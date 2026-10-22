@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(3941) {
+    buildMap(3960) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -604,7 +604,29 @@ private fun uiCataloguePart1(): Map<String, Int> = mapOf(
     "Provider setup" to R.string.ui_13e10588f9f9,
     "Local network" to R.string.ui_4fda695d3e86,
     "Cloud" to R.string.ui_b977b950c1ae,
+    "Power" to R.string.ui_848e96567d6b,
+    "Power mode" to R.string.ui_d47b51ac5c4a,
+    "Private / Power" to R.string.ui_f7c25d67b4c2,
+    "Everything stays on this phone. Power features are off." to R.string.ui_a0f62566edfc,
+    "AI processing stays on this phone. Power features are off." to R.string.ui_7be2dcda5a77,
+    "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply." to R.string.ui_f95736e4ba58,
+    "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Power choices separate." to R.string.ui_91d1493a8e85,
+    "This switch controls sharing for supported online Halo features." to R.string.ui_b78e8b0ee157,
+    "This action needs Power mode. Use the switch at the top of Halo." to R.string.ui_91e23dc2c14e,
+    "Switch to Power" to R.string.ui_c3b89f7b634c,
+    "Power mode could not be enabled. Check Kids settings or try again." to R.string.ui_2ff19ca13b1f,
+    "A grown-up must allow Power mode in Kids settings." to R.string.ui_ec07e6b3552b,
+    "Switch to Power mode at the top of Halo." to R.string.ui_7c81ad053a8f,
+    "Cloud voice needs Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval." to R.string.ui_914a820f10fd,
+    "Cloud processing is off. Use the Private / Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval." to R.string.ui_b7b8b4725c30,
+    "Cloud sharing is not allowed for this image. Use the Private / Power switch at the top of Halo." to R.string.ui_80bb16adde05,
+    "Media sharing follows the Private / Power switch at the top of Halo." to R.string.ui_a8f9f96f6425,
+    "File sharing follows the Private / Power switch at the top of Halo." to R.string.ui_e5a3e94e5574,
+    "Memory sharing follows the Private / Power switch at the top of Halo." to R.string.ui_eede4c33bb88,
     "Conversation default" to R.string.ui_824ddc4cb517,
+)
+
+private fun uiCataloguePart2(): Map<String, Int> = mapOf(
     "Model roles" to R.string.ui_30e82a8c8371,
     "Images and visual context" to R.string.ui_dff99ddda166,
     "Configured" to R.string.ui_84aebc69a1bf,
@@ -624,9 +646,6 @@ private fun uiCataloguePart1(): Map<String, Int> = mapOf(
     "Silero VAD · Ready" to R.string.ui_ead1e05c21d2,
     "Energy fallback · Silero VAD not installed" to R.string.ui_d0424e7a386a,
     "Install Silero VAD" to R.string.ui_68581b90dcec,
-)
-
-private fun uiCataloguePart2(): Map<String, Int> = mapOf(
     "Verifying" to R.string.ui_a7d4a9f301ed,
     "Speech diagnostics" to R.string.ui_816513eca3ed,
     "One local utterance. Audio stays in memory. No commands or conversation entry." to R.string.ui_c8c07434ff84,
@@ -908,6 +927,9 @@ private fun uiCataloguePart2(): Map<String, Int> = mapOf(
     "Delete block" to R.string.ui_e980a9c5ab94,
     "This reference has no target in the workspace." to R.string.ui_77827f472b67,
     "Add block" to R.string.ui_328e818521e4,
+)
+
+private fun uiCataloguePart3(): Map<String, Int> = mapOf(
     "Remove attachment" to R.string.ui_595b066a8838,
     "Add a heading to build an outline of this note." to R.string.ui_fde061312669,
     "Think with Halo" to R.string.ui_2c4ddc933e24,
@@ -927,9 +949,6 @@ private fun uiCataloguePart2(): Map<String, Int> = mapOf(
     "Rename" to R.string.ui_3064d79a295c,
     "Fit all cards" to R.string.ui_5459803f39ee,
     "Reset view" to R.string.ui_ce89ae822e8b,
-)
-
-private fun uiCataloguePart3(): Map<String, Int> = mapOf(
     "Export to note" to R.string.ui_47ff625df896,
     "Study this canvas" to R.string.ui_16c3fdb8a991,
     "Add text" to R.string.ui_1b4d10038c32,
@@ -1211,6 +1230,9 @@ private fun uiCataloguePart3(): Map<String, Int> = mapOf(
     "Continue on" to R.string.ui_3de472df1f9d,
     "The conversation and computation stay on your phone." to R.string.ui_8e795a803344,
     "The original conversation is unavailable." to R.string.ui_8dd020233bfd,
+)
+
+private fun uiCataloguePart4(): Map<String, Int> = mapOf(
     "Continue in current conversation" to R.string.ui_cde5efcc72da,
     "Cancel task" to R.string.ui_a1d26b85bf20,
     "Open in Notebook" to R.string.ui_55e5b8eb9b3d,
@@ -1230,9 +1252,6 @@ private fun uiCataloguePart3(): Map<String, Int> = mapOf(
     "Nothing scheduled soon" to R.string.ui_21ee7a7647ee,
     "See all" to R.string.ui_d7a8c446069a,
     "Filter" to R.string.ui_638e249f4a15,
-)
-
-private fun uiCataloguePart4(): Map<String, Int> = mapOf(
     "No workspace objects to reference." to R.string.ui_d3ed18cbb091,
     "%1\$d remembered · %2\$d suggestions" to R.string.ui_4f6edce78d6b,
     "Halo may retrieve relevant saved memories that fit the current scope and context budget." to R.string.ui_c21d33121a42,
@@ -1514,6 +1533,9 @@ private fun uiCataloguePart4(): Map<String, Int> = mapOf(
     "This card changed while Halo was writing. Regenerate the draft before applying it." to R.string.ui_c2a1106e3fe2,
     "This card could not be saved yet." to R.string.ui_422137390f4e,
     "This card position could not be saved yet." to R.string.ui_461fb0d67cb1,
+)
+
+private fun uiCataloguePart5(): Map<String, Int> = mapOf(
     "This source is unavailable. Restore it from Workspace if it is archived or in trash." to R.string.ui_dc5435b3db34,
     "Ungroup" to R.string.ui_b57ef478f9ba,
     "Untitled card" to R.string.ui_29fc54324b6c,
@@ -1533,9 +1555,6 @@ private fun uiCataloguePart4(): Map<String, Int> = mapOf(
     "%1\$d cards will move; %2\$d will stay where they are." to R.string.ui_0a7bb5db3c3e,
     "Remove selected cards?" to R.string.ui_db5dbb3bc780,
     "No active model" to R.string.ui_cc57b6955a2c,
-)
-
-private fun uiCataloguePart5(): Map<String, Int> = mapOf(
     "Missing" to R.string.ui_6be36ca49ee8,
     "Loading" to R.string.ui_dc380888c4e2,
     "Installed" to R.string.ui_f8b32f4e92bd,
@@ -1817,6 +1836,9 @@ private fun uiCataloguePart5(): Map<String, Int> = mapOf(
     "On-device models" to R.string.ui_2c7e25e01779,
     "Model library" to R.string.ui_1e26bf4f841b,
     "Browse available models" to R.string.ui_429d2b9fa816,
+)
+
+private fun uiCataloguePart6(): Map<String, Int> = mapOf(
     "On device" to R.string.ui_d822e6257a23,
     "Choose an AI provider" to R.string.ui_2d73dae09115,
     "No model selected" to R.string.ui_f0f9cb152ba7,
@@ -1836,9 +1858,6 @@ private fun uiCataloguePart5(): Map<String, Int> = mapOf(
     "Alarms & timers" to R.string.ui_392b9a84a969,
     "Apps & Navigation" to R.string.ui_d5e4779c101c,
     "Current app" to R.string.ui_acb4f1b9068d,
-)
-
-private fun uiCataloguePart6(): Map<String, Int> = mapOf(
     "System panels" to R.string.ui_70cafa67c001,
     "Research & delegation" to R.string.ui_568fac116d13,
     "Conversation & payload reading" to R.string.ui_5d3d6840c561,
@@ -2120,6 +2139,9 @@ private fun uiCataloguePart6(): Map<String, Int> = mapOf(
     "%1\$d MB" to R.string.ui_7116c5c5b574,
     "Model does not support %1\$s" to R.string.ui_8afa02f06566,
     "Download or removal did not finish" to R.string.ui_4deb69547a01,
+)
+
+private fun uiCataloguePart7(): Map<String, Int> = mapOf(
     "Check storage and your connection, then retry. The selected model is shown above." to R.string.ui_1f80bf2d4cfe,
     "Try listening" to R.string.ui_748dd6a1621e,
     "Capture details" to R.string.ui_3be67ab721cf,
@@ -2139,9 +2161,6 @@ private fun uiCataloguePart6(): Map<String, Int> = mapOf(
     "Load provider image models" to R.string.ui_a63db64ab0b8,
     "Selecting a model sends no prompt. Generate or edit images from a note or canvas." to R.string.ui_9edd5ed9dc6f,
     "Load the live list after configuring this provider." to R.string.ui_978bc6afa688,
-)
-
-private fun uiCataloguePart7(): Map<String, Int> = mapOf(
     "Clear search" to R.string.ui_3b7ea51793e9,
     "Selected for workspace images" to R.string.ui_ce3ef5c0abc8,
     "Image models couldn't be loaded." to R.string.ui_b153e2f2c5d1,
@@ -2423,6 +2442,9 @@ private fun uiCataloguePart7(): Map<String, Int> = mapOf(
     "Review in Android" to R.string.ui_dd1fe257534a,
     "Check network name, security, and password" to R.string.ui_54a80cfee097,
     "Halo Do Not Disturb" to R.string.ui_26ecf1f1d13a,
+)
+
+private fun uiCataloguePart8(): Map<String, Int> = mapOf(
     "Halo changes only its own Do Not Disturb rule. Other rules may keep Do Not Disturb active. Manage access in Android, then make a fresh request in Halo." to R.string.ui_27c98694dc2c,
     "Android settings could not be opened." to R.string.ui_dbc597a35691,
     "Light colours" to R.string.ui_c00396934c25,
@@ -2442,9 +2464,6 @@ private fun uiCataloguePart7(): Map<String, Int> = mapOf(
     "Learning and tools on one page." to R.string.ui_f74e7f9e8405,
     "Tool approvals stay the same." to R.string.ui_a40ab236f7a5,
     "Could not save your change. Try again." to R.string.ui_e4fc62ef77ba,
-)
-
-private fun uiCataloguePart8(): Map<String, Int> = mapOf(
     "My tools" to R.string.ui_9ecd916802ea,
     "Choose a tool. Halo will ask when an action needs approval." to R.string.ui_aa7d246d81a5,
     "5-minute timer" to R.string.ui_591e51e8f6c4,
@@ -2726,6 +2745,9 @@ private fun uiCataloguePart8(): Map<String, Int> = mapOf(
     "Backend availability and task qualification are checked separately." to R.string.ui_bf5bc920cc64,
     "On demand" to R.string.ui_7be15cd189a3,
     "Warm when safe" to R.string.ui_d0d4ac822b81,
+)
+
+private fun uiCataloguePart9(): Map<String, Int> = mapOf(
     "Remote execution requires explicit consent." to R.string.ui_82544954d8dc,
     "These policies do not overwrite native model tuning." to R.string.ui_7e69e3b12d18,
     "Unable to save workload policy" to R.string.ui_0b7d77870d04,
@@ -2745,9 +2767,6 @@ private fun uiCataloguePart8(): Map<String, Int> = mapOf(
     "Source IDs, one per line" to R.string.ui_ba8196aa0ca6,
     "Enable selected local sources" to R.string.ui_6adf3520bf11,
     "Disable and clear index" to R.string.ui_5ecd11eca673,
-)
-
-private fun uiCataloguePart9(): Map<String, Int> = mapOf(
     "Local semantic scope enabled" to R.string.ui_03bdbb201699,
     "Local semantic scope disabled" to R.string.ui_2bb8088c5aad,
     "Private retrieval query" to R.string.ui_b330861e85e1,
@@ -3029,6 +3048,9 @@ private fun uiCataloguePart9(): Map<String, Int> = mapOf(
     "Preview does not use AI or upload your material. Pinch to zoom; drag to move." to R.string.ui_c6df5923e18a,
     "Zoom in" to R.string.ui_0e47f09a748f,
     "Could not open the source preview. Check the original material and edit the wording yourself." to R.string.ui_81bf9656712e,
+)
+
+private fun uiCataloguePart10(): Map<String, Int> = mapOf(
     "Not enough memory for the preview. Check the original material instead." to R.string.ui_67b8d1bc4ba5,
     "Repeat" to R.string.ui_b6b7a0065808,
     "Reading aloud" to R.string.ui_044c9986f460,
@@ -3048,9 +3070,6 @@ private fun uiCataloguePart9(): Map<String, Int> = mapOf(
     "Try: hint, repeat, next step, or stop." to R.string.ui_20070851bb0c,
     "Left Kids lesson" to R.string.ui_8c09cd5888c8,
     "Kids page hidden" to R.string.ui_87e8b53a2157,
-)
-
-private fun uiCataloguePart10(): Map<String, Int> = mapOf(
     "Parent turned off cloud sharing" to R.string.ui_ef8bb210453e,
     "Stopped by learner" to R.string.ui_a12ab62d1cfd,
     "Voice latency" to R.string.ui_786be443dd71,
@@ -3332,6 +3351,9 @@ private fun uiCataloguePart10(): Map<String, Int> = mapOf(
     "Skill packages" to R.string.ui_8a4abef11f83,
     "Import and manage your own skills" to R.string.ui_769628e54e78,
     "Manage skill packages in Advanced." to R.string.ui_6430c125dffd,
+)
+
+private fun uiCataloguePart11(): Map<String, Int> = mapOf(
     "App action" to R.string.ui_75a6e8b5b5f6,
     "Connected · getting ready" to R.string.ui_d60951b67c34,
     "Your phone manages the buttons and volume." to R.string.ui_6233bef75ba3,
@@ -3351,9 +3373,6 @@ private fun uiCataloguePart10(): Map<String, Int> = mapOf(
     "Download natural voices, then listen to a preview before using them." to R.string.ui_cd04c394a91b,
     "Download natural voices" to R.string.ui_0c480d0b774d,
     "Import voice download" to R.string.ui_067c3de802cd,
-)
-
-private fun uiCataloguePart11(): Map<String, Int> = mapOf(
     "About this voice download" to R.string.ui_9c5b7ce3f9d3,
     "Listen to this voice" to R.string.ui_7012e9dfd3a5,
     "Yes, I heard this voice" to R.string.ui_83283fb1abd8,
@@ -3635,6 +3654,9 @@ private fun uiCataloguePart11(): Map<String, Int> = mapOf(
     "Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled." to R.string.ui_82b081c3e6fb,
     "This runs the reviewed actions once and records the result in History. It does not save this draft or test notification and wearable delivery." to R.string.ui_58203e13417a,
     "Trial stopped before a result was recorded." to R.string.ui_974cad06f421,
+)
+
+private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "Trial unavailable. Check the actions and try again." to R.string.ui_b44f4f10d647,
     "This automation may run these exact actions without asking each time. Changing the automation requires another review." to R.string.ui_9444c497aa82,
     "Delivery" to R.string.ui_52bfe584a5fc,
@@ -3654,9 +3676,6 @@ private fun uiCataloguePart11(): Map<String, Int> = mapOf(
     "Suggested routine" to R.string.ui_dca6889a1b73,
     "Why it was suggested" to R.string.ui_ae6766bd1529,
     "You completed this routine manually %1\$d times recently." to R.string.ui_a090fe103b7c,
-)
-
-private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "Nothing changes until you review and save. Turning it on schedules future runs; it does not run it now." to R.string.ui_7fbe54fa7aa1,
     "Suggestion no longer available" to R.string.ui_1148b60f521a,
     "This routine is no longer available. You can dismiss this suggestion." to R.string.ui_231ac91b0282,
@@ -3907,9 +3926,6 @@ private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "No active session" to R.string.ui_1f9dae2d58d7,
     "Retrieved" to R.string.ui_4790277aa10c,
     "Optional private starter bundle: pinned Qwen intent candidate, Whisper Small, Silero VAD and Supertonic speech output. Halo checks the installed files, but does not select candidates or claim device quality. You can continue with individual downloads instead." to R.string.ui_95145f43d145,
-    "Private voice and intent starter bundle" to R.string.ui_ac83c14ed2a2,
-    "Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality." to R.string.ui_fe1513423fca,
-    "No starter bundle setup is active." to R.string.ui_92a6b4173bd1,
     "Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate." to R.string.ui_3007ade836ff,
     "Checking available storage…" to R.string.ui_2f9f525e3f4e,
     "Downloading intent candidate…" to R.string.ui_2e34fc62280f,
@@ -3941,6 +3957,9 @@ private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "No archived cards" to R.string.ui_ff87c4c5b7a8,
     "No cards on Screen" to R.string.ui_081d5db0eed6,
     "Card archived" to R.string.ui_f4fb38d052fe,
+)
+
+private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Card restored" to R.string.ui_a4749ce2c60e,
     "A finished routine will update this card." to R.string.ui_57020c06ae3d,
     "Updated" to R.string.ui_3a5ecca188c0,
@@ -3960,9 +3979,6 @@ private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "Imported model must be a .litertlm file" to R.string.ui_5cc788d99adc,
     "Not enough free storage to import this model. Free space and try again." to R.string.ui_af305790d439,
     "Preparing model import…" to R.string.ui_64e121a724c8,
-)
-
-private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Registering imported model…" to R.string.ui_7971c95e6593,
     "The file provider returned an incomplete model. Download the full file and import again." to R.string.ui_fc18c5b2eb93,
     "Unable to open URI input stream" to R.string.ui_079c18445722,

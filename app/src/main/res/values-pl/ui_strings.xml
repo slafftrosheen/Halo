@@ -136,6 +136,25 @@
     <string name="ui_13e10588f9f9" formatted="false">"Konfiguracja dostawcy"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Sieć lokalna"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Chmura"</string>
+    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Tryb Power"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Prywatny / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Przetwarzanie AI pozostaje na tym telefonie. Funkcje Power są wyłączone."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"Przetwarzanie AI pozostaje na tym telefonie. Funkcje Power są wyłączone."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"W trybie Power rozmowy, obrazy, pamięć i obszar roboczy mogą być wysyłane do wybranego dostawcy. Mogą obowiązywać opłaty dostawcy."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"Jeden przełącznik u góry ekranu steruje udostępnianiem. Profile trybów przechowują osobne ustawienia Private i Power."</string>
+    <string name="ui_b78e8b0ee157" formatted="false">"Ten przełącznik steruje udostępnianiem danych obsługiwanym funkcjom online halo."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"To działanie wymaga trybu Power. Włącz go przełącznikiem u góry halo."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Przełącz na Power"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Nie udało się włączyć trybu Power. Sprawdź ustawienia trybu Dzieci lub spróbuj ponownie."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"Osoba dorosła musi zezwolić na tryb Power w ustawieniach trybu Dzieci."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Włącz tryb Power u góry halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Głos w chmurze wymaga trybu Power. Włącz go przełącznikiem u góry halo. Sesje dzieci wymagają też zgody osoby dorosłej."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Przetwarzanie w chmurze jest wyłączone. Włącz tryb Power przełącznikiem u góry halo lub wybierz model na urządzeniu. Sesje dzieci wymagają też zgody osoby dorosłej."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Nie można udostępnić tego obrazu w chmurze. Użyj przełącznika Private / Power u góry halo."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Udostępnianie multimediów zależy od przełącznika Private / Power u góry halo."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"Udostępnianie plików zależy od przełącznika Private / Power u góry halo."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Udostępnianie pamięci zależy od przełącznika Private / Power u góry halo."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Domyślny model rozmowy"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Role modeli"</string>
     <string name="ui_dff99ddda166" formatted="false">"Obrazy i kontekst wizualny"</string>
@@ -1056,9 +1075,6 @@
     <string name="ui_1f9dae2d58d7" formatted="false">"Brak aktywnej sesji"</string>
     <string name="ui_4790277aa10c" formatted="false">"Pobrano"</string>
     <string name="ui_95145f43d145" formatted="false">"Opcjonalny prywatny pakiet startowy: kandydat Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i synteza mowy Supertonic. halo sprawdza zainstalowane pliki, ale nie wybiera kandydatów ani nie potwierdza ich jakości na urządzeniu. Możesz też pobierać modele osobno."</string>
-    <string name="ui_ac83c14ed2a2" formatted="false">"Prywatny pakiet startowy rozpoznawania mowy i intencji"</string>
-    <string name="ui_fe1513423fca" formatted="false">"Opcjonalnie pobierz razem kandydata Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i pliki głosu Supertonic. Halo sprawdza pliki, ale nie wybiera modeli ani nie potwierdza ich jakości na urządzeniu."</string>
-    <string name="ui_92a6b4173bd1" formatted="false">"Konfiguracja pakietu startowego nie została rozpoczęta."</string>
     <string name="ui_3007ade836ff" formatted="false">"Pliki pakietu startowego zostały zainstalowane i sprawdzone. Przed użyciem wybierz model rozpoznawania mowy i odsłuchaj głos. Model Qwen pozostaje niewybranym kandydatem."</string>
     <string name="ui_2f9f525e3f4e" formatted="false">"Sprawdzanie dostępnego miejsca…"</string>
     <string name="ui_2e34fc62280f" formatted="false">"Pobieranie modelu do rozpoznawania intencji…"</string>

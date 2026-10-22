@@ -103,7 +103,7 @@ import java.util.Date
         }) { Text(stringResource(R.string.online_save)) }
         TextButton(onClick = { readLocal() }, enabled = !busy) { Text(stringResource(R.string.online_refresh)) }
         HorizontalDivider()
-        Text(com.halo.app.language.uiText("Media sharing follows the Private / Cloud switch at the top of halo."), style = MaterialTheme.typography.bodySmall)
+        Text(com.halo.app.language.uiText("Media sharing follows the Private / Power switch at the top of Halo."), style = MaterialTheme.typography.bodySmall)
         if (!kidsLoaded || kids) Text(stringResource(R.string.online_child_restricted), style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
         TextButton(onClick = { runCatching { uri.openUri("https://openrouter.ai/settings/keys") } }) {

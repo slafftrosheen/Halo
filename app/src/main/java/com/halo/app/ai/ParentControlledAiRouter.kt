@@ -13,12 +13,12 @@ class ParentControlledAiRouter(
     private fun constrained(workload: AiWorkloadSpec) = workload.copy(allowRemote = workload.allowRemote && remoteAllowed())
     private fun requireRemote() {
         if (!remoteAllowed()) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
-            "Cloud processing is off. Use the Private / Cloud switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval.")
+            "Cloud processing is off. Use the Private / Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval.")
     }
     private suspend fun <T> resolveWithGuidance(block: suspend () -> T): T = try { block() }
         catch (failure: AiProviderException) {
             if (!remoteAllowed()) throw AiProviderException(failure.type,
-                "${failure.message}. Cloud processing is off. Use the Private / Cloud switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval.",
+                "${failure.message}. Cloud processing is off. Use the Private / Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval.",
                 failure.details, cause = failure)
             throw failure
         }

@@ -41,12 +41,12 @@ import kotlinx.coroutines.withContext
                     }
                 }, enabled = !busy && (!kids || kidsCloud || mode == PrivacyMode.CLOUD),
                     modifier = Modifier.padding(horizontal = 12.dp).semantics { contentDescription = modeDescription })
-                Text(uiText("Cloud"), style = MaterialTheme.typography.labelLarge,
+                Text(uiText("Power"), style = MaterialTheme.typography.labelLarge,
                     color = if (mode == PrivacyMode.CLOUD) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (detail) Text(uiText(if (mode == PrivacyMode.PRIVATE)
-                "Everything stays on this phone. Cloud features are off."
-                else "Cloud models can use your conversation, images, memories, and workspace. Provider charges may apply."),
+                "AI processing stays on this phone. Power features are off."
+                else "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."),
                 style = MaterialTheme.typography.bodySmall)
             if (failed) Text(uiText("Could not change privacy mode. Try again."), color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall)
@@ -60,14 +60,14 @@ import kotlinx.coroutines.withContext
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
     if (mode == PrivacyMode.PRIVATE) {
-        Text(uiText(if (required) "This action needs Cloud mode. Use the switch at the top of halo." else "Private mode"), style = MaterialTheme.typography.bodySmall)
+        Text(uiText(if (required) "This action needs Power mode. Use the switch at the top of Halo." else "Private mode"), style = MaterialTheme.typography.bodySmall)
         TextButton(enabled = !busy, onClick = { scope.launch {
             busy = true
             try { withContext(Dispatchers.IO) { Graph.setPrivacyMode(PrivacyMode.CLOUD) }; error = false }
             catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { error = true }
             finally { busy = false }
-        } }) { Text(uiText("Switch to Cloud")) }
-        if (error) Text(uiText("Cloud mode could not be enabled. Check Kids settings or try again."), color = MaterialTheme.colorScheme.error)
+        } }) { Text(uiText("Switch to Power")) }
+        if (error) Text(uiText("Power mode could not be enabled. Check Kids settings or try again."), color = MaterialTheme.colorScheme.error)
     }
 }

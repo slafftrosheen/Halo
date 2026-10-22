@@ -144,7 +144,7 @@ object ManualDependencyGraph {
     fun setPrivacyMode(mode: com.halo.app.ai.PrivacyMode) {
         if (mode == com.halo.app.ai.PrivacyMode.CLOUD) {
             check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
-                "A grown-up must allow Cloud mode in Kids settings."
+                "A grown-up must allow Power mode in Kids settings."
             }
             if (aiProviderRouter.routingPolicy.value == com.halo.sdk.provider.AiRoutingPolicy.LOCAL_ONLY)
                 aiProviderRouter.selectedProviderId.value?.let(aiProviderRouter::selectProvider)

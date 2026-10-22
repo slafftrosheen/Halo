@@ -46,7 +46,7 @@ class PrivacyModeStore(private val storage: Storage) {
 suspend fun <T> whileCloudMode(modes: StateFlow<PrivacyMode>?, onPrivate: () -> Unit = {}, block: suspend () -> T): T {
     if (modes == null) return block()
     return coroutineScope {
-        check(modes.value == PrivacyMode.CLOUD) { "Switch to Cloud mode at the top of halo." }
+        check(modes.value == PrivacyMode.CLOUD) { "Switch to Power mode at the top of Halo." }
         val task = async(start = CoroutineStart.LAZY) { block() }
         val watch = launch(start = CoroutineStart.UNDISPATCHED) {
             modes.collect { if (it == PrivacyMode.PRIVATE) {

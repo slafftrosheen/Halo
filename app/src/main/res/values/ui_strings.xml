@@ -580,6 +580,25 @@
     <string name="ui_13e10588f9f9" formatted="false">"Provider setup"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Local network"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Cloud"</string>
+    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Power mode"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Private / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Everything stays on this phone. Power features are off."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"AI processing stays on this phone. Power features are off."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"One switch at the top of every screen controls sharing. Mode profiles keep your Private and Power choices separate."</string>
+    <string name="ui_b78e8b0ee157" formatted="false">"This switch controls sharing for supported online halo features."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"This action needs Power mode. Use the switch at the top of halo."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Switch to Power"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Power mode could not be enabled. Check Kids settings or try again."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"A grown-up must allow Power mode in Kids settings."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Switch to Power mode at the top of halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Cloud voice needs Power mode. Use the switch at the top of halo. Kids sessions also need grown-up approval."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Cloud processing is off. Use the Private / Power switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Power switch at the top of halo."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Media sharing follows the Private / Power switch at the top of halo."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"File sharing follows the Private / Power switch at the top of halo."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Memory sharing follows the Private / Power switch at the top of halo."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Conversation default"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Model roles"</string>
     <string name="ui_dff99ddda166" formatted="false">"Images and visual context"</string>
@@ -3850,9 +3869,6 @@
     <string name="ui_1f9dae2d58d7" formatted="false">"No active session"</string>
     <string name="ui_4790277aa10c" formatted="false">"Retrieved"</string>
     <string name="ui_95145f43d145" formatted="false">"Optional private starter bundle: pinned Qwen intent candidate, Whisper Small, Silero VAD and Supertonic speech output. halo checks the installed files, but does not select candidates or claim device quality. You can continue with individual downloads instead."</string>
-    <string name="ui_ac83c14ed2a2" formatted="false">"Private voice and intent starter bundle"</string>
-    <string name="ui_fe1513423fca" formatted="false">"Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality."</string>
-    <string name="ui_92a6b4173bd1" formatted="false">"No starter bundle setup is active."</string>
     <string name="ui_3007ade836ff" formatted="false">"Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate."</string>
     <string name="ui_2f9f525e3f4e" formatted="false">"Checking available storage…"</string>
     <string name="ui_2e34fc62280f" formatted="false">"Downloading intent candidate…"</string>
