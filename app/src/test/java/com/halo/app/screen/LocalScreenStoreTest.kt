@@ -46,8 +46,7 @@ class LocalScreenStoreTest {
             availableActions = listOf(ScreenAction.OpenSource, ScreenAction.SaveToNotebook, ScreenAction.HideFromScreen),
             sourceLinks = listOf(ScreenSourceLink("Original paper", "https://example.org/paper")),
         )
-        store.publish(research)
-        store.saveLayout(ScreenWidgets.starter("Quiet").copy(cards = listOf(
+        store.publishAndSaveLayout(research, ScreenWidgets.starter("Quiet").copy(cards = listOf(
             ScreenCard("research", research.id, CardSize.STANDARD, false))))
 
         val restored = LocalScreenStore(context)

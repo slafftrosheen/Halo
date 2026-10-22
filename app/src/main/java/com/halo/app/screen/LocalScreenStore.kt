@@ -30,17 +30,24 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     private var undoLayout: ScreenLayout? = null
 
     override suspend fun publish(item: ScreenItem) = synchronized(lock) {
-        require(item.id.length in 1..240 && item.title.length <= 240)
-        require(item.sourceLinks.size <= 8 && item.sourceLinks.all {
-            it.title.length in 1..200 && it.url.length in 1..2048 && it.url.startsWith("https://")
-        })
+        validateItem(item)
         val old = _items.value.firstOrNull { it.id == item.id }
         if (old?.updatedAt != null && item.updatedAt != null && old.updatedAt > item.updatedAt) return@synchronized
-        val updated = (_items.value.filterNot { it.id == item.id } + item).takeLast(100)
-        preferences.edit().putString("items", JSONArray().apply {
-            updated.forEach { put(it.toJson()) }
-        }.toString()).apply()
+        persistItems((_items.value.filterNot { it.id == item.id } + item).takeLast(100))
+    }
+
+    /** Atomically writes a locally sourced item and the layout card that displays it. */
+    suspend fun publishAndSaveLayout(item: ScreenItem, value: ScreenLayout, recordUndo: Boolean = false) = synchronized(lock) {
+        validateItem(item)
+        require(value.cards.size <= 24 && value.cards.all { it.widgetType in ScreenWidgets.types })
+        val old = _items.value.firstOrNull { it.id == item.id }
+        val updated = if (old?.updatedAt != null && item.updatedAt != null && old.updatedAt > item.updatedAt) _items.value
+            else (_items.value.filterNot { it.id == item.id } + item).takeLast(100)
+        val nextLayout = value.copy(version = (_layout.value?.version ?: 0) + 1)
+        if (recordUndo) undoLayout = _layout.value
+        preferences.edit().putString("items", itemsJson(updated)).putString("layout", nextLayout.toJson().toString()).apply()
         _items.value = updated
+        _layout.value = nextLayout
     }
 
     override suspend fun markFailed(id: String, at: Instant) {
@@ -66,14 +73,29 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     fun setDimAtNight(enabled: Boolean) { preferences.edit().putBoolean("dim_night", enabled).apply(); _dimAtNight.value = enabled }
 
     private fun persistLayout(value: ScreenLayout) {
-        val json = JSONObject().put("id", value.id).put("name", value.name).put("version", value.version)
-            .put("cards", JSONArray().apply { value.cards.forEach { card ->
-                put(JSONObject().put("type", card.widgetType).put("itemId", card.itemId)
-                    .put("size", card.size.name).put("pinned", card.pinned).put("config", JSONObject(card.config)))
-            } })
-        preferences.edit().putString("layout", json.toString()).apply()
+        preferences.edit().putString("layout", value.toJson().toString()).apply()
         _layout.value = value
     }
+
+    private fun validateItem(item: ScreenItem) {
+        require(item.id.length in 1..240 && item.title.length <= 240)
+        require(item.sourceLinks.size <= 8 && item.sourceLinks.all {
+            it.title.length in 1..200 && it.url.length in 1..2048 && it.url.startsWith("https://")
+        })
+    }
+
+    private fun persistItems(items: List<ScreenItem>) {
+        preferences.edit().putString("items", itemsJson(items)).apply()
+        _items.value = items
+    }
+
+    private fun itemsJson(items: List<ScreenItem>) = JSONArray().apply { items.forEach { put(it.toJson()) } }.toString()
+
+    private fun ScreenLayout.toJson() = JSONObject().put("id", id).put("name", name).put("version", version)
+        .put("cards", JSONArray().apply { cards.forEach { card ->
+            put(JSONObject().put("type", card.widgetType).put("itemId", card.itemId)
+                .put("size", card.size.name).put("pinned", card.pinned).put("config", JSONObject(card.config)))
+        } })
 
     private fun readLayout(): ScreenLayout? = runCatching {
         val json = JSONObject(preferences.getString("layout", null) ?: return@runCatching null)

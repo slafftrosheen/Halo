@@ -104,7 +104,6 @@ import java.util.Date
                                     saveError = true
                                     return@launch
                                 }
-                                store.publish(item)
                                 val cards = when {
                                     existing >= 0 -> current.cards
                                     unbound >= 0 -> current.cards.mapIndexed { index, card ->
@@ -113,7 +112,7 @@ import java.util.Date
                                     else -> current.cards + com.halo.app.screen.ScreenCard("research", itemId,
                                         com.halo.app.screen.CardSize.STANDARD, false)
                                 }
-                                store.saveLayout(current.copy(cards = cards), recordUndo = false)
+                                store.publishAndSaveLayout(item, current.copy(cards = cards))
                                 savedToScreen = true
                                 saveError = false
                             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
