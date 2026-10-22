@@ -101,39 +101,45 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     private fun readLayout(): ScreenLayout? = runCatching {
         val json = JSONObject(preferences.getString("layout", null) ?: return@runCatching null)
         val cards = json.getJSONArray("cards")
-        ScreenLayout(json.getString("id"), json.getString("name"), (0 until cards.length()).map { index ->
-            val c = cards.getJSONObject(index)
-            ScreenCard(c.getString("type"), c.optString("itemId").takeUnless { it.isBlank() || it == "null" },
-                CardSize.valueOf(c.getString("size")), c.optBoolean("pinned"),
-                    c.optJSONObject("config")?.let { config -> config.keys().asSequence().associateWith { config.getString(it) } }.orEmpty(),
-                    c.optBoolean("archived", false))
-        }.filter { it.widgetType in ScreenWidgets.types }.take(24), json.optInt("version", 1))
+        val recoveredCards = (0 until cards.length()).mapNotNull { index ->
+            runCatching {
+                val c = cards.getJSONObject(index)
+                ScreenCard(c.getString("type"), c.optString("itemId").takeUnless { it.isBlank() || it == "null" },
+                    CardSize.valueOf(c.getString("size")), c.optBoolean("pinned"),
+                    c.optJSONObject("config")?.let { config ->
+                        config.keys().asSequence().associateWith { config.optString(it) }
+                    }.orEmpty(), c.optBoolean("archived", false))
+            }.getOrNull()?.takeIf { it.widgetType in ScreenWidgets.types }
+        }.take(24)
+        ScreenLayout(json.getString("id"), json.getString("name"), recoveredCards, json.optInt("version", 1))
     }.getOrNull()
 
     private fun readItems(): List<ScreenItem> = runCatching {
         val array = JSONArray(preferences.getString("items", "[]"))
-        (0 until array.length()).map { index ->
-            val j = array.getJSONObject(index)
-            fun instant(key: String) = j.optString(key).takeIf { it.isNotBlank() && it != "null" }?.let(Instant::parse)
-            ScreenItem(j.getString("id"), ScreenSourceType.valueOf(j.getString("sourceType")),
-                j.optString("sourceId").takeUnless { it.isBlank() || it == "null" }, j.getString("title"),
-                j.optString("summary").takeUnless { it == "null" }, ScreenContentType.valueOf(j.getString("contentType")),
-                instant("updatedAt"), instant("lastSuccessAt"), instant("expiresAt"), ScreenItemState.valueOf(j.getString("state")),
-                ScreenSensitivity.valueOf(j.getString("sensitivity")),
-                j.optString("attribution").takeUnless { it.isBlank() || it == "null" },
-                j.optJSONArray("availableActions")?.let { actions ->
-                    (0 until actions.length()).mapNotNull { index -> screenAction(actions.optString(index)) }.distinct()
-                } ?: listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen),
-                j.optJSONArray("sourceLinks")?.let { links ->
-                    (0 until links.length()).mapNotNull { index ->
-                        links.optJSONObject(index)?.let { link ->
-                            val title = link.optString("title").take(200)
-                            val url = link.optString("url").take(2048)
-                            if (title.isNotBlank() && url.startsWith("https://")) ScreenSourceLink(title, url) else null
-                        }
-                    }.take(8)
-                }.orEmpty())
-        }
+        (0 until array.length()).mapNotNull { index ->
+            runCatching {
+                val j = array.getJSONObject(index)
+                fun instant(key: String) = j.optString(key).takeIf { it.isNotBlank() && it != "null" }?.let(Instant::parse)
+                ScreenItem(j.getString("id"), ScreenSourceType.valueOf(j.getString("sourceType")),
+                    j.optString("sourceId").takeUnless { it.isBlank() || it == "null" }, j.getString("title"),
+                    j.optString("summary").takeUnless { it == "null" }, ScreenContentType.valueOf(j.getString("contentType")),
+                    instant("updatedAt"), instant("lastSuccessAt"), instant("expiresAt"), ScreenItemState.valueOf(j.getString("state")),
+                    ScreenSensitivity.valueOf(j.getString("sensitivity")),
+                    j.optString("attribution").takeUnless { it.isBlank() || it == "null" },
+                    j.optJSONArray("availableActions")?.let { actions ->
+                        (0 until actions.length()).mapNotNull { index -> screenAction(actions.optString(index)) }.distinct()
+                    } ?: listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen),
+                    j.optJSONArray("sourceLinks")?.let { links ->
+                        (0 until links.length()).mapNotNull { index ->
+                            links.optJSONObject(index)?.let { link ->
+                                val title = link.optString("title").take(200)
+                                val url = link.optString("url").take(2048)
+                                if (title.isNotBlank() && url.startsWith("https://")) ScreenSourceLink(title, url) else null
+                            }
+                        }.take(8)
+                    }.orEmpty())
+            }.getOrNull()
+        }.asReversed().distinctBy { it.id }.asReversed()
     }.getOrDefault(emptyList())
 
     private fun screenAction(id: String): ScreenAction? = when (id) {
