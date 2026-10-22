@@ -9,22 +9,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
 
 @Composable
-fun HomeSurfaceSwitch(screen: Boolean, onSelect: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun HomeSurfaceSwitch(screen: Boolean, onSelect: (Boolean) -> Unit, modifier: Modifier = Modifier,
+    compact: Boolean = false) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         Surface(shape = HaloShapes.pill, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Row(Modifier.padding(4.dp).selectableGroup()) {
                 listOf(false to "Chat", true to "Screen").forEach { (value, label) ->
-                    Surface(Modifier.widthIn(min = 56.dp).heightIn(min = 48.dp)
+                    val description = uiText(label)
+                    Surface(Modifier.widthIn(min = if (compact) 48.dp else 56.dp).heightIn(min = 48.dp)
+                        .semantics { contentDescription = description }
                         .selectable(screen == value, role = Role.Tab, onClick = { onSelect(value) }),
                         shape = HaloShapes.pill,
                         color = if (screen == value) MaterialTheme.colorScheme.primaryContainer.copy(alpha = .18f) else Color.Transparent) {
                         Box(Modifier.padding(horizontal = 10.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
-                            Text(uiText(label), style = MaterialTheme.typography.labelLarge)
+                            if (compact) Icon(painterResource(if (value) com.halo.app.R.drawable.halo_ic_canvas
+                                else com.halo.app.R.drawable.halo_ic_conversations), null, Modifier.size(24.dp))
+                            else Text(description, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }

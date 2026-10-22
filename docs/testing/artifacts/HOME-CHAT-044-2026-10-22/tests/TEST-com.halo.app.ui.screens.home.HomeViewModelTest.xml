@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeViewModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-22T20:43:35.201Z" hostname="MINIFOXEY" time="0.016">
+  <properties/>
+  <testcase name="test12_cognitiveReasoningOwnsThinkingAfterSpeechHandoff" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.01"/>
+  <testcase name="test4_reasoningSession" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test5_executingToolSession" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.001"/>
+  <testcase name="test8_failedCognitiveSession" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test9_streamingResponseIsNotPhysicalSpeech" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test3_preparingContextDoesNotMapToMicrophone" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test11_idleCognitiveSessionExposesBufferedSpeechProcessing" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test1_capturingSpeech" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test2_recognizingSpeech" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test10_actualSpeechWinsWhileResponseIsStreaming" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.001"/>
+  <testcase name="test6_speakingWithCompletedCognitiveSession" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <testcase name="test13_providerDiagnosticProjectsRecoveryState" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.003"/>
+  <testcase name="test7_idleSpeechWithCompletedCognitiveSession" classname="com.halo.app.ui.screens.home.HomeViewModelTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

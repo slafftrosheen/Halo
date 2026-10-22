@@ -46,10 +46,6 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     val scope = rememberCoroutineScope()
     val owner = LocalLifecycleOwner.current
     var permissionRevision by remember { mutableIntStateOf(0) }
-    var denied by rememberSaveable { mutableStateOf(false) }
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        denied = !granted; permissionRevision++; if(!granted) store.diagnostic(SetupError.PERMISSION_DENIED)
-    }
     fun granted(value: String): Boolean { permissionRevision; return ContextCompat.checkSelfPermission(context, value) == PackageManager.PERMISSION_GRANTED }
     val microphone = granted(Manifest.permission.RECORD_AUDIO)
     val speech by Graph.speechRecognitionAvailability.collectAsStateWithLifecycle()
@@ -155,17 +151,9 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     SetupProgressStore.intentions.forEach { label -> Choice(uiText(label), progress.intention == label) { store.intention(label) } }
                 }
                 SetupStage.PERMISSIONS -> {
-                    Copy("Microphone access lets Halo hear you only when you start talking. Without it, you can still type and save notes.")
-                    PermissionChoice("Allow microphone", microphone) { permission.launch(Manifest.permission.RECORD_AUDIO) }
-                    if(Build.VERSION.SDK_INT >= 33) {
-                        Copy("Notifications let Halo show reminders and finished tasks. You can use the app without them.")
-                        PermissionChoice("Allow notifications", granted(Manifest.permission.POST_NOTIFICATIONS)) { permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
-                    }
-                    Copy("Nearby-device access is requested only when you choose a device. Files and photos are selected individually; setup does not need access to your whole library.")
-                    if(denied) {
-                        Copy("Access was not granted. Try again, continue without it, or allow it in Android settings.")
-                        Secondary("Open Android permissions") { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }
-                    }
+                    Copy("Access is optional. Typed questions and private notes remain available when you decline.")
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.capability_guide_explanation))
+                    TextButton(onClick = { onOpen("permissions") }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.capability_guide_title)) }
                     Copy("Continue skips any permission you do not want to grant.")
                 }
                 SetupStage.AI -> {
@@ -223,8 +211,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     }
                     val language by Graph.speechLanguageSettingsRepository.languageMode.collectAsStateWithLifecycle()
                     listOf("en" to "English", "ru" to "Русский", "lv" to "Latviešu", "pl" to "Polski").forEach { (tag,name) -> Choice(name, language == tag) { scope.launch { Graph.speechLanguageSettingsRepository.select(tag); Graph.voiceSettingsViewModel.refreshState() } } }
-                    if(!microphone) Secondary("Allow microphone") { permission.launch(Manifest.permission.RECORD_AUDIO) }
-                    if(denied) Secondary("Open Android permissions") { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }
+                    if(!microphone) Secondary("Allow microphone") { onOpen("permissions") }
                     Copy("Optional local voice files: Whisper Small for speech recognition, Silero VAD for speech activity detection, and Supertonic 3 for speech output. Downloading files does not prove microphone capture, recognition quality or audible output.")
                     if(voice.models["whisper-small"] != true) {
                         Copy("Whisper Small INT8 · about 375 MB · catalog lists EN, LV, RU and PL. Requires more memory and time than Base; test recognition in your language before relying on it.")
@@ -405,7 +392,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     }
 }
 @Composable private fun PermissionChoice(label: String, ready: Boolean, action: () -> Unit) {
-    if(ready) Copy("Access granted") else Secondary(label,action)
+    if(ready) Copy("Access granted") else Secondary(label, action = action)
 }
 @Composable private fun Readiness(label: String, ready: Boolean, route: String, open: (String) -> Unit) {
     Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
@@ -514,7 +501,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     !inventoryReady -> Copy("Refresh on-device files before downloading.")
                     installed -> {
                         if (model.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
-                            Secondary("Find related notes", configureSearch)
+                            Secondary("Find related notes", action = configureSearch)
                             Copy("Choose your own Notebook/Canvas/Study sources in Context & privacy; installing a model does not share or index them.")
                         } else {
                             OutlinedButton(enabled = !operationBusy, onClick = { models.selectLocalModel(model.id) },

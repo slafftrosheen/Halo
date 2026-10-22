@@ -182,7 +182,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
                 val sectionTitle = when (filter) {
                     ActivityFilter.REVIEW -> "Needs you"
                     ActivityFilter.RUNNING -> "Running"
-                    ActivityFilter.HISTORY -> "Done"
+                    ActivityFilter.HISTORY -> "Completed"
                     ActivityFilter.ALL -> "Recent activity"
                 }
                 Text(uiText(sectionTitle), style = MaterialTheme.typography.titleLarge)
@@ -443,7 +443,7 @@ internal fun activityStatusLabel(story: ActivityStory): String = when {
 }
 
 internal enum class ActivityFilter(val label: String) {
-    ALL("All"), REVIEW("Needs you"), RUNNING("Running"), HISTORY("Done")
+    ALL("All"), REVIEW("Needs you"), RUNNING("Running"), HISTORY("Completed")
 }
 
 /** Round 2 p.40: one grouped segmented surface, rather than three floating

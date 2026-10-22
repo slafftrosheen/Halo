@@ -71,7 +71,7 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
             extractionError?.let { Text(it,color=MaterialTheme.colorScheme.error) }
             val saving = current.status == CaptureStatus.SAVING
             Button(onClick={ controller.action(CaptureAction.ASK) },enabled=bitmap != null && !saving) { Text(uiText("Ask halo")) }
-            Text(uiText("Media sharing follows the Private / Cloud switch at the top of halo."), style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Media sharing follows the Private / Power switch at the top of Halo."), style = MaterialTheme.typography.bodySmall)
             com.halo.app.ui.components.CloudModeResolution(required = false)
             TextButton(onClick={controller.visible.value=false;onVisionSetup()}) { Text(uiText("Choose vision model")) }
             OutlinedButton(onClick={ controller.action(CaptureAction.STUDY) },enabled=bitmap != null && !saving) { Text(uiText("Study this")) }

@@ -26,3 +26,11 @@ The APK was installed with `adb install -r` on the attached Samsung SM-G990B2 (`
 No Qwen intent inference was run. No EN/RU/LV/PL live classification matrix, warm/cold latency, memory/residency, cancellation, STT/TTS contention, native or screen action, confirmation, no-duplicate-effect, tool-markup speech/history, restart/model-removal, or on-device clarification journey was qualified. The connected-device installation is evidence of package install only, not behavior acceptance. Polish UI localization remains incomplete. Keep Issue 36 open pending those owner/alpha checks.
 
 No CI or GitHub Actions were used.
+
+## Follow-up: safe settings launch and Home receipt — 2026-10-22
+
+After the run above, the Home progress projection was corrected for `halo_open_settings`: a successful dispatch is shown as `Settings · Action confirmed`, because opening the settings screen is the complete requested effect. Other dispatched actions still show `Delivery not confirmed` unless they have confirmed effect evidence.
+
+The updated debug APK was built from the follow-up source change and installed on the same Samsung SM-G990B2 (`R5CTA0TKLZZ`); final APK SHA-256 `2B22C4D3DB48826053756D45F16B65160DF82B7A794832FFE87C1A2C30E42C5E`. On-device, sending `Open Settings` brought `com.android.settings/.homepage.SettingsHomepageActivity` to the foreground. Returning to Halo showed `Settings · Action confirmed` with the completed check. This verifies one deterministic, non-mutating native action and its user-facing receipt only.
+
+The focused `HomeTaskProgressTest` suite passed (6 tests); `:runtime:cognition:test` passed the focused `NativeActionTruthTest.settingsLaunchExplainsTheDispatchedEffectWithoutClaimingASettingChanged` case; and `:app:assembleDebug` succeeded. The settings-specific response projection is unit-tested as “Android settings opened; no setting was changed.” This follow-up supersedes the earlier statement above that no native action was exercised. The Qwen model was not installed, so no Qwen inference, language matrix, latency/residency, or broader action-loop checks were run; Issue 36 remains open for those acceptance gates. No CI or GitHub Actions were used.

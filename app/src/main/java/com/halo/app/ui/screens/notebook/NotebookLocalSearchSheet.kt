@@ -214,15 +214,20 @@ internal fun NotebookLocalSearchSheet(
         .collectAsStateWithLifecycle(emptyList())
     val workspaceAudioFiles by ManualDependencyGraph.workspaceFileRepository.observeFiles()
         .collectAsStateWithLifecycle(emptyList())
+    val audioFallbackLabel = uiText("Audio memo")
+    val voiceMemoLabel = uiText("Voice memo")
+    val inboxLabel = uiText("Inbox")
+    val videoFallbackLabel = uiText("Video clip")
+    val canvasImageFallbackLabel = uiText("Picture")
     val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,
-        workspaceAudioFiles,configuration) {
+        workspaceAudioFiles,configuration,audioFallbackLabel,voiceMemoLabel,inboxLabel,videoFallbackLabel,canvasImageFallbackLabel) {
         notebookSearchSources(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,
             workspaceAudioFiles = workspaceAudioFiles,
             captureAuthority = "${context.packageName}.captures",
-            audioFallbackLabel = uiText("Audio memo"),
-            voiceMemoLabel = uiText("Voice memo"),
-            inboxLabel = uiText("Inbox"),
-            videoFallbackLabel = uiText("Video clip"), canvasImageFallbackLabel = uiText("Picture"))
+            audioFallbackLabel = audioFallbackLabel,
+            voiceMemoLabel = voiceMemoLabel,
+            inboxLabel = inboxLabel,
+            videoFallbackLabel = videoFallbackLabel, canvasImageFallbackLabel = canvasImageFallbackLabel)
     }
     val access = remember { service.localSearchAccess() }
     var approved by remember { mutableStateOf(access.enabled) }

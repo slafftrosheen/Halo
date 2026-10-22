@@ -273,7 +273,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                     }
                     selectedSources.forEach { selectedSource ->
                         if (length >= 65_536) return@forEach
-                        append("\nSelected source: ").append(selectedSource.title)
+                        append("\nSelected source: ").append(selectedSource.provenance)
                             .append(" [").append(selectedSource.version).append("]\n")
                         val remaining = (65_536 - length).coerceAtLeast(0)
                         append(selectedSource.text.take(remaining))

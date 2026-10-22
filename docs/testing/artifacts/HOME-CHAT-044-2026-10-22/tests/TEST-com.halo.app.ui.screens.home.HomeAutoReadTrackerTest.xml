@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeAutoReadTrackerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-22T20:43:13.867Z" hostname="MINIFOXEY" time="0.001">
+  <properties/>
+  <testcase name="restoredAndDelayedHistoryNeverSpeaks" classname="com.halo.app.ui.screens.home.HomeAutoReadTrackerTest" time="0.001"/>
+  <testcase name="switchingOrFailureDisarmsThePreviousGeneration" classname="com.halo.app.ui.screens.home.HomeAutoReadTrackerTest" time="0.0"/>
+  <testcase name="newlyCompletedAnswerSpeaksOnlyOnceAfterObservedWork" classname="com.halo.app.ui.screens.home.HomeAutoReadTrackerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -74,13 +74,13 @@ import kotlinx.coroutines.Dispatchers
 fun PermissionsScreen(
     onRequestPermissions: () -> Unit,
     onBack: (() -> Unit)? = null,
+    guideStore: com.halo.app.ui.onboarding.SetupProgressStore? = null,
     storageAccessRepository: StorageAccessRepository? = null,
     onOpenStorageBackup: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var refreshKey by remember { mutableStateOf(0) }
-    var bulkAccess by rememberSaveable { mutableStateOf(false) }
     var technicalDetails by rememberSaveable { mutableStateOf(false) }
     var microphoneRequested by rememberSaveable { mutableStateOf(false) }
 
@@ -143,15 +143,15 @@ fun PermissionsScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        val allPermissionsLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) {
-            refreshKey++
-            permissionScope.launch(Dispatchers.IO) {
-                ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(CapabilityRefreshReason.PERMISSION_RESULT)
-                ManualDependencyGraph.hostGraph.capabilityPublisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
-                ManualDependencyGraph.skillRegistry.refreshAvailability()
-            }
+        if (guideStore != null) {
+            CapabilitySetupGuide(guideStore, onAccessChanged = {
+                refreshKey++
+                permissionScope.launch(Dispatchers.IO) {
+                    ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(CapabilityRefreshReason.PERMISSION_RESULT)
+                    ManualDependencyGraph.hostGraph.capabilityPublisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
+                    ManualDependencyGraph.skillRegistry.refreshAvailability()
+                }
+            })
         }
 
         Text(uiText("Access is optional. Typed questions and private notes remain available when you decline."))
@@ -166,35 +166,13 @@ fun PermissionsScreen(
                 )
             }
         }
-        if (!micGranted) HaloFocusAction(uiText("Grant microphone access"), HaloGlyph.LISTEN, true,
+        if (guideStore == null && !micGranted) HaloFocusAction(uiText("Grant microphone access"), HaloGlyph.LISTEN, true,
             { microphoneRequested = true; onRequestPermissions(); refreshKey++ })
         if (microphoneRequested && !micGranted) {
             Text(uiText("If microphone access stays off, you can keep typing, retry, or enable it in Android settings."))
             TextButton(onClick = { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 android.net.Uri.parse("package:${context.packageName}"))) }) { Text(uiText("Open Android app settings")) }
         }
-        TextButton(onClick = { bulkAccess = !bulkAccess },
-            modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(uiText(if (bulkAccess) "Hide bulk access request" else "Advanced: request several permissions"))
-        }
-        if (bulkAccess) HaloWorkspaceButton(uiText("Grant all permissions for skills & tools"), onClick = {
-            val permissionsToRequest = buildList {
-                add(Manifest.permission.RECORD_AUDIO)
-                add(Manifest.permission.READ_CONTACTS)
-                add(Manifest.permission.READ_CALENDAR)
-                add(Manifest.permission.WRITE_CALENDAR)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    add(Manifest.permission.BLUETOOTH_CONNECT)
-                    add(Manifest.permission.BLUETOOTH_SCAN)
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    add(Manifest.permission.POST_NOTIFICATIONS)
-                    add(Manifest.permission.NEARBY_WIFI_DEVICES)
-                }
-            }.toTypedArray()
-            allPermissionsLauncher.launch(permissionsToRequest)
-        }, modifier = Modifier.fillMaxWidth())
-
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceCard(accent = if (micGranted) HaloPastelMint else HaloPastelYellow) {
@@ -221,7 +199,7 @@ fun PermissionsScreen(
                 })
             }
         }
-        if (!contactsGranted) {
+        if (guideStore == null && !contactsGranted) {
             HaloWorkspaceButton(uiText("Allow contact lookup"), { contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS) })
         }
         TextButton(onClick = { technicalDetails = !technicalDetails },

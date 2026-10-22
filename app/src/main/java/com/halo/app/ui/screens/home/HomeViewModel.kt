@@ -263,6 +263,9 @@ class HomeViewModel(
 
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
+    private val conversationNavigationMutex = Mutex()
+    private val _conversationChanging = MutableStateFlow(false)
+    val conversationChanging = _conversationChanging.asStateFlow()
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
     private val _voiceModeActive = MutableStateFlow(false)
@@ -286,6 +289,8 @@ class HomeViewModel(
     private val textSubmissions = TextSubmissionTracker()
     val textSubmission = textSubmissions.state
     val conversationTurns get() = conversations?.turns ?: MutableStateFlow(emptyList<ConversationTurn>())
+    val savedConversations = conversations?.conversations
+        ?: MutableStateFlow(emptyList<com.halo.app.data.PersistedConversation>())
     private var lastProjectedResponseKey: String? = null
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
@@ -652,6 +657,7 @@ class HomeViewModel(
         } catch(error: Exception) { captureMessage.value = error.message ?: "Could not save this result" } }
     }
     fun submitText(text: String) {
+        if (_conversationChanging.value) return
         val normalized = text.trim()
         val interactionId = UUID.randomUUID().toString()
         val conversationAtTap = conversations?.activeConversationId()
@@ -834,17 +840,72 @@ class HomeViewModel(
         continuity.value.takeIf { it.conversationId == conversation }?.interactionId?.let(cognitiveSession::cancelInteraction)
     }
     fun newConversation() {
-        val previous = conversations?.activeConversationId()
-        stopVoiceMode()
-        lastVoiceResponseRequest = null
-        _lastVoiceResponseConversation.value = null
-        _sessionPresentationEnabled.value = false
-        cancelVisibleSubmission(stopActiveText = true)
+        if (!_conversationChanging.compareAndSet(false, true)) return
         viewModelScope.launch {
-            previous?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
-            ManualDependencyGraph.visualAttachments.remove()
-            conversations?.newConversation(); _publishedResponse.value = null; saveReview.value = null
-            textSubmissions.reset(); ManualDependencyGraph.interactionContext.refresh()
+            try {
+                conversationNavigationMutex.withLock {
+                    val previous = conversations?.activeConversationId()
+                    stopInputForConversationChange()
+                    lastVoiceResponseRequest = null
+                    _lastVoiceResponseConversation.value = null
+                    _sessionPresentationEnabled.value = false
+                    cancelVisibleSubmission(stopActiveText = true)
+                    previous?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
+                    ManualDependencyGraph.visualAttachments.remove()
+                    conversations?.newConversation()
+                    _publishedResponse.value = null
+                    saveReview.value = null
+                    textSubmissions.reset()
+                    ManualDependencyGraph.interactionContext.refresh()
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { captureMessage.value = "Conversation unavailable" }
+            finally { _conversationChanging.value = false }
+        }
+    }
+
+    /** Reuse the canonical conversation transaction and the same cancellation boundary as New chat. */
+    fun openConversation(id: String) {
+        val store = conversations ?: return
+        if (!_conversationChanging.compareAndSet(false, true)) return
+        viewModelScope.launch {
+            try {
+                conversationNavigationMutex.withLock {
+                    store.awaitReady()
+                    if (id == store.activeConversationId()) return@withLock
+                    check(store.isConversationAvailable(id)) { "Conversation unavailable" }
+                    val previous = store.activeConversationId()
+                    stopInputForConversationChange()
+                    lastVoiceResponseRequest = null
+                    _lastVoiceResponseConversation.value = null
+                    _sessionPresentationEnabled.value = false
+                    cancelVisibleSubmission(stopActiveText = true)
+                    previous?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
+                    ManualDependencyGraph.visualAttachments.remove()
+                    check(store.activateExistingConversation(id)) { "Conversation unavailable" }
+                    _publishedResponse.value = null
+                    saveReview.value = null
+                    textSubmissions.reset()
+                    ManualDependencyGraph.interactionContext.refresh()
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { captureMessage.value = "Conversation unavailable" }
+            finally { _conversationChanging.value = false }
+        }
+    }
+
+    /** Await queued capture commands and cancel the old capture before rebinding the thread. */
+    private suspend fun stopInputForConversationChange() {
+        stopVoiceModeStateOnly()
+        _listeningRequested.value = false
+        stopSpeechOutput()
+        com.halo.app.ui.components.VoiceFieldCancellation.stop()
+        listeningCommandMutex.withLock {
+            speechInput.value.turn?.let { turn ->
+                cognitiveSession.cancelInteraction(turn.captureId)
+                ManualDependencyGraph.audioPerceptionEngine.cancelExternalInput(turn.captureId)
+            }
+            commandBus.dispatch(StopListening)
         }
     }
 
@@ -929,6 +990,7 @@ class HomeViewModel(
     }
 
     fun startListening() {
+        if (_conversationChanging.value) return
         val conversationAtTap = conversations?.activeConversationId()
         synchronized(voiceModeLock) {
             if (_voiceModeActive.value) _voiceModeListeningPaused.value = false
@@ -965,6 +1027,7 @@ class HomeViewModel(
 
     /** Starts a user-visible foreground session; every later capture is tied to a completed reply. */
     fun requestVoiceModeStart() {
+        if (_conversationChanging.value) return
         _voiceModeStartRequested.value = true
         _voiceModeStartRequestId.value += 1
     }
@@ -976,11 +1039,12 @@ class HomeViewModel(
     }
 
     fun startVoiceMode() {
-        if (!speechAvailability.value || !microphonePermission.value) return
+        if (_conversationChanging.value || !speechAvailability.value || !microphonePermission.value) return
         val conversationStore = conversations ?: return
         viewModelScope.launch {
             try {
                 conversationStore.awaitReady()
+                if (_conversationChanging.value) return@launch
                 val conversation = conversationStore.activeConversationId()
                     ?: error("VOICE_MODE_CONVERSATION_UNAVAILABLE")
                 synchronized(voiceModeLock) {

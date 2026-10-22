@@ -21,7 +21,7 @@ class ActivityFilterTest {
     @Test fun round2StatusTabsHaveDistinctNonTechnicalLabels() {
         assertEquals("Needs you", ActivityFilter.REVIEW.label)
         assertEquals("Running", ActivityFilter.RUNNING.label)
-        assertEquals("Done", ActivityFilter.HISTORY.label)
+        assertEquals("Completed", ActivityFilter.HISTORY.label)
     }
 
     @Test fun historicalFilteringPreservesInterruptedFailedAndUnconfirmedResults() {

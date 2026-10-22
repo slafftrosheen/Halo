@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-22",
+  "source_base": "a7e586fb7f7da907b9268988c88a888a5e10f439",
+  "apk_sha256": "154b65ea28aded0fec4a6341e3ea4297e256a6ac6f06c2359eaba7971a0a92f8",
+  "apk_bytes": 286402821,
+  "installed_hash_verified": true,
+  "build": "BUILD SUCCESSFUL in 8m 15s",
+  "suites": [
+    {
+      "suite": "com.halo.app.ui.onboarding.GuidedSetupNavigationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.onboarding.SetupInteractionEvidenceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.onboarding.SetupProgressStoreTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.PermissionsScreenTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "phone": {
+    "model": "23124RA7EO",
+    "api": 35,
+    "original_density": 440,
+    "original_font_scale": 1.0,
+    "settings_restored": true
+  },
+  "observed": [
+    "Existing-grant presentation",
+    "Guide step survives force-stop/relaunch",
+    "No automatic Settings launch on Start/restart",
+    "Exact alarm Android Settings entry and return without granting",
+    "Exhausted Start disabled",
+    "Microphone revocation shows declined/repair, no re-prompt; original grant restored",
+    "No global task pill on confirmed Permissions captures"
+  ],
+  "not_qualified": [
+    "API33/34 fresh-install Deny/permanent denial",
+    "EN/LV device layouts and TalkBack",
+    "Complete font-scale200 journey",
+    "Process death during OS request",
+    "Private/Full Power network trace",
+    "Configuration-change route retention: some capture attempts landed on Activity and were excluded"
+  ]
+}

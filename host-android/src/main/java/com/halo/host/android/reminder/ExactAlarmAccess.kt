@@ -17,7 +17,8 @@ class ExactAlarmAccessController(private val context: Context) {
         else if (context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()) ExactAlarmAccess.Available
         else ExactAlarmAccess.NeedsUserGrant
     fun openSettings() {
-        if (Build.VERSION.SDK_INT >= 31) context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-            Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        settingsIntent()?.let { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
+    fun settingsIntent(): Intent? = if (Build.VERSION.SDK_INT >= 31)
+        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}")) else null
 }

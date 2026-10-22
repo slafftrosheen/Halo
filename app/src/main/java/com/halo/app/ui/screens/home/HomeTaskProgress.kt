@@ -14,10 +14,12 @@ import com.halo.runtime.cognition.interaction.StructuredPresentation
 internal fun homeTaskProgress(steps: List<AgentStep>): StructuredPresentation {
     val actions = linkedMapOf<String, Pair<String, PresentationStepState>>()
     val labels = mutableMapOf<String, String>()
-    fun outcome(id: String, success: Boolean, truth: ActionTruth) {
+    fun outcome(id: String, success: Boolean, truth: ActionTruth, toolId: String? = null) {
         actions[id] = when {
             !success || truth == ActionTruth.FAILED -> "Could not finish" to PresentationStepState.FAILED
             truth == ActionTruth.CONFIRMED -> "Action confirmed" to PresentationStepState.COMPLETED
+            toolId == "halo_open_settings" && truth == ActionTruth.DISPATCHED ->
+                "Action confirmed" to PresentationStepState.COMPLETED
             else -> "Delivery not confirmed" to PresentationStepState.SKIPPED
         }
     }
@@ -36,8 +38,8 @@ internal fun homeTaskProgress(steps: List<AgentStep>): StructuredPresentation {
         when (step) {
             is AgentStep.ToolInvocationPrepared -> actions.putIfAbsent(step.toolCallId, "Ready to start" to PresentationStepState.PENDING)
             is AgentStep.ToolExecutionClaimed -> actions[step.toolCallId] = "Working on your request" to PresentationStepState.ACTIVE
-            is AgentStep.ToolOutcomeRecorded -> outcome(step.toolCallId, step.success, step.actionTruth)
-            is AgentStep.ToolCompleted -> outcome(step.toolCallId, step.success, step.actionTruth)
+            is AgentStep.ToolOutcomeRecorded -> outcome(step.toolCallId, step.success, step.actionTruth, step.toolId)
+            is AgentStep.ToolCompleted -> outcome(step.toolCallId, step.success, step.actionTruth, step.toolId)
             is AgentStep.ToolFailed -> actions[step.toolCallId] = "Could not finish" to PresentationStepState.FAILED
             is AgentStep.ToolRejected -> actions[step.toolCallId] = "Action not run" to
                 if (step.requiresUserAction) PresentationStepState.PENDING else PresentationStepState.SKIPPED
@@ -82,6 +84,7 @@ internal fun homeTaskProgress(steps: List<AgentStep>): StructuredPresentation {
 }
 
 private fun homeProgressActionLabel(name: String): String = when {
+    name == "halo_open_settings" -> "Settings"
     name.startsWith("halo_appfn_") -> "Current app action"
     name.contains("calendar") -> "Calendar"
     name.contains("message") || name.contains("send") -> "Messages"

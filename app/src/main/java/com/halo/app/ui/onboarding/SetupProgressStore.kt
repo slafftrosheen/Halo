@@ -17,6 +17,35 @@ data class SetupProgress(val stage: SetupStage = SetupStage.WELCOME, val intenti
 
 /** Presentation receipts only. Never stores credentials, transcripts, prompts or provider payloads. */
 class SetupProgressStore(private val storage: Storage) {
+    private val guide = MutableStateFlow(CapabilityGuideProgress.decode(storage.getString("setup_capability_guide_v1")))
+    val capabilityGuideState = guide.asStateFlow()
+    val capabilityGuide: CapabilityGuideProgress get() = guide.value
+
+    @Synchronized private fun saveGuide(value: CapabilityGuideProgress) {
+        storage.putString("setup_capability_guide_v1", value.encode())
+        guide.value = value
+    }
+
+    @Synchronized fun startCapabilityGuide(firstId: String?) {
+        require(firstId == null || firstId in CapabilityGuideProgress.ids)
+        saveGuide(capabilityGuide.copy(active = firstId != null, currentId = firstId, pendingId = null))
+    }
+
+    /** Persist before launching Android; interrupted requests must never automatically re-prompt. */
+    @Synchronized fun markCapabilityRequested(id: String) {
+        if (!capabilityGuide.active || capabilityGuide.currentId != id) return
+        saveGuide(capabilityGuide.copy(attemptedIds = capabilityGuide.attemptedIds + id,
+            skippedIds = capabilityGuide.skippedIds - id, pendingId = id))
+    }
+
+    @Synchronized fun advanceCapabilityGuide(id: String, nextId: String?, attempted: Boolean) {
+        require(nextId == null || nextId in CapabilityGuideProgress.ids)
+        if (!capabilityGuide.active || capabilityGuide.currentId != id) return
+        saveGuide(capabilityGuide.copy(active = nextId != null, currentId = nextId, pendingId = null,
+            attemptedIds = if (attempted) capabilityGuide.attemptedIds + id else capabilityGuide.attemptedIds,
+            skippedIds = if (!attempted) capabilityGuide.skippedIds + id else capabilityGuide.skippedIds))
+    }
+
     private val mutable = MutableStateFlow(read())
     val state = mutable.asStateFlow()
     val diagnosticsEnabled = MutableStateFlow(storage.getBoolean("setup_diagnostics_enabled_v1"))

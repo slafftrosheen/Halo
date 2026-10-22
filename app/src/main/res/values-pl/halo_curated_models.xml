@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="curated_models_intro">Niewielki zestaw przypiętych kandydatów oraz modeli i pobrań, którymi już zarządzasz. Kandydaci nie są rekomendacjami potwierdzonymi dla konkretnego urządzenia ani języka.</string>
+    <string name="curated_models_development">Pełne wyszukiwanie, import i dostrajanie są dostępne w laboratorium modeli lokalnych w sekcji dla deweloperów.</string>
+    <string name="curated_models_candidate">Kandydat z wyselekcjonowanej listy · wymaga kwalifikacji</string>
+    <string name="curated_models_owned">Twój model · poza wyselekcjonowaną listą</string>
+    <string name="curated_models_intent">Kandydat do lokalnego rozpoznawania intencji. Pobranie nie uprawnia do używania narzędzi i nie potwierdza jakości w żadnym języku.</string>
+    <string name="curated_models_search">Kandydat do wyszukiwania tekstowego. Przed użyciem dokończ konfigurację wyszukiwania lokalnego. To nie jest model do czatu ani generowania obrazów.</string>
+    <string name="curated_models_lfm">LFM2.5 jest w Halo kandydatem przeznaczonym przede wszystkim do języka angielskiego. Przed użyciem w rozmowie lub nauce sprawdź osobno pozostałe języki.</string>
+    <string name="curated_models_fit_estimate">Szacuje się, że model powinien się zmieścić; nie potwierdza to szybkości, jakości ani stabilności.</string>
+    <string name="curated_models_fit_memory">Może być potrzebna większa ilość wolnej pamięci. Zamknij inne aplikacje lub wybierz mniejszy model.</string>
+    <string name="curated_models_fit_storage">Według szacunków brakuje wolnego miejsca na pobranie. Przed rozpoczęciem program pobierający ponownie sprawdzi dostępne miejsce.</string>
+    <string name="curated_models_fit_unknown">Nie wiadomo, czy model zmieści się na urządzeniu. Odśwież stan plików; nie oznacza to gwarancji zgodności.</string>
+    <string name="curated_models_search_label">Szukaj wśród tych modeli</string>
+    <string name="curated_models_import_development">Aby zaimportować lub przywrócić ten licencjonowany model, otwórz laboratorium modeli lokalnych w sekcji dla deweloperów.</string>
+    <string name="curated_models_no_evidence">Zweryfikowany plik ani jedna udana odpowiedź nie oznaczają rekomendacji dla każdej roli, języka ani urządzenia.</string>
+    <string name="curated_models_setup_intro">Konfiguracja lokalna korzysta z tej samej wyselekcjonowanej listy kandydatów co ekran modeli lokalnych. Pobranie nie kwalifikuje modelu do danej roli ani nie uprawnia do używania narzędzi. Wybierz i sprawdź model osobno.</string>
+    <string name="curated_models_manage">Zarządzaj modelami lokalnymi i pobraniami</string>
+</resources>

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="ui_9580a67e9fb8" formatted="false">"Pakiety umiejętności wymagają uwagi"</string>
+    <string name="ui_826e63a5df3b" formatted="false">"Te pakiety nie zostały wczytane. Pozostałe umiejętności są nadal dostępne."</string>
+    <string name="ui_76c02b7eddca" formatted="false">"Szukaj umiejętności"</string>
     <string name="ui_8c3023819c3a" formatted="false">"Ukryj zaawansowane informacje"</string>
+    <string name="ui_78b56df48289" formatted="false">"Modele dla Twoich umiejętności"</string>
+    <string name="ui_65d3e0277d3a" formatted="false">"Pobrane modele lokalne mogą odpowiadać na tym telefonie. Działania AI wymagają również zgodnego modelu i włączonych umiejętności."</string>
+    <string name="ui_7839c11f5800" formatted="false">"Nie znaleziono pasujących umiejętności"</string>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
     <string name="ui_bcba696f3eb1" formatted="false">"Przekierowanie"</string>
     <string name="ui_3ff5620b0294" formatted="false">"Nauka"</string>
@@ -8,8 +14,13 @@
     <string name="ui_76900f1bfd16" formatted="false">"Wstecz"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
     <string name="ui_87bf2bc08589" formatted="false">"Głos"</string>
+    <string name="ui_090512d93fcc" formatted="false">"Integracje"</string>
+    <string name="ui_95338ea2de74" formatted="false">"Działania dostępne dla halo"</string>
+    <string name="ui_abccc78cc93c" formatted="false">"Uprawnienia"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
+    <string name="ui_1a4f630ac1b6" formatted="false">"Zatrzymano"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
+    <string name="ui_4f1fc01dc19d" formatted="false">"Wymagana jest kontrola połączenia"</string>
     <string name="ui_08ad51871af7" formatted="false">"Czego chcesz się nauczyć?"</string>
     <string name="ui_ce7274ff262c" formatted="false">"Temat, pytanie albo zadanie..."</string>
     <string name="ui_426f4c7dfab4" formatted="false">"Język materiału (opcjonalnie)"</string>
@@ -23,6 +34,8 @@
     <string name="ui_c66feb5eb8f2" formatted="false">"Przenieś wyżej"</string>
     <string name="ui_40bb50da160c" formatted="false">"Przenieś niżej"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
+    <string name="ui_298a9207a732" formatted="false">"Następny krok"</string>
+    <string name="ui_23e39291d613" formatted="false">"Zapisywanie…"</string>
     <string name="ui_1208ec01f223" formatted="false">"Poprzednia strona"</string>
     <string name="ui_c08ac736a5e2" formatted="false">"Następna strona"</string>
     <string name="ui_0791ec684798" formatted="false">"Odczytaj na głos"</string>
@@ -38,6 +51,7 @@
     <string name="ui_b58eb52c8810" formatted="false">"Pomiń na razie"</string>
     <string name="ui_dc20b3d5d2cd" formatted="false">"Biblioteka"</string>
     <string name="ui_84917b36f495" formatted="false">"Przeszukaj obszar roboczy"</string>
+    <string name="ui_a52ace420f21" formatted="false">"Wszystko"</string>
     <string name="ui_94835ea2fcf7" formatted="false">"Odebrane"</string>
     <string name="ui_76ea482f843e" formatted="false">"Nowa notatka"</string>
     <string name="ui_cefd66fedb8d" formatted="false">"Nowa kolekcja"</string>
@@ -62,6 +76,7 @@
     <string name="ui_b99fa6c06150" formatted="false">"Podgląd jest niedostępny"</string>
     <string name="ui_eb1a70e39274" formatted="false">"Odrzuć"</string>
     <string name="ui_48845bff334a" formatted="false">"Zamknij"</string>
+    <string name="ui_464c4ffd019e" formatted="false">"Edytuj"</string>
     <string name="ui_31e392d1c037" formatted="false">"Zastosuj"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
@@ -70,6 +85,7 @@
     <string name="ui_565339bc4d33" formatted="false">"OK"</string>
     <string name="ui_f730c75d143a" formatted="false">"Anuluj test"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
+    <string name="ui_f6f4688ff23d" formatted="false">"Wyślij"</string>
     <string name="ui_118fb65601f7" formatted="false">"Wybierz zdjęcie"</string>
     <string name="ui_b3e8ec3e76b5" formatted="false">"Tekst gotowy"</string>
     <string name="ui_3e6ff6fedc87" formatted="false">"Część tekstu jest gotowa"</string>
@@ -83,9 +99,13 @@
     <string name="ui_b0e0687a3021" formatted="false">"Wyjaśniaj w tym języku (puste pole = język aplikacji)"</string>
     <string name="ui_3bac3b491e7c" formatted="false">"Przetestuj dźwięk"</string>
     <string name="ui_b2439bcb8dee" formatted="false">"Wyjście"</string>
+    <string name="ui_22965568d22a" formatted="false">"Połączono"</string>
+    <string name="ui_1a2303ede074" formatted="false">"Połącz"</string>
     <string name="ui_5a1f096a0d8d" formatted="false">"Włącz"</string>
     <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
+    <string name="ui_d17d2d78d76e" formatted="false">"Modele"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
+    <string name="ui_ce1c23d020c5" formatted="false">"Zmierzono, ale wyniki są niestabilne"</string>
     <string name="ui_a3773fd35520" formatted="false">"Kandydaci do testów: %1$s"</string>
     <string name="ui_339c70704322" formatted="false">"Kandydat do testów: %1$s"</string>
     <string name="ui_956f37e4b3ec" formatted="false">"Sugerowane role: %1$s"</string>
@@ -104,7 +124,46 @@
     <string name="ui_2a78025de6aa" formatted="false">"Wybierz"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
+    <string name="ui_10421935232f" formatted="false">"Szukaj modeli"</string>
+    <string name="ui_9e6ea475a239" formatted="false">"Ukryj filtry"</string>
+    <string name="ui_546ebb8eb993" formatted="false">"Filtry"</string>
+    <string name="ui_96e47ea0b1ee" formatted="false">"Wszystkie koszty"</string>
+    <string name="ui_f411a1fb6275" formatted="false">"Bezpłatne"</string>
+    <string name="ui_20e56db7dfc7" formatted="false">"Wszyscy dostawcy"</string>
+    <string name="ui_0e23b0cfebfc" formatted="false">"Wszystkie lokalizacje"</string>
+    <string name="ui_6ebe0bc360aa" formatted="false">"Wszystkie możliwości"</string>
+    <string name="ui_1c0def7be060" formatted="false">"Odświeżanie…"</string>
+    <string name="ui_13e10588f9f9" formatted="false">"Konfiguracja dostawcy"</string>
+    <string name="ui_4fda695d3e86" formatted="false">"Sieć lokalna"</string>
+    <string name="ui_b977b950c1ae" formatted="false">"Chmura"</string>
+    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Tryb Power"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Prywatny / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Przetwarzanie AI pozostaje na tym telefonie. Funkcje Power są wyłączone."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"Przetwarzanie AI pozostaje na tym telefonie. Funkcje Power są wyłączone."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"W trybie Power rozmowy, obrazy, pamięć i obszar roboczy mogą być wysyłane do wybranego dostawcy. Mogą obowiązywać opłaty dostawcy."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"Jeden przełącznik u góry ekranu steruje udostępnianiem. Profile trybów przechowują osobne ustawienia Private i Power."</string>
+    <string name="ui_b78e8b0ee157" formatted="false">"Ten przełącznik steruje udostępnianiem danych obsługiwanym funkcjom online halo."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"To działanie wymaga trybu Power. Włącz go przełącznikiem u góry halo."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Przełącz na Power"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Nie udało się włączyć trybu Power. Sprawdź ustawienia trybu Dzieci lub spróbuj ponownie."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"Osoba dorosła musi zezwolić na tryb Power w ustawieniach trybu Dzieci."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Włącz tryb Power u góry halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Głos w chmurze wymaga trybu Power. Włącz go przełącznikiem u góry halo. Sesje dzieci wymagają też zgody osoby dorosłej."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Przetwarzanie w chmurze jest wyłączone. Włącz tryb Power przełącznikiem u góry halo lub wybierz model na urządzeniu. Sesje dzieci wymagają też zgody osoby dorosłej."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Nie można udostępnić tego obrazu w chmurze. Użyj przełącznika Private / Power u góry halo."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Udostępnianie multimediów zależy od przełącznika Private / Power u góry halo."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"Udostępnianie plików zależy od przełącznika Private / Power u góry halo."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Udostępnianie pamięci zależy od przełącznika Private / Power u góry halo."</string>
+    <string name="ui_824ddc4cb517" formatted="false">"Domyślny model rozmowy"</string>
+    <string name="ui_30e82a8c8371" formatted="false">"Role modeli"</string>
+    <string name="ui_dff99ddda166" formatted="false">"Obrazy i kontekst wizualny"</string>
+    <string name="ui_84aebc69a1bf" formatted="false">"Skonfigurowano"</string>
+    <string name="ui_9298c8f4b3ff" formatted="false">"Zmierzono"</string>
+    <string name="ui_f6e05dcfcfa8" formatted="false">"Wybierz model"</string>
+    <string name="ui_75055b60a427" formatted="false">"Przeglądaj lokalne modele"</string>
     <string name="ui_0e9161011702" formatted="false">"Odśwież"</string>
+    <string name="ui_526c70b826b9" formatted="false">"Rozpoznawanie mowy"</string>
     <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_36ecb4f86691" formatted="false">"Wejście"</string>
     <string name="ui_37b345555d7e" formatted="false">"Pobieranie"</string>
@@ -120,6 +179,50 @@
     <string name="ui_aca87581221f" formatted="false">"Dźwięk systemowy korzysta z bieżącej trasy wyjściowej Androida."</string>
     <string name="ui_ed3f9a8f70a2" formatted="false">"Pliki modelu i licencja"</string>
     <string name="ui_db23f1b146aa" formatted="false">"Wyczyść pamięć podręczną syntezy mowy"</string>
+    <string name="ui_7a8960f50321" formatted="false">"Instrukcje są niedostępne"</string>
+    <string name="ui_9d60841e0a78" formatted="false">"Sprawdź"</string>
+    <string name="ui_71427fb7169d" formatted="false">"Przyznaj dostęp do Androida"</string>
+    <string name="ui_ff8059dc6752" formatted="false">"Działania"</string>
+    <string name="ui_569ca49f4aaf" formatted="false">"Zainstaluj"</string>
+    <string name="ui_fbb7a8c4c651" formatted="false">"Importuj SKILL.md"</string>
+    <string name="ui_0dfe1d63c9d8" formatted="false">"Sprawdzanie…"</string>
+    <string name="ui_a3cdac3bdf98" formatted="false">"Co halo może teraz zrobić"</string>
+    <string name="ui_d88af80346ea" formatted="false">"Modele według funkcji"</string>
+    <string name="ui_1767a0238233" formatted="false">"Pamięć i kopia zapasowa"</string>
+    <string name="ui_0eb4a70f0097" formatted="false">"Zmień folder"</string>
+    <string name="ui_aaae42e3d690" formatted="false">"Wybierz folder kopii zapasowej"</string>
+    <string name="ui_02a2840b598b" formatted="false">"Utwórz kopię teraz"</string>
+    <string name="ui_8771c56bf6d8" formatted="false">"Zachowaj ostatnie kopie"</string>
+    <string name="ui_ce41ef217ad9" formatted="false">"Usuń pobrane pliki modeli"</string>
+    <string name="ui_d33461e6c0b6" formatted="false">"Wyczyść pamięć podręczną"</string>
+    <string name="ui_d6512d81e9b9" formatted="false">"Cofnij przywracanie"</string>
+    <string name="ui_91cac509faa3" formatted="false">"Zezwól halo na powiadomienia"</string>
+    <string name="ui_be7e2f201293" formatted="false">"Obrazy"</string>
+    <string name="ui_737b13c8b8d1" formatted="false">"Czym jest MCP?"</string>
+    <string name="ui_0e3e58f90d67" formatted="false">"Dodaj serwer MCP"</string>
+    <string name="ui_4556cab2aa83" formatted="false">"Szukaj serwerów i narzędzi"</string>
+    <string name="ui_95199237fde4" formatted="false">"Połącz zewnętrzne narzędzia"</string>
+    <string name="ui_6a747be4785f" formatted="false">"MCP pozwala halo korzystać z funkcji wybranych przez Ciebie serwerów. Każde zdalne działanie nadal podlega zasadom uprawnień i potwierdzeń halo."</string>
+    <string name="ui_2df01a03ff43" formatted="false">"Brak wyników"</string>
+    <string name="ui_dcd1d5223f73" formatted="false">"Nazwa"</string>
+    <string name="ui_3df9726c68ba" formatted="false">"Adres endpointu"</string>
+    <string name="ui_66880d2d8216" formatted="false">"Uwierzytelnianie"</string>
+    <string name="ui_f0341f8dbcc5" formatted="false">"Zapisano dane logowania"</string>
+    <string name="ui_95e154398a4b" formatted="false">"Zastąp"</string>
+    <string name="ui_b22ac30e61f6" formatted="false">"Token typu Bearer"</string>
+    <string name="ui_ade9248e0132" formatted="false">"Zaufanie"</string>
+    <string name="ui_6420634af352" formatted="false">"Zaufanie nie pozwala narzędziom omijać potwierdzeń ani uprawnień halo."</string>
+    <string name="ui_9f4b9260b933" formatted="false">"Zapisane integracje są domyślnie wyłączone. Sprawdź konfigurację, a następnie włącz integrację i połącz się."</string>
+    <string name="ui_2f2ae39a7adc" formatted="false">"Ładowanie integracji…"</string>
+    <string name="ui_3ff935c2b4e3" formatted="false">"Włącz integrację"</string>
+    <string name="ui_5f7e1c068f22" formatted="false">"halo może używać tej integracji po jej połączeniu i autoryzowaniu."</string>
+    <string name="ui_31393d318605" formatted="false">"Odśwież narzędzia"</string>
+    <string name="ui_fbd165231fa1" formatted="false">"Szukaj narzędzi"</string>
+    <string name="ui_16badd61cdf7" formatted="false">"Nie wykryto żadnych narzędzi. Włącz tę integrację i ręcznie odśwież listę narzędzi."</string>
+    <string name="ui_c83ad254b40b" formatted="false">"Usuń integrację"</string>
+    <string name="ui_d9500ae46a2d" formatted="false">"Usunie to z halo wykryte narzędzia i konfigurację połączenia. Nie usunie żadnych danych ze zdalnego serwera."</string>
+    <string name="ui_75081b593d15" formatted="false">"Wyłączone"</string>
+    <string name="ui_7d20cb58ea34" formatted="false">"Opisy przekazane przez serwer są danymi zewnętrznymi. Narzędzia są uruchamiane wyłącznie zgodnie ze zwykłym procesem uprawnień i potwierdzeń halo."</string>
     <string name="ui_879dd831b8b6" formatted="false">"Bieżące urządzenie · Trwała macierz ról"</string>
     <string name="ui_6cc7c6b30613" formatted="false">"Uruchom macierz ról dla zainstalowanych modeli"</string>
     <string name="ui_716441045c2d" formatted="false">"Skopiuj wyniki bieżącego urządzenia"</string>
@@ -129,6 +232,14 @@
     <string name="ui_340128ddbdf7" formatted="false">"Szybki test"</string>
     <string name="ui_1fa330e271ba" formatted="false">"Test porównawczy"</string>
     <string name="ui_4b3f645d95d4" formatted="false">"Sprawdź kanał narzędzi"</string>
+    <string name="ui_63ff4e491b02" formatted="false">"Cofnąć dostęp do folderu?"</string>
+    <string name="ui_bb349bfe6750" formatted="false">"Cofnij dostęp"</string>
+    <string name="ui_5021d45b3051" formatted="false">"Automatyczne kopie zapasowe są wyłączone do czasu wybrania folderu"</string>
+    <string name="ui_d2cef118ca5a" formatted="false">"Brak dostępu · Wybierz folder ponownie"</string>
+    <string name="ui_311b3066b102" formatted="false">"Nie utworzono jeszcze żadnej kopii zapasowej"</string>
+    <string name="ui_02f71ba0ae71" formatted="false">"Istniejące pliki kopii zapasowej pozostaną po cofnięciu dostępu."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Utwórz przenośną kopię Notatnika, pamięci i rozmów."</string>
+    <string name="ui_f7f9e56ea8d1" formatted="false">"Przed zastąpieniem danych zostanie utworzona lokalna kopia bezpieczeństwa."</string>
     <string name="ui_2b36bfcfc993" formatted="false">"Możesz je przywrócić, wybierając filtr „Kosz”."</string>
     <string name="ui_f2ca345f552f" formatted="false">"Usunąć kolekcję?"</string>
     <string name="ui_70f58736b63e" formatted="false">"Wybierz widoczne"</string>
@@ -152,7 +263,9 @@
     <string name="ui_b352578b07b1" formatted="false">"Brak zapisanych wiadomości do wyświetlenia."</string>
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
+    <string name="ui_02cdaabfca80" formatted="false">"Duplikuj"</string>
     <string name="ui_120637f54127" formatted="false">"halo zastanawia się…"</string>
+    <string name="ui_c3963aedaac6" formatted="false">"Pamięć"</string>
     <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
     <string name="ui_e60cf185f16f" formatted="false">"Kontekst halo"</string>
     <string name="ui_29a390f9237e" formatted="false">"Wyczyść wszystko"</string>
@@ -162,6 +275,11 @@
     <string name="ui_d2a7f5b8070e" formatted="false">"halo tworzy kontekst wyłącznie z wybranych lokalnych źródeł."</string>
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
+    <string name="ui_e03af4915226" formatted="false">"Niektóre katalogi są niedostępne lub nieaktualne. Zachowane informacje o modelach są nadal dostępne."</string>
+    <string name="ui_57ee5aa68531" formatted="false">"Brak pasujących modeli w pamięci podręcznej. Skonfiguruj dostawcę i ręcznie odśwież listę modeli albo pobierz model na urządzenie."</string>
+    <string name="ui_047ac7ec252d" formatted="false">"Wymagana konfiguracja dostawcy"</string>
+    <string name="ui_4227afaea7ce" formatted="false">"Dostępne do pobrania lub importu · Otwórz konfigurację dostawcy"</string>
+    <string name="ui_f397aa331860" formatted="false">"Skonfigurowany model jest niedostępny"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
     <string name="ui_03c91a480a79" formatted="false">"Synteza mowy ElevenLabs"</string>
     <string name="ui_16f0ee47f993" formatted="false">"Klucz API"</string>
@@ -172,17 +290,106 @@
     <string name="ui_baf0544e430e" formatted="false">"Styl głosu"</string>
     <string name="ui_7dfd4c4b11d5" formatted="false">"Użyj ElevenLabs do syntezy mowy"</string>
     <string name="ui_753e99a7c10d" formatted="false">"Odsłuchaj frazę testową na telefonie"</string>
+    <string name="ui_e817ef95f0c6" formatted="false">"Dane logowania skonfigurowane"</string>
+    <string name="ui_294b6d76f82b" formatted="false">"Otwórz w Aktywności"</string>
+    <string name="ui_e1038aba5163" formatted="false">"Anuluj dalsze oczekiwanie"</string>
+    <string name="ui_b1c919e9bd90" formatted="false">"Przestać czekać na ten warunek?"</string>
+    <string name="ui_b9ad2e4e8954" formatted="false">"Czekaj dalej"</string>
+    <string name="ui_db87a63d537e" formatted="false">"Nowa automatyzacja"</string>
+    <string name="ui_d741ff50ff5b" formatted="false">"Zacznij od alertu o baterii, informacji o zmianie połączenia lub wieczornego podsumowania."</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
+    <string name="ui_66e0d66e3cae" formatted="false">"Automatyzacja wymaga sprawdzenia"</string>
+    <string name="ui_2acc7b37f0d5" formatted="false">"Ta zapisana definicja nie jest już obsługiwana i nie można jej uruchomić."</string>
+    <string name="ui_ac2f48c6419b" formatted="false">"Usuń nieobsługiwaną automatyzację"</string>
+    <string name="ui_fd259f509ed1" formatted="false">"Poproś halo o powiadomienie, gdy internet wróci lub urządzenie się połączy."</string>
+    <string name="ui_896d89387b86" formatted="false">"Automatyzacje nie były jeszcze uruchamiane."</string>
+    <string name="ui_63568f0582af" formatted="false">"Ustawienia powiadomień"</string>
+    <string name="ui_a4822ffed15b" formatted="false">"Zacznij od początku"</string>
+    <string name="ui_f17b9dc6acd9" formatted="false">"Używa zapisanej, zatwierdzonej automatyzacji. Jej warunki nadal obowiązują."</string>
+    <string name="ui_0991397702fa" formatted="false">"Uruchom teraz"</string>
+    <string name="ui_4dbf31de9710" formatted="false">"Historia pozostanie w Aktywności, jeśli ma zastosowanie. Sama automatyzacja nie będzie już uruchamiana."</string>
+    <string name="ui_1c6ff48c896d" formatted="false">"Skonfiguruj dostęp do ekranu telefonu"</string>
+    <string name="ui_34a3bb6f0e08" formatted="false">"Zarządzaj dostępem do powiadomień"</string>
+    <string name="ui_f67db8e43407" formatted="false">"Otwórz skrzynkę odbiorczą"</string>
+    <string name="ui_996c32b35f21" formatted="false">"Dostawcy"</string>
+    <string name="ui_75ddc529a5d3" formatted="false">"Autoryzuj przez Google"</string>
+    <string name="ui_d4141a59e1e3" formatted="false">"Odłącz OAuth Google"</string>
+    <string name="ui_37ec7e16decf" formatted="false">"Usuń dane logowania"</string>
+    <string name="ui_ec84bc0a20b2" formatted="false">"Użyj w czacie"</string>
+    <string name="ui_7989a7891ab6" formatted="false">"Przeglądaj modele do generowania obrazów"</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Generowanie obrazów ma osobny wybór modelu w Canvas i Notatniku."</string>
+    <string name="ui_25debf3f0e04" formatted="false">"Przeglądaj modele tego dostawcy"</string>
+    <string name="ui_6831ccaba643" formatted="false">"Zarządzaj modelami lokalnymi"</string>
+    <string name="ui_3ee78c800fff" formatted="false">"Zapisanie danych logowania nie włącza korzystania z chmury. Zdalne żądania podlegają zasadom rozliczeń i przechowywania danych Twojego konta."</string>
+    <string name="ui_ad1fb9ec0cb3" formatted="false">"Automatyzacje"</string>
+    <string name="ui_778ed9b67c3f" formatted="false">"Nie skonfigurowano jeszcze żadnych rutyn."</string>
+    <string name="ui_f0fe07086169" formatted="false">"Utwórz rutynę"</string>
+    <string name="ui_2405e098b52f" formatted="false">"Zapisanie zastąpi zatwierdzoną definicję i ponownie zaplanuje tę automatyzację."</string>
+    <string name="ui_da011627f3ba" formatted="false">"Zapisz jako wyłączoną"</string>
+    <string name="ui_c28f22128246" formatted="false">"Wybierz wyzwalacz"</string>
+    <string name="ui_df7c36d9fb8b" formatted="false">"Wybierz urządzenie"</string>
+    <string name="ui_ea248d3d95a2" formatted="false">"Wybierz zainstalowaną aplikację"</string>
+    <string name="ui_210bb5328695" formatted="false">"Uruchamia się tylko wtedy, gdy poziom baterii przekroczy ten próg. Nie powtarza się, gdy poziom pozostaje po tej samej stronie progu."</string>
+    <string name="ui_d1bc6db1f02f" formatted="false">"Korzysta ze stanu dostępnej sieci Androida. Nazwa sieci Wi-Fi nie jest zapisywana."</string>
+    <string name="ui_21e8e616555a" formatted="false">"Powtarzające się powiadomienia w tym przedziale są liczone jako jedno uruchomienie automatyzacji."</string>
+    <string name="ui_a2da19e32125" formatted="false">"Bez dodatkowych warunków"</string>
+    <string name="ui_c95521b4c93a" formatted="false">"Wybierz dostawcę"</string>
+    <string name="ui_5ac0b06fc9f0" formatted="false">"Usuń warunek"</string>
+    <string name="ui_60a0d83510ea" formatted="false">"Dodaj warunek"</string>
+    <string name="ui_866b10a76aa8" formatted="false">"Wybierz działanie automatyzacji"</string>
+    <string name="ui_da9b2eaa1680" formatted="false">"Pokaż wiadomość"</string>
+    <string name="ui_2f77668a9dfb" formatted="false">"Wiadomość"</string>
+    <string name="ui_caee5752dee2" formatted="false">"Zbiorcze powiadomienie"</string>
+    <string name="ui_0941f053c935" formatted="false">"Zachowano z tej automatyzacji. To działanie musi być dostępne przed zapisaniem."</string>
+    <string name="ui_d910e7be7b49" formatted="false">"Usuń działanie"</string>
+    <string name="ui_6390ba9cbb0c" formatted="false">"Dodaj działanie"</string>
+    <string name="ui_10962ea51c03" formatted="false">"Wybierz sposób dostarczenia"</string>
+    <string name="ui_e6b7dc3ac91e" formatted="false">"Sprawdź i zapisz"</string>
+    <string name="ui_9d5097a83710" formatted="false">"Wszystkie kategorie"</string>
+    <string name="ui_72c5566b3811" formatted="false">"Nie zapisano urządzeń. Najpierw dodaj urządzenie w sekcji Urządzenia."</string>
+    <string name="ui_62ce9ef6dce9" formatted="false">"Znajdź strefę czasową"</string>
+    <string name="ui_6554386f8e88" formatted="false">"Znajdź zainstalowaną aplikację"</string>
+    <string name="ui_c4e42b974c33" formatted="false">"Codziennie"</string>
+    <string name="ui_6f4b602bb529" formatted="false">"Dni robocze"</string>
+    <string name="ui_93dcf1d1d25e" formatted="false">"Weekendy"</string>
+    <string name="ui_4a186dd7a707" formatted="false">"Dane lokalne"</string>
+    <string name="ui_3dadeedf4c21" formatted="false">"Automatyczna kopia zapasowa"</string>
+    <string name="ui_6c901c2d632a" formatted="false">"Hasło, jeśli kopia jest chroniona"</string>
+    <string name="ui_17ccfa5b681e" formatted="false">"Konserwacja"</string>
+    <string name="ui_f64001c434a8" formatted="false">"Niektóre wrażliwe działania zawsze wymagają potwierdzenia."</string>
+    <string name="ui_0131d7ca5cad" formatted="false">"Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania."</string>
+    <string name="ui_c30d7093bd2d" formatted="false">"Instrukcje dostarczone przez ten pakiet"</string>
+    <string name="ui_bf1e14eeaad5" formatted="false">"Pakiet umiejętności nie jest zainstalowany"</string>
+    <string name="ui_5f3c25857f00" formatted="false">"Wczesna synteza mowy jest dostępna dla dokładnych odpowiedzi przesyłanych strumieniowo bez narzędzi. Działania narzędzi i zatwierdzenia pozostają buforowane."</string>
+    <string name="ui_a84dd26a67de" formatted="false">"Proś o dostęp tylko wtedy, gdy wymaga go dana funkcja."</string>
+    <string name="ui_4e6110152515" formatted="false">"Przyznaj wszystkie uprawnienia wymagane przez umiejętności i narzędzia"</string>
+    <string name="ui_fe4e1d87d901" formatted="false">"halo działa także bez dostępu do mikrofonu. Zezwól na niego tylko w celu używania głosu; prośby o Bluetooth i Wi-Fi w pobliżu pojawią się w procesach konfiguracji urządzeń, które ich wymagają."</string>
+    <string name="ui_5b7fde26274a" formatted="false">"Dostęp do sieci lokalnej"</string>
+    <string name="ui_3693ff431dc7" formatted="false">"Zezwól na dostęp podczas łączenia z pobliskimi urządzeniami lub lokalnym serwerem AI."</string>
+    <string name="ui_b97c4592cdf4" formatted="false">"Zezwól na dostęp do sieci lokalnej"</string>
+    <string name="ui_87a2e882ffea" formatted="false">"Zezwól na wyszukiwanie kontaktów"</string>
+    <string name="ui_ec5ba0abb717" formatted="false">"Dostęp"</string>
+    <string name="ui_02cbfa1a4ea2" formatted="false">"Zarządzaj pamięcią i kopią zapasową"</string>
+    <string name="ui_469caecbaf66" formatted="false">"Zezwól na dostęp do mikrofonu"</string>
+    <string name="ui_51a2a9671c0f" formatted="false">"Zapytaj halo…"</string>
+    <string name="ui_e21f935f11d7" formatted="false">"Kopiuj"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
+    <string name="ui_22a970d2e5b1" formatted="false">"Zakończone"</string>
+    <string name="ui_132d124d6bb3" formatted="false">"Przerwano"</string>
+    <string name="ui_5917d8be2cdf" formatted="false">"Sugestia halo"</string>
     <string name="ui_4e86512d9a0a" formatted="false">"halo"</string>
     <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
     <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
+    <string name="ui_6a7c277bdc6e" formatted="false">"Pracuję…"</string>
+    <string name="ui_c0b93db1d10c" formatted="false">"Wymaga Twojej weryfikacji"</string>
+    <string name="ui_d461a493a375" formatted="false">"Automatycznie"</string>
     <string name="ui_da0dbc127233" formatted="false">"Przerwij odpowiedź i zacznij mówić"</string>
     <string name="ui_0f831f06c1d4" formatted="false">"Załączniki i kontekst"</string>
     <string name="ui_168512c5b1c3" formatted="false">"Nie udało się odtworzyć odpowiedzi"</string>
     <string name="ui_3cdb61e7de92" formatted="false">"Nie można użyć tego wejścia głosowego"</string>
+    <string name="ui_16b7130a2876" formatted="false">"Ta odpowiedź jest niepełna."</string>
     <string name="ui_7d008b7feeab" formatted="false">"Uruchom tryb głosowy"</string>
     <string name="ui_15be678720cc" formatted="false">"Zakończ tryb głosowy"</string>
     <string name="ui_4be3502fc307" formatted="false">"Wstrzymaj nasłuchiwanie"</string>
@@ -195,11 +402,21 @@
     <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
+    <string name="ui_5b0c3a902266" formatted="false">"Oczekujące aktualizacje: %1$d"</string>
+    <string name="ui_fee0c63aa32e" formatted="false">"Sugestie do sprawdzenia w Pamięci: %1$d"</string>
+    <string name="ui_d52ac79db0ec" formatted="false">"Otwórz podgląd, aby odpowiedzieć lub zatwierdzić. Zamknięcie widoku pozostawi prośbę oczekującą."</string>
     <string name="ui_c9722a7a962a" formatted="false">"Ukryj szczegóły"</string>
+    <string name="ui_f04e042c0f36" formatted="false">"Otwórz w obszarze roboczym"</string>
+    <string name="ui_a5d341a5b0db" formatted="false">"Wynik niepotwierdzony"</string>
+    <string name="ui_a59364b3e9e0" formatted="false">"Nie udało się ukończyć"</string>
     <string name="ui_b847d5e00684" formatted="false">"Ucz się na podstawie notatki"</string>
+    <string name="ui_cb30147eec19" formatted="false">"Odrzuć szkic"</string>
     <string name="ui_80c250f3db4a" formatted="false">"Historia rozmów"</string>
     <string name="ui_19e6d24090b3" formatted="false">"Ukryj wiadomości"</string>
     <string name="ui_449f5a775762" formatted="false">"Mów"</string>
+    <string name="ui_45989de49fb7" formatted="false">"Szczegóły"</string>
+    <string name="ui_c1f88e9d6c41" formatted="false">"W toku"</string>
+    <string name="ui_ca7981b46ecf" formatted="false">"Wyłączone"</string>
     <string name="ui_381a8e969905" formatted="false">"Sekundy"</string>
     <string name="ui_09526e9d005a" formatted="false">"Nazwa aplikacji"</string>
     <string name="ui_9f760ab20739" formatted="false">"Czeka na Ciebie"</string>
@@ -217,6 +434,7 @@
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
     <string name="ui_158aa43ca64e" formatted="false">"Anuluj nagrywanie"</string>
     <string name="ui_a0f7acc32c7c" formatted="false">"Zapisz teraz, uporządkuj później. Wszystko pozostaje lokalnie, dopóki nie zdecydujesz się udostępnić."</string>
+    <string name="ui_fa8d9e436ed1" formatted="false">"Nie udało się zapisać tej zmiany. Spróbuj ponownie."</string>
     <string name="ui_fdc1d3d94759" formatted="false">"Utwórz powiązaną notatkę z listą kontrolną"</string>
     <string name="ui_3331a4782f7a" formatted="false">"Usuń zapisaną notatkę głosową"</string>
     <string name="ui_6578dc409104" formatted="false">"Przenieś do nowej grupy"</string>
@@ -243,6 +461,7 @@
     <string name="ui_92bf06f7a2b0" formatted="false">"Skonfiguruj później / tryb ograniczony"</string>
     <string name="ui_ff8237a9f122" formatted="false">"Przetestuj mikrofon i rozpoznawanie mowy"</string>
     <string name="ui_5fdc3423b23c" formatted="false">"Tu halo. Czy mnie słyszysz?"</string>
+    <string name="ui_4ad0a0a6ae56" formatted="false">"Odpowiedzi"</string>
     <string name="ui_1a44449a775f" formatted="false">"Kontynuuj z ograniczeniami"</string>
     <string name="ui_cd61bf0cc67f" formatted="false">"Która godzina?"</string>
     <string name="ui_4c4318a16785" formatted="false">"Twoje pierwsze polecenie"</string>
@@ -266,6 +485,9 @@
     <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
     <string name="ui_13bbdede669f" formatted="false">"Wstrzymaj pobieranie"</string>
     <string name="ui_ebae1110ebec" formatted="false">"Pobieranie zostanie wznowione po przerwaniu. Żaden głos nie jest wybierany automatycznie."</string>
+    <string name="ui_ba5ca289c1ab" formatted="false">"Szybkie odpowiedzi"</string>
+    <string name="ui_6493f5a6791f" formatted="false">"Dokładniejsza analiza"</string>
+    <string name="ui_66b2c6f11be8" formatted="false">"Działania i narzędzia"</string>
     <string name="ui_675b7e1dbaf0" formatted="false">"Pobierz model na licencji"</string>
     <string name="ui_b0a363b97ad2" formatted="false">"Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu."</string>
     <string name="ui_7e902370711d" formatted="false">"Otwórz licencję wydawcy"</string>
@@ -310,10 +532,18 @@
     <string name="ui_1b8394275f47" formatted="false">"Załącznik Notatnika"</string>
     <string name="ui_80e25d621620" formatted="false">"Przejdź do podglądu"</string>
     <string name="ui_e536acc1978c" formatted="false">"Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały."</string>
+    <string name="ui_ee3e426036c5" formatted="false">"Trochę pomocy na co dzień"</string>
+    <string name="ui_28e1bbcfd974" formatted="false">"Przemyśl sprawę, znajdź właściwe słowa albo naucz się czegoś nowego."</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
+    <string name="ui_74b6abdf5969" formatted="false">"Wymaga Twojej uwagi"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
+    <string name="ui_d822e6257a23" formatted="false">"Na urządzeniu"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
+    <string name="ui_7356acceb0c5" formatted="false">"Utwórz umiejętność"</string>
+    <string name="ui_afa8a4dfa861" formatted="false">"Zacznij od dostępnych działań halo, a następnie dostosuj instrukcje. Przed instalacją sprawdź umiejętność."</string>
+    <string name="ui_0fbb6f49b868" formatted="false">"Nazwa umiejętności"</string>
+    <string name="ui_95e5a7cfdb02" formatted="false">"Sprawdź umiejętność"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
     <string name="ui_d177cdc09a4e" formatted="false">"Nie zainstalowano"</string>
     <string name="ui_7db320928b62" formatted="false">"Zainstalowano · plik zweryfikowany · niezaładowany"</string>
@@ -322,6 +552,8 @@
     <string name="ui_594fa48dd816" formatted="false">"Uszkodzony lub nieaktualny — pobierz ponownie"</string>
     <string name="ui_ef2d963f8941" formatted="false">"Urządzenie jest zajęte…"</string>
     <string name="ui_640e4136b8fb" formatted="false">"Nie zainstalowano · zaimportuj plik z licencją"</string>
+    <string name="ui_57e6ff68eee1" formatted="false">"Dodaj do szkicu"</string>
+    <string name="ui_d7adc1a097e3" formatted="false">"Wybierz punkt wyjścia. Możesz go edytować przed wysłaniem."</string>
     <string name="ui_977395125c7f" formatted="false">"Rozpocznij nową lekcję"</string>
     <string name="ui_63144fde57ac" formatted="false">"Na przykład: wyjaśnij ułamki, poćwicz pisownię albo wspólnie rozwiąż zadanie."</string>
     <string name="ui_c9787f8f7111" formatted="false">"Możesz zacząć od samego tematu. Jeśli chcesz pracować na własnym materiale, dodaj plik albo notatkę."</string>
@@ -331,7 +563,9 @@
     <string name="ui_4e730ac30841" formatted="false">"Pokaż mniej lekcji"</string>
     <string name="ui_0a5313dfc412" formatted="false">"Wróć do lekcji"</string>
     <string name="ui_064d8a50b989" formatted="false">"Wybierz lekcję do powtórki"</string>
-    <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności"</string>
+    <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności."</string>
+    <string name="ui_6d37544c8ff3" formatted="false">"Nic w tym widoku."</string>
+    <string name="ui_029e80851826" formatted="false">"Otwórz ekran główny"</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
     <string name="ui_552e80d242be" formatted="false">"Ta kolekcja"</string>
     <string name="ui_90f41411fa9d" formatted="false">"Wczytywanie biblioteki…"</string>
@@ -340,17 +574,88 @@
     <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
     <string name="ui_78a7ab5e314a" formatted="false">"Wybierz model"</string>
+    <string name="ui_7b09a495def4" formatted="false">"Sprawdzanie tej konfiguracji…"</string>
+    <string name="ui_5a178470ad67" formatted="false">"Modeli w pamięci podręcznej: %1$d modeļi"</string>
+    <string name="ui_bf46d5215a78" formatted="false">"Połącz halo z wybranym modelem AI."</string>
+    <string name="ui_8ae2538a897a" formatted="false">"Generowanie obrazów"</string>
+    <string name="ui_ff2113958589" formatted="false">"Dostawca jest niedostępny"</string>
+    <string name="ui_9fd64fcb5153" formatted="false">"Wróć do dostawców i wybierz dostępny sposób konfiguracji."</string>
+    <string name="ui_f8d63587010e" formatted="false">"Testy odpowiedzi dotyczą tego dostawcy, a nie każdego modelu. Zapisanie konfiguracji usuwa wcześniejsze wyniki testów."</string>
+    <string name="ui_8f8d600b409c" formatted="false">"Bieżący model: %1$s"</string>
+    <string name="ui_3e0bae9d4f24" formatted="false">"Usunąć dane logowania?"</string>
+    <string name="ui_2a1d9e3b7427" formatted="false">"Ten dostawca będzie wymagać ponownej autoryzacji. Zapisane notatki i rozmowy pozostaną."</string>
+    <string name="ui_cb0b5b7247ee" formatted="false">"Przed testowaniem zapisz zmiany. Testy korzystają z zapisanej konfiguracji."</string>
+    <string name="ui_5267f5e646a5" formatted="false">"Brak pasujących modeli"</string>
+    <string name="ui_c7f3fb40a48e" formatted="false">"Przy obecnej konfiguracji nie można wybrać tego modelu do tego zadania."</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
     <string name="ui_c0b69be081b5" formatted="false">"Wybrano do testu"</string>
+    <string name="ui_3b7ea51793e9" formatted="false">"Wyczyść wyszukiwanie"</string>
     <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
     <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
+    <string name="ui_ce55dc5592b3" formatted="false">"Wyniki pomiarów"</string>
+    <string name="ui_7d72dd702521" formatted="false">"Ukryj wyniki pomiarów"</string>
+    <string name="ui_92479c7665b6" formatted="false">"Pliki wymagające uwagi: %1$d"</string>
+    <string name="ui_cae632f94b8d" formatted="false">"Nowe: %1$d · istniejące: %2$d · konflikty: %3$d"</string>
+    <string name="ui_cbd38d68a6f2" formatted="false">"Dostęp jest opcjonalny. Po odmowie nadal możesz wpisywać pytania i prowadzić prywatne notatki."</string>
+    <string name="ui_366596141374" formatted="false">"Zastosuj ustawienia"</string>
+    <string name="ui_3ab5dd235601" formatted="false">"Dostęp do folderu kopii zapasowej został cofnięty"</string>
+    <string name="ui_0a87328cecda" formatted="false">"Folder kopii zapasowej jest niedostępny. Wybierz go ponownie."</string>
+    <string name="ui_f77a611652ee" formatted="false">"Folder kopii zapasowej · Nie wybrano"</string>
+    <string name="ui_d07c4c04054c" formatted="false">"Folder kopii zapasowej: %1$s"</string>
+    <string name="ui_15b9fa4f8785" formatted="false">"Anuluj wybór pliku"</string>
+    <string name="ui_e90a4c413b9e" formatted="false">"Zmienić wszystkie ustawienia zatwierdzania narzędzi?"</string>
+    <string name="ui_0e36a3d49ac1" formatted="false">"Zmiany pozostają w tym szkicu do czasu ich sprawdzenia i zapisania. Istniejąca włączona automatyzacja nadal korzysta z zapisanej definicji."</string>
+    <string name="ui_02b8036088a0" formatted="false">"Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie."</string>
+    <string name="ui_6d47a2cfe159" formatted="false">"Łącz się z wybranymi usługami"</string>
+    <string name="ui_7a308a8671b6" formatted="false">"Połączenie wymaga uwagi. Otwórz tę integrację, aby sprawdzić jej konfigurację."</string>
+    <string name="ui_aba755bc6310" formatted="false">"Odrzucić szkic tej automatyzacji?"</string>
+    <string name="ui_325da5b3bd34" formatted="false">"halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa."</string>
+    <string name="ui_73a20bdfbb81" formatted="false">"Jeśli dostęp do mikrofonu pozostanie wyłączony, możesz nadal pisać, spróbować ponownie lub włączyć go w ustawieniach Androida."</string>
+    <string name="ui_9a42d40a3f31" formatted="false">"Integracja"</string>
+    <string name="ui_e76fd2add010" formatted="false">"Kontynuuj edycję"</string>
+    <string name="ui_7faa9446189c" formatted="false">"Ostatnia kopia zapasowa nie powiodła się. Sprawdź dostęp do folderu i wolne miejsce."</string>
+    <string name="ui_3bc8c6ce7691" formatted="false">"Nie uzgodniono"</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
+    <string name="ui_41c510ec1365" formatted="false">"Poprzednie dane połączenia; bieżące połączenie nie zostało potwierdzone."</string>
+    <string name="ui_e98d2b70f757" formatted="false">"Zapisano · Wyłączona. Sprawdź konfigurację, a następnie włącz integrację i połącz się."</string>
+    <string name="ui_7ec68fcae8ce" formatted="false">"Zapisanie zatwierdza dokładnie tę definicję. Włączenie zaplanuje przyszłe uruchomienia, ale nie uruchomi jej teraz."</string>
+    <string name="ui_5a426e81bae3" formatted="false">"Te zmiany nie zostały zapisane. Ustawienia istniejącej automatyzacji pozostaną bez zmian, dopóki ich nie zapiszesz."</string>
+    <string name="ui_5277abbcdb93" formatted="false">"To połączenie nie jest szyfrowane. Używaj HTTP tylko z serwerem, którym zarządzasz, w zaufanej sieci lokalnej."</string>
+    <string name="ui_01c61c885b23" formatted="false">"Ta integracja będzie wymagać ponownej autoryzacji. Dane na zdalnym serwerze zostaną zachowane."</string>
+    <string name="ui_f4fad9bd7526" formatted="false">"Przetwarzanie danych…"</string>
+    <string name="ui_61ae1fac6d98" formatted="false">"Przywrócić poprzednią kopię?"</string>
+    <string name="ui_18bf75a73e89" formatted="false">"Wyczyścić wybrane dane?"</string>
+    <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
+    <string name="ui_13fe672ebaa2" formatted="false">"Serwery MCP udostępniają halo zewnętrzne narzędzia. halo nadaje im własne przestrzenie nazw i przed uruchomieniem stosuje własne uprawnienia, potwierdzenia oraz limity wykonań."</string>
+    <string name="ui_24eefaa59d37" formatted="false">"Zapamiętane ustawienia narzędzi. Tylko połączona i włączona integracja udostępnia halo włączone narzędzia. Każde działanie nadal wymaga standardowej autoryzacji."</string>
+    <string name="ui_494ca78f7374" formatted="false">"Niestandardowe"</string>
+    <string name="ui_a5f1b6640cc6" formatted="false">"Niestandardowa liczba minut · od 15 do 1440"</string>
+    <string name="ui_50017ea75995" formatted="false">"Niestandardowa liczba sekund"</string>
+    <string name="ui_cf205c33359a" formatted="false">"Bez uwierzytelniania"</string>
+    <string name="ui_9a911b08feb9" formatted="false">"Token dostępu"</string>
+    <string name="ui_6c863c3012b6" formatted="false">"Odrzucić zmiany w umiejętności?"</string>
+    <string name="ui_25c11e7cf257" formatted="false">"Te instrukcje nie zostały zainstalowane. Sprawdź je przed instalacją albo odrzuć ten szkic."</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
+    <string name="ui_597c61bffed6" formatted="false">"Operacja na danych wymaga uwagi"</string>
+    <string name="ui_8b14bde391c7" formatted="false">"Wynik operacji na danych"</string>
+    <string name="ui_753faf7fceae" formatted="false">"Pobrane pliki modeli zostaną usunięte. Pobierz je ponownie przed lokalnym wnioskowaniem. Notatki i rozmowy zostaną zachowane."</string>
+    <string name="ui_e983dee4cc9a" formatted="false">"Zapisane pliki diagnostyczne zostaną usunięte. Notatki, rozmowy i kopie zapasowe zostaną zachowane."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"Poprzednia lokalna kopia zastąpi bieżące dane Notatnika, pamięci i rozmów. Jeśli chcesz zachować obecne zmiany, najpierw wyeksportuj kopię."</string>
+    <string name="ui_e43690e26d1f" formatted="false">"Pliki tymczasowe i aktualnie przeglądana kopia zapasowa zostaną usunięte. Zapisana zawartość obszaru roboczego pozostanie."</string>
+    <string name="ui_b3739b547eec" formatted="false">"Dodatkowe zatwierdzone działanie"</string>
+    <string name="ui_9a7aa4102706" formatted="false">"Wybierz urządzenie"</string>
+    <string name="ui_8b9b4f57f1c7" formatted="false">"Wybierz aplikację"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
+    <string name="ui_934652dce41d" formatted="false">"Instrukcje"</string>
+    <string name="ui_293df2caff23" formatted="false">"Ostatnia udana kopia · %1$s"</string>
+    <string name="ui_b24f04846a22" formatted="false">"Brak zgodnego modelu"</string>
+    <string name="ui_7b3b2c40f4e6" formatted="false">"Bez dodatkowego limitu"</string>
+    <string name="ui_d7d557fa439a" formatted="false">"Rozmiar niedostępny"</string>
+    <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
     <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 głosów"</string>
@@ -377,8 +682,24 @@
     <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
     <string name="ui_a2243f3686d9" formatted="false">"Otwórz Mini halo"</string>
     <string name="ui_62fae752c4b7" formatted="false">"Miej halo pod ręką w małym oknie lub widżecie na ekranie głównym."</string>
+    <string name="ui_befe514bdf8f" formatted="false">"Wklej dane logowania"</string>
+    <string name="ui_ad3d9699142e" formatted="false">"Zapisz bezpiecznie"</string>
+    <string name="ui_32f908c5ce01" formatted="false">"Pobierz listę moich modeli"</string>
+    <string name="ui_fd9b7c2ba85b" formatted="false">"Konfiguracja została zapisana; połączenie nie zostało sprawdzone"</string>
+    <string name="ui_90f754bf8d33" formatted="false">"Uzyskaj klucz API"</string>
+    <string name="ui_0adde84d26d4" formatted="false">"Zaawansowany OAuth Google"</string>
     <string name="ui_ef6691545d2c" formatted="false">"Standardowy"</string>
+    <string name="ui_f4ccae29e1bb" formatted="false">"W toku"</string>
+    <string name="ui_a9ca50914eed" formatted="false">"Sprawdź kroki"</string>
+    <string name="ui_379b99e0ca98" formatted="false">"Aby zacząć, zadaj halo pytanie na ekranie głównym."</string>
+    <string name="ui_5d1705e6235a" formatted="false">"Na razie nic tu nie ma. Sprawdź inną kartę."</string>
+    <string name="ui_180583c405c8" formatted="false">"Prośby o zatwierdzenie i pytania czekają tu, aż zdecydujesz, co dalej."</string>
     <string name="ui_890ab358a55d" formatted="false">"Szczegóły techniczne"</string>
+    <string name="ui_6cb44b56336a" formatted="false">"Ostatnie działania"</string>
+    <string name="ui_238b52a679a7" formatted="false">"Pokaż prośby"</string>
+    <string name="ui_5882f776f021" formatted="false">"Pokaż trwające"</string>
+    <string name="ui_2943d006bb6a" formatted="false">"Pokaż ukończone"</string>
+    <string name="ui_22e2bada8f1c" formatted="false">"Powiadomienia"</string>
     <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok."</string>
@@ -386,13 +707,24 @@
     <string name="ui_eb00ba19cdcf" formatted="false">"Nie dołączono materiału. halo skorzysta z wiedzy ogólnej."</string>
     <string name="ui_414691a4f8e9" formatted="false">"Wybrany materiał będzie przetwarzany zgodnie z wybraną przez Ciebie zasadą użycia źródła."</string>
     <string name="ui_43d5d369235d" formatted="false">"Zapytaj halo"</string>
+    <string name="ui_1d8022bd7e51" formatted="false">"Przekazanie zapytania do chmury"</string>
+    <string name="ui_31b2146c3447" formatted="false">"Korzystanie ze zdalnego dostawcy AI"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
     <string name="ui_4a703d8c58cf" formatted="false">"Daty i godziny również będą wyświetlane w tym języku."</string>
     <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
+    <string name="ui_944a5838210b" formatted="false">"Wszystko, co zrobiło halo — jasno i prostym językiem."</string>
     <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
     <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
+    <string name="ui_45dc8020467a" formatted="false">"W Twojej sieci"</string>
+    <string name="ui_b3f7f4016185" formatted="false">"W chmurze"</string>
+    <string name="ui_ab334a7536b2" formatted="false">"Zapisane kroki"</string>
+    <string name="ui_9743f7f82eb1" formatted="false">"Pokaż wszystkie zapisane kroki (%1$d)"</string>
+    <string name="ui_81c6a0c63866" formatted="false">"Pokaż mniej kroków"</string>
+    <string name="ui_e159b06187d3" formatted="false">"Wstrzymano"</string>
+    <string name="ui_43702621125c" formatted="false">"Trwa działanie na telefonie"</string>
+    <string name="ui_34dbd8856a1a" formatted="false">"Oczekiwanie na wynik działania"</string>
     <string name="ui_8586ad2ecc67" formatted="false">"Diagnostyka obciążenia"</string>
     <string name="ui_b6f7890974ea" formatted="false">"Zainstaluj lokalny model mowy w ustawieniach głosu."</string>
     <string name="ui_f07479a5ff73" formatted="false">"Sprawdź rozpoznany tekst"</string>
@@ -404,6 +736,7 @@
     <string name="ui_ce12f2065ea4" formatted="false">"Zachowaj tekst prywatnie"</string>
     <string name="ui_fa6d5a89e3b5" formatted="false">"Małe okno na szybkie pytanie."</string>
     <string name="ui_cafabf0d8b58" formatted="false">"Na ekranie głównym"</string>
+    <string name="ui_a4e63bcacf6c" formatted="false">"halo"</string>
     <string name="ui_4711aac75af4" formatted="false">"Głos i czytanie"</string>
     <string name="ui_6203e75ec103" formatted="false">"Słuchanie, dyktowanie i czytanie na głos"</string>
     <string name="ui_5eaab99e43b7" formatted="false">"Poproś rodzica lub opiekuna o ustawienie kodu PIN lub hasła urządzenia w ustawieniach Androida."</string>
@@ -426,6 +759,7 @@
     <string name="ui_cc42af5664d6" formatted="false">"Token odczytu Hugging Face"</string>
     <string name="ui_ea1f1ba0beb3" formatted="false">"Token nie akceptuje licencji modelu. Zaakceptuj licencję wydawcy na tym samym koncie Hugging Face."</string>
     <string name="ui_c70df78cbfc4" formatted="false">"Kandydaci obejmują pętle narzędziowe oparte na promptach halo. Natywne wywoływanie narzędzi jest osobną funkcją i wymaga dowodów dla danego pliku modelu."</string>
+    <string name="ui_99cb5f56f029" formatted="false">"Kandydat narzędziowy halo Prompt · pobierz i przetestuj przed przypisaniem roli działania"</string>
     <string name="ui_050e2c6cc9a1" formatted="false">"Zaimportuj w pełni pobrany plik .litertlm. To środowisko wykonawcze nie obsługuje plików GGUF ani .tflite."</string>
     <string name="ui_a57bf7bcba44" formatted="false">"Odśwież pliki na urządzeniu"</string>
     <string name="ui_fc72166cc2c3" formatted="false">"Przed pobraniem odśwież pliki na urządzeniu."</string>
@@ -491,6 +825,8 @@
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_9bcea1fdbb4b" formatted="false">"Jak halo odpowiada"</string>
+    <string name="ui_35a860e0406b" formatted="false">"Działania dostępne dla halo"</string>
     <string name="ui_0085d5ec796b" formatted="false">"Opcje techniczne w jednym miejscu."</string>
     <string name="ui_d68f0cbd3664" formatted="false">"Opcje techniczne znajdują się w sekcji Zaawansowane."</string>
     <string name="ui_a9678fc14996" formatted="false">"Otwórz ustawienia zaawansowane"</string>
@@ -524,10 +860,38 @@
     <string name="ui_4d8d5ea3b434" formatted="false">"Czytanie i zainteresowania"</string>
     <string name="ui_c345ddcf3224" formatted="false">"Kontynuuj w Notatniku"</string>
     <string name="ui_d85b2cac1425" formatted="false">"Jak halo pomaga"</string>
+    <string name="ui_dd541994468a" formatted="false">"Aplikacje i usługi"</string>
+    <string name="ui_83b9e5c1b14b" formatted="false">"Działania udostępniane halo przez aplikacje."</string>
+    <string name="ui_9550bda45c3e" formatted="false">"Działania aplikacji nie są jeszcze dostępne. Nadal możesz zadawać pytania halo i pracować w Notatniku."</string>
+    <string name="ui_1997dfb83b61" formatted="false">"Aplikacja na tym telefonie"</string>
     <string name="ui_ded151ea4486" formatted="false">"Na niektórych stronach halo potrzebuje dostępu do zdjęć."</string>
     <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
     <string name="ui_efdcf466b553" formatted="false">"Laboratorium"</string>
     <string name="ui_324b134f57c7" formatted="false">"Podgląd"</string>
+    <string name="ui_611a1e8d3816" formatted="false">"Sprawdź odpowiedzi"</string>
+    <string name="ui_be5dff52eeb0" formatted="false">"Sprawdź połączenie"</string>
+    <string name="ui_3088287cff7f" formatted="false">"halo odpowiedziało"</string>
+    <string name="ui_c0283b9dbbfc" formatted="false">"Wybierz ten telefon, komputer w domu lub usługę w chmurze."</string>
+    <string name="ui_6b8d65f3f884" formatted="false">"Wybór zapisano. Sprawdź, czy halo może się połączyć."</string>
+    <string name="ui_11a9504b8666" formatted="false">"Połączono. Wybierz model, zanim zadasz pierwsze pytanie."</string>
+    <string name="ui_bf283be58a4f" formatted="false">"Model jest wybrany. Sprawdź, czy potrafi odpowiadać."</string>
+    <string name="ui_cec3341e08d6" formatted="false">"halo odpowiedziało przy użyciu tego ustawienia. Każde kolejne żądanie pokaże własny wynik."</string>
+    <string name="ui_3562b6562465" formatted="false">"halo sprawdza ten wybór. To może chwilę potrwać."</string>
+    <string name="ui_74701834ec6b" formatted="false">"Wybierz, skąd mają pochodzić odpowiedzi"</string>
+    <string name="ui_8b03c30c5090" formatted="false">"Wybierz, od czego zacząć"</string>
+    <string name="ui_0812299672ba" formatted="false">"Odpowiedzi na co dzień · sprawdzone przez Ciebie"</string>
+    <string name="ui_d57e1516ea80" formatted="false">"Odpowiedzi na co dzień · jeszcze niesprawdzone"</string>
+    <string name="ui_3e28715e1afd" formatted="false">"Sprawdzanie odpowiedzi…"</string>
+    <string name="ui_815eddb95f31" formatted="false">"Odpowiedzi wymagają sprawdzenia"</string>
+    <string name="ui_3f3ab96cfbd5" formatted="false">"Przy tym ustawieniu odpowiedzi są tworzone na telefonie"</string>
+    <string name="ui_b7e8b12b9653" formatted="false">"Pytania trafiają do komputera w domu"</string>
+    <string name="ui_312e27857f15" formatted="false">"Pytania trafiają do wybranej usługi w chmurze"</string>
+    <string name="ui_d17b84225922" formatted="false">"Ty decydujesz, jakie dane opuszczają ten telefon"</string>
+    <string name="ui_2c9b703e352d" formatted="false">"Skąd pochodzą odpowiedzi"</string>
+    <string name="ui_c8517b9d5148" formatted="false">"Odpowiedzi na co dzień"</string>
+    <string name="ui_04db04765c60" formatted="false">"Nic jeszcze nie wybrano"</string>
+    <string name="ui_5a966a2c3f29" formatted="false">"Pobrane na tym telefonie"</string>
+    <string name="ui_97e2a141be0c" formatted="false">"Zarządzaj plikami na telefonie"</string>
     <string name="ui_5a7a27778f4d" formatted="false">"Naturalne głosy"</string>
     <string name="ui_ec9e16e60935" formatted="false">"Pobrane głosy"</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
@@ -555,13 +919,23 @@
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
     <string name="ui_ee9ba864e400" formatted="false">"Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie."</string>
+    <string name="ui_6430c125dffd" formatted="false">"Pakietami umiejętnościami zarządzaj w sekcji Zaawansowane."</string>
+    <string name="ui_75a6e8b5b5f6" formatted="false">"Działanie aplikacji"</string>
     <string name="ui_3373a168ec11" formatted="false">"Tylko za Twoją zgodą"</string>
     <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
+    <string name="ui_cf9c7aa24a26" formatted="false">"Kiedy"</string>
+    <string name="ui_a710ef69aa04" formatted="false">"Tylko gdy"</string>
+    <string name="ui_30094e0bec00" formatted="false">"Wykonaj"</string>
+    <string name="ui_573b8c055df4" formatted="false">"Powiadom mnie"</string>
+    <string name="ui_2ae5d0da2ee7" formatted="false">"Czas między uruchomieniami"</string>
+    <string name="ui_e4c300152ca8" formatted="false">"Utworzono na tym telefonie · bez chmury"</string>
     <string name="ui_7fbdc83474ee" formatted="false">"Zapisane nagrania pozostają prywatne na tym telefonie i są usuwane po siedmiu dniach."</string>
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
+    <string name="ui_c905013aab29" formatted="false">"Tylko lokalnie"</string>
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
+    <string name="ui_c72e91e40fb2" formatted="false">"Znajdź plik"</string>
     <string name="ui_30ee65fa01ad" formatted="false">"Rozmowę przeniesiono do Kosza"</string>
     <string name="ui_488c5c7d85a5" formatted="false">"Przywrócono rozmowę"</string>
     <string name="ui_64a721c7cbe8" formatted="false">"Nie udało się zmienić tej rozmowy. Spróbuj ponownie."</string>
@@ -570,6 +944,58 @@
     <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
+    <string name="ui_e38b9d46e214" formatted="false">"Postęp zadania"</string>
+    <string name="ui_2104d5085b65" formatted="false">"Nie uruchamiaj, gdy wyłączona"</string>
+    <string name="ui_99cf83e21702" formatted="false">"Usunięta automatyzacja"</string>
+    <string name="ui_e86dbab56f49" formatted="false">"Wypróbuj raz"</string>
+    <string name="ui_29b51bad8b27" formatted="false">"Trwa jednorazowa próba…"</string>
+    <string name="ui_84381083ebba" formatted="false">"Zatrzymaj próbę"</string>
+    <string name="ui_7f31468e6a82" formatted="false">"Uruchomić tę automatyzację próbnie jeden raz?"</string>
+    <string name="ui_a2e58581e951" formatted="false">"Uruchom próbnie"</string>
+    <string name="ui_b5fc7f5f5bf0" formatted="false">"Ostatni pomyślny wynik"</string>
+    <string name="ui_ae50714f26a5" formatted="false">"Zapisano osobno od ostatniego uruchomienia."</string>
+    <string name="ui_e7879d5b9838" formatted="false">"Ukończono pomyślnie. Nie zapisano tekstu wyniku."</string>
+    <string name="ui_ec89c18da461" formatted="false">"Ta próba nie zapisała automatyzacji ani jej nie włączyła."</string>
+    <string name="ui_5c1472cac712" formatted="false">"Możesz wypróbować automatyzację raz na stronie sprawdzania, przed zapisaniem."</string>
+    <string name="ui_82b081c3e6fb" formatted="false">"Uruchom teraz te działania. Warunki nadal obowiązują. Wynik pozostanie tutaj i w Historii; nie zostaną zaplanowane powiadomienia, mowa ani przyszłe uruchomienie."</string>
+    <string name="ui_58203e13417a" formatted="false">"Uruchomi raz sprawdzone działania i zapisze wynik w Historii. Nie zapisze szkicu ani nie sprawdzi dostarczania powiadomień i na urządzenie noszone."</string>
+    <string name="ui_9444c497aa82" formatted="false">"Ta automatyzacja może wykonywać dokładnie te działania bez każdorazowego pytania. Zmiana automatyzacji wymaga ponownego sprawdzenia."</string>
+    <string name="ui_7fbe54fa7aa1" formatted="false">"Nic się nie zmieni, dopóki nie sprawdzisz i nie zapiszesz zmian. Włączenie zaplanuje przyszłe uruchomienia, ale nie uruchomi automatyzacji teraz."</string>
+    <string name="ui_1148b60f521a" formatted="false">"Sugestia jest już niedostępna"</string>
+    <string name="ui_231ac91b0282" formatted="false">"Ta rutyna jest już niedostępna. Możesz odrzucić tę sugestię."</string>
+    <string name="ui_49780701dc2d" formatted="false">"Nie, dziękuję"</string>
+    <string name="ui_d8c8d201a7bc" formatted="false">"Dostęp do Androida"</string>
+    <string name="ui_4c90e38762a6" formatted="false">"Nie są wymagane specjalne uprawnienia"</string>
+    <string name="ui_64833438f39e" formatted="false">"Obecnie niedostępne"</string>
+    <string name="ui_b740a108ed03" formatted="false">"Dostępne działania nadal wymagają uprawnień. Połączenie aplikacji nie zezwala na jej działania."</string>
+    <string name="ui_c8e1a13dd0fb" formatted="false">"Sprawdź działania"</string>
+    <string name="ui_569ba99ebfb1" formatted="false">"Zarchiwizuj bieżący element"</string>
+    <string name="ui_2c19d584bf8a" formatted="false">"Oznacz jako nieprzeczytane"</string>
+    <string name="ui_65a4a8d871ac" formatted="false">"Wstrzymaj odtwarzanie"</string>
+    <string name="ui_22b0fe8a57d9" formatted="false">"Rozpocznij odtwarzanie"</string>
+    <string name="ui_4f467ca50fd3" formatted="false">"Szukaj w tej aplikacji"</string>
+    <string name="ui_576a4a258210" formatted="false">"Zarządzaj dostępem do działań"</string>
+    <string name="ui_d5c25f87aeb6" formatted="false">"Zastąpić dane na tym telefonie?"</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"Zastąpi to dane Notatnika, rozmowy i pamięć. halo najpierw zachowa lokalną kopię do odzyskiwania. Wyeksportuj kopię zapasową, aby zachować dodatkową kopię."</string>
+    <string name="ui_ce1773ec5b12" formatted="false">"Zastąp dane"</string>
+    <string name="ui_aa0b0c0954a5" formatted="false">"halo przestanie zapisywać kopie w tym folderze. Istniejące kopie pozostaną na swoim miejscu."</string>
+    <string name="ui_0810464d4842" formatted="false">"Twoje notatki, rozmowy i pamięć pozostają na tym telefonie. Wybierz miejsce przechowywania kopii zapasowych."</string>
+    <string name="ui_c6e6c5800828" formatted="false">"Notatki, rozmowy i pamięć"</string>
+    <string name="ui_fb2647f443e8" formatted="false">"Folder kopii zapasowej"</string>
+    <string name="ui_d6dfd0f08280" formatted="false">"Eksportuj kopię zapasową"</string>
+    <string name="ui_4ca9d17706f8" formatted="false">"Wybierz kopię zapasową"</string>
+    <string name="ui_96276c8b3a4b" formatted="false">"Przywróć kopię zapasową"</string>
+    <string name="ui_358bbb9266a0" formatted="false">"Wybierz kopię zapasową, aby ją najpierw przejrzeć. Nic się nie zmieni, dopóki nie wybierzesz sposobu przywrócenia."</string>
+    <string name="ui_d60a079e573e" formatted="false">"Przeniesione pliki"</string>
+    <string name="ui_4f70a141825a" formatted="false">"Usuń zapisane raporty"</string>
+    <string name="ui_d5c00c83fc6d" formatted="false">"Zachowaj wersję z tego telefonu"</string>
+    <string name="ui_ba012cf56bbc" formatted="false">"Zachowaj wersję z kopii zapasowej"</string>
+    <string name="ui_93672212b4c2" formatted="false">"Zachowaj obie wersje"</string>
+    <string name="ui_87518e494690" formatted="false">"Dodaj na tym telefonie"</string>
+    <string name="ui_8f028a72b28c" formatted="false">"Zapisane raporty"</string>
+    <string name="ui_c98dd523988f" formatted="false">"Zapisany element"</string>
+    <string name="ui_69b6a12956b4" formatted="false">"Wybierz wersję, którą chcesz zachować"</string>
+    <string name="ui_a8569bf79e45" formatted="false">"Najpierw ustaw hasło do kopii zapasowej"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
     <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
     <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
@@ -587,11 +1013,15 @@
     <string name="ui_1e1eb5441389" formatted="false">"Tematy wybierasz samodzielnie. Nadal trzeba połączyć źródło do czytania."</string>
     <string name="ui_6436d3154dde" formatted="false">"Podgląd karty"</string>
     <string name="ui_0ce666a9a655" formatted="false">"Dodaj kartę, ukryj ją, powiększ lub przenieś na górę. Podaj nazwę karty widoczną po wybraniu opcji „Dodaj kartę”."</string>
+    <string name="ui_6522402e0ed3" formatted="false">"Możesz też opisać kilka kart i temat wyszukiwania."</string>
     <string name="ui_2c029f3c3d00" formatted="false">"Co chcesz zmienić?"</string>
     <string name="ui_ca8c2d690be6" formatted="false">"Ta zmiana jest niedostępna. Wybierz kartę i działanie w sekcji „Dostosuj”."</string>
     <string name="ui_1523d23e2e00" formatted="false">"Sprawdź nowy układ"</string>
     <string name="ui_99452646e34b" formatted="false">"Kompaktowy"</string>
     <string name="ui_ab80540d98d2" formatted="false">"Duży"</string>
+    <string name="ui_fe918372a41b" formatted="false">"Zezwól na działania w tej aplikacji"</string>
+    <string name="ui_b326be4bf8a4" formatted="false">"Zawsze najpierw pyta o zgodę"</string>
+    <string name="ui_bd3ed386f718" formatted="false">"Zezwól na to działanie"</string>
     <string name="ui_40fdff809655" formatted="false">"Laboratorium modeli lokalnych"</string>
     <string name="ui_58c8d314f5aa" formatted="false">"Przeglądaj pliki modeli i wyniki pomiarów"</string>
     <string name="ui_1e8a95e8a597" formatted="false">"Pobierz modele, aby uzyskiwać odpowiedzi na tym telefonie."</string>
@@ -608,6 +1038,13 @@
     <string name="ui_750af77aa42e" formatted="false">"W użyciu"</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
+    <string name="ui_35881e86e3a4" formatted="false">"Wybrano model odpowiedzi"</string>
+    <string name="ui_3e39703b6e87" formatted="false">"Hasło do kopii zapasowej"</string>
+    <string name="ui_58a0744156ae" formatted="false">"Zachowaj to hasło, aby przywrócić dane na innym telefonie. halo bezpiecznie przechowuje je na potrzeby zaplanowanych kopii. Zmiana hasła dotyczy tylko nowych kopii."</string>
+    <string name="ui_d2e61f5b2e63" formatted="false">"Zapisz hasło do kopii zapasowej"</string>
+    <string name="ui_a5bb59a7e4fe" formatted="false">"Przywrócenie można cofnąć na tym telefonie przez 7 dni."</string>
+    <string name="ui_50287a4d5ea7" formatted="false">"Dostęp do działań aplikacji jest zablokowany. Sprawdź uprawnienia, aby kontynuować."</string>
+    <string name="ui_c4bd14cbcafa" formatted="false">"Nie udało się odczytać działań aplikacji. Otwórz aplikację i spróbuj ponownie."</string>
     <string name="ui_7bc5279a8267" formatted="false">"Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis."</string>
     <string name="ui_0562eec23e31" formatted="false">"Użyj mojego zapisanego zaznaczenia odręcznego jako punktu odniesienia."</string>
     <string name="ui_a45d0de015bd" formatted="false">"Wyszukuj lokalnie na tym telefonie tekst, obrazy, nagrania i krótkie filmy z wybranych źródeł Notebooka, Canvas i Nauki. W przypadku filmów używane są tylko cztery wybrane klatki; ścieżki dźwiękowe nie są przetwarzane. halo odczytuje wyłącznie źródła zatwierdzone podczas tworzenia indeksu."</string>
@@ -698,4 +1135,36 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Pobierz i wybierz Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"Nie ma nic do przeczytania"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Nie udało się zapisać. Sprawdź konfigurację i spróbuj ponownie."</string>
+    <string name="ui_120a64e7e914" formatted="false">"Autoryzacja Google została anulowana lub jest niedostępna."</string>
+    <string name="ui_cd426fedb903" formatted="false">"Wprowadź identyfikator projektu Google Cloud; autoryzacja Google musi być dostępna."</string>
+    <string name="ui_6b8a44750d45" formatted="false">"Dane logowania nie są wymagane"</string>
+    <string name="ui_4eb55c901146" formatted="false">"Brak zapisanych danych logowania"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Wprowadź dane logowania"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"Autoryzacja OAuth zakończona; sprawdź połączenie, aby potwierdzić gotowość."</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Autoryzacja Google nie powiodła się."</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Płatne / zależne od konta"</string>
+    <string name="ui_d721c079e186" formatted="false">"Użyj modelu rozmowy"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Wybieraj automatycznie"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Użyj wybranego modelu"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Natywna obsługa cyklu narzędzi"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"Obsługa cyklu narzędzi w promptach halo"</string>
+    <string name="ui_c8f701d80021" formatted="false">"Brak cyklu narzędzi"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Szybkie odpowiedzi w rozmowie"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Zwykła rozmowa · domyślny model rozmowy"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Dokładniejsza analiza · osobny wybór modelu"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Zadania wymagające narzędzi"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Najlepszy wynik pomiarów na tym urządzeniu"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Jedyny kandydat z wynikami pomiarów"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"CZAT 3/3 i trzy pomiary po rozgrzaniu; najniższe zmierzone opóźnienie po rozgrzaniu"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"CZAT 3/3; wyniki sprawdzianu rozumowania, kontekstu i opóźnienia"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"Testy czatu i rozumowania 3/3; stabilne działanie"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Potwierdzono pierwsze wywołanie narzędzia i kontynuację cyklu; preferowany jest natywny protokół"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Zweryfikowane wyniki obsługi obrazów z Vision Lab"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Sposób kierowania: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Sugestia: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Użyj w roli: %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Tylko wybrany model"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Preferowany dostawca z opcją zapasową"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Odśwież dane wybranego dostawcy"</string>
 </resources>

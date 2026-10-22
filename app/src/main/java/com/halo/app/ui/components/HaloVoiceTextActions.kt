@@ -85,6 +85,9 @@ fun HaloVoiceTextActions(
     applySearchImmediately: Boolean = false,
     spokenTransform: (String) -> String? = { it },
     previewIsValid: (String) -> Boolean = { true },
+    readRequest: Long = 0,
+    onReadRequestConsumed: () -> Unit = {},
+    showReadAction: Boolean = true,
     fieldContent: (@Composable (@Composable () -> Unit) -> Unit)? = null,
 ) {
     // Design previews have no Android speech host. Keep the editable field available
@@ -360,9 +363,17 @@ fun HaloVoiceTextActions(
             }
         }
     }
+    // A message overflow can request this same policy-controlled action while its owner
+    // stays composed. Closing a menu must not dispose/cancel the reading transaction.
+    LaunchedEffect(readRequest) {
+        if (readRequest > 0) {
+            if (enabled) requestReading()
+            onReadRequestConsumed()
+        }
+    }
     val actions: @Composable () -> Unit = {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (!readText.isNullOrBlank()) {
+            if (showReadAction && !readText.isNullOrBlank()) {
                 val reading = readingState?.takeIf { it.id == spokenId }?.let { it.playing || it.preparing } == true
                 val label = uiText(when {
                     reading -> "Pause reading"

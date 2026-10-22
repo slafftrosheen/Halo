@@ -1,0 +1,152 @@
+{
+  "issue": 44,
+  "date": "2026-10-22",
+  "finalGate": "BUILD SUCCESSFUL in 2m 41s",
+  "tests": {
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "tests": 100
+  },
+  "apk": {
+    "bytes": 286408785,
+    "sha256": "8081ec5fa5c70a443c2faed703523ba77c5d65039ddbf40a066af10b888bebf1",
+    "installed": false,
+    "reason": "Device disconnected before final resize-corrected APK installation"
+  },
+  "installedObservationRevision": "97b2e227a04db7b30f0aecc24c5fdee2416efb441c36171bb88d41128dce85e1",
+  "device": {
+    "model": "23124RA7EO",
+    "api": 35,
+    "densityRestored": 440,
+    "fontScaleRestored": "1.0",
+    "automaticRotationRestored": 1,
+    "userRotationRestored": 0,
+    "promptsSentToProvider": 0
+  },
+  "physicalStatus": {
+    "portraitDraftHistoryAttachmentsTools": "Named observations PASS on installed observation revision",
+    "landscapeKeyboard": "FAIL on old revision; adjustResize source fix built and merged-manifest-tested; NOT RETESTED on phone",
+    "font200": "BLOCKED by debug LeakCanary dump overlay",
+    "fullMatrix": "NOT QUALIFIED; tracked under issue43"
+  },
+  "renderStatus": "Six explicitly recorded host component fixtures; synthetic content, not installed-app proof",
+  "files": [
+    {
+      "path": "device/device-attachment-draft.png",
+      "sha256": "e9799a2c0d2d20e2857301eec0c4443a5597ac2da66856606de5ae1942a9e834"
+    },
+    {
+      "path": "device/device-attachment-sheet.png",
+      "sha256": "c073ba0adc642c0ae0ccb113b1830ce9bdf3fe513c905e53930da0dacc279792"
+    },
+    {
+      "path": "device/device-draft-restored.png",
+      "sha256": "5a46263192e7a4255d9fc65529ef459676aa01040719eb0b3815f1185d4ac6ad"
+    },
+    {
+      "path": "device/device-font200-debug-dump-interruption.png",
+      "sha256": "19a666bc2c0cbff574efddb8e65b6eed8611ca82790c20c0904c330b55a86152"
+    },
+    {
+      "path": "device/device-landscape-ime-failure-before-resize.png",
+      "sha256": "478b538dc50b36e44fdb33d73e17d0d76a9432633c2c2443875d96ca8ba56492"
+    },
+    {
+      "path": "device/device-landscape-no-keyboard.png",
+      "sha256": "7205ffd776ca446587d20fb4c52e0f8419229af0a072235195b9e0c721034676"
+    },
+    {
+      "path": "device/device-portrait-keyboard.png",
+      "sha256": "20eb0f3d730b0faf11bd19321ac1d99521f1f8a1505621b5dcb92768b8c3a545"
+    },
+    {
+      "path": "device/device-tools-menu.png",
+      "sha256": "d005bb9fdb6b7dfe6dae316ac3830e811ab7bac7e9b512dd5e22ec4bbae1602b"
+    },
+    {
+      "path": "renders/com.halo.app.ui.screens.home.HomeChatVisualTest.darkThread412.png",
+      "sha256": "0aa773e9d93700a03b05798ffb296705e269544ca5e74eed9df3618cca1f027d"
+    },
+    {
+      "path": "renders/com.halo.app.ui.screens.home.HomeChatVisualTest.latvianLargeText.png",
+      "sha256": "15e4e1a1d05401729e993e0f4d202c7bc65c458c0cb84e5093eaeb4f02793edf"
+    },
+    {
+      "path": "renders/com.halo.app.ui.screens.home.HomeChatVisualTest.lightThread360.png",
+      "sha256": "3cd7302d149803ce362aec6311063b910ab551de5ec4fed85ae74e3d51b9a1d9"
+    },
+    {
+      "path": "renders/com.halo.app.ui.screens.home.HomeChatVisualTest.narrowLandscape.png",
+      "sha256": "ef4d8538caeb6687b956778578cd610034a11ea4661ab0457e022b22795f0316"
+    },
+    {
+      "path": "renders/com.halo.app.ui.screens.home.HomeChatVisualTest.russianLargeText.png",
+      "sha256": "323af26d7b25c30796d84a7703d685efda3a3f851c0eaf3dcf88b79ae54857f8"
+    },
+    {
+      "path": "renders/com.halo.app.ui.screens.home.HomeChatVisualTest.tabletThread.png",
+      "sha256": "39d0bce1ebf1968e8f4767010d2802fe8d68839d69ad6dcc1944e97c07c8629a"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.audio.ConversationalVoiceTest.xml",
+      "sha256": "006adcd621c5f1ded2e780b83d0c7aa74601898f7c04f22a35e0fd411853577c"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.audio.SpeechPlaybackLifecycleTest.xml",
+      "sha256": "df0f779f2d9302206c003e3cad16e9fea41600f3abd0b6bd1657754b5193d057"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeAutoReadTrackerTest.xml",
+      "sha256": "729db7912d26cdd528cb9f5ba4abad85b85a7a2cef6c0808d11903489f59873f"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeChatControlsTest.xml",
+      "sha256": "d3e9c9edc2465ea03bc3bce2e8282d087a71267a12da217c9fdc3d44e5272ccb"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeChatVisualTest.xml",
+      "sha256": "d4720523eedaf56ee1bfc5c61318becc4889eb4001b0032ee0aea8006b5f88f3"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeComposerInteractionTest.xml",
+      "sha256": "cfff41c71401617d4dc049e3ed2b5a9f4c44578f7c452ccbd466858c8a7c1559"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeComposerPriorityTest.xml",
+      "sha256": "d63458f2c52f42ad149805bbbca8fcac0665468b1c6b0b537bd2b295845b175e"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeFlowPresentationTest.xml",
+      "sha256": "f2cae0bb4dd4eb0c10a68d58efcf16ada16c368768a5c22bd57d9eaa8b82de32"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeHeaderBrandBook3Test.xml",
+      "sha256": "4e124ff1357e9de8327c918f54df0cf584d771efedd57399ed47496d2ad9d7b0"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeKeyboardWindowTest.xml",
+      "sha256": "954a38c7ebce42281c9d6a5dd183374a8c7e4e75d23002376b22f8a3cc128e75"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeResponseProjectionTest.xml",
+      "sha256": "f01d9c70a7aa26115b3a7dcb70685f20aacae938d40e051fd707fc2da6ae1cc8"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeThinkingSkeletonTest.xml",
+      "sha256": "6c656799b4393ac8d5cb76da1fc00965cc6e3a2f7648fa396625c17e8f0e3451"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeThreadPresentationTest.xml",
+      "sha256": "a370d6bc6950834c856cefa0f5714e6c14a5038eb5ebf16fd77755466097f61b"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeToolResultFxTest.xml",
+      "sha256": "694844a7fe026fb2e0c301d144411fc0c05a8b69178dfa61ca4028dbb16e68c0"
+    },
+    {
+      "path": "tests/TEST-com.halo.app.ui.screens.home.HomeViewModelTest.xml",
+      "sha256": "8feb66afb10dc435de11949ff113bfd5265d4a2d8001577ea35e40b653567d4c"
+    }
+  ]
+}

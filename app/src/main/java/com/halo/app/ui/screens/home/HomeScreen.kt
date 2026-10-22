@@ -36,6 +36,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,6 +47,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -183,6 +187,11 @@ fun HomeScreen(
     )
     val clipboard = LocalClipboardManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
+    val savedConversations by viewModel.savedConversations.collectAsStateWithLifecycle()
+    val changingConversation by viewModel.conversationChanging.collectAsStateWithLifecycle()
+    val currentTurns = conversationTurns.filter { it.conversationId == uiState.conversationId }
+
     val fxContinuity by viewModel.continuity.collectAsStateWithLifecycle()
     val providerRows by viewModel.providerRows.collectAsStateWithLifecycle()
     val chatProviderId by viewModel.chatProviderId.collectAsStateWithLifecycle()
@@ -212,6 +221,11 @@ fun HomeScreen(
     val textInput = drafts[draftKey].orEmpty()
     var pendingHistoryDraft by remember(draftKey) { mutableStateOf<String?>(null) }
     fun updateDraft(value: String) { drafts = HashMap(drafts).apply { put(draftKey, value) } }
+    fun prepareEarlierQuestion(value: String) {
+        if (textInput.isBlank() || textInput == value) updateDraft(value) else pendingHistoryDraft = value
+    }
+    var visibleTurnCount by rememberSaveable(draftKey) { mutableIntStateOf(20) }
+
     LaunchedEffect(inkSelectionAskPromptRequest, draftKey) {
         if (viewModel.consumeInkSelectionAskPrompt(inkSelectionAskPromptRequest)) {
             when {
@@ -246,6 +260,8 @@ fun HomeScreen(
         viewModel.captureQuestionDraft.value = null
     } }
     val reducedMotion by rememberReducedMotion()
+    val shortScreen = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 480
+    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val lifecycleOwner = LocalLifecycleOwner.current
 
 
@@ -301,13 +317,34 @@ fun HomeScreen(
     val showReadyAura = uiState.runtimeState == HaloRuntimeState.Idle &&
         !isListening && !isSpeechProcessing && !isSpeaking &&
         !providerNeedsAttention && !connectionNeedsAttention && !presentation.needsReview
-    val canSend = !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession
+    val canSend = !changingConversation && !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession
     val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed &&
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
         else uiState.presentedResponse.orEmpty()).trim()
     // Attachments and quick actions live next to the pinned composer, never inside the scrolled feed.
     var showContext by rememberSaveable { mutableStateOf(false) }
-    var showActions by remember { mutableStateOf(false) }
+    var showActions by rememberSaveable { mutableStateOf(false) }
+    var showHistory by rememberSaveable { mutableStateOf(false) }
+    var showToday by rememberSaveable { mutableStateOf(false) }
+    var webSearchDraft by rememberSaveable { mutableStateOf<String?>(null) }
+    var showTaskDetails by rememberSaveable(draftKey) { mutableStateOf(false) }
+    val pendingQuestion = homePendingQuestion(submission, uiState.conversationId, currentTurns)
+    val priorSavedReply = pendingQuestion != null && uiState.presentedIdentity?.source == ResponsePresentationSource.COMMITTED_CONVERSATION
+    val liveReplyIdentity = homeVisibleReplyIdentity(uiState.presentedIdentity, responseText, priorSavedReply)
+    if (showHistory) HomeConversationHistory(savedConversations, uiState.conversationId,
+        onSelect = { showHistory = false; viewModel.openConversation(it) },
+        onNew = { showHistory = false; viewModel.newConversation() }, onDismiss = { showHistory = false })
+    webSearchDraft?.let { query -> com.halo.app.ui.online.GroundedWebSearchDialog(query) { webSearchDraft = null } }
+    if (showToday) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showToday = false }) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp)) {
+            Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day), style = MaterialTheme.typography.titleLarge)
+            DailyAssistantSection(daily, compact = true) { action ->
+                viewModel.recordDailyAction(action); onDailyAction(action); showToday = false
+            }
+        }
+    }
+
     var modeMenuExpanded by remember { mutableStateOf(false) }
     var quickAction by remember { mutableStateOf<String?>(null) }
     var quickValue by remember { mutableStateOf("") }
@@ -375,8 +412,29 @@ fun HomeScreen(
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
         // H01: keep the wordmark and Updates above the scrollable conversation.
         // Only the feed moves; actions and the composer stay anchored below.
-        Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
-            HomeBrandHeader(onUpdates = onOpenNotificationInbox, surfaceSwitcher = surfaceSwitcher)
+        if (!shortScreen || !keyboardVisible) Box(Modifier.fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = if (shortScreen) 4.dp else 12.dp)) {
+            HomeChatHeader(mode = uiText(homeModeLabel(currentMode)),
+                modeEnabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing,
+                onMode = { modeMenuExpanded = true }, onHistory = { showHistory = true },
+                onNew = viewModel::newConversation, onUpdates = onOpenNotificationInbox,
+                onActivity = onOpenActivity, onClear = { confirmClear = true },
+                onToday = if (daily.items.isNotEmpty()) ({ showToday = true }) else null,
+                modeMenu = {
+                    DropdownMenu(expanded = modeMenuExpanded, onDismissRequest = { modeMenuExpanded = false }) {
+                        CognitiveOperatingMode.entries.forEach { mode ->
+                            DropdownMenuItem(text = { Column {
+                                Text(uiText(homeModeLabel(mode)))
+                                Text(uiText(homeModeSummary(mode)), style = MaterialTheme.typography.bodySmall)
+                            } }, trailingIcon = { if (mode == currentMode) HaloIcon(HaloGlyph.SUCCESS, null) },
+                                onClick = {
+                                    if (!isActiveSession && !isListening && !isSpeechProcessing) viewModel.selectedMode.value = mode
+                                    modeMenuExpanded = false
+                                })
+                        }
+                    }
+                }, surfaceSwitcher = surfaceSwitcher)
+
         }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
             .padding(horizontal = 20.dp, vertical = 12.dp),
@@ -394,19 +452,34 @@ fun HomeScreen(
                 title = uiText(presentation.status),
                 supporting = if (providerNeedsAttention || connectionNeedsAttention)
                     uiText("Choose how halo answers") else null,
-                compact = responseText.isNotBlank() || presentation.needsReview ||
+                compact = currentTurns.isNotEmpty() || submission.phase != TextSubmissionPhase.READY || responseText.isNotBlank() || presentation.needsReview ||
                     uiState.sessionState is CognitiveSessionState.ExecutingTool,
                 micOpen = uiState.inputStatus.capturing,
                 inputLevel = uiState.inputStatus.inputLevel,
                 aura = false,
                 orbModifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
+                action = when {
+                    presentation.needsReview -> ({ IconButton(onClick = onOpenActivity, modifier = Modifier.size(48.dp)) {
+                        HaloIcon(HaloGlyph.APPROVAL, uiText("Review"))
+                    } })
+                    submission.retryable && submission.conversationId == draftKey -> ({
+                        TextButton(onClick = ::submitText, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
+                    })
+                    submission.needsRecovery && submission.conversationId == draftKey -> ({
+                        IconButton(onClick = onOpenActivity, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.ACTIVITY, uiText("Open Activity")) }
+                    })
+                    else -> null
+                },
             )
             // Tool artwork is mounted ONLY while the active cognitive turn owns a
             // matching execution. It disappears when the runtime leaves ExecutingTool;
             // that transition alone is NOT proof of success.
             val executingToolId =
                 (uiState.sessionState as? CognitiveSessionState.ExecutingTool)?.toolId
-            executingToolId?.let { id ->
+            if (executingToolId != null || uiState.longTaskProgress != null) TextButton(onClick = { showTaskDetails = !showTaskDetails }) {
+                Text(androidx.compose.ui.res.stringResource(if (showTaskDetails) com.halo.app.R.string.home_hide_task_details else com.halo.app.R.string.home_task_details))
+            }
+            if (showTaskDetails) executingToolId?.let { id ->
                 if (homeFxTool(id) != null) HomeToolExecutionFx(id, viewModel::cancelSession)
                 else if (homeShouldShowUnmappedPhoneAction(id))
                     HomeUnmappedPhoneAction(viewModel::cancelSession)
@@ -415,7 +488,7 @@ fun HomeScreen(
             // action. No steps are inferred from a text request or tool name.
             val showActivePlan = homeShouldPromoteActivePlan(
                 uiState.sessionState, uiState.longTaskProgress != null)
-            if (showActivePlan) uiState.longTaskProgress?.let { plan ->
+            if (showTaskDetails && showActivePlan) uiState.longTaskProgress?.let { plan ->
                 HomeTaskProgress(plan)
             }
             HomeToolResultFx(uiState.toolReceipt, uiState.conversationId, isActiveSession,
@@ -437,79 +510,40 @@ fun HomeScreen(
                 !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text(uiText("Enable voice")) }
                 !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text(uiText("Set up voice")) }
             }
-            if (presentation.needsReview) {
-                // Needs you is an actual waiting journal state. Apricot never marks
-                // the current or completed step, and Review does not approve by itself.
-                val attentionInk = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
-                    androidx.compose.ui.graphics.Color(0xFFFF9F6B)
-                    else androidx.compose.ui.graphics.Color(0xFFA84B12)
-                Surface(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    border = BorderStroke(1.dp, attentionInk)) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(uiText(presentation.status), style = MaterialTheme.typography.titleMedium)
-                        Text(uiText("Open Activity to see what halo needs and choose what happens next."),
-                            style = MaterialTheme.typography.bodyMedium)
-                        HaloActionButton(onClick = onOpenActivity, modifier = Modifier.fillMaxWidth()) {
-                            Text(uiText("Review in Activity"))
-                        }
-                    }
+            // Page earlier content without hiding turns based on equal answer text.
+            if (currentTurns.size > visibleTurnCount) TextButton(onClick = {
+                followLatest = false
+                visibleTurnCount = (visibleTurnCount + 20).coerceAtMost(currentTurns.size)
+            }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_load_earlier)) }
+            val canEditMessage = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking
+            currentTurns.takeLast(visibleTurnCount).forEach { turn ->
+                androidx.compose.runtime.key(turn.id) {
+                    if (turn.userText.isNotBlank()) HomeTranscriptMessage("${turn.id}:user", turn.userText, user = true,
+                        onEdit = if (canEditMessage) ({ prepareEarlierQuestion(turn.userText) }) else null)
+                    if (homeShowsHistoricalReply(turn, liveReplyIdentity)) HomeTranscriptMessage(
+                        "${turn.id}:assistant", turn.assistantText, user = false,
+                        onSave = if (canEditMessage) ({ viewModel.saveResponse(PresentedAssistantResponse(
+                            turn.conversationId, turn.id, turn.metadata["interactionId"], turn.metadata["requestId"],
+                            turn.assistantText, ResponsePresentationSource.COMMITTED_CONVERSATION)) }) else null,
+                        onEdit = if (canEditMessage && turn.userText.isNotBlank()) ({ prepareEarlierQuestion(turn.userText) }) else null,
+                        canRead = canEditMessage)
                 }
             }
-            if (daily.items.isNotEmpty()) DailyAssistantSection(daily, compact = true) { action ->
-                viewModel.recordDailyAction(action)
-                onDailyAction(action)
-            }
-            if (homeShouldShowThinkingSkeleton(
-                    uiState.sessionState, responseText, presentation.needsReview
-                )) HomeThinkingSkeleton()
-            // Keep recent turns in the conversation feed. Earlier turns remain available
-            // without hiding the conversation behind a development-style disclosure.
-            val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
-            val currentTurns = conversationTurns.filter { it.conversationId == uiState.conversationId }
-            var showEarlierMessages by rememberSaveable(uiState.conversationId) { mutableStateOf(false) }
-            if (currentTurns.size > 4) TextButton(onClick = { showEarlierMessages = !showEarlierMessages }) {
-                Text(uiText(if (showEarlierMessages) "Hide messages" else "Conversation history"))
-            }
-            (if (showEarlierMessages) currentTurns else currentTurns.takeLast(4)).forEach { turn ->
-                if (turn.userText.isNotBlank()) Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(turn.userText, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = {
-                            if (textInput.isBlank() || textInput == turn.userText) updateDraft(turn.userText)
-                            else pendingHistoryDraft = turn.userText
-                        }, enabled = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) {
-                            Text(uiText("Edit as a new message"))
-                        }
-                    }
-                }
-                if (turn.assistantText.isNotBlank() && turn.assistantText.trim() != responseText) Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    modifier = Modifier.fillMaxWidth().padding(end = 32.dp)
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(turn.assistantText, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = { clipboard.setText(AnnotatedString(turn.assistantText)) }) {
-                            Text(uiText("Copy reply"))
-                        }
-                    }
-                }
-            }
+            pendingQuestion?.let { HomeTranscriptMessage("${submission.interactionId}:pending", it, user = true) }
+            if (homeShouldShowThinkingSkeleton(uiState.sessionState, if (priorSavedReply) "" else responseText,
+                    presentation.needsReview)) HomeThinkingSkeleton()
             HomeAutoReadAnswers(uiState, responseText, isActiveSession)
-            if (responseText.isNotBlank()) {
+            if (responseText.isNotBlank() && !priorSavedReply) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
                     cloudReply = cloudHandoffProviderId(
                         uiState.presentedIdentity?.providerId,
                         providerRows.associate { it.descriptor.providerId to it.descriptor.location }
                     ) != null,
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
-                    onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) })
-            } else if (canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {
+                    onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) },
+                    onEdit = if (canEditMessage) currentTurns.firstOrNull { it.id == uiState.presentedIdentity?.turnId }
+                        ?.userText?.takeIf(String::isNotBlank)?.let { question -> ({ prepareEarlierQuestion(question) }) } else null)
+            } else if (currentTurns.isEmpty() && pendingQuestion == null && canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {
                 HomeWelcome(compact = true, onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
             }
             uiState.rejectionNotice?.let { notice ->
@@ -549,7 +583,8 @@ fun HomeScreen(
                 Spacer(Modifier.height(8.dp))
             }
             captureMessage?.let {
-                Text(uiText(it), style = MaterialTheme.typography.bodyMedium)
+                Text(if (it == "Conversation unavailable") androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_conversation_unavailable)
+                    else uiText(it), style = MaterialTheme.typography.bodyMedium)
                 if (it in setOf("Microphone permission denied.", "Camera permission was not granted", "Open Android settings to allow camera access."))
                     com.halo.app.ui.components.AndroidPermissionHelp()
             }
@@ -567,11 +602,6 @@ fun HomeScreen(
             if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
                 Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
             ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
-            if (lastVoiceResponseConversation != null && lastVoiceResponseConversation == uiState.conversationId) {
-                TextButton(onClick = viewModel::repeatLastVoiceResponse, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText("Repeat last reply"))
-                }
-            }
             if (voiceModeActive) Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                 Text(uiText(if (voiceModeListeningPaused) "Voice Mode is on. Listening is paused."
                     else "Voice Mode is on. Halo listens again after a spoken reply."),
@@ -591,7 +621,7 @@ fun HomeScreen(
                     }
                 }
             }
-            if (!showActivePlan) uiState.longTaskProgress?.let {
+            if (showTaskDetails && !showActivePlan) uiState.longTaskProgress?.let {
                 HomeTaskProgress(it)
             }
             if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -615,19 +645,6 @@ fun HomeScreen(
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (isActiveSession || isListening || isSpeechProcessing || isSpeaking ||
-                presentation.needsReview || submission.needsRecovery || submission.retryable)
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText(presentation.status), modifier = Modifier.weight(1f).semantics {
-                    liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite
-                }, style = MaterialTheme.typography.bodyMedium)
-                if (presentation.needsReview) HaloActionButton(onClick = onOpenActivity) { Text(uiText("Review")) }
-                else if (submission.retryable && submission.conversationId == draftKey)
-                    TextButton(onClick = ::submitText, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
-            }
-            if (submission.needsRecovery && submission.conversationId == draftKey && !submission.retryable)
-                TextButton(onClick = onOpenActivity) { Text(uiText("Open Activity")) }
             // H03: selected sources remain visible without opening the attachment sheet.
             // A single horizontally scrollable row avoids clipping the pinned composer
             // at 200% font scale, and a tap opens source actions/privacy.
@@ -636,9 +653,16 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 contextChips.forEach { chip ->
-                    androidx.compose.material3.SuggestionChip(
+                    androidx.compose.material3.InputChip(
+                        selected = true,
                         onClick = { showContext = true },
-                        modifier = Modifier.widthIn(max = 200.dp).heightIn(min = 48.dp),
+                        modifier = Modifier.widthIn(max = 260.dp).heightIn(min = 48.dp),
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.removeContext(chip.focus.category) }, modifier = Modifier.size(48.dp)) {
+                                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
+                                    androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_remove_attachment, chip.title), Modifier.size(18.dp))
+                            }
+                        },
                         label = {
                             Text(chip.title, maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
@@ -647,7 +671,7 @@ fun HomeScreen(
                 }
             }
             HaloComposer(
-                focusAllowed = !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
+                focusAllowed = true,
                 focusRequester = composerFocusRequester,
                 value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
                 onVoice = ::togglePresence,
@@ -659,8 +683,9 @@ fun HomeScreen(
                         else -> viewModel.cancelSession()
                     }
                 },
-                enabled = canSend,
-                voiceEnabled = !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
+                enabled = canSend && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
+                voiceEnabled = !changingConversation && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention &&
+                    !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
                 voiceActive = isListening,
                 voiceContentDescription = uiText(when {
                     !uiState.microphonePermissionGranted -> "Enable voice"
@@ -670,100 +695,35 @@ fun HomeScreen(
                     else -> "Talk"
                 }),
                 showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
-            )
-            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val toolbarText = androidx.compose.ui.text.rememberTextMeasurer()
-            val toolbarStyle = MaterialTheme.typography.labelMedium
-            val toolbarLabelWidth = listOf(uiText("Attach"), uiText("Tools"), uiText(homeModeLabel(currentMode)))
-                .sumOf { toolbarText.measure(AnnotatedString(it), style = toolbarStyle).size.width }
-            // Use real translated text metrics; reserve room for all controls before hiding labels.
-            val actionLabelsFit = LocalDensity.current.fontScale < 1.5f &&
-                with(LocalDensity.current) { toolbarLabelWidth.toDp() } + 160.dp <= maxWidth
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                val attachA11yLabel = uiText("Attach") +
-                    if (contextChips.isNotEmpty()) " (" + contextChips.size + ")" else ""
-                if (!actionLabelsFit) IconButton(
-                    onClick = { showContext = true },
-                    modifier = Modifier.semantics { contentDescription = attachA11yLabel }) {
-                    androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), uiText("Attach"))
-                } else TextButton(onClick = { showContext = true }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_attach), null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(uiText("Attach") + if (contextChips.isNotEmpty()) " (${contextChips.size})" else "", style = MaterialTheme.typography.labelMedium)
-                }
-                Box {
-                    if (!actionLabelsFit) IconButton(onClick = { showActions = true }) {
-                        HaloIcon(HaloGlyph.TOOL, uiText("Tools"))
-                    } else TextButton(onClick = { showActions = true }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        HaloIcon(HaloGlyph.TOOL, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
-                        Text(uiText("Tools"), style = MaterialTheme.typography.labelMedium)
-                    }
+                onAttach = { showContext = true }, onTools = { showActions = true },
+                toolsMenu = {
                     DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
-                        DropdownMenuItem(
-                            text = { Text(uiText("How halo helps") + ": " + uiText(homeModeLabel(currentMode))) },
-                            enabled = !isActiveSession && !isListening && !isSpeechProcessing,
-                            onClick = { showActions = false; modeMenuExpanded = true },
-                        )
                         DropdownMenuItem(text = { Text(uiText(if (voiceModeActive) "End Voice Mode" else "Start Voice Mode")) },
-                            enabled = voiceModeActive || (!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking),
+                            enabled = voiceModeActive || (!changingConversation && !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking),
                             onClick = {
                                 showActions = false
-                                if (voiceModeActive) viewModel.stopVoiceMode()
-                                else when {
+                                if (voiceModeActive) viewModel.stopVoiceMode() else when {
                                     !uiState.microphonePermissionGranted -> onRequestMicrophonePermission()
                                     !uiState.speechReady -> viewModel.navigateToVoice()
                                     else -> viewModel.startVoiceMode()
                                 }
                             })
-                        DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = {
-                            showActions = false; showInboxCapture = true
-                        })
-                        DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = {
-                            showActions = false; viewModel.createNote()
-                        })
+                        if (lastVoiceResponseConversation != null && lastVoiceResponseConversation == uiState.conversationId)
+                            DropdownMenuItem(text = { Text(uiText("Repeat last reply")) }, onClick = { showActions = false; viewModel.repeatLastVoiceResponse() })
+                        DropdownMenuItem(text = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.online_title)) },
+                            enabled = canSend && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
+                            onClick = { showActions = false; webSearchDraft = textInput })
+                        DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = { showActions = false; showInboxCapture = true })
+                        DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
                         DropdownMenuItem(text = { Text(uiText("Timer")) },
-                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention &&
-                                "halo_timer" in dashboard.quickTools,
+                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention && "halo_timer" in dashboard.quickTools,
                             onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
                         DropdownMenuItem(text = { Text(uiText("Open app")) },
-                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention &&
-                                "halo_open_app" in dashboard.quickTools,
+                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention && "halo_open_app" in dashboard.quickTools,
                             onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
-                        DropdownMenuItem(text = { Text(uiText("New conversation")) }, onClick = {
-                            showActions = false; viewModel.newConversation()
-                        })
-                        DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = {
-                            showActions = false; confirmClear = true
-                        })
                     }
-                }
-                Box(Modifier.weight(1f)) {
-                    TextButton(onClick = { modeMenuExpanded = true }, enabled = !isActiveSession && !isListening && !isSpeechProcessing,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                        Text(uiText(homeModeLabel(currentMode)), modifier = Modifier.weight(1f, fill = false), style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                        HaloIcon(HaloGlyph.NEXT, null, Modifier.size(16.dp))
-                    }
-                    DropdownMenu(expanded = modeMenuExpanded, onDismissRequest = { modeMenuExpanded = false }) {
-                        CognitiveOperatingMode.values().forEach { mode ->
-                            DropdownMenuItem(
-                                text = { Column {
-                                    Text(uiText(homeModeLabel(mode)))
-                                    Text(uiText(homeModeSummary(mode)), style = MaterialTheme.typography.bodySmall)
-                                } },
-                                trailingIcon = { if (mode == currentMode) Text("✓") },
-                                onClick = {
-                                    if (!isActiveSession && !isListening && !isSpeechProcessing)
-                                        viewModel.selectedMode.value = mode
-                                    modeMenuExpanded = false
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-            }
+                },
+            )
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
         }

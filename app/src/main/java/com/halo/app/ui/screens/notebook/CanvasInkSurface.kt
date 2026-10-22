@@ -325,13 +325,14 @@ internal fun CanvasInkSurface(
                 Text(stringResource(R.string.ink_selection_clear))
             }
         }
-        selectionContext?.let { selected ->
+        if (selectionContext != null) {
+            val selected = requireNotNull(selectionContext)
             Text(stringResource(R.string.ink_selection_count, selected.selectedStrokeIds.size),
                 color = selectionColor, style = MaterialTheme.typography.bodySmall)
             onSaveSelection?.let { save ->
                 TextButton(onClick = { save(selected) }) { Text(com.halo.app.language.uiText("Save selection")) }
             }
-        } ?: if (selectionBounds != null) {
+        } else if (selectionBounds != null) {
             Text(stringResource(R.string.ink_selection_empty), style = MaterialTheme.typography.bodySmall)
         } else if (mode == InkMode.SELECT) {
             Text(stringResource(R.string.ink_selection_help), style = MaterialTheme.typography.bodySmall)

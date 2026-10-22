@@ -580,6 +580,25 @@
     <string name="ui_13e10588f9f9" formatted="false">"Provider setup"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Local network"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Cloud"</string>
+    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Power mode"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Private / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Everything stays on this phone. Power features are off."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"AI processing stays on this phone. Power features are off."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"One switch at the top of every screen controls sharing. Mode profiles keep your Private and Power choices separate."</string>
+    <string name="ui_b78e8b0ee157" formatted="false">"This switch controls sharing for supported online halo features."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"This action needs Power mode. Use the switch at the top of halo."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Switch to Power"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Power mode could not be enabled. Check Kids settings or try again."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"A grown-up must allow Power mode in Kids settings."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Switch to Power mode at the top of halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Cloud voice needs Power mode. Use the switch at the top of halo. Kids sessions also need grown-up approval."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Cloud processing is off. Use the Private / Power switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Power switch at the top of halo."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Media sharing follows the Private / Power switch at the top of halo."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"File sharing follows the Private / Power switch at the top of halo."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Memory sharing follows the Private / Power switch at the top of halo."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Conversation default"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Model roles"</string>
     <string name="ui_dff99ddda166" formatted="false">"Images and visual context"</string>
@@ -3690,6 +3709,7 @@
     <string name="ui_1e1eb5441389" formatted="false">"Topics are chosen by you. A reading source still needs to be connected."</string>
     <string name="ui_6436d3154dde" formatted="false">"Card preview"</string>
     <string name="ui_0ce666a9a655" formatted="false">"Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card."</string>
+    <string name="ui_6522402e0ed3" formatted="false">"You can also describe several cards and a research topic."</string>
     <string name="ui_2c029f3c3d00" formatted="false">"What would you like to change?"</string>
     <string name="ui_ca8c2d690be6" formatted="false">"That change is unavailable. Use Customize to choose the card and action."</string>
     <string name="ui_1523d23e2e00" formatted="false">"Review your new layout"</string>
@@ -3909,4 +3929,36 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Download and select Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"There is nothing to read"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Unable to save; check the configuration and try again"</string>
+    <string name="ui_120a64e7e914" formatted="false">"Google authorization was cancelled or unavailable"</string>
+    <string name="ui_cd426fedb903" formatted="false">"Enter a Google Cloud project ID; Google authorization must be available"</string>
+    <string name="ui_6b8a44750d45" formatted="false">"No credential required"</string>
+    <string name="ui_4eb55c901146" formatted="false">"No stored credential"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Enter credential"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"OAuth authorized; test connection to check readiness"</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Google authorization failed"</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Paid / account dependent"</string>
+    <string name="ui_d721c079e186" formatted="false">"Use conversation model"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Choose automatically"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Use selected model"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Native tool loop"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"halo prompt tool loop"</string>
+    <string name="ui_c8f701d80021" formatted="false">"No tool loop"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Quick conversational responses"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Normal conversation · Conversation default"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Deeper analysis · Independent model assignment"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Tasks that need tools"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Best measured on this device"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Only measured candidate"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"CHAT 3/3 and three warm samples; lowest measured warm latency"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"CHAT 3/3; reasoning, context and latency evidence"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"CHAT and reasoning probes 3/3; stable execution"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Proven initial tool and continuation loop; native protocol preferred"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Verified image evidence from Vision Lab"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Routing: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Suggested: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Use for %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Explicit model only"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Preferred provider with fallback"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Refresh selected provider metadata"</string>
 </resources>

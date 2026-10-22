@@ -1,0 +1,13 @@
+<resources>
+    <string name="home_chat_options">Параметры чата</string>
+    <string name="home_your_day">Ваш день</string>
+    <string name="home_message_actions">Действия с сообщением</string>
+    <string name="home_history_empty">Здесь появятся сохранённые разговоры.</string>
+    <string name="home_current_chat">Текущий разговор</string>
+    <string name="home_share_failed">Не удалось поделиться. Вы можете скопировать сообщение.</string>
+    <string name="home_task_details">Подробности задачи</string>
+    <string name="home_hide_task_details">Скрыть подробности задачи</string>
+    <string name="home_load_earlier">Загрузить предыдущие сообщения</string>
+    <string name="home_remove_attachment">Убрать: %1$s</string>
+    <string name="home_conversation_unavailable">Не удалось открыть разговор. Попробуйте ещё раз.</string>
+</resources>

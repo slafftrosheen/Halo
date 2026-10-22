@@ -580,6 +580,25 @@
     <string name="ui_13e10588f9f9" formatted="false">"Настройка провайдера"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Локальная сеть"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Облако"</string>
+    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Режим Power"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Приватный режим / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Обработка ИИ остаётся на этом телефоне. Функции Power отключены."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"Обработка ИИ остаётся на этом телефоне. Функции Power отключены."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"В режиме Power переписка, изображения, память и рабочее пространство могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"Один переключатель вверху экрана управляет передачей данных. Профили режимов хранят отдельные настройки Private и Power."</string>
+    <string name="ui_b78e8b0ee157" formatted="false">"Этот переключатель управляет передачей данных для поддерживаемых онлайн-функций halo."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"Для этого действия нужен режим Power. Включите его переключателем вверху halo."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Включить Power"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Не удалось включить режим Power. Проверьте настройки детского режима или повторите попытку."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"Взрослый должен разрешить режим Power в настройках детского режима."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Включите режим Power в верхней части halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Для облачного синтеза речи нужен режим Power. Включите его переключателем вверху halo. Для детских сеансов также требуется разрешение взрослого."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Облачная обработка отключена. Включите режим Power переключателем вверху halo или выберите модель на устройстве. Для детских сеансов также требуется разрешение взрослого."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Udostępnianie tego obrazu w chmurze jest niedozwolone. Użyj przełącznika Private / Power u góry halo."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Передача медиафайлов зависит от переключателя Private / Power вверху halo."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"Передача файлов зависит от переключателя Private / Power вверху halo."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Передача памяти зависит от переключателя Private / Power вверху halo."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Модель для разговоров по умолчанию"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Роли моделей"</string>
     <string name="ui_dff99ddda166" formatted="false">"Изображения и визуальный контекст"</string>
@@ -3690,6 +3709,7 @@
     <string name="ui_1e1eb5441389" formatted="false">"Вы выбираете темы сами. Источник для чтения ещё нужно подключить."</string>
     <string name="ui_6436d3154dde" formatted="false">"Предпросмотр карточки"</string>
     <string name="ui_0ce666a9a655" formatted="false">"Добавьте, скройте, увеличьте или переместите карточку в начало. Назовите её так, как в списке «Добавить карточку»."</string>
+    <string name="ui_6522402e0ed3" formatted="false">"Можно также описать несколько карточек и тему для поиска."</string>
     <string name="ui_2c029f3c3d00" formatted="false">"Что вы хотите изменить?"</string>
     <string name="ui_ca8c2d690be6" formatted="false">"Такое изменение недоступно. Выберите карточку и действие в настройке экрана."</string>
     <string name="ui_1523d23e2e00" formatted="false">"Проверьте новое расположение"</string>
@@ -3909,4 +3929,36 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Скачать и выбрать Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"Здесь нечего читать"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Не удалось сохранить. Проверьте настройки и повторите попытку."</string>
+    <string name="ui_120a64e7e914" formatted="false">"Авторизация Google отменена или недоступна."</string>
+    <string name="ui_cd426fedb903" formatted="false">"Введите идентификатор проекта Google Cloud; должна быть доступна авторизация Google."</string>
+    <string name="ui_6b8a44750d45" formatted="false">"Учетные данные не требуются"</string>
+    <string name="ui_4eb55c901146" formatted="false">"Нет сохранённых учетных данных"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Введите учетные данные"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"Авторизация OAuth завершена; проверьте подключение, чтобы убедиться в готовности."</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Не удалось выполнить авторизацию Google."</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Платно / зависит от аккаунта"</string>
+    <string name="ui_d721c079e186" formatted="false">"Использовать модель для разговора"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Выбирать автоматически"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Использовать выбранную модель"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Встроенный цикл вызова инструментов"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"Цикл инструментов в запросе halo"</string>
+    <string name="ui_c8f701d80021" formatted="false">"Без цикла вызова инструментов"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Короткие ответы в разговоре"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Обычный разговор · модель по умолчанию"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Более глубокий анализ · отдельный выбор модели"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Задачи, которым нужны инструменты"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Лучший результат измерений на этом устройстве"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Единственный кандидат с результатами измерений"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"ЧАТ 3/3 и три замера после прогрева; минимальная задержка после прогрева"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"ЧАТ 3/3; результаты проверки рассуждений, контекста и задержки"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"Проверки чата и рассуждений 3/3; стабильное выполнение"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Подтверждён первый вызов инструмента и продолжение цикла; предпочтителен встроенный протокол"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Подтверждённые результаты обработки изображений из Vision Lab"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Маршрутизация: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Рекомендация: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Использовать для роли: %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Только выбранная модель"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Предпочтительный провайдер с резервным вариантом"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Обновить данные выбранного провайдера"</string>
 </resources>

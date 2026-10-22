@@ -49,6 +49,7 @@ internal fun HomePresenceHeader(
     inputLevel: Float = 0f,
     aura: Boolean = false,
     orbModifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
 ) {
     val folded = compact || LocalDensity.current.fontScale >= 1.5f
     // H01: an on-page presence, not the full-screen onboarding hero.
@@ -67,7 +68,9 @@ internal fun HomePresenceHeader(
     val words: @Composable (Modifier) -> Unit = { modifier ->
         Column(modifier, horizontalAlignment = if (folded) Alignment.Start else Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium,
+            Text(title, style = if (folded) MaterialTheme.typography.titleSmall else MaterialTheme.typography.headlineMedium,
+                maxLines = if (folded) 2 else Int.MAX_VALUE,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 textAlign = if (folded) TextAlign.Start else TextAlign.Center)
             supporting?.let { Text(it, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -76,9 +79,9 @@ internal fun HomePresenceHeader(
     }
     if (folded) Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        presence(); words(Modifier.weight(1f))
+        presence(); words(Modifier.weight(1f)); action?.invoke()
     } else Column(Modifier.fillMaxWidth().padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        presence(); words(Modifier.fillMaxWidth())
+        presence(); words(Modifier.fillMaxWidth()); action?.invoke()
     }
 }

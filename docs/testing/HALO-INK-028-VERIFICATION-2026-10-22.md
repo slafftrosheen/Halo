@@ -17,3 +17,18 @@ The instrumentation tests synthesize Android pointer events. They cover ordered 
 No physical pressure-sensitive stylus or eraser was used. No tablet layout, real pen/finger palm contact, rotation, process-death draft recovery, long-session capacity/performance, accessibility, or saved-v1 sketch visual preservation was assessed on a physical pen device. Keep Issue 28 open until an owner/alpha tester qualifies those scenarios on a compatible pen device; no Huion or other model compatibility is claimed.
 
 No CI or GitHub Actions were used.
+
+## Physical phone touch-input check — 2026-10-22
+
+At source revision `1a6de8246b0e8eca8ab7c5aa1adf47b601bdefcd`, the debug APK
+(SHA-256 `0F00ED6EAD6CFC89C75A162A949D51A6BBA0D6909E7DBC8D6ACC4DCC4E6758B1`)
+was installed on Samsung SM-G990B2 (`R5CTA0TKLZZ`, Android 16 / API 36). In a
+new unsaved Canvas, an Android touch swipe rendered a visible stroke; Undo
+cleared it and enabled Redo; Redo restored it; Cancel returned to the empty
+Canvas (`0 cards`). No saved drawing was created, and no app fatal exception
+was observed. This check used ADB-injected touch events; it is evidence for the
+phone UI and touch-fallback path, not a real hand, stylus, pressure, or palm test.
+
+Pen hardware, tablet layout, rotation, process-death draft recovery, long-session
+capacity/performance, accessibility, and saved-v1 sketch visual preservation
+remain unqualified. Keep Issue 28 open.

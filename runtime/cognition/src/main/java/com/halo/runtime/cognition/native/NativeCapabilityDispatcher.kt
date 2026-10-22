@@ -102,6 +102,8 @@ data class NativeCapabilityResult(val request: NativeCapabilityRequest, val runI
                 NativeActionOutcome.CANCELLED -> "Screen action cancelled."
             }
         }
+        if (request.operation == "halo_open_settings" && outcome == NativeActionOutcome.DISPATCHED)
+            return "Android settings opened; no setting was changed."
         return when (outcome) {
             NativeActionOutcome.CONFIRMED -> details.ifBlank { "Action confirmed." }
             NativeActionOutcome.DISPATCHED -> "Action dispatched; completion is unconfirmed."
