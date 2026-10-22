@@ -23,6 +23,8 @@ data class ObjectProvenance(@PrimaryKey val objectId: String, val sourceId: Stri
 interface WorkspaceContextDao {
     @Query("SELECT objectId FROM working_set") fun observeWorkingSet(): Flow<List<String>>
     @Query("SELECT objectId FROM working_set ORDER BY addedAt DESC") suspend fun selectedIds(): List<String>
+    @Query("SELECT * FROM working_set ORDER BY addedAt DESC") suspend fun selectedEntries(): List<WorkingSetEntry>
+    @Query("SELECT * FROM working_set WHERE objectId = :id LIMIT 1") suspend fun selectedEntry(id: String): WorkingSetEntry?
     @Query("SELECT notes.body FROM notes INNER JOIN working_set ON notes.objectId = working_set.objectId INNER JOIN workspace_objects ON workspace_objects.id = notes.objectId WHERE workspace_objects.lifecycle = 'ACTIVE'")
     suspend fun selectedContent(): List<String>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun add(entry: WorkingSetEntry)
@@ -59,6 +61,11 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         requireNotNull(database.notebookDao().getWorkspaceObject(id))
         database.workspaceContextDao().add(WorkingSetEntry(id, System.currentTimeMillis()))
     }
+    suspend fun selectInkSelection(canvasId: String, selectionNodeId: String) {
+        require(selectionReferenceText(canvasId, selectionNodeId) != null) { "Selection is stale or unavailable." }
+        database.workspaceContextDao().add(WorkingSetEntry(canvasId, System.currentTimeMillis(),
+            "$INK_SELECTION_SOURCE_PREFIX$selectionNodeId"))
+    }
     suspend fun remove(id: String) = database.workspaceContextDao().remove(id)
     suspend fun remember(id: String) {
         val note = requireNotNull(notes.getNote(id))
@@ -71,10 +78,10 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     suspend fun forget(id: Int) { com.halo.app.data.memory.RoomMemoryRepository(database).forgetMemory("mem_$id") }
     override suspend fun content(includeMemories: Boolean): List<String> = entries(includeMemories).map { it.text }
     override suspend fun entries(includeMemories: Boolean): List<com.halo.runtime.cognition.context.WorkspaceContextEntry> =
-        database.workspaceContextDao().selectedIds().take(20).mapNotNull { id ->
-            resolveContent(id)?.let { (type,text) ->
+        database.workspaceContextDao().selectedEntries().take(20).mapNotNull { entry ->
+            resolveWorkingSetEntry(entry)?.let { (type,text) ->
                 if(type == "MEMORY" && !includeMemories) null else
-                    com.halo.runtime.cognition.context.WorkspaceContextEntry(id,"Working set ${type.lowercase()}: ${text.take(8_000)}")
+                    com.halo.runtime.cognition.context.WorkspaceContextEntry(entry.objectId,"Working set ${type.lowercase()}: ${text.take(8_000)}")
             }
         }
 
@@ -96,11 +103,51 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
                 }
             }
             "FILE", "MEDIA", "ARTIFACT" -> database.workspaceFileDao().getFile(objectId)?.let { it.sha256 ?: it.modifiedAt?.let { stamp -> "workspace-file:$stamp" } }
+            "CANVAS" -> {
+                val selectionEntry = database.workspaceContextDao().selectedEntry(objectId)
+                    ?.takeIf { it.source.startsWith(INK_SELECTION_SOURCE_PREFIX) }
+                if (selectionEntry == null) item.updatedAt.toString() else {
+                    val selectionId = selectionEntry.source.removePrefix(INK_SELECTION_SOURCE_PREFIX).takeIf { it.isNotBlank() }
+                        ?: return null
+                    val reference = selectionReferenceText(objectId, selectionId) ?: return null
+                    "ink-selection:" + java.security.MessageDigest.getInstance("SHA-256")
+                        .digest(reference.toByteArray(Charsets.UTF_8))
+                        .joinToString("") { byte -> "%02x".format(byte) }
+                }
+            }
             else -> item.updatedAt.toString()
         }
     }
 
     override suspend fun isMemory(objectId: String): Boolean = database.notebookDao().getWorkspaceObject(objectId)?.type == "MEMORY"
+
+    private suspend fun resolveWorkingSetEntry(entry: WorkingSetEntry): Pair<String, String>? {
+        if (entry.source.startsWith(INK_SELECTION_SOURCE_PREFIX)) {
+            val selectionId = entry.source.removePrefix(INK_SELECTION_SOURCE_PREFIX).takeIf { it.isNotBlank() } ?: return null
+            val item = database.notebookDao().getWorkspaceObject(entry.objectId)
+                ?.takeIf { it.lifecycle == "ACTIVE" && it.type == WorkspaceObjectType.CANVAS.name } ?: return null
+            return selectionReferenceText(entry.objectId, selectionId)?.let { item.type to it }
+        }
+        return resolveContent(entry.objectId)
+    }
+
+    private suspend fun selectionReferenceText(canvasId: String, selectionNodeId: String): String? {
+        val item = database.notebookDao().getWorkspaceObject(canvasId)
+            ?.takeIf { it.lifecycle == "ACTIVE" && it.type == WorkspaceObjectType.CANVAS.name } ?: return null
+        val nodes = database.notebookCanvasDao().getNodes(canvasId)
+        val selection = nodes.firstOrNull { it.id == selectionNodeId && it.type == CanvasNodeType.INK_SELECTION.name } ?: return null
+        val context = InkSelectionBookmarkCodec.decode(selection.text) ?: return null
+        val sourceId = database.notebookCanvasDao().getEdges(canvasId)
+            .firstOrNull { it.toNodeId == selectionNodeId && it.label == "selection" }?.fromNodeId ?: return null
+        val source = nodes.firstOrNull { it.id == sourceId } ?: return null
+        val type = runCatching { CanvasNodeType.valueOf(source.type) }.getOrNull() ?: return null
+        val sourceVersion = source.refObjectId?.let { id ->
+            database.workspaceFileDao().getFile(id)?.let { it.sha256 ?: it.modifiedAt?.let { stamp -> "workspace-file:$stamp" } }
+        }
+        if (InkSelectionBookmarkCodec.resolve(context, canvasId, type, source.id, source.refObjectId,
+                source.text, sourceVersion) == null) return null
+        return "Canvas '${item.title}': ${InkSelectionBookmarkCodec.referenceText(context)}"
+    }
 
     private suspend fun resolveContent(id: String): Pair<String, String>? {
         val item = database.notebookDao().getWorkspaceObject(id) ?: return null
@@ -128,5 +175,9 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
             else -> item.title
         }?.takeIf { it.isNotBlank() } ?: return null
         return item.type to text
+    }
+
+    private companion object {
+        const val INK_SELECTION_SOURCE_PREFIX = "INK_SELECTION:"
     }
 }

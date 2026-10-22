@@ -3774,3 +3774,6 @@ Ink selection|||Выделенная область рисунка|||Atzīmētai
 Selection source is unchanged.|||Источник выделения не изменился.|||Atlases avots nav mainījies.
 Source changed; select the region again.|||Источник изменился. Выделите область ещё раз.|||Avots mainījies; atlasi apgabalu vēlreiz.
 Open linked source|||Открыть связанный источник|||Atvērt saistīto avotu
+Add selection to working set|||Добавить выделение в рабочий набор|||Pievienot atlasi darba kopai
+Selection added to working set|||Выделение добавлено в рабочий набор|||Atlase pievienota darba kopai
+Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized.|||Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся.|||Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts.

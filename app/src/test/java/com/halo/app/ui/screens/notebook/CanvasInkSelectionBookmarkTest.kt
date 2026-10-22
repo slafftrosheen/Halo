@@ -5,8 +5,10 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.notebook.CanvasNodeType
 import com.halo.app.data.notebook.NotebookCanvasRepository
+import com.halo.app.data.notebook.RoomNotebookRepository
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectSource
@@ -20,6 +22,7 @@ import com.halo.sdk.runtime.ink.InkSelectionOrigin
 import com.halo.sdk.runtime.ink.InkSelections
 import com.halo.sdk.runtime.ink.InkStroke
 import com.halo.sdk.runtime.ink.InkTool
+import com.halo.sdk.runtime.Storage
 import java.security.MessageDigest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -108,6 +111,22 @@ class CanvasInkSelectionBookmarkTest {
         assertFalse(bookmark.inkSelectionIsCurrent(savedSource, canvasId, "file-v2"))
         assertEquals("selection", canvas.edges.single { it.toNodeId == bookmark.id }.label)
         assertNotNull(database.workspaceFileDao().getFile(fileId))
+
+        val contextStore = WorkspaceContextStore(database, RoomNotebookRepository(database.notebookDao()), MemoryStorage())
+        contextStore.selectInkSelection(canvasId, bookmark.id)
+        assertNotNull(contextStore.versionFor(canvasId))
+        val workingContext = contextStore.entries(includeMemories = false).single().text
+        assertTrue(workingContext.contains("page=page-2"))
+        assertTrue(workingContext.contains("sourceRevision="))
+        assertTrue(workingContext.contains("recognitionStatus=NOT_AVAILABLE"))
+        assertTrue(workingContext.contains("visualContentIncluded=false"))
+        assertFalse(workingContext.contains(encoded))
+
+        val changed = InkCodec.encode(ink("pdf-edited"))
+        assertTrue(repository.saveFileMarkup(canvasId, sourceNodeId, mapOf(2 to changed),
+            expectedText = savedSource.text, expectedFileVersion = "file-v1"))
+        assertEquals(null, contextStore.versionFor(canvasId))
+        assertTrue(contextStore.entries(includeMemories = false).isEmpty())
     }
 
     private fun ink(id: String) = InkDocument(listOf(InkStroke(InkTool.STYLUS,
@@ -121,4 +140,16 @@ class CanvasInkSelectionBookmarkTest {
         MessageDigest.getInstance("SHA-256")
             .digest((base + "\n" + InkCodec.encode(document)).toByteArray(Charsets.UTF_8))
             .joinToString("") { byte -> "%02x".format(byte) }
+
+    private class MemoryStorage : Storage {
+        private val values = mutableMapOf<String, Any>()
+        override fun getString(key: String, defaultValue: String?) = (values[key] as? String) ?: defaultValue
+        override fun putString(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
+        override fun getInt(key: String, defaultValue: Int) = (values[key] as? Int) ?: defaultValue
+        override fun putInt(key: String, value: Int) { values[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean) = (values[key] as? Boolean) ?: defaultValue
+        override fun putBoolean(key: String, value: Boolean) { values[key] = value }
+        override fun remove(key: String) { values.remove(key) }
+        override fun clear() { values.clear() }
+    }
 }

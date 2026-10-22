@@ -394,12 +394,8 @@ class NotebookCanvasRepository(
         val nodes = canvasDao.getNodes(canvasId)
         val source = nodes.firstOrNull { it.id == context.pageId && it.type == CanvasNodeType.SKETCH.name }
         requireNotNull(source) { "Selection source is no longer on this Canvas." }
-        val document = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(source.text)) { "Selection source is unreadable." }
-        val encoded = com.halo.sdk.runtime.ink.InkCodec.encode(document)
-        val revisionBytes = java.security.MessageDigest.getInstance("SHA-256")
-            .digest(("\n" + encoded).toByteArray(Charsets.UTF_8))
-        val sourceRevision = revisionBytes.joinToString("") { byte -> "%02x".format(byte) }
-        require(com.halo.sdk.runtime.ink.InkSelections.resolve(document, context, canvasId, source.id, sourceRevision) != null) {
+        require(InkSelectionBookmarkCodec.resolve(context, canvasId, CanvasNodeType.SKETCH, source.id,
+            source.refObjectId, source.text) != null) {
             "Source changed. Select the region again."
         }
         val id = insertInkSelectionBookmark(canvasId, source, context, nodes)
@@ -415,18 +411,7 @@ class NotebookCanvasRepository(
     ): String {
         val id = newId()
         val stamp = now()
-        val payload = org.json.JSONObject().apply {
-            put("schemaVersion", context.schemaVersion)
-            put("workspaceObjectId", context.workspaceObjectId)
-            put("pageId", context.pageId)
-            put("left", context.bounds.left); put("top", context.bounds.top)
-            put("right", context.bounds.right); put("bottom", context.bounds.bottom)
-            put("strokeIds", org.json.JSONArray(context.selectedStrokeIds))
-            put("sourceRevision", context.sourceRevision)
-            put("origin", context.origin.name)
-            put("createdAtMs", context.createdAtMs)
-            put("updatedAtMs", context.updatedAtMs)
-        }.toString()
+        val payload = InkSelectionBookmarkCodec.encode(context)
         val layer = (currentNodes.maxOfOrNull { it.zIndex } ?: -1) + 1
         canvasDao.insertNode(CanvasNodeEntity(id, canvasId, CanvasNodeType.INK_SELECTION.name, null, payload,
             source.x + source.width + 32f, source.y, 220f, 150f, layer, stamp, stamp))
@@ -517,13 +502,9 @@ class NotebookCanvasRepository(
             check(selection.workspaceObjectId == node.refObjectId) { "Selection belongs to a different source." }
             val pageNumber = selection.pageId?.removePrefix("page-")?.toIntOrNull()
                 ?.takeIf { it in 1..9999 } ?: error("Selection page is invalid.")
-            val encoded = CanvasFileMarkupCodec.decode(text).pages[pageNumber].orEmpty()
-            val document = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(encoded)) { "Selection page is unreadable." }
             val baseRevision = expectedFileVersion ?: currentFileVersion ?: error("Source version is unavailable.")
-            val sourceRevision = java.security.MessageDigest.getInstance("SHA-256")
-                .digest((baseRevision + "\n" + com.halo.sdk.runtime.ink.InkCodec.encode(document)).toByteArray(Charsets.UTF_8))
-                .joinToString("") { byte -> "%02x".format(byte) }
-            require(com.halo.sdk.runtime.ink.InkSelections.resolve(document, selection, node.refObjectId, "page-$pageNumber", sourceRevision) != null) {
+            require(InkSelectionBookmarkCodec.resolve(selection, canvasId, CanvasNodeType.valueOf(node.type), node.id,
+                node.refObjectId, text, baseRevision) != null) {
                 "Source changed. Select the region again."
             }
         }

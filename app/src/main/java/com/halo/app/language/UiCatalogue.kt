@@ -3772,4 +3772,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Selection source is unchanged." to R.string.ui_a21b1c1e33ca,
     "Source changed; select the region again." to R.string.ui_9ebce4ab2618,
     "Open linked source" to R.string.ui_cf0d1a41f783,
+    "Add selection to working set" to R.string.ui_cfb03a6319e9,
+    "Selection added to working set" to R.string.ui_19ce2f3279a2,
+    "Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized." to R.string.ui_e6fd9b9426fd,
 )

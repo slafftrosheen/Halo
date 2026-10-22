@@ -3770,4 +3770,7 @@
     <string name="ui_a21b1c1e33ca" formatted="false">"Источник выделения не изменился."</string>
     <string name="ui_9ebce4ab2618" formatted="false">"Источник изменился. Выделите область ещё раз."</string>
     <string name="ui_cf0d1a41f783" formatted="false">"Открыть связанный источник"</string>
+    <string name="ui_cfb03a6319e9" formatted="false">"Добавить выделение в рабочий набор"</string>
+    <string name="ui_19ce2f3279a2" formatted="false">"Выделение добавлено в рабочий набор"</string>
+    <string name="ui_e6fd9b9426fd" formatted="false">"Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся."</string>
 </resources>

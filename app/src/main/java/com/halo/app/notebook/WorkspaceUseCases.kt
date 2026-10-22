@@ -72,6 +72,7 @@ class WorkspaceUseCases(
     suspend fun search(text: String): WorkspaceSearchResult =
         searchEngine.search(WorkspaceSearchQuery(text, maxHits = 100))
     suspend fun select(id: String) = context.select(id)
+    suspend fun selectInkSelection(canvasId: String, selectionNodeId: String) = context.selectInkSelection(canvasId, selectionNodeId)
     suspend fun remove(id: String) = context.remove(id)
     suspend fun remember(id: String) {
         val note = notes.getNote(id) ?: return

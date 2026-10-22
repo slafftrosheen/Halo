@@ -924,6 +924,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 style = MaterialTheme.typography.bodyMedium)
                             Text(uiText(if (selectionCurrent) "Selection source is unchanged." else "Source changed; select the region again."),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (selectionCurrent) Text(uiText("Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."),
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             TextButton(onClick = {
                                 sourceNode?.let { source ->
                                     if (source.type == CanvasNodeType.SKETCH) {
@@ -932,6 +934,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                     } else viewModel.openReference(source.id)
                                 }
                             }, enabled = sourceNode != null) { Text(uiText("Open linked source")) }
+                            TextButton(onClick = { viewModel.addInkSelectionToWorkingSet(node.id) },
+                                enabled = selectionCurrent) { Text(uiText("Add selection to working set")) }
                         }
                         else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)

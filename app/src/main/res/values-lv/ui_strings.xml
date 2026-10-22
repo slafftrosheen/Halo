@@ -3770,4 +3770,7 @@
     <string name="ui_a21b1c1e33ca" formatted="false">"Atlases avots nav mainījies."</string>
     <string name="ui_9ebce4ab2618" formatted="false">"Avots mainījies; atlasi apgabalu vēlreiz."</string>
     <string name="ui_cf0d1a41f783" formatted="false">"Atvērt saistīto avotu"</string>
+    <string name="ui_cfb03a6319e9" formatted="false">"Pievienot atlasi darba kopai"</string>
+    <string name="ui_19ce2f3279a2" formatted="false">"Atlase pievienota darba kopai"</string>
+    <string name="ui_e6fd9b9426fd" formatted="false">"Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts."</string>
 </resources>
