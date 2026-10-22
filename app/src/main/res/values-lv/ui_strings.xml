@@ -2896,8 +2896,11 @@
     <string name="ui_4eb036062899" formatted="false">"Šajā tālrunī · darbība nav pārbaudīta"</string>
     <string name="ui_9317af088467" formatted="false">"Šajā tālrunī · jāpārbauda"</string>
     <string name="ui_5569a4e0a4ce" formatted="false">"Nav lejupielādēts"</string>
+    <string name="ui_f0b0738f75b8" formatted="false">"Lejupielādēts"</string>
+    <string name="ui_661ff40a07e0" formatted="false">"Rindā"</string>
     <string name="ui_9ea4b3629991" formatted="false">"Pārbauda ierīces failus"</string>
     <string name="ui_ea09329797d4" formatted="false">"Pārbauda modeļu failus ierīcē…"</string>
+    <string name="ui_63bbd08c916b" formatted="false">"Verificē…"</string>
     <string name="ui_25a2eb2bb766" formatted="false">"Neizdevās pārbaudīt ierīces failus. Lai mēģinātu vēlreiz, atjaunini ierīces failu sarakstu."</string>
     <string name="ui_e4086b54a958" formatted="false">"Faila statuss nav pieejams"</string>
     <string name="ui_ad6a5b84aac1" formatted="false">"Atstāj lauku tukšu, lai izmantotu šai lietotnes sesijai lietoto marķieri."</string>
@@ -3888,4 +3891,13 @@
     <string name="ui_5745eeece618" formatted="false">"Gaida rezultātu"</string>
     <string name="ui_22d82f5bf178" formatted="false">"Nav uzdevumu, kas būtu jāizpilda"</string>
     <string name="ui_fe18013d93d2" formatted="false">"Tagad"</string>
+    <string name="ui_7a0a4fb205e1" formatted="false">"Importētais fails ir tukšs."</string>
+    <string name="ui_5cc788d99adc" formatted="false">"Importētajam modelim jābūt .litertlm failam."</string>
+    <string name="ui_af305790d439" formatted="false">"Nepietiek brīvas vietas šī modeļa importēšanai. Atbrīvojiet vietu un mēģiniet vēlreiz."</string>
+    <string name="ui_64e121a724c8" formatted="false">"Sagatavo modeļa importu…"</string>
+    <string name="ui_7971c95e6593" formatted="false">"Reģistrē importēto modeli…"</string>
+    <string name="ui_fc18c5b2eb93" formatted="false">"Faila nodrošinātājs nodeva nepilnu modeli. Lejupielādējiet pilnu failu un importējiet vēlreiz."</string>
+    <string name="ui_079c18445722" formatted="false">"Neizdevās atvērt URI ievades plūsmu."</string>
+    <string name="ui_35cc3c5e9d34" formatted="false">"Izvēlieties pilnu .litertlm modeļa failu."</string>
+    <string name="ui_57bc2bcc327f" formatted="false">"Lokālo modeļu pārvaldnieks nav pieejams."</string>
 </resources>

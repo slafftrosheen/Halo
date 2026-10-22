@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="ui_8c3023819c3a" formatted="false">"Ukryj zaawansowane informacje"</string>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
     <string name="ui_bcba696f3eb1" formatted="false">"Przekierowanie"</string>
     <string name="ui_3ff5620b0294" formatted="false">"Nauka"</string>
@@ -74,6 +75,7 @@
     <string name="ui_6c48253817ef" formatted="false">"Zaimportowane modele"</string>
     <string name="ui_e03fbfc3ca53" formatted="false">"Nie zmierzono na tym urządzeniu"</string>
     <string name="ui_ea93d6a262ec" formatted="false">"Narzędzia"</string>
+    <string name="ui_2cff9baabf56" formatted="false">"Importuj"</string>
     <string name="ui_d640c7421da0" formatted="false">"Wznów"</string>
     <string name="ui_70313db71cd3" formatted="false">"Usuń niepełny plik"</string>
     <string name="ui_420eaafbda7b" formatted="false">"Pobierz ponownie"</string>
@@ -130,6 +132,7 @@
     <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
+    <string name="ui_c9722a7a962a" formatted="false">"Ukryj szczegóły"</string>
     <string name="ui_b847d5e00684" formatted="false">"Ucz się na podstawie notatki"</string>
     <string name="ui_80c250f3db4a" formatted="false">"Historia rozmów"</string>
     <string name="ui_19e6d24090b3" formatted="false">"Ukryj wiadomości"</string>
@@ -144,9 +147,15 @@
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
     <string name="ui_76d165ea898a" formatted="false">"Zapisz w Odebranych"</string>
     <string name="ui_0266a4695e9a" formatted="false">"Otwórz halo"</string>
+    <string name="ui_ec963ffc911b" formatted="false">"Sprawdzanie…"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>
     <string name="ui_a6a5fe15ed48" formatted="false">"Synchronizuj z Hugging Face"</string>
+    <string name="ui_df593230ed8e" formatted="false">"Zapisany katalog offline"</string>
+    <string name="ui_48872557e688" formatted="false">"Synchronizowanie modeli…"</string>
+    <string name="ui_624c33e406f7" formatted="false">"Lista modeli została zaktualizowana."</string>
+    <string name="ui_21cf5a9c27af" formatted="false">"Synchronizacja została anulowana."</string>
+    <string name="ui_fbeb706abd54" formatted="false">"Nie udało się zsynchronizować modeli. Zapisany katalog jest dostępny."</string>
     <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
     <string name="ui_13bbdede669f" formatted="false">"Wstrzymaj pobieranie"</string>
     <string name="ui_675b7e1dbaf0" formatted="false">"Pobierz model na licencji"</string>
@@ -155,7 +164,10 @@
     <string name="ui_c65a8dff696f" formatted="false">"Uzyskaj token odczytu Hugging Face"</string>
     <string name="ui_767fb8352ca0" formatted="false">"Token Hugging Face"</string>
     <string name="ui_27ca04d3ae63" formatted="false">"Akceptuję licencję wydawcy"</string>
+    <string name="ui_edfedb77fa61" formatted="false">"Token jest używany wyłącznie do tego pobierania i nie jest zapisywany."</string>
+    <string name="ui_e11cae48f168" formatted="false">"Pobierz z Hugging Face"</string>
     <string name="ui_84526abbf679" formatted="false">"Użyj do rozmów"</string>
+    <string name="ui_10c1282fcb73" formatted="false">"Pobieranie wstrzymane"</string>
     <string name="ui_18b3f5465aa1" formatted="false">"Narzędzia obrazu"</string>
     <string name="ui_ac27c4201488" formatted="false">"Edytuj lokalnie. Oryginalny obraz pozostanie bez zmian."</string>
     <string name="ui_54c46b33d809" formatted="false">"Obróć w lewo"</string>
@@ -167,8 +179,16 @@
     <string name="ui_75c5986a189a" formatted="false">"Zapisz nowy obraz"</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
+    <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
+    <string name="ui_d177cdc09a4e" formatted="false">"Nie zainstalowano"</string>
+    <string name="ui_7db320928b62" formatted="false">"Zainstalowano · plik zweryfikowany · niezaładowany"</string>
+    <string name="ui_395f2d74009e" formatted="false">"Wybrano · niezaładowany (zostanie załadowany na żądanie)"</string>
+    <string name="ui_0e9e9b54b216" formatted="false">"Zainstalowano (niezweryfikowane)"</string>
+    <string name="ui_594fa48dd816" formatted="false">"Uszkodzony lub nieaktualny — pobierz ponownie"</string>
+    <string name="ui_ef2d963f8941" formatted="false">"Urządzenie jest zajęte…"</string>
+    <string name="ui_640e4136b8fb" formatted="false">"Nie zainstalowano · zaimportuj plik z licencją"</string>
     <string name="ui_977395125c7f" formatted="false">"Rozpocznij nową lekcję"</string>
     <string name="ui_63144fde57ac" formatted="false">"Na przykład: wyjaśnij ułamki, poćwicz pisownię albo wspólnie rozwiąż zadanie."</string>
     <string name="ui_c9787f8f7111" formatted="false">"Możesz zacząć od samego tematu. Jeśli chcesz pracować na własnym materiale, dodaj plik albo notatkę."</string>
@@ -195,12 +215,15 @@
     <string name="ui_872f9ce4e737" formatted="false">"Porównaj wybrany obraz z prywatnym zapytaniem tekstowym (CPU)"</string>
     <string name="ui_7b987f8db83e" formatted="false">"Tylko dla deweloperów. Używa natywnego kodera EmbeddingGemma; limit obrazu wynosi 4 MB. Zdjęcie, URI ani wektor osadzenia nie są zapisywane ani przesyłane; nie jest to certyfikacja jakości."</string>
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
+    <string name="ui_e0f3101491eb" formatted="false">"Zwolnij model z pamięci przed testem GPU."</string>
+    <string name="ui_9c71b7370b1d" formatted="false">"Tryb automatyczny używa procesora CPU, dopóki ten model nie przejdzie testu GPU."</string>
     <string name="ui_9ecd916802ea" formatted="false">"Moje narzędzia"</string>
     <string name="ui_463816d07097" formatted="false">"Czytanie"</string>
     <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
     <string name="ui_a2243f3686d9" formatted="false">"Otwórz Mini halo"</string>
     <string name="ui_62fae752c4b7" formatted="false">"Miej halo pod ręką w małym oknie lub widżecie na ekranie głównym."</string>
     <string name="ui_ef6691545d2c" formatted="false">"Standardowy"</string>
+    <string name="ui_890ab358a55d" formatted="false">"Szczegóły techniczne"</string>
     <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok."</string>
@@ -232,6 +255,29 @@
     <string name="ui_fc72166cc2c3" formatted="false">"Przed pobraniem odśwież pliki na urządzeniu."</string>
     <string name="ui_b0270cb66825" formatted="false">"Pliki na urządzeniu"</string>
     <string name="ui_3200851a9605" formatted="false">"Zweryfikowane pliki modelu"</string>
+    <string name="ui_74835cee7342" formatted="false">"Na tym telefonie · plik zweryfikowany"</string>
+    <string name="ui_4eb036062899" formatted="false">"Na tym telefonie · środowisko uruchomieniowe nie zostało sprawdzone"</string>
+    <string name="ui_9317af088467" formatted="false">"Na tym telefonie · wymaga uwagi"</string>
+    <string name="ui_5569a4e0a4ce" formatted="false">"Nie pobrano"</string>
+    <string name="ui_f0b0738f75b8" formatted="false">"Pobrano"</string>
+    <string name="ui_661ff40a07e0" formatted="false">"W kolejce"</string>
+    <string name="ui_9ea4b3629991" formatted="false">"Sprawdzanie plików na urządzeniu"</string>
+    <string name="ui_ea09329797d4" formatted="false">"Sprawdzanie plików modeli na urządzeniu…"</string>
+    <string name="ui_63bbd08c916b" formatted="false">"Weryfikowanie…"</string>
+    <string name="ui_25a2eb2bb766" formatted="false">"Nie udało się sprawdzić plików na urządzeniu. Dotknij „Odśwież pliki na urządzeniu”, aby spróbować ponownie."</string>
+    <string name="ui_e4086b54a958" formatted="false">"Stan pliku jest niedostępny"</string>
+    <string name="ui_ad6a5b84aac1" formatted="false">"Pozostaw pole puste, aby użyć tokenu zastosowanego w tej sesji aplikacji."</string>
+    <string name="ui_64e03e4ae838" formatted="false">"Token został zastosowany na czas tej sesji aplikacji. Nie jest zapisywany na dysku."</string>
+    <string name="ui_43c085cbc4b9" formatted="false">"Nie zastosowano tokenu. Nadal możesz pobierać modele publiczne."</string>
+    <string name="ui_055e8b81a715" formatted="false">"Token zastosowano na czas tej sesji aplikacji. Dostęp do modelu jest sprawdzany podczas pobierania."</string>
+    <string name="ui_131455e18e2c" formatted="false">"Wpisz token odczytu Hugging Face zaczynający się od hf_."</string>
+    <string name="ui_bd9580dfd79e" formatted="false">"Token Hugging Face został usunięty."</string>
+    <string name="ui_e442ba4bbc20" formatted="false">"Model został zaimportowany. Zgodność ze środowiskiem wykonawczym zostanie sprawdzona podczas jego ładowania."</string>
+    <string name="ui_fd4121035b44" formatted="false">"Dostęp do pliku wygasł. Wybierz model ponownie za pomocą opcji „Importuj plik”."</string>
+    <string name="ui_9464b55b051a" formatted="false">"Nie udało się odczytać ani zapisać modelu. Sprawdź ilość wolnego miejsca i wybierz w pełni pobrany plik lokalny."</string>
+    <string name="ui_109f325833cd" formatted="false">"Nie udało się zarejestrować zaimportowanego modelu. Odśwież pliki na urządzeniu i spróbuj ponownie."</string>
+    <string name="ui_e106b1e3e4a7" formatted="false">"Anuluj pobieranie tego modelu przed jego importem."</string>
+    <string name="ui_4fdb8b47746a" formatted="false">"Zwolnij ten model przed zastąpieniem uszkodzonego pliku."</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Znajdź powiązane notatki"</string>
     <string name="ui_49b31501b1c2" formatted="false">"Prywatnie wyszukuj na tym telefonie w wybranych notatkach, elementach Canvas, materiałach Study i załączonych plikach. halo rozpocznie indeksowanie dopiero po wyrażeniu zgody na źródła i utworzeniu wyszukiwania lokalnego."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Model wyszukiwania lokalnego"</string>
@@ -253,6 +299,9 @@
     <string name="ui_b0aedda34eac" formatted="false">"Wybierz źródła, których halo może szukać, a następnie utwórz lokalny indeks."</string>
     <string name="ui_02126cf07a25" formatted="false">"Za mało wolnej pamięci roboczej. Zamknij inne modele lub wybierz mniej źródeł."</string>
     <string name="ui_8f1ba0226a49" formatted="false">"Nie udało się zakończyć wyszukiwania lokalnego. Twoje notatki nie zostały wysłane do żadnej usługi w chmurze."</string>
+    <string name="ui_1199482749b3" formatted="false">"Inne źródła modeli"</string>
+    <string name="ui_aab0a0a7c386" formatted="false">"Diagnostyka dla deweloperów"</string>
+    <string name="ui_fa874238f3ac" formatted="false">"Ukryj diagnostykę deweloperską"</string>
     <string name="ui_453a6a2fec8d" formatted="false">"Używaj wyników w lokalnych odpowiedziach halo"</string>
     <string name="ui_1a7f71528618" formatted="false">"Opcjonalnie. Wybrane fragmenty mogą pomóc w odpowiedziach na urządzeniu; zewnętrzni dostawcy nie otrzymują tego kontekstu automatycznie."</string>
     <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawanie poleceń na urządzeniu"</string>
@@ -335,7 +384,20 @@
     <string name="ui_1523d23e2e00" formatted="false">"Sprawdź nowy układ"</string>
     <string name="ui_99452646e34b" formatted="false">"Kompaktowy"</string>
     <string name="ui_ab80540d98d2" formatted="false">"Duży"</string>
+    <string name="ui_40fdff809655" formatted="false">"Laboratorium modeli lokalnych"</string>
+    <string name="ui_58c8d314f5aa" formatted="false">"Przeglądaj pliki modeli i wyniki pomiarów"</string>
+    <string name="ui_1e8a95e8a597" formatted="false">"Pobierz modele, aby uzyskiwać odpowiedzi na tym telefonie."</string>
+    <string name="ui_ce04e16b9f64" formatted="false">"Nie udało się otworzyć tego modelu"</string>
+    <string name="ui_5d1fa38bcf0d" formatted="false">"Przygotowywanie…"</string>
+    <string name="ui_a778d3492af2" formatted="false">"Pobieranie…"</string>
+    <string name="ui_efaac5b7a54a" formatted="false">"Sprawdzanie pobierania…"</string>
+    <string name="ui_8acdd7c9166a" formatted="false">"Pobierz ponownie, aby naprawić ten model"</string>
+    <string name="ui_98661f8bb566" formatted="false">"Odpowiedziano na tym telefonie"</string>
+    <string name="ui_b4df7f92c9a3" formatted="false">"Wymaga sprawdzenia"</string>
+    <string name="ui_1cb21039c802" formatted="false">"Odpowiedzi i rozmowa"</string>
+    <string name="ui_0f21463e2f85" formatted="false">"Funkcje specjalistyczne"</string>
     <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
+    <string name="ui_750af77aa42e" formatted="false">"W użyciu"</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
     <string name="ui_7bc5279a8267" formatted="false">"Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis."</string>
@@ -415,4 +477,13 @@
     <string name="ui_5745eeece618" formatted="false">"Oczekiwanie na wynik"</string>
     <string name="ui_22d82f5bf178" formatted="false">"Nie masz zaległych zadań"</string>
     <string name="ui_fe18013d93d2" formatted="false">"Teraz"</string>
+    <string name="ui_7a0a4fb205e1" formatted="false">"Zaimportowany plik jest pusty."</string>
+    <string name="ui_5cc788d99adc" formatted="false">"Importowany model musi być plikiem .litertlm."</string>
+    <string name="ui_af305790d439" formatted="false">"Za mało wolnego miejsca, aby zaimportować ten model. Zwolnij miejsce i spróbuj ponownie."</string>
+    <string name="ui_64e121a724c8" formatted="false">"Przygotowywanie importu modelu…"</string>
+    <string name="ui_7971c95e6593" formatted="false">"Rejestrowanie zaimportowanego modelu…"</string>
+    <string name="ui_fc18c5b2eb93" formatted="false">"Dostawca pliku zwrócił niekompletny model. Pobierz cały plik i zaimportuj go ponownie."</string>
+    <string name="ui_079c18445722" formatted="false">"Nie można otworzyć strumienia wejściowego URI."</string>
+    <string name="ui_35cc3c5e9d34" formatted="false">"Wybierz kompletny plik modelu .litertlm."</string>
+    <string name="ui_57bc2bcc327f" formatted="false">"Menedżer modeli lokalnych jest niedostępny."</string>
 </resources>

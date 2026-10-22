@@ -39,7 +39,7 @@ Skill packages need attention|||Пакеты навыков требуют пр�
 These packages were not loaded. Your other skills remain available.|||Эти пакеты не загружены. Другие навыки остаются доступными.|||Šīs pakotnes netika ielādētas. Citas prasmes joprojām ir pieejamas.
 Search skills|||Поиск навыков|||Meklēt prasmes
 Advanced details|||Дополнительные сведения|||Papildu informācija
-Hide advanced details|||Скрыть дополнительные сведения|||Paslēpt papildu informāciju
+Hide advanced details|||Скрыть дополнительные сведения|||Paslēpt papildu informāciju|||Ukryj zaawansowane informacje
 Models for your skills|||Модели для ваших навыков|||Modeļi jūsu prasmēm
 Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills.|||Загруженные модели могут отвечать на телефоне. Для действий через ИИ также нужны совместимая модель и включённые навыки.|||Lejupielādētie modeļi var atbildēt šajā tālrunī. MI darbībām vajadzīgs arī saderīgs modelis un ieslēgtas prasmes.
 Download and verify local models|||Загрузить и проверить локальные модели|||Lejupielādēt un pārbaudīt vietējos modeļus
@@ -554,7 +554,7 @@ Not measured on this device|||Не проверено на этом устрой
 Text|||Текст|||Teksts
 Vision|||Зрение|||Redze
 Tools|||Инструменты|||Rīki|||Narzędzia
-Import|||Импортировать|||Importēt
+Import|||Импортировать|||Importēt|||Importuj
 Resume|||Продолжить|||Turpināt|||Wznów
 Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi|||Usuń niepełny plik
 Re-download|||Скачать заново|||Lejupielādēt vēlreiz|||Pobierz ponownie
@@ -1306,7 +1306,7 @@ No pending actions right now.|||Сейчас нет ожидающих дейс�
 %1$d updates waiting|||Ожидают обновления: %1$d|||Gaida %1$d atjauninājumi
 %1$d suggestions to review in Memory|||Предложений для проверки в «Памяти»: %1$d|||Ieteikumi pārskatīšanai sadaļā «Atmiņa»: %1$d
 Review to answer or approve. Closing the review leaves it waiting.|||Нажмите «Проверить», чтобы ответить или одобрить. Если закрыть окно, запрос останется в ожидании.|||Pieskarieties «Pārskatīt», lai atbildētu vai apstiprinātu. Aizverot logu, pieprasījums turpinās gaidīt.
-Hide details|||Скрыть подробности|||Paslēpt informāciju
+Hide details|||Скрыть подробности|||Paslēpt informāciju|||Ukryj szczegóły
 Open in Workspace|||Открыть в рабочем пространстве|||Atvērt darbvietā
 Result not confirmed|||Результат не подтверждён|||Rezultāts nav apstiprināts
 Couldn’t finish|||Не удалось закончить|||Neizdevās pabeigt
@@ -1597,7 +1597,7 @@ Check what works and share a safe report|||Проверить работу и п
 Hide advanced settings|||Скрыть расширенные настройки|||Paslēpt papildu iestatījumus
 Developer tools|||Инструменты разработчика|||Izstrādātāja rīki
 Not connected|||Не подключено|||Nav savienots
-Checking…|||Проверка…|||Pārbauda…
+Checking…|||Проверка…|||Pārbauda…|||Sprawdzanie…
 Save setup diagnostics on this phone|||Сохранять диагностику настройки на телефоне|||Saglabāt iestatīšanas diagnostiku šajā tālrunī
 Optional diagnostics record only setup stage, outcome and error type. No keys, speech or private content are recorded.|||Необязательная диагностика сохраняет только этап, результат и тип ошибки. Ключи, речь и личные данные не записываются.|||Izvēles diagnostika saglabā tikai iestatīšanas posmu, iznākumu un kļūdas veidu. Atslēgas, runa un privāts saturs netiek ierakstīti.
 Multilingual listening works on this phone. Download the balanced model once, about 161 MB. It supports English, Russian and Latvian; recognition still needs testing.|||Распознавание разных языков работает на телефоне. Загрузите модель один раз, около 161 МБ. Она поддерживает английский, русский и латышский; качество нужно проверить.|||Daudzvalodu runas atpazīšana darbojas šajā tālrunī. Vienreiz lejupielādējiet sabalansēto modeli, aptuveni 161 MB. Tas atbalsta angļu, krievu un latviešu valodu; atpazīšana vēl jāpārbauda.
@@ -1624,11 +1624,11 @@ Open Halo with limitations|||Открыть Halo с ограничениями||
 An answer test sends only a short test phrase to your selected service, with no saved notes or conversation. Online usage may be charged.|||Проверка ответа отправляет выбранному сервису только короткую тестовую фразу, без заметок и разговоров. Онлайн-сервис может взимать плату.|||Atbildes pārbaude nosūta izvēlētajam pakalpojumam tikai īsu testa frāzi bez piezīmēm vai sarunām. Par tiešsaistes lietošanu var būt jāmaksā.
 Test an answer|||Проверить ответ|||Pārbaudīt atbildi|||Przetestuj odpowiedź
 Sync Hugging Face|||Обновить из Hugging Face|||Atjaunināt no Hugging Face|||Synchronizuj z Hugging Face
-Offline catalog|||Сохранённый каталог|||Saglabātais katalogs
-Syncing models…|||Обновляем модели…|||Atjaunina modeļus…
-Models updated|||Модели обновлены|||Modeļi atjaunināti
-Sync cancelled|||Обновление отменено|||Atjaunināšana atcelta
-Couldn't sync models. Your saved catalog is available.|||Не удалось обновить модели. Сохранённый каталог доступен.|||Neizdevās atjaunināt modeļus. Saglabātais katalogs ir pieejams.
+Offline catalog|||Сохранённый каталог|||Saglabātais katalogs|||Zapisany katalog offline
+Syncing models…|||Обновляем модели…|||Atjaunina modeļus…|||Synchronizowanie modeli…
+Models updated|||Модели обновлены|||Modeļi atjaunināti|||Lista modeli została zaktualizowana.
+Sync cancelled|||Обновление отменено|||Atjaunināšana atcelta|||Synchronizacja została anulowana.
+Couldn't sync models. Your saved catalog is available.|||Не удалось обновить модели. Сохранённый каталог доступен.|||Neizdevās atjaunināt modeļus. Saglabātais katalogs ir pieejams.|||Nie udało się zsynchronizować modeli. Zapisany katalog jest dostępny.
 Download models and choose how Halo uses them.|||Скачайте модели и выберите, как Halo их использует.|||Lejupielādējiet modeļus un izvēlieties, kā Halo tos izmanto.
 Sorted for this phone. Memory estimates are guidance; test a model before relying on it.|||Отсортировано для этого телефона. Оценки памяти приблизительны; проверьте модель перед использованием.|||Sakārtots šim tālrunim. Atmiņas aplēses ir orientējošas; pārbaudiet modeli pirms lietošanas.|||Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem.
 Not enough free storage|||Недостаточно места|||Nepietiek brīvas vietas
@@ -1647,12 +1647,12 @@ Open publisher license|||Открыть лицензию издателя|||Atv�
 Get a Hugging Face read token|||Получить токен чтения Hugging Face|||Iegūt Hugging Face lasīšanas pilnvaru|||Uzyskaj token odczytu Hugging Face
 Hugging Face token|||Токен Hugging Face|||Hugging Face pilnvara|||Token Hugging Face
 I accepted the publisher's license|||Я принял лицензию издателя|||Es pieņēmu izdevēja licenci|||Akceptuję licencję wydawcy
-The token is used for this download only and is not saved.|||Токен используется только для этой загрузки и не сохраняется.|||Pilnvara tiek izmantota tikai šai lejupielādei un netiek saglabāta.
-Download with Hugging Face|||Скачать через Hugging Face|||Lejupielādēt ar Hugging Face
+The token is used for this download only and is not saved.|||Токен используется только для этой загрузки и не сохраняется.|||Pilnvara tiek izmantota tikai šai lejupielādei un netiek saglabāta.|||Token jest używany wyłącznie do tego pobierania i nie jest zapisywany.
+Download with Hugging Face|||Скачать через Hugging Face|||Lejupielādēt ar Hugging Face|||Pobierz z Hugging Face
 Use for conversation|||Использовать для разговора|||Izmantot sarunai|||Użyj do rozmów
 Model downloads|||Загрузки моделей|||Modeļu lejupielādes
 Downloading model|||Загружаем модель|||Lejupielādē modeli
-Download paused|||Загрузка приостановлена|||Lejupielāde apturēta
+Download paused|||Загрузка приостановлена|||Lejupielāde apturēta|||Pobieranie wstrzymane
 Couldn't download voice. Retry to continue.|||Не удалось скачать голос. Повторите, чтобы продолжить.|||Neizdevās lejupielādēt balsi. Mēģiniet vēlreiz, lai turpinātu.
 Installing voice…|||Устанавливаем голос…|||Instalē balsi…
 Advanced|||Дополнительно|||Papildu iespējas
@@ -1771,7 +1771,7 @@ Remove audio|||Удалить аудио|||Noņemt audio
 Transcribe audio|||Расшифровать аудио|||Transkribēt audio
 Choose a listening model and language|||Выберите модель распознавания и язык|||Izvēlieties atpazīšanas modeli un valodu
 Choose a voice and output provider|||Выберите голос и сервис озвучивания|||Izvēlieties balsi un balss izvades pakalpojumu
-On-device models|||Модели на телефоне|||Modeļi ierīcē
+On-device models|||Модели на телефоне|||Modeļi ierīcē|||Modele na urządzeniu
 Model library|||Каталог моделей|||Modeļu katalogs
 Browse available models|||Посмотрите доступные модели|||Pārlūkojiet pieejamos modeļus
 On device|||На телефоне|||Ierīcē
@@ -1832,13 +1832,13 @@ Audio understanding|||Понимание аудио|||Audio izpratne
 Tool candidates|||Модели для инструментов|||Rīku modeļu kandidāti
 Tool candidates still need a proven tool loop before Halo can use them for actions.|||Прежде чем использовать такую модель для действий, нужно проверить её цикл работы с инструментами.|||Pirms Halo izmanto šādu modeli darbībām, jāpārbauda tā rīku darbību cikls.
 No local models match these filters. Try another capability or clear the search.|||Нет моделей с такими параметрами. Выберите другую возможность или очистите поиск.|||Nav modeļu ar šādiem filtriem. Izvēlieties citu iespēju vai notīriet meklēšanu.|||Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie.
-Not installed|||Не установлена|||Nav instalēts
-Installed · verified · cold|||Установлена и проверена · загрузится по запросу|||Instalēts un pārbaudīts · ielādēsies pēc pieprasījuma
-Selected · cold (will load on request)|||Выбрана · загрузится по запросу|||Izvēlēts · ielādēsies pēc pieprasījuma
-Installed (unverified)|||Установлена · не проверена|||Instalēts · nav pārbaudīts
-Corrupt/stale — re-download|||Файл повреждён или устарел · скачайте заново|||Fails bojāts vai novecojis · lejupielādējiet vēlreiz
-Busy on device…|||Выполняется на телефоне…|||Tiek izpildīts tālrunī…
-Not installed · import a licensed file|||Не установлена · импортируйте лицензированный файл|||Nav instalēts · importējiet licencētu failu
+Not installed|||Не установлена|||Nav instalēts|||Nie zainstalowano
+Installed · verified · cold|||Установлена и проверена · загрузится по запросу|||Instalēts un pārbaudīts · ielādēsies pēc pieprasījuma|||Zainstalowano · plik zweryfikowany · niezaładowany
+Selected · cold (will load on request)|||Выбрана · загрузится по запросу|||Izvēlēts · ielādēsies pēc pieprasījuma|||Wybrano · niezaładowany (zostanie załadowany na żądanie)
+Installed (unverified)|||Установлена · не проверена|||Instalēts · nav pārbaudīts|||Zainstalowano (niezweryfikowane)
+Corrupt/stale — re-download|||Файл повреждён или устарел · скачайте заново|||Fails bojāts vai novecojis · lejupielādējiet vēlreiz|||Uszkodzony lub nieaktualny — pobierz ponownie
+Busy on device…|||Выполняется на телефоне…|||Tiek izpildīts tālrunī…|||Urządzenie jest zajęte…
+Not installed · import a licensed file|||Не установлена · импортируйте лицензированный файл|||Nav instalēts · importējiet licencētu failu|||Nie zainstalowano · zaimportuj plik z licencją
 Text only|||Только текст|||Tikai teksts
 Skill starter is unavailable|||Основа навыка недоступна|||Prasmes sagatave nav pieejama
 Advanced settings|||Расширенные настройки|||Papildu iestatījumi
@@ -2356,8 +2356,8 @@ Internet connection is lost|||Подключение к интернету по�
 Required capability becomes available|||Нужная возможность становится доступной|||Vajadzīgā iespēja kļūst pieejama
 
 Test GPU for Automatic|||Проверить GPU для автоматического режима|||Pārbaudīt GPU automātiskajam režīmam|||Przetestuj GPU dla trybu automatycznego
-Unload the model before testing GPU.|||Выгрузите модель перед проверкой GPU.|||Pirms GPU pārbaudes izņemiet modeli no atmiņas.
-Automatic uses CPU until this model passes the GPU test.|||Автоматический режим использует CPU, пока модель не пройдет проверку GPU.|||Automātiskais režīms izmanto CPU, līdz modelis iztur GPU pārbaudi.
+Unload the model before testing GPU.|||Выгрузите модель перед проверкой GPU.|||Pirms GPU pārbaudes izņemiet modeli no atmiņas.|||Zwolnij model z pamięci przed testem GPU.
+Automatic uses CPU until this model passes the GPU test.|||Автоматический режим использует CPU, пока модель не пройдет проверку GPU.|||Automātiskais režīms izmanto CPU, līdz modelis iztur GPU pārbaudi.|||Tryb automatyczny używa procesora CPU, dopóki ten model nie przejdzie testu GPU.
 If the selected voice is unavailable|||Если выбранный голос недоступен|||Ja izvēlētā balss nav pieejama
 Upgrade to English and Chinese|||Обновить для английского и китайского|||Atjaunināt angļu un ķīniešu valodai
 English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled.|||Английский и китайский на этом телефоне. Загрузите полный пакет голоса (365 МБ). Для латышского и русского используется речь Android, если включено резервное озвучивание.|||Angļu un ķīniešu valoda šajā tālrunī. Lejupielādējiet pilnu balss pakotni (365 MB). Latviešu un krievu valodai tiek izmantota Android balss, ja ieslēgta rezerves balss.
@@ -2513,7 +2513,7 @@ See what needs you, what's running and what finished.|||Здесь видно, �
 Ask halo something on Home to get started.|||Задайте halo вопрос на главном экране, чтобы начать.|||Lai sāktu, uzdodiet halo jautājumu sākuma ekrānā.
 There is nothing here right now. You can check another tab.|||Здесь пока ничего нет. Посмотрите другую вкладку.|||Šeit pašlaik nekā nav. Apskatiet citu cilni.
 Approvals and answers wait here until you choose what happens next.|||Здесь ждут вашего решения запросы на подтверждение и уточняющие вопросы.|||Šeit gaida jūsu lēmumu apstiprinājuma pieprasījumi un precizējoši jautājumi.
-Technical details|||Технические сведения|||Tehniskā informācija
+Technical details|||Технические сведения|||Tehniskā informācija|||Szczegóły techniczne
 Recent activity|||Последние действия|||Pēdējās darbības
 Show requests|||Показать запросы|||Rādīt pieprasījumus
 Show running|||Показать выполняемые|||Rādīt notiekošos
@@ -2894,26 +2894,29 @@ On-device files|||Файлы на устройстве|||Ierīces faili|||Pliki 
 Verified artifacts|||Проверенные файлы моделей|||Pārbaudīti modeļu faili|||Zweryfikowane pliki modelu
 All files and downloads|||Все файлы и загрузки|||Visi faili un lejupielādes
 Available to download|||Доступно для скачивания|||Pieejams lejupielādei
-On this phone · file verified|||На устройстве · файл проверен|||Šajā tālrunī · fails pārbaudīts
-On this phone · runtime not checked|||На устройстве · запуск не проверен|||Šajā tālrunī · darbība nav pārbaudīta
-On this phone · needs attention|||На устройстве · требует внимания|||Šajā tālrunī · jāpārbauda
-Not downloaded|||Не скачано|||Nav lejupielādēts
-Checking on-device files|||Проверяем файлы на устройстве|||Pārbauda ierīces failus
-Checking on-device model files…|||Проверяем файлы моделей на устройстве…|||Pārbauda modeļu failus ierīcē…
-Could not check on-device files. Tap Refresh on-device files to retry.|||Не удалось проверить файлы. Нажми «Обновить файлы на устройстве», чтобы повторить.|||Neizdevās pārbaudīt ierīces failus. Lai mēģinātu vēlreiz, atjaunini ierīces failu sarakstu.
-File status unavailable|||Состояние файла недоступно|||Faila statuss nav pieejams
-Leave the field empty to use the token applied for this app session.|||Оставь поле пустым, чтобы использовать токен, применённый для этого сеанса.|||Atstāj lauku tukšu, lai izmantotu šai lietotnes sesijai lietoto marķieri.
-A token is applied for this app session. It is not saved to disk.|||Токен применён для этого сеанса. На диск он не сохраняется.|||Marķieris ir lietots šai lietotnes sesijai. Tas netiek saglabāts diskā.
-No token applied. Public models can still be downloaded.|||Токен не применён. Открытые модели можно скачивать без него.|||Marķieris nav lietots. Publiskos modeļus joprojām var lejupielādēt.
-Token applied for this app session. Model access is checked when downloading.|||Токен применён для этого сеанса. Доступ к модели проверяется при скачивании.|||Marķieris ir lietots šai lietotnes sesijai. Piekļuve modelim tiek pārbaudīta lejupielādes laikā.
-Enter a Hugging Face read token beginning with hf_.|||Введи токен чтения Hugging Face, начинающийся с hf_.|||Ievadi Hugging Face lasīšanas marķieri, kas sākas ar hf_.
-Hugging Face token cleared.|||Токен Hugging Face удалён.|||Hugging Face marķieris ir notīrīts.
-Model imported. Runtime compatibility is checked when you load it.|||Модель импортирована. Совместимость проверяется при загрузке в память.|||Modelis ir importēts. Saderība tiek pārbaudīta, ielādējot to atmiņā.
-File access expired. Choose the model again using Import file.|||Доступ к файлу истёк. Снова выбери модель через «Импортировать файл».|||Piekļuve failam ir beigusies. Izvēlies modeli vēlreiz, izmantojot faila importēšanu.
-Could not read or store the model. Check free space and choose a fully downloaded local file.|||Не удалось прочитать или сохранить модель. Проверь свободное место и выбери полностью скачанный локальный файл.|||Neizdevās nolasīt vai saglabāt modeli. Pārbaudi brīvo vietu un izvēlies pilnībā lejupielādētu lokālu failu.
-Could not register the imported model. Refresh on-device files and try again.|||Не удалось зарегистрировать импортированную модель. Обнови файлы на устройстве и повтори.|||Neizdevās reģistrēt importēto modeli. Atjaunini ierīces failu sarakstu un mēģini vēlreiz.
-Cancel the download for this model before importing it.|||Перед импортом этой модели отмени её загрузку.|||Pirms modeļa importēšanas atcel tā lejupielādi.
-Unload this model before replacing its damaged file.|||Перед заменой повреждённого файла выгрузи модель из памяти.|||Pirms bojātā faila aizstāšanas izkrauj modeli no atmiņas.
+On this phone · file verified|||На устройстве · файл проверен|||Šajā tālrunī · fails pārbaudīts|||Na tym telefonie · plik zweryfikowany
+On this phone · runtime not checked|||На устройстве · запуск не проверен|||Šajā tālrunī · darbība nav pārbaudīta|||Na tym telefonie · środowisko uruchomieniowe nie zostało sprawdzone
+On this phone · needs attention|||На устройстве · требует внимания|||Šajā tālrunī · jāpārbauda|||Na tym telefonie · wymaga uwagi
+Not downloaded|||Не скачано|||Nav lejupielādēts|||Nie pobrano
+Downloaded|||Загружено|||Lejupielādēts|||Pobrano
+Queued|||В очереди|||Rindā|||W kolejce
+Checking on-device files|||Проверяем файлы на устройстве|||Pārbauda ierīces failus|||Sprawdzanie plików na urządzeniu
+Checking on-device model files…|||Проверяем файлы моделей на устройстве…|||Pārbauda modeļu failus ierīcē…|||Sprawdzanie plików modeli na urządzeniu…
+Verifying…|||Проверяем…|||Verificē…|||Weryfikowanie…
+Could not check on-device files. Tap Refresh on-device files to retry.|||Не удалось проверить файлы. Нажми «Обновить файлы на устройстве», чтобы повторить.|||Neizdevās pārbaudīt ierīces failus. Lai mēģinātu vēlreiz, atjaunini ierīces failu sarakstu.|||Nie udało się sprawdzić plików na urządzeniu. Dotknij „Odśwież pliki na urządzeniu”, aby spróbować ponownie.
+File status unavailable|||Состояние файла недоступно|||Faila statuss nav pieejams|||Stan pliku jest niedostępny
+Leave the field empty to use the token applied for this app session.|||Оставь поле пустым, чтобы использовать токен, применённый для этого сеанса.|||Atstāj lauku tukšu, lai izmantotu šai lietotnes sesijai lietoto marķieri.|||Pozostaw pole puste, aby użyć tokenu zastosowanego w tej sesji aplikacji.
+A token is applied for this app session. It is not saved to disk.|||Токен применён для этого сеанса. На диск он не сохраняется.|||Marķieris ir lietots šai lietotnes sesijai. Tas netiek saglabāts diskā.|||Token został zastosowany na czas tej sesji aplikacji. Nie jest zapisywany na dysku.
+No token applied. Public models can still be downloaded.|||Токен не применён. Открытые модели можно скачивать без него.|||Marķieris nav lietots. Publiskos modeļus joprojām var lejupielādēt.|||Nie zastosowano tokenu. Nadal możesz pobierać modele publiczne.
+Token applied for this app session. Model access is checked when downloading.|||Токен применён для этого сеанса. Доступ к модели проверяется при скачивании.|||Marķieris ir lietots šai lietotnes sesijai. Piekļuve modelim tiek pārbaudīta lejupielādes laikā.|||Token zastosowano na czas tej sesji aplikacji. Dostęp do modelu jest sprawdzany podczas pobierania.
+Enter a Hugging Face read token beginning with hf_.|||Введи токен чтения Hugging Face, начинающийся с hf_.|||Ievadi Hugging Face lasīšanas marķieri, kas sākas ar hf_.|||Wpisz token odczytu Hugging Face zaczynający się od hf_.
+Hugging Face token cleared.|||Токен Hugging Face удалён.|||Hugging Face marķieris ir notīrīts.|||Token Hugging Face został usunięty.
+Model imported. Runtime compatibility is checked when you load it.|||Модель импортирована. Совместимость проверяется при загрузке в память.|||Modelis ir importēts. Saderība tiek pārbaudīta, ielādējot to atmiņā.|||Model został zaimportowany. Zgodność ze środowiskiem wykonawczym zostanie sprawdzona podczas jego ładowania.
+File access expired. Choose the model again using Import file.|||Доступ к файлу истёк. Снова выбери модель через «Импортировать файл».|||Piekļuve failam ir beigusies. Izvēlies modeli vēlreiz, izmantojot faila importēšanu.|||Dostęp do pliku wygasł. Wybierz model ponownie za pomocą opcji „Importuj plik”.
+Could not read or store the model. Check free space and choose a fully downloaded local file.|||Не удалось прочитать или сохранить модель. Проверь свободное место и выбери полностью скачанный локальный файл.|||Neizdevās nolasīt vai saglabāt modeli. Pārbaudi brīvo vietu un izvēlies pilnībā lejupielādētu lokālu failu.|||Nie udało się odczytać ani zapisać modelu. Sprawdź ilość wolnego miejsca i wybierz w pełni pobrany plik lokalny.
+Could not register the imported model. Refresh on-device files and try again.|||Не удалось зарегистрировать импортированную модель. Обнови файлы на устройстве и повтори.|||Neizdevās reģistrēt importēto modeli. Atjaunini ierīces failu sarakstu un mēģini vēlreiz.|||Nie udało się zarejestrować zaimportowanego modelu. Odśwież pliki na urządzeniu i spróbuj ponownie.
+Cancel the download for this model before importing it.|||Перед импортом этой модели отмени её загрузку.|||Pirms modeļa importēšanas atcel tā lejupielādi.|||Anuluj pobieranie tego modelu przed jego importem.
+Unload this model before replacing its damaged file.|||Перед заменой повреждённого файла выгрузи модель из памяти.|||Pirms bojātā faila aizstāšanas izkrauj modeli no atmiņas.|||Zwolnij ten model przed zastąpieniem uszkodzonego pliku.
 My projects|||Мои проекты|||Mani projekti
 Start a new project|||Начать новый проект|||Sākt jaunu projektu
 Share saved project · grown-up|||Поделиться сохранённым проектом · для взрослых|||Kopīgot saglabāto projektu · pieaugušajam
@@ -3031,9 +3034,9 @@ Choose and prepare an installed embedding model first.|||Сначала выбе
 Choose which sources Halo may search, then build your local index.|||Выберите материалы, по которым Halo может искать, затем создайте локальный индекс.|||Izvēlieties avotus, kuros Halo drīkst meklēt, pēc tam izveidojiet lokālo indeksu.|||Wybierz źródła, których halo może szukać, a następnie utwórz lokalny indeks.
 Not enough free working memory. Close other models or select fewer sources.|||Недостаточно свободной оперативной памяти. Выгрузите другие модели или сократите число материалов.|||Nepietiek brīvās operatīvās atmiņas. Aizveriet citus modeļus vai izvēlieties mazāk avotu.|||Za mało wolnej pamięci roboczej. Zamknij inne modele lub wybierz mniej źródeł.
 Local search could not finish. Your notes were not sent to any cloud service.|||Не удалось завершить локальный поиск. Ваши заметки не отправлялись в облако.|||Lokālo meklēšanu neizdevās pabeigt. Jūsu piezīmes netika nosūtītas uz mākoni.|||Nie udało się zakończyć wyszukiwania lokalnego. Twoje notatki nie zostały wysłane do żadnej usługi w chmurze.
-Other model sources|||Другие источники моделей|||Citi modeļu avoti
-Developer diagnostics|||Диагностика для разработчиков|||Izstrādātāja diagnostika
-Hide developer diagnostics|||Скрыть диагностику разработчика|||Paslēpt izstrādātāja diagnostiku
+Other model sources|||Другие источники моделей|||Citi modeļu avoti|||Inne źródła modeli
+Developer diagnostics|||Диагностика для разработчиков|||Izstrādātāja diagnostika|||Diagnostyka dla deweloperów
+Hide developer diagnostics|||Скрыть диагностику разработчика|||Paslēpt izstrādātāja diagnostiku|||Ukryj diagnostykę deweloperską
 Additional settings, model setup and system check.|||Дополнительные настройки, выбор моделей и проверка системы.|||Papildu iestatījumi, modeļu konfigurācija un sistēmas pārbaude.
 Model labs and diagnostics are enabled. No test starts automatically.|||Лаборатории моделей и диагностика включены. Тесты не запускаются автоматически.|||Modeļu laboratorijas un diagnostika ir ieslēgta. Pārbaudes netiek palaistas automātiski.
 Choose embedding role|||Выбрать модель для поиска|||Izvēlēties iegulumu lomu
@@ -3718,21 +3721,21 @@ Allow actions from this app|||Разрешить действия в этом п
 App action %1$d|||Действие приложения %1$d|||Lietotnes darbība %1$d
 Always asks you first|||Всегда сначала спрашивает вас|||Vienmēr vispirms lūdz jūsu apstiprinājumu
 Allow this action|||Разрешить это действие|||Atļaut šo darbību
-Local model lab|||Лаборатория локальных моделей|||Lokālo modeļu laboratorija
-Inspect model files and measured results|||Файлы моделей и результаты измерений|||Modeļu faili un mērījumu rezultāti
+Local model lab|||Лаборатория локальных моделей|||Lokālo modeļu laboratorija|||Laboratorium modeli lokalnych
+Inspect model files and measured results|||Файлы моделей и результаты измерений|||Modeļu faili un mērījumu rezultāti|||Przeglądaj pliki modeli i wyniki pomiarów
 Lab · Advanced|||Лаборатория · Дополнительно|||Laboratorija · Papildu
-Download models for answers on this phone.|||Скачайте модели для ответов на этом телефоне.|||Lejupielādējiet modeļus atbildēm šajā tālrunī.
-Could not open this model|||Не удалось открыть модель|||Šo modeli neizdevās atvērt
-Preparing…|||Подготовка…|||Sagatavo…
-Downloading…|||Загрузка…|||Lejupielādē…
-Checking download…|||Проверка загрузки…|||Pārbauda lejupielādi…
-Download again to repair this model|||Скачайте модель заново, чтобы восстановить её|||Lejupielādējiet modeli vēlreiz, lai to atjaunotu
-Answered on this phone|||Ответ получен на этом телефоне|||Atbilde saņemta šajā tālrunī
-Needs checking|||Нужна проверка|||Jāpārbauda
-Answers and conversation|||Ответы и общение|||Atbildes un sarunas
-Specialized features|||Специальные возможности|||Specializētas iespējas
+Download models for answers on this phone.|||Скачайте модели для ответов на этом телефоне.|||Lejupielādējiet modeļus atbildēm šajā tālrunī.|||Pobierz modele, aby uzyskiwać odpowiedzi na tym telefonie.
+Could not open this model|||Не удалось открыть модель|||Šo modeli neizdevās atvērt|||Nie udało się otworzyć tego modelu
+Preparing…|||Подготовка…|||Sagatavo…|||Przygotowywanie…
+Downloading…|||Загрузка…|||Lejupielādē…|||Pobieranie…
+Checking download…|||Проверка загрузки…|||Pārbauda lejupielādi…|||Sprawdzanie pobierania…
+Download again to repair this model|||Скачайте модель заново, чтобы восстановить её|||Lejupielādējiet modeli vēlreiz, lai to atjaunotu|||Pobierz ponownie, aby naprawić ten model
+Answered on this phone|||Ответ получен на этом телефоне|||Atbilde saņemta šajā tālrunī|||Odpowiedziano na tym telefonie
+Needs checking|||Нужна проверка|||Jāpārbauda|||Wymaga sprawdzenia
+Answers and conversation|||Ответы и общение|||Atbildes un sarunas|||Odpowiedzi i rozmowa
+Specialized features|||Специальные возможности|||Specializētas iespējas|||Funkcje specjalistyczne
 This model does not answer chats. Its other features need compatible support.|||Эта модель не отвечает в чатах. Для других её возможностей нужна совместимая поддержка.|||Šis modelis neatbild sarunās. Tā pārējām iespējām vajadzīgs saderīgs atbalsts.|||Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi.
-In use|||Используется|||Tiek izmantots
+In use|||Используется|||Tiek izmantots|||W użyciu
 Answer from this phone|||Ответ с этого телефона|||Atbilde no šī tālruņa|||Odpowiedź z tego telefonu
 No answer was received. Try again or choose another model.|||Ответ не получен. Повторите попытку или выберите другую модель.|||Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli.|||Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model.
 An answer model is selected|||Модель для ответов выбрана|||Atbilžu modelis ir izvēlēts
@@ -3892,3 +3895,12 @@ Calendar event|||Событие календаря|||Kalendāra notikums|||Wydar
 Waiting for a result|||Ожидание результата|||Gaida rezultātu|||Oczekiwanie na wynik
 No tasks to catch up on|||Нет заданий, которые нужно наверстать|||Nav uzdevumu, kas būtu jāizpilda|||Nie masz zaległych zadań
 Now|||Сейчас|||Tagad|||Teraz
+Imported file was empty|||Импортируемый файл пуст.|||Importētais fails ir tukšs.|||Zaimportowany plik jest pusty.
+Imported model must be a .litertlm file|||Импортируемая модель должна быть файлом .litertlm.|||Importētajam modelim jābūt .litertlm failam.|||Importowany model musi być plikiem .litertlm.
+Not enough free storage to import this model. Free space and try again.|||Недостаточно свободного места для импорта этой модели. Освободите место и повторите попытку.|||Nepietiek brīvas vietas šī modeļa importēšanai. Atbrīvojiet vietu un mēģiniet vēlreiz.|||Za mało wolnego miejsca, aby zaimportować ten model. Zwolnij miejsce i spróbuj ponownie.
+Preparing model import…|||Подготовка импорта модели…|||Sagatavo modeļa importu…|||Przygotowywanie importu modelu…
+Registering imported model…|||Регистрация импортированной модели…|||Reģistrē importēto modeli…|||Rejestrowanie zaimportowanego modelu…
+The file provider returned an incomplete model. Download the full file and import again.|||Поставщик файла вернул неполную модель. Загрузите полный файл и импортируйте его снова.|||Faila nodrošinātājs nodeva nepilnu modeli. Lejupielādējiet pilnu failu un importējiet vēlreiz.|||Dostawca pliku zwrócił niekompletny model. Pobierz cały plik i zaimportuj go ponownie.
+Unable to open URI input stream|||Не удалось открыть поток данных URI.|||Neizdevās atvērt URI ievades plūsmu.|||Nie można otworzyć strumienia wejściowego URI.
+Choose a complete .litertlm model file.|||Выберите полный файл модели .litertlm.|||Izvēlieties pilnu .litertlm modeļa failu.|||Wybierz kompletny plik modelu .litertlm.
+The local model manager is unavailable.|||Менеджер локальных моделей недоступен.|||Lokālo modeļu pārvaldnieks nav pieejams.|||Menedżer modeli lokalnych jest niedostępny.

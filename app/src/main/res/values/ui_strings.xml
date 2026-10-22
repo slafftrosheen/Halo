@@ -2896,8 +2896,11 @@
     <string name="ui_4eb036062899" formatted="false">"On this phone · runtime not checked"</string>
     <string name="ui_9317af088467" formatted="false">"On this phone · needs attention"</string>
     <string name="ui_5569a4e0a4ce" formatted="false">"Not downloaded"</string>
+    <string name="ui_f0b0738f75b8" formatted="false">"Downloaded"</string>
+    <string name="ui_661ff40a07e0" formatted="false">"Queued"</string>
     <string name="ui_9ea4b3629991" formatted="false">"Checking on-device files"</string>
     <string name="ui_ea09329797d4" formatted="false">"Checking on-device model files…"</string>
+    <string name="ui_63bbd08c916b" formatted="false">"Verifying…"</string>
     <string name="ui_25a2eb2bb766" formatted="false">"Could not check on-device files. Tap Refresh on-device files to retry."</string>
     <string name="ui_e4086b54a958" formatted="false">"File status unavailable"</string>
     <string name="ui_ad6a5b84aac1" formatted="false">"Leave the field empty to use the token applied for this app session."</string>
@@ -3888,4 +3891,13 @@
     <string name="ui_5745eeece618" formatted="false">"Waiting for a result"</string>
     <string name="ui_22d82f5bf178" formatted="false">"No tasks to catch up on"</string>
     <string name="ui_fe18013d93d2" formatted="false">"Now"</string>
+    <string name="ui_7a0a4fb205e1" formatted="false">"Imported file was empty"</string>
+    <string name="ui_5cc788d99adc" formatted="false">"Imported model must be a .litertlm file"</string>
+    <string name="ui_af305790d439" formatted="false">"Not enough free storage to import this model. Free space and try again."</string>
+    <string name="ui_64e121a724c8" formatted="false">"Preparing model import…"</string>
+    <string name="ui_7971c95e6593" formatted="false">"Registering imported model…"</string>
+    <string name="ui_fc18c5b2eb93" formatted="false">"The file provider returned an incomplete model. Download the full file and import again."</string>
+    <string name="ui_079c18445722" formatted="false">"Unable to open URI input stream"</string>
+    <string name="ui_35cc3c5e9d34" formatted="false">"Choose a complete .litertlm model file."</string>
+    <string name="ui_57bc2bcc327f" formatted="false">"The local model manager is unavailable."</string>
 </resources>

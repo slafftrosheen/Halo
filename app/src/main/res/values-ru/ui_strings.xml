@@ -2896,8 +2896,11 @@
     <string name="ui_4eb036062899" formatted="false">"На устройстве · запуск не проверен"</string>
     <string name="ui_9317af088467" formatted="false">"На устройстве · требует внимания"</string>
     <string name="ui_5569a4e0a4ce" formatted="false">"Не скачано"</string>
+    <string name="ui_f0b0738f75b8" formatted="false">"Загружено"</string>
+    <string name="ui_661ff40a07e0" formatted="false">"В очереди"</string>
     <string name="ui_9ea4b3629991" formatted="false">"Проверяем файлы на устройстве"</string>
     <string name="ui_ea09329797d4" formatted="false">"Проверяем файлы моделей на устройстве…"</string>
+    <string name="ui_63bbd08c916b" formatted="false">"Проверяем…"</string>
     <string name="ui_25a2eb2bb766" formatted="false">"Не удалось проверить файлы. Нажми «Обновить файлы на устройстве», чтобы повторить."</string>
     <string name="ui_e4086b54a958" formatted="false">"Состояние файла недоступно"</string>
     <string name="ui_ad6a5b84aac1" formatted="false">"Оставь поле пустым, чтобы использовать токен, применённый для этого сеанса."</string>
@@ -3888,4 +3891,13 @@
     <string name="ui_5745eeece618" formatted="false">"Ожидание результата"</string>
     <string name="ui_22d82f5bf178" formatted="false">"Нет заданий, которые нужно наверстать"</string>
     <string name="ui_fe18013d93d2" formatted="false">"Сейчас"</string>
+    <string name="ui_7a0a4fb205e1" formatted="false">"Импортируемый файл пуст."</string>
+    <string name="ui_5cc788d99adc" formatted="false">"Импортируемая модель должна быть файлом .litertlm."</string>
+    <string name="ui_af305790d439" formatted="false">"Недостаточно свободного места для импорта этой модели. Освободите место и повторите попытку."</string>
+    <string name="ui_64e121a724c8" formatted="false">"Подготовка импорта модели…"</string>
+    <string name="ui_7971c95e6593" formatted="false">"Регистрация импортированной модели…"</string>
+    <string name="ui_fc18c5b2eb93" formatted="false">"Поставщик файла вернул неполную модель. Загрузите полный файл и импортируйте его снова."</string>
+    <string name="ui_079c18445722" formatted="false">"Не удалось открыть поток данных URI."</string>
+    <string name="ui_35cc3c5e9d34" formatted="false">"Выберите полный файл модели .litertlm."</string>
+    <string name="ui_57bc2bcc327f" formatted="false">"Менеджер локальных моделей недоступен."</string>
 </resources>
