@@ -689,7 +689,7 @@ Undo restore|||Отменить восстановление|||Atsaukt atjaunoš
 Notifications & Digests|||Уведомления и сводки|||Paziņojumi un kopsavilkumi
 Open notification inbox|||Открыть входящие уведомления|||Atvērt paziņojumu iesūtni
 Open Android notification access|||Открыть доступ к уведомлениям Android|||Atvērt Android paziņojumu piekļuvi
-Allow Halo notifications|||Разрешить уведомления Halo|||Atļaut Halo paziņojumus
+Allow Halo notifications|||Разрешить уведомления Halo|||Atļaut Halo paziņojumus|||Zezwól Halo na powiadomienia
 Manage exact alarm access|||Настроить доступ к точным будильникам|||Pārvaldīt precīzu modinātāju piekļuvi
 Background digest delivery|||Фоновая доставка сводок|||Kopsavilkumu piegāde fonā
 Summarize now|||Создать сводку|||Apkopot tagad
@@ -903,7 +903,7 @@ Study this canvas|||Изучить этот холст|||Mācīties no šīs kan
 Add text|||Добавить текст|||Pievienot tekstu
 Link item|||Связать объект|||Saistīt vienumu
 Link|||Связать|||Saistīt
-Duplicate|||Дублировать|||Dublēt
+Duplicate|||Дублировать|||Dublēt|||Duplikuj
 Halo is thinking...|||Halo думает...|||Halo domā...|||Halo zastanawia się…
 Canvas unavailable|||Холст недоступен|||Kanva nav pieejama
 Make room for your ideas|||Место для ваших идей|||Vieta tavām idejām
@@ -1029,26 +1029,26 @@ Use ElevenLabs for speech output|||Использовать ElevenLabs для о
 Speak test phrase on phone|||Произнести тестовую фразу через телефон|||Atskaņot testa frāzi tālrunī|||Odsłuchaj frazę testową na telefonie
 Credential configured|||Ключ настроен|||Piekļuves atslēga iestatīta
 Enter API key|||Введите API-ключ|||Ievadi API atslēgu
-Open in Activity|||Открыть в журнале действий|||Atvērt darbību žurnālā
-Cancel follow-up|||Отменить отслеживание|||Atcelt sekošanu
-Stop waiting for this condition?|||Прекратить ожидание этого условия?|||Pārtraukt gaidīt šo nosacījumu?
-Keep waiting|||Продолжить ожидание|||Turpināt gaidīt
-New automation|||Новая автоматизация|||Jauna automatizācija
-Start with a battery alert, a connection update or an evening digest.|||Начните с оповещения о батарее, изменении подключения или вечерней сводки.|||Sāc ar akumulatora brīdinājumu, savienojuma izmaiņu vai vakara kopsavilkumu.
+Open in Activity|||Открыть в журнале действий|||Atvērt darbību žurnālā|||Otwórz w Aktywności
+Cancel follow-up|||Отменить отслеживание|||Atcelt sekošanu|||Anuluj dalsze oczekiwanie
+Stop waiting for this condition?|||Прекратить ожидание этого условия?|||Pārtraukt gaidīt šo nosacījumu?|||Przestać czekać na ten warunek?
+Keep waiting|||Продолжить ожидание|||Turpināt gaidīt|||Czekaj dalej
+New automation|||Новая автоматизация|||Jauna automatizācija|||Nowa automatyzacja
+Start with a battery alert, a connection update or an evening digest.|||Начните с оповещения о батарее, изменении подключения или вечерней сводки.|||Sāc ar akumulatora brīdinājumu, savienojuma izmaiņu vai vakara kopsavilkumu.|||Zacznij od alertu o baterii, informacji o zmianie połączenia lub wieczornego podsumowania.
 Review|||Проверить|||Pārskatīt|||Sprawdź
-Automation needs review|||Нужно проверить автоматизацию|||Automatizācija jāpārskata
-This saved definition is no longer supported. It cannot run.|||Сохранённая конфигурация больше не поддерживается и не может выполняться.|||Šī saglabātā definīcija vairs netiek atbalstīta un to nevar izpildīt.
-Delete unsupported automation|||Удалить неподдерживаемую автоматизацию|||Dzēst neatbalstīto automatizāciju
-Ask Halo to tell you when internet returns or a device connects.|||Попросите Halo сообщить о восстановлении интернета или подключении устройства.|||Lūdz Halo paziņot, kad atjaunojas internets vai pievienojas ierīce.
-No automation runs yet.|||Автоматизации ещё не запускались.|||Automatizācijas vēl nav palaistas.
-Notification settings|||Настройки уведомлений|||Paziņojumu iestatījumi
-Start from scratch|||Начать с нуля|||Sākt no jauna
-This uses the saved approved automation. Its conditions still apply.|||Будет использована ранее подтверждённая автоматизация с теми же условиями.|||Tiks izmantota saglabātā apstiprinātā automatizācija ar tiem pašiem nosacījumiem.
-Run now|||Запустить сейчас|||Palaist tagad
-Its history remains part of Activity where applicable. The automation itself will no longer run.|||История останется в журнале действий, где применимо. Сама автоматизация больше не будет выполняться.|||Vēsture paliks darbību žurnālā, kur tas attiecas. Pati automatizācija vairs netiks izpildīta.
-Set up phone screen access|||Настроить доступ к экрану телефона|||Iestatīt piekļuvi tālruņa ekrānam
-Manage notification access|||Управлять доступом к уведомлениям|||Pārvaldīt piekļuvi paziņojumiem
-Open Inbox|||Открыть входящие|||Atvērt iesūtni
+Automation needs review|||Нужно проверить автоматизацию|||Automatizācija jāpārskata|||Automatyzacja wymaga sprawdzenia
+This saved definition is no longer supported. It cannot run.|||Сохранённая конфигурация больше не поддерживается и не может выполняться.|||Šī saglabātā definīcija vairs netiek atbalstīta un to nevar izpildīt.|||Ta zapisana definicja nie jest już obsługiwana i nie można jej uruchomić.
+Delete unsupported automation|||Удалить неподдерживаемую автоматизацию|||Dzēst neatbalstīto automatizāciju|||Usuń nieobsługiwaną automatyzację
+Ask Halo to tell you when internet returns or a device connects.|||Попросите Halo сообщить о восстановлении интернета или подключении устройства.|||Lūdz Halo paziņot, kad atjaunojas internets vai pievienojas ierīce.|||Poproś Halo o powiadomienie, gdy internet wróci lub urządzenie się połączy.
+No automation runs yet.|||Автоматизации ещё не запускались.|||Automatizācijas vēl nav palaistas.|||Automatyzacje nie były jeszcze uruchamiane.
+Notification settings|||Настройки уведомлений|||Paziņojumu iestatījumi|||Ustawienia powiadomień
+Start from scratch|||Начать с нуля|||Sākt no jauna|||Zacznij od początku
+This uses the saved approved automation. Its conditions still apply.|||Будет использована ранее подтверждённая автоматизация с теми же условиями.|||Tiks izmantota saglabātā apstiprinātā automatizācija ar tiem pašiem nosacījumiem.|||Używa zapisanej, zatwierdzonej automatyzacji. Jej warunki nadal obowiązują.
+Run now|||Запустить сейчас|||Palaist tagad|||Uruchom teraz
+Its history remains part of Activity where applicable. The automation itself will no longer run.|||История останется в журнале действий, где применимо. Сама автоматизация больше не будет выполняться.|||Vēsture paliks darbību žurnālā, kur tas attiecas. Pati automatizācija vairs netiks izpildīta.|||Historia pozostanie w Aktywności, jeśli ma zastosowanie. Sama automatyzacja nie będzie już uruchamiana.
+Set up phone screen access|||Настроить доступ к экрану телефона|||Iestatīt piekļuvi tālruņa ekrānam|||Skonfiguruj dostęp do ekranu telefonu
+Manage notification access|||Управлять доступом к уведомлениям|||Pārvaldīt piekļuvi paziņojumiem|||Zarządzaj dostępem do powiadomień
+Open Inbox|||Открыть входящие|||Atvērt iesūtni|||Otwórz skrzynkę odbiorczą
 Providers|||Провайдеры|||Pakalpojumu sniedzēji
 Authorize with Google|||Войти через Google|||Autorizēties ar Google
 Disconnect Google OAuth|||Отключить Google OAuth|||Atvienot Google OAuth
@@ -1088,41 +1088,41 @@ Automations|||Автоматизации|||Automatizācijas
 Automate local tasks|||Автоматизировать локальные задачи|||Automatizēt lokālos uzdevumus
 No routines configured yet.|||Сценарии ещё не настроены.|||Vēl nav konfigurētu rutīnu.
 Create routine|||Создать сценарий|||Izveidot rutīnu
-Saving replaces the approved definition and reschedules this automation.|||Сохранение заменит подтверждённую конфигурацию и обновит расписание автоматизации.|||Saglabāšana aizstās apstiprināto definīciju un atjaunos automatizācijas grafiku.
-Save off|||Сохранить выключенной|||Saglabāt izslēgtu
+Saving replaces the approved definition and reschedules this automation.|||Сохранение заменит подтверждённую конфигурацию и обновит расписание автоматизации.|||Saglabāšana aizstās apstiprināto definīciju un atjaunos automatizācijas grafiku.|||Zapisanie zastąpi zatwierdzoną definicję i ponownie zaplanuje tę automatyzację.
+Save off|||Сохранить выключенной|||Saglabāt izslēgtu|||Zapisz jako wyłączoną
 WHEN|||КОГДА|||KAD
-Choose trigger|||Выбрать условие запуска|||Izvēlēties aktivizētāju
-Choose device|||Выбрать устройство|||Izvēlēties ierīci
-Choose installed app|||Выбрать установленное приложение|||Izvēlēties instalētu lietotni
-Runs only when the battery crosses this level. It does not repeat while battery stays on the same side.|||Срабатывает только при пересечении заданного уровня заряда. Не повторяется, пока заряд остаётся по ту же сторону порога.|||Nostrādā tikai tad, kad akumulatora līmenis šķērso slieksni. Neatkārtojas, kamēr tas paliek tajā pašā pusē.
-Uses Android’s usable-network state. No Wi-Fi name is stored.|||Используется состояние доступной сети Android. Имя сети Wi-Fi не сохраняется.|||Izmanto Android pieejamā tīkla stāvokli. Wi-Fi tīkla nosaukums netiek glabāts.
-Repeated notifications during this window count as one automation occurrence.|||Повторные уведомления за этот период считаются одним запуском.|||Atkārtoti paziņojumi šajā logā tiek uzskatīti par vienu automatizācijas notikumu.
+Choose trigger|||Выбрать условие запуска|||Izvēlēties aktivizētāju|||Wybierz wyzwalacz
+Choose device|||Выбрать устройство|||Izvēlēties ierīci|||Wybierz urządzenie
+Choose installed app|||Выбрать установленное приложение|||Izvēlēties instalētu lietotni|||Wybierz zainstalowaną aplikację
+Runs only when the battery crosses this level. It does not repeat while battery stays on the same side.|||Срабатывает только при пересечении заданного уровня заряда. Не повторяется, пока заряд остаётся по ту же сторону порога.|||Nostrādā tikai tad, kad akumulatora līmenis šķērso slieksni. Neatkārtojas, kamēr tas paliek tajā pašā pusē.|||Uruchamia się tylko wtedy, gdy poziom baterii przekroczy ten próg. Nie powtarza się, gdy poziom pozostaje po tej samej stronie progu.
+Uses Android’s usable-network state. No Wi-Fi name is stored.|||Используется состояние доступной сети Android. Имя сети Wi-Fi не сохраняется.|||Izmanto Android pieejamā tīkla stāvokli. Wi-Fi tīkla nosaukums netiek glabāts.|||Korzysta ze stanu dostępnej sieci Androida. Nazwa sieci Wi-Fi nie jest zapisywana.
+Repeated notifications during this window count as one automation occurrence.|||Повторные уведомления за этот период считаются одним запуском.|||Atkārtoti paziņojumi šajā logā tiek uzskatīti par vienu automatizācijas notikumu.|||Powtarzające się powiadomienia w tym przedziale są liczone jako jedno uruchomienie automatyzacji.
 IF|||ЕСЛИ|||JA
-No additional conditions|||Без дополнительных условий|||Nav papildu nosacījumu
-Choose provider|||Выбрать провайдера|||Izvēlēties pakalpojumu sniedzēju
-Remove condition|||Удалить условие|||Noņemt nosacījumu
-Add condition|||Добавить условие|||Pievienot nosacījumu
+No additional conditions|||Без дополнительных условий|||Nav papildu nosacījumu|||Bez dodatkowych warunków
+Choose provider|||Выбрать провайдера|||Izvēlēties pakalpojumu sniedzēju|||Wybierz dostawcę
+Remove condition|||Удалить условие|||Noņemt nosacījumu|||Usuń warunek
+Add condition|||Добавить условие|||Pievienot nosacījumu|||Dodaj warunek
 THEN|||ТОГДА|||TAD
-Choose what this automation should do|||Выберите действие автоматизации|||Izvēlies, kas automatizācijai jādara
-Show message|||Показать сообщение|||Parādīt ziņojumu
-Message|||Сообщение|||Ziņojums
-Notification digest|||Сводка уведомлений|||Paziņojumu kopsavilkums
+Choose what this automation should do|||Выберите действие автоматизации|||Izvēlies, kas automatizācijai jādara|||Wybierz działanie automatyzacji
+Show message|||Показать сообщение|||Parādīt ziņojumu|||Pokaż wiadomość
+Message|||Сообщение|||Ziņojums|||Wiadomość
+Notification digest|||Сводка уведомлений|||Paziņojumu kopsavilkums|||Zbiorcze powiadomienie
 Local · deterministic · no AI or cloud|||Локально · предсказуемо · без ИИ и облака|||Lokāli · deterministiski · bez MI vai mākoņa
-Preserved from this automation. This action must be available before saving.|||Сохранено из этой автоматизации. Действие должно быть доступно до сохранения.|||Saglabāts no šīs automatizācijas. Darbībai jābūt pieejamai pirms saglabāšanas.
-Remove action|||Удалить действие|||Noņemt darbību
-Add action|||Добавить действие|||Pievienot darbību
+Preserved from this automation. This action must be available before saving.|||Сохранено из этой автоматизации. Действие должно быть доступно до сохранения.|||Saglabāts no šīs automatizācijas. Darbībai jābūt pieejamai pirms saglabāšanas.|||Zachowano z tej automatyzacji. To działanie musi być dostępne przed zapisaniem.
+Remove action|||Удалить действие|||Noņemt darbību|||Usuń działanie
+Add action|||Добавить действие|||Pievienot darbību|||Dodaj działanie
 DELIVER|||ДОСТАВКА|||PIEGĀDE
-Choose delivery|||Выбрать способ доставки|||Izvēlēties piegādi
+Choose delivery|||Выбрать способ доставки|||Izvēlēties piegādi|||Wybierz sposób dostarczenia
 REPEAT PROTECTION|||ЗАЩИТА ОТ ПОВТОРОВ|||AIZSARDZĪBA PRET ATKĀRTOJUMIEM
-Review & save|||Проверить и сохранить|||Pārskatīt un saglabāt
+Review & save|||Проверить и сохранить|||Pārskatīt un saglabāt|||Sprawdź i zapisz
 Run now is available after saving, from the automation’s detail page.|||«Запустить сейчас» станет доступно после сохранения на странице автоматизации.|||Palaist tagad būs pieejams pēc saglabāšanas automatizācijas detaļu lapā.
-All categories|||Все категории|||Visas kategorijas
-No saved devices. Add a device in Devices first.|||Нет сохранённых устройств. Сначала добавьте устройство в разделе «Устройства».|||Nav saglabātu ierīču. Vispirms pievieno ierīci sadaļā Ierīces.
-Find a time zone|||Поиск часового пояса|||Meklēt laika joslu
-Find installed app|||Поиск установленного приложения|||Meklēt instalētu lietotni
-Every day|||Каждый день|||Katru dienu
-Weekdays|||По будням|||Darbdienās
-Weekends|||По выходным|||Nedēļas nogalēs
+All categories|||Все категории|||Visas kategorijas|||Wszystkie kategorie
+No saved devices. Add a device in Devices first.|||Нет сохранённых устройств. Сначала добавьте устройство в разделе «Устройства».|||Nav saglabātu ierīču. Vispirms pievieno ierīci sadaļā Ierīces.|||Nie zapisano urządzeń. Najpierw dodaj urządzenie w sekcji Urządzenia.
+Find a time zone|||Поиск часового пояса|||Meklēt laika joslu|||Znajdź strefę czasową
+Find installed app|||Поиск установленного приложения|||Meklēt instalētu lietotni|||Znajdź zainstalowaną aplikację
+Every day|||Каждый день|||Katru dienu|||Codziennie
+Weekdays|||По будням|||Darbdienās|||Dni robocze
+Weekends|||По выходным|||Nedēļas nogalēs|||Weekendy
 Not configurable as an automation yet|||Пока нельзя настроить как автоматизацию|||Pagaidām nevar konfigurēt kā automatizāciju
 Local data|||Локальные данные|||Lokālie dati
 Automatic backup|||Автоматическое резервное копирование|||Automātiskā dublēšana
@@ -1239,7 +1239,7 @@ Procedure reference|||Ссылка на процедуру|||Atsauce uz procedū
 Past task|||Прошлая задача|||Iepriekšējais uzdevums
 You asked Halo to remember this|||Вы попросили Halo это запомнить|||Tu lūdzi Halo to atcerēties
 You corrected this|||Вы исправили эту информацию|||Tu izlaboji šo informāciju
-Suggested by Halo|||Предложено Halo|||Halo ieteikums
+Suggested by Halo|||Предложено Halo|||Halo ieteikums|||Sugestia Halo
 Suggested from a past task|||Предложено на основе прошлой задачи|||Ieteikts no iepriekšēja uzdevuma
 Suggested from Workspace|||Предложено из рабочего пространства|||Ieteikts no darbvietas
 Imported|||Импортировано|||Importēts
@@ -1338,7 +1338,7 @@ This reaches beyond Halo.|||Это действие затрагивает др�
 This touches personal data.|||Это действие использует личные данные.|||Šī darbība izmanto personas datus.
 This cannot be undone.|||Это действие нельзя отменить.|||Šo darbību nevar atsaukt.
 Keep card|||Сохранить карточку|||Paturēt kartīti
-Discard draft|||Удалить черновик|||Dzēst melnrakstu
+Discard draft|||Удалить черновик|||Dzēst melnrakstu|||Odrzuć szkic
 Delete card|||Удалить карточку|||Dzēst kartīti
 Previous sentence|||Предыдущее предложение|||Iepriekšējais teikums
 Next sentence|||Следующее предложение|||Nākamais teikums
@@ -1358,7 +1358,7 @@ In progress|||В работе|||Procesā
 Choose|||Выбрать|||Izvēlēties
 Later|||Позже|||Vēlāk
 On|||Вкл.|||Ieslēgts
-Off|||Выкл.|||Izslēgts
+Off|||Выкл.|||Izslēgts|||Wyłączone
 Set|||Установить|||Iestatīt
 Seconds|||Секунды|||Sekundes|||Sekundy
 Application name|||Название приложения|||Lietotnes nosaukums|||Nazwa aplikacji
@@ -2148,7 +2148,7 @@ Backup inspected. Review the plan before restoring.|||Резервная коп�
 Brain Dump exported (%1$s)|||Архив Halo экспортирован (%1$s)|||Halo arhīvs eksportēts (%1$s)
 Cancel file selection|||Отменить выбор файла|||Atcelt faila izvēli
 Change all tool approval preferences?|||Изменить настройки подтверждения всех инструментов?|||Mainīt visu rīku apstiprināšanas iestatījumus?|||Zmienić wszystkie ustawienia zatwierdzania narzędzi?
-Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition.|||Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки.|||Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus.
+Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition.|||Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки.|||Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus.|||Zmiany pozostają w tym szkicu do czasu ich sprawdzenia i zapisania. Istniejąca włączona automatyzacja nadal korzysta z zapisanej definicji.
 Check the endpoint, credential and network, then connect again.|||Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова.|||Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz.|||Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie.
 Choose a backup folder first|||Сначала выберите папку резервных копий|||Vispirms izvēlieties dublējumu mapi
 Choosing a backup only inspects it. Merge or Replace requires your next action.|||Выбор резервной копии только проверяет её. Для объединения или замены требуется отдельное действие.|||Izvēloties dublējumu, tas tiek tikai pārbaudīts. Apvienošanai vai aizstāšanai vajadzīga atsevišķa darbība.
@@ -2159,7 +2159,7 @@ Could not update notification settings. Try again.|||Не удалось обн�
 Could not save notification access. Try again.|||Не удалось сохранить доступ к уведомлениям. Повторите попытку.|||Neizdevās saglabāt piekļuvi paziņojumiem. Mēģiniet vēlreiz.
 Device ID or package (developer preview)|||Идентификатор устройства или приложения (предпросмотр для разработчика)|||Ierīces vai lietotnes identifikators (izstrādātāja priekšskatījums)
 Diagnostics cleared|||Диагностика очищена|||Diagnostika iztīrīta
-Discard this automation draft?|||Отбросить черновик автоматизации?|||Atmest šo automatizācijas melnrakstu?
+Discard this automation draft?|||Отбросить черновик автоматизации?|||Atmest šo automatizācijas melnrakstu?|||Odrzucić szkic tej automatyzacji?
 Enable integration %1$s|||Включить интеграцию %1$s|||Ieslēgt integrāciju %1$s
 Enable tool %1$s|||Включить инструмент %1$s|||Ieslēgt rīku %1$s
 File reconnected|||Файл подключён заново|||Fails atkārtoti piesaistīts
@@ -2171,7 +2171,7 @@ If microphone access stays off, you can keep typing, retry, or enable it in Andr
 Import / Restore|||Импорт / Восстановление|||Importēt / Atjaunot
 Inspect tool %1$s|||Просмотреть инструмент %1$s|||Apskatīt rīku %1$s
 Integration|||Интеграция|||Integrācija|||Integracja
-Keep editing|||Продолжить редактирование|||Turpināt rediģēt
+Keep editing|||Продолжить редактирование|||Turpināt rediģēt|||Kontynuuj edycję
 Last backup failed. Check folder access and available storage.|||Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место.|||Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu.
 Learning|||Обучение|||Mācīšanās
 Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval.|||Локальное осмысление позволяет подходящей модели на устройстве предлагать воспоминания после значимых задач. По умолчанию выключено, работает только при подходящих условиях и требует вашего подтверждения.|||Lokāla pārdomāšana ļauj piemērotam ierīces modelim ierosināt atmiņas pēc nozīmīgiem uzdevumiem. Pēc noklusējuma izslēgta, darbojas tikai piemērotos apstākļos un prasa jūsu apstiprinājumu.
@@ -2188,9 +2188,9 @@ Protocol: %1$s|||Протокол: %1$s|||Protokols: %1$s
 Reading notifications and showing Halo notifications are separate permissions. You can decline either.|||Чтение уведомлений и показ уведомлений Halo требуют разных разрешений. От любого можно отказаться.|||Paziņojumu lasīšana un Halo paziņojumu rādīšana ir atsevišķas atļaujas. Varat noraidīt jebkuru no tām.
 Restore completed: %1$d created, %2$d updated, %3$d kept local|||Восстановление завершено: %1$d создано, %2$d обновлено, %3$d оставлено локально|||Atjaunošana pabeigta: %1$d izveidoti, %2$d atjaunināti, %3$d lokāli saglabāti
 Saved · Disabled. Review the configuration, then enable and connect.|||Сохранено · Выключено. Проверьте настройки, затем включите и подключитесь.|||Saglabāts · Izslēgts. Pārskatiet iestatījumus, tad ieslēdziet un savienojiet.|||Zapisano · Wyłączona. Sprawdź konfigurację, a następnie włącz integrację i połącz się.
-Saving approves this exact definition. Turning it on schedules future runs; it does not run it now.|||Сохранение подтверждает именно эти настройки. Включение планирует будущие запуски, но не запускает автоматизацию сейчас.|||Saglabāšana apstiprina tieši šos iestatījumus. Ieslēgšana plāno nākotnes izpildes, bet nepalaiž to tagad.
+Saving approves this exact definition. Turning it on schedules future runs; it does not run it now.|||Сохранение подтверждает именно эти настройки. Включение планирует будущие запуски, но не запускает автоматизацию сейчас.|||Saglabāšana apstiprina tieši šos iestatījumus. Ieslēgšana plāno nākotnes izpildes, bet nepalaiž to tagad.|||Zapisanie zatwierdza dokładnie tę definicję. Włączenie zaplanuje przyszłe uruchomienia, ale nie uruchomi jej teraz.
 Temporary cache cleared|||Временный кэш очищен|||Pagaidu kešatmiņa iztīrīta
-These edits have not been saved. Existing automation settings are kept until you save.|||Изменения не сохранены. До сохранения действуют прежние настройки автоматизации.|||Izmaiņas nav saglabātas. Esošie automatizācijas iestatījumi paliek spēkā līdz saglabāšanai.
+These edits have not been saved. Existing automation settings are kept until you save.|||Изменения не сохранены. До сохранения действуют прежние настройки автоматизации.|||Izmaiņas nav saglabātas. Esošie automatizācijas iestatījumi paliek spēkā līdz saglabāšanai.|||Te zmiany nie zostały zapisane. Ustawienia istniejącej automatyzacji pozostaną bez zmian, dopóki ich nie zapiszesz.
 This backup could not be validated. Choose another file or check its password.|||Не удалось проверить резервную копию. Выберите другой файл или проверьте пароль.|||Neizdevās pārbaudīt dublējumu. Izvēlieties citu failu vai pārbaudiet tā paroli.
 This backup was created by a newer Halo version|||Эта резервная копия создана более новой версией Halo|||Šo dublējumu izveidoja jaunāka Halo versija
 This connection is not encrypted. Use HTTP only for a server you control on a trusted local network.|||Это подключение не зашифровано. Используйте HTTP только для своего сервера в доверенной локальной сети.|||Šis savienojums nav šifrēts. Lietojiet HTTP tikai savam serverim uzticamā lokālajā tīklā.|||To połączenie nie jest szyfrowane. Używaj HTTP tylko z serwerem, którym zarządzasz, w zaufanej sieci lokalnej.
@@ -2254,9 +2254,9 @@ Halo initiative|||Инициатива Halo|||Halo iniciatīva
 Respect Do Not Disturb|||Учитывать режим «Не беспокоить»|||Ievērot režīmu «Netraucēt»
 Automation sandbox|||Тестовая среда автоматизаций|||Automatizāciju izmēģinājumu vide
 Internal preview · no actions or delivery|||Внутренний предпросмотр · без выполнения и отправки|||Iekšējs priekšskatījums · bez izpildes vai piegādes
-Custom|||Своё значение|||Pielāgots
-Custom minutes · 15 to 1440|||Свои минуты · от 15 до 1440|||Pielāgotas minūtes · no 15 līdz 1440
-Custom seconds|||Свои секунды|||Pielāgotas sekundes
+Custom|||Своё значение|||Pielāgots|||Niestandardowe
+Custom minutes · 15 to 1440|||Свои минуты · от 15 до 1440|||Pielāgotas minūtes · no 15 līdz 1440|||Niestandardowa liczba minut · od 15 do 1440
+Custom seconds|||Свои секунды|||Pielāgotas sekundes|||Niestandardowa liczba sekund
 Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation.|||Разрешение без запросов применяет сохранённую политику ко всем навыкам. Разрешения Android запрашиваются отдельно, а действия с обязательным подтверждением по-прежнему его требуют.|||Atļaušana bez jautāšanas piemēro saglabāto politiku visām prasmēm. Android atļaujas tiek pieprasītas atsevišķi, un darbībām ar obligātu apstiprinājumu tas joprojām ir vajadzīgs.
 ElevenLabs · |||ElevenLabs · |||ElevenLabs ·
 Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review.|||Простые задачи не учитываются. Значимые завершённые задачи создают записи. Необязательное локальное осмысление ограничено, прерываемо и не использует инструменты. Предложенные воспоминания и поведение требуют проверки в Блокноте.|||Vienkārši uzdevumi netiek ņemti vērā. Nozīmīgi pabeigti uzdevumi veido ierakstus. Neobligāta lokāla pārdomāšana ir ierobežota, pārtraucama un neizmanto rīkus. Ierosinātās atmiņas un uzvedība jāpārskata Piezīmju grāmatā.
@@ -3291,12 +3291,12 @@ Available while connected|||Доступно при подключении|||Pie
 Only if you say yes|||Только если вы согласитесь|||Tikai ar jūsu piekrišanu|||Tylko za Twoją zgodą
 Open Library|||Открыть библиотеку|||Atvērt bibliotēku
 Back to Notebook|||Назад в блокнот|||Atpakaļ uz piezīmju grāmatu|||Wróć do Notatnika
-When|||Когда|||Kad
-Only if|||Только если|||Tikai ja
-Do|||Сделать|||Darīt
-Tell me|||Сообщить мне|||Paziņot man
-Time between runs|||Время между запусками|||Laiks starp izpildēm
-Made on this phone · no cloud needed|||Создаётся на телефоне · облако не нужно|||Veidots šajā tālrunī · mākonis nav vajadzīgs
+When|||Когда|||Kad|||Kiedy
+Only if|||Только если|||Tikai ja|||Tylko gdy
+Do|||Сделать|||Darīt|||Wykonaj
+Tell me|||Сообщить мне|||Paziņot man|||Powiadom mnie
+Time between runs|||Время между запусками|||Laiks starp izpildēm|||Czas między uruchomieniami
+Made on this phone · no cloud needed|||Создаётся на телефоне · облако не нужно|||Veidots šajā tālrunī · mākonis nav vajadzīgs|||Utworzono na tym telefonie · bez chmury
 Connect to BuddyBot on your home Wi-Fi.|||Подключитесь к BuddyBot по домашней сети Wi-Fi.|||Savienojieties ar BuddyBot mājas Wi-Fi tīklā.
 BuddyBot address|||Адрес BuddyBot|||BuddyBot adrese
 Download natural voices, then listen to a preview before using them.|||Загрузите естественные голоса и прослушайте пример перед использованием.|||Lejupielādējiet dabiskas balsis un pirms lietošanas noklausieties paraugu.
@@ -3526,7 +3526,7 @@ Choose an available saved device|||Выберите доступное сохр�
 Choose an installed app|||Выберите установленное приложение|||Izvēlieties instalētu lietotni
 Notification access required|||Нужен доступ к уведомлениям|||Nepieciešama piekļuve paziņojumiem
 Phone screen access required|||Нужен доступ к экрану телефона|||Nepieciešama piekļuve tālruņa ekrānam
-Removed automation|||Удалённый сценарий|||Dzēsta rutīna
+Removed automation|||Удалённый сценарий|||Dzēsta rutīna|||Usunięta automatyzacja
 Source status|||Доступность события|||Notikuma pieejamība
 Trigger source|||Причина запуска|||Palaišanas iemesls
 Trigger time|||Время запуска|||Palaišanas laiks
@@ -3567,24 +3567,24 @@ Evening digest|||Вечерняя сводка|||Vakara kopsavilkums
 Battery is below 20%|||Заряд ниже 20%|||Uzlāde ir zem 20%
 Network connection is available again|||Соединение снова доступно|||Savienojums atkal ir pieejams
 Your device is connected|||Ваше устройство подключено|||Jūsu ierīce ir savienota
-Try it once|||Попробовать один раз|||Izmēģināt vienreiz
-Trying it once…|||Пробный запуск…|||Notiek izmēģinājums…
-Stop trial|||Остановить пробный запуск|||Apturēt izmēģinājumu
-Try this automation once?|||Выполнить пробный запуск?|||Izmēģināt šo automatizāciju vienreiz?
-Run trial|||Запустить пробу|||Sākt izmēģinājumu
+Try it once|||Попробовать один раз|||Izmēģināt vienreiz|||Wypróbuj raz
+Trying it once…|||Пробный запуск…|||Notiek izmēģinājums…|||Trwa jednorazowa próba…
+Stop trial|||Остановить пробный запуск|||Apturēt izmēģinājumu|||Zatrzymaj próbę
+Try this automation once?|||Выполнить пробный запуск?|||Izmēģināt šo automatizāciju vienreiz?|||Uruchomić tę automatyzację próbnie jeden raz?
+Run trial|||Запустить пробу|||Sākt izmēģinājumu|||Uruchom próbnie
 Trial result|||Результат пробы|||Izmēģinājuma rezultāts
 Trial run|||Пробный запуск|||Izmēģinājums
 Trial recorded in History|||Проба записана в истории|||Izmēģinājums saglabāts vēsturē
-Last successful result|||Последний успешный результат|||Pēdējais veiksmīgais rezultāts
-Kept separately from the latest run.|||Сохранён отдельно от последнего запуска.|||Saglabāts atsevišķi no pēdējās izpildes.
-Completed successfully. No result text was recorded.|||Выполнено успешно. Текст результата не был записан.|||Izpildīts veiksmīgi. Rezultāta teksts netika saglabāts.
-This trial has not saved or turned on your automation.|||Пробный запуск не сохранил и не включил автоматизацию.|||Izmēģinājums nav saglabājis vai ieslēdzis automatizāciju.
-Try it once is available on the review page before saving.|||На странице проверки можно попробовать автоматизацию до сохранения.|||Pārskatīšanas lapā automatizāciju var izmēģināt pirms saglabāšanas.
-Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled.|||Попробуйте эти действия сейчас с учётом условий. Результат останется здесь и в истории. Уведомления, речь и будущие запуски не планируются.|||Izmēģiniet šīs darbības tagad, ievērojot nosacījumus. Rezultāts paliks šeit un vēsturē; paziņojumi, runa un turpmākas izpildes netiks ieplānotas.
-This runs the reviewed actions once and records the result in History. It does not save this draft or test notification and wearable delivery.|||Проверенные действия выполнятся один раз, а результат сохранится в истории. Черновик не будет сохранён. Доставка уведомлений и вывод на носимое устройство не проверяются.|||Pārskatītās darbības tiks izpildītas vienreiz, un rezultāts tiks saglabāts vēsturē. Melnraksts netiks saglabāts. Paziņojumu piegāde un izvade valkājamajā ierīcē netiks pārbaudīta.
+Last successful result|||Последний успешный результат|||Pēdējais veiksmīgais rezultāts|||Ostatni pomyślny wynik
+Kept separately from the latest run.|||Сохранён отдельно от последнего запуска.|||Saglabāts atsevišķi no pēdējās izpildes.|||Zapisano osobno od ostatniego uruchomienia.
+Completed successfully. No result text was recorded.|||Выполнено успешно. Текст результата не был записан.|||Izpildīts veiksmīgi. Rezultāta teksts netika saglabāts.|||Ukończono pomyślnie. Nie zapisano tekstu wyniku.
+This trial has not saved or turned on your automation.|||Пробный запуск не сохранил и не включил автоматизацию.|||Izmēģinājums nav saglabājis vai ieslēdzis automatizāciju.|||Ta próba nie zapisała automatyzacji ani jej nie włączyła.
+Try it once is available on the review page before saving.|||На странице проверки можно попробовать автоматизацию до сохранения.|||Pārskatīšanas lapā automatizāciju var izmēģināt pirms saglabāšanas.|||Możesz wypróbować automatyzację raz na stronie sprawdzania, przed zapisaniem.
+Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled.|||Попробуйте эти действия сейчас с учётом условий. Результат останется здесь и в истории. Уведомления, речь и будущие запуски не планируются.|||Izmēģiniet šīs darbības tagad, ievērojot nosacījumus. Rezultāts paliks šeit un vēsturē; paziņojumi, runa un turpmākas izpildes netiks ieplānotas.|||Uruchom teraz te działania. Warunki nadal obowiązują. Wynik pozostanie tutaj i w Historii; nie zostaną zaplanowane powiadomienia, mowa ani przyszłe uruchomienie.
+This runs the reviewed actions once and records the result in History. It does not save this draft or test notification and wearable delivery.|||Проверенные действия выполнятся один раз, а результат сохранится в истории. Черновик не будет сохранён. Доставка уведомлений и вывод на носимое устройство не проверяются.|||Pārskatītās darbības tiks izpildītas vienreiz, un rezultāts tiks saglabāts vēsturē. Melnraksts netiks saglabāts. Paziņojumu piegāde un izvade valkājamajā ierīcē netiks pārbaudīta.|||Uruchomi raz sprawdzone działania i zapisze wynik w Historii. Nie zapisze szkicu ani nie sprawdzi dostarczania powiadomień i na urządzenie noszone.
 Trial stopped before a result was recorded.|||Пробный запуск остановлен до записи результата.|||Izmēģinājums apturēts pirms rezultāta saglabāšanas.
 Trial unavailable. Check the actions and try again.|||Пробный запуск недоступен. Проверьте действия и повторите попытку.|||Izmēģinājums nav pieejams. Pārbaudiet darbības un mēģiniet vēlreiz.
-This automation may run these exact actions without asking each time. Changing the automation requires another review.|||Эта автоматизация может выполнять именно эти действия без повторного запроса. После изменения настроек потребуется новая проверка.|||Šī automatizācija var veikt tieši šīs darbības bez atkārtotas atļaujas. Pēc iestatījumu maiņas tās būs jāpārskata vēlreiz.
+This automation may run these exact actions without asking each time. Changing the automation requires another review.|||Эта автоматизация может выполнять именно эти действия без повторного запроса. После изменения настроек потребуется новая проверка.|||Šī automatizācija var veikt tieši šīs darbības bez atkārtotas atļaujas. Pēc iestatījumu maiņas tās būs jāpārskata vēlreiz.|||Ta automatyzacja może wykonywać dokładnie te działania bez każdorazowego pytania. Zmiana automatyzacji wymaga ponownego sprawdzenia.
 Delivery|||Доставка|||Piegāde
 Silent|||Без звука|||Bez skaņas
 Keep result in Activity|||Оставить результат в разделе «Действия»|||Saglabāt rezultātu sadaļā Darbības

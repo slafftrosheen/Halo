@@ -139,6 +139,7 @@
     <string name="ui_0dfe1d63c9d8" formatted="false">"Sprawdzanie…"</string>
     <string name="ui_a3cdac3bdf98" formatted="false">"Co halo może teraz zrobić"</string>
     <string name="ui_d88af80346ea" formatted="false">"Modele według funkcji"</string>
+    <string name="ui_91cac509faa3" formatted="false">"Zezwól halo na powiadomienia"</string>
     <string name="ui_737b13c8b8d1" formatted="false">"Czym jest MCP?"</string>
     <string name="ui_0e3e58f90d67" formatted="false">"Dodaj serwer MCP"</string>
     <string name="ui_4556cab2aa83" formatted="false">"Szukaj serwerów i narzędzi"</string>
@@ -196,6 +197,7 @@
     <string name="ui_b352578b07b1" formatted="false">"Brak zapisanych wiadomości do wyświetlenia."</string>
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
+    <string name="ui_02cdaabfca80" formatted="false">"Duplikuj"</string>
     <string name="ui_120637f54127" formatted="false">"halo zastanawia się…"</string>
     <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
     <string name="ui_e60cf185f16f" formatted="false">"Kontekst halo"</string>
@@ -216,8 +218,55 @@
     <string name="ui_baf0544e430e" formatted="false">"Styl głosu"</string>
     <string name="ui_7dfd4c4b11d5" formatted="false">"Użyj ElevenLabs do syntezy mowy"</string>
     <string name="ui_753e99a7c10d" formatted="false">"Odsłuchaj frazę testową na telefonie"</string>
+    <string name="ui_294b6d76f82b" formatted="false">"Otwórz w Aktywności"</string>
+    <string name="ui_e1038aba5163" formatted="false">"Anuluj dalsze oczekiwanie"</string>
+    <string name="ui_b1c919e9bd90" formatted="false">"Przestać czekać na ten warunek?"</string>
+    <string name="ui_b9ad2e4e8954" formatted="false">"Czekaj dalej"</string>
+    <string name="ui_db87a63d537e" formatted="false">"Nowa automatyzacja"</string>
+    <string name="ui_d741ff50ff5b" formatted="false">"Zacznij od alertu o baterii, informacji o zmianie połączenia lub wieczornego podsumowania."</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
+    <string name="ui_66e0d66e3cae" formatted="false">"Automatyzacja wymaga sprawdzenia"</string>
+    <string name="ui_2acc7b37f0d5" formatted="false">"Ta zapisana definicja nie jest już obsługiwana i nie można jej uruchomić."</string>
+    <string name="ui_ac2f48c6419b" formatted="false">"Usuń nieobsługiwaną automatyzację"</string>
+    <string name="ui_fd259f509ed1" formatted="false">"Poproś halo o powiadomienie, gdy internet wróci lub urządzenie się połączy."</string>
+    <string name="ui_896d89387b86" formatted="false">"Automatyzacje nie były jeszcze uruchamiane."</string>
+    <string name="ui_63568f0582af" formatted="false">"Ustawienia powiadomień"</string>
+    <string name="ui_a4822ffed15b" formatted="false">"Zacznij od początku"</string>
+    <string name="ui_f17b9dc6acd9" formatted="false">"Używa zapisanej, zatwierdzonej automatyzacji. Jej warunki nadal obowiązują."</string>
+    <string name="ui_0991397702fa" formatted="false">"Uruchom teraz"</string>
+    <string name="ui_4dbf31de9710" formatted="false">"Historia pozostanie w Aktywności, jeśli ma zastosowanie. Sama automatyzacja nie będzie już uruchamiana."</string>
+    <string name="ui_1c6ff48c896d" formatted="false">"Skonfiguruj dostęp do ekranu telefonu"</string>
+    <string name="ui_34a3bb6f0e08" formatted="false">"Zarządzaj dostępem do powiadomień"</string>
+    <string name="ui_f67db8e43407" formatted="false">"Otwórz skrzynkę odbiorczą"</string>
     <string name="ui_37ec7e16decf" formatted="false">"Usuń dane logowania"</string>
+    <string name="ui_2405e098b52f" formatted="false">"Zapisanie zastąpi zatwierdzoną definicję i ponownie zaplanuje tę automatyzację."</string>
+    <string name="ui_da011627f3ba" formatted="false">"Zapisz jako wyłączoną"</string>
+    <string name="ui_c28f22128246" formatted="false">"Wybierz wyzwalacz"</string>
+    <string name="ui_df7c36d9fb8b" formatted="false">"Wybierz urządzenie"</string>
+    <string name="ui_ea248d3d95a2" formatted="false">"Wybierz zainstalowaną aplikację"</string>
+    <string name="ui_210bb5328695" formatted="false">"Uruchamia się tylko wtedy, gdy poziom baterii przekroczy ten próg. Nie powtarza się, gdy poziom pozostaje po tej samej stronie progu."</string>
+    <string name="ui_d1bc6db1f02f" formatted="false">"Korzysta ze stanu dostępnej sieci Androida. Nazwa sieci Wi-Fi nie jest zapisywana."</string>
+    <string name="ui_21e8e616555a" formatted="false">"Powtarzające się powiadomienia w tym przedziale są liczone jako jedno uruchomienie automatyzacji."</string>
+    <string name="ui_a2da19e32125" formatted="false">"Bez dodatkowych warunków"</string>
+    <string name="ui_c95521b4c93a" formatted="false">"Wybierz dostawcę"</string>
+    <string name="ui_5ac0b06fc9f0" formatted="false">"Usuń warunek"</string>
+    <string name="ui_60a0d83510ea" formatted="false">"Dodaj warunek"</string>
+    <string name="ui_866b10a76aa8" formatted="false">"Wybierz działanie automatyzacji"</string>
+    <string name="ui_da9b2eaa1680" formatted="false">"Pokaż wiadomość"</string>
+    <string name="ui_2f77668a9dfb" formatted="false">"Wiadomość"</string>
+    <string name="ui_caee5752dee2" formatted="false">"Zbiorcze powiadomienie"</string>
+    <string name="ui_0941f053c935" formatted="false">"Zachowano z tej automatyzacji. To działanie musi być dostępne przed zapisaniem."</string>
+    <string name="ui_d910e7be7b49" formatted="false">"Usuń działanie"</string>
+    <string name="ui_6390ba9cbb0c" formatted="false">"Dodaj działanie"</string>
+    <string name="ui_10962ea51c03" formatted="false">"Wybierz sposób dostarczenia"</string>
+    <string name="ui_e6b7dc3ac91e" formatted="false">"Sprawdź i zapisz"</string>
+    <string name="ui_9d5097a83710" formatted="false">"Wszystkie kategorie"</string>
+    <string name="ui_72c5566b3811" formatted="false">"Nie zapisano urządzeń. Najpierw dodaj urządzenie w sekcji Urządzenia."</string>
+    <string name="ui_62ce9ef6dce9" formatted="false">"Znajdź strefę czasową"</string>
+    <string name="ui_6554386f8e88" formatted="false">"Znajdź zainstalowaną aplikację"</string>
+    <string name="ui_c4e42b974c33" formatted="false">"Codziennie"</string>
+    <string name="ui_6f4b602bb529" formatted="false">"Dni robocze"</string>
+    <string name="ui_93dcf1d1d25e" formatted="false">"Weekendy"</string>
     <string name="ui_f64001c434a8" formatted="false">"Niektóre wrażliwe działania zawsze wymagają potwierdzenia."</string>
     <string name="ui_0131d7ca5cad" formatted="false">"Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania."</string>
     <string name="ui_c30d7093bd2d" formatted="false">"Instrukcje dostarczone przez ten pakiet"</string>
@@ -225,6 +274,7 @@
     <string name="ui_5f3c25857f00" formatted="false">"Wczesna synteza mowy jest dostępna dla dokładnych odpowiedzi przesyłanych strumieniowo bez narzędzi. Działania narzędzi i zatwierdzenia pozostają buforowane."</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
+    <string name="ui_5917d8be2cdf" formatted="false">"Sugestia halo"</string>
     <string name="ui_4e86512d9a0a" formatted="false">"halo"</string>
     <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
@@ -247,9 +297,11 @@
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
     <string name="ui_c9722a7a962a" formatted="false">"Ukryj szczegóły"</string>
     <string name="ui_b847d5e00684" formatted="false">"Ucz się na podstawie notatki"</string>
+    <string name="ui_cb30147eec19" formatted="false">"Odrzuć szkic"</string>
     <string name="ui_80c250f3db4a" formatted="false">"Historia rozmów"</string>
     <string name="ui_19e6d24090b3" formatted="false">"Ukryj wiadomości"</string>
     <string name="ui_449f5a775762" formatted="false">"Mów"</string>
+    <string name="ui_ca7981b46ecf" formatted="false">"Wyłączone"</string>
     <string name="ui_381a8e969905" formatted="false">"Sekundy"</string>
     <string name="ui_09526e9d005a" formatted="false">"Nazwa aplikacji"</string>
     <string name="ui_9f760ab20739" formatted="false">"Czeka na Ciebie"</string>
@@ -404,20 +456,28 @@
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
     <string name="ui_366596141374" formatted="false">"Zastosuj ustawienia"</string>
     <string name="ui_e90a4c413b9e" formatted="false">"Zmienić wszystkie ustawienia zatwierdzania narzędzi?"</string>
+    <string name="ui_0e36a3d49ac1" formatted="false">"Zmiany pozostają w tym szkicu do czasu ich sprawdzenia i zapisania. Istniejąca włączona automatyzacja nadal korzysta z zapisanej definicji."</string>
     <string name="ui_02b8036088a0" formatted="false">"Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie."</string>
     <string name="ui_6d47a2cfe159" formatted="false">"Łącz się z wybranymi usługami"</string>
     <string name="ui_7a308a8671b6" formatted="false">"Połączenie wymaga uwagi. Otwórz tę integrację, aby sprawdzić jej konfigurację."</string>
+    <string name="ui_aba755bc6310" formatted="false">"Odrzucić szkic tej automatyzacji?"</string>
     <string name="ui_325da5b3bd34" formatted="false">"halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa."</string>
     <string name="ui_9a42d40a3f31" formatted="false">"Integracja"</string>
+    <string name="ui_e76fd2add010" formatted="false">"Kontynuuj edycję"</string>
     <string name="ui_3bc8c6ce7691" formatted="false">"Nie uzgodniono"</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
     <string name="ui_41c510ec1365" formatted="false">"Poprzednie dane połączenia; bieżące połączenie nie zostało potwierdzone."</string>
     <string name="ui_e98d2b70f757" formatted="false">"Zapisano · Wyłączona. Sprawdź konfigurację, a następnie włącz integrację i połącz się."</string>
+    <string name="ui_7ec68fcae8ce" formatted="false">"Zapisanie zatwierdza dokładnie tę definicję. Włączenie zaplanuje przyszłe uruchomienia, ale nie uruchomi jej teraz."</string>
+    <string name="ui_5a426e81bae3" formatted="false">"Te zmiany nie zostały zapisane. Ustawienia istniejącej automatyzacji pozostaną bez zmian, dopóki ich nie zapiszesz."</string>
     <string name="ui_5277abbcdb93" formatted="false">"To połączenie nie jest szyfrowane. Używaj HTTP tylko z serwerem, którym zarządzasz, w zaufanej sieci lokalnej."</string>
     <string name="ui_01c61c885b23" formatted="false">"Ta integracja będzie wymagać ponownej autoryzacji. Dane na zdalnym serwerze zostaną zachowane."</string>
     <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
     <string name="ui_13fe672ebaa2" formatted="false">"Serwery MCP udostępniają halo zewnętrzne narzędzia. halo nadaje im własne przestrzenie nazw i przed uruchomieniem stosuje własne uprawnienia, potwierdzenia oraz limity wykonań."</string>
     <string name="ui_24eefaa59d37" formatted="false">"Zapamiętane ustawienia narzędzi. Tylko połączona i włączona integracja udostępnia halo włączone narzędzia. Każde działanie nadal wymaga standardowej autoryzacji."</string>
+    <string name="ui_494ca78f7374" formatted="false">"Niestandardowe"</string>
+    <string name="ui_a5f1b6640cc6" formatted="false">"Niestandardowa liczba minut · od 15 do 1440"</string>
+    <string name="ui_50017ea75995" formatted="false">"Niestandardowa liczba sekund"</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
     <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>
@@ -630,6 +690,12 @@
     <string name="ui_75a6e8b5b5f6" formatted="false">"Działanie aplikacji"</string>
     <string name="ui_3373a168ec11" formatted="false">"Tylko za Twoją zgodą"</string>
     <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
+    <string name="ui_cf9c7aa24a26" formatted="false">"Kiedy"</string>
+    <string name="ui_a710ef69aa04" formatted="false">"Tylko gdy"</string>
+    <string name="ui_30094e0bec00" formatted="false">"Wykonaj"</string>
+    <string name="ui_573b8c055df4" formatted="false">"Powiadom mnie"</string>
+    <string name="ui_2ae5d0da2ee7" formatted="false">"Czas między uruchomieniami"</string>
+    <string name="ui_e4c300152ca8" formatted="false">"Utworzono na tym telefonie · bez chmury"</string>
     <string name="ui_7fbdc83474ee" formatted="false">"Zapisane nagrania pozostają prywatne na tym telefonie i są usuwane po siedmiu dniach."</string>
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
@@ -643,6 +709,20 @@
     <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
+    <string name="ui_99cf83e21702" formatted="false">"Usunięta automatyzacja"</string>
+    <string name="ui_e86dbab56f49" formatted="false">"Wypróbuj raz"</string>
+    <string name="ui_29b51bad8b27" formatted="false">"Trwa jednorazowa próba…"</string>
+    <string name="ui_84381083ebba" formatted="false">"Zatrzymaj próbę"</string>
+    <string name="ui_7f31468e6a82" formatted="false">"Uruchomić tę automatyzację próbnie jeden raz?"</string>
+    <string name="ui_a2e58581e951" formatted="false">"Uruchom próbnie"</string>
+    <string name="ui_b5fc7f5f5bf0" formatted="false">"Ostatni pomyślny wynik"</string>
+    <string name="ui_ae50714f26a5" formatted="false">"Zapisano osobno od ostatniego uruchomienia."</string>
+    <string name="ui_e7879d5b9838" formatted="false">"Ukończono pomyślnie. Nie zapisano tekstu wyniku."</string>
+    <string name="ui_ec89c18da461" formatted="false">"Ta próba nie zapisała automatyzacji ani jej nie włączyła."</string>
+    <string name="ui_5c1472cac712" formatted="false">"Możesz wypróbować automatyzację raz na stronie sprawdzania, przed zapisaniem."</string>
+    <string name="ui_82b081c3e6fb" formatted="false">"Uruchom teraz te działania. Warunki nadal obowiązują. Wynik pozostanie tutaj i w Historii; nie zostaną zaplanowane powiadomienia, mowa ani przyszłe uruchomienie."</string>
+    <string name="ui_58203e13417a" formatted="false">"Uruchomi raz sprawdzone działania i zapisze wynik w Historii. Nie zapisze szkicu ani nie sprawdzi dostarczania powiadomień i na urządzenie noszone."</string>
+    <string name="ui_9444c497aa82" formatted="false">"Ta automatyzacja może wykonywać dokładnie te działania bez każdorazowego pytania. Zmiana automatyzacji wymaga ponownego sprawdzenia."</string>
     <string name="ui_d8c8d201a7bc" formatted="false">"Dostęp do Androida"</string>
     <string name="ui_4c90e38762a6" formatted="false">"Nie są wymagane specjalne uprawnienia"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
