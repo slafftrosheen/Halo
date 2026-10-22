@@ -35,16 +35,16 @@ Analogy|||Аналогия|||Analoģija
 Check attempt|||Проверка попытки|||Mēģinājuma pārbaude
 Partial solution|||Часть решения|||Daļējs risinājums
 Solution|||Решение|||Risinājums
-Skill packages need attention|||Пакеты навыков требуют проверки|||Prasmju pakotnes jāpārbauda
-These packages were not loaded. Your other skills remain available.|||Эти пакеты не загружены. Другие навыки остаются доступными.|||Šīs pakotnes netika ielādētas. Citas prasmes joprojām ir pieejamas.
-Search skills|||Поиск навыков|||Meklēt prasmes
+Skill packages need attention|||Пакеты навыков требуют проверки|||Prasmju pakotnes jāpārbauda|||Pakiety umiejętności wymagają uwagi
+These packages were not loaded. Your other skills remain available.|||Эти пакеты не загружены. Другие навыки остаются доступными.|||Šīs pakotnes netika ielādētas. Citas prasmes joprojām ir pieejamas.|||Te pakiety nie zostały wczytane. Pozostałe umiejętności są nadal dostępne.
+Search skills|||Поиск навыков|||Meklēt prasmes|||Szukaj umiejętności
 Advanced details|||Дополнительные сведения|||Papildu informācija
 Hide advanced details|||Скрыть дополнительные сведения|||Paslēpt papildu informāciju|||Ukryj zaawansowane informacje
-Models for your skills|||Модели для ваших навыков|||Modeļi jūsu prasmēm
-Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills.|||Загруженные модели могут отвечать на телефоне. Для действий через ИИ также нужны совместимая модель и включённые навыки.|||Lejupielādētie modeļi var atbildēt šajā tālrunī. MI darbībām vajadzīgs arī saderīgs modelis un ieslēgtas prasmes.
+Models for your skills|||Модели для ваших навыков|||Modeļi jūsu prasmēm|||Modele dla Twoich umiejętności
+Downloaded local models can answer on this phone. AI actions also need a compatible model and enabled skills.|||Загруженные модели могут отвечать на телефоне. Для действий через ИИ также нужны совместимая модель и включённые навыки.|||Lejupielādētie modeļi var atbildēt šajā tālrunī. MI darbībām vajadzīgs arī saderīgs modelis un ieslēgtas prasmes.|||Pobrane modele lokalne mogą odpowiadać na tym telefonie. Działania AI wymagają również zgodnego modelu i włączonych umiejętności.
 Download and verify local models|||Загрузить и проверить локальные модели|||Lejupielādēt un pārbaudīt vietējos modeļus
 Choose a model for actions and tools|||Выбрать модель для действий и инструментов|||Izvēlēties modeli darbībām un rīkiem
-No skills match your search|||Навыки по вашему запросу не найдены|||Nav atrasta meklētajam atbilstoša prasme
+No skills match your search|||Навыки по вашему запросу не найдены|||Nav atrasta meklētajam atbilstoša prasme|||Nie znaleziono pasujących umiejętności
 Phone & apps|||Телефон и приложения|||Tālrunis un lietotnes
 Manage workspace and phone actions|||Настроить действия с рабочими материалами и телефоном|||Pārvaldīt darbības ar darba materiāliem un tālruni
 Context & privacy|||Контекст и приватность|||Konteksts un privātums
@@ -112,7 +112,7 @@ Listening and speaking|||Распознавание и озвучивание|||
 Integrations|||Интеграции|||Integrācijas
 MCP servers and external capabilities|||MCP-серверы и внешние возможности|||MCP serveri un ārējās iespējas
 Skills|||Навыки|||Prasmes
-Actions Halo can use|||Действия, доступные Halo|||Darbības, ko Halo var izmantot
+Actions Halo can use|||Действия, доступные Halo|||Darbības, ko Halo var izmantot|||Działania dostępne dla Halo
 Memory & learning|||Память и обучение|||Atmiņa un mācīšanās
 Review what Halo remembers|||Проверьте, что запомнил Halo|||Pārskati, ko Halo atceras
 Access & data|||Доступ и данные|||Piekļuve un dati
@@ -640,18 +640,18 @@ No active resource leases|||Нет занятых ресурсов|||Nav rezerv�
 Capabilities|||Возможности|||Iespējas
 Hide instructions|||Скрыть инструкции|||Paslēpt instrukcijas
 Read instructions|||Читать инструкции|||Lasīt instrukcijas
-Instructions unavailable|||Инструкции недоступны|||Instrukcijas nav pieejamas
-Check|||Проверить|||Pārbaudīt
-Grant Android access|||Разрешить доступ Android|||Piešķirt Android piekļuvi
-Actions|||Действия|||Darbības
+Instructions unavailable|||Инструкции недоступны|||Instrukcijas nav pieejamas|||Instrukcje są niedostępne
+Check|||Проверить|||Pārbaudīt|||Sprawdź
+Grant Android access|||Разрешить доступ Android|||Piešķirt Android piekļuvi|||Przyznaj dostęp do Androida
+Actions|||Действия|||Darbības|||Działania
 Disable|||Выключить|||Atspējot
 Enable|||Включить|||Iespējot
-Install|||Установить|||Instalēt
-Import SKILL.md|||Импортировать SKILL.md|||Importēt SKILL.md
+Install|||Установить|||Instalēt|||Zainstaluj
+Import SKILL.md|||Импортировать SKILL.md|||Importēt SKILL.md|||Importuj SKILL.md
 Skill authority|||Полномочия навыка|||Prasmes pilnvaras
-Checking|||Проверка|||Pārbauda
-What Halo can do now|||Текущие возможности Halo|||Ko Halo pašlaik var paveikt
-Capability models|||Модели возможностей|||Spēju modeļi
+Checking|||Проверка|||Pārbauda|||Sprawdzanie…
+What Halo can do now|||Текущие возможности Halo|||Ko Halo pašlaik var paveikt|||Co halo może teraz zrobić
+Capability models|||Модели возможностей|||Spēju modeļi|||Modele według funkcji
 Android Assistant|||Помощник Android|||Android palīgs
 System interactor & gesture integration|||Взаимодействие с системой и жестами|||Sistēmas vadība un žestu integrācija
 Integration Error|||Ошибка интеграции|||Integrācijas kļūda
@@ -747,7 +747,7 @@ No tools discovered. Enable this integration and refresh tools explicitly.|||И�
 Remove integration|||Удалить интеграцию|||Dzēst integrāciju
 This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.|||Из Halo будут удалены обнаруженные инструменты и параметры подключения. На удалённом сервере ничего не удалится.|||No Halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts.
 Enabled|||Включено|||Iespējots
-Disabled|||Выключено|||Atspējots
+Disabled|||Выключено|||Atspējots|||Wyłączone
 Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow.|||Описания от сервера — внешние данные. Инструменты выполняются только с обычными разрешениями и подтверждениями Halo.|||Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar Halo parastajām atļaujām un apstiprinājumiem.
 What Halo did|||Что делал Halo|||Ko Halo paveica
 Nothing here yet.|||Пока ничего нет.|||Te vēl nekā nav.
@@ -1129,14 +1129,14 @@ Automatic backup|||Автоматическое резервное копиро�
 Password, if protected|||Пароль, если защищено|||Parole, ja aizsargāts
 Maintenance|||Обслуживание|||Apkope
 Files needing relink|||Файлы, требующие повторной привязки|||Faili, kam jāatjauno saites
-Some sensitive actions always require confirmation.|||Некоторые чувствительные действия всегда требуют подтверждения.|||Dažām sensitīvām darbībām vienmēr vajadzīgs apstiprinājums.
-The skill installs disabled. You can review its actions before enabling it.|||Навык устанавливается выключенным. Перед включением можно проверить его действия.|||Prasme tiek instalēta atspējota. Pirms iespējošanas vari pārskatīt tās darbības.
-Instructions supplied by this package|||Инструкции из этого пакета|||Šīs pakotnes instrukcijas
-Skill package not installed|||Пакет навыка не установлен|||Prasmes pakotne nav instalēta
+Some sensitive actions always require confirmation.|||Некоторые чувствительные действия всегда требуют подтверждения.|||Dažām sensitīvām darbībām vienmēr vajadzīgs apstiprinājums.|||Niektóre wrażliwe działania zawsze wymagają potwierdzenia.
+The skill installs disabled. You can review its actions before enabling it.|||Навык устанавливается выключенным. Перед включением можно проверить его действия.|||Prasme tiek instalēta atspējota. Pirms iespējošanas vari pārskatīt tās darbības.|||Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania.
+Instructions supplied by this package|||Инструкции из этого пакета|||Šīs pakotnes instrukcijas|||Instrukcje dostarczone przez ten pakiet
+Skill package not installed|||Пакет навыка не установлен|||Prasmes pakotne nav instalēta|||Pakiet umiejętności nie jest zainstalowany
 Allow all tools without asking|||Разрешить все инструменты без запроса|||Atļaut visus rīkus bez jautāšanas
 App capabilities|||Возможности приложения|||Lietotnes iespējas
 Grant all needed Android access|||Предоставить необходимый доступ Android|||Piešķirt visu vajadzīgo Android piekļuvi
-Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered.|||Раннее озвучивание доступно только для потоковых ответов без инструментов. Работа с инструментами и подтверждениями остаётся в буфере.|||Agrīna runas izvade ir pieejama precīzām straumētām atbildēm bez rīkiem. Darbs ar rīkiem un apstiprinājumiem paliek buferēts.
+Early speech is available for exact, tool-free streaming responses. Tool and approval work stays buffered.|||Раннее озвучивание доступно только для потоковых ответов без инструментов. Работа с инструментами и подтверждениями остаётся в буфере.|||Agrīna runas izvade ir pieejama precīzām straumētām atbildēm bez rīkiem. Darbs ar rīkiem un apstiprinājumiem paliek buferēts.|||Wczesna synteza mowy jest dostępna dla dokładnych odpowiedzi przesyłanych strumieniowo bez narzędzi. Działania narzędzi i zatwierdzenia pozostają buforowane.
 Diagnostic hardware & runtime probe|||Диагностика оборудования и среды выполнения|||Aparatūras un izpildvides diagnostika
 Reconcile automation schedules|||Сверить расписания автоматизации|||Saskaņot automatizācijas grafikus
 Refresh automation source availability|||Обновить доступность источников автоматизации|||Atjaunināt automatizācijas avotu pieejamību
@@ -1434,7 +1434,7 @@ Changes could not be saved yet. Try Back again.|||Изменения пока н
 Could not add a card. Try again.|||Не удалось добавить карточку. Повторите.|||Neizdevās pievienot kartīti. Mēģiniet vēlreiz.
 Could not delete this card.|||Не удалось удалить карточку.|||Neizdevās noņemt šo kartīti.
 Could not export the canvas. Your cards are still here.|||Не удалось сохранить доску в заметку. Все карточки остались здесь.|||Neizdevās saglabāt audeklu piezīmē. Kartītes paliek šeit.
-Could not save that change. Try again.|||Не удалось сохранить изменение. Повторите.|||Neizdevās saglabāt izmaiņu. Mēģiniet vēlreiz.
+Could not save that change. Try again.|||Не удалось сохранить изменение. Повторите.|||Neizdevās saglabāt izmaiņu. Mēģiniet vēlreiz.|||Nie udało się zapisać tej zmiany. Spróbuj ponownie.
 Create a linked checklist note|||Создать связанную заметку со списком задач|||Izveidot saistītu uzdevumu piezīmi|||Utwórz powiązaną notatkę z listą kontrolną
 Discard saved memo|||Удалить несохранённую запись|||Dzēst nesaglabāto ierakstu|||Usuń zapisaną notatkę głosową
 Halo could not propose safe groups. The manual preview is still available.|||Halo не смог предложить подходящие группы. Можно упорядочить карточки вручную.|||Halo nevarēja piedāvāt drošas grupas. Varat sakārtot kartītes manuāli.
@@ -1821,7 +1821,7 @@ Alarms, timers & settings|||Будильники, таймеры и настро
 Phone|||Телефон|||Tālrunis
 Presentation|||Презентация|||Prezentācija
 Agentic|||Инструменты ИИ|||MI rīki
-Create a skill|||Создать навык|||Izveidot prasmi
+Create a skill|||Создать навык|||Izveidot prasmi|||Utwórz umiejętność
 Workspace helper|||Помощник по рабочим материалам|||Darba materiālu palīgs
 Phone app helper|||Помощник для приложений|||Lietotņu palīgs
 Study helper|||Помощник в учёбе|||Mācību palīgs
@@ -2138,7 +2138,7 @@ Hide measured details|||Скрыть результаты измерений|||P
 %1$d new · %2$d existing · %3$d conflicts|||%1$d новых · %2$d существующих · %3$d конфликтов|||%1$d jauni · %2$d esoši · %3$d konflikti
 %1$d tools · %2$d enabled|||%1$d инструментов · %2$d включено|||%1$d rīki · %2$d ieslēgti
 Access is optional. Typed questions and private notes remain available when you decline.|||Доступ необязателен. При отказе можно вводить вопросы и вести личные заметки.|||Piekļuve nav obligāta. Ja to noraidāt, joprojām varat rakstīt jautājumus un privātas piezīmes.
-Apply preferences|||Применить настройки|||Lietot iestatījumus
+Apply preferences|||Применить настройки|||Lietot iestatījumus|||Zastosuj ustawienia
 Backup completed (%1$s)|||Резервное копирование завершено (%1$s)|||Dublēšana pabeigta (%1$s)
 Backup folder access was removed|||Доступ к папке резервных копий отозван|||Piekļuve dublējumu mapei ir noņemta
 Backup folder unavailable. Choose the folder again.|||Папка резервных копий недоступна. Выберите её снова.|||Dublējumu mape nav pieejama. Izvēlieties mapi vēlreiz.
@@ -2147,7 +2147,7 @@ Backup folder: %1$s|||Папка резервных копий: %1$s|||Dublējum
 Backup inspected. Review the plan before restoring.|||Резервная копия проверена. Просмотрите план перед восстановлением.|||Dublējums pārbaudīts. Pirms atjaunošanas pārskatiet plānu.
 Brain Dump exported (%1$s)|||Архив Halo экспортирован (%1$s)|||Halo arhīvs eksportēts (%1$s)
 Cancel file selection|||Отменить выбор файла|||Atcelt faila izvēli
-Change all tool approval preferences?|||Изменить настройки подтверждения всех инструментов?|||Mainīt visu rīku apstiprināšanas iestatījumus?
+Change all tool approval preferences?|||Изменить настройки подтверждения всех инструментов?|||Mainīt visu rīku apstiprināšanas iestatījumus?|||Zmienić wszystkie ustawienia zatwierdzania narzędzi?
 Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition.|||Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки.|||Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus.
 Check the endpoint, credential and network, then connect again.|||Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова.|||Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz.
 Choose a backup folder first|||Сначала выберите папку резервных копий|||Vispirms izvēlieties dublējumu mapi
@@ -2166,7 +2166,7 @@ File reconnected|||Файл подключён заново|||Fails atkārtoti p
 Finalizing|||Завершение|||Pabeigšana
 Folder access removed. Existing backups were not deleted.|||Доступ к папке отозван. Существующие резервные копии не удалены.|||Piekļuve mapei noņemta. Esošie dublējumi nav dzēsti.
 Halo Vault connected|||Хранилище резервных копий подключено|||Halo dublējumu krātuve savienota
-Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.|||Halo может реже запрашивать подтверждение для подходящих инструментов. Обязательные подтверждения, разрешения и правила безопасности сохраняются.|||Halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas.
+Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.|||Halo может реже запрашивать подтверждение для подходящих инструментов. Обязательные подтверждения, разрешения и правила безопасности сохраняются.|||Halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas.|||Halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa.
 If microphone access stays off, you can keep typing, retry, or enable it in Android settings.|||Если доступ к микрофону остаётся выключенным, можно вводить текст, повторить запрос или включить доступ в настройках Android.|||Ja piekļuve mikrofonam paliek izslēgta, varat rakstīt, mēģināt vēlreiz vai ieslēgt to Android iestatījumos.
 Import / Restore|||Импорт / Восстановление|||Importēt / Atjaunot
 Inspect tool %1$s|||Просмотреть инструмент %1$s|||Apskatīt rīku %1$s
@@ -2335,7 +2335,7 @@ Preview failed. Try again. No actions were executed.|||Предпросмотр 
 Searching nearby|||Поиск поблизости|||Meklē tuvumā
 Show “%1$s”|||Показать «%1$s»|||Parādīt “%1$s”
 Size unavailable|||Размер неизвестен|||Izmērs nav zināms
-These are optional abilities, not chat models. Halo installs nothing without a verified artifact.|||Это необязательные возможности, а не модели чата. Halo устанавливает только проверенные файлы.|||Tās ir neobligātas iespējas, nevis sarunu modeļi. Halo instalē tikai pārbaudītus failus.
+These are optional abilities, not chat models. Halo installs nothing without a verified artifact.|||Это необязательные возможности, а не модели чата. Halo устанавливает только проверенные файлы.|||Tās ir neobligātas iespējas, nevis sarunu modeļi. Halo instalē tikai pārbaudītus failus.|||To opcjonalne funkcje, a nie modele czatu. Halo niczego nie instaluje bez zweryfikowanego pliku modelu.
 This source changed since the session started. Citations refer to revision|||Источник изменился после начала занятия. Цитаты относятся к версии|||Avots ir mainījies kopš nodarbības sākuma. Citāti attiecas uz versiju
 Turn on Bluetooth|||Включить Bluetooth|||Ieslēgt Bluetooth
 Untitled|||Без названия|||Bez nosaukuma|||Bez tytułu
@@ -3058,7 +3058,7 @@ How halo answers|||Как halo отвечает|||Kā halo atbild
 Choose what halo can use|||Выберите, что может использовать halo|||Izvēlieties, ko halo drīkst izmantot
 Review what halo remembers|||Посмотрите, что помнит halo|||Pārskatiet, ko halo atceras
 Use halo from your phone|||Обращайтесь к halo с телефона|||Izmantojiet halo savā tālrunī
-Actions halo can use|||Действия, доступные halo|||Darbības, ko halo var izmantot
+Actions halo can use|||Действия, доступные halo|||Darbības, ko halo var izmantot|||Działania dostępne dla halo
 halo nearby|||halo рядом|||halo tuvumā
 What halo can use|||Что может использовать halo|||Ko halo drīkst izmantot
 Check-up|||Проверка|||Pārbaude
@@ -3282,8 +3282,8 @@ Polish interface is partly translated. Some screens may still appear in English.
 Listening and answer languages are separate. Change them in Voice & reading.|||Языки распознавания и ответов задаются отдельно в разделе «Голос и чтение».|||Klausīšanās un atbilžu valodas ir atsevišķas. Mainiet tās sadaļā «Balss un lasīšana».|||Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie.
 Skill packages|||Пакеты навыков|||Prasmju pakotnes
 Import and manage your own skills|||Импортируйте свои навыки и управляйте ими|||Importējiet un pārvaldiet savas prasmes
-Manage skill packages in Advanced.|||Управление пакетами навыков — в расширенных настройках.|||Prasmju pakotnes pārvaldiet papildu iestatījumos.
-App action|||Действие приложения|||Lietotnes darbība
+Manage skill packages in Advanced.|||Управление пакетами навыков — в расширенных настройках.|||Prasmju pakotnes pārvaldiet papildu iestatījumos.|||Pakietami umiejętnościami zarządzaj w sekcji Zaawansowane.
+App action|||Действие приложения|||Lietotnes darbība|||Działanie aplikacji
 Connected · getting ready|||Подключено · готовится|||Savienots · gatavojas
 Your phone manages the buttons and volume.|||Телефон управляет кнопками и громкостью.|||Tālrunis pārvalda pogas un skaļumu.
 Available while connected|||Доступно при подключении|||Pieejams, kamēr savienots
@@ -3606,8 +3606,8 @@ Nothing changes until you review and save. Turning it on schedules future runs; 
 Suggestion no longer available|||Предложение больше недоступно|||Ieteikums vairs nav pieejams
 This routine is no longer available. You can dismiss this suggestion.|||Этот сценарий больше недоступен. Предложение можно отклонить.|||Šis scenārijs vairs nav pieejams. Varat noraidīt šo ieteikumu.
 No thanks|||Нет, спасибо|||Nē, paldies
-Android access|||Доступ Android|||Android piekļuve
-No special permission needed|||Особые разрешения не нужны|||Īpašas atļaujas nav vajadzīgas
+Android access|||Доступ Android|||Android piekļuve|||Dostęp do Androida
+No special permission needed|||Особые разрешения не нужны|||Īpašas atļaujas nav vajadzīgas|||Nie są wymagane specjalne uprawnienia
 Needs access or a connected device|||Нужен доступ или подключённое устройство|||Vajadzīga piekļuve vai pievienota ierīce
 Some features are unavailable|||Некоторые функции недоступны|||Dažas iespējas nav pieejamas
 Not available right now|||Сейчас недоступно|||Pašlaik nav pieejams

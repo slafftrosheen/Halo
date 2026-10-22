@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="ui_9580a67e9fb8" formatted="false">"Pakiety umiejętności wymagają uwagi"</string>
+    <string name="ui_826e63a5df3b" formatted="false">"Te pakiety nie zostały wczytane. Pozostałe umiejętności są nadal dostępne."</string>
+    <string name="ui_76c02b7eddca" formatted="false">"Szukaj umiejętności"</string>
     <string name="ui_8c3023819c3a" formatted="false">"Ukryj zaawansowane informacje"</string>
+    <string name="ui_78b56df48289" formatted="false">"Modele dla Twoich umiejętności"</string>
+    <string name="ui_65d3e0277d3a" formatted="false">"Pobrane modele lokalne mogą odpowiadać na tym telefonie. Działania AI wymagają również zgodnego modelu i włączonych umiejętności."</string>
+    <string name="ui_7839c11f5800" formatted="false">"Nie znaleziono pasujących umiejętności"</string>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
     <string name="ui_bcba696f3eb1" formatted="false">"Przekierowanie"</string>
     <string name="ui_3ff5620b0294" formatted="false">"Nauka"</string>
@@ -8,6 +14,7 @@
     <string name="ui_76900f1bfd16" formatted="false">"Wstecz"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
     <string name="ui_87bf2bc08589" formatted="false">"Głos"</string>
+    <string name="ui_95338ea2de74" formatted="false">"Działania dostępne dla halo"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
     <string name="ui_08ad51871af7" formatted="false">"Czego chcesz się nauczyć?"</string>
@@ -120,6 +127,16 @@
     <string name="ui_aca87581221f" formatted="false">"Dźwięk systemowy korzysta z bieżącej trasy wyjściowej Androida."</string>
     <string name="ui_ed3f9a8f70a2" formatted="false">"Pliki modelu i licencja"</string>
     <string name="ui_db23f1b146aa" formatted="false">"Wyczyść pamięć podręczną syntezy mowy"</string>
+    <string name="ui_7a8960f50321" formatted="false">"Instrukcje są niedostępne"</string>
+    <string name="ui_9d60841e0a78" formatted="false">"Sprawdź"</string>
+    <string name="ui_71427fb7169d" formatted="false">"Przyznaj dostęp do Androida"</string>
+    <string name="ui_ff8059dc6752" formatted="false">"Działania"</string>
+    <string name="ui_569ca49f4aaf" formatted="false">"Zainstaluj"</string>
+    <string name="ui_fbb7a8c4c651" formatted="false">"Importuj SKILL.md"</string>
+    <string name="ui_0dfe1d63c9d8" formatted="false">"Sprawdzanie…"</string>
+    <string name="ui_a3cdac3bdf98" formatted="false">"Co halo może teraz zrobić"</string>
+    <string name="ui_d88af80346ea" formatted="false">"Modele według funkcji"</string>
+    <string name="ui_75081b593d15" formatted="false">"Wyłączone"</string>
     <string name="ui_879dd831b8b6" formatted="false">"Bieżące urządzenie · Trwała macierz ról"</string>
     <string name="ui_6cc7c6b30613" formatted="false">"Uruchom macierz ról dla zainstalowanych modeli"</string>
     <string name="ui_716441045c2d" formatted="false">"Skopiuj wyniki bieżącego urządzenia"</string>
@@ -173,6 +190,11 @@
     <string name="ui_7dfd4c4b11d5" formatted="false">"Użyj ElevenLabs do syntezy mowy"</string>
     <string name="ui_753e99a7c10d" formatted="false">"Odsłuchaj frazę testową na telefonie"</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
+    <string name="ui_f64001c434a8" formatted="false">"Niektóre wrażliwe działania zawsze wymagają potwierdzenia."</string>
+    <string name="ui_0131d7ca5cad" formatted="false">"Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania."</string>
+    <string name="ui_c30d7093bd2d" formatted="false">"Instrukcje dostarczone przez ten pakiet"</string>
+    <string name="ui_bf1e14eeaad5" formatted="false">"Pakiet umiejętności nie jest zainstalowany"</string>
+    <string name="ui_5f3c25857f00" formatted="false">"Wczesna synteza mowy jest dostępna dla dokładnych odpowiedzi przesyłanych strumieniowo bez narzędzi. Działania narzędzi i zatwierdzenia pozostają buforowane."</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
     <string name="ui_4e86512d9a0a" formatted="false">"halo"</string>
@@ -217,6 +239,7 @@
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
     <string name="ui_158aa43ca64e" formatted="false">"Anuluj nagrywanie"</string>
     <string name="ui_a0f7acc32c7c" formatted="false">"Zapisz teraz, uporządkuj później. Wszystko pozostaje lokalnie, dopóki nie zdecydujesz się udostępnić."</string>
+    <string name="ui_fa8d9e436ed1" formatted="false">"Nie udało się zapisać tej zmiany. Spróbuj ponownie."</string>
     <string name="ui_fdc1d3d94759" formatted="false">"Utwórz powiązaną notatkę z listą kontrolną"</string>
     <string name="ui_3331a4782f7a" formatted="false">"Usuń zapisaną notatkę głosową"</string>
     <string name="ui_6578dc409104" formatted="false">"Przenieś do nowej grupy"</string>
@@ -314,6 +337,7 @@
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
+    <string name="ui_7356acceb0c5" formatted="false">"Utwórz umiejętność"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
     <string name="ui_d177cdc09a4e" formatted="false">"Nie zainstalowano"</string>
     <string name="ui_7db320928b62" formatted="false">"Zainstalowano · plik zweryfikowany · niezaładowany"</string>
@@ -348,9 +372,13 @@
     <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
     <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
+    <string name="ui_366596141374" formatted="false">"Zastosuj ustawienia"</string>
+    <string name="ui_e90a4c413b9e" formatted="false">"Zmienić wszystkie ustawienia zatwierdzania narzędzi?"</string>
+    <string name="ui_325da5b3bd34" formatted="false">"halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa."</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
+    <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
     <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 głosów"</string>
@@ -491,6 +519,7 @@
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_35a860e0406b" formatted="false">"Działania dostępne dla halo"</string>
     <string name="ui_0085d5ec796b" formatted="false">"Opcje techniczne w jednym miejscu."</string>
     <string name="ui_d68f0cbd3664" formatted="false">"Opcje techniczne znajdują się w sekcji Zaawansowane."</string>
     <string name="ui_a9678fc14996" formatted="false">"Otwórz ustawienia zaawansowane"</string>
@@ -555,6 +584,8 @@
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
     <string name="ui_ee9ba864e400" formatted="false">"Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie."</string>
+    <string name="ui_6430c125dffd" formatted="false">"Pakietami umiejętnościami zarządzaj w sekcji Zaawansowane."</string>
+    <string name="ui_75a6e8b5b5f6" formatted="false">"Działanie aplikacji"</string>
     <string name="ui_3373a168ec11" formatted="false">"Tylko za Twoją zgodą"</string>
     <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
     <string name="ui_7fbdc83474ee" formatted="false">"Zapisane nagrania pozostają prywatne na tym telefonie i są usuwane po siedmiu dniach."</string>
@@ -570,6 +601,8 @@
     <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
+    <string name="ui_d8c8d201a7bc" formatted="false">"Dostęp do Androida"</string>
+    <string name="ui_4c90e38762a6" formatted="false">"Nie są wymagane specjalne uprawnienia"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
     <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
     <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
