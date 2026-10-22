@@ -99,6 +99,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var proposalBase by remember { mutableStateOf<ScreenLayout?>(null) }
     var proposedLayout by remember { mutableStateOf<ScreenLayout?>(null) }
     var requestError by remember { mutableStateOf(false) }
+    var researchRefreshQuery by rememberSaveable { mutableStateOf<String?>(null) }
     val widgetNames = ScreenWidgets.types.associateWith { uiText(widgetTitle(it)) }
     var detailCard by remember { mutableStateOf<ScreenCard?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
@@ -450,6 +451,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     }
     detailCard?.let { selected -> layout?.cards?.firstOrNull { it.widgetType == selected.widgetType && it.itemId == selected.itemId }?.let { card ->
         val data = display(card)
+        val researchItem = if (card.widgetType == "research")
+            routineItems.firstOrNull { it.id == card.itemId && it.sourceType == ScreenSourceType.RESEARCH } else null
         ModalBottomSheet(onDismissRequest = { detailCard = null }) {
             Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(if (fullScreen && hidePrivate && data.sensitive) uiText("Private card") else if (data.sourceTitle) data.title else uiText(data.title), style = MaterialTheme.typography.headlineSmall)
@@ -465,7 +468,20 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     if (card.widgetType == "interests") TextButton(onClick = {
                         topicsDraft = topics; topicsOpen = true; detailCard = null
                     }) { Text(uiText("Choose topics")) }
-                    if (card.widgetType == "research") routineItems.firstOrNull { it.id == card.itemId }?.sourceLinks.orEmpty().forEach { source ->
+                    if (card.widgetType in setOf("calendar", "tasks") || researchItem != null) {
+                        OutlinedButton(onClick = {
+                            when (card.widgetType) {
+                                "calendar" -> { now = Instant.now(); calendarFailed = false }
+                                "tasks" -> ManualDependencyGraph.dailyAssistantController.refresh()
+                                "research" -> {
+                                    researchRefreshQuery = researchItem?.title
+                                    detailCard = null
+                                }
+                                else -> Unit
+                            }
+                        }, modifier = Modifier.fillMaxWidth()) { Text(uiText("Refresh")) }
+                    }
+                    if (card.widgetType == "research") researchItem?.sourceLinks.orEmpty().forEach { source ->
                         OutlinedButton(onClick = { runCatching { uriHandler.openUri(source.url) } }, modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.fillMaxWidth()) { Text(source.title); Text(source.url, style = MaterialTheme.typography.labelSmall) }
                         }
@@ -486,6 +502,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
         }
     } }
+    researchRefreshQuery?.let { query ->
+        com.halo.app.ui.online.GroundedWebSearchDialog(query) { researchRefreshQuery = null }
+    }
 }
 
 private fun uiTextFallbackCalendar() = "Calendar event"
