@@ -67,6 +67,7 @@
     <string name="ui_565339bc4d33" formatted="false">"OK"</string>
     <string name="ui_f730c75d143a" formatted="false">"Anuluj test"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
+    <string name="ui_118fb65601f7" formatted="false">"Wybierz zdjęcie"</string>
     <string name="ui_b3e8ec3e76b5" formatted="false">"Tekst gotowy"</string>
     <string name="ui_3e6ff6fedc87" formatted="false">"Część tekstu jest gotowa"</string>
     <string name="ui_0faade3653af" formatted="false">"Sprawdzanie dostępu"</string>
@@ -173,11 +174,23 @@
     <string name="ui_9f760ab20739" formatted="false">"Czeka na Ciebie"</string>
     <string name="ui_57d1aec01657" formatted="false">"Słuchanie zatrzymane"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
+    <string name="ui_845a42ac5a43" formatted="false">"Nagraj notatkę głosową"</string>
+    <string name="ui_c2a7865d3b96" formatted="false">"Zatrzymaj i zapisz"</string>
     <string name="ui_1aa22a9b1abc" formatted="false">"Dodaj adnotację do źródła"</string>
     <string name="ui_0a30a815d67d" formatted="false">"Strona"</string>
     <string name="ui_50b563c05624" formatted="false">"Oznaczenia są zapisywane na tym Canvasie, a nie w oryginalnym pliku."</string>
+    <string name="ui_9a83c4da41dc" formatted="false">"Dodaj do bieżącego Canvasu"</string>
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
+    <string name="ui_158aa43ca64e" formatted="false">"Anuluj nagrywanie"</string>
+    <string name="ui_a0f7acc32c7c" formatted="false">"Zapisz teraz, uporządkuj później. Wszystko pozostaje lokalnie, dopóki nie zdecydujesz się udostępnić."</string>
+    <string name="ui_3331a4782f7a" formatted="false">"Usuń zapisaną notatkę głosową"</string>
+    <string name="ui_d84eebada93e" formatted="false">"Zdjęcie"</string>
+    <string name="ui_e5ab0a866833" formatted="false">"Spróbuj ponownie zapisać notatkę głosową"</string>
+    <string name="ui_6501e1ced8da" formatted="false">"Zapisz notatkę"</string>
     <string name="ui_76d165ea898a" formatted="false">"Zapisz w Odebranych"</string>
+    <string name="ui_8a397257d435" formatted="false">"Krótka notatka"</string>
+    <string name="ui_e3de5d43dfd4" formatted="false">"Notatki głosowe mogą trwać do dwóch minut. Zatrzymaj i zapisz nagranie przed opuszczeniem tego ekranu."</string>
+    <string name="ui_505e82fae329" formatted="false">"Spróbuj ponownie zapisać zdjęcie"</string>
     <string name="ui_3efef4004996" formatted="false">"Zapisać konfigurację na później?"</string>
     <string name="ui_59240e9f4b9e" formatted="false">"Twoje wybory zostały zapisane. Aby kontynuować, otwórz „Konfiguracja z przewodnikiem” w Ustawieniach."</string>
     <string name="ui_e243532c5616" formatted="false">"Poznaj halo"</string>

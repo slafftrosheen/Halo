@@ -440,7 +440,7 @@ Built-in microphone|||Встроенный микрофон|||Iebūvētais mikro
 Send|||Отправить|||Nosūtīt
 Add context|||Добавить контекст|||Pievienot kontekstu
 Take a photo|||Сделать фото|||Uzņemt foto
-Choose a photo|||Выбрать фото|||Izvēlēties foto
+Choose a photo|||Выбрать фото|||Izvēlēties foto|||Wybierz zdjęcie
 %1$d sources · %2$d cards · %3$d saved replies|||Источники: %1$d · карточки: %2$d · сохранённые ответы: %3$d|||Avoti: %1$d · kartītes: %2$d · saglabātās atbildes: %3$d
 Next: %1$s|||Далее: %1$s|||Tālāk: %1$s
 Text ready|||Текст готов|||Teksts gatavs|||Tekst gotowy
@@ -1375,8 +1375,8 @@ Edit sketch|||Изменить набросок|||Rediģēt skici
 Draw with your finger or stylus.|||Рисуйте пальцем или стилусом.|||Zīmē ar pirkstu vai irbuli.
 Undo stroke|||Отменить штрих|||Atsaukt līniju
 Clear sketch|||Очистить рисунок|||Notīrīt skici
-Record memo|||Записать голосовую заметку|||Ierakstīt balss piezīmi
-Stop & save|||Остановить и сохранить|||Apturēt un saglabāt
+Record memo|||Записать голосовую заметку|||Ierakstīt balss piezīmi|||Nagraj notatkę głosową
+Stop & save|||Остановить и сохранить|||Apturēt un saglabāt|||Zatrzymaj i zapisz
 Recording…|||Идёт запись…|||Notiek ieraksts…
 Importing into Workspace…|||Импорт в рабочее пространство…|||Importē darbvietā…
 Could not start recording. The microphone may be busy.|||Не удалось начать запись. Возможно, микрофон занят.|||Neizdevās sākt ierakstu. Iespējams, mikrofons ir aizņemts.
@@ -1419,16 +1419,16 @@ Drag this zone to move enclosed cards.|||Перетащите область, ч
 %1$d source cards · %2$d groups|||Исходных карточек: %1$d · Групп: %2$d|||%1$d avota kartītes · %2$d grupas
 AI couldn't respond. Check your provider and sharing settings, then retry.|||ИИ не ответил. Проверьте модель и настройки доступа, затем повторите.|||MI neatbildēja. Pārbaudiet modeli un kopīgošanas iestatījumus, tad mēģiniet vēlreiz.
 Add an idea first.|||Сначала добавьте идею.|||Vispirms pievienojiet ideju.
-Add to current Canvas|||Добавить на текущую доску|||Pievienot pašreizējam audeklam
+Add to current Canvas|||Добавить на текущую доску|||Pievienot pašreizējam audeklam|||Dodaj do bieżącego Canvasu
 Approval arranges these cards and adds group links. Original notes and files stay unchanged. Nothing is sent to another app.|||После подтверждения карточки будут упорядочены и связаны с группами. Исходные заметки и файлы не изменятся. В другие приложения ничего не отправляется.|||Apstiprināšana sakārto kartītes un saista tās ar grupām. Sākotnējās piezīmes un faili paliek nemainīti. Citām lietotnēm nekas netiek nosūtīts.
 Approve organization|||Подтвердить порядок|||Apstiprināt kārtojumu
 Arrange selected|||Упорядочить выбранные|||Sakārtot atlasītās
 Ask Halo to organize|||Попросить Halo упорядочить|||Lūgt Halo sakārtot
 Bring forward|||На передний план|||Pārvietot priekšplānā
 Camera permission was not granted|||Доступ к камере не разрешён|||Piekļuve kamerai nav atļauta|||Nie przyznano dostępu do aparatu
-Cancel recording|||Отменить запись|||Atcelt ierakstīšanu
+Cancel recording|||Отменить запись|||Atcelt ierakstīšanu|||Anuluj nagrywanie
 Canvas position could not be saved yet.|||Положение доски пока не сохранено.|||Audekla novietojumu pagaidām neizdevās saglabāt.
-Capture now, organize later. Everything stays local unless you choose to share it.|||Сохраните сейчас, упорядочите позже. Всё остаётся на устройстве, пока вы не разрешите отправку.|||Saglabājiet tagad, sakārtojiet vēlāk. Viss paliek ierīcē, līdz atļaujat kopīgošanu.
+Capture now, organize later. Everything stays local unless you choose to share it.|||Сохраните сейчас, упорядочите позже. Всё остаётся на устройстве, пока вы не разрешите отправку.|||Saglabājiet tagad, sakārtojiet vēlāk. Viss paliek ierīcē, līdz atļaujat kopīgošanu.|||Zapisz teraz, uporządkuj później. Wszystko pozostaje lokalnie, dopóki nie zdecydujesz się udostępnić.
 Card actions|||Действия с карточкой|||Kartītes darbības
 Changes could not be saved yet. Try Back again.|||Изменения пока не сохранены. Нажмите «Назад» ещё раз.|||Izmaiņas pagaidām neizdevās saglabāt. Nospiediet Atpakaļ vēlreiz.
 Could not add a card. Try again.|||Не удалось добавить карточку. Повторите.|||Neizdevās pievienot kartīti. Mēģiniet vēlreiz.
@@ -1436,7 +1436,7 @@ Could not delete this card.|||Не удалось удалить карточк�
 Could not export the canvas. Your cards are still here.|||Не удалось сохранить доску в заметку. Все карточки остались здесь.|||Neizdevās saglabāt audeklu piezīmē. Kartītes paliek šeit.
 Could not save that change. Try again.|||Не удалось сохранить изменение. Повторите.|||Neizdevās saglabāt izmaiņu. Mēģiniet vēlreiz.
 Create a linked checklist note|||Создать связанную заметку со списком задач|||Izveidot saistītu uzdevumu piezīmi
-Discard saved memo|||Удалить несохранённую запись|||Dzēst nesaglabāto ierakstu
+Discard saved memo|||Удалить несохранённую запись|||Dzēst nesaglabāto ierakstu|||Usuń zapisaną notatkę głosową
 Halo could not propose safe groups. The manual preview is still available.|||Halo не смог предложить подходящие группы. Можно упорядочить карточки вручную.|||Halo nevarēja piedāvāt drošas grupas. Varat sakārtot kartītes manuāli.
 Halo couldn't import the shared content|||Halo не смог импортировать отправленные материалы|||Halo neizdevās importēt kopīgoto saturu
 Local OCR reads Latin script, including Latvian. Cyrillic and handwriting may be unreadable. Review against the source.|||Распознавание поддерживает латиницу, включая латышский. Кириллица и рукописный текст могут не распознаться. Сверьте результат с оригиналом.|||Lokālā teksta atpazīšana atbalsta latīņu rakstību, arī latviešu valodu. Kirilica un rokraksts var netikt atpazīti. Salīdziniet ar avotu.
@@ -1450,7 +1450,7 @@ No camera app is available|||Приложение камеры недоступ�
 Organization saved. Original notes and files are unchanged.|||Порядок сохранён. Исходные заметки и файлы не изменены.|||Kārtojums saglabāts. Sākotnējās piezīmes un faili nav mainīti.
 Organize selected|||Упорядочить выбранные|||Sakārtot atlasītās
 Organize whole board|||Упорядочить всю доску|||Sakārtot visu audeklu
-Photo|||Фото|||Foto
+Photo|||Фото|||Foto|||Zdjęcie
 Photo cancelled. No image was received.|||Съёмка отменена. Изображение не получено.|||Fotografēšana atcelta. Attēls nav saņemts.
 Photo could not be saved. Choose it from Files to retry.|||Не удалось сохранить фото. Выберите его в файлах и повторите.|||Neizdevās saglabāt foto. Atlasiet to no failiem un mēģiniet vēlreiz.
 Preview organization|||Просмотреть порядок|||Apskatīt kārtojumu
@@ -1461,9 +1461,9 @@ Recording cancelled.|||Запись отменена.|||Ierakstīšana atcelta.
 Remove selected cards|||Удалить выбранные карточки|||Noņemt atlasītās kartītes
 Remove suggested group|||Убрать предложенную группу|||Noņemt piedāvāto grupu
 Resume drawing|||Продолжить рисунок|||Turpināt zīmējumu
-Retry saved memo|||Повторить сохранение записи|||Mēģināt saglabāt ierakstu vēlreiz
+Retry saved memo|||Повторить сохранение записи|||Mēģināt saglabāt ierakstu vēlreiz|||Spróbuj ponownie zapisać notatkę głosową
 Save failed. Your source is kept; retry or choose the file again.|||Не удалось сохранить. Оригинал сохранён; повторите или выберите файл снова.|||Saglabāšana neizdevās. Avots ir saglabāts; mēģiniet vēlreiz vai atlasiet failu no jauna.
-Save note|||Сохранить заметку|||Saglabāt piezīmi
+Save note|||Сохранить заметку|||Saglabāt piezīmi|||Zapisz notatkę
 Save to Inbox|||Сохранить во Входящие|||Saglabāt iesūtnē|||Zapisz w Odebranych
 Saved locally. You can place these same items on a Canvas without copying them again.|||Сохранено на устройстве. Можно добавить эти же материалы на доску без повторного копирования.|||Saglabāts ierīcē. Šos pašus vienumus varat pievienot audeklam bez atkārtotas kopēšanas.
 Saved to Inbox and added to Canvas.|||Сохранено во Входящих и добавлено на доску.|||Saglabāts iesūtnē un pievienots audeklam.
@@ -1473,7 +1473,7 @@ Saving to Inbox…|||Сохраняем во Входящие…|||Saglabā ies�
 Search could not finish. Try again.|||Поиск не завершён. Повторите.|||Meklēšana neizdevās. Mēģiniet vēlreiz.
 Select a text card to rewrite it. Linked sources can be edited in their own editor.|||Выберите текстовую карточку. Связанные материалы редактируются в своём редакторе.|||Atlasiet teksta kartīti. Saistītos avotus var rediģēt to redaktorā.
 Select all|||Выбрать всё|||Atlasīt visu
-Short note|||Короткая заметка|||Īsa piezīme
+Short note|||Короткая заметка|||Īsa piezīme|||Krótka notatka
 Source: %1$s|||Источник: %1$s|||Avots: %1$s
 The note was saved; Study could not start.|||Заметка сохранена; не удалось начать обучение.|||Piezīme saglabāta; neizdevās sākt mācīšanos.
 This card changed while Halo was writing. Regenerate the draft before applying it.|||Карточка изменилась во время работы Halo. Создайте новый черновик перед применением.|||Kartīte mainījās, kamēr Halo rakstīja. Pirms piemērošanas izveidojiet jaunu melnrakstu.
@@ -1482,7 +1482,7 @@ This card position could not be saved yet.|||Положение карточки
 This source is unavailable. Restore it from Workspace if it is archived or in trash.|||Источник недоступен. Восстановите его в рабочем пространстве, если он в архиве или корзине.|||Avots nav pieejams. Atjaunojiet to darbvietā, ja tas ir arhīvā vai atkritnē.
 Ungroup|||Разгруппировать|||Atgrupēt
 Untitled card|||Карточка без названия|||Kartīte bez nosaukuma
-Voice memos are limited to two minutes. Stop and save before leaving this screen.|||Запись ограничена двумя минутами. Остановите и сохраните её перед выходом с экрана.|||Balss ieraksta ilgums ir līdz divām minūtēm. Pirms aiziešanas apturiet un saglabājiet to.
+Voice memos are limited to two minutes. Stop and save before leaving this screen.|||Запись ограничена двумя минутами. Остановите и сохраните её перед выходом с экрана.|||Balss ieraksta ilgums ir līdz divām minūtēm. Pirms aiziešanas apturiet un saglabājiet to.|||Notatki głosowe mogą trwać do dwóch minut. Zatrzymaj i zapisz nagranie przed opuszczeniem tego ekranu.
 Write transcript|||Записать текст вручную|||Ievadīt atšifrējumu
 connection|||связь|||saikne
 Local speech: %1$s · %2$s · %3$s|||Распознавание на устройстве: %1$s · %2$s · %3$s|||Runas atpazīšana ierīcē: %1$s · %2$s · %3$s
@@ -1493,7 +1493,7 @@ Select cards|||Выбрать карточки|||Atlasīt kartītes
 Source changed. Review it again.|||Источник изменился. Проверьте его снова.|||Avots ir mainījies. Pārbaudiet to vēlreiz.
 Local transcription failed. Check the installed speech model or write a transcript. Original recording is safe.|||Не удалось распознать речь. Проверьте установленную речевую модель или введите текст вручную. Исходная запись сохранена.|||Neizdevās atpazīt runu. Pārbaudiet instalēto runas modeli vai ievadiet tekstu manuāli. Sākotnējais ieraksts ir saglabāts.
 Photo could not be saved. Retry the saved photo.|||Не удалось сохранить фото. Повторите сохранение снимка.|||Neizdevās saglabāt foto. Mēģiniet saglabāt uzņemto foto vēlreiz.
-Retry saved photo|||Повторить сохранение фото|||Mēģināt saglabāt foto vēlreiz
+Retry saved photo|||Повторить сохранение фото|||Mēģināt saglabāt foto vēlreiz|||Spróbuj ponownie zapisać zdjęcie
 %1$d cards · %2$d connections · %3$d%%|||Карточек: %1$d · Связей: %2$d · %3$d%%|||%1$d kartītes · %2$d saiknes · %3$d%%
 %1$d cards will move; %2$d will stay where they are.|||Будет перемещено карточек: %1$d; останется на месте: %2$d.|||Tiks pārvietotas %1$d kartītes; %2$d paliks savās vietās.
 Remove selected cards?|||Удалить выбранные карточки?|||Noņemt atlasītās kartītes?
