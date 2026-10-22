@@ -1,6 +1,6 @@
 # Halo alpha acceptance matrix — 2026-10-22
 
-**Source baseline:** `93fd87338fba066d291acfa0520ed3e9c60e0b56` (`main`).
+**Source baseline:** `4f3cde2886f162030f8dd14e82ac47e2d4bd5d12` (`main`).
 **Overall alpha status: NOT TESTED.** This matrix records end-to-end acceptance,
 not whether implementation work exists. A passing source test does not pass a
 physical user journey.
@@ -35,7 +35,7 @@ physical user journey.
 ## Current execution environment
 
 This update records source state at
-`93fd87338fba066d291acfa0520ed3e9c60e0b56` only. Per #43, coding agents do not
+`4f3cde2886f162030f8dd14e82ac47e2d4bd5d12` only. Per #43, coding agents do not
 run builds, tests, CI/Actions, or physical acceptance; owner/alpha testers must fill the
 run artifacts on real devices. No new builds, tests, or physical runs are
 claimed here. Historical verification records linked above retain their
