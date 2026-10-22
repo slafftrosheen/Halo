@@ -3827,6 +3827,8 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Saving to Screen" to R.string.ui_516d508c626b,
     "No source links to save." to R.string.ui_71a490610984,
     "Continue studying" to R.string.ui_7e412fd41461,
+    "Weather" to R.string.ui_a0bba6381246,
+    "What halo did" to R.string.ui_2b0b55513bd8,
     "Start a Study session to see it here." to R.string.ui_d6d63435d67d,
     "Resume your saved Study session." to R.string.ui_879979ad80a9,
     "No active session" to R.string.ui_1f9dae2d58d7,

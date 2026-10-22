@@ -5,10 +5,10 @@ internal object ScreenLayoutRequests {
     fun propose(text: String, names: Map<String, String>): LayoutChange? {
         val request = text.trim().trimEnd('.', '!', '?').lowercase()
         val commands = listOf(
-            listOf("add", "добавь", "добавить", "pievieno", "pievienot") to "add",
-            listOf("hide", "remove", "скрой", "убери", "paslēp", "noņemt") to "hide",
-            listOf("enlarge", "увеличь", "palielini") to "large",
-            listOf("move to top", "в начало", "pārvieto augšā") to "top",
+            listOf("add", "добавь", "добавить", "pievieno", "pievienot", "dodaj") to "add",
+            listOf("hide", "remove", "скрой", "убери", "paslēp", "noņemt", "ukryj", "usuń") to "hide",
+            listOf("enlarge", "увеличь", "palielini", "powiększ", "zwiększ") to "large",
+            listOf("move to top", "в начало", "pārvieto augšā", "przenieś na górę", "przesuń na górę") to "top",
         )
         for ((verbs, command) in commands) for (verb in verbs) {
             if (!request.startsWith("$verb ")) continue

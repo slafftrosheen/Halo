@@ -148,7 +148,7 @@ Stopped|||Остановлено|||Apturēts
 Offline|||Нет подключения|||Bezsaistē
 Complete|||Готово|||Pabeigts
 All done|||Готово|||Viss pabeigts
-Needs attention|||Требуется внимание|||Jāpievērš uzmanība
+Needs attention|||Требуется внимание|||Jāpievērš uzmanība|||Wymaga uwagi
 Needs your approval|||Нужно ваше разрешение|||Vajadzīga tava atļauja
 Needs your answer|||Нужен ваш ответ|||Vajadzīga tava atbilde
 Waiting for resource|||Ожидание ресурса|||Gaida resursu
@@ -1800,7 +1800,7 @@ Routines & procedures|||Сценарии и процедуры|||Rutīnas un pro
 Follow-ups|||Отслеживание событий|||Notikumu uzraudzība
 Contacts|||Контакты|||Kontakti
 Sharing|||Общий доступ|||Kopīgošana
-Calendar|||Календарь|||Kalendārs
+Calendar|||Календарь|||Kalendārs|||Kalendarz
 Storage status|||Состояние хранилища|||Krātuves stāvoklis
 Tool discovery|||Поиск инструментов|||Rīku atrašana
 Notification digests|||Сводки уведомлений|||Paziņojumu apkopojumi
@@ -3089,7 +3089,7 @@ Pinned|||Закреплено|||Piesprausts
 Private card|||Личная карточка|||Privāta kartīte
 Private details are hidden. Exit full screen to see them.|||Личные данные скрыты. Выйдите из полноэкранного режима, чтобы увидеть их.|||Privāta informācija ir paslēpta. Lai to skatītu, izejiet no pilnekrāna režīma.
 Resize|||Изменить размер|||Mainīt izmēru
-Routine results|||Результаты сценариев|||Rutīnu rezultāti
+Routine results|||Результаты сценариев|||Rutīnu rezultāti|||Wyniki rutyn
 Screen settings|||Настройки экрана|||Ekrāna iestatījumi
 Starting layouts|||Начальные макеты|||Sākuma izkārtojumi
 This part is for grown-ups. They’ll unlock it with the phone’s screen lock.|||Этот раздел для взрослых. Они откроют его с помощью блокировки экрана телефона.|||Šī sadaļa ir pieaugušajiem. Viņi to atbloķēs ar tālruņa ekrāna bloķēšanu.
@@ -3118,9 +3118,9 @@ Exit full screen|||Выйти из полноэкранного режима|||I
 Hide private details in full screen|||Скрывать личные данные в полноэкранном режиме|||Paslēpt privātu informāciju pilnekrāna režīmā
 Stay on while charging|||Не выключать экран при зарядке|||Neizslēgt ekrānu uzlādes laikā
 Dim at night|||Уменьшать яркость ночью|||Aptumšot naktī
-Clock & date|||Часы и дата|||Pulkstenis un datums
-Reading & interests|||Чтение и интересы|||Lasīšana un intereses
-Continue in Notebook|||Продолжить в блокноте|||Turpināt piezīmju grāmatiņā
+Clock & date|||Часы и дата|||Pulkstenis un datums|||Zegar i data
+Reading & interests|||Чтение и интересы|||Lasīšana un intereses|||Czytanie i zainteresowania
+Continue in Notebook|||Продолжить в блокноте|||Turpināt piezīmju grāmatiņā|||Kontynuuj w Notatniku
 Card added|||Карточка добавлена|||Kartīte pievienota
 Card moved|||Карточка перемещена|||Kartīte pārvietota
 Card updated|||Карточка обновлена|||Kartīte atjaunināta
@@ -3820,7 +3820,7 @@ A selected video changed while it was being read. Build local search again.|||В
 A selected video is unavailable or no longer permitted. Reattach it or remove it from local search.|||Выбранное видео недоступно или доступ к нему больше не разрешён. Прикрепите его снова или удалите из локального поиска.|||Atlasītais video nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai noņemiet no vietējās meklēšanas.|||Wybrany film jest niedostępny lub nie masz już do niego dostępu. Dołącz go ponownie albo usuń z wyszukiwania lokalnego.
 This phone cannot run the image encoder on CPU. Deselect videos to continue with text-only local search.|||Этот телефон не может запускать обработчик изображений на CPU. Снимите выбор с видео, чтобы продолжить поиск только по тексту.|||Šis tālrunis nevar darbināt attēlu kodētāju ar CPU. Noņemiet video atlasi, lai turpinātu tikai ar teksta meklēšanu.|||Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz filmy, aby kontynuować wyszukiwanie lokalne tylko w tekście.
 A selected recording changed while it was being read. Build local search again.|||Выбранная запись изменилась во время чтения. Снова создайте локальный поиск.|||Atlasītais ieraksts mainījās lasīšanas laikā. Vēlreiz izveidojiet vietējo meklēšanu.|||Wybrane nagranie zmieniło się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego.
-Research|||Исследование|||Izpēte
+Research|||Исследование|||Izpēte|||Badania
 Save to Screen|||Сохранить на экран|||Saglabāt ekrānā
 Saved to Screen|||Сохранено на экране|||Saglabāts ekrānā
 Screen is full or could not save this research.|||Экран заполнен или не удалось сохранить исследование.|||Ekrāns ir pilns vai neizdevās saglabāt šo izpēti.
@@ -3828,7 +3828,9 @@ Sourced research|||Исследование с источниками|||Izpēte 
 links|||ссылок|||saites
 Saving to Screen|||Сохранение на экран|||Saglabā ekrānā
 No source links to save.|||Нет ссылок на источники для сохранения.|||Nav avotu saišu, ko saglabāt.
-Continue studying|||Продолжить учёбу|||Turpināt mācības
+Continue studying|||Продолжить учёбу|||Turpināt mācības|||Kontynuuj naukę
+Weather|||Погода|||Laikapstākļi|||Pogoda
+What halo did|||Что сделал Halo|||Ko paveica halo|||Co zrobił Halo
 Start a Study session to see it here.|||Начните занятие в разделе «Учёба», чтобы оно появилось здесь.|||Sāciet mācību sesiju, lai tā tiktu parādīta šeit.
 Resume your saved Study session.|||Продолжить сохранённое занятие.|||Turpiniet saglabāto mācību sesiju.
 No active session|||Нет активного занятия|||Nav aktīvas sesijas
