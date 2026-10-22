@@ -41,6 +41,25 @@ class LocalMediaEmbeddingSafetyTest {
         }
     }
 
+    @Test fun mediaRequestSnapshotsCallerOwnedCollectionsAndBytes() {
+        val callerBytes = png.copyOf()
+        val callerInputs = mutableListOf<LocalEmbeddingInput>(LocalEmbeddingInput.Image(callerBytes))
+        val request = LocalMediaEmbeddingRequest(sha,768,callerInputs)
+
+        callerBytes[0] = 0
+        callerInputs.clear()
+
+        assertArrayEquals(png, (request.inputs.single() as LocalEmbeddingInput.Image).encodedPngOrJpeg)
+    }
+
+    @Test fun mediaRequestDoesNotExposeItsValidatedByteSnapshot() {
+        val request = LocalMediaEmbeddingRequest(sha,768,listOf(LocalEmbeddingInput.Image(png)))
+        val exposedBytes = (request.inputs.single() as LocalEmbeddingInput.Image).encodedPngOrJpeg
+        exposedBytes[0] = 0
+
+        assertArrayEquals(png, (request.inputs.single() as LocalEmbeddingInput.Image).encodedPngOrJpeg)
+    }
+
     @Test fun batchAndIdentityCannotBeForged() {
         assertThrows(IllegalArgumentException::class.java) {
             LocalMediaEmbeddingRequest("not-a-real-hash",768,listOf(LocalEmbeddingInput.Image(png)))
