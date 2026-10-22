@@ -197,6 +197,7 @@ fun HomeScreen(
     val voiceModeListeningPaused by viewModel.voiceModeListeningPaused.collectAsStateWithLifecycle()
     val voiceModeStartRequested by viewModel.voiceModeStartRequested.collectAsStateWithLifecycle()
     val voiceModeStartRequestId by viewModel.voiceModeStartRequestId.collectAsStateWithLifecycle()
+    val lastVoiceResponseConversation by viewModel.lastVoiceResponseConversation.collectAsStateWithLifecycle()
     LaunchedEffect(voiceModeStartRequested, voiceModeStartRequestId, uiState.microphonePermissionGranted, uiState.speechReady) {
         if (!voiceModeStartRequested) return@LaunchedEffect
         when {
@@ -565,6 +566,11 @@ fun HomeScreen(
             if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
                 Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
             ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
+            if (lastVoiceResponseConversation != null && lastVoiceResponseConversation == uiState.conversationId) {
+                TextButton(onClick = viewModel::repeatLastVoiceResponse, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Repeat last reply"))
+                }
+            }
             if (voiceModeActive) Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                 Text(uiText(if (voiceModeListeningPaused) "Voice Mode is on. Listening is paused."
                     else "Voice Mode is on. Halo listens again after a spoken reply."),

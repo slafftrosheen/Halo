@@ -1296,6 +1296,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "End Voice Mode" to R.string.ui_15be678720cc,
     "Pause listening" to R.string.ui_4be3502fc307,
     "Resume listening" to R.string.ui_649271a6f3bd,
+    "Repeat last reply" to R.string.ui_9b1b8ba858ff,
     "Voice Mode could not start. Try again." to R.string.ui_afb9ab558853,
     "Voice Mode is on. Halo listens again after a spoken reply." to R.string.ui_af5016d82624,
     "Voice Mode is on. Listening is paused." to R.string.ui_6f8b9e7b5034,

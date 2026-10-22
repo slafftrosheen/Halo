@@ -270,6 +270,9 @@ class HomeViewModel(
     val voiceModeStartRequested: StateFlow<Boolean> = _voiceModeStartRequested.asStateFlow()
     private val _voiceModeStartRequestId = MutableStateFlow(0L)
     val voiceModeStartRequestId: StateFlow<Long> = _voiceModeStartRequestId.asStateFlow()
+    private val _lastVoiceResponseConversation = MutableStateFlow<String?>(null)
+    val lastVoiceResponseConversation: StateFlow<String?> = _lastVoiceResponseConversation.asStateFlow()
+    @Volatile private var lastVoiceResponseRequest: TtsRequested? = null
     private val voiceModeLock = Any()
     private var voiceModeConversationId: String? = null
     private var voiceModeCaptureId: String? = null
@@ -426,6 +429,15 @@ class HomeViewModel(
                         event.sourceCaptureId?.let { captureId -> synchronized(voiceModeLock) {
                             rememberVoiceResponse(interactionId, captureId)
                         } }
+                        val sourceTurn = speechInput.value.turn?.takeIf { it.captureId == event.sourceCaptureId }
+                        val modeConversation = synchronized(voiceModeLock) {
+                            voiceModeConversationId?.takeIf { _voiceModeActive.value && voiceModeCaptureId == event.sourceCaptureId }
+                        }
+                        val sourceConversation = modeConversation ?: sourceTurn?.conversationId
+                        if (event.sourceCaptureId != null && event.text.isNotBlank() && sourceConversation != null) {
+                            lastVoiceResponseRequest = event
+                            _lastVoiceResponseConversation.value = sourceConversation
+                        }
                     }
                     is TtsCompleted -> {
                         val (captureId, interruptedByUser) = event.interactionId?.let { interactionId -> synchronized(voiceModeLock) {
@@ -821,6 +833,8 @@ class HomeViewModel(
     fun newConversation() {
         val previous = conversations?.activeConversationId()
         stopVoiceMode()
+        lastVoiceResponseRequest = null
+        _lastVoiceResponseConversation.value = null
         _sessionPresentationEnabled.value = false
         cancelVisibleSubmission(stopActiveText = true)
         viewModelScope.launch {
@@ -834,6 +848,8 @@ class HomeViewModel(
     fun clearConversation() {
         val conversation = conversations?.activeConversationId()
         stopVoiceMode()
+        lastVoiceResponseRequest = null
+        _lastVoiceResponseConversation.value = null
         _sessionPresentationEnabled.value = false
         cancelVisibleSubmission()
         cognitiveSession.clearConversation()
@@ -1030,6 +1046,42 @@ class HomeViewModel(
                         Log.e("HomeViewModel", "Failed to resume Voice Mode listening", it)
                     }
                 }
+            }
+        }
+    }
+
+    /** Replays a prior voice reply only in its originating conversation and audio route. */
+    fun repeatLastVoiceResponse() {
+        val source = lastVoiceResponseRequest ?: return
+        val conversation = conversations?.activeConversationId() ?: return
+        if (_lastVoiceResponseConversation.value != conversation || source.text.isBlank()) return
+        val pauseCapture = synchronized(voiceModeLock) {
+            if (_voiceModeActive.value && !_voiceModeListeningPaused.value) {
+                _voiceModeListeningPaused.value = true
+                true
+            } else false
+        }
+        val replay = source.copy(
+            id = UUID.randomUUID().toString(),
+            timestamp = System.currentTimeMillis(),
+            transactionId = UUID.randomUUID().toString(),
+            sourceCaptureId = null,
+            interactionId = UUID.randomUUID().toString(),
+        )
+        viewModelScope.launch {
+            listeningCommandMutex.withLock {
+                if (pauseCapture) {
+                    _listeningRequested.value = false
+                    val stopped = runCatching { commandBus.dispatch(StopListening) }
+                    if (stopped.isFailure) {
+                        Log.e("HomeViewModel", "Failed to stop listening before repeating a reply", stopped.exceptionOrNull())
+                        stopVoiceMode()
+                        return@withLock
+                    }
+                }
+                stopSpeechOutput()
+                runCatching { eventBus.publish(replay) }
+                    .onFailure { Log.e("HomeViewModel", "Failed to repeat the last voice response", it) }
             }
         }
     }
