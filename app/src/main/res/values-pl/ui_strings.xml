@@ -18,6 +18,7 @@
     <string name="ui_95338ea2de74" formatted="false">"Działania dostępne dla halo"</string>
     <string name="ui_abccc78cc93c" formatted="false">"Uprawnienia"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
+    <string name="ui_1a4f630ac1b6" formatted="false">"Zatrzymano"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
     <string name="ui_4f1fc01dc19d" formatted="false">"Wymagana jest kontrola połączenia"</string>
     <string name="ui_08ad51871af7" formatted="false">"Czego chcesz się nauczyć?"</string>
@@ -49,6 +50,7 @@
     <string name="ui_b58eb52c8810" formatted="false">"Pomiń na razie"</string>
     <string name="ui_dc20b3d5d2cd" formatted="false">"Biblioteka"</string>
     <string name="ui_84917b36f495" formatted="false">"Przeszukaj obszar roboczy"</string>
+    <string name="ui_a52ace420f21" formatted="false">"Wszystko"</string>
     <string name="ui_94835ea2fcf7" formatted="false">"Odebrane"</string>
     <string name="ui_76ea482f843e" formatted="false">"Nowa notatka"</string>
     <string name="ui_cefd66fedb8d" formatted="false">"Nowa kolekcja"</string>
@@ -141,6 +143,7 @@
     <string name="ui_f6e05dcfcfa8" formatted="false">"Wybierz model"</string>
     <string name="ui_75055b60a427" formatted="false">"Przeglądaj lokalne modele"</string>
     <string name="ui_0e9161011702" formatted="false">"Odśwież"</string>
+    <string name="ui_526c70b826b9" formatted="false">"Rozpoznawanie mowy"</string>
     <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_36ecb4f86691" formatted="false">"Wejście"</string>
     <string name="ui_37b345555d7e" formatted="false">"Pobieranie"</string>
@@ -352,12 +355,15 @@
     <string name="ui_e21f935f11d7" formatted="false">"Kopiuj"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
+    <string name="ui_22a970d2e5b1" formatted="false">"Zakończone"</string>
+    <string name="ui_132d124d6bb3" formatted="false">"Przerwano"</string>
     <string name="ui_5917d8be2cdf" formatted="false">"Sugestia halo"</string>
     <string name="ui_4e86512d9a0a" formatted="false">"halo"</string>
     <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
     <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
     <string name="ui_6a7c277bdc6e" formatted="false">"Pracuję…"</string>
+    <string name="ui_c0b93db1d10c" formatted="false">"Wymaga Twojej weryfikacji"</string>
     <string name="ui_d461a493a375" formatted="false">"Automatycznie"</string>
     <string name="ui_da0dbc127233" formatted="false">"Przerwij odpowiedź i zacznij mówić"</string>
     <string name="ui_0f831f06c1d4" formatted="false">"Załączniki i kontekst"</string>
@@ -376,12 +382,20 @@
     <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
+    <string name="ui_5b0c3a902266" formatted="false">"Oczekujące aktualizacje: %1$d"</string>
+    <string name="ui_fee0c63aa32e" formatted="false">"Sugestie do sprawdzenia w Pamięci: %1$d"</string>
+    <string name="ui_d52ac79db0ec" formatted="false">"Otwórz podgląd, aby odpowiedzieć lub zatwierdzić. Zamknięcie widoku pozostawi prośbę oczekującą."</string>
     <string name="ui_c9722a7a962a" formatted="false">"Ukryj szczegóły"</string>
+    <string name="ui_f04e042c0f36" formatted="false">"Otwórz w obszarze roboczym"</string>
+    <string name="ui_a5d341a5b0db" formatted="false">"Wynik niepotwierdzony"</string>
+    <string name="ui_a59364b3e9e0" formatted="false">"Nie udało się ukończyć"</string>
     <string name="ui_b847d5e00684" formatted="false">"Ucz się na podstawie notatki"</string>
     <string name="ui_cb30147eec19" formatted="false">"Odrzuć szkic"</string>
     <string name="ui_80c250f3db4a" formatted="false">"Historia rozmów"</string>
     <string name="ui_19e6d24090b3" formatted="false">"Ukryj wiadomości"</string>
     <string name="ui_449f5a775762" formatted="false">"Mów"</string>
+    <string name="ui_45989de49fb7" formatted="false">"Szczegóły"</string>
+    <string name="ui_c1f88e9d6c41" formatted="false">"W toku"</string>
     <string name="ui_ca7981b46ecf" formatted="false">"Wyłączone"</string>
     <string name="ui_381a8e969905" formatted="false">"Sekundy"</string>
     <string name="ui_09526e9d005a" formatted="false">"Nazwa aplikacji"</string>
@@ -500,6 +514,7 @@
     <string name="ui_ee3e426036c5" formatted="false">"Trochę pomocy na co dzień"</string>
     <string name="ui_28e1bbcfd974" formatted="false">"Przemyśl sprawę, znajdź właściwe słowa albo naucz się czegoś nowego."</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
+    <string name="ui_74b6abdf5969" formatted="false">"Wymaga Twojej uwagi"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
     <string name="ui_d822e6257a23" formatted="false">"Na urządzeniu"</string>
@@ -527,7 +542,9 @@
     <string name="ui_4e730ac30841" formatted="false">"Pokaż mniej lekcji"</string>
     <string name="ui_0a5313dfc412" formatted="false">"Wróć do lekcji"</string>
     <string name="ui_064d8a50b989" formatted="false">"Wybierz lekcję do powtórki"</string>
-    <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności"</string>
+    <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności."</string>
+    <string name="ui_6d37544c8ff3" formatted="false">"Nic w tym widoku."</string>
+    <string name="ui_029e80851826" formatted="false">"Otwórz ekran główny"</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
     <string name="ui_552e80d242be" formatted="false">"Ta kolekcja"</string>
     <string name="ui_90f41411fa9d" formatted="false">"Wczytywanie biblioteki…"</string>
@@ -650,7 +667,16 @@
     <string name="ui_90f754bf8d33" formatted="false">"Uzyskaj klucz API"</string>
     <string name="ui_0adde84d26d4" formatted="false">"Zaawansowany OAuth Google"</string>
     <string name="ui_ef6691545d2c" formatted="false">"Standardowy"</string>
+    <string name="ui_f4ccae29e1bb" formatted="false">"W toku"</string>
+    <string name="ui_a9ca50914eed" formatted="false">"Sprawdź kroki"</string>
+    <string name="ui_379b99e0ca98" formatted="false">"Aby zacząć, zadaj halo pytanie na ekranie głównym."</string>
+    <string name="ui_5d1705e6235a" formatted="false">"Na razie nic tu nie ma. Sprawdź inną kartę."</string>
+    <string name="ui_180583c405c8" formatted="false">"Prośby o zatwierdzenie i pytania czekają tu, aż zdecydujesz, co dalej."</string>
     <string name="ui_890ab358a55d" formatted="false">"Szczegóły techniczne"</string>
+    <string name="ui_6cb44b56336a" formatted="false">"Ostatnie działania"</string>
+    <string name="ui_238b52a679a7" formatted="false">"Pokaż prośby"</string>
+    <string name="ui_5882f776f021" formatted="false">"Pokaż trwające"</string>
+    <string name="ui_2943d006bb6a" formatted="false">"Pokaż ukończone"</string>
     <string name="ui_22e2bada8f1c" formatted="false">"Powiadomienia"</string>
     <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
@@ -666,8 +692,13 @@
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
     <string name="ui_4a703d8c58cf" formatted="false">"Daty i godziny również będą wyświetlane w tym języku."</string>
     <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
+    <string name="ui_944a5838210b" formatted="false">"Wszystko, co zrobiło halo — jasno i prostym językiem."</string>
     <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
     <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
+    <string name="ui_ab334a7536b2" formatted="false">"Zapisane kroki"</string>
+    <string name="ui_9743f7f82eb1" formatted="false">"Pokaż wszystkie zapisane kroki (%1$d)"</string>
+    <string name="ui_81c6a0c63866" formatted="false">"Pokaż mniej kroków"</string>
+    <string name="ui_e159b06187d3" formatted="false">"Wstrzymano"</string>
     <string name="ui_43702621125c" formatted="false">"Trwa działanie na telefonie"</string>
     <string name="ui_34dbd8856a1a" formatted="false">"Oczekiwanie na wynik działania"</string>
     <string name="ui_8586ad2ecc67" formatted="false">"Diagnostyka obciążenia"</string>

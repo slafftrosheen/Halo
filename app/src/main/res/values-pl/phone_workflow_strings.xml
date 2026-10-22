@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_phone_workflow_title">Procedura na telefonie</string>
+    <string name="halo_phone_progress">Potwierdzone kroki: %1$d/%2$d</string>
+    <string name="halo_phone_step">Krok %1$d z %2$d: %3$s</string>
+    <string name="halo_phone_success">Wszystkie kroki zostały potwierdzone.</string>
+    <string name="halo_phone_unknown">Nie udało się potwierdzić działania. Sprawdź bieżącą aplikację przed kontynuowaniem.</string>
+    <string name="halo_phone_failed">Krok zakończył się błędem lub został odrzucony. Kolejne działania nie zostały potwierdzone.</string>
+    <string name="halo_phone_stopped">Zatrzymano. Pozostałe kroki nie zostaną wykonane.</string>
+    <string name="halo_phone_review">Oczekuje na Twoją weryfikację.</string>
+    <string name="halo_phone_wait">Oczekuje na zasób urządzenia lub wymaganą funkcję.</string>
+    <string name="halo_phone_incomplete">Procedura nie została ukończona. Sprawdź aplikację i zleć wykonanie pozostałych kroków.</string>
+    <string name="halo_phone_open">Otwórz aplikację</string>
+    <string name="halo_phone_find">Znajdź element na ekranie</string>
+    <string name="halo_phone_tap">Dotknij elementu</string>
+    <string name="halo_phone_type">Wpisz tekst</string>
+    <string name="halo_phone_scroll_down">Przewiń w dół</string>
+    <string name="halo_phone_scroll_up">Przewiń w górę</string>
+    <string name="halo_phone_back">Wróć</string>
+    <string name="halo_phone_action">Działanie na telefonie</string>
+    <string name="halo_phone_verified">Potwierdzono</string>
+    <string name="halo_phone_dispatched">Wysłano, wykonanie niepotwierdzone</string>
+    <string name="halo_phone_unconfirmed">Wynik nieznany</string>
+    <string name="halo_phone_rejected">Odrzucono</string>
+    <string name="halo_phone_error">Niepowodzenie</string>
+    <string name="halo_phone_stopped_short">Zatrzymano</string>
+    <string name="halo_phone_input">Oczekuje na zatwierdzenie lub dane</string>
+    <string name="halo_phone_permission">Wymagane uprawnienie lub funkcja</string>
+    <string name="halo_phone_resource">Oczekuje na urządzenie</string>
+    <string name="halo_phone_not_started">Nie rozpoczęto</string>
+    <string name="halo_phone_fresh_instruction_hint">Nie można bezpiecznie wznowić tego działania. Sprawdź bieżącą aplikację przed wydaniem nowego polecenia.</string>
+    <string name="halo_phone_new_instruction">Wydaj nowe polecenie</string>
+    <string name="halo_phone_first_unresolved">Pierwszy niepotwierdzony krok: %1$d z %2$d</string>
+    <string name="halo_phone_recovery_approval">Przed kontynuowaniem sprawdź oczekującą prośbę o zatwierdzenie w halo.</string>
+    <string name="halo_phone_recovery_device">Zasób urządzenia jest niedostępny. Nie ponawiaj działania, dopóki nie będzie gotowy.</string>
+    <string name="halo_phone_recovery_inspect">Działanie mogło już zostać wykonane. Sprawdź aplikację przed ponowieniem polecenia.</string>
+    <string name="halo_phone_recovery_fresh">Do wykonania kolejnego działania potrzebne jest nowe polecenie i ponowna obserwacja ekranu.</string>
+    <string name="halo_phone_recovery_running">halo wykonuje ten krok. Nie wysyłaj ponownie tego samego polecenia.</string>
+    <string name="halo_phone_foreground_verified">Potwierdzono, że wskazana aplikacja jest na pierwszym planie</string>
+</resources>

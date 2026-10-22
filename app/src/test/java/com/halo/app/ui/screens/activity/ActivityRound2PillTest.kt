@@ -31,7 +31,7 @@ class ActivityRound2PillTest {
         compose.onNodeWithText("Needs you").assertExists()
         compose.onNodeWithText("Running").performClick()
         assertEquals(ActivityFilter.RUNNING, selected)
-        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithText("Completed").performClick()
         assertEquals(ActivityFilter.HISTORY, selected)
     }
 }

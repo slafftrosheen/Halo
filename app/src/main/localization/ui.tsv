@@ -144,7 +144,7 @@ Speaking|||Говорю|||Runāju
 Responding|||Отвечаю|||Atbildu
 Preparing|||Подготавливаю|||Sagatavoju
 Recovering|||Восстанавливаюсь|||Atjaunojos
-Stopped|||Остановлено|||Apturēts
+Stopped|||Остановлено|||Apturēts|||Zatrzymano
 Offline|||Нет подключения|||Bezsaistē
 Complete|||Готово|||Pabeigts
 All done|||Готово|||Viss pabeigts
@@ -320,7 +320,7 @@ Accepted cards appear here with a due date. Nothing enters the queue automatical
 Your library|||Твоя библиотека|||Tava bibliotēka
 Library|||Библиотека|||Bibliotēka|||Biblioteka
 Search your workspace|||Поиск в рабочем пространстве|||Meklēt darbvietā|||Przeszukaj obszar roboczy
-All|||Все|||Visi
+All|||Все|||Visi|||Wszystko
 Inbox|||Входящие|||Iesūtne|||Odebrane
 New note|||Новая заметка|||Jauna piezīme|||Nowa notatka
 Create note|||Создать заметку|||Izveidot piezīmi
@@ -586,7 +586,7 @@ Measured|||Проверено|||Izmērīts|||Zmierzono
 Choose model|||Выбрать модель|||Izvēlēties modeli|||Wybierz model
 Explore local candidates|||Посмотреть локальные модели|||Izpētīt lokālos modeļus|||Przeglądaj lokalne modele
 Refresh|||Обновить|||Atjaunināt|||Odśwież
-Speech recognition|||Распознавание речи|||Runas atpazīšana
+Speech recognition|||Распознавание речи|||Runas atpazīšana|||Rozpoznawanie mowy
 Local speech model and language.|||Локальная речевая модель и язык.|||Lokālais runas modelis un valoda.
 Speech Lab · compare one sample|||Лаборатория речи · сравнить образец|||Runas laboratorija · salīdzināt paraugu
 Installed models initialize when you use recognition. Automatic language is a configuration, not a detected language.|||Установленные модели загружаются при распознавании. Автоматический язык — настройка, а не определённый язык речи.|||Instalētie modeļi tiek inicializēti atpazīšanas laikā. Automātiskā valoda ir iestatījums, nevis noteikta runas valoda.
@@ -1216,11 +1216,11 @@ Recently used|||Недавно использованные|||Nesen izmantotie
 No memories in this view. Remember something or review a suggestion.|||Здесь пока нет записей памяти. Добавьте информацию или проверьте предложение.|||Šeit vēl nav atmiņas ierakstu. Pievieno informāciju vai pārskati ieteikumu.
 No current memories match this search in the eligible scope.|||В разрешённой области памяти нет совпадений.|||Atļautajā atmiņas jomā nav atbilstošu ierakstu.
 Completion wasn't confirmed|||Завершение не подтверждено|||Pabeigšana nav apstiprināta
-Completed|||Завершено|||Pabeigts
+Completed|||Завершено|||Pabeigts|||Zakończone
 Partially completed|||Частично выполнено|||Daļēji pabeigts
 Cancelled|||Отменено|||Atcelts
 Blocked|||Заблокировано|||Bloķēts
-Interrupted|||Прервано|||Pārtraukts
+Interrupted|||Прервано|||Pārtraukts|||Przerwano
 Referenced %1$d Workspace items · %2$d saved memories|||Связанные объекты: %1$d · записи памяти: %2$d|||Saistītie darbvietas vienumi: %1$d · atmiņas ieraksti: %2$d
 Update memory?|||Обновить память?|||Atjaunināt atmiņas ierakstu?
 Halo already remembers this|||Halo уже помнит это|||Halo to jau atceras
@@ -1269,7 +1269,7 @@ Working on it…|||Работаю над этим…|||Strādāju pie tā…|||P
 Turning your voice into text…|||Преобразую речь в текст…|||Pārvēršu jūsu runu tekstā…
 Message received|||Сообщение получено|||Ziņojums saņemts
 Another conversation is busy. Stop it to send here.|||В другом разговоре идёт работа. Остановите её, чтобы отправить сообщение здесь.|||Citā sarunā vēl notiek darbs. Apturiet to, lai nosūtītu ziņojumu šeit.
-Needs your review|||Нужно ваше решение|||Nepieciešams jūsu lēmums
+Needs your review|||Нужно ваше решение|||Nepieciešams jūsu lēmums|||Wymaga Twojej weryfikacji
 Waiting for a device or setup|||Ожидаю подключения или настройки|||Gaida ierīci vai iestatīšanu
 Waiting for another task|||Ожидаю завершения другой задачи|||Gaida cita uzdevuma pabeigšanu
 Review the recorded outcome in Activity before trying again.|||Проверьте результат в «Действиях», прежде чем пробовать снова.|||Pirms mēģināt vēlreiz, pārbaudiet reģistrēto rezultātu sadaļā «Darbības».
@@ -1308,13 +1308,13 @@ Could not save to Notebook|||Не удалось сохранить в блок�
 Review requests and see what happened.|||Проверьте запросы и узнайте, что произошло.|||Pārskatiet pieprasījumus un uzziniet, kas notika.
 No activity yet. Ask Halo something on Home to get started.|||Действий пока нет. Задайте вопрос Halo на главном экране.|||Darbību vēl nav. Lai sāktu, uzdodiet Halo jautājumu sākumlapā.
 No pending actions right now.|||Сейчас нет ожидающих действий.|||Pašlaik nav gaidošu darbību.
-%1$d updates waiting|||Ожидают обновления: %1$d|||Gaida %1$d atjauninājumi
-%1$d suggestions to review in Memory|||Предложений для проверки в «Памяти»: %1$d|||Ieteikumi pārskatīšanai sadaļā «Atmiņa»: %1$d
-Review to answer or approve. Closing the review leaves it waiting.|||Нажмите «Проверить», чтобы ответить или одобрить. Если закрыть окно, запрос останется в ожидании.|||Pieskarieties «Pārskatīt», lai atbildētu vai apstiprinātu. Aizverot logu, pieprasījums turpinās gaidīt.
+%1$d updates waiting|||Ожидают обновления: %1$d|||Gaida %1$d atjauninājumi|||Oczekujące aktualizacje: %1$d
+%1$d suggestions to review in Memory|||Предложений для проверки в «Памяти»: %1$d|||Ieteikumi pārskatīšanai sadaļā «Atmiņa»: %1$d|||Sugestie do sprawdzenia w Pamięci: %1$d
+Review to answer or approve. Closing the review leaves it waiting.|||Нажмите «Проверить», чтобы ответить или одобрить. Если закрыть окно, запрос останется в ожидании.|||Pieskarieties «Pārskatīt», lai atbildētu vai apstiprinātu. Aizverot logu, pieprasījums turpinās gaidīt.|||Otwórz podgląd, aby odpowiedzieć lub zatwierdzić. Zamknięcie widoku pozostawi prośbę oczekującą.
 Hide details|||Скрыть подробности|||Paslēpt informāciju|||Ukryj szczegóły
-Open in Workspace|||Открыть в рабочем пространстве|||Atvērt darbvietā
-Result not confirmed|||Результат не подтверждён|||Rezultāts nav apstiprināts
-Couldn’t finish|||Не удалось закончить|||Neizdevās pabeigt
+Open in Workspace|||Открыть в рабочем пространстве|||Atvērt darbvietā|||Otwórz w obszarze roboczym
+Result not confirmed|||Результат не подтверждён|||Rezultāts nav apstiprināts|||Wynik niepotwierdzony
+Couldn’t finish|||Не удалось закончить|||Neizdevās pabeigt|||Nie udało się ukończyć
 Approve to continue. Decline to refuse this action. Closing leaves it waiting in Activity.|||Одобрите, чтобы продолжить, или отклоните это действие. Если закрыть окно, запрос останется в «Действиях».|||Apstipriniet, lai turpinātu, vai noraidiet šo darbību. Aizverot logu, pieprasījums paliks sadaļā «Darbības».
 Decline|||Отклонить|||Noraidīt
 Your phone and connected devices.|||Ваш телефон и подключённые устройства.|||Jūsu tālrunis un pievienotās ierīces.
@@ -1353,8 +1353,8 @@ Conversation history|||История разговора|||Sarunas vēsture|||Hi
 Hide messages|||Скрыть сообщения|||Paslēpt ziņojumus|||Ukryj wiadomości
 Talk|||Говорить|||Runāt|||Mów
 Approve|||Одобрить|||Apstiprināt
-Details|||Подробности|||Informācija
-In progress|||В работе|||Procesā
+Details|||Подробности|||Informācija|||Szczegóły
+In progress|||В работе|||Procesā|||W toku
 Choose|||Выбрать|||Izvēlēties
 Later|||Позже|||Vēlāk
 On|||Вкл.|||Ieslēgts
@@ -1734,7 +1734,7 @@ Your notes, conversations and ideas, together.|||Ваши заметки, раз
 More tools|||Больше инструментов|||Vairāk rīku
 Hide tools|||Скрыть инструменты|||Paslēpt rīkus
 %1$d updates|||Обновлений: %1$d|||%1$d jaunumi|||Aktualizacje: %1$d
-Needs you|||Требует внимания|||Nepieciešama iesaiste
+Needs you|||Требует внимания|||Nepieciešama iesaiste|||Wymaga Twojej uwagi
 Due|||Пора повторить|||Laiks atkārtot
 Available|||Доступно|||Pieejams
 Continue lesson|||Продолжить урок|||Turpināt nodarbību
@@ -1925,10 +1925,10 @@ Getting ready…|||Подготовка…|||Sagatavošana…
 Access required|||Требуется доступ|||Nepieciešama piekļuve
 Steps completed: %1$d of %2$d|||Выполнено шагов: %1$d из %2$d|||Pabeigtās darbības: %1$d no %2$d
 History|||История|||Vēsture
-No activity yet|||Пока нет действий|||Vēl nav darbību|||Brak aktywności
-Nothing in this view|||Здесь пока ничего нет|||Šajā skatā nekā nav
+No activity yet|||Пока нет действий|||Vēl nav darbību|||Brak aktywności.
+Nothing in this view|||Здесь пока ничего нет|||Šajā skatā nekā nav|||Nic w tym widoku.
 Choose another filter to see more activity.|||Выберите другой фильтр, чтобы увидеть больше действий.|||Izvēlieties citu filtru, lai redzētu vairāk darbību.
-Open Home|||Открыть главный экран|||Atvērt sākumu
+Open Home|||Открыть главный экран|||Atvērt sākumu|||Otwórz ekran główny
 Show all activity|||Показать все действия|||Rādīt visas darbības
 Just now|||Только что|||Tikko
 %1$d min ago|||%1$d мин назад|||Pirms %1$d min
@@ -2512,17 +2512,17 @@ Thinking mode|||Режим рассуждения|||Spriešanas režīms
 Auto|||Авто|||Automātiski
 Thinking budget: requested %1$d · effective %2$d|||Бюджет рассуждения: запрошено %1$d · фактически %2$d|||Spriešanas budžets: pieprasīts %1$d · faktiskais %2$d
 Model default|||По умолчанию для модели|||Modeļa noklusējums
-Running|||Выполняется|||Izpildē
-Review steps|||Просмотреть шаги|||Pārskatīt soļus
+Running|||Выполняется|||Izpildē|||W toku
+Review steps|||Просмотреть шаги|||Pārskatīt soļus|||Sprawdź kroki
 See what needs you, what's running and what finished.|||Здесь видно, где нужно ваше участие, что выполняется и что завершено.|||Šeit redzams, kur vajadzīga jūsu iesaiste, kas notiek un kas ir pabeigts.
-Ask halo something on Home to get started.|||Задайте halo вопрос на главном экране, чтобы начать.|||Lai sāktu, uzdodiet halo jautājumu sākuma ekrānā.
-There is nothing here right now. You can check another tab.|||Здесь пока ничего нет. Посмотрите другую вкладку.|||Šeit pašlaik nekā nav. Apskatiet citu cilni.
-Approvals and answers wait here until you choose what happens next.|||Здесь ждут вашего решения запросы на подтверждение и уточняющие вопросы.|||Šeit gaida jūsu lēmumu apstiprinājuma pieprasījumi un precizējoši jautājumi.
+Ask halo something on Home to get started.|||Задайте halo вопрос на главном экране, чтобы начать.|||Lai sāktu, uzdodiet halo jautājumu sākuma ekrānā.|||Aby zacząć, zadaj halo pytanie na ekranie głównym.
+There is nothing here right now. You can check another tab.|||Здесь пока ничего нет. Посмотрите другую вкладку.|||Šeit pašlaik nekā nav. Apskatiet citu cilni.|||Na razie nic tu nie ma. Sprawdź inną kartę.
+Approvals and answers wait here until you choose what happens next.|||Здесь ждут вашего решения запросы на подтверждение и уточняющие вопросы.|||Šeit gaida jūsu lēmumu apstiprinājuma pieprasījumi un precizējoši jautājumi.|||Prośby o zatwierdzenie i pytania czekają tu, aż zdecydujesz, co dalej.
 Technical details|||Технические сведения|||Tehniskā informācija|||Szczegóły techniczne
-Recent activity|||Последние действия|||Pēdējās darbības
-Show requests|||Показать запросы|||Rādīt pieprasījumus
-Show running|||Показать выполняемые|||Rādīt notiekošos
-Show completed|||Показать завершённые|||Rādīt pabeigtos
+Recent activity|||Последние действия|||Pēdējās darbības|||Ostatnie działania
+Show requests|||Показать запросы|||Rādīt pieprasījumus|||Pokaż prośby
+Show running|||Показать выполняемые|||Rādīt notiekošos|||Pokaż trwające
+Show completed|||Показать завершённые|||Rādīt pabeigtos|||Pokaż ukończone
 Updates|||Обновления|||Paziņojumi|||Powiadomienia
 Review in Activity|||Проверить в «Действиях»|||Pārskatīt sadaļā “Darbības”|||Sprawdź w Działaniach
 Choose how halo answers|||Настройте, как halo отвечает|||Izvēlieties, kā halo atbild|||Wybierz, jak halo odpowiada
@@ -2615,7 +2615,7 @@ Russian|||Русский|||Krievu
 New lesson|||Новый урок|||Jauna nodarbība|||Nowa lekcja
 Step %1$d of 4 · %2$s|||Шаг %1$d из 4 · %2$s|||%1$d. solis no 4 · %2$s
 Read a photo or page|||Прочитать фото или страницу|||Nolasīt fotoattēlu vai lapu
-Everything halo did, in plain words.|||Всё, что делал halo, простыми словами.|||Viss, ko halo paveica, vienkāršiem vārdiem.
+Everything halo did, in plain words.|||Всё, что делал halo, простыми словами.|||Viss, ko halo paveica, vienkāršiem vārdiem.|||Wszystko, co zrobiło halo — jasno i prostym językiem.
 Add glasses|||Добавить очки|||Pievienot brilles
 Let's find your glasses|||Давайте найдём ваши очки|||Atradīsim jūsu brilles
 Bluetooth is on|||Bluetooth включён|||Bluetooth ir ieslēgts
@@ -2653,10 +2653,10 @@ Conversation model|||Модель для разговоров|||Sarunas modelis
 On this phone|||На этом телефоне|||Šajā tālrunī|||Na tym telefonie
 On your network|||В вашей сети|||Jūsu tīklā
 In the cloud|||В облаке|||Mākonī
-Recorded steps|||Записанные этапы|||Reģistrētie soļi
-Show all %1$d recorded steps|||Показать все этапы (%1$d)|||Rādīt visus reģistrētos soļus (%1$d)
-Show fewer steps|||Свернуть этапы|||Rādīt mazāk soļu
-Paused|||Приостановлено|||Apturēts
+Recorded steps|||Записанные этапы|||Reģistrētie soļi|||Zapisane kroki
+Show all %1$d recorded steps|||Показать все этапы (%1$d)|||Rādīt visus reģistrētos soļus (%1$d)|||Pokaż wszystkie zapisane kroki (%1$d)
+Show fewer steps|||Свернуть этапы|||Rādīt mazāk soļu|||Pokaż mniej kroków
+Paused|||Приостановлено|||Apturēts|||Wstrzymano
 Proposed by halo · not saved|||Предложение halo · ещё не сохранено|||halo ieteikums · vēl nav saglabāts
 Rewrite|||Переписать|||Pārrakstīt
 Expand|||Расширить|||Paplašināt
