@@ -223,7 +223,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                     (it.mimeType.startsWith("text/") || it.mimeType == "application/json") &&
                         it.availability in setOf("AVAILABLE", "OWNED_LOCAL")
                 } ?: return null
-                val text = try {
+                val bytes = try {
                     withContext(Dispatchers.IO) {
                         val input = if (file.ownedCopyPath != null && file.ownership == "HALO_OWNED") {
                             val canonical = runCatching { File(file.ownedCopyPath).canonicalFile }.getOrNull()
@@ -238,12 +238,19 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                                 !file.permissionPersisted || file.availability != "AVAILABLE") return@withContext null
                             context.contentResolver.openInputStream(uri) ?: return@withContext null
                         }
-                        input.use { it.reader(Charsets.UTF_8).readTextBounded() }
+                        input.use { it.readBytesBounded(2 * 1024 * 1024) }
                     }
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { return null }
-                if (text == null) return null
-                val version = java.security.MessageDigest.getInstance("SHA-256").digest(text.toByteArray())
+                if (bytes == null) return null
+                val text = try {
+                    Charsets.UTF_8.newDecoder()
+                        .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                        .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+                        .decode(java.nio.ByteBuffer.wrap(bytes)).toString().removePrefix("\ufeff")
+                        .take(65536)
+                } catch (_: Exception) { return null }
+                val version = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
                     .joinToString("") { "%02x".format(it) }
                 SemanticSource(id, version, "personal", text, owner.title, owner.updatedAt)
             }
@@ -1069,6 +1076,18 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val chars=CharArray(65536); var count=0
         while(count<chars.size) { val n=read(chars,count,chars.size-count); if(n<0) break; count+=n }
         return String(chars,0,count)
+    }
+    private fun java.io.InputStream.readBytesBounded(maxBytes: Int): ByteArray? {
+        val output = java.io.ByteArrayOutputStream(minOf(maxBytes, 8192))
+        val buffer = ByteArray(8192)
+        while (true) {
+            val remainingIncludingOverflowProbe = maxBytes - output.size() + 1
+            val count = read(buffer, 0, minOf(buffer.size, remainingIncludingOverflowProbe))
+            if (count < 0) break
+            output.write(buffer, 0, count)
+            if (output.size() > maxBytes) return null
+        }
+        return output.toByteArray()
     }
     suspend fun contextSegments(modelId: String,sha: String,dimension: Int,query: String)=
         referencesForContext(modelId,sha,dimension,query).map { ref ->
