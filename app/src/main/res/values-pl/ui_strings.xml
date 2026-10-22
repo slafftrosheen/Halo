@@ -30,9 +30,15 @@
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_c3812fc4acb8" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
+    <string name="ui_e4bb9f1ece9a" formatted="false">"Rozpocznij"</string>
     <string name="ui_b58eb52c8810" formatted="false">"Pomiń na razie"</string>
+    <string name="ui_dc20b3d5d2cd" formatted="false">"Biblioteka"</string>
+    <string name="ui_84917b36f495" formatted="false">"Przeszukaj obszar roboczy"</string>
     <string name="ui_94835ea2fcf7" formatted="false">"Odebrane"</string>
     <string name="ui_76ea482f843e" formatted="false">"Nowa notatka"</string>
+    <string name="ui_cefd66fedb8d" formatted="false">"Nowa kolekcja"</string>
+    <string name="ui_922214922b48" formatted="false">"Nazwa kolekcji"</string>
+    <string name="ui_4759498ac2a7" formatted="false">"Utwórz"</string>
     <string name="ui_396c946f0c79" formatted="false">"Nowa rozmowa"</string>
     <string name="ui_1b367321030f" formatted="false">"Kopiuj odpowiedź"</string>
     <string name="ui_681e4cb7bc65" formatted="false">"Edytuj jako nową wiadomość"</string>
@@ -55,6 +61,7 @@
     <string name="ui_31e392d1c037" formatted="false">"Zastosuj"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
+    <string name="ui_b250a454877d" formatted="false">"Przenieś do kosza"</string>
     <string name="ui_78ec8b7880dd" formatted="false">"Zapytaj halo"</string>
     <string name="ui_565339bc4d33" formatted="false">"OK"</string>
     <string name="ui_f730c75d143a" formatted="false">"Anuluj test"</string>
@@ -88,6 +95,7 @@
     <string name="ui_d640c7421da0" formatted="false">"Wznów"</string>
     <string name="ui_70313db71cd3" formatted="false">"Usuń niepełny plik"</string>
     <string name="ui_420eaafbda7b" formatted="false">"Pobierz ponownie"</string>
+    <string name="ui_2a78025de6aa" formatted="false">"Wybierz"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
     <string name="ui_0e9161011702" formatted="false">"Odśwież"</string>
@@ -103,6 +111,12 @@
     <string name="ui_340128ddbdf7" formatted="false">"Szybki test"</string>
     <string name="ui_1fa330e271ba" formatted="false">"Test porównawczy"</string>
     <string name="ui_4b3f645d95d4" formatted="false">"Sprawdź kanał narzędzi"</string>
+    <string name="ui_2b36bfcfc993" formatted="false">"Możesz je przywrócić, wybierając filtr „Kosz”."</string>
+    <string name="ui_f2ca345f552f" formatted="false">"Usunąć kolekcję?"</string>
+    <string name="ui_70f58736b63e" formatted="false">"Wybierz widoczne"</string>
+    <string name="ui_bb4d72dd6eb3" formatted="false">"Dodaj do kontekstu halo"</string>
+    <string name="ui_7975ae28951e" formatted="false">"Usuń z tej kolekcji"</string>
+    <string name="ui_614ee9c4d789" formatted="false">"Zapisane rozmowy"</string>
     <string name="ui_5ca4d42d717e" formatted="false">"Fizyczne przyciski zawsze natychmiast przerywają odtwarzanie."</string>
     <string name="ui_ad3be18a1e8c" formatted="false">"Zacznij mówić wcześniej"</string>
     <string name="ui_0d0bb78e6af4" formatted="false">"Styl odpowiedzi głosowej"</string>
@@ -151,6 +165,7 @@
     <string name="ui_449f5a775762" formatted="false">"Mów"</string>
     <string name="ui_381a8e969905" formatted="false">"Sekundy"</string>
     <string name="ui_09526e9d005a" formatted="false">"Nazwa aplikacji"</string>
+    <string name="ui_9f760ab20739" formatted="false">"Czeka na Ciebie"</string>
     <string name="ui_57d1aec01657" formatted="false">"Słuchanie zatrzymane"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
     <string name="ui_1aa22a9b1abc" formatted="false">"Dodaj adnotację do źródła"</string>
@@ -229,6 +244,10 @@
     <string name="ui_064d8a50b989" formatted="false">"Wybierz lekcję do powtórki"</string>
     <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności"</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
+    <string name="ui_552e80d242be" formatted="false">"Ta kolekcja"</string>
+    <string name="ui_90f41411fa9d" formatted="false">"Wczytywanie biblioteki…"</string>
+    <string name="ui_cb472b994cf9" formatted="false">"Usuń wybraną kolekcję"</string>
+    <string name="ui_4a33eacd5fa6" formatted="false">"element"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
@@ -255,6 +274,7 @@
     <string name="ui_e4fc62ef77ba" formatted="false">"Nie udało się zapisać zmiany. Spróbuj ponownie."</string>
     <string name="ui_9ecd916802ea" formatted="false">"Moje narzędzia"</string>
     <string name="ui_463816d07097" formatted="false">"Czytanie"</string>
+    <string name="ui_b9e367cfcbbc" formatted="false">"Moja lekcja"</string>
     <string name="ui_f3ae5d3d5bd5" formatted="false">"Wróć do mojej przestrzeni nauki"</string>
     <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
     <string name="ui_a2243f3686d9" formatted="false">"Otwórz Mini halo"</string>
@@ -421,6 +441,7 @@
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
     <string name="ui_ee9ba864e400" formatted="false">"Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie."</string>
+    <string name="ui_3373a168ec11" formatted="false">"Tylko za Twoją zgodą"</string>
     <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>

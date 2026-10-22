@@ -289,7 +289,7 @@ Keep|||Оставить|||Paturēt
 Keep draft|||Оставить черновик|||Paturēt melnrakstu
 Remove draft|||Удалить черновик|||Dzēst melnrakstu
 Stop|||Остановить|||Apturēt|||Zatrzymaj
-Start|||Начать|||Sākt
+Start|||Начать|||Sākt|||Rozpocznij
 More|||Ещё|||Vēl
 Help|||Помощь|||Palīdzība
 Question|||Вопрос|||Jautājums
@@ -318,15 +318,15 @@ Draft — not in the review queue|||Черновик — не в очереди 
 Drafts stay out of the queue until you accept them|||Черновики не попадают в очередь, пока ты их не примешь|||Melnraksti nenonāk rindā, līdz tos apstiprini
 Accepted cards appear here with a due date. Nothing enters the queue automatically.|||Принятые карточки появятся здесь с датой повторения. Ничего не добавляется автоматически.|||Apstiprinātās kartītes šeit parādās ar atkārtošanas datumu. Nekas netiek pievienots automātiski.
 Your library|||Твоя библиотека|||Tava bibliotēka
-Library|||Библиотека|||Bibliotēka
-Search your workspace|||Поиск в рабочем пространстве|||Meklēt darbvietā
+Library|||Библиотека|||Bibliotēka|||Biblioteka
+Search your workspace|||Поиск в рабочем пространстве|||Meklēt darbvietā|||Przeszukaj obszar roboczy
 All|||Все|||Visi
 Inbox|||Входящие|||Iesūtne|||Odebrane
 New note|||Новая заметка|||Jauna piezīme|||Nowa notatka
 Create note|||Создать заметку|||Izveidot piezīmi
-New collection|||Новая коллекция|||Jauna kolekcija
-Collection name|||Название коллекции|||Kolekcijas nosaukums
-Create|||Создать|||Izveidot
+New collection|||Новая коллекция|||Jauna kolekcija|||Nowa kolekcja
+Collection name|||Название коллекции|||Kolekcijas nosaukums|||Nazwa kolekcji
+Create|||Создать|||Izveidot|||Utwórz
 Title (optional)|||Название (необязательно)|||Nosaukums (nav obligāts)
 New conversation|||Новый разговор|||Jauna saruna|||Nowa rozmowa
 Copy reply|||Копировать ответ|||Kopēt atbildi|||Kopiuj odpowiedź
@@ -378,7 +378,7 @@ Insert|||Вставить|||Ievietot
 Apply|||Применить|||Lietot|||Zastosuj
 Restore|||Восстановить|||Atjaunot|||Przywróć
 Archive|||В архив|||Arhivēt|||Archiwizuj
-Move to trash|||В корзину|||Pārvietot uz atkritni
+Move to trash|||В корзину|||Pārvietot uz atkritni|||Przenieś do kosza
 Edit with AI|||Изменить с AI|||Labot ar AI
 Ask Halo|||Спросить Halo|||Jautāt Halo|||Zapytaj Halo
 Study this note|||Учиться по этой заметке|||Mācīties ar šo piezīmi
@@ -563,7 +563,7 @@ Import|||Импортировать|||Importēt|||Importuj
 Resume|||Продолжить|||Turpināt|||Wznów
 Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi|||Usuń niepełny plik
 Re-download|||Скачать заново|||Lejupielādēt vēlreiz|||Pobierz ponownie
-Select|||Выбрать|||Izvēlēties
+Select|||Выбрать|||Izvēlēties|||Wybierz
 Unload|||Выгрузить|||Izlādēt|||Wyładuj
 Download|||Скачать|||Lejupielādēt|||Pobierz
 Search models|||Поиск моделей|||Meklēt modeļus
@@ -811,13 +811,13 @@ Only unreadable, permitted apps. Semantic screen context remains preferred.|||Т
 Allow bounded page scripts when static extraction has little readable text.|||Разрешить ограниченное выполнение скриптов, если в статической странице мало читаемого текста.|||Atļaut ierobežotu skriptu izpildi, ja statiskajā lapā ir maz lasāma teksta.
 Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply.|||Дочерние агенты работают только на чтение. Поиск, сравнение и анализ используют Reasoning; сводка и извлечение — Fast. Действуют текущие правила маршрутизации и облака.|||Apakšaģenti darbojas tikai lasīšanas režīmā. Izpēte, salīdzināšana un analīze izmanto Reasoning; apkopošana un izgūšana — Fast. Saglabājas esošie maršrutēšanas un mākoņa noteikumi.
 Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization.|||Порог: 70%. Оригиналы остаются в истории; сводки лишь оптимизируют контекст. Локальная маршрутизация исключает удалённое суммирование.|||Slieksnis: 70%. Oriģināli paliek vēsturē; kopsavilkumi tikai optimizē kontekstu. Tikai lokāla maršrutēšana novērš attālinātu apkopošanu.
-You can restore them from the Trash filter.|||Их можно восстановить через фильтр «Корзина».|||Tos var atjaunot, izmantojot filtru Atkritne.
-Delete collection?|||Удалить коллекцию?|||Dzēst kolekciju?
+You can restore them from the Trash filter.|||Их можно восстановить через фильтр «Корзина».|||Tos var atjaunot, izmantojot filtru Atkritne.|||Możesz je przywrócić, wybierając filtr „Kosz”.
+Delete collection?|||Удалить коллекцию?|||Dzēst kolekciju?|||Usunąć kolekcję?
 Tools for your ideas, with everything in one place|||Все инструменты для ваших идей в одном месте|||Visi rīki tavām idejām vienuviet
-Select visible|||Выбрать видимые|||Atlasīt redzamos
-Add to Halo context|||Добавить в контекст Halo|||Pievienot Halo kontekstam
-Remove from this collection|||Убрать из этой коллекции|||Noņemt no šīs kolekcijas
-Saved chats|||Сохранённые диалоги|||Saglabātās sarunas
+Select visible|||Выбрать видимые|||Atlasīt redzamos|||Wybierz widoczne
+Add to Halo context|||Добавить в контекст Halo|||Pievienot Halo kontekstam|||Dodaj do kontekstu Halo
+Remove from this collection|||Убрать из этой коллекции|||Noņemt no šīs kolekcijas|||Usuń z tej kolekcji
+Saved chats|||Сохранённые диалоги|||Saglabātās sarunas|||Zapisane rozmowy
 Browse and continue earlier conversations|||Просматривайте и продолжайте предыдущие диалоги|||Pārlūko un turpini iepriekšējās sarunas
 Search chats|||Поиск по диалогам|||Meklēt sarunas
 This chat is empty|||Этот диалог пуст|||Šī saruna ir tukša
@@ -1362,7 +1362,7 @@ Off|||Выкл.|||Izslēgts
 Set|||Установить|||Iestatīt
 Seconds|||Секунды|||Sekundes|||Sekundy
 Application name|||Название приложения|||Lietotnes nosaukums|||Nazwa aplikacji
-Waiting for you|||Жду вашего решения|||Gaida jūsu lēmumu
+Waiting for you|||Жду вашего решения|||Gaida jūsu lēmumu|||Czeka na Ciebie
 Your workspace is empty|||Рабочее пространство пока пусто|||Jūsu darbvieta ir tukša
 Create a note or import a file to begin.|||Создайте заметку или добавьте файл, чтобы начать.|||Lai sāktu, izveidojiet piezīmi vai importējiet failu.
 Try another name or content phrase.|||Попробуйте другое название или слова из содержимого.|||Mēģiniet citu nosaukumu vai vārdus no satura.
@@ -1966,13 +1966,13 @@ Could not build the local summary|||Не удалось создать лока�
 Move %1$s items to trash?|||Переместить %1$s элементов в корзину?|||Pārvietot %1$s vienumus uz atkritni?
 Move %1$d items to trash?|||Переместить %1$d элементов в корзину?|||Pārvietot %1$d vienumus uz atkritni?
 %1$s will be removed. Its items stay in Workspace.|||%1$s будет удалена. Её элементы останутся в рабочем пространстве.|||%1$s tiks noņemta. Tās vienumi paliks darbvietā.
-This collection|||Эта коллекция|||Šī kolekcija
+This collection|||Эта коллекция|||Šī kolekcija|||Ta kolekcja
 Notes are documents. Canvas connects them. Inbox holds new captures. Memory stores information you approve.|||Заметки — это документы. Холст связывает их. Входящие содержат новые материалы. Память хранит одобренную вами информацию.|||Piezīmes ir dokumenti. Audekls tos savieno. Iesūtnē ir jaunie materiāli. Atmiņā glabājas jūsu apstiprinātā informācija.
 Saved on this device. Adding context does not change your sharing permissions.|||Сохранено на этом устройстве. Добавление контекста не меняет разрешения на передачу данных.|||Saglabāts šajā ierīcē. Konteksta pievienošana nemaina datu kopīgošanas atļaujas.
 Add to %1$s|||Добавить в %1$s|||Pievienot: %1$s
 Review cards: %1$d|||Повторить карточки: %1$d|||Atkārtojamās kartītes: %1$d
-Loading your library…|||Загружаем библиотеку…|||Ielādē bibliotēku…
-Delete selected collection|||Удалить выбранную коллекцию|||Dzēst atlasīto kolekciju
+Loading your library…|||Загружаем библиотеку…|||Ielādē bibliotēku…|||Wczytywanie biblioteki…
+Delete selected collection|||Удалить выбранную коллекцию|||Dzēst atlasīto kolekciju|||Usuń wybraną kolekcję
 This collection is empty|||В этой коллекции пока ничего нет|||Šī kolekcija ir tukša
 Your first canvas|||Ваш первый холст|||Jūsu pirmais audekls
 Nothing in trash|||Корзина пуста|||Atkritne ir tukša
@@ -1981,7 +1981,7 @@ Create a board, then add text, media or links to your existing notes.|||Созд
 Choose the whole library to see your items. Filters do not delete anything.|||Откройте всю библиотеку, чтобы увидеть свои материалы. Фильтры ничего не удаляют.|||Atveriet visu bibliotēku, lai redzētu savus vienumus. Filtri neko nedzēš.
 Show whole library|||Показать всю библиотеку|||Rādīt visu bibliotēku
 Organize %1$s|||Упорядочить %1$s|||Sakārtot: %1$s
-item|||элемент|||vienums
+item|||элемент|||vienums|||element
 Add content|||Добавить материал|||Pievienot saturu
 Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan.|||Нажмите на карточку для выбора. Удерживайте и перетащите для перемещения. Масштабируйте двумя пальцами; двигайте фон для прокрутки.|||Pieskarieties kartītei, lai atlasītu. Turiet un velciet, lai pārvietotu. Mainiet mērogu ar diviem pirkstiem; velciet fonu, lai pārlūkotu.
 Selected cards: %1$d|||Выбрано карточек: %1$d|||Atlasītās kartītes: %1$d
@@ -2414,7 +2414,7 @@ Starting lesson…|||Начинаем занятие…|||Sākam nodarbību…
 Let's begin|||Давай начнём|||Sāksim
 Choose another topic|||Выбрать другую тему|||Izvēlēties citu tēmu
 My question or tool request|||Мой вопрос или запрос инструменту|||Mans jautājums vai rīka pieprasījums
-My lesson|||Моё занятие|||Mana nodarbība
+My lesson|||Моё занятие|||Mana nodarbība|||Moja lekcja
 Read to me|||Прочитай мне|||Lasi man priekšā
 My thinking|||Мои мысли|||Manas domas
 Try my answer|||Проверить мой ответ|||Pārbaudīt manu atbildi
@@ -3288,7 +3288,7 @@ Connected · getting ready|||Подключено · готовится|||Savien
 Your phone manages the buttons and volume.|||Телефон управляет кнопками и громкостью.|||Tālrunis pārvalda pogas un skaļumu.
 Available while connected|||Доступно при подключении|||Pieejams, kamēr savienots
 %1$d things halo could remember|||halo мог бы запомнить: %1$d|||halo varētu atcerēties %1$d lietas
-Only if you say yes|||Только если вы согласитесь|||Tikai ar jūsu piekrišanu
+Only if you say yes|||Только если вы согласитесь|||Tikai ar jūsu piekrišanu|||Tylko za Twoją zgodą
 Open Library|||Открыть библиотеку|||Atvērt bibliotēku
 Back to Notebook|||Назад в блокнот|||Atpakaļ uz piezīmju grāmatu|||Wróć do Notatnika
 When|||Когда|||Kad
