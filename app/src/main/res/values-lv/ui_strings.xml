@@ -3850,6 +3850,9 @@
     <string name="ui_1f9dae2d58d7" formatted="false">"Nav aktīvas sesijas"</string>
     <string name="ui_4790277aa10c" formatted="false">"Iegūts"</string>
     <string name="ui_95145f43d145" formatted="false">"Neobligāta privāta sākuma pakotne: fiksēts Qwen nolūku kandidāts, Whisper Small, Silero VAD un Supertonic runas izvade. halo pārbauda instalētos failus, taču neizvēlas kandidātus un neapgalvo to kvalitāti ierīcē. Varat turpināt ar atsevišķām lejupielādēm."</string>
+    <string name="ui_ac83c14ed2a2" formatted="false">"Privātā runas un nolūku sākuma pakotne"</string>
+    <string name="ui_fe1513423fca" formatted="false">"Ja vēlaties, lejupielādējiet kopā Qwen nolūku kandidātu, Whisper Small, Silero VAD un Supertonic balss failus. Halo pārbauda failus, bet neizvēlas modeļus un neapgalvo to kvalitāti ierīcē."</string>
+    <string name="ui_92a6b4173bd1" formatted="false">"Sākuma pakotnes iestatīšana nav sākta."</string>
     <string name="ui_3007ade836ff" formatted="false">"Sākuma pakotnes faili ir instalēti un pārbaudīti. Pirms lietošanas izvēlieties runas atpazīšanas modeli un noklausieties balsi. Qwen fails joprojām ir neizvēlēts kandidāts."</string>
     <string name="ui_2f9f525e3f4e" formatted="false">"Notiek brīvās vietas pārbaude…"</string>
     <string name="ui_2e34fc62280f" formatted="false">"Lejupielādē nolūku kandidātu…"</string>

@@ -1056,6 +1056,9 @@
     <string name="ui_1f9dae2d58d7" formatted="false">"Brak aktywnej sesji"</string>
     <string name="ui_4790277aa10c" formatted="false">"Pobrano"</string>
     <string name="ui_95145f43d145" formatted="false">"Opcjonalny prywatny pakiet startowy: kandydat Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i synteza mowy Supertonic. halo sprawdza zainstalowane pliki, ale nie wybiera kandydatów ani nie potwierdza ich jakości na urządzeniu. Możesz też pobierać modele osobno."</string>
+    <string name="ui_ac83c14ed2a2" formatted="false">"Prywatny pakiet startowy rozpoznawania mowy i intencji"</string>
+    <string name="ui_fe1513423fca" formatted="false">"Opcjonalnie pobierz razem kandydata Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i pliki głosu Supertonic. Halo sprawdza pliki, ale nie wybiera modeli ani nie potwierdza ich jakości na urządzeniu."</string>
+    <string name="ui_92a6b4173bd1" formatted="false">"Konfiguracja pakietu startowego nie została rozpoczęta."</string>
     <string name="ui_3007ade836ff" formatted="false">"Pliki pakietu startowego zostały zainstalowane i sprawdzone. Przed użyciem wybierz model rozpoznawania mowy i odsłuchaj głos. Model Qwen pozostaje niewybranym kandydatem."</string>
     <string name="ui_2f9f525e3f4e" formatted="false">"Sprawdzanie dostępnego miejsca…"</string>
     <string name="ui_2e34fc62280f" formatted="false">"Pobieranie modelu do rozpoznawania intencji…"</string>

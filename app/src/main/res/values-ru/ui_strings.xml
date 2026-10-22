@@ -3850,6 +3850,9 @@
     <string name="ui_1f9dae2d58d7" formatted="false">"Нет активного занятия"</string>
     <string name="ui_4790277aa10c" formatted="false">"Получено"</string>
     <string name="ui_95145f43d145" formatted="false">"Необязательный локальный набор: закреплённый кандидат Qwen для намерений, Whisper Small, Silero VAD и синтез речи Supertonic. halo проверяет файлы, но не выбирает кандидаты и не заявляет об их качестве на устройстве. Вместо этого можно скачивать модели по отдельности."</string>
+    <string name="ui_ac83c14ed2a2" formatted="false">"Локальный набор для распознавания речи и намерений"</string>
+    <string name="ui_fe1513423fca" formatted="false">"При желании скачайте вместе кандидат Qwen для распознавания намерений, Whisper Small, Silero VAD и голосовые файлы Supertonic. Halo проверяет файлы, но не выбирает модели и не заявляет об их качестве на устройстве."</string>
+    <string name="ui_92a6b4173bd1" formatted="false">"Настройка начального набора не запущена."</string>
     <string name="ui_3007ade836ff" formatted="false">"Файлы начального набора установлены и проверены. Перед использованием выберите модель распознавания речи и прослушайте голос. Артефакт Qwen остаётся невыбранным кандидатом."</string>
     <string name="ui_2f9f525e3f4e" formatted="false">"Проверяем свободное место…"</string>
     <string name="ui_2e34fc62280f" formatted="false">"Скачиваем кандидат для распознавания намерений…"</string>
