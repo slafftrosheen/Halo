@@ -14,10 +14,13 @@
     <string name="ui_47173482314e" formatted="false">"Wznów przerwaną naukę"</string>
     <string name="ui_26e5b147b623" formatted="false">"Kontynuuj naukę"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
+    <string name="ui_1208ec01f223" formatted="false">"Poprzednia strona"</string>
+    <string name="ui_c08ac736a5e2" formatted="false">"Następna strona"</string>
     <string name="ui_942087cc2d41" formatted="false">"Ponów próbę"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
     <string name="ui_7d9eb7acb13e" formatted="false">"Zamknij"</string>
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
+    <string name="ui_1509f561f241" formatted="false">"Zapisz"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_c3812fc4acb8" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
@@ -40,6 +43,7 @@
     <string name="ui_8b3f05442c1b" formatted="false">"Ustawienia mowy"</string>
     <string name="ui_e51c6b48fb9e" formatted="false">"Otwórz aplikację"</string>
     <string name="ui_a12156590140" formatted="false">"Sprawdź przechwycone zdjęcie"</string>
+    <string name="ui_b99fa6c06150" formatted="false">"Podgląd jest niedostępny"</string>
     <string name="ui_48845bff334a" formatted="false">"Zamknij"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
@@ -115,6 +119,9 @@
     <string name="ui_09526e9d005a" formatted="false">"Nazwa aplikacji"</string>
     <string name="ui_57d1aec01657" formatted="false">"Słuchanie zatrzymane"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
+    <string name="ui_1aa22a9b1abc" formatted="false">"Dodaj adnotację do źródła"</string>
+    <string name="ui_0a30a815d67d" formatted="false">"Strona"</string>
+    <string name="ui_50b563c05624" formatted="false">"Oznaczenia są zapisywane na tym Canvasie, a nie w oryginalnym pliku."</string>
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
     <string name="ui_76d165ea898a" formatted="false">"Zapisz w Odebranych"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
@@ -129,6 +136,15 @@
     <string name="ui_767fb8352ca0" formatted="false">"Token Hugging Face"</string>
     <string name="ui_27ca04d3ae63" formatted="false">"Akceptuję licencję wydawcy"</string>
     <string name="ui_84526abbf679" formatted="false">"Użyj do rozmów"</string>
+    <string name="ui_18b3f5465aa1" formatted="false">"Narzędzia obrazu"</string>
+    <string name="ui_ac27c4201488" formatted="false">"Edytuj lokalnie. Oryginalny obraz pozostanie bez zmian."</string>
+    <string name="ui_54c46b33d809" formatted="false">"Obróć w lewo"</string>
+    <string name="ui_9938c21d2ced" formatted="false">"Obróć w prawo"</string>
+    <string name="ui_0b121e5c4006" formatted="false">"Wyśrodkuj kwadratowe kadrowanie"</string>
+    <string name="ui_9a168711e330" formatted="false">"Maksymalny rozmiar wyjściowy"</string>
+    <string name="ui_1f1f7f3a89fb" formatted="false">"Format obrazu"</string>
+    <string name="ui_5c874c87eb42" formatted="false">"PNG zachowuje przezroczystość, JPEG używa białego tła."</string>
+    <string name="ui_75c5986a189a" formatted="false">"Zapisz nowy obraz"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>

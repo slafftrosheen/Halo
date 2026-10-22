@@ -263,8 +263,8 @@ Continue with current source|||Продолжить с текущим источ
 Restart updated lesson|||Начать обновлённое занятие заново|||Sākt atjaunināto nodarbību no jauna
 Use this visual material|||Использовать это изображение|||Izmantot šo attēlu
 Configure vision|||Настроить анализ изображений|||Iestatīt attēlu analīzi
-Previous page|||Предыдущая страница|||Iepriekšējā lappuse
-Next page|||Следующая страница|||Nākamā lappuse
+Previous page|||Предыдущая страница|||Iepriekšējā lappuse|||Poprzednia strona
+Next page|||Следующая страница|||Nākamā lappuse|||Następna strona
 Explanation language|||Язык объяснений|||Paskaidrojumu valoda
 Assignment language · blank = same as material|||Язык задания · пусто = как в материале|||Uzdevuma valoda · tukšs = materiāla valoda
 Strongest language · brief clarification|||Основной язык · краткие уточнения|||Vislabāk zināmā valoda · īsi precizējumi
@@ -282,7 +282,7 @@ Retry|||Повторить|||Mēģināt vēlreiz|||Ponów próbę
 Cancel|||Отмена|||Atcelt|||Anuluj
 Close|||Закрыть|||Aizvērt|||Zamknij
 Done|||Готово|||Gatavs|||Gotowe
-Save|||Сохранить|||Saglabāt
+Save|||Сохранить|||Saglabāt|||Zapisz
 Delete|||Удалить|||Dzēst|||Usuń
 Remove|||Удалить|||Noņemt|||Usuń
 Keep|||Оставить|||Paturēt
@@ -352,7 +352,7 @@ Conversation & tools|||Разговор и инструменты|||Saruna un r�
 Retry message|||Повторить сообщение|||Atkārtot ziņu
 Review captured image|||Проверить снимок|||Pārskatīt uzņemto attēlu|||Sprawdź przechwycone zdjęcie
 Capture review|||Проверка снимка|||Attēla pārskatīšana
-Preview unavailable|||Предпросмотр недоступен|||Priekšskatījums nav pieejams
+Preview unavailable|||Предпросмотр недоступен|||Priekšskatījums nav pieejams|||Podgląd jest niedostępny
 Image analysis requires an eligible vision model and your image privacy permissions. Captures are local-only by default.|||Для анализа изображений нужна подходящая модель и разрешение на использование изображения. По умолчанию снимки доступны только на телефоне.|||Attēlu analīzei vajadzīgs piemērots modelis un atļauja izmantot attēlu. Pēc noklusējuma attēli ir pieejami tikai tālrunī.
 Allow this image for configured cloud analysis (global permissions still apply)|||Разрешить настроенный облачный анализ этого изображения (общие разрешения сохраняются)|||Atļaut šī attēla analīzi konfigurētajā mākonī (joprojām spēkā vispārīgās atļaujas)
 Choose vision model|||Выбрать модель для изображений|||Izvēlēties attēlu modeli
@@ -1384,9 +1384,9 @@ PDF document|||Документ PDF|||PDF dokuments
 Play memo|||Воспроизвести заметку|||Atskaņot piezīmi
 Stop playback|||Остановить воспроизведение|||Apturēt atskaņošanu
 Audio playback unavailable|||Не удалось воспроизвести аудио|||Audio atskaņošana nav pieejama
-Annotate source|||Разметка файла|||Faila anotēšana
-Page|||Страница|||Lapa
-Marks are saved on this Canvas, not into the original file.|||Пометки сохраняются в Canvas, исходный файл не изменяется.|||Atzīmes saglabājas Canvas, nevis sākotnējā failā.
+Annotate source|||Разметка файла|||Faila anotēšana|||Dodaj adnotację do źródła
+Page|||Страница|||Lapa|||Strona
+Marks are saved on this Canvas, not into the original file.|||Пометки сохраняются в Canvas, исходный файл не изменяется.|||Atzīmes saglabājas Canvas, nevis sākotnējā failā.|||Oznaczenia są zapisywane na tym Canvasie, a nie w oryginalnym pliku.
 Find on canvas|||Найти на Canvas|||Meklēt Canvas
 Search this canvas|||Поиск по Canvas|||Meklēt šajā Canvas
 matching cards|||совпадений|||atbilstošas kartītes
@@ -1656,18 +1656,18 @@ Download paused|||Загрузка приостановлена|||Lejupielāde a
 Couldn't download voice. Retry to continue.|||Не удалось скачать голос. Повторите, чтобы продолжить.|||Neizdevās lejupielādēt balsi. Mēģiniet vēlreiz, lai turpinātu.
 Installing voice…|||Устанавливаем голос…|||Instalē balsi…
 Advanced|||Дополнительно|||Papildu iespējas
-Image tools|||Инструменты изображения|||Attēla rīki
-Edit locally. Your original image remains unchanged.|||Редактирование выполняется на устройстве. Оригинал не изменится.|||Rediģēšana notiek ierīcē. Sākotnējais attēls netiks mainīts.
+Image tools|||Инструменты изображения|||Attēla rīki|||Narzędzia obrazu
+Edit locally. Your original image remains unchanged.|||Редактирование выполняется на устройстве. Оригинал не изменится.|||Rediģēšana notiek ierīcē. Sākotnējais attēls netiks mainīts.|||Edytuj lokalnie. Oryginalny obraz pozostanie bez zmian.
 Loading preview…|||Загружаем предпросмотр…|||Ielādē priekšskatījumu…
-Rotate left|||Повернуть влево|||Pagriezt pa kreisi
-Rotate right|||Повернуть вправо|||Pagriezt pa labi
+Rotate left|||Повернуть влево|||Pagriezt pa kreisi|||Obróć w lewo
+Rotate right|||Повернуть вправо|||Pagriezt pa labi|||Obróć w prawo
 Undo mirror|||Убрать отражение|||Atcelt spoguļattēlu
 Mirror horizontally|||Отразить по горизонтали|||Spoguļot horizontāli
-Center square crop|||Квадратная обрезка по центру|||Kvadrātveida apgriešana centrā
-Maximum output size|||Максимальный размер изображения|||Maksimālais attēla izmērs
-Image format|||Формат изображения|||Attēla formāts
-PNG retains transparency; JPEG uses a white background.|||PNG сохраняет прозрачность, JPEG использует белый фон.|||PNG saglabā caurspīdīgumu; JPEG izmanto baltu fonu.
-Save new image|||Сохранить новое изображение|||Saglabāt jaunu attēlu
+Center square crop|||Квадратная обрезка по центру|||Kvadrātveida apgriešana centrā|||Wyśrodkuj kwadratowe kadrowanie
+Maximum output size|||Максимальный размер изображения|||Maksimālais attēla izmērs|||Maksymalny rozmiar wyjściowy
+Image format|||Формат изображения|||Attēla formāts|||Format obrazu
+PNG retains transparency; JPEG uses a white background.|||PNG сохраняет прозрачность, JPEG использует белый фон.|||PNG saglabā caurspīdīgumu; JPEG izmanto baltu fonu.|||PNG zachowuje przezroczystość, JPEG używa białego tła.
+Save new image|||Сохранить новое изображение|||Saglabāt jaunu attēlu|||Zapisz nowy obraz
 Edited image saved as a new Notebook item.|||Отредактированное изображение сохранено в Блокноте как новый элемент.|||Rediģētais attēls saglabāts Piezīmju blokā kā jauns vienums.
 Image editing could not finish. The original is unchanged; check Inbox before retrying.|||Не удалось завершить обработку изображения. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Attēla rediģēšanu neizdevās pabeigt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
 Extract color palette|||Извлечь цветовую палитру|||Iegūt krāsu paleti
