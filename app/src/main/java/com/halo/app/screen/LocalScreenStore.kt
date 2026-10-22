@@ -92,14 +92,33 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
                 j.optString("sourceId").takeUnless { it.isBlank() || it == "null" }, j.getString("title"),
                 j.optString("summary").takeUnless { it == "null" }, ScreenContentType.valueOf(j.getString("contentType")),
                 instant("updatedAt"), instant("lastSuccessAt"), instant("expiresAt"), ScreenItemState.valueOf(j.getString("state")),
-                ScreenSensitivity.valueOf(j.getString("sensitivity")), null, listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen))
+                ScreenSensitivity.valueOf(j.getString("sensitivity")),
+                j.optString("attribution").takeUnless { it.isBlank() || it == "null" },
+                j.optJSONArray("availableActions")?.let { actions ->
+                    (0 until actions.length()).mapNotNull { index -> screenAction(actions.optString(index)) }.distinct()
+                } ?: listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen))
         }
     }.getOrDefault(emptyList())
+
+    private fun screenAction(id: String): ScreenAction? = when (id) {
+        ScreenAction.ReadAloud.id -> ScreenAction.ReadAloud
+        ScreenAction.OpenSource.id -> ScreenAction.OpenSource
+        ScreenAction.SaveToNotebook.id -> ScreenAction.SaveToNotebook
+        ScreenAction.Pin.id -> ScreenAction.Pin
+        ScreenAction.HideFromScreen.id -> ScreenAction.HideFromScreen
+        ScreenAction.Setup.id -> ScreenAction.Setup
+        ScreenAction.Retry.id -> ScreenAction.Retry
+        ScreenAction.FewerLikeThis.id -> ScreenAction.FewerLikeThis
+        else -> null
+    }
 
     private fun ScreenItem.toJson() = JSONObject().put("id", id).put("sourceType", sourceType.name)
         .put("sourceId", sourceId).put("title", title).put("summary", summary).put("contentType", contentType.name)
         .put("updatedAt", updatedAt?.toString()).put("lastSuccessAt", lastSuccessAt?.toString())
         .put("expiresAt", expiresAt?.toString()).put("state", state.name).put("sensitivity", sensitivity.name)
+        .put("attribution", attribution).put("availableActions", JSONArray().apply {
+            availableActions.distinctBy { it.id }.forEach { put(it.id) }
+        })
 }
 
 object ScreenWidgets {
