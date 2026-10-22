@@ -72,6 +72,7 @@
     <string name="ui_b99fa6c06150" formatted="false">"Podgląd jest niedostępny"</string>
     <string name="ui_eb1a70e39274" formatted="false">"Odrzuć"</string>
     <string name="ui_48845bff334a" formatted="false">"Zamknij"</string>
+    <string name="ui_464c4ffd019e" formatted="false">"Edytuj"</string>
     <string name="ui_31e392d1c037" formatted="false">"Zastosuj"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
@@ -243,6 +244,9 @@
     <string name="ui_34a3bb6f0e08" formatted="false">"Zarządzaj dostępem do powiadomień"</string>
     <string name="ui_f67db8e43407" formatted="false">"Otwórz skrzynkę odbiorczą"</string>
     <string name="ui_37ec7e16decf" formatted="false">"Usuń dane logowania"</string>
+    <string name="ui_ad1fb9ec0cb3" formatted="false">"Automatyzacje"</string>
+    <string name="ui_778ed9b67c3f" formatted="false">"Nie skonfigurowano jeszcze żadnych rutyn."</string>
+    <string name="ui_f0fe07086169" formatted="false">"Utwórz rutynę"</string>
     <string name="ui_2405e098b52f" formatted="false">"Zapisanie zastąpi zatwierdzoną definicję i ponownie zaplanuje tę automatyzację."</string>
     <string name="ui_da011627f3ba" formatted="false">"Zapisz jako wyłączoną"</string>
     <string name="ui_c28f22128246" formatted="false">"Wybierz wyzwalacz"</string>
@@ -438,6 +442,9 @@
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
     <string name="ui_7356acceb0c5" formatted="false">"Utwórz umiejętność"</string>
+    <string name="ui_afa8a4dfa861" formatted="false">"Zacznij od dostępnych działań halo, a następnie dostosuj instrukcje. Przed instalacją sprawdź umiejętność."</string>
+    <string name="ui_0fbb6f49b868" formatted="false">"Nazwa umiejętności"</string>
+    <string name="ui_95e5a7cfdb02" formatted="false">"Sprawdź umiejętność"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
     <string name="ui_d177cdc09a4e" formatted="false">"Nie zainstalowano"</string>
     <string name="ui_7db320928b62" formatted="false">"Zainstalowano · plik zweryfikowany · niezaładowany"</string>
@@ -466,6 +473,7 @@
     <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
     <string name="ui_78a7ab5e314a" formatted="false">"Wybierz model"</string>
+    <string name="ui_ff2113958589" formatted="false">"Dostawca jest niedostępny"</string>
     <string name="ui_3e0bae9d4f24" formatted="false">"Usunąć dane logowania?"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
@@ -502,8 +510,15 @@
     <string name="ui_494ca78f7374" formatted="false">"Niestandardowe"</string>
     <string name="ui_a5f1b6640cc6" formatted="false">"Niestandardowa liczba minut · od 15 do 1440"</string>
     <string name="ui_50017ea75995" formatted="false">"Niestandardowa liczba sekund"</string>
+    <string name="ui_6c863c3012b6" formatted="false">"Odrzucić zmiany w umiejętności?"</string>
+    <string name="ui_25c11e7cf257" formatted="false">"Te instrukcje nie zostały zainstalowane. Sprawdź je przed instalacją albo odrzuć ten szkic."</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
+    <string name="ui_b3739b547eec" formatted="false">"Dodatkowe zatwierdzone działanie"</string>
+    <string name="ui_9a7aa4102706" formatted="false">"Wybierz urządzenie"</string>
+    <string name="ui_8b9b4f57f1c7" formatted="false">"Wybierz aplikację"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
+    <string name="ui_934652dce41d" formatted="false">"Instrukcje"</string>
+    <string name="ui_7b3b2c40f4e6" formatted="false">"Bez dodatkowego limitu"</string>
     <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
@@ -740,6 +755,7 @@
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
     <string name="ui_e38b9d46e214" formatted="false">"Postęp zadania"</string>
+    <string name="ui_2104d5085b65" formatted="false">"Nie uruchamiaj, gdy wyłączona"</string>
     <string name="ui_99cf83e21702" formatted="false">"Usunięta automatyzacja"</string>
     <string name="ui_e86dbab56f49" formatted="false">"Wypróbuj raz"</string>
     <string name="ui_29b51bad8b27" formatted="false">"Trwa jednorazowa próba…"</string>
@@ -754,6 +770,10 @@
     <string name="ui_82b081c3e6fb" formatted="false">"Uruchom teraz te działania. Warunki nadal obowiązują. Wynik pozostanie tutaj i w Historii; nie zostaną zaplanowane powiadomienia, mowa ani przyszłe uruchomienie."</string>
     <string name="ui_58203e13417a" formatted="false">"Uruchomi raz sprawdzone działania i zapisze wynik w Historii. Nie zapisze szkicu ani nie sprawdzi dostarczania powiadomień i na urządzenie noszone."</string>
     <string name="ui_9444c497aa82" formatted="false">"Ta automatyzacja może wykonywać dokładnie te działania bez każdorazowego pytania. Zmiana automatyzacji wymaga ponownego sprawdzenia."</string>
+    <string name="ui_7fbe54fa7aa1" formatted="false">"Nic się nie zmieni, dopóki nie sprawdzisz i nie zapiszesz zmian. Włączenie zaplanuje przyszłe uruchomienia, ale nie uruchomi automatyzacji teraz."</string>
+    <string name="ui_1148b60f521a" formatted="false">"Sugestia jest już niedostępna"</string>
+    <string name="ui_231ac91b0282" formatted="false">"Ta rutyna jest już niedostępna. Możesz odrzucić tę sugestię."</string>
+    <string name="ui_49780701dc2d" formatted="false">"Nie, dziękuję"</string>
     <string name="ui_d8c8d201a7bc" formatted="false">"Dostęp do Androida"</string>
     <string name="ui_4c90e38762a6" formatted="false">"Nie są wymagane specjalne uprawnienia"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>

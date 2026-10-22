@@ -373,7 +373,7 @@ Open saved source|||Открыть сохранённый источник|||Atv
 Discard temporary capture|||Удалить временный снимок|||Dzēst pagaidu attēlu
 Discard|||Удалить|||Atmest|||Odrzuć
 Dismiss|||Закрыть|||Aizvērt|||Zamknij
-Edit|||Изменить|||Labot
+Edit|||Изменить|||Labot|||Edytuj
 Insert|||Вставить|||Ievietot
 Apply|||Применить|||Lietot|||Zastosuj
 Restore|||Восстановить|||Atjaunot|||Przywróć
@@ -1084,10 +1084,10 @@ Preview snapshot|||Предпросмотр снимка|||Momentuzņēmuma prie
 Observation ready. Tap Preview snapshot.|||Данные получены. Нажмите «Предпросмотр снимка».|||Novērojums gatavs. Spied Momentuzņēmuma priekšskatījums.
 Open phone-control sandbox|||Открыть тест управления телефоном|||Atvērt tālruņa vadības testa vidi
 These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own.|||Эти переключатели только разрешают передачу необходимого контекста при выборе удалённой модели. Сами по себе они не включают облачную маршрутизацию.|||Šie slēdži atļauj vajadzīgā konteksta nosūtīšanu tikai tad, ja izvēlēts attālināts modelis. Tie paši neieslēdz mākoņa maršrutēšanu.
-Automations|||Автоматизации|||Automatizācijas
+Automations|||Автоматизации|||Automatizācijas|||Automatyzacje
 Automate local tasks|||Автоматизировать локальные задачи|||Automatizēt lokālos uzdevumus
-No routines configured yet.|||Сценарии ещё не настроены.|||Vēl nav konfigurētu rutīnu.
-Create routine|||Создать сценарий|||Izveidot rutīnu
+No routines configured yet.|||Сценарии ещё не настроены.|||Vēl nav konfigurētu rutīnu.|||Nie skonfigurowano jeszcze żadnych rutyn.
+Create routine|||Создать сценарий|||Izveidot rutīnu|||Utwórz rutynę
 Saving replaces the approved definition and reschedules this automation.|||Сохранение заменит подтверждённую конфигурацию и обновит расписание автоматизации.|||Saglabāšana aizstās apstiprināto definīciju un atjaunos automatizācijas grafiku.|||Zapisanie zastąpi zatwierdzoną definicję i ponownie zaplanuje tę automatyzację.
 Save off|||Сохранить выключенной|||Saglabāt izslēgtu|||Zapisz jako wyłączoną
 WHEN|||КОГДА|||KAD
@@ -1826,9 +1826,9 @@ Workspace helper|||Помощник по рабочим материалам|||D
 Phone app helper|||Помощник для приложений|||Lietotņu palīgs
 Study helper|||Помощник в учёбе|||Mācību palīgs
 Calendar helper|||Помощник по календарю|||Kalendāra palīgs
-Start with existing Halo actions, then customize the instructions. Review before installing.|||Начните с действий Halo, настройте инструкции и проверьте навык перед установкой.|||Sāciet ar Halo darbībām, pielāgojiet norādījumus un pārskatiet prasmi pirms instalēšanas.
-Skill name|||Название навыка|||Prasmes nosaukums
-Review skill|||Проверить навык|||Pārskatīt prasmi
+Start with existing Halo actions, then customize the instructions. Review before installing.|||Начните с действий Halo, настройте инструкции и проверьте навык перед установкой.|||Sāciet ar Halo darbībām, pielāgojiet norādījumus un pārskatiet prasmi pirms instalēšanas.|||Zacznij od dostępnych działań Halo, a następnie dostosuj instrukcje. Przed instalacją sprawdź umiejętność.
+Skill name|||Название навыка|||Prasmes nosaukums|||Nazwa umiejętności
+Review skill|||Проверить навык|||Pārskatīt prasmi|||Sprawdź umiejętność
 Use a skill name of 1 to 80 characters without quotes or line breaks|||Введите название от 1 до 80 символов без кавычек и переносов строк|||Ievadiet nosaukumu no 1 līdz 80 rakstzīmēm bez pēdiņām un rindu pārtraukumiem
 All models|||Все модели|||Visi modeļi
 Text answers|||Текстовые ответы|||Teksta atbildes
@@ -2060,7 +2060,7 @@ Checking this setup…|||Проверка настроек…|||Iestatījumu pā
 %1$d cached models|||Моделей в сохранённом списке: %1$d|||Saglabātajā sarakstā: %1$d modeļi
 Connect Halo to the intelligence you choose.|||Выберите, как Halo будет отвечать.|||Izvēlieties, kā Halo atbildēs.
 Image creation|||Создание изображений|||Attēlu veidošana
-Provider unavailable|||Провайдер недоступен|||Pakalpojums nav pieejams
+Provider unavailable|||Провайдер недоступен|||Pakalpojums nav pieejams|||Dostawca jest niedostępny
 Return to Providers and choose an available setup.|||Вернитесь к провайдерам и выберите доступный вариант.|||Atgriezieties pie pakalpojumiem un izvēlieties pieejamu variantu.
 Reply tests apply to this provider, not every model. Saving configuration clears previous checks.|||Проверка ответа относится к провайдеру, а не ко всем моделям. Сохранение настроек сбрасывает прежние проверки.|||Atbildes pārbaude attiecas uz pakalpojumu, nevis visiem modeļiem. Iestatījumu saglabāšana atiestata iepriekšējās pārbaudes.
 Current model: %1$s|||Текущая модель: %1$s|||Pašreizējais modelis: %1$s
@@ -2269,8 +2269,8 @@ Provider check failed. Review configuration and try again.|||Проверка п
 Sign in with account|||Войти в аккаунт|||Pierakstīties ar kontu
 No authentication|||Без авторизации|||Bez autentifikācijas
 Access token|||Токен доступа|||Piekļuves pilnvara
-Discard skill edits?|||Отбросить изменения навыка?|||Atmest prasmes izmaiņas?
-These instructions have not been installed. Review them before installing, or discard this draft.|||Эти инструкции не установлены. Проверьте их перед установкой или отбросьте черновик.|||Šīs instrukcijas nav instalētas. Pirms instalēšanas pārskatiet tās vai atmetiet melnrakstu.
+Discard skill edits?|||Отбросить изменения навыка?|||Atmest prasmes izmaiņas?|||Odrzucić zmiany w umiejętności?
+These instructions have not been installed. Review them before installing, or discard this draft.|||Эти инструкции не установлены. Проверьте их перед установкой или отбросьте черновик.|||Šīs instrukcijas nav instalētas. Pirms instalēšanas pārskatiet tās vai atmetiet melnrakstu.|||Te instrukcje nie zostały zainstalowane. Sprawdź je przed instalacją albo odrzuć ten szkic.
 Hide technical details|||Скрыть технические сведения|||Slēpt tehnisko informāciju
 Run checks explicitly. Hardware and inference checks may need access or configuration.|||Запускайте проверки явно. Для проверки оборудования и моделей могут потребоваться доступ и настройка.|||Palaidiet pārbaudes apzināti. Aparatūras un modeļu pārbaudēm var būt vajadzīga piekļuve vai iestatījumi.
 Bearer · Credential required|||Токен · Требуется ключ доступа|||Pilnvara · Vajadzīgi piekļuves dati
@@ -2303,14 +2303,14 @@ The operation did not finish. Check access, storage and the password, then try a
 %1$s disconnects|||%1$s отключается|||%1$s atvienojas
 %1$s opens|||%1$s открывается|||%1$s atveras
 %1$s · no phone-speaker fallback|||%1$s · без переключения на динамик телефона|||%1$s · bez pārslēgšanās uz tālruņa skaļruni
-Additional approved action|||Дополнительное подтверждённое действие|||Papildu apstiprināta darbība
+Additional approved action|||Дополнительное подтверждённое действие|||Papildu apstiprināta darbība|||Dodatkowe zatwierdzone działanie
 Battery above %1$d%%|||Заряд выше %1$d%%|||Akumulatora uzlāde virs %1$d%%
 Battery below %1$d%%|||Заряд ниже %1$d%%|||Akumulatora uzlāde zem %1$d%%
 Battery falls below %1$d%%|||Заряд опускается ниже %1$d%%|||Akumulatora uzlāde samazinās zem %1$d%%
 Battery rises above %1$d%%|||Заряд поднимается выше %1$d%%|||Akumulatora uzlāde paaugstinās virs %1$d%%
 Choose Halo for Android assistant gestures|||Выберите Halo для жестов ассистента Android|||Izvēlieties Halo Android asistenta žestiem
-Choose a device|||Выберите устройство|||Izvēlieties ierīci
-Choose an app|||Выберите приложение|||Izvēlieties lietotni
+Choose a device|||Выберите устройство|||Izvēlieties ierīci|||Wybierz urządzenie
+Choose an app|||Выберите приложение|||Izvēlieties lietotni|||Wybierz aplikację
 Copy section|||Копировать раздел|||Kopēt sadaļu
 Could not open assistant settings. Try Android settings directly.|||Не удалось открыть настройки ассистента. Откройте настройки Android напрямую.|||Neizdevās atvērt asistenta iestatījumus. Atveriet Android iestatījumus tieši.
 Could not inspect Android assistant status. Refresh and try again.|||Не удалось проверить состояние ассистента Android. Обновите и повторите попытку.|||Neizdevās pārbaudīt Android asistenta stāvokli. Atjauniniet un mēģiniet vēlreiz.
@@ -2320,12 +2320,12 @@ Fixed sample data. This exercises every component the renderer supports, includi
 Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer.|||Halo отправил модели только часть источника. Для полного ответа задайте вопрос о более коротком отрывке.|||Halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu.
 Go to section|||Перейти к разделу|||Doties uz sadaļu
 Image|||Изображение|||Attēls|||Obraz
-Instructions|||Инструкции|||Instrukcijas
+Instructions|||Инструкции|||Instrukcijas|||Instrukcje
 Last enrollment return|||Последний возврат из настройки|||Pēdējā atgriešanās no iestatīšanas
 Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s
 Local controls for later device acceptance|||Локальные элементы для проверки на устройстве|||Lokāla vadība pārbaudei ierīcē
 No compatible model available|||Нет совместимой модели|||Nav pieejama saderīga modeļa
-No extra limit|||Без дополнительного ограничения|||Bez papildu ierobežojuma
+No extra limit|||Без дополнительного ограничения|||Bez papildu ierobežojuma|||Bez dodatkowego limitu
 Notification digest · last %1$d minutes|||Сводка уведомлений · последние %1$d минут|||Paziņojumu kopsavilkums · pēdējās %1$d minūtes
 Notification from %1$s|||Уведомление от %1$s|||Paziņojums no %1$s
 Once · %1$s|||Однократно · %1$s|||Vienreiz · %1$s
@@ -3496,7 +3496,7 @@ Volume down|||Тише|||Samazināt skaļumu
 Volume up|||Громче|||Palielināt skaļumu
 Capturing…|||Снимаю…|||Uzņem…
 %1$d on · %2$d off|||Включено: %1$d · выключено: %2$d|||Ieslēgts: %1$d · izslēgts: %2$d
-No runs while off|||Не запускается, пока выключено|||Netiek palaista, kamēr ir izslēgta
+No runs while off|||Не запускается, пока выключено|||Netiek palaista, kamēr ir izslēgta|||Nie uruchamiaj, gdy wyłączona
 Next · %1$s|||Следующий запуск · %1$s|||Nākamā palaišana · %1$s
 Run “%1$s” now?|||Запустить «%1$s» сейчас?|||Palaist “%1$s” tagad?
 Delete “%1$s”?|||Удалить «%1$s»?|||Dzēst “%1$s”?
@@ -3602,10 +3602,10 @@ Minimum time between runs|||Минимальный интервал между �
 Suggested routine|||Предложенный сценарий|||Ieteiktais scenārijs
 Why it was suggested|||Почему это предложено|||Kāpēc tas ieteikts
 You completed this routine manually %1$d times recently.|||Запуски этого сценария вручную за последнее время: %1$d.|||Manuālo izpilžu skaits pēdējā laikā: %1$d.
-Nothing changes until you review and save. Turning it on schedules future runs; it does not run it now.|||Ничего не изменится до проверки и сохранения. Включение разрешает будущие запуски, но не запускает сценарий сейчас.|||Nekas nemainās, kamēr nepārskatāt un nesaglabājat. Ieslēgšana ieplāno turpmākās izpildes, bet nepalaiž scenāriju tūlīt.
-Suggestion no longer available|||Предложение больше недоступно|||Ieteikums vairs nav pieejams
-This routine is no longer available. You can dismiss this suggestion.|||Этот сценарий больше недоступен. Предложение можно отклонить.|||Šis scenārijs vairs nav pieejams. Varat noraidīt šo ieteikumu.
-No thanks|||Нет, спасибо|||Nē, paldies
+Nothing changes until you review and save. Turning it on schedules future runs; it does not run it now.|||Ничего не изменится до проверки и сохранения. Включение разрешает будущие запуски, но не запускает сценарий сейчас.|||Nekas nemainās, kamēr nepārskatāt un nesaglabājat. Ieslēgšana ieplāno turpmākās izpildes, bet nepalaiž scenāriju tūlīt.|||Nic się nie zmieni, dopóki nie sprawdzisz i nie zapiszesz zmian. Włączenie zaplanuje przyszłe uruchomienia, ale nie uruchomi automatyzacji teraz.
+Suggestion no longer available|||Предложение больше недоступно|||Ieteikums vairs nav pieejams|||Sugestia jest już niedostępna
+This routine is no longer available. You can dismiss this suggestion.|||Этот сценарий больше недоступен. Предложение можно отклонить.|||Šis scenārijs vairs nav pieejams. Varat noraidīt šo ieteikumu.|||Ta rutyna jest już niedostępna. Możesz odrzucić tę sugestię.
+No thanks|||Нет, спасибо|||Nē, paldies|||Nie, dziękuję
 Android access|||Доступ Android|||Android piekļuve|||Dostęp do Androida
 No special permission needed|||Особые разрешения не нужны|||Īpašas atļaujas nav vajadzīgas|||Nie są wymagane specjalne uprawnienia
 Needs access or a connected device|||Нужен доступ или подключённое устройство|||Vajadzīga piekļuve vai pievienota ierīce
