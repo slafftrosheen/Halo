@@ -75,4 +75,27 @@ class LocalScreenStoreTest {
         assertEquals("research", restored.layout.value!!.cards.single().widgetType)
         assertEquals(research.id, restored.layout.value!!.cards.single().itemId)
     }
+
+    @Test fun automationResultUpdatesOneStableScreenCardAcrossRestart() = runBlocking {
+        val store = LocalScreenStore(context)
+        val firstAt = Instant.parse("2026-10-22T10:00:00Z")
+        val first = ScreenItem(
+            id = "automation:routine-1", sourceType = ScreenSourceType.AUTOMATION,
+            sourceId = "routine-1", title = "Morning summary", summary = "First result",
+            contentType = ScreenContentType.SUMMARY, updatedAt = firstAt, lastSuccessAt = firstAt,
+            expiresAt = null, state = ScreenItemState.READY, sensitivity = ScreenSensitivity.PRIVATE,
+            attribution = null, availableActions = listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen),
+        )
+        val layout = ScreenWidgets.starter("Quiet").copy(cards = listOf(
+            ScreenCard("automation_result", first.id, CardSize.STANDARD, false)))
+        store.publishAndSaveLayout(first, layout)
+        val updatedAt = firstAt.plusSeconds(60)
+        store.publish(first.copy(summary = "Updated result", updatedAt = updatedAt, lastSuccessAt = updatedAt))
+
+        val restored = LocalScreenStore(context)
+
+        assertEquals(1, restored.items.value.size)
+        assertEquals("Updated result", restored.items.value.single().summary)
+        assertEquals(first.id, restored.layout.value!!.cards.single().itemId)
+    }
 }
