@@ -107,7 +107,7 @@ Make Halo feel like yours.|||Настройте Halo под себя.|||Pielāgo
 Your companion|||Ваш помощник|||Tavs palīgs
 Intelligence|||Интеллект|||Intelekts
 Models and providers|||Модели и поставщики|||Modeļi un pakalpojumu sniedzēji
-Voice|||Голос|||Balss
+Voice|||Голос|||Balss|||Głos
 Listening and speaking|||Распознавание и озвучивание|||Klausīšanās un runāšana
 Integrations|||Интеграции|||Integrācijas
 MCP servers and external capabilities|||MCP-серверы и внешние возможности|||MCP serveri un ārējās iespējas
@@ -534,7 +534,7 @@ Discover and connect supported HeyCyan hardware.|||Найдите и подкл�
 Grant nearby-device access before scanning.|||Разрешите доступ к устройствам поблизости перед поиском.|||Pirms meklēšanas atļauj piekļuvi tuvumā esošām ierīcēm.
 Turn on Bluetooth to discover and connect glasses.|||Включите Bluetooth для поиска и подключения очков.|||Ieslēdz Bluetooth, lai atrastu un savienotu brilles.
 Grant access|||Разрешить доступ|||Atļaut piekļuvi
-Turn on|||Включить|||Ieslēgt
+Turn on|||Включить|||Ieslēgt|||Włącz
 Unavailable|||Недоступно|||Nav pieejams
 Scan|||Поиск|||Meklēt
 Discovered devices|||Найденные устройства|||Atrastās ierīces
@@ -1600,7 +1600,7 @@ Test listening and speaking|||Проверить распознавание и �
 Setup readiness|||Готовность после настройки|||Iestatīšanas gatavība
 Check what works and share a safe report|||Проверить работу и поделиться безопасным отчётом|||Pārbaudīt darbību un kopīgot drošu pārskatu
 Hide advanced settings|||Скрыть расширенные настройки|||Paslēpt papildu iestatījumus
-Developer tools|||Инструменты разработчика|||Izstrādātāja rīki
+Developer tools|||Инструменты разработчика|||Izstrādātāja rīki|||Narzędzia deweloperskie
 Not connected|||Не подключено|||Nav savienots
 Checking…|||Проверка…|||Pārbauda…|||Sprawdzanie…
 Save setup diagnostics on this phone|||Сохранять диагностику настройки на телефоне|||Saglabāt iestatīšanas diagnostiku šajā tālrunī|||Zapisuj diagnostykę konfiguracji na tym telefonie
@@ -2285,7 +2285,7 @@ Explicit only|||Только по прямому запросу|||Tikai pēc tie
 Suggest|||Предлагать|||Ieteikt
 Halo may retrieve relevant saved memories within the current scope and context budget.|||Halo может находить подходящие воспоминания в текущей области и пределах объёма контекста.|||Halo var meklēt atbilstošas atmiņas pašreizējā tvērumā un konteksta apjoma robežās.
 Saved memories stay in Memory. Automatic conversational use is off.|||Сохранённые воспоминания остаются в Памяти. Автоматическое использование в разговорах выключено.|||Saglabātās atmiņas paliek Atmiņā. Automātiska lietošana sarunās ir izslēgta.
-Clear|||Очистить|||Iztīrīt
+Clear|||Очистить|||Iztīrīt|||Wyczyść
 Data operation needs attention|||Операция с данными требует внимания|||Darbībai ar datiem jāpievērš uzmanība
 Data operation result|||Результат операции с данными|||Darbības ar datiem rezultāts
 Downloaded model files will be removed. Download them again before local inference. Notes and conversations are kept.|||Загруженные файлы моделей будут удалены. Перед использованием локальных моделей скачайте их снова. Заметки и разговоры сохраняются.|||Lejupielādētie modeļu faili tiks dzēsti. Pirms lokālo modeļu lietošanas lejupielādējiet tos vēlreiz. Piezīmes un sarunas tiek saglabātas.
@@ -2395,10 +2395,10 @@ Warm|||Тёплый|||Silts
 Cool|||Прохладный|||Vēss
 Your Halo|||Ваш Halo|||Tavs Halo
 A little colour. Still easy to read.|||Немного цвета. По-прежнему легко читать.|||Nedaudz krāsu. Joprojām viegli lasīt.
-Kids mode|||Детский режим|||Bērnu režīms
-Learning and tools on one page.|||Учёба и инструменты на одной странице.|||Mācības un rīki vienā lapā.
-Tool approvals stay the same.|||Подтверждение действий инструментов не меняется.|||Rīku darbību apstiprināšana nemainās.
-Could not save your change. Try again.|||Не удалось сохранить изменение. Попробуйте ещё раз.|||Neizdevās saglabāt izmaiņu. Mēģini vēlreiz.
+Kids mode|||Детский режим|||Bērnu režīms|||Tryb dla dzieci
+Learning and tools on one page.|||Учёба и инструменты на одной странице.|||Mācības un rīki vienā lapā.|||Nauka i narzędzia na jednej stronie.
+Tool approvals stay the same.|||Подтверждение действий инструментов не меняется.|||Rīku darbību apstiprināšana nemainās.|||Zasady zatwierdzania działań pozostają bez zmian.
+Could not save your change. Try again.|||Не удалось сохранить изменение. Попробуйте ещё раз.|||Neizdevās saglabāt izmaiņu. Mēģini vēlreiz.|||Nie udało się zapisać zmiany. Spróbuj ponownie.
 My tools|||Мои инструменты|||Mani rīki|||Moje narzędzia
 Choose a tool. Halo will ask when an action needs approval.|||Выбери инструмент. Halo запросит подтверждение, если оно понадобится.|||Izvēlies rīku. Halo lūgs apstiprinājumu, ja darbībai tas būs vajadzīgs.
 5-minute timer|||Таймер на 5 минут|||5 minūšu taimeris
@@ -3043,7 +3043,7 @@ Other model sources|||Другие источники моделей|||Citi mode
 Developer diagnostics|||Диагностика для разработчиков|||Izstrādātāja diagnostika|||Diagnostyka dla deweloperów
 Hide developer diagnostics|||Скрыть диагностику разработчика|||Paslēpt izstrādātāja diagnostiku|||Ukryj diagnostykę deweloperską
 Additional settings, model setup and system check.|||Дополнительные настройки, выбор моделей и проверка системы.|||Papildu iestatījumi, modeļu konfigurācija un sistēmas pārbaude.
-Model labs and diagnostics are enabled. No test starts automatically.|||Лаборатории моделей и диагностика включены. Тесты не запускаются автоматически.|||Modeļu laboratorijas un diagnostika ir ieslēgta. Pārbaudes netiek palaistas automātiski.
+Model labs and diagnostics are enabled. No test starts automatically.|||Лаборатории моделей и диагностика включены. Тесты не запускаются автоматически.|||Modeļu laboratorijas un diagnostika ir ieslēgta. Pārbaudes netiek palaistas automātiski.|||Laboratoria modeli i diagnostyka są włączone. Żaden test nie uruchamia się automatycznie.
 Choose embedding role|||Выбрать модель для поиска|||Izvēlēties iegulumu lomu
 Download local search model|||Загрузить модель локального поиска|||Lejupielādēt lokālās meklēšanas modeli
 Optional · Local search|||Дополнительно · Локальный поиск|||Neobligāti · Lokālā meklēšana
@@ -3070,12 +3070,12 @@ Custom servers (MCP)|||Свои серверы (MCP)|||Pielāgoti serveri (MCP)
 Manage your own connections|||Управляйте своими подключениями|||Pārvaldiet savus savienojumus
 Technical report|||Технический отчёт|||Tehniskais pārskats
 Safe to share: no keys, no messages|||Можно делиться: без ключей и сообщений|||Droši kopīgojams: bez atslēgām un ziņojumiem
-Technical options, kept in one place.|||Технические настройки собраны здесь.|||Tehniskie iestatījumi vienuviet.
-Technical options live in Advanced.|||Технические настройки — в разделе «Дополнительно».|||Tehniskie iestatījumi atrodas sadaļā «Papildu iestatījumi».
-Open Advanced|||Открыть дополнительные настройки|||Atvērt papildu iestatījumus
+Technical options, kept in one place.|||Технические настройки собраны здесь.|||Tehniskie iestatījumi vienuviet.|||Opcje techniczne w jednym miejscu.
+Technical options live in Advanced.|||Технические настройки — в разделе «Дополнительно».|||Tehniskie iestatījumi atrodas sadaļā «Papildu iestatījumi».|||Opcje techniczne znajdują się w sekcji Zaawansowane.
+Open Advanced|||Открыть дополнительные настройки|||Atvērt papildu iestatījumus|||Otwórz ustawienia zaawansowane
 Model roles, custom servers and technical report|||Роли моделей, свои серверы и технический отчёт|||Modeļu lomas, pielāgoti serveri un tehniskais pārskats
-Turn on developer tools?|||Включить инструменты разработчика?|||Ieslēgt izstrādātāja rīkus?
-Show labs and diagnostics in Advanced. Nothing runs until you choose it.|||Показать лаборатории и диагностику в дополнительных настройках. Ничего не запустится без вашего выбора.|||Rādīt laboratorijas un diagnostiku papildu iestatījumos. Nekas netiks palaists bez jūsu izvēles.
+Turn on developer tools?|||Включить инструменты разработчика?|||Ieslēgt izstrādātāja rīkus?|||Włączyć narzędzia deweloperskie?
+Show labs and diagnostics in Advanced. Nothing runs until you choose it.|||Показать лаборатории и диагностику в дополнительных настройках. Ничего не запустится без вашего выбора.|||Rādīt laboratorijas un diagnostiku papildu iestatījumos. Nekas netiks palaists bez jūsu izvēles.|||Pokaż laboratoria i diagnostykę w sekcji Zaawansowane. Nic się nie uruchomi, dopóki tego nie wybierzesz.
 Labs & diagnostics · Lab|||Лаборатории и диагностика · Лаб|||Laboratorijas un diagnostika · Lab
 Phone sandbox|||Песочница телефона|||Tālruņa izmēģinājumu vide
 Try phone actions|||Попробуйте действия на телефоне|||Izmēģiniet tālruņa darbības
@@ -3168,7 +3168,7 @@ Some pages need halo to read photos|||Для некоторых страниц h
 halo needs permission to read this photo|||halo нужно разрешение прочитать это фото|||halo ir vajadzīga atļauja lasīt šo fotoattēlu|||halo potrzebuje dostępu, aby odczytać to zdjęcie.
 How well you remember|||Насколько хорошо вы помните|||Cik labi atceraties
 Compare with halo’s answer|||Сравнить с ответом halo|||Salīdzināt ar halo atbildi
-Lab|||Лаб|||Lab
+Lab|||Лаб|||Lab|||Laboratorium
 halo is ready|||halo готов|||halo ir gatavs
 Use your phone’s assistant gesture to talk to halo.|||Используйте жест вызова помощника на телефоне, чтобы поговорить с halo.|||Izmantojiet tālruņa palīga žestu, lai runātu ar halo.
 Selected, waiting for Android|||Выбрано, ожидаем Android|||Izvēlēts, gaida Android
@@ -3279,7 +3279,7 @@ Language changed|||Язык изменён|||Valoda nomainīta|||Zmieniono języ
 Polish|||Польский|||Poļu|||polski
 Partly translated|||Частично переведено|||Daļēji iztulkots|||Częściowo przetłumaczono
 Polish interface is partly translated. Some screens may still appear in English.|||Интерфейс на польском языке переведён частично. Некоторые экраны могут отображаться на английском.|||Lietotnes interfeiss poļu valodā ir iztulkots daļēji. Dažas sadaļas vēl var būt angļu valodā.|||Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku.
-Listening and answer languages are separate. Change them in Voice & reading.|||Языки распознавания и ответов задаются отдельно в разделе «Голос и чтение».|||Klausīšanās un atbilžu valodas ir atsevišķas. Mainiet tās sadaļā «Balss un lasīšana».
+Listening and answer languages are separate. Change them in Voice & reading.|||Языки распознавания и ответов задаются отдельно в разделе «Голос и чтение».|||Klausīšanās un atbilžu valodas ir atsevišķas. Mainiet tās sadaļā «Balss un lasīšana».|||Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie.
 Skill packages|||Пакеты навыков|||Prasmju pakotnes
 Import and manage your own skills|||Импортируйте свои навыки и управляйте ими|||Importējiet un pārvaldiet savas prasmes
 Manage skill packages in Advanced.|||Управление пакетами навыков — в расширенных настройках.|||Prasmju pakotnes pārvaldiet papildu iestatījumos.
@@ -3373,7 +3373,7 @@ Connect selected cards?|||Соединить выбранные карточки
 Connect selected cards|||Соединить выбранные карточки|||Savienot atlasītās kartītes
 Chat unavailable|||Чат недоступен|||Saruna nav pieejama|||Czat jest niedostępny
 This chat may be in Trash. Restore it from Notebook to read it again.|||Чат может быть в корзине. Восстановите его в Блокноте.|||Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā.|||Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać.
-Labs, diagnostics and test sandboxes|||Лаборатории, диагностика и тестовые среды|||Laboratorijas, diagnostika un testēšanas vides
+Labs, diagnostics and test sandboxes|||Лаборатории, диагностика и тестовые среды|||Laboratorijas, diagnostika un testēšanas vides|||Laboratoria, diagnostyka i środowiska testowe
 Task progress|||Ход выполнения|||Uzdevuma norise
 Action confirmed|||Действие подтверждено|||Darbība apstiprināta
 Action not run|||Действие не выполнено|||Darbība netika izpildīta

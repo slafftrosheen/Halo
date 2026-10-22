@@ -7,6 +7,7 @@
     <string name="ui_38da1505ca83" formatted="false">"Aktywność"</string>
     <string name="ui_76900f1bfd16" formatted="false">"Wstecz"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
+    <string name="ui_87bf2bc08589" formatted="false">"Głos"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
     <string name="ui_08ad51871af7" formatted="false">"Czego chcesz się nauczyć?"</string>
@@ -69,6 +70,7 @@
     <string name="ui_d8b8392e2c54" formatted="false">"Spróbuj ponownie"</string>
     <string name="ui_b0e0687a3021" formatted="false">"Wyjaśniaj w tym języku (puste pole = język aplikacji)"</string>
     <string name="ui_b2439bcb8dee" formatted="false">"Wyjście"</string>
+    <string name="ui_5a1f096a0d8d" formatted="false">"Włącz"</string>
     <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_a3773fd35520" formatted="false">"Kandydaci do testów: %1$s"</string>
@@ -172,6 +174,7 @@
     <string name="ui_7b615c94cc70" formatted="false">"Napraw lub wybierz inną opcję"</string>
     <string name="ui_b958190e7457" formatted="false">"Wklej klucz"</string>
     <string name="ui_7d161a71a26a" formatted="false">"Wróć do konfiguracji z przewodnikiem"</string>
+    <string name="ui_96f0c06bbcb7" formatted="false">"Narzędzia deweloperskie"</string>
     <string name="ui_ec963ffc911b" formatted="false">"Sprawdzanie…"</string>
     <string name="ui_9a17e07748b9" formatted="false">"Zapisuj diagnostykę konfiguracji na tym telefonie"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
@@ -231,6 +234,7 @@
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
+    <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
     <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 głosów"</string>
@@ -245,6 +249,10 @@
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
     <string name="ui_e0f3101491eb" formatted="false">"Zwolnij model z pamięci przed testem GPU."</string>
     <string name="ui_9c71b7370b1d" formatted="false">"Tryb automatyczny używa procesora CPU, dopóki ten model nie przejdzie testu GPU."</string>
+    <string name="ui_0ac7c2c3435b" formatted="false">"Tryb dla dzieci"</string>
+    <string name="ui_f74e7f9e8405" formatted="false">"Nauka i narzędzia na jednej stronie."</string>
+    <string name="ui_a40ab236f7a5" formatted="false">"Zasady zatwierdzania działań pozostają bez zmian."</string>
+    <string name="ui_e4fc62ef77ba" formatted="false">"Nie udało się zapisać zmiany. Spróbuj ponownie."</string>
     <string name="ui_9ecd916802ea" formatted="false">"Moje narzędzia"</string>
     <string name="ui_463816d07097" formatted="false">"Czytanie"</string>
     <string name="ui_f3ae5d3d5bd5" formatted="false">"Wróć do mojej przestrzeni nauki"</string>
@@ -349,12 +357,18 @@
     <string name="ui_1199482749b3" formatted="false">"Inne źródła modeli"</string>
     <string name="ui_aab0a0a7c386" formatted="false">"Diagnostyka dla deweloperów"</string>
     <string name="ui_fa874238f3ac" formatted="false">"Ukryj diagnostykę deweloperską"</string>
+    <string name="ui_9502ad740182" formatted="false">"Laboratoria modeli i diagnostyka są włączone. Żaden test nie uruchamia się automatycznie."</string>
     <string name="ui_453a6a2fec8d" formatted="false">"Używaj wyników w lokalnych odpowiedziach halo"</string>
     <string name="ui_1a7f71528618" formatted="false">"Opcjonalnie. Wybrane fragmenty mogą pomóc w odpowiedziach na urządzeniu; zewnętrzni dostawcy nie otrzymują tego kontekstu automatycznie."</string>
     <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawanie poleceń na urządzeniu"</string>
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_0085d5ec796b" formatted="false">"Opcje techniczne w jednym miejscu."</string>
+    <string name="ui_d68f0cbd3664" formatted="false">"Opcje techniczne znajdują się w sekcji Zaawansowane."</string>
+    <string name="ui_a9678fc14996" formatted="false">"Otwórz ustawienia zaawansowane"</string>
+    <string name="ui_2ab0a174261c" formatted="false">"Włączyć narzędzia deweloperskie?"</string>
+    <string name="ui_361330daedbd" formatted="false">"Pokaż laboratoria i diagnostykę w sekcji Zaawansowane. Nic się nie uruchomi, dopóki tego nie wybierzesz."</string>
     <string name="ui_199f3793725a" formatted="false">"Najważniejsze informacje w zasięgu wzroku."</string>
     <string name="ui_be8f51d20dd8" formatted="false">"Dodaj kartę"</string>
     <string name="ui_769c53b24ede" formatted="false">"Dodaj kartę"</string>
@@ -383,6 +397,7 @@
     <string name="ui_d85b2cac1425" formatted="false">"Jak halo pomaga"</string>
     <string name="ui_ded151ea4486" formatted="false">"Na niektórych stronach halo potrzebuje dostępu do zdjęć."</string>
     <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
+    <string name="ui_efdcf466b553" formatted="false">"Laboratorium"</string>
     <string name="ui_324b134f57c7" formatted="false">"Podgląd"</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
     <string name="ui_89c045bac21a" formatted="false">"W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy."</string>
@@ -405,6 +420,7 @@
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
+    <string name="ui_ee9ba864e400" formatted="false">"Język rozpoznawania mowy i język odpowiedzi są ustawiane osobno. Zmień je w sekcji Głos i czytanie."</string>
     <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
@@ -412,6 +428,7 @@
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
     <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
+    <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
     <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
     <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
