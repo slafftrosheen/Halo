@@ -3798,4 +3798,12 @@
     <string name="ui_36f112ede148" formatted="false">"Atlasītais ieraksts nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai izņemiet no vietējās meklēšanas."</string>
     <string name="ui_7048fefd2548" formatted="false">"Vietējai meklēšanai atlasiet ne vairāk kā astoņus audio ierakstus."</string>
     <string name="ui_5b48705ce252" formatted="false">"Atlasītais ieraksts mainījās lasīšanas laikā. Vēlreiz izveidojiet vietējo meklēšanu."</string>
+    <string name="ui_979d6300fd98" formatted="false">"Izpēte"</string>
+    <string name="ui_ac29ba01579f" formatted="false">"Saglabāt ekrānā"</string>
+    <string name="ui_d4c7f432c78c" formatted="false">"Saglabāts ekrānā"</string>
+    <string name="ui_495587b16df4" formatted="false">"Ekrāns ir pilns vai neizdevās saglabāt šo izpēti."</string>
+    <string name="ui_df7aebea4721" formatted="false">"Izpēte ar avotiem"</string>
+    <string name="ui_eef8b9fd5d43" formatted="false">"saites"</string>
+    <string name="ui_516d508c626b" formatted="false">"Saglabā ekrānā"</string>
+    <string name="ui_71a490610984" formatted="false">"Nav avotu saišu, ko saglabāt."</string>
 </resources>

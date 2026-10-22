@@ -3800,4 +3800,12 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "A selected recording is unavailable or no longer permitted. Reattach it or remove it from local search." to R.string.ui_36f112ede148,
     "Select up to eight audio recordings for local search." to R.string.ui_7048fefd2548,
     "A selected recording changed while it was being read. Build local search again." to R.string.ui_5b48705ce252,
+    "Research" to R.string.ui_979d6300fd98,
+    "Save to Screen" to R.string.ui_ac29ba01579f,
+    "Saved to Screen" to R.string.ui_d4c7f432c78c,
+    "Screen is full or could not save this research." to R.string.ui_495587b16df4,
+    "Sourced research" to R.string.ui_df7aebea4721,
+    "links" to R.string.ui_eef8b9fd5d43,
+    "Saving to Screen" to R.string.ui_516d508c626b,
+    "No source links to save." to R.string.ui_71a490610984,
 )

@@ -28,6 +28,9 @@ import java.util.Date
     val clipboard = LocalClipboardManager.current
     var query by remember { mutableStateOf(initialQuery.take(2000)) }
     var result by remember { mutableStateOf<GroundedWebAnswer?>(null) }
+    var savedToScreen by remember { mutableStateOf(false) }
+    var savingToScreen by remember { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf(false) }
     var prepared by remember { mutableStateOf<OnlineConsentChallenge?>(null) }
     var preparedQuery by remember { mutableStateOf("") }
     var preparedLanguage by remember { mutableStateOf("") }
@@ -48,7 +51,7 @@ import java.util.Date
     AlertDialog(onDismissRequest = { cancel(); onDismiss() }, title = { Text(stringResource(R.string.online_title)) },
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                HaloTextField(query, { service.discard(prepared); prepared = null; query = it.take(2000); result = null },
+                HaloTextField(query, { service.discard(prepared); prepared = null; query = it.take(2000); result = null; savedToScreen = false; saveError = false },
                     enabled = !busy, label = { Text(stringResource(R.string.online_query)) }, kind = VoiceFieldKind.SEARCH,
                     modifier = Modifier.fillMaxWidth(), minLines = 2)
                 Text(stringResource(R.string.online_query_only), style = MaterialTheme.typography.bodySmall)
@@ -67,6 +70,65 @@ import java.util.Date
                             Column(Modifier.fillMaxWidth()) { Text(source.title); Text(source.url, style = MaterialTheme.typography.labelSmall) }
                         }
                     }
+                    TextButton(enabled = !savedToScreen && !savingToScreen && answer.sources.any { it.url.startsWith("https://") }, onClick = {
+                        savingToScreen = true
+                        scope.launch {
+                            try {
+                                val store = com.halo.app.di.ManualDependencyGraph.screenStore
+                                val idDigest = java.security.MessageDigest.getInstance("SHA-256")
+                                    .digest(query.trim().lowercase(java.util.Locale.ROOT).toByteArray(Charsets.UTF_8))
+                                    .take(12).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+                                val itemId = "research:$idDigest"
+                                val item = com.halo.app.screen.ScreenItem(
+                                    id = itemId,
+                                    sourceType = com.halo.app.screen.ScreenSourceType.RESEARCH,
+                                    sourceId = null,
+                                    title = query.trim().take(200),
+                                    summary = answer.answer.take(6000),
+                                    contentType = com.halo.app.screen.ScreenContentType.ARTICLES,
+                                    updatedAt = java.time.Instant.ofEpochMilli(answer.retrievedAtMs),
+                                    lastSuccessAt = java.time.Instant.ofEpochMilli(answer.retrievedAtMs),
+                                    expiresAt = null,
+                                    state = com.halo.app.screen.ScreenItemState.READY,
+                                    sensitivity = com.halo.app.screen.ScreenSensitivity.PRIVATE,
+                                    attribution = "Grounded web search",
+                                    availableActions = listOf(com.halo.app.screen.ScreenAction.OpenSource,
+                                        com.halo.app.screen.ScreenAction.SaveToNotebook, com.halo.app.screen.ScreenAction.HideFromScreen),
+                                    sourceLinks = answer.sources.asSequence().filter { it.url.startsWith("https://") }
+                                        .take(8).map { com.halo.app.screen.ScreenSourceLink(it.title.take(200), it.url.take(2048)) }.toList(),
+                                )
+                                val current = store.layout.value ?: com.halo.app.screen.ScreenWidgets.starter("Morning")
+                                val existing = current.cards.indexOfFirst { it.widgetType == "research" && it.itemId == itemId }
+                                val unbound = current.cards.indexOfFirst { it.widgetType == "research" && it.itemId == null }
+                                if (existing < 0 && unbound < 0 && current.cards.size >= 24) {
+                                    saveError = true
+                                    return@launch
+                                }
+                                store.publish(item)
+                                val cards = when {
+                                    existing >= 0 -> current.cards
+                                    unbound >= 0 -> current.cards.mapIndexed { index, card ->
+                                        if (index == unbound) card.copy(itemId = itemId) else card
+                                    }
+                                    else -> current.cards + com.halo.app.screen.ScreenCard("research", itemId,
+                                        com.halo.app.screen.CardSize.STANDARD, false)
+                                }
+                                store.saveLayout(current.copy(cards = cards), recordUndo = false)
+                                savedToScreen = true
+                                saveError = false
+                            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { saveError = true }
+                            finally { savingToScreen = false }
+                        }
+                    }) { Text(com.halo.app.language.uiText(when {
+                        savedToScreen -> "Saved to Screen"
+                        savingToScreen -> "Saving to Screen"
+                        else -> "Save to Screen"
+                    })) }
+                    if (answer.sources.none { it.url.startsWith("https://") }) Text(com.halo.app.language.uiText("No source links to save."),
+                        style = MaterialTheme.typography.bodySmall)
+                    if (saveError) Text(com.halo.app.language.uiText("Screen is full or could not save this research."),
+                        color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     answer.reportedCostUsd?.let { Text(stringResource(R.string.online_reported, it.toPlainString())) }
                     TextButton(onClick = {
                         clipboard.setText(AnnotatedString(answer.answer + "\n\n" +

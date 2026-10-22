@@ -3798,4 +3798,12 @@
     <string name="ui_36f112ede148" formatted="false">"A selected recording is unavailable or no longer permitted. Reattach it or remove it from local search."</string>
     <string name="ui_7048fefd2548" formatted="false">"Select up to eight audio recordings for local search."</string>
     <string name="ui_5b48705ce252" formatted="false">"A selected recording changed while it was being read. Build local search again."</string>
+    <string name="ui_979d6300fd98" formatted="false">"Research"</string>
+    <string name="ui_ac29ba01579f" formatted="false">"Save to Screen"</string>
+    <string name="ui_d4c7f432c78c" formatted="false">"Saved to Screen"</string>
+    <string name="ui_495587b16df4" formatted="false">"Screen is full or could not save this research."</string>
+    <string name="ui_df7aebea4721" formatted="false">"Sourced research"</string>
+    <string name="ui_eef8b9fd5d43" formatted="false">"links"</string>
+    <string name="ui_516d508c626b" formatted="false">"Saving to Screen"</string>
+    <string name="ui_71a490610984" formatted="false">"No source links to save."</string>
 </resources>

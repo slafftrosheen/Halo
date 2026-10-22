@@ -36,7 +36,10 @@ data class ScreenItem(
     val sensitivity: ScreenSensitivity,
     val attribution: String?,          // publisher / provider shown on the card
     val availableActions: List<ScreenAction>,
+    val sourceLinks: List<ScreenSourceLink> = emptyList(),
 )
+
+data class ScreenSourceLink(val title: String, val url: String)
 
 data class ScreenCard(val widgetType: String, val itemId: String?, val size: CardSize, val pinned: Boolean, val config: Map<String, String> = emptyMap())
 data class ScreenLayout(val id: String, val name: String, val cards: List<ScreenCard>, val version: Int)  // persisted locally (DataStore/Room)

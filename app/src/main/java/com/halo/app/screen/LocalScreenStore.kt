@@ -31,6 +31,9 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 
     override suspend fun publish(item: ScreenItem) = synchronized(lock) {
         require(item.id.length in 1..240 && item.title.length <= 240)
+        require(item.sourceLinks.size <= 8 && item.sourceLinks.all {
+            it.title.length in 1..200 && it.url.length in 1..2048 && it.url.startsWith("https://")
+        })
         val old = _items.value.firstOrNull { it.id == item.id }
         if (old?.updatedAt != null && item.updatedAt != null && old.updatedAt > item.updatedAt) return@synchronized
         val updated = (_items.value.filterNot { it.id == item.id } + item).takeLast(100)
@@ -96,7 +99,16 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
                 j.optString("attribution").takeUnless { it.isBlank() || it == "null" },
                 j.optJSONArray("availableActions")?.let { actions ->
                     (0 until actions.length()).mapNotNull { index -> screenAction(actions.optString(index)) }.distinct()
-                } ?: listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen))
+                } ?: listOf(ScreenAction.OpenSource, ScreenAction.HideFromScreen),
+                j.optJSONArray("sourceLinks")?.let { links ->
+                    (0 until links.length()).mapNotNull { index ->
+                        links.optJSONObject(index)?.let { link ->
+                            val title = link.optString("title").take(200)
+                            val url = link.optString("url").take(2048)
+                            if (title.isNotBlank() && url.startsWith("https://")) ScreenSourceLink(title, url) else null
+                        }
+                    }.take(8)
+                }.orEmpty())
         }
     }.getOrDefault(emptyList())
 
@@ -118,11 +130,13 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         .put("expiresAt", expiresAt?.toString()).put("state", state.name).put("sensitivity", sensitivity.name)
         .put("attribution", attribution).put("availableActions", JSONArray().apply {
             availableActions.distinctBy { it.id }.forEach { put(it.id) }
+        }).put("sourceLinks", JSONArray().apply {
+            sourceLinks.take(8).forEach { link -> put(JSONObject().put("title", link.title.take(200)).put("url", link.url.take(2048))) }
         })
 }
 
 object ScreenWidgets {
-    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "automation_result", "halo_activity", "interests")
+    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "automation_result", "halo_activity", "interests", "research")
     fun starter(name: String): ScreenLayout {
         val types = when (name) {
             "Focus" -> listOf("clock", "tasks", "notebook")

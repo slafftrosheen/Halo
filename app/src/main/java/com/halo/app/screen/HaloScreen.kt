@@ -53,7 +53,7 @@ import java.util.Locale
 private data class ScreenDisplay(
     val title: String, val summary: String, val state: String,
     val route: String?, val sensitive: Boolean = false, val updatedAt: Instant? = null,
-    val sourceTitle: Boolean = false, val sourceSummary: Boolean = false,
+    val sourceTitle: Boolean = false, val sourceSummary: Boolean = false, val detailSummary: String? = null,
 )
 
 /** The same local layout is used on phones, tablets and in full screen. */
@@ -74,6 +74,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         .collectAsStateWithLifecycle(emptyList())
     val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val reduced = rememberHaloReducedMotion()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var now by remember { mutableStateOf(Instant.now()) }
@@ -186,6 +187,12 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         }, if (!calendarAllowed) "Permission needed" else if (calendarFailed) "Needs attention" else "On this phone", null, true, sourceSummary = calendarAllowed && !calendarFailed && calendarEvent != null)
         "weather" -> ScreenDisplay("Weather", "A weather source has not been connected.", "Needs setup", null)
         "interests" -> ScreenDisplay("For you", topics.ifBlank { "Choose a reading source. Your notes and chats are never used to guess your interests." }, "Needs setup", null, topics.isNotBlank(), sourceSummary = topics.isNotBlank())
+        "research" -> routineItems.firstOrNull { it.id == card.itemId && it.sourceType == ScreenSourceType.RESEARCH }?.let { item ->
+            val summary = item.summary.orEmpty()
+            ScreenDisplay(item.title, summary.take(280) + if (summary.length > 280) "…" else "", if (item.expiresAt?.isBefore(now) == true) uiText("Saved result may be out of date")
+                else "${uiText("Sourced research")} · ${item.sourceLinks.size} ${uiText("links")}",
+                null, true, item.updatedAt, sourceTitle = true, sourceSummary = true, detailSummary = summary)
+        } ?: ScreenDisplay("Research", "Save a sourced web search to keep it here.", "No saved research yet", null, true)
         "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "You're caught up",
             if (daily.items.isEmpty()) "No pending items" else "${daily.items.size} updates", daily.primary?.action?.let {
                 com.halo.app.ui.shell.dailyOwnerRoute(it)
@@ -315,6 +322,11 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     TextButton(onClick = { previewType = type; previewItem = result.id; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Text(uiText("Routine results") + " · " + result.title)
                     }
+                } else if (type == "research" && routineItems.any { it.sourceType == ScreenSourceType.RESEARCH }) routineItems
+                    .filter { it.sourceType == ScreenSourceType.RESEARCH }.forEach { result ->
+                        TextButton(onClick = { previewType = type; previewItem = result.id; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                            Text(uiText("Research") + " · " + result.title)
+                        }
                 } else TextButton(onClick = { previewType = type; previewItem = null; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(uiText(widgetTitle(type)))
                 }
@@ -409,11 +421,17 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 Text(if (fullScreen && hidePrivate && data.sensitive) uiText("Private card") else if (data.sourceTitle) data.title else uiText(data.title), style = MaterialTheme.typography.headlineSmall)
                 if (fullScreen && hidePrivate && data.sensitive) Text(uiText("Private details are hidden. Exit full screen to see them."))
                 else {
-                    Text(if (data.sourceSummary) data.summary else uiText(data.summary), style = MaterialTheme.typography.bodyLarge)
+                    val detailSummary = data.detailSummary ?: data.summary
+                    Text(if (data.sourceSummary) detailSummary else uiText(detailSummary), style = MaterialTheme.typography.bodyLarge)
                     if (card.widgetType == "interests") TextButton(onClick = {
                         topicsDraft = topics; topicsOpen = true; detailCard = null
                     }) { Text(uiText("Choose topics")) }
-                    HaloReadAloud(data.title + ". " + data.summary, compact = false)
+                    if (card.widgetType == "research") routineItems.firstOrNull { it.id == card.itemId }?.sourceLinks.orEmpty().forEach { source ->
+                        OutlinedButton(onClick = { runCatching { uriHandler.openUri(source.url) } }, modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.fillMaxWidth()) { Text(source.title); Text(source.url, style = MaterialTheme.typography.labelSmall) }
+                        }
+                    }
+                    HaloReadAloud(data.title + ". " + detailSummary, compact = false)
                     if (card.widgetType == "calendar" && !calendarAllowed)
                         com.halo.app.ui.components.HaloActionButton(onClick = {
                             if (calendarDenied) context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -436,7 +454,7 @@ private fun uiTextFallbackCalendar() = "Calendar event"
 internal fun widgetTitle(type: String): String = when (type) {
     "clock" -> "Clock & date"; "weather" -> "Weather"; "calendar" -> "Calendar"
     "tasks" -> "Needs attention"; "notebook" -> "Continue in Notebook"
-    "automation_result" -> "Routine results"; "halo_activity" -> "What halo did"; else -> "Reading & interests"
+    "automation_result" -> "Routine results"; "halo_activity" -> "What halo did"; "research" -> "Research"; else -> "Reading & interests"
 }
 
 @Composable

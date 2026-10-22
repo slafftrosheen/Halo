@@ -3798,4 +3798,12 @@
     <string name="ui_36f112ede148" formatted="false">"Выбранная запись недоступна или доступ к ней отозван. Прикрепите её снова или удалите из локального поиска."</string>
     <string name="ui_7048fefd2548" formatted="false">"Для локального поиска можно выбрать не более восьми аудиозаписей."</string>
     <string name="ui_5b48705ce252" formatted="false">"Выбранная запись изменилась во время чтения. Снова создайте локальный поиск."</string>
+    <string name="ui_979d6300fd98" formatted="false">"Исследование"</string>
+    <string name="ui_ac29ba01579f" formatted="false">"Сохранить на экран"</string>
+    <string name="ui_d4c7f432c78c" formatted="false">"Сохранено на экране"</string>
+    <string name="ui_495587b16df4" formatted="false">"Экран заполнен или не удалось сохранить исследование."</string>
+    <string name="ui_df7aebea4721" formatted="false">"Исследование с источниками"</string>
+    <string name="ui_eef8b9fd5d43" formatted="false">"ссылок"</string>
+    <string name="ui_516d508c626b" formatted="false">"Сохранение на экран"</string>
+    <string name="ui_71a490610984" formatted="false">"Нет ссылок на источники для сохранения."</string>
 </resources>
