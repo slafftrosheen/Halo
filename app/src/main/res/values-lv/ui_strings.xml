@@ -3772,6 +3772,7 @@
     <string name="ui_cf0d1a41f783" formatted="false">"Atvērt saistīto avotu"</string>
     <string name="ui_cfb03a6319e9" formatted="false">"Pievienot atlasi darba kopai"</string>
     <string name="ui_3e812c70c455" formatted="false">"Jautāt par atlasi"</string>
+    <string name="ui_69c10772bf75" formatted="false">"Izskaidro šo atlasīto apgabalu, izmantojot saglabāto atsauci. Ja ar atsauci nepietiek, lūdz mani to aprakstīt."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Atlase pievienota darba kopai"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts."</string>
 </resources>

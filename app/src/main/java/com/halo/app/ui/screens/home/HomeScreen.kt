@@ -116,6 +116,8 @@ fun HomeScreen(
     val nextActions by viewModel.nextActions.collectAsStateWithLifecycle()
     val contextChips by viewModel.contextChips.collectAsStateWithLifecycle()
     val composerFocus by viewModel.composerFocus.collectAsStateWithLifecycle()
+    val inkSelectionAskPromptRequest by viewModel.inkSelectionAskPromptRequest.collectAsStateWithLifecycle()
+    val inkSelectionAskPrompt = uiText("Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it.")
     val composerFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
@@ -195,6 +197,11 @@ fun HomeScreen(
     val textInput = drafts[draftKey].orEmpty()
     var pendingHistoryDraft by remember(draftKey) { mutableStateOf<String?>(null) }
     fun updateDraft(value: String) { drafts = HashMap(drafts).apply { put(draftKey, value) } }
+    LaunchedEffect(inkSelectionAskPromptRequest, draftKey) {
+        if (viewModel.consumeInkSelectionAskPrompt(inkSelectionAskPromptRequest) && textInput.isBlank()) {
+            updateDraft(inkSelectionAskPrompt)
+        }
+    }
     pendingHistoryDraft?.let { previousQuestion -> androidx.compose.material3.AlertDialog(
         onDismissRequest={pendingHistoryDraft=null},title={Text(uiText("Replace your draft?"))},
         text={Text(uiText("The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged."))},

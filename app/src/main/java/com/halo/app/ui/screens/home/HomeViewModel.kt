@@ -517,6 +517,17 @@ class HomeViewModel(
     val contextNotice get() = ManualDependencyGraph.interactionContext.message
     val saveReview = MutableStateFlow<com.halo.app.context.ContextResultSaveReview?>(null)
     val composerFocus = MutableStateFlow(0)
+    val inkSelectionAskPromptRequest = MutableStateFlow(0L)
+    private var consumedInkSelectionAskPrompt = 0L
+    fun requestInkSelectionAskPrompt() {
+        inkSelectionAskPromptRequest.value += 1L
+        composerFocus.value += 1
+    }
+    fun consumeInkSelectionAskPrompt(version: Long): Boolean {
+        if (version <= consumedInkSelectionAskPrompt) return false
+        consumedInkSelectionAskPrompt = version
+        return true
+    }
     val nextActions: StateFlow<List<com.halo.runtime.cognition.context.ContextualNextAction>> = combine(
         conversations?.turns ?: MutableStateFlow(emptyList<ConversationTurn>()), cognitiveSession.state
     ) { turns,state ->

@@ -3776,5 +3776,6 @@ Source changed; select the region again.|||Источник изменился. 
 Open linked source|||Открыть связанный источник|||Atvērt saistīto avotu
 Add selection to working set|||Добавить выделение в рабочий набор|||Pievienot atlasi darba kopai
 Ask about selection|||Спросить о выделении|||Jautāt par atlasi
+Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it.|||Объясни эту выделенную область по сохранённой ссылке. Если данных недостаточно, попроси меня описать её.|||Izskaidro šo atlasīto apgabalu, izmantojot saglabāto atsauci. Ja ar atsauci nepietiek, lūdz mani to aprakstīt.
 Selection added to working set|||Выделение добавлено в рабочий набор|||Atlase pievienota darba kopai
 Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized.|||Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся.|||Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts.

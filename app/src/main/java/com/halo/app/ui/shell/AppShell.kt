@@ -584,8 +584,8 @@ fun AppShell(
                                         "study?captureSource=${android.net.Uri.encode(event.noteId)}&goal=${android.net.Uri.encode(event.goal)}")
                                     com.halo.app.ui.screens.notebook.CanvasEditorNavigation.AskAboutSelection -> {
                                         ManualDependencyGraph.homeViewModel.selectedMode.value = com.halo.runtime.cognition.context.CognitiveOperatingMode.ASK
+                                        ManualDependencyGraph.homeViewModel.requestInkSelectionAskPrompt()
                                         navigateSafely("home")
-                                        ManualDependencyGraph.homeViewModel.composerFocus.value += 1
                                     }
                                     is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenObject -> {
                                         val item = event.objectRef
