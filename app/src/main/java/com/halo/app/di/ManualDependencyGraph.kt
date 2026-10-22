@@ -1161,7 +1161,7 @@ object ManualDependencyGraph {
     }
     val contextResultSave by lazy { com.halo.app.context.ContextResultSaveOwner(appDatabase,notebookRepository) }
     val visualAttachments by lazy { com.halo.app.capture.VisualAttachmentStore(applicationContext, interactionMediaStore,
-        onSelected = { interactionContext.selectImage(it.ref,it.source) },
+        onSelected = { interactionContext.selectImage(it.ref,it.source,it.contextText) },
         onRemoved = { interactionContext.remove(com.halo.runtime.cognition.context.ContextCategory.VISUAL) }) }
     val visualContextSource by lazy {
         com.halo.app.capture.RuntimeVisualContextSource(

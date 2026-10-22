@@ -724,7 +724,7 @@ class CanvasEditorViewModel(
                 val crop = runCatching {
                     withContext(Dispatchers.Default) { CanvasInkSelectionCropRenderer.renderSketch(resolvedSource.text, context) }
                 }.getOrNull()?.let { MediaAssetContent(it, "image/png") }
-                navigation.send(CanvasEditorNavigation.AskAboutSelection(canvasId, crop = crop))
+                navigation.send(CanvasEditorNavigation.AskAboutSelection(canvasId, crop = crop, selection = context))
             }
             com.halo.app.data.notebook.CanvasNodeType.FILE, com.halo.app.data.notebook.CanvasNodeType.IMAGE -> {
                 val pageNumber = context.pageId?.removePrefix("page-")?.toIntOrNull()

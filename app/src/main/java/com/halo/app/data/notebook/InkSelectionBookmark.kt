@@ -99,8 +99,9 @@ object InkSelectionStudyMaterial {
         if (!body.startsWith(PREFIX)) return null
         val match = reference.find(body) ?: return null
         val source = match.groupValues[1]
-        val page = match.groupValues[2].takeIf { it != "canvas" }
-            ?.removePrefix("page-")?.let { "page $it" } ?: "Canvas"
+        val pageId = match.groupValues[2]
+        val page = Regex("page-(\\d+)").matchEntire(pageId)?.groupValues?.get(1)
+            ?.let { "page $it" } ?: "Canvas region"
         val revision = match.groupValues[5]
         return "${source.take(120)} · $page · ink revision ${revision.take(16)}"
     }

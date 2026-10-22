@@ -227,7 +227,8 @@ class DefaultCognitiveTurnPreparer(
                 activeWorkspaceObjectId = turn.metadata["workspaceObjectId"],
                 origin = obsOrigin,
                 explicitImage = turn.explicitImage,
-                workspaceVersion = turn.contextReferences.filterIsInstance<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject>().firstOrNull()?.version,
+                workspaceVersion = turn.contextReferences.filterIsInstance<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject>()
+                    .firstOrNull()?.version ?: turn.metadata["contextWorkspaceVersion"],
                 explicitWorkspaceText = turn.explicitWorkspaceText,
             ),
         ) ?: ContextAcquisitionResult(

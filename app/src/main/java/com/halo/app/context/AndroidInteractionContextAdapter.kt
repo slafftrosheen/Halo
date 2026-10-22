@@ -31,9 +31,13 @@ class AndroidInteractionContextAdapter(
     private val eventBus: com.halo.sdk.runtime.EventBus? = null,
     private val effectivePolicy: (String) -> com.halo.sdk.provider.AiContextPolicy = { com.halo.sdk.provider.AiContextPolicy.CONSERVATIVE },
 ) {
+    private data class VisualWorkspaceBinding(val objectId: String, val version: String)
     private val lock = Mutex()
     private val leases = linkedMapOf<String, MediaAssetRef>()
     private val titles = mutableMapOf<ContextReference, String>()
+    /** Content-free source provenance travels with this explicit image into one turn. */
+    private val visualContextText = mutableMapOf<ContextReference, String>()
+    private val visualWorkspaceBindings = mutableMapOf<ContextReference, VisualWorkspaceBinding>()
     private val visualReferences = mutableSetOf<ContextReference>()
     private val mutableChips = MutableStateFlow<List<SelectedContextChip>>(emptyList())
     val chips = mutableChips.asStateFlow()
@@ -72,7 +76,7 @@ class AndroidInteractionContextAdapter(
         } }
     }
     private suspend fun conversation(): String { conversations.awaitReady(); return requireNotNull(conversations.activeConversationId()) }
-    suspend fun selectImage(ref: MediaAssetRef, title: String) = lock.withLock {
+    suspend fun selectImage(ref: MediaAssetRef, title: String, contextText: String? = null) = lock.withLock {
         val conversation = conversation()
         require(media.metadata(ref) != null) { "That image is no longer available. Please attach it again." }
         check(owner.current(conversation).none { it.category == ContextCategory.VISUAL &&
@@ -80,12 +84,21 @@ class AndroidInteractionContextAdapter(
         check(owner.current(conversation).none { it.category == ContextCategory.WORKSPACE && it.reference in visualReferences }) {
             "Remove the selected image source before attaching another"
         }
+        val boundWorkspaceId = contextText?.takeIf { it.isNotBlank() }?.let { ref.workspaceObjectId }
+        val boundWorkspaceVersion = boundWorkspaceId?.let { objectId ->
+            requireNotNull(workspace.versionFor(objectId)) { "Selected region source is no longer available." }
+        }
         releaseVisual(conversation)
         val retained = media.transferOwnership(ref, "context:${UUID.randomUUID()}")
         leases[conversation] = retained
         while(leases.size > 8) { val oldest = leases.keys.first(); releaseVisual(oldest); owner.remove(oldest,ContextCategory.VISUAL) }
         val reference = ContextReference.MediaAsset(retained.id,retained.interactionId)
         titles[reference] = title.take(160)
+        contextText?.takeIf { it.isNotBlank() }?.take(2000)?.let { text ->
+            visualContextText[reference] = text
+            if (boundWorkspaceId != null && boundWorkspaceVersion != null)
+                visualWorkspaceBindings[reference] = VisualWorkspaceBinding(boundWorkspaceId, boundWorkspaceVersion)
+        }
         visualReferences.add(reference)
         val expires = if (ref.lifetime == MediaLifetime.WORKSPACE_PERSISTED) null else minOf(nowMs() + 120_000, ref.createdAtMs + 15 * 60_000)
         owner.select(InteractionContextFocus(conversation,reference,ContextCategory.VISUAL,ContextFocusReason.EXPLICIT_ATTACHMENT,nowMs(),expires))
@@ -141,6 +154,8 @@ class AndroidInteractionContextAdapter(
         }
         val live = owner.state.value.map { it.reference }.toSet()
         titles.keys.retainAll(live)
+        visualContextText.keys.retainAll(live)
+        visualWorkspaceBindings.keys.retainAll(live)
         visualReferences.retainAll(live)
     }
     private suspend fun releaseVisual(conversation: String) { leases.remove(conversation)?.interactionId?.let { media.releaseInteraction(it) } }
@@ -153,7 +168,7 @@ class AndroidInteractionContextAdapter(
         val refs = mutableListOf<ContextReference>()
         var image: MediaAssetRef? = null
         var workspaceId: String? = null
-        var workspaceText: String? = null
+        val workspaceTexts = mutableListOf<String>()
         for(focus in selected) {
             check(focus.state != ContextReferenceState.EXPIRED && focus.state != ContextReferenceState.SOURCE_UNAVAILABLE) {
                 "That source is no longer available. Please attach it again or remove the reference."
@@ -165,6 +180,15 @@ class AndroidInteractionContextAdapter(
                         owner.transition(conversation,reference,ContextReferenceState.SOURCE_UNAVAILABLE)
                         error("That image is no longer available. Please attach it again.")
                     }
+                    visualWorkspaceBindings[reference]?.let { binding ->
+                        if (workspace.versionFor(binding.objectId) != binding.version) {
+                            owner.transition(conversation,reference,ContextReferenceState.SOURCE_UNAVAILABLE)
+                            message.value = "The selected ink region changed. Return to Canvas and select it again."
+                            error(message.value!!)
+                        }
+                        workspaceId = binding.objectId
+                    }
+                    visualContextText[reference]?.let(workspaceTexts::add)
                 }
                 is ContextReference.WorkspaceObject -> {
                     if(workspace.versionFor(reference.objectId) != reference.version) {
@@ -174,7 +198,10 @@ class AndroidInteractionContextAdapter(
                     }
                     when(val source = sources.resolveExplicitReference(reference.objectId,turn.request.text.orEmpty())) {
                         is ResolvedStudySource.Visual -> image = source.asset
-                        is ResolvedStudySource.Text -> { workspaceId = reference.objectId; workspaceText = source.passages.joinToString("\n\n") { it.text }.take(8000) }
+                        is ResolvedStudySource.Text -> {
+                            workspaceId = reference.objectId
+                            workspaceTexts += source.passages.joinToString("\n\n") { it.text }.take(8000)
+                        }
                         else -> { owner.transition(conversation,reference,ContextReferenceState.SOURCE_UNAVAILABLE); error("Source unavailable. Please reselect it.") }
                     }
                     check(workspace.versionFor(reference.objectId) == reference.version) { "Original version changed. Please select it again." }
@@ -185,12 +212,16 @@ class AndroidInteractionContextAdapter(
         }
         val bound = image?.let { binder.bindImage(it,turn.interactionId,VisualFreshness.REFERENCE).ref }
         refs.forEach { owner.transition(conversation,it,ContextReferenceState.BOUND_TO_TURN,turn.interactionId.value) }
-        turn.copy(contextReferences=refs,explicitWorkspaceText=workspaceText,explicitImage=bound?.let { ImageContext(mediaRef=it,mimeType=it.mimeType,timestampMs=it.createdAtMs,
+        val explicitWorkspaceText = workspaceTexts.distinct().joinToString("\n\n").take(8000).takeIf { it.isNotBlank() }
+        val visualBinding = refs.filterIsInstance<ContextReference.MediaAsset>()
+            .mapNotNull { visualWorkspaceBindings[it] }.firstOrNull()
+        turn.copy(contextReferences=refs,explicitWorkspaceText=explicitWorkspaceText,explicitImage=bound?.let { ImageContext(mediaRef=it,mimeType=it.mimeType,timestampMs=it.createdAtMs,
             assetId=it.id,interactionId=turn.interactionId.value,freshness=VisualFreshness.REFERENCE) },
             request=if(bound != null) turn.request.copy(toolUseMode=com.halo.sdk.provider.ToolUseMode.NONE) else turn.request,
             metadata=turn.metadata + (if(bound != null) mapOf("hasAssistantImage" to "true","explicitImageReference" to "true") else emptyMap()) +
-                listOfNotNull(workspaceId?.let { "workspaceObjectId" to it },
+                listOfNotNull((workspaceId ?: visualBinding?.objectId)?.let { "workspaceObjectId" to it },
                     refs.filterIsInstance<ContextReference.WorkspaceObject>().firstOrNull()?.version?.let { "contextWorkspaceVersion" to it },
+                    visualBinding?.let { "contextWorkspaceVersion" to it.version },
                     (workspaceId ?: image?.workspaceObjectId)?.let { "contextWorkspaceObjectId" to it }).toMap())
     } } catch(cancelled: CancellationException) { throw cancelled }
     catch(error: Exception) { message.value = error.message ?: "Selected source unavailable. Please attach it again."; throw error }

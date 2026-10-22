@@ -23,7 +23,7 @@ fun ContextContinuityControls(model: HomeViewModel,onImport: () -> Unit, onCamer
     val review by model.saveReview.collectAsStateWithLifecycle()
     var chooser by remember { mutableStateOf(false) }
     if (expanded) {
-    notice?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+    notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium) }
     // H03: import and camera are direct actions. Only picking existing Notebook
     // sources opens a secondary chooser; the permission/capture owners are unchanged.
     Text(uiText("Add an attachment"), style = MaterialTheme.typography.titleSmall)

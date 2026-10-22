@@ -12,7 +12,7 @@ import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.UUID
 
-data class VisualAttachment(val ref: MediaAssetRef, val source: String)
+data class VisualAttachment(val ref: MediaAssetRef, val source: String, val contextText: String? = null)
 
 /** One explicit pending reference. Nothing may replace it with a newer camera observation. */
 class VisualAttachmentStore(private val context: Context, private val media: MediaAssetStore,
@@ -44,16 +44,19 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
     }
 
     /** Attach a bounded derived image through the same explicit context and privacy path as user-selected media. */
-    suspend fun attachGeneratedImage(bytes: ByteArray, source: String, workspaceObjectId: String): VisualAttachment =
+    suspend fun attachGeneratedImage(bytes: ByteArray, source: String, workspaceObjectId: String,
+        contextText: String? = null): VisualAttachment =
         withContext(Dispatchers.IO) {
             require(bytes.size in 1..ImageInputLimits().maxBytes)
-            attachContent(MediaAssetContent(bytes, "image/png"), source, MediaProvenance.WORKSPACE, workspaceObjectId)
+            attachContent(MediaAssetContent(bytes, "image/png"), source, MediaProvenance.WORKSPACE,
+                workspaceObjectId, contextText)
         }
 
-    private suspend fun attachContent(content: MediaAssetContent, source: String, provenance: MediaProvenance, workspaceObjectId: String? = null): VisualAttachment = lock.withLock {
+    private suspend fun attachContent(content: MediaAssetContent, source: String, provenance: MediaProvenance,
+        workspaceObjectId: String? = null, contextText: String? = null): VisualAttachment = lock.withLock {
         check(pending.value == null) { "Remove the attached image before selecting another" }
         val ref = media.ingest(content, provenance, "attachment:${UUID.randomUUID()}", workspaceObjectId = workspaceObjectId)
-        val attachment = VisualAttachment(ref, source)
+        val attachment = VisualAttachment(ref, source, contextText?.takeIf { it.isNotBlank() }?.take(2000))
         try { onSelected(attachment) }
         catch (error: Throwable) { withContext(kotlinx.coroutines.NonCancellable) { ref.interactionId?.let { media.releaseInteraction(it) } }; throw error }
         pending.value = attachment

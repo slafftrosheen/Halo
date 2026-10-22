@@ -609,7 +609,8 @@ fun AppShell(
                                         if (crop != null) {
                                             try {
                                                 ManualDependencyGraph.visualAttachments.attachGeneratedImage(
-                                                    crop.bytes, "Canvas selection", event.canvasId)
+                                                    crop.bytes, "Canvas selection", event.canvasId,
+                                                    selection?.let { com.halo.app.data.notebook.InkSelectionBookmarkCodec.referenceText(it) })
                                             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                                             catch (_: Exception) {
                                                 canvasViewModel.showNotice("Remove the current image attachment before asking about an ink selection.")
