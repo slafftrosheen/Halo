@@ -75,6 +75,16 @@
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
+    <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
+    <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 głosów"</string>
+    <string name="ui_a5989ca14f34" formatted="false">"Polski"</string>
+    <string name="ui_6df380bc6309" formatted="false">"To ostrożne wskazówki, a nie potwierdzenie zgodności modelu. Telefony z 4/6 GB RAM używają trybu AUTO z priorytetem CPU; GPU nadal można przetestować osobno. Wymagające obliczenia są wykonywane kolejno."</string>
+    <string name="ui_9b0d798b2e73" formatted="false">"Wyszukiwanie w społeczności znajduje pliki modeli, ale nie potwierdza ich zgodności z telefonem. Sprawdź informacje o modelu i przetestuj go lokalnie."</string>
+    <string name="ui_3e105203fe3e" formatted="false">"Limit kontekstu przy następnym wczytaniu modelu (dla deweloperów)"</string>
+    <string name="ui_ae9ba0f83f65" formatted="false">"Kopiuj identyfikator modelu do testów na urządzeniu"</string>
+    <string name="ui_e4ce452878cc" formatted="false">"Ten zaimportowany artefakt nie jest modelem do prowadzenia rozmowy. Jeśli jest to obsługiwane, użyj środowiska wykonawczego przeznaczonego dla jego zadania."</string>
+    <string name="ui_872f9ce4e737" formatted="false">"Porównaj wybrany obraz z prywatnym zapytaniem tekstowym (CPU)"</string>
+    <string name="ui_7b987f8db83e" formatted="false">"Tylko dla deweloperów. Używa natywnego kodera EmbeddingGemma; limit obrazu wynosi 4 MB. Zdjęcie, URI ani wektor osadzenia nie są zapisywane ani przesyłane; nie jest to certyfikacja jakości."</string>
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>

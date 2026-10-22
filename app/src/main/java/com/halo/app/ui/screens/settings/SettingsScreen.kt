@@ -597,7 +597,7 @@ internal fun LanguagePickerPage(
                     Column(Modifier.fillMaxWidth().padding(16.dp)) {
                       Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("Polski", style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant)
+                            Text(uiText("Polski"), style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant)
                             Text(uiText("Polish"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                         }
                             Text(uiText("Partly translated"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)

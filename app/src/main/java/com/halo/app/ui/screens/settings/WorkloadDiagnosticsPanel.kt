@@ -166,10 +166,9 @@ internal fun WorkloadDiagnosticsPanel(router: AiProviderRouter) {
                     model.sha256!=null && query.isNotBlank(),onClick={
                     pendingImageModel=model.id
                     imagePicker.launch("image/*")
-                }) { Text("Compare a chosen image with the private text query (CPU)")
+                }) { Text(uiText("Compare a chosen image with the private text query (CPU)"))
                 }
-                Text("Developer only. Uses the native EmbeddingGemma encoder, with a 4MB image limit. " +
-                    "No photo, URI or embedding vector is saved or uploaded; this is not a quality certification.",
+                Text(uiText("Developer only. Uses the native EmbeddingGemma encoder, with a 4MB image limit. No photo, URI or embedding vector is saved or uploaded; this is not a quality certification."),
                     style=MaterialTheme.typography.bodySmall)
             }
             if (!model.verified) Text(uiText("Imported model: inspect native task before any role qualification."),

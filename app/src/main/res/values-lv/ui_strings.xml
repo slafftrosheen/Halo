@@ -2336,6 +2336,16 @@
     <string name="ui_a4c87f9211a1" formatted="false">"Avots ir mainījies kopš nodarbības sākuma. Citāti attiecas uz versiju"</string>
     <string name="ui_d081d82e7bac" formatted="false">"Ieslēgt Bluetooth"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez nosaukuma"</string>
+    <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
+    <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 balsis"</string>
+    <string name="ui_a5989ca14f34" formatted="false">"Polski"</string>
+    <string name="ui_6df380bc6309" formatted="false">"Piesardzīgas norādes, nevis modeļa kvalifikācija. Tālruņos ar 4/6 GB RAM režīms AUTO vispirms izmanto CPU; GPU joprojām var pārbaudīt atsevišķi. Smagie aprēķini tiek veikti secīgi."</string>
+    <string name="ui_9b0d798b2e73" formatted="false">"Kopienas modeļu meklēšana atrod avota artefaktus, bet neapliecina saderību ar tālruni. Pārbaudiet modeļa informāciju un izmēģiniet to ierīcē."</string>
+    <string name="ui_3e105203fe3e" formatted="false">"Konteksta budžets nākamajai modeļa ielādei (izstrādātājiem)"</string>
+    <string name="ui_ae9ba0f83f65" formatted="false">"Kopēt modeļa ID pārbaudei ierīcē"</string>
+    <string name="ui_e4ce452878cc" formatted="false">"Šis importētais artefakts nav sarunu ģenerēšanas modelis. Ja tas tiek atbalstīts, izmantojiet tam paredzēto uzdevuma izpildvidi."</string>
+    <string name="ui_872f9ce4e737" formatted="false">"Salīdzināt izvēlēto attēlu ar privātu teksta vaicājumu (CPU)"</string>
+    <string name="ui_7b987f8db83e" formatted="false">"Tikai izstrādātājiem. Izmanto iebūvēto EmbeddingGemma kodētāju; attēla limits ir 4 MB. Fotoattēls, URI un iegulšanas vektors netiek saglabāti vai augšupielādēti; tā nav kvalitātes apliecināšana."</string>
     <string name="ui_627ecd013117" formatted="false">"Sākas uzlāde"</string>
     <string name="ui_7fea76ea6561" formatted="false">"Uzlāde beidzas"</string>
     <string name="ui_f39ef190af29" formatted="false">"Tīkls kļūst pieejams"</string>

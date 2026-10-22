@@ -2336,6 +2336,16 @@
     <string name="ui_a4c87f9211a1" formatted="false">"This source changed since the session started. Citations refer to revision"</string>
     <string name="ui_d081d82e7bac" formatted="false">"Turn on Bluetooth"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Untitled"</string>
+    <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
+    <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 voices"</string>
+    <string name="ui_a5989ca14f34" formatted="false">"Polski"</string>
+    <string name="ui_6df380bc6309" formatted="false">"Conservative guidance, not model qualification. 4/6GB phones use CPU-first AUTO; an explicit GPU test is still available. Active heavy compute is serialized."</string>
+    <string name="ui_9b0d798b2e73" formatted="false">"Community discovery finds source artifacts, not certified phone compatibility. Check model details and test locally."</string>
+    <string name="ui_3e105203fe3e" formatted="false">"Context budget for next model load (developer)"</string>
+    <string name="ui_ae9ba0f83f65" formatted="false">"Copy model ID for device tests"</string>
+    <string name="ui_e4ce452878cc" formatted="false">"This imported artifact is not a conversational generator. Use its dedicated task runtime when supported."</string>
+    <string name="ui_872f9ce4e737" formatted="false">"Compare a chosen image with the private text query (CPU)"</string>
+    <string name="ui_7b987f8db83e" formatted="false">"Developer only. Uses the native EmbeddingGemma encoder, with a 4MB image limit. No photo, URI or embedding vector is saved or uploaded; this is not a quality certification."</string>
     <string name="ui_627ecd013117" formatted="false">"Charging starts"</string>
     <string name="ui_7fea76ea6561" formatted="false">"Charging stops"</string>
     <string name="ui_f39ef190af29" formatted="false">"Network becomes available"</string>

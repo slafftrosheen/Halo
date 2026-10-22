@@ -60,7 +60,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider, technical: Boole
         }
         if (technical) TextButton(onClick={details=!details}) { Text(uiText(if(details) "Hide advanced details" else "Advanced details")) }
         if(technical && details) {
-            Text("Sherpa 1.13.8 · CPU")
+            Text(uiText("Sherpa 1.13.8 · CPU"))
             Text(uiText("Supertonic and INT8 candidates require separate qualification."))
             Row {
                 Text(uiText("Keep voice warm when memory permits"),modifier=androidx.compose.ui.Modifier.weight(1f))

@@ -2336,6 +2336,16 @@
     <string name="ui_a4c87f9211a1" formatted="false">"Источник изменился после начала занятия. Цитаты относятся к версии"</string>
     <string name="ui_d081d82e7bac" formatted="false">"Включить Bluetooth"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Без названия"</string>
+    <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
+    <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 голосов"</string>
+    <string name="ui_a5989ca14f34" formatted="false">"Polski"</string>
+    <string name="ui_6df380bc6309" formatted="false">"Осторожная рекомендация, а не подтверждение совместимости модели. На телефонах с 4/6 ГБ ОЗУ режим AUTO в первую очередь использует CPU; GPU можно проверить отдельно. Тяжёлые вычисления выполняются по очереди."</string>
+    <string name="ui_9b0d798b2e73" formatted="false">"Поиск моделей сообщества находит исходные артефакты, но не подтверждает совместимость с телефоном. Проверьте сведения о модели и протестируйте её на устройстве."</string>
+    <string name="ui_3e105203fe3e" formatted="false">"Бюджет контекста для следующей загрузки модели (для разработчиков)"</string>
+    <string name="ui_ae9ba0f83f65" formatted="false">"Скопировать ID модели для проверки на устройстве"</string>
+    <string name="ui_e4ce452878cc" formatted="false">"Этот импортированный артефакт не является генеративной моделью для диалога. Используйте предназначенный для его задачи runtime, если он поддерживается."</string>
+    <string name="ui_872f9ce4e737" formatted="false">"Сравнить выбранное изображение с закрытым текстовым запросом (CPU)"</string>
+    <string name="ui_7b987f8db83e" formatted="false">"Только для разработчиков. Использует встроенный кодировщик EmbeddingGemma; размер изображения — до 4 МБ. Фото, URI и вектор эмбеддинга не сохраняются и не отправляются; это не подтверждение качества."</string>
     <string name="ui_627ecd013117" formatted="false">"Начинается зарядка"</string>
     <string name="ui_7fea76ea6561" formatted="false">"Зарядка прекращается"</string>
     <string name="ui_f39ef190af29" formatted="false">"Сеть становится доступной"</string>

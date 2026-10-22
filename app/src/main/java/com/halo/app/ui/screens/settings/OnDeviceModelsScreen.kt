@@ -311,7 +311,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
             Text(com.halo.app.ai.MobileModelAdvice.tierLabel(memory.totalMem) + " · " +
                 com.halo.app.ai.MobileModelAdvice.computePlan(memory.totalMem),
                 style = MaterialTheme.typography.bodySmall)
-            Text("Conservative guidance, not model qualification. 4/6GB phones use CPU-first AUTO; an explicit GPU test is still available. Active heavy compute is serialized.",
+            Text(uiText("Conservative guidance, not model qualification. 4/6GB phones use CPU-first AUTO; an explicit GPU test is still available. Active heavy compute is serialized."),
                 style = MaterialTheme.typography.bodySmall)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -384,7 +384,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 }
             }
         }
-        Text("Community discovery finds source artifacts, not certified phone compatibility. Check model details and test locally.",
+        Text(uiText("Community discovery finds source artifacts, not certified phone compatibility. Check model details and test locally."),
             style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(HaloSpacing.md))
@@ -724,7 +724,7 @@ private fun ModelCard(
             if (developerControls && detailsExpanded) {
             val testClipboard = LocalClipboardManager.current
             TextButton(onClick = { testClipboard.setText(AnnotatedString(model.id)) }) {
-                Text("Copy model ID for device tests")
+                Text(uiText("Copy model ID for device tests"))
             }
             measuredRoles?.let { row -> Text("Measured roles · FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · VISION ${row.visionVerdict}", style = MaterialTheme.typography.bodySmall) }
                 ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
@@ -806,7 +806,7 @@ private fun ModelCard(
 
 
             ModelTuningSection(model.id, tuning, !busy && !resident && installedAndVerified, nativeThinkingSupported, onTuning)
-            Text("Context budget for next model load (developer)", style = MaterialTheme.typography.bodySmall)
+            Text(uiText("Context budget for next model load (developer)"), style = MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 val contextChoices = com.halo.providers.litert.runtime.LiteRtContextPresetPolicy.choicesFor(model.contextWindowTokens)
                 (listOf<Int?>(null) + contextChoices.map { it }).forEach { tokens ->
@@ -1179,7 +1179,7 @@ private fun ImportedModelCard(
             )
             if (!com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
                     null, java.io.File(descriptor.path).name)) {
-                Text("This imported artifact is not a conversational generator. Use its dedicated task runtime when supported.",
+                Text(uiText("This imported artifact is not a conversational generator. Use its dedicated task runtime when supported."),
                     style = MaterialTheme.typography.bodySmall)
             }
             if (developerControls) descriptor.validationDetail?.let {

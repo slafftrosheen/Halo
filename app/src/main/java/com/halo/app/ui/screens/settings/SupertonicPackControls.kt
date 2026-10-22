@@ -192,7 +192,7 @@ internal fun SupertonicPackControls(
                     onValueChangeFinished={action {
                         withContext(Dispatchers.IO) { storage.putString("supertonic_speed",speed.toString()) }
                     }})
-                Text("Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 voices")
+                Text(uiText("Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 voices"))
                 Text(uiText("This approval covers only the selected model, language and voice."),
                     style=MaterialTheme.typography.bodySmall)
             }
