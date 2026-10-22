@@ -273,7 +273,7 @@ Find in material (text only)|||Поиск в материале (только т
 No readable text is available for this source.|||В этом источнике нет доступного текста.|||Šajā avotā nav pieejama lasāma teksta.
 Pause keeps your place. Play starts this sentence again.|||Пауза сохраняет место. Воспроизведение повторяет текущее предложение.|||Pauze saglabā vietu. Atskaņošana atkārto pašreizējo teikumu.
 Continue to the next sentence automatically|||Автоматически переходить к следующему предложению|||Automātiski turpināt nākamo teikumu
-Read aloud|||Прочитать вслух|||Lasīt skaļi
+Read aloud|||Прочитать вслух|||Lasīt skaļi|||Odczytaj na głos
 Play|||Воспроизвести|||Atskaņot
 Pause|||Пауза|||Pauzēt
 Previous|||Назад|||Iepriekšējais
@@ -818,9 +818,9 @@ Select visible|||Выбрать видимые|||Atlasīt redzamos|||Wybierz wid
 Add to Halo context|||Добавить в контекст Halo|||Pievienot Halo kontekstam|||Dodaj do kontekstu Halo
 Remove from this collection|||Убрать из этой коллекции|||Noņemt no šīs kolekcijas|||Usuń z tej kolekcji
 Saved chats|||Сохранённые диалоги|||Saglabātās sarunas|||Zapisane rozmowy
-Browse and continue earlier conversations|||Просматривайте и продолжайте предыдущие диалоги|||Pārlūko un turpini iepriekšējās sarunas
-Search chats|||Поиск по диалогам|||Meklēt sarunas
-This chat is empty|||Этот диалог пуст|||Šī saruna ir tukša
+Browse and continue earlier conversations|||Просматривайте и продолжайте предыдущие диалоги|||Pārlūko un turpini iepriekšējās sarunas|||Przeglądaj wcześniejsze rozmowy i kontynuuj je
+Search chats|||Поиск по диалогам|||Meklēt sarunas|||Szukaj rozmów
+This chat is empty|||Этот диалог пуст|||Šī saruna ir tukša|||Ta rozmowa jest pusta
 Interrupt Halo when I speak|||Прерывать Halo, когда я говорю|||Pārtraukt Halo, kad es runāju
 Physical controls always interrupt immediately.|||Физические кнопки всегда прерывают немедленно.|||Fiziskās vadīklas vienmēr pārtrauc uzreiz.|||Fizyczne przyciski zawsze natychmiast przerywają odtwarzanie.
 Interruption timing|||Момент прерывания|||Pārtraukšanas laiks
@@ -840,7 +840,7 @@ Developer tests|||Тесты разработчика|||Izstrādātāja testi|||
 Use model|||Использовать модель|||Izmantot modeli|||Użyj modelu
 Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ|||Oryginalna notatka jest niedostępna · Wstecz
 Continue|||Продолжить|||Turpināt|||Kontynuuj
-There are no saved messages to display.|||Нет сохранённых сообщений.|||Nav saglabātu ziņojumu.
+There are no saved messages to display.|||Нет сохранённых сообщений.|||Nav saglabātu ziņojumu.|||Brak zapisanych wiadomości do wyświetlenia.
 Study unavailable|||Обучение недоступно|||Mācīšanās nav pieejama
 Undo|||Отменить|||Atsaukt|||Cofnij
 Redo|||Повторить действие|||Atcelt atsaukšanu
@@ -3359,11 +3359,11 @@ Restart lesson|||Начать урок заново|||Atsākt nodarbību
 Page %1$d of %2$d · This page may need image reading.|||Страница %1$d из %2$d · Для этой страницы может понадобиться распознавание изображения.|||%1$d. lapa no %2$d · Šīs lapas lasīšanai var būt vajadzīga attēla atpazīšana.
 Ask about this|||Спросить об этом|||Jautāt par šo
 Could not attach this file. Try again.|||Не удалось прикрепить файл. Попробуйте ещё раз.|||Failu neizdevās pievienot. Mēģiniet vēlreiz.
-Chat moved to Trash|||Чат перемещён в корзину|||Saruna pārvietota uz atkritni
-Chat restored|||Чат восстановлен|||Saruna atjaunota
-This chat could not be changed. Try again.|||Не удалось изменить этот чат. Попробуйте снова.|||Šo sarunu neizdevās mainīt. Mēģiniet vēlreiz.
-Delete this chat?|||Удалить этот чат?|||Dzēst šo sarunu?
-The chat moves to Trash. You can restore it from Notebook.|||Чат переместится в корзину. Его можно восстановить в Блокноте.|||Saruna tiks pārvietota uz atkritni. To var atjaunot Piezīmju grāmatiņā.
+Chat moved to Trash|||Чат перемещён в корзину|||Saruna pārvietota uz atkritni|||Rozmowę przeniesiono do Kosza
+Chat restored|||Чат восстановлен|||Saruna atjaunota|||Przywrócono rozmowę
+This chat could not be changed. Try again.|||Не удалось изменить этот чат. Попробуйте снова.|||Šo sarunu neizdevās mainīt. Mēģiniet vēlreiz.|||Nie udało się zmienić tej rozmowy. Spróbuj ponownie.
+Delete this chat?|||Удалить этот чат?|||Dzēst šo sarunu?|||Usunąć tę rozmowę?
+The chat moves to Trash. You can restore it from Notebook.|||Чат переместится в корзину. Его можно восстановить в Блокноте.|||Saruna tiks pārvietota uz atkritni. To var atjaunot Piezīmju grāmatiņā.|||Rozmowa zostanie przeniesiona do Kosza. Możesz ją przywrócić w Notatniku.
 Add to Canvas|||Добавить на холст|||Pievienot audeklam
 Photo or voice memo|||Фото или голосовая заметка|||Fotoattēls vai balss piezīme
 Add a file or PDF|||Добавить файл или PDF|||Pievienot failu vai PDF

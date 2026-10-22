@@ -22,6 +22,7 @@
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
     <string name="ui_1208ec01f223" formatted="false">"Poprzednia strona"</string>
     <string name="ui_c08ac736a5e2" formatted="false">"Następna strona"</string>
+    <string name="ui_0791ec684798" formatted="false">"Odczytaj na głos"</string>
     <string name="ui_942087cc2d41" formatted="false">"Ponów próbę"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
     <string name="ui_7d9eb7acb13e" formatted="false">"Zamknij"</string>
@@ -117,6 +118,9 @@
     <string name="ui_bb4d72dd6eb3" formatted="false">"Dodaj do kontekstu halo"</string>
     <string name="ui_7975ae28951e" formatted="false">"Usuń z tej kolekcji"</string>
     <string name="ui_614ee9c4d789" formatted="false">"Zapisane rozmowy"</string>
+    <string name="ui_a9d9d679c3d9" formatted="false">"Przeglądaj wcześniejsze rozmowy i kontynuuj je"</string>
+    <string name="ui_02a39c4adce0" formatted="false">"Szukaj rozmów"</string>
+    <string name="ui_5d36e52e61ce" formatted="false">"Ta rozmowa jest pusta"</string>
     <string name="ui_5ca4d42d717e" formatted="false">"Fizyczne przyciski zawsze natychmiast przerywają odtwarzanie."</string>
     <string name="ui_ad3be18a1e8c" formatted="false">"Zacznij mówić wcześniej"</string>
     <string name="ui_0d0bb78e6af4" formatted="false">"Styl odpowiedzi głosowej"</string>
@@ -128,6 +132,7 @@
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
     <string name="ui_16ebc6b11fc9" formatted="false">"Oryginalna notatka jest niedostępna · Wstecz"</string>
     <string name="ui_31fbef162594" formatted="false">"Kontynuuj"</string>
+    <string name="ui_b352578b07b1" formatted="false">"Brak zapisanych wiadomości do wyświetlenia."</string>
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
     <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
@@ -447,6 +452,11 @@
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
+    <string name="ui_30ee65fa01ad" formatted="false">"Rozmowę przeniesiono do Kosza"</string>
+    <string name="ui_488c5c7d85a5" formatted="false">"Przywrócono rozmowę"</string>
+    <string name="ui_64a721c7cbe8" formatted="false">"Nie udało się zmienić tej rozmowy. Spróbuj ponownie."</string>
+    <string name="ui_848dad9ba0a4" formatted="false">"Usunąć tę rozmowę?"</string>
+    <string name="ui_c0bacf57d866" formatted="false">"Rozmowa zostanie przeniesiona do Kosza. Możesz ją przywrócić w Notatniku."</string>
     <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
     <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratoria, diagnostyka i środowiska testowe"</string>
