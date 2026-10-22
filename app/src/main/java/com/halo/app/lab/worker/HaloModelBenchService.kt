@@ -246,7 +246,7 @@ class HaloModelBenchService : Service() {
                 val started = activeStageStartedElapsedMs
                 val budget = budgetFor(stage.orEmpty())
                 val now = android.os.SystemClock.elapsedRealtime()
-                if (stage != null && budget != null && now >= started && now - started > budget) {
+                if (stage != null && budget != null && now >= started && now - started >= budget) {
                     val code = "${stage}_STAGE_BUDGET_EXCEEDED"
                     stageTimeoutTriggered = true
                     synchronized(lock) {
