@@ -94,7 +94,8 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     private fun ScreenLayout.toJson() = JSONObject().put("id", id).put("name", name).put("version", version)
         .put("cards", JSONArray().apply { cards.forEach { card ->
             put(JSONObject().put("type", card.widgetType).put("itemId", card.itemId)
-                .put("size", card.size.name).put("pinned", card.pinned).put("config", JSONObject(card.config)))
+                .put("size", card.size.name).put("pinned", card.pinned).put("archived", card.archived)
+                .put("config", JSONObject(card.config)))
         } })
 
     private fun readLayout(): ScreenLayout? = runCatching {
@@ -104,7 +105,8 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
             val c = cards.getJSONObject(index)
             ScreenCard(c.getString("type"), c.optString("itemId").takeUnless { it.isBlank() || it == "null" },
                 CardSize.valueOf(c.getString("size")), c.optBoolean("pinned"),
-                    c.optJSONObject("config")?.let { config -> config.keys().asSequence().associateWith { config.getString(it) } }.orEmpty())
+                    c.optJSONObject("config")?.let { config -> config.keys().asSequence().associateWith { config.getString(it) } }.orEmpty(),
+                    c.optBoolean("archived", false))
         }.filter { it.widgetType in ScreenWidgets.types }.take(24), json.optInt("version", 1))
     }.getOrNull()
 

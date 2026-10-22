@@ -376,8 +376,8 @@ Dismiss|||Закрыть|||Aizvērt
 Edit|||Изменить|||Labot
 Insert|||Вставить|||Ievietot
 Apply|||Применить|||Lietot
-Restore|||Восстановить|||Atjaunot
-Archive|||В архив|||Arhivēt
+Restore|||Восстановить|||Atjaunot|||Przywróć
+Archive|||В архив|||Arhivēt|||Archiwizuj
 Move to trash|||В корзину|||Pārvietot uz atkritni
 Edit with AI|||Изменить с AI|||Labot ar AI
 Ask Halo|||Спросить Halo|||Jautāt Halo
@@ -3848,3 +3848,9 @@ Remove hands-free support|||Удалить поддержку режима бе�
 Video clip|||Video clip|||Video klips|||Klip wideo
 Audio memo|||Аудиозаметка|||Audio piezīme|||Notatka audio
 Voice memo|||Голосовая заметка|||Balss piezīme|||Notatka głosowa
+Show archived cards|||Показать архивные карточки|||Rādīt arhivētās kartītes|||Pokaż zarchiwizowane karty
+Show current cards|||Показать текущие карточки|||Rādīt pašreizējās kartītes|||Pokaż bieżące karty
+No archived cards|||В архиве пока нет карточек|||Arhīvā vēl nav kartīšu|||Brak zarchiwizowanych kart
+No cards on Screen|||На экране пока нет карточек|||Ekrānā vēl nav kartīšu|||Na ekranie nie ma kart
+Card archived|||Карточка перемещена в архив|||Kartīte arhivēta|||Karta została zarchiwizowana
+Card restored|||Карточка восстановлена|||Kartīte atjaunota|||Karta została przywrócona

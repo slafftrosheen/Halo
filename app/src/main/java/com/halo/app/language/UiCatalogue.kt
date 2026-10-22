@@ -3846,4 +3846,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Video clip" to R.string.ui_72f11335587f,
     "Audio memo" to R.string.ui_73bc756b9086,
     "Voice memo" to R.string.ui_24741c4aff7c,
+    "Show archived cards" to R.string.ui_bbdf5a0b9e3d,
+    "Show current cards" to R.string.ui_14474ab9a271,
+    "No archived cards" to R.string.ui_ff87c4c5b7a8,
+    "No cards on Screen" to R.string.ui_081d5db0eed6,
+    "Card archived" to R.string.ui_f4fb38d052fe,
+    "Card restored" to R.string.ui_a4749ce2c60e,
 )

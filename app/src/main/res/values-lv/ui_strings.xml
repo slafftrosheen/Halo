@@ -3844,4 +3844,10 @@
     <string name="ui_72f11335587f" formatted="false">"Video klips"</string>
     <string name="ui_73bc756b9086" formatted="false">"Audio piezīme"</string>
     <string name="ui_24741c4aff7c" formatted="false">"Balss piezīme"</string>
+    <string name="ui_bbdf5a0b9e3d" formatted="false">"Rādīt arhivētās kartītes"</string>
+    <string name="ui_14474ab9a271" formatted="false">"Rādīt pašreizējās kartītes"</string>
+    <string name="ui_ff87c4c5b7a8" formatted="false">"Arhīvā vēl nav kartīšu"</string>
+    <string name="ui_081d5db0eed6" formatted="false">"Ekrānā vēl nav kartīšu"</string>
+    <string name="ui_f4fb38d052fe" formatted="false">"Kartīte arhivēta"</string>
+    <string name="ui_a4749ce2c60e" formatted="false">"Kartīte atjaunota"</string>
 </resources>

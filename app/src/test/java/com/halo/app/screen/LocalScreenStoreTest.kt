@@ -21,11 +21,21 @@ class LocalScreenStoreTest {
     @Test fun layoutConfigurationAndTopicsSurviveRestart() {
         val store = LocalScreenStore(context)
         val layout = ScreenWidgets.starter("Morning").copy(cards = listOf(ScreenCard("calendar", null,
-            CardSize.EXPANDED, true, mapOf("calendar" to "chosen"))))
+            CardSize.EXPANDED, true, mapOf("calendar" to "chosen"), archived = true)))
         store.saveLayout(layout); store.setTopics("Space, architecture")
         val restored = LocalScreenStore(context)
         assertEquals(layout.cards, restored.layout.value!!.cards)
+        assertTrue(restored.layout.value!!.cards.single().archived)
         assertEquals("Space, architecture", restored.topics.value)
+    }
+    @Test fun layoutsWithoutArchiveFieldRemainCurrentAfterUpgrade() {
+        context.getSharedPreferences("halo_screen", 0).edit()
+            .putString("layout", """{"id":"morning","name":"Morning","version":1,"cards":[{"type":"clock","size":"STANDARD","pinned":true}]}""")
+            .commit()
+
+        val restored = LocalScreenStore(context)
+
+        assertFalse(restored.layout.value!!.cards.single().archived)
     }
     @Test fun morningLayoutIncludesNativeStudyResumeCard() {
         assertTrue(ScreenWidgets.types.contains("study"))

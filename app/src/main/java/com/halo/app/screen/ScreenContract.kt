@@ -41,7 +41,8 @@ data class ScreenItem(
 
 data class ScreenSourceLink(val title: String, val url: String)
 
-data class ScreenCard(val widgetType: String, val itemId: String?, val size: CardSize, val pinned: Boolean, val config: Map<String, String> = emptyMap())
+data class ScreenCard(val widgetType: String, val itemId: String?, val size: CardSize, val pinned: Boolean,
+    val config: Map<String, String> = emptyMap(), val archived: Boolean = false)
 data class ScreenLayout(val id: String, val name: String, val cards: List<ScreenCard>, val version: Int)  // persisted locally (DataStore/Room)
 
 /** Publication is idempotent: same id → update in place, never append a duplicate card. */

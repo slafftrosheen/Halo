@@ -9,6 +9,8 @@
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
+    <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
+    <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_26488c95ce6a" formatted="false">"Przetestuj ponownie"</string>
@@ -159,4 +161,10 @@
     <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
     <string name="ui_73bc756b9086" formatted="false">"Notatka audio"</string>
     <string name="ui_24741c4aff7c" formatted="false">"Notatka głosowa"</string>
+    <string name="ui_bbdf5a0b9e3d" formatted="false">"Pokaż zarchiwizowane karty"</string>
+    <string name="ui_14474ab9a271" formatted="false">"Pokaż bieżące karty"</string>
+    <string name="ui_ff87c4c5b7a8" formatted="false">"Brak zarchiwizowanych kart"</string>
+    <string name="ui_081d5db0eed6" formatted="false">"Na ekranie nie ma kart"</string>
+    <string name="ui_f4fb38d052fe" formatted="false">"Karta została zarchiwizowana"</string>
+    <string name="ui_a4749ce2c60e" formatted="false">"Karta została przywrócona"</string>
 </resources>

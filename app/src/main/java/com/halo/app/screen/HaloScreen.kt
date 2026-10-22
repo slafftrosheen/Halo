@@ -82,6 +82,11 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var now by remember { mutableStateOf(Instant.now()) }
     var customizing by rememberSaveable { mutableStateOf(false) }
+    var showingArchivedCards by rememberSaveable { mutableStateOf(false) }
+    fun setCustomizing(enabled: Boolean) {
+        customizing = enabled
+        if (!enabled) showingArchivedCards = false
+    }
     var picker by rememberSaveable { mutableStateOf(false) }
     var chromeVisible by remember { mutableStateOf(true) }
     var chromeTouch by remember { mutableLongStateOf(0) }
@@ -251,7 +256,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             HomeSurfaceSwitch(true, { if (!it) onChat() }, Modifier.weight(1f))
             TextButton(onClick = { settings = true }) { Text(uiText(layout?.name ?: "Your Screen")) }
             IconButton(onClick = onTalk) { HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo")) }
-            IconButton(onClick = { customizing = !customizing }) { HaloIcon(HaloGlyph.NOTE, uiText("Customize")) }
+            IconButton(onClick = { setCustomizing(!customizing) }) { HaloIcon(HaloGlyph.NOTE, uiText("Customize")) }
         }
         if (layout == null) {
             Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.Center,
@@ -267,7 +272,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         } else {
             if (!fullScreen || chromeVisible) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!fullScreen) {
-                    TextButton(onClick = { customizing = !customizing }) { Text(uiText(if (customizing) "Done" else "Customize")) }
+                    TextButton(onClick = { setCustomizing(!customizing) }) { Text(uiText(if (customizing) "Done" else "Customize")) }
                     TextButton(onClick = { picker = true }) { Text(uiText("Add card")) }
                     TextButton(onClick = { askLayout = true }) { Text(uiText("Ask halo to change Screen")) }
                 }
@@ -281,15 +286,22 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     TextButton(onClick = { notice = null }) { Text(uiText("Dismiss")) }
                 }
             }
-            val cardsForDisplay = layout!!.cards
+            val cardsForDisplay = layout!!.cards.withIndex().filter { it.value.archived == showingArchivedCards }
+            if (customizing) TextButton(onClick = { showingArchivedCards = !showingArchivedCards }) {
+                Text(uiText(if (showingArchivedCards) "Show current cards" else "Show archived cards"))
+            }
+            if (cardsForDisplay.isEmpty()) Text(uiText(if (showingArchivedCards) "No archived cards" else "No cards on Screen"),
+                Modifier.padding(vertical = 16.dp), style = MaterialTheme.typography.bodyMedium)
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                 val columns = when { maxWidth >= 840.dp -> 4; maxWidth >= 600.dp -> 3; else -> 2 }
                 val enlarged = LocalDensity.current.fontScale >= 1.5f
                 LazyVerticalGrid(GridCells.Fixed(columns), contentPadding = PaddingValues(bottom = 20.dp, top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    cardsForDisplay.forEachIndexed { index, card ->
+                    cardsForDisplay.forEachIndexed { index, indexedCard ->
+                        val sourceIndex = indexedCard.index
+                        val card = indexedCard.value
                         val section = screenSection(card.widgetType)
-                        if (index == 0 || screenSection(cardsForDisplay[index - 1].widgetType) != section)
+                        if (index == 0 || screenSection(cardsForDisplay[index - 1].value.widgetType) != section)
                             item(key = "section:$index", span = { GridItemSpan(maxLineSpan) }) {
                                 Text(uiText(section), Modifier.padding(top = 12.dp, bottom = 4.dp),
                                     style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -308,13 +320,25 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                         androidx.compose.animation.AnimatedVisibility(visible = appeared, enter = if (reduced) fadeIn(androidx.compose.animation.core.snap())
                             else fadeIn() + slideInVertically { it / 8 }) {
                             ScreenWidgetCard(data, card, fullScreen && hidePrivate && data.sensitive,
-                                fullScreen, customizing, index, layout!!.cards.size,
+                                fullScreen, customizing, index, cardsForDisplay.size,
                                 onOpen = { detailCard = card },
-                                onMove = { delta -> val cards = layout!!.cards.toMutableList(); val target = index + delta
-                                    if (target in cards.indices) { val c = cards.removeAt(index); cards.add(target, c); change(cards, "Card moved") } },
-                                onHide = { change(layout!!.cards.filterIndexed { i, _ -> i != index }, "Hidden from Screen. Its source is kept.") },
-                                onPin = { change(layout!!.cards.mapIndexed { i, c -> if (i == index) c.copy(pinned = !c.pinned) else c }, "Card updated") },
-                                onResize = { change(layout!!.cards.mapIndexed { i, c -> if (i == index) c.copy(size = when (c.size) {
+                                onMove = { delta ->
+                                    val target = cardsForDisplay.getOrNull(index + delta)?.index
+                                    if (target != null) {
+                                        val cards = layout!!.cards.toMutableList()
+                                        val moved = cards[sourceIndex]
+                                        cards[sourceIndex] = cards[target]
+                                        cards[target] = moved
+                                        change(cards, "Card moved")
+                                    }
+                                },
+                                onArchive = {
+                                    change(layout!!.cards.mapIndexed { i, c -> if (i == sourceIndex) c.copy(archived = !c.archived) else c },
+                                        if (showingArchivedCards) "Card restored" else "Card archived")
+                                },
+                                onHide = { change(layout!!.cards.filterIndexed { i, _ -> i != sourceIndex }, "Hidden from Screen. Its source is kept.") },
+                                onPin = { change(layout!!.cards.mapIndexed { i, c -> if (i == sourceIndex) c.copy(pinned = !c.pinned) else c }, "Card updated") },
+                                onResize = { change(layout!!.cards.mapIndexed { i, c -> if (i == sourceIndex) c.copy(size = when (c.size) {
                                     CardSize.COMPACT -> CardSize.STANDARD; CardSize.STANDARD -> CardSize.EXPANDED; CardSize.EXPANDED -> CardSize.COMPACT
                                 }) else c }, "Card resized") })
                         }
@@ -385,7 +409,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(uiText("Card preview"), style = MaterialTheme.typography.headlineSmall)
                 ScreenWidgetCard(data, card, fullScreen && hidePrivate && data.sensitive, false, false, 0, 1,
-                    {}, {}, {}, {}, {})
+                    {}, {}, {}, {}, {}, {})
                 com.halo.app.ui.components.HaloActionButton(onClick = { add(type, previewItem); previewType = null },
                     modifier = Modifier.fillMaxWidth()) { Text(uiText("Add card")) }
                 TextButton(onClick = { previewType = null; picker = true }) { Text(uiText("Back")) }
@@ -491,7 +515,7 @@ private fun ScreenToggle(label: String, checked: Boolean, onChange: (Boolean) ->
 @Composable
 private fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boolean, fullScreen: Boolean,
     editing: Boolean, index: Int, count: Int, onOpen: () -> Unit, onMove: (Int) -> Unit,
-    onHide: () -> Unit, onPin: () -> Unit, onResize: () -> Unit) {
+    onArchive: () -> Unit, onHide: () -> Unit, onPin: () -> Unit, onResize: () -> Unit) {
     var previous by remember { mutableStateOf(data.updatedAt) }
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     var update by remember { mutableStateOf(false) }
@@ -528,6 +552,7 @@ private fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Bool
                 TextButton(onClick = { onMove(1) }, enabled = index < count - 1) { Text(uiText("Move down")) }
                 TextButton(onClick = onResize) { Text(uiText("Resize")) }
                 TextButton(onClick = onPin) { Text(uiText(if (card.pinned) "Unpin" else "Pin")) }
+                TextButton(onClick = onArchive) { Text(uiText(if (card.archived) "Restore" else "Archive")) }
                 TextButton(onClick = onHide) { Text(uiText("Hide")) }
             }
         }
