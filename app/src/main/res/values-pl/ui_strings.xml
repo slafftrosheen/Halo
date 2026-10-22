@@ -16,6 +16,7 @@
     <string name="ui_87bf2bc08589" formatted="false">"Głos"</string>
     <string name="ui_090512d93fcc" formatted="false">"Integracje"</string>
     <string name="ui_95338ea2de74" formatted="false">"Działania dostępne dla halo"</string>
+    <string name="ui_abccc78cc93c" formatted="false">"Uprawnienia"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
     <string name="ui_4f1fc01dc19d" formatted="false">"Wymagana jest kontrola połączenia"</string>
@@ -79,6 +80,7 @@
     <string name="ui_565339bc4d33" formatted="false">"OK"</string>
     <string name="ui_f730c75d143a" formatted="false">"Anuluj test"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
+    <string name="ui_f6f4688ff23d" formatted="false">"Wyślij"</string>
     <string name="ui_118fb65601f7" formatted="false">"Wybierz zdjęcie"</string>
     <string name="ui_b3e8ec3e76b5" formatted="false">"Tekst gotowy"</string>
     <string name="ui_3e6ff6fedc87" formatted="false">"Część tekstu jest gotowa"</string>
@@ -114,6 +116,7 @@
     <string name="ui_2a78025de6aa" formatted="false">"Wybierz"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
+    <string name="ui_b977b950c1ae" formatted="false">"Chmura"</string>
     <string name="ui_0e9161011702" formatted="false">"Odśwież"</string>
     <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_36ecb4f86691" formatted="false">"Wejście"</string>
@@ -139,6 +142,7 @@
     <string name="ui_0dfe1d63c9d8" formatted="false">"Sprawdzanie…"</string>
     <string name="ui_a3cdac3bdf98" formatted="false">"Co halo może teraz zrobić"</string>
     <string name="ui_d88af80346ea" formatted="false">"Modele według funkcji"</string>
+    <string name="ui_1767a0238233" formatted="false">"Pamięć i kopia zapasowa"</string>
     <string name="ui_91cac509faa3" formatted="false">"Zezwól halo na powiadomienia"</string>
     <string name="ui_737b13c8b8d1" formatted="false">"Czym jest MCP?"</string>
     <string name="ui_0e3e58f90d67" formatted="false">"Dodaj serwer MCP"</string>
@@ -272,6 +276,18 @@
     <string name="ui_c30d7093bd2d" formatted="false">"Instrukcje dostarczone przez ten pakiet"</string>
     <string name="ui_bf1e14eeaad5" formatted="false">"Pakiet umiejętności nie jest zainstalowany"</string>
     <string name="ui_5f3c25857f00" formatted="false">"Wczesna synteza mowy jest dostępna dla dokładnych odpowiedzi przesyłanych strumieniowo bez narzędzi. Działania narzędzi i zatwierdzenia pozostają buforowane."</string>
+    <string name="ui_a84dd26a67de" formatted="false">"Proś o dostęp tylko wtedy, gdy wymaga go dana funkcja."</string>
+    <string name="ui_4e6110152515" formatted="false">"Przyznaj wszystkie uprawnienia wymagane przez umiejętności i narzędzia"</string>
+    <string name="ui_fe4e1d87d901" formatted="false">"halo działa także bez dostępu do mikrofonu. Zezwól na niego tylko w celu używania głosu; prośby o Bluetooth i Wi-Fi w pobliżu pojawią się w procesach konfiguracji urządzeń, które ich wymagają."</string>
+    <string name="ui_5b7fde26274a" formatted="false">"Dostęp do sieci lokalnej"</string>
+    <string name="ui_3693ff431dc7" formatted="false">"Zezwól na dostęp podczas łączenia z pobliskimi urządzeniami lub lokalnym serwerem AI."</string>
+    <string name="ui_b97c4592cdf4" formatted="false">"Zezwól na dostęp do sieci lokalnej"</string>
+    <string name="ui_87a2e882ffea" formatted="false">"Zezwól na wyszukiwanie kontaktów"</string>
+    <string name="ui_ec5ba0abb717" formatted="false">"Dostęp"</string>
+    <string name="ui_02cbfa1a4ea2" formatted="false">"Zarządzaj pamięcią i kopią zapasową"</string>
+    <string name="ui_469caecbaf66" formatted="false">"Zezwól na dostęp do mikrofonu"</string>
+    <string name="ui_51a2a9671c0f" formatted="false">"Zapytaj halo…"</string>
+    <string name="ui_e21f935f11d7" formatted="false">"Kopiuj"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
     <string name="ui_5917d8be2cdf" formatted="false">"Sugestia halo"</string>
@@ -279,10 +295,12 @@
     <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
     <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
+    <string name="ui_6a7c277bdc6e" formatted="false">"Pracuję…"</string>
     <string name="ui_da0dbc127233" formatted="false">"Przerwij odpowiedź i zacznij mówić"</string>
     <string name="ui_0f831f06c1d4" formatted="false">"Załączniki i kontekst"</string>
     <string name="ui_168512c5b1c3" formatted="false">"Nie udało się odtworzyć odpowiedzi"</string>
     <string name="ui_3cdb61e7de92" formatted="false">"Nie można użyć tego wejścia głosowego"</string>
+    <string name="ui_16b7130a2876" formatted="false">"Ta odpowiedź jest niepełna."</string>
     <string name="ui_7d008b7feeab" formatted="false">"Uruchom tryb głosowy"</string>
     <string name="ui_15be678720cc" formatted="false">"Zakończ tryb głosowy"</string>
     <string name="ui_4be3502fc307" formatted="false">"Wstrzymaj nasłuchiwanie"</string>
@@ -454,6 +472,7 @@
     <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
     <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
+    <string name="ui_cbd38d68a6f2" formatted="false">"Dostęp jest opcjonalny. Po odmowie nadal możesz wpisywać pytania i prowadzić prywatne notatki."</string>
     <string name="ui_366596141374" formatted="false">"Zastosuj ustawienia"</string>
     <string name="ui_e90a4c413b9e" formatted="false">"Zmienić wszystkie ustawienia zatwierdzania narzędzi?"</string>
     <string name="ui_0e36a3d49ac1" formatted="false">"Zmiany pozostają w tym szkicu do czasu ich sprawdzenia i zapisania. Istniejąca włączona automatyzacja nadal korzysta z zapisanej definicji."</string>
@@ -462,6 +481,7 @@
     <string name="ui_7a308a8671b6" formatted="false">"Połączenie wymaga uwagi. Otwórz tę integrację, aby sprawdzić jej konfigurację."</string>
     <string name="ui_aba755bc6310" formatted="false">"Odrzucić szkic tej automatyzacji?"</string>
     <string name="ui_325da5b3bd34" formatted="false">"halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa."</string>
+    <string name="ui_73a20bdfbb81" formatted="false">"Jeśli dostęp do mikrofonu pozostanie wyłączony, możesz nadal pisać, spróbować ponownie lub włączyć go w ustawieniach Androida."</string>
     <string name="ui_9a42d40a3f31" formatted="false">"Integracja"</string>
     <string name="ui_e76fd2add010" formatted="false">"Kontynuuj edycję"</string>
     <string name="ui_3bc8c6ce7691" formatted="false">"Nie uzgodniono"</string>
@@ -523,6 +543,8 @@
     <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
     <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
     <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
+    <string name="ui_43702621125c" formatted="false">"Trwa działanie na telefonie"</string>
+    <string name="ui_34dbd8856a1a" formatted="false">"Oczekiwanie na wynik działania"</string>
     <string name="ui_8586ad2ecc67" formatted="false">"Diagnostyka obciążenia"</string>
     <string name="ui_b6f7890974ea" formatted="false">"Zainstaluj lokalny model mowy w ustawieniach głosu."</string>
     <string name="ui_f07479a5ff73" formatted="false">"Sprawdź rozpoznany tekst"</string>
@@ -534,6 +556,7 @@
     <string name="ui_ce12f2065ea4" formatted="false">"Zachowaj tekst prywatnie"</string>
     <string name="ui_fa6d5a89e3b5" formatted="false">"Małe okno na szybkie pytanie."</string>
     <string name="ui_cafabf0d8b58" formatted="false">"Na ekranie głównym"</string>
+    <string name="ui_a4e63bcacf6c" formatted="false">"halo"</string>
     <string name="ui_4711aac75af4" formatted="false">"Głos i czytanie"</string>
     <string name="ui_6203e75ec103" formatted="false">"Słuchanie, dyktowanie i czytanie na głos"</string>
     <string name="ui_5eaab99e43b7" formatted="false">"Poproś rodzica lub opiekuna o ustawienie kodu PIN lub hasła urządzenia w ustawieniach Androida."</string>

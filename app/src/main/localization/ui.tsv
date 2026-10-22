@@ -116,7 +116,7 @@ Actions Halo can use|||Действия, доступные Halo|||Darbības, ko
 Memory & learning|||Память и обучение|||Atmiņa un mācīšanās
 Review what Halo remembers|||Проверьте, что запомнил Halo|||Pārskati, ko Halo atceras
 Access & data|||Доступ и данные|||Piekļuve un dati
-Permissions|||Разрешения|||Atļaujas
+Permissions|||Разрешения|||Atļaujas|||Uprawnienia
 Device and data access|||Доступ к устройству и данным|||Piekļuve ierīcei un datiem
 Storage & backup|||Хранилище и резервные копии|||Krātuve un rezerves kopijas
 Manage your saved work|||Управление сохранёнными материалами|||Pārvaldi saglabāto darbu
@@ -437,7 +437,7 @@ Delete model|||Удалить модель|||Dzēst modeli
 Cancel test|||Отменить проверку|||Atcelt pārbaudi|||Anuluj test
 Latvian supported|||Латышский поддерживается|||Latviešu valoda tiek atbalstīta|||Obsługiwany język: łotewski
 Built-in microphone|||Встроенный микрофон|||Iebūvētais mikrofons
-Send|||Отправить|||Nosūtīt
+Send|||Отправить|||Nosūtīt|||Wyślij
 Add context|||Добавить контекст|||Pievienot kontekstu
 Take a photo|||Сделать фото|||Uzņemt foto
 Choose a photo|||Выбрать фото|||Izvēlēties foto|||Wybierz zdjęcie
@@ -577,7 +577,7 @@ All capabilities|||Все возможности|||Visas iespējas
 Refreshing…|||Обновление…|||Atjaunina…
 Provider setup|||Настройка провайдера|||Pakalpojumu sniedzēja iestatīšana
 Local network|||Локальная сеть|||Lokālais tīkls
-Cloud|||Облако|||Mākonis
+Cloud|||Облако|||Mākonis|||Chmura
 Conversation default|||Модель для разговоров по умолчанию|||Noklusējuma sarunu modelis
 Model roles|||Роли моделей|||Modeļu lomas
 Images and visual context|||Изображения и визуальный контекст|||Attēli un vizuālais konteksts
@@ -668,7 +668,7 @@ Actual endpoint|||Фактический аудиовыход|||Faktiskais galap
 Fallback|||Резервный вариант|||Rezerves variants
 Route state|||Состояние маршрута|||Maršruta stāvoklis
 Platform recognition adapter|||Системный адаптер распознавания|||Platformas atpazīšanas adapteris
-Storage & Backup|||Хранилище и резервные копии|||Krātuve un rezerves kopijas
+Storage & Backup|||Хранилище и резервные копии|||Krātuve un rezerves kopijas|||Pamięć i kopia zapasowa
 Halo Vault|||Хранилище Halo|||Halo krātuve
 Change folder|||Сменить папку|||Mainīt mapi
 Choose backup folder|||Выбрать папку резервных копий|||Izvēlēties rezerves kopiju mapi
@@ -1161,18 +1161,18 @@ Review reply|||Проверить ответ|||Pārskatīt atbildi
 This reply action is no longer available|||Ответить этим способом больше нельзя|||Šī atbildes darbība vairs nav pieejama
 Manage app notification privacy|||Управлять приватностью уведомлений приложения|||Pārvaldīt lietotnes paziņojumu privātumu
 Dismiss notification?|||Закрыть уведомление?|||Aizvērt paziņojumu?
-Only request access when a capability needs it.|||Запрашивайте доступ только тогда, когда он нужен для функции.|||Pieprasi piekļuvi tikai tad, kad tā vajadzīga iespējai.
-Grant all permissions for skills & tools|||Предоставить разрешения для навыков и инструментов|||Piešķirt atļaujas prasmēm un rīkiem
-Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them.|||Halo работает и без доступа к микрофону. Разрешайте его только для голосового ввода; Bluetooth и Wi-Fi поблизости запрашиваются при подключении соответствующих устройств.|||Halo darbojas arī bez mikrofona piekļuves. Atļauj to tikai balss ievadei; Bluetooth un tuvumā esošā Wi-Fi atļaujas tiek prasītas attiecīgajos ierīču procesos.
-Local network access|||Доступ к локальной сети|||Piekļuve lokālajam tīklam
-Allow access when connecting to nearby devices or a local AI server.|||Разрешайте доступ при подключении близлежащих устройств или локального ИИ-сервера.|||Atļauj piekļuvi, savienojot tuvumā esošas ierīces vai lokālu MI serveri.
-Allow local network access|||Разрешить доступ к локальной сети|||Atļaut piekļuvi lokālajam tīklam
-Allow contact lookup|||Разрешить поиск контактов|||Atļaut kontaktu meklēšanu
-Access|||Доступ|||Piekļuve
-Manage Storage & Backup|||Настроить хранение и резервные копии|||Pārvaldīt krātuvi un rezerves kopijas
-Grant microphone access|||Разрешить доступ к микрофону|||Atļaut mikrofona piekļuvi
-Ask Halo…|||Спросите Halo…|||Jautā Halo…
-Copy|||Копировать|||Kopēt
+Only request access when a capability needs it.|||Запрашивайте доступ только тогда, когда он нужен для функции.|||Pieprasi piekļuvi tikai tad, kad tā vajadzīga iespējai.|||Proś o dostęp tylko wtedy, gdy wymaga go dana funkcja.
+Grant all permissions for skills & tools|||Предоставить разрешения для навыков и инструментов|||Piešķirt atļaujas prasmēm un rīkiem|||Przyznaj wszystkie uprawnienia wymagane przez umiejętności i narzędzia
+Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them.|||Halo работает и без доступа к микрофону. Разрешайте его только для голосового ввода; Bluetooth и Wi-Fi поблизости запрашиваются при подключении соответствующих устройств.|||Halo darbojas arī bez mikrofona piekļuves. Atļauj to tikai balss ievadei; Bluetooth un tuvumā esošā Wi-Fi atļaujas tiek prasītas attiecīgajos ierīču procesos.|||Halo działa także bez dostępu do mikrofonu. Zezwól na niego tylko w celu używania głosu; prośby o Bluetooth i Wi-Fi w pobliżu pojawią się w procesach konfiguracji urządzeń, które ich wymagają.
+Local network access|||Доступ к локальной сети|||Piekļuve lokālajam tīklam|||Dostęp do sieci lokalnej
+Allow access when connecting to nearby devices or a local AI server.|||Разрешайте доступ при подключении близлежащих устройств или локального ИИ-сервера.|||Atļauj piekļuvi, savienojot tuvumā esošas ierīces vai lokālu MI serveri.|||Zezwól na dostęp podczas łączenia z pobliskimi urządzeniami lub lokalnym serwerem AI.
+Allow local network access|||Разрешить доступ к локальной сети|||Atļaut piekļuvi lokālajam tīklam|||Zezwól na dostęp do sieci lokalnej
+Allow contact lookup|||Разрешить поиск контактов|||Atļaut kontaktu meklēšanu|||Zezwól na wyszukiwanie kontaktów
+Access|||Доступ|||Piekļuve|||Dostęp
+Manage Storage & Backup|||Настроить хранение и резервные копии|||Pārvaldīt krātuvi un rezerves kopijas|||Zarządzaj pamięcią i kopią zapasową
+Grant microphone access|||Разрешить доступ к микрофону|||Atļaut mikrofona piekļuvi|||Zezwól na dostęp do mikrofonu
+Ask Halo…|||Спросите Halo…|||Jautā Halo…|||Zapytaj halo…
+Copy|||Копировать|||Kopēt|||Kopiuj
 Continue on…|||Продолжить на…|||Turpināt ar…
 That endpoint is unavailable. Your reply route has not changed.|||Это устройство недоступно. Маршрут ответа не изменился.|||Šī galapunkta nav. Atbildes maršruts nav mainīts.
 Audio output blocked. Reconnect the selected device or choose an available output.|||Вывод звука заблокирован. Переподключите выбранное устройство или выберите доступный выход.|||Skaņas izvade ir bloķēta. Pievieno izvēlēto ierīci vēlreiz vai izvēlies pieejamu izvadi.
@@ -1265,7 +1265,7 @@ Open Activity|||Открыть действия|||Atvērt darbības|||Otwórz Dz
 Open Activity to see what Halo needs and choose what happens next.|||Откройте «Действия», чтобы узнать, что нужно Halo, и выбрать следующий шаг.|||Atveriet «Darbības», lai redzētu, kas Halo nepieciešams, un izvēlētos nākamo soli.
 Listening…|||Слушаю…|||Klausos…|||Słucham…
 Speaking…|||Говорю…|||Runāju…
-Working on it…|||Работаю над этим…|||Strādāju pie tā…
+Working on it…|||Работаю над этим…|||Strādāju pie tā…|||Pracuję…
 Turning your voice into text…|||Преобразую речь в текст…|||Pārvēršu jūsu runu tekstā…
 Message received|||Сообщение получено|||Ziņojums saņemts
 Another conversation is busy. Stop it to send here.|||В другом разговоре идёт работа. Остановите её, чтобы отправить сообщение здесь.|||Citā sarunā vēl notiek darbs. Apturiet to, lai nosūtītu ziņojumu šeit.
@@ -1289,7 +1289,7 @@ Hide attachments|||Скрыть вложения|||Paslēpt pielikumus
 Add an attachment|||Добавить вложение|||Pievienot pielikumu
 Couldn’t play the reply|||Не удалось озвучить ответ|||Neizdevās atskaņot atbildi|||Nie udało się odtworzyć odpowiedzi
 Couldn’t use that voice input|||Не удалось использовать эту запись|||Neizdevās izmantot šo balss ievadi|||Nie można użyć tego wejścia głosowego
-This reply is incomplete.|||Этот ответ не завершён.|||Šī atbilde nav pabeigta.
+This reply is incomplete.|||Этот ответ не завершён.|||Šī atbilde nav pabeigta.|||Ta odpowiedź jest niepełna.
 Reply|||Ответ|||Atbilde
 Previous reply|||Предыдущий ответ|||Iepriekšējā atbilde
 Replying…|||Отвечаю…|||Atbildu…
@@ -2137,7 +2137,7 @@ Hide measured details|||Скрыть результаты измерений|||P
 %1$d files need attention|||%1$d файлов требуют внимания|||%1$d failiem jāpievērš uzmanība
 %1$d new · %2$d existing · %3$d conflicts|||%1$d новых · %2$d существующих · %3$d конфликтов|||%1$d jauni · %2$d esoši · %3$d konflikti
 %1$d tools · %2$d enabled|||%1$d инструментов · %2$d включено|||%1$d rīki · %2$d ieslēgti
-Access is optional. Typed questions and private notes remain available when you decline.|||Доступ необязателен. При отказе можно вводить вопросы и вести личные заметки.|||Piekļuve nav obligāta. Ja to noraidāt, joprojām varat rakstīt jautājumus un privātas piezīmes.
+Access is optional. Typed questions and private notes remain available when you decline.|||Доступ необязателен. При отказе можно вводить вопросы и вести личные заметки.|||Piekļuve nav obligāta. Ja to noraidāt, joprojām varat rakstīt jautājumus un privātas piezīmes.|||Dostęp jest opcjonalny. Po odmowie nadal możesz wpisywać pytania i prowadzić prywatne notatki.
 Apply preferences|||Применить настройки|||Lietot iestatījumus|||Zastosuj ustawienia
 Backup completed (%1$s)|||Резервное копирование завершено (%1$s)|||Dublēšana pabeigta (%1$s)
 Backup folder access was removed|||Доступ к папке резервных копий отозван|||Piekļuve dublējumu mapei ir noņemta
@@ -2167,7 +2167,7 @@ Finalizing|||Завершение|||Pabeigšana
 Folder access removed. Existing backups were not deleted.|||Доступ к папке отозван. Существующие резервные копии не удалены.|||Piekļuve mapei noņemta. Esošie dublējumi nav dzēsti.
 Halo Vault connected|||Хранилище резервных копий подключено|||Halo dublējumu krātuve savienota
 Halo may ask less often for eligible tools. Required confirmations, permissions and native safety rules still apply.|||Halo может реже запрашивать подтверждение для подходящих инструментов. Обязательные подтверждения, разрешения и правила безопасности сохраняются.|||Halo var retāk lūgt apstiprinājumu piemērotiem rīkiem. Obligātie apstiprinājumi, atļaujas un drošības noteikumi joprojām darbojas.|||Halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa.
-If microphone access stays off, you can keep typing, retry, or enable it in Android settings.|||Если доступ к микрофону остаётся выключенным, можно вводить текст, повторить запрос или включить доступ в настройках Android.|||Ja piekļuve mikrofonam paliek izslēgta, varat rakstīt, mēģināt vēlreiz vai ieslēgt to Android iestatījumos.
+If microphone access stays off, you can keep typing, retry, or enable it in Android settings.|||Если доступ к микрофону остаётся выключенным, можно вводить текст, повторить запрос или включить доступ в настройках Android.|||Ja piekļuve mikrofonam paliek izslēgta, varat rakstīt, mēģināt vēlreiz vai ieslēgt to Android iestatījumos.|||Jeśli dostęp do mikrofonu pozostanie wyłączony, możesz nadal pisać, spróbować ponownie lub włączyć go w ustawieniach Androida.
 Import / Restore|||Импорт / Восстановление|||Importēt / Atjaunot
 Inspect tool %1$s|||Просмотреть инструмент %1$s|||Apskatīt rīku %1$s
 Integration|||Интеграция|||Integrācija|||Integracja
@@ -2660,8 +2660,8 @@ Paused|||Приостановлено|||Apturēts
 Proposed by halo · not saved|||Предложение halo · ещё не сохранено|||halo ieteikums · vēl nav saglabāts
 Rewrite|||Переписать|||Pārrakstīt
 Expand|||Расширить|||Paplašināt
-Phone action in progress|||Выполняется действие на телефоне|||Notiek darbība tālrunī
-Awaiting the action result|||Ожидается результат действия|||Gaida darbības rezultātu
+Phone action in progress|||Выполняется действие на телефоне|||Notiek darbība tālrunī|||Trwa działanie na telefonie
+Awaiting the action result|||Ожидается результат действия|||Gaida darbības rezultātu|||Oczekiwanie na wynik działania
 Recorded action progress|||Ход выполнения действий|||Reģistrētais darbību progress
 Installed voice versions|||Установленные версии голоса|||Instalētās balss versijas
 Installed pack|||Установленный пакет|||Instalētā pakotne
@@ -2768,7 +2768,7 @@ A little space for a quick question.|||Небольшое окно для быс
 On your home screen|||На главном экране|||Sākuma ekrānā|||Na ekranie głównym
 A small orb over other apps. You can hide it anytime.|||Небольшой значок поверх приложений. Его можно скрыть в любой момент.|||Neliela lode virs citām lietotnēm. To var paslēpt jebkurā brīdī.
 Quick access without opening the full app.|||Быстрый доступ без открытия полного интерфейса.|||Ātra piekļuve, neatverot pilno lietotni.
-halo|||halo|||halo
+halo|||halo|||halo|||halo
 No matching settings in this tab. Try the other tab.|||В этой вкладке ничего не найдено. Проверьте другую вкладку.|||Šajā cilnē nekas nav atrasts. Izmēģini otru cilni.
 Assistant diagnostics|||Диагностика ассистента|||Asistenta diagnostika
 Android integration, audio routes and operator tools|||Интеграция с Android, маршруты звука и инструменты управления|||Android integrācija, audio maršruti un vadības rīki
