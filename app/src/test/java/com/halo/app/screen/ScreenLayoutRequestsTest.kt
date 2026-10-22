@@ -19,4 +19,34 @@ class ScreenLayoutRequestsTest {
         assertNull(ScreenLayoutRequests.apply(original, LayoutChange.Add("unknown", emptyMap())))
         assertNull(ScreenLayoutRequests.apply(original, LayoutChange.Move("clock", 0)))
     }
+
+    @Test fun compositionAddsOnlyNamedCardsAndRoutesResearchTopicToGroundedSearch() {
+        val names = mapOf("weather" to "Weather", "research" to "Research", "calendar" to "Calendar")
+        val plan = ScreenLayoutRequests.compose(
+            "build my screen with weather, black-hole research articles and calendar", names,
+        )!!
+
+        assertEquals(listOf("weather", "research", "calendar"),
+            plan.changes.map { (it as LayoutChange.Add).widgetType })
+        assertEquals("black hole", plan.researchQuery)
+        val layout = ScreenLayoutRequests.apply(ScreenWidgets.starter("Focus"), plan)!!
+        assertTrue(layout.cards.any { it.widgetType == "weather" })
+        assertTrue(layout.cards.any { it.widgetType == "research" && it.itemId == null })
+        assertTrue(layout.cards.any { it.widgetType == "calendar" })
+    }
+
+    @Test fun compositionDoesNotGuessUnsupportedRequests() {
+        val names = mapOf("weather" to "Weather", "research" to "Research")
+        assertNull(ScreenLayoutRequests.compose("build my screen with an unknown widget", names))
+    }
+
+    @Test fun researchRefreshCanRunWhenItsCardAlreadyExists() {
+        val names = mapOf("research" to "Research")
+        val plan = ScreenLayoutRequests.compose("build my screen with research articles about black holes", names)!!
+        val layout = ScreenWidgets.starter("Focus").copy(cards = ScreenWidgets.starter("Focus").cards +
+            ScreenCard("research", "research:existing", CardSize.STANDARD, false))
+
+        assertEquals("black holes", plan.researchQuery)
+        assertEquals(layout, ScreenLayoutRequests.apply(layout, plan))
+    }
 }

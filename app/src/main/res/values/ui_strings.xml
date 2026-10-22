@@ -3709,6 +3709,7 @@
     <string name="ui_1e1eb5441389" formatted="false">"Topics are chosen by you. A reading source still needs to be connected."</string>
     <string name="ui_6436d3154dde" formatted="false">"Card preview"</string>
     <string name="ui_0ce666a9a655" formatted="false">"Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card."</string>
+    <string name="ui_6522402e0ed3" formatted="false">"You can also describe several cards and a research topic."</string>
     <string name="ui_2c029f3c3d00" formatted="false">"What would you like to change?"</string>
     <string name="ui_ca8c2d690be6" formatted="false">"That change is unavailable. Use Customize to choose the card and action."</string>
     <string name="ui_1523d23e2e00" formatted="false">"Review your new layout"</string>

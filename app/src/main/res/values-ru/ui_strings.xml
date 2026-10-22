@@ -3709,6 +3709,7 @@
     <string name="ui_1e1eb5441389" formatted="false">"Вы выбираете темы сами. Источник для чтения ещё нужно подключить."</string>
     <string name="ui_6436d3154dde" formatted="false">"Предпросмотр карточки"</string>
     <string name="ui_0ce666a9a655" formatted="false">"Добавьте, скройте, увеличьте или переместите карточку в начало. Назовите её так, как в списке «Добавить карточку»."</string>
+    <string name="ui_6522402e0ed3" formatted="false">"Можно также описать несколько карточек и тему для поиска."</string>
     <string name="ui_2c029f3c3d00" formatted="false">"Что вы хотите изменить?"</string>
     <string name="ui_ca8c2d690be6" formatted="false">"Такое изменение недоступно. Выберите карточку и действие в настройке экрана."</string>
     <string name="ui_1523d23e2e00" formatted="false">"Проверьте новое расположение"</string>

@@ -101,6 +101,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var layoutRequest by rememberSaveable { mutableStateOf("") }
     var proposalBase by remember { mutableStateOf<ScreenLayout?>(null) }
     var proposedLayout by remember { mutableStateOf<ScreenLayout?>(null) }
+    var proposedResearchQuery by rememberSaveable { mutableStateOf<String?>(null) }
     var requestError by remember { mutableStateOf(false) }
     var researchRefreshQuery by rememberSaveable { mutableStateOf<String?>(null) }
     var savingResearch by remember { mutableStateOf(false) }
@@ -427,13 +428,16 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
         }
     }
-    if (askLayout) ModalBottomSheet(onDismissRequest = { askLayout = false; proposedLayout = null }) {
+    if (askLayout) ModalBottomSheet(onDismissRequest = {
+        askLayout = false; proposedLayout = null; proposedResearchQuery = null
+    }) {
         Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(uiText("Ask halo to change Screen"), style = MaterialTheme.typography.headlineSmall)
             Text(uiText("Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card."))
+            Text(uiText("You can also describe several cards and a research topic."), style = MaterialTheme.typography.bodySmall)
             com.halo.app.ui.components.HaloTextField(layoutRequest, {
-                layoutRequest = it; proposedLayout = null; requestError = false
+                layoutRequest = it; proposedLayout = null; proposedResearchQuery = null; requestError = false
             }, label = { Text(uiText("What would you like to change?")) },
                 modifier = Modifier.fillMaxWidth(), kind = com.halo.app.ui.components.VoiceFieldKind.TEXT)
             if (requestError) Text(uiText("That change is unavailable. Use Customize to choose the card and action."),
@@ -441,9 +445,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             val proposal = proposedLayout
             if (proposal == null) com.halo.app.ui.components.HaloActionButton(onClick = {
                 val base = latest.value
-                val change = ScreenLayoutRequests.propose(layoutRequest, widgetNames)
+                val plan = ScreenLayoutRequests.compose(layoutRequest, widgetNames)
                 proposalBase = base
-                proposedLayout = if (base != null && change != null) ScreenLayoutRequests.apply(base, change) else null
+                proposedLayout = if (base != null && plan != null) ScreenLayoutRequests.apply(base, plan) else null
+                proposedResearchQuery = plan?.researchQuery
                 requestError = proposedLayout == null
             }, enabled = layoutRequest.isNotBlank() && layout != null) { Text(uiText("Preview")) }
             else {
@@ -451,9 +456,18 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 proposal.cards.forEach { card -> Text(uiText(widgetTitle(card.widgetType)) + " · " + uiText(when (card.size) {
                     CardSize.COMPACT -> "Compact"; CardSize.STANDARD -> "Standard"; CardSize.EXPANDED -> "Large"
                 })) }
+                proposedResearchQuery?.let { query -> Text(uiText("Research") + " · " + query) }
                 com.halo.app.ui.components.HaloActionButton(onClick = {
                     if (latest.value != proposalBase) { proposedLayout = null; requestError = true }
-                    else { store.saveLayout(proposal); canUndo = true; notice = "Layout changed"; proposedLayout = null; askLayout = false }
+                    else {
+                        val layoutChanged = proposal.cards != proposalBase?.cards
+                        if (layoutChanged) {
+                            store.saveLayout(proposal); canUndo = true; notice = "Layout changed"
+                        }
+                        proposedLayout = null; askLayout = false
+                        proposedResearchQuery?.let { researchRefreshQuery = it }
+                        proposedResearchQuery = null
+                    }
                 }) { Text(uiText("Apply")) }
             }
             TextButton(onClick = { proposedLayout = null; askLayout = false; customizing = true }) { Text(uiText("Customize")) }

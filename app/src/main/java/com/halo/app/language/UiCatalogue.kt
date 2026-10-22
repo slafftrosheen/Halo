@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(3960) {
+    buildMap(3961) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -3766,6 +3766,7 @@ private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "Topics are chosen by you. A reading source still needs to be connected." to R.string.ui_1e1eb5441389,
     "Card preview" to R.string.ui_6436d3154dde,
     "Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card." to R.string.ui_0ce666a9a655,
+    "You can also describe several cards and a research topic." to R.string.ui_6522402e0ed3,
     "What would you like to change?" to R.string.ui_2c029f3c3d00,
     "That change is unavailable. Use Customize to choose the card and action." to R.string.ui_ca8c2d690be6,
     "Review your new layout" to R.string.ui_1523d23e2e00,
@@ -3956,10 +3957,10 @@ private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "Show current cards" to R.string.ui_14474ab9a271,
     "No archived cards" to R.string.ui_ff87c4c5b7a8,
     "No cards on Screen" to R.string.ui_081d5db0eed6,
-    "Card archived" to R.string.ui_f4fb38d052fe,
 )
 
 private fun uiCataloguePart13(): Map<String, Int> = mapOf(
+    "Card archived" to R.string.ui_f4fb38d052fe,
     "Card restored" to R.string.ui_a4749ce2c60e,
     "A finished routine will update this card." to R.string.ui_57020c06ae3d,
     "Updated" to R.string.ui_3a5ecca188c0,
