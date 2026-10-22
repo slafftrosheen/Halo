@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ink_surface_description">Obszar rysowania. Użyj opcji Rysuj, Wymaż lub Przesuń widok. Ctrl+Z cofa, a Ctrl+Shift+Z ponawia.</string>
+    <string name="ink_draw">Rysuj</string>
+    <string name="ink_erase">Wymaż kreski</string>
+    <string name="ink_pan">Przesuń widok</string>
+    <string name="ink_select">Zaznacz obszar</string>
+    <string name="ink_selection_help">Przeciągnij po rysunku, aby zaznaczyć obszar i przecinające go kreski.</string>
+    <string name="ink_selection_empty">Żadna kreska nie przecina tego obszaru.</string>
+    <string name="ink_selection_count">Zaznaczone kreski: %1$d</string>
+    <string name="ink_selection_clear">Wyczyść zaznaczenie</string>
+    <string name="ink_undo">Cofnij</string>
+    <string name="ink_redo">Ponów</string>
+    <string name="ink_clear">Wyczyść rysunek</string>
+    <string name="ink_zoom_out">Pomniejsz</string>
+    <string name="ink_zoom_in">Powiększ</string>
+    <string name="ink_reset_view">Dopasuj stronę</string>
+    <string name="ink_input_help">Możesz użyć palca, myszy lub pióra. Nacisk pióra jest uwzględniany, jeśli urządzenie go udostępnia. Gumka usuwa całe kreski.</string>
+    <string name="ink_unreadable">Nie można bezpiecznie odczytać rysunku ani wersji roboczej odzyskiwania. Nie zostaną nadpisane. Zamknij okno, aby zachować oryginał.</string>
+    <string name="ink_capacity">Osiągnięto limit rysunku. Unieś pióro, cofnij lub wymaż kreski, aby zrobić miejsce.</string>
+    <string name="ink_draft_rejected">Ta zmiana jest za duża lub nie udało się jej zapisać. Poprzednia wersja robocza została zachowana. Cofnij lub wymaż część kresek.</string>
+    <string name="ink_draft_help">Zakończone kreski tworzą lokalną wersję roboczą do odzyskania. Anulowanie ją odrzuci bez zmiany zapisanego rysunku.</string>
+</resources>
