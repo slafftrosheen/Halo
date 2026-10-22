@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
+    <string name="ui_3ff5620b0294" formatted="false">"Nauka"</string>
+    <string name="ui_76900f1bfd16" formatted="false">"Wstecz"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
+    <string name="ui_08ad51871af7" formatted="false">"Czego chcesz się nauczyć?"</string>
+    <string name="ui_ce7274ff262c" formatted="false">"Temat, pytanie albo zadanie..."</string>
+    <string name="ui_426f4c7dfab4" formatted="false">"Język materiału (opcjonalnie)"</string>
+    <string name="ui_97c41f32fa70" formatted="false">"Język, który znam najlepiej (opcjonalnie)"</string>
+    <string name="ui_60e22975996e" formatted="false">"Gotowe do zapamiętania"</string>
+    <string name="ui_47173482314e" formatted="false">"Wznów przerwaną naukę"</string>
+    <string name="ui_26e5b147b623" formatted="false">"Kontynuuj naukę"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
     <string name="ui_942087cc2d41" formatted="false">"Ponów próbę"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
     <string name="ui_7d9eb7acb13e" formatted="false">"Zamknij"</string>
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
+    <string name="ui_c3812fc4acb8" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
+    <string name="ui_b58eb52c8810" formatted="false">"Pomiń na razie"</string>
     <string name="ui_94835ea2fcf7" formatted="false">"Odebrane"</string>
     <string name="ui_76ea482f843e" formatted="false">"Nowa notatka"</string>
     <string name="ui_396c946f0c79" formatted="false">"Nowa rozmowa"</string>
@@ -33,11 +44,17 @@
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
+    <string name="ui_b3e8ec3e76b5" formatted="false">"Tekst gotowy"</string>
+    <string name="ui_3e6ff6fedc87" formatted="false">"Część tekstu jest gotowa"</string>
+    <string name="ui_0faade3653af" formatted="false">"Sprawdzanie dostępu"</string>
+    <string name="ui_5f91095400cd" formatted="false">"Wczytywanie materiału…"</string>
     <string name="ui_e9938c0a9a18" formatted="false">"Edytuj jako tekst"</string>
     <string name="ui_8ab98c2a229a" formatted="false">"Szkic wyodrębniony przez model · Przed użyciem sprawdź widoczny tekst i niepewne wartości"</string>
     <string name="ui_00d60e31a4e6" formatted="false">"Uruchom"</string>
     <string name="ui_cdeec2b374c1" formatted="false">"Minutnik"</string>
     <string name="ui_d8b8392e2c54" formatted="false">"Spróbuj ponownie"</string>
+    <string name="ui_b0e0687a3021" formatted="false">"Wyjaśniaj w tym języku (puste pole = język aplikacji)"</string>
+    <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_26488c95ce6a" formatted="false">"Przetestuj ponownie"</string>
     <string name="ui_185e4b007d63" formatted="false">"Skonfiguruj role modeli"</string>
@@ -90,6 +107,7 @@
     <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
+    <string name="ui_b847d5e00684" formatted="false">"Ucz się na podstawie notatki"</string>
     <string name="ui_80c250f3db4a" formatted="false">"Historia rozmów"</string>
     <string name="ui_19e6d24090b3" formatted="false">"Ukryj wiadomości"</string>
     <string name="ui_449f5a775762" formatted="false">"Mów"</string>
@@ -114,6 +132,13 @@
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
+    <string name="ui_977395125c7f" formatted="false">"Rozpocznij nową lekcję"</string>
+    <string name="ui_63144fde57ac" formatted="false">"Na przykład: wyjaśnij ułamki, poćwicz pisownię albo wspólnie rozwiąż zadanie."</string>
+    <string name="ui_c9787f8f7111" formatted="false">"Możesz zacząć od samego tematu. Jeśli chcesz pracować na własnym materiale, dodaj plik albo notatkę."</string>
+    <string name="ui_60eda5f4ea71" formatted="false">"Wybierz sposób nauki. Możesz go zmienić w trakcie lekcji."</string>
+    <string name="ui_5b510ac4805c" formatted="false">"Pokaż wszystkie lekcje"</string>
+    <string name="ui_4e730ac30841" formatted="false">"Pokaż mniej lekcji"</string>
+    <string name="ui_064d8a50b989" formatted="false">"Wybierz lekcję do powtórki"</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
@@ -133,10 +158,14 @@
     <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
     <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
     <string name="ui_9c1fa8a254cd" formatted="false">"Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok."</string>
+    <string name="ui_3c37e6594abb" formatted="false">"halo pomaga zrozumieć temat, spróbować i powtórzyć. Lekcja rozwija się na podstawie Twoich odpowiedzi."</string>
+    <string name="ui_eb00ba19cdcf" formatted="false">"Nie dołączono materiału. halo skorzysta z wiedzy ogólnej."</string>
+    <string name="ui_414691a4f8e9" formatted="false">"Wybrany materiał będzie przetwarzany zgodnie z wybraną przez Ciebie zasadą użycia źródła."</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
     <string name="ui_4a703d8c58cf" formatted="false">"Daty i godziny również będą wyświetlane w tym języku."</string>
+    <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
     <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
     <string name="ui_ce53b39bb842" formatted="false">"Usuń token"</string>
     <string name="ui_cc42af5664d6" formatted="false">"Token odczytu Hugging Face"</string>
@@ -175,10 +204,14 @@
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
     <string name="ui_edaba47cac2f" formatted="false">"Wyniki rutyn"</string>
+    <string name="ui_8bba2156247a" formatted="false">"Nad czym halo ma się zastanowić?"</string>
+    <string name="ui_f81c132cc3e9" formatted="false">"Wybierz opcję dla tej lekcji. Żadna nie jest wybrana za Ciebie."</string>
     <string name="ui_c8a9cc92f54a" formatted="false">"Zegar i data"</string>
     <string name="ui_4d8d5ea3b434" formatted="false">"Czytanie i zainteresowania"</string>
     <string name="ui_c345ddcf3224" formatted="false">"Kontynuuj w Notatniku"</string>
     <string name="ui_d85b2cac1425" formatted="false">"Jak halo pomaga"</string>
+    <string name="ui_ded151ea4486" formatted="false">"Na niektórych stronach halo potrzebuje dostępu do zdjęć."</string>
+    <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
     <string name="ui_89c045bac21a" formatted="false">"W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy."</string>
     <string name="ui_cae4ac9f4854" formatted="false">"Wybierz sposób, w jaki halo rozpoznaje mowę"</string>

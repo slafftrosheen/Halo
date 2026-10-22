@@ -95,12 +95,12 @@ Active assistant screenshot|||Снимок экрана активного по�
 Use attached image|||Использовать прикреплённое изображение|||Izmantot pievienoto attēlu
 Local Vision: Not installed|||Локальная модель для изображений не установлена|||Vietējais attēlu modelis nav instalēts
 Verify image support|||Проверить поддержку изображений|||Pārbaudīt attēlu atbalstu
-Study|||Учёба|||Mācības
+Study|||Учёба|||Mācības|||Nauka
 Activity|||Действия|||Darbības
 Workspace|||Рабочее пространство|||Darbvieta
 Devices|||Устройства|||Ierīces
 Settings|||Настройки|||Iestatījumi
-Back|||Назад|||Atpakaļ
+Back|||Назад|||Atpakaļ|||Wstecz
 Language|||Язык|||Valoda|||Język
 Use this language for Halo's interface and default replies. You can request another language at any time.|||Этот язык используется в интерфейсе и ответах Halo по умолчанию. Вы всегда можете попросить ответ на другом языке.|||Šī valoda tiek izmantota Halo saskarnei un noklusējuma atbildēm. Jebkurā laikā vari lūgt atbildi citā valodā.
 Make Halo feel like yours.|||Настройте Halo под себя.|||Pielāgo Halo sev.
@@ -178,20 +178,20 @@ Your study material|||Твой учебный материал|||Tavs mācību m
 Add a photo or file, choose saved material, or type a topic below.|||Добавь фото или файл, выбери сохранённый материал или введи тему ниже.|||Pievieno foto vai failu, izvēlies saglabātu materiālu vai ieraksti tēmu zemāk.
 Choose saved material|||Выбрать сохранённый материал|||Izvēlēties saglabātu materiālu
 Add a file|||Добавить файл|||Pievienot failu
-What would you like to learn?|||Что ты хочешь изучить?|||Ko vēlies apgūt?
+What would you like to learn?|||Что ты хочешь изучить?|||Ko vēlies apgūt?|||Czego chcesz się nauczyć?
 Question or goal (optional)|||Вопрос или цель (необязательно)|||Jautājums vai mērķis (nav obligāts)
-A topic, a question, or an exercise...|||Тема, вопрос или задание...|||Tēma, jautājums vai uzdevums...
-Material language (optional)|||Язык материала (необязательно)|||Materiāla valoda (nav obligāta)
+A topic, a question, or an exercise...|||Тема, вопрос или задание...|||Tēma, jautājums vai uzdevums...|||Temat, pytanie albo zadanie...
+Material language (optional)|||Язык материала (необязательно)|||Materiāla valoda (nav obligāta)|||Język materiału (opcjonalnie)
 Explain in this language (en, lv, ru, pl)|||Язык объяснений (en, lv, ru, pl)|||Paskaidrojumu valoda (en, lv, ru, pl)
-Language I know best (optional)|||Мой основной язык (необязательно)|||Valoda, ko pārzinu vislabāk (nav obligāta)
+Language I know best (optional)|||Мой основной язык (необязательно)|||Valoda, ko pārzinu vislabāk (nav obligāta)|||Język, który znam najlepiej (opcjonalnie)
 Starting...|||Начинаем...|||Sākam...
 Let's learn|||Начнём учиться|||Sāksim mācīties
 Learning setup|||Настройки обучения|||Mācību iestatījumi
 Open Workspace|||Открыть рабочее пространство|||Atvērt darbvietu
-Ready to remember|||Пора повторить|||Laiks atkārtot
+Ready to remember|||Пора повторить|||Laiks atkārtot|||Gotowe do zapamiętania
 Review cards|||Повторить карточки|||Atkārtot kartītes
-Pick up where you left off|||Продолжи с того места, где остановился|||Turpini no vietas, kur apstājies
-Continue learning|||Продолжить обучение|||Turpināt mācīties
+Pick up where you left off|||Продолжи с того места, где остановился|||Turpini no vietas, kur apstājies|||Wznów przerwaną naukę
+Continue learning|||Продолжить обучение|||Turpināt mācīties|||Kontynuuj naukę
 How detailed should explanations be?|||Насколько подробными должны быть объяснения?|||Cik detalizētiem jābūt paskaidrojumiem?
 How would you like to learn?|||Как ты хочешь учиться?|||Kā vēlies mācīties?
 What can Halo use?|||Какие материалы может использовать Halo?|||Ko Halo drīkst izmantot?
@@ -284,7 +284,7 @@ Close|||Закрыть|||Aizvērt|||Zamknij
 Done|||Готово|||Gatavs|||Gotowe
 Save|||Сохранить|||Saglabāt
 Delete|||Удалить|||Dzēst|||Usuń
-Remove|||Удалить|||Noņemt
+Remove|||Удалить|||Noņemt|||Usuń
 Keep|||Оставить|||Paturēt
 Keep draft|||Оставить черновик|||Paturēt melnrakstu
 Remove draft|||Удалить черновик|||Dzēst melnrakstu
@@ -305,7 +305,7 @@ I had it|||Я знал ответ|||Es zināju atbildi
 Needs practice|||Нужно потренироваться|||Jāvingrinās
 Remembered|||Запомнил|||Atcerējos
 Show again soon|||Повторить скоро|||Atkārtot drīz
-Skip for now|||Пока пропустить|||Pagaidām izlaist
+Skip for now|||Пока пропустить|||Pagaidām izlaist|||Pomiń na razie
 Return to skipped cards|||Вернуться к пропущенным карточкам|||Atgriezties pie izlaistajām kartītēm
 Edit practice card|||Изменить карточку|||Labot kartīti
 Save edit|||Сохранить изменения|||Saglabāt izmaiņas
@@ -443,10 +443,10 @@ Take a photo|||Сделать фото|||Uzņemt foto
 Choose a photo|||Выбрать фото|||Izvēlēties foto
 %1$d sources · %2$d cards · %3$d saved replies|||Источники: %1$d · карточки: %2$d · сохранённые ответы: %3$d|||Avoti: %1$d · kartītes: %2$d · saglabātās atbildes: %3$d
 Next: %1$s|||Далее: %1$s|||Tālāk: %1$s
-Text ready|||Текст готов|||Teksts gatavs
-Part of the text is ready|||Готова часть текста|||Daļa teksta ir gatava
-Checking access|||Проверяю доступ|||Pārbaudu piekļuvi
-Loading material…|||Загружаю материал…|||Ielādēju materiālu…
+Text ready|||Текст готов|||Teksts gatavs|||Tekst gotowy
+Part of the text is ready|||Готова часть текста|||Daļa teksta ir gatava|||Część tekstu jest gotowa
+Checking access|||Проверяю доступ|||Pārbaudu piekļuvi|||Sprawdzanie dostępu
+Loading material…|||Загружаю материал…|||Ielādēju materiālu…|||Wczytywanie materiału…
 Topic lesson · general knowledge · no attached material|||Занятие по теме · общие знания · без материала|||Nodarbība par tēmu · vispārīgas zināšanas · bez materiāla
 Unverified|||Не проверено|||Nav pārbaudīts
 Needs work|||Нужно исправить|||Jālabo
@@ -468,7 +468,7 @@ Source changed · this card keeps its original version|||Источник изм
 You edited this card; Halo will not overwrite it.|||Ты изменил эту карточку; Halo её не перезапишет.|||Tu laboji šo kartīti; Halo to nepārrakstīs.
 Collection · Inbox|||Коллекция · Входящие|||Kolekcija · Iesūtne
 Extract text on phone|||Распознать текст на телефоне|||Nolasīt tekstu tālrunī
-Explain in this language (blank = app language)|||Язык объяснений (пусто = язык приложения)|||Paskaidrojumu valoda (tukšs = lietotnes valoda)
+Explain in this language (blank = app language)|||Язык объяснений (пусто = язык приложения)|||Paskaidrojumu valoda (tukšs = lietotnes valoda)|||Wyjaśniaj w tym języku (puste pole = język aplikacji)
 Explanation language (blank = app language)|||Язык объяснений (пусто = язык приложения)|||Paskaidrojumu valoda (tukšs = lietotnes valoda)
 Connected hardware and saved sessions.|||Подключённое оборудование и сохранённые подключения.|||Pievienotās ierīces un saglabātie savienojumi.
 Add device|||Добавить устройство|||Pievienot ierīci
@@ -539,7 +539,7 @@ Unavailable|||Недоступно|||Nav pieejams
 Scan|||Поиск|||Meklēt
 Discovered devices|||Найденные устройства|||Atrastās ierīces
 Unknown glasses|||Неизвестные очки|||Nezināmas brilles
-Selected|||Выбрано|||Atlasīts
+Selected|||Выбрано|||Atlasīts|||Wybrano
 Models|||Модели|||Modeļi
 Show all|||Показать все|||Rādīt visu|||Pokaż wszystkie
 Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
@@ -1323,7 +1323,7 @@ Seen|||Было на связи|||Pēdējoreiz redzēts
 Connect apps and services|||Подключение приложений и сервисов|||Pievienot lietotnes un pakalpojumus
 Advanced task details|||Подробная информация о задачах|||Papildu informācija par uzdevumiem
 Choose a topic, add material, and learn at your pace.|||Выберите тему, добавьте материал и учитесь в своём темпе.|||Izvēlieties tēmu, pievienojiet materiālu un mācieties savā tempā.
-Study from a note|||Учиться по заметке|||Mācīties no piezīmes
+Study from a note|||Учиться по заметке|||Mācīties no piezīmes|||Ucz się na podstawie notatki
 Search by words in your saved memories.|||Ищите по словам в сохранённой памяти.|||Meklējiet pēc vārdiem saglabātajā atmiņā.
 Nothing remembered here yet. Add something to remember, or review Suggestions.|||Здесь пока ничего не сохранено. Добавьте запись или проверьте «Предложения».|||Šeit vēl nekas nav saglabāts. Pievienojiet ko atceramu vai pārskatiet «Ieteikumus».
 No memories match. Try another word or change the filters.|||Совпадений нет. Попробуйте другое слово или измените фильтры.|||Nav atbilstošu atmiņu. Mēģiniet citu vārdu vai mainiet filtrus.
@@ -1844,17 +1844,17 @@ Skill starter is unavailable|||Основа навыка недоступна|||
 Advanced settings|||Расширенные настройки|||Papildu iestatījumi
 Add to draft|||Добавить в черновик|||Pievienot melnrakstam
 Pick a starting point. You can edit it before sending.|||Выберите, с чего начать. Перед отправкой текст можно изменить.|||Izvēlies, ar ko sākt. Pirms nosūtīšanas tekstu var rediģēt.
-Start a new lesson|||Начать новый урок|||Sākt jaunu nodarbību
+Start a new lesson|||Начать новый урок|||Sākt jaunu nodarbību|||Rozpocznij nową lekcję
 Halo guides you through understanding, trying, and reviewing. Your answers lead the lesson.|||Halo помогает разобраться, попробовать самому и закрепить материал. Урок строится вокруг ваших ответов.|||Halo palīdz saprast, izmēģināt un atkārtot. Tavas atbildes virza nodarbību.
 Your learning goal|||Чему хотите научиться|||Ko vēlies iemācīties
-For example, explain fractions, practise spelling, or solve a problem together.|||Например: разобрать дроби, потренировать правописание или вместе решить задачу.|||Piemēram, izprast daļskaitļus, trenēt pareizrakstību vai kopā atrisināt uzdevumu.
+For example, explain fractions, practise spelling, or solve a problem together.|||Например: разобрать дроби, потренировать правописание или вместе решить задачу.|||Piemēram, izprast daļskaitļus, trenēt pareizrakstību vai kopā atrisināt uzdevumu.|||Na przykład: wyjaśnij ułamki, poćwicz pisownię albo wspólnie rozwiąż zadanie.
 Add material (optional)|||Добавить материал (необязательно)|||Pievienot materiālu (nav obligāti)
-You can start with just a topic. Add a file or note if you want to work from your own material.|||Можно начать просто с темы. Добавьте файл или заметку, если хотите учиться по своим материалам.|||Var sākt tikai ar tēmu. Pievieno failu vai piezīmi, ja vēlies izmantot savus materiālus.
+You can start with just a topic. Add a file or note if you want to work from your own material.|||Можно начать просто с темы. Добавьте файл или заметку, если хотите учиться по своим материалам.|||Var sākt tikai ar tēmu. Pievieno failu vai piezīmi, ja vēlies izmantot savus materiālus.|||Możesz zacząć od samego tematu. Jeśli chcesz pracować na własnym materiale, dodaj plik albo notatkę.
 Saved material|||Сохранённое|||Saglabātie materiāli
 PDF pages may need image AI|||Для страниц PDF может понадобиться распознавание изображений|||PDF lapām var būt vajadzīga attēlu atpazīšana
 Image · vision required|||Изображение · нужно распознавание|||Attēls · vajadzīga attēlu atpazīšana
 How should Halo help?|||Как Halo должен помогать?|||Kā Halo palīdzēs?
-Choose a learning style. You can change this during the lesson.|||Выберите способ обучения. Его можно изменить во время урока.|||Izvēlies mācīšanās veidu. Nodarbības laikā to var mainīt.
+Choose a learning style. You can change this during the lesson.|||Выберите способ обучения. Его можно изменить во время урока.|||Izvēlies mācīšanās veidu. Nodarbības laikā to var mainīt.|||Wybierz sposób nauki. Możesz go zmienić w trakcie lekcji.
 Hide learning options|||Скрыть параметры обучения|||Paslēpt mācību iestatījumus
 Age, language & learning options|||Возраст, языки и обучение|||Vecums, valodas un mācību iestatījumi
 Start lesson|||Начать урок|||Sākt nodarbību
@@ -1876,8 +1876,8 @@ Another hint|||Ещё подсказка|||Vēl viena norāde
 More help|||Больше помощи|||Vairāk palīdzības
 Your answer or question|||Ваш ответ или вопрос|||Tava atbilde vai jautājums
 Submit an attempt for feedback. Asking a question does not grade your work.|||Отправьте свою попытку на проверку. Вопрос не оценивается как ответ.|||Iesniedz savu mēģinājumu atsauksmei. Jautājums netiek vērtēts kā atbilde.
-Show all lessons|||Показать все уроки|||Rādīt visas nodarbības
-Show fewer lessons|||Свернуть список уроков|||Rādīt mazāk nodarbību
+Show all lessons|||Показать все уроки|||Rādīt visas nodarbības|||Pokaż wszystkie lekcje
+Show fewer lessons|||Свернуть список уроков|||Rādīt mazāk nodarbību|||Pokaż mniej lekcji
 Repeat this step|||Повторить этот шаг|||Atkārtot šo soli
 Get a hint|||Получить подсказку|||Saņemt norādi
 Explain the idea|||Объяснить идею|||Izskaidrot ideju
@@ -1915,7 +1915,7 @@ Resume reading|||Продолжить чтение|||Turpināt lasīšanu
 Halo gives hints in small steps. You keep trying.|||Halo подсказывает небольшими шагами. Вы продолжаете пробовать сами.|||Halo palīdz ar nelielām norādēm. Tu turpini mēģināt pats.
 You answer first, then review what needs work.|||Сначала отвечаете сами, затем разбираете то, что нужно улучшить.|||Vispirms tu atbildi, tad pārrunā, ko vēl vajag uzlabot.
 Halo explains the idea, then checks your understanding.|||Halo объясняет идею, затем помогает проверить понимание.|||Halo izskaidro ideju un pēc tam palīdz pārbaudīt izpratni.
-Choose a lesson to review|||Выберите урок для повторения|||Izvēlies nodarbību atkārtošanai
+Choose a lesson to review|||Выберите урок для повторения|||Izvēlies nodarbību atkārtošanai|||Wybierz lekcję do powtórki
 Getting ready…|||Подготовка…|||Sagatavošana…
 Access required|||Требуется доступ|||Nepieciešama piekļuve
 Steps completed: %1$d of %2$d|||Выполнено шагов: %1$d из %2$d|||Pabeigtās darbības: %1$d no %2$d
@@ -2542,12 +2542,12 @@ Sharing permissions never select a cloud provider. halo can answer without enabl
 Think with halo|||Обсудить с halo|||Domāt kopā ar halo
 Ask halo to organize|||Попросить halo упорядочить|||Lūgt halo sakārtot
 halo is thinking...|||halo думает...|||halo domā...
-halo guides you through understanding, trying, and reviewing. Your answers lead the lesson.|||halo помогает разобраться в теме, попробовать самостоятельно и повторить изученное. Ход занятия зависит от ваших ответов.|||halo palīdz izprast tēmu, izmēģināt pašam un atkārtot apgūto. Nodarbība attīstās atbilstoši tavām atbildēm.
+halo guides you through understanding, trying, and reviewing. Your answers lead the lesson.|||halo помогает разобраться в теме, попробовать самостоятельно и повторить изученное. Ход занятия зависит от ваших ответов.|||halo palīdz izprast tēmu, izmēģināt pašam un atkārtot apgūto. Nodarbība attīstās atbilstoši tavām atbildēm.|||halo pomaga zrozumieć temat, spróbować i powtórzyć. Lekcja rozwija się na podstawie Twoich odpowiedzi.
 How should halo help?|||Как halo должен помогать?|||Kā halo tev palīdzēs?
 halo gives hints in small steps. You keep trying.|||halo подсказывает небольшими шагами. Вы продолжаете пробовать сами.|||halo dod nelielus mājienus. Tu turpini mēģināt pats.
 halo explains the idea, then checks your understanding.|||halo объясняет идею, а затем проверяет понимание.|||halo izskaidro ideju un pēc tam pārbauda izpratni.
-No material attached. halo will use general knowledge.|||Материалы не добавлены. halo будет использовать общие знания.|||Materiāli nav pievienoti. halo izmantos vispārīgās zināšanas.
-Selected material will follow your chosen source policy.|||Выбранные материалы будут использоваться согласно заданному правилу источников.|||Atlasītie materiāli tiks izmantoti saskaņā ar izvēlēto avotu politiku.
+No material attached. halo will use general knowledge.|||Материалы не добавлены. halo будет использовать общие знания.|||Materiāli nav pievienoti. halo izmantos vispārīgās zināšanas.|||Nie dołączono materiału. halo skorzysta z wiedzy ogólnej.
+Selected material will follow your chosen source policy.|||Выбранные материалы будут использоваться согласно заданному правилу источников.|||Atlasītie materiāli tiks izmantoti saskaņā ar izvēlēto avotu politiku.|||Wybrany materiał będzie przetwarzany zgodnie z wybraną przez Ciebie zasadą użycia źródła.
 halo is preparing the next step. Your work stays saved.|||halo готовит следующий шаг. Ваша работа остаётся сохранённой.|||halo gatavo nākamo soli. Tavs darbs paliek saglabāts.
 Start with your own thoughts, or ask halo for the first explanation.|||Начните со своих мыслей или попросите halo дать первое объяснение.|||Sāc ar savām domām vai palūdz halo pirmo skaidrojumu.
 Ask halo|||Спросить halo|||Jautāt halo
@@ -2607,7 +2607,7 @@ Dates and times follow this language too.|||Даты и время тоже ис
 English|||Английский|||Angļu
 Latvian|||Латышский|||Latviešu
 Russian|||Русский|||Krievu
-New lesson|||Новый урок|||Jauna nodarbība
+New lesson|||Новый урок|||Jauna nodarbība|||Nowa lekcja
 Step %1$d of 4 · %2$s|||Шаг %1$d из 4 · %2$s|||%1$d. solis no 4 · %2$s
 Read a photo or page|||Прочитать фото или страницу|||Nolasīt fotoattēlu vai lapu
 Everything halo did, in plain words.|||Всё, что делал halo, простыми словами.|||Viss, ko halo paveica, vienkāršiem vārdiem.
@@ -3106,8 +3106,8 @@ This part is for grown-ups. They’ll unlock it with the phone’s screen lock.|
 Try halo’s voice|||Попробовать голос halo|||Izmēģināt halo balsi
 Voice confirmed by you|||Вы подтвердили, что слышите голос|||Jūs apstiprinājāt, ka balss ir dzirdama
 Yes|||Да|||Jā
-Where should halo think?|||Где halo должен думать?|||Kur halo domāt?
-Choose for this lesson. Neither option is selected for you.|||Выберите для этого урока. Ни один вариант не выбран заранее.|||Izvēlieties šai nodarbībai. Neviens variants nav izvēlēts iepriekš.
+Where should halo think?|||Где halo должен думать?|||Kur halo domāt?|||Nad czym halo ma się zastanowić?
+Choose for this lesson. Neither option is selected for you.|||Выберите для этого урока. Ни один вариант не выбран заранее.|||Izvēlieties šai nodarbībai. Neviens variants nav izvēlēts iepriekš.|||Wybierz opcję dla tej lekcji. Żadna nie jest wybrana za Ciebie.
 With cloud help|||С помощью облака|||Ar mākoņa palīdzību
 Draft by halo · not saved|||Черновик halo · не сохранён|||halo melnraksts · nav saglabāts
 Your note changed. Ask halo to write the draft again.|||Заметка изменилась. Попросите halo написать черновик заново.|||Piezīme ir mainījusies. Lūdziet halo uzrakstīt melnrakstu vēlreiz.
@@ -3156,8 +3156,8 @@ An app on this phone|||Приложение на этом телефоне|||Lie
 %1$d available actions|||Доступно действий: %1$d|||Pieejamās darbības: %1$d
 %1$d actions halo can use in your apps|||Действий, доступных halo в ваших приложениях: %1$d|||Darbības, ko halo var izmantot jūsu lietotnēs: %1$d
 See available actions|||Посмотреть доступные действия|||Skatīt pieejamās darbības
-Some pages need halo to read photos|||Для некоторых страниц halo нужно прочитать изображения|||Dažās lapās halo jālasa attēli
-halo needs permission to read this photo|||halo нужно разрешение прочитать это фото|||halo ir vajadzīga atļauja lasīt šo fotoattēlu
+Some pages need halo to read photos|||Для некоторых страниц halo нужно прочитать изображения|||Dažās lapās halo jālasa attēli|||Na niektórych stronach halo potrzebuje dostępu do zdjęć.
+halo needs permission to read this photo|||halo нужно разрешение прочитать это фото|||halo ir vajadzīga atļauja lasīt šo fotoattēlu|||halo potrzebuje dostępu, aby odczytać to zdjęcie.
 How well you remember|||Насколько хорошо вы помните|||Cik labi atceraties
 Compare with halo’s answer|||Сравнить с ответом halo|||Salīdzināt ar halo atbildi
 Lab|||Лаб|||Lab
