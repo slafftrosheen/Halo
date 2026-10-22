@@ -3777,6 +3777,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it." to R.string.ui_69c10772bf75,
     "Use my saved ink selection as the referent." to R.string.ui_0562eec23e31,
     "Selected marks preview" to R.string.ui_52c1af2b9004,
+    "Selected page marks preview (source page not shown)" to R.string.ui_b4c50261ef99,
     "Selection added to working set" to R.string.ui_19ce2f3279a2,
     "Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized." to R.string.ui_e6fd9b9426fd,
 )

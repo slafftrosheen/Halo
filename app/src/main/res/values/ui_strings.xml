@@ -3775,6 +3775,7 @@
     <string name="ui_69c10772bf75" formatted="false">"Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it."</string>
     <string name="ui_0562eec23e31" formatted="false">"Use my saved ink selection as the referent."</string>
     <string name="ui_52c1af2b9004" formatted="false">"Selected marks preview"</string>
+    <string name="ui_b4c50261ef99" formatted="false">"Selected page marks preview (source page not shown)"</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Selection added to working set"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."</string>
 </resources>

@@ -920,12 +920,21 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                             val sourceVersion = sourceNode?.refObjectId?.let { id -> state.files[id]?.version ?: state.files[id]?.sha256 }
                             val selectionCurrent = node.inkSelectionIsCurrent(sourceNode, viewModel.canvasId, sourceVersion)
                             val selectionContext = node.inkSelectionContext().takeIf { selectionCurrent }
+                            val selectedInkMarkup = if (sourceNode != null && selectionContext != null) when (sourceNode.type) {
+                                CanvasNodeType.SKETCH -> sourceNode.text
+                                CanvasNodeType.FILE, CanvasNodeType.IMAGE -> selectionContext.pageId
+                                    ?.removePrefix("page-")?.toIntOrNull()?.let { page ->
+                                        CanvasFileMarkupCodec.decode(sourceNode.text).pages[page]
+                                    }
+                                else -> null
+                            } else null
                             Text(uiText("Ink selection"), style = MaterialTheme.typography.labelSmall)
                             Text(uiText("%1\$d strokes", node.inkSelectionStrokeCount() ?: 0),
                                 style = MaterialTheme.typography.bodyMedium)
-                            if (selectionContext != null && sourceNode?.type == CanvasNodeType.SKETCH) {
-                                Text(uiText("Selected marks preview"), style = MaterialTheme.typography.labelSmall)
-                                CanvasSketchPreview(sourceNode.text, Modifier.fillMaxWidth().height(104.dp), selectionContext)
+                            if (selectionContext != null && selectedInkMarkup != null) {
+                                Text(uiText(if (sourceNode?.type == CanvasNodeType.SKETCH) "Selected marks preview" else "Selected page marks preview (source page not shown)"),
+                                    style = MaterialTheme.typography.labelSmall)
+                                CanvasSketchPreview(selectedInkMarkup, Modifier.fillMaxWidth().height(104.dp), selectionContext)
                             }
                             Text(uiText(if (selectionCurrent) "Selection source is unchanged." else "Source changed; select the region again."),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

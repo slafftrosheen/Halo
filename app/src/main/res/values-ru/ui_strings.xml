@@ -3775,6 +3775,7 @@
     <string name="ui_69c10772bf75" formatted="false">"Объясни эту выделенную область по сохранённой ссылке. Если данных недостаточно, попроси меня описать её."</string>
     <string name="ui_0562eec23e31" formatted="false">"Используй моё сохранённое выделение как объект вопроса."</string>
     <string name="ui_52c1af2b9004" formatted="false">"Предпросмотр выделенных штрихов"</string>
+    <string name="ui_b4c50261ef99" formatted="false">"Предпросмотр штрихов страницы (сама страница не показана)"</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Выделение добавлено в рабочий набор"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся."</string>
 </resources>

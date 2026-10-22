@@ -3779,5 +3779,6 @@ Ask about selection|||Спросить о выделении|||Jautāt par atlas
 Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it.|||Объясни эту выделенную область по сохранённой ссылке. Если данных недостаточно, попроси меня описать её.|||Izskaidro šo atlasīto apgabalu, izmantojot saglabāto atsauci. Ja ar atsauci nepietiek, lūdz mani to aprakstīt.
 Use my saved ink selection as the referent.|||Используй моё сохранённое выделение как объект вопроса.|||Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci.
 Selected marks preview|||Предпросмотр выделенных штрихов|||Atlasīto triepienu priekšskatījums
+Selected page marks preview (source page not shown)|||Предпросмотр штрихов страницы (сама страница не показана)|||Atlasīto lapas triepienu priekšskatījums (avota lapa nav redzama)
 Selection added to working set|||Выделение добавлено в рабочий набор|||Atlase pievienota darba kopai
 Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized.|||Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся.|||Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts.
