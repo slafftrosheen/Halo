@@ -1,9 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
+    <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
+    <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
+    <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
+    <string name="ui_185e4b007d63" formatted="false">"Skonfiguruj role modeli"</string>
+    <string name="ui_6c48253817ef" formatted="false">"Zaimportowane modele"</string>
+    <string name="ui_d640c7421da0" formatted="false">"Wznów"</string>
+    <string name="ui_70313db71cd3" formatted="false">"Usuń niepełny plik"</string>
+    <string name="ui_420eaafbda7b" formatted="false">"Pobierz ponownie"</string>
+    <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
+    <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
+    <string name="ui_37b345555d7e" formatted="false">"Pobieranie"</string>
+    <string name="ui_6c277724149d" formatted="false">"Zweryfikuj model"</string>
+    <string name="ui_340128ddbdf7" formatted="false">"Szybki test"</string>
+    <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
+    <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
+    <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
+    <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>
+    <string name="ui_a6a5fe15ed48" formatted="false">"Synchronizuj z Hugging Face"</string>
+    <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
+    <string name="ui_675b7e1dbaf0" formatted="false">"Pobierz model na licencji"</string>
+    <string name="ui_b0a363b97ad2" formatted="false">"Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu."</string>
+    <string name="ui_7e902370711d" formatted="false">"Otwórz licencję wydawcy"</string>
+    <string name="ui_c65a8dff696f" formatted="false">"Uzyskaj token odczytu Hugging Face"</string>
+    <string name="ui_767fb8352ca0" formatted="false">"Token Hugging Face"</string>
+    <string name="ui_27ca04d3ae63" formatted="false">"Akceptuję licencję wydawcy"</string>
+    <string name="ui_84526abbf679" formatted="false">"Użyj do rozmów"</string>
+    <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
+    <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
+    <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
+    <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
     <string name="ui_4a703d8c58cf" formatted="false">"Daty i godziny również będą wyświetlane w tym języku."</string>
+    <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
+    <string name="ui_ce53b39bb842" formatted="false">"Usuń token"</string>
+    <string name="ui_cc42af5664d6" formatted="false">"Token odczytu Hugging Face"</string>
+    <string name="ui_ea1f1ba0beb3" formatted="false">"Token nie akceptuje licencji modelu. Zaakceptuj licencję wydawcy na tym samym koncie Hugging Face."</string>
+    <string name="ui_c70df78cbfc4" formatted="false">"Kandydaci obejmują pętle narzędziowe oparte na promptach halo. Natywne wywoływanie narzędzi jest osobną funkcją i wymaga dowodów dla danego pliku modelu."</string>
+    <string name="ui_050e2c6cc9a1" formatted="false">"Zaimportuj w pełni pobrany plik .litertlm. To środowisko wykonawcze nie obsługuje plików GGUF ani .tflite."</string>
+    <string name="ui_a57bf7bcba44" formatted="false">"Odśwież pliki na urządzeniu"</string>
+    <string name="ui_fc72166cc2c3" formatted="false">"Przed pobraniem odśwież pliki na urządzeniu."</string>
+    <string name="ui_b0270cb66825" formatted="false">"Pliki na urządzeniu"</string>
+    <string name="ui_3200851a9605" formatted="false">"Zweryfikowane pliki modelu"</string>
+    <string name="ui_fc90e099e9ab" formatted="false">"Znajdź powiązane notatki"</string>
     <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawaj polecenia lokalnie"</string>
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie może wykonywać działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie poleceń przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
@@ -12,4 +54,7 @@
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
+    <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
+    <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
+    <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
 </resources>

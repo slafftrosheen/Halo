@@ -49,7 +49,7 @@ Phone & apps|||Телефон и приложения|||Tālrunis un lietotnes
 Manage workspace and phone actions|||Настроить действия с рабочими материалами и телефоном|||Pārvaldīt darbības ar darba materiāliem un tālruni
 Context & privacy|||Контекст и приватность|||Konteksts un privātums
 Configured · not checked|||Настроено · ещё не проверено|||Iestatīts · vēl nav pārbaudīts
-Vision Lab|||Проверка изображений|||Attēlu pārbaude
+Vision Lab|||Проверка изображений|||Attēlu pārbaude|||Laboratorium obrazu
 Model|||Модель|||Modelis
 Refresh candidates|||Обновить список моделей|||Atjaunināt modeļu sarakstu
 Routing|||Выбор маршрута|||Maršruta izvēle
@@ -279,11 +279,11 @@ Pause|||Пауза|||Pauzēt
 Previous|||Назад|||Iepriekšējais
 Next|||Далее|||Nākamais
 Retry|||Повторить|||Mēģināt vēlreiz
-Cancel|||Отмена|||Atcelt
+Cancel|||Отмена|||Atcelt|||Anuluj
 Close|||Закрыть|||Aizvērt
 Done|||Готово|||Gatavs
 Save|||Сохранить|||Saglabāt
-Delete|||Удалить|||Dzēst
+Delete|||Удалить|||Dzēst|||Usuń
 Remove|||Удалить|||Noņemt
 Keep|||Оставить|||Paturēt
 Keep draft|||Оставить черновик|||Paturēt melnrakstu
@@ -541,26 +541,26 @@ Discovered devices|||Найденные устройства|||Atrastās ierīce
 Unknown glasses|||Неизвестные очки|||Nezināmas brilles
 Selected|||Выбрано|||Atlasīts
 Models|||Модели|||Modeļi
-Show all|||Показать все|||Rādīt visu
+Show all|||Показать все|||Rādīt visu|||Pokaż wszystkie
 Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
 Needs retest|||Нужно проверить повторно|||Jāpārbauda atkārtoti
 Stable|||Стабильно|||Stabils
 Measured but unstable|||Проверено, нестабильно|||Izmērīts, bet nestabils
 Retest|||Повторить проверку|||Pārbaudīt vēlreiz
-Configure model roles|||Настроить роли моделей|||Iestatīt modeļu lomas
+Configure model roles|||Настроить роли моделей|||Iestatīt modeļu lomas|||Skonfiguruj role modeli
 Search catalog models|||Поиск моделей в каталоге|||Meklēt modeļus katalogā
-Imported models|||Импортированные модели|||Importētie modeļi
+Imported models|||Импортированные модели|||Importētie modeļi|||Zaimportowane modele
 Not measured on this device|||Не проверено на этом устройстве|||Nav mērīts šajā ierīcē
 Text|||Текст|||Teksts
 Vision|||Зрение|||Redze
 Tools|||Инструменты|||Rīki
 Import|||Импортировать|||Importēt
-Resume|||Продолжить|||Turpināt
-Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi
-Re-download|||Скачать заново|||Lejupielādēt vēlreiz
+Resume|||Продолжить|||Turpināt|||Wznów
+Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi|||Usuń niepełny plik
+Re-download|||Скачать заново|||Lejupielādēt vēlreiz|||Pobierz ponownie
 Select|||Выбрать|||Izvēlēties
-Unload|||Выгрузить|||Izlādēt
-Download|||Скачать|||Lejupielādēt
+Unload|||Выгрузить|||Izlādēt|||Wyładuj
+Download|||Скачать|||Lejupielādēt|||Pobierz
 Search models|||Поиск моделей|||Meklēt modeļus
 Hide filters|||Скрыть фильтры|||Paslēpt filtrus
 Filters|||Фильтры|||Filtri
@@ -602,7 +602,7 @@ Test speech recognition|||Проверить распознавание речи
 Reference phrases (speak them yourself):|||Примеры фраз (произнесите сами):|||Frāžu piemēri (izrunā pats):
 Speech input, output and routing|||Речевой ввод, вывод и маршрутизация|||Runas ievade, izvade un maršrutēšana
 Input|||Ввод|||Ievade
-Downloading|||Загрузка|||Lejupielādē
+Downloading|||Загрузка|||Lejupielādē|||Pobieranie
 Android TTS|||Android TTS|||Android TTS
 Choose a voice|||Выбрать голос|||Izvēlēties balsi
 Speech output|||Синтез речи|||Runas sintēze
@@ -772,8 +772,8 @@ Copy current device results|||Копировать результаты устр
 Copy role matrix|||Копировать матрицу ролей|||Kopēt lomu matricu
 Role evidence is separate from Benchmark calibration provenance|||Проверка ролей отделена от калибровки Benchmark|||Lomu pārbaudes rezultāti ir atsevišķi no Benchmark kalibrācijas datiem
 Direct runtime probe|||Прямая проверка среды выполнения|||Tieša izpildvides pārbaude
-Verify model|||Проверить модель|||Pārbaudīt modeli
-Smoke test|||Быстрая проверка|||Ātrā pārbaude
+Verify model|||Проверить модель|||Pārbaudīt modeli|||Zweryfikuj model
+Smoke test|||Быстрая проверка|||Ātrā pārbaude|||Szybki test
 Benchmark|||Тест производительности|||Veiktspējas tests
 Probe tool channel|||Проверить канал инструментов|||Pārbaudīt rīku kanālu
 Developer tests ▴|||Тесты разработчика ▴|||Izstrādātāja testi ▴
@@ -832,7 +832,7 @@ Wear OS|||Wear OS|||Wear OS
 Run synthetic vision probe|||Запустить синтетическую проверку зрения|||Palaist sintētisko redzes pārbaudi
 Run role suite|||Запустить набор тестов ролей|||Palaist lomu testu kopu
 Developer tests|||Тесты разработчика|||Izstrādātāja testi
-Use model|||Использовать модель|||Izmantot modeli
+Use model|||Использовать модель|||Izmantot modeli|||Użyj modelu
 Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ
 Continue|||Продолжить|||Turpināt
 There are no saved messages to display.|||Нет сохранённых сообщений.|||Nav saglabātu ziņojumu.
@@ -1011,7 +1011,7 @@ No cached models match. Configure a provider and explicitly refresh its metadata
 Provider setup required|||Нужно настроить провайдера|||Jāiestata pakalpojumu sniedzējs
 Available to download or import · Open provider setup|||Доступно для загрузки или импорта · Откройте настройки провайдера|||Pieejams lejupielādei vai importēšanai · Atver pakalpojumu sniedzēja iestatījumus
 Configured model unavailable|||Настроенная модель недоступна|||Konfigurētais modelis nav pieejams
-Resident|||В памяти устройства|||Ielādēts atmiņā
+Resident|||В памяти устройства|||Ielādēts atmiņā|||W pamięci
 ElevenLabs speech|||Синтез речи ElevenLabs|||ElevenLabs runas sintēze
 Synthesis fallback keeps the selected audio output route.|||Резервный синтез речи сохраняет выбранный маршрут вывода звука.|||Rezerves runas sintēze saglabā izvēlēto skaņas izvades maršrutu.
 API key|||API-ключ|||API atslēga
@@ -1353,7 +1353,7 @@ Try another name or content phrase.|||Попробуйте другое назв
 Reviewed %1$d times|||Повторений: %1$d|||Atkārtots %1$d reizes
 Listening stopped|||Прослушивание остановлено|||Klausīšanās apturēta
 Input interrupted. You can try again or type your question.|||Запись остановлена. Можно начать снова или написать вопрос.|||Ieraksts apturēts. Varat sākt vēlreiz vai ierakstīt jautājumu.
-Import file|||Импортировать файл|||Importēt failu
+Import file|||Импортировать файл|||Importēt failu|||Importuj plik
 Sketch|||Набросок|||Skice
 Edit sketch|||Изменить набросок|||Rediģēt skici
 Draw with your finger or stylus.|||Рисуйте пальцем или стилусом.|||Zīmē ar pirkstu vai irbuli.
@@ -1611,15 +1611,15 @@ Cancel download|||Отменить загрузку|||Atcelt lejupielādi
 Privacy|||Приватность|||Privātums
 Open Halo with limitations|||Открыть Halo с ограничениями|||Atvērt Halo ar ierobežojumiem
 An answer test sends only a short test phrase to your selected service, with no saved notes or conversation. Online usage may be charged.|||Проверка ответа отправляет выбранному сервису только короткую тестовую фразу, без заметок и разговоров. Онлайн-сервис может взимать плату.|||Atbildes pārbaude nosūta izvēlētajam pakalpojumam tikai īsu testa frāzi bez piezīmēm vai sarunām. Par tiešsaistes lietošanu var būt jāmaksā.
-Test an answer|||Проверить ответ|||Pārbaudīt atbildi
-Sync Hugging Face|||Обновить из Hugging Face|||Atjaunināt no Hugging Face
+Test an answer|||Проверить ответ|||Pārbaudīt atbildi|||Przetestuj odpowiedź
+Sync Hugging Face|||Обновить из Hugging Face|||Atjaunināt no Hugging Face|||Synchronizuj z Hugging Face
 Offline catalog|||Сохранённый каталог|||Saglabātais katalogs
 Syncing models…|||Обновляем модели…|||Atjaunina modeļus…
 Models updated|||Модели обновлены|||Modeļi atjaunināti
 Sync cancelled|||Обновление отменено|||Atjaunināšana atcelta
 Couldn't sync models. Your saved catalog is available.|||Не удалось обновить модели. Сохранённый каталог доступен.|||Neizdevās atjaunināt modeļus. Saglabātais katalogs ir pieejams.
 Download models and choose how Halo uses them.|||Скачайте модели и выберите, как Halo их использует.|||Lejupielādējiet modeļus un izvēlieties, kā Halo tos izmanto.
-Sorted for this phone. Memory estimates are guidance; test a model before relying on it.|||Отсортировано для этого телефона. Оценки памяти приблизительны; проверьте модель перед использованием.|||Sakārtots šim tālrunim. Atmiņas aplēses ir orientējošas; pārbaudiet modeli pirms lietošanas.
+Sorted for this phone. Memory estimates are guidance; test a model before relying on it.|||Отсортировано для этого телефона. Оценки памяти приблизительны; проверьте модель перед использованием.|||Sakārtots šim tālrunim. Atmiņas aplēses ir orientējošas; pārbaudiet modeli pirms lietošanas.|||Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem.
 Not enough free storage|||Недостаточно места|||Nepietiek brīvas vietas
 May need more free memory|||Может потребоваться больше свободной памяти|||Var būt nepieciešams vairāk brīvas atmiņas
 Estimated to fit this phone|||По оценке подходит этому телефону|||Pēc aplēsēm der šim tālrunim
@@ -1630,15 +1630,15 @@ Downloads resume after interruption. Nothing is selected automatically.|||Заг
 Quick replies|||Быстрые ответы|||Ātras atbildes
 Careful thinking|||Подробный анализ|||Rūpīga analīze
 Actions and tools|||Действия и инструменты|||Darbības un rīki
-Download a licensed model|||Скачать лицензированную модель|||Lejupielādēt licencētu modeli
-Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you.|||Примите лицензию издателя на Hugging Face, затем используйте токен чтения с доступом. Halo не может принять лицензию за вас.|||Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. Halo nevar pieņemt licenci jūsu vietā.
-Open publisher license|||Открыть лицензию издателя|||Atvērt izdevēja licenci
-Get a Hugging Face read token|||Получить токен чтения Hugging Face|||Iegūt Hugging Face lasīšanas pilnvaru
-Hugging Face token|||Токен Hugging Face|||Hugging Face pilnvara
-I accepted the publisher's license|||Я принял лицензию издателя|||Es pieņēmu izdevēja licenci
+Download a licensed model|||Скачать лицензированную модель|||Lejupielādēt licencētu modeli|||Pobierz model na licencji
+Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you.|||Примите лицензию издателя на Hugging Face, затем используйте токен чтения с доступом. Halo не может принять лицензию за вас.|||Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. Halo nevar pieņemt licenci jūsu vietā.|||Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu.
+Open publisher license|||Открыть лицензию издателя|||Atvērt izdevēja licenci|||Otwórz licencję wydawcy
+Get a Hugging Face read token|||Получить токен чтения Hugging Face|||Iegūt Hugging Face lasīšanas pilnvaru|||Uzyskaj token odczytu Hugging Face
+Hugging Face token|||Токен Hugging Face|||Hugging Face pilnvara|||Token Hugging Face
+I accepted the publisher's license|||Я принял лицензию издателя|||Es pieņēmu izdevēja licenci|||Akceptuję licencję wydawcy
 The token is used for this download only and is not saved.|||Токен используется только для этой загрузки и не сохраняется.|||Pilnvara tiek izmantota tikai šai lejupielādei un netiek saglabāta.
 Download with Hugging Face|||Скачать через Hugging Face|||Lejupielādēt ar Hugging Face
-Use for conversation|||Использовать для разговора|||Izmantot sarunai
+Use for conversation|||Использовать для разговора|||Izmantot sarunai|||Użyj do rozmów
 Model downloads|||Загрузки моделей|||Modeļu lejupielādes
 Downloading model|||Загружаем модель|||Lejupielādē modeli
 Download paused|||Загрузка приостановлена|||Lejupielāde apturēta
@@ -1751,7 +1751,7 @@ In context|||В контексте|||Kontekstā
 Actions & connections|||Действия и подключения|||Darbības un savienojumi
 Setup & support|||Настройка и помощь|||Iestatīšana un palīdzība
 Model diagnostics|||Проверка моделей|||Modeļu diagnostika
-Local audio test|||Проверка локального аудио|||Lokālā audio pārbaude
+Local audio test|||Проверка локального аудио|||Lokālā audio pārbaude|||Lokalny test dźwięku
 Try an audio file with an installed model|||Попробуйте аудиофайл с установленной моделью|||Izmēģiniet audio failu ar instalētu modeli
 Audio stays on this phone. This test uses no tools and saves no conversation. Audio input models return text; Voice settings control spoken replies.|||Аудио остаётся на телефоне. Проверка не использует инструменты и не сохраняет беседу. Аудиомодели возвращают текст; озвучивание настраивается в разделе «Голос».|||Audio paliek šajā tālrunī. Pārbaude neizmanto rīkus un nesaglabā sarunu. Audio modeļi atgriež tekstu; balss atbildes iestata sadaļā Balss.
 No audio-capable model installed|||Нет установленной модели с поддержкой аудио|||Nav instalēta modeļa ar audio atbalstu
@@ -1820,7 +1820,7 @@ Image understanding|||Понимание изображений|||Attēlu izprat
 Audio understanding|||Понимание аудио|||Audio izpratne
 Tool candidates|||Модели для инструментов|||Rīku modeļu kandidāti
 Tool candidates still need a proven tool loop before Halo can use them for actions.|||Прежде чем использовать такую модель для действий, нужно проверить её цикл работы с инструментами.|||Pirms Halo izmanto šādu modeli darbībām, jāpārbauda tā rīku darbību cikls.
-No local models match these filters. Try another capability or clear the search.|||Нет моделей с такими параметрами. Выберите другую возможность или очистите поиск.|||Nav modeļu ar šādiem filtriem. Izvēlieties citu iespēju vai notīriet meklēšanu.
+No local models match these filters. Try another capability or clear the search.|||Нет моделей с такими параметрами. Выберите другую возможность или очистите поиск.|||Nav modeļu ar šādiem filtriem. Izvēlieties citu iespēju vai notīriet meklēšanu.|||Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie.
 Not installed|||Не установлена|||Nav instalēts
 Installed · verified · cold|||Установлена и проверена · загрузится по запросу|||Instalēts un pārbaudīts · ielādēsies pēc pieprasījuma
 Selected · cold (will load on request)|||Выбрана · загрузится по запросу|||Izvēlēts · ielādēsies pēc pieprasījuma
@@ -1925,7 +1925,7 @@ Notification access|||Доступ к уведомлениям|||Piekļuve pazi�
 24 hours|||24 часа|||24 stundas
 Nothing waiting here|||Здесь пока нет уведомлений|||Šeit vēl nav paziņojumu
 Clear the search and app filter to see more notifications.|||Очистите поиск и фильтр приложений, чтобы увидеть больше уведомлений.|||Notīriet meklēšanu un lietotņu filtru, lai redzētu vairāk paziņojumu.
-Clear filters|||Очистить фильтры|||Notīrīt filtrus
+Clear filters|||Очистить фильтры|||Notīrīt filtrus|||Wyczyść filtry
 Messages|||Сообщения|||Ziņojumi
 Calls|||Звонки|||Zvani
 Open notification from %1$s|||Открыть уведомление от %1$s|||Atvērt paziņojumu no %1$s
@@ -2334,7 +2334,7 @@ Internet is available|||Интернет доступен|||Internets ir pieejam
 Internet connection is lost|||Подключение к интернету потеряно|||Interneta savienojums zudis
 Required capability becomes available|||Нужная возможность становится доступной|||Vajadzīgā iespēja kļūst pieejama
 
-Test GPU for Automatic|||Проверить GPU для автоматического режима|||Pārbaudīt GPU automātiskajam režīmam
+Test GPU for Automatic|||Проверить GPU для автоматического режима|||Pārbaudīt GPU automātiskajam režīmam|||Przetestuj GPU dla trybu automatycznego
 Unload the model before testing GPU.|||Выгрузите модель перед проверкой GPU.|||Pirms GPU pārbaudes izņemiet modeli no atmiņas.
 Automatic uses CPU until this model passes the GPU test.|||Автоматический режим использует CPU, пока модель не пройдет проверку GPU.|||Automātiskais režīms izmanto CPU, līdz modelis iztur GPU pārbaudi.
 If the selected voice is unavailable|||Если выбранный голос недоступен|||Ja izvēlētā balss nav pieejama
@@ -2859,18 +2859,18 @@ No exercises found in this view. Try another page or type the exercise.|||На �
 Check each exercise against your material before using it.|||Прежде чем начать, сверь каждое упражнение с материалом.|||Pirms risināšanas salīdzini katru uzdevumu ar savu materiālu.
 Could not open the project canvas. Your saved note is kept.|||Не удалось открыть холст проекта. Сохранённая заметка осталась.|||Neizdevās atvērt projekta audeklu. Saglabātā piezīme ir paturēta.
 Unkept changes discarded. Your saved project is restored.|||Несохранённые изменения отменены. Сохранённый проект восстановлен.|||Nesaglabātās izmaiņas ir atmestas. Saglabātais projekts ir atjaunots.
-Apply token|||Применить токен|||Lietot piekļuves marķieri
-Clear token|||Удалить токен|||Notīrīt piekļuves marķieri
+Apply token|||Применить токен|||Lietot piekļuves marķieri|||Zastosuj token
+Clear token|||Удалить токен|||Notīrīt piekļuves marķieri|||Usuń token
 Hugging Face access|||Доступ к Hugging Face|||Hugging Face piekļuve
-Hugging Face read token|||Токен чтения Hugging Face|||Hugging Face lasīšanas marķieris
-A token does not accept a model license. Accept the publisher's license using the same Hugging Face account.|||Токен не подтверждает лицензию модели. Прими лицензию издателя в том же аккаунте Hugging Face.|||Marķieris neapstiprina modeļa licenci. Pieņem izdevēja licenci tajā pašā Hugging Face kontā.
-Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence.|||Среди кандидатов есть модели с вызовом инструментов через промпт Halo. Нативный вызов инструментов проверяется отдельно для конкретного файла модели.|||Kandidāti ietver Halo uzvednē vadītus rīku ciklus. Iebūvētie rīku izsaukumi ir atsevišķa iespēja, kas jāpārbauda konkrētajam modeļa failam.
+Hugging Face read token|||Токен чтения Hugging Face|||Hugging Face lasīšanas marķieris|||Token odczytu Hugging Face
+A token does not accept a model license. Accept the publisher's license using the same Hugging Face account.|||Токен не подтверждает лицензию модели. Прими лицензию издателя в том же аккаунте Hugging Face.|||Marķieris neapstiprina modeļa licenci. Pieņem izdevēja licenci tajā pašā Hugging Face kontā.|||Token nie akceptuje licencji modelu. Zaakceptuj licencję wydawcy na tym samym koncie Hugging Face.
+Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence.|||Среди кандидатов есть модели с вызовом инструментов через промпт Halo. Нативный вызов инструментов проверяется отдельно для конкретного файла модели.|||Kandidāti ietver Halo uzvednē vadītus rīku ciklus. Iebūvētie rīku izsaukumi ir atsevišķa iespēja, kas jāpārbauda konkrētajam modeļa failam.|||Kandydaci obejmują pętle narzędziowe oparte na promptach halo. Natywne wywoływanie narzędzi jest osobną funkcją i wymaga dowodów dla danego pliku modelu.
 Halo prompt tool candidate · download and test before assigning an action role|||Кандидат для инструментов через промпт Halo · скачай и проверь перед назначением роли действий|||Halo uzvednes rīku kandidāts · lejupielādē un pārbaudi pirms darbību lomas piešķiršanas
-Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime.|||Импортируй полностью скачанный файл .litertlm. Эта среда не поддерживает GGUF и .tflite.|||Importē pilnībā lejupielādētu .litertlm failu. Šī izpildvide neatbalsta GGUF un .tflite failus.
-Refresh on-device files|||Обновить файлы на устройстве|||Atjaunināt ierīces failu sarakstu
-Refresh on-device files before downloading.|||Перед скачиванием обнови список файлов на устройстве.|||Pirms lejupielādes atjaunini ierīces failu sarakstu.
-On-device files|||Файлы на устройстве|||Ierīces faili
-Verified artifacts|||Проверенные файлы моделей|||Pārbaudīti modeļu faili
+Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime.|||Импортируй полностью скачанный файл .litertlm. Эта среда не поддерживает GGUF и .tflite.|||Importē pilnībā lejupielādētu .litertlm failu. Šī izpildvide neatbalsta GGUF un .tflite failus.|||Zaimportuj w pełni pobrany plik .litertlm. To środowisko wykonawcze nie obsługuje plików GGUF ani .tflite.
+Refresh on-device files|||Обновить файлы на устройстве|||Atjaunināt ierīces failu sarakstu|||Odśwież pliki na urządzeniu
+Refresh on-device files before downloading.|||Перед скачиванием обнови список файлов на устройстве.|||Pirms lejupielādes atjaunini ierīces failu sarakstu.|||Przed pobraniem odśwież pliki na urządzeniu.
+On-device files|||Файлы на устройстве|||Ierīces faili|||Pliki na urządzeniu
+Verified artifacts|||Проверенные файлы моделей|||Pārbaudīti modeļu faili|||Zweryfikowane pliki modelu
 All files and downloads|||Все файлы и загрузки|||Visi faili un lejupielādes
 Available to download|||Доступно для скачивания|||Pieejams lejupielādei
 On this phone · file verified|||На устройстве · файл проверен|||Šajā tālrunī · fails pārbaudīts
@@ -2983,7 +2983,7 @@ Median: %1$d ms · P95: %2$d ms|||Медиана: %1$d мс · P95: %2$d мс|||
 Not enough measured samples for percentiles|||Недостаточно измерений для процентилей|||Nepietiek mērījumu procentilēm
 Copy voice latency report|||Копировать отчёт о задержке голоса|||Kopēt balss aiztures pārskatu
 Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d|||Голосовых запросов: %1$d · Завершено: %2$d · Отменено: %3$d · Ошибок: %4$d|||Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d
-Find related notes|||Найти связанные заметки|||Atrast saistītās piezīmes
+Find related notes|||Найти связанные заметки|||Atrast saistītās piezīmes|||Znajdź powiązane notatki
 Search your chosen Notebook, Canvas and Study text privately on this phone. Halo will not index anything until you approve the sources and tap Build local search.|||Ищите по выбранным заметкам, Canvas и материалам Study прямо на телефоне. Halo ничего не индексирует, пока вы не разрешите источники и не запустите локальный поиск.|||Meklējiet izvēlēto piezīmju, Canvas un Study tekstā privāti šajā tālrunī. Halo neko neindeksē, līdz atļaujat avotus un sākat lokālās meklēšanas izveidi.
 Local search model|||Модель локального поиска|||Lokālās meklēšanas modelis
 No verified local search model is installed.|||Подтверждённая модель локального поиска не установлена.|||Nav instalēts pārbaudīts lokālās meklēšanas modelis.
@@ -3710,10 +3710,10 @@ Answered on this phone|||Ответ получен на этом телефон�
 Needs checking|||Нужна проверка|||Jāpārbauda
 Answers and conversation|||Ответы и общение|||Atbildes un sarunas
 Specialized features|||Специальные возможности|||Specializētas iespējas
-This model does not answer chats. Its other features need compatible support.|||Эта модель не отвечает в чатах. Для других её возможностей нужна совместимая поддержка.|||Šis modelis neatbild sarunās. Tā pārējām iespējām vajadzīgs saderīgs atbalsts.
+This model does not answer chats. Its other features need compatible support.|||Эта модель не отвечает в чатах. Для других её возможностей нужна совместимая поддержка.|||Šis modelis neatbild sarunās. Tā pārējām iespējām vajadzīgs saderīgs atbalsts.|||Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi.
 In use|||Используется|||Tiek izmantots
-Answer from this phone|||Ответ с этого телефона|||Atbilde no šī tālruņa
-No answer was received. Try again or choose another model.|||Ответ не получен. Повторите попытку или выберите другую модель.|||Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli.
+Answer from this phone|||Ответ с этого телефона|||Atbilde no šī tālruņa|||Odpowiedź z tego telefonu
+No answer was received. Try again or choose another model.|||Ответ не получен. Повторите попытку или выберите другую модель.|||Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli.|||Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model.
 An answer model is selected|||Модель для ответов выбрана|||Atbilžu modelis ir izvēlēts
 Backup password|||Пароль резервной копии|||Rezerves kopijas parole
 Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only.|||Сохраните пароль для восстановления на другом телефоне. halo безопасно хранит его для резервного копирования по расписанию. Изменение пароля касается только новых копий.|||Saglabājiet paroli atjaunošanai citā tālrunī. halo to glabā droši plānotajām rezerves kopijām. Paroles maiņa attiecas tikai uz jaunām kopijām.
