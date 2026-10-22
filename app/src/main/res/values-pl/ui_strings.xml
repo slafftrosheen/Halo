@@ -102,6 +102,7 @@
     <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
     <string name="ui_d17d2d78d76e" formatted="false">"Modele"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
+    <string name="ui_ce1c23d020c5" formatted="false">"Zmierzono, ale wyniki są niestabilne"</string>
     <string name="ui_a3773fd35520" formatted="false">"Kandydaci do testów: %1$s"</string>
     <string name="ui_339c70704322" formatted="false">"Kandydat do testów: %1$s"</string>
     <string name="ui_956f37e4b3ec" formatted="false">"Sugerowane role: %1$s"</string>
@@ -120,9 +121,25 @@
     <string name="ui_2a78025de6aa" formatted="false">"Wybierz"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
+    <string name="ui_10421935232f" formatted="false">"Szukaj modeli"</string>
+    <string name="ui_9e6ea475a239" formatted="false">"Ukryj filtry"</string>
+    <string name="ui_546ebb8eb993" formatted="false">"Filtry"</string>
+    <string name="ui_96e47ea0b1ee" formatted="false">"Wszystkie koszty"</string>
+    <string name="ui_f411a1fb6275" formatted="false">"Bezpłatne"</string>
+    <string name="ui_20e56db7dfc7" formatted="false">"Wszyscy dostawcy"</string>
+    <string name="ui_0e23b0cfebfc" formatted="false">"Wszystkie lokalizacje"</string>
+    <string name="ui_6ebe0bc360aa" formatted="false">"Wszystkie możliwości"</string>
+    <string name="ui_1c0def7be060" formatted="false">"Odświeżanie…"</string>
+    <string name="ui_13e10588f9f9" formatted="false">"Konfiguracja dostawcy"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Sieć lokalna"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Chmura"</string>
     <string name="ui_824ddc4cb517" formatted="false">"Domyślny model rozmowy"</string>
+    <string name="ui_30e82a8c8371" formatted="false">"Role modeli"</string>
+    <string name="ui_dff99ddda166" formatted="false">"Obrazy i kontekst wizualny"</string>
+    <string name="ui_84aebc69a1bf" formatted="false">"Skonfigurowano"</string>
+    <string name="ui_9298c8f4b3ff" formatted="false">"Zmierzono"</string>
+    <string name="ui_f6e05dcfcfa8" formatted="false">"Wybierz model"</string>
+    <string name="ui_75055b60a427" formatted="false">"Przeglądaj lokalne modele"</string>
     <string name="ui_0e9161011702" formatted="false">"Odśwież"</string>
     <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_36ecb4f86691" formatted="false">"Wejście"</string>
@@ -157,6 +174,7 @@
     <string name="ui_d33461e6c0b6" formatted="false">"Wyczyść pamięć podręczną"</string>
     <string name="ui_d6512d81e9b9" formatted="false">"Cofnij przywracanie"</string>
     <string name="ui_91cac509faa3" formatted="false">"Zezwól halo na powiadomienia"</string>
+    <string name="ui_be7e2f201293" formatted="false">"Obrazy"</string>
     <string name="ui_737b13c8b8d1" formatted="false">"Czym jest MCP?"</string>
     <string name="ui_0e3e58f90d67" formatted="false">"Dodaj serwer MCP"</string>
     <string name="ui_4556cab2aa83" formatted="false">"Szukaj serwerów i narzędzi"</string>
@@ -234,6 +252,11 @@
     <string name="ui_d2a7f5b8070e" formatted="false">"halo tworzy kontekst wyłącznie z wybranych lokalnych źródeł."</string>
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
+    <string name="ui_e03af4915226" formatted="false">"Niektóre katalogi są niedostępne lub nieaktualne. Zachowane informacje o modelach są nadal dostępne."</string>
+    <string name="ui_57ee5aa68531" formatted="false">"Brak pasujących modeli w pamięci podręcznej. Skonfiguruj dostawcę i ręcznie odśwież listę modeli albo pobierz model na urządzenie."</string>
+    <string name="ui_047ac7ec252d" formatted="false">"Wymagana konfiguracja dostawcy"</string>
+    <string name="ui_4227afaea7ce" formatted="false">"Dostępne do pobrania lub importu · Otwórz konfigurację dostawcy"</string>
+    <string name="ui_f397aa331860" formatted="false">"Skonfigurowany model jest niedostępny"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
     <string name="ui_03c91a480a79" formatted="false">"Synteza mowy ElevenLabs"</string>
     <string name="ui_16f0ee47f993" formatted="false">"Klucz API"</string>
@@ -335,6 +358,7 @@
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
     <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
     <string name="ui_6a7c277bdc6e" formatted="false">"Pracuję…"</string>
+    <string name="ui_d461a493a375" formatted="false">"Automatycznie"</string>
     <string name="ui_da0dbc127233" formatted="false">"Przerwij odpowiedź i zacznij mówić"</string>
     <string name="ui_0f831f06c1d4" formatted="false">"Załączniki i kontekst"</string>
     <string name="ui_168512c5b1c3" formatted="false">"Nie udało się odtworzyć odpowiedzi"</string>
@@ -426,6 +450,9 @@
     <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
     <string name="ui_13bbdede669f" formatted="false">"Wstrzymaj pobieranie"</string>
     <string name="ui_ebae1110ebec" formatted="false">"Pobieranie zostanie wznowione po przerwaniu. Żaden głos nie jest wybierany automatycznie."</string>
+    <string name="ui_ba5ca289c1ab" formatted="false">"Szybkie odpowiedzi"</string>
+    <string name="ui_6493f5a6791f" formatted="false">"Dokładniejsza analiza"</string>
+    <string name="ui_66b2c6f11be8" formatted="false">"Działania i narzędzia"</string>
     <string name="ui_675b7e1dbaf0" formatted="false">"Pobierz model na licencji"</string>
     <string name="ui_b0a363b97ad2" formatted="false">"Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu."</string>
     <string name="ui_7e902370711d" formatted="false">"Otwórz licencję wydawcy"</string>
@@ -519,6 +546,8 @@
     <string name="ui_3e0bae9d4f24" formatted="false">"Usunąć dane logowania?"</string>
     <string name="ui_2a1d9e3b7427" formatted="false">"Ten dostawca będzie wymagać ponownej autoryzacji. Zapisane notatki i rozmowy pozostaną."</string>
     <string name="ui_cb0b5b7247ee" formatted="false">"Przed testowaniem zapisz zmiany. Testy korzystają z zapisanej konfiguracji."</string>
+    <string name="ui_5267f5e646a5" formatted="false">"Brak pasujących modeli"</string>
+    <string name="ui_c7f3fb40a48e" formatted="false">"Przy obecnej konfiguracji nie można wybrać tego modelu do tego zadania."</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
@@ -528,6 +557,8 @@
     <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
     <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
+    <string name="ui_ce55dc5592b3" formatted="false">"Wyniki pomiarów"</string>
+    <string name="ui_7d72dd702521" formatted="false">"Ukryj wyniki pomiarów"</string>
     <string name="ui_92479c7665b6" formatted="false">"Pliki wymagające uwagi: %1$d"</string>
     <string name="ui_cae632f94b8d" formatted="false">"Nowe: %1$d · istniejące: %2$d · konflikty: %3$d"</string>
     <string name="ui_cbd38d68a6f2" formatted="false">"Dostęp jest opcjonalny. Po odmowie nadal możesz wpisywać pytania i prowadzić prywatne notatki."</string>
@@ -582,6 +613,7 @@
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
     <string name="ui_934652dce41d" formatted="false">"Instrukcje"</string>
     <string name="ui_293df2caff23" formatted="false">"Ostatnia udana kopia · %1$s"</string>
+    <string name="ui_b24f04846a22" formatted="false">"Brak zgodnego modelu"</string>
     <string name="ui_7b3b2c40f4e6" formatted="false">"Bez dodatkowego limitu"</string>
     <string name="ui_d7d557fa439a" formatted="false">"Rozmiar niedostępny"</string>
     <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>
@@ -672,6 +704,7 @@
     <string name="ui_cc42af5664d6" formatted="false">"Token odczytu Hugging Face"</string>
     <string name="ui_ea1f1ba0beb3" formatted="false">"Token nie akceptuje licencji modelu. Zaakceptuj licencję wydawcy na tym samym koncie Hugging Face."</string>
     <string name="ui_c70df78cbfc4" formatted="false">"Kandydaci obejmują pętle narzędziowe oparte na promptach halo. Natywne wywoływanie narzędzi jest osobną funkcją i wymaga dowodów dla danego pliku modelu."</string>
+    <string name="ui_99cb5f56f029" formatted="false">"Kandydat narzędziowy halo Prompt · pobierz i przetestuj przed przypisaniem roli działania"</string>
     <string name="ui_050e2c6cc9a1" formatted="false">"Zaimportuj w pełni pobrany plik .litertlm. To środowisko wykonawcze nie obsługuje plików GGUF ani .tflite."</string>
     <string name="ui_a57bf7bcba44" formatted="false">"Odśwież pliki na urządzeniu"</string>
     <string name="ui_fc72166cc2c3" formatted="false">"Przed pobraniem odśwież pliki na urządzeniu."</string>
@@ -820,6 +853,7 @@
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
+    <string name="ui_c905013aab29" formatted="false">"Tylko lokalnie"</string>
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
     <string name="ui_c72e91e40fb2" formatted="false">"Znajdź plik"</string>
     <string name="ui_30ee65fa01ad" formatted="false">"Rozmowę przeniesiono do Kosza"</string>
@@ -1028,4 +1062,28 @@
     <string name="ui_73a0d909ce75" formatted="false">"Wprowadź dane logowania"</string>
     <string name="ui_c3f87d0c007c" formatted="false">"Autoryzacja OAuth zakończona; sprawdź połączenie, aby potwierdzić gotowość."</string>
     <string name="ui_a5a4c9a03be3" formatted="false">"Autoryzacja Google nie powiodła się."</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Płatne / zależne od konta"</string>
+    <string name="ui_d721c079e186" formatted="false">"Użyj modelu rozmowy"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Wybieraj automatycznie"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Użyj wybranego modelu"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Natywna obsługa cyklu narzędzi"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"Obsługa cyklu narzędzi w promptach halo"</string>
+    <string name="ui_c8f701d80021" formatted="false">"Brak cyklu narzędzi"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Szybkie odpowiedzi w rozmowie"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Zwykła rozmowa · domyślny model rozmowy"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Dokładniejsza analiza · osobny wybór modelu"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Zadania wymagające narzędzi"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Najlepszy wynik pomiarów na tym urządzeniu"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Jedyny kandydat z wynikami pomiarów"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"CZAT 3/3 i trzy pomiary po rozgrzaniu; najniższe zmierzone opóźnienie po rozgrzaniu"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"CZAT 3/3; wyniki sprawdzianu rozumowania, kontekstu i opóźnienia"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"Testy czatu i rozumowania 3/3; stabilne działanie"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Potwierdzono pierwsze wywołanie narzędzia i kontynuację cyklu; preferowany jest natywny protokół"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Zweryfikowane wyniki obsługi obrazów z Vision Lab"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Sposób kierowania: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Sugestia: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Użyj w roli: %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Tylko wybrany model"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Preferowany dostawca z opcją zapasową"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Odśwież dane wybranego dostawcy"</string>
 </resources>

@@ -3917,4 +3917,28 @@
     <string name="ui_73a0d909ce75" formatted="false">"Enter credential"</string>
     <string name="ui_c3f87d0c007c" formatted="false">"OAuth authorized; test connection to check readiness"</string>
     <string name="ui_a5a4c9a03be3" formatted="false">"Google authorization failed"</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Paid / account dependent"</string>
+    <string name="ui_d721c079e186" formatted="false">"Use conversation model"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Choose automatically"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Use selected model"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Native tool loop"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"halo prompt tool loop"</string>
+    <string name="ui_c8f701d80021" formatted="false">"No tool loop"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Quick conversational responses"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Normal conversation · Conversation default"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Deeper analysis · Independent model assignment"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Tasks that need tools"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Best measured on this device"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Only measured candidate"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"CHAT 3/3 and three warm samples; lowest measured warm latency"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"CHAT 3/3; reasoning, context and latency evidence"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"CHAT and reasoning probes 3/3; stable execution"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Proven initial tool and continuation loop; native protocol preferred"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Verified image evidence from Vision Lab"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Routing: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Suggested: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Use for %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Explicit model only"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Preferred provider with fallback"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Refresh selected provider metadata"</string>
 </resources>

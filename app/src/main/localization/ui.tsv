@@ -545,7 +545,7 @@ Show all|||Показать все|||Rādīt visu|||Pokaż wszystkie
 Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
 Needs retest|||Нужно проверить повторно|||Jāpārbauda atkārtoti
 Stable|||Стабильно|||Stabils
-Measured but unstable|||Проверено, нестабильно|||Izmērīts, bet nestabils
+Measured but unstable|||Проверено, нестабильно|||Izmērīts, bet nestabils|||Zmierzono, ale wyniki są niestabilne
 Candidates for %1$s testing|||Кандидаты для проверки: %1$s|||Kandidāti pārbaudei: %1$s|||Kandydaci do testów: %1$s
 Candidate for: %1$s testing|||Кандидат для проверки: %1$s|||Kandidāts pārbaudei: %1$s|||Kandydat do testów: %1$s
 Suggested roles: %1$s|||Рекомендуемые роли: %1$s|||Ieteicamās lomas: %1$s|||Sugerowane role: %1$s
@@ -566,25 +566,25 @@ Re-download|||Скачать заново|||Lejupielādēt vēlreiz|||Pobierz po
 Select|||Выбрать|||Izvēlēties|||Wybierz
 Unload|||Выгрузить|||Izlādēt|||Wyładuj
 Download|||Скачать|||Lejupielādēt|||Pobierz
-Search models|||Поиск моделей|||Meklēt modeļus
-Hide filters|||Скрыть фильтры|||Paslēpt filtrus
-Filters|||Фильтры|||Filtri
-All costs|||Любая стоимость|||Visas cenas
-Free|||Бесплатно|||Bezmaksas
-All providers|||Все провайдеры|||Visi pakalpojumu sniedzēji
-All locations|||Все местоположения|||Visas atrašanās vietas
-All capabilities|||Все возможности|||Visas iespējas
-Refreshing…|||Обновление…|||Atjaunina…
-Provider setup|||Настройка провайдера|||Pakalpojumu sniedzēja iestatīšana
+Search models|||Поиск моделей|||Meklēt modeļus|||Szukaj modeli
+Hide filters|||Скрыть фильтры|||Paslēpt filtrus|||Ukryj filtry
+Filters|||Фильтры|||Filtri|||Filtry
+All costs|||Любая стоимость|||Visas cenas|||Wszystkie koszty
+Free|||Бесплатно|||Bezmaksas|||Bezpłatne
+All providers|||Все провайдеры|||Visi pakalpojumu sniedzēji|||Wszyscy dostawcy
+All locations|||Все местоположения|||Visas atrašanās vietas|||Wszystkie lokalizacje
+All capabilities|||Все возможности|||Visas iespējas|||Wszystkie możliwości
+Refreshing…|||Обновление…|||Atjaunina…|||Odświeżanie…
+Provider setup|||Настройка провайдера|||Pakalpojumu sniedzēja iestatīšana|||Konfiguracja dostawcy
 Local network|||Локальная сеть|||Lokālais tīkls|||Sieć lokalna
 Cloud|||Облако|||Mākonis|||Chmura
 Conversation default|||Модель для разговоров по умолчанию|||Noklusējuma sarunu modelis|||Domyślny model rozmowy
-Model roles|||Роли моделей|||Modeļu lomas
-Images and visual context|||Изображения и визуальный контекст|||Attēli un vizuālais konteksts
-Configured|||Настроено|||Iestatīts
-Measured|||Проверено|||Izmērīts
-Choose model|||Выбрать модель|||Izvēlēties modeli
-Explore local candidates|||Посмотреть локальные модели|||Izpētīt lokālos modeļus
+Model roles|||Роли моделей|||Modeļu lomas|||Role modeli
+Images and visual context|||Изображения и визуальный контекст|||Attēli un vizuālais konteksts|||Obrazy i kontekst wizualny
+Configured|||Настроено|||Iestatīts|||Skonfigurowano
+Measured|||Проверено|||Izmērīts|||Zmierzono
+Choose model|||Выбрать модель|||Izvēlēties modeli|||Wybierz model
+Explore local candidates|||Посмотреть локальные модели|||Izpētīt lokālos modeļus|||Przeglądaj lokalne modele
 Refresh|||Обновить|||Atjaunināt|||Odśwież
 Speech recognition|||Распознавание речи|||Runas atpazīšana
 Local speech model and language.|||Локальная речевая модель и язык.|||Lokālais runas modelis un valoda.
@@ -709,7 +709,7 @@ Workspace context|||Контекст рабочего пространства||
 Remote context sharing|||Передача контекста в облако|||Konteksta kopīgošana attālināti
 Workspace references|||Ссылки на рабочее пространство|||Darbvietas atsauces
 Current screen|||Текущий экран|||Pašreizējais ekrāns
-Images|||Изображения|||Attēli
+Images|||Изображения|||Attēli|||Obrazy
 Copy local AI diagnostics|||Копировать диагностику локального ИИ|||Kopēt lokālā MI diagnostiku
 Preview reflection policy|||Предпросмотр политики самоанализа|||Pārskatīt refleksijas politiku
 Copy Summary|||Копировать сводку|||Kopēt kopsavilkumu
@@ -1011,11 +1011,11 @@ BLE PROTOCOL DISCOVERY|||ИССЛЕДОВАНИЕ ПРОТОКОЛА BLE|||BLE P
 Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.|||Сбор необработанных данных BLE. Выбранное устройство не считается HeyCyan без проверки. Команды протокола не отправляются.|||Neapstrādātu BLE datu vākšana. Nav pieņemts, ka izvēlētā ierīce ir HeyCyan. Protokola komandas netiek sūtītas.
 Save Capture|||Сохранить запись|||Saglabāt ierakstu
 Models & connections|||Модели и подключения|||Modeļi un savienojumi
-Some catalogues are unavailable or stale. Retained metadata remains browsable.|||Некоторые каталоги недоступны или устарели. Сохранённые сведения всё ещё доступны для просмотра.|||Daži katalogi nav pieejami vai ir novecojuši. Saglabātos metadatus joprojām var pārlūkot.
-No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.|||Подходящих сохранённых моделей нет. Настройте провайдера и обновите его каталог либо скачайте локальную модель.|||Nav atbilstošu kešatmiņā saglabātu modeļu. Iestati pakalpojumu sniedzēju un atjaunini tā katalogu vai lejupielādē lokālu modeli.
-Provider setup required|||Нужно настроить провайдера|||Jāiestata pakalpojumu sniedzējs
-Available to download or import · Open provider setup|||Доступно для загрузки или импорта · Откройте настройки провайдера|||Pieejams lejupielādei vai importēšanai · Atver pakalpojumu sniedzēja iestatījumus
-Configured model unavailable|||Настроенная модель недоступна|||Konfigurētais modelis nav pieejams
+Some catalogues are unavailable or stale. Retained metadata remains browsable.|||Некоторые каталоги недоступны или устарели. Сохранённые сведения всё ещё доступны для просмотра.|||Daži katalogi nav pieejami vai ir novecojuši. Saglabātos metadatus joprojām var pārlūkot.|||Niektóre katalogi są niedostępne lub nieaktualne. Zachowane informacje o modelach są nadal dostępne.
+No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.|||Подходящих сохранённых моделей нет. Настройте провайдера и обновите его каталог либо скачайте локальную модель.|||Nav atbilstošu kešatmiņā saglabātu modeļu. Iestati pakalpojumu sniedzēju un atjaunini tā katalogu vai lejupielādē lokālu modeli.|||Brak pasujących modeli w pamięci podręcznej. Skonfiguruj dostawcę i ręcznie odśwież listę modeli albo pobierz model na urządzenie.
+Provider setup required|||Нужно настроить провайдера|||Jāiestata pakalpojumu sniedzējs|||Wymagana konfiguracja dostawcy
+Available to download or import · Open provider setup|||Доступно для загрузки или импорта · Откройте настройки провайдера|||Pieejams lejupielādei vai importēšanai · Atver pakalpojumu sniedzēja iestatījumus|||Dostępne do pobrania lub importu · Otwórz konfigurację dostawcy
+Configured model unavailable|||Настроенная модель недоступна|||Konfigurētais modelis nav pieejams|||Skonfigurowany model jest niedostępny
 Resident|||В памяти устройства|||Ielādēts atmiņā|||W pamięci
 ElevenLabs speech|||Синтез речи ElevenLabs|||ElevenLabs runas sintēze|||Synteza mowy ElevenLabs
 Synthesis fallback keeps the selected audio output route.|||Резервный синтез речи сохраняет выбранный маршрут вывода звука.|||Rezerves runas sintēze saglabā izvēlēto skaņas izvades maršrutu.
@@ -1278,7 +1278,7 @@ Couldn’t finish that. Try again.|||Не удалось закончить. П�
 Setup needs attention|||Проверьте настройки|||Pārbaudiet iestatījumus
 Halo is offline|||Halo не в сети|||Halo ir bezsaistē
 Getting ready again…|||Готовлюсь к работе…|||Gatavojos darbam…
-Automatic|||Автоматически|||Automātiski
+Automatic|||Автоматически|||Automātiski|||Automatycznie
 Ask|||Спросить|||Jautāt
 Act|||Действовать|||Rīkoties
 Mode: %1$s|||Режим: %1$s|||Režīms: %1$s
@@ -1643,9 +1643,9 @@ English voice on this phone. Download the complete publisher pack (320 MB). Othe
 Download Kokoro voice|||Скачать голос Kokoro|||Lejupielādēt Kokoro balsi
 Pause download|||Приостановить загрузку|||Apturēt lejupielādi|||Wstrzymaj pobieranie
 Downloads resume after interruption. Nothing is selected automatically.|||Загрузку можно продолжить после прерывания. Ничего не выбирается автоматически.|||Pēc pārtraukuma lejupielādi var turpināt. Nekas netiek izvēlēts automātiski.|||Pobieranie zostanie wznowione po przerwaniu. Żaden głos nie jest wybierany automatycznie.
-Quick replies|||Быстрые ответы|||Ātras atbildes
-Careful thinking|||Подробный анализ|||Rūpīga analīze
-Actions and tools|||Действия и инструменты|||Darbības un rīki
+Quick replies|||Быстрые ответы|||Ātras atbildes|||Szybkie odpowiedzi
+Careful thinking|||Подробный анализ|||Rūpīga analīze|||Dokładniejsza analiza
+Actions and tools|||Действия и инструменты|||Darbības un rīki|||Działania i narzędzia
 Download a licensed model|||Скачать лицензированную модель|||Lejupielādēt licencētu modeli|||Pobierz model na licencji
 Accept the publisher's license on Hugging Face, then use a read token with access. Halo cannot approve the license for you.|||Примите лицензию издателя на Hugging Face, затем используйте токен чтения с доступом. Halo не может принять лицензию за вас.|||Pieņemiet izdevēja licenci Hugging Face, pēc tam izmantojiet lasīšanas piekļuves pilnvaru. Halo nevar pieņemt licenci jūsu vietā.|||Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu.
 Open publisher license|||Открыть лицензию издателя|||Atvērt izdevēja licenci|||Otwórz licencję wydawcy
@@ -2068,8 +2068,8 @@ Last connection check: %1$s|||Последняя проверка подключ
 Remove credential?|||Удалить данные авторизации?|||Dzēst autorizācijas datus?|||Usunąć dane logowania?
 This provider will need authorization again. Saved notes and conversations are kept.|||Для этого провайдера потребуется новая авторизация. Заметки и разговоры сохранятся.|||Šim pakalpojumam būs vajadzīga atkārtota autorizācija. Piezīmes un sarunas tiks saglabātas.|||Ten dostawca będzie wymagać ponownej autoryzacji. Zapisane notatki i rozmowy pozostaną.
 Save your changes before testing. Checks use the saved configuration.|||Сохраните изменения перед проверкой. Проверки используют сохранённые настройки.|||Pirms pārbaudes saglabājiet izmaiņas. Pārbaudes izmanto saglabātos iestatījumus.|||Przed testowaniem zapisz zmiany. Testy korzystają z zapisanej konfiguracji.
-No matching models|||Подходящие модели не найдены|||Nav atbilstošu modeļu
-This model cannot be selected for this task with the current setup.|||С текущими настройками эту модель нельзя выбрать для данной задачи.|||Ar pašreizējiem iestatījumiem šo modeli nevar izvēlēties šim uzdevumam.
+No matching models|||Подходящие модели не найдены|||Nav atbilstošu modeļu|||Brak pasujących modeli
+This model cannot be selected for this task with the current setup.|||С текущими настройками эту модель нельзя выбрать для данной задачи.|||Ar pašreizējiem iestatījumiem šo modeli nevar izvēlēties šim uzdevumam.|||Przy obecnej konfiguracji nie można wybrać tego modelu do tego zadania.
 Video understanding|||Понимание видео|||Video izpratne
 Mixed media|||Разные типы данных|||Dažādu veidu saturs
 Streaming replies|||Ответ по частям|||Atbildes pa daļām
@@ -2132,8 +2132,8 @@ Control during Halo speech: %1$s|||Управление во время речи
 Voice: %1$s|||Голос: %1$s|||Balss: %1$s
 Model: %1$s|||Модель: %1$s|||Modelis: %1$s
 Speech output is unavailable. Check authorization, voice selection and your connection.|||Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение.|||Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu.|||Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie.
-Measured details|||Результаты измерений|||Mērījumu detaļas
-Hide measured details|||Скрыть результаты измерений|||Paslēpt mērījumu detaļas
+Measured details|||Результаты измерений|||Mērījumu detaļas|||Wyniki pomiarów
+Hide measured details|||Скрыть результаты измерений|||Paslēpt mērījumu detaļas|||Ukryj wyniki pomiarów
 %1$d files need attention|||%1$d файлов требуют внимания|||%1$d failiem jāpievērš uzmanība|||Pliki wymagające uwagi: %1$d
 %1$d new · %2$d existing · %3$d conflicts|||%1$d новых · %2$d существующих · %3$d конфликтов|||%1$d jauni · %2$d esoši · %3$d konflikti|||Nowe: %1$d · istniejące: %2$d · konflikty: %3$d
 %1$d tools · %2$d enabled|||%1$d инструментов · %2$d включено|||%1$d rīki · %2$d ieslēgti
@@ -2324,7 +2324,7 @@ Instructions|||Инструкции|||Instrukcijas|||Instrukcje
 Last enrollment return|||Последний возврат из настройки|||Pēdējā atgriešanās no iestatīšanas
 Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s|||Ostatnia udana kopia · %1$s
 Local controls for later device acceptance|||Локальные элементы для проверки на устройстве|||Lokāla vadība pārbaudei ierīcē
-No compatible model available|||Нет совместимой модели|||Nav pieejama saderīga modeļa
+No compatible model available|||Нет совместимой модели|||Nav pieejama saderīga modeļa|||Brak zgodnego modelu
 No extra limit|||Без дополнительного ограничения|||Bez papildu ierobežojuma|||Bez dodatkowego limitu
 Notification digest · last %1$d minutes|||Сводка уведомлений · последние %1$d минут|||Paziņojumu kopsavilkums · pēdējās %1$d minūtes
 Notification from %1$s|||Уведомление от %1$s|||Paziņojums no %1$s
@@ -2891,7 +2891,7 @@ Hugging Face access|||Доступ к Hugging Face|||Hugging Face piekļuve
 Hugging Face read token|||Токен чтения Hugging Face|||Hugging Face lasīšanas marķieris|||Token odczytu Hugging Face
 A token does not accept a model license. Accept the publisher's license using the same Hugging Face account.|||Токен не подтверждает лицензию модели. Прими лицензию издателя в том же аккаунте Hugging Face.|||Marķieris neapstiprina modeļa licenci. Pieņem izdevēja licenci tajā pašā Hugging Face kontā.|||Token nie akceptuje licencji modelu. Zaakceptuj licencję wydawcy na tym samym koncie Hugging Face.
 Candidates include Halo prompt tool loops. Native tool calling is separate and requires artifact-specific evidence.|||Среди кандидатов есть модели с вызовом инструментов через промпт Halo. Нативный вызов инструментов проверяется отдельно для конкретного файла модели.|||Kandidāti ietver Halo uzvednē vadītus rīku ciklus. Iebūvētie rīku izsaukumi ir atsevišķa iespēja, kas jāpārbauda konkrētajam modeļa failam.|||Kandydaci obejmują pętle narzędziowe oparte na promptach halo. Natywne wywoływanie narzędzi jest osobną funkcją i wymaga dowodów dla danego pliku modelu.
-Halo prompt tool candidate · download and test before assigning an action role|||Кандидат для инструментов через промпт Halo · скачай и проверь перед назначением роли действий|||Halo uzvednes rīku kandidāts · lejupielādē un pārbaudi pirms darbību lomas piešķiršanas
+Halo prompt tool candidate · download and test before assigning an action role|||Кандидат для инструментов через промпт Halo · скачай и проверь перед назначением роли действий|||Halo uzvednes rīku kandidāts · lejupielādē un pārbaudi pirms darbību lomas piešķiršanas|||Kandydat narzędziowy Halo Prompt · pobierz i przetestuj przed przypisaniem roli działania
 Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime.|||Импортируй полностью скачанный файл .litertlm. Эта среда не поддерживает GGUF и .tflite.|||Importē pilnībā lejupielādētu .litertlm failu. Šī izpildvide neatbalsta GGUF un .tflite failus.|||Zaimportuj w pełni pobrany plik .litertlm. To środowisko wykonawcze nie obsługuje plików GGUF ani .tflite.
 Refresh on-device files|||Обновить файлы на устройстве|||Atjaunināt ierīces failu sarakstu|||Odśwież pliki na urządzeniu
 Refresh on-device files before downloading.|||Перед скачиванием обнови список файлов на устройстве.|||Pirms lejupielādes atjaunini ierīces failu sarakstu.|||Przed pobraniem odśwież pliki na urządzeniu.
@@ -3324,7 +3324,7 @@ Ready for follow-up|||Готово для уточняющего вопроса|
 Context disabled|||Контекст отключён|||Konteksts ir izslēgts
 Excluded from AI|||Не передаётся ИИ|||Nav pieejams MI
 Configured cloud permitted|||Использование облачной модели разрешено|||Atļauta mākoņa modeļa izmantošana
-Local only|||Только локально|||Tikai lokāli
+Local only|||Только локально|||Tikai lokāli|||Tylko lokalnie
 Current lesson|||Текущий урок|||Pašreizējā nodarbība
 Selected source|||Выбранный источник|||Atlasītais avots
 %1$d items moved to trash|||Перемещено в корзину: %1$d|||Uz atkritni pārvietoti %1$d vienumi
@@ -3921,3 +3921,27 @@ No stored credential|||Нет сохранённых учетных данных
 Enter credential|||Введите учетные данные|||Ievadiet piekļuves datus|||Wprowadź dane logowania
 OAuth authorized; test connection to check readiness|||Авторизация OAuth завершена; проверьте подключение, чтобы убедиться в готовности.|||OAuth autorizācija pabeigta; pārbaudiet savienojumu, lai pārliecinātos par gatavību.|||Autoryzacja OAuth zakończona; sprawdź połączenie, aby potwierdzić gotowość.
 Google authorization failed|||Не удалось выполнить авторизацию Google.|||Google autorizācija neizdevās.|||Autoryzacja Google nie powiodła się.
+Paid / account dependent|||Платно / зависит от аккаунта|||Maksas / atkarīgs no konta|||Płatne / zależne od konta
+Use conversation model|||Использовать модель для разговора|||Izmantot sarunu modeli|||Użyj modelu rozmowy
+Choose automatically|||Выбирать автоматически|||Izvēlēties automātiski|||Wybieraj automatycznie
+Use selected model|||Использовать выбранную модель|||Izmantot izvēlēto modeli|||Użyj wybranego modelu
+Native tool loop|||Встроенный цикл вызова инструментов|||Iebūvētais rīku izsaukšanas cikls|||Natywna obsługa cyklu narzędzi
+Halo prompt tool loop|||Цикл инструментов в запросе Halo|||Halo uzvednes rīku izsaukšanas cikls|||Obsługa cyklu narzędzi w promptach Halo
+No tool loop|||Без цикла вызова инструментов|||Bez rīku izsaukšanas cikla|||Brak cyklu narzędzi
+Quick conversational responses|||Короткие ответы в разговоре|||Īsas atbildes sarunā|||Szybkie odpowiedzi w rozmowie
+Normal conversation · Conversation default|||Обычный разговор · модель по умолчанию|||Parasta saruna · noklusējuma sarunu modelis|||Zwykła rozmowa · domyślny model rozmowy
+Deeper analysis · Independent model assignment|||Более глубокий анализ · отдельный выбор модели|||Dziļāka analīze · atsevišķa modeļa izvēle|||Dokładniejsza analiza · osobny wybór modelu
+Tasks that need tools|||Задачи, которым нужны инструменты|||Uzdevumi, kuriem vajadzīgi rīki|||Zadania wymagające narzędzi
+Best measured on this device|||Лучший результат измерений на этом устройстве|||Labākie mērījumi šajā ierīcē|||Najlepszy wynik pomiarów na tym urządzeniu
+Only measured candidate|||Единственный кандидат с результатами измерений|||Vienīgais kandidāts ar mērījumu rezultātiem|||Jedyny kandydat z wynikami pomiarów
+CHAT 3/3 and three warm samples; lowest measured warm latency|||ЧАТ 3/3 и три замера после прогрева; минимальная задержка после прогрева|||SARUNA 3/3 un trīs mērījumi pēc iesilšanas; mazākā mērītā aizture pēc iesilšanas|||CZAT 3/3 i trzy pomiary po rozgrzaniu; najniższe zmierzone opóźnienie po rozgrzaniu
+CHAT 3/3; reasoning, context and latency evidence|||ЧАТ 3/3; результаты проверки рассуждений, контекста и задержки|||SARUNA 3/3; spriešanas, konteksta un aiztures pārbaudes rezultāti|||CZAT 3/3; wyniki sprawdzianu rozumowania, kontekstu i opóźnienia
+CHAT and reasoning probes 3/3; stable execution|||Проверки чата и рассуждений 3/3; стабильное выполнение|||Sarunas un spriešanas pārbaudes 3/3; stabila izpilde|||Testy czatu i rozumowania 3/3; stabilne działanie
+Proven initial tool and continuation loop; native protocol preferred|||Подтверждён первый вызов инструмента и продолжение цикла; предпочтителен встроенный протокол|||Pārbaudīts sākotnējais rīka izsaukums un cikla turpinājums; priekšroka iebūvētajam protokolam|||Potwierdzono pierwsze wywołanie narzędzia i kontynuację cyklu; preferowany jest natywny protokół
+Verified image evidence from Vision Lab|||Подтверждённые результаты обработки изображений из Vision Lab|||Pārbaudīti Vision Lab attēlu apstrādes rezultāti|||Zweryfikowane wyniki obsługi obrazów z Vision Lab
+Routing: %1$s|||Маршрутизация: %1$s|||Maršrutēšana: %1$s|||Sposób kierowania: %1$s
+Suggested: %1$s|||Рекомендация: %1$s|||Ieteikums: %1$s|||Sugestia: %1$s
+Use for %1$s|||Использовать для роли: %1$s|||Izmantot lomai: %1$s|||Użyj w roli: %1$s
+Explicit model only|||Только выбранная модель|||Tikai izvēlētais modelis|||Tylko wybrany model
+Preferred provider with fallback|||Предпочтительный провайдер с резервным вариантом|||Vēlamais pakalpojumu sniedzējs ar rezerves variantu|||Preferowany dostawca z opcją zapasową
+Refresh selected provider metadata|||Обновить данные выбранного провайдера|||Atjaunināt izvēlētā pakalpojumu sniedzēja informāciju|||Odśwież dane wybranego dostawcy

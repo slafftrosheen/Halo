@@ -114,8 +114,10 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
             HaloScreenHeader(uiText("Model roles"), navigation = onBack)
             WorkloadPolicyControls()
             message?.let { Text(it) }
-            Text("Routing: ${routing.name.lowercase().replace('_', ' ')}")
-            AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) { Text(policy.name.lowercase().replace('_', ' ') + if (routing == policy) " · Selected" else "") } }
+            Text(uiText("Routing: %1$s", uiText(routingPolicyLabel(routing))))
+            AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) {
+                Text(uiText(routingPolicyLabel(policy)) + if (routing == policy) " · " + uiText("Selected") else "")
+            } }
         }
         items(AiModelRole.entries.toList(), key = { it.name }) { role ->
             val binding = bindings[role] ?: control.router.roleBinding(role)
@@ -165,21 +167,21 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                     AiModelRole.REASONING -> "${row.reasoningPassed}/${row.reasoningTotal}"
                     AiModelRole.AGENTIC -> "${row.toolProtocol} · ${row.agenticVerdict}"
                     AiModelRole.VISION -> row.visionVerdict
-                } + if (!row.stable) " · Measured but unstable" else "") }
+                } + if (!row.stable) " · ${uiText("Measured but unstable")}" else "") }
                 if (measured.current.isEmpty()) Text(uiText("Not measured on this device"))
                 val suggestion = measured.recommendations[role]
                 suggestion?.recommended?.let { recommended ->
-                    Text("Suggested: ${recommended.modelId}", style = MaterialTheme.typography.labelMedium)
-                    Text(if (suggestion.confidence == LocalRoleRecommendationConfidence.COMPARATIVE)
-                        "Best measured on this device" else "Only measured candidate")
-                    Text(when(role) {
+                    Text(uiText("Suggested: %1$s", recommended.modelId), style = MaterialTheme.typography.labelMedium)
+                    Text(uiText(if (suggestion.confidence == LocalRoleRecommendationConfidence.COMPARATIVE)
+                        "Best measured on this device" else "Only measured candidate"))
+                    Text(uiText(when(role) {
                         AiModelRole.FAST -> "CHAT 3/3 and three warm samples; lowest measured warm latency"
                         AiModelRole.CHAT -> "CHAT 3/3; reasoning, context and latency evidence"
                         AiModelRole.REASONING -> "CHAT and reasoning probes 3/3; stable execution"
                         AiModelRole.AGENTIC -> "Proven initial tool and continuation loop; native protocol preferred"
                         AiModelRole.VISION -> "Verified image evidence from Vision Lab"
-                    })
-                    TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text("Use for ${role.name.lowercase()}") }
+                    }))
+                    TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text(uiText("Use for %1$s", uiText(modelRoleLabel(role)))) }
                 }
                 TextButton(onClick = { onExplore(role) }) { Text(uiText("Explore local candidates")) }
                 }
@@ -199,4 +201,11 @@ internal fun toolProtocolLabel(protocol: ToolCallProtocol): String = when (proto
     ToolCallProtocol.NATIVE -> "Native tool loop"
     ToolCallProtocol.HALO_PROMPT -> "Halo prompt tool loop"
     ToolCallProtocol.NONE -> "No tool loop"
+}
+
+internal fun routingPolicyLabel(policy: AiRoutingPolicy): String = when (policy) {
+    AiRoutingPolicy.EXPLICIT -> "Explicit model only"
+    AiRoutingPolicy.AUTOMATIC -> "Automatic"
+    AiRoutingPolicy.LOCAL_ONLY -> "Local only"
+    AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> "Preferred provider with fallback"
 }

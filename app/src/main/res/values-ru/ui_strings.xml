@@ -3917,4 +3917,28 @@
     <string name="ui_73a0d909ce75" formatted="false">"Введите учетные данные"</string>
     <string name="ui_c3f87d0c007c" formatted="false">"Авторизация OAuth завершена; проверьте подключение, чтобы убедиться в готовности."</string>
     <string name="ui_a5a4c9a03be3" formatted="false">"Не удалось выполнить авторизацию Google."</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Платно / зависит от аккаунта"</string>
+    <string name="ui_d721c079e186" formatted="false">"Использовать модель для разговора"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Выбирать автоматически"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Использовать выбранную модель"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Встроенный цикл вызова инструментов"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"Цикл инструментов в запросе halo"</string>
+    <string name="ui_c8f701d80021" formatted="false">"Без цикла вызова инструментов"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Короткие ответы в разговоре"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Обычный разговор · модель по умолчанию"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Более глубокий анализ · отдельный выбор модели"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Задачи, которым нужны инструменты"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Лучший результат измерений на этом устройстве"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Единственный кандидат с результатами измерений"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"ЧАТ 3/3 и три замера после прогрева; минимальная задержка после прогрева"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"ЧАТ 3/3; результаты проверки рассуждений, контекста и задержки"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"Проверки чата и рассуждений 3/3; стабильное выполнение"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Подтверждён первый вызов инструмента и продолжение цикла; предпочтителен встроенный протокол"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Подтверждённые результаты обработки изображений из Vision Lab"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Маршрутизация: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Рекомендация: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Использовать для роли: %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Только выбранная модель"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Предпочтительный провайдер с резервным вариантом"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Обновить данные выбранного провайдера"</string>
 </resources>

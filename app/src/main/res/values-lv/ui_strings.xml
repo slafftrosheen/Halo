@@ -3917,4 +3917,28 @@
     <string name="ui_73a0d909ce75" formatted="false">"Ievadiet piekļuves datus"</string>
     <string name="ui_c3f87d0c007c" formatted="false">"OAuth autorizācija pabeigta; pārbaudiet savienojumu, lai pārliecinātos par gatavību."</string>
     <string name="ui_a5a4c9a03be3" formatted="false">"Google autorizācija neizdevās."</string>
+    <string name="ui_9af77b28cc70" formatted="false">"Maksas / atkarīgs no konta"</string>
+    <string name="ui_d721c079e186" formatted="false">"Izmantot sarunu modeli"</string>
+    <string name="ui_85128d4f5a07" formatted="false">"Izvēlēties automātiski"</string>
+    <string name="ui_bc7194e81bf6" formatted="false">"Izmantot izvēlēto modeli"</string>
+    <string name="ui_d0b09d0ce169" formatted="false">"Iebūvētais rīku izsaukšanas cikls"</string>
+    <string name="ui_f0b22a7e5316" formatted="false">"halo uzvednes rīku izsaukšanas cikls"</string>
+    <string name="ui_c8f701d80021" formatted="false">"Bez rīku izsaukšanas cikla"</string>
+    <string name="ui_fa3316eb973f" formatted="false">"Īsas atbildes sarunā"</string>
+    <string name="ui_f20a98e70cbb" formatted="false">"Parasta saruna · noklusējuma sarunu modelis"</string>
+    <string name="ui_26648d4bf432" formatted="false">"Dziļāka analīze · atsevišķa modeļa izvēle"</string>
+    <string name="ui_717d68e7fd20" formatted="false">"Uzdevumi, kuriem vajadzīgi rīki"</string>
+    <string name="ui_6b5c7d572d27" formatted="false">"Labākie mērījumi šajā ierīcē"</string>
+    <string name="ui_7c4ecfbdf65b" formatted="false">"Vienīgais kandidāts ar mērījumu rezultātiem"</string>
+    <string name="ui_5d10a40dcedb" formatted="false">"SARUNA 3/3 un trīs mērījumi pēc iesilšanas; mazākā mērītā aizture pēc iesilšanas"</string>
+    <string name="ui_f13b42c2a79b" formatted="false">"SARUNA 3/3; spriešanas, konteksta un aiztures pārbaudes rezultāti"</string>
+    <string name="ui_588b2b4f1b25" formatted="false">"Sarunas un spriešanas pārbaudes 3/3; stabila izpilde"</string>
+    <string name="ui_ee4c580ba220" formatted="false">"Pārbaudīts sākotnējais rīka izsaukums un cikla turpinājums; priekšroka iebūvētajam protokolam"</string>
+    <string name="ui_482b89e86edf" formatted="false">"Pārbaudīti Vision Lab attēlu apstrādes rezultāti"</string>
+    <string name="ui_8740354dc9c9" formatted="false">"Maršrutēšana: %1$s"</string>
+    <string name="ui_ade86c5b3acd" formatted="false">"Ieteikums: %1$s"</string>
+    <string name="ui_86af35e07f01" formatted="false">"Izmantot lomai: %1$s"</string>
+    <string name="ui_cf3975c3bb90" formatted="false">"Tikai izvēlētais modelis"</string>
+    <string name="ui_d8da64e2a75e" formatted="false">"Vēlamais pakalpojumu sniedzējs ar rezerves variantu"</string>
+    <string name="ui_0c3f86e41410" formatted="false">"Atjaunināt izvēlētā pakalpojumu sniedzēja informāciju"</string>
 </resources>
