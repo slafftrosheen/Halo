@@ -1,6 +1,6 @@
 # Halo alpha acceptance matrix — 2026-10-22
 
-**Source baseline:** `b9ed52d096a38bc5c7d280401cf2db5477e89e44` (`main`).
+**Source baseline:** `a707f7f9879699d200ab07cbaad8b27e1a8cb988` (`main`).
 **Overall alpha status: NOT TESTED.** This matrix records end-to-end acceptance,
 not whether implementation work exists. A passing source test does not pass a
 physical user journey.
@@ -11,7 +11,7 @@ physical user journey.
 | Safe ask → act → respond (#36, #40) | NOT TESTED | Historical source tests and APK installation are recorded at older revisions; they did not confirm foreground interaction, real-model inference, approvals, side effects, or no-duplicate behavior. A 48-case EN/RU/LV/PL voice/keyboard matrix is prepared in [the classification matrix](HALO-INTENT-150-CLASSIFICATION-MATRIX.md), but every case is NOT RUN. Repeat the full action loop on device. |
 | Study: grounded answer, hint, practice, save/resume (#34) | NOT TESTED | No current physical acceptance record demonstrates both Kids and adult journeys from a genuine source through guided practice and resume. |
 | Core consumer navigation and final UX (#37) | NOT TESTED | Screen source includes persistent layouts/cards, per-record cache recovery, EN/RU/LV/PL labels for all native widgets, and bounded Polish add/hide/enlarge/reorder commands, alongside local automation results, sourced research, refresh, read-aloud, archive/restore, ambient settings and a research-to-Notebook handoff. No current physical evidence confirms the full Screen journey, Home/Chat non-regression, accessibility, ambient safeguards, or approved final navigation/design handoff. |
-| Setup, model selection, and recovery (#39) | NOT TESTED | Issue #39 records source progress, but no fresh-install, download recovery, restart, offline, permission-denial, or model-removal journey is qualified on device. |
+| Setup, model selection, and recovery (#39) | NOT TESTED | Starter-pack storage preflight now accounts for each payload on its destination root and combines needs when roots share a filesystem. No fresh-install, download recovery, restart, offline, permission-denial, or model-removal journey is qualified on device. |
 | Privacy, ownership, and provider boundaries (#41, #42) | NOT TESTED | No current end-to-end evidence covers local-only behavior, cloud consent/denial, provider traffic, billing disclosure, or restore/refund flows. Billing product choice is still unresolved in #42. |
 | Pen input and saved ink (#28) | NOT TESTED | [Ink verification](HALO-INK-028-VERIFICATION-2026-10-22.md) covers source and synthetic pointer tests only. Physical pressure/eraser/palm behavior, saved-v1 visual preservation, tablet layout, rotation, and process-death recovery remain unqualified. |
 | Ink as referenced cognitive context (#29) | NOT TESTED | Source includes stable stroke IDs, accessible box selection, persistent Canvas/PDF selection bookmarks, source/page/revision binding, stale-source rejection, bounded crops, and Ask / Add to working set / Study actions. Mixed voice-and-ink turns, provider/consent boundaries end to end, source fidelity through physical edits/orientation, guided Study quality, and phone/tablet performance remain unverified. |
