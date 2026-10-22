@@ -15,6 +15,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     private val points = ArrayList<InkPoint>()
     private var working: InkDocument? = null
     private var tool: InkTool? = null
+    private var activeStrokeId: String? = null
     private var erasing = false
     private var previousErase: InkPoint? = null
     var limitReached = false
@@ -33,6 +34,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
             return false
         }
         this.tool = tool; this.erasing = erasing; working = document
+        activeStrokeId = if (erasing) null else InkStrokeIds.create()
         return true
     }
 
@@ -61,7 +63,8 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     }
 
     fun preview(): InkDocument = if (erasing && active) working ?: document else
-        if (points.isNotEmpty() && tool != null) document.copy(strokes = document.strokes + InkStroke(tool!!, points.toList())) else document
+        if (points.isNotEmpty() && tool != null) document.copy(strokes = document.strokes +
+            InkStroke(tool!!, points.toList(), requireNotNull(activeStrokeId))) else document
 
     fun finish(): Boolean {
         if (!active) return false
@@ -71,7 +74,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     }
 
     /** Platform palm/navigation cancellation rolls back drawing AND erasing. */
-    fun cancel() { points.clear(); working = null; tool = null; previousErase = null; erasing = false }
+    fun cancel() { points.clear(); working = null; tool = null; activeStrokeId = null; previousErase = null; erasing = false }
 
     fun clear(): Boolean { cancel(); limitReached = false; return commit(document.copy(strokes = emptyList())) }
     fun undo(): Boolean {
@@ -132,5 +135,57 @@ object InkGeometry {
         if (max(a.x, b.x) < min(c.x, d.x) || max(c.x, d.x) < min(a.x, b.x) ||
             max(a.y, b.y) < min(c.y, d.y) || max(c.y, d.y) < min(a.y, b.y)) return false
         return side(a, b, c) * side(a, b, d) <= 0.0 && side(c, d, a) * side(c, d, b) <= 0.0
+    }
+
+    /** Select a whole stroke when any segment or point touches a normalized document region. */
+    fun intersects(stroke: InkStroke, bounds: InkSelectionBounds): Boolean {
+        fun inside(point: InkPoint) = point.x in bounds.left..bounds.right && point.y in bounds.top..bounds.bottom
+        if (stroke.points.any(::inside)) return true
+        val corners = listOf(
+            InkPoint(bounds.left, bounds.top), InkPoint(bounds.right, bounds.top),
+            InkPoint(bounds.right, bounds.bottom), InkPoint(bounds.left, bounds.bottom),
+        )
+        if (stroke.points.size < 2) return false
+        return stroke.points.zipWithNext().any { (from, to) ->
+            (0..3).any { index -> crosses(from.toP(), to.toP(), corners[index].toP(), corners[(index + 1) % 4].toP()) }
+        }
+    }
+
+    private fun InkPoint.toP() = P(x.toDouble(), y.toDouble())
+}
+
+/** Build and resolve region selections against the exact document revision that owns them. */
+object InkSelections {
+    fun create(
+        document: InkDocument,
+        workspaceObjectId: String,
+        pageId: String?,
+        sourceRevision: String,
+        bounds: InkSelectionBounds,
+        origin: InkSelectionOrigin,
+        createdAtMs: Long,
+    ): InkSelectionContext? {
+        InkLimits.requireValid(document)
+        val selectedIds = document.strokes.filter { InkGeometry.intersects(it, bounds) }.map { it.strokeId }
+        if (selectedIds.isEmpty()) return null
+        return InkSelectionContext(workspaceObjectId, pageId, bounds, selectedIds, sourceRevision,
+            origin, createdAtMs, createdAtMs)
+    }
+
+    /** Returns null when the caller's source identity, revision, or selected strokes have changed. */
+    fun resolve(
+        document: InkDocument,
+        context: InkSelectionContext,
+        workspaceObjectId: String,
+        pageId: String?,
+        sourceRevision: String,
+    ): List<InkStroke>? {
+        InkLimits.requireValid(document)
+        if (context.workspaceObjectId != workspaceObjectId || context.pageId != pageId ||
+            context.sourceRevision != sourceRevision) return null
+        val byId = document.strokes.associateBy { it.strokeId }
+        val selected = context.selectedStrokeIds.map { byId[it] ?: return null }
+        if (selected.any { !InkGeometry.intersects(it, context.bounds) }) return null
+        return selected
     }
 }

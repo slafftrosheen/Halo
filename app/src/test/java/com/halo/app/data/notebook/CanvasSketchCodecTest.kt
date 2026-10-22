@@ -18,6 +18,16 @@ class CanvasSketchCodecTest {
         assertEquals(listOf(listOf(CanvasSketchPoint(0, 1000))), CanvasSketchCodec.decode(encoded))
     }
 
+    @Test fun projectsV3StrokeIdsToLegacyGeometryWithoutLosingPoints() {
+        val document = com.halo.sdk.runtime.ink.InkDocument(listOf(
+            com.halo.sdk.runtime.ink.InkStroke(com.halo.sdk.runtime.ink.InkTool.STYLUS,
+                listOf(com.halo.sdk.runtime.ink.InkPoint(25, 75)), "stable-stroke-id")
+        ))
+        val encoded = com.halo.sdk.runtime.ink.InkCodec.encode(document)
+
+        assertEquals(listOf(listOf(CanvasSketchPoint(25, 75))), CanvasSketchCodec.decode(encoded))
+    }
+
     @Test fun rejectsCorruptionAndOversizedInput() {
         assertTrue(CanvasSketchCodec.decode("v2|0,0").isEmpty())
         assertTrue(CanvasSketchCodec.decode("sketch:v1|3,what").isEmpty())

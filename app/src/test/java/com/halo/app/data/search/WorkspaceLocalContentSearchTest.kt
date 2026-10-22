@@ -23,9 +23,13 @@ class WorkspaceLocalContentSearchTest {
         assertFalse(WorkspaceLocalContentSearch.safe("password: super-secret-credential"))
         assertEquals("Source unavailable", CanvasFileMarkupCodec.displayTitle("halo-markup:v1|corrupt"))
     }
-    @Test fun inkV2CoordinatesNeverBecomeSearchHits() {
-        val rows = listOf(CanvasSearchRow("board", "node", "Board", "SKETCH", null, null, null,
-            "sketch:v2|1400|S@10,20,0,500,_,_,0", "meeting"))
+    @Test fun inkV2AndV3CoordinatesNeverBecomeSearchHits() {
+        val rows = listOf(
+            CanvasSearchRow("board", "node-v2", "Board", "SKETCH", null, null, null,
+                "sketch:v2|1400|S@10,20,0,500,_,_,0", "meeting"),
+            CanvasSearchRow("board", "node-v3", "Board", "SKETCH", null, null, null,
+                "sketch:v3|1400|S@stroke-a@10,20,0,500,_,_,0", "meeting"),
+        )
         assertTrue(WorkspaceLocalContentSearch.cards(rows, WorkspaceSearchQuery("meeting")).isEmpty())
     }
     @Test fun futureVectorFormatsAreNotPlainText() {

@@ -17,7 +17,9 @@ This work is independent of the unmerged #40 search/media/cost package.
 
 ## Format and migration contract
 
-`sketch:v2|<aspectMilli>|<tool>@<points>|...`
+New writes use `sketch:v3|<aspectMilli>|<tool>@<strokeId>@<points>|...`.
+The reader remains backward-compatible with `sketch:v1|...` and
+`sketch:v2|<aspectMilli>|<tool>@<points>|...`.
 
 Tools have stable wire values: `L` legacy, `F` finger, `S` stylus, `M` mouse.
 Normal points are `x,y,timeMs,pressure,tilt,orientation,buttons`, separated by `;`.
@@ -27,10 +29,13 @@ Legacy `L` points retain compact `x,y` pairs; assigning extra metadata to a lega
 point is rejected rather than silently discarding it. Whole-stroke erasure stores
 the resulting vector document, not a background-colored overlay or an event log.
 
-The strict reader recognizes both v1 and v2. Malformed, oversized, unknown-version
-or unknown-tool data is unreadable, not an editable blank sheet. Existing v1
-encoding callers remain v1. Opening or saving an unchanged v1 drawing preserves
-its original string; first real editing uses v2 without discarding old points.
+Each v3 stroke carries a bounded ASCII ID that remains stable when its points are
+edited. Decoding older formats assigns deterministic per-document IDs, so their
+references remain stable after a v3 save. The strict reader recognizes v1, v2
+and v3. Malformed, oversized, unknown-version or unknown-tool data is unreadable,
+not an editable blank sheet. Opening or saving an unchanged legacy drawing
+preserves its original string; the first real edit writes v3 without discarding
+old points.
 When old geometry has no recorded aspect, the first edit binds it to the editing
 rectangle; undo restores the exact pre-edit document. No database migration runs.
 
@@ -41,7 +46,7 @@ rectangle; undo restores the exact pre-edit document. No database migration runs
 | Strokes per document | 256 (legacy v1 input remains 64) |
 | Samples per stroke | 2,048 (legacy v1 input remains 256) |
 | Total samples per document | 16,384 |
-| Encoded v2 document | 262,144 characters |
+| Encoded document | 262,144 characters |
 | Contact duration field | One hour; relative timestamps must be nondecreasing |
 | Undo history | At most 16 entries; bounded retained point references |
 | Existing source annotation envelope | 16 pages / 1,500,000 characters, unchanged |
@@ -66,12 +71,19 @@ point/history bounds, swept erasure, rollback, undo/redo, source markup, drafts,
 pointer-index reordering, physical eraser type, barrel button, hover, mouse
 secondary-button rejection, batched samples and pressure normalization.
 
-Performed: source/call-site review against pinned base, old-format consumer search,
-EN/RU/LV XML parsing/key parity/reference checks, whitespace checks, content hashes
-and changed-path review. No independent reviewer agent was available.
-**Not performed:** Kotlin/Android compilation, Gradle tasks, unit/instrumentation
-execution, CI/Actions, emulator installation, hardware drawing or performance tests.
-The commit uses `[skip ci]`; source checks are not reported as passing runtime tests.
+Performed before the v3 follow-up: source/call-site review against pinned base,
+old-format consumer search, EN/RU/LV XML parsing/key parity/reference checks,
+whitespace checks, content hashes and changed-path review. The portable runtime
+SDK test suite passed for the original v2 implementation.
+
+**2026-10-22 follow-up:** v3 stable stroke IDs, backward-compatible v1/v2 reads,
+selection geometry and exact source identity/revision resolution were added. The
+full `:sdk:runtime-sdk:test` suite passed, as did focused app tests for InkV2,
+CanvasSketchCodec and WorkspaceLocalContentSearch. The search test was rerun after
+adding explicit v3 payload coverage; it passed. The first app run hit a corrupt
+local Gradle cache entry, then passed with `--no-build-cache`. No CI/Actions,
+emulator install, hardware drawing or physical pen acceptance is claimed here.
+No independent reviewer agent was available.
 
 ## Keep #28 open until owner acceptance
 

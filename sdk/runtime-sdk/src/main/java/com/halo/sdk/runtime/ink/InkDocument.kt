@@ -9,7 +9,10 @@ data class InkPoint(
 
 /** Erasing is an editing transaction, never a white stroke baked into a document. */
 enum class InkTool(val wire: String) { LEGACY("L"), FINGER("F"), STYLUS("S"), MOUSE("M") }
-data class InkStroke(val tool: InkTool, val points: List<InkPoint>)
+data class InkStroke(val tool: InkTool, val points: List<InkPoint>, val strokeId: String = InkStrokeIds.create())
+internal object InkStrokeIds {
+    fun create(): String = java.util.UUID.randomUUID().toString()
+}
 /** Zero aspect preserves v1's rectangle-relative rendering; new sketches use 7:5. */
 data class InkDocument(val strokes: List<InkStroke> = emptyList(), val aspectMilli: Int = 1400)
 
@@ -30,8 +33,10 @@ object InkLimits {
     fun requireValid(document: InkDocument) {
         require(document.aspectMilli == 0 || document.aspectMilli in 125..8000)
         require(document.strokes.size <= MAX_STROKES)
+        require(document.strokes.map { it.strokeId }.distinct().size == document.strokes.size)
         var total = 0
         document.strokes.forEach { stroke ->
+            require(stroke.strokeId.length in 1..128 && stroke.strokeId.matches(Regex("[A-Za-z0-9_-]+")))
             require(stroke.points.size in 1..MAX_POINTS_PER_STROKE)
             total += stroke.points.size
             require(total <= MAX_TOTAL_POINTS)

@@ -26,7 +26,7 @@ class InkV2Test {
     }
     @Test fun emptyAndUnreadableAreDifferent() {
         assertEquals(emptyList<InkStroke>(), InkCodec.decode("")?.strokes)
-        listOf("sketch:v3|", "sketch:v2|1400|S@", "sketch:v1|1,2|bad", "sketch:v1|0,0|").forEach { assertNull(it, InkCodec.decode(it)) }
+        listOf("sketch:v4|", "sketch:v2|1400|S@", "sketch:v1|1,2|bad", "sketch:v1|0,0|").forEach { assertNull(it, InkCodec.decode(it)) }
     }
     @Test fun legacyLimitsDoNotChange() {
         assertNull(InkCodec.decode("sketch:v1|" + List(257) { "0,0" }.joinToString(";")))

@@ -1,10 +1,43 @@
 package com.halo.sdk.runtime.ink
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class InkSelectionContextTest {
+    @Test fun selectionCapturesExactIntersectingStrokeIdsAndResolvesOnlyOnItsSourceRevision() {
+        val selected = InkStroke(InkTool.STYLUS,
+            listOf(InkPoint(100, 500), InkPoint(700, 500)), "stroke-selected")
+        val distant = InkStroke(InkTool.FINGER,
+            listOf(InkPoint(100, 100), InkPoint(700, 100)), "stroke-distant")
+        val document = InkDocument(listOf(selected, distant))
+        val bounds = InkSelectionBounds(400, 400, 600, 600)
+        val context = requireNotNull(InkSelections.create(document, "canvas-17", "page-2", "rev-1",
+            bounds, InkSelectionOrigin.BOX, 1234))
+
+        assertEquals(listOf("stroke-selected"), context.selectedStrokeIds)
+        assertEquals(listOf(selected), InkSelections.resolve(document, context,
+            "canvas-17", "page-2", "rev-1"))
+        assertNull(InkSelections.resolve(document, context, "canvas-17", "page-2", "rev-2"))
+        assertNull(InkSelections.resolve(document, context, "canvas-18", "page-2", "rev-1"))
+        assertNull(InkSelections.resolve(document, context, "canvas-17", "page-3", "rev-1"))
+    }
+
+    @Test fun emptyRegionDoesNotBecomeAnActionableSelectionAndDeletedStrokeIsRejected() {
+        val stroke = InkStroke(InkTool.STYLUS,
+            listOf(InkPoint(100, 100), InkPoint(200, 200)), "stroke-a")
+        val document = InkDocument(listOf(stroke))
+        val bounds = InkSelectionBounds(700, 700, 900, 900)
+
+        assertNull(InkSelections.create(document, "canvas-17", null, "rev-1", bounds,
+            InkSelectionOrigin.ACCESSIBILITY, 1234))
+
+        val selected = requireNotNull(InkSelections.create(document, "canvas-17", null, "rev-1",
+            InkSelectionBounds(100, 100, 300, 300), InkSelectionOrigin.BOX, 1234))
+        assertNull(InkSelections.resolve(InkDocument(), selected, "canvas-17", null, "rev-1"))
+    }
+
     @Test fun stableSelectionRetainsDocumentRegionAndProvenance() {
         val context = InkSelectionContext(
             workspaceObjectId = "canvas-17",
