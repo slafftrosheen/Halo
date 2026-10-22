@@ -3873,4 +3873,17 @@
     <string name="ui_081d5db0eed6" formatted="false">"No cards on Screen"</string>
     <string name="ui_f4fb38d052fe" formatted="false">"Card archived"</string>
     <string name="ui_a4749ce2c60e" formatted="false">"Card restored"</string>
+    <string name="ui_57020c06ae3d" formatted="false">"A finished routine will update this card."</string>
+    <string name="ui_3a5ecca188c0" formatted="false">"Updated"</string>
+    <string name="ui_96e97dcf07ca" formatted="false">"Nothing saved yet"</string>
+    <string name="ui_833b595281de" formatted="false">"Your calendar could not be opened."</string>
+    <string name="ui_fbab31130ee7" formatted="false">"Your saved work will appear here."</string>
+    <string name="ui_45fed19d54bf" formatted="false">"Next on your calendar"</string>
+    <string name="ui_973fb36115af" formatted="false">"Nothing scheduled in the next 24 hours."</string>
+    <string name="ui_eac91ea7d49b" formatted="false">"No saved research yet"</string>
+    <string name="ui_8bc5b29a6ce2" formatted="false">"No pending items"</string>
+    <string name="ui_32bd6d33e347" formatted="false">"Choose whether halo can read your calendar."</string>
+    <string name="ui_f74c0be05e82" formatted="false">"Calendar event"</string>
+    <string name="ui_5745eeece618" formatted="false">"Waiting for a result"</string>
+    <string name="ui_22d82f5bf178" formatted="false">"No tasks to catch up on"</string>
 </resources>

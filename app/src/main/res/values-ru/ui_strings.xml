@@ -3873,4 +3873,17 @@
     <string name="ui_081d5db0eed6" formatted="false">"На экране пока нет карточек"</string>
     <string name="ui_f4fb38d052fe" formatted="false">"Карточка перемещена в архив"</string>
     <string name="ui_a4749ce2c60e" formatted="false">"Карточка восстановлена"</string>
+    <string name="ui_57020c06ae3d" formatted="false">"После завершения сценария эта карточка обновится."</string>
+    <string name="ui_3a5ecca188c0" formatted="false">"Обновлено"</string>
+    <string name="ui_96e97dcf07ca" formatted="false">"Пока ничего не сохранено"</string>
+    <string name="ui_833b595281de" formatted="false">"Не удалось открыть календарь."</string>
+    <string name="ui_fbab31130ee7" formatted="false">"Сохранённые материалы появятся здесь."</string>
+    <string name="ui_45fed19d54bf" formatted="false">"Следующее событие в календаре"</string>
+    <string name="ui_973fb36115af" formatted="false">"В ближайшие 24 часа событий нет."</string>
+    <string name="ui_eac91ea7d49b" formatted="false">"Пока нет сохранённых результатов поиска"</string>
+    <string name="ui_8bc5b29a6ce2" formatted="false">"Нет ожидающих дел"</string>
+    <string name="ui_32bd6d33e347" formatted="false">"Выберите, разрешить ли halo читать календарь."</string>
+    <string name="ui_f74c0be05e82" formatted="false">"Событие календаря"</string>
+    <string name="ui_5745eeece618" formatted="false">"Ожидание результата"</string>
+    <string name="ui_22d82f5bf178" formatted="false">"Нет заданий, которые нужно наверстать"</string>
 </resources>

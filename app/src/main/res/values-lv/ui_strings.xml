@@ -3873,4 +3873,17 @@
     <string name="ui_081d5db0eed6" formatted="false">"Ekrānā vēl nav kartīšu"</string>
     <string name="ui_f4fb38d052fe" formatted="false">"Kartīte arhivēta"</string>
     <string name="ui_a4749ce2c60e" formatted="false">"Kartīte atjaunota"</string>
+    <string name="ui_57020c06ae3d" formatted="false">"Pabeigta rutīna atjauninās šo kartīti."</string>
+    <string name="ui_3a5ecca188c0" formatted="false">"Atjaunināts"</string>
+    <string name="ui_96e97dcf07ca" formatted="false">"Pagaidām nekas nav saglabāts"</string>
+    <string name="ui_833b595281de" formatted="false">"Neizdevās atvērt kalendāru."</string>
+    <string name="ui_fbab31130ee7" formatted="false">"Šeit tiks parādīti saglabātie darbi."</string>
+    <string name="ui_45fed19d54bf" formatted="false">"Nākamais notikums kalendārā"</string>
+    <string name="ui_973fb36115af" formatted="false">"Nākamo 24 stundu laikā nekas nav ieplānots."</string>
+    <string name="ui_eac91ea7d49b" formatted="false">"Pagaidām nav saglabātu izpētes rezultātu"</string>
+    <string name="ui_8bc5b29a6ce2" formatted="false">"Nav nepabeigtu uzdevumu"</string>
+    <string name="ui_32bd6d33e347" formatted="false">"Izvēlieties, vai atļaut halo lasīt kalendāru."</string>
+    <string name="ui_f74c0be05e82" formatted="false">"Kalendāra notikums"</string>
+    <string name="ui_5745eeece618" formatted="false">"Gaida rezultātu"</string>
+    <string name="ui_22d82f5bf178" formatted="false">"Nav uzdevumu, kas būtu jāizpilda"</string>
 </resources>

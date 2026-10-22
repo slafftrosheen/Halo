@@ -3,6 +3,7 @@
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
     <string name="ui_bcba696f3eb1" formatted="false">"Przekierowanie"</string>
     <string name="ui_3ff5620b0294" formatted="false">"Nauka"</string>
+    <string name="ui_38da1505ca83" formatted="false">"Aktywność"</string>
     <string name="ui_76900f1bfd16" formatted="false">"Wstecz"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
@@ -100,13 +101,16 @@
     <string name="ui_df952a8c1b62" formatted="false">"Uruchom zestaw testów ról"</string>
     <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
+    <string name="ui_31fbef162594" formatted="false">"Kontynuuj"</string>
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
+    <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
     <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
     <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
@@ -161,6 +165,7 @@
     <string name="ui_1f1f7f3a89fb" formatted="false">"Format obrazu"</string>
     <string name="ui_5c874c87eb42" formatted="false">"PNG zachowuje przezroczystość, JPEG używa białego tła."</string>
     <string name="ui_75c5986a189a" formatted="false">"Zapisz nowy obraz"</string>
+    <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
@@ -171,6 +176,7 @@
     <string name="ui_5b510ac4805c" formatted="false">"Pokaż wszystkie lekcje"</string>
     <string name="ui_4e730ac30841" formatted="false">"Pokaż mniej lekcji"</string>
     <string name="ui_064d8a50b989" formatted="false">"Wybierz lekcję do powtórki"</string>
+    <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności"</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
@@ -205,6 +211,8 @@
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
     <string name="ui_4a703d8c58cf" formatted="false">"Daty i godziny również będą wyświetlane w tym języku."</string>
     <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
+    <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
+    <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
     <string name="ui_fa6d5a89e3b5" formatted="false">"Małe okno na szybkie pytanie."</string>
     <string name="ui_cafabf0d8b58" formatted="false">"Na ekranie głównym"</string>
     <string name="ui_4711aac75af4" formatted="false">"Głos i czytanie"</string>
@@ -300,7 +308,15 @@
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
+    <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
+    <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
+    <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
+    <string name="ui_49a3002b4bad" formatted="false">"Wybierz źródło do czytania. halo nigdy nie wykorzystuje Twoich notatek ani rozmów do zgadywania zainteresowań."</string>
     <string name="ui_96dbf046194b" formatted="false">"Zapisany wynik może być nieaktualny"</string>
+    <string name="ui_dfe40efe921f" formatted="false">"Aktualizowanie…"</string>
+    <string name="ui_343caea0a933" formatted="false">"Nie ma jeszcze nic do wyświetlenia"</string>
+    <string name="ui_7b4609266d42" formatted="false">"Brak połączenia · wyświetlam zapisane treści"</string>
+    <string name="ui_c0ab4c40fe0b" formatted="false">"Nie udało się zaktualizować"</string>
     <string name="ui_18ed4c65aec8" formatted="false">"Poproś halo o zmianę ekranu"</string>
     <string name="ui_4d58a20a806a" formatted="false">"Wybierz tematy"</string>
     <string name="ui_e22820fcf5cd" formatted="false">"Tematy"</string>
@@ -376,4 +392,17 @@
     <string name="ui_081d5db0eed6" formatted="false">"Na ekranie nie ma kart"</string>
     <string name="ui_f4fb38d052fe" formatted="false">"Karta została zarchiwizowana"</string>
     <string name="ui_a4749ce2c60e" formatted="false">"Karta została przywrócona"</string>
+    <string name="ui_57020c06ae3d" formatted="false">"Po zakończeniu rutyny ta karta zostanie zaktualizowana."</string>
+    <string name="ui_3a5ecca188c0" formatted="false">"Zaktualizowano"</string>
+    <string name="ui_96e97dcf07ca" formatted="false">"Jeszcze nic nie zapisano"</string>
+    <string name="ui_833b595281de" formatted="false">"Nie udało się otworzyć kalendarza."</string>
+    <string name="ui_fbab31130ee7" formatted="false">"Zapisane materiały pojawią się tutaj."</string>
+    <string name="ui_45fed19d54bf" formatted="false">"Następne wydarzenie w kalendarzu"</string>
+    <string name="ui_973fb36115af" formatted="false">"Brak wydarzeń w kalendarzu w ciągu najbliższych 24 godzin."</string>
+    <string name="ui_eac91ea7d49b" formatted="false">"Brak zapisanych wyników wyszukiwania"</string>
+    <string name="ui_8bc5b29a6ce2" formatted="false">"Brak oczekujących zadań"</string>
+    <string name="ui_32bd6d33e347" formatted="false">"Wybierz, czy halo może odczytywać Twój kalendarz."</string>
+    <string name="ui_f74c0be05e82" formatted="false">"Wydarzenie z kalendarza"</string>
+    <string name="ui_5745eeece618" formatted="false">"Oczekiwanie na wynik"</string>
+    <string name="ui_22d82f5bf178" formatted="false">"Nie masz zaległych zadań"</string>
 </resources>

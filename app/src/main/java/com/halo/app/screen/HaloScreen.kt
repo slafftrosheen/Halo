@@ -57,6 +57,7 @@ private data class ScreenDisplay(
     val route: String?, val sensitive: Boolean = false, val updatedAt: Instant? = null,
     val sourceTitle: Boolean = false, val sourceSummary: Boolean = false, val detailSummary: String? = null,
     val showFullTimestamp: Boolean = false,
+    val stateArguments: List<Any> = emptyList(),
 )
 
 /** The same local layout is used on phones, tablets and in full screen. */
@@ -113,6 +114,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var calendarEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
     var calendarFailed by remember { mutableStateOf(false) }
     var calendarDenied by rememberSaveable { mutableStateOf(false) }
+    val fallbackCalendarTitle = uiText("Calendar event")
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         calendarAllowed = it
         calendarDenied = !it
@@ -176,7 +178,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     context.contentResolver.query(uri,
                         arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN),
                         null, null, "${CalendarContract.Instances.BEGIN} ASC")?.use { cursor ->
-                        if (cursor.moveToFirst()) (cursor.getString(0) ?: uiTextFallbackCalendar()) to cursor.getLong(1) else null
+                        if (cursor.moveToFirst()) (cursor.getString(0) ?: fallbackCalendarTitle) to cursor.getLong(1) else null
                     }.also { calendarFailed = false }
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) { calendarFailed = true; null }
@@ -207,10 +209,12 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 null, true, item.updatedAt, sourceTitle = true, sourceSummary = true, detailSummary = summary,
                 showFullTimestamp = true)
         } ?: ScreenDisplay("Research", "Save a sourced web search to keep it here.", "No saved research yet", null, true)
-        "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "You're caught up",
-            if (daily.items.isEmpty()) "No pending items" else "${daily.items.size} updates", daily.primary?.action?.let {
+        "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "No tasks to catch up on",
+            if (daily.items.isEmpty()) "No pending items" else "%1$d updates", daily.primary?.action?.let {
                 com.halo.app.ui.shell.dailyOwnerRoute(it)
-            } ?: "activity", true)
+            } ?: "activity", true,
+            sourceSummary = daily.primary != null,
+            stateArguments = if (daily.items.isEmpty()) emptyList() else listOf(daily.items.size))
         "notebook" -> workspace.firstOrNull()?.let { note ->
             val kind = when (note.type) {
                 com.halo.app.data.notebook.WorkspaceObjectType.CANVAS -> "canvas"
@@ -228,7 +232,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         } ?: ScreenDisplay("Continue studying", uiText("Start a Study session to see it here."), uiText("No active session"), "study", true,
             sourceSummary = true)
         "halo_activity" -> ScreenDisplay("What halo did", activity.events.firstOrNull()?.title ?: "No activity yet",
-            "Activity", "activity", true)
+            "Activity", "activity", true, sourceSummary = activity.events.isNotEmpty())
         else -> {
             val item = if (card.itemId != null) routineItems.firstOrNull { it.id == card.itemId }
                 else null
@@ -528,7 +532,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                         }) { Text(uiText(if (calendarDenied) "Open Android settings" else "Allow calendar access")) }
                     data.route?.let { route -> com.halo.app.ui.components.HaloActionButton(onClick = { detailCard = null; onFullScreen(false); onOpen(route) }) { Text(uiText("Open source")) } }
                 }
-                Text(uiText(data.state), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(uiText(data.state, *data.stateArguments.toTypedArray()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = {
                     change(layout!!.cards.filterNot { it == card }, "Hidden from Screen. Its source is kept."); detailCard = null
                 }) { Text(uiText("Hide from Screen")) }
@@ -562,8 +566,6 @@ private fun researchNoteBody(item: ScreenItem): String = buildString {
     }
     item.updatedAt?.let { append("\nRetrieved · ").append(it.toString()) }
 }.take(12_000)
-
-private fun uiTextFallbackCalendar() = "Calendar event"
 
 internal fun widgetTitle(type: String): String = when (type) {
     "clock" -> "Clock & date"; "weather" -> "Weather"; "calendar" -> "Calendar"
@@ -617,7 +619,7 @@ private fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Bool
                     else if (card.pinned) HaloIcon(HaloGlyph.NOTE, uiText("Pinned"), Modifier.size(16.dp))
                 }
                 Text(if (data.sourceSummary) data.summary else uiText(data.summary), style = MaterialTheme.typography.bodyMedium)
-                Text(uiText(data.state) + (data.updatedAt?.let { instant ->
+                Text(uiText(data.state, *data.stateArguments.toTypedArray()) + (data.updatedAt?.let { instant ->
                     " · " + formatScreenTimestamp(instant, data.showFullTimestamp, locale)
                 } ?: ""),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
