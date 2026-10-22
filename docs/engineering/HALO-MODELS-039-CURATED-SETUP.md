@@ -112,3 +112,30 @@ runtime release, refreshed installation state, and rejection of unknown IDs.
 This is a rollback prerequisite, not the transactional LLM/intent/STT/VAD/TTS
 pack installer. No build or test was run per #43; source and localization checks
 are the only evidence for this follow-up.
+
+## Source follow-up — resumable starter bundle
+
+Added a process-lifetime coordinator and durable, content-free transaction
+journal for the pinned Qwen3 0.6B intent candidate, Whisper Small, Silero VAD,
+and Supertonic local speech output. The journal records the exact stage and
+which supported artifacts were already present before the transaction. On
+process recovery, an interrupted install becomes resumable; owner inventories
+are reconciled before the next stage so a completed transfer is not needlessly
+repeated. Qwen remains a candidate and Supertonic is installed without voice
+selection or audible qualification.
+
+The setup step performs aggregate free-space admission before acquisition,
+including the existing LiteRT/Sherpa and Supertonic safety reserves. Each
+download remains owned by its existing manager. Pause preserves each owner's
+resume data. Rollback cancels transfers and removes only newly acquired model
+assets; active or newly selected assets produce a retryable rollback failure.
+Pre-existing interrupted artifacts are left untouched and must be resolved
+through their current owner before starting the bundle.
+
+Source regressions were added for journal round-trip, malformed journal
+rejection, and resume/rollback state. They were NOT executed per #43. The bundle
+does not auto-select a model or prove a functional quality-qualified profile.
+The complete provenance/backend/device/language qualification matrix,
+qualification invalidation, executable owner verification and physical
+acceptance remain open. In particular, acquisition success is not evidence
+that this bundle is recommended for any device or language.

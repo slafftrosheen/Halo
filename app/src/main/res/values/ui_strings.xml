@@ -3811,6 +3811,26 @@
     <string name="ui_879979ad80a9" formatted="false">"Resume your saved Study session."</string>
     <string name="ui_1f9dae2d58d7" formatted="false">"No active session"</string>
     <string name="ui_4790277aa10c" formatted="false">"Retrieved"</string>
+    <string name="ui_95145f43d145" formatted="false">"Optional private starter bundle: pinned Qwen intent candidate, Whisper Small, Silero VAD and Supertonic speech output. halo checks the installed files, but does not select candidates or claim device quality. You can continue with individual downloads instead."</string>
+    <string name="ui_3007ade836ff" formatted="false">"Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate."</string>
+    <string name="ui_2f9f525e3f4e" formatted="false">"Checking available storage…"</string>
+    <string name="ui_2e34fc62280f" formatted="false">"Downloading intent candidate…"</string>
+    <string name="ui_8b5164561b44" formatted="false">"Installing hands-free support…"</string>
+    <string name="ui_fc90bf68fab2" formatted="false">"Downloading voice pack…"</string>
+    <string name="ui_992d61234414" formatted="false">"Verifying model files…"</string>
+    <string name="ui_aa10a65ff49a" formatted="false">"Pause setup"</string>
+    <string name="ui_17773737ab5b" formatted="false">"Model setup is paused. Resume it or roll back only the files added by this setup."</string>
+    <string name="ui_cd19e372d956" formatted="false">"Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup."</string>
+    <string name="ui_dc40d6600d77" formatted="false">"Some new models are still in use. Close the task using them, then retry rollback."</string>
+    <string name="ui_c3f962eda9e8" formatted="false">"Removing models added by this setup…"</string>
+    <string name="ui_4b2e8b937b10" formatted="false">"Install private starter bundle"</string>
+    <string name="ui_071f55ea3346" formatted="false">"Resume private starter bundle"</string>
+    <string name="ui_b0d795f796b5" formatted="false">"Roll back starter bundle"</string>
+    <string name="ui_68bf6ac86ce4" formatted="false">"Retry rollback"</string>
+    <string name="ui_20a65e7f6009" formatted="false">"Newly downloaded models were rolled back."</string>
+    <string name="ui_80366b64dbac" formatted="false">"Optional local voice files: Whisper Small for speech recognition, Silero VAD for speech activity detection, and Supertonic 3 for speech output. Downloading files does not prove microphone capture, recognition quality or audible output."</string>
+    <string name="ui_6b42e8c8bff0" formatted="false">"Whisper Small INT8 · about 375 MB · catalog lists EN, LV, RU and PL. Requires more memory and time than Base; test recognition in your language before relying on it."</string>
+    <string name="ui_655dde73763d" formatted="false">"Supertonic 3 INT8 · about 129 MB archive · local speech output. Language labels include EN, LV, RU and PL; audition and confirm each voice on this device."</string>
     <string name="ui_5eeb7e21a0d8" formatted="false">"Remove hands-free support?"</string>
     <string name="ui_0ebd71038088" formatted="false">"halo will use basic speech activity detection. You can download hands-free support again later."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Remove hands-free support"</string>

@@ -19,13 +19,26 @@ data class SpeechModelDownloadProgress(
 
 /** Only invoked by an explicit install action. Files and totals come from the catalog. */
 object SpeechModelInstaller {
+    const val STORAGE_RESERVE_BYTES = 64L * 1024 * 1024
+
+    /** Bytes still required by this exact pinned spec; completed files and resumable partials count. */
+    fun remainingBytes(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File): Long =
+        spec.files.sumOf { file ->
+            if (SherpaSpeechModelCatalog.validFile(destination, spec, file)) 0L
+            else {
+                val partial = File(destination, "${file.name}.${file.sha256 ?: spec.revision}.download")
+                val partialBytes = partial.length().takeIf { it <= file.expectedBytes } ?: 0L
+                (file.expectedBytes - partialBytes).coerceAtLeast(0L)
+            }
+        }
+
     suspend fun install(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
         onProgress: (SpeechModelDownloadProgress) -> Unit = {}): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             check(destination.isDirectory || destination.mkdirs()) { "Unable to create model directory" }
-            val reserve = 64L * 1024 * 1024
-            check(destination.usableSpace >= spec.expectedBytes + reserve) {
-                "Not enough storage. Need ${spec.expectedBytes / 1_000_000} MB plus 64 MB safety reserve; available ${destination.usableSpace / 1_000_000} MB."
+            val remainingBytes = remainingBytes(spec, destination)
+            check(destination.usableSpace >= remainingBytes + STORAGE_RESERVE_BYTES) {
+                "Not enough storage. Need ${remainingBytes / 1_000_000} MB to finish plus ${STORAGE_RESERVE_BYTES / 1_000_000} MB safety reserve; available ${destination.usableSpace / 1_000_000} MB."
             }
             val downloadContext = coroutineContext
             var downloaded = 0L

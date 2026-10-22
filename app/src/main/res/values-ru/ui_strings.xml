@@ -3811,6 +3811,26 @@
     <string name="ui_879979ad80a9" formatted="false">"Продолжить сохранённое занятие."</string>
     <string name="ui_1f9dae2d58d7" formatted="false">"Нет активного занятия"</string>
     <string name="ui_4790277aa10c" formatted="false">"Получено"</string>
+    <string name="ui_95145f43d145" formatted="false">"Необязательный локальный набор: закреплённый кандидат Qwen для намерений, Whisper Small, Silero VAD и синтез речи Supertonic. halo проверяет файлы, но не выбирает кандидаты и не заявляет об их качестве на устройстве. Вместо этого можно скачивать модели по отдельности."</string>
+    <string name="ui_3007ade836ff" formatted="false">"Файлы начального набора установлены и проверены. Перед использованием выберите модель распознавания речи и прослушайте голос. Артефакт Qwen остаётся невыбранным кандидатом."</string>
+    <string name="ui_2f9f525e3f4e" formatted="false">"Проверяем свободное место…"</string>
+    <string name="ui_2e34fc62280f" formatted="false">"Скачиваем кандидат для распознавания намерений…"</string>
+    <string name="ui_8b5164561b44" formatted="false">"Устанавливаем поддержку режима без рук…"</string>
+    <string name="ui_fc90bf68fab2" formatted="false">"Скачиваем голосовой набор…"</string>
+    <string name="ui_992d61234414" formatted="false">"Проверяем файлы моделей…"</string>
+    <string name="ui_aa10a65ff49a" formatted="false">"Приостановить настройку"</string>
+    <string name="ui_17773737ab5b" formatted="false">"Установка моделей приостановлена. Возобновите её или удалите только файлы, добавленные этой настройкой."</string>
+    <string name="ui_cd19e372d956" formatted="false">"Установка моделей не завершилась. Проверьте свободное место или подключение, затем возобновите её или удалите добавленные файлы."</string>
+    <string name="ui_dc40d6600d77" formatted="false">"Некоторые новые модели ещё используются. Закройте использующую их задачу и повторите отмену."</string>
+    <string name="ui_c3f962eda9e8" formatted="false">"Удаляем модели, добавленные этой настройкой…"</string>
+    <string name="ui_4b2e8b937b10" formatted="false">"Установить локальный набор моделей"</string>
+    <string name="ui_071f55ea3346" formatted="false">"Продолжить установку локального набора"</string>
+    <string name="ui_b0d795f796b5" formatted="false">"Отменить установку набора"</string>
+    <string name="ui_68bf6ac86ce4" formatted="false">"Повторить отмену"</string>
+    <string name="ui_20a65e7f6009" formatted="false">"Новые скачанные модели удалены."</string>
+    <string name="ui_80366b64dbac" formatted="false">"Необязательные локальные голосовые модели: Whisper Small для распознавания речи, Silero VAD для определения речевой активности и Supertonic 3 для синтеза речи. Загрузка моделей не подтверждает работу микрофона, качество распознавания или слышимость голоса."</string>
+    <string name="ui_6b42e8c8bff0" formatted="false">"Whisper Small INT8 · около 375 МБ · в каталоге указаны EN, LV, RU и PL. Требует больше памяти и времени, чем Base; проверьте распознавание на своём языке, прежде чем полагаться на него."</string>
+    <string name="ui_655dde73763d" formatted="false">"Supertonic 3 INT8 · архив около 129 МБ · локальный синтез речи. Указаны EN, LV, RU и PL; прослушайте и подтвердите каждый голос на этом устройстве."</string>
     <string name="ui_5eeb7e21a0d8" formatted="false">"Удалить поддержку режима без рук?"</string>
     <string name="ui_0ebd71038088" formatted="false">"halo будет использовать базовое определение речи. Позже поддержку режима без рук можно скачать снова."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Удалить поддержку режима без рук"</string>

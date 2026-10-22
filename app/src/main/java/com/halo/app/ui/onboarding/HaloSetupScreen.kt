@@ -183,20 +183,58 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                 }
                 SetupStage.SPEECH -> {
                     Copy("Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report.")
+                    val rolePack = remember { Graph.localRolePackInstaller }
+                    val rolePackState by rolePack.state.collectAsStateWithLifecycle()
+                    Copy("Optional private starter bundle: pinned Qwen intent candidate, Whisper Small, Silero VAD and Supertonic speech output. Halo checks the installed files, but does not select candidates or claim device quality. You can continue with individual downloads instead.")
+                    when (rolePackState.phase) {
+                        com.halo.app.ai.LocalRolePackPhase.COMPLETE -> Copy("Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate.")
+                        com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> Copy("Checking available storage…")
+                        com.halo.app.ai.LocalRolePackPhase.INSTALLING -> {
+                            Copy(when (rolePackState.stage) {
+                                com.halo.app.ai.LocalRolePackStage.INTENT -> "Downloading intent candidate…"
+                                com.halo.app.ai.LocalRolePackStage.SPEECH_RECOGNITION -> "Downloading listening model…"
+                                com.halo.app.ai.LocalRolePackStage.SPEECH_ACTIVITY -> "Installing hands-free support…"
+                                com.halo.app.ai.LocalRolePackStage.SPEECH_OUTPUT -> "Downloading voice pack…"
+                                com.halo.app.ai.LocalRolePackStage.DONE -> "Verifying model files…"
+                            })
+                            if (rolePackState.totalBytes > 0L) LinearProgressIndicator(
+                                progress = { (rolePackState.downloadedBytes.toFloat() / rolePackState.totalBytes).coerceIn(0f, 1f) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Secondary("Pause setup") { rolePack.pause() }
+                        }
+                        com.halo.app.ai.LocalRolePackPhase.PAUSED -> Copy("Model setup is paused. Resume it or roll back only the files added by this setup.")
+                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup.")
+                        com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy("Some new models are still in use. Close the task using them, then retry rollback.")
+                        com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Copy("Removing models added by this setup…")
+                        com.halo.app.ai.LocalRolePackPhase.IDLE -> Unit
+                    }
+                    if (rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
+                        rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
+                        rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
+                        OutlinedButton(
+                            enabled = !rolePackState.busy,
+                            onClick = rolePack::startOrResume,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                        ) { Text(uiText(if (rolePackState.canResume) "Resume private starter bundle" else "Install private starter bundle")) }
+                    }
+                    if (rolePackState.canRollback || rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
+                        Secondary(if (rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) "Retry rollback" else "Roll back starter bundle") { rolePack.rollback() }
+                    }
                     val language by Graph.speechLanguageSettingsRepository.languageMode.collectAsStateWithLifecycle()
                     listOf("en" to "English", "ru" to "Русский", "lv" to "Latviešu", "pl" to "Polski").forEach { (tag,name) -> Choice(name, language == tag) { scope.launch { Graph.speechLanguageSettingsRepository.select(tag); Graph.voiceSettingsViewModel.refreshState() } } }
                     if(!microphone) Secondary("Allow microphone") { permission.launch(Manifest.permission.RECORD_AUDIO) }
                     if(denied) Secondary("Open Android permissions") { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))) }
-                    Copy("Recommended private voice starter: Whisper Small for multilingual STT, Silero VAD for speech activity detection, and Supertonic 3 for local speech output. Install each explicitly; downloaded models do not prove microphone or voice readiness.")
+                    Copy("Optional local voice files: Whisper Small for speech recognition, Silero VAD for speech activity detection, and Supertonic 3 for speech output. Downloading files does not prove microphone capture, recognition quality or audible output.")
                     if(voice.models["whisper-small"] != true) {
-                        Copy("Whisper Small INT8 · about 375 MB · quality-first recognition for EN, LV, RU and PL. Requires more memory and time than Base.")
-                        OutlinedButton(enabled=!voice.isDownloading,onClick={Graph.voiceSettingsViewModel.installModel("whisper-small")},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download Whisper Small")) }
-                    } else Secondary("Use Whisper Small") { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_small") }
+                        Copy("Whisper Small INT8 · about 375 MB · catalog lists EN, LV, RU and PL. Requires more memory and time than Base; test recognition in your language before relying on it.")
+                        OutlinedButton(enabled=!voice.isDownloading && !rolePackState.busy,onClick={Graph.voiceSettingsViewModel.installModel("whisper-small")},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download Whisper Small")) }
+                    } else Secondary("Use Whisper Small", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_small") }
                     if(voice.models["whisper-base"] != true) {
-                        Secondary("Download lighter Whisper Base instead (161 MB)") { Graph.voiceSettingsViewModel.installModel("whisper-base") }
-                    } else Secondary("Use Whisper Base (lighter)") { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_base") }
+                        Secondary("Download lighter Whisper Base instead (161 MB)", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.installModel("whisper-base") }
+                    } else Secondary("Use Whisper Base (lighter)", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_base") }
                     if(!voice.sileroInstalled) {
-                        Secondary("Install Silero VAD (optional, about 0.6 MB)") { Graph.voiceSettingsViewModel.installModel("silero-vad") }
+                        Secondary("Install Silero VAD (optional, about 0.6 MB)", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.installModel("silero-vad") }
                     } else Copy("Silero VAD is installed; voice activity detection is available.")
                     val supertonic = remember {
                         Graph.speechSynthesisRegistry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()
@@ -208,8 +246,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     if(supertonicState?.selectedPackAvailable == true) {
                         Copy("Supertonic 3 INT8 pack selected. It becomes the automatic local voice after you audition and approve a language/voice in Speech output.")
                     } else if(supertonic != null) {
-                        Copy("Supertonic 3 INT8 · about 129 MB archive · recommended local TTS for EN, LV, RU and PL.")
-                        OutlinedButton(enabled=!installingVoice && !voice.isDownloading, onClick={
+                        Copy("Supertonic 3 INT8 · about 129 MB archive · local speech output. Language labels include EN, LV, RU and PL; audition and confirm each voice on this device.")
+                        OutlinedButton(enabled=!installingVoice && !voice.isDownloading && !rolePackState.busy, onClick={
                             scope.launch {
                                 installingVoice = true
                                 voiceInstallError = null
@@ -230,10 +268,10 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         Secondary("Pause Supertonic download") { supertonic?.packs?.cancelDownload() }
                     }
                     voiceInstallError?.let { Copy(it) }
-                    Secondary("Audition and approve voices / use Kokoro 1.1") { onOpen("settings/voice/output") }
+                    Secondary("Audition and approve voices / use Kokoro 1.1", enabled = !rolePackState.busy) { onOpen("settings/voice/output") }
                     if(voice.isDownloading) { LinearProgressIndicator(progress={voice.downloadProgress},modifier=Modifier.fillMaxWidth()); Copy("Downloading listening model…") }
                     if(voice.downloadError != null) Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")
-                    Secondary("Choose or download a listening model") { onOpen("settings/voice/input") }
+                    Secondary("Choose or download a listening model", enabled = !rolePackState.busy) { onOpen("settings/voice/input") }
                     Copy("Downloads start only when you choose them. Language support depends on the installed model and Android voice.")
                     OutlinedButton(enabled = microphone && speechJob == null, onClick = {
                         speechError = false; transcript = null; recording = true; microphoneTested = false; recognitionTested = false
@@ -347,8 +385,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
 }
 
 @Composable private fun Copy(text: String) { Text(uiText(text), style=MaterialTheme.typography.bodyLarge) }
-@Composable private fun Secondary(label: String, action: () -> Unit) {
-    OutlinedButton(onClick=action, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText(label)) }
+@Composable private fun Secondary(label: String, enabled: Boolean = true, action: () -> Unit) {
+    OutlinedButton(onClick=action, enabled=enabled, modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText(label)) }
 }
 @Composable private fun Choice(label: String, selected: Boolean, action: () -> Unit) {
     Surface(onClick = action, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)

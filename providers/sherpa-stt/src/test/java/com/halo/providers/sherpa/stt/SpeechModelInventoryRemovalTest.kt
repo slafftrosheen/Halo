@@ -2,11 +2,27 @@ package com.halo.providers.sherpa.stt
 
 import java.io.File
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SpeechModelInventoryRemovalTest {
+    @Test
+    fun remainingBytesCountsOnlyMissingBytesFromPinnedPartial() {
+        val root = createTempDir(prefix = "halo-silero-budget-")
+        try {
+            val spec = SherpaSpeechModelCatalog.sileroVad.files.single()
+            val partial = File(root, "${spec.name}.${spec.sha256}.download")
+            partial.writeBytes(ByteArray(100_000))
+
+            assertEquals(spec.expectedBytes - 100_000L,
+                SpeechModelInstaller.remainingBytes(SherpaSpeechModelCatalog.sileroVad, root))
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
     @Test
     fun removingSileroReleasesRuntimeAndDeletesOnlyItsFiles() = runBlocking {
         val root = createTempDir(prefix = "halo-silero-remove-")

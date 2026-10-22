@@ -24,12 +24,25 @@ data class SupertonicInstalledPack(val fingerprint: String, val selected: Boolea
 /** Local, user-imported model bytes. Audible authorization is recorded separately per voice/language. */
 class SupertonicPackStore(private val context: Context, private val storage: Storage) {
     private val root = File(context.noBackupFilesDir, "supertonic")
+    val storageRoot: File get() = root
     private val mutex = Mutex()
     private val acquisitionLock = Mutex()
     private var downloadJob: Job? = null
     private val downloadMutable=MutableStateFlow<Long?>(null)
     val downloadProgress = downloadMutable.asStateFlow()
     fun cancelDownload() { downloadJob?.cancel() }
+    fun hasOfficialPartial(): Boolean = File(root, "official-$OFFICIAL_SHA256.tar.bz2.part").let { it.isFile && it.length() > 0L }
+    fun remainingOfficialDownloadBytes(): Long {
+        val partial = File(root, "official-$OFFICIAL_SHA256.tar.bz2.part")
+        val partialBytes = partial.length().takeIf { it <= OFFICIAL_BYTES } ?: 0L
+        return (OFFICIAL_BYTES - partialBytes).coerceAtLeast(0L)
+    }
+    suspend fun discardOfficialPartial() = acquisitionLock.withLock {
+        withContext(Dispatchers.IO) {
+            val partial = File(root, "official-$OFFICIAL_SHA256.tar.bz2.part")
+            check(!partial.exists() || partial.delete()) { "Unable to discard the partial Supertonic archive" }
+        }
+    }
     private val required = SpeechPackRegistry.supertonic.requiredFiles
     private val hashPattern = Regex("[a-f0-9]{64}")
     private val languages = setOf("en", "lv", "ru", "pl")
@@ -110,7 +123,7 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         try {
             withContext(Dispatchers.IO) {
                 root.mkdirs()
-                require(root.usableSpace > OFFICIAL_BYTES + 1024L*1024*1024) {
+                require(root.usableSpace > remainingOfficialDownloadBytes() + INSTALL_RESERVE_BYTES) {
                     "Not enough free space to install the Supertonic voice pack"
                 }
                 downloadMutable.value=part.length()
@@ -128,7 +141,7 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
 
     suspend fun importArchive(uri: Uri): String = withContext(Dispatchers.IO) { mutex.withLock {
         root.mkdirs()
-        require(root.usableSpace>1024L*1024*1024) { "Supertonic requires at least 1 GiB free space for import" }
+        require(root.usableSpace>INSTALL_RESERVE_BYTES) { "Supertonic requires at least 1 GiB free space for import" }
         val temp=File(root,"incoming-"+java.util.UUID.randomUUID()).apply { mkdirs() }
         try {
             val seen=mutableSetOf<String>()
@@ -245,5 +258,6 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         const val OFFICIAL_URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
         const val OFFICIAL_SHA256="82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
         const val OFFICIAL_BYTES=128774318L
+        const val INSTALL_RESERVE_BYTES=1024L*1024*1024
     }
 }

@@ -25,6 +25,7 @@ class ProviderGraph(
 ) {
 
     private val storageLayout by lazy { haloStorageLayout(applicationContext) }
+    val speechModelRoot: java.io.File get() = storageLayout.speechModels
     val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models, backgroundDownloads = true) }
     val nativeResourceCoordinator by lazy { NativeResourceCoordinator(infra?.resourceLeaseManager) }
 

@@ -1690,6 +1690,17 @@ object ManualDependencyGraph {
             providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage, allowCloudSpeech = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
     }
 
+    val localRolePackInstaller by lazy {
+        val tts = speechSynthesisRegistry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()
+        com.halo.app.ai.LocalRolePackInstaller(
+            storage = storage,
+            models = providerGraph.modelManager,
+            speech = providerGraph.speechModelInventory,
+            speechRoot = providerGraph.speechModelRoot,
+            supertonic = tts,
+        )
+    }
+
     val routedSpeechPlaybackProvider by lazy {
         com.halo.app.audio.RoutedSpeechPlaybackProvider(
             applicationContext,
