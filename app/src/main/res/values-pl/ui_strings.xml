@@ -33,6 +33,7 @@
     <string name="ui_c66feb5eb8f2" formatted="false">"Przenieś wyżej"</string>
     <string name="ui_40bb50da160c" formatted="false">"Przenieś niżej"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
+    <string name="ui_23e39291d613" formatted="false">"Zapisywanie…"</string>
     <string name="ui_1208ec01f223" formatted="false">"Poprzednia strona"</string>
     <string name="ui_c08ac736a5e2" formatted="false">"Następna strona"</string>
     <string name="ui_0791ec684798" formatted="false">"Odczytaj na głos"</string>
@@ -117,7 +118,9 @@
     <string name="ui_2a78025de6aa" formatted="false">"Wybierz"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
+    <string name="ui_4fda695d3e86" formatted="false">"Sieć lokalna"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Chmura"</string>
+    <string name="ui_824ddc4cb517" formatted="false">"Domyślny model rozmowy"</string>
     <string name="ui_0e9161011702" formatted="false">"Odśwież"</string>
     <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_36ecb4f86691" formatted="false">"Wejście"</string>
@@ -223,6 +226,7 @@
     <string name="ui_baf0544e430e" formatted="false">"Styl głosu"</string>
     <string name="ui_7dfd4c4b11d5" formatted="false">"Użyj ElevenLabs do syntezy mowy"</string>
     <string name="ui_753e99a7c10d" formatted="false">"Odsłuchaj frazę testową na telefonie"</string>
+    <string name="ui_e817ef95f0c6" formatted="false">"Dane logowania skonfigurowane"</string>
     <string name="ui_294b6d76f82b" formatted="false">"Otwórz w Aktywności"</string>
     <string name="ui_e1038aba5163" formatted="false">"Anuluj dalsze oczekiwanie"</string>
     <string name="ui_b1c919e9bd90" formatted="false">"Przestać czekać na ten warunek?"</string>
@@ -243,7 +247,16 @@
     <string name="ui_1c6ff48c896d" formatted="false">"Skonfiguruj dostęp do ekranu telefonu"</string>
     <string name="ui_34a3bb6f0e08" formatted="false">"Zarządzaj dostępem do powiadomień"</string>
     <string name="ui_f67db8e43407" formatted="false">"Otwórz skrzynkę odbiorczą"</string>
+    <string name="ui_996c32b35f21" formatted="false">"Dostawcy"</string>
+    <string name="ui_75ddc529a5d3" formatted="false">"Autoryzuj przez Google"</string>
+    <string name="ui_d4141a59e1e3" formatted="false">"Odłącz OAuth Google"</string>
     <string name="ui_37ec7e16decf" formatted="false">"Usuń dane logowania"</string>
+    <string name="ui_ec84bc0a20b2" formatted="false">"Użyj w czacie"</string>
+    <string name="ui_7989a7891ab6" formatted="false">"Przeglądaj modele do generowania obrazów"</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Generowanie obrazów ma osobny wybór modelu w Canvas i Notatniku."</string>
+    <string name="ui_25debf3f0e04" formatted="false">"Przeglądaj modele tego dostawcy"</string>
+    <string name="ui_6831ccaba643" formatted="false">"Zarządzaj modelami lokalnymi"</string>
+    <string name="ui_3ee78c800fff" formatted="false">"Zapisanie danych logowania nie włącza korzystania z chmury. Zdalne żądania podlegają zasadom rozliczeń i przechowywania danych Twojego konta."</string>
     <string name="ui_ad1fb9ec0cb3" formatted="false">"Automatyzacje"</string>
     <string name="ui_778ed9b67c3f" formatted="false">"Nie skonfigurowano jeszcze żadnych rutyn."</string>
     <string name="ui_f0fe07086169" formatted="false">"Utwórz rutynę"</string>
@@ -440,6 +453,7 @@
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_2c7e25e01779" formatted="false">"Modele na urządzeniu"</string>
+    <string name="ui_d822e6257a23" formatted="false">"Na urządzeniu"</string>
     <string name="ui_d5d0a30b517e" formatted="false">"Kalendarz"</string>
     <string name="ui_7356acceb0c5" formatted="false">"Utwórz umiejętność"</string>
     <string name="ui_afa8a4dfa861" formatted="false">"Zacznij od dostępnych działań halo, a następnie dostosuj instrukcje. Przed instalacją sprawdź umiejętność."</string>
@@ -473,8 +487,16 @@
     <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
     <string name="ui_78a7ab5e314a" formatted="false">"Wybierz model"</string>
+    <string name="ui_5a178470ad67" formatted="false">"Modeli w pamięci podręcznej: %1$d modeļi"</string>
+    <string name="ui_bf46d5215a78" formatted="false">"Połącz halo z wybranym modelem AI."</string>
+    <string name="ui_8ae2538a897a" formatted="false">"Generowanie obrazów"</string>
     <string name="ui_ff2113958589" formatted="false">"Dostawca jest niedostępny"</string>
+    <string name="ui_9fd64fcb5153" formatted="false">"Wróć do dostawców i wybierz dostępny sposób konfiguracji."</string>
+    <string name="ui_f8d63587010e" formatted="false">"Testy odpowiedzi dotyczą tego dostawcy, a nie każdego modelu. Zapisanie konfiguracji usuwa wcześniejsze wyniki testów."</string>
+    <string name="ui_8f8d600b409c" formatted="false">"Bieżący model: %1$s"</string>
     <string name="ui_3e0bae9d4f24" formatted="false">"Usunąć dane logowania?"</string>
+    <string name="ui_2a1d9e3b7427" formatted="false">"Ten dostawca będzie wymagać ponownej autoryzacji. Zapisane notatki i rozmowy pozostaną."</string>
+    <string name="ui_cb0b5b7247ee" formatted="false">"Przed testowaniem zapisz zmiany. Testy korzystają z zapisanej konfiguracji."</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
@@ -510,6 +532,8 @@
     <string name="ui_494ca78f7374" formatted="false">"Niestandardowe"</string>
     <string name="ui_a5f1b6640cc6" formatted="false">"Niestandardowa liczba minut · od 15 do 1440"</string>
     <string name="ui_50017ea75995" formatted="false">"Niestandardowa liczba sekund"</string>
+    <string name="ui_cf205c33359a" formatted="false">"Bez uwierzytelniania"</string>
+    <string name="ui_9a911b08feb9" formatted="false">"Token dostępu"</string>
     <string name="ui_6c863c3012b6" formatted="false">"Odrzucić zmiany w umiejętności?"</string>
     <string name="ui_25c11e7cf257" formatted="false">"Te instrukcje nie zostały zainstalowane. Sprawdź je przed instalacją albo odrzuć ten szkic."</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
@@ -546,6 +570,12 @@
     <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
     <string name="ui_a2243f3686d9" formatted="false">"Otwórz Mini halo"</string>
     <string name="ui_62fae752c4b7" formatted="false">"Miej halo pod ręką w małym oknie lub widżecie na ekranie głównym."</string>
+    <string name="ui_befe514bdf8f" formatted="false">"Wklej dane logowania"</string>
+    <string name="ui_ad3d9699142e" formatted="false">"Zapisz bezpiecznie"</string>
+    <string name="ui_32f908c5ce01" formatted="false">"Pobierz listę moich modeli"</string>
+    <string name="ui_fd9b7c2ba85b" formatted="false">"Konfiguracja została zapisana; połączenie nie zostało sprawdzone"</string>
+    <string name="ui_90f754bf8d33" formatted="false">"Uzyskaj klucz API"</string>
+    <string name="ui_0adde84d26d4" formatted="false">"Zaawansowany OAuth Google"</string>
     <string name="ui_ef6691545d2c" formatted="false">"Standardowy"</string>
     <string name="ui_890ab358a55d" formatted="false">"Szczegóły techniczne"</string>
     <string name="ui_22e2bada8f1c" formatted="false">"Powiadomienia"</string>
@@ -830,6 +860,7 @@
     <string name="ui_750af77aa42e" formatted="false">"W użyciu"</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
+    <string name="ui_35881e86e3a4" formatted="false">"Wybrano model odpowiedzi"</string>
     <string name="ui_50287a4d5ea7" formatted="false">"Dostęp do działań aplikacji jest zablokowany. Sprawdź uprawnienia, aby kontynuować."</string>
     <string name="ui_c4bd14cbcafa" formatted="false">"Nie udało się odczytać działań aplikacji. Otwórz aplikację i spróbuj ponownie."</string>
     <string name="ui_7bc5279a8267" formatted="false">"Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis."</string>
@@ -922,4 +953,12 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Pobierz i wybierz Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"Nie ma nic do przeczytania"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Nie udało się zapisać. Sprawdź konfigurację i spróbuj ponownie."</string>
+    <string name="ui_120a64e7e914" formatted="false">"Autoryzacja Google została anulowana lub jest niedostępna."</string>
+    <string name="ui_cd426fedb903" formatted="false">"Wprowadź identyfikator projektu Google Cloud; autoryzacja Google musi być dostępna."</string>
+    <string name="ui_6b8a44750d45" formatted="false">"Dane logowania nie są wymagane"</string>
+    <string name="ui_4eb55c901146" formatted="false">"Brak zapisanych danych logowania"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Wprowadź dane logowania"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"Autoryzacja OAuth zakończona; sprawdź połączenie, aby potwierdzić gotowość."</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Autoryzacja Google nie powiodła się."</string>
 </resources>

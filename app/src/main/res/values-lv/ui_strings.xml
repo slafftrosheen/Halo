@@ -2059,7 +2059,7 @@
     <string name="ui_c9fb6b91c07a" formatted="false">"Pakalpojuma atbildes pārbaude izdevās"</string>
     <string name="ui_7b09a495def4" formatted="false">"Iestatījumu pārbaude…"</string>
     <string name="ui_1aa21411e35c" formatted="false">"Konfigurēti pakalpojumi: %1$d"</string>
-    <string name="ui_5a178470ad67" formatted="false">"Saglabātajā sarakstā: %1$d modeļi"</string>
+    <string name="ui_5a178470ad67" formatted="false">"Saglabātajā sarakstā: %1$d"</string>
     <string name="ui_bf46d5215a78" formatted="false">"Izvēlieties, kā halo atbildēs."</string>
     <string name="ui_8ae2538a897a" formatted="false">"Attēlu veidošana"</string>
     <string name="ui_ff2113958589" formatted="false">"Pakalpojums nav pieejams"</string>
@@ -3909,4 +3909,12 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Lejupielādēt un izvēlēties Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"Šeit nav nekā, ko lasīt"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Neizdevās saglabāt. Pārbaudiet konfigurāciju un mēģiniet vēlreiz."</string>
+    <string name="ui_120a64e7e914" formatted="false">"Google autorizācija tika atcelta vai nav pieejama."</string>
+    <string name="ui_cd426fedb903" formatted="false">"Ievadiet Google Cloud projekta ID; jābūt pieejamai Google autorizācijai."</string>
+    <string name="ui_6b8a44750d45" formatted="false">"Piekļuves dati nav vajadzīgi"</string>
+    <string name="ui_4eb55c901146" formatted="false">"Nav saglabātu piekļuves datu"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Ievadiet piekļuves datus"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"OAuth autorizācija pabeigta; pārbaudiet savienojumu, lai pārliecinātos par gatavību."</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Google autorizācija neizdevās."</string>
 </resources>

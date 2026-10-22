@@ -3911,4 +3911,12 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Download and select Supertonic 3" to R.string.ui_6c5ad9fabaae,
     "There is nothing to read" to R.string.ui_451feab79370,
     "ElevenLabs" to R.string.ui_91268016fe67,
+    "Unable to save; check the configuration and try again" to R.string.ui_aee0092c74f2,
+    "Google authorization was cancelled or unavailable" to R.string.ui_120a64e7e914,
+    "Enter a Google Cloud project ID; Google authorization must be available" to R.string.ui_cd426fedb903,
+    "No credential required" to R.string.ui_6b8a44750d45,
+    "No stored credential" to R.string.ui_4eb55c901146,
+    "Enter credential" to R.string.ui_73a0d909ce75,
+    "OAuth authorized; test connection to check readiness" to R.string.ui_c3f87d0c007c,
+    "Google authorization failed" to R.string.ui_a5a4c9a03be3,
 )

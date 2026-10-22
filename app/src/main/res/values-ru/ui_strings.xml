@@ -3909,4 +3909,12 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Скачать и выбрать Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"Здесь нечего читать"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Не удалось сохранить. Проверьте настройки и повторите попытку."</string>
+    <string name="ui_120a64e7e914" formatted="false">"Авторизация Google отменена или недоступна."</string>
+    <string name="ui_cd426fedb903" formatted="false">"Введите идентификатор проекта Google Cloud; должна быть доступна авторизация Google."</string>
+    <string name="ui_6b8a44750d45" formatted="false">"Учетные данные не требуются"</string>
+    <string name="ui_4eb55c901146" formatted="false">"Нет сохранённых учетных данных"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Введите учетные данные"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"Авторизация OAuth завершена; проверьте подключение, чтобы убедиться в готовности."</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Не удалось выполнить авторизацию Google."</string>
 </resources>

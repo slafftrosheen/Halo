@@ -3909,4 +3909,12 @@
     <string name="ui_6c5ad9fabaae" formatted="false">"Download and select Supertonic 3"</string>
     <string name="ui_451feab79370" formatted="false">"There is nothing to read"</string>
     <string name="ui_91268016fe67" formatted="false">"ElevenLabs"</string>
+    <string name="ui_aee0092c74f2" formatted="false">"Unable to save; check the configuration and try again"</string>
+    <string name="ui_120a64e7e914" formatted="false">"Google authorization was cancelled or unavailable"</string>
+    <string name="ui_cd426fedb903" formatted="false">"Enter a Google Cloud project ID; Google authorization must be available"</string>
+    <string name="ui_6b8a44750d45" formatted="false">"No credential required"</string>
+    <string name="ui_4eb55c901146" formatted="false">"No stored credential"</string>
+    <string name="ui_73a0d909ce75" formatted="false">"Enter credential"</string>
+    <string name="ui_c3f87d0c007c" formatted="false">"OAuth authorized; test connection to check readiness"</string>
+    <string name="ui_a5a4c9a03be3" formatted="false">"Google authorization failed"</string>
 </resources>

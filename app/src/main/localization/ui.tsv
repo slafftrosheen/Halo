@@ -240,7 +240,7 @@ Ask Halo for the first step, or write your attempt and submit it.|||Попрос
 Your thoughts or question|||Твои мысли или вопрос|||Tavas domas vai jautājums
 Write what you have so far — you can submit at any stage|||Запиши то, что получилось — можно отправить на любом этапе|||Pieraksti, kas līdz šim izdevies — vari iesniegt jebkurā posmā
 Submit attempt|||Отправить попытку|||Iesniegt mēģinājumu
-Saving…|||Сохраняю…|||Saglabāju…
+Saving…|||Сохраняю…|||Saglabāju…|||Zapisywanie…
 Begin|||Начать|||Sākt
 Try another explanation|||Попробовать другое объяснение|||Izmēģināt citu paskaidrojumu
 Reveal the full solution?|||Показать полное решение?|||Parādīt pilnu risinājumu?
@@ -576,9 +576,9 @@ All locations|||Все местоположения|||Visas atrašanās vietas
 All capabilities|||Все возможности|||Visas iespējas
 Refreshing…|||Обновление…|||Atjaunina…
 Provider setup|||Настройка провайдера|||Pakalpojumu sniedzēja iestatīšana
-Local network|||Локальная сеть|||Lokālais tīkls
+Local network|||Локальная сеть|||Lokālais tīkls|||Sieć lokalna
 Cloud|||Облако|||Mākonis|||Chmura
-Conversation default|||Модель для разговоров по умолчанию|||Noklusējuma sarunu modelis
+Conversation default|||Модель для разговоров по умолчанию|||Noklusējuma sarunu modelis|||Domyślny model rozmowy
 Model roles|||Роли моделей|||Modeļu lomas
 Images and visual context|||Изображения и визуальный контекст|||Attēli un vizuālais konteksts
 Configured|||Настроено|||Iestatīts
@@ -1027,7 +1027,7 @@ Search voices|||Поиск голосов|||Meklēt balsis|||Szukaj głosów
 Voice style|||Стиль голоса|||Balss stils|||Styl głosu
 Use ElevenLabs for speech output|||Использовать ElevenLabs для озвучивания|||Izmantot ElevenLabs runas izvadei|||Użyj ElevenLabs do syntezy mowy
 Speak test phrase on phone|||Произнести тестовую фразу через телефон|||Atskaņot testa frāzi tālrunī|||Odsłuchaj frazę testową na telefonie
-Credential configured|||Ключ настроен|||Piekļuves atslēga iestatīta
+Credential configured|||Ключ настроен|||Piekļuves atslēga iestatīta|||Dane logowania skonfigurowane
 Enter API key|||Введите API-ключ|||Ievadi API atslēgu
 Open in Activity|||Открыть в журнале действий|||Atvērt darbību žurnālā|||Otwórz w Aktywności
 Cancel follow-up|||Отменить отслеживание|||Atcelt sekošanu|||Anuluj dalsze oczekiwanie
@@ -1049,21 +1049,21 @@ Its history remains part of Activity where applicable. The automation itself wil
 Set up phone screen access|||Настроить доступ к экрану телефона|||Iestatīt piekļuvi tālruņa ekrānam|||Skonfiguruj dostęp do ekranu telefonu
 Manage notification access|||Управлять доступом к уведомлениям|||Pārvaldīt piekļuvi paziņojumiem|||Zarządzaj dostępem do powiadomień
 Open Inbox|||Открыть входящие|||Atvērt iesūtni|||Otwórz skrzynkę odbiorczą
-Providers|||Провайдеры|||Pakalpojumu sniedzēji
-Authorize with Google|||Войти через Google|||Autorizēties ar Google
-Disconnect Google OAuth|||Отключить Google OAuth|||Atvienot Google OAuth
+Providers|||Провайдеры|||Pakalpojumu sniedzēji|||Dostawcy
+Authorize with Google|||Войти через Google|||Autorizēties ar Google|||Autoryzuj przez Google
+Disconnect Google OAuth|||Отключить Google OAuth|||Atvienot Google OAuth|||Odłącz OAuth Google
 Save configuration|||Сохранить конфигурацию|||Saglabāt konfigurāciju
 Remove credential|||Удалить учётные данные|||Dzēst piekļuves datus|||Usuń dane logowania
 Test generation|||Проверить генерацию|||Pārbaudīt ģenerēšanu
-Use for Chat|||Использовать для чата|||Izmantot sarunām
+Use for Chat|||Использовать для чата|||Izmantot sarunām|||Użyj w czacie
 Assign roles|||Назначить роли|||Piešķirt lomas
 Refresh models|||Обновить список моделей|||Atjaunināt modeļu sarakstu
-Browse image generation models|||Выбрать модели генерации изображений|||Pārlūkot attēlu ģenerēšanas modeļus
-Image creation uses its own model selection in Canvas and Notebook.|||Для создания изображений модель выбирается отдельно в холсте и блокноте.|||Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un piezīmēs.
-Browse this provider’s models|||Просмотреть модели провайдера|||Pārlūkot šī pakalpojumu sniedzēja modeļus
-Manage local models|||Управление локальными моделями|||Pārvaldīt lokālos modeļus
+Browse image generation models|||Выбрать модели генерации изображений|||Pārlūkot attēlu ģenerēšanas modeļus|||Przeglądaj modele do generowania obrazów
+Image creation uses its own model selection in Canvas and Notebook.|||Для создания изображений модель выбирается отдельно в холсте и блокноте.|||Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un piezīmēs.|||Generowanie obrazów ma osobny wybór modelu w Canvas i Notatniku.
+Browse this provider’s models|||Просмотреть модели провайдера|||Pārlūkot šī pakalpojumu sniedzēja modeļus|||Przeglądaj modele tego dostawcy
+Manage local models|||Управление локальными моделями|||Pārvaldīt lokālos modeļus|||Zarządzaj modelami lokalnymi
 System check and diagnostics|||Проверка системы и диагностика|||Sistēmas pārbaude un diagnostika
-Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy.|||Сохранение ключей само по себе не включает облако. Удалённые запросы подчиняются условиям оплаты и хранения данных вашего аккаунта.|||Piekļuves datu saglabāšana pati par sevi neieslēdz mākoni. Attālinātiem pieprasījumiem piemēro konta norēķinu un datu glabāšanas politiku.
+Saving credentials never enables cloud use. Remote requests use your account’s billing and retention policy.|||Сохранение ключей само по себе не включает облако. Удалённые запросы подчиняются условиям оплаты и хранения данных вашего аккаунта.|||Piekļuves datu saglabāšana pati par sevi neieslēdz mākoni. Attālinātiem pieprasījumiem piemēro konta norēķinu un datu glabāšanas politiku.|||Zapisanie danych logowania nie włącza korzystania z chmury. Zdalne żądania podlegają zasadom rozliczeń i przechowywania danych Twojego konta.
 Phone-control sandbox|||Тестовая среда управления телефоном|||Tālruņa vadības testa vide
 Sandbox details|||Сведения о тестовой среде|||Testa vides detaļas
 Return to controls|||Вернуться к управлению|||Atgriezties pie vadīklām
@@ -1779,7 +1779,7 @@ Choose a voice and output provider|||Выберите голос и сервис
 On-device models|||Модели на телефоне|||Modeļi ierīcē|||Modele na urządzeniu
 Model library|||Каталог моделей|||Modeļu katalogs
 Browse available models|||Посмотрите доступные модели|||Pārlūkojiet pieejamos modeļus
-On device|||На телефоне|||Ierīcē
+On device|||На телефоне|||Ierīcē|||Na urządzeniu
 Choose an AI provider|||Выберите сервис ИИ|||Izvēlieties MI pakalpojumu
 No model selected|||Модель не выбрана|||Modelis nav izvēlēts
 Change model|||Сменить модель|||Mainīt modeli
@@ -2057,17 +2057,17 @@ Test a reply|||Проверить ответ|||Pārbaudīt atbildi
 Provider reply test succeeded|||Ответ провайдера проверен|||Pakalpojuma atbildes pārbaude izdevās
 Checking this setup…|||Проверка настроек…|||Iestatījumu pārbaude…
 %1$d configured providers|||Настроено провайдеров: %1$d|||Konfigurēti pakalpojumi: %1$d
-%1$d cached models|||Моделей в сохранённом списке: %1$d|||Saglabātajā sarakstā: %1$d modeļi
-Connect Halo to the intelligence you choose.|||Выберите, как Halo будет отвечать.|||Izvēlieties, kā Halo atbildēs.
-Image creation|||Создание изображений|||Attēlu veidošana
+%1$d cached models|||Моделей в сохранённом списке: %1$d|||Saglabātajā sarakstā: %1$d|||Modeli w pamięci podręcznej: %1$d modeļi
+Connect Halo to the intelligence you choose.|||Выберите, как Halo будет отвечать.|||Izvēlieties, kā Halo atbildēs.|||Połącz Halo z wybranym modelem AI.
+Image creation|||Создание изображений|||Attēlu veidošana|||Generowanie obrazów
 Provider unavailable|||Провайдер недоступен|||Pakalpojums nav pieejams|||Dostawca jest niedostępny
-Return to Providers and choose an available setup.|||Вернитесь к провайдерам и выберите доступный вариант.|||Atgriezieties pie pakalpojumiem un izvēlieties pieejamu variantu.
-Reply tests apply to this provider, not every model. Saving configuration clears previous checks.|||Проверка ответа относится к провайдеру, а не ко всем моделям. Сохранение настроек сбрасывает прежние проверки.|||Atbildes pārbaude attiecas uz pakalpojumu, nevis visiem modeļiem. Iestatījumu saglabāšana atiestata iepriekšējās pārbaudes.
-Current model: %1$s|||Текущая модель: %1$s|||Pašreizējais modelis: %1$s
+Return to Providers and choose an available setup.|||Вернитесь к провайдерам и выберите доступный вариант.|||Atgriezieties pie pakalpojumiem un izvēlieties pieejamu variantu.|||Wróć do dostawców i wybierz dostępny sposób konfiguracji.
+Reply tests apply to this provider, not every model. Saving configuration clears previous checks.|||Проверка ответа относится к провайдеру, а не ко всем моделям. Сохранение настроек сбрасывает прежние проверки.|||Atbildes pārbaude attiecas uz pakalpojumu, nevis visiem modeļiem. Iestatījumu saglabāšana atiestata iepriekšējās pārbaudes.|||Testy odpowiedzi dotyczą tego dostawcy, a nie każdego modelu. Zapisanie konfiguracji usuwa wcześniejsze wyniki testów.
+Current model: %1$s|||Текущая модель: %1$s|||Pašreizējais modelis: %1$s|||Bieżący model: %1$s
 Last connection check: %1$s|||Последняя проверка подключения: %1$s|||Pēdējā savienojuma pārbaude: %1$s
 Remove credential?|||Удалить данные авторизации?|||Dzēst autorizācijas datus?|||Usunąć dane logowania?
-This provider will need authorization again. Saved notes and conversations are kept.|||Для этого провайдера потребуется новая авторизация. Заметки и разговоры сохранятся.|||Šim pakalpojumam būs vajadzīga atkārtota autorizācija. Piezīmes un sarunas tiks saglabātas.
-Save your changes before testing. Checks use the saved configuration.|||Сохраните изменения перед проверкой. Проверки используют сохранённые настройки.|||Pirms pārbaudes saglabājiet izmaiņas. Pārbaudes izmanto saglabātos iestatījumus.
+This provider will need authorization again. Saved notes and conversations are kept.|||Для этого провайдера потребуется новая авторизация. Заметки и разговоры сохранятся.|||Šim pakalpojumam būs vajadzīga atkārtota autorizācija. Piezīmes un sarunas tiks saglabātas.|||Ten dostawca będzie wymagać ponownej autoryzacji. Zapisane notatki i rozmowy pozostaną.
+Save your changes before testing. Checks use the saved configuration.|||Сохраните изменения перед проверкой. Проверки используют сохранённые настройки.|||Pirms pārbaudes saglabājiet izmaiņas. Pārbaudes izmanto saglabātos iestatījumus.|||Przed testowaniem zapisz zmiany. Testy korzystają z zapisanej konfiguracji.
 No matching models|||Подходящие модели не найдены|||Nav atbilstošu modeļu
 This model cannot be selected for this task with the current setup.|||С текущими настройками эту модель нельзя выбрать для данной задачи.|||Ar pašreizējiem iestatījumiem šo modeli nevar izvēlēties šim uzdevumam.
 Video understanding|||Понимание видео|||Video izpratne
@@ -2267,8 +2267,8 @@ Refresh image models|||Обновить модели изображений|||At
 Uses the provider credentials in Settings. Your prompt and any reference image are sent to that provider.|||Использует ключ доступа из Настроек. Ваш запрос и исходное изображение отправляются этому провайдеру.|||Izmanto piekļuves datus no Iestatījumiem. Jūsu pieprasījums un parauga attēls tiek nosūtīti šim pakalpojuma sniedzējam.
 Provider check failed. Review configuration and try again.|||Проверка провайдера не удалась. Проверьте настройки и повторите попытку.|||Pakalpojuma pārbaude neizdevās. Pārskatiet iestatījumus un mēģiniet vēlreiz.
 Sign in with account|||Войти в аккаунт|||Pierakstīties ar kontu
-No authentication|||Без авторизации|||Bez autentifikācijas
-Access token|||Токен доступа|||Piekļuves pilnvara
+No authentication|||Без авторизации|||Bez autentifikācijas|||Bez uwierzytelniania
+Access token|||Токен доступа|||Piekļuves pilnvara|||Token dostępu
 Discard skill edits?|||Отбросить изменения навыка?|||Atmest prasmes izmaiņas?|||Odrzucić zmiany w umiejętności?
 These instructions have not been installed. Review them before installing, or discard this draft.|||Эти инструкции не установлены. Проверьте их перед установкой или отбросьте черновик.|||Šīs instrukcijas nav instalētas. Pirms instalēšanas pārskatiet tās vai atmetiet melnrakstu.|||Te instrukcje nie zostały zainstalowane. Sprawdź je przed instalacją albo odrzuć ten szkic.
 Hide technical details|||Скрыть технические сведения|||Slēpt tehnisko informāciju
@@ -2452,11 +2452,11 @@ Ready to review: %1$d|||Карточки для повторения: %1$d|||Kar
 Test an online answer?|||Проверить ответ онлайн?|||Pārbaudīt tiešsaistes atbildi?
 This sends a short test phrase to this provider and may use paid credits. No notes, history, images or tools are included.|||Провайдер получит короткую тестовую фразу. Могут списаться платные кредиты. Заметки, история, изображения и инструменты не передаются.|||Pakalpojuma sniedzējam tiks nosūtīta īsa pārbaudes frāze. Var tikt izmantoti maksas kredīti. Piezīmes, vēsture, attēli un rīki netiks pievienoti.
 Test answer|||Проверить ответ|||Pārbaudīt atbildi
-Paste credential|||Вставить ключ|||Ielīmēt atslēgu
-Save securely|||Сохранить безопасно|||Saglabāt droši
-Fetch my models|||Получить мои модели|||Ielādēt manus modeļus
+Paste credential|||Вставить ключ|||Ielīmēt atslēgu|||Wklej dane logowania
+Save securely|||Сохранить безопасно|||Saglabāt droši|||Zapisz bezpiecznie
+Fetch my models|||Получить мои модели|||Ielādēt manus modeļus|||Pobierz listę moich modeli
 
-Configuration saved; connection not checked|||Настройки сохранены; соединение не проверено|||Iestatījumi saglabāti; savienojums nav pārbaudīts
+Configuration saved; connection not checked|||Настройки сохранены; соединение не проверено|||Iestatījumi saglabāti; savienojums nav pārbaudīts|||Konfiguracja została zapisana; połączenie nie zostało sprawdzone
 Connection checked; answer not tested|||Соединение проверено; ответ не проверен|||Savienojums pārbaudīts; atbilde nav pārbaudīta
 Available models refreshed|||Доступные модели обновлены|||Pieejamie modeļi atjaunināti
 This account cannot access this service|||У этой учётной записи нет доступа к сервису|||Šim kontam nav piekļuves pakalpojumam
@@ -2472,8 +2472,8 @@ Protected credential storage is unavailable|||Защищённое хранил�
 Confirm online usage before testing an answer|||Подтвердите использование онлайн-сервиса перед проверкой ответа|||Pirms atbildes pārbaudes apstipriniet tiešsaistes izmantošanu
 Choose an available text model first|||Сначала выберите доступную текстовую модель|||Vispirms izvēlieties pieejamu teksta modeli
 A final answer was not received|||Итоговый ответ не получен|||Gala atbilde netika saņemta
-Get API key|||Получить API-ключ|||Iegūt API atslēgu
-Advanced Google OAuth|||Google OAuth: расширенная настройка|||Google OAuth: papildu iestatījumi
+Get API key|||Получить API-ключ|||Iegūt API atslēgu|||Uzyskaj klucz API
+Advanced Google OAuth|||Google OAuth: расширенная настройка|||Google OAuth: papildu iestatījumi|||Zaawansowany OAuth Google
 Model tuning|||Настройка модели|||Modeļa pielāgošana
 Changes apply to this model only.|||Изменения применяются только к этой модели.|||Izmaiņas attiecas tikai uz šo modeli.
 Balanced|||Сбалансированный|||Līdzsvarots
@@ -3743,7 +3743,7 @@ This model does not answer chats. Its other features need compatible support.|||
 In use|||Используется|||Tiek izmantots|||W użyciu
 Answer from this phone|||Ответ с этого телефона|||Atbilde no šī tālruņa|||Odpowiedź z tego telefonu
 No answer was received. Try again or choose another model.|||Ответ не получен. Повторите попытку или выберите другую модель.|||Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli.|||Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model.
-An answer model is selected|||Модель для ответов выбрана|||Atbilžu modelis ir izvēlēts
+An answer model is selected|||Модель для ответов выбрана|||Atbilžu modelis ir izvēlēts|||Wybrano model odpowiedzi
 Backup password|||Пароль резервной копии|||Rezerves kopijas parole
 Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only.|||Сохраните пароль для восстановления на другом телефоне. halo безопасно хранит его для резервного копирования по расписанию. Изменение пароля касается только новых копий.|||Saglabājiet paroli atjaunošanai citā tālrunī. halo to glabā droši plānotajām rezerves kopijām. Paroles maiņa attiecas tikai uz jaunām kopijām.
 Save backup password|||Сохранить пароль резервной копии|||Saglabāt rezerves kopijas paroli
@@ -3913,3 +3913,11 @@ Download Whisper Small|||Скачать Whisper Small|||Lejupielādēt Whisper S
 Download and select Supertonic 3|||Скачать и выбрать Supertonic 3|||Lejupielādēt un izvēlēties Supertonic 3|||Pobierz i wybierz Supertonic 3
 There is nothing to read|||Здесь нечего читать|||Šeit nav nekā, ko lasīt|||Nie ma nic do przeczytania
 ElevenLabs|||ElevenLabs|||ElevenLabs|||ElevenLabs
+Unable to save; check the configuration and try again|||Не удалось сохранить. Проверьте настройки и повторите попытку.|||Neizdevās saglabāt. Pārbaudiet konfigurāciju un mēģiniet vēlreiz.|||Nie udało się zapisać. Sprawdź konfigurację i spróbuj ponownie.
+Google authorization was cancelled or unavailable|||Авторизация Google отменена или недоступна.|||Google autorizācija tika atcelta vai nav pieejama.|||Autoryzacja Google została anulowana lub jest niedostępna.
+Enter a Google Cloud project ID; Google authorization must be available|||Введите идентификатор проекта Google Cloud; должна быть доступна авторизация Google.|||Ievadiet Google Cloud projekta ID; jābūt pieejamai Google autorizācijai.|||Wprowadź identyfikator projektu Google Cloud; autoryzacja Google musi być dostępna.
+No credential required|||Учетные данные не требуются|||Piekļuves dati nav vajadzīgi|||Dane logowania nie są wymagane
+No stored credential|||Нет сохранённых учетных данных|||Nav saglabātu piekļuves datu|||Brak zapisanych danych logowania
+Enter credential|||Введите учетные данные|||Ievadiet piekļuves datus|||Wprowadź dane logowania
+OAuth authorized; test connection to check readiness|||Авторизация OAuth завершена; проверьте подключение, чтобы убедиться в готовности.|||OAuth autorizācija pabeigta; pārbaudiet savienojumu, lai pārliecinātos par gatavību.|||Autoryzacja OAuth zakończona; sprawdź połączenie, aby potwierdzić gotowość.
+Google authorization failed|||Не удалось выполнить авторизацию Google.|||Google autorizācija neizdevās.|||Autoryzacja Google nie powiodła się.
