@@ -3907,4 +3907,5 @@
     <string name="ui_57bc2bcc327f" formatted="false">"The local model manager is unavailable."</string>
     <string name="ui_2e264e13070c" formatted="false">"Download Whisper Small"</string>
     <string name="ui_6c5ad9fabaae" formatted="false">"Download and select Supertonic 3"</string>
+    <string name="ui_451feab79370" formatted="false">"There is nothing to read"</string>
 </resources>

@@ -192,9 +192,9 @@ Ready to remember|||Пора повторить|||Laiks atkārtot|||Gotowe do za
 Review cards|||Повторить карточки|||Atkārtot kartītes
 Pick up where you left off|||Продолжи с того места, где остановился|||Turpini no vietas, kur apstājies|||Wznów przerwaną naukę
 Continue learning|||Продолжить обучение|||Turpināt mācīties|||Kontynuuj naukę
-How detailed should explanations be?|||Насколько подробными должны быть объяснения?|||Cik detalizētiem jābūt paskaidrojumiem?
-How would you like to learn?|||Как ты хочешь учиться?|||Kā vēlies mācīties?
-What can Halo use?|||Какие материалы может использовать Halo?|||Ko Halo drīkst izmantot?
+How detailed should explanations be?|||Насколько подробными должны быть объяснения?|||Cik detalizētiem jābūt paskaidrojumiem?|||Jak szczegółowe mają być wyjaśnienia?
+How would you like to learn?|||Как ты хочешь учиться?|||Kā vēlies mācīties?|||Jak chcesz się uczyć?
+What can Halo use?|||Какие материалы может использовать Halo?|||Ko Halo drīkst izmantot?|||Z czego Halo może korzystać?
 Guide me|||Помоги разобраться|||Palīdzi izprast
 Let me practise|||Дай потренироваться|||Ļauj vingrināties
 Explain it|||Объясни|||Paskaidro
@@ -1864,7 +1864,7 @@ Hide learning options|||Скрыть параметры обучения|||Pasl�
 Age, language & learning options|||Возраст, языки и обучение|||Vecums, valodas un mācību iestatījumi
 Start lesson|||Начать урок|||Sākt nodarbību
 Enter a learning goal or choose material to begin.|||Чтобы начать, укажите цель или выберите материал.|||Lai sāktu, norādi mācību mērķi vai izvēlies materiālu.
-Your learning path|||Ваш путь обучения|||Tavs mācību ceļš
+Your learning path|||Ваш путь обучения|||Tavs mācību ceļš|||Twoja ścieżka nauki
 Understand|||Разобраться|||Saprast
 Try|||Попробовать|||Izmēģināt
 Halo is preparing the next step. Your work stays saved.|||Halo готовит следующий шаг. Ваша работа сохранена.|||Halo gatavo nākamo soli. Tavs darbs ir saglabāts.
@@ -1894,7 +1894,7 @@ Can you explain this with an example?|||Можешь объяснить это �
 Need a starting point?|||Не знаете, с чего начать?|||Nezini, ar ko sākt?
 Share my thinking|||Поделиться своими мыслями|||Padalīties ar savu domu gaitu
 Ask for an example|||Попросить пример|||Lūgt piemēru
-Back to lesson|||Вернуться к уроку|||Atpakaļ uz nodarbību
+Back to lesson|||Вернуться к уроку|||Atpakaļ uz nodarbību|||Wróć do lekcji
 Material|||Материал|||Materiāls
 Opening your lesson|||Открываем урок|||Atver nodarbību
 Back to Study|||Вернуться к обучению|||Atpakaļ uz mācībām
@@ -2555,7 +2555,7 @@ No material attached. halo will use general knowledge.|||Материалы не
 Selected material will follow your chosen source policy.|||Выбранные материалы будут использоваться согласно заданному правилу источников.|||Atlasītie materiāli tiks izmantoti saskaņā ar izvēlēto avotu politiku.|||Wybrany materiał będzie przetwarzany zgodnie z wybraną przez Ciebie zasadą użycia źródła.
 halo is preparing the next step. Your work stays saved.|||halo готовит следующий шаг. Ваша работа остаётся сохранённой.|||halo gatavo nākamo soli. Tavs darbs paliek saglabāts.
 Start with your own thoughts, or ask halo for the first explanation.|||Начните со своих мыслей или попросите halo дать первое объяснение.|||Sāc ar savām domām vai palūdz halo pirmo skaidrojumu.
-Ask halo|||Спросить halo|||Jautāt halo
+Ask halo|||Спросить halo|||Jautāt halo|||Zapytaj halo
 Remember in halo|||Сохранить в памяти halo|||Saglabāt halo atmiņā
 Review image with halo|||Проверить изображение с halo|||Pārskatīt attēlu ar halo
 halo is writing…|||halo пишет…|||halo raksta…
@@ -2967,12 +2967,12 @@ Compare both answers and rate what you remembered.|||Сравни оба отв�
 Comparison took too long. Your answer is kept; compare it yourself.|||Сравнение заняло слишком много времени. Ответ остался; сравни самостоятельно.|||Salīdzināšana aizņēma pārāk ilgu laiku. Tava atbilde ir paturēta; salīdzini pats.
 Could not compare meaning reliably. Your answer is kept; compare it yourself.|||Не удалось надёжно сравнить смысл. Ответ остался; сравни самостоятельно.|||Neizdevās uzticami salīdzināt nozīmi. Tava atbilde ir paturēta; salīdzini pats.
 This card has no source identity. Compare its stored answer yourself.|||У карточки нет сведений об источнике. Сравни с сохранённым ответом самостоятельно.|||Šai kartītei nav avota identitātes. Salīdzini tās saglabāto atbildi pats.
-Listen to this lesson|||Прослушать урок|||Noklausīties šo nodarbību
-Chapters use saved lesson steps. You can always read their full text here.|||Разделы составлены из сохранённых шагов урока. Полный текст каждого можно прочитать здесь.|||Nodaļas izmanto saglabātos nodarbības soļus. To pilno tekstu vienmēr vari lasīt šeit.
+Listen to this lesson|||Прослушать урок|||Noklausīties šo nodarbību|||Posłuchaj tej lekcji
+Chapters use saved lesson steps. You can always read their full text here.|||Разделы составлены из сохранённых шагов урока. Полный текст каждого можно прочитать здесь.|||Nodaļas izmanto saglabātos nodarbības soļus. To pilno tekstu vienmēr vari lasīt šeit.|||Rozdziały korzystają z zapisanych etapów lekcji. Tutaj zawsze możesz przeczytać pełną treść.
 Read chapter aloud|||Прочитать раздел вслух|||Nolasīt nodaļu skaļi
-Previous chapter|||Предыдущий раздел|||Iepriekšējā nodaļa
-Next chapter|||Следующий раздел|||Nākamā nodaļa
-Ask about this step|||Спросить об этом шаге|||Jautāt par šo soli
+Previous chapter|||Предыдущий раздел|||Iepriekšējā nodaļa|||Poprzedni rozdział
+Next chapter|||Следующий раздел|||Nākamā nodaļa|||Następny rozdział
+Ask about this step|||Спросить об этом шаге|||Jautāt par šo soli|||Zapytaj o ten krok
 Marked done by you. This is not a verified assessment.|||Ты отметил задание выполненным. Это не проверка знаний.|||Tu atzīmēji uzdevumu kā pabeigtu. Tas nav pārbaudīts zināšanu novērtējums.
 Marked done by you · not an assessment|||Отмечено тобой · без оценки|||Tevis atzīmēts kā pabeigts · bez vērtējuma
 Next exercise|||Следующее упражнение|||Nākamais uzdevums
@@ -3911,3 +3911,4 @@ Choose a complete .litertlm model file.|||Выберите полный файл
 The local model manager is unavailable.|||Менеджер локальных моделей недоступен.|||Lokālo modeļu pārvaldnieks nav pieejams.|||Menedżer modeli lokalnych jest niedostępny.
 Download Whisper Small|||Скачать Whisper Small|||Lejupielādēt Whisper Small|||Pobierz Whisper Small
 Download and select Supertonic 3|||Скачать и выбрать Supertonic 3|||Lejupielādēt un izvēlēties Supertonic 3|||Pobierz i wybierz Supertonic 3
+There is nothing to read|||Здесь нечего читать|||Šeit nav nekā, ko lasīt|||Nie ma nic do przeczytania

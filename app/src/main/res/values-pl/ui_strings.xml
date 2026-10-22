@@ -17,6 +17,9 @@
     <string name="ui_60e22975996e" formatted="false">"Gotowe do zapamiętania"</string>
     <string name="ui_47173482314e" formatted="false">"Wznów przerwaną naukę"</string>
     <string name="ui_26e5b147b623" formatted="false">"Kontynuuj naukę"</string>
+    <string name="ui_ab6a99e63f7b" formatted="false">"Jak szczegółowe mają być wyjaśnienia?"</string>
+    <string name="ui_c02002799d0d" formatted="false">"Jak chcesz się uczyć?"</string>
+    <string name="ui_1adaa196ef17" formatted="false">"Z czego halo może korzystać?"</string>
     <string name="ui_c66feb5eb8f2" formatted="false">"Przenieś wyżej"</string>
     <string name="ui_40bb50da160c" formatted="false">"Przenieś niżej"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
@@ -263,8 +266,10 @@
     <string name="ui_63144fde57ac" formatted="false">"Na przykład: wyjaśnij ułamki, poćwicz pisownię albo wspólnie rozwiąż zadanie."</string>
     <string name="ui_c9787f8f7111" formatted="false">"Możesz zacząć od samego tematu. Jeśli chcesz pracować na własnym materiale, dodaj plik albo notatkę."</string>
     <string name="ui_60eda5f4ea71" formatted="false">"Wybierz sposób nauki. Możesz go zmienić w trakcie lekcji."</string>
+    <string name="ui_53e502a050db" formatted="false">"Twoja ścieżka nauki"</string>
     <string name="ui_5b510ac4805c" formatted="false">"Pokaż wszystkie lekcje"</string>
     <string name="ui_4e730ac30841" formatted="false">"Pokaż mniej lekcji"</string>
+    <string name="ui_0a5313dfc412" formatted="false">"Wróć do lekcji"</string>
     <string name="ui_064d8a50b989" formatted="false">"Wybierz lekcję do powtórki"</string>
     <string name="ui_0a12b92ce789" formatted="false">"Brak aktywności"</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
@@ -313,6 +318,7 @@
     <string name="ui_3c37e6594abb" formatted="false">"halo pomaga zrozumieć temat, spróbować i powtórzyć. Lekcja rozwija się na podstawie Twoich odpowiedzi."</string>
     <string name="ui_eb00ba19cdcf" formatted="false">"Nie dołączono materiału. halo skorzysta z wiedzy ogólnej."</string>
     <string name="ui_414691a4f8e9" formatted="false">"Wybrany materiał będzie przetwarzany zgodnie z wybraną przez Ciebie zasadą użycia źródła."</string>
+    <string name="ui_43d5d369235d" formatted="false">"Zapytaj halo"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
@@ -379,6 +385,11 @@
     <string name="ui_109f325833cd" formatted="false">"Nie udało się zarejestrować zaimportowanego modelu. Odśwież pliki na urządzeniu i spróbuj ponownie."</string>
     <string name="ui_e106b1e3e4a7" formatted="false">"Anuluj pobieranie tego modelu przed jego importem."</string>
     <string name="ui_4fdb8b47746a" formatted="false">"Zwolnij ten model przed zastąpieniem uszkodzonego pliku."</string>
+    <string name="ui_8e7c2cc808e4" formatted="false">"Posłuchaj tej lekcji"</string>
+    <string name="ui_8866ab095d4c" formatted="false">"Rozdziały korzystają z zapisanych etapów lekcji. Tutaj zawsze możesz przeczytać pełną treść."</string>
+    <string name="ui_2bebdca31f07" formatted="false">"Poprzedni rozdział"</string>
+    <string name="ui_4344dde797b6" formatted="false">"Następny rozdział"</string>
+    <string name="ui_0cefea1d909b" formatted="false">"Zapytaj o ten krok"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Znajdź powiązane notatki"</string>
     <string name="ui_49b31501b1c2" formatted="false">"Prywatnie wyszukuj na tym telefonie w wybranych notatkach, elementach Canvas, materiałach Study i załączonych plikach. halo rozpocznie indeksowanie dopiero po wyrażeniu zgody na źródła i utworzeniu wyszukiwania lokalnego."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Model wyszukiwania lokalnego"</string>
@@ -607,4 +618,5 @@
     <string name="ui_57bc2bcc327f" formatted="false">"Menedżer modeli lokalnych jest niedostępny."</string>
     <string name="ui_2e264e13070c" formatted="false">"Pobierz Whisper Small"</string>
     <string name="ui_6c5ad9fabaae" formatted="false">"Pobierz i wybierz Supertonic 3"</string>
+    <string name="ui_451feab79370" formatted="false">"Nie ma nic do przeczytania"</string>
 </resources>

@@ -3909,4 +3909,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "The local model manager is unavailable." to R.string.ui_57bc2bcc327f,
     "Download Whisper Small" to R.string.ui_2e264e13070c,
     "Download and select Supertonic 3" to R.string.ui_6c5ad9fabaae,
+    "There is nothing to read" to R.string.ui_451feab79370,
 )
