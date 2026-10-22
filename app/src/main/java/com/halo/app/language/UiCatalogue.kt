@@ -3786,4 +3786,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Study this selection" to R.string.ui_86cb9cfa1c76,
     "Selected ink region" to R.string.ui_365a8c54301e,
     "Study the selected region" to R.string.ui_583994585ca6,
+    "Open original Canvas" to R.string.ui_0255090bcdcd,
 )

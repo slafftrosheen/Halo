@@ -3784,4 +3784,5 @@
     <string name="ui_86cb9cfa1c76" formatted="false">"Изучить это выделение"</string>
     <string name="ui_365a8c54301e" formatted="false">"Выделенная область рисунка"</string>
     <string name="ui_583994585ca6" formatted="false">"Изучить выделенную область"</string>
+    <string name="ui_0255090bcdcd" formatted="false">"Открыть исходный холст"</string>
 </resources>

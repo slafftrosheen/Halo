@@ -90,8 +90,9 @@ object InkSelectionStudyMaterial {
         "Source=([^;]+); page=([^;]+); bounds=([^;]+); selectedStrokeCount=(\\d+); sourceRevision=(.+)\\."
     )
 
-    fun body(context: com.halo.sdk.runtime.ink.InkSelectionContext): String =
-        InkSelectionBookmarkCodec.referenceText(context)
+    fun body(context: com.halo.sdk.runtime.ink.InkSelectionContext, canvasId: String, selectionNodeId: String): String =
+        InkSelectionBookmarkCodec.referenceText(context) +
+            "\ncanvasObjectId=$canvasId\nselectionBookmarkId=$selectionNodeId"
 
     /** Keep model/citation locator concise; the full bounds and revision remain in the note body. */
     fun sourceLocator(body: String): String? {
@@ -102,5 +103,14 @@ object InkSelectionStudyMaterial {
             ?.removePrefix("page-")?.let { "page $it" } ?: "Canvas"
         val revision = match.groupValues[5]
         return "${source.take(120)} · $page · ink revision ${revision.take(16)}"
+    }
+
+    fun canvasTarget(body: String): Pair<String, String>? {
+        if (sourceLocator(body) == null) return null
+        val canvasId = Regex("(?:^|\\n)canvasObjectId=([^\\s]{1,200})(?:\\n|$)")
+            .find(body)?.groupValues?.get(1) ?: return null
+        val selectionId = Regex("(?:^|\\n)selectionBookmarkId=([^\\s]{1,200})(?:\\n|$)")
+            .find(body)?.groupValues?.get(1) ?: return null
+        return canvasId to selectionId
     }
 }

@@ -149,6 +149,7 @@ fun NoteEditorScreen(
     viewModel: NoteEditorViewModel,
     onBack: () -> Unit,
     onOpenStudy: (String) -> Unit = {},
+    onOpenCanvas: (String, String) -> Unit = { _, _ -> },
     onStartStudySetup: ((String?) -> Unit)? = null,
     onReviewMemory: (String) -> Unit = {},
 ) {
@@ -451,6 +452,7 @@ fun NoteEditorScreen(
                 onStudyPassage = { passage -> startStudy(passage) },
                 showAssistMenu = false,
                 context = context,
+                onOpenCanvas = onOpenCanvas,
             )
         }
 
@@ -662,9 +664,11 @@ private fun ColumnScope.EditModeView(
     onStudyPassage: (String?) -> Unit,
     showAssistMenu: Boolean,
     context: android.content.Context,
+    onOpenCanvas: (String, String) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val enabled = state.isEditable
+    val inkCanvasTarget = remember(state.body) { com.halo.app.data.notebook.InkSelectionStudyMaterial.canvasTarget(state.body) }
 
     LazyColumn(
         state = listState,
@@ -673,6 +677,11 @@ private fun ColumnScope.EditModeView(
     ) {
         if (showTools || state.isGenerating || state.attachments.isNotEmpty()) item(key = "editor-controls") {
             Column {
+    inkCanvasTarget?.let { (canvasId, selectionId) ->
+        TextButton(onClick = { onOpenCanvas(canvasId, selectionId) }) {
+            Text(uiText("Open original Canvas"))
+        }
+    }
     if (showTools) SelectionToolbar(
         state = state,
         viewModel = viewModel,
