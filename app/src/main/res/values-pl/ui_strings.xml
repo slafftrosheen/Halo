@@ -137,6 +137,12 @@
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
     <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
+    <string name="ui_e60cf185f16f" formatted="false">"Kontekst halo"</string>
+    <string name="ui_29a390f9237e" formatted="false">"Wyczyść wszystko"</string>
+    <string name="ui_a09bd5db007e" formatted="false">"Jeszcze nic nie dodano. Dodaj notatkę, rozmowę, plik lub wspomnienie, jeśli chcesz, aby halo użyło ich w rozmowie."</string>
+    <string name="ui_ed077f3d8125" formatted="false">"Otwórz"</string>
+    <string name="ui_c13d94e13c0b" formatted="false">"Dlaczego ten kontekst?"</string>
+    <string name="ui_d2a7f5b8070e" formatted="false">"halo tworzy kontekst wyłącznie z wybranych lokalnych źródeł."</string>
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
@@ -266,6 +272,8 @@
     <string name="ui_90f41411fa9d" formatted="false">"Wczytywanie biblioteki…"</string>
     <string name="ui_cb472b994cf9" formatted="false">"Usuń wybraną kolekcję"</string>
     <string name="ui_4a33eacd5fa6" formatted="false">"element"</string>
+    <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
+    <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>

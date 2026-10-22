@@ -964,12 +964,12 @@ Correct memory|||Исправить память|||Labot atmiņas ierakstu
 Current|||Текущее|||Pašreizējais
 Correction|||Исправление|||Labojums
 Save correction|||Сохранить исправление|||Saglabāt labojumu
-Halo context|||Контекст Halo|||Halo konteksts
-Clear all|||Очистить всё|||Notīrīt visu
-Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation.|||Контекст пока пуст. Добавьте заметку, диалог, файл или память, когда захотите использовать их в разговоре с Halo.|||Konteksts pagaidām ir tukšs. Pievieno piezīmi, sarunu, failu vai atmiņu, kad vēlies to izmantot sarunā ar Halo.
-Open|||Открыть|||Atvērt
-Why this context?|||Почему выбран этот контекст?|||Kāpēc šis konteksts?
-Halo assembles context only from selected local sources.|||Halo собирает контекст только из выбранных локальных источников.|||Halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem.
+Halo context|||Контекст Halo|||Halo konteksts|||Kontekst Halo
+Clear all|||Очистить всё|||Notīrīt visu|||Wyczyść wszystko
+Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation.|||Контекст пока пуст. Добавьте заметку, диалог, файл или память, когда захотите использовать их в разговоре с Halo.|||Konteksts pagaidām ir tukšs. Pievieno piezīmi, sarunu, failu vai atmiņu, kad vēlies to izmantot sarunā ar Halo.|||Jeszcze nic nie dodano. Dodaj notatkę, rozmowę, plik lub wspomnienie, jeśli chcesz, aby Halo użyło ich w rozmowie.
+Open|||Открыть|||Atvērt|||Otwórz
+Why this context?|||Почему выбран этот контекст?|||Kāpēc šis konteksts?|||Dlaczego ten kontekst?
+Halo assembles context only from selected local sources.|||Halo собирает контекст только из выбранных локальных источников.|||Halo apkopo kontekstu tikai no izvēlētajiem lokālajiem avotiem.|||Halo tworzy kontekst wyłącznie z wybranych lokalnych źródeł.
 Conversation|||Диалог|||Saruna|||Rozmowa
 Network Privacy|||Сетевая конфиденциальность|||Tīkla privātums
 Suggested memory|||Предлагаемая память|||Ieteiktais atmiņas ieraksts
@@ -1998,8 +1998,8 @@ Try a different word or phrase.|||Попробуйте другое слово �
 Chats you start with Halo will appear here.|||Разговоры с Halo появятся здесь.|||Šeit parādīsies sarunas, ko sākat ar Halo.
 Messages: %1$d|||Сообщений: %1$d|||Ziņojumi: %1$d
 Items available to Halo: %1$d|||Доступно Halo: %1$d элементов|||Halo pieejamie vienumi: %1$d
-Selected items take priority over older chat. Removing context keeps the original items.|||Выбранные материалы важнее старых сообщений. Удаление из контекста сохраняет оригиналы.|||Atlasītie vienumi ir svarīgāki par agrāko sarunu. Noņemot no konteksta, oriģināli paliek.
-Remove from context|||Убрать из контекста|||Noņemt no konteksta
+Selected items take priority over older chat. Removing context keeps the original items.|||Выбранные материалы важнее старых сообщений. Удаление из контекста сохраняет оригиналы.|||Atlasītie vienumi ir svarīgāki par agrāko sarunu. Noņemot no konteksta, oriģināli paliek.|||Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów.
+Remove from context|||Убрать из контекста|||Noņemt no konteksta|||Usuń z kontekstu
 Cloud allowed|||Передача в облако разрешена|||Mākonis atļauts
 Conflict — your edits are kept|||Конфликт — ваши изменения сохранены|||Konflikts — jūsu labojumi ir saglabāti
 In trash — editing disabled|||В корзине — редактирование отключено|||Atkritnē — rediģēšana atspējota
