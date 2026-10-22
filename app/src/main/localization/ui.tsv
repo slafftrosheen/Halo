@@ -278,7 +278,7 @@ Play|||Воспроизвести|||Atskaņot
 Pause|||Пауза|||Pauzēt
 Previous|||Назад|||Iepriekšējais
 Next|||Далее|||Nākamais
-Retry|||Повторить|||Mēģināt vēlreiz
+Retry|||Повторить|||Mēģināt vēlreiz|||Ponów próbę
 Cancel|||Отмена|||Atcelt|||Anuluj
 Close|||Закрыть|||Aizvērt|||Zamknij
 Done|||Готово|||Gatavs|||Gotowe
@@ -322,35 +322,35 @@ Library|||Библиотека|||Bibliotēka
 Search your workspace|||Поиск в рабочем пространстве|||Meklēt darbvietā
 All|||Все|||Visi
 Inbox|||Входящие|||Iesūtne|||Odebrane
-New note|||Новая заметка|||Jauna piezīme
+New note|||Новая заметка|||Jauna piezīme|||Nowa notatka
 Create note|||Создать заметку|||Izveidot piezīmi
 New collection|||Новая коллекция|||Jauna kolekcija
 Collection name|||Название коллекции|||Kolekcijas nosaukums
 Create|||Создать|||Izveidot
 Title (optional)|||Название (необязательно)|||Nosaukums (nav obligāts)
-New conversation|||Новый разговор|||Jauna saruna
-Copy reply|||Копировать ответ|||Kopēt atbildi
-Edit as a new message|||Изменить как новое сообщение|||Labot kā jaunu ziņu
-Replace your draft?|||Заменить черновик?|||Aizstāt melnrakstu?
-Use earlier question|||Использовать прежний вопрос|||Izmantot iepriekšējo jautājumu
-Keep my draft|||Оставить мой черновик|||Paturēt manu melnrakstu
-The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged.|||Прежний вопрос будет скопирован в поле ввода для редактирования. Ничего не отправляется; сохранённые сообщения не изменятся.|||Iepriekšējais jautājums tiks kopēts ievades laukā labošanai. Nekas netiek nosūtīts; saglabātās ziņas nemainīsies.
-Clear this conversation?|||Очистить этот разговор?|||Notīrīt šo sarunu?
-This removes its messages. Your other conversations and Notebook are kept.|||Сообщения этого разговора будут удалены. Другие разговоры и заметки останутся.|||Šīs sarunas ziņas tiks dzēstas. Citas sarunas un piezīmes paliks.
-Clear conversation|||Очистить разговор|||Notīrīt sarunu
-Keep messages|||Оставить сообщения|||Paturēt ziņas
+New conversation|||Новый разговор|||Jauna saruna|||Nowa rozmowa
+Copy reply|||Копировать ответ|||Kopēt atbildi|||Kopiuj odpowiedź
+Edit as a new message|||Изменить как новое сообщение|||Labot kā jaunu ziņu|||Edytuj jako nową wiadomość
+Replace your draft?|||Заменить черновик?|||Aizstāt melnrakstu?|||Zastąpić wersję roboczą?
+Use earlier question|||Использовать прежний вопрос|||Izmantot iepriekšējo jautājumu|||Użyj poprzedniego pytania
+Keep my draft|||Оставить мой черновик|||Paturēt manu melnrakstu|||Zachowaj moją wersję roboczą
+The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged.|||Прежний вопрос будет скопирован в поле ввода для редактирования. Ничего не отправляется; сохранённые сообщения не изменятся.|||Iepriekšējais jautājums tiks kopēts ievades laukā labošanai. Nekas netiek nosūtīts; saglabātās ziņas nemainīsies.|||Poprzednie pytanie zostanie skopiowane do pola wiadomości, gdzie będzie można je edytować. Nic nie zostanie wysłane, a zapisane wiadomości pozostaną bez zmian.
+Clear this conversation?|||Очистить этот разговор?|||Notīrīt šo sarunu?|||Wyczyścić tę rozmowę?
+This removes its messages. Your other conversations and Notebook are kept.|||Сообщения этого разговора будут удалены. Другие разговоры и заметки останутся.|||Šīs sarunas ziņas tiks dzēstas. Citas sarunas un piezīmes paliks.|||Usunięte zostaną wiadomości z tej rozmowy. Pozostałe rozmowy i Notatnik zostaną zachowane.
+Clear conversation|||Очистить разговор|||Notīrīt sarunu|||Wyczyść rozmowę
+Keep messages|||Оставить сообщения|||Paturēt ziņas|||Zachowaj wiadomości
 Configure|||Настроить|||Iestatīt
-Enable voice|||Включить голос|||Iespējot balsi
-Set up voice|||Настроить голос|||Iestatīt balsi
+Enable voice|||Включить голос|||Iespējot balsi|||Włącz głos
+Set up voice|||Настроить голос|||Iestatīt balsi|||Skonfiguruj głos
 What should Halo do?|||Что должен сделать Halo?|||Kas Halo jādara?
-Speech settings|||Настройки речи|||Runas iestatījumi
+Speech settings|||Настройки речи|||Runas iestatījumi|||Ustawienia mowy
 Native assistant active|||Помощник активен|||Palīgs ir aktīvs
 Set up native assistant|||Настроить помощника|||Iestatīt palīgu
-Open app|||Открыть приложение|||Atvērt lietotni
+Open app|||Открыть приложение|||Atvērt lietotni|||Otwórz aplikację
 Connection & context|||Подключение и контекст|||Savienojums un konteksts
 Conversation & tools|||Разговор и инструменты|||Saruna un rīki
 Retry message|||Повторить сообщение|||Atkārtot ziņu
-Review captured image|||Проверить снимок|||Pārskatīt uzņemto attēlu
+Review captured image|||Проверить снимок|||Pārskatīt uzņemto attēlu|||Sprawdź przechwycone zdjęcie
 Capture review|||Проверка снимка|||Attēla pārskatīšana
 Preview unavailable|||Предпросмотр недоступен|||Priekšskatījums nav pieejams
 Image analysis requires an eligible vision model and your image privacy permissions. Captures are local-only by default.|||Для анализа изображений нужна подходящая модель и разрешение на использование изображения. По умолчанию снимки доступны только на телефоне.|||Attēlu analīzei vajadzīgs piemērots modelis un atļauja izmantot attēlu. Pēc noklusējuma attēli ir pieejami tikai tālrunī.
@@ -372,7 +372,7 @@ Study this|||Изучить это|||Mācīties šo
 Open saved source|||Открыть сохранённый источник|||Atvērt saglabāto avotu
 Discard temporary capture|||Удалить временный снимок|||Dzēst pagaidu attēlu
 Discard|||Удалить|||Atmest
-Dismiss|||Закрыть|||Aizvērt
+Dismiss|||Закрыть|||Aizvērt|||Zamknij
 Edit|||Изменить|||Labot
 Insert|||Вставить|||Ievietot
 Apply|||Применить|||Lietot
@@ -451,11 +451,11 @@ Topic lesson · general knowledge · no attached material|||Занятие по 
 Unverified|||Не проверено|||Nav pārbaudīts
 Needs work|||Нужно исправить|||Jālabo
 Checks out|||Соответствует|||Atbilst
-Edit as text|||Редактировать как текст|||Labot kā tekstu
-Model-extracted draft · Verify visible text and uncertain values before using them|||Черновик модели · Проверьте видимый текст и сомнительные значения перед использованием|||Modeļa melnraksts · Pirms izmantošanas pārbaudi redzamo tekstu un neskaidrās vērtības
-Run|||Запустить|||Palaist
-Timer|||Таймер|||Taimeris
-Try again|||Попробовать снова|||Mēģināt vēlreiz
+Edit as text|||Редактировать как текст|||Labot kā tekstu|||Edytuj jako tekst
+Model-extracted draft · Verify visible text and uncertain values before using them|||Черновик модели · Проверьте видимый текст и сомнительные значения перед использованием|||Modeļa melnraksts · Pirms izmantošanas pārbaudi redzamo tekstu un neskaidrās vērtības|||Szkic wyodrębniony przez model · Przed użyciem sprawdź widoczny tekst i niepewne wartości
+Run|||Запустить|||Palaist|||Uruchom
+Timer|||Таймер|||Taimeris|||Minutnik
+Try again|||Попробовать снова|||Mēģināt vēlreiz|||Spróbuj ponownie
 Focused review|||Повторение без отвлечений|||Atkārtošana bez traucējumiem
 Mastered — kept in a long-interval maintenance queue|||Освоено — сохранено для редких повторений|||Apgūts — saglabāts retai atkārtošanai
 Memory decay|||Забывание|||Aizmiršana
@@ -553,7 +553,7 @@ Imported models|||Импортированные модели|||Importētie mode
 Not measured on this device|||Не проверено на этом устройстве|||Nav mērīts šajā ierīcē|||Nie zmierzono na tym urządzeniu
 Text|||Текст|||Teksts
 Vision|||Зрение|||Redze
-Tools|||Инструменты|||Rīki
+Tools|||Инструменты|||Rīki|||Narzędzia
 Import|||Импортировать|||Importēt
 Resume|||Продолжить|||Turpināt|||Wznów
 Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi|||Usuń niepełny plik
@@ -848,7 +848,7 @@ Use stored|||Использовать сохранённый вариант|||Iz
 Create an image|||Создать изображение|||Izveidot attēlu
 Cancel AI writing|||Остановить написание с ИИ|||Pārtraukt MI rakstīšanu
 Add file|||Добавить файл|||Pievienot failu
-Attach|||Прикрепить|||Pievienot
+Attach|||Прикрепить|||Pievienot|||Dołącz
 Insert object|||Вставить объект|||Ievietot objektu
 Halo is writing…|||Halo пишет…|||Halo raksta…
 Bold|||Полужирный|||Treknraksts
@@ -977,7 +977,7 @@ What this procedure does|||Что делает процедура|||Ko dara šī
 No private arguments are copied. Execution still needs the usual permissions and approvals.|||Личные аргументы не копируются. Для выполнения по-прежнему нужны обычные разрешения и подтверждения.|||Privātie argumenti netiek kopēti. Izpildei joprojām vajadzīgas parastās atļaujas un apstiprinājumi.
 Review trigger and permission|||Проверить условие запуска и разрешение|||Pārskatīt aktivizētāju un atļauju
 Review capability setup|||Проверить настройки возможности|||Pārskatīt spējas iestatījumus
-Not now|||Не сейчас|||Ne tagad
+Not now|||Не сейчас|||Ne tagad|||Nie teraz
 Local WebSocket endpoint|||Локальный адрес WebSocket|||Lokālā WebSocket adrese
 Embodiment · manual control|||Физическое устройство · ручное управление|||Fiziskā ierīce · manuālā vadība
 ▲  Forward|||▲  Вперёд|||▲  Uz priekšu
@@ -1030,7 +1030,7 @@ Stop waiting for this condition?|||Прекратить ожидание это�
 Keep waiting|||Продолжить ожидание|||Turpināt gaidīt
 New automation|||Новая автоматизация|||Jauna automatizācija
 Start with a battery alert, a connection update or an evening digest.|||Начните с оповещения о батарее, изменении подключения или вечерней сводки.|||Sāc ar akumulatora brīdinājumu, savienojuma izmaiņu vai vakara kopsavilkumu.
-Review|||Проверить|||Pārskatīt
+Review|||Проверить|||Pārskatīt|||Sprawdź
 Automation needs review|||Нужно проверить автоматизацию|||Automatizācija jāpārskata
 This saved definition is no longer supported. It cannot run.|||Сохранённая конфигурация больше не поддерживается и не может выполняться.|||Šī saglabātā definīcija vairs netiek atbalstīta un to nevar izpildīt.
 Delete unsupported automation|||Удалить неподдерживаемую автоматизацию|||Dzēst neatbalstīto automatizāciju
@@ -1184,7 +1184,7 @@ Reattach source|||Прикрепить источник заново|||Pievienot
 Continue in Study|||Продолжить в обучении|||Turpināt mācībās
 Image and model setup|||Настройка изображений и моделей|||Attēlu un modeļu iestatīšana
 Choose context|||Выбрать контекст|||Izvēlēties kontekstu
-Import image|||Импортировать изображение|||Importēt attēlu
+Import image|||Импортировать изображение|||Importēt attēlu|||Importuj obraz
 Notebook|||Блокнот|||Piezīmes
 Save result to Notebook?|||Сохранить результат в блокнот?|||Saglabāt rezultātu piezīmēs?
 Model-generated result · saving does not verify its claims|||Результат сгенерирован моделью · сохранение не подтверждает достоверность|||Modeļa ģenerēts rezultāts · saglabāšana neapstiprina tā patiesumu
@@ -1255,10 +1255,10 @@ Halo|||Halo|||Halo
 Hello, I’m Halo|||Привет, я Halo|||Sveiki, es esmu Halo
 Ask Halo something, or tap Talk to start speaking.|||Спросите Halo или нажмите «Говорить», чтобы начать.|||Uzdodiet Halo jautājumu vai pieskarieties «Runāt», lai sāktu.
 Choose how Halo answers|||Выберите, как Halo будет отвечать|||Izvēlieties, kā Halo atbildēs
-Set up answers|||Настроить ответы|||Iestatīt atbildes
-Open Activity|||Открыть действия|||Atvērt darbības
+Set up answers|||Настроить ответы|||Iestatīt atbildes|||Skonfiguruj odpowiedzi
+Open Activity|||Открыть действия|||Atvērt darbības|||Otwórz Działania
 Open Activity to see what Halo needs and choose what happens next.|||Откройте «Действия», чтобы узнать, что нужно Halo, и выбрать следующий шаг.|||Atveriet «Darbības», lai redzētu, kas Halo nepieciešams, un izvēlētos nākamo soli.
-Listening…|||Слушаю…|||Klausos…
+Listening…|||Слушаю…|||Klausos…|||Słucham…
 Speaking…|||Говорю…|||Runāju…
 Working on it…|||Работаю над этим…|||Strādāju pie tā…
 Turning your voice into text…|||Преобразую речь в текст…|||Pārvēršu jūsu runu tekstā…
@@ -1278,12 +1278,12 @@ Ask|||Спросить|||Jautāt
 Act|||Действовать|||Rīkoties
 Mode: %1$s|||Режим: %1$s|||Režīms: %1$s
 %1$s · %2$d attached sources|||%1$s · прикреплено источников: %2$d|||%1$s · pievienoti avoti: %2$d
-Interrupt reply and talk|||Прервать ответ и говорить|||Pārtraukt atbildi un runāt
-Attachments and context|||Вложения и контекст|||Pielikumi un konteksts
+Interrupt reply and talk|||Прервать ответ и говорить|||Pārtraukt atbildi un runāt|||Przerwij odpowiedź i zacznij mówić
+Attachments and context|||Вложения и контекст|||Pielikumi un konteksts|||Załączniki i kontekst
 Hide attachments|||Скрыть вложения|||Paslēpt pielikumus
 Add an attachment|||Добавить вложение|||Pievienot pielikumu
-Couldn’t play the reply|||Не удалось озвучить ответ|||Neizdevās atskaņot atbildi
-Couldn’t use that voice input|||Не удалось использовать эту запись|||Neizdevās izmantot šo balss ievadi
+Couldn’t play the reply|||Не удалось озвучить ответ|||Neizdevās atskaņot atbildi|||Nie udało się odtworzyć odpowiedzi
+Couldn’t use that voice input|||Не удалось использовать эту запись|||Neizdevās izmantot šo balss ievadi|||Nie można użyć tego wejścia głosowego
 This reply is incomplete.|||Этот ответ не завершён.|||Šī atbilde nav pabeigta.
 Reply|||Ответ|||Atbilde
 Previous reply|||Предыдущий ответ|||Iepriekšējā atbilde
@@ -1344,9 +1344,9 @@ Time (HH:MM)|||Время (ЧЧ:ММ)|||Laiks (SS:MM)
 Date & time|||Дата и время|||Datums un laiks
 Open Halo app to select files.|||Откройте Halo, чтобы выбрать файлы.|||Atveriet Halo, lai izvēlētos failus.
 Halo will open the system file picker.|||Halo откроет окно выбора файлов.|||Halo atvērs sistēmas failu izvēli.
-Conversation history|||История разговора|||Sarunas vēsture
-Hide messages|||Скрыть сообщения|||Paslēpt ziņojumus
-Talk|||Говорить|||Runāt
+Conversation history|||История разговора|||Sarunas vēsture|||Historia rozmów
+Hide messages|||Скрыть сообщения|||Paslēpt ziņojumus|||Ukryj wiadomości
+Talk|||Говорить|||Runāt|||Mów
 Approve|||Одобрить|||Apstiprināt
 Details|||Подробности|||Informācija
 In progress|||В работе|||Procesā
@@ -1355,14 +1355,14 @@ Later|||Позже|||Vēlāk
 On|||Вкл.|||Ieslēgts
 Off|||Выкл.|||Izslēgts
 Set|||Установить|||Iestatīt
-Seconds|||Секунды|||Sekundes
-Application name|||Название приложения|||Lietotnes nosaukums
+Seconds|||Секунды|||Sekundes|||Sekundy
+Application name|||Название приложения|||Lietotnes nosaukums|||Nazwa aplikacji
 Waiting for you|||Жду вашего решения|||Gaida jūsu lēmumu
 Your workspace is empty|||Рабочее пространство пока пусто|||Jūsu darbvieta ir tukša
 Create a note or import a file to begin.|||Создайте заметку или добавьте файл, чтобы начать.|||Lai sāktu, izveidojiet piezīmi vai importējiet failu.
 Try another name or content phrase.|||Попробуйте другое название или слова из содержимого.|||Mēģiniet citu nosaukumu vai vārdus no satura.
 Reviewed %1$d times|||Повторений: %1$d|||Atkārtots %1$d reizes
-Listening stopped|||Прослушивание остановлено|||Klausīšanās apturēta
+Listening stopped|||Прослушивание остановлено|||Klausīšanās apturēta|||Słuchanie zatrzymane
 Input interrupted. You can try again or type your question.|||Запись остановлена. Можно начать снова или написать вопрос.|||Ieraksts apturēts. Varat sākt vēlreiz vai ierakstīt jautājumu.
 Import file|||Импортировать файл|||Importēt failu|||Importuj plik
 Sketch|||Набросок|||Skice
@@ -1420,7 +1420,7 @@ Approve organization|||Подтвердить порядок|||Apstiprināt kār
 Arrange selected|||Упорядочить выбранные|||Sakārtot atlasītās
 Ask Halo to organize|||Попросить Halo упорядочить|||Lūgt Halo sakārtot
 Bring forward|||На передний план|||Pārvietot priekšplānā
-Camera permission was not granted|||Доступ к камере не разрешён|||Piekļuve kamerai nav atļauta
+Camera permission was not granted|||Доступ к камере не разрешён|||Piekļuve kamerai nav atļauta|||Nie przyznano dostępu do aparatu
 Cancel recording|||Отменить запись|||Atcelt ierakstīšanu
 Canvas position could not be saved yet.|||Положение доски пока не сохранено.|||Audekla novietojumu pagaidām neizdevās saglabāt.
 Capture now, organize later. Everything stays local unless you choose to share it.|||Сохраните сейчас, упорядочите позже. Всё остаётся на устройстве, пока вы не разрешите отправку.|||Saglabājiet tagad, sakārtojiet vēlāk. Viss paliek ierīcē, līdz atļaujat kopīgošanu.
@@ -1459,7 +1459,7 @@ Resume drawing|||Продолжить рисунок|||Turpināt zīmējumu
 Retry saved memo|||Повторить сохранение записи|||Mēģināt saglabāt ierakstu vēlreiz
 Save failed. Your source is kept; retry or choose the file again.|||Не удалось сохранить. Оригинал сохранён; повторите или выберите файл снова.|||Saglabāšana neizdevās. Avots ir saglabāts; mēģiniet vēlreiz vai atlasiet failu no jauna.
 Save note|||Сохранить заметку|||Saglabāt piezīmi
-Save to Inbox|||Сохранить во Входящие|||Saglabāt iesūtnē
+Save to Inbox|||Сохранить во Входящие|||Saglabāt iesūtnē|||Zapisz w Odebranych
 Saved locally. You can place these same items on a Canvas without copying them again.|||Сохранено на устройстве. Можно добавить эти же материалы на доску без повторного копирования.|||Saglabāts ierīcē. Šos pašus vienumus varat pievienot audeklam bez atkārtotas kopēšanas.
 Saved to Inbox and added to Canvas.|||Сохранено во Входящих и добавлено на доску.|||Saglabāts iesūtnē un pievienots audeklam.
 Saved to Inbox.|||Сохранено во Входящих.|||Saglabāts iesūtnē.
@@ -2519,9 +2519,9 @@ Show requests|||Показать запросы|||Rādīt pieprasījumus
 Show running|||Показать выполняемые|||Rādīt notiekošos
 Show completed|||Показать завершённые|||Rādīt pabeigtos
 Updates|||Обновления|||Paziņojumi
-Review in Activity|||Проверить в «Действиях»|||Pārskatīt sadaļā “Darbības”
-Choose how halo answers|||Настройте, как halo отвечает|||Izvēlieties, kā halo atbild
-Open Activity to see what halo needs and choose what happens next.|||Откройте «Действия», чтобы узнать, что нужно halo, и выбрать следующий шаг.|||Atveriet sadaļu “Darbības”, lai redzētu, kas halo vajadzīgs, un izvēlētos nākamo soli.
+Review in Activity|||Проверить в «Действиях»|||Pārskatīt sadaļā “Darbības”|||Sprawdź w Działaniach
+Choose how halo answers|||Настройте, как halo отвечает|||Izvēlieties, kā halo atbild|||Wybierz, jak halo odpowiada
+Open Activity to see what halo needs and choose what happens next.|||Откройте «Действия», чтобы узнать, что нужно halo, и выбрать следующий шаг.|||Atveriet sadaļu “Darbības”, lai redzētu, kas halo vajadzīgs, un izvēlētos nākamo soli.|||Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok.
 Where halo thinks|||Где halo обрабатывает запросы|||Kur halo apstrādā pieprasījumus
 Change location|||Изменить место обработки|||Mainīt apstrādes vietu
 Hide choices|||Скрыть варианты|||Paslēpt izvēles
@@ -3144,7 +3144,7 @@ Let halo choose how to help|||Пусть halo выберет, как помоч�
 Answer questions without taking action|||Отвечать на вопросы без действий|||Atbildēt uz jautājumiem bez darbību veikšanas
 Make a plan for you to review|||Составить план для вашего просмотра|||Sagatavot plānu, ko varat pārskatīt
 Use your apps, asking when needed|||Использовать приложения, спрашивая при необходимости|||Izmantot lietotnes, vajadzības gadījumā jautājot
-How halo helps|||Как помогает halo|||Kā halo palīdz
+How halo helps|||Как помогает halo|||Kā halo palīdz|||Jak halo pomaga
 Working on your request|||Выполняю ваш запрос|||Izpildu jūsu pieprasījumu
 Thinking it through|||Обдумываю|||Pārdomāju
 Delivery not confirmed|||Доставка не подтверждена|||Piegāde nav apstiprināta
@@ -3303,10 +3303,10 @@ Choose a voice download|||Выберите загрузку голосов|||Izv
 Saved speech stays private on this phone and is cleared after seven days.|||Сохранённая речь остаётся на телефоне и удаляется через семь дней.|||Saglabātā runa paliek privāti šajā tālrunī un tiek notīrīta pēc septiņām dienām.
 Voice packs|||Голосовые пакеты|||Balss pakotnes
 Downloads and performance options|||Загрузки и параметры производительности|||Lejupielādes un veiktspējas opcijas
-New reply ↓|||Новый ответ ↓|||Jauna atbilde ↓
-Choose an image instead, or allow camera access in Android settings.|||Выберите изображение или разрешите доступ к камере в настройках Android.|||Izvēlieties attēlu vai atļaujiet piekļuvi kamerai Android iestatījumos.
+New reply ↓|||Новый ответ ↓|||Jauna atbilde ↓|||Nowa odpowiedź ↓
+Choose an image instead, or allow camera access in Android settings.|||Выберите изображение или разрешите доступ к камере в настройках Android.|||Izvēlieties attēlu vai atļaujiet piekļuvi kamerai Android iestatījumos.|||Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida.
 Open Android settings to allow camera access.|||Откройте настройки Android и разрешите доступ к камере.|||Atveriet Android iestatījumus un atļaujiet piekļuvi kamerai.
-Open settings|||Открыть настройки|||Atvērt iestatījumus
+Open settings|||Открыть настройки|||Atvērt iestatījumus|||Otwórz ustawienia
 Saved source|||Сохранённый источник|||Saglabāts avots
 Temporary context|||Временный контекст|||Pagaidu konteksts
 Expired — attach again|||Срок действия истёк — прикрепите заново|||Derīgums beidzies — pievienojiet vēlreiz
@@ -3798,8 +3798,8 @@ Source changed; select the region again.|||Источник изменился. 
 Open linked source|||Открыть связанный источник|||Atvērt saistīto avotu
 Add selection to working set|||Добавить выделение в рабочий набор|||Pievienot atlasi darba kopai
 Ask about selection|||Спросить о выделении|||Jautāt par atlasi
-Use the saved source reference and selected crop when attached to explain this region. If my question refers to another region or is ambiguous, ask me which one before answering. If the selection itself is unclear, ask me to describe it.|||Используй сохранённую ссылку на источник и, если прикреплено, изображение выделенной области. Если мой вопрос относится к другой области или неоднозначен, сначала спроси меня, какую именно. Если само выделение неясно, попроси меня описать его.|||Izskaidro šo apgabalu, izmantojot saglabāto avota atsauci un, ja tas ir pievienots, atlasītā apgabala attēlu. Ja mans jautājums attiecas uz citu apgabalu vai ir neskaidrs, pirms atbildes pajautā, kuru es domāju. Ja pati atlase nav skaidra, lūdz mani to aprakstīt.
-Use my saved ink selection as the referent.|||Используй моё сохранённое выделение как объект вопроса.|||Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci.
+Use the saved source reference and selected crop when attached to explain this region. If my question refers to another region or is ambiguous, ask me which one before answering. If the selection itself is unclear, ask me to describe it.|||Используй сохранённую ссылку на источник и, если прикреплено, изображение выделенной области. Если мой вопрос относится к другой области или неоднозначен, сначала спроси меня, какую именно. Если само выделение неясно, попроси меня описать его.|||Izskaidro šo apgabalu, izmantojot saglabāto avota atsauci un, ja tas ir pievienots, atlasītā apgabala attēlu. Ja mans jautājums attiecas uz citu apgabalu vai ir neskaidrs, pirms atbildes pajautā, kuru es domāju. Ja pati atlase nav skaidra, lūdz mani to aprakstīt.|||Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis.
+Use my saved ink selection as the referent.|||Используй моё сохранённое выделение как объект вопроса.|||Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci.|||Użyj mojego zapisanego zaznaczenia odręcznego jako punktu odniesienia.
 Selected marks preview|||Предпросмотр выделенных штрихов|||Atlasīto triepienu priekšskatījums
 Selected page marks preview (source page not shown)|||Предпросмотр штрихов страницы (сама страница не показана)|||Atlasīto lapas triepienu priekšskatījums (avota lapa nav redzama)
 Canvas selection|||Выделение на холсте|||Atlase kanvā

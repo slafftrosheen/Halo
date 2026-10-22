@@ -5,21 +5,46 @@
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
+    <string name="ui_942087cc2d41" formatted="false">"Ponów próbę"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
     <string name="ui_7d9eb7acb13e" formatted="false">"Zamknij"</string>
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
     <string name="ui_94835ea2fcf7" formatted="false">"Odebrane"</string>
+    <string name="ui_76ea482f843e" formatted="false">"Nowa notatka"</string>
+    <string name="ui_396c946f0c79" formatted="false">"Nowa rozmowa"</string>
+    <string name="ui_1b367321030f" formatted="false">"Kopiuj odpowiedź"</string>
+    <string name="ui_681e4cb7bc65" formatted="false">"Edytuj jako nową wiadomość"</string>
+    <string name="ui_4e20e70f6968" formatted="false">"Zastąpić wersję roboczą?"</string>
+    <string name="ui_244a21f497cf" formatted="false">"Użyj poprzedniego pytania"</string>
+    <string name="ui_cdb80bb94da3" formatted="false">"Zachowaj moją wersję roboczą"</string>
+    <string name="ui_ed938cfc8979" formatted="false">"Poprzednie pytanie zostanie skopiowane do pola wiadomości, gdzie będzie można je edytować. Nic nie zostanie wysłane, a zapisane wiadomości pozostaną bez zmian."</string>
+    <string name="ui_f907fd63ddc4" formatted="false">"Wyczyścić tę rozmowę?"</string>
+    <string name="ui_905b081897e4" formatted="false">"Usunięte zostaną wiadomości z tej rozmowy. Pozostałe rozmowy i Notatnik zostaną zachowane."</string>
+    <string name="ui_16299ad1abb8" formatted="false">"Wyczyść rozmowę"</string>
+    <string name="ui_2376e3cd01a1" formatted="false">"Zachowaj wiadomości"</string>
+    <string name="ui_c7ecfd844be3" formatted="false">"Włącz głos"</string>
+    <string name="ui_35caa7c79ce4" formatted="false">"Skonfiguruj głos"</string>
+    <string name="ui_8b3f05442c1b" formatted="false">"Ustawienia mowy"</string>
+    <string name="ui_e51c6b48fb9e" formatted="false">"Otwórz aplikację"</string>
+    <string name="ui_a12156590140" formatted="false">"Sprawdź przechwycone zdjęcie"</string>
+    <string name="ui_48845bff334a" formatted="false">"Zamknij"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
+    <string name="ui_e9938c0a9a18" formatted="false">"Edytuj jako tekst"</string>
+    <string name="ui_8ab98c2a229a" formatted="false">"Szkic wyodrębniony przez model · Przed użyciem sprawdź widoczny tekst i niepewne wartości"</string>
+    <string name="ui_00d60e31a4e6" formatted="false">"Uruchom"</string>
+    <string name="ui_cdeec2b374c1" formatted="false">"Minutnik"</string>
+    <string name="ui_d8b8392e2c54" formatted="false">"Spróbuj ponownie"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_26488c95ce6a" formatted="false">"Przetestuj ponownie"</string>
     <string name="ui_185e4b007d63" formatted="false">"Skonfiguruj role modeli"</string>
     <string name="ui_c12814d1710f" formatted="false">"Szukaj modeli w katalogu"</string>
     <string name="ui_6c48253817ef" formatted="false">"Zaimportowane modele"</string>
     <string name="ui_e03fbfc3ca53" formatted="false">"Nie zmierzono na tym urządzeniu"</string>
+    <string name="ui_ea93d6a262ec" formatted="false">"Narzędzia"</string>
     <string name="ui_d640c7421da0" formatted="false">"Wznów"</string>
     <string name="ui_70313db71cd3" formatted="false">"Usuń niepełny plik"</string>
     <string name="ui_420eaafbda7b" formatted="false">"Pobierz ponownie"</string>
@@ -41,7 +66,18 @@
     <string name="ui_df952a8c1b62" formatted="false">"Uruchom zestaw testów ról"</string>
     <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
+    <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
+    <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
+    <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
+    <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
+    <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
+    <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
+    <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
+    <string name="ui_da0dbc127233" formatted="false">"Przerwij odpowiedź i zacznij mówić"</string>
+    <string name="ui_0f831f06c1d4" formatted="false">"Załączniki i kontekst"</string>
+    <string name="ui_168512c5b1c3" formatted="false">"Nie udało się odtworzyć odpowiedzi"</string>
+    <string name="ui_3cdb61e7de92" formatted="false">"Nie można użyć tego wejścia głosowego"</string>
     <string name="ui_7d008b7feeab" formatted="false">"Uruchom tryb głosowy"</string>
     <string name="ui_15be678720cc" formatted="false">"Zakończ tryb głosowy"</string>
     <string name="ui_4be3502fc307" formatted="false">"Wstrzymaj nasłuchiwanie"</string>
@@ -54,7 +90,15 @@
     <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
+    <string name="ui_80c250f3db4a" formatted="false">"Historia rozmów"</string>
+    <string name="ui_19e6d24090b3" formatted="false">"Ukryj wiadomości"</string>
+    <string name="ui_449f5a775762" formatted="false">"Mów"</string>
+    <string name="ui_381a8e969905" formatted="false">"Sekundy"</string>
+    <string name="ui_09526e9d005a" formatted="false">"Nazwa aplikacji"</string>
+    <string name="ui_57d1aec01657" formatted="false">"Słuchanie zatrzymane"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
+    <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
+    <string name="ui_76d165ea898a" formatted="false">"Zapisz w Odebranych"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>
     <string name="ui_a6a5fe15ed48" formatted="false">"Synchronizuj z Hugging Face"</string>
@@ -86,6 +130,9 @@
     <string name="ui_872f9ce4e737" formatted="false">"Porównaj wybrany obraz z prywatnym zapytaniem tekstowym (CPU)"</string>
     <string name="ui_7b987f8db83e" formatted="false">"Tylko dla deweloperów. Używa natywnego kodera EmbeddingGemma; limit obrazu wynosi 4 MB. Zdjęcie, URI ani wektor osadzenia nie są zapisywane ani przesyłane; nie jest to certyfikacja jakości."</string>
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
+    <string name="ui_5490626fb7d2" formatted="false">"Sprawdź w Działaniach"</string>
+    <string name="ui_089edfc7cb83" formatted="false">"Wybierz, jak halo odpowiada"</string>
+    <string name="ui_9c1fa8a254cd" formatted="false">"Otwórz Działania, aby sprawdzić, czego potrzebuje halo, i wybrać dalszy krok."</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
     <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
@@ -131,6 +178,7 @@
     <string name="ui_c8a9cc92f54a" formatted="false">"Zegar i data"</string>
     <string name="ui_4d8d5ea3b434" formatted="false">"Czytanie i zainteresowania"</string>
     <string name="ui_c345ddcf3224" formatted="false">"Kontynuuj w Notatniku"</string>
+    <string name="ui_d85b2cac1425" formatted="false">"Jak halo pomaga"</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
     <string name="ui_89c045bac21a" formatted="false">"W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy."</string>
     <string name="ui_cae4ac9f4854" formatted="false">"Wybierz sposób, w jaki halo rozpoznaje mowę"</string>
@@ -146,9 +194,14 @@
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
+    <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
+    <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
+    <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
     <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
+    <string name="ui_7bc5279a8267" formatted="false">"Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis."</string>
+    <string name="ui_0562eec23e31" formatted="false">"Użyj mojego zapisanego zaznaczenia odręcznego jako punktu odniesienia."</string>
     <string name="ui_a45d0de015bd" formatted="false">"Wyszukuj lokalnie na tym telefonie tekst, obrazy, nagrania i krótkie filmy z wybranych źródeł Notebooka, Canvas i Nauki. W przypadku filmów używane są tylko cztery wybrane klatki; ścieżki dźwiękowe nie są przetwarzane. halo odczytuje wyłącznie źródła zatwierdzone podczas tworzenia indeksu."</string>
     <string name="ui_587513a42667" formatted="false">"Wyszukiwanie obrazów wymaga zweryfikowanego modelu EmbeddingGemma 2. Odznacz obrazy, aby wyszukiwać lokalnie tylko w tekście."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz obrazy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
