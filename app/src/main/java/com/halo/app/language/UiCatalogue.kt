@@ -3774,7 +3774,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Open linked source" to R.string.ui_cf0d1a41f783,
     "Add selection to working set" to R.string.ui_cfb03a6319e9,
     "Ask about selection" to R.string.ui_3e812c70c455,
-    "Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it." to R.string.ui_69c10772bf75,
+    "Use the saved source reference and selected crop when attached to explain this region. If my question refers to another region or is ambiguous, ask me which one before answering. If the selection itself is unclear, ask me to describe it." to R.string.ui_7bc5279a8267,
     "Use my saved ink selection as the referent." to R.string.ui_0562eec23e31,
     "Selected marks preview" to R.string.ui_52c1af2b9004,
     "Selected page marks preview (source page not shown)" to R.string.ui_b4c50261ef99,

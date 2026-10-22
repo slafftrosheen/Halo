@@ -3772,7 +3772,7 @@
     <string name="ui_cf0d1a41f783" formatted="false">"Atvērt saistīto avotu"</string>
     <string name="ui_cfb03a6319e9" formatted="false">"Pievienot atlasi darba kopai"</string>
     <string name="ui_3e812c70c455" formatted="false">"Jautāt par atlasi"</string>
-    <string name="ui_69c10772bf75" formatted="false">"Izskaidro šo atlasīto apgabalu, izmantojot saglabāto atsauci. Ja ar atsauci nepietiek, lūdz mani to aprakstīt."</string>
+    <string name="ui_7bc5279a8267" formatted="false">"Izskaidro šo apgabalu, izmantojot saglabāto avota atsauci un, ja tas ir pievienots, atlasītā apgabala attēlu. Ja mans jautājums attiecas uz citu apgabalu vai ir neskaidrs, pirms atbildes pajautā, kuru es domāju. Ja pati atlase nav skaidra, lūdz mani to aprakstīt."</string>
     <string name="ui_0562eec23e31" formatted="false">"Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci."</string>
     <string name="ui_52c1af2b9004" formatted="false">"Atlasīto triepienu priekšskatījums"</string>
     <string name="ui_b4c50261ef99" formatted="false">"Atlasīto lapas triepienu priekšskatījums (avota lapa nav redzama)"</string>

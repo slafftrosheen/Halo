@@ -117,7 +117,7 @@ fun HomeScreen(
     val contextChips by viewModel.contextChips.collectAsStateWithLifecycle()
     val composerFocus by viewModel.composerFocus.collectAsStateWithLifecycle()
     val inkSelectionAskPromptRequest by viewModel.inkSelectionAskPromptRequest.collectAsStateWithLifecycle()
-    val inkSelectionAskPrompt = uiText("Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it.")
+    val inkSelectionAskPrompt = uiText("Use the saved source reference and selected crop when attached to explain this region. If my question refers to another region or is ambiguous, ask me which one before answering. If the selection itself is unclear, ask me to describe it.")
     val inkSelectionAskInstruction = uiText("Use my saved ink selection as the referent.")
     val composerFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
