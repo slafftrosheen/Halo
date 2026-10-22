@@ -34,14 +34,14 @@ class CanvasImageSearchSourceTest {
     @Test fun listsOnlyActiveFileBackedPngAndJpegImageNodes() = runBlocking {
         val boardId = canvas.create("Board")
         addMedia("jpeg", "diagram.jpg", "image/jpeg")
-        addMedia("png", "chart.png", "image/png")
+        addMedia("png", "chart.png", "IMAGE/PNG")
         addMedia("gif", "animation.gif", "image/gif")
         val jpegNode = canvas.addReference(boardId, "jpeg", 0f, 0f)
         val pngNode = canvas.addReference(boardId, "png", 0f, 0f)
         canvas.addReference(boardId, "gif", 0f, 0f)
 
         assertEquals(setOf(
-            CanvasImageSearchSource(boardId, pngNode, "png", "Board", "chart.png", "image/png"),
+            CanvasImageSearchSource(boardId, pngNode, "png", "Board", "chart.png", "IMAGE/PNG"),
             CanvasImageSearchSource(boardId, jpegNode, "jpeg", "Board", "diagram.jpg", "image/jpeg"),
         ), database.notebookCanvasDao().observeImageSearchSources().first().toSet())
     }

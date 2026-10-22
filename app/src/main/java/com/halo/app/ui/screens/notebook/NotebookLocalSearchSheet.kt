@@ -85,7 +85,7 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     }.associateBy { it.id.value }
     val canvasPictures = canvasImages.mapNotNull { source ->
         val canvas = activeCanvases[source.canvasId] ?: return@mapNotNull null
-        if (source.objectId.isBlank() || source.mimeType !in setOf("image/png", "image/jpeg")) return@mapNotNull null
+        if (source.objectId.isBlank() || source.mimeType.lowercase() !in setOf("image/png", "image/jpeg")) return@mapNotNull null
         val label = source.displayName.takeIf { it.isNotBlank() } ?: canvasImageFallbackLabel
         LocalSearchSourceChoice("canvas-image:${source.canvasId}:${source.nodeId}",
             "${canvas.title.ifBlank { "Untitled" }} · $label")

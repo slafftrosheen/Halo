@@ -303,7 +303,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val source = db.notebookDao().getWorkspaceObject(objectId)
             ?.takeIf { it.lifecycle == "ACTIVE" && it.type in setOf("FILE", "MEDIA") } ?: return null
         val file = db.workspaceFileDao().getFile(source.id) ?: return null
-        if (file.mimeType !in setOf("image/png", "image/jpeg")) return null
+        if (file.mimeType.lowercase() !in setOf("image/png", "image/jpeg")) return null
         return CanvasImageMetadata(canvas.id,node.id,source.id,canvas.title,file)
     }
 

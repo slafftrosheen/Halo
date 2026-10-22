@@ -75,12 +75,13 @@ class NotebookLocalSearchSourcesTest {
         val image = CanvasImageSearchSource("board1", "node1", "file1", "Ignored title", "diagram.png", "image/png")
         val hiddenBoard = image.copy(canvasId = "trashed")
         val unsupported = image.copy(nodeId = "node2", mimeType = "image/gif")
+        val uppercaseMime = image.copy(nodeId = "node3", mimeType = "IMAGE/PNG")
         val choices = notebookSearchSources(listOf(
             item("board1", WorkspaceObjectType.CANVAS),
             item("trashed", WorkspaceObjectType.CANVAS, WorkspaceObjectLifecycle.TRASHED),
-        ), emptyList(), canvasImages = listOf(image, hiddenBoard, unsupported))
+        ), emptyList(), canvasImages = listOf(image, hiddenBoard, unsupported, uppercaseMime))
 
-        assertEquals(listOf("canvas:board1", "canvas-image:board1:node1"), choices.map { it.id })
+        assertEquals(listOf("canvas:board1", "canvas-image:board1:node1", "canvas-image:board1:node3"), choices.map { it.id })
         assertTrue(choices.last().title.contains("diagram.png"))
     }
 
