@@ -189,7 +189,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     ScreenWindowPolicy(fullScreen, keepCharging, dimAtNight, now)
     val shift = if (fullScreen) ((now.epochSecond / 300L) % 5L).toInt() - 2 else 0
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.getDefault()
-    fun display(card: ScreenCard): ScreenDisplay = when (card.widgetType) {
+    @Composable fun display(card: ScreenCard): ScreenDisplay = when (card.widgetType) {
         "clock" -> ScreenDisplay(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
             .format(now.atZone(ZoneId.systemDefault())), DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
             .withLocale(locale).format(now.atZone(ZoneId.systemDefault())), "On this phone", null, sourceTitle = true, sourceSummary = true)
@@ -210,7 +210,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 showFullTimestamp = true)
         } ?: ScreenDisplay("Research", "Save a sourced web search to keep it here.", "No saved research yet", null, true)
         "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "No tasks to catch up on",
-            if (daily.items.isEmpty()) "No pending items" else "%1$d updates", daily.primary?.action?.let {
+            if (daily.items.isEmpty()) "No pending items" else "%1\$d updates", daily.primary?.action?.let {
                 com.halo.app.ui.shell.dailyOwnerRoute(it)
             } ?: "activity", true,
             sourceSummary = daily.primary != null,
@@ -495,6 +495,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                         }
                     }
                     if (researchItem?.availableActions?.contains(ScreenAction.SaveToNotebook) == true) {
+                        val saveNotebookError = uiText("Could not save to Notebook")
                         com.halo.app.ui.components.HaloActionButton(
                             onClick = {
                                 if (!savingResearch) {
@@ -512,7 +513,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                                         } catch (cancelled: CancellationException) {
                                             throw cancelled
                                         } catch (_: Exception) {
-                                            notice = uiText("Could not save to Notebook")
+                                            notice = saveNotebookError
                                         } finally {
                                             savingResearch = false
                                         }

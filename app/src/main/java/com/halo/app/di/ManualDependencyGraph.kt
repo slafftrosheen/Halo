@@ -117,7 +117,7 @@ object ManualDependencyGraph {
             }.stateIn(infra.scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false))
     }
     val platformStateMonitor by lazy { AndroidPlatformStateMonitor(applicationContext) }
-    val hostGraph by lazy {
+    val hostGraph: HostGraph by lazy {
         RuntimeStartupTrace.measure("graph.host") {
             HostGraph(
                 applicationContext,
@@ -128,7 +128,7 @@ object ManualDependencyGraph {
             )
         }
     }
-    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
+    val engineGraph: EngineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val notebookRepository by lazy {

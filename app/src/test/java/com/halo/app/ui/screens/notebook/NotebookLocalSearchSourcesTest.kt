@@ -14,7 +14,12 @@ import com.halo.app.data.workspace.WorkspaceFile
 import com.halo.app.data.workspace.WorkspaceFileAvailability
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class NotebookLocalSearchSourcesTest {
     private fun item(id: String,type: WorkspaceObjectType,
         lifecycle: WorkspaceObjectLifecycle = WorkspaceObjectLifecycle.ACTIVE) =

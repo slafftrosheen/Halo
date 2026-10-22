@@ -35,14 +35,16 @@ class FileImageSemanticIndexStoreTest {
         } finally { directory.deleteRecursively() }
     }
 
-    @Test fun imageStoreRejectsTextOnlyEmbeddingSpaces() = runBlocking {
-        val directory = Files.createTempDirectory("halo-image-index").toFile()
-        try {
-            val store = FileImageSemanticIndexStore(directory.resolve("image-index.json"))
-            val textSpace = space.copy(preprocessingIdentity="text-special-tokens-v1")
-            assertThrows(IllegalArgumentException::class.java) {
-                runBlocking { store.replace(ImageSemanticSnapshot(textSpace,emptyList())) }
-            }
-        } finally { directory.deleteRecursively() }
+    @Test fun imageStoreRejectsTextOnlyEmbeddingSpaces() {
+        runBlocking {
+            val directory = Files.createTempDirectory("halo-image-index").toFile()
+            try {
+                val store = FileImageSemanticIndexStore(directory.resolve("image-index.json"))
+                val textSpace = space.copy(preprocessingIdentity="text-special-tokens-v1")
+                assertThrows(IllegalArgumentException::class.java) {
+                    runBlocking { store.replace(ImageSemanticSnapshot(textSpace,emptyList())) }
+                }
+            } finally { directory.deleteRecursively() }
+        }
     }
 }

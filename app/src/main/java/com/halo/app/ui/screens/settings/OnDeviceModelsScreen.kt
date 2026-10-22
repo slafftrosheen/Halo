@@ -246,7 +246,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
 
         if (developerToolsEnabled && purpose != null) Row {
-            Text(uiText("Candidates for %1$s testing", purpose?.name?.lowercase()?.replace('_', ' ') ?: "—"))
+            Text(uiText("Candidates for %1\$s testing", purpose?.name?.lowercase()?.replace('_', ' ') ?: "—"))
             TextButton(onClick = { viewModel.candidatePurpose.value = null }) { Text(uiText("Show all")) }
         }
         Spacer(Modifier.height(HaloSpacing.sm))
@@ -338,7 +338,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     Text("${history.artifactId} · ${row?.backend ?: history.backend} · " + if (row == null) "Needs retest" else
                         "FAST ${row.warmMedianMs ?: "—"} ms · CHAT ${row.chatPassed}/${row.chatTotal} · REASONING ${row.reasoningPassed}/${row.reasoningTotal} · AGENTIC ${row.toolProtocol} ${row.agenticVerdict} · ${if (row.stable) "Stable" else "Measured but unstable"} · Tested ${row.testedAtMs}", style = MaterialTheme.typography.bodySmall)
                     val suggested = evidence.recommendations.filterValues { it.recommended?.modelId == history.artifactId }.keys
-                    if (suggested.isNotEmpty()) Text(uiText("Suggested roles: %1$s", suggested.joinToString()), style = MaterialTheme.typography.labelSmall)
+                    if (suggested.isNotEmpty()) Text(uiText("Suggested roles: %1\$s", suggested.joinToString()), style = MaterialTheme.typography.labelSmall)
                     TextButton(onClick = { viewModel.runRoleSuite(history.artifactId) }, enabled = !ui.runningRoleMatrix && !ui.runningMatrix && ui.busyModelId == null) { Text(uiText("Retest")) }
                 }
             }
@@ -380,7 +380,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("LFM2.5", "Granite", "Bonsai", "embeddinggemma").forEach { family ->
                 TextButton(onClick = { query = family; viewModel.syncHubModels(family) }) {
-                    Text(uiText("Find %1$s", family))
+                    Text(uiText("Find %1\$s", family))
                 }
             }
         }
@@ -726,14 +726,14 @@ private fun ModelCard(
             TextButton(onClick = { testClipboard.setText(AnnotatedString(model.id)) }) {
                 Text(uiText("Copy model ID for device tests"))
             }
-            measuredRoles?.let { row -> Text(uiText("Measured roles · FAST %1$s ms · CHAT %2$s · REASONING %3$s · AGENTIC %4$s · VISION %5$s",
+            measuredRoles?.let { row -> Text(uiText("Measured roles · FAST %1\$s ms · CHAT %2\$s · REASONING %3\$s · AGENTIC %4\$s · VISION %5\$s",
                 row.warmMedianMs ?: "—", "${row.chatPassed}/${row.chatTotal}", "${row.reasoningPassed}/${row.reasoningTotal}",
                 "${row.toolProtocol} ${row.agenticVerdict}", row.visionVerdict), style = MaterialTheme.typography.bodySmall) }
                 ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
             com.halo.providers.litert.models.LiteRtCommunityModelGuide.guide(model.repoId, model.filename)?.let { note ->
                 Text(note.description, style = MaterialTheme.typography.bodySmall)
             }
-            if (model.evaluationPurposes.isNotEmpty()) Text(uiText("Candidate for: %1$s testing",
+            if (model.evaluationPurposes.isNotEmpty()) Text(uiText("Candidate for: %1\$s testing",
                 model.evaluationPurposes.joinToString { it.name.lowercase().replace('_', ' ') }), style = MaterialTheme.typography.labelSmall)
             Text(
                 "${model.family} · ${model.quantizationLabel} · ${size(model.expectedBytes)} · " +
@@ -1152,7 +1152,7 @@ private fun ImportedModelCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             if (developerControls) {
-                measuredRoles?.let { row -> Text(uiText("Measured roles · FAST %1$s ms · CHAT %2$s · REASONING %3$s · AGENTIC %4$s · VISION %5$s",
+                measuredRoles?.let { row -> Text(uiText("Measured roles · FAST %1\$s ms · CHAT %2\$s · REASONING %3\$s · AGENTIC %4\$s · VISION %5\$s",
                     row.warmMedianMs ?: "—", "${row.chatPassed}/${row.chatTotal}", "${row.reasoningPassed}/${row.reasoningTotal}",
                     "${row.toolProtocol} ${row.agenticVerdict}", row.visionVerdict), style = MaterialTheme.typography.bodySmall) }
                     ?: Text(uiText("Not measured on this device"), style = MaterialTheme.typography.bodySmall)

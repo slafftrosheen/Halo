@@ -88,8 +88,8 @@ internal class FileVideoSemanticIndexStore(file: File) {
                     require(entry.sourceId.startsWith("attachment:") && entry.sourceId.length <= 200)
                     require(entry.title.length <= 400 && entry.provenance.length <= 400)
                     require(entry.vector.size == snapshot.space.dimension && entry.vector.all { it.isFinite() })
-                    put(JSONObject().put("id", entry.sourceId).put("version", entry.sourceVersion)
-                        .put("contentSha", entry.contentSha).put("title", entry.title.take(400))
+                    this@apply.put(JSONObject().put("id", entry.sourceId).put("version", entry.sourceVersion)
+                        .put("contentSha", entry.contentSha256).put("title", entry.title.take(400))
                         .put("provenance", entry.provenance.take(400)).put("vector", JSONArray(entry.vector)))
                 }
             })

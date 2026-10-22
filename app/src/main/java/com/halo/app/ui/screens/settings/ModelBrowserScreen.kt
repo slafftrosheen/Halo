@@ -114,7 +114,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
             HaloScreenHeader(uiText("Model roles"), navigation = onBack)
             WorkloadPolicyControls()
             message?.let { Text(it) }
-            Text(uiText("Routing: %1$s", uiText(routingPolicyLabel(routing))))
+            Text(uiText("Routing: %1\$s", uiText(routingPolicyLabel(routing))))
             AiRoutingPolicy.entries.forEach { policy -> TextButton(onClick = { (control.router as? com.halo.engines.ai.DefaultAiProviderRouter)?.setRoutingPolicy(policy) }) {
                 Text(uiText(routingPolicyLabel(policy)) + if (routing == policy) " · " + uiText("Selected") else "")
             } }
@@ -171,7 +171,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                 if (measured.current.isEmpty()) Text(uiText("Not measured on this device"))
                 val suggestion = measured.recommendations[role]
                 suggestion?.recommended?.let { recommended ->
-                    Text(uiText("Suggested: %1$s", recommended.modelId), style = MaterialTheme.typography.labelMedium)
+                    Text(uiText("Suggested: %1\$s", recommended.modelId), style = MaterialTheme.typography.labelMedium)
                     Text(uiText(if (suggestion.confidence == LocalRoleRecommendationConfidence.COMPARATIVE)
                         "Best measured on this device" else "Only measured candidate"))
                     Text(uiText(when(role) {
@@ -181,7 +181,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                         AiModelRole.AGENTIC -> "Proven initial tool and continuation loop; native protocol preferred"
                         AiModelRole.VISION -> "Verified image evidence from Vision Lab"
                     }))
-                    TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text(uiText("Use for %1$s", uiText(modelRoleLabel(role)))) }
+                    TextButton(onClick = { evidence?.applyRoleRecommendation(role, recommended) }) { Text(uiText("Use for %1\$s", uiText(modelRoleLabel(role)))) }
                 }
                 TextButton(onClick = { onExplore(role) }) { Text(uiText("Explore local candidates")) }
                 }

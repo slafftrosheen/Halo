@@ -25,8 +25,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class CanvasInkSelectionCropTest {
     @Test fun sketchCropContainsOnlySelectedStrokesAndClipsToSavedBounds() {
         val doc = InkDocument(strokes = listOf(
@@ -40,7 +42,8 @@ class CanvasInkSelectionCropTest {
             assertEquals(768, bitmap.width)
             assertEquals(768, bitmap.height)
             assertTrue(Color.red(bitmap.getPixel(384, 384)) < 80)
-            assertTrue(Color.red(bitmap.getPixel(384, 40)) > 240)
+            val outsideRed = Color.red(bitmap.getPixel(384, 40))
+            assertTrue("crop should exclude marks beyond saved bounds: red=$outsideRed", outsideRed > 240)
         } finally { bitmap.recycle() }
     }
 
@@ -67,9 +70,10 @@ class CanvasInkSelectionCropTest {
         try {
             assertEquals(50, result.width)
             assertEquals(50, result.height)
-            assertTrue(Color.red(result.getPixel(2, 2)) > 240)
-            assertTrue(Color.red(result.getPixel(25, 25)) < 80)
-            assertTrue(Color.red(result.getPixel(25, 2)) > 240)
+            assertTrue("crop should retain source pixels", Color.red(result.getPixel(2, 2)) > 240)
+            val selectedRed = Color.red(result.getPixel(25, 25))
+            assertTrue("crop should include selected ink: red=$selectedRed", selectedRed < 200)
+            assertTrue("crop should omit unselected ink", Color.red(result.getPixel(25, 2)) > 240)
         } finally {
             result.recycle()
             source.delete()

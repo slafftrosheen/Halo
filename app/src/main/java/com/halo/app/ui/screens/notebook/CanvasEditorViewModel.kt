@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.notebook
 import android.net.Uri
 import com.halo.app.data.notebook.CanvasFileMarkupCodec
 import com.halo.app.data.notebook.InkSelectionBookmarkCodec
+import com.halo.app.data.notebook.InkSelectionStudyMaterial
 import com.halo.sdk.runtime.multimodal.MediaAssetContent
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiExecutionLocation

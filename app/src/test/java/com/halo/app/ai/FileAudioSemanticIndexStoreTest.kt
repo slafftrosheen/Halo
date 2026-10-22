@@ -43,31 +43,35 @@ class FileAudioSemanticIndexStoreTest {
         } finally { directory.deleteRecursively() }
     }
 
-    @Test fun workspaceAudioSourceIdsCannotContainPathsOrArbitrarySeparators() = runBlocking {
-        val directory = Files.createTempDirectory("halo-workspace-audio-index-invalid").toFile()
-        try {
-            val store = FileAudioSemanticIndexStore(directory.resolve("audio-index.json"))
-            val invalid = AudioSemanticEntry("workspace-audio:../memo",sha,sha,
-                "Inbox memo","Inbox audio",listOf(0f,1f))
+    @Test fun workspaceAudioSourceIdsCannotContainPathsOrArbitrarySeparators() {
+        runBlocking {
+            val directory = Files.createTempDirectory("halo-workspace-audio-index-invalid").toFile()
+            try {
+                val store = FileAudioSemanticIndexStore(directory.resolve("audio-index.json"))
+                val invalid = AudioSemanticEntry("workspace-audio:../memo",sha,sha,
+                    "Inbox memo","Inbox audio",listOf(0f,1f))
 
-            assertThrows(IllegalArgumentException::class.java) {
-                runBlocking { store.replace(AudioSemanticSnapshot(space,listOf(invalid))) }
-            }
-        } finally { directory.deleteRecursively() }
+                assertThrows(IllegalArgumentException::class.java) {
+                    runBlocking { store.replace(AudioSemanticSnapshot(space,listOf(invalid))) }
+                }
+            } finally { directory.deleteRecursively() }
+        }
     }
 
-    @Test fun audioStoreRejectsImageAndTextEmbeddingSpaces() = runBlocking {
-        val directory = Files.createTempDirectory("halo-audio-index").toFile()
-        try {
-            val store = FileAudioSemanticIndexStore(directory.resolve("audio-index.json"))
-            assertThrows(IllegalArgumentException::class.java) {
-                runBlocking { store.replace(AudioSemanticSnapshot(space.copy(
-                    preprocessingIdentity="embeddinggemma2-full-image-cross-modal-search-v1"),emptyList())) }
-            }
-            assertThrows(IllegalArgumentException::class.java) {
-                runBlocking { store.replace(AudioSemanticSnapshot(space.copy(
-                    preprocessingIdentity="text-special-tokens-v1"),emptyList())) }
-            }
-        } finally { directory.deleteRecursively() }
+    @Test fun audioStoreRejectsImageAndTextEmbeddingSpaces() {
+        runBlocking {
+            val directory = Files.createTempDirectory("halo-audio-index").toFile()
+            try {
+                val store = FileAudioSemanticIndexStore(directory.resolve("audio-index.json"))
+                assertThrows(IllegalArgumentException::class.java) {
+                    runBlocking { store.replace(AudioSemanticSnapshot(space.copy(
+                        preprocessingIdentity="embeddinggemma2-full-image-cross-modal-search-v1"),emptyList())) }
+                }
+                assertThrows(IllegalArgumentException::class.java) {
+                    runBlocking { store.replace(AudioSemanticSnapshot(space.copy(
+                        preprocessingIdentity="text-special-tokens-v1"),emptyList())) }
+                }
+            } finally { directory.deleteRecursively() }
+        }
     }
 }

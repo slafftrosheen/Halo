@@ -954,10 +954,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 enabled = selectionCurrent) { Text(uiText("Add selection to working set")) }
                             TextButton(onClick = { viewModel.askAboutInkSelection(node.id) },
                                 enabled = selectionCurrent) { Text(uiText("Ask about selection")) }
+                            val studyMaterialTitle = uiText("Selected ink region")
+                            val studyGoal = uiText("Study the selected region")
                             TextButton(onClick = { viewModel.studyInkSelection(
                                 node.id,
-                                uiText("Selected ink region"),
-                                uiText("Study the selected region")) },
+                                studyMaterialTitle,
+                                studyGoal) },
                                 enabled = selectionCanRender) { Text(uiText("Study this selection")) }
                         }
                         else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

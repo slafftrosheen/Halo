@@ -405,7 +405,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     }
 }
 @Composable private fun PermissionChoice(label: String, ready: Boolean, action: () -> Unit) {
-    if(ready) Copy("Access granted") else Secondary(label,action)
+    if(ready) Copy("Access granted") else Secondary(label, action = action)
 }
 @Composable private fun Readiness(label: String, ready: Boolean, route: String, open: (String) -> Unit) {
     Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
@@ -514,7 +514,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     !inventoryReady -> Copy("Refresh on-device files before downloading.")
                     installed -> {
                         if (model.task == com.halo.providers.litert.models.LiteRtArtifactTask.EMBEDDING) {
-                            Secondary("Find related notes", configureSearch)
+                            Secondary("Find related notes", action = configureSearch)
                             Copy("Choose your own Notebook/Canvas/Study sources in Context & privacy; installing a model does not share or index them.")
                         } else {
                             OutlinedButton(enabled = !operationBusy, onClick = { models.selectLocalModel(model.id) },

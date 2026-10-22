@@ -111,7 +111,7 @@ class CanvasInkSelectionBookmarkTest {
         val canvas = repository.observe(canvasId).first()!!
         val savedSource = canvas.nodes.single { it.id == sourceNodeId }
         val bookmark = canvas.nodes.single { it.type == CanvasNodeType.INK_SELECTION }
-        assertTrue(savedSource.text.contains(encoded))
+        assertEquals(encoded, com.halo.app.data.notebook.CanvasFileMarkupCodec.decode(savedSource.text).pages[2])
         assertTrue(bookmark.inkSelectionIsCurrent(savedSource, canvasId, "file-v1"))
         assertFalse(bookmark.inkSelectionIsCurrent(savedSource, canvasId, "file-v2"))
         assertEquals("selection", canvas.edges.single { it.toNodeId == bookmark.id }.label)
