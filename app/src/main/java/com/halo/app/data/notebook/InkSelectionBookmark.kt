@@ -76,7 +76,7 @@ object InkSelectionBookmarkCodec {
 
     /** Safe, inspectable reference text; deliberately contains no ink content or stroke IDs. */
     fun referenceText(context: InkSelectionContext): String =
-        "User-selected visual region reference; recognitionStatus=NOT_AVAILABLE; visualContentIncluded=false. " +
+        "User-selected visual region reference; recognitionStatus=NOT_AVAILABLE; visualContentIncluded=false; separateExplicitCropMayBeAttached=true. " +
             "Source=${context.workspaceObjectId}; page=${context.pageId ?: "canvas"}; " +
             "bounds=${context.bounds.left},${context.bounds.top},${context.bounds.right},${context.bounds.bottom}/1000; " +
             "selectedStrokeCount=${context.selectedStrokeIds.size}; sourceRevision=${context.sourceRevision}."

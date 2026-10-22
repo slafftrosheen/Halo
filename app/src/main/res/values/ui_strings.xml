@@ -3778,6 +3778,7 @@
     <string name="ui_b4c50261ef99" formatted="false">"Selected page marks preview (source page not shown)"</string>
     <string name="ui_32eae2988e9f" formatted="false">"Canvas selection"</string>
     <string name="ui_17c3fa4440e9" formatted="false">"Remove the current image attachment before asking about an ink selection."</string>
+    <string name="ui_fd4c6ff25b0f" formatted="false">"Could not prepare the selected-region image. Try selecting again."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Selection added to working set"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."</string>
 </resources>

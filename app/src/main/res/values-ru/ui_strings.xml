@@ -3778,6 +3778,7 @@
     <string name="ui_b4c50261ef99" formatted="false">"Предпросмотр штрихов страницы (сама страница не показана)"</string>
     <string name="ui_32eae2988e9f" formatted="false">"Выделение на холсте"</string>
     <string name="ui_17c3fa4440e9" formatted="false">"Перед вопросом о чернильном выделении удалите текущее вложенное изображение."</string>
+    <string name="ui_fd4c6ff25b0f" formatted="false">"Не удалось подготовить изображение выделенной области. Выделите её ещё раз."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Выделение добавлено в рабочий набор"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся."</string>
 </resources>

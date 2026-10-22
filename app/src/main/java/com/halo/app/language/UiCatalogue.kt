@@ -3780,6 +3780,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Selected page marks preview (source page not shown)" to R.string.ui_b4c50261ef99,
     "Canvas selection" to R.string.ui_32eae2988e9f,
     "Remove the current image attachment before asking about an ink selection." to R.string.ui_17c3fa4440e9,
+    "Could not prepare the selected-region image. Try selecting again." to R.string.ui_fd4c6ff25b0f,
     "Selection added to working set" to R.string.ui_19ce2f3279a2,
     "Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized." to R.string.ui_e6fd9b9426fd,
 )

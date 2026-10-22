@@ -3782,5 +3782,6 @@ Selected marks preview|||Предпросмотр выделенных штри�
 Selected page marks preview (source page not shown)|||Предпросмотр штрихов страницы (сама страница не показана)|||Atlasīto lapas triepienu priekšskatījums (avota lapa nav redzama)
 Canvas selection|||Выделение на холсте|||Atlase kanvā
 Remove the current image attachment before asking about an ink selection.|||Перед вопросом о чернильном выделении удалите текущее вложенное изображение.|||Pirms jautā par tintes atlasi, noņem pašreizējo attēla pielikumu.
+Could not prepare the selected-region image. Try selecting again.|||Не удалось подготовить изображение выделенной области. Выделите её ещё раз.|||Neizdevās sagatavot atlasītā apgabala attēlu. Mēģini atlasīt vēlreiz.
 Selection added to working set|||Выделение добавлено в рабочий набор|||Atlase pievienota darba kopai
 Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized.|||Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся.|||Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts.

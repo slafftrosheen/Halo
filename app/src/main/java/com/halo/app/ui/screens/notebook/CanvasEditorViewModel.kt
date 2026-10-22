@@ -122,7 +122,14 @@ sealed interface CanvasEditorNavigation {
     data class OpenObject(val objectRef: WorkspaceObject) : CanvasEditorNavigation
     data class OpenStudy(val sessionId: String) : CanvasEditorNavigation
     data class StartStudyFromSource(val noteId: String, val goal: String) : CanvasEditorNavigation
-    data class AskAboutSelection(val canvasId: String, val crop: MediaAssetContent?) : CanvasEditorNavigation
+    data class AskAboutSelection(
+        val canvasId: String,
+        val crop: MediaAssetContent? = null,
+        val sourceFile: com.halo.app.data.workspace.WorkspaceFile? = null,
+        val pageInk: String? = null,
+        val pageNumber: Int? = null,
+        val selection: com.halo.sdk.runtime.ink.InkSelectionContext? = null,
+    ) : CanvasEditorNavigation
 }
 
 class CanvasEditorViewModel(
@@ -708,14 +715,29 @@ class CanvasEditorViewModel(
             it.type == com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION } ?: error("Selection is unavailable.")
         val sourceId = current.edges.firstOrNull { it.toNodeId == selectionNodeId && it.label == "selection" }?.fromNodeId
         val source = sourceId?.let { id -> current.nodes.firstOrNull { it.id == id } }
-        val context = InkSelectionBookmarkCodec.decode(bookmark.text)
-        val crop = if (context != null && source?.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH &&
-            bookmark.inkSelectionIsCurrent(source, canvasId)) {
-            runCatching {
-                withContext(Dispatchers.Default) { CanvasInkSelectionCropRenderer.renderSketch(source.text, context) }
-            }.getOrNull()?.let { MediaAssetContent(it, "image/png") }
-        } else null
-        navigation.send(CanvasEditorNavigation.AskAboutSelection(canvasId, crop))
+        val context = requireNotNull(InkSelectionBookmarkCodec.decode(bookmark.text)) { "Selection is unavailable." }
+        val sourceVersion = source?.refObjectId?.let { id -> current.files[id]?.version ?: current.files[id]?.sha256 }
+        require(bookmark.inkSelectionIsCurrent(source, canvasId, sourceVersion)) { "Source changed. Select the region again." }
+        val resolvedSource = requireNotNull(source) { "Selection source is unavailable." }
+        when (resolvedSource.type) {
+            com.halo.app.data.notebook.CanvasNodeType.SKETCH -> {
+                val crop = runCatching {
+                    withContext(Dispatchers.Default) { CanvasInkSelectionCropRenderer.renderSketch(resolvedSource.text, context) }
+                }.getOrNull()?.let { MediaAssetContent(it, "image/png") }
+                navigation.send(CanvasEditorNavigation.AskAboutSelection(canvasId, crop = crop))
+            }
+            com.halo.app.data.notebook.CanvasNodeType.FILE, com.halo.app.data.notebook.CanvasNodeType.IMAGE -> {
+                val pageNumber = context.pageId?.removePrefix("page-")?.toIntOrNull()
+                    ?.takeIf { it in 1..9999 } ?: error("Selection page is unavailable.")
+                val sourceFile = resolvedSource.refObjectId?.let(current.files::get)
+                    ?: error("Selected source file is unavailable.")
+                val pageInk = CanvasFileMarkupCodec.decode(resolvedSource.text).pages[pageNumber]
+                    ?: error("Selected page annotations are unavailable.")
+                navigation.send(CanvasEditorNavigation.AskAboutSelection(canvasId,
+                    sourceFile = sourceFile, pageInk = pageInk, pageNumber = pageNumber, selection = context))
+            }
+            else -> error("Selection source is unavailable.")
+        }
     }
 
     fun showNotice(message: String) { mutableState.value = mutableState.value.copy(notice = message) }
