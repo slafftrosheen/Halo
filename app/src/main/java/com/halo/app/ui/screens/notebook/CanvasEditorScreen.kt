@@ -936,6 +936,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                             }, enabled = sourceNode != null) { Text(uiText("Open linked source")) }
                             TextButton(onClick = { viewModel.addInkSelectionToWorkingSet(node.id) },
                                 enabled = selectionCurrent) { Text(uiText("Add selection to working set")) }
+                            TextButton(onClick = { viewModel.askAboutInkSelection(node.id) },
+                                enabled = selectionCurrent) { Text(uiText("Ask about selection")) }
                         }
                         else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)

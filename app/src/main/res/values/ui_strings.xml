@@ -3771,6 +3771,7 @@
     <string name="ui_9ebce4ab2618" formatted="false">"Source changed; select the region again."</string>
     <string name="ui_cf0d1a41f783" formatted="false">"Open linked source"</string>
     <string name="ui_cfb03a6319e9" formatted="false">"Add selection to working set"</string>
+    <string name="ui_3e812c70c455" formatted="false">"Ask about selection"</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Selection added to working set"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."</string>
 </resources>

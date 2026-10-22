@@ -117,6 +117,7 @@ sealed interface CanvasEditorNavigation {
     data class OpenObject(val objectRef: WorkspaceObject) : CanvasEditorNavigation
     data class OpenStudy(val sessionId: String) : CanvasEditorNavigation
     data class StartStudyFromSource(val noteId: String, val goal: String) : CanvasEditorNavigation
+    data object AskAboutSelection : CanvasEditorNavigation
 }
 
 class CanvasEditorViewModel(
@@ -693,6 +694,11 @@ class CanvasEditorViewModel(
         flushPendingEdits()
         requireNotNull(workspace) { "Working set is unavailable." }.selectInkSelection(canvasId, selectionNodeId)
         mutableState.value = mutableState.value.copy(notice = "Selection added to working set")
+    }
+    fun askAboutInkSelection(selectionNodeId: String) = command {
+        flushPendingEdits()
+        requireNotNull(workspace) { "Working set is unavailable." }.selectInkSelection(canvasId, selectionNodeId)
+        navigation.send(CanvasEditorNavigation.AskAboutSelection)
     }
     fun keepDrawingDraft(draft: com.halo.app.data.notebook.CanvasDrawingDraft) = command {
         repository.saveDrawingDraft(canvasId, draft)
