@@ -27,6 +27,9 @@ internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier)
 internal fun CanvasSketchPadDialog(
     initial: String = "",
     recovery: String? = null,
+    selectionOwnerId: String? = null,
+    selectionPageId: String? = null,
+    onSelectionChanged: (com.halo.sdk.runtime.ink.InkSelectionContext?) -> Unit = {},
     onDraft: (String) -> Unit = {},
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -35,6 +38,7 @@ internal fun CanvasSketchPadDialog(
     val source = remember(initial) { recovery ?: initial }
     var draft by remember(source) { mutableStateOf(source) }
     val document = remember(draft) { InkCodec.decode(draft) }
+    LaunchedEffect(Unit) { onSelectionChanged(null) }
     AlertDialog(
         modifier = Modifier.widthIn(max = 880.dp).fillMaxWidth().padding(horizontal = 16.dp),
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -42,7 +46,9 @@ internal fun CanvasSketchPadDialog(
         title = { Text(uiText("Sketch")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CanvasInkSurface(source, onChanged = { encoded -> onDraft(encoded); draft = encoded })
+                CanvasInkSurface(source, onChanged = { encoded -> onDraft(encoded); draft = encoded },
+                    selectionOwnerId = selectionOwnerId, selectionPageId = selectionPageId,
+                    onSelectionChanged = onSelectionChanged)
                 Text(stringResource(R.string.ink_draft_help), style = MaterialTheme.typography.bodySmall)
             }
         },

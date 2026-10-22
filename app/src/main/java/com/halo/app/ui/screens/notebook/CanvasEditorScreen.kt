@@ -286,13 +286,16 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         CanvasSketchPadDialog(
             initial = sketchOriginal,
             recovery = state.drawingDraft?.takeIf { it.kind == "sketch" && it.nodeId == sketchTarget }?.sketch,
+            selectionOwnerId = target?.let { viewModel.canvasId },
+            selectionPageId = target?.id,
+            onSelectionChanged = viewModel::setInkSelection,
             onDraft = { encoded -> viewModel.keepDrawingDraft(com.halo.app.data.notebook.CanvasDrawingDraft(sketchTarget, "sketch", sketchOriginal, sketch = encoded)) },
             onSave = { encoded ->
                 viewModel.addSketch(encoded, sketchTarget, sketchOriginal.takeIf { sketchTarget != null })
                 sketchOpen = false
                 sketchTarget = null
             },
-            onDismiss = { viewModel.discardDrawingDraft(); sketchOpen = false; sketchTarget = null },
+            onDismiss = { viewModel.discardDrawingDraft(); viewModel.setInkSelection(null); sketchOpen = false; sketchTarget = null },
         )
     }
 
@@ -322,7 +325,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 recovery = state.drawingDraft?.takeIf { it.kind == "annotation" && it.nodeId == nodeId },
                 onDraft = { draft -> viewModel.keepDrawingDraft(draft.copy(nodeId = nodeId, fileVersion = annotationVersion)) },
                 onSave = { updates -> viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion); annotateNodeId = null },
-                onDismiss = { viewModel.discardDrawingDraft(); annotateNodeId = null })
+                onDismiss = { viewModel.discardDrawingDraft(); viewModel.setInkSelection(null); annotateNodeId = null },
+                onSelectionChanged = viewModel::setInkSelection)
         }
     }
     imageToolsNodeId?.let { nodeId ->

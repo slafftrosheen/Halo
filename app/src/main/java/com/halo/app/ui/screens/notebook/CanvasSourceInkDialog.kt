@@ -78,6 +78,7 @@ internal fun CanvasSourceInkDialog(
     onDraft: (CanvasDrawingDraft) -> Unit = {},
     onSave: (Map<Int, String>) -> Unit,
     onDismiss: () -> Unit,
+    onSelectionChanged: (com.halo.sdk.runtime.ink.InkSelectionContext?) -> Unit = {},
 ) {
     val context = LocalContext.current
     val base = remember(markup) { CanvasFileMarkupCodec.decode(markup) }
@@ -100,6 +101,10 @@ internal fun CanvasSourceInkDialog(
     val currentPage = rendered?.takeIf { it.page == page }
     val displayedBitmap = rendered?.bitmap
     DisposableEffect(displayedBitmap) { onDispose { displayedBitmap?.recycle() } }
+    val selectionCallback by rememberUpdatedState(onSelectionChanged)
+    LaunchedEffect(file.objectId.value, page) {
+        selectionCallback(null)
+    }
     fun draftFor(pages: Map<Int, String>) = CanvasDrawingDraft(recovery?.nodeId, "annotation", markup,
         pages = pages, page = page, fileVersion = recovery?.fileVersion)
     fun keepPosition() {
@@ -136,7 +141,9 @@ internal fun CanvasSourceInkDialog(
                             onDraft(draft)
                             pending[page] = updates.getValue(page)
                             saveError = false
-                        })
+                        }, selectionOwnerId = file.version?.let { file.objectId.value }, selectionPageId = "page-$page",
+                            selectionBaseRevision = file.version ?: file.sha256,
+                            onSelectionChanged = onSelectionChanged)
                     }
                     if (saveError) Text(stringResource(R.string.ink_draft_rejected), color = MaterialTheme.colorScheme.error)
                     Text(uiText("Marks are saved on this Canvas, not into the original file."), style = MaterialTheme.typography.bodySmall)

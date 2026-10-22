@@ -37,9 +37,12 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.R
 import com.halo.host.android.ink.AndroidInkInput
 import com.halo.sdk.runtime.ink.*
+import java.security.MessageDigest
+import kotlin.math.ceil
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private enum class InkMode { DRAW, ERASE, PAN }
+private enum class InkMode { DRAW, ERASE, PAN, SELECT }
 
 /** Shared for free sketches and page overlays. Only finished edits invoke the draft owner. */
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
@@ -49,6 +52,10 @@ internal fun CanvasInkSurface(
     onChanged: (String) -> Unit,
     background: ImageBitmap? = null,
     aspectMilli: Int = 1400,
+    selectionOwnerId: String? = null,
+    selectionPageId: String? = null,
+    selectionBaseRevision: String? = null,
+    onSelectionChanged: (InkSelectionContext?) -> Unit = {},
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -67,6 +74,11 @@ internal fun CanvasInkSurface(
     var pan by remember { mutableStateOf(Offset.Zero) }
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     var hover by remember { mutableStateOf<Pair<Float, Float>?>(null) }
+    var selectionBounds by remember { mutableStateOf<InkSelectionBounds?>(null) }
+    var selectionContext by remember { mutableStateOf<InkSelectionContext?>(null) }
+    var selectionStart by remember { mutableStateOf<Offset?>(null) }
+    var selectionEnd by remember { mutableStateOf<Offset?>(null) }
+    var selectionPointer by remember { mutableIntStateOf(-1) }
     var rejectedChange by remember { mutableStateOf(false) }
     var panPointer by remember { mutableIntStateOf(-1) }
     var lastPan by remember { mutableStateOf(Offset.Zero) }
@@ -74,6 +86,7 @@ internal fun CanvasInkSurface(
     val focus = remember { FocusRequester() }
     val disallowIntercept = remember { RequestDisallowInterceptTouchEvent() }
     val surfaceLabel = stringResource(R.string.ink_surface_description)
+    val selectionClearLabel = stringResource(R.string.ink_selection_clear)
     val zoomOutLabel = stringResource(R.string.ink_zoom_out)
     val zoomInLabel = stringResource(R.string.ink_zoom_in)
     val actualAspect = background?.let { (it.width * 1000f / it.height).roundToInt() }
@@ -85,8 +98,56 @@ internal fun CanvasInkSurface(
         return Offset(value.x.coerceIn(-rect.width * (zoom - 1) / 2, rect.width * (zoom - 1) / 2),
             value.y.coerceIn(-rect.height * (zoom - 1) / 2, rect.height * (zoom - 1) / 2))
     }
+    fun documentPoint(x: Float, y: Float): Offset? {
+        val rect = bounds()
+        if (rect.width <= 0f || rect.height <= 0f || !x.isFinite() || !y.isFinite()) return null
+        val px = (x - rect.center.x - pan.x) / zoom + rect.center.x
+        val py = (y - rect.center.y - pan.y) / zoom + rect.center.y
+        if (!rect.contains(Offset(px, py))) return null
+        return Offset((1000f * (px - rect.left) / rect.width).coerceIn(0f, 1000f),
+            (1000f * (py - rect.top) / rect.height).coerceIn(0f, 1000f))
+    }
+    fun clearSelection(notify: Boolean = true) {
+        val hadSelection = selectionBounds != null || selectionContext != null || selectionStart != null || selectionEnd != null
+        selectionBounds = null
+        selectionContext = null
+        selectionStart = null
+        selectionEnd = null
+        if (notify && hadSelection) onSelectionChanged(null)
+    }
+    LaunchedEffect(selectionOwnerId, selectionPageId, selectionBaseRevision) { clearSelection() }
+    fun normalizedBounds(from: Offset, to: Offset): InkSelectionBounds? {
+        val minX = minOf(from.x, to.x); val maxX = maxOf(from.x, to.x)
+        val minY = minOf(from.y, to.y); val maxY = maxOf(from.y, to.y)
+        if (abs(maxX - minX) < 1f || abs(maxY - minY) < 1f) return null
+        val left = minX.toInt().coerceIn(0, 999)
+        val top = minY.toInt().coerceIn(0, 999)
+        val right = ceil(maxX).toInt().coerceIn(1, 1000)
+        val bottom = ceil(maxY).toInt().coerceIn(1, 1000)
+        if (right <= left || bottom <= top) return null
+        return InkSelectionBounds(left, top, right, bottom)
+    }
+    fun finishSelection(from: Offset?, to: Offset?) {
+        val region = if (from != null && to != null) normalizedBounds(from, to) else null
+        selectionBounds = region
+        selectionStart = null
+        selectionEnd = null
+        selectionPointer = -1
+        val owner = selectionOwnerId
+        val context = if (region != null && !owner.isNullOrBlank()) {
+            val doc = editor.preview()
+            val serialized = (selectionBaseRevision.orEmpty() + "\n" + InkCodec.encode(doc))
+            val digest = MessageDigest.getInstance("SHA-256").digest(serialized.toByteArray(Charsets.UTF_8))
+            val sourceRevision = digest.joinToString("") { byte -> "%02x".format(byte) }
+            InkSelections.create(doc, owner, selectionPageId, sourceRevision, region,
+                InkSelectionOrigin.BOX, System.currentTimeMillis())
+        } else null
+        selectionContext = context
+        onSelectionChanged(context)
+    }
     fun publish(rollback: () -> Unit = { editor.undo() }) {
         val current = editor.document
+        clearSelection()
         try {
             val encoded = if (current == parsed) initial else InkCodec.encode(current)
             committedCallback(encoded); rejectedChange = false
@@ -115,28 +176,31 @@ internal fun CanvasInkSurface(
                 (18f * density * 1000 / rect.width.coerceAtLeast(1f) / zoom) to
                     (18f * density * 1000 / rect.height.coerceAtLeast(1f) / zoom)
             },
-            eraseSelected = { mode == InkMode.ERASE }, onPreview = { revision++ },
+            eraseSelected = { mode == InkMode.ERASE }, onPreview = { clearSelection(); revision++ },
             onCommit = { publish() }, onHover = { hover = it })
     }
     // The normalized document belongs to the draft owner; the viewport is intentionally ephemeral.
     DisposableEffect(input) { onDispose { input.abort() } }
     val preview = remember(editor, revision) { editor.preview() }
-    fun changeMode(next: InkMode) { input.abort(); panPointer = -1; hover = null; mode = next; revision++ }
+    fun changeMode(next: InkMode) { input.abort(); panPointer = -1; selectionPointer = -1; selectionStart = null; selectionEnd = null; hover = null; mode = next; revision++ }
     fun changeZoom(next: Float) { input.abort(); zoom = next.coerceIn(1f, 4f); pan = clampPan(pan); revision++ }
-    fun undo() { input.abort(); if (editor.undo()) publish { editor.redo() } }
-    fun redo() { input.abort(); if (editor.redo()) publish() }
+    fun undo() { input.abort(); clearSelection(); if (editor.undo()) publish { editor.redo() } }
+    fun redo() { input.abort(); clearSelection(); if (editor.redo()) publish() }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (!readable) Text(stringResource(R.string.ink_unreadable), color = MaterialTheme.colorScheme.error)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(InkMode.DRAW to R.string.ink_draw, InkMode.ERASE to R.string.ink_erase,
-                InkMode.PAN to R.string.ink_pan).forEach { (choice, label) ->
+                InkMode.PAN to R.string.ink_pan).plus(
+                if (!selectionOwnerId.isNullOrBlank()) listOf(InkMode.SELECT to R.string.ink_select) else emptyList()
+            ).forEach { (choice, label) ->
                 FilterChip(mode == choice, { changeMode(choice) }, label = { Text(stringResource(label)) },
                     enabled = readable, modifier = Modifier.heightIn(min = 48.dp))
             }
         }
         val height = (LocalConfiguration.current.screenHeightDp * 0.42f).coerceIn(180f, 440f).dp
         val inkColor = if (background != null) Color.Black else MaterialTheme.colorScheme.onSurface
+        val selectionColor = MaterialTheme.colorScheme.primary
         Canvas(Modifier.fillMaxWidth().height(height).clipToBounds()
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .focusRequester(focus)
@@ -153,7 +217,40 @@ internal fun CanvasInkSurface(
                     if (event.actionMasked == MotionEvent.ACTION_DOWN) { focus.requestFocus(); disallowIntercept(true) }
                     if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL)
                         disallowIntercept(false)
-                    if (mode != InkMode.PAN) input.motion(event) else {
+                    if (mode == InkMode.SELECT) {
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_HOVER_ENTER, MotionEvent.ACTION_HOVER_MOVE -> {
+                                hover = documentPoint(event.x, event.y)?.let { it.x to it.y }
+                                true
+                            }
+                            MotionEvent.ACTION_HOVER_EXIT -> { hover = null; true }
+                            MotionEvent.ACTION_DOWN -> {
+                                hover = null
+                                selectionPointer = event.getPointerId(event.actionIndex)
+                                selectionStart = documentPoint(event.getX(event.actionIndex), event.getY(event.actionIndex))
+                                selectionEnd = selectionStart
+                                true
+                            }
+                            MotionEvent.ACTION_MOVE -> {
+                                val index = event.findPointerIndex(selectionPointer)
+                                if (index >= 0) selectionEnd = documentPoint(event.getX(index), event.getY(index))
+                                true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                if (event.getPointerId(event.actionIndex) == selectionPointer) {
+                                    val end = documentPoint(event.getX(event.actionIndex), event.getY(event.actionIndex))
+                                    finishSelection(selectionStart, end)
+                                }
+                                true
+                            }
+                            MotionEvent.ACTION_CANCEL -> { finishSelection(null, null); true }
+                            MotionEvent.ACTION_POINTER_UP -> {
+                                if (event.getPointerId(event.actionIndex) == selectionPointer) finishSelection(null, null)
+                                true
+                            }
+                            else -> true
+                        }
+                    } else if (mode != InkMode.PAN) input.motion(event) else {
                         when (event.actionMasked) {
                             MotionEvent.ACTION_DOWN -> {
                                 panPointer = event.getPointerId(event.actionIndex)
@@ -179,7 +276,32 @@ internal fun CanvasInkSurface(
                     drawImage(image, dstOffset = IntOffset(rect.left.roundToInt(), rect.top.roundToInt()),
                         dstSize = IntSize(rect.width.roundToInt().coerceAtLeast(1), rect.height.roundToInt().coerceAtLeast(1)))
                 }
+                selectionBounds?.let { region ->
+                    val topLeft = Offset(rect.left + region.left / 1000f * rect.width,
+                        rect.top + region.top / 1000f * rect.height)
+                    val bottomRight = Offset(rect.left + region.right / 1000f * rect.width,
+                        rect.top + region.bottom / 1000f * rect.height)
+                    val selectionRect = Rect(topLeft, bottomRight)
+                    drawRect(selectionColor.copy(alpha = 0.1f), topLeft, androidx.compose.ui.geometry.Size(selectionRect.width, selectionRect.height))
+                    drawRect(selectionColor, topLeft, androidx.compose.ui.geometry.Size(selectionRect.width, selectionRect.height),
+                        style = Stroke(2.dp.toPx() / zoom))
+                }
                 drawInk(preview, inkColor, rect)
+                selectionContext?.let { selected ->
+                    val ids = selected.selectedStrokeIds.toSet()
+                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }), selectionColor, rect)
+                }
+                val dragStart = selectionStart
+                val dragEnd = selectionEnd
+                if (mode == InkMode.SELECT && dragStart != null && dragEnd != null) {
+                    val region = normalizedBounds(dragStart, dragEnd)
+                    region?.let {
+                        val topLeft = Offset(rect.left + it.left / 1000f * rect.width, rect.top + it.top / 1000f * rect.height)
+                        val bottomRight = Offset(rect.left + it.right / 1000f * rect.width, rect.top + it.bottom / 1000f * rect.height)
+                        drawRect(selectionColor, topLeft, androidx.compose.ui.geometry.Size(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y),
+                            style = Stroke(2.dp.toPx() / zoom))
+                    }
+                }
                 hover?.let { (x, y) ->
                     drawCircle(inkColor.copy(alpha = 0.5f), 5.dp.toPx() / zoom,
                         Offset(rect.left + x / 1000 * rect.width, rect.top + y / 1000 * rect.height), style = Stroke(1.dp.toPx() / zoom))
@@ -189,7 +311,7 @@ internal fun CanvasInkSurface(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { undo() }, enabled = readable && editor.canUndo) { Text(stringResource(R.string.ink_undo)) }
             TextButton(onClick = { redo() }, enabled = readable && editor.canRedo) { Text(stringResource(R.string.ink_redo)) }
-            TextButton(onClick = { input.abort(); if (editor.clear()) publish() }, enabled = readable && preview.strokes.isNotEmpty()) {
+            TextButton(onClick = { input.abort(); clearSelection(); if (editor.clear()) publish() }, enabled = readable && preview.strokes.isNotEmpty()) {
                 Text(stringResource(R.string.ink_clear))
             }
             TextButton(onClick = { changeZoom(zoom - 0.5f) }, enabled = zoom > 1f,
@@ -197,6 +319,18 @@ internal fun CanvasInkSurface(
             TextButton(onClick = { changeZoom(zoom + 0.5f) }, enabled = zoom < 4f,
                 modifier = Modifier.semantics { contentDescription = zoomInLabel }) { Text("+") }
             TextButton(onClick = { changeZoom(1f) }) { Text(stringResource(R.string.ink_reset_view)) }
+            if (selectionBounds != null) TextButton(onClick = { clearSelection() },
+                modifier = Modifier.semantics { contentDescription = selectionClearLabel }) {
+                Text(stringResource(R.string.ink_selection_clear))
+            }
+        }
+        selectionContext?.let { selected ->
+            Text(stringResource(R.string.ink_selection_count, selected.selectedStrokeIds.size),
+                color = selectionColor, style = MaterialTheme.typography.bodySmall)
+        } ?: if (selectionBounds != null) {
+            Text(stringResource(R.string.ink_selection_empty), style = MaterialTheme.typography.bodySmall)
+        } else if (mode == InkMode.SELECT) {
+            Text(stringResource(R.string.ink_selection_help), style = MaterialTheme.typography.bodySmall)
         }
         Text(stringResource(R.string.ink_input_help), style = MaterialTheme.typography.bodySmall)
         if (editor.limitReached) Text(stringResource(R.string.ink_capacity), color = MaterialTheme.colorScheme.error)

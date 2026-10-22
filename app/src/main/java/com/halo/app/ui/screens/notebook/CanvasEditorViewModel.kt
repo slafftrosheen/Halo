@@ -86,6 +86,7 @@ data class CanvasEditorUiState(
     val textDraft: CanvasRecognizedDraft? = null,
     val searchHits: List<com.halo.app.data.search.WorkspaceSearchHit> = emptyList(),
     val drawingDraft: com.halo.app.data.notebook.CanvasDrawingDraft? = null,
+    val inkSelection: com.halo.sdk.runtime.ink.InkSelectionContext? = null,
 )
 
 /**
@@ -669,6 +670,9 @@ class CanvasEditorViewModel(
     }
 
     fun persistPending() = command { flushPendingEdits() }
+    fun setInkSelection(selection: com.halo.sdk.runtime.ink.InkSelectionContext?) {
+        mutableState.value = mutableState.value.copy(inkSelection = selection)
+    }
     fun keepDrawingDraft(draft: com.halo.app.data.notebook.CanvasDrawingDraft) = command {
         repository.saveDrawingDraft(canvasId, draft)
         mutableState.value = mutableState.value.copy(drawingDraft = draft)

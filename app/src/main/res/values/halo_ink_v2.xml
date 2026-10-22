@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ink_surface_description">Drawing surface. Use Draw, Erase or Pan. Control Z undoes; Control Shift Z redoes.</string>
+    <string name="ink_surface_description">Drawing surface. Use Draw, Erase or Move view. Control Z undoes; Control Shift Z redoes.</string>
     <string name="ink_draw">Draw</string>
     <string name="ink_erase">Erase strokes</string>
     <string name="ink_pan">Move view</string>
+    <string name="ink_select">Select region</string>
+    <string name="ink_selection_help">Drag across the drawing to select a region and its intersecting strokes.</string>
+    <string name="ink_selection_empty">No strokes intersect this region.</string>
+    <string name="ink_selection_count">Selected strokes: %1$d</string>
+    <string name="ink_selection_clear">Clear selection</string>
     <string name="ink_undo">Undo</string>
     <string name="ink_redo">Redo</string>
     <string name="ink_clear">Clear drawing</string>

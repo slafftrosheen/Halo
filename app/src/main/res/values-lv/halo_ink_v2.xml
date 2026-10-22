@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ink_surface_description">Zīmēšanas laukums. Izvēlieties zīmēšanu, dzēšgumiju vai pārvietošanu. Ctrl+Z atceļ, Ctrl+Shift+Z atkārto.</string>
+    <string name="ink_surface_description">Zīmēšanas laukums. Izvēlieties zīmēšanu, dzēšgumiju vai skata pārvietošanu. Ctrl+Z atceļ, Ctrl+Shift+Z atkārto.</string>
     <string name="ink_draw">Zīmēt</string>
     <string name="ink_erase">Dzēst vilcienus</string>
     <string name="ink_pan">Pārvietot skatu</string>
+    <string name="ink_select">Atlasīt apgabalu</string>
+    <string name="ink_selection_help">Velciet pāri zīmējumam, lai atlasītu apgabalu un tā vilcienus.</string>
+    <string name="ink_selection_empty">Šajā apgabalā nav vilcienu.</string>
+    <string name="ink_selection_count">Atlasītie vilcieni: %1$d</string>
+    <string name="ink_selection_clear">Notīrīt atlasi</string>
     <string name="ink_undo">Atsaukt</string>
     <string name="ink_redo">Atjaunot</string>
     <string name="ink_clear">Notīrīt zīmējumu</string>

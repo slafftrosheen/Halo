@@ -4,6 +4,11 @@
     <string name="ink_draw">Рисовать</string>
     <string name="ink_erase">Стирать штрихи</string>
     <string name="ink_pan">Двигать лист</string>
+    <string name="ink_select">Выделить область</string>
+    <string name="ink_selection_help">Проведите по рисунку, чтобы выделить область и пересекающие её штрихи.</string>
+    <string name="ink_selection_empty">В этой области нет штрихов.</string>
+    <string name="ink_selection_count">Выбрано штрихов: %1$d</string>
+    <string name="ink_selection_clear">Снять выделение</string>
     <string name="ink_undo">Отменить</string>
     <string name="ink_redo">Повторить</string>
     <string name="ink_clear">Очистить рисунок</string>
