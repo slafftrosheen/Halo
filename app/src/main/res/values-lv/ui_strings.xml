@@ -3781,4 +3781,7 @@
     <string name="ui_fd4c6ff25b0f" formatted="false">"Neizdevās sagatavot atlasītā apgabala attēlu. Mēģini atlasīt vēlreiz."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Atlase pievienota darba kopai"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts."</string>
+    <string name="ui_86cb9cfa1c76" formatted="false">"Mācīties šo atlasi"</string>
+    <string name="ui_365a8c54301e" formatted="false">"Atlasītais tintes apgabals"</string>
+    <string name="ui_583994585ca6" formatted="false">"Mācīties atlasīto apgabalu"</string>
 </resources>

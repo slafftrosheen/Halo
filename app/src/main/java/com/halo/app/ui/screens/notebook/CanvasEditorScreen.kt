@@ -919,6 +919,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 ?.fromNodeId?.let { sourceId -> state.nodes.firstOrNull { it.id == sourceId } }
                             val sourceVersion = sourceNode?.refObjectId?.let { id -> state.files[id]?.version ?: state.files[id]?.sha256 }
                             val selectionCurrent = node.inkSelectionIsCurrent(sourceNode, viewModel.canvasId, sourceVersion)
+                            val selectionCanRender = selectionCurrent && sourceNode?.type in
+                                setOf(CanvasNodeType.SKETCH, CanvasNodeType.FILE, CanvasNodeType.IMAGE)
                             val selectionContext = node.inkSelectionContext().takeIf { selectionCurrent }
                             val selectedInkMarkup = if (sourceNode != null && selectionContext != null) when (sourceNode.type) {
                                 CanvasNodeType.SKETCH -> sourceNode.text
@@ -952,6 +954,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 enabled = selectionCurrent) { Text(uiText("Add selection to working set")) }
                             TextButton(onClick = { viewModel.askAboutInkSelection(node.id) },
                                 enabled = selectionCurrent) { Text(uiText("Ask about selection")) }
+                            TextButton(onClick = { viewModel.studyInkSelection(
+                                node.id,
+                                uiText("Selected ink region"),
+                                uiText("Study the selected region")) },
+                                enabled = selectionCanRender) { Text(uiText("Study this selection")) }
                         }
                         else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)

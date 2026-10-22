@@ -3785,3 +3785,6 @@ Remove the current image attachment before asking about an ink selection.|||Пе
 Could not prepare the selected-region image. Try selecting again.|||Не удалось подготовить изображение выделенной области. Выделите её ещё раз.|||Neizdevās sagatavot atlasītā apgabala attēlu. Mēģini atlasīt vēlreiz.
 Selection added to working set|||Выделение добавлено в рабочий набор|||Atlase pievienota darba kopai
 Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized.|||Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся.|||Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts.
+Study this selection|||Изучить это выделение|||Mācīties šo atlasi
+Selected ink region|||Выделенная область рисунка|||Atlasītais tintes apgabals
+Study the selected region|||Изучить выделенную область|||Mācīties atlasīto apgabalu

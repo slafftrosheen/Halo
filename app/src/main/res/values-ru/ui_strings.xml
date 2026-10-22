@@ -3781,4 +3781,7 @@
     <string name="ui_fd4c6ff25b0f" formatted="false">"Не удалось подготовить изображение выделенной области. Выделите её ещё раз."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Выделение добавлено в рабочий набор"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся."</string>
+    <string name="ui_86cb9cfa1c76" formatted="false">"Изучить это выделение"</string>
+    <string name="ui_365a8c54301e" formatted="false">"Выделенная область рисунка"</string>
+    <string name="ui_583994585ca6" formatted="false">"Изучить выделенную область"</string>
 </resources>

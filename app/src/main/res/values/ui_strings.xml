@@ -3781,4 +3781,7 @@
     <string name="ui_fd4c6ff25b0f" formatted="false">"Could not prepare the selected-region image. Try selecting again."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Selection added to working set"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."</string>
+    <string name="ui_86cb9cfa1c76" formatted="false">"Study this selection"</string>
+    <string name="ui_365a8c54301e" formatted="false">"Selected ink region"</string>
+    <string name="ui_583994585ca6" formatted="false">"Study the selected region"</string>
 </resources>

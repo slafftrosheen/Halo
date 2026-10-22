@@ -3783,4 +3783,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Could not prepare the selected-region image. Try selecting again." to R.string.ui_fd4c6ff25b0f,
     "Selection added to working set" to R.string.ui_19ce2f3279a2,
     "Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized." to R.string.ui_e6fd9b9426fd,
+    "Study this selection" to R.string.ui_86cb9cfa1c76,
+    "Selected ink region" to R.string.ui_365a8c54301e,
+    "Study the selected region" to R.string.ui_583994585ca6,
 )

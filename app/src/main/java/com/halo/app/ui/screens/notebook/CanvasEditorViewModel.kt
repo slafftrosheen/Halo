@@ -740,6 +740,52 @@ class CanvasEditorViewModel(
         }
     }
 
+    fun studyInkSelection(selectionNodeId: String, materialTitle: String, goal: String) = command {
+        flushPendingEdits()
+        val noteStore = requireNotNull(notes) { "Notebook is unavailable." }
+        val assetStore = requireNotNull(assets) { "Notebook assets are unavailable." }
+        val current = mutableState.value
+        val bookmark = current.nodes.firstOrNull { it.id == selectionNodeId &&
+            it.type == com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION } ?: error("Selection is unavailable.")
+        val sourceId = current.edges.firstOrNull { it.toNodeId == selectionNodeId && it.label == "selection" }?.fromNodeId
+        val source = sourceId?.let { id -> current.nodes.firstOrNull { it.id == id } }
+        val context = requireNotNull(InkSelectionBookmarkCodec.decode(bookmark.text)) { "Selection is unavailable." }
+        val sourceVersion = source?.refObjectId?.let { id -> current.files[id]?.version ?: current.files[id]?.sha256 }
+        require(bookmark.inkSelectionIsCurrent(source, canvasId, sourceVersion)) {
+            "Source changed. Select the region again."
+        }
+        val resolvedSource = requireNotNull(source) { "Selection source is unavailable." }
+        val crop = when (resolvedSource.type) {
+            com.halo.app.data.notebook.CanvasNodeType.SKETCH -> withContext(Dispatchers.Default) {
+                CanvasInkSelectionCropRenderer.renderSketch(resolvedSource.text, context)
+            }
+            com.halo.app.data.notebook.CanvasNodeType.FILE, com.halo.app.data.notebook.CanvasNodeType.IMAGE -> {
+                val pageNumber = context.pageId?.removePrefix("page-")?.toIntOrNull()
+                    ?.takeIf { it in 1..9999 } ?: error("Selection page is unavailable.")
+                val sourceFile = resolvedSource.refObjectId?.let(current.files::get)
+                    ?: error("Selected source file is unavailable.")
+                val pageInk = CanvasFileMarkupCodec.decode(resolvedSource.text).pages[pageNumber]
+                    ?: error("Selected page annotations are unavailable.")
+                CanvasInkSelectionCropRenderer.renderPage(
+                    com.halo.app.di.ManualDependencyGraph.applicationContext,
+                    sourceFile, pageNumber, pageInk, context)
+            }
+            else -> error("Selection source is unavailable.")
+        }
+        // Study's existing resolver consumes one explicit image from a Note. The crop is
+        // therefore persisted as a visible, inspectable material with the source reference.
+        val provenance = InkSelectionBookmarkCodec.referenceText(context)
+        val note = noteStore.createNote(provenance, materialTitle.take(120))
+        try {
+            assetStore.addLocalEdited(note.id, crop, com.halo.app.data.workspace.CanvasImageFormat.PNG,
+                "Selected region from Canvas ${canvasId}; $provenance")
+        } catch (failure: Exception) {
+            withContext(kotlinx.coroutines.NonCancellable) { runCatching { noteStore.moveToTrash(note.id) } }
+            throw failure
+        }
+        navigation.send(CanvasEditorNavigation.StartStudyFromSource(note.id, goal.take(400)))
+    }
+
     fun showNotice(message: String) { mutableState.value = mutableState.value.copy(notice = message) }
     fun keepDrawingDraft(draft: com.halo.app.data.notebook.CanvasDrawingDraft) = command {
         repository.saveDrawingDraft(canvasId, draft)
