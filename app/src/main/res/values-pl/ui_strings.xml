@@ -9,6 +9,7 @@
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
+    <string name="ui_94835ea2fcf7" formatted="false">"Odebrane"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
@@ -61,6 +62,7 @@
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
+    <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
