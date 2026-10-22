@@ -108,7 +108,8 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
-    onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {}) {
+    onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
+    onStartVoiceMode: () -> Unit = {}) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -230,6 +231,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 navigation = if (showLibrary) ::leaveLibrary else null,
                 // The Round 2 Notebook home has a word-only header.
                 glyph = if (showLibrary) HaloGlyph.NOTE else null,
+                primaryAction = if (!showLibrary) HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode) else null,
                 trailing = {
                     if (!showLibrary) {
                         IconButton(onClick = { libraryFocused = true },

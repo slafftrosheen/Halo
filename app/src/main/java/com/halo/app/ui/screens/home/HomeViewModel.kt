@@ -264,6 +264,8 @@ class HomeViewModel(
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
     private val _voiceModeActive = MutableStateFlow(false)
     val voiceModeActive: StateFlow<Boolean> = _voiceModeActive.asStateFlow()
+    private val _voiceModeStartRequested = MutableStateFlow(false)
+    val voiceModeStartRequested: StateFlow<Boolean> = _voiceModeStartRequested.asStateFlow()
     private val voiceModeLock = Any()
     private var voiceModeConversationId: String? = null
     private var voiceModeCaptureId: String? = null
@@ -932,6 +934,14 @@ class HomeViewModel(
     }
 
     /** Starts a user-visible foreground session; every later capture is tied to a completed reply. */
+    fun requestVoiceModeStart() { _voiceModeStartRequested.value = true }
+
+    fun consumeVoiceModeStartRequest(): Boolean {
+        if (!_voiceModeStartRequested.value) return false
+        _voiceModeStartRequested.value = false
+        return true
+    }
+
     fun startVoiceMode() {
         if (!speechAvailability.value || !microphonePermission.value) return
         val conversationStore = conversations ?: return

@@ -114,7 +114,7 @@ internal fun shouldCelebrateStudyCompletion(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onBack: () -> Unit) {
+fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onStartVoiceMode: () -> Unit = {}, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val attemptStarter = uiText("I think the answer is... because...")
     val questionStarter = uiText("Can you explain this with an example?")
@@ -317,7 +317,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 viewModel.stopReading("Left the Study screen")
                 onBack()
             },
-            primaryAction = null,
+            primaryAction = com.halo.app.ui.design.HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode),
             glyph = HaloGlyph.QUESTION,
         )
 

@@ -45,6 +45,7 @@ fun StudyHomeScreen(
     onResume: (String) -> Unit,
     onReview: (String) -> Unit,
     onNotebook: () -> Unit,
+    onStartVoiceMode: () -> Unit = {},
     initialSourceId: String? = null,
     initialGoal: String? = null,
 ) {
@@ -151,6 +152,8 @@ fun StudyHomeScreen(
                     navigation = if (setupActive) {
                         returnFromSetup
                     } else { onNotebook },
+                    primaryAction = if (!setupActive) com.halo.app.ui.design.HaloHeaderAction(
+                        uiText("Start Voice Mode"), onStartVoiceMode) else null,
                     glyph = null,
                 )
             }

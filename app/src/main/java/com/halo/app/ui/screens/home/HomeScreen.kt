@@ -194,6 +194,12 @@ fun HomeScreen(
 
     val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
     val voiceModeActive by viewModel.voiceModeActive.collectAsStateWithLifecycle()
+    val voiceModeStartRequested by viewModel.voiceModeStartRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(voiceModeStartRequested) {
+        if (voiceModeStartRequested && viewModel.consumeVoiceModeStartRequest()) {
+            viewModel.startVoiceMode()
+        }
+    }
     var drafts by rememberSaveable { mutableStateOf(hashMapOf<String, String>()) }
     val draftKey = uiState.conversationId.orEmpty()
     val textInput = drafts[draftKey].orEmpty()

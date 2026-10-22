@@ -182,6 +182,20 @@ fun AppShell(
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
         else performNavigation(route)
     }
+    val requestVoiceModeFromSurface: () -> Unit = {
+        val current = homeViewModel.uiState.value
+        when {
+            !current.microphonePermissionGranted -> {
+                onRequestPermissions()
+                navController.navigateToPrimary("home")
+            }
+            !current.speechReady -> navigateSafely("voice_settings")
+            else -> {
+                homeViewModel.requestVoiceModeStart()
+                navController.navigateToPrimary("home")
+            }
+        }
+    }
     if (parentUnavailable) androidx.compose.material3.AlertDialog(onDismissRequest = { parentUnavailable = false },
         title = { Text(uiText("Grown-up space")) },
         text = { Text(uiText("Ask a grown-up to set a device PIN or password in Android settings first.")) },
@@ -430,6 +444,7 @@ fun AppShell(
                             ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.NOTES)
                             navigateSafely("notebook")
                         },
+                        onStartVoiceMode = requestVoiceModeFromSurface,
                         initialSourceId = entry.arguments?.getString("captureSource"),
                         initialGoal = entry.arguments?.getString("goal"))
                 }
@@ -479,7 +494,8 @@ fun AppShell(
                         onLocalSearchOpened = { notebookEntry.savedStateHandle["openLocalSearch"] = false },
                         onOpenStudy = { navigateSafely(Screen.Study.route) },
                         onSkills = { navigateSafely("skills") },
-                        onOpenModels = { navigateSafely("settings/intelligence/on-device") })
+                        onOpenModels = { navigateSafely("settings/intelligence/on-device") },
+                        onStartVoiceMode = requestVoiceModeFromSurface)
                 }
 
                 composable(
@@ -550,7 +566,8 @@ fun AppShell(
                             val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
                             val kind = if (item?.type == WorkspaceObjectType.NOTE) "note" else "file"
                             navigateSafely("notebook/$kind/${android.net.Uri.encode(id)}")
-                        } }, onConfigureVision = { navigateSafely("settings/intelligence/roles") }) { navController.popBackStack() }
+                        } }, onConfigureVision = { navigateSafely("settings/intelligence/roles") },
+                            onStartVoiceMode = requestVoiceModeFromSurface) { navController.popBackStack() }
                     }
                 }
 
