@@ -8,7 +8,9 @@
 
 Halo has **no developer-operated server required for assistant functionality**. Runtime inference, speech, memory, Canvas/Notebook/Study/Screen, native actions, automations and optional device sync must work on user-owned compute and storage, or directly with a third-party service the user has deliberately configured. No Halo account is required.
 
-Halo's developer may operate a **strictly isolated commerce/licensing service** for Google Play purchase validation, entitlement state, refunds/revocations, replay protection and compliance. It is forbidden to act as an assistant, telemetry, device-sync, data-store, provider-key proxy or remote-execution backend. Whether the base app is a paid listing or a one-time non-consumable in-app unlock remains unresolved in issue #42; this ADR does not implement billing.
+Halo's base app will use a **paid Google Play listing**, targeting approximately US $4.99 as a one-time purchase (issue #42; confirmed 2026-10-22). The Play Store listing and Google Play account own delivery, purchase access and refunds for the base app. Halo will not add an in-app base-app unlock, purchase-token verifier or Halo-operated commerce backend for that listing. Localized prices, taxes, availability, publication and refund support remain subject to Play Console configuration and review. See [Google Play's paid-app refund guidance](https://support.google.com/googleplay/android-developer/answer/9037917) and [order management guidance](https://support.google.com/googleplay/android-developer/answer/2741495).
+
+The developer may consider a **strictly isolated commerce/licensing service** only if a separately scoped, optional feature pack later uses an in-app purchase. That service could handle Google Play purchase validation, entitlement state, refunds/revocations, replay protection and compliance. It is forbidden to act as an assistant, telemetry, device-sync, data-store, provider-key proxy or remote-execution backend. No such feature pack or service is implemented or approved by this decision.
 
 A third-party service is **not** a Halo-operated service: users must see that optional cloud providers, speech services, MCP integrations and search services may process and retain shared content under their own policies. A user-controlled Ollama/LAN endpoint or personal storage remains user-owned, even though it can communicate across the network.
 
@@ -29,18 +31,13 @@ flowchart LR
     MCP["Configured MCP / search / apps"]
     PLAY["Google Play billing platform"]
   end
-  subgraph D["Optional developer-operated infrastructure — commerce only"]
-    LIC["Minimal license verifier / entitlement store"]
-  end
   R -->|"Explicit device/local config"| LAN
   R -->|"User-selected provider, scoped content"| AI
   R -->|"User-authorized integrations/tools"| MCP
-  R -->|"Purchase / restore (if adopted)"| PLAY
-  PLAY <-->|"Purchase status and refund checks"| LIC
-  R -.->|"Purchase token / entitlement only, if adopted"| LIC
+  R -->|"Store installation and account access"| PLAY
 ```
 
-**No arrow is permitted** from local conversations, memory, media, voice, provider API keys, automation execution or device sync to LIC. The licensing service may not gain access to those domains through a shared log pipeline, support dashboard or an apparently harmless diagnostics SDK.
+If a future feature-pack verifier is approved, **no data flow is permitted** from local conversations, memory, media, voice, provider API keys, automation execution or device sync to it. It may not gain access to those domains through a shared log pipeline, support dashboard or diagnostics SDK.
 
 ## Invariants
 
@@ -55,16 +52,15 @@ flowchart LR
 
 | Threat | Required control |
 |---|---|
-| Forged client entitlement / APK patching | Verify purchase tokens against the Google Play Developer API server-side if a non-consumable unlock is used; local UI state alone is not authority |
-| Replayed / stolen tokens | Token-hash indexed deduplication, minimal purchase reference, ownership/entitlement checks, rate limits; never log raw tokens |
-| Refunded, revoked or pending purchase | Reconcile status, acknowledgement, refund/revocation; design explicit offline grace with eventual correction, no permanent trust in a stale cache |
-| Lost service-account secret | Keep credentials in a server secret manager, restrict scopes, rotate/revoke; **never ship credentials in APK** |
-| Data-content leakage via observability | Separate billing deployment, database, logs and access roles; strict request schema rejects prompt/audio/note/API-key fields; short, documented retention |
-| Outage, unauthorized reads and cost spikes | Least privilege, encrypted transport/storage, backups, rate limiting, budget alerts, operational incident plan and a defined restore/offline path |
+| Base-app purchase access or refund | Use Google Play's paid-app delivery and order/refund mechanisms; provide a clear support contact and verify store behavior during release acceptance |
+| Future feature-pack entitlement forgery or replay | If an in-app non-consumable is approved, verify purchase tokens server-side, deduplicate token references, check ownership and never log raw tokens |
+| Future feature-pack refund, revocation or pending purchase | If such a pack is approved, reconcile status and design explicit offline grace; do not trust stale local state permanently |
+| Future service-account secret loss | Only if a verifier is approved: keep credentials in a server secret manager, restrict scopes, rotate/revoke; **never ship credentials in APK** |
+| Future commerce data leakage or outage | Only if a verifier is approved: isolate deployment, database, logs and access roles; reject content fields and define retention, backups and recovery |
 
-The only proposed persisted fields are a hashed/token-reference key, product identifier, purchase/entitlement state, verification timestamps and necessary refund/audit records. Final fields and deletion/retention windows need a documented legal and provider-guidance review before shipping. An IP address or device diagnostics must not be stored without purpose and disclosure.
+There is no Halo commerce persistence for the paid base listing. If an optional feature-pack verifier is later approved, persisted fields must be limited to a hashed/token-reference key, product identifier, purchase/entitlement state, verification timestamps and necessary refund/audit records. Final fields and deletion/retention windows need a documented legal and provider-guidance review before shipping. An IP address or device diagnostics must not be stored without purpose and disclosure.
 
-**Cost:** no developer backend is needed for assistant features; while commerce is not implemented, there is no commerce service to deploy. If later adopted, cost depends on hosting, storage, egress, secret management, uptime and verification volume. Estimate and cap it before implementation; this ADR invents no monthly price.
+**Cost:** no developer backend is needed for assistant features or the paid base listing. If a feature-pack verifier is later adopted, cost depends on hosting, storage, egress, secret management, uptime and verification volume. Estimate and cap it before implementation; this ADR invents no monthly price.
 
 ## Source-backed rationale and limits (2026-10-21)
 
@@ -80,8 +76,8 @@ These are **static code observations**, not runtime packet-capture evidence, exh
 
 - No Halo-owned cross-device account or centralized backup. Optional sync is via user-owned devices/cloud accounts under user control.
 - The developer does not promise offline operation for uninstalled models, online tools, provider-specific voices, Google services or external device operations.
-- No mandatory Google account for assistant features. Google Play commerce may require the Play account associated with purchase.
-- Billing implementation and end-to-end purchase/refund tests remain tracked in #42, separate from acceptance of this architectural decision.
+- No mandatory Google account for assistant features. Installing a paid Play listing uses the buyer's Google Play account.
+- Base-listing price/regions, Play Console publication, support/refund handling and store acceptance remain tracked in #42, separate from acceptance of this architectural decision. Optional feature-pack billing requires a new scoped decision.
 - No retroactive claim about already-released APK permissions, libraries or Play Data Safety accuracy.
 
-**Acceptance for #41:** ADR, diagram, inspected flow inventory, localized app disclosure and ongoing change-review checklist are committed; issue #42 retains commerce implementation and physical validation.
+**Acceptance for #41:** ADR, diagram, inspected flow inventory, localized app disclosure and ongoing change-review checklist are committed; issue #42 retains paid-listing configuration and release acceptance.
