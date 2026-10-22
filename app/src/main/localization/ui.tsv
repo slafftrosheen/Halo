@@ -546,6 +546,11 @@ Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
 Needs retest|||Нужно проверить повторно|||Jāpārbauda atkārtoti
 Stable|||Стабильно|||Stabils
 Measured but unstable|||Проверено, нестабильно|||Izmērīts, bet nestabils
+Candidates for %1$s testing|||Кандидаты для проверки: %1$s|||Kandidāti pārbaudei: %1$s|||Kandydaci do testów: %1$s
+Candidate for: %1$s testing|||Кандидат для проверки: %1$s|||Kandidāts pārbaudei: %1$s|||Kandydat do testów: %1$s
+Suggested roles: %1$s|||Рекомендуемые роли: %1$s|||Ieteicamās lomas: %1$s|||Sugerowane role: %1$s
+Find %1$s|||Найти: %1$s|||Atrast: %1$s|||Znajdź: %1$s
+Measured roles · FAST %1$s ms · CHAT %2$s · REASONING %3$s · AGENTIC %4$s · VISION %5$s|||Измеренные роли · БЫСТРО: %1$s мс · ЧАТ: %2$s · РАССУЖДЕНИЕ: %3$s · ДЕЙСТВИЯ: %4$s · ЗРЕНИЕ: %5$s|||Izmērītās lomas · ĀTRI: %1$s ms · SARUNA: %2$s · SPRIEŠANA: %3$s · DARBĪBAS: %4$s · REDZE: %5$s|||Zmierzono role · FAST: %1$s ms · CZAT: %2$s · ROZUMOWANIE: %3$s · NARZĘDZIA: %4$s · WIZJA: %5$s
 Retest|||Повторить проверку|||Pārbaudīt vēlreiz|||Przetestuj ponownie
 Configure model roles|||Настроить роли моделей|||Iestatīt modeļu lomas|||Skonfiguruj role modeli
 Search catalog models|||Поиск моделей в каталоге|||Meklēt modeļus katalogā|||Szukaj modeli w katalogu

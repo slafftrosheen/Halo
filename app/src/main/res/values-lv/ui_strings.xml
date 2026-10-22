@@ -548,6 +548,11 @@
     <string name="ui_74eabd4ce82a" formatted="false">"Jāpārbauda atkārtoti"</string>
     <string name="ui_90ee305714d7" formatted="false">"Stabils"</string>
     <string name="ui_ce1c23d020c5" formatted="false">"Izmērīts, bet nestabils"</string>
+    <string name="ui_a3773fd35520" formatted="false">"Kandidāti pārbaudei: %1$s"</string>
+    <string name="ui_339c70704322" formatted="false">"Kandidāts pārbaudei: %1$s"</string>
+    <string name="ui_956f37e4b3ec" formatted="false">"Ieteicamās lomas: %1$s"</string>
+    <string name="ui_53346eb5cf89" formatted="false">"Atrast: %1$s"</string>
+    <string name="ui_75686cd522f3" formatted="false">"Izmērītās lomas · ĀTRI: %1$s ms · SARUNA: %2$s · SPRIEŠANA: %3$s · DARBĪBAS: %4$s · REDZE: %5$s"</string>
     <string name="ui_26488c95ce6a" formatted="false">"Pārbaudīt vēlreiz"</string>
     <string name="ui_185e4b007d63" formatted="false">"Iestatīt modeļu lomas"</string>
     <string name="ui_c12814d1710f" formatted="false">"Meklēt modeļus katalogā"</string>
