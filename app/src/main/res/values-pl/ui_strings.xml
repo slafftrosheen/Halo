@@ -14,9 +14,11 @@
     <string name="ui_76900f1bfd16" formatted="false">"Wstecz"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
     <string name="ui_87bf2bc08589" formatted="false">"Głos"</string>
+    <string name="ui_090512d93fcc" formatted="false">"Integracje"</string>
     <string name="ui_95338ea2de74" formatted="false">"Działania dostępne dla halo"</string>
     <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_c1ebc7817870" formatted="false">"Wymaga uwagi"</string>
+    <string name="ui_4f1fc01dc19d" formatted="false">"Wymagana jest kontrola połączenia"</string>
     <string name="ui_08ad51871af7" formatted="false">"Czego chcesz się nauczyć?"</string>
     <string name="ui_ce7274ff262c" formatted="false">"Temat, pytanie albo zadanie..."</string>
     <string name="ui_426f4c7dfab4" formatted="false">"Język materiału (opcjonalnie)"</string>
@@ -90,6 +92,7 @@
     <string name="ui_b0e0687a3021" formatted="false">"Wyjaśniaj w tym języku (puste pole = język aplikacji)"</string>
     <string name="ui_3bac3b491e7c" formatted="false">"Przetestuj dźwięk"</string>
     <string name="ui_b2439bcb8dee" formatted="false">"Wyjście"</string>
+    <string name="ui_1a2303ede074" formatted="false">"Połącz"</string>
     <string name="ui_5a1f096a0d8d" formatted="false">"Włącz"</string>
     <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
@@ -136,7 +139,31 @@
     <string name="ui_0dfe1d63c9d8" formatted="false">"Sprawdzanie…"</string>
     <string name="ui_a3cdac3bdf98" formatted="false">"Co halo może teraz zrobić"</string>
     <string name="ui_d88af80346ea" formatted="false">"Modele według funkcji"</string>
+    <string name="ui_737b13c8b8d1" formatted="false">"Czym jest MCP?"</string>
+    <string name="ui_0e3e58f90d67" formatted="false">"Dodaj serwer MCP"</string>
+    <string name="ui_4556cab2aa83" formatted="false">"Szukaj serwerów i narzędzi"</string>
+    <string name="ui_95199237fde4" formatted="false">"Połącz zewnętrzne narzędzia"</string>
+    <string name="ui_6a747be4785f" formatted="false">"MCP pozwala halo korzystać z funkcji wybranych przez Ciebie serwerów. Każde zdalne działanie nadal podlega zasadom uprawnień i potwierdzeń halo."</string>
+    <string name="ui_2df01a03ff43" formatted="false">"Brak wyników"</string>
+    <string name="ui_dcd1d5223f73" formatted="false">"Nazwa"</string>
+    <string name="ui_3df9726c68ba" formatted="false">"Adres endpointu"</string>
+    <string name="ui_66880d2d8216" formatted="false">"Uwierzytelnianie"</string>
+    <string name="ui_f0341f8dbcc5" formatted="false">"Zapisano dane logowania"</string>
+    <string name="ui_95e154398a4b" formatted="false">"Zastąp"</string>
+    <string name="ui_b22ac30e61f6" formatted="false">"Token typu Bearer"</string>
+    <string name="ui_ade9248e0132" formatted="false">"Zaufanie"</string>
+    <string name="ui_6420634af352" formatted="false">"Zaufanie nie pozwala narzędziom omijać potwierdzeń ani uprawnień halo."</string>
+    <string name="ui_9f4b9260b933" formatted="false">"Zapisane integracje są domyślnie wyłączone. Sprawdź konfigurację, a następnie włącz integrację i połącz się."</string>
+    <string name="ui_2f2ae39a7adc" formatted="false">"Ładowanie integracji…"</string>
+    <string name="ui_3ff935c2b4e3" formatted="false">"Włącz integrację"</string>
+    <string name="ui_5f7e1c068f22" formatted="false">"halo może używać tej integracji po jej połączeniu i autoryzowaniu."</string>
+    <string name="ui_31393d318605" formatted="false">"Odśwież narzędzia"</string>
+    <string name="ui_fbd165231fa1" formatted="false">"Szukaj narzędzi"</string>
+    <string name="ui_16badd61cdf7" formatted="false">"Nie wykryto żadnych narzędzi. Włącz tę integrację i ręcznie odśwież listę narzędzi."</string>
+    <string name="ui_c83ad254b40b" formatted="false">"Usuń integrację"</string>
+    <string name="ui_d9500ae46a2d" formatted="false">"Usunie to z halo wykryte narzędzia i konfigurację połączenia. Nie usunie żadnych danych ze zdalnego serwera."</string>
     <string name="ui_75081b593d15" formatted="false">"Wyłączone"</string>
+    <string name="ui_7d20cb58ea34" formatted="false">"Opisy przekazane przez serwer są danymi zewnętrznymi. Narzędzia są uruchamiane wyłącznie zgodnie ze zwykłym procesem uprawnień i potwierdzeń halo."</string>
     <string name="ui_879dd831b8b6" formatted="false">"Bieżące urządzenie · Trwała macierz ról"</string>
     <string name="ui_6cc7c6b30613" formatted="false">"Uruchom macierz ról dla zainstalowanych modeli"</string>
     <string name="ui_716441045c2d" formatted="false">"Skopiuj wyniki bieżącego urządzenia"</string>
@@ -190,6 +217,7 @@
     <string name="ui_7dfd4c4b11d5" formatted="false">"Użyj ElevenLabs do syntezy mowy"</string>
     <string name="ui_753e99a7c10d" formatted="false">"Odsłuchaj frazę testową na telefonie"</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
+    <string name="ui_37ec7e16decf" formatted="false">"Usuń dane logowania"</string>
     <string name="ui_f64001c434a8" formatted="false">"Niektóre wrażliwe działania zawsze wymagają potwierdzenia."</string>
     <string name="ui_0131d7ca5cad" formatted="false">"Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania."</string>
     <string name="ui_c30d7093bd2d" formatted="false">"Instrukcje dostarczone przez ten pakiet"</string>
@@ -364,18 +392,32 @@
     <string name="ui_c906aa6c516f" formatted="false">"Wybrane elementy mają pierwszeństwo przed starszymi rozmowami. Usunięcie ich z kontekstu nie usuwa oryginałów."</string>
     <string name="ui_f0557c6bcef6" formatted="false">"Usuń z kontekstu"</string>
     <string name="ui_78a7ab5e314a" formatted="false">"Wybierz model"</string>
+    <string name="ui_3e0bae9d4f24" formatted="false">"Usunąć dane logowania?"</string>
     <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
     <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
     <string name="ui_1f80bf2d4cfe" formatted="false">"Sprawdź miejsce na urządzeniu i połączenie, a następnie spróbuj ponownie. Wybrany model jest widoczny powyżej."</string>
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
     <string name="ui_c0b69be081b5" formatted="false">"Wybrano do testu"</string>
+    <string name="ui_3b7ea51793e9" formatted="false">"Wyczyść wyszukiwanie"</string>
     <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
     <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
     <string name="ui_366596141374" formatted="false">"Zastosuj ustawienia"</string>
     <string name="ui_e90a4c413b9e" formatted="false">"Zmienić wszystkie ustawienia zatwierdzania narzędzi?"</string>
+    <string name="ui_02b8036088a0" formatted="false">"Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie."</string>
+    <string name="ui_6d47a2cfe159" formatted="false">"Łącz się z wybranymi usługami"</string>
+    <string name="ui_7a308a8671b6" formatted="false">"Połączenie wymaga uwagi. Otwórz tę integrację, aby sprawdzić jej konfigurację."</string>
     <string name="ui_325da5b3bd34" formatted="false">"halo może rzadziej prosić o zgodę na kwalifikujące się narzędzia. Nadal obowiązują wymagane potwierdzenia, uprawnienia i natywne reguły bezpieczeństwa."</string>
+    <string name="ui_9a42d40a3f31" formatted="false">"Integracja"</string>
+    <string name="ui_3bc8c6ce7691" formatted="false">"Nie uzgodniono"</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
+    <string name="ui_41c510ec1365" formatted="false">"Poprzednie dane połączenia; bieżące połączenie nie zostało potwierdzone."</string>
+    <string name="ui_e98d2b70f757" formatted="false">"Zapisano · Wyłączona. Sprawdź konfigurację, a następnie włącz integrację i połącz się."</string>
+    <string name="ui_5277abbcdb93" formatted="false">"To połączenie nie jest szyfrowane. Używaj HTTP tylko z serwerem, którym zarządzasz, w zaufanej sieci lokalnej."</string>
+    <string name="ui_01c61c885b23" formatted="false">"Ta integracja będzie wymagać ponownej autoryzacji. Dane na zdalnym serwerze zostaną zachowane."</string>
+    <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
+    <string name="ui_13fe672ebaa2" formatted="false">"Serwery MCP udostępniają halo zewnętrzne narzędzia. halo nadaje im własne przestrzenie nazw i przed uruchomieniem stosuje własne uprawnienia, potwierdzenia oraz limity wykonań."</string>
+    <string name="ui_24eefaa59d37" formatted="false">"Zapamiętane ustawienia narzędzi. Tylko połączona i włączona integracja udostępnia halo włączone narzędzia. Każde działanie nadal wymaga standardowej autoryzacji."</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
     <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>

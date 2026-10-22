@@ -109,7 +109,7 @@ Intelligence|||Интеллект|||Intelekts
 Models and providers|||Модели и поставщики|||Modeļi un pakalpojumu sniedzēji
 Voice|||Голос|||Balss|||Głos
 Listening and speaking|||Распознавание и озвучивание|||Klausīšanās un runāšana
-Integrations|||Интеграции|||Integrācijas
+Integrations|||Интеграции|||Integrācijas|||Integracje
 MCP servers and external capabilities|||MCP-серверы и внешние возможности|||MCP serveri un ārējās iespējas
 Skills|||Навыки|||Prasmes
 Actions Halo can use|||Действия, доступные Halo|||Darbības, ko Halo var izmantot|||Działania dostępne dla Halo
@@ -156,7 +156,7 @@ Waiting for device|||Ожидание устройства|||Gaida ierīci
 Task paused|||Задача приостановлена|||Uzdevums pauzēts
 Waiting|||Ожидаю|||Gaidu
 Setup needed|||Нужна настройка|||Nepieciešama iestatīšana
-Connection needs attention|||Проверьте подключение|||Pārbaudi savienojumu
+Connection needs attention|||Проверьте подключение|||Pārbaudi savienojumu|||Wymagana jest kontrola połączenia
 Hello, I'm Halo|||Привет, я Halo|||Sveiki, es esmu Halo
 Ready when you are|||Готов, когда вы готовы|||Gatavs, kad esi gatavs
 Hearing you|||Слушаю вас|||Dzirdēju tevi
@@ -504,7 +504,7 @@ Sleepy|||Сонный|||Miegains
 Celebrate|||Праздновать|||Svinēt
 Look left|||Посмотреть налево|||Paskatīties pa kreisi
 Connection|||Подключение|||Savienojums
-Connect|||Подключить|||Savienot
+Connect|||Подключить|||Savienot|||Połącz
 Disconnect|||Отключить|||Atvienot
 BuddyBot target|||Адрес BuddyBot|||BuddyBot adrese
 WebSocket URL|||Адрес WebSocket|||WebSocket adrese
@@ -717,38 +717,38 @@ Presentation preview|||Предпросмотр представления|||Pre
 Close preview|||Закрыть предпросмотр|||Aizvērt priekšskatījumu
 Finish speech capture|||Завершить запись речи|||Pabeigt runas ierakstu
 Cancel speech probe|||Отменить проверку речи|||Atcelt runas pārbaudi
-What is MCP?|||Что такое MCP?|||Kas ir MCP?
-Add MCP server|||Добавить MCP-сервер|||Pievienot MCP serveri
-Search servers and tools|||Поиск серверов и инструментов|||Meklēt serverus un rīkus
-Connect external tools|||Подключить внешние инструменты|||Savienot ārējos rīkus
-MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules.|||MCP позволяет Halo использовать функции выбранных серверов. Для удалённых действий по-прежнему действуют разрешения и подтверждения Halo.|||MCP ļauj Halo izmantot izvēlēto serveru iespējas. Attālinātām darbībām joprojām piemēro Halo atļauju un apstiprināšanas noteikumus.
-No matches|||Совпадений нет|||Nav atbilstību
+What is MCP?|||Что такое MCP?|||Kas ir MCP?|||Czym jest MCP?
+Add MCP server|||Добавить MCP-сервер|||Pievienot MCP serveri|||Dodaj serwer MCP
+Search servers and tools|||Поиск серверов и инструментов|||Meklēt serverus un rīkus|||Szukaj serwerów i narzędzi
+Connect external tools|||Подключить внешние инструменты|||Savienot ārējos rīkus|||Połącz zewnętrzne narzędzia
+MCP lets Halo use capabilities from servers you choose. Every remote action still follows Halo’s permission and confirmation rules.|||MCP позволяет Halo использовать функции выбранных серверов. Для удалённых действий по-прежнему действуют разрешения и подтверждения Halo.|||MCP ļauj Halo izmantot izvēlēto serveru iespējas. Attālinātām darbībām joprojām piemēro Halo atļauju un apstiprināšanas noteikumus.|||MCP pozwala Halo korzystać z funkcji wybranych przez Ciebie serwerów. Każde zdalne działanie nadal podlega zasadom uprawnień i potwierdzeń Halo.
+No matches|||Совпадений нет|||Nav atbilstību|||Brak wyników
 Edit MCP server|||Изменить MCP-сервер|||Labot MCP serveri
-Name|||Имя|||Nosaukums
-Endpoint|||Адрес сервера|||Servera adrese
-Authentication|||Аутентификация|||Autentifikācija
+Name|||Имя|||Nosaukums|||Nazwa
+Endpoint|||Адрес сервера|||Servera adrese|||Adres endpointu
+Authentication|||Аутентификация|||Autentifikācija|||Uwierzytelnianie
 None|||Нет|||Nav
 Bearer|||Токен Bearer|||Bearer tokens
-Credential saved|||Данные доступа сохранены|||Piekļuves dati saglabāti
-Replace|||Заменить|||Aizstāt
-Bearer token|||Токен Bearer|||Bearer tokens
-Trust|||Доверие|||Uzticamība
+Credential saved|||Данные доступа сохранены|||Piekļuves dati saglabāti|||Zapisano dane logowania
+Replace|||Заменить|||Aizstāt|||Zastąp
+Bearer token|||Токен Bearer|||Bearer tokens|||Token typu Bearer
+Trust|||Доверие|||Uzticamība|||Zaufanie
 You have not vouched for this server.|||Вы ещё не подтвердили доверие к этому серверу.|||Tu vēl neesi apstiprinājis uzticēšanos šim serverim.
 You recognize and intentionally configured this server.|||Вы знаете этот сервер и намеренно его настроили.|||Tu atpazīsti šo serveri un apzināti to konfigurēji.
 A server you control in your local environment.|||Сервер под вашим управлением в локальной среде.|||Serveris, ko tu pārvaldi savā lokālajā vidē.
-Trust does not allow tools to bypass Halo confirmations or permissions.|||Доверие не позволяет инструментам обходить подтверждения и разрешения Halo.|||Uzticēšanās neļauj rīkiem apiet Halo apstiprinājumus vai atļaujas.
-Saved integrations start disabled. Review the configuration, then enable and connect.|||Новые интеграции по умолчанию выключены. Проверьте настройки, включите и подключите их.|||Saglabātās integrācijas sākotnēji ir atspējotas. Pārskati iestatījumus, pēc tam iespējo un savieno.
-Loading integration…|||Загрузка интеграции…|||Ielādē integrāciju…
-Enable integration|||Включить интеграцию|||Iespējot integrāciju
-Halo may use this integration when connected and authorized.|||Halo может использовать эту интеграцию после подключения и разрешения.|||Halo var izmantot šo integrāciju, kad tā ir savienota un autorizēta.
-Refresh tools|||Обновить инструменты|||Atjaunināt rīkus
-Search tools|||Поиск инструментов|||Meklēt rīkus
-No tools discovered. Enable this integration and refresh tools explicitly.|||Инструменты не обнаружены. Включите интеграцию и обновите список инструментов.|||Rīki nav atrasti. Iespējo integrāciju un atjaunini rīku sarakstu.
-Remove integration|||Удалить интеграцию|||Dzēst integrāciju
-This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.|||Из Halo будут удалены обнаруженные инструменты и параметры подключения. На удалённом сервере ничего не удалится.|||No Halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts.
+Trust does not allow tools to bypass Halo confirmations or permissions.|||Доверие не позволяет инструментам обходить подтверждения и разрешения Halo.|||Uzticēšanās neļauj rīkiem apiet Halo apstiprinājumus vai atļaujas.|||Zaufanie nie pozwala narzędziom omijać potwierdzeń ani uprawnień Halo.
+Saved integrations start disabled. Review the configuration, then enable and connect.|||Новые интеграции по умолчанию выключены. Проверьте настройки, включите и подключите их.|||Saglabātās integrācijas sākotnēji ir atspējotas. Pārskati iestatījumus, pēc tam iespējo un savieno.|||Zapisane integracje są domyślnie wyłączone. Sprawdź konfigurację, a następnie włącz integrację i połącz się.
+Loading integration…|||Загрузка интеграции…|||Ielādē integrāciju…|||Ładowanie integracji…
+Enable integration|||Включить интеграцию|||Iespējot integrāciju|||Włącz integrację
+Halo may use this integration when connected and authorized.|||Halo может использовать эту интеграцию после подключения и разрешения.|||Halo var izmantot šo integrāciju, kad tā ir savienota un autorizēta.|||Halo może używać tej integracji po jej połączeniu i autoryzowaniu.
+Refresh tools|||Обновить инструменты|||Atjaunināt rīkus|||Odśwież narzędzia
+Search tools|||Поиск инструментов|||Meklēt rīkus|||Szukaj narzędzi
+No tools discovered. Enable this integration and refresh tools explicitly.|||Инструменты не обнаружены. Включите интеграцию и обновите список инструментов.|||Rīki nav atrasti. Iespējo integrāciju un atjaunini rīku sarakstu.|||Nie wykryto żadnych narzędzi. Włącz tę integrację i ręcznie odśwież listę narzędzi.
+Remove integration|||Удалить интеграцию|||Dzēst integrāciju|||Usuń integrację
+This removes its discovered tools and connection configuration from Halo. It does not delete anything on the remote server.|||Из Halo будут удалены обнаруженные инструменты и параметры подключения. На удалённом сервере ничего не удалится.|||No Halo tiks dzēsti atrastie rīki un savienojuma konfigurācija. Attālinātajā serverī nekas netiks dzēsts.|||Usunie to z Halo wykryte narzędzia i konfigurację połączenia. Nie usunie żadnych danych ze zdalnego serwera.
 Enabled|||Включено|||Iespējots
 Disabled|||Выключено|||Atspējots|||Wyłączone
-Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow.|||Описания от сервера — внешние данные. Инструменты выполняются только с обычными разрешениями и подтверждениями Halo.|||Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar Halo parastajām atļaujām un apstiprinājumiem.
+Server-provided descriptions are external data. Tools execute only through Halo’s ordinary permission and confirmation flow.|||Описания от сервера — внешние данные. Инструменты выполняются только с обычными разрешениями и подтверждениями Halo.|||Servera sniegtie apraksti ir ārēji dati. Rīki darbojas tikai ar Halo parastajām atļaujām un apstiprinājumiem.|||Opisy przekazane przez serwer są danymi zewnętrznymi. Narzędzia są uruchamiane wyłącznie zgodnie ze zwykłym procesem uprawnień i potwierdzeń Halo.
 What Halo did|||Что делал Halo|||Ko Halo paveica
 Nothing here yet.|||Пока ничего нет.|||Te vēl nekā nav.
 Hide processing details|||Скрыть подробности обработки|||Paslēpt apstrādes detaļas
@@ -1053,7 +1053,7 @@ Providers|||Провайдеры|||Pakalpojumu sniedzēji
 Authorize with Google|||Войти через Google|||Autorizēties ar Google
 Disconnect Google OAuth|||Отключить Google OAuth|||Atvienot Google OAuth
 Save configuration|||Сохранить конфигурацию|||Saglabāt konfigurāciju
-Remove credential|||Удалить учётные данные|||Dzēst piekļuves datus
+Remove credential|||Удалить учётные данные|||Dzēst piekļuves datus|||Usuń dane logowania
 Test generation|||Проверить генерацию|||Pārbaudīt ģenerēšanu
 Use for Chat|||Использовать для чата|||Izmantot sarunām
 Assign roles|||Назначить роли|||Piešķirt lomas
@@ -2065,7 +2065,7 @@ Return to Providers and choose an available setup.|||Вернитесь к пр�
 Reply tests apply to this provider, not every model. Saving configuration clears previous checks.|||Проверка ответа относится к провайдеру, а не ко всем моделям. Сохранение настроек сбрасывает прежние проверки.|||Atbildes pārbaude attiecas uz pakalpojumu, nevis visiem modeļiem. Iestatījumu saglabāšana atiestata iepriekšējās pārbaudes.
 Current model: %1$s|||Текущая модель: %1$s|||Pašreizējais modelis: %1$s
 Last connection check: %1$s|||Последняя проверка подключения: %1$s|||Pēdējā savienojuma pārbaude: %1$s
-Remove credential?|||Удалить данные авторизации?|||Dzēst autorizācijas datus?
+Remove credential?|||Удалить данные авторизации?|||Dzēst autorizācijas datus?|||Usunąć dane logowania?
 This provider will need authorization again. Saved notes and conversations are kept.|||Для этого провайдера потребуется новая авторизация. Заметки и разговоры сохранятся.|||Šim pakalpojumam būs vajadzīga atkārtota autorizācija. Piezīmes un sarunas tiks saglabātas.
 Save your changes before testing. Checks use the saved configuration.|||Сохраните изменения перед проверкой. Проверки используют сохранённые настройки.|||Pirms pārbaudes saglabājiet izmaiņas. Pārbaudes izmanto saglabātos iestatījumus.
 No matching models|||Подходящие модели не найдены|||Nav atbilstošu modeļu
@@ -2098,7 +2098,7 @@ Search image models|||Поиск моделей изображений|||Meklēt
 Load provider image models|||Загрузить список моделей изображений|||Ielādēt attēlu modeļu sarakstu
 Selecting a model sends no prompt. Generate or edit images from a note or canvas.|||Выбор модели не отправляет запрос. Создавайте или редактируйте изображения из заметки или холста.|||Modeļa izvēle nenosūta pieprasījumu. Veidojiet vai rediģējiet attēlus no piezīmes vai audekla.
 Load the live list after configuring this provider.|||Загрузите актуальный список после настройки провайдера.|||Pēc pakalpojuma konfigurēšanas ielādējiet aktuālo sarakstu.
-Clear search|||Очистить поиск|||Notīrīt meklēšanu
+Clear search|||Очистить поиск|||Notīrīt meklēšanu|||Wyczyść wyszukiwanie
 Selected for workspace images|||Выбрано для изображений рабочего пространства|||Izvēlēts darbvietas attēliem
 Image models couldn't be loaded.|||Не удалось загрузить модели изображений.|||Neizdevās ielādēt attēlu modeļus.
 Generate and edit images|||Создание и редактирование изображений|||Veidot un rediģēt attēlus
@@ -2149,12 +2149,12 @@ Brain Dump exported (%1$s)|||Архив Halo экспортирован (%1$s)||
 Cancel file selection|||Отменить выбор файла|||Atcelt faila izvēli
 Change all tool approval preferences?|||Изменить настройки подтверждения всех инструментов?|||Mainīt visu rīku apstiprināšanas iestatījumus?|||Zmienić wszystkie ustawienia zatwierdzania narzędzi?
 Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition.|||Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки.|||Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus.
-Check the endpoint, credential and network, then connect again.|||Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова.|||Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz.
+Check the endpoint, credential and network, then connect again.|||Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова.|||Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz.|||Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie.
 Choose a backup folder first|||Сначала выберите папку резервных копий|||Vispirms izvēlieties dublējumu mapi
 Choosing a backup only inspects it. Merge or Replace requires your next action.|||Выбор резервной копии только проверяет её. Для объединения или замены требуется отдельное действие.|||Izvēloties dublējumu, tas tiek tikai pārbaudīts. Apvienošanai vai aizstāšanai vajadzīga atsevišķa darbība.
 Conflicting item: %1$s|||Конфликтующий объект: %1$s|||Konfliktējošs vienums: %1$s
-Connect services you choose|||Подключайте выбранные вами сервисы|||Savienojiet pašu izvēlētos pakalpojumus
-Connection needs attention. Open this integration to review its setup.|||Подключение требует внимания. Откройте интеграцию, чтобы проверить настройки.|||Savienojumam jāpievērš uzmanība. Atveriet integrāciju, lai pārskatītu iestatījumus.
+Connect services you choose|||Подключайте выбранные вами сервисы|||Savienojiet pašu izvēlētos pakalpojumus|||Łącz się z wybranymi usługami
+Connection needs attention. Open this integration to review its setup.|||Подключение требует внимания. Откройте интеграцию, чтобы проверить настройки.|||Savienojumam jāpievērš uzmanība. Atveriet integrāciju, lai pārskatītu iestatījumus.|||Połączenie wymaga uwagi. Otwórz tę integrację, aby sprawdzić jej konfigurację.
 Could not update notification settings. Try again.|||Не удалось обновить настройки уведомлений. Повторите попытку.|||Neizdevās atjaunināt paziņojumu iestatījumus. Mēģiniet vēlreiz.
 Could not save notification access. Try again.|||Не удалось сохранить доступ к уведомлениям. Повторите попытку.|||Neizdevās saglabāt piekļuvi paziņojumiem. Mēģiniet vēlreiz.
 Device ID or package (developer preview)|||Идентификатор устройства или приложения (предпросмотр для разработчика)|||Ierīces vai lietotnes identifikators (izstrādātāja priekšskatījums)
@@ -2170,7 +2170,7 @@ Halo may ask less often for eligible tools. Required confirmations, permissions 
 If microphone access stays off, you can keep typing, retry, or enable it in Android settings.|||Если доступ к микрофону остаётся выключенным, можно вводить текст, повторить запрос или включить доступ в настройках Android.|||Ja piekļuve mikrofonam paliek izslēgta, varat rakstīt, mēģināt vēlreiz vai ieslēgt to Android iestatījumos.
 Import / Restore|||Импорт / Восстановление|||Importēt / Atjaunot
 Inspect tool %1$s|||Просмотреть инструмент %1$s|||Apskatīt rīku %1$s
-Integration|||Интеграция|||Integrācija
+Integration|||Интеграция|||Integrācija|||Integracja
 Keep editing|||Продолжить редактирование|||Turpināt rediģēt
 Last backup failed. Check folder access and available storage.|||Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место.|||Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu.
 Learning|||Обучение|||Mācīšanās
@@ -2178,23 +2178,23 @@ Local reflection allows an eligible local model to propose memory after meaningf
 Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts.|||Память хранит сохранённую информацию. Обучение управляет предложениями. Блокнот хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты.|||Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Piezīmju grāmata glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus.
 Memory retrieval depends on available search capabilities and your privacy settings.|||Поиск в памяти зависит от доступных возможностей поиска и ваших настроек приватности.|||Atmiņas meklēšana ir atkarīga no pieejamajām meklēšanas iespējām un jūsu privātuma iestatījumiem.
 Model downloads cleared|||Загруженные модели удалены|||Lejupielādētie modeļi izdzēsti
-Not negotiated|||Не согласовано|||Nav saskaņots
+Not negotiated|||Не согласовано|||Nav saskaņots|||Nie uzgodniono
 Open Android app settings|||Открыть настройки приложения в Android|||Atvērt lietotnes Android iestatījumus|||Otwórz ustawienia aplikacji Android
 Password required or incorrect|||Пароль требуется или неверен|||Parole ir vajadzīga vai nepareiza
 Passwords are not saved in screen state. After an interruption, enter the password again.|||Пароли не сохраняются в состоянии экрана. После прерывания введите пароль снова.|||Paroles netiek saglabātas ekrāna stāvoklī. Pēc pārtraukuma ievadiet paroli vēlreiz.
 Previous brain restored: %1$d objects|||Предыдущее состояние восстановлено: %1$d объектов|||Iepriekšējais stāvoklis atjaunots: %1$d objekti
-Previous connection details; current connection is not confirmed.|||Данные предыдущего подключения; текущее подключение не подтверждено.|||Iepriekšējā savienojuma dati; pašreizējais savienojums nav apstiprināts.
+Previous connection details; current connection is not confirmed.|||Данные предыдущего подключения; текущее подключение не подтверждено.|||Iepriekšējā savienojuma dati; pašreizējais savienojums nav apstiprināts.|||Poprzednie dane połączenia; bieżące połączenie nie zostało potwierdzone.
 Protocol: %1$s|||Протокол: %1$s|||Protokols: %1$s
 Reading notifications and showing Halo notifications are separate permissions. You can decline either.|||Чтение уведомлений и показ уведомлений Halo требуют разных разрешений. От любого можно отказаться.|||Paziņojumu lasīšana un Halo paziņojumu rādīšana ir atsevišķas atļaujas. Varat noraidīt jebkuru no tām.
 Restore completed: %1$d created, %2$d updated, %3$d kept local|||Восстановление завершено: %1$d создано, %2$d обновлено, %3$d оставлено локально|||Atjaunošana pabeigta: %1$d izveidoti, %2$d atjaunināti, %3$d lokāli saglabāti
-Saved · Disabled. Review the configuration, then enable and connect.|||Сохранено · Выключено. Проверьте настройки, затем включите и подключитесь.|||Saglabāts · Izslēgts. Pārskatiet iestatījumus, tad ieslēdziet un savienojiet.
+Saved · Disabled. Review the configuration, then enable and connect.|||Сохранено · Выключено. Проверьте настройки, затем включите и подключитесь.|||Saglabāts · Izslēgts. Pārskatiet iestatījumus, tad ieslēdziet un savienojiet.|||Zapisano · Wyłączona. Sprawdź konfigurację, a następnie włącz integrację i połącz się.
 Saving approves this exact definition. Turning it on schedules future runs; it does not run it now.|||Сохранение подтверждает именно эти настройки. Включение планирует будущие запуски, но не запускает автоматизацию сейчас.|||Saglabāšana apstiprina tieši šos iestatījumus. Ieslēgšana plāno nākotnes izpildes, bet nepalaiž to tagad.
 Temporary cache cleared|||Временный кэш очищен|||Pagaidu kešatmiņa iztīrīta
 These edits have not been saved. Existing automation settings are kept until you save.|||Изменения не сохранены. До сохранения действуют прежние настройки автоматизации.|||Izmaiņas nav saglabātas. Esošie automatizācijas iestatījumi paliek spēkā līdz saglabāšanai.
 This backup could not be validated. Choose another file or check its password.|||Не удалось проверить резервную копию. Выберите другой файл или проверьте пароль.|||Neizdevās pārbaudīt dublējumu. Izvēlieties citu failu vai pārbaudiet tā paroli.
 This backup was created by a newer Halo version|||Эта резервная копия создана более новой версией Halo|||Šo dublējumu izveidoja jaunāka Halo versija
-This connection is not encrypted. Use HTTP only for a server you control on a trusted local network.|||Это подключение не зашифровано. Используйте HTTP только для своего сервера в доверенной локальной сети.|||Šis savienojums nav šifrēts. Lietojiet HTTP tikai savam serverim uzticamā lokālajā tīklā.
-This integration will need authorization again. Remote server data is kept.|||Для интеграции потребуется повторная авторизация. Данные удалённого сервера сохраняются.|||Integrācijai būs vajadzīga atkārtota autorizācija. Attālā servera dati tiek saglabāti.
+This connection is not encrypted. Use HTTP only for a server you control on a trusted local network.|||Это подключение не зашифровано. Используйте HTTP только для своего сервера в доверенной локальной сети.|||Šis savienojums nav šifrēts. Lietojiet HTTP tikai savam serverim uzticamā lokālajā tīklā.|||To połączenie nie jest szyfrowane. Używaj HTTP tylko z serwerem, którym zarządzasz, w zaufanej sieci lokalnej.
+This integration will need authorization again. Remote server data is kept.|||Для интеграции потребуется повторная авторизация. Данные удалённого сервера сохраняются.|||Integrācijai būs vajadzīga atkārtota autorizācija. Attālā servera dati tiek saglabāti.|||Ta integracja będzie wymagać ponownej autoryzacji. Dane na zdalnym serwerze zostaną zachowane.
 This replaces current Notebook, conversations and memory. Halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.|||Это заменит текущий Блокнот, разговоры и память. Halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив Halo.|||Tas aizstās pašreizējo Piezīmju grāmatu, sarunas un atmiņu. Halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu Halo arhīvu.
 Trust: %1$s|||Доверие: %1$s|||Uzticamība: %1$s
 Use saved memory in conversations|||Использовать сохранённую память в разговорах|||Lietot saglabāto atmiņu sarunās
@@ -2246,9 +2246,9 @@ Forward motion blocked|||Движение вперёд заблокирован�
 Sensor unavailable|||Датчик недоступен|||Sensors nav pieejams
 %1$d mm detected|||Обнаружено %1$d мм|||Noteikti %1$d mm
 %1$d mm|||%1$d мм|||%1$d mm
-MCP|||MCP|||MCP
-MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.|||Серверы MCP предоставляют Halo внешние инструменты. Перед выполнением Halo применяет свои разрешения, подтверждения и ограничения запусков.|||MCP serveri nodrošina Halo ārējos rīkus. Pirms izpildes Halo piemēro savas atļaujas, apstiprinājumus un izpildes ierobežojumus.
-Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization.|||Сохранённые настройки инструментов. Только подключённая и включённая интеграция предоставляет Halo включённые инструменты. Для каждого действия по-прежнему нужна обычная авторизация.|||Saglabātie rīku iestatījumi. Tikai savienota un ieslēgta integrācija nodrošina Halo ieslēgtos rīkus. Katrai darbībai joprojām vajadzīga parastā autorizācija.
+MCP|||MCP|||MCP|||MCP
+MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute.|||Серверы MCP предоставляют Halo внешние инструменты. Перед выполнением Halo применяет свои разрешения, подтверждения и ограничения запусков.|||MCP serveri nodrošina Halo ārējos rīkus. Pirms izpildes Halo piemēro savas atļaujas, apstiprinājumus un izpildes ierobežojumus.|||Serwery MCP udostępniają Halo zewnętrzne narzędzia. Halo nadaje im własne przestrzenie nazw i przed uruchomieniem stosuje własne uprawnienia, potwierdzenia oraz limity wykonań.
+Cached tool settings. Only a connected, enabled integration exposes enabled tools to Halo. Every action still requires normal authorization.|||Сохранённые настройки инструментов. Только подключённая и включённая интеграция предоставляет Halo включённые инструменты. Для каждого действия по-прежнему нужна обычная авторизация.|||Saglabātie rīku iestatījumi. Tikai savienota un ieslēgta integrācija nodrošina Halo ieslēgtos rīkus. Katrai darbībai joprojām vajadzīga parastā autorizācija.|||Zapamiętane ustawienia narzędzi. Tylko połączona i włączona integracja udostępnia Halo włączone narzędzia. Każde działanie nadal wymaga standardowej autoryzacji.
 Automation results: silent by default. Spoken updates: off unless configured per automation.|||Результаты автоматизаций по умолчанию без звука. Голосовые сообщения выключены, если не настроены отдельно.|||Automatizāciju rezultāti pēc noklusējuma ir klusi. Balss ziņojumi ir izslēgti, ja nav atsevišķi iestatīti.
 Halo initiative|||Инициатива Halo|||Halo iniciatīva
 Respect Do Not Disturb|||Учитывать режим «Не беспокоить»|||Ievērot režīmu «Netraucēt»
