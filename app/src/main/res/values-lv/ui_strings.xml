@@ -3905,4 +3905,6 @@
     <string name="ui_079c18445722" formatted="false">"Neizdevās atvērt URI ievades plūsmu."</string>
     <string name="ui_35cc3c5e9d34" formatted="false">"Izvēlieties pilnu .litertlm modeļa failu."</string>
     <string name="ui_57bc2bcc327f" formatted="false">"Lokālo modeļu pārvaldnieks nav pieejams."</string>
+    <string name="ui_2e264e13070c" formatted="false">"Lejupielādēt Whisper Small"</string>
+    <string name="ui_6c5ad9fabaae" formatted="false">"Lejupielādēt un izvēlēties Supertonic 3"</string>
 </resources>

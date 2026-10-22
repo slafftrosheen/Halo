@@ -1019,7 +1019,7 @@ Configured model unavailable|||Настроенная модель недост�
 Resident|||В памяти устройства|||Ielādēts atmiņā|||W pamięci
 ElevenLabs speech|||Синтез речи ElevenLabs|||ElevenLabs runas sintēze
 Synthesis fallback keeps the selected audio output route.|||Резервный синтез речи сохраняет выбранный маршрут вывода звука.|||Rezerves runas sintēze saglabā izvēlēto skaņas izvades maršrutu.
-API key|||API-ключ|||API atslēga
+API key|||API-ключ|||API atslēga|||Klucz API
 Remove key|||Удалить ключ|||Dzēst atslēgu
 Test connection|||Проверить подключение|||Pārbaudīt savienojumu
 TTS model|||Модель синтеза речи|||Runas sintēzes modelis
@@ -1256,7 +1256,7 @@ Action stopped. Review its recorded outcome before sending again.|||Действ
 Message cancelled. You can retry it.|||Сообщение отменено. Его можно отправить снова.|||Ziņojums atcelts. Vari mēģināt vēlreiz.
 Message was not accepted. Try again.|||Запрос не принят. Попробуйте ещё раз.|||Pieprasījums netika pieņemts. Mēģini vēlreiz.
 The request ended without a reply. You can retry your message.|||Запрос завершился без ответа. Можно попробовать отправить его снова.|||Pieprasījums beidzās bez atbildes. Vari mēģināt nosūtīt ziņojumu vēlreiz.
-Halo|||Halo|||Halo
+Halo|||Halo|||Halo|||Halo
 Hello, I’m Halo|||Привет, я Halo|||Sveiki, es esmu Halo
 Ask Halo something, or tap Talk to start speaking.|||Спросите Halo или нажмите «Говорить», чтобы начать.|||Uzdodiet Halo jautājumu vai pieskarieties «Runāt», lai sāktu.
 Choose how Halo answers|||Выберите, как Halo будет отвечать|||Izvēlieties, kā Halo atbildēs
@@ -1515,12 +1515,12 @@ Use headphones or glasses|||Использовать наушники или о�
 Notes and Canvas|||Заметки и холст|||Piezīmes un audekls
 Study and guidance|||Учёба и помощь|||Mācības un palīdzība
 Explore first|||Сначала осмотреться|||Vispirms iepazīties
-Save setup for later?|||Продолжить настройку позже?|||Turpināt iestatīšanu vēlāk?
-Your choices are saved. Open Guided setup in Settings to continue.|||Ваш выбор сохранён. Чтобы продолжить, откройте пошаговую настройку в настройках.|||Jūsu izvēles ir saglabātas. Lai turpinātu, atveriet vadīto iestatīšanu sadaļā Iestatījumi.
-Explore Halo|||Открыть Halo|||Iepazīt Halo
-Keep setting up|||Продолжить настройку|||Turpināt iestatīšanu
+Save setup for later?|||Продолжить настройку позже?|||Turpināt iestatīšanu vēlāk?|||Zapisać konfigurację na później?
+Your choices are saved. Open Guided setup in Settings to continue.|||Ваш выбор сохранён. Чтобы продолжить, откройте пошаговую настройку в настройках.|||Jūsu izvēles ir saglabātas. Lai turpinātu, atveriet vadīto iestatīšanu sadaļā Iestatījumi.|||Twoje wybory zostały zapisane. Aby kontynuować, otwórz „Konfiguracja z przewodnikiem” w Ustawieniach.
+Explore Halo|||Открыть Halo|||Iepazīt Halo|||Poznaj Halo
+Keep setting up|||Продолжить настройку|||Turpināt iestatīšanu|||Kontynuuj konfigurację
 Open Halo|||Открыть Halo|||Atvērt Halo|||Otwórz Halo
-Save and leave|||Сохранить и выйти|||Saglabāt un iziet
+Save and leave|||Сохранить и выйти|||Saglabāt un iziet|||Zapisz i wyjdź
 Halo helps you ask questions, save ideas and get things done. Your notes stay on this phone unless you choose to share them. You decide which services, permissions and devices Halo can use.|||Halo помогает находить ответы, сохранять идеи и выполнять задачи. Заметки остаются на телефоне, пока вы не решите ими поделиться. Вы выбираете, какие сервисы, разрешения и устройства может использовать Halo.|||Halo palīdz rast atbildes, saglabāt idejas un paveikt darbus. Piezīmes paliek šajā tālrunī, ja vien neizvēlaties tās kopīgot. Jūs nosakāt, kurus pakalpojumus, atļaujas un ierīces Halo drīkst izmantot.
 Pick a starting point. You can use every feature later.|||Выберите, с чего начать. Все функции останутся доступны.|||Izvēlieties sākumpunktu. Visas iespējas būs pieejamas arī vēlāk.
 Microphone access lets Halo hear you only when you start talking. Without it, you can still type and save notes.|||Доступ к микрофону позволяет Halo слышать вас, когда вы начинаете говорить. Без него можно вводить текст и сохранять заметки.|||Piekļuve mikrofonam ļauj Halo jūs dzirdēt, kad sākat runāt. Bez tās joprojām varat rakstīt un saglabāt piezīmes.
@@ -1534,17 +1534,17 @@ Continue skips any permission you do not want to grant.|||Можно продо�
 Choose how Halo answers questions. Online answers send your request and allowed context to your chosen service. Local models run on this phone and need a separate download.|||Выберите, как Halo отвечает. Онлайн-режим отправляет запрос и разрешённый контекст выбранному сервису. Локальные модели работают на телефоне и загружаются отдельно.|||Izvēlieties, kā Halo atbild. Tiešsaistes atbildēm jūsu pieprasījums un atļautais konteksts tiek nosūtīts izvēlētajam pakalpojumam. Vietējie modeļi darbojas šajā tālrunī un jālejupielādē atsevišķi.
 Local/private model|||Локальная модель|||Vietējais modelis
 Bring my own provider|||Подключить свой сервис|||Pievienot savu pakalpojumu
-Configure later / limited mode|||Настроить позже / ограниченный режим|||Iestatīt vēlāk / ierobežots režīms
+Configure later / limited mode|||Настроить позже / ограниченный режим|||Iestatīt vēlāk / ierobežots režīms|||Skonfiguruj później / tryb ograniczony
 Limited mode keeps notes, Canvas and supported phone actions available. AI answers and voice may need setup later.|||В ограниченном режиме доступны заметки, холст и поддерживаемые действия телефона. Для ответов ИИ и голоса может понадобиться настройка.|||Ierobežotajā režīmā ir pieejamas piezīmes, audekls un atbalstītās tālruņa darbības. AI atbildēm un balsij var būt vajadzīga papildu iestatīšana.
 Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report.|||Выберите язык и произнесите короткую фразу. Распознанный текст показывается только здесь и не попадает в отчёт о настройке.|||Izvēlieties valodu un pasakiet īsu frāzi. Atpazītais teksts ir redzams tikai šeit un netiek iekļauts iestatīšanas pārskatā.
 Choose or download a listening model|||Выбрать или загрузить модель распознавания|||Izvēlēties vai lejupielādēt runas atpazīšanas modeli
 Downloads start only when you choose them. Language support depends on the installed model and Android voice.|||Загрузка начинается только по вашему выбору. Поддержка языков зависит от установленной модели и голоса Android.|||Lejupielāde sākas tikai pēc jūsu izvēles. Valodu atbalsts ir atkarīgs no instalētā modeļa un Android balss.
-Test microphone and listening|||Проверить микрофон и распознавание|||Pārbaudīt mikrofonu un atpazīšanu
+Test microphone and listening|||Проверить микрофон и распознавание|||Pārbaudīt mikrofonu un atpazīšanu|||Przetestuj mikrofon i rozpoznawanie mowy
 Finish phrase|||Закончить фразу|||Pabeigt frāzi
 Could not recognize that phrase. Try again or choose another listening model.|||Не удалось распознать фразу. Попробуйте ещё раз или выберите другую модель.|||Neizdevās atpazīt frāzi. Mēģiniet vēlreiz vai izvēlieties citu atpazīšanas modeli.
 Choose another listening option|||Выбрать другое распознавание|||Izvēlēties citu atpazīšanas iespēju
 Play a Halo response|||Послушать ответ Halo|||Atskaņot Halo atbildi
-This is Halo. Can you hear me?|||Это Halo. Вы меня слышите?|||Te ir Halo. Vai jūs mani dzirdat?
+This is Halo. Can you hear me?|||Это Halo. Вы меня слышите?|||Te ir Halo. Vai jūs mani dzirdat?|||Tu Halo. Czy mnie słyszysz?
 I heard it|||Я услышал ответ|||Es dzirdēju
 Did you hear Halo? Confirm only what you heard.|||Вы услышали Halo? Подтвердите только то, что действительно слышали.|||Vai dzirdējāt Halo? Apstipriniet tikai to, ko tiešām dzirdējāt.
 Audio is being checked. If you hear nothing, choose another voice or retry.|||Звук проверяется. Если ничего не слышно, выберите другой голос или повторите проверку.|||Skaņa tiek pārbaudīta. Ja neko nedzirdat, izvēlieties citu balsi vai mēģiniet vēlreiz.
@@ -1566,12 +1566,12 @@ Audible response|||Слышимый ответ|||Dzirdama atbilde
 Optional device|||Необязательное устройство|||Izvēles ierīce
 Check selected service|||Проверить выбранный сервис|||Pārbaudīt izvēlēto pakalpojumu
 Share sanitized setup report|||Поделиться отчётом без личных данных|||Kopīgot pārskatu bez privātiem datiem
-Continue with limitations|||Продолжить с ограничениями|||Turpināt ar ierobežojumiem
+Continue with limitations|||Продолжить с ограничениями|||Turpināt ar ierobežojumiem|||Kontynuuj z ograniczeniami
 Send a real request. Halo will interpret it, decide what is needed, use only allowed actions and show its reply. If approval is needed, continue in Activity.|||Отправьте настоящий запрос. Halo поймёт его, выберет нужные разрешённые действия и покажет ответ. Если нужно подтверждение, продолжите в разделе действий.|||Nosūtiet īstu pieprasījumu. Halo to sapratīs, izvēlēsies vajadzīgās atļautās darbības un parādīs atbildi. Ja vajadzīgs apstiprinājums, turpiniet sadaļā Darbības.
 Try asking the time, opening a Halo screen, or creating a note. You can edit the request before sending.|||Попробуйте спросить время, открыть раздел Halo или создать заметку. Запрос можно изменить перед отправкой.|||Mēģiniet pajautāt laiku, atvērt Halo sadaļu vai izveidot piezīmi. Pirms nosūtīšanas varat rediģēt pieprasījumu.
-What time is it?|||Который час?|||Cik ir pulkstenis?
-Your first request|||Ваш первый запрос|||Jūsu pirmais pieprasījums
-Send to Halo|||Отправить Halo|||Nosūtīt Halo
+What time is it?|||Который час?|||Cik ir pulkstenis?|||Która godzina?
+Your first request|||Ваш первый запрос|||Jūsu pirmais pieprasījums|||Twoje pierwsze polecenie
+Send to Halo|||Отправить Halo|||Nosūtīt Halo|||Wyślij do Halo
 Could not finish. Review the result before trying again.|||Не удалось завершить. Просмотрите результат перед повторной попыткой.|||Neizdevās pabeigt. Pirms mēģināt vēlreiz, pārskatiet rezultātu.
 Your reply appears here.|||Ответ появится здесь.|||Jūsu atbilde parādīsies šeit.
 Halo completed your request and saved the reply. You can continue from Home, and review actions in Activity.|||Halo выполнил запрос и сохранил ответ. Продолжайте на главной странице, а действия проверяйте в разделе действий.|||Halo pabeidza pieprasījumu un saglabāja atbildi. Turpiniet sākumā un pārskatiet veiktās darbības sadaļā Darbības.
@@ -1580,10 +1580,10 @@ Enter limited mode without a verified interaction|||Продолжить без 
 A previous request is not automatically repeated after restart. Check Home or Activity before sending again.|||После перезапуска прежний запрос не повторяется автоматически. Проверьте главную страницу или раздел действий перед повторной отправкой.|||Pēc restartēšanas iepriekšējais pieprasījums netiek atkārtots automātiski. Pirms nosūtīt vēlreiz, pārbaudiet Sākumu vai Darbības.
 Access granted|||Доступ разрешён|||Piekļuve piešķirta
 Not checked or needs setup|||Не проверено или нужна настройка|||Nav pārbaudīts vai jāiestata
-Fix or choose another option|||Исправить или выбрать другой вариант|||Labot vai izvēlēties citu iespēju
+Fix or choose another option|||Исправить или выбрать другой вариант|||Labot vai izvēlēties citu iespēju|||Napraw lub wybierz inną opcję
 Recommended online setup: OpenRouter. Create a key on its website, then paste it below. The service may charge for usage; check its pricing and privacy policy. Halo does not create an account for you.|||Рекомендуемый онлайн-сервис: OpenRouter. Создайте ключ на его сайте и вставьте ниже. Сервис может взимать плату; проверьте цены и правила обработки данных. Halo не создаёт учётную запись за вас.|||Ieteicamais tiešsaistes pakalpojums: OpenRouter. Izveidojiet atslēgu tā vietnē un ielīmējiet zemāk. Par lietošanu var būt jāmaksā; pārbaudiet cenas un privātuma politiku. Halo neveido kontu jūsu vietā.
 Get an OpenRouter key|||Получить ключ OpenRouter|||Iegūt OpenRouter atslēgu
-Paste key|||Вставить ключ|||Ielīmēt atslēgu
+Paste key|||Вставить ключ|||Ielīmēt atslēgu|||Wklej klucz
 Save and check key|||Сохранить и проверить ключ|||Saglabāt un pārbaudīt atslēgu
 Could not connect. Check the key, internet connection and service access, then try again. You can choose another option or continue in limited mode.|||Не удалось подключиться. Проверьте ключ, интернет и доступ к сервису. Можно выбрать другой вариант или продолжить в ограниченном режиме.|||Neizdevās savienoties. Pārbaudiet atslēgu, internetu un piekļuvi pakalpojumam. Varat izvēlēties citu iespēju vai turpināt ierobežotajā režīmā.
 Connected. Choose an answer model to use with Halo.|||Подключено. Выберите модель для ответов Halo.|||Savienots. Izvēlieties Halo atbilžu modeli.
@@ -1603,7 +1603,7 @@ Hide advanced settings|||Скрыть расширенные настройки|
 Developer tools|||Инструменты разработчика|||Izstrādātāja rīki
 Not connected|||Не подключено|||Nav savienots
 Checking…|||Проверка…|||Pārbauda…|||Sprawdzanie…
-Save setup diagnostics on this phone|||Сохранять диагностику настройки на телефоне|||Saglabāt iestatīšanas diagnostiku šajā tālrunī
+Save setup diagnostics on this phone|||Сохранять диагностику настройки на телефоне|||Saglabāt iestatīšanas diagnostiku šajā tālrunī|||Zapisuj diagnostykę konfiguracji na tym telefonie
 Optional diagnostics record only setup stage, outcome and error type. No keys, speech or private content are recorded.|||Необязательная диагностика сохраняет только этап, результат и тип ошибки. Ключи, речь и личные данные не записываются.|||Izvēles diagnostika saglabā tikai iestatīšanas posmu, iznākumu un kļūdas veidu. Atslēgas, runa un privāts saturs netiek ierakstīti.
 Multilingual listening works on this phone. Download the balanced model once, about 161 MB. It supports English, Russian and Latvian; recognition still needs testing.|||Распознавание разных языков работает на телефоне. Загрузите модель один раз, около 161 МБ. Она поддерживает английский, русский и латышский; качество нужно проверить.|||Daudzvalodu runas atpazīšana darbojas šajā tālrunī. Vienreiz lejupielādējiet sabalansēto modeli, aptuveni 161 MB. Tas atbalsta angļu, krievu un latviešu valodu; atpazīšana vēl jāpārbauda.
 Download multilingual listening|||Загрузить многоязычное распознавание|||Lejupielādēt daudzvalodu atpazīšanu
@@ -1616,8 +1616,8 @@ Claude: create a key in the Claude developer platform. Check that your account h
 OpenRouter: create a key in its key settings. Check available credit, model prices and usage limits before choosing a model.|||OpenRouter: создайте ключ в настройках ключей. Перед выбором модели проверьте баланс, цены и ограничения.|||OpenRouter: izveidojiet atslēgu atslēgu iestatījumos. Pirms izvēlēties modeli, pārbaudiet kredītu, modeļu cenas un lietošanas ierobežojumus.
 Open service key page|||Открыть страницу ключей сервиса|||Atvērt pakalpojuma atslēgu lapu
 Local answers keep the request on this phone. Download a model explicitly, then select and test it. Phone memory and language quality vary; online setup or limited mode remain available.|||Локальные ответы обрабатывают запрос на телефоне. Загрузите модель, затем выберите и проверьте её. Память телефона и качество языков различаются; онлайн-сервис и ограниченный режим остаются доступны.|||Vietējās atbildes apstrādā pieprasījumu šajā tālrunī. Lejupielādējiet modeli, tad izvēlieties un pārbaudiet to. Tālruņa atmiņa un valodu kvalitāte atšķiras; joprojām varat izvēlēties tiešsaisti vai ierobežoto režīmu.
-Use this local model|||Использовать эту локальную модель|||Lietot šo vietējo modeli
-Test local answers|||Проверить локальные ответы|||Pārbaudīt vietējās atbildes
+Use this local model|||Использовать эту локальную модель|||Lietot šo vietējo modeli|||Użyj tego modelu lokalnego
+Test local answers|||Проверить локальные ответы|||Pārbaudīt vietējās atbildes|||Przetestuj odpowiedzi lokalne
 Local answer test passed|||Проверка локальных ответов пройдена|||Vietējo atbilžu pārbaude izdevās
 Local answer test failed. Choose another model or continue in limited mode.|||Проверка локальных ответов не пройдена. Выберите другую модель или ограниченный режим.|||Vietējo atbilžu pārbaude neizdevās. Izvēlieties citu modeli vai ierobežoto režīmu.
 Download this local model|||Загрузить эту локальную модель|||Lejupielādēt šo vietējo modeli
@@ -2863,7 +2863,7 @@ My project|||Мой проект|||Mans projekts
 Other languages use the configured synthesis fallback or report unavailable.|||Для других языков используется настроенный резервный синтез речи; если он недоступен, halo сообщит об этом.|||Citām valodām tiek izmantota iestatītā rezerves balss sintēze vai parādīts paziņojums, ka tā nav pieejama.
 Review it, change anything you like, then choose Keep to save it.|||Проверь, измени всё, что хочешь, и нажми «Оставить», чтобы сохранить.|||Pārskati, maini, ko vēlies, un izvēlies «Paturēt», lai saglabātu.
 Saving photo…|||Сохраняем фото…|||Saglabā fotoattēlu…
-Setup|||Настройка|||Iestatīšana
+Setup|||Настройка|||Iestatīšana|||Konfiguracja
 Source excerpt|||Фрагмент источника|||Avota fragments
 Starting halo…|||Запускаем halo…|||Palaiž halo…
 Talk to halo|||Поговорить с halo|||Runāt ar halo|||Porozmawiaj z Halo
@@ -3909,3 +3909,5 @@ The file provider returned an incomplete model. Download the full file and impor
 Unable to open URI input stream|||Не удалось открыть поток данных URI.|||Neizdevās atvērt URI ievades plūsmu.|||Nie można otworzyć strumienia wejściowego URI.
 Choose a complete .litertlm model file.|||Выберите полный файл модели .litertlm.|||Izvēlieties pilnu .litertlm modeļa failu.|||Wybierz kompletny plik modelu .litertlm.
 The local model manager is unavailable.|||Менеджер локальных моделей недоступен.|||Lokālo modeļu pārvaldnieks nav pieejams.|||Menedżer modeli lokalnych jest niedostępny.
+Download Whisper Small|||Скачать Whisper Small|||Lejupielādēt Whisper Small|||Pobierz Whisper Small
+Download and select Supertonic 3|||Скачать и выбрать Supertonic 3|||Lejupielādēt un izvēlēties Supertonic 3|||Pobierz i wybierz Supertonic 3

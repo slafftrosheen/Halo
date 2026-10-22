@@ -3905,4 +3905,6 @@
     <string name="ui_079c18445722" formatted="false">"Unable to open URI input stream"</string>
     <string name="ui_35cc3c5e9d34" formatted="false">"Choose a complete .litertlm model file."</string>
     <string name="ui_57bc2bcc327f" formatted="false">"The local model manager is unavailable."</string>
+    <string name="ui_2e264e13070c" formatted="false">"Download Whisper Small"</string>
+    <string name="ui_6c5ad9fabaae" formatted="false">"Download and select Supertonic 3"</string>
 </resources>

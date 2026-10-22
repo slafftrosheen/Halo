@@ -115,9 +115,11 @@
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
+    <string name="ui_16f0ee47f993" formatted="false">"Klucz API"</string>
     <string name="ui_aff0766a5290" formatted="false">"Sprawdź"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importuj obraz"</string>
     <string name="ui_0dec07abf92d" formatted="false">"Notatnik"</string>
+    <string name="ui_4e86512d9a0a" formatted="false">"halo"</string>
     <string name="ui_662ae9b570ef" formatted="false">"Skonfiguruj odpowiedzi"</string>
     <string name="ui_b2a9770667ad" formatted="false">"Otwórz Działania"</string>
     <string name="ui_bbb4106e8144" formatted="false">"Słucham…"</string>
@@ -151,9 +153,26 @@
     <string name="ui_50b563c05624" formatted="false">"Oznaczenia są zapisywane na tym Canvasie, a nie w oryginalnym pliku."</string>
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
     <string name="ui_76d165ea898a" formatted="false">"Zapisz w Odebranych"</string>
+    <string name="ui_3efef4004996" formatted="false">"Zapisać konfigurację na później?"</string>
+    <string name="ui_59240e9f4b9e" formatted="false">"Twoje wybory zostały zapisane. Aby kontynuować, otwórz „Konfiguracja z przewodnikiem” w Ustawieniach."</string>
+    <string name="ui_e243532c5616" formatted="false">"Poznaj halo"</string>
+    <string name="ui_f0000e348493" formatted="false">"Kontynuuj konfigurację"</string>
     <string name="ui_0266a4695e9a" formatted="false">"Otwórz halo"</string>
+    <string name="ui_f23cf4462bf3" formatted="false">"Zapisz i wyjdź"</string>
+    <string name="ui_92bf06f7a2b0" formatted="false">"Skonfiguruj później / tryb ograniczony"</string>
+    <string name="ui_ff8237a9f122" formatted="false">"Przetestuj mikrofon i rozpoznawanie mowy"</string>
+    <string name="ui_5fdc3423b23c" formatted="false">"Tu halo. Czy mnie słyszysz?"</string>
+    <string name="ui_1a44449a775f" formatted="false">"Kontynuuj z ograniczeniami"</string>
+    <string name="ui_cd61bf0cc67f" formatted="false">"Która godzina?"</string>
+    <string name="ui_4c4318a16785" formatted="false">"Twoje pierwsze polecenie"</string>
+    <string name="ui_1848bd7bc215" formatted="false">"Wyślij do halo"</string>
+    <string name="ui_7b615c94cc70" formatted="false">"Napraw lub wybierz inną opcję"</string>
+    <string name="ui_b958190e7457" formatted="false">"Wklej klucz"</string>
     <string name="ui_ec963ffc911b" formatted="false">"Sprawdzanie…"</string>
+    <string name="ui_9a17e07748b9" formatted="false">"Zapisuj diagnostykę konfiguracji na tym telefonie"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
+    <string name="ui_b006c89efce7" formatted="false">"Użyj tego modelu lokalnego"</string>
+    <string name="ui_461ee4af3792" formatted="false">"Przetestuj odpowiedzi lokalne"</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>
     <string name="ui_a6a5fe15ed48" formatted="false">"Synchronizuj z Hugging Face"</string>
     <string name="ui_df593230ed8e" formatted="false">"Zapisany katalog offline"</string>
@@ -249,6 +268,7 @@
     <string name="ui_d9897824ec41" formatted="false">"Czytanie automatyczne używa głosu z urządzenia. Czytanie w chmurze zawsze pyta przed wysłaniem tekstu."</string>
     <string name="ui_d36dc408280b" formatted="false">"Czytaj zgodnie ze słowami"</string>
     <string name="ui_f35027f0622e" formatted="false">"Czytaj nowe odpowiedzi na głos"</string>
+    <string name="ui_7013af4c42fe" formatted="false">"Konfiguracja"</string>
     <string name="ui_ef6a6b58ce86" formatted="false">"Porozmawiaj z halo"</string>
     <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
     <string name="ui_ce53b39bb842" formatted="false">"Usuń token"</string>
@@ -491,4 +511,6 @@
     <string name="ui_079c18445722" formatted="false">"Nie można otworzyć strumienia wejściowego URI."</string>
     <string name="ui_35cc3c5e9d34" formatted="false">"Wybierz kompletny plik modelu .litertlm."</string>
     <string name="ui_57bc2bcc327f" formatted="false">"Menedżer modeli lokalnych jest niedostępny."</string>
+    <string name="ui_2e264e13070c" formatted="false">"Pobierz Whisper Small"</string>
+    <string name="ui_6c5ad9fabaae" formatted="false">"Pobierz i wybierz Supertonic 3"</string>
 </resources>

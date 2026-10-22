@@ -3907,4 +3907,6 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Unable to open URI input stream" to R.string.ui_079c18445722,
     "Choose a complete .litertlm model file." to R.string.ui_35cc3c5e9d34,
     "The local model manager is unavailable." to R.string.ui_57bc2bcc327f,
+    "Download Whisper Small" to R.string.ui_2e264e13070c,
+    "Download and select Supertonic 3" to R.string.ui_6c5ad9fabaae,
 )

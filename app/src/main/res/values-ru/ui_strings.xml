@@ -3905,4 +3905,6 @@
     <string name="ui_079c18445722" formatted="false">"Не удалось открыть поток данных URI."</string>
     <string name="ui_35cc3c5e9d34" formatted="false">"Выберите полный файл модели .litertlm."</string>
     <string name="ui_57bc2bcc327f" formatted="false">"Менеджер локальных моделей недоступен."</string>
+    <string name="ui_2e264e13070c" formatted="false">"Скачать Whisper Small"</string>
+    <string name="ui_6c5ad9fabaae" formatted="false">"Скачать и выбрать Supertonic 3"</string>
 </resources>
