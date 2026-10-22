@@ -27,12 +27,12 @@ data class InkSelectionContext(
     val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
 ) {
     init {
-        require(workspaceObjectId.isNotBlank() && workspaceObjectId.length <= MAX_REFERENCE_LENGTH)
-        require(pageId == null || (pageId.isNotBlank() && pageId.length <= MAX_REFERENCE_LENGTH))
+        require(workspaceObjectId.length in 1..MAX_REFERENCE_LENGTH && workspaceObjectId.matches(REFERENCE_ID))
+        require(pageId == null || (pageId.length in 1..MAX_REFERENCE_LENGTH && pageId.matches(REFERENCE_ID)))
         require(selectedStrokeIds.isNotEmpty() && selectedStrokeIds.size <= InkLimits.MAX_STROKES)
-        require(selectedStrokeIds.all { it.isNotBlank() && it.length <= MAX_REFERENCE_LENGTH })
+        require(selectedStrokeIds.all { it.length in 1..128 && it.matches(REFERENCE_ID) })
         require(selectedStrokeIds.distinct().size == selectedStrokeIds.size) { "Stroke IDs must be unique" }
-        require(sourceRevision.isNotBlank() && sourceRevision.length <= MAX_REFERENCE_LENGTH)
+        require(sourceRevision.length in 1..MAX_REFERENCE_LENGTH && sourceRevision.matches(REFERENCE_ID))
         require(createdAtMs >= 0 && updatedAtMs >= createdAtMs)
         require(schemaVersion == CURRENT_SCHEMA_VERSION)
     }
@@ -40,5 +40,6 @@ data class InkSelectionContext(
     companion object {
         const val CURRENT_SCHEMA_VERSION = 1
         const val MAX_REFERENCE_LENGTH = 200
+        private val REFERENCE_ID = Regex("[A-Za-z0-9_-]+")
     }
 }

@@ -21,26 +21,29 @@ object InkSelectionBookmarkCodec {
         put("origin", context.origin.name)
         put("createdAtMs", context.createdAtMs)
         put("updatedAtMs", context.updatedAtMs)
-    }.toString()
+    }.toString().also { require(it.length <= MAX_ENCODED_CHARS) }
 
-    fun decode(encoded: String): InkSelectionContext? = runCatching {
-        val json = org.json.JSONObject(encoded)
-        val ids = json.getJSONArray("strokeIds").let { array ->
-            (0 until array.length()).map(array::getString)
-        }
-        InkSelectionContext(
-            workspaceObjectId = json.getString("workspaceObjectId"),
-            pageId = json.optString("pageId").takeIf(String::isNotEmpty),
-            bounds = InkSelectionBounds(json.getInt("left"), json.getInt("top"),
-                json.getInt("right"), json.getInt("bottom")),
-            selectedStrokeIds = ids,
-            sourceRevision = json.getString("sourceRevision"),
-            origin = InkSelectionOrigin.valueOf(json.getString("origin")),
-            createdAtMs = json.getLong("createdAtMs"),
-            updatedAtMs = json.getLong("updatedAtMs"),
-            schemaVersion = json.getInt("schemaVersion"),
-        )
-    }.getOrNull()
+    fun decode(encoded: String): InkSelectionContext? {
+        if (encoded.length !in 1..MAX_ENCODED_CHARS) return null
+        return runCatching {
+            val json = org.json.JSONObject(encoded)
+            val ids = json.getJSONArray("strokeIds").let { array ->
+                (0 until array.length()).map(array::getString)
+            }
+            InkSelectionContext(
+                workspaceObjectId = json.getString("workspaceObjectId"),
+                pageId = json.optString("pageId").takeIf(String::isNotEmpty),
+                bounds = InkSelectionBounds(json.getInt("left"), json.getInt("top"),
+                    json.getInt("right"), json.getInt("bottom")),
+                selectedStrokeIds = ids,
+                sourceRevision = json.getString("sourceRevision"),
+                origin = InkSelectionOrigin.valueOf(json.getString("origin")),
+                createdAtMs = json.getLong("createdAtMs"),
+                updatedAtMs = json.getLong("updatedAtMs"),
+                schemaVersion = json.getInt("schemaVersion"),
+            )
+        }.getOrNull()
+    }
 
     /** Re-resolves an anchor against the current canonical source revision. */
     fun resolve(
@@ -80,6 +83,8 @@ object InkSelectionBookmarkCodec {
             "Source=${context.workspaceObjectId}; page=${context.pageId ?: "canvas"}; " +
             "bounds=${context.bounds.left},${context.bounds.top},${context.bounds.right},${context.bounds.bottom}/1000; " +
             "selectedStrokeCount=${context.selectedStrokeIds.size}; sourceRevision=${context.sourceRevision}."
+
+    const val MAX_ENCODED_CHARS = 65_536
 }
 
 /** Visible Study material wrapper that keeps the exact canonical selection reference inspectable. */
@@ -114,4 +119,5 @@ object InkSelectionStudyMaterial {
             .find(body)?.groupValues?.get(1) ?: return null
         return canvasId to selectionId
     }
+
 }

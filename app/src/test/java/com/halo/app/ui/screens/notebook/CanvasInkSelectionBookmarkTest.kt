@@ -52,6 +52,11 @@ class CanvasInkSelectionBookmarkTest {
 
     @After fun tearDown() = database.close()
 
+    @Test fun bookmarkDecoderRejectsOversizedPayloadBeforeParsing() {
+        assertEquals(null, com.halo.app.data.notebook.InkSelectionBookmarkCodec.decode(
+            "x".repeat(com.halo.app.data.notebook.InkSelectionBookmarkCodec.MAX_ENCODED_CHARS + 1)))
+    }
+
     @Test fun savedSketchBookmarkResolvesUntilItsSourceChanges() = runBlocking {
         val canvasId = repository.create()
         val original = ink("stroke-original")

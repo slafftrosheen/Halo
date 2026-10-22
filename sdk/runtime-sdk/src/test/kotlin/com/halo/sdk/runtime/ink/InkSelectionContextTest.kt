@@ -82,4 +82,26 @@ class InkSelectionContextTest {
                 InkSelectionOrigin.BOX, 1, 1)
         }
     }
+
+    @Test fun selectionStrokeReferencesUseTheCanonicalInkStrokeIdFormat() {
+        assertThrows(IllegalArgumentException::class.java) {
+            InkSelectionContext("canvas-17", null, InkSelectionBounds(0, 0, 10, 10), listOf("stroke\n1"), "r1",
+                InkSelectionOrigin.BOX, 1, 1)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            InkSelectionContext("canvas-17", null, InkSelectionBounds(0, 0, 10, 10), listOf("s".repeat(129)), "r1",
+                InkSelectionOrigin.BOX, 1, 1)
+        }
+    }
+
+    @Test fun sourceAndRevisionReferencesCannotInjectBookmarkFields() {
+        assertThrows(IllegalArgumentException::class.java) {
+            InkSelectionContext("canvas-17;source=other", null, InkSelectionBounds(0, 0, 10, 10), listOf("stroke-a"), "r1",
+                InkSelectionOrigin.BOX, 1, 1)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            InkSelectionContext("canvas-17", "page-2", InkSelectionBounds(0, 0, 10, 10), listOf("stroke-a"), "rev\nision",
+                InkSelectionOrigin.BOX, 1, 1)
+        }
+    }
 }
