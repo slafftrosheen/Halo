@@ -113,7 +113,7 @@ internal class FileVideoSemanticIndexStore(file: File) {
         const val MAX_ENTRIES = 64
         const val MAX_VECTOR_VALUES = 1_048_576L
         const val RUNTIME_ID = "litertlm/0.18.0"
-        const val PREPROCESSING_ID = com.halo.providers.litert.LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1
+        const val PREPROCESSING_ID = com.halo.providers.litert.LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2
         val SHA256 = Regex("[a-f0-9]{64}")
     }
 }

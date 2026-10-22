@@ -449,7 +449,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             timestamps.map { timestampMs ->
                 currentCoroutineContext().ensureActive()
                 val frame = retriever.getFrameAtTime(timestampMs * 1_000L,
-                    android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    android.media.MediaMetadataRetriever.OPTION_CLOSEST)
                     ?: throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_FRAME_UNAVAILABLE")
                 var scaled: android.graphics.Bitmap? = null
                 try {
@@ -608,7 +608,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             model.sha256 == sha && model.revision == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.revision &&
             model.task == LiteRtArtifactTask.EMBEDDING) { "SEARCH_VIDEO_MODEL_UNSUPPORTED" }
         return EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
-            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1)
+            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2)
     }
 
     /** Rebuild only from the exact allowlisted image attachment IDs; media bytes are never stored in the index. */
@@ -764,7 +764,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
             val embedded = provider.embedMedia(LocalMediaEmbeddingRequest(sha,dimension,
                 frames.map { LocalEmbeddingInput.Image(it) },
-                LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1))
+                LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2))
             embedded.requireCompatible(currentSpace)
             require(embedded.vectors.size == VideoFrameSampling.FRAME_COUNT)
             val vector = VideoFrameSampling.aggregate(embedded.vectors,dimension)
@@ -862,7 +862,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             ?: error("LITERT_MEDIA_ADAPTER_REQUIRED")
         val queryVector = provider.embedMedia(LocalMediaEmbeddingRequest(sha,dimension,
             listOf(LocalEmbeddingInput.Text("task: search result | query: ${query.trim()}")),
-            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1))
+            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2))
         queryVector.requireCompatible(space)
         val queryValues = queryVector.vectors.single()
         val live = candidates.filter { entry ->

@@ -14,7 +14,7 @@ import java.nio.file.Files
 class FileVideoSemanticIndexStoreTest {
     private val sha = "a".repeat(64)
     private val space = EmbeddingSpace(sha,2,true,"litertlm/0.18.0",
-        com.halo.providers.litert.LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1)
+        com.halo.providers.litert.LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2)
 
     @Test fun videoIndexRoundTripsFrameVectorsWithoutVideoOrFramePayloads() = runBlocking {
         val directory = Files.createTempDirectory("halo-video-index").toFile()
