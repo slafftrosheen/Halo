@@ -14,7 +14,7 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH, GROUP, TAG }
+enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH, INK_SELECTION, GROUP, TAG }
 
 @Entity(
     tableName = "canvas_documents",
@@ -260,7 +260,11 @@ class NotebookCanvasRepository(
                     append("## ").append(group.title).append('\n')
                     group.memberIds.forEach { id ->
                         val node = domain.getValue(id)
-                        append("- ").append(if (node.type == CanvasNodeType.SKETCH) "[Sketch]" else CanvasFileMarkupCodec.displayTitle(node.text).take(300)).append('\n')
+                        append("- ").append(when (node.type) {
+                            CanvasNodeType.SKETCH -> "[Sketch]"
+                            CanvasNodeType.INK_SELECTION -> "[Saved ink selection]"
+                            else -> CanvasFileMarkupCodec.displayTitle(node.text).take(300)
+                        }).append('\n')
                         append("  Source: ").append(node.refObjectId ?: "canvas:$canvasId#${node.id}").append('\n')
                     }
                 }
@@ -380,6 +384,44 @@ class NotebookCanvasRepository(
     suspend fun addSketchNode(canvasId: String, x: Float, y: Float, strokes: String): String {
         require(CanvasSketchCodec.decode(strokes).isNotEmpty())
         return addNode(canvasId, CanvasNodeType.SKETCH, null, strokes, x, y)
+    }
+
+    /** Persist only the explicit selection reference; source strokes remain in their original card. */
+    suspend fun addInkSelection(canvasId: String, context: com.halo.sdk.runtime.ink.InkSelectionContext): String = database.withTransaction {
+        requireWritable(canvasId)
+        require(context.workspaceObjectId == canvasId) { "Only selections from saved Canvas sketches can be bookmarked yet." }
+        require(context.workspaceObjectId.length <= com.halo.sdk.runtime.ink.InkSelectionContext.MAX_REFERENCE_LENGTH)
+        val nodes = canvasDao.getNodes(canvasId)
+        val source = nodes.firstOrNull { it.id == context.pageId && it.type == CanvasNodeType.SKETCH.name }
+        requireNotNull(source) { "Selection source is no longer on this Canvas." }
+        val document = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(source.text)) { "Selection source is unreadable." }
+        val encoded = com.halo.sdk.runtime.ink.InkCodec.encode(document)
+        val revisionBytes = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(("\n" + encoded).toByteArray(Charsets.UTF_8))
+        val sourceRevision = revisionBytes.joinToString("") { byte -> "%02x".format(byte) }
+        require(com.halo.sdk.runtime.ink.InkSelections.resolve(document, context, canvasId, source.id, sourceRevision) != null) {
+            "Selection source changed. Select the region again."
+        }
+        val id = newId()
+        val stamp = now()
+        val payload = org.json.JSONObject().apply {
+            put("schemaVersion", context.schemaVersion)
+            put("workspaceObjectId", context.workspaceObjectId)
+            put("pageId", context.pageId)
+            put("left", context.bounds.left); put("top", context.bounds.top)
+            put("right", context.bounds.right); put("bottom", context.bounds.bottom)
+            put("strokeIds", org.json.JSONArray(context.selectedStrokeIds))
+            put("sourceRevision", context.sourceRevision)
+            put("origin", context.origin.name)
+            put("createdAtMs", context.createdAtMs)
+            put("updatedAtMs", context.updatedAtMs)
+        }.toString()
+        val layer = (nodes.maxOfOrNull { it.zIndex } ?: -1) + 1
+        canvasDao.insertNode(CanvasNodeEntity(id, canvasId, CanvasNodeType.INK_SELECTION.name, null, payload,
+            source.x + source.width + 32f, source.y, 220f, 150f, layer, stamp, stamp))
+        canvasDao.insertEdge(CanvasEdgeEntity(newId(), canvasId, source.id, id, "selection", stamp))
+        touch(canvasId)
+        id
     }
 
     suspend fun addReference(canvasId: String, objectId: String, x: Float, y: Float, image: Boolean = false): String = database.withTransaction {

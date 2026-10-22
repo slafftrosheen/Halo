@@ -3763,4 +3763,10 @@
     <string name="ui_fe062eaa6bcc" formatted="false">"Нет доступных моделей изображений. Проверьте настройки провайдера и обновите список."</string>
     <string name="ui_b7ae4027f7ea" formatted="false">"Не удалось прочитать исходное изображение. Закройте окно и выберите изображение ещё раз."</string>
     <string name="ui_4c8f9e8e326c" formatted="false">"Прикреплённое изображение"</string>
+    <string name="ui_dd183ea631fd" formatted="false">"Сохранить выделение"</string>
+    <string name="ui_cc0dc8fec54b" formatted="false">"Выделение сохранено на холсте"</string>
+    <string name="ui_a24f237da3cd" formatted="false">"Выделенная область рисунка"</string>
+    <string name="ui_afada8582413" formatted="false">"%1$d штрихов"</string>
+    <string name="ui_f91dc70872a5" formatted="false">"Только ссылка; откройте связанный источник, чтобы просмотреть его."</string>
+    <string name="ui_cf0d1a41f783" formatted="false">"Открыть связанный источник"</string>
 </resources>

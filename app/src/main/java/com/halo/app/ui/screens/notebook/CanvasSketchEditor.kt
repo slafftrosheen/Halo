@@ -30,6 +30,7 @@ internal fun CanvasSketchPadDialog(
     selectionOwnerId: String? = null,
     selectionPageId: String? = null,
     onSelectionChanged: (com.halo.sdk.runtime.ink.InkSelectionContext?) -> Unit = {},
+    onSaveSelection: (com.halo.sdk.runtime.ink.InkSelectionContext) -> Unit = {},
     onDraft: (String) -> Unit = {},
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -48,7 +49,7 @@ internal fun CanvasSketchPadDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 CanvasInkSurface(source, onChanged = { encoded -> onDraft(encoded); draft = encoded },
                     selectionOwnerId = selectionOwnerId, selectionPageId = selectionPageId,
-                    onSelectionChanged = onSelectionChanged)
+                    onSelectionChanged = onSelectionChanged, onSaveSelection = onSaveSelection)
                 Text(stringResource(R.string.ink_draft_help), style = MaterialTheme.typography.bodySmall)
             }
         },

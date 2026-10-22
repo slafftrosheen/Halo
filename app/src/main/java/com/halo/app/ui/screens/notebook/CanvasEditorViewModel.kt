@@ -48,9 +48,13 @@ data class CanvasRecognizedDraft(val sourceNodeId: String, val sourceKind: Strin
 /** Strip non-prose card payloads before constructing AI prompts, exports or preview labels. */
 internal fun CanvasNode.readableText(): String = when {
     type == com.halo.app.data.notebook.CanvasNodeType.SKETCH -> "[hand-drawn sketch]"
+    type == com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION -> "[saved ink selection]"
     refObjectId != null -> CanvasFileMarkupCodec.displayTitle(text)
     else -> text
 }
+
+internal fun CanvasNode.inkSelectionStrokeCount(): Int? = if (type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION) null else
+    runCatching { org.json.JSONObject(text).getJSONArray("strokeIds").length() }.getOrNull()
 
 data class CanvasEditorUiState(
     val title: String = "Canvas",
@@ -378,6 +382,7 @@ class CanvasEditorViewModel(
         val state = mutableState.value
         val currentNodes = repository.observe(canvasId).first()?.nodes ?: error("Canvas unavailable")
         val scope = currentNodes.filter { it.type != com.halo.app.data.notebook.CanvasNodeType.GROUP &&
+            it.type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION &&
             (wholeBoard || it.id in state.selectedNodeIds || it.id == state.selectedNodeId) }.take(100)
         check(scope.isNotEmpty())
         val versions = scope.mapNotNull { it.refObjectId }.distinct().associateWith { repository.sourceObjectVersion(it) ?: error("Source unavailable") }
@@ -672,6 +677,10 @@ class CanvasEditorViewModel(
     fun persistPending() = command { flushPendingEdits() }
     fun setInkSelection(selection: com.halo.sdk.runtime.ink.InkSelectionContext?) {
         mutableState.value = mutableState.value.copy(inkSelection = selection)
+    }
+    fun saveInkSelection(selection: com.halo.sdk.runtime.ink.InkSelectionContext) = command {
+        repository.addInkSelection(canvasId, selection)
+        mutableState.value = mutableState.value.copy(notice = "Selection saved to Canvas")
     }
     fun keepDrawingDraft(draft: com.halo.app.data.notebook.CanvasDrawingDraft) = command {
         repository.saveDrawingDraft(canvasId, draft)

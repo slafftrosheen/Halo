@@ -3763,4 +3763,10 @@
     <string name="ui_fe062eaa6bcc" formatted="false">"Nav pieejamu attēlu modeļu. Pārbaudi pakalpojuma iestatījumus un atjaunini sarakstu."</string>
     <string name="ui_b7ae4027f7ea" formatted="false">"Neizdevās nolasīt sākotnējo attēlu. Aizver logu un izvēlies attēlu vēlreiz."</string>
     <string name="ui_4c8f9e8e326c" formatted="false">"Pievienotais attēls"</string>
+    <string name="ui_dd183ea631fd" formatted="false">"Saglabāt atlasi"</string>
+    <string name="ui_cc0dc8fec54b" formatted="false">"Atlase saglabāta kanvā"</string>
+    <string name="ui_a24f237da3cd" formatted="false">"Atzīmētais zīmējuma apgabals"</string>
+    <string name="ui_afada8582413" formatted="false">"%1$d vilkumi"</string>
+    <string name="ui_f91dc70872a5" formatted="false">"Tikai atsauce; atver saistīto avotu, lai to pārskatītu."</string>
+    <string name="ui_cf0d1a41f783" formatted="false">"Atvērt saistīto avotu"</string>
 </resources>

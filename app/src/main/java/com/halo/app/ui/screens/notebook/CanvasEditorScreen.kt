@@ -289,6 +289,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             selectionOwnerId = target?.let { viewModel.canvasId },
             selectionPageId = target?.id,
             onSelectionChanged = viewModel::setInkSelection,
+            onSaveSelection = viewModel::saveInkSelection,
             onDraft = { encoded -> viewModel.keepDrawingDraft(com.halo.app.data.notebook.CanvasDrawingDraft(sketchTarget, "sketch", sketchOriginal, sketch = encoded)) },
             onSave = { encoded ->
                 viewModel.addSketch(encoded, sketchTarget, sketchOriginal.takeIf { sketchTarget != null })
@@ -693,14 +694,14 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         Text(uiText(if (state.selectedNodeIds.isEmpty()) "Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan." else "Selected cards: %1\$d", state.selectedNodeIds.size),
             Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
         com.halo.app.ui.components.HaloReadAloud(
-            state.nodes.sortedWith(compareBy({ it.y }, { it.x })).map { it.text }.filter { it.isNotBlank() }
+            state.nodes.sortedWith(compareBy({ it.y }, { it.x })).map { it.readableText() }.filter { it.isNotBlank() }
                 .plus(state.edges.mapNotNull { it.label?.takeIf(String::isNotBlank) }).joinToString("\n\n"),
             label = "Read this canvas")
         // The selected card is the explicit voice-edit target. Never dictate into
         // an arbitrary card when multiple cards are selected or one is linked.
         val voiceCard = state.nodes.firstOrNull { node ->
             node.id == state.selectedNodeId && node.refObjectId == null &&
-                node.type != CanvasNodeType.SKETCH
+                node.type != CanvasNodeType.SKETCH && node.type != CanvasNodeType.INK_SELECTION
         }
         if (voiceCard != null && state.selectedNodeIds.size <= 1 && !state.selectionMode) {
             Column(Modifier.fillMaxWidth().padding(horizontal=16.dp)) {
@@ -738,7 +739,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                         matches.forEach { node ->
                             val label = node.refObjectId?.let { id -> state.references.firstOrNull { it.id.value == id }?.title }
-                                ?: if (node.type == CanvasNodeType.SKETCH) "Sketch" else CanvasFileMarkupCodec.displayTitle(node.text)
+                                ?: when (node.type) {
+                                    CanvasNodeType.SKETCH -> uiText("Sketch")
+                                    CanvasNodeType.INK_SELECTION -> uiText("Ink selection")
+                                    else -> CanvasFileMarkupCodec.displayTitle(node.text)
+                                }
                             TextButton(onClick = { viewModel.focusNode(node.id) }) {
                                 Text(label.take(28).ifBlank { uiText("Untitled card") })
                             }
@@ -900,6 +905,25 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                             if (node.type == CanvasNodeType.GROUP) Text(
                                 uiText("Drag this zone to move enclosed cards."),
                                 style = MaterialTheme.typography.bodySmall)
+                        }
+                        else if (node.type == CanvasNodeType.INK_SELECTION) Column(
+                            Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val sourceNode = state.edges.firstOrNull { it.toNodeId == node.id && it.label == "selection" }
+                                ?.fromNodeId?.let { sourceId -> state.nodes.firstOrNull { it.id == sourceId } }
+                            Text(uiText("Ink selection"), style = MaterialTheme.typography.labelSmall)
+                            Text(uiText("%1\$d strokes", node.inkSelectionStrokeCount() ?: 0),
+                                style = MaterialTheme.typography.bodyMedium)
+                            Text(uiText("Reference only; open the linked source to review it."),
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            TextButton(onClick = {
+                                sourceNode?.let { source ->
+                                    if (source.type == CanvasNodeType.SKETCH) {
+                                        viewModel.selectNode(source.id); sketchTarget = source.id
+                                        sketchOriginal = source.text; sketchOpen = true
+                                    } else viewModel.openReference(source.id)
+                                }
+                            }, enabled = sourceNode != null) { Text(uiText("Open linked source")) }
                         }
                         else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)

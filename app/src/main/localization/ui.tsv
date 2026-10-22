@@ -3767,3 +3767,9 @@ No notes yet. Save this image to Notebook first.|||Заметок пока не�
 No image models are available. Check provider setup, then refresh.|||Нет доступных моделей изображений. Проверьте настройки провайдера и обновите список.|||Nav pieejamu attēlu modeļu. Pārbaudi pakalpojuma iestatījumus un atjaunini sarakstu.
 The reference image could not be read. Close and select the image again.|||Не удалось прочитать исходное изображение. Закройте окно и выберите изображение ещё раз.|||Neizdevās nolasīt sākotnējo attēlu. Aizver logu un izvēlies attēlu vēlreiz.
 Attached image|||Прикреплённое изображение|||Pievienotais attēls
+Save selection|||Сохранить выделение|||Saglabāt atlasi
+Selection saved to Canvas|||Выделение сохранено на холсте|||Atlase saglabāta kanvā
+Ink selection|||Выделенная область рисунка|||Atzīmētais zīmējuma apgabals
+%1$d strokes|||%1$d штрихов|||%1$d vilkumi
+Reference only; open the linked source to review it.|||Только ссылка; откройте связанный источник, чтобы просмотреть его.|||Tikai atsauce; atver saistīto avotu, lai to pārskatītu.
+Open linked source|||Открыть связанный источник|||Atvērt saistīto avotu

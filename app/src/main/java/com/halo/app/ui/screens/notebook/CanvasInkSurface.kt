@@ -56,6 +56,7 @@ internal fun CanvasInkSurface(
     selectionPageId: String? = null,
     selectionBaseRevision: String? = null,
     onSelectionChanged: (InkSelectionContext?) -> Unit = {},
+    onSaveSelection: ((InkSelectionContext) -> Unit)? = null,
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -327,6 +328,9 @@ internal fun CanvasInkSurface(
         selectionContext?.let { selected ->
             Text(stringResource(R.string.ink_selection_count, selected.selectedStrokeIds.size),
                 color = selectionColor, style = MaterialTheme.typography.bodySmall)
+            onSaveSelection?.let { save ->
+                TextButton(onClick = { save(selected) }) { Text(com.halo.app.language.uiText("Save selection")) }
+            }
         } ?: if (selectionBounds != null) {
             Text(stringResource(R.string.ink_selection_empty), style = MaterialTheme.typography.bodySmall)
         } else if (mode == InkMode.SELECT) {

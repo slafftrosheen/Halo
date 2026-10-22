@@ -3765,4 +3765,10 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "No image models are available. Check provider setup, then refresh." to R.string.ui_fe062eaa6bcc,
     "The reference image could not be read. Close and select the image again." to R.string.ui_b7ae4027f7ea,
     "Attached image" to R.string.ui_4c8f9e8e326c,
+    "Save selection" to R.string.ui_dd183ea631fd,
+    "Selection saved to Canvas" to R.string.ui_cc0dc8fec54b,
+    "Ink selection" to R.string.ui_a24f237da3cd,
+    "%1\$d strokes" to R.string.ui_afada8582413,
+    "Reference only; open the linked source to review it." to R.string.ui_f91dc70872a5,
+    "Open linked source" to R.string.ui_cf0d1a41f783,
 )

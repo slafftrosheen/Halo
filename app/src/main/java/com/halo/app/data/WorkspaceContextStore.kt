@@ -117,6 +117,7 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
                 database.notebookCanvasDao().getNodes(id).joinToString("\n\n") { node ->
                     when {
                         node.type == CanvasNodeType.SKETCH.name -> "[hand-drawn sketch]"
+                        node.type == CanvasNodeType.INK_SELECTION.name -> "[saved ink selection]"
                         node.refObjectId == null -> node.text
                         else -> "Linked workspace item: ${CanvasFileMarkupCodec.displayTitle(node.text)}. Select that source separately to include its content."
                     }

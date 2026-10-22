@@ -25,7 +25,7 @@ interface NotebookDao {
         FROM canvas_nodes c JOIN workspace_objects w ON w.id = c.canvasId
         LEFT JOIN workspace_objects r ON r.id = c.refObjectId
         LEFT JOIN notes n ON n.objectId = c.refObjectId
-        WHERE w.lifecycle = 'ACTIVE' AND c.type != 'SKETCH' AND
+        WHERE w.lifecycle = 'ACTIVE' AND c.type NOT IN ('SKETCH', 'INK_SELECTION') AND
         (c.refObjectId IS NULL OR r.lifecycle = 'ACTIVE') ORDER BY c.id LIMIT :limit OFFSET :offset""")
     suspend fun canvasSearchCandidates(limit: Int = 64, offset: Int = 0): List<CanvasSearchRow>
     @Query(
