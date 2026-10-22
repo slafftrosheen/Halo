@@ -29,7 +29,7 @@ data class InkSelectionContext(
     init {
         require(workspaceObjectId.isNotBlank() && workspaceObjectId.length <= MAX_REFERENCE_LENGTH)
         require(pageId == null || (pageId.isNotBlank() && pageId.length <= MAX_REFERENCE_LENGTH))
-        require(selectedStrokeIds.isNotEmpty() && selectedStrokeIds.size <= InkLimits.MAX_POINTS_PER_STROKE)
+        require(selectedStrokeIds.isNotEmpty() && selectedStrokeIds.size <= InkLimits.MAX_STROKES)
         require(selectedStrokeIds.all { it.isNotBlank() && it.length <= MAX_REFERENCE_LENGTH })
         require(selectedStrokeIds.distinct().size == selectedStrokeIds.size) { "Stroke IDs must be unique" }
         require(sourceRevision.isNotBlank() && sourceRevision.length <= MAX_REFERENCE_LENGTH)

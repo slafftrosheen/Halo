@@ -74,4 +74,12 @@ class InkSelectionContextTest {
                 InkSelectionOrigin.LASSO, 5, 4)
         }
     }
+
+    @Test fun selectionStrokeReferencesCannotExceedTheSourceDocumentStrokeQuota() {
+        val strokeIds = (0..InkLimits.MAX_STROKES).map { "stroke-$it" }
+        assertThrows(IllegalArgumentException::class.java) {
+            InkSelectionContext("canvas-17", null, InkSelectionBounds(0, 0, 10, 10), strokeIds, "r1",
+                InkSelectionOrigin.BOX, 1, 1)
+        }
+    }
 }
