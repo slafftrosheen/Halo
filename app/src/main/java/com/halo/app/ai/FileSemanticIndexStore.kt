@@ -19,7 +19,14 @@ class FileSemanticIndexStore(file: File): SemanticIndexStore {
         if(!atomic.baseFile.exists()) return@withLock null
         require(atomic.baseFile.length()<=32L*1024*1024)
         val json=atomic.openRead().use { JSONObject(it.readBytes().toString(Charsets.UTF_8)) }
-        require(json.getInt("schema")==1)
+        val schema = json.getInt("schema")
+        require(schema in 1..2)
+        // Schema 1 was written only by the text-only Notebook index. Schema 2
+        // records modality explicitly so a future media index cannot reuse these rows.
+        if (schema >= 2) {
+            val modalities = json.getJSONArray("modalities")
+            require(modalities.length() == 1 && modalities.getString(0) == "TEXT")
+        }
         val space=EmbeddingSpace(json.getString("sha"),json.getInt("dimension"),json.getBoolean("normalized"),
             json.getString("runtime"),json.getString("preprocessing"))
         val rows=json.getJSONArray("chunks"); require(rows.length()<=512 && rows.length()*space.dimension.toLong()<=1_048_576)
@@ -34,7 +41,8 @@ class FileSemanticIndexStore(file: File): SemanticIndexStore {
     } }
     override suspend fun replace(snapshot: SemanticSnapshot?)=withContext(Dispatchers.IO) { lock.withLock {
         if(snapshot==null) { atomic.delete(); return@withLock }
-        val json=JSONObject().put("schema",1).put("sha",snapshot.space.modelSha256).put("dimension",snapshot.space.dimension)
+        val json=JSONObject().put("schema",2).put("modalities", JSONArray().put("TEXT"))
+            .put("sha",snapshot.space.modelSha256).put("dimension",snapshot.space.dimension)
             .put("normalized",snapshot.space.normalized).put("runtime",snapshot.space.runtimeIdentity)
             .put("preprocessing",snapshot.space.preprocessingIdentity)
         json.put("chunks",JSONArray().apply { snapshot.chunks.forEach { row -> put(JSONObject()
