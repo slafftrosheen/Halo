@@ -30,11 +30,11 @@ sealed interface LocalEmbeddingInput {
 }
 
 class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
-    inputs: List<LocalEmbeddingInput>,
+    inputCandidates: List<LocalEmbeddingInput>,
     val preprocessingIdentity: String = "embeddinggemma2-native-media-v1") {
     // ByteArray is mutable and List is only read-only at the Kotlin type level.
     // Snapshot both here so request validation cannot be invalidated by the caller.
-    private val inputSnapshot = snapshotInputs(inputs)
+    private val inputSnapshot: List<LocalEmbeddingInput>
     /** Each read returns owned media bytes; callers cannot mutate the validated snapshot. */
     val inputs: List<LocalEmbeddingInput>
         get() = inputSnapshot.map(::copyInput)
@@ -42,8 +42,8 @@ class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
     init {
         require(modelSha256.matches(Regex("[a-f0-9]{64}")))
         require(dimension in 1..16_384)
-        require(inputSnapshot.isNotEmpty() && inputSnapshot.size <= 8)
         require(preprocessingIdentity == "embeddinggemma2-native-media-v1")
+        inputSnapshot = snapshotInputs(inputCandidates)
         inputSnapshot.forEach(LocalMediaEmbeddingSafety::check)
     }
 
