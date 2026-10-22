@@ -481,7 +481,7 @@ Communication route|||Маршрут связи|||Sakaru maršruts
 Halo devices|||Устройства Halo|||Halo ierīces
 No saved devices|||Нет сохранённых устройств|||Nav saglabātu ierīču
 Pair supported hardware to make it available to Halo.|||Подключите совместимое устройство, чтобы использовать его с Halo.|||Savieno saderīgu ierīci, lai tā būtu pieejama Halo.
-Connected|||Подключено|||Savienots
+Connected|||Подключено|||Savienots|||Połączono
 Saved|||Сохранено|||Saglabāts
 Error|||Ошибка|||Kļūda
 Open device|||Открыть устройство|||Atvērt ierīci
@@ -540,7 +540,7 @@ Scan|||Поиск|||Meklēt
 Discovered devices|||Найденные устройства|||Atrastās ierīces
 Unknown glasses|||Неизвестные очки|||Nezināmas brilles
 Selected|||Выбрано|||Atlasīts|||Wybrano
-Models|||Модели|||Modeļi
+Models|||Модели|||Modeļi|||Modele
 Show all|||Показать все|||Rādīt visu|||Pokaż wszystkie
 Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
 Needs retest|||Нужно проверить повторно|||Jāpārbauda atkārtoti
@@ -670,22 +670,22 @@ Route state|||Состояние маршрута|||Maršruta stāvoklis
 Platform recognition adapter|||Системный адаптер распознавания|||Platformas atpazīšanas adapteris
 Storage & Backup|||Хранилище и резервные копии|||Krātuve un rezerves kopijas|||Pamięć i kopia zapasowa
 Halo Vault|||Хранилище Halo|||Halo krātuve
-Change folder|||Сменить папку|||Mainīt mapi
-Choose backup folder|||Выбрать папку резервных копий|||Izvēlēties rezerves kopiju mapi
-Back up now|||Создать копию|||Izveidot rezerves kopiju
-Keep last|||Хранить последние|||Saglabāt pēdējās
+Change folder|||Сменить папку|||Mainīt mapi|||Zmień folder
+Choose backup folder|||Выбрать папку резервных копий|||Izvēlēties rezerves kopiju mapi|||Wybierz folder kopii zapasowej
+Back up now|||Создать копию|||Izveidot rezerves kopiju|||Utwórz kopię teraz
+Keep last|||Хранить последние|||Saglabāt pēdējās|||Zachowaj ostatnie kopie
 Export Brain Dump|||Экспортировать данные Halo|||Eksportēt Halo datus
 Include workspace files|||Включить файлы рабочего пространства|||Iekļaut darbvietas failus
 Protect with password|||Защитить паролем|||Aizsargāt ar paroli
 Password|||Пароль|||Parole
 Choose Brain Dump|||Выбрать архив Halo|||Izvēlēties Halo arhīvu
 Merge|||Объединить|||Apvienot
-Clear model downloads|||Удалить загруженные модели|||Dzēst lejupielādētos modeļus
+Clear model downloads|||Удалить загруженные модели|||Dzēst lejupielādētos modeļus|||Usuń pobrane pliki modeli
 Clear diagnostics|||Очистить диагностику|||Notīrīt diagnostiku
-Clear cache|||Очистить кэш|||Notīrīt kešatmiņu
+Clear cache|||Очистить кэш|||Notīrīt kešatmiņu|||Wyczyść pamięć podręczną
 Locate file|||Найти файл|||Atrast failu
 Restore completed|||Восстановление завершено|||Atjaunošana pabeigta
-Undo restore|||Отменить восстановление|||Atsaukt atjaunošanu
+Undo restore|||Отменить восстановление|||Atsaukt atjaunošanu|||Cofnij przywracanie
 Notifications & Digests|||Уведомления и сводки|||Paziņojumi un kopsavilkumi
 Open notification inbox|||Открыть входящие уведомления|||Atvērt paziņojumu iesūtni
 Open Android notification access|||Открыть доступ к уведомлениям Android|||Atvērt Android paziņojumu piekļuvi
@@ -786,16 +786,16 @@ Developer tests ▾|||Тесты разработчика ▾|||Izstrādātāja 
 Configure ElevenLabs|||Настроить ElevenLabs|||Iestatīt ElevenLabs
 Replace local Halo Brain?|||Заменить локальные данные Halo?|||Aizstāt lokālos Halo datus?
 Replace brain|||Заменить данные|||Aizstāt datus
-Remove folder access?|||Отозвать доступ к папке?|||Noņemt piekļuvi mapei?
-Remove access|||Отозвать доступ|||Noņemt piekļuvi
+Remove folder access?|||Отозвать доступ к папке?|||Noņemt piekļuvi mapei?|||Cofnąć dostęp do folderu?
+Remove access|||Отозвать доступ|||Noņemt piekļuvi|||Cofnij dostęp
 Halo will stop updating this Vault. Existing backup files will remain in the folder.|||Halo перестанет обновлять это хранилище. Существующие копии останутся в папке.|||Halo pārtrauks atjaunināt šo krātuvi. Esošie rezerves faili paliks mapē.
 Your live brain stays private on this phone. Vault backups belong to you.|||Основные данные Halo остаются приватными на этом телефоне. Резервные копии принадлежат вам.|||Halo galvenie dati paliek privāti šajā tālrunī. Rezerves kopijas pieder tev.
-Automatic backup is off until you choose a folder|||Автоматическое копирование выключено до выбора папки|||Automātiskā dublēšana ir izslēgta, līdz izvēlies mapi
-Access lost · Choose the folder again|||Доступ потерян · выберите папку заново|||Piekļuve zaudēta · izvēlies mapi vēlreiz
-No successful backup yet|||Успешных резервных копий пока нет|||Vēl nav veiksmīgu rezerves kopiju
-Existing backup files remain when access is removed.|||При отзыве доступа существующие резервные копии останутся в папке.|||Noņemot piekļuvi, esošie rezerves faili paliks mapē.
-Create a portable copy of your Notebook, memory and conversations.|||Создать переносимую копию заметок, памяти и диалогов.|||Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju.
-Replace creates a local safety snapshot first.|||Перед заменой создаётся локальная защитная копия.|||Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums.
+Automatic backup is off until you choose a folder|||Автоматическое копирование выключено до выбора папки|||Automātiskā dublēšana ir izslēgta, līdz izvēlies mapi|||Automatyczne kopie zapasowe są wyłączone do czasu wybrania folderu
+Access lost · Choose the folder again|||Доступ потерян · выберите папку заново|||Piekļuve zaudēta · izvēlies mapi vēlreiz|||Brak dostępu · Wybierz folder ponownie
+No successful backup yet|||Успешных резервных копий пока нет|||Vēl nav veiksmīgu rezerves kopiju|||Nie utworzono jeszcze żadnej kopii zapasowej
+Existing backup files remain when access is removed.|||При отзыве доступа существующие резервные копии останутся в папке.|||Noņemot piekļuvi, esošie rezerves faili paliks mapē.|||Istniejące pliki kopii zapasowej pozostaną po cofnięciu dostępu.
+Create a portable copy of your Notebook, memory and conversations.|||Создать переносимую копию заметок, памяти и диалогов.|||Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju.|||Utwórz przenośną kopię Notatnika, pamięci i rozmów.
+Replace creates a local safety snapshot first.|||Перед заменой создаётся локальная защитная копия.|||Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums.|||Przed zastąpieniem danych zostanie utworzona lokalna kopia bezpieczeństwa.
 Notification access: |||Доступ к уведомлениям: |||Piekļuve paziņojumiem:
 Manage Halo notification delivery|||Настроить доставку уведомлений Halo|||Pārvaldīt Halo paziņojumu piegādi
 Android intent|||Намерение Android|||Android intents
@@ -910,7 +910,7 @@ Make room for your ideas|||Место для ваших идей|||Vieta tavām 
 Add cards, link your notes and connect what belongs together.|||Добавляйте карточки и заметки и соединяйте связанные идеи.|||Pievieno kartītes un piezīmes un savieno saistītas idejas.
 Write an idea...|||Запишите идею...|||Pieraksti ideju...
 URL|||URL|||URL
-Memory|||Память|||Atmiņa
+Memory|||Память|||Atmiņa|||Pamięć
 What Halo remembers and may use as context|||Что Halo помнит и может использовать как контекст|||Ko Halo atceras un drīkst izmantot kā kontekstu
 Use memory in conversations|||Использовать память в диалогах|||Izmantot atmiņu sarunās
 Remote AI receives memory only when your existing cloud-memory permission allows it.|||Удалённый ИИ получает данные памяти только при действующем разрешении на передачу памяти в облако.|||Attālinātais MI saņem atmiņas datus tikai tad, ja to atļauj tavs esošais mākoņa atmiņas iestatījums.
@@ -1124,10 +1124,10 @@ Every day|||Каждый день|||Katru dienu|||Codziennie
 Weekdays|||По будням|||Darbdienās|||Dni robocze
 Weekends|||По выходным|||Nedēļas nogalēs|||Weekendy
 Not configurable as an automation yet|||Пока нельзя настроить как автоматизацию|||Pagaidām nevar konfigurēt kā automatizāciju
-Local data|||Локальные данные|||Lokālie dati
-Automatic backup|||Автоматическое резервное копирование|||Automātiskā dublēšana
-Password, if protected|||Пароль, если защищено|||Parole, ja aizsargāts
-Maintenance|||Обслуживание|||Apkope
+Local data|||Локальные данные|||Lokālie dati|||Dane lokalne
+Automatic backup|||Автоматическое резервное копирование|||Automātiskā dublēšana|||Automatyczna kopia zapasowa
+Password, if protected|||Пароль, если защищено|||Parole, ja aizsargāts|||Hasło, jeśli kopia jest chroniona
+Maintenance|||Обслуживание|||Apkope|||Konserwacja
 Files needing relink|||Файлы, требующие повторной привязки|||Faili, kam jāatjauno saites
 Some sensitive actions always require confirmation.|||Некоторые чувствительные действия всегда требуют подтверждения.|||Dažām sensitīvām darbībām vienmēr vajadzīgs apstiprinājums.|||Niektóre wrażliwe działania zawsze wymagają potwierdzenia.
 The skill installs disabled. You can review its actions before enabling it.|||Навык устанавливается выключенным. Перед включением можно проверить его действия.|||Prasme tiek instalēta atspējota. Pirms iespējošanas vari pārskatīt tās darbības.|||Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania.
@@ -2134,19 +2134,19 @@ Model: %1$s|||Модель: %1$s|||Modelis: %1$s
 Speech output is unavailable. Check authorization, voice selection and your connection.|||Озвучивание недоступно. Проверьте авторизацию, выбранный голос и подключение.|||Runas izvade nav pieejama. Pārbaudiet autorizāciju, izvēlēto balsi un savienojumu.|||Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie.
 Measured details|||Результаты измерений|||Mērījumu detaļas
 Hide measured details|||Скрыть результаты измерений|||Paslēpt mērījumu detaļas
-%1$d files need attention|||%1$d файлов требуют внимания|||%1$d failiem jāpievērš uzmanība
-%1$d new · %2$d existing · %3$d conflicts|||%1$d новых · %2$d существующих · %3$d конфликтов|||%1$d jauni · %2$d esoši · %3$d konflikti
+%1$d files need attention|||%1$d файлов требуют внимания|||%1$d failiem jāpievērš uzmanība|||Pliki wymagające uwagi: %1$d
+%1$d new · %2$d existing · %3$d conflicts|||%1$d новых · %2$d существующих · %3$d конфликтов|||%1$d jauni · %2$d esoši · %3$d konflikti|||Nowe: %1$d · istniejące: %2$d · konflikty: %3$d
 %1$d tools · %2$d enabled|||%1$d инструментов · %2$d включено|||%1$d rīki · %2$d ieslēgti
 Access is optional. Typed questions and private notes remain available when you decline.|||Доступ необязателен. При отказе можно вводить вопросы и вести личные заметки.|||Piekļuve nav obligāta. Ja to noraidāt, joprojām varat rakstīt jautājumus un privātas piezīmes.|||Dostęp jest opcjonalny. Po odmowie nadal możesz wpisywać pytania i prowadzić prywatne notatki.
 Apply preferences|||Применить настройки|||Lietot iestatījumus|||Zastosuj ustawienia
 Backup completed (%1$s)|||Резервное копирование завершено (%1$s)|||Dublēšana pabeigta (%1$s)
-Backup folder access was removed|||Доступ к папке резервных копий отозван|||Piekļuve dublējumu mapei ir noņemta
-Backup folder unavailable. Choose the folder again.|||Папка резервных копий недоступна. Выберите её снова.|||Dublējumu mape nav pieejama. Izvēlieties mapi vēlreiz.
-Backup folder · Not selected|||Папка резервных копий · Не выбрана|||Dublējumu mape · Nav izvēlēta
-Backup folder: %1$s|||Папка резервных копий: %1$s|||Dublējumu mape: %1$s
+Backup folder access was removed|||Доступ к папке резервных копий отозван|||Piekļuve dublējumu mapei ir noņemta|||Dostęp do folderu kopii zapasowej został cofnięty
+Backup folder unavailable. Choose the folder again.|||Папка резервных копий недоступна. Выберите её снова.|||Dublējumu mape nav pieejama. Izvēlieties mapi vēlreiz.|||Folder kopii zapasowej jest niedostępny. Wybierz go ponownie.
+Backup folder · Not selected|||Папка резервных копий · Не выбрана|||Dublējumu mape · Nav izvēlēta|||Folder kopii zapasowej · Nie wybrano
+Backup folder: %1$s|||Папка резервных копий: %1$s|||Dublējumu mape: %1$s|||Folder kopii zapasowej: %1$s
 Backup inspected. Review the plan before restoring.|||Резервная копия проверена. Просмотрите план перед восстановлением.|||Dublējums pārbaudīts. Pirms atjaunošanas pārskatiet plānu.
 Brain Dump exported (%1$s)|||Архив Halo экспортирован (%1$s)|||Halo arhīvs eksportēts (%1$s)
-Cancel file selection|||Отменить выбор файла|||Atcelt faila izvēli
+Cancel file selection|||Отменить выбор файла|||Atcelt faila izvēli|||Anuluj wybór pliku
 Change all tool approval preferences?|||Изменить настройки подтверждения всех инструментов?|||Mainīt visu rīku apstiprināšanas iestatījumus?|||Zmienić wszystkie ustawienia zatwierdzania narzędzi?
 Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition.|||Изменения остаются в черновике до проверки и сохранения. Включённая автоматизация продолжает использовать сохранённые настройки.|||Izmaiņas paliek melnrakstā līdz pārskatīšanai un saglabāšanai. Esoša ieslēgta automatizācija izmanto saglabātos iestatījumus.|||Zmiany pozostają w tym szkicu do czasu ich sprawdzenia i zapisania. Istniejąca włączona automatyzacja nadal korzysta z zapisanej definicji.
 Check the endpoint, credential and network, then connect again.|||Проверьте адрес сервера, ключ доступа и сеть, затем подключитесь снова.|||Pārbaudiet servera adresi, piekļuves datus un tīklu, tad savienojiet vēlreiz.|||Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie.
@@ -2172,7 +2172,7 @@ Import / Restore|||Импорт / Восстановление|||Importēt / Atj
 Inspect tool %1$s|||Просмотреть инструмент %1$s|||Apskatīt rīku %1$s
 Integration|||Интеграция|||Integrācija|||Integracja
 Keep editing|||Продолжить редактирование|||Turpināt rediģēt|||Kontynuuj edycję
-Last backup failed. Check folder access and available storage.|||Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место.|||Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu.
+Last backup failed. Check folder access and available storage.|||Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место.|||Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu.|||Ostatnia kopia zapasowa nie powiodła się. Sprawdź dostęp do folderu i wolne miejsce.
 Learning|||Обучение|||Mācīšanās
 Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval.|||Локальное осмысление позволяет подходящей модели на устройстве предлагать воспоминания после значимых задач. По умолчанию выключено, работает только при подходящих условиях и требует вашего подтверждения.|||Lokāla pārdomāšana ļauj piemērotam ierīces modelim ierosināt atmiņas pēc nozīmīgiem uzdevumiem. Pēc noklusējuma izslēgta, darbojas tikai piemērotos apstākļos un prasa jūsu apstiprinājumu.
 Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts.|||Память хранит сохранённую информацию. Обучение управляет предложениями. Блокнот хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты.|||Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Piezīmju grāmata glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus.
@@ -2199,15 +2199,15 @@ This replaces current Notebook, conversations and memory. Halo will first create
 Trust: %1$s|||Доверие: %1$s|||Uzticamība: %1$s
 Use saved memory in conversations|||Использовать сохранённую память в разговорах|||Lietot saglabāto atmiņu sarunās
 Using memory|||Использование памяти|||Atmiņas izmantošana
-Working with your data…|||Работа с вашими данными…|||Darbs ar jūsu datiem…
+Working with your data…|||Работа с вашими данными…|||Darbs ar jūsu datiem…|||Przetwarzanie danych…
 Writing %1$s · %2$d/%3$d|||Запись %1$s · %2$d/%3$d|||Raksta %1$s · %2$d/%3$d
 Writing %1$s · %2$s|||Запись %1$s · %2$s|||Raksta %1$s · %2$s
 Hide bulk access request|||Скрыть общий запрос доступа|||Slēpt kopējo piekļuves pieprasījumu
 Advanced: request several permissions|||Дополнительно: запросить несколько разрешений|||Papildu: pieprasīt vairākas atļaujas
 Microphone access is off|||Доступ к микрофону выключен|||Piekļuve mikrofonam ir izslēgta
 Voice input can use the microphone|||Голосовой ввод может использовать микрофон|||Balss ievade var izmantot mikrofonu
-Restore previous snapshot?|||Восстановить предыдущее состояние?|||Atjaunot iepriekšējo stāvokli?
-Clear selected data?|||Очистить выбранные данные?|||Iztīrīt izvēlētos datus?
+Restore previous snapshot?|||Восстановить предыдущее состояние?|||Atjaunot iepriekšējo stāvokli?|||Przywrócić poprzednią kopię?
+Clear selected data?|||Очистить выбранные данные?|||Iztīrīt izvēlētos datus?|||Wyczyścić wybrane dane?
 Read and use notifications|||Читать и использовать уведомления|||Lasīt un izmantot paziņojumus
 Summaries only|||Только сводки|||Tikai kopsavilkumi
 Hide notification content|||Скрывать содержимое уведомлений|||Slēpt paziņojumu saturu
@@ -2286,12 +2286,12 @@ Suggest|||Предлагать|||Ieteikt
 Halo may retrieve relevant saved memories within the current scope and context budget.|||Halo может находить подходящие воспоминания в текущей области и пределах объёма контекста.|||Halo var meklēt atbilstošas atmiņas pašreizējā tvērumā un konteksta apjoma robežās.
 Saved memories stay in Memory. Automatic conversational use is off.|||Сохранённые воспоминания остаются в Памяти. Автоматическое использование в разговорах выключено.|||Saglabātās atmiņas paliek Atmiņā. Automātiska lietošana sarunās ir izslēgta.
 Clear|||Очистить|||Iztīrīt|||Wyczyść
-Data operation needs attention|||Операция с данными требует внимания|||Darbībai ar datiem jāpievērš uzmanība
-Data operation result|||Результат операции с данными|||Darbības ar datiem rezultāts
-Downloaded model files will be removed. Download them again before local inference. Notes and conversations are kept.|||Загруженные файлы моделей будут удалены. Перед использованием локальных моделей скачайте их снова. Заметки и разговоры сохраняются.|||Lejupielādētie modeļu faili tiks dzēsti. Pirms lokālo modeļu lietošanas lejupielādējiet tos vēlreiz. Piezīmes un sarunas tiek saglabātas.
-Saved diagnostic files will be removed. Notes, conversations and backups are kept.|||Сохранённые диагностические файлы будут удалены. Заметки, разговоры и резервные копии сохраняются.|||Saglabātie diagnostikas faili tiks dzēsti. Piezīmes, sarunas un dublējumi tiek saglabāti.
-The previous local snapshot will replace your current Notebook, memory and conversations. Export current changes first if you need them.|||Предыдущая локальная копия заменит текущий Блокнот, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны.|||Iepriekšējā lokālā kopija aizstās pašreizējo Piezīmju grāmatu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas.
-Temporary files and the currently inspected backup will be cleared. Saved workspace content is kept.|||Временные файлы и проверяемая резервная копия будут удалены. Сохранённое содержимое рабочего пространства сохраняется.|||Pagaidu faili un pašreiz pārbaudāmais dublējums tiks dzēsti. Saglabātais darbvietas saturs tiek saglabāts.
+Data operation needs attention|||Операция с данными требует внимания|||Darbībai ar datiem jāpievērš uzmanība|||Operacja na danych wymaga uwagi
+Data operation result|||Результат операции с данными|||Darbības ar datiem rezultāts|||Wynik operacji na danych
+Downloaded model files will be removed. Download them again before local inference. Notes and conversations are kept.|||Загруженные файлы моделей будут удалены. Перед использованием локальных моделей скачайте их снова. Заметки и разговоры сохраняются.|||Lejupielādētie modeļu faili tiks dzēsti. Pirms lokālo modeļu lietošanas lejupielādējiet tos vēlreiz. Piezīmes un sarunas tiek saglabātas.|||Pobrane pliki modeli zostaną usunięte. Pobierz je ponownie przed lokalnym wnioskowaniem. Notatki i rozmowy zostaną zachowane.
+Saved diagnostic files will be removed. Notes, conversations and backups are kept.|||Сохранённые диагностические файлы будут удалены. Заметки, разговоры и резервные копии сохраняются.|||Saglabātie diagnostikas faili tiks dzēsti. Piezīmes, sarunas un dublējumi tiek saglabāti.|||Zapisane pliki diagnostyczne zostaną usunięte. Notatki, rozmowy i kopie zapasowe zostaną zachowane.
+The previous local snapshot will replace your current Notebook, memory and conversations. Export current changes first if you need them.|||Предыдущая локальная копия заменит текущий Блокнот, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны.|||Iepriekšējā lokālā kopija aizstās pašreizējo Piezīmju grāmatu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas.|||Poprzednia lokalna kopia zastąpi bieżące dane Notatnika, pamięci i rozmów. Jeśli chcesz zachować obecne zmiany, najpierw wyeksportuj kopię.
+Temporary files and the currently inspected backup will be cleared. Saved workspace content is kept.|||Временные файлы и проверяемая резервная копия будут удалены. Сохранённое содержимое рабочего пространства сохраняется.|||Pagaidu faili un pašreiz pārbaudāmais dublējums tiks dzēsti. Saglabātais darbvietas saturs tiek saglabāts.|||Pliki tymczasowe i aktualnie przeglądana kopia zapasowa zostaną usunięte. Zapisana zawartość obszaru roboczego pozostanie.
 Enter the export password again after the interruption|||После прерывания введите пароль экспорта снова|||Pēc pārtraukuma ievadiet eksporta paroli vēlreiz
 The operation did not finish. Check access, storage and the password, then try again.|||Операция не завершилась. Проверьте доступ, свободное место и пароль, затем повторите попытку.|||Darbība netika pabeigta. Pārbaudiet piekļuvi, brīvo vietu un paroli, tad mēģiniet vēlreiz.
 %1$d minutes|||%1$d минут|||%1$d minūtes
@@ -2322,7 +2322,7 @@ Go to section|||Перейти к разделу|||Doties uz sadaļu
 Image|||Изображение|||Attēls|||Obraz
 Instructions|||Инструкции|||Instrukcijas|||Instrukcje
 Last enrollment return|||Последний возврат из настройки|||Pēdējā atgriešanās no iestatīšanas
-Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s
+Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s|||Ostatnia udana kopia · %1$s
 Local controls for later device acceptance|||Локальные элементы для проверки на устройстве|||Lokāla vadība pārbaudei ierīcē
 No compatible model available|||Нет совместимой модели|||Nav pieejama saderīga modeļa
 No extra limit|||Без дополнительного ограничения|||Bez papildu ierobežojuma|||Bez dodatkowego limitu
@@ -2334,7 +2334,7 @@ Preparing preview…|||Подготовка предпросмотра…|||Saga
 Preview failed. Try again. No actions were executed.|||Предпросмотр не удался. Повторите попытку. Действия не выполнялись.|||Priekšskatījums neizdevās. Mēģiniet vēlreiz. Darbības netika izpildītas.
 Searching nearby|||Поиск поблизости|||Meklē tuvumā
 Show “%1$s”|||Показать «%1$s»|||Parādīt “%1$s”
-Size unavailable|||Размер неизвестен|||Izmērs nav zināms
+Size unavailable|||Размер неизвестен|||Izmērs nav zināms|||Rozmiar niedostępny
 These are optional abilities, not chat models. Halo installs nothing without a verified artifact.|||Это необязательные возможности, а не модели чата. Halo устанавливает только проверенные файлы.|||Tās ir neobligātas iespējas, nevis sarunu modeļi. Halo instalē tikai pārbaudītus failus.|||To opcjonalne funkcje, a nie modele czatu. Halo niczego nie instaluje bez zweryfikowanego pliku modelu.
 This source changed since the session started. Citations refer to revision|||Источник изменился после начала занятия. Цитаты относятся к версии|||Avots ir mainījies kopš nodarbības sākuma. Citāti attiecas uz versiju
 Turn on Bluetooth|||Включить Bluetooth|||Ieslēgt Bluetooth
@@ -3342,7 +3342,7 @@ Find the file to reconnect it|||Выберите файл, чтобы восст
 This file is missing|||Этот файл отсутствует|||Šis fails nav atrodams
 The original file is unavailable. Choose it again to reconnect.|||Исходный файл недоступен. Выберите его снова, чтобы восстановить связь.|||Sākotnējais fails nav pieejams. Izvēlieties to vēlreiz, lai atjaunotu saiti.
 Choose another file|||Выбрать другой файл|||Izvēlēties citu failu
-Find the file|||Найти файл|||Atrast failu
+Find the file|||Найти файл|||Atrast failu|||Znajdź plik
 Show this answer?|||Показать этот ответ?|||Parādīt šo atbildi?
 You can try your own answer first. Reveal only when you want to see the saved answer.|||Сначала можно попробовать ответить самостоятельно. Откройте ответ, когда будете готовы его увидеть.|||Vispirms varat mēģināt atbildēt pats. Atklājiet atbildi, kad vēlaties redzēt saglabāto atbildi.
 Show answer|||Показать ответ|||Parādīt atbildi
@@ -3638,26 +3638,26 @@ Can change state and is intended to be reversible|||Вносит изменен�
 Affects another app, service, or device|||Влияет на другое приложение, сервис или устройство|||Ietekmē citu lietotni, pakalpojumu vai ierīci
 Uses sensitive information|||Использует конфиденциальную информацию|||Izmanto sensitīvu informāciju
 Can make a non-reversible change|||Может внести необратимое изменение|||Var veikt neatgriezeniskas izmaiņas
-Replace data on this phone?|||Заменить данные на этом телефоне?|||Aizstāt datus šajā tālrunī?
-This replaces your Notebook, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy.|||Это заменит блокнот, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно.|||Tas aizstās piezīmju grāmatu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju.
-Replace data|||Заменить данные|||Aizstāt datus
-halo will stop saving backups to this folder. Existing backups stay there.|||halo перестанет сохранять резервные копии в эту папку. Уже сохранённые копии останутся.|||halo pārtrauks saglabāt dublējumus šajā mapē. Esošie dublējumi paliks.
-Your notes, conversations and memory stay on this phone. Choose where to keep your backups.|||Заметки, разговоры и память хранятся на этом телефоне. Выберите, где сохранять резервные копии.|||Jūsu piezīmes, sarunas un atmiņa paliek šajā tālrunī. Izvēlieties, kur glabāt dublējumus.
-Notes, conversations & memory|||Заметки, разговоры и память|||Piezīmes, sarunas un atmiņa
-Backup folder|||Папка резервных копий|||Dublējumu mape
-Export backup|||Экспортировать резервную копию|||Eksportēt dublējumu
-Choose backup|||Выбрать резервную копию|||Izvēlēties dublējumu
-Restore a backup|||Восстановить из резервной копии|||Atjaunot no dublējuma
-Choose a backup to review it first. Nothing changes until you choose how to restore it.|||Выберите резервную копию для просмотра. Ничего не изменится, пока вы не выберете способ восстановления.|||Izvēlieties dublējumu, lai to vispirms pārskatītu. Nekas nemainīsies, līdz izvēlēsieties atjaunošanas veidu.
-Files that moved|||Перемещённые файлы|||Pārvietotie faili
-Clear saved reports|||Удалить сохранённые отчёты|||Dzēst saglabātos pārskatus
-Keep this phone’s|||Оставить версию с телефона|||Paturēt tālruņa versiju
-Keep the backup’s|||Оставить версию из копии|||Paturēt dublējuma versiju
-Keep both|||Оставить обе|||Paturēt abas
-Add to this phone|||Добавить на этот телефон|||Pievienot šim tālrunim
-Saved reports|||Сохранённые отчёты|||Saglabātie pārskati
-Saved item|||Сохранённый элемент|||Saglabāts vienums
-Choose which version to keep|||Выберите версию для сохранения|||Izvēlieties, kuru versiju paturēt
+Replace data on this phone?|||Заменить данные на этом телефоне?|||Aizstāt datus šajā tālrunī?|||Zastąpić dane na tym telefonie?
+This replaces your Notebook, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy.|||Это заменит блокнот, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно.|||Tas aizstās piezīmju grāmatu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju.|||Zastąpi to dane Notatnika, rozmowy i pamięć. halo najpierw zachowa lokalną kopię do odzyskiwania. Wyeksportuj kopię zapasową, aby zachować dodatkową kopię.
+Replace data|||Заменить данные|||Aizstāt datus|||Zastąp dane
+halo will stop saving backups to this folder. Existing backups stay there.|||halo перестанет сохранять резервные копии в эту папку. Уже сохранённые копии останутся.|||halo pārtrauks saglabāt dublējumus šajā mapē. Esošie dublējumi paliks.|||halo przestanie zapisywać kopie w tym folderze. Istniejące kopie pozostaną na swoim miejscu.
+Your notes, conversations and memory stay on this phone. Choose where to keep your backups.|||Заметки, разговоры и память хранятся на этом телефоне. Выберите, где сохранять резервные копии.|||Jūsu piezīmes, sarunas un atmiņa paliek šajā tālrunī. Izvēlieties, kur glabāt dublējumus.|||Twoje notatki, rozmowy i pamięć pozostają na tym telefonie. Wybierz miejsce przechowywania kopii zapasowych.
+Notes, conversations & memory|||Заметки, разговоры и память|||Piezīmes, sarunas un atmiņa|||Notatki, rozmowy i pamięć
+Backup folder|||Папка резервных копий|||Dublējumu mape|||Folder kopii zapasowej
+Export backup|||Экспортировать резервную копию|||Eksportēt dublējumu|||Eksportuj kopię zapasową
+Choose backup|||Выбрать резервную копию|||Izvēlēties dublējumu|||Wybierz kopię zapasową
+Restore a backup|||Восстановить из резервной копии|||Atjaunot no dublējuma|||Przywróć kopię zapasową
+Choose a backup to review it first. Nothing changes until you choose how to restore it.|||Выберите резервную копию для просмотра. Ничего не изменится, пока вы не выберете способ восстановления.|||Izvēlieties dublējumu, lai to vispirms pārskatītu. Nekas nemainīsies, līdz izvēlēsieties atjaunošanas veidu.|||Wybierz kopię zapasową, aby ją najpierw przejrzeć. Nic się nie zmieni, dopóki nie wybierzesz sposobu przywrócenia.
+Files that moved|||Перемещённые файлы|||Pārvietotie faili|||Przeniesione pliki
+Clear saved reports|||Удалить сохранённые отчёты|||Dzēst saglabātos pārskatus|||Usuń zapisane raporty
+Keep this phone’s|||Оставить версию с телефона|||Paturēt tālruņa versiju|||Zachowaj wersję z tego telefonu
+Keep the backup’s|||Оставить версию из копии|||Paturēt dublējuma versiju|||Zachowaj wersję z kopii zapasowej
+Keep both|||Оставить обе|||Paturēt abas|||Zachowaj obie wersje
+Add to this phone|||Добавить на этот телефон|||Pievienot šim tālrunim|||Dodaj na tym telefonie
+Saved reports|||Сохранённые отчёты|||Saglabātie pārskati|||Zapisane raporty
+Saved item|||Сохранённый элемент|||Saglabāts vienums|||Zapisany element
+Choose which version to keep|||Выберите версию для сохранения|||Izvēlieties, kuru versiju paturēt|||Wybierz wersję, którą chcesz zachować
 %1$d actions|||Действий: %1$d|||Darbību skaits: %1$d
 Show notifications|||Показ уведомлений|||Paziņojumu rādīšana
 Read notifications|||Чтение уведомлений|||Paziņojumu lasīšana
@@ -3674,7 +3674,7 @@ halo assistant|||Помощник halo|||halo palīgs
 In %1$s|||В приложении %1$s|||Lietotnē %1$s
 Current screen included|||Текущий экран добавлен|||Pašreizējais ekrāns pievienots
 Open halo|||Открыть halo|||Atvērt halo
-Set a backup password first|||Сначала задайте пароль резервной копии|||Vispirms iestatiet rezerves kopijas paroli
+Set a backup password first|||Сначала задайте пароль резервной копии|||Vispirms iestatiet rezerves kopijas paroli|||Najpierw ustaw hasło do kopii zapasowej
 Permission needed|||Нужно разрешение|||Nepieciešama atļauja|||Wymagane uprawnienie
 A weather source has not been connected.|||Источник погоды ещё не подключён.|||Laikapstākļu avots vēl nav pievienots.|||Nie połączono źródła pogody.
 For you|||Для вас|||Tev|||Dla Ciebie
@@ -3744,10 +3744,10 @@ In use|||Используется|||Tiek izmantots|||W użyciu
 Answer from this phone|||Ответ с этого телефона|||Atbilde no šī tālruņa|||Odpowiedź z tego telefonu
 No answer was received. Try again or choose another model.|||Ответ не получен. Повторите попытку или выберите другую модель.|||Atbilde netika saņemta. Mēģiniet vēlreiz vai izvēlieties citu modeli.|||Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model.
 An answer model is selected|||Модель для ответов выбрана|||Atbilžu modelis ir izvēlēts|||Wybrano model odpowiedzi
-Backup password|||Пароль резервной копии|||Rezerves kopijas parole
-Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only.|||Сохраните пароль для восстановления на другом телефоне. halo безопасно хранит его для резервного копирования по расписанию. Изменение пароля касается только новых копий.|||Saglabājiet paroli atjaunošanai citā tālrunī. halo to glabā droši plānotajām rezerves kopijām. Paroles maiņa attiecas tikai uz jaunām kopijām.
-Save backup password|||Сохранить пароль резервной копии|||Saglabāt rezerves kopijas paroli
-You can undo a restore for 7 days on this phone.|||Восстановление можно отменить в течение 7 дней на этом телефоне.|||Atjaunošanu šajā tālrunī var atsaukt 7 dienu laikā.
+Backup password|||Пароль резервной копии|||Rezerves kopijas parole|||Hasło do kopii zapasowej
+Keep this password to restore on another phone. halo stores it securely for scheduled backups. Changing it affects new backups only.|||Сохраните пароль для восстановления на другом телефоне. halo безопасно хранит его для резервного копирования по расписанию. Изменение пароля касается только новых копий.|||Saglabājiet paroli atjaunošanai citā tālrunī. halo to glabā droši plānotajām rezerves kopijām. Paroles maiņa attiecas tikai uz jaunām kopijām.|||Zachowaj to hasło, aby przywrócić dane na innym telefonie. halo bezpiecznie przechowuje je na potrzeby zaplanowanych kopii. Zmiana hasła dotyczy tylko nowych kopii.
+Save backup password|||Сохранить пароль резервной копии|||Saglabāt rezerves kopijas paroli|||Zapisz hasło do kopii zapasowej
+You can undo a restore for 7 days on this phone.|||Восстановление можно отменить в течение 7 дней на этом телефоне.|||Atjaunošanu šajā tālrunī var atsaukt 7 dienu laikā.|||Przywrócenie można cofnąć na tym telefonie przez 7 dni.
 Backup password saved|||Пароль резервной копии сохранён|||Rezerves kopijas parole saglabāta
 Again|||Ещё раз|||Vēlreiz
 Almost|||Почти|||Gandrīz

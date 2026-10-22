@@ -96,9 +96,11 @@
     <string name="ui_b0e0687a3021" formatted="false">"Wyjaśniaj w tym języku (puste pole = język aplikacji)"</string>
     <string name="ui_3bac3b491e7c" formatted="false">"Przetestuj dźwięk"</string>
     <string name="ui_b2439bcb8dee" formatted="false">"Wyjście"</string>
+    <string name="ui_22965568d22a" formatted="false">"Połączono"</string>
     <string name="ui_1a2303ede074" formatted="false">"Połącz"</string>
     <string name="ui_5a1f096a0d8d" formatted="false">"Włącz"</string>
     <string name="ui_57fd7a0cf33f" formatted="false">"Wybrano"</string>
+    <string name="ui_d17d2d78d76e" formatted="false">"Modele"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_a3773fd35520" formatted="false">"Kandydaci do testów: %1$s"</string>
     <string name="ui_339c70704322" formatted="false">"Kandydat do testów: %1$s"</string>
@@ -147,6 +149,13 @@
     <string name="ui_a3cdac3bdf98" formatted="false">"Co halo może teraz zrobić"</string>
     <string name="ui_d88af80346ea" formatted="false">"Modele według funkcji"</string>
     <string name="ui_1767a0238233" formatted="false">"Pamięć i kopia zapasowa"</string>
+    <string name="ui_0eb4a70f0097" formatted="false">"Zmień folder"</string>
+    <string name="ui_aaae42e3d690" formatted="false">"Wybierz folder kopii zapasowej"</string>
+    <string name="ui_02a2840b598b" formatted="false">"Utwórz kopię teraz"</string>
+    <string name="ui_8771c56bf6d8" formatted="false">"Zachowaj ostatnie kopie"</string>
+    <string name="ui_ce41ef217ad9" formatted="false">"Usuń pobrane pliki modeli"</string>
+    <string name="ui_d33461e6c0b6" formatted="false">"Wyczyść pamięć podręczną"</string>
+    <string name="ui_d6512d81e9b9" formatted="false">"Cofnij przywracanie"</string>
     <string name="ui_91cac509faa3" formatted="false">"Zezwól halo na powiadomienia"</string>
     <string name="ui_737b13c8b8d1" formatted="false">"Czym jest MCP?"</string>
     <string name="ui_0e3e58f90d67" formatted="false">"Dodaj serwer MCP"</string>
@@ -182,6 +191,14 @@
     <string name="ui_340128ddbdf7" formatted="false">"Szybki test"</string>
     <string name="ui_1fa330e271ba" formatted="false">"Test porównawczy"</string>
     <string name="ui_4b3f645d95d4" formatted="false">"Sprawdź kanał narzędzi"</string>
+    <string name="ui_63ff4e491b02" formatted="false">"Cofnąć dostęp do folderu?"</string>
+    <string name="ui_bb349bfe6750" formatted="false">"Cofnij dostęp"</string>
+    <string name="ui_5021d45b3051" formatted="false">"Automatyczne kopie zapasowe są wyłączone do czasu wybrania folderu"</string>
+    <string name="ui_d2cef118ca5a" formatted="false">"Brak dostępu · Wybierz folder ponownie"</string>
+    <string name="ui_311b3066b102" formatted="false">"Nie utworzono jeszcze żadnej kopii zapasowej"</string>
+    <string name="ui_02f71ba0ae71" formatted="false">"Istniejące pliki kopii zapasowej pozostaną po cofnięciu dostępu."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Utwórz przenośną kopię Notatnika, pamięci i rozmów."</string>
+    <string name="ui_f7f9e56ea8d1" formatted="false">"Przed zastąpieniem danych zostanie utworzona lokalna kopia bezpieczeństwa."</string>
     <string name="ui_2b36bfcfc993" formatted="false">"Możesz je przywrócić, wybierając filtr „Kosz”."</string>
     <string name="ui_f2ca345f552f" formatted="false">"Usunąć kolekcję?"</string>
     <string name="ui_70f58736b63e" formatted="false">"Wybierz widoczne"</string>
@@ -207,6 +224,7 @@
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
     <string name="ui_02cdaabfca80" formatted="false">"Duplikuj"</string>
     <string name="ui_120637f54127" formatted="false">"halo zastanawia się…"</string>
+    <string name="ui_c3963aedaac6" formatted="false">"Pamięć"</string>
     <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
     <string name="ui_e60cf185f16f" formatted="false">"Kontekst halo"</string>
     <string name="ui_29a390f9237e" formatted="false">"Wyczyść wszystko"</string>
@@ -288,6 +306,10 @@
     <string name="ui_c4e42b974c33" formatted="false">"Codziennie"</string>
     <string name="ui_6f4b602bb529" formatted="false">"Dni robocze"</string>
     <string name="ui_93dcf1d1d25e" formatted="false">"Weekendy"</string>
+    <string name="ui_4a186dd7a707" formatted="false">"Dane lokalne"</string>
+    <string name="ui_3dadeedf4c21" formatted="false">"Automatyczna kopia zapasowa"</string>
+    <string name="ui_6c901c2d632a" formatted="false">"Hasło, jeśli kopia jest chroniona"</string>
+    <string name="ui_17ccfa5b681e" formatted="false">"Konserwacja"</string>
     <string name="ui_f64001c434a8" formatted="false">"Niektóre wrażliwe działania zawsze wymagają potwierdzenia."</string>
     <string name="ui_0131d7ca5cad" formatted="false">"Umiejętność jest instalowana jako wyłączona. Przed jej włączeniem możesz przejrzeć dostępne działania."</string>
     <string name="ui_c30d7093bd2d" formatted="false">"Instrukcje dostarczone przez ten pakiet"</string>
@@ -506,8 +528,15 @@
     <string name="ui_6b25bb67dbb5" formatted="false">"Asystent systemowy · Obsługiwany przez Androida. Gdy halo nie jest aktywne, multimediami i głośnością steruje system."</string>
     <string name="ui_7a549fb62918" formatted="false">"Wybranie ElevenLabs wysyła oczyszczony tekst odpowiedzi do ElevenLabs. Historia rozmów, wspomnienia i dane narzędzi nie są wysyłane. Przechowywanie danych zależy od ustawień Twojego konta ElevenLabs."</string>
     <string name="ui_a7e6f87941b3" formatted="false">"Synteza mowy jest niedostępna. Sprawdź autoryzację, wybór głosu i połączenie."</string>
+    <string name="ui_92479c7665b6" formatted="false">"Pliki wymagające uwagi: %1$d"</string>
+    <string name="ui_cae632f94b8d" formatted="false">"Nowe: %1$d · istniejące: %2$d · konflikty: %3$d"</string>
     <string name="ui_cbd38d68a6f2" formatted="false">"Dostęp jest opcjonalny. Po odmowie nadal możesz wpisywać pytania i prowadzić prywatne notatki."</string>
     <string name="ui_366596141374" formatted="false">"Zastosuj ustawienia"</string>
+    <string name="ui_3ab5dd235601" formatted="false">"Dostęp do folderu kopii zapasowej został cofnięty"</string>
+    <string name="ui_0a87328cecda" formatted="false">"Folder kopii zapasowej jest niedostępny. Wybierz go ponownie."</string>
+    <string name="ui_f77a611652ee" formatted="false">"Folder kopii zapasowej · Nie wybrano"</string>
+    <string name="ui_d07c4c04054c" formatted="false">"Folder kopii zapasowej: %1$s"</string>
+    <string name="ui_15b9fa4f8785" formatted="false">"Anuluj wybór pliku"</string>
     <string name="ui_e90a4c413b9e" formatted="false">"Zmienić wszystkie ustawienia zatwierdzania narzędzi?"</string>
     <string name="ui_0e36a3d49ac1" formatted="false">"Zmiany pozostają w tym szkicu do czasu ich sprawdzenia i zapisania. Istniejąca włączona automatyzacja nadal korzysta z zapisanej definicji."</string>
     <string name="ui_02b8036088a0" formatted="false">"Sprawdź adres endpointu, dane dostępowe i sieć, a następnie spróbuj połączyć się ponownie."</string>
@@ -518,6 +547,7 @@
     <string name="ui_73a20bdfbb81" formatted="false">"Jeśli dostęp do mikrofonu pozostanie wyłączony, możesz nadal pisać, spróbować ponownie lub włączyć go w ustawieniach Androida."</string>
     <string name="ui_9a42d40a3f31" formatted="false">"Integracja"</string>
     <string name="ui_e76fd2add010" formatted="false">"Kontynuuj edycję"</string>
+    <string name="ui_7faa9446189c" formatted="false">"Ostatnia kopia zapasowa nie powiodła się. Sprawdź dostęp do folderu i wolne miejsce."</string>
     <string name="ui_3bc8c6ce7691" formatted="false">"Nie uzgodniono"</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
     <string name="ui_41c510ec1365" formatted="false">"Poprzednie dane połączenia; bieżące połączenie nie zostało potwierdzone."</string>
@@ -526,6 +556,9 @@
     <string name="ui_5a426e81bae3" formatted="false">"Te zmiany nie zostały zapisane. Ustawienia istniejącej automatyzacji pozostaną bez zmian, dopóki ich nie zapiszesz."</string>
     <string name="ui_5277abbcdb93" formatted="false">"To połączenie nie jest szyfrowane. Używaj HTTP tylko z serwerem, którym zarządzasz, w zaufanej sieci lokalnej."</string>
     <string name="ui_01c61c885b23" formatted="false">"Ta integracja będzie wymagać ponownej autoryzacji. Dane na zdalnym serwerze zostaną zachowane."</string>
+    <string name="ui_f4fad9bd7526" formatted="false">"Przetwarzanie danych…"</string>
+    <string name="ui_61ae1fac6d98" formatted="false">"Przywrócić poprzednią kopię?"</string>
+    <string name="ui_18bf75a73e89" formatted="false">"Wyczyścić wybrane dane?"</string>
     <string name="ui_53f13ae99ed5" formatted="false">"MCP"</string>
     <string name="ui_13fe672ebaa2" formatted="false">"Serwery MCP udostępniają halo zewnętrzne narzędzia. halo nadaje im własne przestrzenie nazw i przed uruchomieniem stosuje własne uprawnienia, potwierdzenia oraz limity wykonań."</string>
     <string name="ui_24eefaa59d37" formatted="false">"Zapamiętane ustawienia narzędzi. Tylko połączona i włączona integracja udostępnia halo włączone narzędzia. Każde działanie nadal wymaga standardowej autoryzacji."</string>
@@ -537,12 +570,20 @@
     <string name="ui_6c863c3012b6" formatted="false">"Odrzucić zmiany w umiejętności?"</string>
     <string name="ui_25c11e7cf257" formatted="false">"Te instrukcje nie zostały zainstalowane. Sprawdź je przed instalacją albo odrzuć ten szkic."</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
+    <string name="ui_597c61bffed6" formatted="false">"Operacja na danych wymaga uwagi"</string>
+    <string name="ui_8b14bde391c7" formatted="false">"Wynik operacji na danych"</string>
+    <string name="ui_753faf7fceae" formatted="false">"Pobrane pliki modeli zostaną usunięte. Pobierz je ponownie przed lokalnym wnioskowaniem. Notatki i rozmowy zostaną zachowane."</string>
+    <string name="ui_e983dee4cc9a" formatted="false">"Zapisane pliki diagnostyczne zostaną usunięte. Notatki, rozmowy i kopie zapasowe zostaną zachowane."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"Poprzednia lokalna kopia zastąpi bieżące dane Notatnika, pamięci i rozmów. Jeśli chcesz zachować obecne zmiany, najpierw wyeksportuj kopię."</string>
+    <string name="ui_e43690e26d1f" formatted="false">"Pliki tymczasowe i aktualnie przeglądana kopia zapasowa zostaną usunięte. Zapisana zawartość obszaru roboczego pozostanie."</string>
     <string name="ui_b3739b547eec" formatted="false">"Dodatkowe zatwierdzone działanie"</string>
     <string name="ui_9a7aa4102706" formatted="false">"Wybierz urządzenie"</string>
     <string name="ui_8b9b4f57f1c7" formatted="false">"Wybierz aplikację"</string>
     <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
     <string name="ui_934652dce41d" formatted="false">"Instrukcje"</string>
+    <string name="ui_293df2caff23" formatted="false">"Ostatnia udana kopia · %1$s"</string>
     <string name="ui_7b3b2c40f4e6" formatted="false">"Bez dodatkowego limitu"</string>
+    <string name="ui_d7d557fa439a" formatted="false">"Rozmiar niedostępny"</string>
     <string name="ui_fd6dd1f25a0a" formatted="false">"To opcjonalne funkcje, a nie modele czatu. halo niczego nie instaluje bez zweryfikowanego pliku modelu."</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
@@ -780,6 +821,7 @@
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
+    <string name="ui_c72e91e40fb2" formatted="false">"Znajdź plik"</string>
     <string name="ui_30ee65fa01ad" formatted="false">"Rozmowę przeniesiono do Kosza"</string>
     <string name="ui_488c5c7d85a5" formatted="false">"Przywrócono rozmowę"</string>
     <string name="ui_64a721c7cbe8" formatted="false">"Nie udało się zmienić tej rozmowy. Spróbuj ponownie."</string>
@@ -819,6 +861,27 @@
     <string name="ui_22b0fe8a57d9" formatted="false">"Rozpocznij odtwarzanie"</string>
     <string name="ui_4f467ca50fd3" formatted="false">"Szukaj w tej aplikacji"</string>
     <string name="ui_576a4a258210" formatted="false">"Zarządzaj dostępem do działań"</string>
+    <string name="ui_d5c25f87aeb6" formatted="false">"Zastąpić dane na tym telefonie?"</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"Zastąpi to dane Notatnika, rozmowy i pamięć. halo najpierw zachowa lokalną kopię do odzyskiwania. Wyeksportuj kopię zapasową, aby zachować dodatkową kopię."</string>
+    <string name="ui_ce1773ec5b12" formatted="false">"Zastąp dane"</string>
+    <string name="ui_aa0b0c0954a5" formatted="false">"halo przestanie zapisywać kopie w tym folderze. Istniejące kopie pozostaną na swoim miejscu."</string>
+    <string name="ui_0810464d4842" formatted="false">"Twoje notatki, rozmowy i pamięć pozostają na tym telefonie. Wybierz miejsce przechowywania kopii zapasowych."</string>
+    <string name="ui_c6e6c5800828" formatted="false">"Notatki, rozmowy i pamięć"</string>
+    <string name="ui_fb2647f443e8" formatted="false">"Folder kopii zapasowej"</string>
+    <string name="ui_d6dfd0f08280" formatted="false">"Eksportuj kopię zapasową"</string>
+    <string name="ui_4ca9d17706f8" formatted="false">"Wybierz kopię zapasową"</string>
+    <string name="ui_96276c8b3a4b" formatted="false">"Przywróć kopię zapasową"</string>
+    <string name="ui_358bbb9266a0" formatted="false">"Wybierz kopię zapasową, aby ją najpierw przejrzeć. Nic się nie zmieni, dopóki nie wybierzesz sposobu przywrócenia."</string>
+    <string name="ui_d60a079e573e" formatted="false">"Przeniesione pliki"</string>
+    <string name="ui_4f70a141825a" formatted="false">"Usuń zapisane raporty"</string>
+    <string name="ui_d5c00c83fc6d" formatted="false">"Zachowaj wersję z tego telefonu"</string>
+    <string name="ui_ba012cf56bbc" formatted="false">"Zachowaj wersję z kopii zapasowej"</string>
+    <string name="ui_93672212b4c2" formatted="false">"Zachowaj obie wersje"</string>
+    <string name="ui_87518e494690" formatted="false">"Dodaj na tym telefonie"</string>
+    <string name="ui_8f028a72b28c" formatted="false">"Zapisane raporty"</string>
+    <string name="ui_c98dd523988f" formatted="false">"Zapisany element"</string>
+    <string name="ui_69b6a12956b4" formatted="false">"Wybierz wersję, którą chcesz zachować"</string>
+    <string name="ui_a8569bf79e45" formatted="false">"Najpierw ustaw hasło do kopii zapasowej"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
     <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
     <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
@@ -861,6 +924,10 @@
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
     <string name="ui_35881e86e3a4" formatted="false">"Wybrano model odpowiedzi"</string>
+    <string name="ui_3e39703b6e87" formatted="false">"Hasło do kopii zapasowej"</string>
+    <string name="ui_58a0744156ae" formatted="false">"Zachowaj to hasło, aby przywrócić dane na innym telefonie. halo bezpiecznie przechowuje je na potrzeby zaplanowanych kopii. Zmiana hasła dotyczy tylko nowych kopii."</string>
+    <string name="ui_d2e61f5b2e63" formatted="false">"Zapisz hasło do kopii zapasowej"</string>
+    <string name="ui_a5bb59a7e4fe" formatted="false">"Przywrócenie można cofnąć na tym telefonie przez 7 dni."</string>
     <string name="ui_50287a4d5ea7" formatted="false">"Dostęp do działań aplikacji jest zablokowany. Sprawdź uprawnienia, aby kontynuować."</string>
     <string name="ui_c4bd14cbcafa" formatted="false">"Nie udało się odczytać działań aplikacji. Otwórz aplikację i spróbuj ponownie."</string>
     <string name="ui_7bc5279a8267" formatted="false">"Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis."</string>
