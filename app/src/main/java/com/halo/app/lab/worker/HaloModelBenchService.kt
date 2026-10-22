@@ -253,7 +253,7 @@ class HaloModelBenchService : Service() {
         private const val FIXTURE_EXPECTED = "READY"
         private const val MAX_OUTPUT_CHARS = 512
         private const val STOP_GRACE_MS = 5_000L
-        private const val MAX_ATTEMPT_DEADLINE_MS = 6 * 60_000L
+        private const val MAX_ATTEMPT_DEADLINE_MS = 90 * 60_000L
         private val UUID_REGEX = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
         private val SHA_REGEX = Regex("[0-9a-f]{64}")
 

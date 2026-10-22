@@ -256,6 +256,20 @@ class HaloLabBridgeService : Service() {
         val model = req.optString("modelId")
         val sha = req.optString("artifactSha256")
         val fixture = req.optString("fixtureId")
+        val stages = req.optJSONObject("stageBudgets")
+        val loadBudgetMs = stages?.optLong("loadMs", -1L) ?: -1L
+        val executeBudgetMs = stages?.optLong("executeMs", -1L) ?: -1L
+        val unloadBudgetMs = stages?.optLong("unloadMs", -1L) ?: -1L
+        val deadlineBudgetMs = if (stages == null) {
+            // Additive optional request field: older v1.0 clients keep their historical limit.
+            LabAttemptDeadlinePolicy.LEGACY_ATTEMPT_MS
+        } else {
+            LabAttemptDeadlinePolicy.totalMs(
+                loadBudgetMs,
+                executeBudgetMs,
+                unloadBudgetMs,
+            ) ?: return error("STAGE_BUDGETS_INVALID")
+        }
         val suppliedLease = artifactLeases[req.optString("leaseId")]
         if (!UUID_PATTERN.matches(attempt) || model.isBlank() || model.length > 160 || !SHA_PATTERN.matches(sha) || fixture != FIXTURE_ID)
             return error("UNSUPPORTED_OR_INVALID_CASE")
@@ -272,21 +286,29 @@ class HaloLabBridgeService : Service() {
             req.optString("fixtureManifestSha256") != HaloLabProtocol.FAST_SMOKE_FIXTURE_SHA256 ||
             !UUID_PATTERN.matches(req.optString("sessionId")) || !UUID_PATTERN.matches(req.optString("queueItemId")) ||
             !SHA_PATTERN.matches(req.optString("planDigestSha256"))) return error("UNSUPPORTED_OR_INVALID_CASE")
+        val acceptedAtElapsedMs = SystemClock.elapsedRealtime()
         val requestHash = sha256(listOf(attempt, model, sha, fixture, req.optString("sessionId"),
-            req.optString("queueItemId"), req.optString("planDigestSha256"), req.optString("fixtureManifestSha256"))
+            req.optString("queueItemId"), req.optString("planDigestSha256"), req.optString("fixtureManifestSha256"),
+            loadBudgetMs, executeBudgetMs, unloadBudgetMs)
             .joinToString("\n"))
         if (journal.openAttempts().any { it.attemptId != attempt }) return error("RECOVERY_REQUIRED")
-        when (journal.accept(attempt, requestHash, model, sha)) {
+        when (journal.accept(attempt, requestHash, model, sha, deadlineBudgetMs, acceptedAtElapsedMs)) {
             "REQUEST_ID_CONFLICT" -> return error("REQUEST_ID_CONFLICT")
             "RECOVERY_REQUIRED" -> return error("RECOVERY_REQUIRED")
             "EXISTING" -> return queryCase(raw)
         }
         // Durable intent is committed before acquiring resources, binding a worker or executing.
-        scope.launch { startAttempt(attempt, model, sha) }
+        scope.launch { startAttempt(attempt, model, sha, deadlineBudgetMs, acceptedAtElapsedMs) }
         return JSONObject().put("status", "ACCEPTED").put("attemptId", attempt).toString()
     }
 
-    private suspend fun startAttempt(attemptId: String, modelId: String, sha: String) {
+    private suspend fun startAttempt(
+        attemptId: String,
+        modelId: String,
+        sha: String,
+        deadlineBudgetMs: Long,
+        acceptedAtElapsedMs: Long,
+    ) {
         if (!startingAttempts.add(attemptId)) return
         try {
         val resourceManager = ManualDependencyGraph.infra.resourceLeaseManager
@@ -310,7 +332,10 @@ class HaloLabBridgeService : Service() {
             journal.terminal(attemptId, terminalFailure(attemptId, "ARTIFACT_UNAVAILABLE", "MODEL"))
             return
         }
-        val run = ActiveRun(attemptId, lease, pinned.second)
+        val deadlineElapsedMs = LabAttemptDeadlinePolicy.deadlineElapsedMs(
+            acceptedAtElapsedMs, deadlineBudgetMs, SystemClock.elapsedRealtime(),
+        )
+        val run = ActiveRun(attemptId, lease, pinned.second, deadlineElapsedMs + STOP_GRACE_MS)
         active[attemptId] = run
         journal.stage(attemptId, "PREFLIGHT", "WORKER_STARTING")
         val intent = Intent(this, HaloModelBenchService::class.java)
@@ -340,7 +365,7 @@ class HaloLabBridgeService : Service() {
         journal.stage(attemptId, "EXECUTE", "EXECUTION_STARTED")
         run.nativeStartRequested = true
         val reply = runCatching {
-            JSONObject(run.worker!!.startTextProbe(attemptId, modelId, sha, SystemClock.elapsedRealtime() + ATTEMPT_DEADLINE_MS))
+            JSONObject(run.worker!!.startTextProbe(attemptId, modelId, sha, deadlineElapsedMs))
         }.getOrElse { finishUnstarted(run, "WORKER_START_FAILED", "HARNESS"); return }
         if (reply.optString("status") == "REJECTED") { finishUnstarted(run, reply.optString("code", "WORKER_REJECTED"), "HARNESS"); return }
         val stopRequested = AtomicBoolean(false)
@@ -466,13 +491,25 @@ class HaloLabBridgeService : Service() {
             ManualDependencyGraph.providerGraph.modelManager.acquireVerifiedArtifactLease(saved.modelId, saved.artifactSha256)
         }.getOrNull()
         if (pinned == null) { lease.release(); startingAttempts.remove(saved.attemptId); return }
-        val run = ActiveRun(saved.attemptId, lease, pinned.second)
+        val deadlineBudgetMs = saved.payload.optLong("deadlineBudgetMs", LabAttemptDeadlinePolicy.LEGACY_ATTEMPT_MS)
+            .coerceIn(1L, LabAttemptDeadlinePolicy.MAX_ATTEMPT_MS)
+        val acceptedAtElapsedMs = saved.payload.optLong("acceptedAtElapsedMs", 0L)
+        val persistedDeadline = if (acceptedAtElapsedMs > 0L) {
+            LabAttemptDeadlinePolicy.deadlineElapsedMs(acceptedAtElapsedMs, deadlineBudgetMs, SystemClock.elapsedRealtime())
+        } else {
+            SystemClock.elapsedRealtime()
+        }
+        val run = ActiveRun(saved.attemptId, lease, pinned.second, persistedDeadline + STOP_GRACE_MS)
         active[saved.attemptId] = run
         startingAttempts.remove(saved.attemptId)
         run.nativeStartRequested = true
         run.connection = WorkerConnection(run)
         val bound = runCatching { bindService(Intent(this, HaloModelBenchService::class.java), run.connection!!, BIND_AUTO_CREATE) }.getOrDefault(false)
-        if (!bound) { releaseRun(run); return }
+        if (!bound) {
+            // A failed bind is not proof the former worker process died. Keep its lease and
+            // journal entry fenced; submitCase refuses another attempt while it is open.
+            return
+        }
         run.bound = true
         if (withTimeoutOrNull(WORKER_BIND_TIMEOUT_MS) { run.ready.await(); true } != true || run.worker == null) {
             // Preserve both leases: a previously-running native worker is not proven dead.
@@ -494,7 +531,7 @@ class HaloLabBridgeService : Service() {
             return
         }
         var stopRequested = false
-        val recoveryDeadline = SystemClock.elapsedRealtime() + ATTEMPT_DEADLINE_MS
+        val recoveryDeadline = persistedDeadline
         while (true) {
             val state = runCatching { JSONObject(run.worker!!.queryAttempt(saved.attemptId)) }.getOrNull()
             if (state == null) { run.workerDied.await(); break }
@@ -588,12 +625,16 @@ class HaloLabBridgeService : Service() {
         override fun onNullBinding(name: ComponentName?) { run.worker = null; run.ready.complete(Unit) }
     }
 
-    private inner class ActiveRun(val attemptId: String, val lease: ResourceLease, val artifact: java.io.Closeable) {
+    private inner class ActiveRun(
+        val attemptId: String,
+        val lease: ResourceLease,
+        val artifact: java.io.Closeable,
+        val deadlineElapsedMs: Long,
+    ) {
         val workerId = UUID.randomUUID().toString()
         val ready = kotlinx.coroutines.CompletableDeferred<Unit>()
         val workerDied = kotlinx.coroutines.CompletableDeferred<Unit>()
         val released = AtomicBoolean(false)
-        val deadlineElapsedMs = SystemClock.elapsedRealtime() + ATTEMPT_DEADLINE_MS + STOP_GRACE_MS
         var worker: IModelBenchWorker? = null
         var connection: ServiceConnection? = null
         var bound = false
@@ -629,7 +670,6 @@ class HaloLabBridgeService : Service() {
         private val SERVER_INSTANCE_ID = UUID.randomUUID().toString()
         private const val FIXTURE_ID = "arith-multiply-17x8-v1"
         private const val LEASE_TTL_MS = 5 * 60_000L
-        private const val ATTEMPT_DEADLINE_MS = 60_000L
         private const val STOP_GRACE_MS = 5_000L
         private const val WORKER_BIND_TIMEOUT_MS = 5_000L
         private val UUID_PATTERN = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")

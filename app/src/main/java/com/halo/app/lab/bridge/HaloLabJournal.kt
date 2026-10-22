@@ -55,7 +55,16 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
     }
 
     @Synchronized
-    fun accept(attemptId: String, requestHash: String, modelId: String, artifactSha256: String): String {
+    fun accept(
+        attemptId: String,
+        requestHash: String,
+        modelId: String,
+        artifactSha256: String,
+        deadlineBudgetMs: Long,
+        acceptedAtElapsedMs: Long,
+    ): String {
+        require(deadlineBudgetMs in 1L..LabAttemptDeadlinePolicy.MAX_ATTEMPT_MS)
+        require(acceptedAtElapsedMs > 0L)
         val db = writableDatabase
         db.beginTransaction()
         try {
@@ -76,9 +85,11 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
                 .put("artifactSha256", artifactSha256)
                 .put("origin", "DEVICE_MEASUREMENT")
                 .put("eventCode", "ACCEPTED")
+                .put("deadlineBudgetMs", deadlineBudgetMs)
+                .put("acceptedAtElapsedMs", acceptedAtElapsedMs)
             db.execSQL(
                 "INSERT INTO attempts(attempt_id,request_hash,model_id,artifact_sha256,state,terminal,payload_json,updated_at_epoch_ms) VALUES(?,?,?,?,?,0,?,?)",
-                arrayOf(attemptId, requestHash, modelId, artifactSha256, "ACCEPTED", "{}", System.currentTimeMillis()),
+                arrayOf(attemptId, requestHash, modelId, artifactSha256, "ACCEPTED", payload.toString(), System.currentTimeMillis()),
             )
             appendEvent(db, attemptId, payload)
             db.setTransactionSuccessful()
