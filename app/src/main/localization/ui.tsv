@@ -3156,11 +3156,11 @@ How halo helps|||Как помогает halo|||Kā halo palīdz|||Jak halo poma
 Working on your request|||Выполняю ваш запрос|||Izpildu jūsu pieprasījumu
 Thinking it through|||Обдумываю|||Pārdomāju
 Delivery not confirmed|||Доставка не подтверждена|||Piegāde nav apstiprināta
-Apps & services|||Приложения и сервисы|||Lietotnes un pakalpojumi
-Actions your apps make available to halo.|||Действия, которые ваши приложения предоставляют halo.|||Darbības, ko jūsu lietotnes piedāvā halo.
+Apps & services|||Приложения и сервисы|||Lietotnes un pakalpojumi|||Aplikacje i usługi
+Actions your apps make available to halo.|||Действия, которые ваши приложения предоставляют halo.|||Darbības, ko jūsu lietotnes piedāvā halo.|||Działania udostępniane halo przez aplikacje.
 Actions available in your apps|||Доступные действия в ваших приложениях|||Jūsu lietotnēs pieejamās darbības
-No app actions are available yet. You can still ask halo questions and work in Notebook.|||Действия приложений пока недоступны. Вы можете задавать halo вопросы и работать в блокноте.|||Lietotņu darbības vēl nav pieejamas. Jūs joprojām varat uzdot halo jautājumus un strādāt piezīmju grāmatiņā.
-An app on this phone|||Приложение на этом телефоне|||Lietotne šajā tālrunī
+No app actions are available yet. You can still ask halo questions and work in Notebook.|||Действия приложений пока недоступны. Вы можете задавать halo вопросы и работать в блокноте.|||Lietotņu darbības vēl nav pieejamas. Jūs joprojām varat uzdot halo jautājumus un strādāt piezīmju grāmatiņā.|||Działania aplikacji nie są jeszcze dostępne. Nadal możesz zadawać pytania halo i pracować w Notatniku.
+An app on this phone|||Приложение на этом телефоне|||Lietotne šajā tālrunī|||Aplikacja na tym telefonie
 %1$d available actions|||Доступно действий: %1$d|||Pieejamās darbības: %1$d
 %1$d actions halo can use in your apps|||Действий, доступных halo в ваших приложениях: %1$d|||Darbības, ko halo var izmantot jūsu lietotnēs: %1$d
 See available actions|||Посмотреть доступные действия|||Skatīt pieejamās darbības
@@ -3610,7 +3610,7 @@ Android access|||Доступ Android|||Android piekļuve|||Dostęp do Androida
 No special permission needed|||Особые разрешения не нужны|||Īpašas atļaujas nav vajadzīgas|||Nie są wymagane specjalne uprawnienia
 Needs access or a connected device|||Нужен доступ или подключённое устройство|||Vajadzīga piekļuve vai pievienota ierīce
 Some features are unavailable|||Некоторые функции недоступны|||Dažas iespējas nav pieejamas
-Not available right now|||Сейчас недоступно|||Pašlaik nav pieejams
+Not available right now|||Сейчас недоступно|||Pašlaik nav pieejams|||Obecnie niedostępne
 Ask every time|||Спрашивать каждый раз|||Jautāt katru reizi
 Allow while halo is open|||Разрешать, пока halo открыт|||Atļaut, kamēr halo ir atvērts
 Allow eligible actions|||Разрешать допустимые действия|||Atļaut pieļaujamās darbības
@@ -3623,16 +3623,16 @@ Read calendar events|||Чтение событий календаря|||Kalendā
 Add calendar events|||Добавление событий календаря|||Kalendāra notikumu pievienošana
 Change phone settings|||Изменение настроек телефона|||Tālruņa iestatījumu maiņa
 Change Do Not Disturb|||Изменение режима «Не беспокоить»|||Režīma “Netraucēt” maiņa
-Available actions still need permission. Connecting an app does not approve its actions.|||Для доступных действий всё равно нужны разрешения. Подключение приложения не означает согласие на его действия.|||Arī pieejamām darbībām ir vajadzīgas atļaujas. Lietotnes pievienošana neapstiprina tās darbības.
+Available actions still need permission. Connecting an app does not approve its actions.|||Для доступных действий всё равно нужны разрешения. Подключение приложения не означает согласие на его действия.|||Arī pieejamām darbībām ir vajadzīgas atļaujas. Lietotnes pievienošana neapstiprina tās darbības.|||Dostępne działania nadal wymagają uprawnień. Połączenie aplikacji nie zezwala na jej działania.
 Hide actions|||Скрыть действия|||Paslēpt darbības
-Review actions|||Посмотреть действия|||Pārskatīt darbības
-Archive the current item|||Архивировать текущий элемент|||Arhivēt pašreizējo vienumu
-Mark as unread|||Отметить как непрочитанное|||Atzīmēt kā nelasītu
-Pause playback|||Приостановить воспроизведение|||Pauzēt atskaņošanu
-Start playback|||Начать воспроизведение|||Sākt atskaņošanu
-Search in this app|||Поиск в этом приложении|||Meklēt šajā lietotnē
+Review actions|||Посмотреть действия|||Pārskatīt darbības|||Sprawdź działania
+Archive the current item|||Архивировать текущий элемент|||Arhivēt pašreizējo vienumu|||Zarchiwizuj bieżący element
+Mark as unread|||Отметить как непрочитанное|||Atzīmēt kā nelasītu|||Oznacz jako nieprzeczytane
+Pause playback|||Приостановить воспроизведение|||Pauzēt atskaņošanu|||Wstrzymaj odtwarzanie
+Start playback|||Начать воспроизведение|||Sākt atskaņošanu|||Rozpocznij odtwarzanie
+Search in this app|||Поиск в этом приложении|||Meklēt šajā lietotnē|||Szukaj w tej aplikacji
 Permission is checked before this action runs|||Разрешение проверяется перед выполнением действия|||Atļauja tiek pārbaudīta pirms darbības izpildes
-Manage action access|||Управление доступом к действиям|||Pārvaldīt piekļuvi darbībām
+Manage action access|||Управление доступом к действиям|||Pārvaldīt piekļuvi darbībām|||Zarządzaj dostępem do działań
 Reads information|||Читает информацию|||Lasa informāciju
 Can change state and is intended to be reversible|||Вносит изменения, которые предполагают отмену|||Veic izmaiņas, kuras paredzēts atcelt
 Affects another app, service, or device|||Влияет на другое приложение, сервис или устройство|||Ietekmē citu lietotni, pakalpojumu vai ierīci
@@ -3722,10 +3722,10 @@ BuddyBot will stop and be removed from your saved devices.|||BuddyBot остан
 Ahead|||Впереди|||Priekšā
 Calm|||Спокойный|||Mierīgs
 Backups are protected with your password.|||Резервные копии защищены вашим паролем.|||Rezerves kopijas ir aizsargātas ar jūsu paroli.
-Allow actions from this app|||Разрешить действия в этом приложении|||Atļaut darbības šajā lietotnē
+Allow actions from this app|||Разрешить действия в этом приложении|||Atļaut darbības šajā lietotnē|||Zezwól na działania w tej aplikacji
 App action %1$d|||Действие приложения %1$d|||Lietotnes darbība %1$d
-Always asks you first|||Всегда сначала спрашивает вас|||Vienmēr vispirms lūdz jūsu apstiprinājumu
-Allow this action|||Разрешить это действие|||Atļaut šo darbību
+Always asks you first|||Всегда сначала спрашивает вас|||Vienmēr vispirms lūdz jūsu apstiprinājumu|||Zawsze najpierw pyta o zgodę
+Allow this action|||Разрешить это действие|||Atļaut šo darbību|||Zezwól na to działanie
 Local model lab|||Лаборатория локальных моделей|||Lokālo modeļu laboratorija|||Laboratorium modeli lokalnych
 Inspect model files and measured results|||Файлы моделей и результаты измерений|||Modeļu faili un mērījumu rezultāti|||Przeglądaj pliki modeli i wyniki pomiarów
 Lab · Advanced|||Лаборатория · Дополнительно|||Laboratorija · Papildu
@@ -3756,8 +3756,8 @@ The review could not be saved|||Не удалось сохранить повт�
 Recorded as remembered|||Отмечено: помню|||Atzīmēts kā atcerēts
 Recorded as almost remembered|||Отмечено: почти помню|||Atzīmēts kā gandrīz atcerēts
 Recorded for an earlier review|||Назначено более раннее повторение|||Ieplānots agrāks atkārtojums
-App action access is blocked. Review access to continue.|||Доступ к действиям приложений заблокирован. Проверьте разрешения, чтобы продолжить.|||Piekļuve lietotņu darbībām ir bloķēta. Pārskatiet atļaujas, lai turpinātu.
-App actions could not be read. Open the app and try again.|||Не удалось получить действия приложения. Откройте его и повторите попытку.|||Lietotnes darbības neizdevās nolasīt. Atveriet lietotni un mēģiniet vēlreiz.
+App action access is blocked. Review access to continue.|||Доступ к действиям приложений заблокирован. Проверьте разрешения, чтобы продолжить.|||Piekļuve lietotņu darbībām ir bloķēta. Pārskatiet atļaujas, lai turpinātu.|||Dostęp do działań aplikacji jest zablokowany. Sprawdź uprawnienia, aby kontynuować.
+App actions could not be read. Open the app and try again.|||Не удалось получить действия приложения. Откройте его и повторите попытку.|||Lietotnes darbības neizdevās nolasīt. Atveriet lietotni un mēģiniet vēlreiz.|||Nie udało się odczytać działań aplikacji. Otwórz aplikację i spróbuj ponownie.
 Driving was not confirmed. Check BuddyBot, then hold to try again.|||Движение не подтверждено. Проверьте BuddyBot, затем удерживайте кнопку для новой попытки.|||Kustība nav apstiprināta. Pārbaudiet BuddyBot, tad turiet pogu, lai mēģinātu vēlreiz.
 Waiting for BuddyBot…|||Ожидание BuddyBot…|||Gaida BuddyBot…
 

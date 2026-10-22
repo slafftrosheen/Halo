@@ -700,6 +700,10 @@
     <string name="ui_4d8d5ea3b434" formatted="false">"Czytanie i zainteresowania"</string>
     <string name="ui_c345ddcf3224" formatted="false">"Kontynuuj w Notatniku"</string>
     <string name="ui_d85b2cac1425" formatted="false">"Jak halo pomaga"</string>
+    <string name="ui_dd541994468a" formatted="false">"Aplikacje i usługi"</string>
+    <string name="ui_83b9e5c1b14b" formatted="false">"Działania udostępniane halo przez aplikacje."</string>
+    <string name="ui_9550bda45c3e" formatted="false">"Działania aplikacji nie są jeszcze dostępne. Nadal możesz zadawać pytania halo i pracować w Notatniku."</string>
+    <string name="ui_1997dfb83b61" formatted="false">"Aplikacja na tym telefonie"</string>
     <string name="ui_ded151ea4486" formatted="false">"Na niektórych stronach halo potrzebuje dostępu do zdjęć."</string>
     <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
     <string name="ui_efdcf466b553" formatted="false">"Laboratorium"</string>
@@ -776,6 +780,15 @@
     <string name="ui_49780701dc2d" formatted="false">"Nie, dziękuję"</string>
     <string name="ui_d8c8d201a7bc" formatted="false">"Dostęp do Androida"</string>
     <string name="ui_4c90e38762a6" formatted="false">"Nie są wymagane specjalne uprawnienia"</string>
+    <string name="ui_64833438f39e" formatted="false">"Obecnie niedostępne"</string>
+    <string name="ui_b740a108ed03" formatted="false">"Dostępne działania nadal wymagają uprawnień. Połączenie aplikacji nie zezwala na jej działania."</string>
+    <string name="ui_c8e1a13dd0fb" formatted="false">"Sprawdź działania"</string>
+    <string name="ui_569ba99ebfb1" formatted="false">"Zarchiwizuj bieżący element"</string>
+    <string name="ui_2c19d584bf8a" formatted="false">"Oznacz jako nieprzeczytane"</string>
+    <string name="ui_65a4a8d871ac" formatted="false">"Wstrzymaj odtwarzanie"</string>
+    <string name="ui_22b0fe8a57d9" formatted="false">"Rozpocznij odtwarzanie"</string>
+    <string name="ui_4f467ca50fd3" formatted="false">"Szukaj w tej aplikacji"</string>
+    <string name="ui_576a4a258210" formatted="false">"Zarządzaj dostępem do działań"</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
     <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
     <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
@@ -798,6 +811,9 @@
     <string name="ui_1523d23e2e00" formatted="false">"Sprawdź nowy układ"</string>
     <string name="ui_99452646e34b" formatted="false">"Kompaktowy"</string>
     <string name="ui_ab80540d98d2" formatted="false">"Duży"</string>
+    <string name="ui_fe918372a41b" formatted="false">"Zezwól na działania w tej aplikacji"</string>
+    <string name="ui_b326be4bf8a4" formatted="false">"Zawsze najpierw pyta o zgodę"</string>
+    <string name="ui_bd3ed386f718" formatted="false">"Zezwól na to działanie"</string>
     <string name="ui_40fdff809655" formatted="false">"Laboratorium modeli lokalnych"</string>
     <string name="ui_58c8d314f5aa" formatted="false">"Przeglądaj pliki modeli i wyniki pomiarów"</string>
     <string name="ui_1e8a95e8a597" formatted="false">"Pobierz modele, aby uzyskiwać odpowiedzi na tym telefonie."</string>
@@ -814,6 +830,8 @@
     <string name="ui_750af77aa42e" formatted="false">"W użyciu"</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
+    <string name="ui_50287a4d5ea7" formatted="false">"Dostęp do działań aplikacji jest zablokowany. Sprawdź uprawnienia, aby kontynuować."</string>
+    <string name="ui_c4bd14cbcafa" formatted="false">"Nie udało się odczytać działań aplikacji. Otwórz aplikację i spróbuj ponownie."</string>
     <string name="ui_7bc5279a8267" formatted="false">"Wyjaśnij ten obszar, korzystając z zapisanej referencji do źródła i dołączonego wycinka. Jeśli moje pytanie dotyczy innego obszaru albo jest niejednoznaczne, najpierw zapytaj, o który obszar chodzi. Jeśli samo zaznaczenie jest niejasne, poproś mnie o jego opis."</string>
     <string name="ui_0562eec23e31" formatted="false">"Użyj mojego zapisanego zaznaczenia odręcznego jako punktu odniesienia."</string>
     <string name="ui_a45d0de015bd" formatted="false">"Wyszukuj lokalnie na tym telefonie tekst, obrazy, nagrania i krótkie filmy z wybranych źródeł Notebooka, Canvas i Nauki. W przypadku filmów używane są tylko cztery wybrane klatki; ścieżki dźwiękowe nie są przetwarzane. halo odczytuje wyłącznie źródła zatwierdzone podczas tworzenia indeksu."</string>
