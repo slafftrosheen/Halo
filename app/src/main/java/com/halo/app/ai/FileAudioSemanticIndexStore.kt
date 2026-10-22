@@ -49,7 +49,7 @@ internal class FileAudioSemanticIndexStore(file: File) {
             val vector = row.getJSONArray("vector")
             require(vector.length() == space.dimension)
             AudioSemanticEntry(
-                sourceId = row.getString("id").also { require(it.startsWith("attachment:") && it.length <= 200) },
+                sourceId = row.getString("id").also { require(isAudioSourceId(it)) },
                 sourceVersion = row.getString("version").also { require(it.matches(SHA256)) },
                 contentSha256 = row.getString("contentSha").also { require(it.matches(SHA256)) },
                 title = row.getString("title").also { require(it.length <= 400) },
@@ -83,7 +83,7 @@ internal class FileAudioSemanticIndexStore(file: File) {
             .put("entries", JSONArray().apply {
                 snapshot.entries.forEach { entry ->
                     require(entry.sourceVersion.matches(SHA256) && entry.contentSha256.matches(SHA256))
-                    require(entry.sourceId.startsWith("attachment:") && entry.sourceId.length <= 200)
+                    require(isAudioSourceId(entry.sourceId))
                     require(entry.title.length <= 400 && entry.provenance.length <= 400)
                     require(entry.vector.size == snapshot.space.dimension && entry.vector.all { it.isFinite() })
                     put(JSONObject().put("id", entry.sourceId).put("version", entry.sourceVersion)
@@ -112,5 +112,8 @@ internal class FileAudioSemanticIndexStore(file: File) {
         const val RUNTIME_ID = "litertlm/0.18.0"
         const val PREPROCESSING_ID = "embeddinggemma2-mono-16khz-audio-cross-modal-search-v1"
         val SHA256 = Regex("[a-f0-9]{64}")
+        private val WORKSPACE_AUDIO_SOURCE = Regex("workspace-audio:[A-Za-z0-9_-]{1,180}")
+        fun isAudioSourceId(id: String): Boolean = id.length <= 200 &&
+            (id.startsWith("attachment:") || WORKSPACE_AUDIO_SOURCE.matches(id))
     }
 }
