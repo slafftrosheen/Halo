@@ -352,6 +352,7 @@
     <string name="ui_7013af4c42fe" formatted="false">"Konfiguracja"</string>
     <string name="ui_1029c7f7030c" formatted="false">"Uruchamianie halo…"</string>
     <string name="ui_ef6a6b58ce86" formatted="false">"Porozmawiaj z halo"</string>
+    <string name="ui_dc087b7ecd63" formatted="false">"Co mogę powiedzieć?"</string>
     <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
     <string name="ui_ce53b39bb842" formatted="false">"Usuń token"</string>
     <string name="ui_cc42af5664d6" formatted="false">"Token odczytu Hugging Face"</string>
@@ -390,6 +391,7 @@
     <string name="ui_2bebdca31f07" formatted="false">"Poprzedni rozdział"</string>
     <string name="ui_4344dde797b6" formatted="false">"Następny rozdział"</string>
     <string name="ui_0cefea1d909b" formatted="false">"Zapytaj o ten krok"</string>
+    <string name="ui_ecbf0bc168a5" formatted="false">"Wpisz zamiast mówić"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Znajdź powiązane notatki"</string>
     <string name="ui_49b31501b1c2" formatted="false">"Prywatnie wyszukuj na tym telefonie w wybranych notatkach, elementach Canvas, materiałach Study i załączonych plikach. halo rozpocznie indeksowanie dopiero po wyrażeniu zgody na źródła i utworzeniu wyszukiwania lokalnego."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Model wyszukiwania lokalnego"</string>
