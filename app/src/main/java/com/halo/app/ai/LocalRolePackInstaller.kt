@@ -292,11 +292,14 @@ class LocalRolePackInstaller(
             models.modelDir.takeIf { intentBytes + liteRtHeadroom > 0L }?.let { it to (intentBytes + liteRtHeadroom) },
             speechRoot.takeIf { speechBytes + vadBytes + speechReserve > 0L }?.let { it to (speechBytes + vadBytes + speechReserve) },
             supertonic?.packs?.storageRoot?.takeIf { ttsBytes > 0L }?.let { it to ttsBytes },
-        ).groupBy { (root, _) -> root.canonicalPath }
+        ).map { (root, required) ->
+            check(root.isDirectory || root.mkdirs() || root.isDirectory) { "Unable to prepare model storage." }
+            val store = java.nio.file.Files.getFileStore(root.toPath())
+            Triple(root, required, Triple(store.name(), store.type(), store.totalSpace))
+        }.groupBy { (_, _, storeIdentity) -> storeIdentity }
         storageNeeds.values.forEach { entries ->
             val root = entries.first().first
-            val required = entries.sumOf { it.second }
-            check(root.isDirectory || root.mkdirs() || root.isDirectory) { "Unable to prepare model storage." }
+            val required = entries.fold(0L) { total, entry -> Math.addExact(total, entry.second) }
             val available = root.usableSpace
             check(available >= required) {
                 "Not enough free space for starter pack files on ${root.name.ifBlank { "model storage" }}. Need about ${required / 1_000_000} MB; available ${available / 1_000_000} MB."
