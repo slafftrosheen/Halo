@@ -147,6 +147,20 @@ class OnlineAdmissionTest {
         catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
         assertEquals(0, f.provider.imageCalls)
     }
+    @Test fun discoveryPreflightDoesNotCreateSpendOrTransportAndTracksAccessChanges() {
+        val f = Fixture()
+        repeat(3) { assertNull(f.search.availability()) }
+        assertEquals(0, f.calls)
+        assertTrue(OnlineOperationLedger(f.storage).snapshot().records.isEmpty())
+        f.allowed = false
+        assertEquals(OnlineProblem.CHILD_RESTRICTED, f.search.availability())
+        f.allowed = true
+        f.storage.putString("openrouter_api_key", null)
+        assertEquals(OnlineProblem.KEY_REQUIRED, f.search.availability())
+        f.router.routingPolicy.value = AiRoutingPolicy.LOCAL_ONLY
+        assertEquals(OnlineProblem.LOCAL_ONLY, f.search.availability())
+        assertEquals(0, f.calls)
+    }
     private suspend fun rejected(block: suspend () -> Unit): OnlineOperationRejected {
         try { block() } catch (error: OnlineOperationRejected) { return error }
         throw AssertionError("Expected rejection")

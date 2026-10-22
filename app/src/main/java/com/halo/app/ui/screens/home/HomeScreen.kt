@@ -113,6 +113,7 @@ fun HomeScreen(
     val daily by viewModel.dailyAssistant.collectAsStateWithLifecycle()
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     var showCameraDenied by rememberSaveable { mutableStateOf(false) }
     val captureDraft by viewModel.captureQuestionDraft.collectAsStateWithLifecycle()
@@ -127,6 +128,9 @@ fun HomeScreen(
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri -> uri?.let(viewModel::attachImportedImage) }
+    val documentPicker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let(viewModel::importDocumentForContext) }
     val scope = rememberCoroutineScope()
     val camera = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { received ->
         val path = pendingPhoto
@@ -190,6 +194,11 @@ fun HomeScreen(
     val conversationTurns by viewModel.conversationTurns.collectAsStateWithLifecycle()
     val savedConversations by viewModel.savedConversations.collectAsStateWithLifecycle()
     val changingConversation by viewModel.conversationChanging.collectAsStateWithLifecycle()
+    val toolCatalog by viewModel.toolCatalog.collectAsStateWithLifecycle()
+    val importedSource by viewModel.importedSource.collectAsStateWithLifecycle()
+    val importingSource by viewModel.importingSource.collectAsStateWithLifecycle()
+    val sourceImportFailed by viewModel.sourceImportFailed.collectAsStateWithLifecycle()
+    val bindingSource by viewModel.bindingSource.collectAsStateWithLifecycle()
     val currentTurns = conversationTurns.filter { it.conversationId == uiState.conversationId }
 
     val fxContinuity by viewModel.continuity.collectAsStateWithLifecycle()
@@ -207,7 +216,6 @@ fun HomeScreen(
     val speechOutputPaused by viewModel.speechOutputPaused.collectAsStateWithLifecycle()
     val voiceModeStartRequested by viewModel.voiceModeStartRequested.collectAsStateWithLifecycle()
     val voiceModeStartRequestId by viewModel.voiceModeStartRequestId.collectAsStateWithLifecycle()
-    val lastVoiceResponseConversation by viewModel.lastVoiceResponseConversation.collectAsStateWithLifecycle()
     LaunchedEffect(voiceModeStartRequested, voiceModeStartRequestId, uiState.microphonePermissionGranted, uiState.speechReady) {
         if (!voiceModeStartRequested) return@LaunchedEffect
         when {
@@ -269,6 +277,7 @@ fun HomeScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshDashboard()
+                viewModel.refreshToolCatalog()
             } else if (event == Lifecycle.Event.ON_STOP) {
                 viewModel.onHomeStopped()
             }
@@ -324,6 +333,7 @@ fun HomeScreen(
     // Attachments and quick actions live next to the pinned composer, never inside the scrolled feed.
     var showContext by rememberSaveable { mutableStateOf(false) }
     var showActions by rememberSaveable { mutableStateOf(false) }
+    var showSelectionHelp by rememberSaveable { mutableStateOf(false) }
     var showHistory by rememberSaveable { mutableStateOf(false) }
     var showToday by rememberSaveable { mutableStateOf(false) }
     var webSearchDraft by rememberSaveable { mutableStateOf<String?>(null) }
@@ -350,6 +360,58 @@ fun HomeScreen(
     var quickValue by remember { mutableStateOf("") }
     var showInboxCapture by rememberSaveable { mutableStateOf(false) }
     if (showInboxCapture) com.halo.app.ui.screens.notebook.InboxCaptureDialog { showInboxCapture = false }
+    val researchPrompt = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_tool_research_prompt)
+    val mapsPrompt = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_tool_maps_prompt)
+    if (showActions) HomeToolsSheet(toolCatalog, voiceModeActive,
+        onRefresh = viewModel::refreshToolCatalog, resolve = viewModel::resolveToolAction,
+        onAction = { action ->
+            showActions = false
+            when (action) {
+                HomeToolAction.NEW_NOTE -> viewModel.createNote()
+                HomeToolAction.ATTACH -> showContext = true
+                HomeToolAction.WEB -> webSearchDraft = textInput
+                HomeToolAction.RESEARCH_DRAFT -> prepareEarlierQuestion(researchPrompt)
+                HomeToolAction.MAPS_DRAFT -> prepareEarlierQuestion(mapsPrompt)
+                HomeToolAction.NOTEBOOK, HomeToolAction.STUDY, HomeToolAction.CONNECTIONS -> viewModel.openToolScreen(action)
+                HomeToolAction.TIMER -> { quickValue = "120"; quickAction = "Timer" }
+                HomeToolAction.OPEN_APP -> { quickValue = ""; quickAction = "Open app" }
+                HomeToolAction.START_VOICE -> viewModel.startVoiceMode()
+                HomeToolAction.END_VOICE -> viewModel.stopVoiceMode()
+                HomeToolAction.INBOX -> showInboxCapture = true
+                HomeToolAction.REPEAT_VOICE -> viewModel.repeatLastVoiceResponse()
+                HomeToolAction.VOICE_MODE, HomeToolAction.PLANNED -> Unit
+            }
+        }, onRecovery = { recovery ->
+            showActions = false
+            if (recovery == HomeToolRecovery.ANDROID_APPS) {
+                try { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_SETTINGS)) }
+                catch (_: android.content.ActivityNotFoundException) { viewModel.captureMessage.value = context.getString(com.halo.app.R.string.home_tools_open_failed) }
+                catch (_: SecurityException) { viewModel.captureMessage.value = context.getString(com.halo.app.R.string.home_tools_open_failed) }
+            } else viewModel.openToolRecovery(recovery)
+        }, onDismiss = { showActions = false })
+    importedSource?.let { source -> HomeImportedSourceDialog(source,
+        onAttach = viewModel::attachImportedSource, onStudy = viewModel::openImportedSourceInStudy,
+        onNotebook = { viewModel.dismissImportedSource(); viewModel.openToolScreen(HomeToolAction.NOTEBOOK) },
+        onDismiss = viewModel::dismissImportedSource, binding = bindingSource) }
+    if (sourceImportFailed) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { viewModel.sourceImportFailed.value = false },
+        title = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_import_failed)) },
+        text = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_original_kept)) },
+        confirmButton = { TextButton(onClick = { viewModel.sourceImportFailed.value = false; documentPicker.launch(arrayOf("*/*")) }) {
+            Text(uiText("Try again"))
+        } }, dismissButton = { TextButton(onClick = { viewModel.sourceImportFailed.value = false }) { Text(uiText("Close")) } })
+    if (showSelectionHelp) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { showSelectionHelp = false },
+        title = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_selection)) },
+        text = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_selection_detail)) },
+        confirmButton = { TextButton(onClick = { showSelectionHelp = false; onAssistantSetup() }) {
+            Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_screen_setup))
+        } }, dismissButton = { Column {
+            TextButton(onClick = { showSelectionHelp = false; viewModel.navigateToDevices() }) {
+                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_ink_device))
+            }
+            TextButton(onClick = { showSelectionHelp = false }) { Text(uiText("Close")) }
+        } })
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(draftKey) { confirmClear = false }
     if (confirmClear) androidx.compose.material3.AlertDialog(onDismissRequest = { confirmClear = false },
@@ -645,6 +707,10 @@ fun HomeScreen(
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (importingSource) {
+                androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing), style = MaterialTheme.typography.bodySmall)
+            }
             // H03: selected sources remain visible without opening the attachment sheet.
             // A single horizontally scrollable row avoids clipping the pinned composer
             // at 200% font scale, and a tap opens source actions/privacy.
@@ -695,34 +761,8 @@ fun HomeScreen(
                     else -> "Talk"
                 }),
                 showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
-                onAttach = { showContext = true }, onTools = { showActions = true },
-                toolsMenu = {
-                    DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
-                        DropdownMenuItem(text = { Text(uiText(if (voiceModeActive) "End Voice Mode" else "Start Voice Mode")) },
-                            enabled = voiceModeActive || (!changingConversation && !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking),
-                            onClick = {
-                                showActions = false
-                                if (voiceModeActive) viewModel.stopVoiceMode() else when {
-                                    !uiState.microphonePermissionGranted -> onRequestMicrophonePermission()
-                                    !uiState.speechReady -> viewModel.navigateToVoice()
-                                    else -> viewModel.startVoiceMode()
-                                }
-                            })
-                        if (lastVoiceResponseConversation != null && lastVoiceResponseConversation == uiState.conversationId)
-                            DropdownMenuItem(text = { Text(uiText("Repeat last reply")) }, onClick = { showActions = false; viewModel.repeatLastVoiceResponse() })
-                        DropdownMenuItem(text = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.online_title)) },
-                            enabled = canSend && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
-                            onClick = { showActions = false; webSearchDraft = textInput })
-                        DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = { showActions = false; showInboxCapture = true })
-                        DropdownMenuItem(text = { Text(uiText("New note")) }, onClick = { showActions = false; viewModel.createNote() })
-                        DropdownMenuItem(text = { Text(uiText("Timer")) },
-                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention && "halo_timer" in dashboard.quickTools,
-                            onClick = { showActions = false; quickValue = "120"; quickAction = "Timer" })
-                        DropdownMenuItem(text = { Text(uiText("Open app")) },
-                            enabled = canSend && !providerNeedsAttention && !connectionNeedsAttention && "halo_open_app" in dashboard.quickTools,
-                            onClick = { showActions = false; quickValue = ""; quickAction = "Open app" })
-                    }
-                },
+                onAttach = { focusManager.clearFocus(); showContext = true },
+                onTools = { focusManager.clearFocus(); viewModel.refreshToolCatalog(); showActions = true },
             )
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
@@ -763,17 +803,7 @@ fun HomeScreen(
         }
         // Review confirmation must remain composed even when attachments are closed.
         ContextContinuityControls(viewModel, expanded = false, onImport = {})
-        if (showContext) androidx.compose.material3.ModalBottomSheet(
-            onDismissRequest = { showContext = false },
-        ) {
-            // H03: the content scrolls at large font scales, not the dismissal.
-            // The action remains reachable when the screen is short or the IME opens.
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.fillMaxWidth().heightIn(max = 440.dp)
-                    .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(uiText("Attachments and context"), style = MaterialTheme.typography.titleMedium)
+        if (showContext) HomeAttachmentSheet(onDismiss = { showContext = false }) {
                     ContextContinuityControls(viewModel, expanded = true,
                         onImport = { showContext = false; imagePicker.launch("image/*") },
                         onCamera = {
@@ -782,13 +812,10 @@ fun HomeScreen(
                                 android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
                             else cameraPermission.launch(android.Manifest.permission.CAMERA)
                         }, onPrivacy = { showContext = false; onContextPrivacy() },
-                        onVision = { showContext = false; onConfigureVision() }, showSaveReview = false)
-                }
-                androidx.compose.material3.Button(onClick = { showContext = false },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(uiText("Done"))
-                }
-            }
+                        onVision = { showContext = false; onConfigureVision() }, showSaveReview = false,
+                        onFile = { showContext = false; documentPicker.launch(arrayOf("*/*")) },
+                        onAudio = { showContext = false; showInboxCapture = true },
+                        onSelection = { showContext = false; showSelectionHelp = true }, importingFile = importingSource)
         }
     }
     }

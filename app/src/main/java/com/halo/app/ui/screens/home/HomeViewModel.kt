@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.async
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.first
@@ -185,6 +186,7 @@ class HomeSourceDependencies(
     val visual: StateFlow<com.halo.app.capture.VisualAttachment?>,
     val providers: StateFlow<List<com.halo.app.ai.ProviderControlRow>>,
     val refresh: suspend () -> HomeDashboardState,
+    val catalog: suspend (HomeToolCatalogRequest) -> HomeToolCatalogSnapshot = { HomeToolCatalogSnapshot(loading = false) },
 )
 
 class HomeViewModel(
@@ -219,6 +221,18 @@ class HomeViewModel(
     private val _visualAttachment = MutableStateFlow<com.halo.app.capture.VisualAttachment?>(null)
     val visualAttachment: StateFlow<com.halo.app.capture.VisualAttachment?> = _visualAttachment.asStateFlow()
     private val _providerRows = MutableStateFlow<List<com.halo.app.ai.ProviderControlRow>>(emptyList())
+    private val _toolCatalog = MutableStateFlow(HomeToolCatalogSnapshot())
+    val toolCatalog = _toolCatalog.asStateFlow()
+    private var toolCatalogRefresh: kotlinx.coroutines.Job? = null
+    private val _importedSource = MutableStateFlow<HomeImportedSource?>(null)
+    val importedSource = _importedSource.asStateFlow()
+    val importingSource = MutableStateFlow(false)
+    val sourceImportFailed = MutableStateFlow(false)
+    private val _bindingSource = MutableStateFlow(false)
+    val bindingSource = _bindingSource.asStateFlow()
+    private var sourceBindingJob: kotlinx.coroutines.Job? = null
+    private var sourceBindingGeneration = 0L
+    private var voiceStartGeneration = 0L
     val providerRows: StateFlow<List<com.halo.app.ai.ProviderControlRow>> = _providerRows.asStateFlow()
     val chatProviderId: StateFlow<String?> = aiProviderRouter?.selectedProviderId ?: MutableStateFlow(null)
 
@@ -259,6 +273,31 @@ class HomeViewModel(
         dailyController?.refresh()
         homeSources?.let { _dashboard.value = it.refresh() }
     }
+    fun refreshToolCatalog() {
+        toolCatalogRefresh?.cancel()
+        toolCatalogRefresh = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                _toolCatalog.value = _toolCatalog.value.copy(loading = true)
+                val value = homeSources?.catalog?.invoke(toolCatalogRequest()) ?: HomeToolCatalogSnapshot(loading = false)
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                _toolCatalog.value = value
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { _toolCatalog.value = HomeToolCatalogSnapshot(loading = false) }
+        }
+    }
+    /** A fresh presentation decision, never execution authority. The sheet owns cancellation. */
+    suspend fun resolveToolAction(id: String): HomeToolAction? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val latest = homeSources?.catalog?.invoke(toolCatalogRequest()) ?: HomeToolCatalogSnapshot(loading = false)
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        _toolCatalog.value = latest
+        latest.entries.firstOrNull { it.descriptor.id == id && it.canUse }?.descriptor?.action
+    }
+    private fun toolCatalogRequest() = HomeToolCatalogRequest(voiceModeActive.value,
+        lastVoiceResponseConversation.value != null && lastVoiceResponseConversation.value == conversations?.activeConversationId(),
+        voiceStartAllowed())
+
+    private fun voiceStartAllowed() = homeVoiceStartAllowed(cognitiveSession.state.value,
+        snapshotManager.snapshot.value.speech, textSubmission.value.busy, _conversationChanging.value, _listeningRequested.value)
     fun recordDailyAction(action: com.halo.app.daily.DailyAssistantAction) { dailyController?.recordAction(action) }
 
     private val mapper = HomeUiMapper()
@@ -620,15 +659,65 @@ class HomeViewModel(
                 sourceAvailable=turn.metadata["contextWorkspaceObjectId"] != null,
                 expiresAtMs=turn.timestamp + 120_000),System.currentTimeMillis())
     }.stateIn(viewModelScope,SharingStarted.WhileSubscribed(0),emptyList())
-    fun selectContext(id: String) = viewModelScope.launch {
-        try { ManualDependencyGraph.visualAttachments.remove(); ManualDependencyGraph.interactionContext.selectWorkspace(id) }
-        catch(error: Exception) { captureMessage.value = error.message ?: "Source unavailable" }
+    fun selectContext(id: String) {
+        if (_conversationChanging.value) return
+        val conversationAtTap = conversations?.activeConversationId()
+        viewModelScope.launch {
+            try { conversationNavigationMutex.withLock {
+                check(conversationAtTap != null && conversationAtTap == conversations?.activeConversationId() && !_conversationChanging.value)
+                ManualDependencyGraph.interactionContext.selectWorkspace(id)
+                ManualDependencyGraph.visualAttachments.remove()
+            } }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { captureMessage.value = error.message ?: "Source unavailable" }
+        }
     }
     fun removeContext(category: com.halo.runtime.cognition.context.ContextCategory) = viewModelScope.launch {
         if(category == com.halo.runtime.cognition.context.ContextCategory.VISUAL) ManualDependencyGraph.visualAttachments.remove()
         ManualDependencyGraph.interactionContext.remove(category)
     }
     fun useUpdatedContext(id: String) = selectContext(id)
+    fun importDocumentForContext(uri: android.net.Uri) {
+        if (!importingSource.compareAndSet(false, true)) return
+        sourceImportFailed.value = false
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val file = ManualDependencyGraph.workspaceUseCases.importForCanvas(uri)
+                _importedSource.value = HomeImportedSource(file.objectId.value, file.displayName, homeImportedSourceKind(file.mimeType))
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { sourceImportFailed.value = true }
+            finally { importingSource.value = false }
+        }
+    }
+    fun dismissImportedSource() {
+        sourceBindingGeneration++
+        sourceBindingJob?.cancel()
+        _bindingSource.value = false
+        _importedSource.value = null
+    }
+    fun attachImportedSource() {
+        val source = _importedSource.value?.takeIf { it.canAttach } ?: return
+        if (_conversationChanging.value || !_bindingSource.compareAndSet(false, true)) return
+        val conversationAtTap = conversations?.activeConversationId()
+        val generation = ++sourceBindingGeneration
+        sourceBindingJob = viewModelScope.launch {
+            try {
+                conversationNavigationMutex.withLock {
+                    check(conversationAtTap != null && conversationAtTap == conversations?.activeConversationId() && !_conversationChanging.value)
+                    ManualDependencyGraph.interactionContext.selectWorkspace(source.objectId)
+                    ManualDependencyGraph.visualAttachments.remove()
+                    _importedSource.compareAndSet(source, null)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { _importedSource.compareAndSet(source, source.copy(attachmentFailed = true)) }
+            finally { if (generation == sourceBindingGeneration) _bindingSource.value = false }
+        }
+    }
+    fun openImportedSourceInStudy() {
+        val source = _importedSource.value?.takeIf { it.kind == HomeImportedSourceKind.PDF } ?: return
+        _importedSource.value = null
+        viewModelScope.launch { _navigationEvents.emit("study?captureSource=${android.net.Uri.encode(source.objectId)}") }
+    }
     fun performNextAction(action: com.halo.runtime.cognition.context.ContextualNextAction) = viewModelScope.launch {
         val target = action.target
         (action.sourceReference as? com.halo.runtime.cognition.context.ContextReference.ConversationTurn)?.let { ref ->
@@ -841,6 +930,7 @@ class HomeViewModel(
     }
     fun newConversation() {
         if (!_conversationChanging.compareAndSet(false, true)) return
+        voiceStartGeneration++
         viewModelScope.launch {
             try {
                 conversationNavigationMutex.withLock {
@@ -868,6 +958,7 @@ class HomeViewModel(
     fun openConversation(id: String) {
         val store = conversations ?: return
         if (!_conversationChanging.compareAndSet(false, true)) return
+        voiceStartGeneration++
         viewModelScope.launch {
             try {
                 conversationNavigationMutex.withLock {
@@ -989,7 +1080,9 @@ class HomeViewModel(
         }
     }
 
-    fun startListening() {
+    fun startListening() = startListeningIfCurrent(null)
+
+    private fun startListeningIfCurrent(voiceGeneration: Long?) {
         if (_conversationChanging.value) return
         val conversationAtTap = conversations?.activeConversationId()
         synchronized(voiceModeLock) {
@@ -1000,6 +1093,8 @@ class HomeViewModel(
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {
+                if (voiceGeneration != null && (voiceGeneration != voiceStartGeneration || !_voiceModeActive.value ||
+                        conversationAtTap != conversations?.activeConversationId())) return@withLock
                 runCatching {
                     cognitiveSession.cancel()
                     stopSpeechOutput()
@@ -1039,12 +1134,16 @@ class HomeViewModel(
     }
 
     fun startVoiceMode() {
-        if (_conversationChanging.value || !speechAvailability.value || !microphonePermission.value) return
+        if (!voiceStartAllowed() || _voiceModeActive.value || !speechAvailability.value || !microphonePermission.value) return
         val conversationStore = conversations ?: return
+        val generation = voiceStartGeneration
+        val conversationAtTap = conversationStore.activeConversationId()
         viewModelScope.launch {
             try {
                 conversationStore.awaitReady()
-                if (_conversationChanging.value) return@launch
+                if (generation != voiceStartGeneration ||
+                    (conversationAtTap != null && conversationAtTap != conversationStore.activeConversationId()) ||
+                    !voiceStartAllowed() || _voiceModeActive.value || !speechAvailability.value || !microphonePermission.value) return@launch
                 val conversation = conversationStore.activeConversationId()
                     ?: error("VOICE_MODE_CONVERSATION_UNAVAILABLE")
                 synchronized(voiceModeLock) {
@@ -1055,7 +1154,7 @@ class HomeViewModel(
                     _voiceModeListeningPaused.value = false
                     _voiceModeActive.value = true
                 }
-                startListening()
+                startListeningIfCurrent(generation)
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -1162,7 +1261,7 @@ class HomeViewModel(
     }
 
     /** A foreground Voice Mode does not keep the microphone when Home is no longer visible. */
-    fun onHomeStopped() = stopVoiceMode()
+    fun onHomeStopped() { voiceStartGeneration++; stopVoiceMode() }
 
     private fun stopVoiceModeStateOnly(): Boolean = synchronized(voiceModeLock) {
         val wasActive = _voiceModeActive.value
@@ -1231,4 +1330,26 @@ class HomeViewModel(
     fun navigateToIntelligence() { viewModelScope.launch { _navigationEvents.emit("ai_settings") } }
     fun navigateToVoice() { viewModelScope.launch { _navigationEvents.emit("voice_settings") } }
     fun navigateToDevices() { viewModelScope.launch { _navigationEvents.emit("devices") } }
+    fun openToolScreen(action: HomeToolAction) {
+        val route = when (action) {
+            HomeToolAction.NOTEBOOK -> "notebook"
+            HomeToolAction.STUDY -> "study"
+            HomeToolAction.CONNECTIONS -> "integrations"
+            else -> return
+        }
+        viewModelScope.launch { _navigationEvents.emit(route) }
+    }
+    fun openToolRecovery(recovery: HomeToolRecovery) {
+        val route = when (recovery) {
+            HomeToolRecovery.ANSWERS -> "ai_settings"
+            HomeToolRecovery.PERMISSIONS -> "permissions"
+            HomeToolRecovery.DEVICES -> "devices"
+            HomeToolRecovery.SETTINGS -> "settings"
+            HomeToolRecovery.SKILLS -> "skills"
+            HomeToolRecovery.VOICE -> "voice_settings"
+            HomeToolRecovery.NOTEBOOK -> "notebook"
+            else -> return
+        }
+        viewModelScope.launch { _navigationEvents.emit(route) }
+    }
 }

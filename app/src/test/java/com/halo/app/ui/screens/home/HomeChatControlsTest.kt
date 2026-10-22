@@ -21,6 +21,27 @@ import org.robolectric.annotation.Config
 class HomeChatControlsTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun composerPreservesEditingAcrossCompactViewportChanges() {
+        val compact = mutableStateOf(false)
+        val draft = mutableStateOf("first line\nsecond line")
+        compose.setContent { HaloTheme {
+            val configuration = android.content.res.Configuration(androidx.compose.ui.platform.LocalConfiguration.current)
+            configuration.screenHeightDp = if (compact.value) 360 else 800
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalConfiguration provides configuration) {
+                HaloComposer(draft.value, { draft.value = it }, {}, {}, {}, true, true, false, "Talk", false)
+            }
+        } }
+        val field = compose.onNodeWithContentDescription("Message")
+        field.performClick()
+        compose.runOnIdle { compact.value = true }
+        field.assertIsDisplayed().assertTextContains("first line\nsecond line")
+        field.performTextReplacement("edited first\nedited second")
+        compose.runOnIdle { compact.value = false }
+        field.assertTextContains("edited first\nedited second")
+        assertEquals("edited first\nedited second", draft.value)
+    }
+
     @Test fun headerNavigationRemainsReachableAtNarrowWidthAndLargeText() {
         var history = 0
         var newChat = 0

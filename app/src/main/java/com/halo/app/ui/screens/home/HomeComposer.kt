@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 import androidx.compose.material3.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -51,18 +53,24 @@ internal fun HaloComposer(
     val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
     val compact = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 480
     val field: @Composable (Modifier) -> Unit = { fieldModifier ->
-        TextField(
+        BasicTextField(
             value = value, onValueChange = onValueChange,
             enabled = focusAllowed,
             modifier = fieldModifier.semantics { contentDescription = messageLabel }.then(
                 if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
-            placeholder = { Text(uiText("Ask Halo…")) }, minLines = 1, maxLines = if (compact) 2 else 4,
-            shape = HaloShapes.pill,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                unfocusedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent),
+            // Keep one vertical text scroller across IME/rotation changes. Material's
+            // multiline decoration padding clips the baseline in a short landscape row.
+            minLines = 1, maxLines = if (compact) 2 else 4,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = scheme.onSurface),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(scheme.primary),
+            decorationBox = { editor ->
+                Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = if (compact) 0.dp else 8.dp),
+                    contentAlignment = Alignment.CenterStart) {
+                    if (value.isEmpty()) Text(uiText("Ask Halo…"),
+                        style = MaterialTheme.typography.bodyLarge, color = scheme.onSurfaceVariant)
+                    Box(Modifier.fillMaxWidth().testTag("home_composer_editor")) { editor() }
+                }
+            },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = {
                 if (homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)

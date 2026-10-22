@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.ModelArtifactFileLocksTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-22T22:02:01.886Z" hostname="MINIFOXEY" time="0.064">
+  <properties/>
+  <testcase name="readerPinBlocksManagerMutationAndReleasesAfterClose" classname="com.halo.providers.litert.models.ModelArtifactFileLocksTest" time="0.059"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

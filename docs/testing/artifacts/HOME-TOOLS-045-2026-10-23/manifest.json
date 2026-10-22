@@ -1,0 +1,95 @@
+{
+  "issue": 45,
+  "date": "2026-10-23",
+  "compiled_app_tree": "2c8bab75b2014f8e43e6da95a383903e17d219df",
+  "integrated_main": "5a4047fec6dc9c561969c446641b22373d5157e2",
+  "apk": {
+    "bytes": 286483453,
+    "sha256": "68f53c0f6c822fef8fdd88ac72d668b914e9aea5647f97ea46d05d92de2c14eb",
+    "binary_committed": false
+  },
+  "final_gate": {
+    "result": "PASS",
+    "app": {
+      "tests": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "classes": [
+      "com.halo.app.audio.ConversationalVoiceTest",
+      "com.halo.app.context.ContextAdapterTest",
+      "com.halo.app.context.ContextFileRevisionTest",
+      "com.halo.app.data.workspace.WorkspaceRepositoryTest",
+      "com.halo.app.lab.bridge.HaloLabProtocolTest",
+      "com.halo.app.lab.bridge.LabAttemptDeadlinePolicyTest",
+      "com.halo.app.lab.bridge.LabAttemptStageBudgetsTest",
+      "com.halo.app.online.OnlineAdmissionTest",
+      "com.halo.app.study.StudySourcesTest",
+      "com.halo.app.ui.screens.home.HomeAttachmentSheetTest",
+      "com.halo.app.ui.screens.home.HomeChatControlsTest",
+      "com.halo.app.ui.screens.home.HomeComposerVisualTest",
+      "com.halo.app.ui.screens.home.HomeResponseProjectionTest",
+      "com.halo.app.ui.screens.home.HomeThreadPresentationTest",
+      "com.halo.app.ui.screens.home.HomeToolCatalogReaderTest",
+      "com.halo.app.ui.screens.home.HomeToolCatalogTest",
+      "com.halo.app.ui.screens.home.HomeToolsSheetTest",
+      "com.halo.app.ui.screens.home.HomeToolsVisualTest",
+      "com.halo.app.ui.screens.home.TextSubmissionStateTest"
+    ],
+    "renders": [
+      "com.halo.app.ui.screens.home.HomeAttachmentSheetTest.russianAttachmentLargeText.png",
+      "com.halo.app.ui.screens.home.HomeAttachmentSheetTest.shortLandscapeAttachmentLargeText.png",
+      "com.halo.app.ui.screens.home.HomeComposerVisualTest.landscapeEditorFitsAnActual48dpRow.png",
+      "com.halo.app.ui.screens.home.HomeComposerVisualTest.landscapeLargeTextEditorFitsAnActual48dpRow.png",
+      "com.halo.app.ui.screens.home.HomeToolsVisualTest.englishTools360.png",
+      "com.halo.app.ui.screens.home.HomeToolsVisualTest.latvianToolsLargeText.png",
+      "com.halo.app.ui.screens.home.HomeToolsVisualTest.russianPdfReceiptLargeText.png",
+      "com.halo.app.ui.screens.home.HomeToolsVisualTest.russianToolsLargeText.png"
+    ],
+    "gradle_heap": "3g",
+    "parallel": false,
+    "workers": 1,
+    "record_roborazzi": true,
+    "duration": "BUILD SUCCESSFUL in 8m 32s"
+  },
+  "litert_lock": {
+    "tests": 1,
+    "result": "PASS",
+    "execution": "Earlier integrated gate; unchanged inputs, cached in subsequent 160-case gate; not newly executed by final app-only gate"
+  },
+  "device": {
+    "model": "SM_G990B2",
+    "api": 36,
+    "language": "RU",
+    "profile": "Private",
+    "earlier_evidence_sha256": "4fad7b18842e2af055eb108d81c6531cf2bc0cdfdbc0cc40214390b50c038813",
+    "earlier_evidence": [
+      "final-file-receipt",
+      "final-file-bound",
+      "final-file-removed",
+      "final-python-preview"
+    ],
+    "final_evidence": [
+      "corrected-landscape-ime",
+      "corrected-360-font200-attachments",
+      "corrected-412-font200-tools"
+    ],
+    "installed_hash_readback": "MATCH",
+    "restored": {
+      "density": "480 physical, no override",
+      "font_scale": 1.0,
+      "accelerometer_rotation": 1,
+      "user_rotation": 0
+    }
+  },
+  "unqualified": [
+    "TalkBack",
+    "full release matrix",
+    "live provider/error/offline flows",
+    "Private/Power network tracing",
+    "all speech states",
+    "process-death restoration",
+    "prior API35 failures"
+  ]
+}

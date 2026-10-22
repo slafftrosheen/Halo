@@ -17,6 +17,12 @@ class GroundedWebSearchService(
 ) {
     private val consents = OneShotConsent()
     private val ledger = OnlineOperationLedger(storage)
+    /** Local preflight for discovery. No challenge, reservation, probe or request is created. */
+    fun availability(): OnlineProblem? = try {
+        checkAccess(null)
+        key()
+        null
+    } catch (rejected: OnlineOperationRejected) { rejected.problem }
     suspend fun prepare(query: String, language: String): OnlineConsentChallenge = withContext(Dispatchers.IO) {
         checkAccess(query)
         checkLanguage(language)
@@ -61,11 +67,11 @@ class GroundedWebSearchService(
         if (router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         whileCloudMode(privacyModes) { client.keyUsage(key()) }
     }
-    private fun checkAccess(query: String) {
+    private fun checkAccess(query: String?) {
         if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (!allowOnline()) throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
         if (router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
-        if (query.trim().length !in 1..2000) throw OnlineOperationRejected(OnlineProblem.INVALID_RESPONSE)
+        if (query != null && query.trim().length !in 1..2000) throw OnlineOperationRejected(OnlineProblem.INVALID_RESPONSE)
         if (router.getAllProviders().none { it.id == "openrouter" }) throw OnlineOperationRejected(OnlineProblem.UNAVAILABLE)
     }
     private fun checkLanguage(language: String) {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceRepositoryTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:10:28.317Z" hostname="MINIFOXEY" time="9.537">
+  <properties/>
+  <testcase name="shareCancellationDoesNotBecomeSuccessOrContinueImporting" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="4.128"/>
+  <testcase name="multipleSharesKeepSuccessfulItemsAndDeduplicateClipData" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="4.453"/>
+  <testcase name="createNoteAndImportFileAppearsInWorkspaceRepository" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="0.143"/>
+  <testcase name="boundedCopyRejectsInterruptedEmptyAndOversizedReadsWithoutOwningPartialBytes" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="0.135"/>
+  <testcase name="repeatedOwnedCopyKeepsIdentityAndBytesAndRevokedPermissionDoesNotCreateArtifact" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="0.108"/>
+  <testcase name="archiveAndTrashChangeWorkspaceObjectLifecycle" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="0.073"/>
+  <testcase name="sendIntentHandlerImportsSharedText" classname="com.halo.app.data.workspace.WorkspaceRepositoryTest" time="0.075"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

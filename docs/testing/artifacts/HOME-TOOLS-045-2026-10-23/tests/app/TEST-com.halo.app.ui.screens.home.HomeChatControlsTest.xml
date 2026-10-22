@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeChatControlsTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:09:56.136Z" hostname="MINIFOXEY" time="10.721">
+  <properties/>
+  <testcase name="historyUsesStoredTitlesAndSelectsTheExactConversation" classname="com.halo.app.ui.screens.home.HomeChatControlsTest" time="8.894"/>
+  <testcase name="messageActionsStayQuietAndFollowTheExactMessageIdentity" classname="com.halo.app.ui.screens.home.HomeChatControlsTest" time="0.442"/>
+  <testcase name="composerPreservesEditingAcrossCompactViewportChanges" classname="com.halo.app.ui.screens.home.HomeChatControlsTest" time="0.642"/>
+  <testcase name="headerNavigationRemainsReachableAtNarrowWidthAndLargeText" classname="com.halo.app.ui.screens.home.HomeChatControlsTest" time="0.229"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeToolsSheetTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:11:25.624Z" hostname="MINIFOXEY" time="7.816">
+  <properties/>
+  <testcase name="importedPdfOnlyOffersStudyAndNeverAttachesOnOpen" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="3.413"/>
+  <testcase name="stoppingHomeCancelsPendingStartWithoutDisposingSheet" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="2.845"/>
+  <testcase name="dismissalCancelsPendingUse" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.271"/>
+  <testcase name="explicitUseRechecksAndDoesNotExecuteRevokedAction" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.277"/>
+  <testcase name="stopIntentCannotTurnIntoStartWhileAvailabilityIsRead" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.362"/>
+  <testcase name="browsingAndPlannedDetailsNeverResolveOrExecute" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.39"/>
+  <testcase name="setupOpensOnlyTheAdvertisedRecovery" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.244"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

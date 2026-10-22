@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.context.ContextAdapterTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:10:11.609Z" hostname="MINIFOXEY" time="10.205">
+  <properties/>
+  <testcase name="expiryFailsInsteadOfCapturingOrReplacing" classname="com.halo.app.context.ContextAdapterTest" time="8.598"/>
+  <testcase name="clearingPreviousConversationKeepsCurrentSelection" classname="com.halo.app.context.ContextAdapterTest" time="0.143"/>
+  <testcase name="replacingAnAttachmentInvalidatesSelectionWithoutChangingNoteTextRevision" classname="com.halo.app.context.ContextAdapterTest" time="0.22"/>
+  <testcase name="exactFollowUpKeepsXAfterYArrivesAndVoiceModalityIsUnchanged" classname="com.halo.app.context.ContextAdapterTest" time="0.095"/>
+  <testcase name="objectPrivacyStillRejectsRemoteAndDeletionRejectsStaleReference" classname="com.halo.app.context.ContextAdapterTest" time="0.101"/>
+  <testcase name="secondExplicitImageCannotReplaceSelectedImage" classname="com.halo.app.context.ContextAdapterTest" time="0.08"/>
+  <testcase name="cancelledTurnRetainsExactSelectedImageForRetry" classname="com.halo.app.context.ContextAdapterTest" time="0.084"/>
+  <testcase name="completedVisualTurnRetainsExactImageForExplicitFollowUp" classname="com.halo.app.context.ContextAdapterTest" time="0.092"/>
+  <testcase name="newConversationDoesNotInheritImage" classname="com.halo.app.context.ContextAdapterTest" time="0.094"/>
+  <testcase name="reviewedResultDoubleSaveCreatesOneObjectAndKeepsExactConversation" classname="com.halo.app.context.ContextAdapterTest" time="0.145"/>
+  <testcase name="noteSelectionDoesNotWriteWorkingSetAndChangedRevisionRequiresReselection" classname="com.halo.app.context.ContextAdapterTest" time="0.116"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

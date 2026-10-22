@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeAttachmentSheetTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:11:03.400Z" hostname="MINIFOXEY" time="15.08">
+  <properties/>
+  <testcase name="expandedChooserPreservesLargeTextAndKeepsDismissalReachable" classname="com.halo.app.ui.screens.home.HomeAttachmentSheetTest" time="13.346"/>
+  <testcase name="russianAttachmentLargeText" classname="com.halo.app.ui.screens.home.HomeAttachmentSheetTest" time="1.048"/>
+  <testcase name="shortLandscapeAttachmentLargeText" classname="com.halo.app.ui.screens.home.HomeAttachmentSheetTest" time="0.283"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

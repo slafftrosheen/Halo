@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeToolCatalogReaderTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:11:21.282Z" hostname="MINIFOXEY" time="4.296">
+  <properties/>
+  <testcase name="readyConnectionWithMissingOrIneligibleModelRequiresAnswersSetup" classname="com.halo.app.ui.screens.home.HomeToolCatalogReaderTest" time="3.875"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

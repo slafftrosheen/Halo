@@ -78,11 +78,5 @@ fun imageProviderPricingUrl(provider: String): String? = when (provider) {
 
 @Composable internal fun rememberOnlineSearchService(): GroundedWebSearchService {
     val graph = com.halo.app.di.ManualDependencyGraph
-    val storage = graph.storage
-    val router = graph.aiProviderRouter
-    val kids = graph.kidsPreferences
-    return remember(storage, router, kids) {
-        GroundedWebSearchService(storage, router,
-            allowOnline = { kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) }, privacyModes = graph.privacyModes.mode)
-    }
+    return remember(graph) { graph.groundedWebSearchService }
 }

@@ -157,6 +157,9 @@ object ManualDependencyGraph {
     val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage,
         allowImages = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
         allowReference = { id -> workspaceMediaAiPolicy.permitsObject(id, false) }, privacyModes = privacyModes.mode) }
+    val groundedWebSearchService by lazy { com.halo.app.online.GroundedWebSearchService(storage, aiProviderRouter,
+        allowOnline = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+        privacyModes = privacyModes.mode) }
     val notebookAssetRepository by lazy {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
@@ -1464,6 +1467,22 @@ object ManualDependencyGraph {
         )
     }
 
+    private val homeToolCatalogReader by lazy {
+        com.halo.app.ui.screens.home.HomeToolCatalogReader(applicationContext, toolRegistry, toolAvailabilityResolver,
+            selectedProvider = { providerControlRepository.rows.value.firstOrNull {
+                it.descriptor.providerId == aiProviderRouter.selectedProviderId.value } },
+            answerModelAvailable = { providerControlRepository.roleTarget(com.halo.sdk.provider.AiModelRole.CHAT)?.eligible == true },
+            privacyMode = { privacyModes.mode.value },
+            familyAllowsOnline = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+            webAvailability = groundedWebSearchService::availability,
+            researchEnabled = { storage.getBoolean("policy_long_task_delegation", true) },
+            speechReady = { speechRecognitionAvailability.value }, attachmentsAvailable = { true },
+            imageConfigured = {
+                val (providerId, modelId) = workspaceImageService.lastChoice()
+                !modelId.isNullOrBlank() && workspaceImageService.providers.any { it.id == providerId } &&
+                    providerControlRepository.rows.value.any { it.descriptor.providerId == providerId && it.configured }
+            })
+    }
     val homeViewModel by lazy {
         RuntimeStartupTrace.measure("viewmodel.home") {
             HomeViewModel(
@@ -1487,7 +1506,11 @@ object ManualDependencyGraph {
                     { notificationInboxSource.refresh();
                         val active = com.halo.host.android.assistant.AssistantEligibilityInspector(applicationContext).inspect().activeVoiceInteractionService
                         val available = skillRegistry.skills.value.flatMap { skillExecutionService.check(it.id).entries }.filter { it.value == "Available" }.map { it.key }.toSet()
-                        com.halo.app.ui.screens.home.HomeDashboardState(assistantActive = active, quickTools = available, nativeReady = "halo_open_app" in available && "halo_timer" in available) })
+                        com.halo.app.ui.screens.home.HomeDashboardState(assistantActive = active, quickTools = available, nativeReady = "halo_open_app" in available && "halo_timer" in available) },
+                    catalog = { request ->
+                        hostGraph.capabilityPublisher.publishInto(capabilityCatalogue)
+                        homeToolCatalogReader.read(request)
+                    })
             )
         }
     }

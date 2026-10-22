@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.lab.bridge.LabAttemptStageBudgetsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-22T23:10:40.587Z" hostname="MINIFOXEY" time="0.007">
+  <properties/>
+  <testcase name="rejectsInvalidOrOverflowedStageBudgets" classname="com.halo.app.lab.bridge.LabAttemptStageBudgetsTest" time="0.006"/>
+  <testcase name="acceptsOnlyBoundedStageBudgetsAndSumsExactly" classname="com.halo.app.lab.bridge.LabAttemptStageBudgetsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
