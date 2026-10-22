@@ -3776,6 +3776,8 @@
     <string name="ui_0562eec23e31" formatted="false">"Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci."</string>
     <string name="ui_52c1af2b9004" formatted="false">"Atlasīto triepienu priekšskatījums"</string>
     <string name="ui_b4c50261ef99" formatted="false">"Atlasīto lapas triepienu priekšskatījums (avota lapa nav redzama)"</string>
+    <string name="ui_32eae2988e9f" formatted="false">"Atlase kanvā"</string>
+    <string name="ui_17c3fa4440e9" formatted="false">"Pirms jautā par tintes atlasi, noņem pašreizējo attēla pielikumu."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Atlase pievienota darba kopai"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts."</string>
 </resources>

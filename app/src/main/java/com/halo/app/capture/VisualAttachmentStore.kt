@@ -43,6 +43,13 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
         attachContent(MediaAssetContent(file.readBytes(), "image/jpeg"), "Camera", MediaProvenance.PHONE_CAMERA)
     }
 
+    /** Attach a bounded derived image through the same explicit context and privacy path as user-selected media. */
+    suspend fun attachGeneratedImage(bytes: ByteArray, source: String, workspaceObjectId: String): VisualAttachment =
+        withContext(Dispatchers.IO) {
+            require(bytes.size in 1..ImageInputLimits().maxBytes)
+            attachContent(MediaAssetContent(bytes, "image/png"), source, MediaProvenance.WORKSPACE, workspaceObjectId)
+        }
+
     private suspend fun attachContent(content: MediaAssetContent, source: String, provenance: MediaProvenance, workspaceObjectId: String? = null): VisualAttachment = lock.withLock {
         check(pending.value == null) { "Remove the attached image before selecting another" }
         val ref = media.ingest(content, provenance, "attachment:${UUID.randomUUID()}", workspaceObjectId = workspaceObjectId)

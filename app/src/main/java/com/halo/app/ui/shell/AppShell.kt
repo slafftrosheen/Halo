@@ -582,7 +582,17 @@ fun AppShell(
                                     is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenStudy -> navigateSafely("notebook/study/${android.net.Uri.encode(event.sessionId)}")
                                     is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.StartStudyFromSource -> navigateSafely(
                                         "study?captureSource=${android.net.Uri.encode(event.noteId)}&goal=${android.net.Uri.encode(event.goal)}")
-                                    com.halo.app.ui.screens.notebook.CanvasEditorNavigation.AskAboutSelection -> {
+                                    is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.AskAboutSelection -> {
+                                        if (event.crop != null) {
+                                            try {
+                                                ManualDependencyGraph.visualAttachments.attachGeneratedImage(
+                                                    event.crop.bytes, "Canvas selection", event.canvasId)
+                                            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                            catch (_: Exception) {
+                                                canvasViewModel.showNotice("Remove the current image attachment before asking about an ink selection.")
+                                                return@collectLatest
+                                            }
+                                        }
                                         ManualDependencyGraph.homeViewModel.selectedMode.value = com.halo.runtime.cognition.context.CognitiveOperatingMode.ASK
                                         ManualDependencyGraph.homeViewModel.requestInkSelectionAskPrompt()
                                         navigateSafely("home")

@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.notebook
 import android.net.Uri
 import com.halo.app.data.notebook.CanvasFileMarkupCodec
 import com.halo.app.data.notebook.InkSelectionBookmarkCodec
+import com.halo.sdk.runtime.multimodal.MediaAssetContent
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiExecutionLocation
 import com.halo.sdk.provider.AiRequest
@@ -121,7 +122,7 @@ sealed interface CanvasEditorNavigation {
     data class OpenObject(val objectRef: WorkspaceObject) : CanvasEditorNavigation
     data class OpenStudy(val sessionId: String) : CanvasEditorNavigation
     data class StartStudyFromSource(val noteId: String, val goal: String) : CanvasEditorNavigation
-    data object AskAboutSelection : CanvasEditorNavigation
+    data class AskAboutSelection(val canvasId: String, val crop: MediaAssetContent?) : CanvasEditorNavigation
 }
 
 class CanvasEditorViewModel(
@@ -702,8 +703,22 @@ class CanvasEditorViewModel(
     fun askAboutInkSelection(selectionNodeId: String) = command {
         flushPendingEdits()
         requireNotNull(workspace) { "Working set is unavailable." }.selectInkSelection(canvasId, selectionNodeId)
-        navigation.send(CanvasEditorNavigation.AskAboutSelection)
+        val current = mutableState.value
+        val bookmark = current.nodes.firstOrNull { it.id == selectionNodeId &&
+            it.type == com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION } ?: error("Selection is unavailable.")
+        val sourceId = current.edges.firstOrNull { it.toNodeId == selectionNodeId && it.label == "selection" }?.fromNodeId
+        val source = sourceId?.let { id -> current.nodes.firstOrNull { it.id == id } }
+        val context = InkSelectionBookmarkCodec.decode(bookmark.text)
+        val crop = if (context != null && source?.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH &&
+            bookmark.inkSelectionIsCurrent(source, canvasId)) {
+            runCatching {
+                withContext(Dispatchers.Default) { CanvasInkSelectionCropRenderer.renderSketch(source.text, context) }
+            }.getOrNull()?.let { MediaAssetContent(it, "image/png") }
+        } else null
+        navigation.send(CanvasEditorNavigation.AskAboutSelection(canvasId, crop))
     }
+
+    fun showNotice(message: String) { mutableState.value = mutableState.value.copy(notice = message) }
     fun keepDrawingDraft(draft: com.halo.app.data.notebook.CanvasDrawingDraft) = command {
         repository.saveDrawingDraft(canvasId, draft)
         mutableState.value = mutableState.value.copy(drawingDraft = draft)

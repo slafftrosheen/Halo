@@ -3780,5 +3780,7 @@ Explain this selected region using its saved reference. If the reference is not 
 Use my saved ink selection as the referent.|||Используй моё сохранённое выделение как объект вопроса.|||Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci.
 Selected marks preview|||Предпросмотр выделенных штрихов|||Atlasīto triepienu priekšskatījums
 Selected page marks preview (source page not shown)|||Предпросмотр штрихов страницы (сама страница не показана)|||Atlasīto lapas triepienu priekšskatījums (avota lapa nav redzama)
+Canvas selection|||Выделение на холсте|||Atlase kanvā
+Remove the current image attachment before asking about an ink selection.|||Перед вопросом о чернильном выделении удалите текущее вложенное изображение.|||Pirms jautā par tintes atlasi, noņem pašreizējo attēla pielikumu.
 Selection added to working set|||Выделение добавлено в рабочий набор|||Atlase pievienota darba kopai
 Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized.|||Рабочий набор использует ссылку на эту область вместо всего холста; рисунок остаётся на устройстве и не распознаётся.|||Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts.
