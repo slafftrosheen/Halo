@@ -93,7 +93,18 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     val learning = sessions.map { session ->
         LocalSearchSourceChoice("study:${session.id}",session.goal?.takeIf { it.isNotBlank() } ?: "Study session")
     }
-    return (workspace + learning + pictures + audio + videos + canvasPictures).distinctBy { it.id }.take(64)
+    val groups = listOf(workspace, learning, pictures, audio, videos, canvasPictures)
+    val sources = ArrayList<LocalSearchSourceChoice>(64)
+    val seen = HashSet<String>()
+    val maxGroupSize = groups.maxOfOrNull { it.size } ?: 0
+    for (index in 0 until maxGroupSize) {
+        for (group in groups) {
+            val choice = group.getOrNull(index) ?: continue
+            if (seen.add(choice.id)) sources += choice
+            if (sources.size == 64) return sources
+        }
+    }
+    return sources
 }
 
 /** Maps technical error codes to user-facing English messages. No @Composable calls here. */

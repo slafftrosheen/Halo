@@ -84,6 +84,16 @@ class NotebookLocalSearchSourcesTest {
         assertTrue(choices.last().title.contains("diagram.png"))
     }
 
+    @Test fun canvasImagesRemainAvailableWhenNotebookExceedsSourceLimit() {
+        val manyNotes = (1..80).map { item("note$it", WorkspaceObjectType.NOTE) }
+        val image = CanvasImageSearchSource("board1", "node1", "file1", "Board", "diagram.png", "image/png")
+        val choices = notebookSearchSources(manyNotes + item("board1", WorkspaceObjectType.CANVAS), emptyList(),
+            canvasImages = listOf(image))
+
+        assertEquals(64, choices.size)
+        assertTrue(choices.any { it.id == "canvas-image:board1:node1" })
+    }
+
     @Test fun lowMemoryAndUnknownFailuresUseBoundedUserLanguage() {
         assertTrue(localSearchUserErrorMessage(IllegalStateException("MEMORY_NOT_ADMITTED")).contains("memory"))
         assertTrue(localSearchUserErrorMessage(IllegalStateException("AUDIO_SOURCE_COUNT_LIMIT")).contains("eight"))
