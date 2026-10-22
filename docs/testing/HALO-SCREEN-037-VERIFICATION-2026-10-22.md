@@ -32,3 +32,5 @@ Installed the current debug APK on the attached Samsung SM-G990B2 (Android 16 / 
 ```
 
 Opened Halo Screen from Chat. The saved Focus layout rendered after the app update. Entered full-screen mode and observed the exit, Screen settings, and Talk to Halo actions; the personal card was masked while “Hide private details” was enabled. Tapping the visible exit control returned to standard Screen, and Android Back also exited full-screen mode. The persistent mode switch showed the new `Private / Power` label in Russian UI. No model was loaded and no inference was run. These checks establish a current-build phone UI smoke pass only; the remaining gates above are unchanged.
+
+At system font scale `2.0` (200%), the Focus title and reading card remained within the viewport, longer text wrapped, and the page remained vertically scrollable with bottom navigation visible. The original system font scale was `1.0` and was restored after the check. This is a large-text phone check, not TalkBack or tablet-layout evidence.
