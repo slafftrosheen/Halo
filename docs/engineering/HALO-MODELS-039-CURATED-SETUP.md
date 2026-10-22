@@ -83,9 +83,10 @@ phone validation. Source checks are not a passing test or runtime result.
 
 ## Remaining #39 scope — keep the issue open
 
-- A transactional, resumable one-click multi-role pack installer spanning
-  LLM/intent/STT/VAD/TTS, with aggregate storage budget, rollback and process-death
-  recovery. This batch only reuses individual-model download controls.
+- **Updated since the base batch:** a resumable starter bundle for intent/STT/VAD/TTS
+  now has a durable journal, aggregate storage admission, owner-controlled transfers,
+  resume, and rollback. This is not a complete local conversation LLM pack and does
+  not auto-select or qualify any model. See the source follow-up below.
 - A complete, audited per-artifact provenance/license/backend manifest and
   device/runtime/role/language qualification matrix, including invalidation on
   upgrades. Existing evidence owners remain; no new evidence is fabricated.
@@ -97,6 +98,8 @@ phone validation. Source checks are not a passing test or runtime result.
   and source/privacy setup. Compile and execute the new cases only when authorized.
 
 Polish voice support does not imply Polish app UI; this patch adds EN/RU/LV only.
+Subsequent Polish UI source slices are recorded in their own commits and issue
+comments; the catalog remains partial.
 
 ## Source follow-up — Silero removal owner and VAD rollback
 
@@ -139,3 +142,10 @@ The complete provenance/backend/device/language qualification matrix,
 qualification invalidation, executable owner verification and physical
 acceptance remain open. In particular, acquisition success is not evidence
 that this bundle is recommended for any device or language.
+
+The source follow-up is present on `main` in commits `72edc447425d5b4ead16ada00261ef9690f1ab73`
+(Silero removal owner), `7c2941d686e92b9050af5bbdc575cfe9ee781824` (resumable starter
+bundle), `a707f7f9879699d200ab07cbaad8b27e1a8cb988` (storage preflight), and
+`ea05440b145d00d06cc74f70ce04f8ac25235ba7` (aggregate requirements on shared filesystems).
+These are source revisions only; the new regression cases remain unexecuted and
+owner/device acceptance remains outstanding.
