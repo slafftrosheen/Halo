@@ -3,6 +3,7 @@ package com.halo.app.ai
 import android.content.Context
 import androidx.room.InvalidationTracker
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.study.StudyJson
 import com.halo.providers.litert.LiteRtEmbeddingProvider
 import com.halo.providers.litert.LiteRtArtifactInspector
 import com.halo.providers.litert.LocalEmbeddingInput
@@ -214,11 +215,65 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                     .joinToString("") { "%02x".format(it) }
                 SemanticSource(id,version,"personal",text,"Canvas:$key",board.updatedAt)
             }
-            "study" -> db.studyDao().getSession(key)?.takeIf { it.lifecycle=="ACTIVE" }?.let {
+            "workspace-text" -> {
+                val owner = db.notebookDao().getWorkspaceObject(key)?.takeIf {
+                    it.lifecycle == "ACTIVE" && it.type in setOf("FILE", "MEDIA", "ARTIFACT")
+                } ?: return null
+                val file = db.workspaceFileDao().getFile(key)?.takeIf {
+                    (it.mimeType.startsWith("text/") || it.mimeType == "application/json") &&
+                        it.availability in setOf("AVAILABLE", "OWNED_LOCAL")
+                } ?: return null
+                val text = try {
+                    withContext(Dispatchers.IO) {
+                        val input = if (file.ownedCopyPath != null && file.ownership == "HALO_OWNED") {
+                            val canonical = runCatching { File(file.ownedCopyPath).canonicalFile }.getOrNull()
+                                ?: return@withContext null
+                            val root = com.halo.app.storage.haloStorageLayout(context).managedWorkspaceFiles.canonicalFile
+                            if (!canonical.path.startsWith(root.path + File.separator) || !canonical.isFile)
+                                return@withContext null
+                            canonical.inputStream()
+                        } else {
+                            val uri = android.net.Uri.parse(file.uri)
+                            if (file.ownership != "EXTERNAL_REFERENCE" || uri.scheme != "content" ||
+                                !file.permissionPersisted || file.availability != "AVAILABLE") return@withContext null
+                            context.contentResolver.openInputStream(uri) ?: return@withContext null
+                        }
+                        input.use { it.reader(Charsets.UTF_8).readTextBounded() }
+                    }
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { return null }
+                if (text == null) return null
+                val version = java.security.MessageDigest.getInstance("SHA-256").digest(text.toByteArray())
+                    .joinToString("") { "%02x".format(it) }
+                SemanticSource(id, version, "personal", text, owner.title, owner.updatedAt)
+            }
+            "study" -> db.studyDao().getSession(key)?.takeIf { it.lifecycle=="ACTIVE" }?.let { session ->
                 val cards=db.studyDao().getPracticeItems(key).filter { card -> card.accepted }
-                val text=(it.goal.orEmpty()+"\n"+cards.joinToString("\n") { card -> card.question+"\n"+card.answer }).take(65536)
+                // Study source IDs are explicit user selections. Resolve each through the same
+                // active Notebook/Canvas/text-file source path used by local search, so edits and
+                // removals invalidate this Study snapshot instead of leaving stale passages.
+                val selectedSources = StudyJson.decodeIds(session.sourceObjectIdsJson)
+                    .distinct().take(4).mapNotNull { objectId ->
+                        source("note:$objectId") ?: source("canvas:$objectId") ?: source("workspace-text:$objectId")
+                    }
+                val text = buildString {
+                    append("Study goal:\n").append(session.goal.orEmpty().take(1_000))
+                    append("\nAccepted practice:\n")
+                    cards.forEach { card ->
+                        if (length >= 4_000) return@forEach
+                        val remaining = (4_000 - length).coerceAtLeast(0)
+                        append((card.question + "\n" + card.answer + "\n").take(remaining))
+                    }
+                    selectedSources.forEach { selectedSource ->
+                        if (length >= 65_536) return@forEach
+                        append("\nSelected source: ").append(selectedSource.title)
+                            .append(" [").append(selectedSource.version).append("]\n")
+                        val remaining = (65_536 - length).coerceAtLeast(0)
+                        append(selectedSource.text.take(remaining))
+                    }
+                }.take(65_536)
                 val version=java.security.MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { byte -> "%02x".format(byte) }
-                SemanticSource(id,version,"personal",text,"Study:$key",it.updatedAtEpochMs)
+                SemanticSource(id,version,"personal",text,"Study:$key",session.updatedAtEpochMs)
             }
             "attachment" -> {
                 val ids=key.split(':',limit=2)

@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.notebook.NoteEntity
+import com.halo.app.data.notebook.WorkspaceObjectEntity
 import com.halo.app.data.study.StudyRepository
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.sdk.provider.*
@@ -32,7 +34,13 @@ class WorkspaceEmbeddingRoutingTest {
         val constructed = mutableListOf<String>()
         val sha = "a".repeat(64)
         try {
-            val source = StudyRepository(db, db.studyDao()).createSession(emptyList(), null,
+            val noteId = "selected-study-note"
+            db.notebookDao().insertNoteObject(
+                WorkspaceObjectEntity(noteId, "NOTE", "Selected lesson notes", 1L, 1L,
+                    "USER", "ACTIVE", false, "READY", "note:$noteId"),
+                NoteEntity(noteId, "Selected source explains that fractions compare equal parts.", 1),
+            )
+            val source = StudyRepository(db, db.studyDao()).createSession(listOf(noteId), 1L,
                 StudyLanguagePreferences(), "Fractions compare equal parts")
             val service = WorkspaceSemanticService(context, db, storage, LiteRtModelManager(context),
                 NativeResourceCoordinator(scope = scope), scope, embeddingFactory = { model ->
@@ -58,6 +66,7 @@ class WorkspaceEmbeddingRoutingTest {
             assertTrue(service.selectedContextExcerpts("fractions").isEmpty())
             service.configureAssistantContext(true)
             assertTrue(service.selectedContextExcerpts("fractions").single().contains("Fractions"))
+            assertTrue(service.selectedContextExcerpts("fractions").single().contains("Selected source explains"))
             assertEquals(listOf("embedding-only"), constructed)
             assertEquals(2, requests.size)
             assertTrue(requests.all { it.modelSha256 == sha && it.dimension == 2 })
