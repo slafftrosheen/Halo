@@ -8,8 +8,6 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.readLock
-import kotlin.concurrent.writeLock
 
 /** Cross-process, per-model file pins shared by the existing manager and the benchmark bridge. */
 internal object ModelArtifactFileLocks {
