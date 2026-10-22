@@ -157,4 +157,6 @@
     <string name="ui_0ebd71038088" formatted="false">"halo będzie używać podstawowego wykrywania aktywności mowy. Obsługę trybu bez użycia rąk możesz pobrać ponownie później."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Usuń obsługę rozpoznawania mowy bez użycia rąk"</string>
     <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
+    <string name="ui_73bc756b9086" formatted="false">"Notatka audio"</string>
+    <string name="ui_24741c4aff7c" formatted="false">"Notatka głosowa"</string>
 </resources>
