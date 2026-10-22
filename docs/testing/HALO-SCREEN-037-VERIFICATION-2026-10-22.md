@@ -22,3 +22,13 @@ ADB input was used to exercise phone touch handling. This is device-level UI evi
 ## Still open for #37
 
 This pass does not qualify sourced-research creation, a real local automation result end to end, voice composition, TalkBack traversal, tablet/rotation layouts, or long-duration ambient behavior. Keep #37 open until those remaining acceptance paths are verified.
+
+## Current source checkpoint — 2026-10-22, commit `90f8bf91`
+
+Installed the current debug APK on the attached Samsung SM-G990B2 (Android 16 / API 36, `R5CTA0TKLZZ`) with `adb install -r`, preserving app data. Pulled the installed base APK back from Package Manager; its SHA-256 matched the local artifact exactly:
+
+```text
+13E3626CADD15C0F969E613DC8DDBC86957B9DF0A925D43170DF2448766A0D00
+```
+
+Opened Halo Screen from Chat. The saved Focus layout rendered after the app update. Entered full-screen mode and observed the exit, Screen settings, and Talk to Halo actions; the personal card was masked while “Hide private details” was enabled. Android Back exited ambient mode and restored the standard Screen controls. The persistent mode switch showed the new `Private / Power` label in Russian UI. No model was loaded and no inference was run. These checks establish a current-build phone UI smoke pass only; the remaining gates above are unchanged.
