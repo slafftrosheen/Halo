@@ -8,11 +8,13 @@ import com.halo.app.data.AppDatabase
 import com.halo.app.data.notebook.NoteEntity
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 import com.halo.app.data.study.StudyRepository
+import com.halo.app.data.workspace.WorkspaceFileEntity
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
+import com.halo.app.storage.haloStorageLayout
 import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -40,7 +42,20 @@ class WorkspaceEmbeddingRoutingTest {
                     "USER", "ACTIVE", false, "READY", "note:$noteId"),
                 NoteEntity(noteId, "Selected source explains that fractions compare equal parts.", 1),
             )
-            val source = StudyRepository(db, db.studyDao()).createSession(listOf(noteId), 1L,
+            val textFileId = "selected-study-text-file"
+            val textFile = java.io.File(haloStorageLayout(context).managedWorkspaceFiles, "$textFileId.txt")
+            textFile.parentFile?.mkdirs()
+            textFile.writeText("Selected text file explains equivalent fractions with equal parts.")
+            db.notebookDao().insertWorkspaceObject(
+                WorkspaceObjectEntity(textFileId, "FILE", "Fraction reference", 1L, 1L,
+                    "USER", "ACTIVE", false, "READY", "file:$textFileId"),
+            )
+            db.workspaceFileDao().insertFile(
+                WorkspaceFileEntity(textFileId, android.net.Uri.fromFile(textFile).toString(),
+                    textFile.name, "text/plain", textFile.length(), 1L, textFile.absolutePath,
+                    false, "HALO_OWNED", "OWNED_LOCAL"),
+            )
+            val source = StudyRepository(db, db.studyDao()).createSession(listOf(noteId, textFileId), 1L,
                 StudyLanguagePreferences(), "Fractions compare equal parts")
             val service = WorkspaceSemanticService(context, db, storage, LiteRtModelManager(context),
                 NativeResourceCoordinator(scope = scope), scope, embeddingFactory = { model ->
@@ -67,6 +82,7 @@ class WorkspaceEmbeddingRoutingTest {
             service.configureAssistantContext(true)
             assertTrue(service.selectedContextExcerpts("fractions").single().contains("Fractions"))
             assertTrue(service.selectedContextExcerpts("fractions").single().contains("Selected source explains"))
+            assertTrue(service.selectedContextExcerpts("fractions").single().contains("Selected text file explains"))
             assertEquals(listOf("embedding-only"), constructed)
             assertEquals(2, requests.size)
             assertTrue(requests.all { it.modelSha256 == sha && it.dimension == 2 })
