@@ -93,7 +93,7 @@
     <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
-    <string name="ui_5ca7401c548d" formatted="false">"Wyszukuj lokalnie na tym telefonie tekst, obrazy i nagrania z wybranych źródeł Notebooka, Canvas i Nauki. halo odczytuje tylko źródła zatwierdzone podczas tworzenia indeksu."</string>
+    <string name="ui_a45d0de015bd" formatted="false">"Wyszukuj lokalnie na tym telefonie tekst, obrazy, nagrania i krótkie filmy z wybranych źródeł Notebooka, Canvas i Nauki. W przypadku filmów używane są tylko cztery wybrane klatki; ścieżki dźwiękowe nie są przetwarzane. halo odczytuje wyłącznie źródła zatwierdzone podczas tworzenia indeksu."</string>
     <string name="ui_587513a42667" formatted="false">"Wyszukiwanie obrazów wymaga zweryfikowanego modelu EmbeddingGemma 2. Odznacz obrazy, aby wyszukiwać lokalnie tylko w tekście."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz obrazy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_00add6a49156" formatted="false">"Ten format lub rozmiar obrazu nie jest obsługiwany w wyszukiwaniu lokalnym. Użyj pliku PNG lub JPEG o rozmiarze do 4 MiB."</string>
@@ -103,5 +103,12 @@
     <string name="ui_5bf1f3af4662" formatted="false">"To nagranie nie jest obsługiwane w wyszukiwaniu lokalnym. Użyj pliku audio o długości do dwóch minut i rozmiarze do 12 MB."</string>
     <string name="ui_36f112ede148" formatted="false">"Wybrane nagranie jest niedostępne lub nie masz już do niego dostępu. Dołącz je ponownie albo usuń z wyszukiwania lokalnego."</string>
     <string name="ui_7048fefd2548" formatted="false">"Wybierz najwyżej osiem nagrań do wyszukiwania lokalnego."</string>
+    <string name="ui_a2d3bedebdbc" formatted="false">"Wyszukiwanie klatek wideo wymaga zweryfikowanego modelu EmbeddingGemma 2. Odznacz filmy, aby wyszukiwać lokalnie tylko w tekście."</string>
+    <string name="ui_154c417ea1cd" formatted="false">"Ten format lub rozmiar filmu nie jest obsługiwany w lokalnym wyszukiwaniu klatek. Użyj pliku MP4, WebM, 3GPP lub QuickTime o długości do dwóch minut, rozmiarze do 24 MB i dłuższym boku klatki nieprzekraczającym 1920 pikseli."</string>
+    <string name="ui_48feb177ada3" formatted="false">"Wybierz najwyżej cztery klipy wideo do wyszukiwania lokalnego."</string>
+    <string name="ui_b4e5fb97cd18" formatted="false">"Wybrany film zmienił się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego."</string>
+    <string name="ui_84b215b21907" formatted="false">"Wybrany film jest niedostępny lub nie masz już do niego dostępu. Dołącz go ponownie albo usuń z wyszukiwania lokalnego."</string>
+    <string name="ui_961204d738d7" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz filmy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_5b48705ce252" formatted="false">"Wybrane nagranie zmieniło się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego."</string>
+    <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
 </resources>

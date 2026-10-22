@@ -125,6 +125,21 @@ interface WorkspaceAssetDao {
     )
     fun observeAudioAttachments(): Flow<List<NoteAttachment>>
 
+    /** Video metadata only; frame extraction requires an explicit local-search selection. */
+    @Query(
+        """
+        SELECT a.id, a.noteId, a.assetId, a.position, a.caption,
+               s.type, s.mimeType, s.storageType, s.pathOrUri,
+               s.permissionPersisted, s.displayName, s.bytes,
+               s.width, s.height, s.durationMs
+        FROM note_attachments a
+        INNER JOIN workspace_assets s ON s.id = a.assetId
+        WHERE s.mimeType LIKE 'video/%'
+        ORDER BY a.createdAtEpochMs DESC
+        """
+    )
+    fun observeVideoAttachments(): Flow<List<NoteAttachment>>
+
     @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM note_attachments WHERE noteId = :noteId")
     suspend fun nextPosition(noteId: String): Int
 

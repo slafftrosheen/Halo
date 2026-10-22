@@ -3787,7 +3787,7 @@
     <string name="ui_583994585ca6" formatted="false">"Mācīties atlasīto apgabalu"</string>
     <string name="ui_0255090bcdcd" formatted="false">"Atvērt sākotnējo kanvu"</string>
     <string name="ui_9acf9dcc1388" formatted="false">"Atlasītais tintes apgabals ir mainījies. Atgriezieties kanvā un atlasiet to vēlreiz."</string>
-    <string name="ui_5ca7401c548d" formatted="false">"Privāti šajā tālrunī meklējiet tekstu, attēlus un audio atlasītajās Notebook, Canvas un Study sadaļās. halo nolasa tikai avotus, kurus atļaujat, veidojot vietējo meklēšanu."</string>
+    <string name="ui_a45d0de015bd" formatted="false">"Šajā tālrunī lokāli meklējiet tekstu, attēlus, audio un īsus video atlasītajās Notebook, Canvas un Study sadaļās. Video tiek izmantoti tikai četri atlasīti kadri; audio celiņi netiek apstrādāti. halo nolasa tikai avotus, kurus atļaujat, veidojot vietējo meklēšanu."</string>
     <string name="ui_587513a42667" formatted="false">"Attēlu meklēšanai vajadzīgs pārbaudītais EmbeddingGemma 2 modelis. Noņemiet attēlu atlasi, lai izmantotu tikai teksta meklēšanu."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"Šis tālrunis nevar darbināt attēlu kodētāju ar CPU. Noņemiet attēlu atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
     <string name="ui_00add6a49156" formatted="false">"Šis attēla formāts vai izmērs nav atbalstīts vietējai meklēšanai. Izmantojiet PNG vai JPEG līdz 4 MiB."</string>
@@ -3798,6 +3798,12 @@
     <string name="ui_5bf1f3af4662" formatted="false">"Šis ieraksts nav atbalstīts vietējai meklēšanai. Izmantojiet audio failu līdz divām minūtēm un 12 MB."</string>
     <string name="ui_36f112ede148" formatted="false">"Atlasītais ieraksts nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai izņemiet no vietējās meklēšanas."</string>
     <string name="ui_7048fefd2548" formatted="false">"Vietējai meklēšanai atlasiet ne vairāk kā astoņus audio ierakstus."</string>
+    <string name="ui_a2d3bedebdbc" formatted="false">"Video kadru meklēšanai vajadzīgs verificēts EmbeddingGemma 2 modelis. Noņemiet video atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
+    <string name="ui_154c417ea1cd" formatted="false">"Šis video formāts vai izmērs netiek atbalstīts vietējai kadru meklēšanai. Izmantojiet MP4, WebM, 3GPP vai QuickTime video, kas nepārsniedz divas minūtes, 24 MB un 1920 pikseļus garākajā malā."</string>
+    <string name="ui_48feb177ada3" formatted="false">"Atlasiet līdz četriem video klipiem vietējai meklēšanai."</string>
+    <string name="ui_b4e5fb97cd18" formatted="false">"Atlasītais video mainījās lasīšanas laikā. Izveidojiet vietējo meklēšanu vēlreiz."</string>
+    <string name="ui_84b215b21907" formatted="false">"Atlasītais video nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai noņemiet no vietējās meklēšanas."</string>
+    <string name="ui_961204d738d7" formatted="false">"Šis tālrunis nevar darbināt attēlu kodētāju ar CPU. Noņemiet video atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
     <string name="ui_5b48705ce252" formatted="false">"Atlasītais ieraksts mainījās lasīšanas laikā. Vēlreiz izveidojiet vietējo meklēšanu."</string>
     <string name="ui_979d6300fd98" formatted="false">"Izpēte"</string>
     <string name="ui_ac29ba01579f" formatted="false">"Saglabāt ekrānā"</string>
@@ -3835,4 +3841,5 @@
     <string name="ui_5eeb7e21a0d8" formatted="false">"Vai noņemt brīvroku atbalstu?"</string>
     <string name="ui_0ebd71038088" formatted="false">"halo izmantos pamata runas aktivitātes noteikšanu. Brīvroku atbalstu vēlāk varēs lejupielādēt vēlreiz."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Noņemt brīvroku atbalstu"</string>
+    <string name="ui_72f11335587f" formatted="false">"Video klips"</string>
 </resources>

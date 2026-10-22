@@ -57,6 +57,19 @@ class NotebookLocalSearchSourcesTest {
         assertTrue(choices.last().title.contains("Lecture"))
     }
 
+    @Test fun videoChoicesAreExactAttachmentsOwnedByVisibleActiveNotes() {
+        val video = NoteAttachment("video1","n1","asset-video",0,"Lecture clip","FILE","video/mp4",
+            "MANAGED_FILE","/private/clip.mp4",true,"clip.mp4",8_000_000L,null,null,null)
+        val hidden = video.copy(id="video2",noteId="trashed")
+        val notVideo = video.copy(id="other",mimeType="application/octet-stream")
+        val choices = notebookSearchSources(listOf(
+            item("n1",WorkspaceObjectType.NOTE),
+            item("trashed",WorkspaceObjectType.NOTE,WorkspaceObjectLifecycle.TRASHED),
+        ), emptyList(), videoAttachments=listOf(video,hidden,notVideo))
+        assertEquals(listOf("note:n1","attachment:n1:video1"),choices.map { it.id })
+        assertTrue(choices.last().title.contains("Lecture clip"))
+    }
+
     @Test fun lowMemoryAndUnknownFailuresUseBoundedUserLanguage() {
         assertTrue(localSearchUserErrorMessage(IllegalStateException("MEMORY_NOT_ADMITTED")).contains("memory"))
         assertTrue(localSearchUserErrorMessage(IllegalStateException("AUDIO_SOURCE_COUNT_LIMIT")).contains("eight"))

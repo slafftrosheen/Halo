@@ -3787,7 +3787,7 @@
     <string name="ui_583994585ca6" formatted="false">"Study the selected region"</string>
     <string name="ui_0255090bcdcd" formatted="false">"Open original Canvas"</string>
     <string name="ui_9acf9dcc1388" formatted="false">"The selected ink region changed. Return to Canvas and select it again."</string>
-    <string name="ui_5ca7401c548d" formatted="false">"Search selected Notebook, Canvas, and Study text, pictures, and audio locally on this phone. halo reads only the sources you approve when you build local search."</string>
+    <string name="ui_a45d0de015bd" formatted="false">"Search selected Notebook, Canvas, and Study text, pictures, audio, and short video clips locally on this phone. For videos, only four sampled frames are used; audio tracks are not processed. halo reads only the sources you approve when you build local search."</string>
     <string name="ui_587513a42667" formatted="false">"Picture search needs the verified EmbeddingGemma 2 model. Deselect pictures to use text-only local search."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"This phone cannot run the image encoder on CPU. Deselect pictures to continue with text-only local search."</string>
     <string name="ui_00add6a49156" formatted="false">"This picture format or size is not supported for local search. Use a PNG or JPEG up to 4 MiB."</string>
@@ -3798,6 +3798,12 @@
     <string name="ui_5bf1f3af4662" formatted="false">"This recording is not supported for local search. Use an audio file up to two minutes and 12 MB."</string>
     <string name="ui_36f112ede148" formatted="false">"A selected recording is unavailable or no longer permitted. Reattach it or remove it from local search."</string>
     <string name="ui_7048fefd2548" formatted="false">"Select up to eight audio recordings for local search."</string>
+    <string name="ui_a2d3bedebdbc" formatted="false">"Video frame search needs the verified EmbeddingGemma 2 model. Deselect videos to use text-only local search."</string>
+    <string name="ui_154c417ea1cd" formatted="false">"This video format or size is not supported for local frame search. Use an MP4, WebM, 3GPP, or QuickTime clip up to two minutes, 24 MB, and 1920 pixels on its longest side."</string>
+    <string name="ui_48feb177ada3" formatted="false">"Select up to four video clips for local search."</string>
+    <string name="ui_b4e5fb97cd18" formatted="false">"A selected video changed while it was being read. Build local search again."</string>
+    <string name="ui_84b215b21907" formatted="false">"A selected video is unavailable or no longer permitted. Reattach it or remove it from local search."</string>
+    <string name="ui_961204d738d7" formatted="false">"This phone cannot run the image encoder on CPU. Deselect videos to continue with text-only local search."</string>
     <string name="ui_5b48705ce252" formatted="false">"A selected recording changed while it was being read. Build local search again."</string>
     <string name="ui_979d6300fd98" formatted="false">"Research"</string>
     <string name="ui_ac29ba01579f" formatted="false">"Save to Screen"</string>
@@ -3835,4 +3841,5 @@
     <string name="ui_5eeb7e21a0d8" formatted="false">"Remove hands-free support?"</string>
     <string name="ui_0ebd71038088" formatted="false">"halo will use basic speech activity detection. You can download hands-free support again later."</string>
     <string name="ui_64f6730b2ee4" formatted="false">"Remove hands-free support"</string>
+    <string name="ui_72f11335587f" formatted="false">"Video clip"</string>
 </resources>

@@ -9,7 +9,7 @@ enum class EmbeddingInputModality { TEXT, IMAGE, AUDIO, VIDEO }
 
 data class LocalEmbeddingModalityStatus(
     val publisherModalities: Set<EmbeddingInputModality>,
-    /** Product-ready source/index/retrieval path, not merely an SDK input class. */
+    /** Consumer source/index/retrieval path, including host-side composition such as sampled video frames. */
     val wiredModalities: Set<EmbeddingInputModality>,
     val userDescription: String,
     /** Native adapter source exists; modalities not in wired still need a consumer workflow or device proof. */
@@ -32,12 +32,12 @@ object LocalEmbeddingModalityPolicy {
             publisherModalities = setOf(EmbeddingInputModality.TEXT, EmbeddingInputModality.IMAGE,
                 EmbeddingInputModality.AUDIO, EmbeddingInputModality.VIDEO),
             wiredModalities = setOf(EmbeddingInputModality.TEXT,EmbeddingInputModality.IMAGE,
-                EmbeddingInputModality.AUDIO),
+                EmbeddingInputModality.AUDIO,EmbeddingInputModality.VIDEO),
             userDescription = "EmbeddingGemma 2 can represent text, pictures, audio and video. " +
-                "Halo can search text, explicitly selected Notebook pictures, and audio attachments locally. " +
-                "Picture search uses full PNG/JPEG images; audio search converts recordings to mono 16 kHz. " +
-                "Both media search paths require compatible CPU encoders and device qualification is pending; " +
-                "video remains planned. " +
+                "Halo can search text, explicitly selected Notebook pictures, audio attachments, and short video clips locally. " +
+                "Picture search uses full PNG/JPEG images; audio search converts recordings to mono 16 kHz; " +
+                "video search averages four evenly sampled interior frames and does not process audio tracks. " +
+                "Media search requires compatible CPU encoders and device qualification is pending. " +
                 "This model finds related content, but does not generate image descriptions.",
             nativeAdapterModalities = setOf(EmbeddingInputModality.TEXT,
                 EmbeddingInputModality.IMAGE,EmbeddingInputModality.AUDIO),

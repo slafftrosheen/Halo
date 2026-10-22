@@ -41,6 +41,9 @@ class LocalMediaEmbeddingSafetyTest {
         assertEquals(LocalMediaEmbeddingSafety.CROSS_MODAL_AUDIO_SEARCH_V1, LocalMediaEmbeddingRequest(
             sha,768,listOf(LocalEmbeddingInput.Audio(wav)),
             LocalMediaEmbeddingSafety.CROSS_MODAL_AUDIO_SEARCH_V1).preprocessingIdentity)
+        assertEquals(LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1, LocalMediaEmbeddingRequest(
+            sha,768,listOf(LocalEmbeddingInput.Image(png)),
+            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1).preprocessingIdentity)
         assertThrows(IllegalArgumentException::class.java) {
             LocalMediaEmbeddingRequest(sha,768,listOf(LocalEmbeddingInput.Text("hello")),
                 preprocessingIdentity = "text-special-tokens-v1")

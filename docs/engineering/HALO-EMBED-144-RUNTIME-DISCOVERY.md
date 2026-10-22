@@ -36,6 +36,10 @@ At source revision `f1c8b7e5`, the same explicit Notebook source scope also incl
 
 Static localization generation/check and `git diff --check` passed. Source regression cases cover exact image/audio source selection, separate IMAGE/AUDIO index persistence, modality-space rejection, media request identity, and defensive input snapshots; tests were authored but not run under #43. No build, test, CI/Actions, emulator, native inference, or device validation was run. This is source progress, not physical qualification.
 
+## Subsequent source progress — sampled video frames
+
+The current application source now exposes explicitly selected short video attachments in Notebook local search. Because LiteRT-LM 0.18 has no typed `InputData.Video`, it samples four interior frames and sends each through the verified image input path; it does not process video audio tracks or claim native video input. The source/index/retrieval path is separately versioned as `VIDEO_FRAME`; the local provider's native-adapter modality set remains TEXT/IMAGE/AUDIO. Limits, permission/hash rechecks, and device-qualification status are recorded in [HALO-EMBED-147-MEDIA-ADAPTER.md](HALO-EMBED-147-MEDIA-ADAPTER.md). This new path is not built or device-qualified.
+
 ## Evidence
 
 - Local resolved artifact: Gradle cache `litertlm-android-0.18.0.aar`; SHA-256 above.

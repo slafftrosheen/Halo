@@ -33,7 +33,9 @@ internal data class LocalSearchSourceChoice(val id: String, val title: String)
 internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     sessions: List<StudySessionRecord>,
     imageAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
-    audioAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList()): List<LocalSearchSourceChoice> {
+    audioAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
+    videoAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
+    videoFallbackLabel: String = "Video clip"): List<LocalSearchSourceChoice> {
     val workspace = items.mapNotNull { item ->
         val row = item.objectRef
         if (row.lifecycle != WorkspaceObjectLifecycle.ACTIVE) return@mapNotNull null
@@ -66,10 +68,19 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
         LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
             "${note.title.ifBlank { "Untitled" }} · $label")
     }
+    val videos = videoAttachments.mapNotNull { attachment ->
+        val note = activeNotes[attachment.noteId] ?: return@mapNotNull null
+        if (!attachment.mimeType.startsWith("video/")) return@mapNotNull null
+        val label = attachment.caption?.takeIf { it.isNotBlank() }
+            ?: attachment.displayName?.takeIf { it.isNotBlank() }
+            ?: videoFallbackLabel
+        LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
+            "${note.title.ifBlank { "Untitled" }} · $label")
+    }
     val learning = sessions.map { session ->
         LocalSearchSourceChoice("study:${session.id}",session.goal?.takeIf { it.isNotBlank() } ?: "Study session")
     }
-    return (workspace + learning + pictures + audio).distinctBy { it.id }.take(64)
+    return (workspace + learning + pictures + audio + videos).distinctBy { it.id }.take(64)
 }
 
 /** Maps technical error codes to user-facing English messages. No @Composable calls here. */
@@ -107,6 +118,18 @@ internal fun localSearchUserErrorMessage(error: Throwable): String = when (error
         "A selected recording changed while it was being read. Build local search again."
     "AUDIO_SOURCE_PERMISSION_EXPIRED", "AUDIO_SOURCE_OUTSIDE_APP_STORAGE", "AUDIO_SOURCE_UNSUPPORTED" ->
         "A selected recording is unavailable or no longer permitted. Reattach it or remove it from local search."
+    "SEARCH_VIDEO_MODEL_UNSUPPORTED" ->
+        "Video frame search needs the verified EmbeddingGemma 2 model. Deselect videos to use text-only local search."
+    "VIDEO_CPU_UNSUPPORTED" ->
+        "This phone cannot run the image encoder on CPU. Deselect videos to continue with text-only local search."
+    "VIDEO_SOURCE_TOO_LARGE", "VIDEO_DURATION_UNSUPPORTED", "VIDEO_FRAME_UNAVAILABLE", "VIDEO_DECODE_UNSUPPORTED" ->
+        "This video is not supported for local frame search. Use a video up to two minutes and 24 MB."
+    "VIDEO_SOURCE_COUNT_LIMIT" ->
+        "Select up to four video clips for local search."
+    "VIDEO_SOURCE_CHANGED" ->
+        "A selected video changed while it was being read. Build local search again."
+    "VIDEO_SOURCE_PERMISSION_EXPIRED", "VIDEO_SOURCE_OUTSIDE_APP_STORAGE", "VIDEO_SOURCE_UNSUPPORTED" ->
+        "A selected video is unavailable or no longer permitted. Reattach it or remove it from local search."
     else -> "Local search could not finish. Your notes were not sent to any cloud service."
 }
 
@@ -125,8 +148,11 @@ internal fun NotebookLocalSearchSheet(
         .collectAsStateWithLifecycle(emptyList())
     val audioAttachments by ManualDependencyGraph.notebookAssetRepository.observeAudioAttachments()
         .collectAsStateWithLifecycle(emptyList())
-    val choices = remember(items,studySessions,imageAttachments,audioAttachments) {
-        notebookSearchSources(items,studySessions,imageAttachments,audioAttachments)
+    val videoAttachments by ManualDependencyGraph.notebookAssetRepository.observeVideoAttachments()
+        .collectAsStateWithLifecycle(emptyList())
+    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments) {
+        notebookSearchSources(items,studySessions,imageAttachments,audioAttachments,videoAttachments,
+            videoFallbackLabel = uiText("Video clip"))
     }
     val access = remember { service.localSearchAccess() }
     var approved by remember { mutableStateOf(access.enabled) }
@@ -172,7 +198,7 @@ internal fun NotebookLocalSearchSheet(
             .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Find related notes"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("Search selected Notebook, Canvas, and Study text, pictures, and audio locally on this phone. Halo reads only the sources you approve when you build local search."),
+            Text(uiText("Search selected Notebook, Canvas, and Study text, pictures, audio, and short video clips locally on this phone. For videos, only four sampled frames are used; audio tracks are not processed. Halo reads only the sources you approve when you build local search."),
                 style = MaterialTheme.typography.bodyMedium)
 
             Text(uiText("Local search model"), style = MaterialTheme.typography.titleSmall)

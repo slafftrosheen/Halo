@@ -30,6 +30,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     private val store=FileSemanticIndexStore(File(context.noBackupFilesDir,"semantic/index-v1.json"))
     private val imageStore=FileImageSemanticIndexStore(File(context.noBackupFilesDir,"semantic/image-index-v1.json"))
     private val audioStore=FileAudioSemanticIndexStore(File(context.noBackupFilesDir,"semantic/audio-index-v1.json"))
+    private val videoStore=FileVideoSemanticIndexStore(File(context.noBackupFilesDir,"semantic/video-index-v1.json"))
     private val changed=Channel<Unit>(Channel.CONFLATED)
     private val mutation=Mutex()
     private val embeddingProviders = java.util.concurrent.ConcurrentHashMap<String, EmbeddingProvider>()
@@ -58,6 +59,12 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                         storage.getBoolean("semantic_enabled",false) && it.sourceId in selected() }
                     if (audioKeep.size != audioSnapshot.entries.size)
                         audioStore.replace(audioSnapshot.copy(entries=audioKeep))
+                }
+                videoStore.read()?.let { videoSnapshot ->
+                    val videoKeep = videoSnapshot.entries.filter { videoSourceMetadata(it.sourceId) != null &&
+                        storage.getBoolean("semantic_enabled",false) && it.sourceId in selected() }
+                    if (videoKeep.size != videoSnapshot.entries.size)
+                        videoStore.replace(videoSnapshot.copy(entries=videoKeep))
                 }
             } } } finally { db.invalidationTracker.removeObserver(observer); changed.close() }
         }
@@ -115,6 +122,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                     store.replace(null)
                     imageStore.replace(null)
                     audioStore.replace(null)
+                    videoStore.replace(null)
                 }
                 WorkloadPreferences(storage).selectEmbedding(modelId,catalog.sha256,dimension)
             }
@@ -141,6 +149,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                 store.replace(null)
                 imageStore.replace(null)
                 audioStore.replace(null)
+                videoStore.replace(null)
             } else {
                 store.read()?.let { old ->
                     store.replace(old.copy(chunks=old.chunks.filter { chunk ->
@@ -153,6 +162,9 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                 audioStore.read()?.let { old ->
                     audioStore.replace(old.copy(entries=old.entries.filter { it.sourceId in sourceIds }))
                 }
+                videoStore.read()?.let { old ->
+                    videoStore.replace(old.copy(entries=old.entries.filter { it.sourceId in sourceIds }))
+                }
             }
         }
         Unit
@@ -164,8 +176,10 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         synchronize(target.modelId,target.sha256,target.dimension)
         synchronizeImageIndex(target.modelId,target.sha256,target.dimension)
         synchronizeAudioIndex(target.modelId,target.sha256,target.dimension)
+        synchronizeVideoIndex(target.modelId,target.sha256,target.dimension)
         return size() + imageIndexSize(target.modelId,target.sha256,target.dimension) +
-            audioIndexSize(target.modelId,target.sha256,target.dimension)
+            audioIndexSize(target.modelId,target.sha256,target.dimension) +
+            videoIndexSize(target.modelId,target.sha256,target.dimension)
     }
 
     suspend fun searchLocalSources(query: String): List<SemanticReference> {
@@ -175,12 +189,15 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val text = referencesForContext(target.modelId,target.sha256,target.dimension,query.trim())
         val hasSelectedImages = selected().any { it.startsWith("attachment:") && imageSourceMetadata(it) != null }
         val hasSelectedAudio = selected().any { it.startsWith("attachment:") && audioSourceMetadata(it) != null }
-        if (!hasSelectedImages && !hasSelectedAudio) return text
+        val hasSelectedVideos = selected().any { it.startsWith("attachment:") && videoSourceMetadata(it) != null }
+        if (!hasSelectedImages && !hasSelectedAudio && !hasSelectedVideos) return text
         if (hasSelectedImages) synchronizeImageIndex(target.modelId,target.sha256,target.dimension)
         if (hasSelectedAudio) synchronizeAudioIndex(target.modelId,target.sha256,target.dimension)
+        if (hasSelectedVideos) synchronizeVideoIndex(target.modelId,target.sha256,target.dimension)
         val images = if (hasSelectedImages) searchLocalImages(target.modelId,target.sha256,target.dimension,query.trim()) else emptyList()
         val audio = if (hasSelectedAudio) searchLocalAudio(target.modelId,target.sha256,target.dimension,query.trim()) else emptyList()
-        return (text + images + audio)
+        val videos = if (hasSelectedVideos) searchLocalVideoFrames(target.modelId,target.sha256,target.dimension,query.trim()) else emptyList()
+        return (text + images + audio + videos)
             .sortedByDescending { it.score }.take(8)
     }
     private suspend fun source(id: String): SemanticSource? {
@@ -236,6 +253,15 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     )
 
     private data class SelectedAudioSource(
+        val sourceId: String,
+        val attachment: com.halo.app.data.workspace.NoteAttachment,
+        val uri: android.net.Uri,
+        val sourceVersion: String,
+        val title: String,
+        val provenance: String,
+    )
+
+    private data class SelectedVideoSource(
         val sourceId: String,
         val attachment: com.halo.app.data.workspace.NoteAttachment,
         val uri: android.net.Uri,
@@ -325,6 +351,142 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         if (db.notebookDao().getWorkspaceObject(noteId)?.type != "NOTE") return null
         return db.workspaceAssetDao().observeAttachments(noteId).first().firstOrNull {
             it.id == attachmentId && it.mimeType.startsWith("audio/")
+        }
+    }
+
+    /** Reads only video metadata for one exact selected attachment owned by an active note. */
+    private suspend fun videoSourceMetadata(sourceId: String): com.halo.app.data.workspace.NoteAttachment? {
+        val parts = sourceId.removePrefix("attachment:").split(':', limit = 2)
+        if (!sourceId.startsWith("attachment:") || parts.size != 2) return null
+        val noteId = parts[0]
+        val attachmentId = parts[1]
+        if (noteId.isBlank() || attachmentId.isBlank()) return null
+        val note = db.notebookDao().getNote(noteId)?.takeIf { it.lifecycle == "ACTIVE" } ?: return null
+        if (db.notebookDao().getWorkspaceObject(noteId)?.type != "NOTE") return null
+        return db.workspaceAssetDao().observeAttachments(noteId).first().firstOrNull {
+            it.id == attachmentId && it.mimeType.startsWith("video/")
+        }
+    }
+
+    /** Hashes only the selected, permission-checked video; it never stores its bytes. */
+    private suspend fun selectedVideoSource(sourceId: String): SelectedVideoSource? = withContext(Dispatchers.IO) {
+        if (!storage.getBoolean("semantic_enabled",false) || sourceId !in selected()) return@withContext null
+        val attachment = videoSourceMetadata(sourceId) ?: return@withContext null
+        if (attachment.mimeType !in SUPPORTED_VIDEO_MIME_TYPES)
+            throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DECODE_UNSUPPORTED")
+        if (attachment.bytes != null && attachment.bytes > MAX_VIDEO_SOURCE_BYTES)
+            throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_TOO_LARGE")
+        val uri = when (attachment.storageType) {
+            "MANAGED_FILE" -> {
+                val file = try { File(attachment.pathOrUri).canonicalFile }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_UNSUPPORTED",failure) }
+                val root = context.filesDir.canonicalFile
+                if (!file.path.startsWith(root.path + File.separator))
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_OUTSIDE_APP_STORAGE")
+                android.net.Uri.fromFile(file)
+            }
+            "APP_OWNED", "EXTERNAL_URI" -> {
+                val contentUri = android.net.Uri.parse(attachment.pathOrUri)
+                if (contentUri.scheme != "content" || !attachment.permissionPersisted)
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_PERMISSION_EXPIRED")
+                contentUri
+            }
+            else -> throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_UNSUPPORTED")
+        }
+        val input = try {
+            if (uri.scheme == "file") File(requireNotNull(uri.path)).inputStream()
+            else requireNotNull(context.contentResolver.openInputStream(uri))
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: Exception) {
+            throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_PERMISSION_EXPIRED",failure)
+        }
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        var total = 0L
+        input.use { stream ->
+            val buffer = ByteArray(16 * 1024)
+            while (true) {
+                currentCoroutineContext().ensureActive()
+                val count = stream.read(buffer)
+                if (count < 0) break
+                total += count
+                if (total > MAX_VIDEO_SOURCE_BYTES)
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_TOO_LARGE")
+                digest.update(buffer,0,count)
+            }
+        }
+        if (total == 0L) throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DECODE_UNSUPPORTED")
+        val sha = digest.digest().joinToString("") { "%02x".format(it) }
+        val note = db.notebookDao().getNote(attachment.noteId)?.takeIf { it.lifecycle == "ACTIVE" }
+            ?: return@withContext null
+        val label = attachment.caption?.takeIf { it.isNotBlank() }
+            ?: attachment.displayName?.takeIf { it.isNotBlank() }
+            ?: "Video clip"
+        SelectedVideoSource(sourceId,attachment,uri,sha,
+            "${note.title.ifBlank { "Untitled" }} · $label",
+            "Notebook video frames:${attachment.noteId}")
+    }
+
+    /** Extracts four short-lived, bounded interior frames; no audio track or frame bytes are retained. */
+    private suspend fun selectedVideoFrames(source: SelectedVideoSource): List<ByteArray> = withContext(Dispatchers.IO) {
+        val retriever = android.media.MediaMetadataRetriever()
+        try {
+            if (source.uri.scheme == "file") retriever.setDataSource(requireNotNull(source.uri.path))
+            else retriever.setDataSource(context,source.uri)
+            val duration = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                ?.toLongOrNull() ?: throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DURATION_UNSUPPORTED")
+            val width = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                ?.toIntOrNull() ?: 0
+            val height = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                ?.toIntOrNull() ?: 0
+            if (width !in 1..MAX_VIDEO_DIMENSION || height !in 1..MAX_VIDEO_DIMENSION ||
+                width.toLong() * height > MAX_VIDEO_PIXELS)
+                throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DECODE_UNSUPPORTED")
+            val timestamps = try { VideoFrameSampling.timestamps(duration) }
+                catch (failure: IllegalArgumentException) {
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DURATION_UNSUPPORTED",failure)
+                }
+            timestamps.map { timestampMs ->
+                currentCoroutineContext().ensureActive()
+                val frame = retriever.getFrameAtTime(timestampMs * 1_000L,
+                    android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    ?: throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_FRAME_UNAVAILABLE")
+                var scaled: android.graphics.Bitmap? = null
+                try {
+                    if (frame.width !in 1..MAX_VIDEO_DIMENSION || frame.height !in 1..MAX_VIDEO_DIMENSION ||
+                        frame.width.toLong() * frame.height > MAX_VIDEO_PIXELS)
+                        throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DECODE_UNSUPPORTED")
+                    val scale = minOf(1f,MAX_VIDEO_FRAME_LONG_EDGE.toFloat() / maxOf(frame.width,frame.height))
+                    val output = if (scale < 1f) android.graphics.Bitmap.createScaledBitmap(frame,
+                        (frame.width * scale).toInt().coerceAtLeast(1),
+                        (frame.height * scale).toInt().coerceAtLeast(1),true) else frame
+                    if (output !== frame) scaled = output
+                    val bytes = java.io.ByteArrayOutputStream().use { stream ->
+                        check(output.compress(android.graphics.Bitmap.CompressFormat.JPEG,82,stream)) {
+                            "VIDEO_FRAME_UNAVAILABLE"
+                        }
+                        stream.toByteArray()
+                    }
+                    if (bytes.size > MAX_VIDEO_FRAME_BYTES)
+                        throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_FRAME_UNAVAILABLE")
+                    LocalMediaEmbeddingSafety.check(LocalEmbeddingInput.Image(bytes))
+                    bytes
+                } finally {
+                    scaled?.recycle()
+                    frame.recycle()
+                }
+            }.also { frames ->
+                val live = selectedVideoSource(source.sourceId)
+                if (live?.sourceVersion != source.sourceVersion)
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_SOURCE_CHANGED")
+                require(frames.size == VideoFrameSampling.FRAME_COUNT)
+            }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: com.halo.providers.litert.EmbeddingUnavailableException) { throw failure }
+        catch (failure: Exception) {
+            throw com.halo.providers.litert.EmbeddingUnavailableException("VIDEO_DECODE_UNSUPPORTED",failure)
+        } finally {
+            runCatching { retriever.release() }
         }
     }
 
@@ -438,6 +600,15 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             model.task == LiteRtArtifactTask.EMBEDDING) { "SEARCH_AUDIO_MODEL_UNSUPPORTED" }
         return EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
             LocalMediaEmbeddingSafety.CROSS_MODAL_AUDIO_SEARCH_V1)
+    }
+
+    private fun videoSearchSpace(modelId: String,sha: String,dimension: Int): EmbeddingSpace {
+        val model = requireNotNull(models.catalogModel(modelId)) { "SEARCH_VIDEO_MODEL_UNSUPPORTED" }
+        require(model.id == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.id &&
+            model.sha256 == sha && model.revision == com.halo.providers.litert.models.LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.revision &&
+            model.task == LiteRtArtifactTask.EMBEDDING) { "SEARCH_VIDEO_MODEL_UNSUPPORTED" }
+        return EmbeddingSpace(sha,dimension,true,"litertlm/0.18.0",
+            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1)
     }
 
     /** Rebuild only from the exact allowlisted image attachment IDs; media bytes are never stored in the index. */
@@ -564,6 +735,61 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         } ?: 0
     }
 
+    /** Indexes four interior frames per explicitly selected short video; originals stay untouched. */
+    private suspend fun synchronizeVideoIndex(modelId: String,sha: String,dimension: Int) = mutation.withLock {
+        check(storage.getBoolean("semantic_enabled",false)) { "SEMANTIC_INDEX_OPT_IN_REQUIRED" }
+        val videoIds = selected().filter { it.startsWith("attachment:") && videoSourceMetadata(it) != null }
+        check(videoIds.size <= MAX_INDEXED_VIDEO_ATTACHMENTS) { "VIDEO_SOURCE_COUNT_LIMIT" }
+        if (videoIds.isEmpty()) {
+            videoStore.replace(null)
+            return@withLock
+        }
+        val currentSpace = videoSearchSpace(modelId,sha,dimension)
+        val old = videoStore.read()?.takeIf { it.space == currentSpace }
+        check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+        val provider = embeddingExecutor(modelId) as? LiteRtEmbeddingProvider
+            ?: error("LITERT_MEDIA_ADAPTER_REQUIRED")
+        val previous = old?.entries.orEmpty().associateBy { it.sourceId }
+        val prepared = linkedMapOf<String,VideoSemanticEntry>()
+        for (sourceId in videoIds) {
+            currentCoroutineContext().ensureActive()
+            val source = selectedVideoSource(sourceId) ?: continue
+            val cached = previous[sourceId]
+            if (cached != null && cached.sourceVersion == source.sourceVersion &&
+                cached.contentSha256 == source.sourceVersion) {
+                prepared[sourceId] = cached.copy(title=source.title,provenance=source.provenance)
+                continue
+            }
+            val frames = selectedVideoFrames(source)
+            check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+            val embedded = provider.embedMedia(LocalMediaEmbeddingRequest(sha,dimension,
+                frames.map { LocalEmbeddingInput.Image(it) },
+                LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1))
+            embedded.requireCompatible(currentSpace)
+            require(embedded.vectors.size == VideoFrameSampling.FRAME_COUNT)
+            val vector = VideoFrameSampling.aggregate(embedded.vectors,dimension)
+            val live = selectedVideoSource(sourceId)
+            if (live?.sourceVersion == source.sourceVersion && sourceId in selected() &&
+                storage.getBoolean("semantic_enabled",false)) {
+                prepared[sourceId] = VideoSemanticEntry(sourceId,source.sourceVersion,
+                    source.sourceVersion,source.title.take(400),source.provenance.take(400),vector)
+            }
+        }
+        currentCoroutineContext().ensureActive()
+        val stillSelected = selected().toSet()
+        val finalEntries = prepared.values.filter { it.sourceId in stillSelected &&
+            videoSourceMetadata(it.sourceId) != null && storage.getBoolean("semantic_enabled",false) }
+        videoStore.replace(VideoSemanticSnapshot(currentSpace,finalEntries))
+    }
+
+    private suspend fun videoIndexSize(modelId: String,sha: String,dimension: Int): Int {
+        val space = runCatching { videoSearchSpace(modelId,sha,dimension) }.getOrNull() ?: return 0
+        val allowed = selected()
+        return videoStore.read()?.takeIf { it.space == space }?.entries?.count {
+            it.sourceId in allowed && videoSourceMetadata(it.sourceId) != null
+        } ?: 0
+    }
+
     /** Cross-modal text query uses the documented retrieval-query prefix; candidate images stay raw. */
     private suspend fun searchLocalImages(modelId: String,sha: String,dimension: Int,query: String): List<SemanticReference> {
         val space = imageSearchSpace(modelId,sha,dimension)
@@ -611,6 +837,36 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val queryValues = queryVector.vectors.single()
         val live = candidates.filter { entry ->
             val source = selectedAudioSource(entry.sourceId)
+            source?.sourceVersion == entry.sourceVersion && entry.sourceId in selected() &&
+                storage.getBoolean("semantic_enabled",false)
+        }
+        return live.map { entry ->
+            val vector = entry.vector
+            val dot = queryValues.indices.sumOf { queryValues[it].toDouble() * vector[it] }
+            val qNorm = kotlin.math.sqrt(queryValues.sumOf { it.toDouble() * it })
+            val dNorm = kotlin.math.sqrt(vector.sumOf { it.toDouble() * it })
+            SemanticReference(entry.sourceId,entry.sourceVersion,"personal",0,entry.title,
+                entry.provenance,if (qNorm > 0 && dNorm > 0) dot / (qNorm * dNorm) else 0.0)
+        }.sortedByDescending { it.score }.take(8)
+    }
+
+    /** Text queries compare with the unit-normalized mean of each video's sampled frame vectors. */
+    private suspend fun searchLocalVideoFrames(modelId: String,sha: String,dimension: Int,query: String): List<SemanticReference> {
+        val space = videoSearchSpace(modelId,sha,dimension)
+        val snapshot = videoStore.read()?.takeIf { it.space == space } ?: return emptyList()
+        val allowed = selected()
+        val candidates = snapshot.entries.filter { it.sourceId in allowed && videoSourceMetadata(it.sourceId) != null }
+        if (!storage.getBoolean("semantic_enabled",false) || candidates.isEmpty()) return emptyList()
+        check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
+        val provider = embeddingExecutor(modelId) as? LiteRtEmbeddingProvider
+            ?: error("LITERT_MEDIA_ADAPTER_REQUIRED")
+        val queryVector = provider.embedMedia(LocalMediaEmbeddingRequest(sha,dimension,
+            listOf(LocalEmbeddingInput.Text("task: search result | query: ${query.trim()}")),
+            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1))
+        queryVector.requireCompatible(space)
+        val queryValues = queryVector.vectors.single()
+        val live = candidates.filter { entry ->
+            val source = selectedVideoSource(entry.sourceId)
             source?.sourceVersion == entry.sourceVersion && entry.sourceId in selected() &&
                 storage.getBoolean("semantic_enabled",false)
         }
@@ -688,5 +944,12 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         const val MAX_AUDIO_SOURCE_BYTES = 12_000_000L
         const val MAX_AUDIO_DURATION_MS = 120_000L
         const val MAX_INDEXED_AUDIO_ATTACHMENTS = 8
+        const val MAX_VIDEO_SOURCE_BYTES = 24_000_000L
+        const val MAX_VIDEO_FRAME_LONG_EDGE = 1_024
+        const val MAX_VIDEO_FRAME_BYTES = 1_048_576
+        const val MAX_VIDEO_DIMENSION = 1_920
+        const val MAX_VIDEO_PIXELS = 4_000_000L
+        const val MAX_INDEXED_VIDEO_ATTACHMENTS = 4
+        val SUPPORTED_VIDEO_MIME_TYPES = setOf("video/mp4","video/webm","video/3gpp","video/quicktime")
     }
 }

@@ -10,10 +10,10 @@ class LocalEmbeddingModalityPolicyTest {
         assertTrue(status.canEmbed(EmbeddingInputModality.TEXT))
         assertTrue(status.canEmbed(EmbeddingInputModality.IMAGE))
         assertTrue(status.canEmbed(EmbeddingInputModality.AUDIO))
+        assertTrue(status.canEmbed(EmbeddingInputModality.VIDEO))
         assertTrue(EmbeddingInputModality.IMAGE in status.nativeAdapterModalities)
         assertTrue(EmbeddingInputModality.AUDIO in status.nativeAdapterModalities)
         assertFalse(EmbeddingInputModality.VIDEO in status.nativeAdapterModalities)
-        assertFalse(status.canEmbed(EmbeddingInputModality.VIDEO))
         assertFalse(LiteRtModelCatalog.EMBEDDINGGEMMA2_740M.supportsVision)
     }
     @Test fun textChatModelDoesNotInheritEmbeddingCapabilities() {

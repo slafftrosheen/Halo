@@ -34,6 +34,10 @@ class NotebookAssetRepository(
     fun observeAudioAttachments(): Flow<List<NoteAttachment>> =
         database.workspaceAssetDao().observeAudioAttachments()
 
+    /** Lists video metadata only; frame extraction requires explicit local-search selection. */
+    fun observeVideoAttachments(): Flow<List<NoteAttachment>> =
+        database.workspaceAssetDao().observeVideoAttachments()
+
     suspend fun migrateLegacyCapture(noteId: String, body: String): Boolean {
         val uri = Regex("content://[^)\\s]+\\.captures/[^)\\s]+")
             .find(body)

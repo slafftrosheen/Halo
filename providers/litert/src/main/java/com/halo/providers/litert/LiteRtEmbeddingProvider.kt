@@ -44,7 +44,8 @@ class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
         require(dimension in 1..16_384)
         require(preprocessingIdentity in setOf("embeddinggemma2-native-media-v1",
             LocalMediaEmbeddingSafety.CROSS_MODAL_IMAGE_SEARCH_V1,
-            LocalMediaEmbeddingSafety.CROSS_MODAL_AUDIO_SEARCH_V1))
+            LocalMediaEmbeddingSafety.CROSS_MODAL_AUDIO_SEARCH_V1,
+            LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1))
         inputSnapshot = snapshotInputs(inputCandidates)
         inputSnapshot.forEach(LocalMediaEmbeddingSafety::check)
     }
@@ -72,6 +73,8 @@ object LocalMediaEmbeddingSafety {
     const val CROSS_MODAL_IMAGE_SEARCH_V1 = "embeddinggemma2-full-image-cross-modal-search-v1"
     /** Mono 16 kHz audio; retrieval query prefix applies only to text. */
     const val CROSS_MODAL_AUDIO_SEARCH_V1 = "embeddinggemma2-mono-16khz-audio-cross-modal-search-v1"
+    /** Four interior fifth-interval frames resized to 1024px JPEG quality 82; audio is excluded. */
+    const val CROSS_MODAL_VIDEO_FRAME_SEARCH_V1 = "embeddinggemma2-video-frame-4-interior-fifths-1024-jpeg82-v1"
     fun check(input: LocalEmbeddingInput) {
         when (input) {
             is LocalEmbeddingInput.Text ->
@@ -192,7 +195,8 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
                     val modalities = info.inputModalities()
                     if (usesVision && (!modalities.vision ||
                             BackendType.CPU !in info.supportedBackends(Modality.VISION)))
-                        throw EmbeddingUnavailableException("VISION_CPU_UNSUPPORTED")
+                        throw EmbeddingUnavailableException(if (identity == LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V1)
+                            "VIDEO_CPU_UNSUPPORTED" else "VISION_CPU_UNSUPPORTED")
                     if (usesAudio && (!modalities.audio ||
                             BackendType.CPU !in info.supportedBackends(Modality.AUDIO)))
                         throw EmbeddingUnavailableException("AUDIO_CPU_UNSUPPORTED")
