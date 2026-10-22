@@ -31,12 +31,13 @@ object LocalEmbeddingModalityPolicy {
         return if (isGemma2) LocalEmbeddingModalityStatus(
             publisherModalities = setOf(EmbeddingInputModality.TEXT, EmbeddingInputModality.IMAGE,
                 EmbeddingInputModality.AUDIO, EmbeddingInputModality.VIDEO),
-            wiredModalities = setOf(EmbeddingInputModality.TEXT,EmbeddingInputModality.IMAGE),
+            wiredModalities = setOf(EmbeddingInputModality.TEXT,EmbeddingInputModality.IMAGE,
+                EmbeddingInputModality.AUDIO),
             userDescription = "EmbeddingGemma 2 can represent text, pictures, audio and video. " +
-                "Halo can search text and explicitly selected Notebook pictures locally. Picture search " +
-                "uses full PNG/JPEG images and requires a compatible image CPU encoder on this phone; " +
-                "device qualification is still pending. Audio has a developer-only adapter without " +
-                "a consumer index; video remains planned. " +
+                "Halo can search text, explicitly selected Notebook pictures, and audio attachments locally. " +
+                "Picture search uses full PNG/JPEG images; audio search converts recordings to mono 16 kHz. " +
+                "Both media search paths require compatible CPU encoders and device qualification is pending; " +
+                "video remains planned. " +
                 "This model finds related content, but does not generate image descriptions.",
             nativeAdapterModalities = setOf(EmbeddingInputModality.TEXT,
                 EmbeddingInputModality.IMAGE,EmbeddingInputModality.AUDIO),

@@ -30,6 +30,10 @@ class NotebookAssetRepository(
     fun observeImageAttachments(): Flow<List<NoteAttachment>> =
         database.workspaceAssetDao().observeImageAttachments()
 
+    /** Lists audio metadata for explicit local-search selection; it never opens or decodes the asset. */
+    fun observeAudioAttachments(): Flow<List<NoteAttachment>> =
+        database.workspaceAssetDao().observeAudioAttachments()
+
     suspend fun migrateLegacyCapture(noteId: String, body: String): Boolean {
         val uri = Regex("content://[^)\\s]+\\.captures/[^)\\s]+")
             .find(body)

@@ -44,8 +44,22 @@ class NotebookLocalSearchSourcesTest {
         assertTrue(choices.last().title.contains("Diagram"))
     }
 
+    @Test fun audioChoicesAreExactAttachmentsOwnedByVisibleActiveNotes() {
+        val memo = NoteAttachment("audio1","n1","asset-audio",0,"Lecture","FILE","audio/mp4",
+            "MANAGED_FILE","/private/memo.m4a",true,"memo.m4a",4_000_000L,null,null,30_000L)
+        val hidden = memo.copy(id="audio2",noteId="trashed")
+        val notAudio = memo.copy(id="video1",mimeType="video/mp4")
+        val choices = notebookSearchSources(listOf(
+            item("n1",WorkspaceObjectType.NOTE),
+            item("trashed",WorkspaceObjectType.NOTE,WorkspaceObjectLifecycle.TRASHED),
+        ), emptyList(), audioAttachments=listOf(memo,hidden,notAudio))
+        assertEquals(listOf("note:n1","attachment:n1:audio1"),choices.map { it.id })
+        assertTrue(choices.last().title.contains("Lecture"))
+    }
+
     @Test fun lowMemoryAndUnknownFailuresUseBoundedUserLanguage() {
         assertTrue(localSearchUserErrorMessage(IllegalStateException("MEMORY_NOT_ADMITTED")).contains("memory"))
+        assertTrue(localSearchUserErrorMessage(IllegalStateException("AUDIO_SOURCE_COUNT_LIMIT")).contains("eight"))
         val raw = IllegalArgumentException("private/source/path/export.json")
         val message = localSearchUserErrorMessage(raw)
         assertFalse(message.contains("private/source"))

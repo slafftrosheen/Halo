@@ -9,7 +9,7 @@ class LocalEmbeddingModalityPolicyTest {
         assertEquals(4, status.publisherModalities.size)
         assertTrue(status.canEmbed(EmbeddingInputModality.TEXT))
         assertTrue(status.canEmbed(EmbeddingInputModality.IMAGE))
-        assertFalse(status.canEmbed(EmbeddingInputModality.AUDIO))
+        assertTrue(status.canEmbed(EmbeddingInputModality.AUDIO))
         assertTrue(EmbeddingInputModality.IMAGE in status.nativeAdapterModalities)
         assertTrue(EmbeddingInputModality.AUDIO in status.nativeAdapterModalities)
         assertFalse(EmbeddingInputModality.VIDEO in status.nativeAdapterModalities)

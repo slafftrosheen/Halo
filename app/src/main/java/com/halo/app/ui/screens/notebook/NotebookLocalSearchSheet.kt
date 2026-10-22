@@ -32,7 +32,8 @@ internal data class LocalSearchSourceChoice(val id: String, val title: String)
 
 internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     sessions: List<StudySessionRecord>,
-    imageAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList()): List<LocalSearchSourceChoice> {
+    imageAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
+    audioAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList()): List<LocalSearchSourceChoice> {
     val workspace = items.mapNotNull { item ->
         val row = item.objectRef
         if (row.lifecycle != WorkspaceObjectLifecycle.ACTIVE) return@mapNotNull null
@@ -56,10 +57,19 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
         LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
             "${note.title.ifBlank { "Untitled" }} · $label")
     }
+    val audio = audioAttachments.mapNotNull { attachment ->
+        val note = activeNotes[attachment.noteId] ?: return@mapNotNull null
+        if (!attachment.mimeType.startsWith("audio/")) return@mapNotNull null
+        val label = attachment.caption?.takeIf { it.isNotBlank() }
+            ?: attachment.displayName?.takeIf { it.isNotBlank() }
+            ?: "Audio memo"
+        LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
+            "${note.title.ifBlank { "Untitled" }} · $label")
+    }
     val learning = sessions.map { session ->
         LocalSearchSourceChoice("study:${session.id}",session.goal?.takeIf { it.isNotBlank() } ?: "Study session")
     }
-    return (workspace + learning + pictures).distinctBy { it.id }.take(64)
+    return (workspace + learning + pictures + audio).distinctBy { it.id }.take(64)
 }
 
 /** Maps technical error codes to user-facing English messages. No @Composable calls here. */
@@ -85,6 +95,18 @@ internal fun localSearchUserErrorMessage(error: Throwable): String = when (error
         "This picture format or size is not supported for local search. Use a PNG or JPEG up to 4 MiB."
     "IMAGE_SOURCE_PERMISSION_EXPIRED", "IMAGE_SOURCE_OUTSIDE_APP_STORAGE", "IMAGE_SOURCE_UNSUPPORTED" ->
         "A selected picture is unavailable or no longer permitted. Reattach it or remove it from local search."
+    "SEARCH_AUDIO_MODEL_UNSUPPORTED" ->
+        "Audio search needs the verified EmbeddingGemma 2 model. Deselect audio to use text-only local search."
+    "AUDIO_CPU_UNSUPPORTED" ->
+        "This phone cannot run the audio encoder on CPU. Deselect audio to continue with text-only local search."
+    "AUDIO_INPUT_INVALID", "AUDIO_SOURCE_TOO_LARGE", "AUDIO_DURATION_UNSUPPORTED" ->
+        "This recording is not supported for local search. Use an audio file up to two minutes and 12 MB."
+    "AUDIO_SOURCE_COUNT_LIMIT" ->
+        "Select up to eight audio recordings for local search."
+    "AUDIO_SOURCE_CHANGED" ->
+        "A selected recording changed while it was being read. Build local search again."
+    "AUDIO_SOURCE_PERMISSION_EXPIRED", "AUDIO_SOURCE_OUTSIDE_APP_STORAGE", "AUDIO_SOURCE_UNSUPPORTED" ->
+        "A selected recording is unavailable or no longer permitted. Reattach it or remove it from local search."
     else -> "Local search could not finish. Your notes were not sent to any cloud service."
 }
 
@@ -101,8 +123,10 @@ internal fun NotebookLocalSearchSheet(
     val scope = rememberCoroutineScope()
     val imageAttachments by ManualDependencyGraph.notebookAssetRepository.observeImageAttachments()
         .collectAsStateWithLifecycle(emptyList())
-    val choices = remember(items,studySessions,imageAttachments) {
-        notebookSearchSources(items,studySessions,imageAttachments)
+    val audioAttachments by ManualDependencyGraph.notebookAssetRepository.observeAudioAttachments()
+        .collectAsStateWithLifecycle(emptyList())
+    val choices = remember(items,studySessions,imageAttachments,audioAttachments) {
+        notebookSearchSources(items,studySessions,imageAttachments,audioAttachments)
     }
     val access = remember { service.localSearchAccess() }
     var approved by remember { mutableStateOf(access.enabled) }
@@ -148,7 +172,7 @@ internal fun NotebookLocalSearchSheet(
             .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Find related notes"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("Search selected Notebook, Canvas, and Study text and pictures privately on this phone. Halo reads only the sources you approve when you build local search."),
+            Text(uiText("Search selected Notebook, Canvas, and Study text, pictures, and audio locally on this phone. Halo reads only the sources you approve when you build local search."),
                 style = MaterialTheme.typography.bodyMedium)
 
             Text(uiText("Local search model"), style = MaterialTheme.typography.titleSmall)
