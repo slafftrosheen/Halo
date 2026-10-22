@@ -34,9 +34,9 @@ def read_catalogue() -> set[str]:
         if not line:
             continue
         fields = line.split("|||")
-        if len(fields) != 3 or not all(fields):
+        if len(fields) not in (3, 4) or not all(fields[:3]) or (len(fields) == 4 and not fields[3]):
             raise ValueError(f"Malformed EN/RU/LV translation, ui.tsv:{index}")
-        en, ru, lv = fields
+        en, ru, lv = fields[:3]
         if en in result:
             raise ValueError(f"Duplicate English key, ui.tsv:{index}: {en!r}")
         result.add(en.replace(r"\n", "\n"))
