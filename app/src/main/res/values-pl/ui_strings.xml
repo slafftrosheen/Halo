@@ -41,6 +41,10 @@
     <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
+    <string name="ui_7d008b7feeab" formatted="false">"Uruchom tryb głosowy"</string>
+    <string name="ui_15be678720cc" formatted="false">"Zakończ tryb głosowy"</string>
+    <string name="ui_afb9ab558853" formatted="false">"Nie udało się uruchomić trybu głosowego. Spróbuj ponownie."</string>
+    <string name="ui_af5016d82624" formatted="false">"Tryb głosowy jest włączony. halo zacznie ponownie nasłuchiwać po odpowiedzi głosowej."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>

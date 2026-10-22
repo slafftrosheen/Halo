@@ -262,6 +262,13 @@ class HomeViewModel(
     private val listeningCommandMutex = Mutex()
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
+    private val _voiceModeActive = MutableStateFlow(false)
+    val voiceModeActive: StateFlow<Boolean> = _voiceModeActive.asStateFlow()
+    private val voiceModeLock = Any()
+    private var voiceModeConversationId: String? = null
+    private var voiceModeCaptureId: String? = null
+    private var voiceModeBargeInInteractionId: String? = null
+    private val voiceResponseCaptures = LinkedHashMap<String, String>()
     private val _publishedResponse = MutableStateFlow<PresentedAssistantResponse?>(null)
     private val _sessionPresentationEnabled = MutableStateFlow(true)
     private val textSubmissions = TextSubmissionTracker()
@@ -398,6 +405,47 @@ class HomeViewModel(
     init {
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             eventBus.events().collect { event ->
+                when (event) {
+                    is com.halo.engines.speech.ListeningStarted -> synchronized(voiceModeLock) {
+                        if (_voiceModeActive.value) {
+                            val currentConversation = conversations?.activeConversationId()
+                            if (currentConversation == voiceModeConversationId) voiceModeCaptureId = event.captureId
+                            else endVoiceModeState()
+                        }
+                    }
+                    is StreamingSpeechPrepared -> event.sourceCaptureId?.let { captureId ->
+                        synchronized(voiceModeLock) { rememberVoiceResponse(event.interactionId, captureId) }
+                    }
+                    is TtsRequested -> event.interactionId?.let { interactionId ->
+                        event.sourceCaptureId?.let { captureId -> synchronized(voiceModeLock) {
+                            rememberVoiceResponse(interactionId, captureId)
+                        } }
+                    }
+                    is TtsCompleted -> {
+                        val (captureId, interruptedByUser) = event.interactionId?.let { interactionId -> synchronized(voiceModeLock) {
+                            val capture = voiceResponseCaptures.remove(interactionId)
+                            val interrupted = voiceModeBargeInInteractionId == interactionId
+                            if (interrupted) voiceModeBargeInInteractionId = null
+                            capture to interrupted
+                        } } ?: (null to false)
+                        if (captureId != null && !interruptedByUser) resumeVoiceModeAfterReply(captureId)
+                    }
+                    is TtsCancelled, is TtsFailed -> {
+                        val interactionId = when (event) {
+                            is TtsCancelled -> event.interactionId
+                            is TtsFailed -> event.interactionId
+                            else -> null
+                        }
+                        val (captureId, interruptedByUser) = interactionId?.let { id -> synchronized(voiceModeLock) {
+                            val capture = voiceResponseCaptures.remove(id)
+                            val interrupted = voiceModeBargeInInteractionId == id
+                            if (interrupted) voiceModeBargeInInteractionId = null
+                            capture to interrupted
+                        } } ?: (null to false)
+                        if (captureId != null && !interruptedByUser) endVoiceModeForCapture(captureId)
+                    }
+                    else -> Unit
+                }
                 textSubmissions.onEvent(event)
             }
         }
@@ -417,6 +465,7 @@ class HomeViewModel(
         viewModelScope.launch {
             eventBus.observe(SpeechRejected::class.java).collect { rejected ->
                 _listeningRequested.value = false
+                rejected.input?.captureId?.let(::endVoiceModeForCapture)
                 val friendlyReason = when (rejected.reason) {
                     "REPETITIVE_HALLUCINATION" -> "repetitive recognition"
                     "INSUFFICIENT_VOICED_AUDIO" -> "audio was too quiet or short"
@@ -437,6 +486,7 @@ class HomeViewModel(
             eventBus.observe(com.halo.engines.speech.RecognitionFailed::class.java).collect { failed ->
                 if (speechInput.value.turn?.captureId?.let { it != failed.id } == true) return@collect
                 _listeningRequested.value = false
+                endVoiceModeForCapture(failed.id)
                 if (_speechRejectionNotice.value?.transcript == null) {
                     _speechRejectionNotice.value = SpeechRejectionNotice(failed.reason, conversationId = speechInput.value.turn?.conversationId)
                 }
@@ -764,6 +814,7 @@ class HomeViewModel(
     }
     fun newConversation() {
         val previous = conversations?.activeConversationId()
+        stopVoiceMode()
         _sessionPresentationEnabled.value = false
         cancelVisibleSubmission(stopActiveText = true)
         viewModelScope.launch {
@@ -776,6 +827,7 @@ class HomeViewModel(
 
     fun clearConversation() {
         val conversation = conversations?.activeConversationId()
+        stopVoiceMode()
         _sessionPresentationEnabled.value = false
         cancelVisibleSubmission()
         cognitiveSession.clearConversation()
@@ -787,9 +839,10 @@ class HomeViewModel(
         }
     }
 
-    fun cancelSession() { com.halo.app.ui.fx.HaloMotionEvents.stop(continuity.value.interactionId ?: textSubmission.value.interactionId); com.halo.app.ui.components.VoiceFieldCancellation.stop(); stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
+    fun cancelSession() { stopVoiceMode(); com.halo.app.ui.fx.HaloMotionEvents.stop(continuity.value.interactionId ?: textSubmission.value.interactionId); com.halo.app.ui.components.VoiceFieldCancellation.stop(); stopSpeechOutput(); cancelVisibleSubmission(stopActiveText = true) }
 
     fun cancelVoiceInput() {
+        stopVoiceMode()
         val turn = speechInput.value.turn ?: run { stopListening(); return }
         _listeningRequested.value = false
         cognitiveSession.cancelInteraction(turn.captureId)
@@ -801,6 +854,14 @@ class HomeViewModel(
 
     fun stopSpeakingAndListen() {
         val conversationAtTap = conversations?.activeConversationId()
+        synchronized(voiceModeLock) {
+            if (_voiceModeActive.value) {
+                val currentCapture = voiceModeCaptureId
+                voiceModeBargeInInteractionId = voiceResponseCaptures.entries.lastOrNull {
+                    it.value == currentCapture
+                }?.key
+            }
+        }
         cognitiveSession.cancel()
         _publishedResponse.value = null
         _listeningRequested.value = true
@@ -820,6 +881,7 @@ class HomeViewModel(
     fun toggleListening() {
         val conversationAtTap = conversations?.activeConversationId()
         val shouldStart = !_listeningRequested.value
+        if (!shouldStart) stopVoiceModeStateOnly()
         if (shouldStart) _publishedResponse.value = null
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
@@ -851,6 +913,7 @@ class HomeViewModel(
                 }
                     .onFailure {
                         _listeningRequested.value = false
+                        stopVoiceModeStateOnly()
                         Log.e("HomeViewModel", "Failed to start listening", it)
                     }
             }
@@ -858,11 +921,109 @@ class HomeViewModel(
     }
 
     fun stopListening() {
+        stopVoiceModeStateOnly()
         _listeningRequested.value = false
         viewModelScope.launch {
             listeningCommandMutex.withLock {
                 runCatching { commandBus.dispatch(StopListening) }
                     .onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) }
+            }
+        }
+    }
+
+    /** Starts a user-visible foreground session; every later capture is tied to a completed reply. */
+    fun startVoiceMode() {
+        if (!speechAvailability.value || !microphonePermission.value) return
+        val conversationStore = conversations ?: return
+        viewModelScope.launch {
+            try {
+                conversationStore.awaitReady()
+                val conversation = conversationStore.activeConversationId()
+                    ?: error("VOICE_MODE_CONVERSATION_UNAVAILABLE")
+                synchronized(voiceModeLock) {
+                    voiceModeConversationId = conversation
+                    voiceModeCaptureId = null
+            voiceModeBargeInInteractionId = null
+                    voiceResponseCaptures.clear()
+                    _voiceModeActive.value = true
+                }
+                startListening()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                captureMessage.value = "Voice Mode could not start. Try again."
+            }
+        }
+    }
+
+    /** Stops the session and its current capture or response. */
+    fun stopVoiceMode() {
+        val wasActive = stopVoiceModeStateOnly()
+        if (!wasActive) return
+        _listeningRequested.value = false
+        cognitiveSession.cancel()
+        stopSpeechOutput()
+        viewModelScope.launch {
+            listeningCommandMutex.withLock { runCatching { commandBus.dispatch(StopListening) } }
+        }
+    }
+
+    /** A foreground Voice Mode does not keep the microphone when Home is no longer visible. */
+    fun onHomeStopped() = stopVoiceMode()
+
+    private fun stopVoiceModeStateOnly(): Boolean = synchronized(voiceModeLock) {
+        val wasActive = _voiceModeActive.value
+        endVoiceModeState()
+        wasActive
+    }
+
+    private fun endVoiceModeState() {
+        _voiceModeActive.value = false
+        voiceModeConversationId = null
+        voiceModeCaptureId = null
+        voiceModeBargeInInteractionId = null
+        voiceResponseCaptures.clear()
+    }
+
+    private fun rememberVoiceResponse(interactionId: String, captureId: String) {
+        if (!_voiceModeActive.value || voiceModeCaptureId != captureId) return
+        voiceResponseCaptures[interactionId] = captureId
+        while (voiceResponseCaptures.size > 16) voiceResponseCaptures.remove(voiceResponseCaptures.keys.first())
+    }
+
+    private fun endVoiceModeForCapture(captureId: String) {
+        synchronized(voiceModeLock) {
+            if (_voiceModeActive.value && voiceModeCaptureId == captureId) endVoiceModeState()
+        }
+    }
+
+    private fun resumeVoiceModeAfterReply(captureId: String) {
+        val generationConversation = synchronized(voiceModeLock) {
+            if (!_voiceModeActive.value || voiceModeCaptureId != captureId) return
+            voiceModeCaptureId = null
+            voiceModeConversationId
+        } ?: return
+        if (!speechAvailability.value || !microphonePermission.value ||
+            conversations?.activeConversationId() != generationConversation) {
+            stopVoiceMode()
+            return
+        }
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(250)
+            listeningCommandMutex.withLock {
+                val canResume = synchronized(voiceModeLock) {
+                    _voiceModeActive.value && voiceModeConversationId == generationConversation && voiceModeCaptureId == null
+                } && speechAvailability.value && microphonePermission.value &&
+                    conversations?.activeConversationId() == generationConversation
+                if (!canResume) { _listeningRequested.value = false; return@withLock }
+                _listeningRequested.value = true
+                runCatching {
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.AUTOMATIC, generationConversation))
+                }.onFailure {
+                    _listeningRequested.value = false
+                    stopVoiceModeStateOnly()
+                    Log.e("HomeViewModel", "Voice Mode could not resume listening", it)
+                }
             }
         }
     }

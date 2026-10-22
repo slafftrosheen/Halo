@@ -193,6 +193,7 @@ fun HomeScreen(
     )
 
     val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
+    val voiceModeActive by viewModel.voiceModeActive.collectAsStateWithLifecycle()
     var drafts by rememberSaveable { mutableStateOf(hashMapOf<String, String>()) }
     val draftKey = uiState.conversationId.orEmpty()
     val textInput = drafts[draftKey].orEmpty()
@@ -239,10 +240,12 @@ fun HomeScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshDashboard()
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.onHomeStopped()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer); viewModel.onHomeStopped() }
     }
 
     val isListening = uiState.speechActive || listeningRequested
@@ -551,6 +554,15 @@ fun HomeScreen(
             if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
                 Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
             ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
+            if (voiceModeActive) Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(uiText("Voice Mode is on. Halo listens again after a spoken reply."),
+                    modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = viewModel::stopVoiceMode, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("End Voice Mode"))
+                }
+            }
             if (!showActivePlan) uiState.longTaskProgress?.let {
                 HomeTaskProgress(it)
             }
@@ -615,6 +627,7 @@ fun HomeScreen(
                     com.halo.app.ui.fx.HaloMotionEvents.stop()
                     when {
                         isListening || isSpeechProcessing -> viewModel.cancelVoiceInput()
+                        isSpeaking -> viewModel.stopSpeakingAndListen()
                         else -> viewModel.cancelSession()
                     }
                 },
@@ -664,6 +677,17 @@ fun HomeScreen(
                             enabled = !isActiveSession && !isListening && !isSpeechProcessing,
                             onClick = { showActions = false; modeMenuExpanded = true },
                         )
+                        DropdownMenuItem(text = { Text(uiText(if (voiceModeActive) "End Voice Mode" else "Start Voice Mode")) },
+                            enabled = voiceModeActive || (!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking),
+                            onClick = {
+                                showActions = false
+                                if (voiceModeActive) viewModel.stopVoiceMode()
+                                else when {
+                                    !uiState.microphonePermissionGranted -> onRequestMicrophonePermission()
+                                    !uiState.speechReady -> viewModel.navigateToVoice()
+                                    else -> viewModel.startVoiceMode()
+                                }
+                            })
                         DropdownMenuItem(text = { Text(uiText("Save to Inbox")) }, onClick = {
                             showActions = false; showInboxCapture = true
                         })
