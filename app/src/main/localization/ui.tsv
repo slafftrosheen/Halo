@@ -904,7 +904,7 @@ Add text|||Добавить текст|||Pievienot tekstu
 Link item|||Связать объект|||Saistīt vienumu
 Link|||Связать|||Saistīt
 Duplicate|||Дублировать|||Dublēt
-Halo is thinking...|||Halo думает...|||Halo domā...
+Halo is thinking...|||Halo думает...|||Halo domā...|||Halo zastanawia się…
 Canvas unavailable|||Холст недоступен|||Kanva nav pieejama
 Make room for your ideas|||Место для ваших идей|||Vieta tavām idejām
 Add cards, link your notes and connect what belongs together.|||Добавляйте карточки и заметки и соединяйте связанные идеи.|||Pievieno kartītes un piezīmes un savieno saistītas idejas.
@@ -1408,7 +1408,7 @@ No recognizable text found.|||Текст не распознан.|||Neizdevās a
 No compatible on-device audio transcription model is ready. Original recording is safe.|||Нет готовой локальной модели для расшифровки. Исходная запись сохранена.|||Nav pieejams piemērots ierīces transkripcijas modelis. Sākotnējais ieraksts ir saglabāts.
 Tag card|||Карточка-метка|||Birkas kartīte
 Add group|||Добавить группу|||Pievienot grupu
-Group title|||Название группы|||Grupas nosaukums
+Group title|||Название группы|||Grupas nosaukums|||Tytuł grupy
 Tag selected|||Добавить метку|||Pievienot birku atlasītajam
 Tag name|||Имя метки|||Birkas nosaukums
 Create group|||Создать группу|||Izveidot grupu
@@ -1420,8 +1420,8 @@ Drag this zone to move enclosed cards.|||Перетащите область, ч
 AI couldn't respond. Check your provider and sharing settings, then retry.|||ИИ не ответил. Проверьте модель и настройки доступа, затем повторите.|||MI neatbildēja. Pārbaudiet modeli un kopīgošanas iestatījumus, tad mēģiniet vēlreiz.
 Add an idea first.|||Сначала добавьте идею.|||Vispirms pievienojiet ideju.
 Add to current Canvas|||Добавить на текущую доску|||Pievienot pašreizējam audeklam|||Dodaj do bieżącego Canvasu
-Approval arranges these cards and adds group links. Original notes and files stay unchanged. Nothing is sent to another app.|||После подтверждения карточки будут упорядочены и связаны с группами. Исходные заметки и файлы не изменятся. В другие приложения ничего не отправляется.|||Apstiprināšana sakārto kartītes un saista tās ar grupām. Sākotnējās piezīmes un faili paliek nemainīti. Citām lietotnēm nekas netiek nosūtīts.
-Approve organization|||Подтвердить порядок|||Apstiprināt kārtojumu
+Approval arranges these cards and adds group links. Original notes and files stay unchanged. Nothing is sent to another app.|||После подтверждения карточки будут упорядочены и связаны с группами. Исходные заметки и файлы не изменятся. В другие приложения ничего не отправляется.|||Apstiprināšana sakārto kartītes un saista tās ar grupām. Sākotnējās piezīmes un faili paliek nemainīti. Citām lietotnēm nekas netiek nosūtīts.|||Po zatwierdzeniu karty zostaną uporządkowane i połączone odnośnikami grup. Oryginalne notatki i pliki pozostaną bez zmian. Nic nie zostanie wysłane do innej aplikacji.
+Approve organization|||Подтвердить порядок|||Apstiprināt kārtojumu|||Zatwierdź porządkowanie
 Arrange selected|||Упорядочить выбранные|||Sakārtot atlasītās
 Ask Halo to organize|||Попросить Halo упорядочить|||Lūgt Halo sakārtot
 Bring forward|||На передний план|||Pārvietot priekšplānā
@@ -1435,16 +1435,16 @@ Could not add a card. Try again.|||Не удалось добавить карт
 Could not delete this card.|||Не удалось удалить карточку.|||Neizdevās noņemt šo kartīti.
 Could not export the canvas. Your cards are still here.|||Не удалось сохранить доску в заметку. Все карточки остались здесь.|||Neizdevās saglabāt audeklu piezīmē. Kartītes paliek šeit.
 Could not save that change. Try again.|||Не удалось сохранить изменение. Повторите.|||Neizdevās saglabāt izmaiņu. Mēģiniet vēlreiz.
-Create a linked checklist note|||Создать связанную заметку со списком задач|||Izveidot saistītu uzdevumu piezīmi
+Create a linked checklist note|||Создать связанную заметку со списком задач|||Izveidot saistītu uzdevumu piezīmi|||Utwórz powiązaną notatkę z listą kontrolną
 Discard saved memo|||Удалить несохранённую запись|||Dzēst nesaglabāto ierakstu|||Usuń zapisaną notatkę głosową
 Halo could not propose safe groups. The manual preview is still available.|||Halo не смог предложить подходящие группы. Можно упорядочить карточки вручную.|||Halo nevarēja piedāvāt drošas grupas. Varat sakārtot kartītes manuāli.
 Halo couldn't import the shared content|||Halo не смог импортировать отправленные материалы|||Halo neizdevās importēt kopīgoto saturu
 Local OCR reads Latin script, including Latvian. Cyrillic and handwriting may be unreadable. Review against the source.|||Распознавание поддерживает латиницу, включая латышский. Кириллица и рукописный текст могут не распознаться. Сверьте результат с оригиналом.|||Lokālā teksta atpazīšana atbalsta latīņu rakstību, arī latviešu valodu. Kirilica un rokraksts var netikt atpazīti. Salīdziniet ar avotu.
-Move to new group|||В новую группу|||Pārvietot uz jaunu grupu
-Move to next group|||В следующую группу|||Pārvietot uz nākamo grupu
-New group|||Новая группа|||Jauna grupa
-Next steps (one per line)|||Следующие шаги (каждый с новой строки)|||Nākamie soļi (katrs savā rindā)
-Next steps are optional suggestions, not completed tasks.|||Следующие шаги — предложения, а не выполненные задачи.|||Nākamie soļi ir izvēles ieteikumi, nevis paveikti uzdevumi.
+Move to new group|||В новую группу|||Pārvietot uz jaunu grupu|||Przenieś do nowej grupy
+Move to next group|||В следующую группу|||Pārvietot uz nākamo grupu|||Przenieś do następnej grupy
+New group|||Новая группа|||Jauna grupa|||Nowa grupa
+Next steps (one per line)|||Следующие шаги (каждый с новой строки)|||Nākamie soļi (katrs savā rindā)|||Następne kroki (po jednym w wierszu)
+Next steps are optional suggestions, not completed tasks.|||Следующие шаги — предложения, а не выполненные задачи.|||Nākamie soļi ir izvēles ieteikumi, nevis paveikti uzdevumi.|||Następne kroki to opcjonalne sugestie, a nie wykonane zadania.
 No AI provider is ready. You can organize these cards manually.|||Модель ИИ не готова. Можно упорядочить карточки вручную.|||MI modelis nav gatavs. Varat sakārtot kartītes manuāli.
 No camera app is available|||Приложение камеры недоступно|||Kameras lietotne nav pieejama
 Organization saved. Original notes and files are unchanged.|||Порядок сохранён. Исходные заметки и файлы не изменены.|||Kārtojums saglabāts. Sākotnējās piezīmes un faili nav mainīti.
@@ -1453,13 +1453,13 @@ Organize whole board|||Упорядочить всю доску|||Sakārtot visu
 Photo|||Фото|||Foto|||Zdjęcie
 Photo cancelled. No image was received.|||Съёмка отменена. Изображение не получено.|||Fotografēšana atcelta. Attēls nav saņemts.
 Photo could not be saved. Choose it from Files to retry.|||Не удалось сохранить фото. Выберите его в файлах и повторите.|||Neizdevās saglabāt foto. Atlasiet to no failiem un mēģiniet vēlreiz.
-Preview organization|||Просмотреть порядок|||Apskatīt kārtojumu
+Preview organization|||Просмотреть порядок|||Apskatīt kārtojumu|||Podgląd porządkowania
 Quick add|||Быстро добавить|||Ātri pievienot
 Recognize source text (page 1)|||Распознать текст (страница 1)|||Atpazīt tekstu (1. lappuse)
 Recording cancelled when Canvas left the foreground.|||Запись отменена при выходе с экрана.|||Ierakstīšana atcelta, izejot no ekrāna.
 Recording cancelled.|||Запись отменена.|||Ierakstīšana atcelta.
 Remove selected cards|||Удалить выбранные карточки|||Noņemt atlasītās kartītes
-Remove suggested group|||Убрать предложенную группу|||Noņemt piedāvāto grupu
+Remove suggested group|||Убрать предложенную группу|||Noņemt piedāvāto grupu|||Usuń sugerowaną grupę
 Resume drawing|||Продолжить рисунок|||Turpināt zīmējumu
 Retry saved memo|||Повторить сохранение записи|||Mēģināt saglabāt ierakstu vēlreiz|||Spróbuj ponownie zapisać notatkę głosową
 Save failed. Your source is kept; retry or choose the file again.|||Не удалось сохранить. Оригинал сохранён; повторите или выберите файл снова.|||Saglabāšana neizdevās. Avots ir saglabāts; mēģiniet vēlreiz vai atlasiet failu no jauna.
@@ -1481,7 +1481,7 @@ This card could not be saved yet.|||Карточка пока не сохран�
 This card position could not be saved yet.|||Положение карточки пока не сохранено.|||Kartītes novietojumu pagaidām neizdevās saglabāt.
 This source is unavailable. Restore it from Workspace if it is archived or in trash.|||Источник недоступен. Восстановите его в рабочем пространстве, если он в архиве или корзине.|||Avots nav pieejams. Atjaunojiet to darbvietā, ja tas ir arhīvā vai atkritnē.
 Ungroup|||Разгруппировать|||Atgrupēt
-Untitled card|||Карточка без названия|||Kartīte bez nosaukuma
+Untitled card|||Карточка без названия|||Kartīte bez nosaukuma|||Karta bez tytułu
 Voice memos are limited to two minutes. Stop and save before leaving this screen.|||Запись ограничена двумя минутами. Остановите и сохраните её перед выходом с экрана.|||Balss ieraksta ilgums ir līdz divām minūtēm. Pirms aiziešanas apturiet un saglabājiet to.|||Notatki głosowe mogą trwać do dwóch minut. Zatrzymaj i zapisz nagranie przed opuszczeniem tego ekranu.
 Write transcript|||Записать текст вручную|||Ievadīt atšifrējumu
 connection|||связь|||saikne
@@ -1663,7 +1663,7 @@ Installing voice…|||Устанавливаем голос…|||Instalē balsi�
 Advanced|||Дополнительно|||Papildu iespējas
 Image tools|||Инструменты изображения|||Attēla rīki|||Narzędzia obrazu
 Edit locally. Your original image remains unchanged.|||Редактирование выполняется на устройстве. Оригинал не изменится.|||Rediģēšana notiek ierīcē. Sākotnējais attēls netiks mainīts.|||Edytuj lokalnie. Oryginalny obraz pozostanie bez zmian.
-Loading preview…|||Загружаем предпросмотр…|||Ielādē priekšskatījumu…
+Loading preview…|||Загружаем предпросмотр…|||Ielādē priekšskatījumu…|||Wczytywanie podglądu…
 Rotate left|||Повернуть влево|||Pagriezt pa kreisi|||Obróć w lewo
 Rotate right|||Повернуть вправо|||Pagriezt pa labi|||Obróć w prawo
 Undo mirror|||Убрать отражение|||Atcelt spoguļattēlu
@@ -1695,30 +1695,30 @@ Combined image saved to Notebook.|||Объединённое изображен�
 Could not combine images. Sources are unchanged; check Inbox before retrying.|||Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой.|||Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni.
 Extract PDF page|||Извлечь страницу PDF|||Izvilkt PDF lapu
 Save one PDF page as a new Notebook image. Original unchanged.|||Сохраните одну страницу PDF как новое изображение в Блокноте. Оригинал не изменится.|||Saglabājiet vienu PDF lapu kā jaunu attēlu Piezīmju blokā. Oriģināls netiks mainīts.
-Pages|||Страницы|||Lapas
+Pages|||Страницы|||Lapas|||Strony
 Page number|||Номер страницы|||Lapas numurs
-PDF preview unavailable|||Предпросмотр PDF недоступен|||PDF priekšskatījums nav pieejams
+PDF preview unavailable|||Предпросмотр PDF недоступен|||PDF priekšskatījums nav pieejams|||Podgląd PDF jest niedostępny
 Choose a page in this PDF.|||Выберите существующую страницу PDF.|||Izvēlieties lapu šajā PDF.
 Save page image|||Сохранить изображение страницы|||Saglabāt lapas attēlu
 PDF page saved as a Notebook image.|||Страница PDF сохранена в Блокноте как изображение.|||PDF lapa saglabāta Piezīmju blokā kā attēls.
 Could not extract this PDF page. Original unchanged; check Inbox before retrying.|||Не удалось извлечь страницу PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Neizdevās izvilkt PDF lapu. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
-Select up to six PDF pages to save in one Notebook note. Original unchanged.|||Выберите до шести страниц PDF для сохранения в одной заметке. Оригинал не изменится.|||Atlasiet līdz sešām PDF lapām, ko saglabāt vienā piezīmē. Oriģināls paliks nemainīts.
-Pages to extract (e.g. 1,3-5)|||Страницы для извлечения (например, 1,3-5)|||Izvelkamās lapas (piem., 1,3-5)
-Choose 1–6 valid, unique pages.|||Выберите от 1 до 6 разных существующих страниц.|||Izvēlieties 1–6 derīgas, neatkārtojošās lapas.
-Pages selected|||Выбрано страниц|||Atlasītās lapas
-Save pages as images|||Сохранить страницы как изображения|||Saglabāt lapas kā attēlus
+Select up to six PDF pages to save in one Notebook note. Original unchanged.|||Выберите до шести страниц PDF для сохранения в одной заметке. Оригинал не изменится.|||Atlasiet līdz sešām PDF lapām, ko saglabāt vienā piezīmē. Oriģināls paliks nemainīts.|||Wybierz maksymalnie sześć stron PDF, aby zapisać je w jednej notatce. Oryginał pozostanie bez zmian.
+Pages to extract (e.g. 1,3-5)|||Страницы для извлечения (например, 1,3-5)|||Izvelkamās lapas (piem., 1,3-5)|||Strony do wyodrębnienia (np. 1,3–5)
+Choose 1–6 valid, unique pages.|||Выберите от 1 до 6 разных существующих страниц.|||Izvēlieties 1–6 derīgas, neatkārtojošās lapas.|||Wybierz od 1 do 6 prawidłowych, niepowtarzających się stron.
+Pages selected|||Выбрано страниц|||Atlasītās lapas|||Wybrane strony
+Save pages as images|||Сохранить страницы как изображения|||Saglabāt lapas kā attēlus|||Zapisz strony jako obrazy
 PDF pages saved to Notebook.|||Страницы PDF сохранены в Блокноте.|||PDF lapas saglabātas Piezīmju blokā.
 Could not extract all PDF pages. Original unchanged; check Inbox before retrying.|||Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой.|||Neizdevās izvilkt visas PDF lapas. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni.
 Image order|||Порядок изображений|||Attēlu secība|||Kolejność obrazów
 The preview follows the image order above.|||Порядок изображений в предпросмотре соответствует списку выше.|||Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā.|||Podgląd odpowiada kolejności obrazów powyżej.
-Extract PDF pages|||Извлечь страницы PDF|||Izvilkt PDF lapas
-Choose images|||Выбрать изображения|||Izvēlēties attēlus
-Choose 2–6 images. A note can contribute more than one.|||Выберите 2–6 изображений. Из одной заметки можно взять несколько.|||Izvēlieties 2–6 attēlus. No vienas piezīmes var izmantot vairākus.
-Could not load image attachments.|||Не удалось загрузить вложенные изображения.|||Neizdevās ielādēt pievienotos attēlus.
-No image attachments in selected cards.|||В выбранных карточках нет изображений.|||Atlasītajās kartītēs nav attēlu pielikumu.
-Imported image|||Импортированное изображение|||Importēts attēls
-Notebook attachment|||Вложение Блокнота|||Piezīmju bloka pielikums
-Continue to preview|||Перейти к предпросмотру|||Turpināt uz priekšskatījumu
+Extract PDF pages|||Извлечь страницы PDF|||Izvilkt PDF lapas|||Wyodrębnij strony PDF
+Choose images|||Выбрать изображения|||Izvēlēties attēlus|||Wybierz obrazy
+Choose 2–6 images. A note can contribute more than one.|||Выберите 2–6 изображений. Из одной заметки можно взять несколько.|||Izvēlieties 2–6 attēlus. No vienas piezīmes var izmantot vairākus.|||Wybierz od 2 do 6 obrazów. Z jednej notatki można dodać więcej niż jeden.
+Could not load image attachments.|||Не удалось загрузить вложенные изображения.|||Neizdevās ielādēt pievienotos attēlus.|||Nie udało się wczytać załączonych obrazów.
+No image attachments in selected cards.|||В выбранных карточках нет изображений.|||Atlasītajās kartītēs nav attēlu pielikumu.|||Wybrane karty nie zawierają załączonych obrazów.
+Imported image|||Импортированное изображение|||Importēts attēls|||Zaimportowany obraz
+Notebook attachment|||Вложение Блокнота|||Piezīmju bloka pielikums|||Załącznik Notatnika
+Continue to preview|||Перейти к предпросмотру|||Turpināt uz priekšskatījumu|||Przejdź do podglądu
 Hero collage|||Коллаж с главным изображением|||Kolāža ar galveno attēlu
 The first image is featured. Images are center-cropped to fit.|||Первое изображение — главное. Изображения обрезаются по центру для заполнения.|||Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu.|||Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały.
 Your everyday companion|||Ваш помощник на каждый день|||Jūsu palīgs ikdienā
@@ -2319,7 +2319,7 @@ Favorite|||Избранное|||Izlase
 Fixed sample data. This exercises every component the renderer supports, including the inert choice group.|||Фиксированные примерные данные. Проверяет все поддерживаемые элементы отображения, включая выбор без выполнения действий.|||Fiksēti parauga dati. Pārbauda visus atbalstītos attēlošanas elementus, ieskaitot izvēli bez darbību izpildes.
 Halo sent only part of this source to the model. Ask about a narrower passage for a complete answer.|||Halo отправил модели только часть источника. Для полного ответа задайте вопрос о более коротком отрывке.|||Halo nosūtīja modelim tikai daļu avota. Lai saņemtu pilnīgu atbildi, jautājiet par īsāku fragmentu.
 Go to section|||Перейти к разделу|||Doties uz sadaļu
-Image|||Изображение|||Attēls
+Image|||Изображение|||Attēls|||Obraz
 Instructions|||Инструкции|||Instrukcijas
 Last enrollment return|||Последний возврат из настройки|||Pēdējā atgriešanās no iestatīšanas
 Last successful backup · %1$s|||Последняя успешная резервная копия · %1$s|||Pēdējais veiksmīgais dublējums · %1$s

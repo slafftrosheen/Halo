@@ -139,6 +139,7 @@
     <string name="ui_b352578b07b1" formatted="false">"Brak zapisanych wiadomości do wyświetlenia."</string>
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
+    <string name="ui_120637f54127" formatted="false">"halo zastanawia się…"</string>
     <string name="ui_ba3bbbe10d8b" formatted="false">"Ładowanie…"</string>
     <string name="ui_e60cf185f16f" formatted="false">"Kontekst halo"</string>
     <string name="ui_29a390f9237e" formatted="false">"Wyczyść wszystko"</string>
@@ -188,16 +189,28 @@
     <string name="ui_1aa22a9b1abc" formatted="false">"Dodaj adnotację do źródła"</string>
     <string name="ui_0a30a815d67d" formatted="false">"Strona"</string>
     <string name="ui_50b563c05624" formatted="false">"Oznaczenia są zapisywane na tym Canvasie, a nie w oryginalnym pliku."</string>
+    <string name="ui_ac721e647bb1" formatted="false">"Tytuł grupy"</string>
     <string name="ui_9a83c4da41dc" formatted="false">"Dodaj do bieżącego Canvasu"</string>
+    <string name="ui_0d7a0134b7be" formatted="false">"Po zatwierdzeniu karty zostaną uporządkowane i połączone odnośnikami grup. Oryginalne notatki i pliki pozostaną bez zmian. Nic nie zostanie wysłane do innej aplikacji."</string>
+    <string name="ui_bb0885f0a279" formatted="false">"Zatwierdź porządkowanie"</string>
     <string name="ui_24eecfda35b6" formatted="false">"Nie przyznano dostępu do aparatu"</string>
     <string name="ui_158aa43ca64e" formatted="false">"Anuluj nagrywanie"</string>
     <string name="ui_a0f7acc32c7c" formatted="false">"Zapisz teraz, uporządkuj później. Wszystko pozostaje lokalnie, dopóki nie zdecydujesz się udostępnić."</string>
+    <string name="ui_fdc1d3d94759" formatted="false">"Utwórz powiązaną notatkę z listą kontrolną"</string>
     <string name="ui_3331a4782f7a" formatted="false">"Usuń zapisaną notatkę głosową"</string>
+    <string name="ui_6578dc409104" formatted="false">"Przenieś do nowej grupy"</string>
+    <string name="ui_89db0c8224f6" formatted="false">"Przenieś do następnej grupy"</string>
+    <string name="ui_df796c655f6f" formatted="false">"Nowa grupa"</string>
+    <string name="ui_375e8130f2bb" formatted="false">"Następne kroki (po jednym w wierszu)"</string>
+    <string name="ui_371b11dcd064" formatted="false">"Następne kroki to opcjonalne sugestie, a nie wykonane zadania."</string>
     <string name="ui_d84eebada93e" formatted="false">"Zdjęcie"</string>
+    <string name="ui_234188bbda96" formatted="false">"Podgląd porządkowania"</string>
+    <string name="ui_7dbf07765b13" formatted="false">"Usuń sugerowaną grupę"</string>
     <string name="ui_e5ab0a866833" formatted="false">"Spróbuj ponownie zapisać notatkę głosową"</string>
     <string name="ui_6501e1ced8da" formatted="false">"Zapisz notatkę"</string>
     <string name="ui_76d165ea898a" formatted="false">"Zapisz w Odebranych"</string>
     <string name="ui_8a397257d435" formatted="false">"Krótka notatka"</string>
+    <string name="ui_29fc54324b6c" formatted="false">"Karta bez tytułu"</string>
     <string name="ui_e3de5d43dfd4" formatted="false">"Notatki głosowe mogą trwać do dwóch minut. Zatrzymaj i zapisz nagranie przed opuszczeniem tego ekranu."</string>
     <string name="ui_505e82fae329" formatted="false">"Spróbuj ponownie zapisać zdjęcie"</string>
     <string name="ui_3efef4004996" formatted="false">"Zapisać konfigurację na później?"</string>
@@ -243,6 +256,7 @@
     <string name="ui_10c1282fcb73" formatted="false">"Pobieranie wstrzymane"</string>
     <string name="ui_18b3f5465aa1" formatted="false">"Narzędzia obrazu"</string>
     <string name="ui_ac27c4201488" formatted="false">"Edytuj lokalnie. Oryginalny obraz pozostanie bez zmian."</string>
+    <string name="ui_c4cf2b2ccb5d" formatted="false">"Wczytywanie podglądu…"</string>
     <string name="ui_54c46b33d809" formatted="false">"Obróć w lewo"</string>
     <string name="ui_9938c21d2ced" formatted="false">"Obróć w prawo"</string>
     <string name="ui_0b121e5c4006" formatted="false">"Wyśrodkuj kwadratowe kadrowanie"</string>
@@ -256,8 +270,23 @@
     <string name="ui_62a822a58309" formatted="false">"Odstępy"</string>
     <string name="ui_ea2b8a878841" formatted="false">"Tło"</string>
     <string name="ui_27ad8eb8232c" formatted="false">"Zapisz połączony obraz"</string>
+    <string name="ui_9046da16aea9" formatted="false">"Strony"</string>
+    <string name="ui_b269a68f045a" formatted="false">"Podgląd PDF jest niedostępny"</string>
+    <string name="ui_e868ba77eded" formatted="false">"Wybierz maksymalnie sześć stron PDF, aby zapisać je w jednej notatce. Oryginał pozostanie bez zmian."</string>
+    <string name="ui_111d4ca0505b" formatted="false">"Strony do wyodrębnienia (np. 1,3–5)"</string>
+    <string name="ui_9dd05754a493" formatted="false">"Wybierz od 1 do 6 prawidłowych, niepowtarzających się stron."</string>
+    <string name="ui_ae3fa1a2c36e" formatted="false">"Wybrane strony"</string>
+    <string name="ui_c0729795e4ec" formatted="false">"Zapisz strony jako obrazy"</string>
     <string name="ui_dbc7c3ff9962" formatted="false">"Kolejność obrazów"</string>
     <string name="ui_0b8f398a7a70" formatted="false">"Podgląd odpowiada kolejności obrazów powyżej."</string>
+    <string name="ui_2336976d01d2" formatted="false">"Wyodrębnij strony PDF"</string>
+    <string name="ui_2d39bc2ff82a" formatted="false">"Wybierz obrazy"</string>
+    <string name="ui_cc0c96802a62" formatted="false">"Wybierz od 2 do 6 obrazów. Z jednej notatki można dodać więcej niż jeden."</string>
+    <string name="ui_a5875e58ee3c" formatted="false">"Nie udało się wczytać załączonych obrazów."</string>
+    <string name="ui_567bcf9287a9" formatted="false">"Wybrane karty nie zawierają załączonych obrazów."</string>
+    <string name="ui_2eb03e4246d2" formatted="false">"Zaimportowany obraz"</string>
+    <string name="ui_1b8394275f47" formatted="false">"Załącznik Notatnika"</string>
+    <string name="ui_80e25d621620" formatted="false">"Przejdź do podglądu"</string>
     <string name="ui_e536acc1978c" formatted="false">"Pierwszy obraz jest wyróżniony. Obrazy są przycinane od środka, aby pasowały."</string>
     <string name="ui_2311fa5aaf83" formatted="false">"Aktualizacje: %1$d"</string>
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
@@ -294,6 +323,7 @@
     <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
     <string name="ui_e035e7acceb1" formatted="false">"Otwórz ustawienia aplikacji Android"</string>
     <string name="ui_83b12c2216ef" formatted="false">"Wyczyść"</string>
+    <string name="ui_1aa4cb0bcca7" formatted="false">"Obraz"</string>
     <string name="ui_f59ab8d1331b" formatted="false">"Bez tytułu"</string>
     <string name="ui_c1004a4b2320" formatted="false">"Sherpa 1.13.8 · CPU"</string>
     <string name="ui_37f73ba12de3" formatted="false">"Sherpa-ONNX 1.13.8 · INT8 · CPU · 10 głosów"</string>
