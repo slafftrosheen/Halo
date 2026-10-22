@@ -1291,6 +1291,7 @@
     <string name="ui_aa49dbe82ea0" formatted="false">"Previous reply"</string>
     <string name="ui_a50b9607757e" formatted="false">"Replying…"</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Save to Notebook"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Could not save to Notebook"</string>
     <string name="ui_40893b155e07" formatted="false">"Review requests and see what happened."</string>
     <string name="ui_fc63b46c9f3a" formatted="false">"No activity yet. Ask halo something on Home to get started."</string>
     <string name="ui_7333a4652b84" formatted="false">"No pending actions right now."</string>

@@ -1291,6 +1291,7 @@
     <string name="ui_aa49dbe82ea0" formatted="false">"Предыдущий ответ"</string>
     <string name="ui_a50b9607757e" formatted="false">"Отвечаю…"</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Сохранить в блокнот"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Не удалось сохранить в блокнот"</string>
     <string name="ui_40893b155e07" formatted="false">"Проверьте запросы и узнайте, что произошло."</string>
     <string name="ui_fc63b46c9f3a" formatted="false">"Действий пока нет. Задайте вопрос halo на главном экране."</string>
     <string name="ui_7333a4652b84" formatted="false">"Сейчас нет ожидающих действий."</string>

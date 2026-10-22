@@ -1291,6 +1291,7 @@
     <string name="ui_aa49dbe82ea0" formatted="false">"Iepriekšējā atbilde"</string>
     <string name="ui_a50b9607757e" formatted="false">"Atbildu…"</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Saglabāt piezīmēs"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Neizdevās saglabāt piezīmēs"</string>
     <string name="ui_40893b155e07" formatted="false">"Pārskatiet pieprasījumus un uzziniet, kas notika."</string>
     <string name="ui_fc63b46c9f3a" formatted="false">"Darbību vēl nav. Lai sāktu, uzdodiet halo jautājumu sākumlapā."</string>
     <string name="ui_7333a4652b84" formatted="false">"Pašlaik nav gaidošu darbību."</string>

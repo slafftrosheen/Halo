@@ -44,6 +44,7 @@ import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -100,6 +101,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var proposedLayout by remember { mutableStateOf<ScreenLayout?>(null) }
     var requestError by remember { mutableStateOf(false) }
     var researchRefreshQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    var savingResearch by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     val widgetNames = ScreenWidgets.types.associateWith { uiText(widgetTitle(it)) }
     var detailCard by remember { mutableStateOf<ScreenCard?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
@@ -486,6 +489,33 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                             Column(Modifier.fillMaxWidth()) { Text(source.title); Text(source.url, style = MaterialTheme.typography.labelSmall) }
                         }
                     }
+                    if (researchItem?.availableActions?.contains(ScreenAction.SaveToNotebook) == true) {
+                        com.halo.app.ui.components.HaloActionButton(
+                            onClick = {
+                                if (!savingResearch) {
+                                    savingResearch = true
+                                    coroutineScope.launch {
+                                        try {
+                                            val note = ManualDependencyGraph.notebookRepository.createNote(
+                                                body = researchNoteBody(researchItem),
+                                                source = com.halo.app.data.notebook.WorkspaceSource.USER_CREATED,
+                                                title = researchItem.title.take(200),
+                                            )
+                                            detailCard = null
+                                            onFullScreen(false)
+                                            onOpen("notebook/note/${android.net.Uri.encode(note.id)}")
+                                        } catch (_: Exception) {
+                                            notice = uiText("Could not save to Notebook")
+                                        } finally {
+                                            savingResearch = false
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !savingResearch,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(uiText("Save to Notebook")) }
+                    }
                     HaloReadAloud(data.title + ". " + detailSummary, compact = false)
                     if (card.widgetType == "calendar" && !calendarAllowed)
                         com.halo.app.ui.components.HaloActionButton(onClick = {
@@ -506,6 +536,29 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         com.halo.app.ui.online.GroundedWebSearchDialog(query) { researchRefreshQuery = null }
     }
 }
+
+private fun researchNoteBody(item: ScreenItem): String = buildString {
+    append((item.summary ?: "").take(8_000))
+    val sources = item.sourceLinks.asSequence()
+        .filter { link -> runCatching {
+            val uri = java.net.URI(link.url)
+            uri.scheme in setOf("https", "http") && !uri.host.isNullOrBlank()
+        }.getOrDefault(false) }
+        .distinctBy { it.url }
+        .take(8)
+        .toList()
+    if (sources.isNotEmpty()) {
+        append("\n\nSources\n")
+        sources.forEach { source ->
+            append("\n")
+            append(source.title.take(200).ifBlank { source.url.take(2048) })
+            append("\n")
+            append(source.url.take(2048))
+            append("\n")
+        }
+    }
+    item.updatedAt?.let { append("\nRetrieved · ").append(it.toString()) }
+}.take(12_000)
 
 private fun uiTextFallbackCalendar() = "Calendar event"
 

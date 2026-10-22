@@ -1293,6 +1293,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Previous reply" to R.string.ui_aa49dbe82ea0,
     "Replying…" to R.string.ui_a50b9607757e,
     "Save to Notebook" to R.string.ui_6fb7365efc3c,
+    "Could not save to Notebook" to R.string.ui_fcbc94dc1e25,
     "Review requests and see what happened." to R.string.ui_40893b155e07,
     "No activity yet. Ask Halo something on Home to get started." to R.string.ui_fc63b46c9f3a,
     "No pending actions right now." to R.string.ui_7333a4652b84,
