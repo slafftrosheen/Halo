@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.os.Process
+import com.halo.app.lab.bridge.HaloLabProtocol
 import com.halo.app.storage.haloStorageLayout
 import com.halo.lab.bridge.v1.IModelBenchWorker
 import com.halo.providers.litert.LiteRtLocalProvider
@@ -94,7 +95,7 @@ class HaloModelBenchService : Service() {
         if (!UUID_REGEX.matches(attemptId) || modelId.isBlank() || modelId.length > 160 || !SHA_REGEX.matches(expectedSha256))
             return@synchronized reply("REJECTED", "INVALID_REQUEST").toString()
         if (supervisorToken?.isBinderAlive != true) return@synchronized reply("REJECTED", "SUPERVISOR_UNAVAILABLE").toString()
-        val payloadHash = sha256("$attemptId\n$modelId\n$expectedSha256\n$FIXTURE_ID")
+        val payloadHash = sha256("$attemptId\n$modelId\n$expectedSha256\n${HaloLabProtocol.FAST_SMOKE_FIXTURE_ID}")
         if (activeAttemptId == attemptId) {
             if (activePayloadHash != payloadHash) return@synchronized reply("REJECTED", "REQUEST_ID_CONFLICT").toString()
             return@synchronized stateJson.toString()
@@ -164,7 +165,7 @@ class HaloModelBenchService : Service() {
                 .put("generationMs", result.generationDurationMs)
                 .put("response", result.responseText.take(MAX_OUTPUT_CHARS))
                 .put("outputTruncated", result.responseText.length > MAX_OUTPUT_CHARS)
-                .put("fixtureId", FIXTURE_ID)
+                .put("fixtureId", HaloLabProtocol.FAST_SMOKE_FIXTURE_ID)
                 .put("origin", "DEVICE_MEASUREMENT")
         } catch (cancelled: CancellationException) {
             terminal = reply("CANCELLED", "USER_STOP").put("attemptId", attemptId)
@@ -248,7 +249,6 @@ class HaloModelBenchService : Service() {
     private class ProbeFailure(val code: String) : IllegalStateException(code)
 
     companion object {
-        private const val FIXTURE_ID = "fast-smoke-1-short-ready"
         private const val FIXTURE_PROMPT = "Reply with exactly READY."
         private const val FIXTURE_EXPECTED = "READY"
         private const val MAX_OUTPUT_CHARS = 512

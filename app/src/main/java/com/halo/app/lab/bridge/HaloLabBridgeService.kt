@@ -271,7 +271,9 @@ class HaloLabBridgeService : Service() {
             ) ?: return error("STAGE_BUDGETS_INVALID")
         }
         val suppliedLease = artifactLeases[req.optString("leaseId")]
-        if (!UUID_PATTERN.matches(attempt) || model.isBlank() || model.length > 160 || !SHA_PATTERN.matches(sha) || fixture != FIXTURE_ID)
+        if (!UUID_PATTERN.matches(attempt) || model.isBlank() || model.length > 160 || !SHA_PATTERN.matches(sha) ||
+            fixture != HaloLabProtocol.FAST_SMOKE_FIXTURE_ID
+        )
             return error("UNSUPPORTED_OR_INVALID_CASE")
         if (suppliedLease == null || suppliedLease.expiresAtElapsedMs <= SystemClock.elapsedRealtime() ||
             suppliedLease.modelId != model || suppliedLease.generationId != req.optString("generationId") ||
@@ -668,7 +670,6 @@ class HaloLabBridgeService : Service() {
     companion object {
         const val ACTION_CONSENT_REVOKED = "com.aistudio.braintool.xkqzps.action.HALO_LAB_CONSENT_REVOKED"
         private val SERVER_INSTANCE_ID = UUID.randomUUID().toString()
-        private const val FIXTURE_ID = "arith-multiply-17x8-v1"
         private const val LEASE_TTL_MS = 5 * 60_000L
         private const val STOP_GRACE_MS = 5_000L
         private const val WORKER_BIND_TIMEOUT_MS = 5_000L
