@@ -90,6 +90,10 @@ phone validation. Source checks are not a passing test or runtime result.
 - A complete, audited per-artifact provenance/license/backend manifest and
   device/runtime/role/language qualification matrix, including invalidation on
   upgrades. Existing evidence owners remain; no new evidence is fabricated.
+- The current pinned starter-bundle source inventory and explicit evidence gaps
+  are recorded in [the qualification matrix](../testing/HALO-MODEL-QUALIFICATION-MATRIX-2026-10-22.md).
+  It is not a qualification pass; upstream license review and reproducible runs
+  remain outstanding.
 - A measured multilingual conversation recommendation. Qwen is still an intent
   candidate and LFM2.5 is not promoted for non-English conversation/Study.
 - Device acceptance: fresh install without technical discovery; technical mode
