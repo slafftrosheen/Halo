@@ -3767,6 +3767,7 @@
     <string name="ui_cc0dc8fec54b" formatted="false">"Atlase saglabāta kanvā"</string>
     <string name="ui_a24f237da3cd" formatted="false">"Atzīmētais zīmējuma apgabals"</string>
     <string name="ui_afada8582413" formatted="false">"%1$d vilkumi"</string>
-    <string name="ui_f91dc70872a5" formatted="false">"Tikai atsauce; atver saistīto avotu, lai to pārskatītu."</string>
+    <string name="ui_a21b1c1e33ca" formatted="false">"Atlases avots nav mainījies."</string>
+    <string name="ui_9ebce4ab2618" formatted="false">"Avots mainījies; atlasi apgabalu vēlreiz."</string>
     <string name="ui_cf0d1a41f783" formatted="false">"Atvērt saistīto avotu"</string>
 </resources>

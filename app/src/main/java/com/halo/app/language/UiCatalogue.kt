@@ -3769,6 +3769,7 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Selection saved to Canvas" to R.string.ui_cc0dc8fec54b,
     "Ink selection" to R.string.ui_a24f237da3cd,
     "%1\$d strokes" to R.string.ui_afada8582413,
-    "Reference only; open the linked source to review it." to R.string.ui_f91dc70872a5,
+    "Selection source is unchanged." to R.string.ui_a21b1c1e33ca,
+    "Source changed; select the region again." to R.string.ui_9ebce4ab2618,
     "Open linked source" to R.string.ui_cf0d1a41f783,
 )

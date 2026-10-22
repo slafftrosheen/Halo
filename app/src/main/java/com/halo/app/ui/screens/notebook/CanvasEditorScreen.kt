@@ -326,6 +326,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 recovery = state.drawingDraft?.takeIf { it.kind == "annotation" && it.nodeId == nodeId },
                 onDraft = { draft -> viewModel.keepDrawingDraft(draft.copy(nodeId = nodeId, fileVersion = annotationVersion)) },
                 onSave = { updates -> viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion); annotateNodeId = null },
+                onSaveSelection = { selection, updates ->
+                    viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion, selection) {
+                        viewModel.setInkSelection(null)
+                        annotateNodeId = null
+                    }
+                },
                 onDismiss = { viewModel.discardDrawingDraft(); viewModel.setInkSelection(null); annotateNodeId = null },
                 onSelectionChanged = viewModel::setInkSelection)
         }
@@ -911,10 +917,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         ) {
                             val sourceNode = state.edges.firstOrNull { it.toNodeId == node.id && it.label == "selection" }
                                 ?.fromNodeId?.let { sourceId -> state.nodes.firstOrNull { it.id == sourceId } }
+                            val sourceVersion = sourceNode?.refObjectId?.let { id -> state.files[id]?.version ?: state.files[id]?.sha256 }
+                            val selectionCurrent = node.inkSelectionIsCurrent(sourceNode, viewModel.canvasId, sourceVersion)
                             Text(uiText("Ink selection"), style = MaterialTheme.typography.labelSmall)
                             Text(uiText("%1\$d strokes", node.inkSelectionStrokeCount() ?: 0),
                                 style = MaterialTheme.typography.bodyMedium)
-                            Text(uiText("Reference only; open the linked source to review it."),
+                            Text(uiText(if (selectionCurrent) "Selection source is unchanged." else "Source changed; select the region again."),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             TextButton(onClick = {
                                 sourceNode?.let { source ->

@@ -400,8 +400,19 @@ class NotebookCanvasRepository(
             .digest(("\n" + encoded).toByteArray(Charsets.UTF_8))
         val sourceRevision = revisionBytes.joinToString("") { byte -> "%02x".format(byte) }
         require(com.halo.sdk.runtime.ink.InkSelections.resolve(document, context, canvasId, source.id, sourceRevision) != null) {
-            "Selection source changed. Select the region again."
+            "Source changed. Select the region again."
         }
+        val id = insertInkSelectionBookmark(canvasId, source, context, nodes)
+        touch(canvasId)
+        id
+    }
+
+    private suspend fun insertInkSelectionBookmark(
+        canvasId: String,
+        source: CanvasNodeEntity,
+        context: com.halo.sdk.runtime.ink.InkSelectionContext,
+        currentNodes: List<CanvasNodeEntity>,
+    ): String {
         val id = newId()
         val stamp = now()
         val payload = org.json.JSONObject().apply {
@@ -416,12 +427,11 @@ class NotebookCanvasRepository(
             put("createdAtMs", context.createdAtMs)
             put("updatedAtMs", context.updatedAtMs)
         }.toString()
-        val layer = (nodes.maxOfOrNull { it.zIndex } ?: -1) + 1
+        val layer = (currentNodes.maxOfOrNull { it.zIndex } ?: -1) + 1
         canvasDao.insertNode(CanvasNodeEntity(id, canvasId, CanvasNodeType.INK_SELECTION.name, null, payload,
             source.x + source.width + 32f, source.y, 220f, 150f, layer, stamp, stamp))
         canvasDao.insertEdge(CanvasEdgeEntity(newId(), canvasId, source.id, id, "selection", stamp))
-        touch(canvasId)
-        id
+        return id
     }
 
     suspend fun addReference(canvasId: String, objectId: String, x: Float, y: Float, image: Boolean = false): String = database.withTransaction {
@@ -493,17 +503,35 @@ class NotebookCanvasRepository(
     }
 
     /** Keep imported PDF/image original bytes unchanged; only card-local marks are saved. */
-    suspend fun saveFileMarkup(canvasId: String, nodeId: String, pages: Map<Int, String>, expectedText: String? = null, expectedFileVersion: String? = null): Boolean = database.withTransaction {
+    suspend fun saveFileMarkup(canvasId: String, nodeId: String, pages: Map<Int, String>, expectedText: String? = null,
+        expectedFileVersion: String? = null, selection: com.halo.sdk.runtime.ink.InkSelectionContext? = null): Boolean = database.withTransaction {
         requireWritable(canvasId)
         val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
         if (node.refObjectId == null || node.type !in setOf(CanvasNodeType.FILE.name, CanvasNodeType.IMAGE.name)) return@withTransaction false
         check(expectedText == null || node.text == expectedText) { "Annotations changed. Reopen the source before saving." }
-        if (expectedFileVersion != null) {
-            val file = database.workspaceFileDao().getFile(node.refObjectId)
-            check(expectedFileVersion == (file?.sha256 ?: file?.modifiedAt?.let { "workspace-file:$it" })) { "Source file changed. Reopen it before saving." }
-        }
+        val file = database.workspaceFileDao().getFile(node.refObjectId)
+        val currentFileVersion = file?.sha256 ?: file?.modifiedAt?.let { "workspace-file:$it" }
+        if (expectedFileVersion != null) check(expectedFileVersion == currentFileVersion) { "Source file changed. Reopen it before saving." }
         val text = CanvasFileMarkupCodec.merge(node.text, pages)
+        if (selection != null) {
+            check(selection.workspaceObjectId == node.refObjectId) { "Selection belongs to a different source." }
+            val pageNumber = selection.pageId?.removePrefix("page-")?.toIntOrNull()
+                ?.takeIf { it in 1..9999 } ?: error("Selection page is invalid.")
+            val encoded = CanvasFileMarkupCodec.decode(text).pages[pageNumber].orEmpty()
+            val document = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(encoded)) { "Selection page is unreadable." }
+            val baseRevision = expectedFileVersion ?: currentFileVersion ?: error("Source version is unavailable.")
+            val sourceRevision = java.security.MessageDigest.getInstance("SHA-256")
+                .digest((baseRevision + "\n" + com.halo.sdk.runtime.ink.InkCodec.encode(document)).toByteArray(Charsets.UTF_8))
+                .joinToString("") { byte -> "%02x".format(byte) }
+            require(com.halo.sdk.runtime.ink.InkSelections.resolve(document, selection, node.refObjectId, "page-$pageNumber", sourceRevision) != null) {
+                "Source changed. Select the region again."
+            }
+        }
         val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
+        if (selection != null) {
+            check(changed) { "Could not save the annotated source." }
+            insertInkSelectionBookmark(canvasId, node, selection, canvasDao.getNodes(canvasId))
+        }
         if (changed) touch(canvasId)
         changed
     }

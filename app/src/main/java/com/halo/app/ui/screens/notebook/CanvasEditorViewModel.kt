@@ -56,6 +56,45 @@ internal fun CanvasNode.readableText(): String = when {
 internal fun CanvasNode.inkSelectionStrokeCount(): Int? = if (type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION) null else
     runCatching { org.json.JSONObject(text).getJSONArray("strokeIds").length() }.getOrNull()
 
+internal fun CanvasNode.inkSelectionIsCurrent(source: CanvasNode?, canvasId: String, sourceVersion: String? = null): Boolean = runCatching {
+    if (type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION || source == null) return false
+    val json = org.json.JSONObject(text)
+    val bounds = com.halo.sdk.runtime.ink.InkSelectionBounds(
+        json.getInt("left"), json.getInt("top"), json.getInt("right"), json.getInt("bottom"))
+    val ids = json.getJSONArray("strokeIds").let { array ->
+        (0 until array.length()).map { index -> array.getString(index) }
+    }
+    val context = com.halo.sdk.runtime.ink.InkSelectionContext(
+        workspaceObjectId = json.getString("workspaceObjectId"),
+        pageId = json.optString("pageId").takeIf(String::isNotEmpty),
+        bounds = bounds,
+        selectedStrokeIds = ids,
+        sourceRevision = json.getString("sourceRevision"),
+        origin = com.halo.sdk.runtime.ink.InkSelectionOrigin.valueOf(json.getString("origin")),
+        createdAtMs = json.getLong("createdAtMs"),
+        updatedAtMs = json.getLong("updatedAtMs"),
+        schemaVersion = json.getInt("schemaVersion"),
+    )
+    val (ownerId, pageId, encoded, revisionBase) = when (source.type) {
+        com.halo.app.data.notebook.CanvasNodeType.SKETCH -> {
+            if (context.workspaceObjectId != canvasId || context.pageId != source.id) return false
+            listOf(canvasId, source.id, source.text, "")
+        }
+        com.halo.app.data.notebook.CanvasNodeType.FILE, com.halo.app.data.notebook.CanvasNodeType.IMAGE -> {
+            val sourceId = source.refObjectId ?: return false
+            val pageNumber = context.pageId?.removePrefix("page-")?.toIntOrNull()?.takeIf { it in 1..9999 } ?: return false
+            if (context.workspaceObjectId != sourceId || sourceVersion.isNullOrBlank()) return false
+            listOf(sourceId, "page-$pageNumber", com.halo.app.data.notebook.CanvasFileMarkupCodec.decode(source.text).pages[pageNumber].orEmpty(), sourceVersion)
+        }
+        else -> return false
+    }
+    val document = com.halo.sdk.runtime.ink.InkCodec.decode(encoded) ?: return false
+    val revision = java.security.MessageDigest.getInstance("SHA-256")
+        .digest((revisionBase + "\n" + com.halo.sdk.runtime.ink.InkCodec.encode(document)).toByteArray(Charsets.UTF_8))
+        .joinToString("") { byte -> "%02x".format(byte) }
+    com.halo.sdk.runtime.ink.InkSelections.resolve(document, context, ownerId, pageId, revision) != null
+}.getOrDefault(false)
+
 data class CanvasEditorUiState(
     val title: String = "Canvas",
     val nodes: List<CanvasNode> = emptyList(),
@@ -1114,11 +1153,14 @@ class CanvasEditorViewModel(
         }
     }
 
-    fun saveFileMarkup(nodeId: String, pageUpdates: Map<Int, String>, expectedText: String? = null, expectedFileVersion: String? = null) = command {
+    fun saveFileMarkup(nodeId: String, pageUpdates: Map<Int, String>, expectedText: String? = null,
+        expectedFileVersion: String? = null, selection: com.halo.sdk.runtime.ink.InkSelectionContext? = null,
+        onSaved: () -> Unit = {}) = command {
         flushPendingEdits()
-        check(repository.saveFileMarkup(canvasId, nodeId, pageUpdates, expectedText, expectedFileVersion))
+        check(repository.saveFileMarkup(canvasId, nodeId, pageUpdates, expectedText, expectedFileVersion, selection))
         repository.clearDrawingDraft(canvasId)
         mutableState.value = mutableState.value.copy(drawingDraft = null)
+        onSaved()
     }
 
     fun recognizedDraft(sourceId: String, kind: String, text: String, expectedOriginal: String? = null, expectedFileVersion: String? = null) {

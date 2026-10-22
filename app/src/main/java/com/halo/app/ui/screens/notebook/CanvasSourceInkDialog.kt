@@ -77,6 +77,7 @@ internal fun CanvasSourceInkDialog(
     recovery: CanvasDrawingDraft? = null,
     onDraft: (CanvasDrawingDraft) -> Unit = {},
     onSave: (Map<Int, String>) -> Unit,
+    onSaveSelection: (com.halo.sdk.runtime.ink.InkSelectionContext, Map<Int, String>) -> Unit,
     onDismiss: () -> Unit,
     onSelectionChanged: (com.halo.sdk.runtime.ink.InkSelectionContext?) -> Unit = {},
 ) {
@@ -143,7 +144,16 @@ internal fun CanvasSourceInkDialog(
                             saveError = false
                         }, selectionOwnerId = file.version?.let { file.objectId.value }, selectionPageId = "page-$page",
                             selectionBaseRevision = file.version ?: file.sha256,
-                            onSelectionChanged = onSelectionChanged)
+                            onSelectionChanged = onSelectionChanged,
+                            onSaveSelection = { selection ->
+                                try {
+                                    val updates = pending.toMap()
+                                    CanvasFileMarkupCodec.merge(markup, updates)
+                                    draftFor(updates).encode()
+                                    onSaveSelection(selection, updates)
+                                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                  catch (_: Exception) { saveError = true }
+                            })
                     }
                     if (saveError) Text(stringResource(R.string.ink_draft_rejected), color = MaterialTheme.colorScheme.error)
                     Text(uiText("Marks are saved on this Canvas, not into the original file."), style = MaterialTheme.typography.bodySmall)
