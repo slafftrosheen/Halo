@@ -28,7 +28,7 @@ This closes only the A discovery record. Source progress for the bounded Noteboo
 
 ## Source progress — explicit Notebook picture search
 
-At source revision `PENDING`, the Notebook local-search sheet now offers individually selectable image attachments from active notes. Listing reads attachment metadata only; image bytes are opened only for selected `attachment:<noteId>:<attachmentId>` IDs after checking the allowlist, active note, MIME, storage boundary, and persisted content permission.
+At source revision `5670ef36`, the Notebook local-search sheet now offers individually selectable image attachments from active notes. Listing reads attachment metadata only; image bytes are opened only for selected `attachment:<noteId>:<attachmentId>` IDs after checking the allowlist, active note, MIME, storage boundary, and persisted content permission.
 
 Picture vectors use a separate atomic IMAGE-only file (`image-index-v1.json`) with pinned model SHA, dimension, normalization, LiteRT runtime, preprocessing identity, and content hash. It stores vectors and source pointers, never image bytes. Text and IMAGE spaces remain separate. Image inputs are bounded to PNG/JPEG, 4 MiB, 4096 px and 16 MP; the provider rechecks current artifact identity, CPU/VISION support, memory admission, cancellation and native lease. The service rechecks the selected attachment and content hash after embedding and again before returning search results. Revoking search consent or removing the source clears its vector entry.
 
