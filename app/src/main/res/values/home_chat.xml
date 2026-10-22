@@ -1,0 +1,13 @@
+<resources>
+    <string name="home_chat_options">Chat options</string>
+    <string name="home_your_day">Your day</string>
+    <string name="home_message_actions">Message actions</string>
+    <string name="home_history_empty">Your saved conversations will appear here.</string>
+    <string name="home_current_chat">Current conversation</string>
+    <string name="home_share_failed">Sharing is unavailable. You can copy this message instead.</string>
+    <string name="home_task_details">Task details</string>
+    <string name="home_hide_task_details">Hide task details</string>
+    <string name="home_load_earlier">Load earlier messages</string>
+    <string name="home_remove_attachment">Remove %1$s</string>
+    <string name="home_conversation_unavailable">Could not open this conversation. Try again.</string>
+</resources>

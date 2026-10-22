@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.audio.SpeechPlaybackLifecycleTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2026-10-22T20:43:07.912Z" hostname="MINIFOXEY" time="5.951">
+  <properties/>
+  <testcase name="cloudFallbackIsStickyAndNeverRetriesOneFailedChunk" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="4.145"/>
+  <testcase name="settingsSurviveRecreationWithSafeFallbackDefault" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.094"/>
+  <testcase name="audibleHandoffStopsOldPlaybackAndSuppressesLateFinalWithoutReplay" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.368"/>
+  <testcase name="scopedStopBeforeAdmissionSuppressesQueuedReadWithoutStoppingCurrentOutput" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.051"/>
+  <testcase name="shortBufferedAnswerSpeaksExactlyOnce" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.066"/>
+  <testcase name="stoppedPinnedResponseCannotStartSynthesisOrFallback" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.054"/>
+  <testcase name="systemDefaultPinsOneActualRouteAcrossResponseChunks" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.063"/>
+  <testcase name="unspokenHandoffAllowsFinalOnExactNewRouteOnce" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.057"/>
+  <testcase name="closeFailureDoesNotSkipOtherSpeechProviders" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.054"/>
+  <testcase name="unavailableExactOutputDoesNotSynthesizeOrFallBackAndTestCanBeStopped" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.081"/>
+  <testcase name="stopClearsThreeChunksAndSuppressesLateFinal" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.052"/>
+  <testcase name="duplicateFinalWhilePlayingDoesNotRestartAudio" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.049"/>
+  <testcase name="duplicatePreparationDoesNotInterruptAudibleChunk" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.054"/>
+  <testcase name="latePcmFromStoppedProviderIsDiscardedWithoutFallback" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.052"/>
+  <testcase name="earlyAudioUsesOneProviderRouteAndTerminalWithoutPrefixReplay" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.048"/>
+  <testcase name="studyStopIsScopedAndDifferentPassageMayRestartItsGenerationCounter" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.067"/>
+  <testcase name="handoffCannotRewriteAnotherInteractionsAffinity" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.041"/>
+  <testcase name="oneTimeOutputTestUsesRoutedOwnerAndHumanConfirmationIsSeparate" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="0.039"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

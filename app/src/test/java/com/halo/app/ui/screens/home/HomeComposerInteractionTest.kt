@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.home
 import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -35,8 +36,8 @@ class HomeComposerInteractionTest {
             }
         }
         val height = compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot.height
-        val maxHeight = with(compose.density) { 88.dp.toPx() }
-        assertTrue("Idle composer should fit one field/action row, height=$height", height <= maxHeight)
+        val maxHeight = with(compose.density) { 112.dp.toPx() }
+        assertTrue("Idle composer should fit its field and compact action row, height=$height", height <= maxHeight)
     }
 
     @Test fun typedDraftShowsSendAndNeverStartsVoice() {
@@ -158,11 +159,60 @@ class HomeComposerInteractionTest {
                 }
             }
         }
-        compose.onNodeWithContentDescription("Set up voice").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Send").assertIsDisplayed()
             .assertHeightIsAtLeast(48.dp).assertIsNotEnabled()
-        compose.onNodeWithContentDescription("Send").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Set up voice").assertDoesNotExist()
         assertEquals(0, setup)
         assertEquals(0, sends)
         compose.onNodeWithText("Draft").assertExists()
+    }
+
+    @Test fun attachmentAndToolsPreserveTheDraftWithoutDispatch() {
+        val draft = mutableStateOf("Keep this draft")
+        var attachments = 0
+        var tools = 0
+        var dispatches = 0
+        compose.setContent {
+            HaloTheme {
+                Box(Modifier.width(360.dp)) {
+                    HaloComposer(draft.value, { draft.value = it }, { dispatches++ }, { dispatches++ }, {},
+                        false, false, false, "Talk", false,
+                        onAttach = { attachments++ }, onTools = { tools++ })
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Attach").assertIsDisplayed().performClick()
+        compose.onNode(hasText("Tools") or hasContentDescription("Tools")).assertIsDisplayed().performClick()
+        compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
+        compose.onNode(hasSetTextAction()).performTextInput(" more")
+        assertEquals(1, attachments)
+        assertEquals(1, tools)
+        assertEquals(0, dispatches)
+        assertTrue(draft.value.contains("more"))
+    }
+
+    @Test @Config(qualifiers = "w560dp-h320dp")
+    fun shortKeyboardViewportKeepsTheFieldAndAllActionsReachable() {
+        var attachments = 0
+        var tools = 0
+        var sends = 0
+        compose.setContent {
+            HaloTheme {
+                Box(Modifier.width(520.dp).height(96.dp)) {
+                    HaloComposer("A question", {}, { sends++ }, {}, {}, true, true, false, "Talk", false,
+                        onAttach = { attachments++ }, onTools = { tools++ })
+                }
+            }
+        }
+        compose.onNode(hasSetTextAction()).assertIsDisplayed()
+        listOf("Attach", "Tools", "Send").forEach { label ->
+            val node = compose.onNodeWithContentDescription(label)
+            node.assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
+            val bottom = node.fetchSemanticsNode().boundsInRoot.bottom
+            assertTrue("$label exceeds the short viewport", bottom <= with(compose.density) { 96.dp.toPx() })
+        }
+        assertEquals(1, attachments)
+        assertEquals(1, tools)
+        assertEquals(1, sends)
     }
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeComposerInteractionTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-22T20:43:33.281Z" hostname="MINIFOXEY" time="1.366">
+  <properties/>
+  <testcase name="shortKeyboardViewportKeepsTheFieldAndAllActionsReachable" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.275"/>
+  <testcase name="focusGateKeepsTheDraftVisibleAndPreventsVoiceOrSubmission" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.091"/>
+  <testcase name="stopDoesNotSubmitTheDraftOrStartVoice" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.106"/>
+  <testcase name="typedDraftShowsSendAndNeverStartsVoice" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.104"/>
+  <testcase name="attachmentAndToolsPreserveTheDraftWithoutDispatch" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.193"/>
+  <testcase name="everydaySuggestionPreparesEditableTextWithoutSending" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.217"/>
+  <testcase name="idleComposerLeavesRoomForTheConversation" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.105"/>
+  <testcase name="busyActionBecomesStopWhileKeepingTheEditableDraftAndTargetPosition" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.152"/>
+  <testcase name="enlargedTranslatedActionsKeepAccessibleTouchTargets" classname="com.halo.app.ui.screens.home.HomeComposerInteractionTest" time="0.113"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

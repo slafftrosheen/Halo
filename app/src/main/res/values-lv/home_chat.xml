@@ -1,0 +1,13 @@
+<resources>
+    <string name="home_chat_options">Sarunas opcijas</string>
+    <string name="home_your_day">Tava diena</string>
+    <string name="home_message_actions">Darbības ar ziņu</string>
+    <string name="home_history_empty">Šeit būs redzamas saglabātās sarunas.</string>
+    <string name="home_current_chat">Pašreizējā saruna</string>
+    <string name="home_share_failed">Kopīgošana nav pieejama. Vari nokopēt šo ziņu.</string>
+    <string name="home_task_details">Uzdevuma informācija</string>
+    <string name="home_hide_task_details">Paslēpt uzdevuma informāciju</string>
+    <string name="home_load_earlier">Ielādēt iepriekšējās ziņas</string>
+    <string name="home_remove_attachment">Noņemt: %1$s</string>
+    <string name="home_conversation_unavailable">Neizdevās atvērt sarunu. Mēģini vēlreiz.</string>
+</resources>

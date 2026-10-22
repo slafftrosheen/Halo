@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeToolResultFxTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-22T20:43:35.189Z" hostname="MINIFOXEY" time="0.005">
+  <properties/>
+  <testcase name="failureNeverPlaysDoneEvenForContradictoryReceipt" classname="com.halo.app.ui.screens.home.HomeToolResultFxTest" time="0.004"/>
+  <testcase name="doneOnlyForConfirmedExecutionTruth" classname="com.halo.app.ui.screens.home.HomeToolResultFxTest" time="0.0"/>
+  <testcase name="historicReceiptsCannotReplayWhenHomeReopensOrConversationChanges" classname="com.halo.app.ui.screens.home.HomeToolResultFxTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

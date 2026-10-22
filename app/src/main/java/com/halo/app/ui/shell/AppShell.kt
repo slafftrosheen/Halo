@@ -12,6 +12,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -302,6 +303,8 @@ fun AppShell(
     val editingWorkspace = backStackEntry?.destination?.route?.let {
         it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/") || it.startsWith("notebook/study/")
     } == true
+    val homeKeyboardVisible = currentRoute == "home" &&
+        WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -309,11 +312,11 @@ fun AppShell(
         bottomBar = {
             if (!immersiveScreen) Column {
             val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
-            if (!kidsMode && !editingWorkspace && currentRoute !in setOf("permissions", "guided_setup")) LiveTaskPill(liveHome,
+            if (!kidsMode && !editingWorkspace && currentRoute !in setOf("home", "permissions", "guided_setup")) LiveTaskPill(liveHome,
                 onReview = { navigateSafely("activity") }, onStop = homeViewModel::cancelSession)
             com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
                 onVoiceSettings = { navigateSafely("settings/voice/output") })
-            if (!mini && !kidsMode && !editingWorkspace && !expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
+            if (!mini && !kidsMode && !editingWorkspace && !expandedNavigation && !homeKeyboardVisible && backStackEntry?.destination?.route != "guided_setup") {
                 HaloNavigation(
                     navController = navController,
                     items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
@@ -413,7 +416,9 @@ fun AppShell(
                             }, onChat = { screenMode = false; screenFull = false })
                             }
                         } else HomeScreen(
-                        surfaceSwitcher = { com.halo.app.screen.HomeSurfaceSwitch(false, { screenMode = it; if (!it) screenFull = false }) },
+                        surfaceSwitcher = { com.halo.app.screen.HomeSurfaceSwitch(false,
+                            { screenMode = it; if (!it) screenFull = false },
+                            compact = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f) },
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,

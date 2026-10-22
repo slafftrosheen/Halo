@@ -6,7 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -22,17 +22,20 @@ import com.halo.app.ui.glass.components.HaloMarkdownText
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean,
-    cloudReply: Boolean = false, onCopy: () -> Unit, onSave: () -> Unit) {
+    cloudReply: Boolean = false, onCopy: () -> Unit, onSave: () -> Unit, onEdit: (() -> Unit)? = null) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val identityKey = uiState.conversationId to (uiState.presentedIdentity?.turnId ?: uiState.presentedIdentity?.requestId)
+    var readRequest by remember(identityKey) { mutableLongStateOf(0) }
+    var shareFailed by remember(identityKey) { mutableStateOf(false) }
+    val canAct = !isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 0.dp),
-                shape = com.halo.app.ui.design.HaloShapes.hero,
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
-                tonalElevation = 1.dp,
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.background,
             ) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -66,15 +69,21 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                             }
                         }
 
+                        if (canAct) HomeMessageActions(onCopy = onCopy,
+                            onShare = { shareFailed = !shareHomeMessage(context, responseText) },
+                            onSave = onSave, onRead = { readRequest++ }, onEdit = onEdit, identityKey = identityKey)
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Text(uiText(when {
+                    Spacer(Modifier.height(4.dp))
+                    val status = when {
                         uiState.presentedIdentity?.continuationPending == true -> "Needs your review"
                         uiState.presentedIdentity?.source == ResponsePresentationSource.COMMITTED_CONVERSATION && isActiveSession -> "Previous reply"
                         uiState.presentedIdentity?.source == ResponsePresentationSource.STREAMING -> "Replying…"
-                        else -> "Reply"
-                    }), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(16.dp))
+                        else -> null
+                    }
+                    status?.let {
+                        Text(uiText(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                    }
                     if (uiState.presentedIdentity?.source == ResponsePresentationSource.INCOMPLETE) {
                         Text(uiText("This reply is incomplete."), color = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.height(8.dp))
@@ -97,20 +106,11 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                         HaloMarkdownText(markdown = responseText, textColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.fillMaxWidth())
                     }
-                    if (!isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null) {
-                        com.halo.app.ui.components.HaloVoiceTextActions(text = "", onText = {},
-                            allowDictation = false, readText = responseText)
-                        Spacer(Modifier.height(10.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { onCopy() }) { Text(uiText("Copy")) }
-                            TextButton(onClick = { onSave() }) {
-                                // Explicit host action; saving is never automatic (Part N).
-                                Text(
-                                    uiText("Save to Notebook"),
-                                )
-                            }
-                        }
-                    }
+
                 }
             }
+    if (shareFailed) Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_share_failed),
+        color = MaterialTheme.colorScheme.error)
+    if (readRequest > 0) com.halo.app.ui.components.HaloVoiceTextActions(text = "", onText = {},
+        allowDictation = false, readText = responseText, readRequest = readRequest, showReadAction = false)
 }
