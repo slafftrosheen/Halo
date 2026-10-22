@@ -22,4 +22,3 @@ ADB input was used to exercise phone touch handling. This is device-level UI evi
 ## Still open for #37
 
 This pass does not qualify sourced-research creation, a real local automation result end to end, voice composition, TalkBack traversal, tablet/rotation layouts, or long-duration ambient behavior. Keep #37 open until those remaining acceptance paths are verified.
-
