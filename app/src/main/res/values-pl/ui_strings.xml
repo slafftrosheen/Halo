@@ -14,6 +14,8 @@
     <string name="ui_60e22975996e" formatted="false">"Gotowe do zapamiętania"</string>
     <string name="ui_47173482314e" formatted="false">"Wznów przerwaną naukę"</string>
     <string name="ui_26e5b147b623" formatted="false">"Kontynuuj naukę"</string>
+    <string name="ui_c66feb5eb8f2" formatted="false">"Przenieś wyżej"</string>
+    <string name="ui_40bb50da160c" formatted="false">"Przenieś niżej"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
     <string name="ui_1208ec01f223" formatted="false">"Poprzednia strona"</string>
     <string name="ui_c08ac736a5e2" formatted="false">"Następna strona"</string>
@@ -46,6 +48,7 @@
     <string name="ui_a12156590140" formatted="false">"Sprawdź przechwycone zdjęcie"</string>
     <string name="ui_b99fa6c06150" formatted="false">"Podgląd jest niedostępny"</string>
     <string name="ui_48845bff334a" formatted="false">"Zamknij"</string>
+    <string name="ui_31e392d1c037" formatted="false">"Zastosuj"</string>
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
     <string name="ui_78ec8b7880dd" formatted="false">"Zapytaj halo"</string>
@@ -97,6 +100,7 @@
     <string name="ui_df952a8c1b62" formatted="false">"Uruchom zestaw testów ról"</string>
     <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
+    <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
     <string name="ui_ccca18175753" formatted="false">"Rozmowa"</string>
     <string name="ui_a0e63d7c7125" formatted="false">"Nie teraz"</string>
@@ -208,6 +212,7 @@
     <string name="ui_d9897824ec41" formatted="false">"Czytanie automatyczne używa głosu z urządzenia. Czytanie w chmurze zawsze pyta przed wysłaniem tekstu."</string>
     <string name="ui_d36dc408280b" formatted="false">"Czytaj zgodnie ze słowami"</string>
     <string name="ui_f35027f0622e" formatted="false">"Czytaj nowe odpowiedzi na głos"</string>
+    <string name="ui_ef6a6b58ce86" formatted="false">"Porozmawiaj z halo"</string>
     <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
     <string name="ui_ce53b39bb842" formatted="false">"Usuń token"</string>
     <string name="ui_cc42af5664d6" formatted="false">"Token odczytu Hugging Face"</string>
@@ -245,7 +250,22 @@
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_199f3793725a" formatted="false">"Najważniejsze informacje w zasięgu wzroku."</string>
+    <string name="ui_be8f51d20dd8" formatted="false">"Dodaj kartę"</string>
+    <string name="ui_769c53b24ede" formatted="false">"Dodaj kartę"</string>
+    <string name="ui_9173f5aa821c" formatted="false">"Wybierz układ początkowy. Każdą kartę możesz później zmienić."</string>
+    <string name="ui_c5276e27afba" formatted="false">"Dostosuj"</string>
+    <string name="ui_7068bd26ffda" formatted="false">"Szczegóły są ukryte w trybie pełnoekranowym."</string>
+    <string name="ui_ac20a57bfde0" formatted="false">"Ukryj"</string>
+    <string name="ui_ed81045f25e7" formatted="false">"Ukryj na ekranie halo"</string>
+    <string name="ui_c339f1284a47" formatted="false">"Godziny nocne: 22:00–07:00. Twoje źródła pozostają bez zmian."</string>
+    <string name="ui_f20c87946555" formatted="false">"Przypięto"</string>
+    <string name="ui_4cbfe4de7610" formatted="false">"Karta prywatna"</string>
+    <string name="ui_3e36adb3ede4" formatted="false">"Prywatne szczegóły są ukryte. Wyjdź z trybu pełnoekranowego, aby je zobaczyć."</string>
+    <string name="ui_2956e06ac065" formatted="false">"Zmień rozmiar"</string>
     <string name="ui_edaba47cac2f" formatted="false">"Wyniki rutyn"</string>
+    <string name="ui_9faaf28319a8" formatted="false">"Ustawienia ekranu halo"</string>
+    <string name="ui_87870d5e785d" formatted="false">"Układy początkowe"</string>
     <string name="ui_8bba2156247a" formatted="false">"Nad czym halo ma się zastanowić?"</string>
     <string name="ui_f81c132cc3e9" formatted="false">"Wybierz opcję dla tej lekcji. Żadna nie jest wybrana za Ciebie."</string>
     <string name="ui_c8a9cc92f54a" formatted="false">"Zegar i data"</string>
@@ -254,6 +274,7 @@
     <string name="ui_d85b2cac1425" formatted="false">"Jak halo pomaga"</string>
     <string name="ui_ded151ea4486" formatted="false">"Na niektórych stronach halo potrzebuje dostępu do zdjęć."</string>
     <string name="ui_bf9ed9ddf7ce" formatted="false">"halo potrzebuje dostępu, aby odczytać to zdjęcie."</string>
+    <string name="ui_324b134f57c7" formatted="false">"Podgląd"</string>
     <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
     <string name="ui_89c045bac21a" formatted="false">"W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy."</string>
     <string name="ui_cae4ac9f4854" formatted="false">"Wybierz sposób, w jaki halo rozpoznaje mowę"</string>
@@ -278,6 +299,19 @@
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
+    <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
+    <string name="ui_96dbf046194b" formatted="false">"Zapisany wynik może być nieaktualny"</string>
+    <string name="ui_18ed4c65aec8" formatted="false">"Poproś halo o zmianę ekranu"</string>
+    <string name="ui_4d58a20a806a" formatted="false">"Wybierz tematy"</string>
+    <string name="ui_e22820fcf5cd" formatted="false">"Tematy"</string>
+    <string name="ui_3339c1507934" formatted="false">"Zastąpić układ ekranu halo?"</string>
+    <string name="ui_bccee4eb2033" formatted="false">"Karty zostaną zmienione. Notatki, rutyny i pozostałe źródła zostaną zachowane. Możesz cofnąć tę zmianę."</string>
+    <string name="ui_1e1eb5441389" formatted="false">"Tematy wybierasz samodzielnie. Nadal trzeba połączyć źródło do czytania."</string>
+    <string name="ui_6436d3154dde" formatted="false">"Podgląd karty"</string>
+    <string name="ui_0ce666a9a655" formatted="false">"Dodaj kartę, ukryj ją, powiększ lub przenieś na górę. Podaj nazwę karty widoczną po wybraniu opcji „Dodaj kartę”."</string>
+    <string name="ui_2c029f3c3d00" formatted="false">"Co chcesz zmienić?"</string>
+    <string name="ui_ca8c2d690be6" formatted="false">"Ta zmiana jest niedostępna. Wybierz kartę i działanie w sekcji „Dostosuj”."</string>
+    <string name="ui_1523d23e2e00" formatted="false">"Sprawdź nowy układ"</string>
     <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
@@ -301,9 +335,15 @@
     <string name="ui_961204d738d7" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz filmy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_5b48705ce252" formatted="false">"Wybrane nagranie zmieniło się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego."</string>
     <string name="ui_979d6300fd98" formatted="false">"Badania"</string>
+    <string name="ui_df7aebea4721" formatted="false">"Wyszukiwanie z podanymi źródłami"</string>
+    <string name="ui_eef8b9fd5d43" formatted="false">"linki"</string>
     <string name="ui_7e412fd41461" formatted="false">"Kontynuuj naukę"</string>
     <string name="ui_a0bba6381246" formatted="false">"Pogoda"</string>
     <string name="ui_2b0b55513bd8" formatted="false">"Co zrobił halo"</string>
+    <string name="ui_d6d63435d67d" formatted="false">"Rozpocznij sesję nauki, aby zobaczyć ją tutaj."</string>
+    <string name="ui_879979ad80a9" formatted="false">"Wznów zapisaną sesję nauki."</string>
+    <string name="ui_1f9dae2d58d7" formatted="false">"Brak aktywnej sesji"</string>
+    <string name="ui_4790277aa10c" formatted="false">"Pobrano"</string>
     <string name="ui_95145f43d145" formatted="false">"Opcjonalny prywatny pakiet startowy: kandydat Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i synteza mowy Supertonic. halo sprawdza zainstalowane pliki, ale nie wybiera kandydatów ani nie potwierdza ich jakości na urządzeniu. Możesz też pobierać modele osobno."</string>
     <string name="ui_3007ade836ff" formatted="false">"Pliki pakietu startowego zostały zainstalowane i sprawdzone. Przed użyciem wybierz model rozpoznawania mowy i odsłuchaj głos. Model Qwen pozostaje niewybranym kandydatem."</string>
     <string name="ui_2f9f525e3f4e" formatted="false">"Sprawdzanie dostępnego miejsca…"</string>

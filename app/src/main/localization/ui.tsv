@@ -214,8 +214,8 @@ End at PDF page|||Последняя страница PDF|||PDF beigu lappuse
 Choose files|||Выбрать файлы|||Izvēlēties failus
 Check your text|||Проверь свой текст|||Pārbaudi savu tekstu
 Fix the words here|||Исправь слова здесь|||Labo vārdus šeit
-Move up|||Переместить выше|||Pārvietot augšup
-Move down|||Переместить ниже|||Pārvietot lejup
+Move up|||Переместить выше|||Pārvietot augšup|||Przenieś wyżej
+Move down|||Переместить ниже|||Pārvietot lejup|||Przenieś niżej
 Save my text|||Сохранить мой текст|||Saglabāt manu tekstu
 Ask about this text|||Спросить об этом тексте|||Jautāt par šo tekstu
 Learn with this text|||Учиться по этому тексту|||Mācīties ar šo tekstu
@@ -375,7 +375,7 @@ Discard|||Удалить|||Atmest
 Dismiss|||Закрыть|||Aizvērt|||Zamknij
 Edit|||Изменить|||Labot
 Insert|||Вставить|||Ievietot
-Apply|||Применить|||Lietot
+Apply|||Применить|||Lietot|||Zastosuj
 Restore|||Восстановить|||Atjaunot|||Przywróć
 Archive|||В архив|||Arhivēt|||Archiwizuj
 Move to trash|||В корзину|||Pārvietot uz atkritni
@@ -837,7 +837,7 @@ Original note is unavailable · Back|||Исходная заметка недо�
 Continue|||Продолжить|||Turpināt
 There are no saved messages to display.|||Нет сохранённых сообщений.|||Nav saglabātu ziņojumu.
 Study unavailable|||Обучение недоступно|||Mācīšanās nav pieejama
-Undo|||Отменить|||Atsaukt
+Undo|||Отменить|||Atsaukt|||Cofnij
 Redo|||Повторить действие|||Atcelt atsaukšanu
 Outline|||Структура|||Struktūra
 Find and replace|||Поиск и замена|||Meklēt un aizstāt
@@ -2861,7 +2861,7 @@ Saving photo…|||Сохраняем фото…|||Saglabā fotoattēlu…
 Setup|||Настройка|||Iestatīšana
 Source excerpt|||Фрагмент источника|||Avota fragments
 Starting halo…|||Запускаем halo…|||Palaiž halo…
-Talk to halo|||Поговорить с halo|||Runāt ar halo
+Talk to halo|||Поговорить с halo|||Runāt ar halo|||Porozmawiaj z Halo
 Type another exercise|||Ввести другое упражнение|||Ievadīt citu uzdevumu
 Untitled note|||Заметка без названия|||Piezīme bez nosaukuma
 What can I say?|||Что можно сказать?|||Ko es varu teikt?
@@ -3081,27 +3081,27 @@ Not checked yet|||Ещё не проверено|||Vēl nav pārbaudīts
 Available means ready to try. It does not mean you have already tried it.|||Доступно — значит можно попробовать. Это не означает, что вы уже проверили работу.|||Pieejams nozīmē, ka varat izmēģināt. Tas nenozīmē, ka darbība jau ir pārbaudīta.
 Copy report|||Копировать отчёт|||Kopēt pārskatu
 Choose notifications and summaries|||Выберите уведомления и сводки|||Izvēlieties paziņojumus un kopsavilkumus
-A little clarity, at a glance.|||Немного ясности с первого взгляда.|||Mazliet skaidrības vienā skatienā.
-Add a card|||Добавить карточку|||Pievienot kartīti
-Add card|||Добавить карточку|||Pievienot kartīti
+A little clarity, at a glance.|||Немного ясности с первого взгляда.|||Mazliet skaidrības vienā skatienā.|||Najważniejsze informacje w zasięgu wzroku.
+Add a card|||Добавить карточку|||Pievienot kartīti|||Dodaj kartę
+Add card|||Добавить карточку|||Pievienot kartīti|||Dodaj kartę
 Allow calendar access|||Разрешить доступ к календарю|||Atļaut piekļuvi kalendāram
-Choose a starting layout. You can change every card.|||Выберите начальный макет. Каждую карточку можно изменить.|||Izvēlieties sākuma izkārtojumu. Katru kartīti var mainīt.
-Customize|||Настроить|||Pielāgot
-Details are hidden in full screen.|||В полноэкранном режиме подробности скрыты.|||Pilnekrāna režīmā informācija ir paslēpta.
+Choose a starting layout. You can change every card.|||Выберите начальный макет. Каждую карточку можно изменить.|||Izvēlieties sākuma izkārtojumu. Katru kartīti var mainīt.|||Wybierz układ początkowy. Każdą kartę możesz później zmienić.
+Customize|||Настроить|||Pielāgot|||Dostosuj
+Details are hidden in full screen.|||В полноэкранном режиме подробности скрыты.|||Pilnekrāna režīmā informācija ir paslēpta.|||Szczegóły są ukryte w trybie pełnoekranowym.
 Did you hear halo?|||Вы слышали halo?|||Vai dzirdējāt halo?
 Go back|||Назад|||Atpakaļ
 Grown-up: unlock|||Взрослый: разблокировать|||Pieaugušajam: atbloķēt
 Hello, I’m halo. Can you hear me clearly?|||Привет, я halo. Меня хорошо слышно?|||Sveiki, es esmu halo. Vai mani labi dzirdat?
-Hide|||Скрыть|||Paslēpt
-Hide from Screen|||Скрыть с экрана|||Paslēpt no ekrāna
-Night hours: 22:00–07:00. Your sources stay unchanged.|||Ночные часы: 22:00–07:00. Источники остаются без изменений.|||Nakts laiks: 22.00–07.00. Avoti paliek nemainīti.
-Pinned|||Закреплено|||Piesprausts
-Private card|||Личная карточка|||Privāta kartīte
-Private details are hidden. Exit full screen to see them.|||Личные данные скрыты. Выйдите из полноэкранного режима, чтобы увидеть их.|||Privāta informācija ir paslēpta. Lai to skatītu, izejiet no pilnekrāna režīma.
-Resize|||Изменить размер|||Mainīt izmēru
+Hide|||Скрыть|||Paslēpt|||Ukryj
+Hide from Screen|||Скрыть с экрана|||Paslēpt no ekrāna|||Ukryj na ekranie Halo
+Night hours: 22:00–07:00. Your sources stay unchanged.|||Ночные часы: 22:00–07:00. Источники остаются без изменений.|||Nakts laiks: 22.00–07.00. Avoti paliek nemainīti.|||Godziny nocne: 22:00–07:00. Twoje źródła pozostają bez zmian.
+Pinned|||Закреплено|||Piesprausts|||Przypięto
+Private card|||Личная карточка|||Privāta kartīte|||Karta prywatna
+Private details are hidden. Exit full screen to see them.|||Личные данные скрыты. Выйдите из полноэкранного режима, чтобы увидеть их.|||Privāta informācija ir paslēpta. Lai to skatītu, izejiet no pilnekrāna režīma.|||Prywatne szczegóły są ukryte. Wyjdź z trybu pełnoekranowego, aby je zobaczyć.
+Resize|||Изменить размер|||Mainīt izmēru|||Zmień rozmiar
 Routine results|||Результаты сценариев|||Rutīnu rezultāti|||Wyniki rutyn
-Screen settings|||Настройки экрана|||Ekrāna iestatījumi
-Starting layouts|||Начальные макеты|||Sākuma izkārtojumi
+Screen settings|||Настройки экрана|||Ekrāna iestatījumi|||Ustawienia ekranu Halo
+Starting layouts|||Начальные макеты|||Sākuma izkārtojumi|||Układy początkowe
 This part is for grown-ups. They’ll unlock it with the phone’s screen lock.|||Этот раздел для взрослых. Они откроют его с помощью блокировки экрана телефона.|||Šī sadaļa ir pieaugušajiem. Viņi to atbloķēs ar tālruņa ekrāna bloķēšanu.
 Try halo’s voice|||Попробовать голос halo|||Izmēģināt halo balsi
 Voice confirmed by you|||Вы подтвердили, что слышите голос|||Jūs apstiprinājāt, ka balss ir dzirdama
@@ -3179,7 +3179,7 @@ Say a short sentence, then review what halo heard.|||Произнесите ко
 Mode|||Режим|||Režīms
 Accent|||Акцент|||Akcents
 Tone|||Оттенок|||Tonis
-Preview|||Предпросмотр|||Priekšskatījums
+Preview|||Предпросмотр|||Priekšskatījums|||Podgląd
 Same as phone|||Как на телефоне|||Kā tālrunī
 Follows Android. You can make it bigger here.|||Следует настройкам Android. Здесь можно увеличить текст.|||Atbilst Android iestatījumiem. Šeit tekstu var palielināt.
 Guide light|||Подсветка следующего шага|||Nākamā soļa izgaismojums
@@ -3328,7 +3328,7 @@ Do not use with AI|||Не использовать с ИИ|||Neizmantot ar MI
 Cloud use also needs your separate permission.|||Для использования облака также нужно ваше отдельное разрешение.|||Izmantošanai mākonī vajadzīga arī jūsu atsevišķa atļauja.
 Text document|||Текстовый документ|||Teksta dokuments
 Video|||Видео|||Video
-Saved on this phone|||Сохранено на этом телефоне|||Saglabāts šajā tālrunī
+Saved on this phone|||Сохранено на этом телефоне|||Saglabāts šajā tālrunī|||Zapisano na tym telefonie
 Linked from another app|||Ссылка на файл из другого приложения|||Saistīts ar failu citā lietotnē
 Find the file to reconnect it|||Выберите файл, чтобы восстановить связь|||Atrodiet failu, lai atjaunotu saiti
 This file is missing|||Этот файл отсутствует|||Šis fails nav atrodams
@@ -3671,22 +3671,22 @@ Permission needed|||Нужно разрешение|||Nepieciešama atļauja
 A weather source has not been connected.|||Источник погоды ещё не подключён.|||Laikapstākļu avots vēl nav pievienots.
 For you|||Для вас|||Tev
 Choose a reading source. Your notes and chats are never used to guess your interests.|||Выберите источник для чтения. Ваши заметки и чаты не используются для определения интересов.|||Izvēlieties lasīšanas avotu. Jūsu piezīmes un sarunas netiek izmantotas interešu noteikšanai.
-Saved result may be out of date|||Сохранённый результат мог устареть|||Saglabātais rezultāts var būt novecojis
+Saved result may be out of date|||Сохранённый результат мог устареть|||Saglabātais rezultāts var būt novecojis|||Zapisany wynik może być nieaktualny
 Updating…|||Обновление…|||Atjaunina…
 Nothing to show yet|||Пока нечего показать|||Vēl nav ko parādīt
 Offline · showing saved content|||Нет сети · показаны сохранённые данные|||Bezsaistē · redzams saglabātais saturs
 Last update failed|||Не удалось обновить|||Pēdējā atjaunināšana neizdevās
-Ask halo to change Screen|||Попросить halo изменить экран|||Lūgt halo mainīt ekrānu
-Choose topics|||Выбрать темы|||Izvēlēties tēmas
-Topics|||Темы|||Tēmas
-Replace your Screen layout?|||Заменить расположение карточек?|||Aizstāt ekrāna izkārtojumu?
-Your cards will change. Notes, routines and other sources are kept. You can undo this change.|||Карточки изменятся. Заметки, сценарии и другие источники сохранятся. Изменение можно отменить.|||Kartītes mainīsies. Piezīmes, rutīnas un citi avoti tiks saglabāti. Izmaiņu varēs atsaukt.
-Topics are chosen by you. A reading source still needs to be connected.|||Вы выбираете темы сами. Источник для чтения ещё нужно подключить.|||Tēmas izvēlaties jūs. Vēl jāpievieno lasīšanas avots.
-Card preview|||Предпросмотр карточки|||Kartītes priekšskatījums
-Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card.|||Добавьте, скройте, увеличьте или переместите карточку в начало. Назовите её так, как в списке «Добавить карточку».|||Pievienojiet, paslēpiet, palieliniet vai pārvietojiet kartīti augšā. Nosauciet to tā, kā sarakstā «Pievienot kartīti».
-What would you like to change?|||Что вы хотите изменить?|||Ko vēlaties mainīt?
-That change is unavailable. Use Customize to choose the card and action.|||Такое изменение недоступно. Выберите карточку и действие в настройке экрана.|||Šī izmaiņa nav pieejama. Sadaļā «Pielāgot» izvēlieties kartīti un darbību.
-Review your new layout|||Проверьте новое расположение|||Pārskatiet jauno izkārtojumu
+Ask halo to change Screen|||Попросить halo изменить экран|||Lūgt halo mainīt ekrānu|||Poproś Halo o zmianę ekranu
+Choose topics|||Выбрать темы|||Izvēlēties tēmas|||Wybierz tematy
+Topics|||Темы|||Tēmas|||Tematy
+Replace your Screen layout?|||Заменить расположение карточек?|||Aizstāt ekrāna izkārtojumu?|||Zastąpić układ ekranu Halo?
+Your cards will change. Notes, routines and other sources are kept. You can undo this change.|||Карточки изменятся. Заметки, сценарии и другие источники сохранятся. Изменение можно отменить.|||Kartītes mainīsies. Piezīmes, rutīnas un citi avoti tiks saglabāti. Izmaiņu varēs atsaukt.|||Karty zostaną zmienione. Notatki, rutyny i pozostałe źródła zostaną zachowane. Możesz cofnąć tę zmianę.
+Topics are chosen by you. A reading source still needs to be connected.|||Вы выбираете темы сами. Источник для чтения ещё нужно подключить.|||Tēmas izvēlaties jūs. Vēl jāpievieno lasīšanas avots.|||Tematy wybierasz samodzielnie. Nadal trzeba połączyć źródło do czytania.
+Card preview|||Предпросмотр карточки|||Kartītes priekšskatījums|||Podgląd karty
+Add, hide, enlarge, or move a card to the top. Say the card name shown in Add card.|||Добавьте, скройте, увеличьте или переместите карточку в начало. Назовите её так, как в списке «Добавить карточку».|||Pievienojiet, paslēpiet, palieliniet vai pārvietojiet kartīti augšā. Nosauciet to tā, kā sarakstā «Pievienot kartīti».|||Dodaj kartę, ukryj ją, powiększ lub przenieś na górę. Podaj nazwę karty widoczną po wybraniu opcji „Dodaj kartę”.
+What would you like to change?|||Что вы хотите изменить?|||Ko vēlaties mainīt?|||Co chcesz zmienić?
+That change is unavailable. Use Customize to choose the card and action.|||Такое изменение недоступно. Выберите карточку и действие в настройке экрана.|||Šī izmaiņa nav pieejama. Sadaļā «Pielāgot» izvēlieties kartīti un darbību.|||Ta zmiana jest niedostępna. Wybierz kartę i działanie w sekcji „Dostosuj”.
+Review your new layout|||Проверьте новое расположение|||Pārskatiet jauno izkārtojumu|||Sprawdź nowy układ
 Compact|||Компактный|||Kompakts
 Large|||Большой|||Liels
 Voice download failed. Check storage and your connection, then try again.|||Не удалось скачать голос. Проверьте свободное место и соединение, затем повторите.|||Balsi neizdevās lejupielādēt. Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz.
@@ -3834,17 +3834,17 @@ Research|||Исследование|||Izpēte|||Badania
 Save to Screen|||Сохранить на экран|||Saglabāt ekrānā
 Saved to Screen|||Сохранено на экране|||Saglabāts ekrānā
 Screen is full or could not save this research.|||Экран заполнен или не удалось сохранить исследование.|||Ekrāns ir pilns vai neizdevās saglabāt šo izpēti.
-Sourced research|||Исследование с источниками|||Izpēte ar avotiem
-links|||ссылок|||saites
+Sourced research|||Исследование с источниками|||Izpēte ar avotiem|||Wyszukiwanie z podanymi źródłami
+links|||ссылок|||saites|||linki
 Saving to Screen|||Сохранение на экран|||Saglabā ekrānā
 No source links to save.|||Нет ссылок на источники для сохранения.|||Nav avotu saišu, ko saglabāt.
 Continue studying|||Продолжить учёбу|||Turpināt mācības|||Kontynuuj naukę
 Weather|||Погода|||Laikapstākļi|||Pogoda
 What halo did|||Что сделал Halo|||Ko paveica halo|||Co zrobił Halo
-Start a Study session to see it here.|||Начните занятие в разделе «Учёба», чтобы оно появилось здесь.|||Sāciet mācību sesiju, lai tā tiktu parādīta šeit.
-Resume your saved Study session.|||Продолжить сохранённое занятие.|||Turpiniet saglabāto mācību sesiju.
-No active session|||Нет активного занятия|||Nav aktīvas sesijas
-Retrieved|||Получено|||Iegūts
+Start a Study session to see it here.|||Начните занятие в разделе «Учёба», чтобы оно появилось здесь.|||Sāciet mācību sesiju, lai tā tiktu parādīta šeit.|||Rozpocznij sesję nauki, aby zobaczyć ją tutaj.
+Resume your saved Study session.|||Продолжить сохранённое занятие.|||Turpiniet saglabāto mācību sesiju.|||Wznów zapisaną sesję nauki.
+No active session|||Нет активного занятия|||Nav aktīvas sesijas|||Brak aktywnej sesji
+Retrieved|||Получено|||Iegūts|||Pobrano
 Optional private starter bundle: pinned Qwen intent candidate, Whisper Small, Silero VAD and Supertonic speech output. Halo checks the installed files, but does not select candidates or claim device quality. You can continue with individual downloads instead.|||Необязательный локальный набор: закреплённый кандидат Qwen для намерений, Whisper Small, Silero VAD и синтез речи Supertonic. Halo проверяет файлы, но не выбирает кандидаты и не заявляет об их качестве на устройстве. Вместо этого можно скачивать модели по отдельности.|||Neobligāta privāta sākuma pakotne: fiksēts Qwen nolūku kandidāts, Whisper Small, Silero VAD un Supertonic runas izvade. Halo pārbauda instalētos failus, taču neizvēlas kandidātus un neapgalvo to kvalitāti ierīcē. Varat turpināt ar atsevišķām lejupielādēm.|||Opcjonalny prywatny pakiet startowy: kandydat Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i synteza mowy Supertonic. Halo sprawdza zainstalowane pliki, ale nie wybiera kandydatów ani nie potwierdza ich jakości na urządzeniu. Możesz też pobierać modele osobno.
 Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate.|||Файлы начального набора установлены и проверены. Перед использованием выберите модель распознавания речи и прослушайте голос. Артефакт Qwen остаётся невыбранным кандидатом.|||Sākuma pakotnes faili ir instalēti un pārbaudīti. Pirms lietošanas izvēlieties runas atpazīšanas modeli un noklausieties balsi. Qwen fails joprojām ir neizvēlēts kandidāts.|||Pliki pakietu startowego zostały zainstalowane i sprawdzone. Przed użyciem wybierz model rozpoznawania mowy i odsłuchaj głos. Model Qwen pozostaje niewybranym kandydatem.
 Checking available storage…|||Проверяем свободное место…|||Notiek brīvās vietas pārbaude…|||Sprawdzanie dostępnego miejsca…
