@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectType
+import com.halo.app.data.notebook.CanvasImageSearchSource
 import com.halo.app.data.study.StudySessionRecord
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.language.uiText
@@ -35,7 +36,9 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     imageAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
     audioAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
     videoAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
-    videoFallbackLabel: String = "Video clip"): List<LocalSearchSourceChoice> {
+    canvasImages: List<CanvasImageSearchSource> = emptyList(),
+    videoFallbackLabel: String = "Video clip",
+    canvasImageFallbackLabel: String = "Picture"): List<LocalSearchSourceChoice> {
     val workspace = items.mapNotNull { item ->
         val row = item.objectRef
         if (row.lifecycle != WorkspaceObjectLifecycle.ACTIVE) return@mapNotNull null
@@ -77,10 +80,20 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
         LocalSearchSourceChoice("attachment:${attachment.noteId}:${attachment.id}",
             "${note.title.ifBlank { "Untitled" }} · $label")
     }
+    val activeCanvases = items.mapNotNull { item ->
+        item.objectRef.takeIf { it.lifecycle == WorkspaceObjectLifecycle.ACTIVE && it.type == WorkspaceObjectType.CANVAS }
+    }.associateBy { it.id.value }
+    val canvasPictures = canvasImages.mapNotNull { source ->
+        val canvas = activeCanvases[source.canvasId] ?: return@mapNotNull null
+        if (source.objectId.isBlank() || source.mimeType !in setOf("image/png", "image/jpeg")) return@mapNotNull null
+        val label = source.displayName.takeIf { it.isNotBlank() } ?: canvasImageFallbackLabel
+        LocalSearchSourceChoice("canvas-image:${source.canvasId}:${source.nodeId}",
+            "${canvas.title.ifBlank { "Untitled" }} · $label")
+    }
     val learning = sessions.map { session ->
         LocalSearchSourceChoice("study:${session.id}",session.goal?.takeIf { it.isNotBlank() } ?: "Study session")
     }
-    return (workspace + learning + pictures + audio + videos).distinctBy { it.id }.take(64)
+    return (workspace + learning + pictures + audio + videos + canvasPictures).distinctBy { it.id }.take(64)
 }
 
 /** Maps technical error codes to user-facing English messages. No @Composable calls here. */
@@ -150,9 +163,11 @@ internal fun NotebookLocalSearchSheet(
         .collectAsStateWithLifecycle(emptyList())
     val videoAttachments by ManualDependencyGraph.notebookAssetRepository.observeVideoAttachments()
         .collectAsStateWithLifecycle(emptyList())
-    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments) {
-        notebookSearchSources(items,studySessions,imageAttachments,audioAttachments,videoAttachments,
-            videoFallbackLabel = uiText("Video clip"))
+    val canvasImages by ManualDependencyGraph.notebookCanvasRepository.observeImageSearchSources()
+        .collectAsStateWithLifecycle(emptyList())
+    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages) {
+        notebookSearchSources(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,
+            videoFallbackLabel = uiText("Video clip"), canvasImageFallbackLabel = uiText("Picture"))
     }
     val access = remember { service.localSearchAccess() }
     var approved by remember { mutableStateOf(access.enabled) }
@@ -335,6 +350,10 @@ internal fun NotebookLocalSearchSheet(
                                 if (hit.sourceId.startsWith("study:")) viewModel.openStudy(id)
                                 else if (hit.sourceId.startsWith("attachment:"))
                                     viewModel.openReferencedObject(id.substringBefore(':'))
+                                else if (hit.sourceId.startsWith("canvas-image:")) {
+                                    val canvasImage = hit.sourceId.removePrefix("canvas-image:").split(':', limit = 2)
+                                    if (canvasImage.size == 2) viewModel.openCanvasNode(canvasImage[0], canvasImage[1])
+                                }
                                 else viewModel.openReferencedObject(id)
                             }) { Text(uiText("Open source")) }
                         }

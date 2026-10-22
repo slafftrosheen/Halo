@@ -2982,13 +2982,13 @@
     <string name="ui_4d5f2c34aff1" formatted="false">"Копировать отчёт о задержке голоса"</string>
     <string name="ui_dc1968315454" formatted="false">"Голосовых запросов: %1$d · Завершено: %2$d · Отменено: %3$d · Ошибок: %4$d"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Найти связанные заметки"</string>
-    <string name="ui_1c99c938fa58" formatted="false">"Ищите по выбранным заметкам, Canvas и материалам Study прямо на телефоне. halo ничего не индексирует, пока вы не разрешите источники и не запустите локальный поиск."</string>
+    <string name="ui_49b31501b1c2" formatted="false">"Ищите на этом телефоне по выбранным заметкам, Canvas, материалам Study и прикреплённым медиафайлам. halo начнёт индексирование только после вашего разрешения и запуска локального поиска."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Модель локального поиска"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"Подтверждённая модель локального поиска не установлена."</string>
     <string name="ui_128202399927" formatted="false">"Посмотреть локальные модели"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Использовать для локального поиска"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Выберите доступные halo материалы"</string>
-    <string name="ui_95110578e66b" formatted="false">"Нет доступных заметок или учебных занятий. Создайте заметку или вернитесь в общую библиотеку для выбора источников."</string>
+    <string name="ui_3ce934646c98" formatted="false">"Нет доступных источников из Notebook, Canvas, Study или медиа. Добавьте источник или вернитесь в библиотеку, чтобы выбрать материалы."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"В приватный поисковый индекс попадут только отмеченные материалы."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Разрешить источники и создать локальный поиск"</string>
     <string name="ui_986855e1bf05" formatted="false">"Обновить индекс локального поиска"</string>

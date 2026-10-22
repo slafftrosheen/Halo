@@ -26,6 +26,8 @@ Runtime discovery is complete for the exact pinned library: the API supports tex
 
 This closes only the A discovery record. Source progress for the bounded Notebook picture-search path is recorded below. Audio/video retrieval, wider consumer integration, physical artifact qualification, and the remaining localization/acceptance matrix are still open; do not mark #35 complete from this audit.
 
+Subsequent source progress adds individual file-backed PNG/JPEG image nodes from active Canvases to the same explicit local image-search working set. Canvas/node/file ownership is rechecked, external URI access needs a persisted grant, and file bytes are transient. See the Canvas visual find section in `HALO-EMBED-147-MEDIA-ADAPTER.md`; this source path has not been built or physically qualified.
+
 ## Source progress — explicit Notebook picture search
 
 At source revision `5670ef36`, the Notebook local-search sheet offers individually selectable image attachments from active notes. Listing reads attachment metadata only; image bytes are opened only for selected `attachment:<noteId>:<attachmentId>` IDs after checking the allowlist, active note, MIME, storage boundary, and persisted content permission.

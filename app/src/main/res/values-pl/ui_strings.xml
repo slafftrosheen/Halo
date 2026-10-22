@@ -61,12 +61,13 @@
     <string name="ui_b0270cb66825" formatted="false">"Pliki na urządzeniu"</string>
     <string name="ui_3200851a9605" formatted="false">"Zweryfikowane pliki modelu"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Znajdź powiązane notatki"</string>
+    <string name="ui_49b31501b1c2" formatted="false">"Prywatnie wyszukuj na tym telefonie w wybranych notatkach, elementach Canvas, materiałach Study i załączonych plikach. halo rozpocznie indeksowanie dopiero po wyrażeniu zgody na źródła i utworzeniu wyszukiwania lokalnego."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Model wyszukiwania lokalnego"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"Nie zainstalowano zweryfikowanego modelu wyszukiwania lokalnego."</string>
     <string name="ui_128202399927" formatted="false">"Przeglądaj modele na urządzeniu"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Użyj do wyszukiwania lokalnego"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Wybierz, czego halo może szukać"</string>
-    <string name="ui_95110578e66b" formatted="false">"Brak dostępnych notatek i sesji nauki. Utwórz notatkę lub wróć do pełnej biblioteki, aby wybrać źródła."</string>
+    <string name="ui_3ce934646c98" formatted="false">"Brak dostępnych źródeł z Notebook, Canvas, Study ani plików multimedialnych. Dodaj źródło lub wróć do biblioteki, aby je wybrać."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"Do prywatnego indeksu wyszukiwania trafią tylko zaznaczone źródła."</string>
     <string name="ui_92196e0e7f6e" formatted="false">"Wyłącz wyszukiwanie lokalne i usuń indeks"</string>
     <string name="ui_076bccbaee33" formatted="false">"Szukaj w wybranych źródłach"</string>

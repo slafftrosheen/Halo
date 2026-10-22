@@ -105,8 +105,34 @@ data class NotebookCanvas(
     val edges: List<CanvasEdge>,
 )
 
+data class CanvasImageSearchSource(
+    val canvasId: String,
+    val nodeId: String,
+    val objectId: String,
+    val canvasTitle: String,
+    val displayName: String,
+    val mimeType: String,
+)
+
 @Dao
 interface NotebookCanvasDao {
+    @Query(
+        """
+        SELECT n.canvasId AS canvasId, n.id AS nodeId, f.objectId AS objectId,
+               c.title AS canvasTitle, f.displayName AS displayName, f.mimeType AS mimeType
+        FROM canvas_nodes n
+        INNER JOIN workspace_objects c ON c.id = n.canvasId
+        INNER JOIN workspace_objects source ON source.id = n.refObjectId
+        INNER JOIN workspace_files f ON f.objectId = source.id
+        WHERE n.type = 'IMAGE' AND c.type = 'CANVAS' AND c.lifecycle = 'ACTIVE'
+          AND source.lifecycle = 'ACTIVE' AND source.type IN ('FILE', 'MEDIA')
+          AND LOWER(f.mimeType) IN ('image/png', 'image/jpeg')
+        ORDER BY n.updatedAtEpochMs DESC
+        LIMIT 256
+        """
+    )
+    fun observeImageSearchSources(): Flow<List<CanvasImageSearchSource>>
+
     @Query("DELETE FROM canvas_edges WHERE canvasId = :canvasId")
     suspend fun clearEdges(canvasId: String)
     @Query("DELETE FROM canvas_nodes WHERE canvasId = :canvasId")
@@ -331,6 +357,8 @@ class NotebookCanvasRepository(
             edges = edges.map { CanvasEdge(it.id, it.fromNodeId, it.toNodeId, it.label) },
         )
     }
+
+    fun observeImageSearchSources(): Flow<List<CanvasImageSearchSource>> = canvasDao.observeImageSearchSources()
 
     suspend fun create(title: String = "Untitled canvas"): String {
         val id = newId()

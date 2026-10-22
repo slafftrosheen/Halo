@@ -20,11 +20,15 @@ class FileImageSemanticIndexStoreTest {
         val directory = Files.createTempDirectory("halo-image-index").toFile()
         val file = directory.resolve("image-index.json")
         val store = FileImageSemanticIndexStore(file)
-        val entry = ImageSemanticEntry("attachment:note1:asset1",sha,sha,
-            "Notebook · diagram","Notebook picture:note1",listOf(1f,0f))
+        val entries = listOf(
+            ImageSemanticEntry("attachment:note1:asset1",sha,sha,
+                "Notebook · diagram","Notebook picture:note1",listOf(1f,0f)),
+            ImageSemanticEntry("canvas-image:board1:node1",sha,sha,
+                "Canvas · diagram","Canvas image:board1:node1",listOf(0f,1f)),
+        )
         try {
-            store.replace(ImageSemanticSnapshot(space,listOf(entry)))
-            assertEquals(ImageSemanticSnapshot(space,listOf(entry)),store.read())
+            store.replace(ImageSemanticSnapshot(space,entries))
+            assertEquals(ImageSemanticSnapshot(space,entries),store.read())
             val persisted = file.readText()
             assertTrue(persisted.contains("IMAGE"))
             assertFalse(persisted.contains("original image bytes"))

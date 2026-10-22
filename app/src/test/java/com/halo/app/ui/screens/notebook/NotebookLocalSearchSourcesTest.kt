@@ -5,6 +5,7 @@ import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectSource
 import com.halo.app.data.notebook.WorkspaceObjectType
+import com.halo.app.data.notebook.CanvasImageSearchSource
 import com.halo.app.data.workspace.NoteAttachment
 import org.junit.Assert.*
 import org.junit.Test
@@ -68,6 +69,19 @@ class NotebookLocalSearchSourcesTest {
         ), emptyList(), videoAttachments=listOf(video,hidden,notVideo))
         assertEquals(listOf("note:n1","attachment:n1:video1"),choices.map { it.id })
         assertTrue(choices.last().title.contains("Lecture clip"))
+    }
+
+    @Test fun canvasPictureChoicesAreExactImagesOnVisibleActiveBoards() {
+        val image = CanvasImageSearchSource("board1", "node1", "file1", "Ignored title", "diagram.png", "image/png")
+        val hiddenBoard = image.copy(canvasId = "trashed")
+        val unsupported = image.copy(nodeId = "node2", mimeType = "image/gif")
+        val choices = notebookSearchSources(listOf(
+            item("board1", WorkspaceObjectType.CANVAS),
+            item("trashed", WorkspaceObjectType.CANVAS, WorkspaceObjectLifecycle.TRASHED),
+        ), emptyList(), canvasImages = listOf(image, hiddenBoard, unsupported))
+
+        assertEquals(listOf("canvas:board1", "canvas-image:board1:node1"), choices.map { it.id })
+        assertTrue(choices.last().title.contains("diagram.png"))
     }
 
     @Test fun lowMemoryAndUnknownFailuresUseBoundedUserLanguage() {

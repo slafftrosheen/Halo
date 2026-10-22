@@ -443,6 +443,10 @@ class NotebookViewModel(
         if (item.canvasNodeId != null) navigationChannel.trySend(NotebookNavigation.OpenCanvas(item.objectRef.id.value, item.canvasNodeId))
         else openObject(item.objectRef)
     }
+    fun openCanvasNode(canvasId: String, nodeId: String) {
+        if (canvasId.isNotBlank() && nodeId.isNotBlank())
+            navigationChannel.trySend(NotebookNavigation.OpenCanvas(canvasId, nodeId))
+    }
     fun openMemoryHub(section: String = "Memories", noteId: String? = null) { navigationChannel.trySend(NotebookNavigation.OpenMemoryHub(section, noteId)) }
     fun openMemory(id: String) { navigationChannel.trySend(NotebookNavigation.OpenMemory(id)) }
     fun reviewAutomation(id: String,suggestionId: String) { navigationChannel.trySend(NotebookNavigation.ReviewAutomation(id,suggestionId)) }

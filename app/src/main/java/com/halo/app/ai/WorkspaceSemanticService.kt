@@ -37,7 +37,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     /** One native owner per model, shared by queries, indexing and explicit diagnostics. */
     internal fun embeddingExecutor(modelId: String): EmbeddingProvider =
         embeddingProviders.computeIfAbsent(modelId) { embeddingFactory(it) }
-    private val observer=object: InvalidationTracker.Observer("workspace_objects","notes","canvas_nodes","study_sessions","study_practice_items","workspace_assets","note_attachments") {
+    private val observer=object: InvalidationTracker.Observer("workspace_objects","notes","canvas_nodes","study_sessions","study_practice_items","workspace_assets","note_attachments","workspace_files") {
         override fun onInvalidated(tables: Set<String>) { changed.trySend(Unit) }
     }
     init {
@@ -49,7 +49,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                     store.replace(old.copy(chunks=keep))
                 }
                 imageStore.read()?.let { imageSnapshot ->
-                    val imageKeep = imageSnapshot.entries.filter { imageSourceMetadata(it.sourceId) != null &&
+                    val imageKeep = imageSnapshot.entries.filter { imageSearchSourceExists(it.sourceId) &&
                         storage.getBoolean("semantic_enabled",false) && it.sourceId in selected() }
                     if (imageKeep.size != imageSnapshot.entries.size)
                         imageStore.replace(imageSnapshot.copy(entries=imageKeep))
@@ -132,7 +132,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     suspend fun configure(enabled: Boolean,sourceIds: Set<String>)=withContext(Dispatchers.IO) {
         require(sourceIds.size<=64 && sourceIds.all {
             it.length in 1..200 &&
-                (it.startsWith("note:") || it.startsWith("canvas:") ||
+                (it.startsWith("note:") || it.startsWith("canvas:") || it.startsWith("canvas-image:") ||
                     it.startsWith("study:") || it.startsWith("attachment:"))
         })
         mutation.withLock {
@@ -187,7 +187,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val target = requireNotNull(selectedSearchModel()) { "SELECT_LOCAL_SEARCH_MODEL" }
         check(localSearchAccess().enabled && selected().isNotEmpty()) { "SELECT_LOCAL_SEARCH_SOURCES" }
         val text = referencesForContext(target.modelId,target.sha256,target.dimension,query.trim())
-        val hasSelectedImages = selected().any { it.startsWith("attachment:") && imageSourceMetadata(it) != null }
+        val hasSelectedImages = selected().any { imageSearchSourceExists(it) }
         val hasSelectedAudio = selected().any { it.startsWith("attachment:") && audioSourceMetadata(it) != null }
         val hasSelectedVideos = selected().any { it.startsWith("attachment:") && videoSourceMetadata(it) != null }
         if (!hasSelectedImages && !hasSelectedAudio && !hasSelectedVideos) return text
@@ -244,12 +244,18 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     }
     private data class SelectedImagePayload(
         val sourceId: String,
-        val noteId: String,
-        val attachmentId: String,
         val sourceVersion: String,
         val title: String,
         val provenance: String,
         val bytes: ByteArray,
+    )
+
+    private data class CanvasImageMetadata(
+        val canvasId: String,
+        val nodeId: String,
+        val objectId: String,
+        val canvasTitle: String,
+        val file: com.halo.app.data.workspace.WorkspaceFileEntity,
     )
 
     private data class SelectedAudioSource(
@@ -284,8 +290,86 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         }
     }
 
+    /** Canonical file-backed image node on an active Canvas; the node and object are re-resolved on every use. */
+    private suspend fun canvasImageSourceMetadata(sourceId: String): CanvasImageMetadata? {
+        val parts = sourceId.removePrefix("canvas-image:").split(':', limit = 2)
+        if (!sourceId.startsWith("canvas-image:") || parts.size != 2 || parts.any(String::isBlank)) return null
+        val canvas = db.notebookDao().getWorkspaceObject(parts[0])
+            ?.takeIf { it.lifecycle == "ACTIVE" && it.type == "CANVAS" } ?: return null
+        val node = db.notebookCanvasDao().getNodes(canvas.id).firstOrNull {
+            it.id == parts[1] && it.type == com.halo.app.data.notebook.CanvasNodeType.IMAGE.name
+        } ?: return null
+        val objectId = node.refObjectId ?: return null
+        val source = db.notebookDao().getWorkspaceObject(objectId)
+            ?.takeIf { it.lifecycle == "ACTIVE" && it.type in setOf("FILE", "MEDIA") } ?: return null
+        val file = db.workspaceFileDao().getFile(source.id) ?: return null
+        if (file.mimeType !in setOf("image/png", "image/jpeg")) return null
+        return CanvasImageMetadata(canvas.id,node.id,source.id,canvas.title,file)
+    }
+
+    private suspend fun imageSearchSourceExists(sourceId: String): Boolean =
+        when {
+            sourceId.startsWith("attachment:") -> imageSourceMetadata(sourceId) != null
+            sourceId.startsWith("canvas-image:") -> canvasImageSourceMetadata(sourceId) != null
+            else -> false
+        }
+
     private suspend fun selectedImage(sourceId: String): SelectedImagePayload? = withContext(Dispatchers.IO) {
         if (!storage.getBoolean("semantic_enabled",false) || sourceId !in selected()) return@withContext null
+        if (sourceId.startsWith("canvas-image:")) {
+            val source = canvasImageSourceMetadata(sourceId) ?: return@withContext null
+            val file = source.file
+            if (file.sizeBytes != null && file.sizeBytes > LocalMediaEmbeddingSafety.MAX_IMAGE_BYTES)
+                throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_INPUT_INVALID")
+            if (file.ownedCopyPath != null && file.ownership != "HALO_OWNED")
+                throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_UNSUPPORTED")
+            val ownedFile = file.ownedCopyPath?.let { path ->
+                val canonical = try { File(path).canonicalFile }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_UNSUPPORTED",failure) }
+                val root = com.halo.app.storage.haloStorageLayout(context).managedWorkspaceFiles.canonicalFile
+                if (!canonical.path.startsWith(root.path + File.separator))
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_OUTSIDE_APP_STORAGE")
+                canonical
+            }
+            val input = if (ownedFile != null) {
+                if (!ownedFile.isFile || file.availability !in setOf("OWNED_LOCAL", "AVAILABLE"))
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED")
+                try { ownedFile.inputStream() }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED",failure) }
+            } else {
+                val uri = android.net.Uri.parse(file.uri)
+                if (file.ownership != "EXTERNAL_REFERENCE" || uri.scheme != "content" ||
+                    !file.permissionPersisted || file.availability != "AVAILABLE")
+                    throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED")
+                try { requireNotNull(context.contentResolver.openInputStream(uri)) }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_SOURCE_PERMISSION_EXPIRED",failure) }
+            }
+            val bytes = input.use { stream ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    if (output.size() + count > LocalMediaEmbeddingSafety.MAX_IMAGE_BYTES)
+                        throw com.halo.providers.litert.EmbeddingUnavailableException("IMAGE_INPUT_INVALID")
+                    output.write(buffer,0,count)
+                }
+                output.toByteArray()
+            }
+            LocalMediaEmbeddingSafety.check(LocalEmbeddingInput.Image(bytes))
+            val sha = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
+                .joinToString("") { "%02x".format(it) }
+            val live = canvasImageSourceMetadata(sourceId)
+            if (live?.objectId != source.objectId || sourceId !in selected()) return@withContext null
+            val label = file.displayName.ifBlank { "Picture" }
+            return@withContext SelectedImagePayload(sourceId,sha,
+                "${source.canvasTitle.ifBlank { "Canvas" }} · $label".take(400),
+                "Canvas image:${source.canvasId}:${source.nodeId}".take(400),bytes)
+        }
         val parts = sourceId.removePrefix("attachment:").split(':', limit = 2)
         if (!sourceId.startsWith("attachment:") || parts.size != 2) return@withContext null
         val attachment = imageSourceMetadata(sourceId) ?: return@withContext null
@@ -335,9 +419,9 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val label = attachment.caption?.takeIf { it.isNotBlank() }
             ?: attachment.displayName?.takeIf { it.isNotBlank() }
             ?: "Picture"
-        SelectedImagePayload(sourceId,attachment.noteId,attachment.id,sha,
-            "${note.title.ifBlank { "Untitled" }} · $label",
-            "Notebook picture:${attachment.noteId}",bytes)
+        SelectedImagePayload(sourceId,sha,
+            "${note.title.ifBlank { "Untitled" }} · $label".take(400),
+            "Notebook picture:${attachment.noteId}".take(400),bytes)
     }
 
     /** Reads only audio attachment metadata for an exact opted-in source ID. */
@@ -611,10 +695,10 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2)
     }
 
-    /** Rebuild only from the exact allowlisted image attachment IDs; media bytes are never stored in the index. */
+    /** Rebuild only from exact allowlisted Notebook attachments and Canvas image nodes; media bytes are never stored. */
     private suspend fun synchronizeImageIndex(modelId: String,sha: String,dimension: Int) = mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false)) { "SEMANTIC_INDEX_OPT_IN_REQUIRED" }
-        val imageIds = selected().filter { it.startsWith("attachment:") && imageSourceMetadata(it) != null }
+        val imageIds = selected().filter { imageSearchSourceExists(it) }
         if (imageIds.isEmpty()) {
             imageStore.replace(null)
             return@withLock
@@ -668,7 +752,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         currentCoroutineContext().ensureActive()
         val stillSelected = selected().toSet()
         val finalEntries = prepared.values.filter { it.sourceId in stillSelected &&
-            imageSourceMetadata(it.sourceId) != null && storage.getBoolean("semantic_enabled",false) }
+            imageSearchSourceExists(it.sourceId) && storage.getBoolean("semantic_enabled",false) }
         imageStore.replace(ImageSemanticSnapshot(currentSpace,finalEntries))
     }
 
@@ -676,7 +760,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val space = runCatching { imageSearchSpace(modelId,sha,dimension) }.getOrNull() ?: return 0
         val allowed = selected()
         return imageStore.read()?.takeIf { it.space == space }?.entries?.count {
-            it.sourceId in allowed && imageSourceMetadata(it.sourceId) != null
+            it.sourceId in allowed && imageSearchSourceExists(it.sourceId)
         } ?: 0
     }
 
@@ -795,7 +879,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val space = imageSearchSpace(modelId,sha,dimension)
         val snapshot = imageStore.read()?.takeIf { it.space == space } ?: return emptyList()
         val allowed = selected()
-        val candidates = snapshot.entries.filter { it.sourceId in allowed && imageSourceMetadata(it.sourceId) != null }
+        val candidates = snapshot.entries.filter { it.sourceId in allowed && imageSearchSourceExists(it.sourceId) }
         if (!storage.getBoolean("semantic_enabled",false) || candidates.isEmpty()) return emptyList()
         check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
         val provider = embeddingExecutor(modelId) as? LiteRtEmbeddingProvider

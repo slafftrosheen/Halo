@@ -2982,13 +2982,13 @@
     <string name="ui_4d5f2c34aff1" formatted="false">"Copy voice latency report"</string>
     <string name="ui_dc1968315454" formatted="false">"Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Find related notes"</string>
-    <string name="ui_1c99c938fa58" formatted="false">"Search your chosen Notebook, Canvas and Study text privately on this phone. halo will not index anything until you approve the sources and tap Build local search."</string>
+    <string name="ui_49b31501b1c2" formatted="false">"Search selected Notebook, Canvas, Study and attached media privately on this phone. halo indexes only after you approve the sources and build local search."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Local search model"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"No verified local search model is installed."</string>
     <string name="ui_128202399927" formatted="false">"Browse on-device models"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Use for local search"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Choose what halo can search"</string>
-    <string name="ui_95110578e66b" formatted="false">"No available notes or study sessions. Create a note or return to the full Library to choose sources."</string>
+    <string name="ui_3ce934646c98" formatted="false">"No available Notebook, Canvas, Study or media sources. Add one or return to the Library to choose sources."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"Only checked sources can enter the private search index."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Allow sources and build local search"</string>
     <string name="ui_986855e1bf05" formatted="false">"Update local search index"</string>

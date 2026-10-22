@@ -2982,13 +2982,13 @@
     <string name="ui_4d5f2c34aff1" formatted="false">"Kopēt balss aiztures pārskatu"</string>
     <string name="ui_dc1968315454" formatted="false">"Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Atrast saistītās piezīmes"</string>
-    <string name="ui_1c99c938fa58" formatted="false">"Meklējiet izvēlēto piezīmju, Canvas un Study tekstā privāti šajā tālrunī. halo neko neindeksē, līdz atļaujat avotus un sākat lokālās meklēšanas izveidi."</string>
+    <string name="ui_49b31501b1c2" formatted="false">"Privāti meklējiet šajā tālrunī atlasītajās piezīmēs, Canvas, Study materiālos un pievienotajos multivides failos. halo sāks indeksēšanu tikai pēc tam, kad atļausiet avotus un izveidosiet lokālo meklēšanu."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Lokālās meklēšanas modelis"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"Nav instalēts pārbaudīts lokālās meklēšanas modelis."</string>
     <string name="ui_128202399927" formatted="false">"Pārlūkot ierīces modeļus"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Izmantot lokālajai meklēšanai"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Izvēlieties, kuros materiālos halo drīkst meklēt"</string>
-    <string name="ui_95110578e66b" formatted="false">"Nav pieejamu piezīmju vai mācību sesiju. Izveidojiet piezīmi vai atgriezieties pilnajā bibliotēkā, lai izvēlētos avotus."</string>
+    <string name="ui_3ce934646c98" formatted="false">"Nav pieejamu Notebook, Canvas, Study vai multivides avotu. Pievienojiet avotu vai atgriezieties bibliotēkā, lai to atlasītu."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"Privātajā meklēšanas indeksā iekļaus tikai atzīmētos avotus."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Atļaut avotus un izveidot lokālo meklēšanu"</string>
     <string name="ui_986855e1bf05" formatted="false">"Atjaunināt lokālās meklēšanas indeksu"</string>
