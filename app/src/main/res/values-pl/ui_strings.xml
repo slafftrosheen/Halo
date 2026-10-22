@@ -4,16 +4,29 @@
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
+    <string name="ui_26488c95ce6a" formatted="false">"Przetestuj ponownie"</string>
     <string name="ui_185e4b007d63" formatted="false">"Skonfiguruj role modeli"</string>
+    <string name="ui_c12814d1710f" formatted="false">"Szukaj modeli w katalogu"</string>
     <string name="ui_6c48253817ef" formatted="false">"Zaimportowane modele"</string>
+    <string name="ui_e03fbfc3ca53" formatted="false">"Nie zmierzono na tym urządzeniu"</string>
     <string name="ui_d640c7421da0" formatted="false">"Wznów"</string>
     <string name="ui_70313db71cd3" formatted="false">"Usuń niepełny plik"</string>
     <string name="ui_420eaafbda7b" formatted="false">"Pobierz ponownie"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
     <string name="ui_37b345555d7e" formatted="false">"Pobieranie"</string>
+    <string name="ui_879dd831b8b6" formatted="false">"Bieżące urządzenie · Trwała macierz ról"</string>
+    <string name="ui_6cc7c6b30613" formatted="false">"Uruchom macierz ról dla zainstalowanych modeli"</string>
+    <string name="ui_716441045c2d" formatted="false">"Skopiuj wyniki bieżącego urządzenia"</string>
+    <string name="ui_d1f0b77811dd" formatted="false">"Skopiuj macierz ról"</string>
+    <string name="ui_5e7479d15c2d" formatted="false">"Bezpośredni test środowiska uruchomieniowego"</string>
     <string name="ui_6c277724149d" formatted="false">"Zweryfikuj model"</string>
     <string name="ui_340128ddbdf7" formatted="false">"Szybki test"</string>
+    <string name="ui_1fa330e271ba" formatted="false">"Test porównawczy"</string>
+    <string name="ui_4b3f645d95d4" formatted="false">"Sprawdź kanał narzędzi"</string>
+    <string name="ui_01037b1d4f5a" formatted="false">"Uruchom syntetyczny test obrazu"</string>
+    <string name="ui_df952a8c1b62" formatted="false">"Uruchom zestaw testów ról"</string>
+    <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>

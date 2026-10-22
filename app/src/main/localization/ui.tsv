@@ -546,11 +546,11 @@ Import .litertlm|||Импортировать .litertlm|||Importēt .litertlm
 Needs retest|||Нужно проверить повторно|||Jāpārbauda atkārtoti
 Stable|||Стабильно|||Stabils
 Measured but unstable|||Проверено, нестабильно|||Izmērīts, bet nestabils
-Retest|||Повторить проверку|||Pārbaudīt vēlreiz
+Retest|||Повторить проверку|||Pārbaudīt vēlreiz|||Przetestuj ponownie
 Configure model roles|||Настроить роли моделей|||Iestatīt modeļu lomas|||Skonfiguruj role modeli
-Search catalog models|||Поиск моделей в каталоге|||Meklēt modeļus katalogā
+Search catalog models|||Поиск моделей в каталоге|||Meklēt modeļus katalogā|||Szukaj modeli w katalogu
 Imported models|||Импортированные модели|||Importētie modeļi|||Zaimportowane modele
-Not measured on this device|||Не проверено на этом устройстве|||Nav mērīts šajā ierīcē
+Not measured on this device|||Не проверено на этом устройстве|||Nav mērīts šajā ierīcē|||Nie zmierzono na tym urządzeniu
 Text|||Текст|||Teksts
 Vision|||Зрение|||Redze
 Tools|||Инструменты|||Rīki
@@ -764,18 +764,18 @@ Delegated task|||Делегированная задача|||Deleģēts uzdevums
 Outcome unknown|||Результат неизвестен|||Rezultāts nav zināms
 Provider turn completed|||Ответ провайдера завершён|||Pakalpojumu sniedzēja atbilde pabeigta
 Plan|||План|||Plāns
-Current device · Durable role matrix|||Текущее устройство · матрица ролей|||Pašreizējā ierīce · saglabātā lomu matrica
-Run installed role matrix|||Проверить роли установленных моделей|||Pārbaudīt instalēto modeļu lomas
+Current device · Durable role matrix|||Текущее устройство · матрица ролей|||Pašreizējā ierīce · saglabātā lomu matrica|||Bieżące urządzenie · Trwała macierz ról
+Run installed role matrix|||Проверить роли установленных моделей|||Pārbaudīt instalēto modeļu lomas|||Uruchom macierz ról dla zainstalowanych modeli
 Running matrix…|||Выполняется проверка…|||Notiek pārbaude…
 Run smoke matrix|||Запустить быструю проверку|||Palaist ātro pārbaudi
-Copy current device results|||Копировать результаты устройства|||Kopēt ierīces rezultātus
-Copy role matrix|||Копировать матрицу ролей|||Kopēt lomu matricu
+Copy current device results|||Копировать результаты устройства|||Kopēt ierīces rezultātus|||Skopiuj wyniki bieżącego urządzenia
+Copy role matrix|||Копировать матрицу ролей|||Kopēt lomu matricu|||Skopiuj macierz ról
 Role evidence is separate from Benchmark calibration provenance|||Проверка ролей отделена от калибровки Benchmark|||Lomu pārbaudes rezultāti ir atsevišķi no Benchmark kalibrācijas datiem
-Direct runtime probe|||Прямая проверка среды выполнения|||Tieša izpildvides pārbaude
+Direct runtime probe|||Прямая проверка среды выполнения|||Tieša izpildvides pārbaude|||Bezpośredni test środowiska uruchomieniowego
 Verify model|||Проверить модель|||Pārbaudīt modeli|||Zweryfikuj model
 Smoke test|||Быстрая проверка|||Ātrā pārbaude|||Szybki test
-Benchmark|||Тест производительности|||Veiktspējas tests
-Probe tool channel|||Проверить канал инструментов|||Pārbaudīt rīku kanālu
+Benchmark|||Тест производительности|||Veiktspējas tests|||Test porównawczy
+Probe tool channel|||Проверить канал инструментов|||Pārbaudīt rīku kanālu|||Sprawdź kanał narzędzi
 Developer tests ▴|||Тесты разработчика ▴|||Izstrādātāja testi ▴
 Developer tests ▾|||Тесты разработчика ▾|||Izstrādātāja testi ▾
 Configure ElevenLabs|||Настроить ElevenLabs|||Iestatīt ElevenLabs
@@ -829,9 +829,9 @@ Last voice reply|||Последний голосовой ответ|||Pēdējā 
 Controls · Assistant managed by Android · Media and volume: System default|||Управление · помощником управляет Android · медиа и громкость: системные настройки|||Vadība · palīgu pārvalda Android · multivide un skaļums: sistēmas noklusējums
 Identity available for this connection only|||Идентификатор доступен только для этого подключения|||Identitāte pieejama tikai šim savienojumam
 Wear OS|||Wear OS|||Wear OS
-Run synthetic vision probe|||Запустить синтетическую проверку зрения|||Palaist sintētisko redzes pārbaudi
-Run role suite|||Запустить набор тестов ролей|||Palaist lomu testu kopu
-Developer tests|||Тесты разработчика|||Izstrādātāja testi
+Run synthetic vision probe|||Запустить синтетическую проверку зрения|||Palaist sintētisko redzes pārbaudi|||Uruchom syntetyczny test obrazu
+Run role suite|||Запустить набор тестов ролей|||Palaist lomu testu kopu|||Uruchom zestaw testów ról
+Developer tests|||Тесты разработчика|||Izstrādātāja testi|||Testy deweloperskie
 Use model|||Использовать модель|||Izmantot modeli|||Użyj modelu
 Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ
 Continue|||Продолжить|||Turpināt
