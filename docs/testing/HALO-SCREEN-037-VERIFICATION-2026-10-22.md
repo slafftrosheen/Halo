@@ -21,7 +21,7 @@ ADB input was used to exercise phone touch handling. This is device-level UI evi
 
 ## Still open for #37
 
-This pass does not qualify sourced-research creation, a real local automation result end to end, voice composition, TalkBack traversal, tablet/rotation layouts, or long-duration ambient behavior. Keep #37 open until those remaining acceptance paths are verified.
+This pass does not qualify sourced-research creation, a real local automation result end to end, voice composition, TalkBack traversal, tablet/rotation layouts, or long-duration ambient behavior. The automation result was verified in the later phone checkpoint below; the other paths remain open for #37.
 
 ## Current source checkpoint — 2026-10-22, commit `90f8bf91`
 
@@ -43,4 +43,14 @@ The Screen text/dictation composer now accepts bounded requests such as “build
 
 Installed and launched the build on Samsung SM-G990B2 (`R5CTA0TKLZZ`). In Russian UI, typed the example request, inspected the preview containing Weather, Calendar and Research, then applied it. The grounded search dialog opened with `black hole` prefilled and displayed its OpenRouter/Exa destination and cost disclosure; no search was dispatched. Used Undo to restore the pre-check Screen layout. Also composed a research-only request with an existing Research card; preview and Apply opened the grounded search dialog with `black holes` and did not require a layout change. No search was dispatched. This verifies the composition-to-search handoff on this phone, not actual sourced-result retrieval or voice-dictation input.
 
-**Keep #37 open.** Actual sourced research retrieval/save, real local automation result end-to-end, voice composition by dictation, TalkBack traversal, tablet/rotation qualification, and long-duration ambient behavior remain outstanding.
+At this checkpoint, actual sourced research retrieval/save, a real local automation result, voice composition by dictation, TalkBack traversal, tablet/rotation qualification, and long-duration ambient behavior were still outstanding. The local automation result was verified in the later phone checkpoint below.
+
+## Local automation result phone checkpoint — 2026-10-22
+
+The installed debug APK on Samsung SM-G990B2 (`R5CTA0TKLZZ`, Android 16 / API 36) had SHA-256 `E642E4D7A326FB4557EDC0F696CECC2FBDA6988F7D87A4C8883558298F84A3F3`, matching `app/build/outputs/apk/debug/app-debug.apk`.
+
+Created a temporary `Codex screen local verification` routine with a Network Available trigger, the local `Show message` action (`Connection is available again`), and silent Activity delivery. The review listed the exact action and stated no notification or speech would be sent. Saved it, invoked **Run now** through the confirmation dialog, and observed **Completed · 1 of 1 actions** with the local result text. The trigger observed Android usable-network status; the action made no network request. No provider, model, external notification, or speech was involved. Added the routine-results card from Screen's native card catalogue; it displayed the routine name, `1 of 1 actions finished`, and an Updated timestamp. After force-stopping and relaunching Halo, the same result card and completed result were still visible in Screen. This verifies a real local automation result and persistence across app restart on this phone.
+
+Removed the temporary routine and hid its Screen card after verification. Its run record remains in Activity history by design. The device was not returned to Private during this pass; its mode was Full Power's legacy `Power` state when observed, and this local routine did not use cloud processing. UI was exercised with ADB touch input; this is not human accessibility testing.
+
+**Keep #37 open.** Sourced research retrieval/save, voice composition by dictation, TalkBack traversal, tablet layout, and long-duration ambient behavior remain unverified. Landscape reflow was exercised on this phone in the earlier checkpoint, but it does not establish tablet support.
