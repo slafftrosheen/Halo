@@ -2579,10 +2579,10 @@ Finish lesson|||Завершить урок|||Pabeigt nodarbību
 Sent · not verified|||Отправлено · результат не подтверждён|||Nosūtīts · rezultāts nav apstiprināts
 Confirmed|||Подтверждено|||Apstiprināts
 Could not finish|||Не удалось завершить|||Neizdevās pabeigt
-Search languages|||Поиск языков|||Meklēt valodas
-No matching languages|||Языки не найдены|||Nav atrasta neviena valoda
-halo's words and replies|||Язык интерфейса и ответов halo|||halo saskarnes un atbilžu valoda
-Dates and times follow this language too.|||Даты и время тоже используют этот язык.|||Arī datumi un laiki tiek rādīti šajā valodā.
+Search languages|||Поиск языков|||Meklēt valodas|||Szukaj języków
+No matching languages|||Языки не найдены|||Nav atrasta neviena valoda|||Nie znaleziono pasujących języków
+halo's words and replies|||Язык интерфейса и ответов halo|||halo saskarnes un atbilžu valoda|||język interfejsu halo i odpowiedzi
+Dates and times follow this language too.|||Даты и время тоже используют этот язык.|||Arī datumi un laiki tiek rādīti šajā valodā.|||Daty i godziny również będą wyświetlane w tym języku.
 English|||Английский|||Angļu
 Latvian|||Латышский|||Latviešu
 Russian|||Русский|||Krievu
@@ -3021,10 +3021,10 @@ Optional · Local search|||Дополнительно · Локальный по
 How Halo helps|||Как Halo может помочь|||Kā Halo var palīdzēt
 Use matches in local Halo replies|||Использовать найденное в локальных ответах Halo|||Izmantot atrastos fragmentus Halo lokālajās atbildēs
 Optional. Selected passages may help on-device replies; remote providers do not receive this automatic context.|||Необязательно. Выбранные фрагменты могут помочь ответам на устройстве; внешние модели не получают этот контекст автоматически.|||Neobligāti. Atlasītie fragmenti var palīdzēt atbildēs ierīcē; attālie modeļi šo kontekstu automātiski nesaņem.
-Understand requests locally|||Распознавание команд на телефоне|||Atpazīt pieprasījumus lokāli
-A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself.|||Небольшая модель на телефоне помогает Halo отличать команды от вопросов. Сама модель не выполняет действия.|||Neliels modelis ierīcē palīdz Halo atšķirt darbības no jautājumiem. Modelis pats neveic darbības.
-Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands.|||Установите небольшую локальную модель для распознавания намерений. Без неё Halo использует заранее заданные команды.|||Instalējiet nelielu lokālo modeli nodoma atpazīšanai. Bez tā Halo izmanto iepriekš definētas komandas.
-Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically.|||Распознавание намерений работает только на телефоне, без облачных сервисов. Неоднозначные запросы не выполняются автоматически.|||Nodomu atpazīšana notiek tikai šajā tālrunī, neizmantojot mākoņpakalpojumus. Neskaidri pieprasījumi netiek automātiski izpildīti.
+Understand requests locally|||Распознавание команд на телефоне|||Atpazīt pieprasījumus lokāli|||Rozpoznawaj polecenia lokalnie
+A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself.|||Небольшая модель на телефоне помогает Halo отличать команды от вопросов. Сама модель не выполняет действия.|||Neliels modelis ierīcē palīdz Halo atšķirt darbības no jautājumiem. Modelis pats neveic darbības.|||Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie może wykonywać działań.
+Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands.|||Установите небольшую локальную модель для распознавания намерений. Без неё Halo использует заранее заданные команды.|||Instalējiet nelielu lokālo modeli nodoma atpazīšanai. Bez tā Halo izmanto iepriekš definētas komandas.|||Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie poleceń przez AI. Bez niego halo korzysta z ustalonych reguł.
+Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically.|||Распознавание намерений работает только на телефоне, без облачных сервисов. Неоднозначные запросы не выполняются автоматически.|||Nodomu atpazīšana notiek tikai šajā tālrunī, neizmantojot mākoņpakalpojumus. Neskaidri pieprasījumi netiek automātiski izpildīti.|||Rozpoznawanie poleceń działa wyłącznie na tym telefonie i nie korzysta z chmury. Niejasne polecenia nie są wykonywane automatycznie.
 How halo answers|||Как halo отвечает|||Kā halo atbild
 Choose what halo can use|||Выберите, что может использовать halo|||Izvēlieties, ko halo drīkst izmantot
 Review what halo remembers|||Посмотрите, что помнит halo|||Pārskatiet, ko halo atceras
@@ -3246,9 +3246,10 @@ halo keeps the output you chose when using the phone's voice.|||При испо�
 Set up online voices|||Настроить онлайн-голоса|||Iestatīt tiešsaistes balsis
 Yes, I heard halo|||Да, я слышу halo|||Jā, es dzirdēju halo
 You heard halo here|||Вы слышали halo здесь|||Jūs šeit dzirdējāt halo
-Language changed|||Язык изменён|||Valoda nomainīta
-Polish|||Польский|||Poļu
-Coming soon|||Скоро|||Drīzumā
+Language changed|||Язык изменён|||Valoda nomainīta|||Zmieniono język
+Polish|||Польский|||Poļu|||polski
+Partly translated|||Частично переведено|||Daļēji iztulkots|||Częściowo przetłumaczono
+Polish interface is partly translated. Some screens may still appear in English.|||Интерфейс на польском языке переведён частично. Некоторые экраны могут отображаться на английском.|||Lietotnes interfeiss poļu valodā ir iztulkots daļēji. Dažas sadaļas vēl var būt angļu valodā.|||Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku.
 Listening and answer languages are separate. Change them in Voice & reading.|||Языки распознавания и ответов задаются отдельно в разделе «Голос и чтение».|||Klausīšanās un atbilžu valodas ir atsevišķas. Mainiet tās sadaļā «Balss un lasīšana».
 Skill packages|||Пакеты навыков|||Prasmju pakotnes
 Import and manage your own skills|||Импортируйте свои навыки и управляйте ими|||Importējiet un pārvaldiet savas prasmes

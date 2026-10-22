@@ -3246,7 +3246,8 @@
     <string name="ui_6d04ecf56e65" formatted="false">"Вы слышали halo здесь"</string>
     <string name="ui_42cfc74a6f1b" formatted="false">"Язык изменён"</string>
     <string name="ui_770341d6e89e" formatted="false">"Польский"</string>
-    <string name="ui_4f7d64017689" formatted="false">"Скоро"</string>
+    <string name="ui_1889bb305d75" formatted="false">"Частично переведено"</string>
+    <string name="ui_7812768f6ea5" formatted="false">"Интерфейс на польском языке переведён частично. Некоторые экраны могут отображаться на английском."</string>
     <string name="ui_ee9ba864e400" formatted="false">"Языки распознавания и ответов задаются отдельно в разделе «Голос и чтение»."</string>
     <string name="ui_8a4abef11f83" formatted="false">"Пакеты навыков"</string>
     <string name="ui_769628e54e78" formatted="false">"Импортируйте свои навыки и управляйте ими"</string>

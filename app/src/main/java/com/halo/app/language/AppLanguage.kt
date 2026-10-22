@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 enum class AppLanguage(val tag: String, val nativeName: String) {
-    ENGLISH("en", "English"), RUSSIAN("ru", "Русский"), LATVIAN("lv", "Latviešu");
+    ENGLISH("en", "English"), RUSSIAN("ru", "Русский"), LATVIAN("lv", "Latviešu"),
+    POLISH("pl", "Polski");
     companion object {
         fun fromTag(tag: String?) = entries.firstOrNull { it.tag == tag?.lowercase(Locale.ROOT)?.substringBefore('-')?.substringBefore('_') } ?: ENGLISH
     }

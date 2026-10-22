@@ -3246,7 +3246,8 @@
     <string name="ui_6d04ecf56e65" formatted="false">"You heard halo here"</string>
     <string name="ui_42cfc74a6f1b" formatted="false">"Language changed"</string>
     <string name="ui_770341d6e89e" formatted="false">"Polish"</string>
-    <string name="ui_4f7d64017689" formatted="false">"Coming soon"</string>
+    <string name="ui_1889bb305d75" formatted="false">"Partly translated"</string>
+    <string name="ui_7812768f6ea5" formatted="false">"Polish interface is partly translated. Some screens may still appear in English."</string>
     <string name="ui_ee9ba864e400" formatted="false">"Listening and answer languages are separate. Change them in Voice &amp; reading."</string>
     <string name="ui_8a4abef11f83" formatted="false">"Skill packages"</string>
     <string name="ui_769628e54e78" formatted="false">"Import and manage your own skills"</string>

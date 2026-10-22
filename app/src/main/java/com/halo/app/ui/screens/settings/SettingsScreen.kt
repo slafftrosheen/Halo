@@ -473,6 +473,7 @@ internal fun languagePickerEnglishName(language: com.halo.app.language.AppLangua
     com.halo.app.language.AppLanguage.ENGLISH -> "English"
     com.halo.app.language.AppLanguage.LATVIAN -> "Latvian"
     com.halo.app.language.AppLanguage.RUSSIAN -> "Russian"
+    com.halo.app.language.AppLanguage.POLISH -> "Polish"
 }
 
 internal fun languagePickerMatches(
@@ -593,12 +594,16 @@ internal fun LanguagePickerPage(
                     }
                 }
                 if (query.isBlank() || "polski polish".contains(query.trim(), ignoreCase = true)) {
-                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                      Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("Polski", style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant)
                             Text(uiText("Polish"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                         }
-                        Text(uiText("Coming soon"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                            Text(uiText("Partly translated"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                      }
+                      Text(uiText("Polish interface is partly translated. Some screens may still appear in English."),
+                          style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                     }
                 }
                 TextButton(onClick = onVoice, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Voice & reading")) }

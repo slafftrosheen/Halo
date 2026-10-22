@@ -3246,7 +3246,8 @@
     <string name="ui_6d04ecf56e65" formatted="false">"Jūs šeit dzirdējāt halo"</string>
     <string name="ui_42cfc74a6f1b" formatted="false">"Valoda nomainīta"</string>
     <string name="ui_770341d6e89e" formatted="false">"Poļu"</string>
-    <string name="ui_4f7d64017689" formatted="false">"Drīzumā"</string>
+    <string name="ui_1889bb305d75" formatted="false">"Daļēji iztulkots"</string>
+    <string name="ui_7812768f6ea5" formatted="false">"Lietotnes interfeiss poļu valodā ir iztulkots daļēji. Dažas sadaļas vēl var būt angļu valodā."</string>
     <string name="ui_ee9ba864e400" formatted="false">"Klausīšanās un atbilžu valodas ir atsevišķas. Mainiet tās sadaļā «Balss un lasīšana»."</string>
     <string name="ui_8a4abef11f83" formatted="false">"Prasmju pakotnes"</string>
     <string name="ui_769628e54e78" formatted="false">"Importējiet un pārvaldiet savas prasmes"</string>

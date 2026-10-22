@@ -19,7 +19,7 @@ class UiLanguageGenerationTest(unittest.TestCase):
         self.script = self.root / "scripts/generate_ui_languages.py"
         shutil.copyfile(Path(__file__).with_name("generate_ui_languages.py"), self.script)
         (self.root / "app/src/main/localization/ui.tsv").write_text(
-            'Guidance level: %1$s|||Уровень: %1$s|||Līmenis: %1$s\n'
+            'Guidance level: %1$s|||Уровень: %1$s|||Līmenis: %1$s|||Poziom wskazówek: %1$s\n'
             'Quote "Halo"\\nNext|||Цитата "Halo"\\nДалее|||Citāts "Halo"\\nTālāk\n',
             encoding="utf-8",
         )
@@ -38,6 +38,10 @@ class UiLanguageGenerationTest(unittest.TestCase):
         self.assertEqual(keys[0], keys[1])
         self.assertEqual(keys[0], keys[2])
         self.assertEqual(2, len(keys[0]))
+        polish = ElementTree.parse(self.root / "app/src/main/res/values-pl/ui_strings.xml")
+        polish_keys = {element.attrib["name"] for element in polish.getroot()}
+        self.assertEqual(1, len(polish_keys))
+        self.assertTrue(polish_keys.issubset(keys[0]))
         self.assertEqual(0, self.run_generator("--check").returncode)
 
     def test_check_detects_manual_drift_without_overwriting_it(self):

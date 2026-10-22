@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
+    <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
+    <string name="ui_3b395ccc27ed" formatted="false">"język interfejsu halo i odpowiedzi"</string>
+    <string name="ui_4a703d8c58cf" formatted="false">"Daty i godziny również będą wyświetlane w tym języku."</string>
+    <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawaj polecenia lokalnie"</string>
+    <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie może wykonywać działań."</string>
+    <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie poleceń przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
+    <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie poleceń działa wyłącznie na tym telefonie i nie korzysta z chmury. Niejasne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_42cfc74a6f1b" formatted="false">"Zmieniono język"</string>
+    <string name="ui_770341d6e89e" formatted="false">"polski"</string>
+    <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
+    <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
+</resources>
