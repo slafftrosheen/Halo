@@ -21,9 +21,12 @@ class HaloLabJournalTest {
         try {
             val id = UUID.randomUUID().toString()
             val requestHash = "a".repeat(64)
-            assertEquals("CREATED", journal.accept(id, requestHash, "model-a", "b".repeat(64)))
-            assertEquals("EXISTING", journal.accept(id, requestHash, "model-a", "b".repeat(64)))
-            assertEquals("REQUEST_ID_CONFLICT", journal.accept(id, "c".repeat(64), "model-a", "b".repeat(64)))
+            val budgets = LabAttemptStageBudgets.LEGACY
+            val acceptedAt = android.os.SystemClock.elapsedRealtime().coerceAtLeast(1L)
+            assertEquals("CREATED", journal.accept(id, requestHash, "model-a", "b".repeat(64), budgets, acceptedAt))
+            assertEquals("EXISTING", journal.accept(id, requestHash, "model-a", "b".repeat(64), budgets, acceptedAt))
+            assertEquals("REQUEST_ID_CONFLICT", journal.accept(id, "c".repeat(64), "model-a", "b".repeat(64), budgets, acceptedAt))
+            assertEquals(budgets.toJson().toString(), journal.query(id)?.payload?.optJSONObject("stageBudgets").toString())
 
             val terminal = JSONObject().put("status", "TERMINAL").put("outcome", "PASS")
                 .put("validity", "VALID").put("modelId", "model-a").put("artifactBytes", 12L)

@@ -6,6 +6,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.os.Process
 import com.halo.app.lab.bridge.HaloLabProtocol
+import com.halo.app.lab.bridge.LabAttemptStageBudgets
 import com.halo.app.storage.haloStorageLayout
 import com.halo.lab.bridge.v1.IModelBenchWorker
 import com.halo.providers.litert.LiteRtLocalProvider
@@ -36,9 +37,13 @@ class HaloModelBenchService : Service() {
     private val lock = Any()
     private var supervisorToken: IBinder? = null
     private var supervisorDeath: IBinder.DeathRecipient? = null
-    private var activeAttemptId: String? = null
+    @Volatile private var activeAttemptId: String? = null
     private var activePayloadHash: String? = null
     private var activeJob: Job? = null
+    @Volatile private var stageBudgets: LabAttemptStageBudgets? = null
+    @Volatile private var activeStage: String? = null
+    @Volatile private var activeStageStartedElapsedMs: Long = 0L
+    @Volatile private var stageTimeoutTriggered = false
     private var processRunLockFile: RandomAccessFile? = null
     private var processRunLock: FileLock? = null
     @Volatile private var cleanupConfirmed = true
@@ -49,8 +54,11 @@ class HaloModelBenchService : Service() {
         override fun attachSupervisor(supervisor: IBinder?, workerInstanceId: String?): String =
             attach(supervisor, workerInstanceId)
 
-        override fun startTextProbe(attemptId: String?, modelId: String?, expectedSha256: String?, deadlineElapsedRealtimeMs: Long): String =
-            start(attemptId.orEmpty(), modelId.orEmpty(), expectedSha256.orEmpty(), deadlineElapsedRealtimeMs)
+        override fun startTextProbe(attemptId: String?, modelId: String?, expectedSha256: String?, deadlineElapsedRealtimeMs: Long,
+            loadBudgetMs: Long, executeBudgetMs: Long, unloadBudgetMs: Long): String = start(
+                attemptId.orEmpty(), modelId.orEmpty(), expectedSha256.orEmpty(), deadlineElapsedRealtimeMs,
+                LabAttemptStageBudgets(loadBudgetMs, executeBudgetMs, unloadBudgetMs),
+            )
 
         override fun queryAttempt(attemptId: String?): String = query(attemptId.orEmpty())
 
@@ -91,9 +99,11 @@ class HaloModelBenchService : Service() {
         reply("SUCCESS", "ATTACHED").put("workerInstanceId", workerId).toString()
     }
 
-    private fun start(attemptId: String, modelId: String, expectedSha256: String, deadline: Long): String = synchronized(lock) {
+    private fun start(attemptId: String, modelId: String, expectedSha256: String, deadline: Long,
+        budgets: LabAttemptStageBudgets): String = synchronized(lock) {
         if (!UUID_REGEX.matches(attemptId) || modelId.isBlank() || modelId.length > 160 || !SHA_REGEX.matches(expectedSha256))
             return@synchronized reply("REJECTED", "INVALID_REQUEST").toString()
+        if (!budgets.valid()) return@synchronized reply("REJECTED", "STAGE_BUDGETS_INVALID").toString()
         if (supervisorToken?.isBinderAlive != true) return@synchronized reply("REJECTED", "SUPERVISOR_UNAVAILABLE").toString()
         val payloadHash = sha256("$attemptId\n$modelId\n$expectedSha256\n${HaloLabProtocol.FAST_SMOKE_FIXTURE_ID}")
         if (activeAttemptId == attemptId) {
@@ -104,6 +114,7 @@ class HaloModelBenchService : Service() {
         val now = android.os.SystemClock.elapsedRealtime()
         if (deadline <= now) return@synchronized reply("REJECTED", "DEADLINE_EXPIRED").toString()
         if (deadline - now > MAX_ATTEMPT_DEADLINE_MS) return@synchronized reply("REJECTED", "DEADLINE_TOO_LARGE").toString()
+        if (deadline - now > (budgets.totalMs ?: 0L)) return@synchronized reply("REJECTED", "DEADLINE_STAGE_BUDGET_MISMATCH").toString()
         // A previous native worker may outlive its former supervisor. Its OS lock remains held
         // until native cleanup or process death, so a new allocation cannot overlap it.
         val lockFile = runCatching {
@@ -118,6 +129,9 @@ class HaloModelBenchService : Service() {
         }
         processRunLockFile = lockFile
         processRunLock = processLock
+        stageBudgets = budgets
+        activeStage = null
+        stageTimeoutTriggered = false
         cleanupConfirmed = false
         activeAttemptId = attemptId
         activePayloadHash = payloadHash
@@ -126,6 +140,7 @@ class HaloModelBenchService : Service() {
         activeJob = serviceScope.launch {
             execute(attemptId, modelId, expectedSha256, deadline)
         }
+        startStageWatchdog(attemptId)
         stateJson.toString()
     }
 
@@ -142,6 +157,7 @@ class HaloModelBenchService : Service() {
                 prompt = FIXTURE_PROMPT,
                 maxOutputTokens = 8,
                 backendOverride = LocalComputeBackend.CPU,
+                onStageChanged = ::markStage,
             ).getOrElse { throw it }
             if (result.artifactSha256 != expectedSha256 || result.effectiveBackend != LocalComputeBackend.CPU)
                 throw ProbeFailure("EXECUTOR_IDENTITY_MISMATCH")
@@ -185,6 +201,7 @@ class HaloModelBenchService : Service() {
                 .put("failureCode", failureCode).put("failureDomain", failureDomain)
                 .put("origin", "DEVICE_MEASUREMENT")
         } finally {
+            markStage("UNLOAD")
             val unloaded = withContext(NonCancellable + Dispatchers.IO) {
                 runCatching { localProvider.unloadLocalModel() }.getOrDefault(false)
             }
@@ -202,10 +219,54 @@ class HaloModelBenchService : Service() {
                     runCatching { processRunLockFile?.close() }
                     processRunLock = null
                     processRunLockFile = null
+                    activeStage = null
+                    stageBudgets = null
                     selfKillScheduled.set(false)
                 }
             }
         }
+    }
+
+    private fun markStage(stage: String) {
+        if (stage !in STAGE_BUDGET_KEYS || stageTimeoutTriggered) return
+        synchronized(lock) {
+            activeStage = stage
+            activeStageStartedElapsedMs = android.os.SystemClock.elapsedRealtime()
+            stateJson = reply("PENDING", "${stage}_STARTED")
+                .put("attemptId", activeAttemptId)
+                .put("stage", stage)
+        }
+    }
+
+    /** Independent process thread kills a worker whose native call ignores coroutine cancellation. */
+    private fun startStageWatchdog(attemptId: String) {
+        Thread({
+            while (!cleanupConfirmed && activeAttemptId == attemptId) {
+                val stage = activeStage
+                val started = activeStageStartedElapsedMs
+                val budget = budgetFor(stage.orEmpty())
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (stage != null && budget != null && now >= started && now - started > budget) {
+                    val code = "${stage}_STAGE_BUDGET_EXCEEDED"
+                    stageTimeoutTriggered = true
+                    synchronized(lock) {
+                        stateJson = reply("STAGE_TIMEOUT", code).put("attemptId", attemptId)
+                            .put("stage", stage).put("failureCode", code)
+                    }
+                    try { Thread.sleep(STAGE_TIMEOUT_REPORT_GRACE_MS) } catch (_: InterruptedException) { }
+                    Process.killProcess(Process.myPid())
+                    return@Thread
+                }
+                try { Thread.sleep(STAGE_WATCHDOG_POLL_MS) } catch (_: InterruptedException) { return@Thread }
+            }
+        }, "halo-modelbench-stage-watchdog").apply { isDaemon = true; start() }
+    }
+
+    private fun budgetFor(stage: String): Long? = when (stage) {
+        "LOAD" -> stageBudgets?.loadMs
+        "EXECUTE" -> stageBudgets?.executeMs
+        "UNLOAD" -> stageBudgets?.unloadMs
+        else -> null
     }
 
     private fun query(attemptId: String): String = synchronized(lock) {
@@ -254,6 +315,9 @@ class HaloModelBenchService : Service() {
         private const val MAX_OUTPUT_CHARS = 512
         private const val STOP_GRACE_MS = 5_000L
         private const val MAX_ATTEMPT_DEADLINE_MS = 90 * 60_000L
+        private const val STAGE_WATCHDOG_POLL_MS = 50L
+        private const val STAGE_TIMEOUT_REPORT_GRACE_MS = 500L
+        private val STAGE_BUDGET_KEYS = setOf("LOAD", "EXECUTE", "UNLOAD")
         private val UUID_REGEX = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
         private val SHA_REGEX = Regex("[0-9a-f]{64}")
 

@@ -85,6 +85,7 @@ class LocalModelBenchmarkRunner(
         generationConfigFor: ((LocalModelDescriptor) -> RuntimeGenerationConfig)? = null,
         freshEngine: Boolean = false,
         loadConfigFor: suspend (LocalModelDescriptor) -> RuntimeLoadConfig,
+        onStageChanged: (String) -> Unit = {},
     ): Result<LocalModelBenchmarkResult> {
         val requestId = UUID.randomUUID().toString()
         val admission = session.tryBeginBenchmark(requestId)
@@ -101,6 +102,7 @@ class LocalModelBenchmarkRunner(
             val heapBefore = javaHeapUsageBytes()
 
             val loadStart = System.currentTimeMillis()
+            onStageChanged("LOAD")
             val loadResult = session.loadModel(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
@@ -120,6 +122,7 @@ class LocalModelBenchmarkRunner(
                 priority = InferencePriority.INTERACTIVE,
             )
 
+            onStageChanged("EXECUTE")
             val genResult = session.generate(
                 config = genConfig,
                 benchmarkRequestId = requestId,

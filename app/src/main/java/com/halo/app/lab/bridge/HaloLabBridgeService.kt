@@ -257,19 +257,10 @@ class HaloLabBridgeService : Service() {
         val sha = req.optString("artifactSha256")
         val fixture = req.optString("fixtureId")
         val stages = req.optJSONObject("stageBudgets")
-        val loadBudgetMs = stages?.optLong("loadMs", -1L) ?: -1L
-        val executeBudgetMs = stages?.optLong("executeMs", -1L) ?: -1L
-        val unloadBudgetMs = stages?.optLong("unloadMs", -1L) ?: -1L
-        val deadlineBudgetMs = if (stages == null) {
-            // Additive optional request field: older v1.0 clients keep their historical limit.
-            LabAttemptDeadlinePolicy.LEGACY_ATTEMPT_MS
-        } else {
-            LabAttemptDeadlinePolicy.totalMs(
-                loadBudgetMs,
-                executeBudgetMs,
-                unloadBudgetMs,
-            ) ?: return error("STAGE_BUDGETS_INVALID")
-        }
+        // Older v1.0 clients keep their historical total deadline, split conservatively by stage.
+        val stageBudgets = if (stages == null) LabAttemptStageBudgets.LEGACY
+        else LabAttemptStageBudgets.parse(stages) ?: return error("STAGE_BUDGETS_INVALID")
+        val deadlineBudgetMs = stageBudgets.totalMs ?: return error("STAGE_BUDGETS_INVALID")
         val suppliedLease = artifactLeases[req.optString("leaseId")]
         if (!UUID_PATTERN.matches(attempt) || model.isBlank() || model.length > 160 || !SHA_PATTERN.matches(sha) ||
             fixture != HaloLabProtocol.FAST_SMOKE_FIXTURE_ID
@@ -291,16 +282,16 @@ class HaloLabBridgeService : Service() {
         val acceptedAtElapsedMs = SystemClock.elapsedRealtime()
         val requestHash = sha256(listOf(attempt, model, sha, fixture, req.optString("sessionId"),
             req.optString("queueItemId"), req.optString("planDigestSha256"), req.optString("fixtureManifestSha256"),
-            loadBudgetMs, executeBudgetMs, unloadBudgetMs)
+            stageBudgets.loadMs, stageBudgets.executeMs, stageBudgets.unloadMs)
             .joinToString("\n"))
         if (journal.openAttempts().any { it.attemptId != attempt }) return error("RECOVERY_REQUIRED")
-        when (journal.accept(attempt, requestHash, model, sha, deadlineBudgetMs, acceptedAtElapsedMs)) {
+        when (journal.accept(attempt, requestHash, model, sha, stageBudgets, acceptedAtElapsedMs)) {
             "REQUEST_ID_CONFLICT" -> return error("REQUEST_ID_CONFLICT")
             "RECOVERY_REQUIRED" -> return error("RECOVERY_REQUIRED")
             "EXISTING" -> return queryCase(raw)
         }
         // Durable intent is committed before acquiring resources, binding a worker or executing.
-        scope.launch { startAttempt(attempt, model, sha, deadlineBudgetMs, acceptedAtElapsedMs) }
+        scope.launch { startAttempt(attempt, model, sha, stageBudgets, acceptedAtElapsedMs) }
         return JSONObject().put("status", "ACCEPTED").put("attemptId", attempt).toString()
     }
 
@@ -308,7 +299,7 @@ class HaloLabBridgeService : Service() {
         attemptId: String,
         modelId: String,
         sha: String,
-        deadlineBudgetMs: Long,
+        stageBudgets: LabAttemptStageBudgets,
         acceptedAtElapsedMs: Long,
     ) {
         if (!startingAttempts.add(attemptId)) return
@@ -335,9 +326,9 @@ class HaloLabBridgeService : Service() {
             return
         }
         val deadlineElapsedMs = LabAttemptDeadlinePolicy.deadlineElapsedMs(
-            acceptedAtElapsedMs, deadlineBudgetMs, SystemClock.elapsedRealtime(),
+            acceptedAtElapsedMs, requireNotNull(stageBudgets.totalMs), SystemClock.elapsedRealtime(),
         )
-        val run = ActiveRun(attemptId, lease, pinned.second, deadlineElapsedMs + STOP_GRACE_MS)
+        val run = ActiveRun(attemptId, lease, pinned.second, deadlineElapsedMs + STOP_GRACE_MS, stageBudgets)
         active[attemptId] = run
         journal.stage(attemptId, "PREFLIGHT", "WORKER_STARTING")
         val intent = Intent(this, HaloModelBenchService::class.java)
@@ -364,19 +355,26 @@ class HaloLabBridgeService : Service() {
             return
         }
         if (run.worker == null) { finishUnstarted(run, "WORKER_UNAVAILABLE", "HARNESS"); return }
-        journal.stage(attemptId, "EXECUTE", "EXECUTION_STARTED")
+        journal.stage(attemptId, "PREFLIGHT", "NATIVE_WORKER_STARTING")
         run.nativeStartRequested = true
         val reply = runCatching {
-            JSONObject(run.worker!!.startTextProbe(attemptId, modelId, sha, deadlineElapsedMs))
+            JSONObject(run.worker!!.startTextProbe(attemptId, modelId, sha, deadlineElapsedMs,
+                stageBudgets.loadMs, stageBudgets.executeMs, stageBudgets.unloadMs))
         }.getOrElse { finishUnstarted(run, "WORKER_START_FAILED", "HARNESS"); return }
         if (reply.optString("status") == "REJECTED") { finishUnstarted(run, reply.optString("code", "WORKER_REJECTED"), "HARNESS"); return }
         val stopRequested = AtomicBoolean(false)
+        var stageTimeout: String? = null
         while (true) {
             val state = runCatching { JSONObject(run.worker!!.queryAttempt(attemptId)) }.getOrNull()
             if (state == null) {
                 // Binder death is the only hard-cancellation proof accepted here.
                 run.workerDied.await()
                 break
+            }
+            val workerStage = state.optString("stage").takeIf { it in WORKER_STAGES }
+            if (workerStage != null && workerStage != run.lastWorkerStage) {
+                run.lastWorkerStage = workerStage
+                journal.stage(attemptId, workerStage, "${workerStage}_STARTED")
             }
             when (state.optString("status")) {
                 "TERMINAL", "FAILED", "CANCELLED" -> if (state.optString("cleanup") == "UNLOADED") {
@@ -385,6 +383,13 @@ class HaloLabBridgeService : Service() {
                     return
                 }
                 "CLEANUP_UNCONFIRMED" -> { run.workerDied.await(); break }
+                "STAGE_TIMEOUT" -> {
+                    if (stageTimeout == null) {
+                        stageTimeout = state.optString("failureCode").takeIf { it.isNotBlank() }
+                        val timedOutStage = state.optString("stage").takeIf { it in WORKER_STAGES } ?: "EXECUTE"
+                        journal.stage(attemptId, timedOutStage, stageTimeout ?: "STAGE_TIMEOUT")
+                    }
+                }
             }
             if (SystemClock.elapsedRealtime() > run.deadlineElapsedMs && stopRequested.compareAndSet(false, true)) {
                 runCatching { run.worker?.requestStop(attemptId) }
@@ -392,7 +397,8 @@ class HaloLabBridgeService : Service() {
             }
             delay(250L)
         }
-        journal.terminal(attemptId, terminalFailure(attemptId, "WORKER_PROCESS_DIED", "HARNESS"))
+        journal.terminal(attemptId, if (stageTimeout != null) terminalStageTimeout(attemptId, stageTimeout!!) else
+            terminalFailure(attemptId, "WORKER_PROCESS_DIED", "HARNESS"))
         releaseRun(run)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             val run = active[attemptId]
@@ -493,15 +499,16 @@ class HaloLabBridgeService : Service() {
             ManualDependencyGraph.providerGraph.modelManager.acquireVerifiedArtifactLease(saved.modelId, saved.artifactSha256)
         }.getOrNull()
         if (pinned == null) { lease.release(); startingAttempts.remove(saved.attemptId); return }
-        val deadlineBudgetMs = saved.payload.optLong("deadlineBudgetMs", LabAttemptDeadlinePolicy.LEGACY_ATTEMPT_MS)
-            .coerceIn(1L, LabAttemptDeadlinePolicy.MAX_ATTEMPT_MS)
+        val stageBudgets = LabAttemptStageBudgets.parse(saved.payload.optJSONObject("stageBudgets"))
+            ?: LabAttemptStageBudgets.LEGACY
+        val deadlineBudgetMs = requireNotNull(stageBudgets.totalMs)
         val acceptedAtElapsedMs = saved.payload.optLong("acceptedAtElapsedMs", 0L)
         val persistedDeadline = if (acceptedAtElapsedMs > 0L) {
             LabAttemptDeadlinePolicy.deadlineElapsedMs(acceptedAtElapsedMs, deadlineBudgetMs, SystemClock.elapsedRealtime())
         } else {
             SystemClock.elapsedRealtime()
         }
-        val run = ActiveRun(saved.attemptId, lease, pinned.second, persistedDeadline + STOP_GRACE_MS)
+        val run = ActiveRun(saved.attemptId, lease, pinned.second, persistedDeadline + STOP_GRACE_MS, stageBudgets)
         active[saved.attemptId] = run
         startingAttempts.remove(saved.attemptId)
         run.nativeStartRequested = true
@@ -533,14 +540,27 @@ class HaloLabBridgeService : Service() {
             return
         }
         var stopRequested = false
+        var stageTimeout: String? = null
         val recoveryDeadline = persistedDeadline
         while (true) {
             val state = runCatching { JSONObject(run.worker!!.queryAttempt(saved.attemptId)) }.getOrNull()
             if (state == null) { run.workerDied.await(); break }
+            val workerStage = state.optString("stage").takeIf { it in WORKER_STAGES }
+            if (workerStage != null && workerStage != run.lastWorkerStage) {
+                run.lastWorkerStage = workerStage
+                journal.stage(saved.attemptId, workerStage, "${workerStage}_RECOVERED")
+            }
             if (state.optString("status") in setOf("TERMINAL", "FAILED", "CANCELLED") && state.optString("cleanup") == "UNLOADED") {
                 journal.terminal(saved.attemptId, state.put("workerInstanceId", run.workerId).put("artifactId", saved.modelId))
                 releaseRun(run)
                 return
+            }
+            if (state.optString("status") == "STAGE_TIMEOUT") {
+                if (stageTimeout == null) {
+                    stageTimeout = state.optString("failureCode").takeIf { it.isNotBlank() }
+                    val timedOutStage = state.optString("stage").takeIf { it in WORKER_STAGES } ?: "EXECUTE"
+                    journal.stage(saved.attemptId, timedOutStage, stageTimeout ?: "STAGE_TIMEOUT")
+                }
             }
             if (state.optString("status") == "CLEANUP_UNCONFIRMED") { run.workerDied.await(); break }
             if (!stopRequested && SystemClock.elapsedRealtime() > recoveryDeadline) {
@@ -550,7 +570,8 @@ class HaloLabBridgeService : Service() {
             }
             delay(250L)
         }
-        journal.terminal(saved.attemptId, terminalFailure(saved.attemptId, "WORKER_PROCESS_DIED", "HARNESS"))
+        journal.terminal(saved.attemptId, if (stageTimeout != null) terminalStageTimeout(saved.attemptId, stageTimeout!!) else
+            terminalFailure(saved.attemptId, "WORKER_PROCESS_DIED", "HARNESS"))
         releaseRun(run)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             active[saved.attemptId]?.let { stopAndSettle(it, saved.attemptId, saved.modelId, "RECOVERY_CANCELLED") }
@@ -610,6 +631,10 @@ class HaloLabBridgeService : Service() {
         .put("status", "FAILED").put("attemptId", id).put("outcome", "FAIL").put("validity", "INVALID")
         .put("failureCode", code).put("failureDomain", domain).put("origin", "DEVICE_MEASUREMENT")
 
+    private fun terminalStageTimeout(id: String, code: String) = JSONObject()
+        .put("status", "TIMED_OUT").put("attemptId", id).put("outcome", "TIMED_OUT").put("validity", "UNKNOWN")
+        .put("failureCode", code).put("failureDomain", "ENVIRONMENT").put("origin", "DEVICE_MEASUREMENT")
+
     private inner class WorkerConnection(val run: ActiveRun) : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val worker = IModelBenchWorker.Stub.asInterface(service)
@@ -632,6 +657,7 @@ class HaloLabBridgeService : Service() {
         val lease: ResourceLease,
         val artifact: java.io.Closeable,
         val deadlineElapsedMs: Long,
+        val stageBudgets: LabAttemptStageBudgets,
     ) {
         val workerId = UUID.randomUUID().toString()
         val ready = kotlinx.coroutines.CompletableDeferred<Unit>()
@@ -641,6 +667,7 @@ class HaloLabBridgeService : Service() {
         var connection: ServiceConnection? = null
         var bound = false
         @Volatile var nativeStartRequested = false
+        @Volatile var lastWorkerStage: String? = null
         val supervisorBinder: IBinder = Binder()
     }
 
@@ -673,6 +700,7 @@ class HaloLabBridgeService : Service() {
         private const val LEASE_TTL_MS = 5 * 60_000L
         private const val STOP_GRACE_MS = 5_000L
         private const val WORKER_BIND_TIMEOUT_MS = 5_000L
+        private val WORKER_STAGES = setOf("LOAD", "EXECUTE", "UNLOAD")
         private val UUID_PATTERN = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
         private val SHA_PATTERN = Regex("[0-9a-f]{64}")
         private fun sha256(value: String): String = java.security.MessageDigest.getInstance("SHA-256")

@@ -1351,6 +1351,7 @@ class LiteRtLocalProvider(
         maxOutputTokens: Int = LocalModelBenchmarkRunner.DEFAULT_MAX_OUTPUT_TOKENS,
         backendOverride: LocalComputeBackend? = null,
         forceFreshEngine: Boolean = false,
+        onStageChanged: (String) -> Unit = {},
     ): Result<LocalModelBenchmarkResult> = withContext(Dispatchers.IO) {
         loadMutex.withLock {
             val descriptor = inventoryRepository.resolveModel(modelId)
@@ -1375,6 +1376,7 @@ class LiteRtLocalProvider(
                     requested.copy(computeBackend = if (resolution.effective == LocalComputeBackend.GPU &&
                         requested.computeBackend == LocalComputeBackend.AUTO) LocalComputeBackend.AUTO else resolution.effective)
                 },
+                onStageChanged = onStageChanged,
             )
         }
     }

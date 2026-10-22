@@ -60,9 +60,11 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
         requestHash: String,
         modelId: String,
         artifactSha256: String,
-        deadlineBudgetMs: Long,
+        stageBudgets: LabAttemptStageBudgets,
         acceptedAtElapsedMs: Long,
     ): String {
+        require(stageBudgets.valid())
+        val deadlineBudgetMs = requireNotNull(stageBudgets.totalMs)
         require(deadlineBudgetMs in 1L..LabAttemptDeadlinePolicy.MAX_ATTEMPT_MS)
         require(acceptedAtElapsedMs > 0L)
         val db = writableDatabase
@@ -86,6 +88,7 @@ class HaloLabJournal(context: Context) : SQLiteOpenHelper(context, "halo_lab_bri
                 .put("origin", "DEVICE_MEASUREMENT")
                 .put("eventCode", "ACCEPTED")
                 .put("deadlineBudgetMs", deadlineBudgetMs)
+                .put("stageBudgets", stageBudgets.toJson())
                 .put("acceptedAtElapsedMs", acceptedAtElapsedMs)
             db.execSQL(
                 "INSERT INTO attempts(attempt_id,request_hash,model_id,artifact_sha256,state,terminal,payload_json,updated_at_epoch_ms) VALUES(?,?,?,?,?,0,?,?)",
