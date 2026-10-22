@@ -101,7 +101,7 @@ Workspace|||Рабочее пространство|||Darbvieta
 Devices|||Устройства|||Ierīces
 Settings|||Настройки|||Iestatījumi
 Back|||Назад|||Atpakaļ
-Language|||Язык|||Valoda
+Language|||Язык|||Valoda|||Język
 Use this language for Halo's interface and default replies. You can request another language at any time.|||Этот язык используется в интерфейсе и ответах Halo по умолчанию. Вы всегда можете попросить ответ на другом языке.|||Šī valoda tiek izmantota Halo saskarnei un noklusējuma atbildēm. Jebkurā laikā vari lūgt atbildi citā valodā.
 Make Halo feel like yours.|||Настройте Halo под себя.|||Pielāgo Halo sev.
 Your companion|||Ваш помощник|||Tavs palīgs
@@ -133,7 +133,7 @@ Tasks and resources|||Задачи и ресурсы|||Uzdevumi un resursi
 A little clarity for your day.|||Больше ясности каждый день.|||Mazliet vairāk skaidrības ikdienā.
 A little curiosity goes a long way.|||Любопытство помогает учиться.|||Zinātkāre palīdz mācīties.
 Ready|||Готов|||Gatavs
-Listening|||Слушаю|||Klausos
+Listening|||Слушаю|||Klausos|||Słuchanie
 Capturing|||Получаю данные|||Iegūstu datus
 Recognizing|||Распознаю|||Atpazīstu
 Understanding|||Разбираюсь|||Izprotu
@@ -280,7 +280,7 @@ Previous|||Назад|||Iepriekšējais
 Next|||Далее|||Nākamais
 Retry|||Повторить|||Mēģināt vēlreiz
 Cancel|||Отмена|||Atcelt|||Anuluj
-Close|||Закрыть|||Aizvērt
+Close|||Закрыть|||Aizvērt|||Zamknij
 Done|||Готово|||Gatavs|||Gotowe
 Save|||Сохранить|||Saglabāt
 Delete|||Удалить|||Dzēst|||Usuń
@@ -435,7 +435,7 @@ Voice request|||Голосовой запрос|||Balss pieprasījums
 Speech recognition language|||Язык распознавания речи|||Runas atpazīšanas valoda
 Delete model|||Удалить модель|||Dzēst modeli
 Cancel test|||Отменить проверку|||Atcelt pārbaudi
-Latvian supported|||Латышский поддерживается|||Latviešu valoda tiek atbalstīta
+Latvian supported|||Латышский поддерживается|||Latviešu valoda tiek atbalstīta|||Obsługiwany język: łotewski
 Built-in microphone|||Встроенный микрофон|||Iebūvētais mikrofons
 Send|||Отправить|||Nosūtīt
 Add context|||Добавить контекст|||Pievienot kontekstu
@@ -588,7 +588,7 @@ Installed models initialize when you use recognition. Automatic language is a co
 Automatic · Selected|||Автоматически · выбрано|||Automātiski · izvēlēts
 Use automatic selection|||Использовать автоматический выбор|||Izmantot automātisko izvēli
 Automatic prefers installed Base, then Tiny.|||Автовыбор предпочитает установленную Base, затем Tiny.|||Automātiskā izvēle dod priekšroku instalētajam Base, pēc tam Tiny.
-Local models|||Локальные модели|||Lokālie modeļi
+Local models|||Локальные модели|||Lokālie modeļi|||Modele lokalne
 Speech detector|||Детектор речи|||Runas detektors
 Silero VAD · Ready|||Silero VAD · готово|||Silero VAD · gatavs
 Energy fallback · Silero VAD not installed|||Резервное обнаружение по энергии · Silero VAD не установлен|||Enerģijas rezerves režīms · Silero VAD nav instalēts
@@ -1625,7 +1625,7 @@ May need more free memory|||Может потребоваться больше �
 Estimated to fit this phone|||По оценке подходит этому телефону|||Pēc aplēsēm der šim tālrunim
 English voice on this phone. Download the complete publisher pack (320 MB). Other languages can use Android speech.|||Английский голос на телефоне. Скачайте полный пакет издателя (320 МБ). Для других языков доступен голос Android.|||Angļu balss šajā tālrunī. Lejupielādējiet pilnu izdevēja pakotni (320 MB). Citām valodām var izmantot Android balsi.
 Download Kokoro voice|||Скачать голос Kokoro|||Lejupielādēt Kokoro balsi
-Pause download|||Приостановить загрузку|||Apturēt lejupielādi
+Pause download|||Приостановить загрузку|||Apturēt lejupielādi|||Wstrzymaj pobieranie
 Downloads resume after interruption. Nothing is selected automatically.|||Загрузку можно продолжить после прерывания. Ничего не выбирается автоматически.|||Pēc pārtraukuma lejupielādi var turpināt. Nekas netiek izvēlēts automātiski.
 Quick replies|||Быстрые ответы|||Ātras atbildes
 Careful thinking|||Подробный анализ|||Rūpīga analīze
@@ -2058,13 +2058,13 @@ Video understanding|||Понимание видео|||Video izpratne
 Mixed media|||Разные типы данных|||Dažādu veidu saturs
 Streaming replies|||Ответ по частям|||Atbildes pa daļām
 Active model: %1$s|||Активная модель: %1$s|||Aktīvais modelis: %1$s
-Change|||Изменить|||Mainīt
+Change|||Изменить|||Mainīt|||Zmień
 %1$d MB / %2$d MB|||%1$d МБ / %2$d МБ|||%1$d MB / %2$d MB
 %1$d MB|||%1$d МБ|||%1$d MB
 Model does not support %1$s|||Модель не поддерживает язык %1$s|||Modelis neatbalsta valodu %1$s
-Download or removal did not finish|||Загрузка или удаление не завершены|||Lejupielāde vai dzēšana netika pabeigta
+Download or removal did not finish|||Загрузка или удаление не завершены|||Lejupielāde vai dzēšana netika pabeigta|||Pobieranie lub usuwanie nie zostało ukończone
 Check storage and your connection, then retry. The selected model is shown above.|||Проверьте свободное место и подключение, затем повторите. Выбранная модель указана выше.|||Pārbaudiet brīvo vietu un savienojumu, tad mēģiniet vēlreiz. Izvēlētais modelis redzams augstāk.
-Try listening|||Проверить распознавание|||Izmēģināt atpazīšanu
+Try listening|||Проверить распознавание|||Izmēģināt atpazīšanu|||Sprawdź rozpoznawanie mowy
 Capture details|||Подробности записи|||Ieraksta detaļas
 Hide capture details|||Скрыть подробности записи|||Paslēpt ieraksta detaļas
 Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms|||Профиль записи: порог 0,50 · минимум речи 200 мс · тишина 350 мс · максимум речи 8 с · предварительная запись 400 мс|||Ieraksta profils: slieksnis 0,50 · runas minimums 200 ms · klusums 350 ms · runas maksimums 8 s · priekšieraksts 400 ms
@@ -3218,26 +3218,26 @@ Phone's voice|||Голос телефона|||Tālruņa balss
 Online voices|||Онлайн-голоса|||Tiešsaistes balsis
 Natural voices|||Естественные голоса|||Dabiskas balsis
 Downloaded voices|||Загруженные голоса|||Lejupielādētās balsis
-Listening downloads stay on this phone.|||Загрузки для распознавания остаются на телефоне.|||Klausīšanās lejupielādes paliek šajā tālrunī.
-Automatic uses an installed listening download.|||Автоматический выбор использует загруженное распознавание.|||Automātiskā izvēle izmanto lejupielādētu klausīšanās modeli.
-Choose how halo listens|||Выберите, как halo слушает|||Izvēlieties, kā halo klausās
-Choose how halo listens.|||Выберите, как halo слушает.|||Izvēlieties, kā halo klausās.
+Listening downloads stay on this phone.|||Загрузки для распознавания остаются на телефоне.|||Klausīšanās lejupielādes paliek šajā tālrunī.|||Pobrane modele rozpoznawania mowy pozostają na tym telefonie.
+Automatic uses an installed listening download.|||Автоматический выбор использует загруженное распознавание.|||Automātiskā izvēle izmanto lejupielādētu klausīšanās modeli.|||W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy.
+Choose how halo listens|||Выберите, как halo слушает|||Izvēlieties, kā halo klausās|||Wybierz sposób, w jaki halo rozpoznaje mowę
+Choose how halo listens.|||Выберите, как halo слушает.|||Izvēlieties, kā halo klausās.|||Wybierz sposób, w jaki halo rozpoznaje mowę.
 Choose a voice and where to hear it|||Выберите голос и где его слушать|||Izvēlieties balsi un kur to dzirdēt
 A smaller download for short requests.|||Небольшая загрузка для коротких запросов.|||Mazāka lejupielāde īsiem pieprasījumiem.
 For longer dictation and more languages.|||Для долгой диктовки и большего числа языков.|||Garākai diktēšanai un vairāk valodām.
 Downloaded · in use|||Загружено · используется|||Lejupielādēts · tiek lietots
 Download this choice before listening|||Сначала загрузите выбранное распознавание|||Pirms klausīšanās lejupielādējiet šo izvēli
-Hands-free listening|||Распознавание без рук|||Klausīšanās brīvroku režīmā
+Hands-free listening|||Распознавание без рук|||Klausīšanās brīvroku režīmā|||Rozpoznawanie mowy bez użycia rąk
 Hands-free support downloaded|||Поддержка работы без рук загружена|||Brīvroku atbalsts lejupielādēts
 Basic listening available|||Базовое распознавание доступно|||Pamata klausīšanās ir pieejama
-Download hands-free support|||Загрузить поддержку работы без рук|||Lejupielādēt brīvroku atbalstu
-Say a short sentence. It stays on this phone and does not start an action.|||Скажите короткое предложение. Оно останется на телефоне и не запустит действие.|||Pasakiet īsu teikumu. Tas paliks tālrunī un nesāks darbību.
+Download hands-free support|||Загрузить поддержку работы без рук|||Lejupielādēt brīvroku atbalstu|||Pobierz obsługę rozpoznawania mowy bez użycia rąk
+Say a short sentence. It stays on this phone and does not start an action.|||Скажите короткое предложение. Оно останется на телефоне и не запустит действие.|||Pasakiet īsu teikumu. Tas paliks tālrunī un nesāks darbību.|||Powiedz krótkie zdanie. Pozostanie na tym telefonie i nie uruchomi żadnej akcji.
 Something to try:|||Попробуйте сказать:|||Pamēģiniet pateikt:
-Remove this listening download?|||Удалить эту загрузку для распознавания?|||Noņemt šo klausīšanās lejupielādi?
-Your selected listening choice stays the same. You can download this one again later.|||Выбранное распознавание не изменится. Эту загрузку можно вернуть позже.|||Izvēlētā klausīšanās nemainīsies. Šo lejupielādi vēlāk varēs iegūt vēlreiz.
-Remove download|||Удалить загрузку|||Noņemt lejupielādi
+Remove this listening download?|||Удалить эту загрузку для распознавания?|||Noņemt šo klausīšanās lejupielādi?|||Usunąć ten pobrany model rozpoznawania mowy?
+Your selected listening choice stays the same. You can download this one again later.|||Выбранное распознавание не изменится. Эту загрузку можно вернуть позже.|||Izvēlētā klausīšanās nemainīsies. Šo lejupielādi vēlāk varēs iegūt vēlreiz.|||Wybrany sposób rozpoznawania mowy pozostanie bez zmian. Ten model możesz pobrać ponownie później.
+Remove download|||Удалить загрузку|||Noņemt lejupielādi|||Usuń pobrany plik
 halo's voice|||Голос halo|||halo balss
-Listening language|||Язык распознавания|||Klausīšanās valoda
+Listening language|||Язык распознавания|||Klausīšanās valoda|||Język rozpoznawania mowy
 Interrupt halo when I speak|||Прерывать halo, когда я говорю|||Pārtraukt halo, kad runāju
 How quickly halo pauses|||Как быстро halo замолкает|||Cik ātri halo apklust
 Start reading complete sentences while halo is still writing.|||Начинать читать полные предложения, пока halo ещё пишет.|||Sākt lasīt pilnus teikumus, kamēr halo vēl raksta.
@@ -3842,7 +3842,7 @@ Newly downloaded models were rolled back.|||Новые скачанные мод
 Optional local voice files: Whisper Small for speech recognition, Silero VAD for speech activity detection, and Supertonic 3 for speech output. Downloading files does not prove microphone capture, recognition quality or audible output.|||Необязательные локальные голосовые модели: Whisper Small для распознавания речи, Silero VAD для определения речевой активности и Supertonic 3 для синтеза речи. Загрузка моделей не подтверждает работу микрофона, качество распознавания или слышимость голоса.|||Neobligāti lokālie balss modeļi: Whisper Small runas atpazīšanai, Silero VAD runas aktivitātes noteikšanai un Supertonic 3 runas izvadei. Modeļu lejupielāde nepierāda mikrofona darbību, atpazīšanas kvalitāti vai balss dzirdamību.|||Opcjonalne lokalne pliki głosowe: Whisper Small do rozpoznawania mowy, Silero VAD do wykrywania aktywności mowy i Supertonic 3 do syntezy mowy. Pobranie plików nie potwierdza działania mikrofonu, jakości rozpoznawania ani słyszalności głosu.
 Whisper Small INT8 · about 375 MB · catalog lists EN, LV, RU and PL. Requires more memory and time than Base; test recognition in your language before relying on it.|||Whisper Small INT8 · около 375 МБ · в каталоге указаны EN, LV, RU и PL. Требует больше памяти и времени, чем Base; проверьте распознавание на своём языке, прежде чем полагаться на него.|||Whisper Small INT8 · apmēram 375 MB · katalogā norādītas EN, LV, RU un PL valodas. Nepieciešams vairāk atmiņas un laika nekā Base modelim; pirms paļaušanās uz to pārbaudiet atpazīšanu savā valodā.|||Whisper Small INT8 · ok. 375 MB · katalog obejmuje EN, LV, RU i PL. Wymaga więcej pamięci i czasu niż model Base; przed poleganiem na nim sprawdź rozpoznawanie w swoim języku.
 Supertonic 3 INT8 · about 129 MB archive · local speech output. Language labels include EN, LV, RU and PL; audition and confirm each voice on this device.|||Supertonic 3 INT8 · архив около 129 МБ · локальный синтез речи. Указаны EN, LV, RU и PL; прослушайте и подтвердите каждый голос на этом устройстве.|||Supertonic 3 INT8 · arhīvs apmēram 129 MB · lokāla runas izvade. Norādītas EN, LV, RU un PL valodas; noklausieties un apstipriniet katru balsi šajā ierīcē.|||Supertonic 3 INT8 · archiwum ok. 129 MB · lokalna synteza mowy. Etykiety językowe obejmują EN, LV, RU i PL; odsłuchaj i potwierdź każdy głos na tym urządzeniu.
-Remove hands-free support?|||Удалить поддержку режима без рук?|||Vai noņemt brīvroku atbalstu?
-Halo will use basic speech activity detection. You can download hands-free support again later.|||Halo будет использовать базовое определение речи. Позже поддержку режима без рук можно скачать снова.|||Halo izmantos pamata runas aktivitātes noteikšanu. Brīvroku atbalstu vēlāk varēs lejupielādēt vēlreiz.
-Remove hands-free support|||Удалить поддержку режима без рук|||Noņemt brīvroku atbalstu
+Remove hands-free support?|||Удалить поддержку режима без рук?|||Vai noņemt brīvroku atbalstu?|||Usunąć obsługę rozpoznawania mowy bez użycia rąk?
+Halo will use basic speech activity detection. You can download hands-free support again later.|||Halo будет использовать базовое определение речи. Позже поддержку режима без рук можно скачать снова.|||Halo izmantos pamata runas aktivitātes noteikšanu. Brīvroku atbalstu vēlāk varēs lejupielādēt vēlreiz.|||Halo będzie używać podstawowego wykrywania aktywności mowy. Obsługę trybu bez użycia rąk możesz pobrać ponownie później.
+Remove hands-free support|||Удалить поддержку режима без рук|||Noņemt brīvroku atbalstu|||Usuń obsługę rozpoznawania mowy bez użycia rąk
 Video clip|||Video clip|||Video klips|||Klip wideo

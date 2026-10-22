@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
+    <string name="ui_a4fe65264ef7" formatted="false">"Język"</string>
+    <string name="ui_49c4605816cf" formatted="false">"Słuchanie"</string>
     <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
+    <string name="ui_7d9eb7acb13e" formatted="false">"Zamknij"</string>
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
     <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
+    <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_26488c95ce6a" formatted="false">"Przetestuj ponownie"</string>
     <string name="ui_185e4b007d63" formatted="false">"Skonfiguruj role modeli"</string>
@@ -17,6 +21,7 @@
     <string name="ui_420eaafbda7b" formatted="false">"Pobierz ponownie"</string>
     <string name="ui_6b88fe530b0a" formatted="false">"Wyładuj"</string>
     <string name="ui_d6eafe823591" formatted="false">"Pobierz"</string>
+    <string name="ui_8e4bf4368b03" formatted="false">"Modele lokalne"</string>
     <string name="ui_37b345555d7e" formatted="false">"Pobieranie"</string>
     <string name="ui_879dd831b8b6" formatted="false">"Bieżące urządzenie · Trwała macierz ról"</string>
     <string name="ui_6cc7c6b30613" formatted="false">"Uruchom macierz ról dla zainstalowanych modeli"</string>
@@ -37,6 +42,7 @@
     <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>
     <string name="ui_a6a5fe15ed48" formatted="false">"Synchronizuj z Hugging Face"</string>
     <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
+    <string name="ui_13bbdede669f" formatted="false">"Wstrzymaj pobieranie"</string>
     <string name="ui_675b7e1dbaf0" formatted="false">"Pobierz model na licencji"</string>
     <string name="ui_b0a363b97ad2" formatted="false">"Zaakceptuj licencję wydawcy w serwisie Hugging Face, a następnie użyj tokenu odczytu z dostępem. halo nie może zaakceptować licencji w Twoim imieniu."</string>
     <string name="ui_7e902370711d" formatted="false">"Otwórz licencję wydawcy"</string>
@@ -47,6 +53,9 @@
     <string name="ui_96826de50988" formatted="false">"Lokalny test dźwięku"</string>
     <string name="ui_6bcc96818c50" formatted="false">"Żadne modele lokalne nie spełniają tych filtrów. Wybierz inną funkcję lub wyczyść wyszukiwanie."</string>
     <string name="ui_7179ea0035fc" formatted="false">"Wyczyść filtry"</string>
+    <string name="ui_c0bf75bd78bf" formatted="false">"Zmień"</string>
+    <string name="ui_4deb69547a01" formatted="false">"Pobieranie lub usuwanie nie zostało ukończone"</string>
+    <string name="ui_748dd6a1621e" formatted="false">"Sprawdź rozpoznawanie mowy"</string>
     <string name="ui_8793eb8b632a" formatted="false">"Przetestuj GPU dla trybu automatycznego"</string>
     <string name="ui_98cdcf4f2415" formatted="false">"Szukaj języków"</string>
     <string name="ui_ee43d3205df1" formatted="false">"Nie znaleziono pasujących języków"</string>
@@ -89,6 +98,17 @@
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
     <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_c8d9fc36418e" formatted="false">"Pobrane modele rozpoznawania mowy pozostają na tym telefonie."</string>
+    <string name="ui_89c045bac21a" formatted="false">"W trybie automatycznym używany jest zainstalowany model rozpoznawania mowy."</string>
+    <string name="ui_cae4ac9f4854" formatted="false">"Wybierz sposób, w jaki halo rozpoznaje mowę"</string>
+    <string name="ui_23b3dea72e79" formatted="false">"Wybierz sposób, w jaki halo rozpoznaje mowę."</string>
+    <string name="ui_5bcc32d2e95b" formatted="false">"Rozpoznawanie mowy bez użycia rąk"</string>
+    <string name="ui_5ecc1f67ca23" formatted="false">"Pobierz obsługę rozpoznawania mowy bez użycia rąk"</string>
+    <string name="ui_bd8dd99c890b" formatted="false">"Powiedz krótkie zdanie. Pozostanie na tym telefonie i nie uruchomi żadnej akcji."</string>
+    <string name="ui_7bf785a6d0ec" formatted="false">"Usunąć ten pobrany model rozpoznawania mowy?"</string>
+    <string name="ui_4507e80acfc9" formatted="false">"Wybrany sposób rozpoznawania mowy pozostanie bez zmian. Ten model możesz pobrać ponownie później."</string>
+    <string name="ui_5dfc369f8178" formatted="false">"Usuń pobrany plik"</string>
+    <string name="ui_e58aa8e2d477" formatted="false">"Język rozpoznawania mowy"</string>
     <string name="ui_42cfc74a6f1b" formatted="false">"Zmieniono język"</string>
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
@@ -133,5 +153,8 @@
     <string name="ui_80366b64dbac" formatted="false">"Opcjonalne lokalne pliki głosowe: Whisper Small do rozpoznawania mowy, Silero VAD do wykrywania aktywności mowy i Supertonic 3 do syntezy mowy. Pobranie plików nie potwierdza działania mikrofonu, jakości rozpoznawania ani słyszalności głosu."</string>
     <string name="ui_6b42e8c8bff0" formatted="false">"Whisper Small INT8 · ok. 375 MB · katalog obejmuje EN, LV, RU i PL. Wymaga więcej pamięci i czasu niż model Base; przed poleganiem na nim sprawdź rozpoznawanie w swoim języku."</string>
     <string name="ui_655dde73763d" formatted="false">"Supertonic 3 INT8 · archiwum ok. 129 MB · lokalna synteza mowy. Etykiety językowe obejmują EN, LV, RU i PL; odsłuchaj i potwierdź każdy głos na tym urządzeniu."</string>
+    <string name="ui_5eeb7e21a0d8" formatted="false">"Usunąć obsługę rozpoznawania mowy bez użycia rąk?"</string>
+    <string name="ui_0ebd71038088" formatted="false">"halo będzie używać podstawowego wykrywania aktywności mowy. Obsługę trybu bez użycia rąk możesz pobrać ponownie później."</string>
+    <string name="ui_64f6730b2ee4" formatted="false">"Usuń obsługę rozpoznawania mowy bez użycia rąk"</string>
     <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
 </resources>
