@@ -40,6 +40,8 @@
     <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>

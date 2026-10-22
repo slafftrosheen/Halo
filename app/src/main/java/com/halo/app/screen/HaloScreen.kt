@@ -43,6 +43,7 @@ import com.halo.app.ui.icons.*
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -504,6 +505,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                                             detailCard = null
                                             onFullScreen(false)
                                             onOpen("notebook/note/${android.net.Uri.encode(note.id)}")
+                                        } catch (cancelled: CancellationException) {
+                                            throw cancelled
                                         } catch (_: Exception) {
                                             notice = uiText("Could not save to Notebook")
                                         } finally {
