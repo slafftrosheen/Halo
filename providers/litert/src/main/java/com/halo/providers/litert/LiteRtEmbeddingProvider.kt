@@ -29,15 +29,37 @@ sealed interface LocalEmbeddingInput {
     data class Audio(val encodedWav: ByteArray): LocalEmbeddingInput
 }
 
-data class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
-    val inputs: List<LocalEmbeddingInput>,
+class LocalMediaEmbeddingRequest(val modelSha256: String, val dimension: Int,
+    inputs: List<LocalEmbeddingInput>,
     val preprocessingIdentity: String = "embeddinggemma2-native-media-v1") {
+    // ByteArray is mutable and List is only read-only at the Kotlin type level.
+    // Snapshot both here so request validation cannot be invalidated by the caller.
+    private val inputSnapshot = snapshotInputs(inputs)
+    /** Each read returns owned media bytes; callers cannot mutate the validated snapshot. */
+    val inputs: List<LocalEmbeddingInput>
+        get() = inputSnapshot.map(::copyInput)
+
     init {
         require(modelSha256.matches(Regex("[a-f0-9]{64}")))
         require(dimension in 1..16_384)
-        require(inputs.isNotEmpty() && inputs.size <= 8)
+        require(inputSnapshot.isNotEmpty() && inputSnapshot.size <= 8)
         require(preprocessingIdentity == "embeddinggemma2-native-media-v1")
-        inputs.forEach(LocalMediaEmbeddingSafety::check)
+        inputSnapshot.forEach(LocalMediaEmbeddingSafety::check)
+    }
+
+    private fun snapshotInputs(inputs: List<LocalEmbeddingInput>): List<LocalEmbeddingInput> {
+        require(inputs.isNotEmpty() && inputs.size <= 8)
+        return inputs.map { input ->
+            // Enforce size and basic format bounds before allocating a private copy.
+            LocalMediaEmbeddingSafety.check(input)
+            copyInput(input)
+        }
+    }
+
+    private fun copyInput(input: LocalEmbeddingInput): LocalEmbeddingInput = when (input) {
+        is LocalEmbeddingInput.Text -> input.copy()
+        is LocalEmbeddingInput.Image -> input.copy(encodedPngOrJpeg = input.encodedPngOrJpeg.copyOf())
+        is LocalEmbeddingInput.Audio -> input.copy(encodedWav = input.encodedWav.copyOf())
     }
 }
 
