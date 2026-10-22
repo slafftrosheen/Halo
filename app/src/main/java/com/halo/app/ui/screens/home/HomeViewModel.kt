@@ -264,6 +264,8 @@ class HomeViewModel(
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
     private val _voiceModeActive = MutableStateFlow(false)
     val voiceModeActive: StateFlow<Boolean> = _voiceModeActive.asStateFlow()
+    private val _voiceModeListeningPaused = MutableStateFlow(false)
+    val voiceModeListeningPaused: StateFlow<Boolean> = _voiceModeListeningPaused.asStateFlow()
     private val _voiceModeStartRequested = MutableStateFlow(false)
     val voiceModeStartRequested: StateFlow<Boolean> = _voiceModeStartRequested.asStateFlow()
     private val _voiceModeStartRequestId = MutableStateFlow(0L)
@@ -860,6 +862,7 @@ class HomeViewModel(
         val conversationAtTap = conversations?.activeConversationId()
         synchronized(voiceModeLock) {
             if (_voiceModeActive.value) {
+                _voiceModeListeningPaused.value = false
                 val currentCapture = voiceModeCaptureId
                 voiceModeBargeInInteractionId = voiceResponseCaptures.entries.lastOrNull {
                     it.value == currentCapture
@@ -885,6 +888,9 @@ class HomeViewModel(
     fun toggleListening() {
         val conversationAtTap = conversations?.activeConversationId()
         val shouldStart = !_listeningRequested.value
+        if (shouldStart) synchronized(voiceModeLock) {
+            if (_voiceModeActive.value) _voiceModeListeningPaused.value = false
+        }
         if (!shouldStart) stopVoiceModeStateOnly()
         if (shouldStart) _publishedResponse.value = null
         _listeningRequested.value = shouldStart
@@ -905,6 +911,9 @@ class HomeViewModel(
 
     fun startListening() {
         val conversationAtTap = conversations?.activeConversationId()
+        synchronized(voiceModeLock) {
+            if (_voiceModeActive.value) _voiceModeListeningPaused.value = false
+        }
         _speechRejectionNotice.value = null
         _publishedResponse.value = null
         _listeningRequested.value = true
@@ -960,6 +969,7 @@ class HomeViewModel(
                     voiceModeCaptureId = null
             voiceModeBargeInInteractionId = null
                     voiceResponseCaptures.clear()
+                    _voiceModeListeningPaused.value = false
                     _voiceModeActive.value = true
                 }
                 startListening()
@@ -983,6 +993,47 @@ class HomeViewModel(
         }
     }
 
+    /** Mutes or resumes microphone capture while preserving the foreground session and playback. */
+    fun toggleVoiceModeListening() {
+        val request = synchronized(voiceModeLock) {
+            if (!_voiceModeActive.value) return
+            val paused = !_voiceModeListeningPaused.value
+            _voiceModeListeningPaused.value = paused
+            voiceModeConversationId?.let { it to paused }
+        } ?: return
+        val (conversation, shouldPause) = request
+        if (shouldPause) {
+            _listeningRequested.value = false
+            viewModelScope.launch {
+                listeningCommandMutex.withLock {
+                    runCatching { commandBus.dispatch(StopListening) }
+                        .onFailure {
+                            Log.e("HomeViewModel", "Failed to pause Voice Mode listening", it)
+                            stopVoiceMode()
+                        }
+                }
+            }
+        } else {
+            if (!speechAvailability.value || !microphonePermission.value) {
+                stopVoiceMode()
+                return
+            }
+            _listeningRequested.value = true
+            viewModelScope.launch {
+                listeningCommandMutex.withLock {
+                    runCatching {
+                        commandBus.dispatch(StartListeningWithActivation(
+                            SpeechActivationKind.EXPLICIT_USER, conversation))
+                    }.onFailure {
+                        _listeningRequested.value = false
+                        stopVoiceModeStateOnly()
+                        Log.e("HomeViewModel", "Failed to resume Voice Mode listening", it)
+                    }
+                }
+            }
+        }
+    }
+
     /** A foreground Voice Mode does not keep the microphone when Home is no longer visible. */
     fun onHomeStopped() = stopVoiceMode()
 
@@ -994,6 +1045,7 @@ class HomeViewModel(
 
     private fun endVoiceModeState() {
         _voiceModeActive.value = false
+        _voiceModeListeningPaused.value = false
         voiceModeConversationId = null
         voiceModeCaptureId = null
         voiceModeBargeInInteractionId = null
@@ -1008,13 +1060,14 @@ class HomeViewModel(
 
     private fun endVoiceModeForCapture(captureId: String) {
         synchronized(voiceModeLock) {
-            if (_voiceModeActive.value && voiceModeCaptureId == captureId) endVoiceModeState()
+            if (_voiceModeActive.value && !_voiceModeListeningPaused.value && voiceModeCaptureId == captureId) endVoiceModeState()
         }
     }
 
     private fun resumeVoiceModeAfterReply(captureId: String) {
         val generationConversation = synchronized(voiceModeLock) {
             if (!_voiceModeActive.value || voiceModeCaptureId != captureId) return
+            if (_voiceModeListeningPaused.value) return
             voiceModeCaptureId = null
             voiceModeConversationId
         } ?: return

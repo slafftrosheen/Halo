@@ -1292,8 +1292,11 @@
     <string name="ui_a50b9607757e" formatted="false">"Отвечаю…"</string>
     <string name="ui_7d008b7feeab" formatted="false">"Запустить голосовой режим"</string>
     <string name="ui_15be678720cc" formatted="false">"Завершить голосовой режим"</string>
+    <string name="ui_4be3502fc307" formatted="false">"Приостановить прослушивание"</string>
+    <string name="ui_649271a6f3bd" formatted="false">"Возобновить прослушивание"</string>
     <string name="ui_afb9ab558853" formatted="false">"Не удалось запустить голосовой режим. Попробуйте ещё раз."</string>
     <string name="ui_af5016d82624" formatted="false">"Голосовой режим включён. halo снова будет слушать после голосового ответа."</string>
+    <string name="ui_6f8b9e7b5034" formatted="false">"Голосовой режим включён. Прослушивание приостановлено."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Сохранить в блокнот"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Не удалось сохранить в блокнот"</string>
     <string name="ui_40893b155e07" formatted="false">"Проверьте запросы и узнайте, что произошло."</string>

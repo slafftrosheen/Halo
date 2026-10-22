@@ -194,6 +194,7 @@ fun HomeScreen(
 
     val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
     val voiceModeActive by viewModel.voiceModeActive.collectAsStateWithLifecycle()
+    val voiceModeListeningPaused by viewModel.voiceModeListeningPaused.collectAsStateWithLifecycle()
     val voiceModeStartRequested by viewModel.voiceModeStartRequested.collectAsStateWithLifecycle()
     val voiceModeStartRequestId by viewModel.voiceModeStartRequestId.collectAsStateWithLifecycle()
     LaunchedEffect(voiceModeStartRequested, voiceModeStartRequestId, uiState.microphonePermissionGranted, uiState.speechReady) {
@@ -564,13 +565,17 @@ fun HomeScreen(
             if (responseText.isNotBlank() && contextualCapture?.selectedAction == com.halo.app.capture.CaptureAction.EXTRACT)
                 Text(uiText("Model-extracted draft · Verify visible text and uncertain values before using them"), style = MaterialTheme.typography.bodyMedium)
             ContinuityControls(viewModel, isActiveSession || isSpeaking, onOpenCapture)
-            if (voiceModeActive) Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText("Voice Mode is on. Halo listens again after a spoken reply."),
-                    modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = viewModel::stopVoiceMode, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText("End Voice Mode"))
+            if (voiceModeActive) Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+                Text(uiText(if (voiceModeListeningPaused) "Voice Mode is on. Listening is paused."
+                    else "Voice Mode is on. Halo listens again after a spoken reply."),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = viewModel::toggleVoiceModeListening, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText(if (voiceModeListeningPaused) "Resume listening" else "Pause listening"))
+                    }
+                    TextButton(onClick = viewModel::stopVoiceMode, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("End Voice Mode"))
+                    }
                 }
             }
             if (!showActivePlan) uiState.longTaskProgress?.let {

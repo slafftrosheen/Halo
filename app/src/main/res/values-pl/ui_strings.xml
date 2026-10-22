@@ -43,8 +43,11 @@
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
     <string name="ui_7d008b7feeab" formatted="false">"Uruchom tryb głosowy"</string>
     <string name="ui_15be678720cc" formatted="false">"Zakończ tryb głosowy"</string>
+    <string name="ui_4be3502fc307" formatted="false">"Wstrzymaj nasłuchiwanie"</string>
+    <string name="ui_649271a6f3bd" formatted="false">"Wznów nasłuchiwanie"</string>
     <string name="ui_afb9ab558853" formatted="false">"Nie udało się uruchomić trybu głosowego. Spróbuj ponownie."</string>
     <string name="ui_af5016d82624" formatted="false">"Tryb głosowy jest włączony. halo zacznie ponownie nasłuchiwać po odpowiedzi głosowej."</string>
+    <string name="ui_6f8b9e7b5034" formatted="false">"Tryb głosowy jest włączony. Nasłuchiwanie jest wstrzymane."</string>
     <string name="ui_6fb7365efc3c" formatted="false">"Zapisz w Notatniku"</string>
     <string name="ui_fcbc94dc1e25" formatted="false">"Nie udało się zapisać w Notatniku"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
