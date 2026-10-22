@@ -1,13 +1,13 @@
 # Halo alpha acceptance matrix — 2026-10-22
 
-**Source baseline:** `0b1b7cbe3a640f5e6a1fbcb3f8faf1da49d973de` (`main`).
+**Source baseline:** `6f49b21bda847923153dd9fb69550dfe99d2482a` (`main`).
 **Overall alpha status: NOT TESTED.** This matrix records end-to-end acceptance,
 not whether implementation work exists. A passing source test does not pass a
 physical user journey.
 
 | Gate | Status | Current evidence and remaining proof |
 | --- | --- | --- |
-| Continuous voice, 10+ turns (#33, #38) | NOT TESTED | Home now has explicit foreground Voice Mode with capture-correlated re-listen after a completed spoken reply and stop behavior on rejection, playback failure, cancellation, or leaving Home. No repeatable physical session record exists; Study/Notebook entry points, route behavior, offline/provider transitions, interruption reliability, device/RAM, model SHA and timing still need owner acceptance. |
+| Continuous voice, 10+ turns (#33, #38) | NOT TESTED | Home has explicit foreground Voice Mode with capture-correlated re-listen after a completed spoken reply and stop behavior on rejection, playback failure, cancellation, or leaving Home. Notebook and both Study surfaces now expose a Start Voice Mode route through Home. No repeatable physical session record exists; permission recovery, route behavior, offline/provider transitions, pause/mute/repeat, interruption reliability, device/RAM, model SHA and timing still need owner acceptance. |
 | Safe ask → act → respond (#36, #40) | NOT TESTED | Historical source tests and APK installation are recorded at older revisions; they did not confirm foreground interaction, real-model inference, approvals, side effects, or no-duplicate behavior. A 48-case EN/RU/LV/PL voice/keyboard matrix is prepared in [the classification matrix](HALO-INTENT-150-CLASSIFICATION-MATRIX.md), but every case is NOT RUN. Repeat the full action loop on device. |
 | Study: grounded answer, hint, practice, save/resume (#34) | NOT TESTED | No current physical acceptance record demonstrates both Kids and adult journeys from a genuine source through guided practice and resume. |
 | Core consumer navigation and final UX (#37) | NOT TESTED | Screen source now includes persistent layouts/cards, local automation results, sourced research, refresh, read-aloud, archive/restore, layout controls, ambient settings and a research-to-Notebook handoff. No current physical evidence confirms the full Screen journey, Home/Chat non-regression, accessibility, ambient safeguards, or approved final navigation/design handoff. |
