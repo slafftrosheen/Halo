@@ -83,10 +83,10 @@
     <string name="ui_8f1ba0226a49" formatted="false">"Nie udało się zakończyć wyszukiwania lokalnego. Twoje notatki nie zostały wysłane do żadnej usługi w chmurze."</string>
     <string name="ui_453a6a2fec8d" formatted="false">"Używaj wyników w lokalnych odpowiedziach halo"</string>
     <string name="ui_1a7f71528618" formatted="false">"Opcjonalnie. Wybrane fragmenty mogą pomóc w odpowiedziach na urządzeniu; zewnętrzni dostawcy nie otrzymują tego kontekstu automatycznie."</string>
-    <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawaj polecenia lokalnie"</string>
-    <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie może wykonywać działań."</string>
-    <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie poleceń przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
-    <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie poleceń działa wyłącznie na tym telefonie i nie korzysta z chmury. Niejasne polecenia nie są wykonywane automatycznie."</string>
+    <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawanie poleceń na urządzeniu"</string>
+    <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie wykonuje działań."</string>
+    <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie intencji przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
+    <string name="ui_99282bcf9b68" formatted="false">"Rozpoznawanie intencji odbywa się na tym telefonie, bez korzystania z usług chmurowych. Niepewne polecenia nie są wykonywane automatycznie."</string>
     <string name="ui_42cfc74a6f1b" formatted="false">"Zmieniono język"</string>
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
@@ -111,5 +111,6 @@
     <string name="ui_84b215b21907" formatted="false">"Wybrany film jest niedostępny lub nie masz już do niego dostępu. Dołącz go ponownie albo usuń z wyszukiwania lokalnego."</string>
     <string name="ui_961204d738d7" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz filmy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_5b48705ce252" formatted="false">"Wybrane nagranie zmieniło się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego."</string>
+    <string name="ui_2e34fc62280f" formatted="false">"Pobieranie modelu do rozpoznawania intencji…"</string>
     <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
 </resources>
