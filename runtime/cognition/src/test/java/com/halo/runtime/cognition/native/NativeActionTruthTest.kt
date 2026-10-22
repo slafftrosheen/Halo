@@ -44,6 +44,13 @@ class NativeActionTruthTest {
         assertEquals(NativeActionOutcome.FAILED, resolveNativeActionOutcome(run(null, AgentRunState.FAILED), "call", container))
     }
 
+    @Test fun settingsLaunchExplainsTheDispatchedEffectWithoutClaimingASettingChanged() {
+        val request = NativeCapabilityRequest("interaction", CapabilityId("host.settings.open"),
+            "halo_open_settings", mapOf("section" to "general"), "OpenSettings")
+        val response = NativeCapabilityResult(request, id, container, NativeActionOutcome.DISPATCHED).responseText()
+        assertEquals("Android settings opened; no setting was changed.", response)
+    }
+
     @Test fun waitStatesAndCurrentRejectionOutrankOldSuccess() {
         assertEquals(NativeActionOutcome.WAITING_FOR_RESOURCE, resolveNativeActionOutcome(run(null, AgentRunState.EXECUTING), "call", ToolTurnResult.WaitingForResource(id)))
         assertEquals(NativeActionOutcome.WAITING_FOR_CAPABILITY, resolveNativeActionOutcome(run(null, AgentRunState.EXECUTING), "call", ToolTurnResult.WaitingForCapability(id)))
