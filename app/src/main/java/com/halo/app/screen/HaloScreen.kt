@@ -54,6 +54,7 @@ private data class ScreenDisplay(
     val title: String, val summary: String, val state: String,
     val route: String?, val sensitive: Boolean = false, val updatedAt: Instant? = null,
     val sourceTitle: Boolean = false, val sourceSummary: Boolean = false, val detailSummary: String? = null,
+    val showFullTimestamp: Boolean = false,
 )
 
 /** The same local layout is used on phones, tablets and in full screen. */
@@ -193,7 +194,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             val summary = item.summary.orEmpty()
             ScreenDisplay(item.title, summary.take(280) + if (summary.length > 280) "…" else "", if (item.expiresAt?.isBefore(now) == true) uiText("Saved result may be out of date")
                 else "${uiText("Sourced research")} · ${item.sourceLinks.size} ${uiText("links")}",
-                null, true, item.updatedAt, sourceTitle = true, sourceSummary = true, detailSummary = summary)
+                null, true, item.updatedAt, sourceTitle = true, sourceSummary = true, detailSummary = summary,
+                showFullTimestamp = true)
         } ?: ScreenDisplay("Research", "Save a sourced web search to keep it here.", "No saved research yet", null, true)
         "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "You're caught up",
             if (daily.items.isEmpty()) "No pending items" else "${daily.items.size} updates", daily.primary?.action?.let {
@@ -431,6 +433,11 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 else {
                     val detailSummary = data.detailSummary ?: data.summary
                     Text(if (data.sourceSummary) detailSummary else uiText(detailSummary), style = MaterialTheme.typography.bodyLarge)
+                    if (data.showFullTimestamp) data.updatedAt?.let { instant ->
+                        val dateTime = formatScreenTimestamp(instant, true, locale)
+                        Text(uiText("Retrieved") + " · " + dateTime, style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     if (card.widgetType == "interests") TextButton(onClick = {
                         topicsDraft = topics; topicsOpen = true; detailCard = null
                     }) { Text(uiText("Choose topics")) }
@@ -465,6 +472,13 @@ internal fun widgetTitle(type: String): String = when (type) {
     "automation_result" -> "Routine results"; "halo_activity" -> "What halo did"; "research" -> "Research"; else -> "Reading & interests"
 }
 
+internal fun formatScreenTimestamp(instant: Instant, includeDate: Boolean, locale: Locale,
+    zone: ZoneId = ZoneId.systemDefault()): String {
+    val formatter = if (includeDate) DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+        else DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+    return formatter.withLocale(locale).format(instant.atZone(zone))
+}
+
 @Composable
 private fun ScreenToggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
@@ -479,6 +493,7 @@ private fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Bool
     editing: Boolean, index: Int, count: Int, onOpen: () -> Unit, onMove: (Int) -> Unit,
     onHide: () -> Unit, onPin: () -> Unit, onResize: () -> Unit) {
     var previous by remember { mutableStateOf(data.updatedAt) }
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     var update by remember { mutableStateOf(false) }
     LaunchedEffect(data.updatedAt) {
         if (previous != null && previous != data.updatedAt) { update = true; delay(1200); update = false }
@@ -503,8 +518,9 @@ private fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Bool
                     else if (card.pinned) HaloIcon(HaloGlyph.NOTE, uiText("Pinned"), Modifier.size(16.dp))
                 }
                 Text(if (data.sourceSummary) data.summary else uiText(data.summary), style = MaterialTheme.typography.bodyMedium)
-                Text(uiText(data.state) + (data.updatedAt?.let { " · " + DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-                    .format(it.atZone(ZoneId.systemDefault())) } ?: ""),
+                Text(uiText(data.state) + (data.updatedAt?.let { instant ->
+                    " · " + formatScreenTimestamp(instant, data.showFullTimestamp, locale)
+                } ?: ""),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (editing) FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

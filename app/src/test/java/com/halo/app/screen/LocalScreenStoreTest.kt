@@ -10,6 +10,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
+import java.time.ZoneId
+import java.util.Locale
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class, sdk = [33])
@@ -28,6 +30,11 @@ class LocalScreenStoreTest {
     @Test fun morningLayoutIncludesNativeStudyResumeCard() {
         assertTrue(ScreenWidgets.types.contains("study"))
         assertTrue(ScreenWidgets.starter("Morning").cards.any { it.widgetType == "study" })
+    }
+    @Test fun researchTimestampIncludesLocalizedDateAndTime() {
+        val timestamp = formatScreenTimestamp(Instant.parse("2026-10-22T10:00:00Z"), true, Locale.US, ZoneId.of("UTC"))
+        assertTrue(timestamp.contains("2026"))
+        assertTrue(timestamp.contains("10:00"))
     }
     @Test fun backgroundBindingDoesNotReplaceUserUndo() {
         val store = LocalScreenStore(context)

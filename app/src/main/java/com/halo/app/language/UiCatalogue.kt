@@ -3812,4 +3812,5 @@ internal val uiCatalogue: Map<String, Int> = mapOf(
     "Start a Study session to see it here." to R.string.ui_d6d63435d67d,
     "Resume your saved Study session." to R.string.ui_879979ad80a9,
     "No active session" to R.string.ui_1f9dae2d58d7,
+    "Retrieved" to R.string.ui_4790277aa10c,
 )
