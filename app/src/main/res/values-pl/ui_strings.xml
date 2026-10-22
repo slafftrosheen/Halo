@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
+    <string name="ui_67a0d2e0dab4" formatted="false">"Otwórz źródło"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
     <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>

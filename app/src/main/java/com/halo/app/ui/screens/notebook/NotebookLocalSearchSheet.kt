@@ -250,7 +250,7 @@ internal fun NotebookLocalSearchSheet(
 
             Text(uiText("Choose what Halo can search"), style = MaterialTheme.typography.titleSmall)
             if (choices.isEmpty()) {
-                Text(uiText("No available notes or study sessions. Create a note or return to the full Library to choose sources."),
+                Text(uiText("No available Notebook, Canvas, Study or media sources. Add one or return to the Library to choose sources."),
                     style = MaterialTheme.typography.bodySmall)
             } else {
                 Text(uiText("Only checked sources can enter the private search index."),
