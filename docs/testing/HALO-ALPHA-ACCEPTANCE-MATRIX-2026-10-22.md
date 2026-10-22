@@ -1,6 +1,6 @@
 # Halo alpha acceptance matrix — 2026-10-22
 
-**Source baseline:** `37a13872bf7d0092267c926c2c077bdcb4e29dc2` (`main`).
+**Source baseline:** `93fd87338fba066d291acfa0520ed3e9c60e0b56` (`main`).
 **Overall alpha status: NOT TESTED.** This matrix records end-to-end acceptance,
 not whether implementation work exists. A passing source test does not pass a
 physical user journey.
@@ -14,7 +14,7 @@ physical user journey.
 | Setup, model selection, and recovery (#39) | NOT TESTED | Issue #39 records source progress, but no fresh-install, download recovery, restart, offline, permission-denial, or model-removal journey is qualified on device. |
 | Privacy, ownership, and provider boundaries (#41, #42) | NOT TESTED | No current end-to-end evidence covers local-only behavior, cloud consent/denial, provider traffic, billing disclosure, or restore/refund flows. Billing product choice is still unresolved in #42. |
 | Pen input and saved ink (#28) | NOT TESTED | [Ink verification](HALO-INK-028-VERIFICATION-2026-10-22.md) covers source and synthetic pointer tests only. Physical pressure/eraser/palm behavior, saved-v1 visual preservation, tablet layout, rotation, and process-death recovery remain unqualified. |
-| Ink as referenced cognitive context (#29) | NOT TESTED | Portable selection and stale-reference rejection are in source at this baseline, but selection UI, source/page binding, Ask/Add/Study actions, privacy-controlled crops, and voice/Study integration are incomplete. |
+| Ink as referenced cognitive context (#29) | NOT TESTED | Source includes stable stroke IDs, accessible box selection, persistent Canvas/PDF selection bookmarks, source/page/revision binding, stale-source rejection, bounded crops, and Ask / Add to working set / Study actions. Mixed voice-and-ink turns, provider/consent boundaries end to end, source fidelity through physical edits/orientation, guided Study quality, and phone/tablet performance remain unverified. |
 | Multimodal retrieval (#35) | NOT TESTED | Source has separate local text/image/audio/video indexes, Notebook image/audio/video search, Canvas image search, selected Study/text sources, and voice memo discovery/indexing behind explicit local-search selection. Static source review and authored regression cases do not establish cross-modal relevance or physical accuracy/latency/memory. Remaining consumer coverage, complete Polish localization, and physical qualification remain open. |
 
 ## Evidence policy
@@ -35,7 +35,7 @@ physical user journey.
 ## Current execution environment
 
 This update records source state at
-`37a13872bf7d0092267c926c2c077bdcb4e29dc2` only. Per #43, coding agents do not
+`93fd87338fba066d291acfa0520ed3e9c60e0b56` only. Per #43, coding agents do not
 run builds, tests, CI/Actions, or physical acceptance; owner/alpha testers must fill the
 run artifacts on real devices. No new builds, tests, or physical runs are
 claimed here. Historical verification records linked above retain their
