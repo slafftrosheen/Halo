@@ -118,6 +118,7 @@ fun HomeScreen(
     val composerFocus by viewModel.composerFocus.collectAsStateWithLifecycle()
     val inkSelectionAskPromptRequest by viewModel.inkSelectionAskPromptRequest.collectAsStateWithLifecycle()
     val inkSelectionAskPrompt = uiText("Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it.")
+    val inkSelectionAskInstruction = uiText("Use my saved ink selection as the referent.")
     val composerFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
@@ -198,8 +199,12 @@ fun HomeScreen(
     var pendingHistoryDraft by remember(draftKey) { mutableStateOf<String?>(null) }
     fun updateDraft(value: String) { drafts = HashMap(drafts).apply { put(draftKey, value) } }
     LaunchedEffect(inkSelectionAskPromptRequest, draftKey) {
-        if (viewModel.consumeInkSelectionAskPrompt(inkSelectionAskPromptRequest) && textInput.isBlank()) {
-            updateDraft(inkSelectionAskPrompt)
+        if (viewModel.consumeInkSelectionAskPrompt(inkSelectionAskPromptRequest)) {
+            when {
+                textInput.isBlank() -> updateDraft(inkSelectionAskPrompt)
+                !textInput.contains(inkSelectionAskInstruction, ignoreCase = true) ->
+                    updateDraft("$textInput\n\n$inkSelectionAskInstruction")
+            }
         }
     }
     pendingHistoryDraft?.let { previousQuestion -> androidx.compose.material3.AlertDialog(

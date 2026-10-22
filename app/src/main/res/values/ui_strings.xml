@@ -3773,6 +3773,7 @@
     <string name="ui_cfb03a6319e9" formatted="false">"Add selection to working set"</string>
     <string name="ui_3e812c70c455" formatted="false">"Ask about selection"</string>
     <string name="ui_69c10772bf75" formatted="false">"Explain this selected region using its saved reference. If the reference is not enough, ask me to describe it."</string>
+    <string name="ui_0562eec23e31" formatted="false">"Use my saved ink selection as the referent."</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Selection added to working set"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."</string>
 </resources>
