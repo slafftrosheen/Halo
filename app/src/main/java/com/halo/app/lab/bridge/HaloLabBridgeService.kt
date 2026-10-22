@@ -54,16 +54,16 @@ class HaloLabBridgeService : Service() {
     private val artifactLeases = ConcurrentHashMap<String, TimedArtifactLease>()
     private val serverInstanceId = SERVER_INSTANCE_ID
     private val binder = object : IHaloLabBridge.Stub() {
-        override fun handshake(requestJson: String?) = dispatch(requestJson) { handshake(requestJson) }
-        override fun listModels(requestJson: String?) = dispatch(requestJson) { listModels(requestJson) }
-        override fun acquireArtifactLease(requestJson: String?) = dispatch(requestJson) { acquireArtifactLease(requestJson) }
-        override fun renewArtifactLease(requestJson: String?) = dispatch(requestJson) { renewArtifactLease(requestJson) }
-        override fun releaseArtifactLease(requestJson: String?) = dispatch(requestJson) { releaseArtifactLease(requestJson) }
-        override fun submitCase(requestJson: String?) = dispatch(requestJson) { submitCase(requestJson) }
-        override fun queryCase(requestJson: String?) = dispatch(requestJson) { queryCase(requestJson) }
-        override fun cancelCase(requestJson: String?) = dispatch(requestJson) { cancelCase(requestJson) }
-        override fun readEvents(requestJson: String?) = dispatch(requestJson) { readEvents(requestJson) }
-        override fun acknowledgeEvents(requestJson: String?) = dispatch(requestJson) { acknowledgeEvents(requestJson) }
+        override fun handshake(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.handshake(requestJson) }
+        override fun listModels(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.listModels(requestJson) }
+        override fun acquireArtifactLease(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.acquireArtifactLease(requestJson) }
+        override fun renewArtifactLease(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.renewArtifactLease(requestJson) }
+        override fun releaseArtifactLease(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.releaseArtifactLease(requestJson) }
+        override fun submitCase(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.submitCase(requestJson) }
+        override fun queryCase(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.queryCase(requestJson) }
+        override fun cancelCase(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.cancelCase(requestJson) }
+        override fun readEvents(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.readEvents(requestJson) }
+        override fun acknowledgeEvents(requestJson: String?): String = dispatch(requestJson) { this@HaloLabBridgeService.acknowledgeEvents(requestJson) }
         override fun acquireModel(requestJson: String?) = dispatch(requestJson) { unsupported("HALO_ACQUISITION_NOT_IMPLEMENTED") }
         override fun queryAcquisition(requestJson: String?) = dispatch(requestJson) { unsupported("HALO_ACQUISITION_NOT_IMPLEMENTED") }
         override fun cancelAcquisition(requestJson: String?) = dispatch(requestJson) { unsupported("HALO_ACQUISITION_NOT_IMPLEMENTED") }
@@ -152,8 +152,9 @@ class HaloLabBridgeService : Service() {
         val page = ordered.drop(offset).take(HaloLabProtocol.MAX_PAGE_ITEMS)
         val models = JSONArray()
         page.forEach { item ->
-            val pin = if (item.verified && item.sha256 != null) runCatching {
-                manager.acquireVerifiedArtifactLease(item.id, item.sha256)
+            val expectedSha = item.sha256
+            val pin = if (item.verified && expectedSha != null) runCatching {
+                manager.acquireVerifiedArtifactLease(item.id, expectedSha)
             }.getOrNull() else null
             val manifest = try {
                 if (pin != null) buildArtifactManifest(pin.first) else null
@@ -572,7 +573,11 @@ class HaloLabBridgeService : Service() {
 
     private inner class WorkerConnection(val run: ActiveRun) : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val worker = IModelBenchWorker.Stub.asInterface(service) ?: return run.ready.complete(Unit)
+            val worker = IModelBenchWorker.Stub.asInterface(service)
+            if (worker == null) {
+                run.ready.complete(Unit)
+                return
+            }
             run.worker = worker
             runCatching { worker.attachSupervisor(run.supervisorBinder, run.workerId) }
                 .onSuccess { if (JSONObject(it).optString("status") == "SUCCESS") run.ready.complete(Unit) else run.ready.complete(Unit) }

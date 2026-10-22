@@ -72,10 +72,10 @@ class HaloModelBenchService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     private fun attach(token: IBinder?, workerId: String?): String = synchronized(lock) {
-        if (token == null || workerId.isNullOrBlank() || workerId.length > 96) return@synchronized reply("REJECTED", "SUPERVISOR_REQUIRED")
+        if (token == null || workerId.isNullOrBlank() || workerId.length > 96) return@synchronized reply("REJECTED", "SUPERVISOR_REQUIRED").toString()
         val existing = supervisorToken
         if (existing != null && existing.isBinderAlive && activeJob?.isActive == true && existing !== token) {
-            return@synchronized reply("REJECTED", "WORKER_RECOVERY_REQUIRED")
+            return@synchronized reply("REJECTED", "WORKER_RECOVERY_REQUIRED").toString()
         }
         runCatching {
             supervisorDeath?.let { existing?.unlinkToDeath(it, 0) }
@@ -86,34 +86,34 @@ class HaloModelBenchService : Service() {
             token.linkToDeath(death, 0)
             supervisorToken = token
             supervisorDeath = death
-        }.onFailure { return@synchronized reply("REJECTED", "SUPERVISOR_UNAVAILABLE") }
+        }.onFailure { return@synchronized reply("REJECTED", "SUPERVISOR_UNAVAILABLE").toString() }
         reply("SUCCESS", "ATTACHED").put("workerInstanceId", workerId).toString()
     }
 
     private fun start(attemptId: String, modelId: String, expectedSha256: String, deadline: Long): String = synchronized(lock) {
         if (!UUID_REGEX.matches(attemptId) || modelId.isBlank() || modelId.length > 160 || !SHA_REGEX.matches(expectedSha256))
-            return@synchronized reply("REJECTED", "INVALID_REQUEST")
-        if (supervisorToken?.isBinderAlive != true) return@synchronized reply("REJECTED", "SUPERVISOR_UNAVAILABLE")
+            return@synchronized reply("REJECTED", "INVALID_REQUEST").toString()
+        if (supervisorToken?.isBinderAlive != true) return@synchronized reply("REJECTED", "SUPERVISOR_UNAVAILABLE").toString()
         val payloadHash = sha256("$attemptId\n$modelId\n$expectedSha256\n$FIXTURE_ID")
         if (activeAttemptId == attemptId) {
-            if (activePayloadHash != payloadHash) return@synchronized reply("REJECTED", "REQUEST_ID_CONFLICT")
+            if (activePayloadHash != payloadHash) return@synchronized reply("REJECTED", "REQUEST_ID_CONFLICT").toString()
             return@synchronized stateJson.toString()
         }
-        if (activeJob?.isActive == true) return@synchronized reply("REJECTED", "WORKER_BUSY")
+        if (activeJob?.isActive == true) return@synchronized reply("REJECTED", "WORKER_BUSY").toString()
         val now = android.os.SystemClock.elapsedRealtime()
-        if (deadline <= now) return@synchronized reply("REJECTED", "DEADLINE_EXPIRED")
-        if (deadline - now > MAX_ATTEMPT_DEADLINE_MS) return@synchronized reply("REJECTED", "DEADLINE_TOO_LARGE")
+        if (deadline <= now) return@synchronized reply("REJECTED", "DEADLINE_EXPIRED").toString()
+        if (deadline - now > MAX_ATTEMPT_DEADLINE_MS) return@synchronized reply("REJECTED", "DEADLINE_TOO_LARGE").toString()
         // A previous native worker may outlive its former supervisor. Its OS lock remains held
         // until native cleanup or process death, so a new allocation cannot overlap it.
         val lockFile = runCatching {
             val dir = java.io.File(modelRoot, ".lab-leases")
             if (!dir.isDirectory && !dir.mkdirs() && !dir.isDirectory) throw java.io.IOException("LOCK_DIR_UNAVAILABLE")
             RandomAccessFile(java.io.File(dir, "worker-allocation.lock"), "rw")
-        }.getOrNull() ?: return@synchronized reply("REJECTED", "WORKER_LOCK_UNAVAILABLE")
+        }.getOrNull() ?: return@synchronized reply("REJECTED", "WORKER_LOCK_UNAVAILABLE").toString()
         val processLock = runCatching { lockFile.channel.tryLock() }.getOrNull()
         if (processLock == null) {
             lockFile.close()
-            return@synchronized reply("REJECTED", "WORKER_RECOVERY_REQUIRED")
+            return@synchronized reply("REJECTED", "WORKER_RECOVERY_REQUIRED").toString()
         }
         processRunLockFile = lockFile
         processRunLock = processLock
@@ -214,7 +214,7 @@ class HaloModelBenchService : Service() {
     }
 
     private fun stop(attemptId: String): String = synchronized(lock) {
-        if (attemptId != activeAttemptId) return@synchronized reply("REJECTED", "ATTEMPT_NOT_ACTIVE")
+        if (attemptId != activeAttemptId) return@synchronized reply("REJECTED", "ATTEMPT_NOT_ACTIVE").toString()
         val job = activeJob
         if (job?.isActive != true) return@synchronized stateJson.toString()
         stateJson = reply("STOPPING", "STOP_REQUESTED").put("attemptId", attemptId)
