@@ -1,6 +1,6 @@
 # Halo alpha acceptance matrix — 2026-10-22
 
-**Source baseline:** `a707f7f9879699d200ab07cbaad8b27e1a8cb988` (`main`).
+**Source baseline:** `ea05440b145d00d06cc74f70ce04f8ac25235ba7` (`main`).
 **Overall alpha status: NOT TESTED.** This matrix records end-to-end acceptance,
 not whether implementation work exists. A passing source test does not pass a
 physical user journey.
