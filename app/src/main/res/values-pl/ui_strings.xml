@@ -2,7 +2,9 @@
 <resources>
     <string name="ui_9943d4ec9e3a" formatted="false">"Laboratorium obrazu"</string>
     <string name="ui_19766ed6ccb2" formatted="false">"Anuluj"</string>
+    <string name="ui_11a6767d5674" formatted="false">"Gotowe"</string>
     <string name="ui_e2d0a54968ea" formatted="false">"Usuń"</string>
+    <string name="ui_cae7d57bc067" formatted="false">"Zatrzymaj"</string>
     <string name="ui_2150d8df37e4" formatted="false">"Pokaż wszystkie"</string>
     <string name="ui_26488c95ce6a" formatted="false">"Przetestuj ponownie"</string>
     <string name="ui_185e4b007d63" formatted="false">"Skonfiguruj role modeli"</string>
@@ -59,6 +61,27 @@
     <string name="ui_b0270cb66825" formatted="false">"Pliki na urządzeniu"</string>
     <string name="ui_3200851a9605" formatted="false">"Zweryfikowane pliki modelu"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Znajdź powiązane notatki"</string>
+    <string name="ui_eb1fabd36b6b" formatted="false">"Model wyszukiwania lokalnego"</string>
+    <string name="ui_68ebc8a1f456" formatted="false">"Nie zainstalowano zweryfikowanego modelu wyszukiwania lokalnego."</string>
+    <string name="ui_128202399927" formatted="false">"Przeglądaj modele na urządzeniu"</string>
+    <string name="ui_d47872d6fa8e" formatted="false">"Użyj do wyszukiwania lokalnego"</string>
+    <string name="ui_ec5f5466e5dc" formatted="false">"Wybierz, czego halo może szukać"</string>
+    <string name="ui_95110578e66b" formatted="false">"Brak dostępnych notatek i sesji nauki. Utwórz notatkę lub wróć do pełnej biblioteki, aby wybrać źródła."</string>
+    <string name="ui_aec8173d0ae8" formatted="false">"Do prywatnego indeksu wyszukiwania trafią tylko zaznaczone źródła."</string>
+    <string name="ui_92196e0e7f6e" formatted="false">"Wyłącz wyszukiwanie lokalne i usuń indeks"</string>
+    <string name="ui_076bccbaee33" formatted="false">"Szukaj w wybranych źródłach"</string>
+    <string name="ui_e3ad92be491a" formatted="false">"Czego szukasz?"</string>
+    <string name="ui_561633ff888a" formatted="false">"Znajdź powiązane treści"</string>
+    <string name="ui_3d8572181469" formatted="false">"Wyszukiwanie lokalne…"</string>
+    <string name="ui_477902bfd517" formatted="false">"Zakończ bieżącą odpowiedź głosową lub modelu, a potem ponów wyszukiwanie lokalne."</string>
+    <string name="ui_3f6fba009441" formatted="false">"Wybrany model wyszukiwania nie jest gotowy. Sprawdź pobieranie w sekcji Modele na urządzeniu."</string>
+    <string name="ui_8b74fae28554" formatted="false">"Ten model nie obsługuje wyszukiwania lokalnego na tym telefonie. Wybierz inny model osadzania."</string>
+    <string name="ui_e92d2b7623ae" formatted="false">"Najpierw wybierz i przygotuj zainstalowany model osadzania."</string>
+    <string name="ui_b0aedda34eac" formatted="false">"Wybierz źródła, których halo może szukać, a następnie utwórz lokalny indeks."</string>
+    <string name="ui_02126cf07a25" formatted="false">"Za mało wolnej pamięci roboczej. Zamknij inne modele lub wybierz mniej źródeł."</string>
+    <string name="ui_8f1ba0226a49" formatted="false">"Nie udało się zakończyć wyszukiwania lokalnego. Twoje notatki nie zostały wysłane do żadnej usługi w chmurze."</string>
+    <string name="ui_453a6a2fec8d" formatted="false">"Używaj wyników w lokalnych odpowiedziach halo"</string>
+    <string name="ui_1a7f71528618" formatted="false">"Opcjonalnie. Wybrane fragmenty mogą pomóc w odpowiedziach na urządzeniu; zewnętrzni dostawcy nie otrzymują tego kontekstu automatycznie."</string>
     <string name="ui_b3b4d7950228" formatted="false">"Rozpoznawaj polecenia lokalnie"</string>
     <string name="ui_0de4e8eefd18" formatted="false">"Niewielki model działający na urządzeniu pomaga halo odróżniać polecenia od pytań. Sam nie może wykonywać działań."</string>
     <string name="ui_8ec41aaaf6db" formatted="false">"Zainstaluj niewielki model lokalny, aby włączyć rozpoznawanie poleceń przez AI. Bez niego halo korzysta z ustalonych reguł."</string>
@@ -70,4 +93,15 @@
     <string name="ui_5a7c9588964d" formatted="false">"Ten model nie odpowiada w czatach. Pozostałe funkcje wymagają zgodnej obsługi."</string>
     <string name="ui_b274690f2260" formatted="false">"Odpowiedź z tego telefonu"</string>
     <string name="ui_bd924415a9da" formatted="false">"Nie otrzymano odpowiedzi. Spróbuj ponownie lub wybierz inny model."</string>
+    <string name="ui_5ca7401c548d" formatted="false">"Wyszukuj lokalnie na tym telefonie tekst, obrazy i nagrania z wybranych źródeł Notebooka, Canvas i Nauki. halo odczytuje tylko źródła zatwierdzone podczas tworzenia indeksu."</string>
+    <string name="ui_587513a42667" formatted="false">"Wyszukiwanie obrazów wymaga zweryfikowanego modelu EmbeddingGemma 2. Odznacz obrazy, aby wyszukiwać lokalnie tylko w tekście."</string>
+    <string name="ui_6c8f6c2d66fa" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz obrazy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
+    <string name="ui_00add6a49156" formatted="false">"Ten format lub rozmiar obrazu nie jest obsługiwany w wyszukiwaniu lokalnym. Użyj pliku PNG lub JPEG o rozmiarze do 4 MiB."</string>
+    <string name="ui_fffa5f83baf0" formatted="false">"Wybrany obraz jest niedostępny lub nie masz już do niego dostępu. Dołącz go ponownie albo usuń z wyszukiwania lokalnego."</string>
+    <string name="ui_e86583f2b967" formatted="false">"Wyszukiwanie nagrań wymaga zweryfikowanego modelu EmbeddingGemma 2. Odznacz nagrania, aby wyszukiwać lokalnie tylko w tekście."</string>
+    <string name="ui_c85c887657ab" formatted="false">"Ten telefon nie może uruchomić kodera dźwięku na procesorze CPU. Odznacz nagrania, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
+    <string name="ui_5bf1f3af4662" formatted="false">"To nagranie nie jest obsługiwane w wyszukiwaniu lokalnym. Użyj pliku audio o długości do dwóch minut i rozmiarze do 12 MB."</string>
+    <string name="ui_36f112ede148" formatted="false">"Wybrane nagranie jest niedostępne lub nie masz już do niego dostępu. Dołącz je ponownie albo usuń z wyszukiwania lokalnego."</string>
+    <string name="ui_7048fefd2548" formatted="false">"Wybierz najwyżej osiem nagrań do wyszukiwania lokalnego."</string>
+    <string name="ui_5b48705ce252" formatted="false">"Wybrane nagranie zmieniło się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego."</string>
 </resources>
