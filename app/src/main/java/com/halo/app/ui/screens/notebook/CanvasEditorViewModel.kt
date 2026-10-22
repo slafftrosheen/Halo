@@ -57,6 +57,10 @@ internal fun CanvasNode.readableText(): String = when {
 internal fun CanvasNode.inkSelectionStrokeCount(): Int? = if (type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION) null else
     InkSelectionBookmarkCodec.decode(text)?.selectedStrokeIds?.size
 
+internal fun CanvasNode.inkSelectionContext(): com.halo.sdk.runtime.ink.InkSelectionContext? =
+    if (type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION) null else
+        InkSelectionBookmarkCodec.decode(text)
+
 internal fun CanvasNode.inkSelectionIsCurrent(source: CanvasNode?, canvasId: String, sourceVersion: String? = null): Boolean = runCatching {
     if (type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION || source == null) return false
     val context = InkSelectionBookmarkCodec.decode(text) ?: return false

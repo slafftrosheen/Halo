@@ -13,13 +13,37 @@ import androidx.compose.ui.window.DialogProperties
 import com.halo.app.R
 import com.halo.app.language.uiText
 import com.halo.sdk.runtime.ink.InkCodec
+import com.halo.sdk.runtime.ink.InkSelectionContext
 
 @Composable
-internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier) {
-    val document = remember(encoded) { InkCodec.decode(encoded) }
-    val ink = MaterialTheme.colorScheme.onSurface
+internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier,
+    selection: InkSelectionContext? = null) {
+    val document = remember(encoded, selection) {
+        val source = InkCodec.decode(encoded) ?: return@remember null
+        if (selection == null) source else {
+            val bounds = selection.bounds
+            val width = bounds.right - bounds.left
+            val height = bounds.bottom - bounds.top
+            val selectedIds = selection.selectedStrokeIds.toSet()
+            val selected = source.strokes.filter { it.strokeId in selectedIds }
+                .map { stroke -> stroke.copy(points = stroke.points.map { point ->
+                    point.copy(
+                        x = 40 + (point.x - bounds.left) * 920 / width,
+                        y = 40 + (point.y - bounds.top) * 920 / height,
+                    )
+                }) }
+            val cropAspect = if (source.aspectMilli == 0) 0 else
+                (source.aspectMilli.toFloat() * width / height).toInt().coerceIn(125, 8000)
+            source.copy(strokes = selected, aspectMilli = cropAspect)
+        }
+    }
+    val ink = if (selection == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
     Canvas(modifier) {
-        document?.let { drawInk(it, ink, inkBounds(size.width, size.height, it.aspectMilli)) }
+        document?.let {
+            val rect = inkBounds(size.width, size.height, it.aspectMilli)
+            if (selection == null) drawInk(it, ink, rect)
+            else clipRect(rect.left, rect.top, rect.right, rect.bottom) { drawInk(it, ink, rect) }
+        }
     }
 }
 

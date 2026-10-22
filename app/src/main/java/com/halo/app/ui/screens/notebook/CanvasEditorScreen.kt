@@ -919,9 +919,14 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 ?.fromNodeId?.let { sourceId -> state.nodes.firstOrNull { it.id == sourceId } }
                             val sourceVersion = sourceNode?.refObjectId?.let { id -> state.files[id]?.version ?: state.files[id]?.sha256 }
                             val selectionCurrent = node.inkSelectionIsCurrent(sourceNode, viewModel.canvasId, sourceVersion)
+                            val selectionContext = node.inkSelectionContext().takeIf { selectionCurrent }
                             Text(uiText("Ink selection"), style = MaterialTheme.typography.labelSmall)
                             Text(uiText("%1\$d strokes", node.inkSelectionStrokeCount() ?: 0),
                                 style = MaterialTheme.typography.bodyMedium)
+                            if (selectionContext != null && sourceNode?.type == CanvasNodeType.SKETCH) {
+                                Text(uiText("Selected marks preview"), style = MaterialTheme.typography.labelSmall)
+                                CanvasSketchPreview(sourceNode.text, Modifier.fillMaxWidth().height(104.dp), selectionContext)
+                            }
                             Text(uiText(if (selectionCurrent) "Selection source is unchanged." else "Source changed; select the region again."),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             if (selectionCurrent) Text(uiText("Working set uses this region reference instead of the whole Canvas; marks stay local and unrecognized."),

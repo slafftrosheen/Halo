@@ -3774,6 +3774,7 @@
     <string name="ui_3e812c70c455" formatted="false">"Jautāt par atlasi"</string>
     <string name="ui_69c10772bf75" formatted="false">"Izskaidro šo atlasīto apgabalu, izmantojot saglabāto atsauci. Ja ar atsauci nepietiek, lūdz mani to aprakstīt."</string>
     <string name="ui_0562eec23e31" formatted="false">"Izmanto manu saglabāto tintes atlasi kā jautājuma atsauci."</string>
+    <string name="ui_52c1af2b9004" formatted="false">"Atlasīto triepienu priekšskatījums"</string>
     <string name="ui_19ce2f3279a2" formatted="false">"Atlase pievienota darba kopai"</string>
     <string name="ui_e6fd9b9426fd" formatted="false">"Darba kopa izmanto šī apgabala atsauci, nevis visu kanvu; zīmējums paliek ierīcē un netiek atpazīts."</string>
 </resources>
