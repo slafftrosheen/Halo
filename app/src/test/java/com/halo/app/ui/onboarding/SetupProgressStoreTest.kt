@@ -5,6 +5,61 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SetupProgressStoreTest {
+    @Test fun guideSurvivesRestartWithoutPretendingPermissionWasGranted() {
+        val storage = MemoryStorage()
+        val first = SetupProgressStore(storage)
+        first.startCapabilityGuide("microphone")
+        first.markCapabilityRequested("microphone")
+        val interrupted = SetupProgressStore(storage)
+        assertEquals("microphone", interrupted.capabilityGuide.pendingId)
+        assertEquals(setOf("microphone"), interrupted.capabilityGuide.attemptedIds)
+        interrupted.advanceCapabilityGuide("microphone", "contacts", attempted = true)
+        val resumed = SetupProgressStore(storage).capabilityGuide
+        assertTrue(resumed.active)
+        assertEquals("contacts", resumed.currentId)
+        assertNull(resumed.pendingId)
+        assertEquals(setOf("microphone"), resumed.attemptedIds)
+        assertTrue(resumed.skippedIds.isEmpty())
+        assertFalse(storage.values.keys.any { "granted" in it })
+    }
+
+    @Test fun guideSkipAndCompletionSurviveRestartWithoutChangingPrivacyOrCredentials() {
+        val storage = MemoryStorage()
+        storage.putString("ai_privacy_mode_v1", "PRIVATE")
+        storage.putString("openrouter_api_key", "secret")
+        val first = SetupProgressStore(storage)
+        first.startCapabilityGuide("camera")
+        first.advanceCapabilityGuide("camera", null, attempted = false)
+        val resumed = SetupProgressStore(storage).capabilityGuide
+        assertFalse(resumed.active)
+        assertNull(resumed.currentId)
+        assertEquals(setOf("camera"), resumed.skippedIds)
+        assertTrue(resumed.attemptedIds.isEmpty())
+        assertEquals("PRIVATE", storage.getString("ai_privacy_mode_v1"))
+        assertEquals("secret", storage.getString("openrouter_api_key"))
+    }
+
+    @Test fun staleGuideResultCannotAdvanceAnotherCapability() {
+        val store = SetupProgressStore(MemoryStorage())
+        store.startCapabilityGuide("camera")
+        store.markCapabilityRequested("microphone")
+        store.advanceCapabilityGuide("microphone", "contacts", attempted = true)
+        assertEquals("camera", store.capabilityGuide.currentId)
+        assertTrue(store.capabilityGuide.attemptedIds.isEmpty())
+    }
+
+    @Test fun corruptGuideIsBoundedAndCannotInjectUnknownCapabilities() {
+        val storage = MemoryStorage()
+        storage.putString("setup_capability_guide_v1", "1|true|unknown|secret,contacts|camera|unknown")
+        val guide = SetupProgressStore(storage).capabilityGuide
+        assertFalse(guide.active)
+        assertNull(guide.currentId)
+        assertEquals(setOf("contacts"), guide.attemptedIds)
+        assertEquals(setOf("camera"), guide.skippedIds)
+        storage.putString("setup_capability_guide_v1", "x".repeat(2049))
+        assertEquals(CapabilityGuideProgress(), SetupProgressStore(storage).capabilityGuide)
+    }
+
     @Test fun restartRetainsStageChoicesAndExactInteractionButNotConfigurationChanges() {
         val storage=MemoryStorage(); storage.putString("openrouter_api_key","secret"); storage.putString("app_language_v1","lv")
         val first=SetupProgressStore(storage)

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.shell.PermissionsScreenTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-22T19:29:22.503Z" hostname="MINIFOXEY" time="0.684">
+  <properties/>
+  <testcase name="grantMicrophoneButtonInvokesHostPermissionAction" classname="com.halo.app.ui.shell.PermissionsScreenTest" time="0.675"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

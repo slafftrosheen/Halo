@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.onboarding.SetupProgressStoreTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-22T19:29:10.340Z" hostname="MINIFOXEY" time="0.059">
+  <properties/>
+  <testcase name="restartRetainsStageChoicesAndExactInteractionButNotConfigurationChanges" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.022"/>
+  <testcase name="guideSkipAndCompletionSurviveRestartWithoutChangingPrivacyOrCredentials" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.0"/>
+  <testcase name="corruptStageRecoversAndReportCannotLeakStoredSecretsOrContent" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.007"/>
+  <testcase name="dismissingIncompleteWizardPersistsWithoutFakeVerification" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.0"/>
+  <testcase name="corruptGuideIsBoundedAndCannotInjectUnknownCapabilities" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.0"/>
+  <testcase name="diagnosticsAreOptInBoundedAndRejectCorruptFreeText" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.024"/>
+  <testcase name="staleGuideResultCannotAdvanceAnotherCapability" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.0"/>
+  <testcase name="guideSurvivesRestartWithoutPretendingPermissionWasGranted" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.0"/>
+  <testcase name="limitedExitIsDistinctAndBackIsBounded" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.001"/>
+  <testcase name="completingWizardNeverRequiresAutomaticLaunch" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.0"/>
+  <testcase name="previousReplyAndPendingApprovalCannotFinishVerifiedSetup" classname="com.halo.app.ui.onboarding.SetupProgressStoreTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

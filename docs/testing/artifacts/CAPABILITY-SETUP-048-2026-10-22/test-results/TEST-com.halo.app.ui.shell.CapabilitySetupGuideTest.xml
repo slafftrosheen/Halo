@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.shell.CapabilitySetupGuideTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-22T19:29:10.501Z" hostname="MINIFOXEY" time="11.833">
+  <properties/>
+  <testcase name="approximateLocationIsUsableAndNeverShownAsPrecise" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="2.601"/>
+  <testcase name="exhaustedSequenceShowsCompletionAndDisablesStart" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="2.798"/>
+  <testcase name="androidGrantAndRevocationOverrideSavedSetupReceipts" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="0.123"/>
+  <testcase name="skipNeverLaunchesAndDoesNotRecordAnAttempt" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="0.589"/>
+  <testcase name="restoredPendingRequestDoesNotReplayWithoutUserAction" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="0.302"/>
+  <testcase name="openingGuideNeverLaunchesAndExplicitStartRequestsOnlyCurrentCapability" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="0.446"/>
+  <testcase name="denialAdvancesWithoutFalseGrantOrAnotherAutomaticPrompt" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="0.512"/>
+  <testcase name="assistantRoleIsUnavailableOnAndroidBeforeRoleApi" classname="com.halo.app.ui.shell.CapabilitySetupGuideTest" time="4.164"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -309,7 +309,7 @@ fun AppShell(
         bottomBar = {
             if (!immersiveScreen) Column {
             val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
-            if (!kidsMode && !editingWorkspace) LiveTaskPill(liveHome,
+            if (!kidsMode && !editingWorkspace && currentRoute !in setOf("permissions", "guided_setup")) LiveTaskPill(liveHome,
                 onReview = { navigateSafely("activity") }, onStop = homeViewModel::cancelSession)
             com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
                 onVoiceSettings = { navigateSafely("settings/voice/output") })
@@ -1127,6 +1127,7 @@ fun AppShell(
 
                 composable("permissions") {
                     PermissionsScreen(
+                        guideStore = setupStore,
                         onBack = { navController.popBackStack() },
                         onRequestPermissions = onRequestPermissions,
                         storageAccessRepository = ManualDependencyGraph.storageAccessRepository,
