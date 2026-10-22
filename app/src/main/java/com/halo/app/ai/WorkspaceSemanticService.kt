@@ -56,7 +56,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
                         imageStore.replace(imageSnapshot.copy(entries=imageKeep))
                 }
                 audioStore.read()?.let { audioSnapshot ->
-                    val audioKeep = audioSnapshot.entries.filter { audioSourceMetadata(it.sourceId) != null &&
+                    val audioKeep = audioSnapshot.entries.filter { audioSearchSourceExists(it.sourceId) &&
                         storage.getBoolean("semantic_enabled",false) && it.sourceId in selected() }
                     if (audioKeep.size != audioSnapshot.entries.size)
                         audioStore.replace(audioSnapshot.copy(entries=audioKeep))
@@ -134,7 +134,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         require(sourceIds.size<=64 && sourceIds.all {
             it.length in 1..200 &&
                 (it.startsWith("note:") || it.startsWith("canvas:") || it.startsWith("canvas-image:") ||
-                    it.startsWith("study:") || it.startsWith("attachment:"))
+                    it.startsWith("study:") || it.startsWith("attachment:") || it.startsWith("workspace-audio:"))
         })
         mutation.withLock {
             // Update permission and cached bytes together, rather than waiting
@@ -189,7 +189,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         check(localSearchAccess().enabled && selected().isNotEmpty()) { "SELECT_LOCAL_SEARCH_SOURCES" }
         val text = referencesForContext(target.modelId,target.sha256,target.dimension,query.trim())
         val hasSelectedImages = selected().any { imageSearchSourceExists(it) }
-        val hasSelectedAudio = selected().any { it.startsWith("attachment:") && audioSourceMetadata(it) != null }
+        val hasSelectedAudio = selected().any { audioSearchSourceExists(it) }
         val hasSelectedVideos = selected().any { it.startsWith("attachment:") && videoSourceMetadata(it) != null }
         if (!hasSelectedImages && !hasSelectedAudio && !hasSelectedVideos) return text
         if (hasSelectedImages) synchronizeImageIndex(target.modelId,target.sha256,target.dimension)
@@ -322,7 +322,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
 
     private data class SelectedAudioSource(
         val sourceId: String,
-        val attachment: com.halo.app.data.workspace.NoteAttachment,
+        val decoderId: String,
         val uri: android.net.Uri,
         val sourceVersion: String,
         val title: String,
@@ -500,6 +500,21 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         }
     }
 
+    /** Resolves one explicitly selected active Inbox/workspace audio file. */
+    private suspend fun workspaceAudioSourceMetadata(sourceId: String): com.halo.app.data.workspace.WorkspaceFileEntity? {
+        val objectId = sourceId.removePrefix("workspace-audio:")
+        if (!sourceId.startsWith("workspace-audio:") || objectId.isBlank()) return null
+        val owner = db.notebookDao().getWorkspaceObject(objectId)?.takeIf {
+            it.lifecycle == "ACTIVE" && it.type in setOf("FILE", "MEDIA", "ARTIFACT")
+        } ?: return null
+        return db.workspaceFileDao().getFile(owner.id)?.takeIf {
+            it.mimeType.startsWith("audio/") && it.availability in setOf("AVAILABLE", "OWNED_LOCAL")
+        }
+    }
+
+    private suspend fun audioSearchSourceExists(sourceId: String): Boolean =
+        audioSourceMetadata(sourceId) != null || workspaceAudioSourceMetadata(sourceId) != null
+
     /** Reads only video metadata for one exact selected attachment owned by an active note. */
     private suspend fun videoSourceMetadata(sourceId: String): com.halo.app.data.workspace.NoteAttachment? {
         val parts = sourceId.removePrefix("attachment:").split(':', limit = 2)
@@ -639,26 +654,51 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     /** Hashes the current compressed source and checks its persisted read permission. */
     private suspend fun selectedAudioSource(sourceId: String): SelectedAudioSource? = withContext(Dispatchers.IO) {
         if (!storage.getBoolean("semantic_enabled",false) || sourceId !in selected()) return@withContext null
-        val attachment = audioSourceMetadata(sourceId) ?: return@withContext null
-        if (attachment.bytes != null && attachment.bytes > MAX_AUDIO_SOURCE_BYTES)
+        val attachment = audioSourceMetadata(sourceId)
+        val workspaceFile = if (attachment == null) workspaceAudioSourceMetadata(sourceId) else null
+        if (attachment == null && workspaceFile == null) return@withContext null
+        val declaredSize = attachment?.bytes ?: workspaceFile?.sizeBytes
+        if (declaredSize != null && declaredSize > MAX_AUDIO_SOURCE_BYTES)
             throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_TOO_LARGE")
-        val uri = when (attachment.storageType) {
-            "MANAGED_FILE" -> {
-                val file = try { File(attachment.pathOrUri).canonicalFile }
+        val uri = if (attachment != null) {
+            when (attachment.storageType) {
+                "MANAGED_FILE" -> {
+                    val file = try { File(attachment.pathOrUri).canonicalFile }
+                        catch (cancelled: CancellationException) { throw cancelled }
+                        catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_UNSUPPORTED",failure) }
+                    val root = context.filesDir.canonicalFile
+                    if (!file.path.startsWith(root.path + File.separator))
+                        throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_OUTSIDE_APP_STORAGE")
+                    android.net.Uri.fromFile(file)
+                }
+                "APP_OWNED", "EXTERNAL_URI" -> {
+                    val contentUri = android.net.Uri.parse(attachment.pathOrUri)
+                    if (contentUri.scheme != "content" || !attachment.permissionPersisted)
+                        throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_PERMISSION_EXPIRED")
+                    contentUri
+                }
+                else -> throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_UNSUPPORTED")
+            }
+        } else {
+            val file = requireNotNull(workspaceFile)
+            if (file.ownedCopyPath != null && file.ownership == "HALO_OWNED") {
+                val owned = try { File(file.ownedCopyPath).canonicalFile }
                     catch (cancelled: CancellationException) { throw cancelled }
                     catch (failure: Exception) { throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_UNSUPPORTED",failure) }
-                val root = context.filesDir.canonicalFile
-                if (!file.path.startsWith(root.path + File.separator))
+                val root = com.halo.app.storage.haloStorageLayout(context).managedWorkspaceFiles.canonicalFile
+                if (!owned.path.startsWith(root.path + File.separator) || !owned.isFile)
                     throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_OUTSIDE_APP_STORAGE")
-                android.net.Uri.fromFile(file)
+                android.net.Uri.fromFile(owned)
+            } else {
+                val contentUri = android.net.Uri.parse(file.uri)
+                val capturedMemo = workspaceVoiceMemoFile(file)
+                when {
+                    capturedMemo != null -> android.net.Uri.fromFile(capturedMemo)
+                    file.ownership == "EXTERNAL_REFERENCE" && contentUri.scheme == "content" &&
+                        file.permissionPersisted && file.availability == "AVAILABLE" -> contentUri
+                    else -> throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_PERMISSION_EXPIRED")
+                }
             }
-            "APP_OWNED", "EXTERNAL_URI" -> {
-                val contentUri = android.net.Uri.parse(attachment.pathOrUri)
-                if (contentUri.scheme != "content" || !attachment.permissionPersisted)
-                    throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_PERMISSION_EXPIRED")
-                contentUri
-            }
-            else -> throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_SOURCE_UNSUPPORTED")
         }
         val input = try { requireNotNull(context.contentResolver.openInputStream(uri)) }
             catch (cancelled: CancellationException) { throw cancelled }
@@ -679,20 +719,49 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         }
         if (total == 0L) throw com.halo.providers.litert.EmbeddingUnavailableException("AUDIO_INPUT_INVALID")
         val sha = digest.digest().joinToString("") { "%02x".format(it) }
-        val note = db.notebookDao().getNote(attachment.noteId)?.takeIf { it.lifecycle == "ACTIVE" }
-            ?: return@withContext null
-        val label = attachment.caption?.takeIf { it.isNotBlank() }
-            ?: attachment.displayName?.takeIf { it.isNotBlank() }
-            ?: "Audio memo"
-        SelectedAudioSource(sourceId,attachment,uri,sha,
-            "${note.title.ifBlank { "Untitled" }} · $label",
-            "Notebook audio:${attachment.noteId}")
+        val decoderId: String
+        val title: String
+        val provenance: String
+        if (attachment != null) {
+            val note = db.notebookDao().getNote(attachment.noteId)?.takeIf { it.lifecycle == "ACTIVE" }
+                ?: return@withContext null
+            val label = attachment.caption?.takeIf { it.isNotBlank() }
+                ?: attachment.displayName?.takeIf { it.isNotBlank() }
+                ?: "Audio memo"
+            decoderId = attachment.id
+            title = "${note.title.ifBlank { "Untitled" }} · $label"
+            provenance = "Notebook audio:${attachment.noteId}"
+        } else {
+            val file = requireNotNull(workspaceFile)
+            val owner = db.notebookDao().getWorkspaceObject(file.objectId)?.takeIf { it.lifecycle == "ACTIVE" }
+                ?: return@withContext null
+            decoderId = file.objectId
+            title = owner.title.ifBlank { file.displayName.ifBlank { "Audio memo" } }
+            provenance = "Inbox audio:${file.objectId}"
+        }
+        SelectedAudioSource(sourceId,decoderId,uri,sha,title.take(400),provenance.take(400))
+    }
+
+    /** Only the app's own Inbox recorder URI may bypass persistable external grants. */
+    private fun workspaceVoiceMemoFile(file: com.halo.app.data.workspace.WorkspaceFileEntity): File? {
+        val uri = android.net.Uri.parse(file.uri)
+        if (file.ownership != "EXTERNAL_REFERENCE" || uri.scheme != "content" ||
+            uri.authority != "${context.packageName}.captures") return null
+        val parts = uri.pathSegments
+        if (parts.size != 3 || parts[0] != "workspace-owned" || parts[1] != "voice-inbox" ||
+            !parts[2].startsWith("memo_") || !parts[2].endsWith(".m4a")) return null
+        return try {
+            val root = File(context.filesDir, "workspace/owned/voice-inbox").canonicalFile
+            val candidate = File(root, parts[2]).canonicalFile
+            candidate.takeIf { it.path.startsWith(root.path + File.separator) && it.isFile }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
     }
 
     /** Normalize one explicitly selected recording to bounded mono 16 kHz WAV in memory. */
     private suspend fun selectedAudioPayload(source: SelectedAudioSource): ByteArray {
         val decoded = try {
-            com.halo.app.capture.MemoPcmDecoder(context).decode(source.uri,"semantic:${source.attachment.id}")
+            com.halo.app.capture.MemoPcmDecoder(context).decode(source.uri,"semantic:${source.decoderId}")
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (failure: Exception) {
             if (failure.message?.contains("12 MB") == true)
@@ -829,7 +898,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     /** Builds only from exact selected audio attachments; WAV bytes are transient and never indexed. */
     private suspend fun synchronizeAudioIndex(modelId: String,sha: String,dimension: Int) = mutation.withLock {
         check(storage.getBoolean("semantic_enabled",false)) { "SEMANTIC_INDEX_OPT_IN_REQUIRED" }
-        val audioIds = selected().filter { it.startsWith("attachment:") && audioSourceMetadata(it) != null }
+        val audioIds = selected().filter { audioSearchSourceExists(it) }
         check(audioIds.size <= MAX_INDEXED_AUDIO_ATTACHMENTS) { "AUDIO_SOURCE_COUNT_LIMIT" }
         if (audioIds.isEmpty()) {
             audioStore.replace(null)
@@ -869,7 +938,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         currentCoroutineContext().ensureActive()
         val stillSelected = selected().toSet()
         val finalEntries = prepared.values.filter { it.sourceId in stillSelected &&
-            audioSourceMetadata(it.sourceId) != null && storage.getBoolean("semantic_enabled",false) }
+            audioSearchSourceExists(it.sourceId) && storage.getBoolean("semantic_enabled",false) }
         audioStore.replace(AudioSemanticSnapshot(currentSpace,finalEntries))
     }
 
@@ -877,7 +946,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val space = runCatching { audioSearchSpace(modelId,sha,dimension) }.getOrNull() ?: return 0
         val allowed = selected()
         return audioStore.read()?.takeIf { it.space == space }?.entries?.count {
-            it.sourceId in allowed && audioSourceMetadata(it.sourceId) != null
+            it.sourceId in allowed && audioSearchSourceExists(it.sourceId)
         } ?: 0
     }
 
@@ -971,7 +1040,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val space = audioSearchSpace(modelId,sha,dimension)
         val snapshot = audioStore.read()?.takeIf { it.space == space } ?: return emptyList()
         val allowed = selected()
-        val candidates = snapshot.entries.filter { it.sourceId in allowed && audioSourceMetadata(it.sourceId) != null }
+        val candidates = snapshot.entries.filter { it.sourceId in allowed && audioSearchSourceExists(it.sourceId) }
         if (!storage.getBoolean("semantic_enabled",false) || candidates.isEmpty()) return emptyList()
         check(resources.snapshot.value.none { it.executing }) { "NATIVE_RESOURCE_BUSY" }
         val provider = embeddingExecutor(modelId) as? LiteRtEmbeddingProvider

@@ -14,6 +14,10 @@ import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.notebook.CanvasImageSearchSource
 import com.halo.app.data.study.StudySessionRecord
+import com.halo.app.data.workspace.ContentOwnership
+import com.halo.app.data.workspace.FilePermissionMode
+import com.halo.app.data.workspace.WorkspaceFile
+import com.halo.app.data.workspace.WorkspaceFileAvailability
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloTextField
@@ -37,6 +41,8 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     audioAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
     videoAttachments: List<com.halo.app.data.workspace.NoteAttachment> = emptyList(),
     canvasImages: List<CanvasImageSearchSource> = emptyList(),
+    workspaceAudioFiles: List<WorkspaceFile> = emptyList(),
+    captureAuthority: String? = null,
     videoFallbackLabel: String = "Video clip",
     canvasImageFallbackLabel: String = "Picture"): List<LocalSearchSourceChoice> {
     val workspace = items.mapNotNull { item ->
@@ -93,7 +99,31 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
     val learning = sessions.map { session ->
         LocalSearchSourceChoice("study:${session.id}",session.goal?.takeIf { it.isNotBlank() } ?: "Study session")
     }
-    val groups = listOf(workspace, learning, pictures, audio, videos, canvasPictures)
+    val activeFileOwners = items.mapNotNull { item ->
+        item.objectRef.takeIf {
+            it.lifecycle == WorkspaceObjectLifecycle.ACTIVE &&
+                it.type in setOf(WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA, WorkspaceObjectType.ARTIFACT)
+        }
+    }.associateBy { it.id.value }
+    val workspaceAudio = workspaceAudioFiles.mapNotNull { file ->
+        val owner = activeFileOwners[file.objectId.value] ?: return@mapNotNull null
+        if (!file.mimeType.startsWith("audio/") || file.availability !in
+            setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)) return@mapNotNull null
+        val persistedExternal = file.ownership == ContentOwnership.EXTERNAL_REFERENCE &&
+            file.permissionMode == FilePermissionMode.PERSISTABLE_URI &&
+            file.availability == WorkspaceFileAvailability.AVAILABLE
+        val ownedCopy = file.ownership == ContentOwnership.HALO_OWNED &&
+            file.availability == WorkspaceFileAvailability.OWNED_LOCAL
+        val appVoiceMemo = file.ownership == ContentOwnership.EXTERNAL_REFERENCE &&
+            file.uri.scheme == "content" && file.uri.authority == captureAuthority &&
+            file.uri.pathSegments.let { it.size == 3 && it[0] == "workspace-owned" &&
+                it[1] == "voice-inbox" && it[2].startsWith("memo_") && it[2].endsWith(".m4a") }
+        if (!persistedExternal && !ownedCopy && !appVoiceMemo) return@mapNotNull null
+        val label = file.displayName.ifBlank { "Audio memo" }
+        LocalSearchSourceChoice("workspace-audio:${file.objectId.value}",
+            "${owner.title.ifBlank { "Inbox" }} · $label")
+    }
+    val groups = listOf(workspace, learning, pictures, audio, workspaceAudio, videos, canvasPictures)
     val sources = ArrayList<LocalSearchSourceChoice>(64)
     val seen = HashSet<String>()
     val maxGroupSize = groups.maxOfOrNull { it.size } ?: 0
@@ -168,6 +198,7 @@ internal fun NotebookLocalSearchSheet(
 ) {
     val service = remember { ManualDependencyGraph.semanticWorkspace }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val imageAttachments by ManualDependencyGraph.notebookAssetRepository.observeImageAttachments()
         .collectAsStateWithLifecycle(emptyList())
     val audioAttachments by ManualDependencyGraph.notebookAssetRepository.observeAudioAttachments()
@@ -176,8 +207,12 @@ internal fun NotebookLocalSearchSheet(
         .collectAsStateWithLifecycle(emptyList())
     val canvasImages by ManualDependencyGraph.notebookCanvasRepository.observeImageSearchSources()
         .collectAsStateWithLifecycle(emptyList())
-    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages) {
+    val workspaceAudioFiles by ManualDependencyGraph.workspaceFileRepository.observeFiles()
+        .collectAsStateWithLifecycle(emptyList())
+    val choices = remember(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,workspaceAudioFiles) {
         notebookSearchSources(items,studySessions,imageAttachments,audioAttachments,videoAttachments,canvasImages,
+            workspaceAudioFiles = workspaceAudioFiles,
+            captureAuthority = "${context.packageName}.captures",
             videoFallbackLabel = uiText("Video clip"), canvasImageFallbackLabel = uiText("Picture"))
     }
     val access = remember { service.localSearchAccess() }

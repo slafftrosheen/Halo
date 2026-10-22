@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.notebook
 
+import android.net.Uri
 import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
@@ -7,6 +8,10 @@ import com.halo.app.data.notebook.WorkspaceObjectSource
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.notebook.CanvasImageSearchSource
 import com.halo.app.data.workspace.NoteAttachment
+import com.halo.app.data.workspace.ContentOwnership
+import com.halo.app.data.workspace.FilePermissionMode
+import com.halo.app.data.workspace.WorkspaceFile
+import com.halo.app.data.workspace.WorkspaceFileAvailability
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -56,6 +61,26 @@ class NotebookLocalSearchSourcesTest {
         ), emptyList(), audioAttachments=listOf(memo,hidden,notAudio))
         assertEquals(listOf("note:n1","attachment:n1:audio1"),choices.map { it.id })
         assertTrue(choices.last().title.contains("Lecture"))
+    }
+
+    @Test fun inboxVoiceMemoChoiceRequiresActiveAudioOwnerAndOwnCaptureUri() {
+        val inboxMemo = WorkspaceFile(WorkspaceObjectId("memo1"),
+            Uri.parse("content://halo.captures/workspace-owned/voice-inbox/memo_demo.m4a"),
+            "memo_demo.m4a", "audio/mp4", 4_000_000L, FilePermissionMode.READ_ONLY,
+            ContentOwnership.EXTERNAL_REFERENCE, WorkspaceFileAvailability.AVAILABLE, null)
+        val ungrantedExternal = inboxMemo.copy(objectId = WorkspaceObjectId("external"),
+            uri = Uri.parse("content://other.provider/recording.m4a"))
+        val archivedMemo = inboxMemo.copy(objectId = WorkspaceObjectId("archived"))
+        val choices = notebookSearchSources(listOf(
+            item("memo1", WorkspaceObjectType.FILE),
+            item("external", WorkspaceObjectType.FILE),
+            item("archived", WorkspaceObjectType.FILE, WorkspaceObjectLifecycle.ARCHIVED),
+        ), emptyList(), workspaceAudioFiles = listOf(inboxMemo, ungrantedExternal, archivedMemo),
+            captureAuthority = "halo.captures")
+
+        assertTrue(choices.any { it.id == "workspace-audio:memo1" })
+        assertFalse(choices.any { it.id == "workspace-audio:external" })
+        assertFalse(choices.any { it.id == "workspace-audio:archived" })
     }
 
     @Test fun videoChoicesAreExactAttachmentsOwnedByVisibleActiveNotes() {
