@@ -186,7 +186,7 @@ fun AppShell(
         val current = homeViewModel.uiState.value
         when {
             !current.microphonePermissionGranted -> {
-                onRequestPermissions()
+                homeViewModel.requestVoiceModeStart()
                 navController.navigateToPrimary("home")
             }
             !current.speechReady -> navigateSafely("voice_settings")

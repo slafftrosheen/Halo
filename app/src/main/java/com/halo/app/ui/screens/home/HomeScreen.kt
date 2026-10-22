@@ -195,9 +195,13 @@ fun HomeScreen(
     val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
     val voiceModeActive by viewModel.voiceModeActive.collectAsStateWithLifecycle()
     val voiceModeStartRequested by viewModel.voiceModeStartRequested.collectAsStateWithLifecycle()
-    LaunchedEffect(voiceModeStartRequested) {
-        if (voiceModeStartRequested && viewModel.consumeVoiceModeStartRequest()) {
-            viewModel.startVoiceMode()
+    val voiceModeStartRequestId by viewModel.voiceModeStartRequestId.collectAsStateWithLifecycle()
+    LaunchedEffect(voiceModeStartRequested, voiceModeStartRequestId, uiState.microphonePermissionGranted, uiState.speechReady) {
+        if (!voiceModeStartRequested) return@LaunchedEffect
+        when {
+            !uiState.microphonePermissionGranted -> onRequestMicrophonePermission()
+            !uiState.speechReady -> if (viewModel.consumeVoiceModeStartRequest()) viewModel.navigateToVoice()
+            else -> if (viewModel.consumeVoiceModeStartRequest()) viewModel.startVoiceMode()
         }
     }
     var drafts by rememberSaveable { mutableStateOf(hashMapOf<String, String>()) }
