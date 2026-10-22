@@ -58,6 +58,10 @@ class HaloApplication :
     override fun onCreate() {
         super.onCreate()
 
+        // Native benchmark workers must not bootstrap Halo's normal application graph,
+        // migrations, observers, providers or user-facing background jobs.
+        if (isModelBenchProcess()) return
+
         val gitCommit = runCatching { BuildConfig::class.java.getField("HALO_GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
         val gitDirty = runCatching { BuildConfig::class.java.getField("HALO_GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
         val sourceId = runCatching { BuildConfig::class.java.getField("HALO_SOURCE_ID").get(null) as? String }.getOrNull() ?: gitCommit
@@ -221,6 +225,16 @@ class HaloApplication :
             catch(_: Exception) { Log.w("HaloApplication", "Reflection observer unavailable") }
         }
         registerActivityLifecycleCallbacks(this)
+    }
+
+    private fun isModelBenchProcess(): Boolean {
+        val processName = if (android.os.Build.VERSION.SDK_INT >= 28) {
+            getProcessName()
+        } else {
+            getSystemService(ActivityManager::class.java)?.runningAppProcesses
+                ?.firstOrNull { it.pid == android.os.Process.myPid() }?.processName
+        }
+        return processName == "$packageName:modelbench"
     }
 
     override fun onCompanionPresence(address: String, appeared: Boolean) {

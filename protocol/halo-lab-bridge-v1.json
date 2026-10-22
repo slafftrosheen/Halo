@@ -1,0 +1,66 @@
+{
+  "schema": "halo-lab-bridge",
+  "protocolMajor": 1,
+  "protocolMinor": 0,
+  "transport": "android-aidl-bounded-json-v1",
+  "canonicalOwner": "Halo",
+  "clientPackage": "com.slafftrosheen.halomodellab",
+  "compatibleLabClientSchemaSha256": "c068ebc704968d82f2d5a9e8e77df399be9fd31ad8d8304b9ffd74c512af5fd9",
+  "operations": [
+    "handshake",
+    "listModels",
+    "acquireArtifactLease",
+    "renewArtifactLease",
+    "releaseArtifactLease",
+    "submitCase",
+    "queryCase",
+    "cancelCase",
+    "readEvents",
+    "acknowledgeEvents",
+    "acquireModel",
+    "queryAcquisition",
+    "cancelAcquisition"
+  ],
+  "implementedFeatures": [
+    "MODEL_INVENTORY",
+    "ARTIFACT_LEASES",
+    "TEXT_EXECUTION",
+    "EVENT_REPLAY"
+  ],
+  "textExecution": {
+    "workerProcess": ":modelbench",
+    "providerId": "provider.litert.local",
+    "suiteId": "fast-smoke",
+    "suiteVersion": "1",
+    "caseId": "short-ready",
+    "fixtureId": "fast-smoke-1-short-ready",
+    "fixtureManifestSha256": "59e0652c15e4dff7dd7bfebd7cd7c04b478ddf8824995f9a610e13b9c90dfa40",
+    "prompt": "Reply with exactly READY.",
+    "expectedText": "READY",
+    "maximumOutputTokens": 8,
+    "backend": "CPU",
+    "arbitraryPromptAccepted": false
+  },
+  "limits": {
+    "requestBytes": 32768,
+    "replyBytes": 65536,
+    "modelsPerPage": 50,
+    "eventsPerPage": 64,
+    "eventPayloadBytes": 16384,
+    "outstandingRunsPerClient": 1,
+    "maxPromptCharacters": 512
+  },
+  "authentication": {
+    "signaturePermission": "com.aistudio.braintool.xkqzps.permission.HALO_LAB_BRIDGE",
+    "callerPackage": "com.slafftrosheen.halomodellab",
+    "callerUidFromBinder": true,
+    "haloConsentRequired": true
+  },
+  "evidence": {
+    "realOrigin": "DEVICE_MEASUREMENT",
+    "syntheticOriginNeverAcceptedAsReal": true,
+    "unknownFieldsRemainUnknown": true,
+    "attemptTerminalWriteOnce": true,
+    "replayKey": ["serverEpoch", "remoteRunId", "sequence"]
+  }
+}

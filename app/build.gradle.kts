@@ -98,6 +98,7 @@ android {
   buildFeatures {
     compose = true
     buildConfig = true
+    aidl = true
   }
   ksp {
     arg("room.schemaLocation", "$projectDir/schemas")

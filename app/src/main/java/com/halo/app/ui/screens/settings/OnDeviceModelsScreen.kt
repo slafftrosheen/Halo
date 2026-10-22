@@ -199,6 +199,18 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 Text(uiText("Refresh on-device files"))
             }
         }
+        if (developerToolsEnabled) {
+            OutlinedButton(onClick = {
+                runCatching {
+                    deviceContext.startActivity(android.content.Intent(
+                        deviceContext,
+                        com.halo.app.lab.bridge.HaloLabConsentActivity::class.java,
+                    ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.halo_lab_consent_manage))
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (developerToolsEnabled) TextButton(onClick = onConfigureRoles) { Text(uiText("Configure model roles")) }
             if (developerToolsEnabled) TextButton(onClick = { accessOpen = !accessOpen }) {

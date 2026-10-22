@@ -22,6 +22,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.io.Closeable
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -164,6 +165,20 @@ class LiteRtModelManager(
         val snapshot = refreshSnapshot(ModelInventoryRefreshReason.INVALIDATED, verifyModelId = modelId)
         return (snapshot as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId && it.valid }
     }
+
+    /** Pins the exact verified artifact generation against manager deletion and replacement. */
+    suspend fun acquireVerifiedArtifactLease(modelId: String, expectedSha256: String): Pair<LocalModelDescriptor, Closeable>? =
+        withContext(Dispatchers.IO) {
+            val lease = ModelArtifactFileLocks.acquireRead(modelRoot, modelId) ?: return@withContext null
+            val descriptor = try { verifyPhysicalArtifact(modelId) } catch (failure: Throwable) {
+                lease.close()
+                throw failure
+            }
+            if (descriptor?.verified != true || descriptor.sha256 != expectedSha256) {
+                lease.close()
+                null
+            } else descriptor to lease
+        }
 
     override fun invalidate(reason: String) {
         scope.launch { refresh(ModelInventoryRefreshReason.INVALIDATED) }
@@ -586,6 +601,9 @@ class LiteRtModelManager(
         sidecarFile: File,
         sidecarPart: File,
     ) {
+        val mutationLease = ModelArtifactFileLocks.tryAcquireWrite(modelRoot, model.id)
+            ?: throw IOException("ARTIFACT_LEASE_ACTIVE")
+        try {
         setDownloadState(model.id, DownloadState.Verifying(verifiedFile.length(), model.expectedBytes))
         Log.i(TAG, "$EVENT_VERIFY id=${model.id} bytes=${verifiedFile.length()} sha256=${model.sha256}")
 
@@ -638,6 +656,9 @@ class LiteRtModelManager(
             "$EVENT_INSTALLED id=${model.id} bytes=${finalFile.length()} sha256=${installed.sha256} " +
                 "validation=${installed.validation}",
         )
+        } finally {
+            mutationLease.close()
+        }
     }
 
     // ---------------------------------------------------------------------------------------
@@ -738,6 +759,9 @@ class LiteRtModelManager(
 
             importing.value = "Registering imported model…"
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            val mutationLease = ModelArtifactFileLocks.tryAcquireWrite(modelRoot, modelId)
+                ?: throw IOException("ARTIFACT_LEASE_ACTIVE")
+            try {
             moveIntoPlace(tempFile, finalFile)
             physicalFingerprints.remove(fingerprintKey(finalFile))
 
@@ -759,6 +783,7 @@ class LiteRtModelManager(
             refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
             resolveModel(modelId)?.takeIf { it.valid }
                 ?: throw IllegalStateException("Model import failed to register")
+            } finally { mutationLease.close() }
         }.onFailure { if (it is CancellationException) throw it }
         } finally { temporaryImport?.delete(); importing.value = null }
         }
@@ -785,11 +810,13 @@ class LiteRtModelManager(
                 if (previous.sha256 != expectedSha || previous.bytes != descriptor.bytes ||
                     previous.id != descriptor.id) return@withLock false
                 if (previous.supportsVision != nativeVision) {
+                    val mutationLease = ModelArtifactFileLocks.tryAcquireWrite(modelRoot, modelId)
+                        ?: return@withLock false
                     val staged = File(modelRoot, "$modelId.halo-model.json.part")
                     try {
                         staged.writeText(previous.copy(supportsVision = nativeVision).toJson())
                         moveIntoPlace(staged, sidecarFile)
-                    } finally { staged.delete() }
+                    } finally { staged.delete(); mutationLease.close() }
                     refresh(ModelInventoryRefreshReason.INVALIDATED)
                 }
                 true
@@ -802,6 +829,8 @@ class LiteRtModelManager(
 
     suspend fun deleteModel(modelId: String): Boolean = withContext(Dispatchers.IO) {
         if (residentModelIdProvider() == modelId || isDownloading(modelId)) return@withContext false
+        val mutationLease = ModelArtifactFileLocks.tryAcquireWrite(modelRoot, modelId) ?: return@withContext false
+        try {
         val descriptor = resolveModel(modelId) ?: return@withContext false
         val modelFile = File(descriptor.path)
         val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
@@ -825,6 +854,9 @@ class LiteRtModelManager(
 
         refresh(ModelInventoryRefreshReason.INVALIDATED)
         deleted
+        } finally {
+            mutationLease.close()
+        }
     }
 
     suspend fun deleteLegacyGgufFiles(): Long = withContext(Dispatchers.IO) {
