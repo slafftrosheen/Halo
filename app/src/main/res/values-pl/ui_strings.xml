@@ -33,6 +33,7 @@
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
     <string name="ui_280eda6fb8fa" formatted="false">"W pamięci"</string>
     <string name="ui_6a9e73cf0d42" formatted="false">"Importuj plik"</string>
+    <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
     <string name="ui_fa37bf97ef5e" formatted="false">"Przetestuj odpowiedź"</string>
     <string name="ui_a6a5fe15ed48" formatted="false">"Synchronizuj z Hugging Face"</string>
     <string name="ui_b744e2d2bbeb" formatted="false">"Lista jest dopasowana do tego telefonu. Szacowane zużycie pamięci ma charakter orientacyjny; sprawdź model przed użyciem."</string>
@@ -112,6 +113,25 @@
     <string name="ui_84b215b21907" formatted="false">"Wybrany film jest niedostępny lub nie masz już do niego dostępu. Dołącz go ponownie albo usuń z wyszukiwania lokalnego."</string>
     <string name="ui_961204d738d7" formatted="false">"Ten telefon nie może uruchomić kodera obrazów na procesorze CPU. Odznacz filmy, aby kontynuować wyszukiwanie lokalne tylko w tekście."</string>
     <string name="ui_5b48705ce252" formatted="false">"Wybrane nagranie zmieniło się podczas odczytu. Ponownie utwórz indeks wyszukiwania lokalnego."</string>
+    <string name="ui_95145f43d145" formatted="false">"Opcjonalny prywatny pakiet startowy: kandydat Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i synteza mowy Supertonic. halo sprawdza zainstalowane pliki, ale nie wybiera kandydatów ani nie potwierdza ich jakości na urządzeniu. Możesz też pobierać modele osobno."</string>
+    <string name="ui_3007ade836ff" formatted="false">"Pliki pakietu startowego zostały zainstalowane i sprawdzone. Przed użyciem wybierz model rozpoznawania mowy i odsłuchaj głos. Model Qwen pozostaje niewybranym kandydatem."</string>
+    <string name="ui_2f9f525e3f4e" formatted="false">"Sprawdzanie dostępnego miejsca…"</string>
     <string name="ui_2e34fc62280f" formatted="false">"Pobieranie modelu do rozpoznawania intencji…"</string>
+    <string name="ui_8b5164561b44" formatted="false">"Instalowanie obsługi trybu bez użycia rąk…"</string>
+    <string name="ui_fc90bf68fab2" formatted="false">"Pobieranie pakietu głosowego…"</string>
+    <string name="ui_992d61234414" formatted="false">"Weryfikowanie plików modeli…"</string>
+    <string name="ui_aa10a65ff49a" formatted="false">"Wstrzymaj konfigurację"</string>
+    <string name="ui_17773737ab5b" formatted="false">"Konfiguracja modeli jest wstrzymana. Wznów ją albo wycofaj tylko pliki dodane w jej ramach."</string>
+    <string name="ui_cd19e372d956" formatted="false">"Konfiguracja modelu nie została ukończona. Sprawdź dostępne miejsce lub połączenie, a następnie wznów ją albo wycofaj tylko dodane w jej ramach pliki."</string>
+    <string name="ui_dc40d6600d77" formatted="false">"Nie można wycofać zmian, bo niektóre nowe modele są nadal używane. Zamknij zadanie, które z nich korzysta, i ponów próbę."</string>
+    <string name="ui_c3f962eda9e8" formatted="false">"Usuwanie modeli dodanych podczas tej konfiguracji…"</string>
+    <string name="ui_4b2e8b937b10" formatted="false">"Zainstaluj prywatny pakiet startowy"</string>
+    <string name="ui_071f55ea3346" formatted="false">"Wznów instalację prywatnego pakietu startowego"</string>
+    <string name="ui_b0d795f796b5" formatted="false">"Wycofaj instalację pakietu startowego"</string>
+    <string name="ui_68bf6ac86ce4" formatted="false">"Ponów wycofywanie"</string>
+    <string name="ui_20a65e7f6009" formatted="false">"Nowo pobrane modele zostały usunięte."</string>
+    <string name="ui_80366b64dbac" formatted="false">"Opcjonalne lokalne pliki głosowe: Whisper Small do rozpoznawania mowy, Silero VAD do wykrywania aktywności mowy i Supertonic 3 do syntezy mowy. Pobranie plików nie potwierdza działania mikrofonu, jakości rozpoznawania ani słyszalności głosu."</string>
+    <string name="ui_6b42e8c8bff0" formatted="false">"Whisper Small INT8 · ok. 375 MB · katalog obejmuje EN, LV, RU i PL. Wymaga więcej pamięci i czasu niż model Base; przed poleganiem na nim sprawdź rozpoznawanie w swoim języku."</string>
+    <string name="ui_655dde73763d" formatted="false">"Supertonic 3 INT8 · archiwum ok. 129 MB · lokalna synteza mowy. Etykiety językowe obejmują EN, LV, RU i PL; odsłuchaj i potwierdź każdy głos na tym urządzeniu."</string>
     <string name="ui_72f11335587f" formatted="false">"Klip wideo"</string>
 </resources>
