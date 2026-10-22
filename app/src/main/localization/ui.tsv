@@ -387,7 +387,7 @@ Relink|||Восстановить ссылку|||Atjaunot saiti
 Note unavailable|||Заметка недоступна|||Piezīme nav pieejama
 This note is empty.|||Эта заметка пуста.|||Šī piezīme ir tukša.
 This note was deleted or is no longer available. Tap to return.|||Заметка удалена или недоступна. Нажмите, чтобы вернуться.|||Piezīme ir dzēsta vai nav pieejama. Pieskaries, lai atgrieztos.
-OK|||ОК|||Labi
+OK|||ОК|||Labi|||OK
 1. Check the words against your original.\n2. Fix any mistakes below.\n3. Choose Save, Ask or Study.\n\nYour photos and files stay saved. This text stays on your phone unless you change its sharing settings. Reading photo text supports Latin letters, such as English and Latvian. Cyrillic photo text is not supported.|||1. Сравни слова с оригиналом.\n2. Исправь ошибки ниже.\n3. Выбери «Сохранить», «Спросить» или «Учиться».\n\nФото и файлы останутся сохранёнными. Этот текст остаётся на телефоне, пока ты не изменишь настройки доступа. Распознавание текста на фото поддерживает латиницу, например английский и латышский. Кириллица на фото не поддерживается.|||1. Salīdzini vārdus ar oriģinālu.\n2. Labo kļūdas zemāk.\n3. Izvēlies saglabāt, jautāt vai mācīties.\n\nFoto un faili paliek saglabāti. Teksts paliek tālrunī, līdz maini kopīgošanas iestatījumus. Teksta nolasīšana no foto atbalsta latīņu alfabētu, piemēram, angļu un latviešu valodu. Kirilica fotoattēlos netiek atbalstīta.
 Explanation level: %1$s. Change it in Learning setup.|||Уровень объяснений: %1$s. Измени его в настройках обучения.|||Paskaidrojumu līmenis: %1$s. Maini to mācību iestatījumos.
 %1$d cards are ready for another look.|||Карточки для повторения: %1$d.|||Kartītes atkārtošanai: %1$d.
@@ -838,7 +838,7 @@ Run synthetic vision probe|||Запустить синтетическую пр�
 Run role suite|||Запустить набор тестов ролей|||Palaist lomu testu kopu|||Uruchom zestaw testów ról
 Developer tests|||Тесты разработчика|||Izstrādātāja testi|||Testy deweloperskie
 Use model|||Использовать модель|||Izmantot modeli|||Użyj modelu
-Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ
+Original note is unavailable · Back|||Исходная заметка недоступна · Назад|||Sākotnējā piezīme nav pieejama · Atpakaļ|||Oryginalna notatka jest niedostępna · Wstecz
 Continue|||Продолжить|||Turpināt|||Kontynuuj
 There are no saved messages to display.|||Нет сохранённых сообщений.|||Nav saglabātu ziņojumu.
 Study unavailable|||Обучение недоступно|||Mācīšanās nav pieejama
@@ -1589,7 +1589,7 @@ Could not connect. Check the key, internet connection and service access, then t
 Connected. Choose an answer model to use with Halo.|||Подключено. Выберите модель для ответов Halo.|||Savienots. Izvēlieties Halo atbilžu modeli.
 More answer models|||Другие модели ответов|||Vairāk atbilžu modeļu
 Advanced provider settings|||Расширенные настройки сервиса|||Papildu pakalpojuma iestatījumi
-Return to guided setup|||Вернуться к пошаговой настройке|||Atgriezties pie vadītās iestatīšanas
+Return to guided setup|||Вернуться к пошаговой настройке|||Atgriezties pie vadītās iestatīšanas|||Wróć do konfiguracji z przewodnikiem
 Basic setup|||Основная настройка|||Pamata iestatīšana
 Guided setup|||Пошаговая настройка|||Vadītā iestatīšana
 Resume or revisit setup without resetting your choices|||Продолжить настройку, сохранив прежний выбор|||Turpināt vai pārskatīt iestatīšanu, saglabājot izvēles
@@ -2418,7 +2418,7 @@ My lesson|||Моё занятие|||Mana nodarbība
 Read to me|||Прочитай мне|||Lasi man priekšā
 My thinking|||Мои мысли|||Manas domas
 Try my answer|||Проверить мой ответ|||Pārbaudīt manu atbildi
-Back to my learning space|||Назад к моей учебной странице|||Atpakaļ uz manu mācību lapu
+Back to my learning space|||Назад к моей учебной странице|||Atpakaļ uz manu mācību lapu|||Wróć do mojej przestrzeni nauki
 Halo nearby|||Halo рядом|||Halo līdzās
 Mini Halo|||Мини-Halo|||Mini Halo|||Mini Halo
 Open Mini Halo|||Открыть мини-Halo|||Atvērt Mini Halo|||Otwórz Mini Halo
@@ -2686,7 +2686,7 @@ Warm when safe|||В памяти, когда безопасно|||Atmiņā, kad 
 Remote execution requires explicit consent.|||Для удалённого выполнения требуется явное согласие.|||Attālai izpildei vajadzīga skaidra piekrišana.
 These policies do not overwrite native model tuning.|||Эти политики не заменяют настройки самой модели.|||Šīs politikas nepārraksta pašas modeļa iestatījumus.
 Unable to save workload policy|||Не удалось сохранить политику задачи|||Neizdevās saglabāt darba slodzes politiku
-Workload diagnostics|||Диагностика рабочих нагрузок|||Darba slodžu diagnostika
+Workload diagnostics|||Диагностика рабочих нагрузок|||Darba slodžu diagnostika|||Diagnostyka obciążenia
 Opening this panel does not run a model. Measurements require explicit actions.|||Открытие панели не запускает модель. Измерения запускаются только явно.|||Paneļa atvēršana nepalaiž modeli. Mērījumi jāpalaiž apzināti.
 Specialized workloads use existing voice and command settings. Task qualification is separate and remains pending.|||Голос и команды используют существующие настройки. Проверка пригодности ещё не выполнена.|||Balss un komandas izmanto esošos iestatījumus. Piemērotības pārbaude vēl jāveic.
 Resident resources and active execution are shown separately.|||Ресурсы в памяти и активное выполнение показаны отдельно.|||Atmiņā esošie resursi un aktīvā izpilde parādīti atsevišķi.
@@ -2792,8 +2792,8 @@ Choose material, check what it says, then tell halo which exercise to work on.||
 Homework photo|||Фото домашней работы|||Mājasdarba foto
 My notes|||Мои заметки|||Manas piezīmes
 This page needs an on-device vision model. If halo cannot read it, type or dictate the exercise instead.|||Для этой страницы нужна модель распознавания изображений на устройстве. Если halo не сможет прочитать её, напечатай или продиктуй задание.|||Šai lapai vajadzīgs attēlu izpratnes modelis tālrunī. Ja halo to nevar nolasīt, ieraksti vai nodiktē uzdevumu.
-Ask a grown-up to set a device PIN or password in Android settings first.|||Попроси взрослого сначала установить PIN-код или пароль устройства в настройках Android.|||Palūdz pieaugušajam vispirms Android iestatījumos iestatīt ierīces PIN kodu vai paroli.
-Grown-up space|||Для взрослых|||Pieaugušo sadaļa
+Ask a grown-up to set a device PIN or password in Android settings first.|||Попроси взрослого сначала установить PIN-код или пароль устройства в настройках Android.|||Palūdz pieaugušajam vispirms Android iestatījumos iestatīt ierīces PIN kodu vai paroli.|||Poproś rodzica lub opiekuna o ustawienie kodu PIN lub hasła urządzenia w ustawieniach Androida.
+Grown-up space|||Для взрослых|||Pieaugušo sadaļa|||Strefa rodzica
 Could not save the photo. Please try again.|||Не удалось сохранить фото. Попробуй ещё раз.|||Foto neizdevās saglabāt. Mēģini vēlreiz.
 Draft ready. Review it before choosing Keep.|||Черновик готов. Проверь его перед сохранением.|||Melnraksts ir gatavs. Pārbaudi to pirms saglabāšanas.
 Could not restore the project. Your saved notes are still in Notebook.|||Не удалось восстановить проект. Сохранённые заметки остались в блокноте.|||Projektu neizdevās atjaunot. Saglabātās piezīmes joprojām ir piezīmju grāmatā.
@@ -2865,7 +2865,7 @@ Review it, change anything you like, then choose Keep to save it.|||Провер
 Saving photo…|||Сохраняем фото…|||Saglabā fotoattēlu…
 Setup|||Настройка|||Iestatīšana|||Konfiguracja
 Source excerpt|||Фрагмент источника|||Avota fragments
-Starting halo…|||Запускаем halo…|||Palaiž halo…
+Starting halo…|||Запускаем halo…|||Palaiž halo…|||Uruchamianie halo…
 Talk to halo|||Поговорить с halo|||Runāt ar halo|||Porozmawiaj z Halo
 Type another exercise|||Ввести другое упражнение|||Ievadīt citu uzdevumu
 Untitled note|||Заметка без названия|||Piezīme bez nosaukuma
@@ -3290,7 +3290,7 @@ Available while connected|||Доступно при подключении|||Pie
 %1$d things halo could remember|||halo мог бы запомнить: %1$d|||halo varētu atcerēties %1$d lietas
 Only if you say yes|||Только если вы согласитесь|||Tikai ar jūsu piekrišanu
 Open Library|||Открыть библиотеку|||Atvērt bibliotēku
-Back to Notebook|||Назад в блокнот|||Atpakaļ uz piezīmju grāmatu
+Back to Notebook|||Назад в блокнот|||Atpakaļ uz piezīmju grāmatu|||Wróć do Notatnika
 When|||Когда|||Kad
 Only if|||Только если|||Tikai ja
 Do|||Сделать|||Darīt
@@ -3371,8 +3371,8 @@ Group these four cards?|||Сгруппировать эти четыре кар�
 Review group|||Проверить группу|||Pārskatīt grupu
 Connect selected cards?|||Соединить выбранные карточки?|||Savienot atlasītās kartītes?
 Connect selected cards|||Соединить выбранные карточки|||Savienot atlasītās kartītes
-Chat unavailable|||Чат недоступен|||Saruna nav pieejama
-This chat may be in Trash. Restore it from Notebook to read it again.|||Чат может быть в корзине. Восстановите его в Блокноте.|||Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā.
+Chat unavailable|||Чат недоступен|||Saruna nav pieejama|||Czat jest niedostępny
+This chat may be in Trash. Restore it from Notebook to read it again.|||Чат может быть в корзине. Восстановите его в Блокноте.|||Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā.|||Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać.
 Labs, diagnostics and test sandboxes|||Лаборатории, диагностика и тестовые среды|||Laboratorijas, diagnostika un testēšanas vides
 Task progress|||Ход выполнения|||Uzdevuma norise
 Action confirmed|||Действие подтверждено|||Darbība apstiprināta

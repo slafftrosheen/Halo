@@ -55,6 +55,7 @@
     <string name="ui_a76e13b98392" formatted="false">"Przywróć"</string>
     <string name="ui_66f4804ee23d" formatted="false">"Archiwizuj"</string>
     <string name="ui_78ec8b7880dd" formatted="false">"Zapytaj halo"</string>
+    <string name="ui_565339bc4d33" formatted="false">"OK"</string>
     <string name="ui_f730c75d143a" formatted="false">"Anuluj test"</string>
     <string name="ui_54009ebf5b61" formatted="false">"Obsługiwany język: łotewski"</string>
     <string name="ui_b3e8ec3e76b5" formatted="false">"Tekst gotowy"</string>
@@ -109,6 +110,7 @@
     <string name="ui_df952a8c1b62" formatted="false">"Uruchom zestaw testów ról"</string>
     <string name="ui_d00f0722da6b" formatted="false">"Testy deweloperskie"</string>
     <string name="ui_cb1c1ca37393" formatted="false">"Użyj modelu"</string>
+    <string name="ui_16ebc6b11fc9" formatted="false">"Oryginalna notatka jest niedostępna · Wstecz"</string>
     <string name="ui_31fbef162594" formatted="false">"Kontynuuj"</string>
     <string name="ui_a8283ade3185" formatted="false">"Cofnij"</string>
     <string name="ui_d406ade2958c" formatted="false">"Dołącz"</string>
@@ -169,6 +171,7 @@
     <string name="ui_1848bd7bc215" formatted="false">"Wyślij do halo"</string>
     <string name="ui_7b615c94cc70" formatted="false">"Napraw lub wybierz inną opcję"</string>
     <string name="ui_b958190e7457" formatted="false">"Wklej klucz"</string>
+    <string name="ui_7d161a71a26a" formatted="false">"Wróć do konfiguracji z przewodnikiem"</string>
     <string name="ui_ec963ffc911b" formatted="false">"Sprawdzanie…"</string>
     <string name="ui_9a17e07748b9" formatted="false">"Zapisuj diagnostykę konfiguracji na tym telefonie"</string>
     <string name="ui_6280e4625ff8" formatted="false">"Pobieranie modelu rozpoznawania mowy…"</string>
@@ -244,6 +247,7 @@
     <string name="ui_9c71b7370b1d" formatted="false">"Tryb automatyczny używa procesora CPU, dopóki ten model nie przejdzie testu GPU."</string>
     <string name="ui_9ecd916802ea" formatted="false">"Moje narzędzia"</string>
     <string name="ui_463816d07097" formatted="false">"Czytanie"</string>
+    <string name="ui_f3ae5d3d5bd5" formatted="false">"Wróć do mojej przestrzeni nauki"</string>
     <string name="ui_d67654ae6d86" formatted="false">"Mini halo"</string>
     <string name="ui_a2243f3686d9" formatted="false">"Otwórz Mini halo"</string>
     <string name="ui_62fae752c4b7" formatted="false">"Miej halo pod ręką w małym oknie lub widżecie na ekranie głównym."</string>
@@ -262,6 +266,7 @@
     <string name="ui_1a05cde1b3f1" formatted="false">"Nowa lekcja"</string>
     <string name="ui_b6df2441064f" formatted="false">"Wymaga konfiguracji"</string>
     <string name="ui_f97da48734b6" formatted="false">"Na tym telefonie"</string>
+    <string name="ui_8586ad2ecc67" formatted="false">"Diagnostyka obciążenia"</string>
     <string name="ui_b6f7890974ea" formatted="false">"Zainstaluj lokalny model mowy w ustawieniach głosu."</string>
     <string name="ui_f07479a5ff73" formatted="false">"Sprawdź rozpoznany tekst"</string>
     <string name="ui_43086da79235" formatted="false">"Edytuj przed użyciem"</string>
@@ -274,6 +279,8 @@
     <string name="ui_cafabf0d8b58" formatted="false">"Na ekranie głównym"</string>
     <string name="ui_4711aac75af4" formatted="false">"Głos i czytanie"</string>
     <string name="ui_6203e75ec103" formatted="false">"Słuchanie, dyktowanie i czytanie na głos"</string>
+    <string name="ui_5eaab99e43b7" formatted="false">"Poproś rodzica lub opiekuna o ustawienie kodu PIN lub hasła urządzenia w ustawieniach Androida."</string>
+    <string name="ui_d0f75f53ae79" formatted="false">"Strefa rodzica"</string>
     <string name="ui_d9897824ec41" formatted="false">"Czytanie automatyczne używa głosu z urządzenia. Czytanie w chmurze zawsze pyta przed wysłaniem tekstu."</string>
     <string name="ui_2b73dfa99c90" formatted="false">"Wpisz cyfry, aby potwierdzić tę wartość."</string>
     <string name="ui_d36dc408280b" formatted="false">"Czytaj zgodnie ze słowami"</string>
@@ -283,6 +290,7 @@
     <string name="ui_f35027f0622e" formatted="false">"Czytaj nowe odpowiedzi na głos"</string>
     <string name="ui_775a8e34ae1d" formatted="false">"Do dwóch minut lokalnego dźwięku, w krótkich nagraniach. Tekst pojawia się po każdym nagraniu. Nic nie zostanie wstawione, dopóki go nie sprawdzisz."</string>
     <string name="ui_7013af4c42fe" formatted="false">"Konfiguracja"</string>
+    <string name="ui_1029c7f7030c" formatted="false">"Uruchamianie halo…"</string>
     <string name="ui_ef6a6b58ce86" formatted="false">"Porozmawiaj z halo"</string>
     <string name="ui_72ea0b6d085a" formatted="false">"Zastosuj token"</string>
     <string name="ui_ce53b39bb842" formatted="false">"Usuń token"</string>
@@ -397,10 +405,13 @@
     <string name="ui_770341d6e89e" formatted="false">"polski"</string>
     <string name="ui_1889bb305d75" formatted="false">"Częściowo przetłumaczono"</string>
     <string name="ui_7812768f6ea5" formatted="false">"Interfejs po polsku jest przetłumaczony częściowo. Niektóre ekrany mogą być nadal wyświetlane po angielsku."</string>
+    <string name="ui_4b88b3f65725" formatted="false">"Wróć do Notatnika"</string>
     <string name="ui_d9741fe53825" formatted="false">"Nowa odpowiedź ↓"</string>
     <string name="ui_6308066d797a" formatted="false">"Wybierz obraz albo zezwól na dostęp do aparatu w ustawieniach Androida."</string>
     <string name="ui_ca381c1e76e6" formatted="false">"Otwórz ustawienia"</string>
     <string name="ui_4c03b51d6368" formatted="false">"Zapisano na tym telefonie"</string>
+    <string name="ui_a45aae80dcc1" formatted="false">"Czat jest niedostępny"</string>
+    <string name="ui_b932adb07c93" formatted="false">"Ta rozmowa może znajdować się w Koszu. Przywróć ją z Notatnika, aby ponownie ją odczytać."</string>
     <string name="ui_4e25d34a2031" formatted="false">"Wymagane uprawnienie"</string>
     <string name="ui_1816f560eeb6" formatted="false">"Nie połączono źródła pogody."</string>
     <string name="ui_143134f93925" formatted="false">"Dla Ciebie"</string>
