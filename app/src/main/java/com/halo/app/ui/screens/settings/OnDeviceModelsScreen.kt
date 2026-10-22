@@ -92,6 +92,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         ui.downloadStates.mapValues { it.value.javaClass.name }, ui.localModels, ui.memoryPressure, capacityRevision))
     val freeStorage = memory.freeStorage
     val intentSettings = remember { com.halo.app.di.ManualDependencyGraph.storage }
+    val starterPack = remember { com.halo.app.di.ManualDependencyGraph.localRolePackInstaller }
+    val starterPackState by starterPack.state.collectAsStateWithLifecycle()
     var localIntentEnabled by rememberSaveable {
         mutableStateOf(intentSettings.getBoolean(com.halo.app.ai.LocalIntentModelRouter.ENABLED_KEY, true))
     }
@@ -291,6 +293,61 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 }
                 Text(uiText("Intent recognition stays on this phone and uses no cloud provider. Uncertain requests are not executed automatically."),
                     style = MaterialTheme.typography.bodySmall)
+            }
+        }
+
+        Surface(shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainerLow) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(uiText("Private voice and intent starter bundle"), style = MaterialTheme.typography.titleSmall)
+                Text(uiText("Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality."),
+                    style = MaterialTheme.typography.bodySmall)
+                when (starterPackState.phase) {
+                    com.halo.app.ai.LocalRolePackPhase.IDLE -> Text(uiText("No starter bundle setup is active."), style = MaterialTheme.typography.bodySmall)
+                    com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> Text(uiText("Checking available storage…"), style = MaterialTheme.typography.bodySmall)
+                    com.halo.app.ai.LocalRolePackPhase.INSTALLING -> {
+                        Text(uiText(when (starterPackState.stage) {
+                            com.halo.app.ai.LocalRolePackStage.INTENT -> "Downloading intent candidate…"
+                            com.halo.app.ai.LocalRolePackStage.SPEECH_RECOGNITION -> "Downloading listening model…"
+                            com.halo.app.ai.LocalRolePackStage.SPEECH_ACTIVITY -> "Installing hands-free support…"
+                            com.halo.app.ai.LocalRolePackStage.SPEECH_OUTPUT -> "Downloading voice pack…"
+                            com.halo.app.ai.LocalRolePackStage.DONE -> "Verifying model files…"
+                        }), style = MaterialTheme.typography.bodySmall)
+                        if (starterPackState.totalBytes > 0L) LinearProgressIndicator(
+                            progress = { (starterPackState.downloadedBytes.toFloat() / starterPackState.totalBytes).coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    com.halo.app.ai.LocalRolePackPhase.PAUSED -> Text(uiText("Model setup is paused. Resume it or roll back only the files added by this setup."), style = MaterialTheme.typography.bodySmall)
+                    com.halo.app.ai.LocalRolePackPhase.FAILED -> Text(uiText("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup."),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Text(uiText("Removing models added by this setup…"), style = MaterialTheme.typography.bodySmall)
+                    com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Text(uiText(starterPackState.message
+                        ?: "Some new models are still in use. Close the task using them, then retry rollback."),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    com.halo.app.ai.LocalRolePackPhase.COMPLETE -> Text(uiText("Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate."),
+                        style = MaterialTheme.typography.bodySmall)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
+                        starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
+                        starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
+                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy,
+                            modifier = Modifier.fillMaxWidth()) {
+                            Text(uiText(if (starterPackState.canResume) "Resume private starter bundle" else "Install private starter bundle"))
+                        }
+                    }
+                    if (starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.INSTALLING) {
+                        TextButton(onClick = starterPack::pause, modifier = Modifier.fillMaxWidth()) { Text(uiText("Pause setup")) }
+                    }
+                    if (starterPackState.canRollback || starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
+                        TextButton(onClick = starterPack::rollback, enabled = !starterPackState.busy,
+                            modifier = Modifier.fillMaxWidth()) {
+                            Text(uiText(if (starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) "Retry rollback" else "Roll back starter bundle"))
+                        }
+                    }
+                }
             }
         }
 
