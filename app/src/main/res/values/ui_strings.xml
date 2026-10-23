@@ -3997,4 +3997,21 @@
     <string name="ui_dc85af8f2b1d" formatted="false">"Saving..."</string>
     <string name="ui_12ad4ee6d948" formatted="false">"Cancel generation"</string>
     <string name="ui_fed2d9b8a028" formatted="false">"%1$s · %2$s"</string>
+    <string name="ui_ea91ffa9aa34" formatted="false">"halo could not initialize the interface."</string>
+    <string name="ui_b77346e8792b" formatted="false">"Unknown startup error"</string>
+    <string name="ui_9a9cbd27ce7b" formatted="false">"halo runtime could not start."</string>
+    <string name="ui_7878e016785a" formatted="false">"Unknown runtime startup error"</string>
+    <string name="ui_627cb2b612f4" formatted="false">"Retry runtime"</string>
+    <string name="ui_1df364a1895e" formatted="false">"Comparison available in halo"</string>
+    <string name="ui_ba35f0c47d86" formatted="false">"Not started"</string>
+    <string name="ui_12698ce1ea5c" formatted="false">"Skipped"</string>
+    <string name="ui_bc29e98543b4" formatted="false">"%1$s: in progress, amount unknown"</string>
+    <string name="ui_af6b7376342a" formatted="false">"Complete or cancel the Android picker to return to halo."</string>
+    <string name="ui_967c25d88cb1" formatted="false">"halo audio"</string>
+    <string name="ui_bf77a488f5bf" formatted="false">"halo audio active"</string>
+    <string name="ui_414799420bc6" formatted="false">"Listening for your voice"</string>
+    <string name="ui_2cdd3d153300" formatted="false">"Speaking a response"</string>
+    <string name="ui_673f512ba46e" formatted="false">"halo updates"</string>
+    <string name="ui_09567fef6b7d" formatted="false">"Text and tool checks use English fixtures. Other languages require separate tests."</string>
+    <string name="ui_b2a91f770f7f" formatted="false">"Image available in halo"</string>
 </resources>

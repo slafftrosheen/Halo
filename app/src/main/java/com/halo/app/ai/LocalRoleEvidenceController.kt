@@ -94,6 +94,7 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
     }
     fun report(source: String): String = buildString {
         appendLine("Halo source=$source roleProbeSuite=$ROLE_PROBE_SUITE_VERSION compatibilityEpoch=$LOCAL_ROLE_QUALIFICATION_COMPAT_EPOCH")
+        appendLine("textAndToolFixtureLanguage=en; otherLanguages=NOT_QUALIFIED_BY_THIS_REPORT")
         for (r in state.value.current) {
             appendLine("model=${r.artifactId} sha=${r.artifactFingerprint.take(12)} backend=${r.backend} context=${r.contextTokens} threads=${r.threads} gpuLayers=${r.gpuLayers} testedAt=${r.testedAtMs}")
             appendLine("loadMs=${r.loadMs} coldMs=${r.coldTtftMs} warmMs=${r.warmTtftSamples} medianMs=${r.warmMedianMs} FAST=${r.fastVerdict} ${r.warmSamples}/3 CHAT=${r.chatPassed}/${r.chatTotal} REASONING=${r.reasoningPassed}/${r.reasoningTotal}")

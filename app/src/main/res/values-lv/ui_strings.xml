@@ -3997,4 +3997,21 @@
     <string name="ui_dc85af8f2b1d" formatted="false">"Saglabā…"</string>
     <string name="ui_12ad4ee6d948" formatted="false">"Atcelt ģenerēšanu"</string>
     <string name="ui_fed2d9b8a028" formatted="false">"%1$s · %2$s"</string>
+    <string name="ui_ea91ffa9aa34" formatted="false">"halo neizdevās sagatavot saskarni."</string>
+    <string name="ui_b77346e8792b" formatted="false">"Nezināma palaišanas kļūda"</string>
+    <string name="ui_9a9cbd27ce7b" formatted="false">"Neizdevās palaist halo."</string>
+    <string name="ui_7878e016785a" formatted="false">"Nezināma halo palaišanas kļūda"</string>
+    <string name="ui_627cb2b612f4" formatted="false">"Mēģināt palaist vēlreiz"</string>
+    <string name="ui_1df364a1895e" formatted="false">"Salīdzinājums pieejams halo"</string>
+    <string name="ui_ba35f0c47d86" formatted="false">"Nav sākts"</string>
+    <string name="ui_12698ce1ea5c" formatted="false">"Izlaists"</string>
+    <string name="ui_bc29e98543b4" formatted="false">"%1$s: notiek, apjoms nav zināms"</string>
+    <string name="ui_af6b7376342a" formatted="false">"Pabeidziet vai atceliet izvēli Android logā, lai atgrieztos halo."</string>
+    <string name="ui_967c25d88cb1" formatted="false">"halo audio"</string>
+    <string name="ui_bf77a488f5bf" formatted="false">"halo audio ir aktīvs"</string>
+    <string name="ui_414799420bc6" formatted="false">"Klausos jūsu balsi"</string>
+    <string name="ui_2cdd3d153300" formatted="false">"Atbildes nolasīšana"</string>
+    <string name="ui_673f512ba46e" formatted="false">"halo paziņojumi"</string>
+    <string name="ui_09567fef6b7d" formatted="false">"Teksta un rīku pārbaudēs izmanto angļu valodas piemērus. Citām valodām vajadzīgas atsevišķas pārbaudes."</string>
+    <string name="ui_b2a91f770f7f" formatted="false">"Attēls pieejams halo"</string>
 </resources>

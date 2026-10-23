@@ -82,7 +82,7 @@ class NativeResultActivity : ComponentActivity() {
         launched = savedInstanceState?.getBoolean("launched") ?: false
         photoPath = savedInstanceState?.getString("photoPath")
         if (!NativeActivityRequests.active(requestId)) { finish(); return }
-        setContentView(TextView(this).apply { text = "Complete or cancel the Android picker to return to Halo."; setPadding(32,32,32,32) })
+        setContentView(TextView(this).apply { text = nativeUi("Complete or cancel the Android picker to return to Halo."); setPadding(32,32,32,32) })
         if (!launched) {
             launched = true // Never replay a launch if recreation interrupts preparation.
             lifecycleScope.launch {

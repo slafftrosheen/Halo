@@ -61,6 +61,22 @@ class AppLanguageTest {
         assertEquals("Strona 2 z 8", resources.getString(R.string.canvas50_page, 2, 8))
         assertEquals("Powiększenie: 150%", resources.getString(R.string.canvas50_zoom_level, 150))
     }
+    @Test fun sharedHostFormatterLocalizesLabelsAndLeavesUnformattedPercentagesLiteral() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val resources = context.createConfigurationContext(Configuration(context.resources.configuration).apply {
+            setLocale(Locale.forLanguageTag("pl-PL"))
+        }).resources
+        assertEquals("Dźwięk halo", resolveUiText(resources, "Halo audio"))
+        assertEquals("Dźwięk halo jest aktywny", resolveUiText(resources, "Halo audio active"))
+        assertEquals("Słuchanie Twojego głosu", resolveUiText(resources, "Listening for your voice"))
+        assertEquals("Odczytywanie odpowiedzi", resolveUiText(resources, "Speaking a response"))
+        assertEquals("Powiadomienia halo", resolveUiText(resources, "Halo updates"))
+        assertEquals("Ponów uruchomienie", resolveUiText(resources, "Retry runtime"))
+        assertEquals("100% of files", resolveUiText(resources, "100% of files"))
+        assertEquals("Private title: w toku, postęp nieokreślony",
+            resolveUiText(resources, "%1\$s: in progress, amount unknown", "Private title"))
+        assertEquals("Zapisz w przestrzeni roboczej", resolveUiText(resources, "Save to Notebook"))
+    }
     private class MemoryStorage : Storage {
         private val values = java.util.concurrent.ConcurrentHashMap<String, Any>()
         override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue

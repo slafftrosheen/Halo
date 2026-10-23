@@ -8,6 +8,5 @@ import com.halo.app.di.ManualDependencyGraph
 internal fun Context.nativeUi(english: String, vararg arguments: Any): String {
     val locale = java.util.Locale.forLanguageTag(ManualDependencyGraph.appLanguagePreferences.language.value.tag)
     val localized = createConfigurationContext(Configuration(resources.configuration).apply { setLocale(locale) })
-    return com.halo.app.language.uiCatalogue[english]?.let { localized.getString(it, *arguments) }
-        ?: String.format(locale, english, *arguments)
+    return com.halo.app.language.resolveUiText(localized.resources, english, *arguments)
 }

@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4014) {
+    buildMap(4031) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4058,6 +4058,23 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Saving..." to R.string.ui_dc85af8f2b1d,
     "Cancel generation" to R.string.ui_12ad4ee6d948,
     "%1\$s · %2\$s" to R.string.ui_fed2d9b8a028,
+    "Halo could not initialize the interface." to R.string.ui_ea91ffa9aa34,
+    "Unknown startup error" to R.string.ui_b77346e8792b,
+    "Halo runtime could not start." to R.string.ui_9a9cbd27ce7b,
+    "Unknown runtime startup error" to R.string.ui_7878e016785a,
+    "Retry runtime" to R.string.ui_627cb2b612f4,
+    "Comparison available in Halo" to R.string.ui_1df364a1895e,
+    "Not started" to R.string.ui_ba35f0c47d86,
+    "Skipped" to R.string.ui_12698ce1ea5c,
+    "%1\$s: in progress, amount unknown" to R.string.ui_bc29e98543b4,
+    "Complete or cancel the Android picker to return to Halo." to R.string.ui_af6b7376342a,
+    "Halo audio" to R.string.ui_967c25d88cb1,
+    "Halo audio active" to R.string.ui_bf77a488f5bf,
+    "Listening for your voice" to R.string.ui_414799420bc6,
+    "Speaking a response" to R.string.ui_2cdd3d153300,
+    "Halo updates" to R.string.ui_673f512ba46e,
+    "Text and tool checks use English fixtures. Other languages require separate tests." to R.string.ui_09567fef6b7d,
+    "Image available in Halo" to R.string.ui_b2a91f770f7f,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

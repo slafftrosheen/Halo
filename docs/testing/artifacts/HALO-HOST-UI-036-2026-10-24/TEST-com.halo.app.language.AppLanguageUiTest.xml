@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.language.AppLanguageUiTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T21:18:29.170Z" hostname="MINIFOXEY" time="7.177">
+  <properties/>
+  <testcase name="switchingLanguagePreservesUnsentDraftAndPickerOwner" classname="com.halo.app.language.AppLanguageUiTest" time="6.535"/>
+  <testcase name="compactPolishComparisonUsesHostCopyWithoutTranslatingTheModelPayload" classname="com.halo.app.language.AppLanguageUiTest" time="0.12"/>
+  <testcase name="polishStructuredResultLocalizesHostSemanticsAndPreservesSourceAndCallbacks" classname="com.halo.app.language.AppLanguageUiTest" time="0.163"/>
+  <testcase name="switchingToPolishPreservesUnsentDraftAndPickerOwner" classname="com.halo.app.language.AppLanguageUiTest" time="0.163"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

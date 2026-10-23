@@ -161,6 +161,8 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
                 TextButton(onClick = { measuredDetails = !measuredDetails }) { Text(uiText(if (measuredDetails) "Hide measured details" else "Measured details")) }
                 if (measuredDetails) {
                 Text(uiText("Measured"), style = MaterialTheme.typography.labelMedium)
+                if (measured.current.isNotEmpty()) Text(uiText("Text and tool checks use English fixtures. Other languages require separate tests."),
+                    style = MaterialTheme.typography.bodySmall)
                 measured.current.forEach { row -> Text("${row.artifactId}: " + when(role) {
                     AiModelRole.FAST -> "${row.fastVerdict} · ${row.warmMedianMs ?: "—"} ms"
                     AiModelRole.CHAT -> "${row.chatPassed}/${row.chatTotal}"

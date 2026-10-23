@@ -389,7 +389,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 enabled = !ui.runningMatrix && !ui.runningRoleMatrix,
                 shape = com.halo.app.ui.design.HaloShapes.control
             ) {
-                Text(if (ui.runningMatrix) "Running matrix…" else "Run smoke matrix")
+                Text(uiText(if (ui.runningMatrix) "Running matrix…" else "Run smoke matrix"))
             }
         }
 
@@ -401,6 +401,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
         }
         if (evidence.history.isNotEmpty()) {
             Text(uiText("Current device · Durable role matrix"), style = MaterialTheme.typography.titleSmall)
+            Text(uiText("Text and tool checks use English fixtures. Other languages require separate tests."), style = MaterialTheme.typography.bodySmall)
             Column(Modifier.heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
                 evidence.history.distinctBy { it.artifactId }.forEach { history ->
                     val row = evidence.current.firstOrNull { it.artifactId == history.artifactId }
@@ -795,10 +796,12 @@ private fun ModelCard(
             TextButton(onClick = { testClipboard.setText(AnnotatedString(model.id)) }) {
                 Text(uiText("Copy model ID for device tests"))
             }
-            measuredRoles?.let { row -> Text(uiText("Measured roles · FAST %1\$s ms · CHAT %2\$s · REASONING %3\$s · AGENTIC %4\$s · VISION %5\$s",
+            measuredRoles?.let { row ->
+                Text(uiText("Text and tool checks use English fixtures. Other languages require separate tests."), style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Measured roles · FAST %1\$s ms · CHAT %2\$s · REASONING %3\$s · AGENTIC %4\$s · VISION %5\$s",
                 row.warmMedianMs ?: "—", "${row.chatPassed}/${row.chatTotal}", "${row.reasoningPassed}/${row.reasoningTotal}",
                 "${row.toolProtocol} ${row.agenticVerdict}", row.visionVerdict), style = MaterialTheme.typography.bodySmall) }
-                ?: Text(if (needsRetest) "Needs retest" else "Not measured on this device", style = MaterialTheme.typography.bodySmall)
+                ?: Text(uiText(if (needsRetest) "Needs retest" else "Not measured on this device"), style = MaterialTheme.typography.bodySmall)
             com.halo.providers.litert.models.LiteRtCommunityModelGuide.guide(model.repoId, model.filename)?.let { note ->
                 Text(note.description, style = MaterialTheme.typography.bodySmall)
             }
@@ -1221,7 +1224,9 @@ private fun ImportedModelCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             if (developerControls) {
-                measuredRoles?.let { row -> Text(uiText("Measured roles · FAST %1\$s ms · CHAT %2\$s · REASONING %3\$s · AGENTIC %4\$s · VISION %5\$s",
+                measuredRoles?.let { row ->
+                    Text(uiText("Text and tool checks use English fixtures. Other languages require separate tests."), style = MaterialTheme.typography.bodySmall)
+                    Text(uiText("Measured roles · FAST %1\$s ms · CHAT %2\$s · REASONING %3\$s · AGENTIC %4\$s · VISION %5\$s",
                     row.warmMedianMs ?: "—", "${row.chatPassed}/${row.chatTotal}", "${row.reasoningPassed}/${row.reasoningTotal}",
                     "${row.toolProtocol} ${row.agenticVerdict}", row.visionVerdict), style = MaterialTheme.typography.bodySmall) }
                     ?: Text(uiText("Not measured on this device"), style = MaterialTheme.typography.bodySmall)

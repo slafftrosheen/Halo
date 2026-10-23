@@ -58,7 +58,31 @@ class PolishResourceCoverageTest(unittest.TestCase):
         result = self.run_check()
         self.assertNotEqual(0, result.returncode)
         self.assertIn("Uncatalogued UI label", result.stderr)
-        source.write_text('uiText("Ready"); uiText("$modelResponse")', encoding="utf-8")
+        source.write_text('uiText("Ready"); nativeUi("Ready"); uiText("$modelResponse")', encoding="utf-8")
+        self.assertEqual(0, self.run_check().returncode)
+
+    def test_native_host_labels_cannot_silently_use_english_fallback(self):
+        catalogue = self.root / "app/src/main/localization/ui.tsv"
+        catalogue.parent.mkdir(parents=True)
+        catalogue.write_text("Ready|||Готово|||Gatavs|||Gotowe\n", encoding="utf-8")
+        source = self.root / "app/src/main/java/Fixture.kt"
+        source.parent.mkdir(parents=True)
+        source.write_text('nativeUi("Missing notification label")', encoding="utf-8")
+        result = self.run_check()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("Uncatalogued UI label", result.stderr)
+
+    def test_direct_host_text_must_use_the_catalogue_even_when_the_key_exists(self):
+        catalogue = self.root / "app/src/main/localization/ui.tsv"
+        catalogue.parent.mkdir(parents=True)
+        catalogue.write_text("Ready|||Готово|||Gatavs|||Gotowe\n", encoding="utf-8")
+        source = self.root / "app/src/main/java/Fixture.kt"
+        source.parent.mkdir(parents=True)
+        source.write_text('Text("Ready")', encoding="utf-8")
+        result = self.run_check()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("Unlocalized host text", result.stderr)
+        source.write_text('Text(uiText("Ready")); Text("halo"); Text("$modelResponse")', encoding="utf-8")
         self.assertEqual(0, self.run_check().returncode)
 
 

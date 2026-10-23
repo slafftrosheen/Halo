@@ -4001,3 +4001,20 @@ Creating your image...|||Создание изображения…|||Veido jūs
 Saving...|||Сохранение…|||Saglabā…|||Zapisywanie…
 Cancel generation|||Отменить создание|||Atcelt ģenerēšanu|||Anuluj generowanie
 %1$s · %2$s|||%1$s · %2$s|||%1$s · %2$s|||%1$s · %2$s
+Halo could not initialize the interface.|||Halo не удалось подготовить интерфейс.|||Halo neizdevās sagatavot saskarni.|||Nie udało się przygotować interfejsu halo.
+Unknown startup error|||Неизвестная ошибка запуска|||Nezināma palaišanas kļūda|||Nieznany błąd uruchamiania
+Halo runtime could not start.|||Не удалось запустить Halo.|||Neizdevās palaist Halo.|||Nie udało się uruchomić halo.
+Unknown runtime startup error|||Неизвестная ошибка запуска Halo|||Nezināma Halo palaišanas kļūda|||Nieznany błąd uruchamiania halo
+Retry runtime|||Повторить запуск|||Mēģināt palaist vēlreiz|||Ponów uruchomienie
+Comparison available in Halo|||Сравнение доступно в Halo|||Salīdzinājums pieejams Halo|||Porównanie jest dostępne w halo
+Not started|||Не начато|||Nav sākts|||Nie rozpoczęto
+Skipped|||Пропущено|||Izlaists|||Pominięto
+%1$s: in progress, amount unknown|||%1$s: выполняется, объём неизвестен|||%1$s: notiek, apjoms nav zināms|||%1$s: w toku, postęp nieokreślony
+Complete or cancel the Android picker to return to Halo.|||Завершите или отмените выбор в Android, чтобы вернуться в Halo.|||Pabeidziet vai atceliet izvēli Android logā, lai atgrieztos Halo.|||Zakończ lub anuluj wybór w Androidzie, aby wrócić do halo.
+Halo audio|||Аудио Halo|||Halo audio|||Dźwięk halo
+Halo audio active|||Аудио Halo активно|||Halo audio ir aktīvs|||Dźwięk halo jest aktywny
+Listening for your voice|||Слушаю ваш голос|||Klausos jūsu balsi|||Słuchanie Twojego głosu
+Speaking a response|||Озвучивание ответа|||Atbildes nolasīšana|||Odczytywanie odpowiedzi
+Halo updates|||Уведомления Halo|||Halo paziņojumi|||Powiadomienia halo
+Text and tool checks use English fixtures. Other languages require separate tests.|||Проверки текста и инструментов используют английские примеры. Для других языков нужны отдельные проверки.|||Teksta un rīku pārbaudēs izmanto angļu valodas piemērus. Citām valodām vajadzīgas atsevišķas pārbaudes.|||Testy tekstu i narzędzi używają angielskich przykładów. Inne języki wymagają oddzielnych testów.
+Image available in Halo|||Изображение доступно в Halo|||Attēls pieejams Halo|||Obraz jest dostępny w halo

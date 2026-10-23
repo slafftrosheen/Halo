@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import com.halo.app.nativeactions.nativeUi
 import kotlinx.coroutines.*
 import java.util.UUID
 
@@ -28,12 +29,12 @@ class HaloAudioForegroundService : Service() {
         }
         try {
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(NotificationChannel(CHANNEL, "Halo audio", NotificationManager.IMPORTANCE_LOW))
+            manager.createNotificationChannel(NotificationChannel(CHANNEL, nativeUi("Halo audio"), NotificationManager.IMPORTANCE_LOW))
             val launch = packageManager.getLaunchIntentForPackage(packageName)
             val notification = Notification.Builder(this, CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_btn_speak_now)
-                .setContentTitle("Halo audio active")
-                .setContentText(if (requests.values.any { it.kind != Kind.PLAYBACK }) "Listening for your voice" else "Speaking a response")
+                .setContentTitle(nativeUi("Halo audio active"))
+                .setContentText(nativeUi(if (requests.values.any { it.kind != Kind.PLAYBACK }) "Listening for your voice" else "Speaking a response"))
                 .setCategory(Notification.CATEGORY_SERVICE).setOngoing(true).setOnlyAlertOnce(true)
                 .apply { readingToken?.let { setStyle(Notification.MediaStyle().setMediaSession(it)) } }
                 .apply { if (launch != null) setContentIntent(PendingIntent.getActivity(this@HaloAudioForegroundService,

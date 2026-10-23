@@ -6,9 +6,12 @@ from pathlib import Path
 from xml.etree import ElementTree
 from localization_format import format_signature
 
+# Product identity and a machine-input syntax example are intentionally invariant.
+INVARIANT_HOST_TEXT = {"Halo", "halo", "note:<id>\ncanvas:<id>\nstudy:<id>\nattachment:<noteId>:<attachmentId>"}
+
 
 def check_static_lookups(root):
-    """Catch literal uiText labels missing from the shared translation source."""
+    """Catch literal Compose/native host labels missing from translation source."""
     source = root / "app/src/main/localization/ui.tsv"
     if not source.exists():
         return []
@@ -19,7 +22,8 @@ def check_static_lookups(root):
         known.update(json.loads(overrides.read_text(encoding="utf-8")).get("aliases", {}))
     errors = []
     for path in sorted((root / "app/src/main/java").rglob("*.kt")):
-        for match in re.finditer(r'\buiText\(\s*("(?:\\.|[^"\\])*")', path.read_text(encoding="utf-8")):
+        kotlin = path.read_text(encoding="utf-8")
+        for match in re.finditer(r'\b(?:uiText|nativeUi)\(\s*("(?:\\.|[^"\\])*")', kotlin):
             literal = match.group(1)
             # Interpolated source/model text is deliberately outside this catalogue.
             if re.search(r"(?<!\\)\$", literal):
@@ -27,6 +31,13 @@ def check_static_lookups(root):
             label = json.loads(literal.replace(r"\$", "$"))
             if label not in known:
                 errors.append(f"Uncatalogued UI label in {path.relative_to(root)}: {label!r}")
+        for match in re.finditer(r'\b(?:Text|BasicText)\(\s*(?:text\s*=\s*)?("(?:\\.|[^"\\])*")', kotlin):
+            literal = match.group(1)
+            if re.search(r"(?<!\\)\$", literal):
+                continue
+            label = json.loads(literal.replace(r"\$", "$"))
+            if re.search(r"[A-Za-z]{2}", label) and label not in INVARIANT_HOST_TEXT:
+                errors.append(f"Unlocalized host text in {path.relative_to(root)}: {label!r}")
     return errors
 
 

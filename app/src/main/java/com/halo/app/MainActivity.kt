@@ -175,14 +175,14 @@ open class MainActivity : ComponentActivity() {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     modifier = Modifier.padding(24.dp)
                                 ) {
-                                    Text("Halo could not initialize the interface.", style = MaterialTheme.typography.titleMedium)
+                                    Text(uiText("Halo could not initialize the interface."), style = MaterialTheme.typography.titleMedium)
                                     Text(
-                                        uiGraphError ?: "Unknown startup error",
+                                        uiGraphError ?: uiText("Unknown startup error"),
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.padding(top = 8.dp)
                                     )
                                     HaloWorkspaceButton(
-                                        text = "Retry",
+                                        text = uiText("Retry"),
                                         onClick = {
                                             runtimeError = null
                                             startUiGraphBootstrap(force = true)
@@ -200,14 +200,14 @@ open class MainActivity : ComponentActivity() {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     modifier = Modifier.padding(24.dp)
                                 ) {
-                                    Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
+                                    Text(uiText("Halo runtime could not start."), style = MaterialTheme.typography.titleMedium)
                                     Text(
-                                        runtimeError ?: "Unknown runtime startup error",
+                                        runtimeError ?: uiText("Unknown runtime startup error"),
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.padding(top = 8.dp)
                                     )
                                     HaloWorkspaceButton(
-                                        text = "Retry runtime",
+                                        text = uiText("Retry runtime"),
                                         onClick = {
                                             runtimeError = null
                                             startRuntimeLoop(force = true)

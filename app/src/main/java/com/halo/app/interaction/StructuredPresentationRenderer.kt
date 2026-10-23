@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.design.HaloSpacing
+import com.halo.app.language.uiText
 import com.halo.runtime.cognition.interaction.PresentationEmphasis
 import com.halo.runtime.cognition.interaction.PresentationNode
 import com.halo.runtime.cognition.interaction.PresentationStepState
@@ -133,6 +134,7 @@ private fun RenderNode(
         )
 
         is PresentationNode.Status -> {
+            val stateLabel = uiText(statusCopy(node.state))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 // A short neutral marker plus explicit words: never color alone.
                 Surface(
@@ -142,11 +144,11 @@ private fun RenderNode(
                 ) { Text("", modifier = Modifier.padding(4.dp)) }
                 Column(Modifier.padding(start = HaloSpacing.sm)) {
                     Text(
-                        text = "${node.label} · ${statusCopy(node.state)}",
+                        text = "${node.label} · $stateLabel",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.semantics {
-                            contentDescription = "${node.label}: ${statusCopy(node.state)}"
+                            contentDescription = "${node.label}: $stateLabel"
                         },
                     )
                     node.detail?.let {
@@ -161,10 +163,11 @@ private fun RenderNode(
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(node.label, style = MaterialTheme.typography.bodySmall)
                 if (fraction == null) {
+                    val progressDescription = uiText("%1\$s: in progress, amount unknown", node.label)
                     LinearProgressIndicator(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .semantics { contentDescription = "${node.label}: in progress, amount unknown" },
+                            .semantics { contentDescription = progressDescription },
                     )
                 } else {
                     LinearProgressIndicator(
@@ -192,6 +195,7 @@ private fun RenderNode(
         ) {
             node.label?.let { Text(it, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium) }
             node.items.forEach { item ->
+                val stateLabel = uiText(stepCopy(item.state))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         stepMarker(item.state),
@@ -206,7 +210,7 @@ private fun RenderNode(
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         },
-                        modifier = Modifier.semantics { stateDescription = stepCopy(item.state) },
+                        modifier = Modifier.semantics { stateDescription = stateLabel },
                     )
                 }
             }
@@ -215,7 +219,7 @@ private fun RenderNode(
         is PresentationNode.Comparison -> if (density == PresentationDensity.COMPACT) {
             // A comparison cannot be squeezed into an overlay: degrade honestly instead.
             Text(
-                "Comparison available in Halo",
+                uiText("Comparison available in Halo"),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -250,7 +254,7 @@ private fun RenderNode(
         is PresentationNode.ImageReference -> {
             // The renderer resolves only Halo-owned assets; it never fetches a URL.
             Text(
-                node.caption ?: "Image available in Halo",
+                node.caption ?: uiText("Image available in Halo"),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -323,7 +327,7 @@ private fun RenderNode(
 /** Optional host affordance: only shown when a host explicitly offers persistence. */
 @Composable
 fun SavePresentationToNotebookAction(onSave: () -> Unit) {
-    TextButton(onClick = onSave) { Text("Save to Notebook") }
+    TextButton(onClick = onSave) { Text(uiText("Save to Notebook")) }
 }
 
 private fun statusCopy(state: PresentationStatusState): String = when (state) {

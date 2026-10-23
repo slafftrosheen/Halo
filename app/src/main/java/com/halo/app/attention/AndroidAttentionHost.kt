@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import com.halo.app.nativeactions.nativeUi
 import com.halo.runtime.cognition.attention.*
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
@@ -75,7 +76,7 @@ class AndroidAttentionHost(
                 if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
                     return AttentionSinkResult(false, "POST_NOTIFICATIONS permission required")
                 if (!notifications.areNotificationsEnabled()) return AttentionSinkResult(false, "Notifications disabled")
-                notifications.createNotificationChannel(NotificationChannel("halo_attention", "Halo updates", NotificationManager.IMPORTANCE_DEFAULT))
+                notifications.createNotificationChannel(NotificationChannel("halo_attention", context.nativeUi("Halo updates"), NotificationManager.IMPORTANCE_DEFAULT))
                 if (notifications.getNotificationChannel("halo_attention").importance == NotificationManager.IMPORTANCE_NONE)
                     return AttentionSinkResult(false, "Notification channel disabled")
                 val notification = android.app.Notification.Builder(context, "halo_attention")
