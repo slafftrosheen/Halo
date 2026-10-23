@@ -1,10 +1,27 @@
 package com.halo.app.ai
 
 import com.halo.engines.interpretation.rules.ModelIntentDecision
+import com.halo.sdk.provider.AiResponse
+import com.halo.sdk.provider.ToolCall
 import org.junit.Assert.*
 import org.junit.Test
 
 class LocalIntentModelRouterTest {
+    @Test fun changedOrDisabledClassifierDiscardsAlreadyGeneratedAdvice() {
+        val reply = AiResponse("ACTION", providerId = "local", modelId = "candidate")
+        assertEquals(ModelIntentDecision.ACTION, LocalIntentModelRouter.acceptReply(reply, "local", "candidate", true, "candidate"))
+        assertNull(LocalIntentModelRouter.acceptReply(reply, "local", "candidate", false, "candidate"))
+        assertNull(LocalIntentModelRouter.acceptReply(reply, "local", "candidate", true, "other"))
+    }
+
+    @Test fun onlyExactActualLocalModelAndToolFreeReplyCanSupplyAdvice() {
+        val reply = AiResponse("ACTION", providerId = "local", modelId = "candidate")
+        for (invalid in listOf(reply.copy(providerId = "cloud"), reply.copy(resolvedModelId = "other"),
+            reply.copy(resolvedModelId = null), reply.copy(toolCalls = listOf(ToolCall("call", "action", emptyMap()))),
+            reply.copy(text = "ACTION because I can do it"))) {
+            assertNull(LocalIntentModelRouter.acceptReply(invalid, "local", "candidate", true, "candidate"))
+        }
+    }
     @Test fun sharedLiteRtResidentChatIsNotEvictedForIntent() {
         val candidate = LocalIntentModelRouter.DEFAULT_ID
         assertFalse(LocalIntentModelRouter.shouldDefer(null,candidate,false))

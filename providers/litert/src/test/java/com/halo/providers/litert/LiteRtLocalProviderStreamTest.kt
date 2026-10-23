@@ -37,9 +37,90 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 @RunWith(RobolectricTestRunner::class)
 class LiteRtLocalProviderStreamTest {
+    @Test fun invalidAdvisoryInputCannotLoadOrGenerateAModel() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        for ((model, text, instruction) in listOf(Triple("", "Open camera", "Label"),
+            Triple("test_model", "x", "Label"), Triple("test_model", "Open camera", "x".repeat(8001)))) {
+            var rejected = false
+            try { provider.tryGenerateAdvisory(model, text, instruction) }
+            catch (_: IllegalArgumentException) { rejected = true }
+            assertTrue(rejected)
+        }
+        assertTrue(runtime.loadedIds.isEmpty())
+        assertTrue(runtime.configs.isEmpty())
+    }
+    @Test fun advisoryNeverQueuesBehindActualConversationalGeneration() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply { generationEntered = entered; generationRelease = release }
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val chat = async(Dispatchers.Default) { provider.generate(AiRequest(text = "Chat", modelId = "test_model"), AiContext.EMPTY) }
+        try {
+            withContext(Dispatchers.Default) { withTimeout(5_000) { entered.await() } }
+            val advice = withContext(Dispatchers.Default) { withTimeout(1_000) {
+                provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label")
+            } }
+            org.junit.Assert.assertNull(advice)
+            assertEquals(1, runtime.configs.size)
+        } finally { release.complete(Unit); chat.await() }
+    }
+
+    @Test fun advisoryKeepsDifferentResidentChatWithoutNativeGenerationOrPreferenceWrites() = runTest {
+        val runtime = FakeRuntime()
+        val storage = FakeStorage()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(ids = listOf("chat", "intent")), storage = storage,
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        provider.generate(AiRequest(text = "Chat", modelId = "chat"), AiContext.EMPTY)
+        val writes = storage.writes.toList()
+        val loaded = runtime.loadedIds.toList()
+        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("intent", "Open camera", "Reply with one label"))
+        assertEquals(loaded, runtime.loadedIds)
+        assertEquals(writes, storage.writes)
+        assertEquals(1, runtime.configs.size)
+        assertEquals("chat", provider.residentModelIdForIntent())
+    }
+
+    @Test fun admittedAdvisoryUsesCanonicalBoundedTextOnlyGenerationAndActualIdentity() = runTest {
+        val runtime = FakeRuntime().apply { nativeThinking = true }
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(thinking = true),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val response = requireNotNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(provider.id, response.providerId)
+        assertEquals("test_model", response.resolvedModelId)
+        val config = runtime.configs.single()
+        assertEquals(12, config.maxTokens)
+        assertTrue(config.availableTools.isEmpty())
+        assertEquals(false, config.thinkingEnabled)
+        assertEquals(0.0, config.temperature, 0.0)
+    }
+
+    @Test fun cancelledAdvisoryReleasesCanonicalMutexForNextRequest() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply { generationEntered = entered; generationRelease = release }
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val advice = async(Dispatchers.Default) { provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label") }
+        withContext(Dispatchers.Default) { withTimeout(5_000) { entered.await() } }
+        advice.cancel()
+        advice.join()
+        assertTrue(advice.isCancelled)
+        runtime.generationEntered = null
+        runtime.generationRelease = null
+        assertTrue(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label") != null)
+    }
     @Test fun roleDiagnosticOverrideIsTransientAndRecordsRequestedConfiguration() = runTest {
         val runtime = FakeRuntime()
         val storage = FakeStorage()
@@ -96,6 +177,8 @@ class LiteRtLocalProviderStreamTest {
         var emptyResponse = false
         var nativeThinking = false
         var failPrompt: String? = null
+        var generationEntered: CompletableDeferred<Unit>? = null
+        var generationRelease: CompletableDeferred<Unit>? = null
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
@@ -112,6 +195,8 @@ class LiteRtLocalProviderStreamTest {
 
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
             configs += config
+            generationEntered?.complete(Unit)
+            generationRelease?.await()
             if (config.prompt == failPrompt) return Result.failure(IllegalStateException("SYNTHETIC_FIXTURE_FAILURE"))
             if (emptyResponse) return Result.success(RuntimeGenerationResult("", emptyList(), 0, 0L, 0.0, 1L))
             state.value = LocalModelSessionState.INFERRING

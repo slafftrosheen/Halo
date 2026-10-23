@@ -57,6 +57,14 @@ Kā atvērt kameru? -> ANSWER
 Otwórz aparat -> ACTION
 Jak otworzyć aparat? -> ANSWER
 Do not perform any action. Do not output JSON, text, quotes, thinking, or explanations."""
+        /** A stale preference or another actual model's answer cannot become intent advice. */
+        internal fun acceptReply(reply: AiResponse, providerId: String, requestedId: String,
+            enabled: Boolean, currentModelId: String): ModelIntentDecision? {
+            if (!enabled || currentModelId != requestedId || reply.providerId != providerId ||
+                reply.resolvedModelId != requestedId || reply.toolCalls.isNotEmpty()) return null
+            return parse(reply.text)
+        }
+
         /** Reject any untrusted output that isn't exactly a single label. */
         fun parse(text: String): ModelIntentDecision? = when(text.trim().uppercase()) {
             "ACTION" -> ModelIntentDecision.ACTION
@@ -89,16 +97,12 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
             withTimeoutOrNull(TIMEOUT_MS) {
                 // Read again after acquiring the intent gate to avoid a competing
                 // model switch or a second queued intent turn.
-                if (shouldDefer(local.residentModelIdForIntent(), id,
+                if (!storage.getBoolean(ENABLED_KEY, true) || configuredModelId() != id ||
+                    shouldDefer(local.residentModelIdForIntent(), id,
                         local.inferenceBusyForIntent())) return@withTimeoutOrNull null
-                val reply = local.generate(
-                    AiRequest(text = finalText, modelId = id, maxOutputTokens = 12,
-                        toolUseMode = ToolUseMode.NONE,
-                        reasoningMode = AiReasoningMode.DISABLED,
-                        publishStreamingTokens = false,
-                        temperatureOverride = 0.0),
-                    AiContext(conversation = listOf(AIMessage(Role.SYSTEM, INSTRUCTIONS))))
-                parse(reply.text)
+                val reply = local.tryGenerateAdvisory(id, finalText, INSTRUCTIONS) ?: return@withTimeoutOrNull null
+                acceptReply(reply, local.id, id,
+                    storage.getBoolean(ENABLED_KEY, true), configuredModelId())
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { null }

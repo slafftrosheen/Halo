@@ -2021,78 +2021,98 @@ class LiteRtLocalProvider(
     }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
-        loadMutex.withLock locked@ {
-            val turnStartedAtMs = System.currentTimeMillis()
-            request.validateForTextGeneration()
-            validateRequestModel(request)
+        loadMutex.withLock { generateLocked(request, context) }
+    }
 
-            discardHybridResidencyBeforeUserTurn()
-            if (!loadModelIfNeededLocked(request.modelId, request)) {
-                throw failedLoad()
+    /** Text/token-bounded local advice never queues behind chat or replaces a different resident model.
+     * The caller owns its deadline and cancellation; no selection or qualification is granted here. */
+    suspend fun tryGenerateAdvisory(modelId: String, finalText: String, systemInstruction: String): AiResponse? =
+        withContext(Dispatchers.IO) {
+            require(modelId.isNotBlank() && finalText.length in 3..384 && systemInstruction.length in 1..8000)
+            if (!loadMutex.tryLock()) return@withContext null
+            try {
+                val resident = modelSession.loadedModelId
+                if (resident != null && resident != modelId || inferenceBusyForIntent()) return@withContext null
+                generateLocked(
+                    AiRequest(text = finalText, modelId = modelId, maxOutputTokens = 12,
+                        toolUseMode = ToolUseMode.NONE, reasoningMode = AiReasoningMode.DISABLED,
+                        publishStreamingTokens = false, temperatureOverride = 0.0),
+                    AiContext(conversation = listOf(com.halo.sdk.provider.AIMessage(com.halo.sdk.provider.Role.SYSTEM, systemInstruction))))
+            } finally { loadMutex.unlock() }
+        }
+
+    /** Caller owns loadMutex, including nonblocking advisory admission. */
+    private suspend fun generateLocked(request: AiRequest, context: AiContext): AiResponse {
+        val turnStartedAtMs = System.currentTimeMillis()
+        request.validateForTextGeneration()
+        validateRequestModel(request)
+
+        discardHybridResidencyBeforeUserTurn()
+        if (!loadModelIfNeededLocked(request.modelId, request)) {
+            throw failedLoad()
+        }
+
+        acquireExecutionLease("Inferring")
+        return try {
+            val descriptor = descriptorForGeneration()
+            val mapped = LiteRtConversationMapper.map(request, context)
+            val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+            val requestedTools = if (request.toolUseMode == ToolUseMode.NONE || protocol == ToolCallProtocol.NONE) emptyList() else toolDefinitionsFor(context)
+            val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
+            val genConfig = generationConfig(
+                descriptor = descriptor,
+                mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
+                systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
+                imageBytes = request.image,
+                initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
+                // The prompt protocol advertises actions as text; passing them as native tools
+                // too would invite double execution and claim a channel the artifact lacks.
+                availableTools = if (usePromptProtocol) emptyList() else requestedTools,
+                requestMaxTokens = request.maxOutputTokens,
+                requestTemperature = request.temperatureOverride,
+                reasoningMode = request.reasoningMode,
+                reasoningTokenBudget = request.reasoningTokenBudget,
+                audioBytes = request.audio,
+            )
+
+            val result = modelSession.generate(genConfig).getOrElse { err ->
+                if (err is CancellationException) throw err
+                recordGenerationFailure(modelSession.loadedModelId, err, stageFor(err))
+                throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
             }
 
-            acquireExecutionLease("Inferring")
-            return@locked try {
-                val descriptor = descriptorForGeneration()
-                val mapped = LiteRtConversationMapper.map(request, context)
-                val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
-                val requestedTools = if (request.toolUseMode == ToolUseMode.NONE || protocol == ToolCallProtocol.NONE) emptyList() else toolDefinitionsFor(context)
-                val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
-                val genConfig = generationConfig(
-                    descriptor = descriptor,
-                    mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
-                    systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
-                    imageBytes = request.image,
-                    initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
-                    // The prompt protocol advertises actions as text; passing them as native tools
-                    // too would invite double execution and claim a channel the artifact lacks.
-                    availableTools = if (usePromptProtocol) emptyList() else requestedTools,
-                    requestMaxTokens = request.maxOutputTokens,
-                    requestTemperature = request.temperatureOverride,
-                    reasoningMode = request.reasoningMode,
-                    reasoningTokenBudget = request.reasoningTokenBudget,
-                    audioBytes = request.audio,
-                )
+            val generationCompletedAtMs = System.currentTimeMillis()
+            val effective = applyPromptProtocol(result, usePromptProtocol, requestedTools)
 
-                val result = modelSession.generate(genConfig).getOrElse { err ->
-                    if (err is CancellationException) throw err
-                    recordGenerationFailure(modelSession.loadedModelId, err, stageFor(err))
-                    throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
-                }
-
-                val generationCompletedAtMs = System.currentTimeMillis()
-                val effective = applyPromptProtocol(result, usePromptProtocol, requestedTools)
-
-                if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
-                    val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
-                    recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
-                    throw error
-                }
-                recordReasoning(result.reasoningText)
-                descriptorForGeneration()?.let(::markGenerationProven)
-                recordConversationDiagnostics(
-                    descriptor = descriptor,
-                    genConfig = genConfig,
-                    generatedText = effective.text,
-                    usePromptProtocol = usePromptProtocol,
-                    requestedTools = requestedTools,
-                    firstTokenMs = result.timeToFirstTokenMs,
-                )
-                _loadDiagnostics.value = null
-
-                AiResponse(
-                    text = effective.text,
-                    providerId = id,
-                    modelId = modelSession.loadedModelId ?: "litert",
-                    finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                    toolCalls = effective.toolCalls,
-                    executionBackend = modelSession.activeBackend?.name,
-                    coldStart = result.coldStart,
-                    metrics = generationMetrics(result, turnStartedAtMs, generationCompletedAtMs),
-                )
-            } finally {
-                finishInteractiveTurn()
+            if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
+                val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
+                recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
+                throw error
             }
+            recordReasoning(result.reasoningText)
+            descriptorForGeneration()?.let(::markGenerationProven)
+            recordConversationDiagnostics(
+                descriptor = descriptor,
+                genConfig = genConfig,
+                generatedText = effective.text,
+                usePromptProtocol = usePromptProtocol,
+                requestedTools = requestedTools,
+                firstTokenMs = result.timeToFirstTokenMs,
+            )
+            _loadDiagnostics.value = null
+
+            AiResponse(
+                text = effective.text,
+                providerId = id,
+                modelId = modelSession.loadedModelId ?: "litert",
+                finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                toolCalls = effective.toolCalls,
+                executionBackend = modelSession.activeBackend?.name,
+                coldStart = result.coldStart,
+                metrics = generationMetrics(result, turnStartedAtMs, generationCompletedAtMs),
+            )
+        } finally {
+            finishInteractiveTurn()
         }
     }
 
