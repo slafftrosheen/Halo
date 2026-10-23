@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:36:06.111Z" hostname="MINIFOXEY" time="0.144">
+  <properties/>
+  <testcase name="toolOptionalAndRequiredNeverStreamSpeech" classname="com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest" time="0.013"/>
+  <testcase name="visualSettingsCapabilityAndTokenPublicationAreIndependentGates" classname="com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest" time="0.0"/>
+  <testcase name="continuationsCannotAcquireEarlySpeechAuthority" classname="com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest" time="0.0"/>
+  <testcase name="exactToolFreeTargetCanStreamSpeech" classname="com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest" time="0.0"/>
+  <testcase name="inferenceUsesOriginalTurnRevisionEvenUnderNewerAmbientAuthority" classname="com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest" time="0.13"/>
+  <system-out><![CDATA[[HALO_PROVIDER_TURN_CONTEXT] interactionId=interaction runId=none round=0 turnKind=INITIAL historyMessages=0 historyRoles= toolMessages=0 exposedToolCount=0 outgoingUserChars=11 continuation=false
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

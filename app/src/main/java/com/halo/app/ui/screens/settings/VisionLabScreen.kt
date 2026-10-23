@@ -31,7 +31,7 @@ fun VisionLabScreen(model: VisionLabViewModel, onBack: () -> Unit, onPrivacy: ()
         item { HaloScreenHeader(uiText("Vision Lab"), uiText("Compare one prepared image across concrete models"), navigation = onBack) }
         item {
             Column {
-                Text(uiText("Media sharing follows the Private / Power switch at the top of Halo."))
+                Text(uiText("Media sharing follows the Private / Full Power switch at the top of Halo."))
                 Text(uiText("Results apply to this diagnostic request. Changing a model or backend requires checking its current capability; a past success does not grant permanent compatibility."), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = onPrivacy, enabled = !state.busy) { Text(uiText("Context & privacy")) }
                 TextButton(onClick = { picker.launch("image/*") }, enabled = !state.busy) { Text(uiText("Choose gallery image")) }

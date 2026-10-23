@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.SpeechSharingProvenanceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:33:35.919Z" hostname="MINIFOXEY" time="0.212">
+  <properties/>
+  <testcase name="currentPermittedAnswerKeepsSelectedHostedSpeechButStaleAnswerStaysLocal" classname="com.halo.app.ai.SpeechSharingProvenanceTest" time="0.083"/>
+  <testcase name="unknownOrInvalidSpeechEventMetadataNeverGrantsRemoteAuthority" classname="com.halo.app.ai.SpeechSharingProvenanceTest" time="0.065"/>
+  <testcase name="locallyDerivedWorkspaceAnswerUsesOfflineSpeechWhenCloudWorkspaceIsDisabled" classname="com.halo.app.ai.SpeechSharingProvenanceTest" time="0.053"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -6,26 +6,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlinx.coroutines.async
 
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
+@org.robolectric.annotation.Config(manifest = org.robolectric.annotation.Config.NONE, sdk = [34])
 class RuntimeAiPolicyTest {
-    @Test fun workloadProfilesCannotAddAnotherCloudSharingSwitch() {
-        val storage = MapStorage()
-        val modes = PrivacyModeStore(storage)
+    @Test fun workloadChoicesAreIndependentAndCannotBypassPrivate() {
+        val modes = PrivacyModeStore(MapStorage())
+        val storage = modes.storage
         val preferences = WorkloadPreferences(storage)
         val workload = com.halo.sdk.provider.LocalWorkload.entries.first()
-        modes.set(PrivacyMode.CLOUD)
+        modes.acknowledgeSharing(); modes.set(PrivacyMode.CLOUD)
         assertTrue(preferences.profile(workload).allowRemote)
+        preferences.save(workload, preferences.profile(workload).copy(allowRemote = false))
+        assertFalse(preferences.profile(workload).allowRemote)
         modes.set(PrivacyMode.PRIVATE)
         assertFalse(preferences.profile(workload).allowRemote)
     }
-    @Test fun singleModeSurvivesRestartAndLegacyControlsCannotDisableCloudSharing() {
-        val storage = MapStorage()
-        val modes = PrivacyModeStore(storage)
+    @Test fun modeAndProfileChoicesSurviveRestartWithoutGrantingSpending() {
+        val disk = MapStorage()
+        val modes = PrivacyModeStore(disk)
+        val storage = modes.storage
         assertFalse(storage.readRuntimeAiContextPolicy().allowCloudImages)
-        modes.set(PrivacyMode.CLOUD)
+        modes.acknowledgeSharing(); modes.set(PrivacyMode.CLOUD)
         storage.writeRuntimeAiContextPolicy(com.halo.sdk.provider.AiContextPolicy())
-        assertTrue(PrivacyModeStore(storage).mode.value == PrivacyMode.CLOUD)
-        assertTrue(storage.readRuntimeAiContextPolicy().allowCloudMemories)
-        assertTrue(storage.getBoolean(com.halo.sdk.provider.PaidMediaPolicy.CONSENT_KEY, false))
+        assertTrue(PrivacyModeStore(disk).mode.value == PrivacyMode.CLOUD)
+        assertFalse(storage.readRuntimeAiContextPolicy().allowCloudMemories)
+        assertFalse(storage.getBoolean(com.halo.sdk.provider.PaidMediaPolicy.CONSENT_KEY, false))
         modes.set(PrivacyMode.PRIVATE)
         assertFalse(storage.getBoolean(KEY_CLOUD_IMAGES, true))
         assertFalse(storage.getBoolean(com.halo.sdk.provider.PaidMediaPolicy.CONSENT_KEY, true))
@@ -45,13 +50,16 @@ class RuntimeAiPolicyTest {
         finished.await()
     }
     @Test fun cloudModeEnablesAllContextWithoutIndividualSharingGrants() {
-        val storage = MapStorage().apply { putString("ai_privacy_mode_v1", "CLOUD") }
+        val modes = PrivacyModeStore(MapStorage())
+        modes.acknowledgeSharing(); modes.set(PrivacyMode.CLOUD)
+        val storage = modes.storage
         val policy = storage.readRuntimeAiContextPolicy()
         assertTrue(policy.includeMemories && policy.includeWorkspace && policy.includeImages && policy.includeAudio && policy.includeVideo)
         assertTrue(policy.allowCloudImages && policy.allowCloudMemories && policy.allowCloudWorkspace && policy.allowCloudScreenContext)
     }
     @Test fun privateModeOverridesEveryOldCloudGrant() {
         val storage = MapStorage().apply { putString("ai_privacy_mode_v1", "PRIVATE")
+            putBoolean(KEY_MEMORIES, true)
             putBoolean(KEY_CLOUD_IMAGES, true); putBoolean(KEY_CLOUD_WORKSPACE, true); putBoolean(KEY_CLOUD_SCREEN, true) }
         val policy = storage.readRuntimeAiContextPolicy()
         assertFalse(policy.allowCloudImages || policy.allowCloudMemories || policy.allowCloudWorkspace || policy.allowCloudScreenContext)

@@ -1,6 +1,7 @@
 package com.halo.app.di
 
 import kotlinx.coroutines.flow.stateIn
+import com.halo.sdk.provider.withRemoteDispatchPolicy
 import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import kotlinx.coroutines.flow.map
 import com.halo.runtime.cognition.ui.observation
@@ -99,7 +100,8 @@ object ManualDependencyGraph {
     val storageLayout by lazy { haloStorageLayout(applicationContext) }
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
-    val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
+    private val securedStorage by lazy { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) }
+    val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { privacyModes.storage } }
     val setupProgress by lazy { com.halo.app.ui.onboarding.SetupProgressStore(storage) }
     val appLanguagePreferences by lazy { com.halo.app.language.AppLanguagePreferences(storage) }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository, releaseSileroVad = { hostGraph.releaseSileroVad() }, allowSileroVadReload = { hostGraph.allowSileroVadReload() }) } }
@@ -140,26 +142,99 @@ object ManualDependencyGraph {
     }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
     val studyLessonStore by lazy { com.halo.app.ui.screens.study.StudyLessonStore(storage) }
-    val privacyModes by lazy { com.halo.app.ai.PrivacyModeStore(storage) }
+    val privacyModes by lazy { com.halo.app.ai.PrivacyModeStore(securedStorage).apply {
+        remoteAllowed = { kidsPreferences.let { it.loadedState.value && (!it.enabled.value || it.cloudAllowed.value) } }
+        configuredProviders = { configuredRemoteProviderIds() }
+    } }
+    val remoteDispatchPolicy by lazy { privacyModes.also { policy ->
+        val kids = kidsPreferences
+        infra.scope.launch {
+            kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed) { ready, enabled, cloud ->
+                Triple(ready, enabled, cloud)
+            }.collect { policy.invalidateAuthority() }
+        }
+    } }
+    private fun configuredRemoteProviderIds(): Set<String> = buildSet {
+        providerGraph.providers.aiProviders.forEach { provider ->
+            if (provider is com.halo.sdk.provider.CredentialProvider && provider.hasCredential() &&
+                provider.id !in setOf(com.halo.sdk.provider.RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE,
+                    com.halo.sdk.provider.RemoteProviderIds.OPENCODE_COMPANION)) add(provider.id)
+            if (provider.id == "provider.ollama" && !storage.getString("ollama_endpoint").isNullOrBlank()) add(provider.id)
+            if (provider.id == com.halo.sdk.provider.RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE &&
+                !storage.getString("custom_openai_compatible_endpoint").isNullOrBlank() &&
+                (provider as? com.halo.sdk.provider.CredentialProvider)?.hasCredential() == true) add(provider.id)
+            if (provider.id == com.halo.sdk.provider.RemoteProviderIds.OPENCODE_COMPANION &&
+                !storage.getString("opencode_companion_endpoint").isNullOrBlank()) add(provider.id)
+        }
+        if (!storage.getString("elevenlabs_api_key").isNullOrBlank()) add("provider.elevenlabs.tts")
+        // These are shipped transport owners. Their own account/server grants still apply.
+        add("web.public"); add("mcp.configured"); add("google.mail")
+    }
+    fun remoteSharingDestinations(): List<String> {
+        val configured = configuredRemoteProviderIds()
+        return providerGraph.providers.aiProviders.filter { it.id in configured }.map { it.displayName } +
+            if ("provider.elevenlabs.tts" in configured) listOf("ElevenLabs") else emptyList()
+    }
     fun setPrivacyMode(mode: com.halo.app.ai.PrivacyMode) {
         if (mode == com.halo.app.ai.PrivacyMode.CLOUD) {
             check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
-                "A grown-up must allow Power mode in Kids settings."
+                "A grown-up must allow Full Power mode in Kids settings."
             }
-            if (aiProviderRouter.routingPolicy.value == com.halo.sdk.provider.AiRoutingPolicy.LOCAL_ONLY)
-                aiProviderRouter.selectedProviderId.value?.let(aiProviderRouter::selectProvider)
         }
-        privacyModes.set(mode)
+        privacyModes.set(mode, recoverPrivate = { reloadProcessingOwners() }) {
+            val profile = privacyModes.profile(mode)
+            profile.providerId?.let { id ->
+                check(aiProviderRouter.getAllProviders().any { it.id == id }) { "The profile provider is unavailable. Review Mode profiles." }
+            }
+            reloadProcessingOwners()
+        }
         workspaceContext.refreshPolicy()
         contextPrivacyViewModel.refresh()
         if (mode == com.halo.app.ai.PrivacyMode.PRIVATE) speechSynthesisRegistry.stopCurrent()
+    }
+    fun enableFullPowerAfterDisclosure() {
+        check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
+            "A grown-up must allow Full Power mode in Kids settings."
+        }
+        privacyModes.acknowledgeSharing()
+        setPrivacyMode(com.halo.app.ai.PrivacyMode.CLOUD)
+    }
+    fun saveModeProfile(mode: com.halo.app.ai.PrivacyMode, profile: com.halo.app.ai.ModeProfile) {
+        check(kidsPreferences.loadedState.value && !kidsPreferences.enabled.value) { "A grown-up must edit mode profiles." }
+        profile.providerId?.let { id ->
+            check(aiProviderRouter.getAllProviders().any { it.id == id }) { "Provider unavailable" }
+            check(mode != com.halo.app.ai.PrivacyMode.PRIVATE || id == "provider.litert.local") { "Choose an on-device provider" }
+        }
+        privacyModes.edit(mode, prepare = { reloadProcessingOwners() },
+            recoverPrivate = { reloadProcessingOwners() }) { profile }
+        workspaceContext.refreshPolicy()
+        contextPrivacyViewModel.refresh()
+    }
+    private fun reloadProcessingOwners() {
+        aiProviderRouter.reloadProcessingProfile()
+        providerGraph.reloadPersistedSpeechSettings()
     }
     val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage,
         allowImages = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
         allowReference = { id -> workspaceMediaAiPolicy.permitsObject(id, false) }, privacyModes = privacyModes.mode) }
     val groundedWebSearchService by lazy { com.halo.app.online.GroundedWebSearchService(storage, aiProviderRouter,
         allowOnline = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+        client = com.halo.app.online.OpenRouterOnlineClient(remoteClient("openrouter", com.halo.sdk.provider.RemoteOperation.WEB,
+            setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT), metadataOnlyForGet = true)),
         privacyModes = privacyModes.mode) }
+    private fun remoteClient(provider: String, operation: com.halo.sdk.provider.RemoteOperation,
+        categories: Set<com.halo.sdk.provider.RemoteDataCategory>,
+        base: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
+            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+            .callTimeout(100, java.util.concurrent.TimeUnit.SECONDS).retryOnConnectionFailure(false).build(),
+        metadataOnlyForGet: Boolean = false,
+    ): okhttp3.OkHttpClient = base.withRemoteDispatchPolicy(remoteDispatchPolicy) { request ->
+        com.halo.sdk.provider.RemoteDispatchRequest(provider, operation,
+            if (metadataOnlyForGet && request.method == "GET") setOf(com.halo.sdk.provider.RemoteDataCategory.ACCOUNT_METADATA) else categories)
+    }
+    fun googleMailClient() = remoteClient("google.mail", com.halo.sdk.provider.RemoteOperation.CONNECTED_SERVICE,
+        setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT, com.halo.sdk.provider.RemoteDataCategory.ACCOUNT_METADATA))
     val notebookAssetRepository by lazy {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
@@ -871,6 +946,9 @@ object ManualDependencyGraph {
                 // MINING-P2-001: dynamic fallback exists but stays opt-in per call, and only runs
                 // when static extraction finds almost no readable text.
                 com.halo.app.di.tools.host.WebInsightTools(
+                    client = remoteClient("web.public", com.halo.sdk.provider.RemoteOperation.WEB,
+                        setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT),
+                        com.halo.app.di.tools.host.WebInsightTools.defaultClient()),
                     dynamicExtractor = dynamicPageExtractor,
                     privacyModes = privacyModes.mode,
                 ),
@@ -964,16 +1042,19 @@ object ManualDependencyGraph {
     val mcpSettingsService by lazy {
         com.halo.app.mcp.McpSettingsService(appDatabase.mcpDao(), mcpIntegrationManager, secretStore, ::syncMcpRegistry)
     }
-    private val mcpTransport by lazy { com.halo.app.mcp.HttpMcpTransport() }
+    private val mcpTransport by lazy { com.halo.app.mcp.HttpMcpTransport(remoteClient("mcp.configured",
+        com.halo.sdk.provider.RemoteOperation.CONNECTED_SERVICE,
+        setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT, com.halo.sdk.provider.RemoteDataCategory.WORKSPACE),
+        com.halo.app.mcp.HttpMcpTransport.defaultClient())) }
 
     /**
      * MINING-P2-001: isolated ephemeral WebView extractor. Constructed lazily and only when a page
      * actually needs rendered content; it is never created at startup.
      */
     private val dynamicPageExtractor by lazy {
-        com.halo.app.web.AndroidDynamicPageExtractor(applicationContext) {
-            storage.getBoolean("policy_dynamic_web_extraction", false)
-        }
+        com.halo.app.web.AndroidDynamicPageExtractor(applicationContext,
+            enabled = { storage.getBoolean("policy_dynamic_web_extraction", false) },
+            dispatchPolicy = privacyModes)
     }
 
     /**
@@ -1713,7 +1794,11 @@ object ManualDependencyGraph {
 
     val speechSynthesisRegistry by lazy {
         com.halo.app.ai.SpeechSynthesisRegistry(providers.ttsProviders,
-            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage, allowCloudSpeech = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
+            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage,
+            allowLocalFallback = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.PRIVATE || privacyModes.profile(com.halo.app.ai.PrivacyMode.CLOUD).localFallback },
+            allowCloudSpeech = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                com.halo.app.ai.OnlineFeature.SPEECH in privacyModes.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
+                kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
     }
 
     val localRolePackInstaller by lazy {

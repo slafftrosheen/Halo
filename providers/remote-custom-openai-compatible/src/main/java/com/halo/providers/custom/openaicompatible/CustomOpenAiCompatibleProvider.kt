@@ -1,5 +1,8 @@
 package com.halo.providers.custom.openaicompatible
 
+import kotlinx.coroutines.flow.flowOn
+import com.halo.sdk.provider.remoteAiContext
+
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.flow.Flow
@@ -58,13 +61,14 @@ class CustomOpenAiCompatibleProvider(
         syncEndpoint()
         return configured.testConnection()
     }
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
+        kotlinx.coroutines.withContext(storage.remoteAiContext(id, request, context)) {
         syncEndpoint()
-        return configured.generate(request, context)
+        configured.generate(request, context)
     }
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> {
         syncEndpoint()
-        return configured.stream(request, context)
+        return configured.stream(request, context).flowOn(storage.remoteAiContext(id, request, context))
     }
     override suspend fun listModels(): List<AiModel> {
         syncEndpoint()

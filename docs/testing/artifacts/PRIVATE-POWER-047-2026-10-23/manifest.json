@@ -1,0 +1,226 @@
+﻿{
+    "issue":  47,
+    "compiledSourceTrees":  {
+                                "app":  "14e737b9d9e6d4dbdfd426fac98200a1c1997c63",
+                                "runtime/cognition":  "09270c4ccca9f17f078617be56b35d34c5890333",
+                                "sdk/provider-sdk":  "c39ac3b8dc3f8315f30eff3b10e3dc0fdfe06c1a",
+                                "sdk/runtime-sdk":  "d90ca023c12bac49db508317a9c68bfaedb954ad",
+                                "engines/ai":  "72ac33081b1498ef5f3425ae664d8ffb1732a667",
+                                "providers":  "e41a30f7b87ac58c94e649a616aaaf2f77530496",
+                                "gradle":  "1abda22927922134b505db99baaf598a1f1b7f71"
+                            },
+    "apk":  {
+                "bytes":  287166217,
+                "sha256":  "11e6fb31e0878f9f3a04009092511c921b331a31bf28eaffeef82dc39a15bde0",
+                "binaryCommitted":  false
+            },
+    "instrumentationApk":  {
+                               "sha256":  "6c45bd7a75ddd6a266a3e3e27d21196bf2531b0db901a158e4a291bb4a530818",
+                               "binaryCommitted":  false
+                           },
+    "suites":  [
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ai.ModeProfileRoutingTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ai.ModeProfilesTest",
+                       "tests":  15,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ai.PrivacyModeRoutingTest",
+                       "tests":  2,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ai.RuntimeAiPolicyTest",
+                       "tests":  6,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ai.SpeechSharingProvenanceTest",
+                       "tests":  3,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.audio.SpeechPlaybackLifecycleTest",
+                       "tests":  19,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.data.agent.AgentRunRepositoryTest",
+                       "tests":  9,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.nativeactions.NativeMailRecreationTest",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.nativeactions.NativeRequestSharingTest",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.online.GroundedWebResultTest",
+                       "tests":  4,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.online.OnlineAdmissionTest",
+                       "tests":  16,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.online.OnlineOperationLedgerTest",
+                       "tests":  6,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.online.OnlineProviderProblemTest",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.components.ModeSharingVisualTest",
+                       "tests":  6,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.settings.RemoteImagePermissionTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.settings.SpeechSelectionPersistenceTest",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.context.InferenceContextBudgetTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest",
+                       "tests":  7,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.turn.AgentContinuationTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.turn.ApprovalContractTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.turn.CognitiveResponseCommitterLifecycleTest",
+                       "tests":  3,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.turn.StreamingSpeechEligibilityTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "sdk/provider-sdk",
+                       "name":  "com.halo.sdk.provider.GuardedRemoteClientTest",
+                       "tests":  9,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "providers/elevenlabs-tts",
+                       "name":  "com.halo.providers.elevenlabs.tts.ElevenLabsTtsProviderTest",
+                       "tests":  4,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   }
+               ],
+    "renders":  [
+                    "com.halo.app.ui.components.ModeSharingVisualTest.dark412.png",
+                    "com.halo.app.ui.components.ModeSharingVisualTest.dismissNeverConfirmsSharing.png",
+                    "com.halo.app.ui.components.ModeSharingVisualTest.english360.png",
+                    "com.halo.app.ui.components.ModeSharingVisualTest.landscape200.png",
+                    "com.halo.app.ui.components.ModeSharingVisualTest.latvian200Dark.png",
+                    "com.halo.app.ui.components.ModeSharingVisualTest.russian200.png"
+                ],
+    "deviceEvidence":  "device/device-observations.json",
+    "privateRawCapturesCommitted":  false,
+    "githubActionsRun":  false
+}

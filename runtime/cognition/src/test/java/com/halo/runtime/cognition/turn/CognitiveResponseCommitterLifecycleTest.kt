@@ -20,6 +20,19 @@ class CognitiveResponseCommitterLifecycleTest {
         override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = flow {}
     }
 
+    @Test fun spokenModelAnswerRetainsAdmittedCategoriesAndOriginalSharingRevision() = runTest {
+        val bus = RecordingBus(); val store = InMemoryConversationStore()
+        val committer = DefaultCognitiveResponseCommitter(store, null, bus)
+        committer.commit(CognitiveResponseCommit(null, InteractionId("fixture"), "fixture", "synthetic",
+            AiResponse("Synthetic answer.", providerId = "on-device"), ResponseDelivery.SPEECH_AND_VISUAL,
+            SpeechOutputTarget.Phone, SpeechOutputFallback.DISALLOW_PHONE, null, emptyMap(),
+            remoteProvenance = com.halo.sdk.provider.RemoteDispatchProvenance(
+                setOf(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE, com.halo.sdk.provider.RemoteDataCategory.SCREEN), 47)))
+        val spoken = bus.events.filterIsInstance<TtsRequested>().single()
+        assertEquals(setOf("WORKSPACE", "SCREEN"), spoken.remoteDataCategories)
+        assertEquals(47L, spoken.remoteDispatchRevision)
+    }
+
     @Test fun nonterminalActionIsVisibleButNotRecordedAsCompletedAndTerminalReceiptIsIdempotent() = runTest {
         val bus = RecordingBus()
         val store = InMemoryConversationStore()

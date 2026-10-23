@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.provider.GuardedRemoteClientTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:34:32.750Z" hostname="MINIFOXEY" time="1.5">
+  <properties/>
+  <testcase name="derivedWorkspaceToolArgumentsCannotBeRelabeledAsPlainWebText" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.405"/>
+  <testcase name="queuedCallCannotBorrowAuthorityAfterPrivatePowerPrivatePower" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.04"/>
+  <testcase name="oldToolProvenanceCannotBorrowANewerTypedProviderIntent" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.004"/>
+  <testcase name="inheritedIntentCannotAuthorizeAnotherProvider" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.003"/>
+  <testcase name="redirectsDoNotDelegateToAnUndisclosedDestination" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.006"/>
+  <testcase name="privateRejectsBeforeDnsConnectOrRequestBytesForEveryOwnerClass" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.014"/>
+  <testcase name="leaseSurvivesResponseHeadersAndCancelsAnActiveBody" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="1.005"/>
+  <testcase name="typedProviderHelpersCannotReplaceAnInheritedProvider" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.007"/>
+  <testcase name="httpErrorResponsesNeverProduceCompletedReceipts" classname="com.halo.sdk.provider.GuardedRemoteClientTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

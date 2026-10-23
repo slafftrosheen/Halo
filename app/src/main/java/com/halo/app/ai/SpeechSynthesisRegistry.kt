@@ -19,13 +19,17 @@ class SpeechSynthesisRegistry(
     val selector: SpeechProviderSelector,
     private val storage: Storage,
     private val allowCloudSpeech: () -> Boolean = { true },
+    private val allowLocalFallback: () -> Boolean = { true },
 ) {
     private val stopEpoch = java.util.concurrent.atomic.AtomicLong()
     fun pin(request: SpeechRequest, explicitPreviewProviderId: String? = null,
         requiredProviderId: String? = null,
         localOnly: Boolean = false): Pair<PcmSpeechSynthesisProvider, SpeechRequest> {
         val epoch = stopEpoch.get()
-        val privateOnly = localOnly || !allowCloudSpeech()
+        val privateMaterial = request.remoteProvenance?.let {
+            (storage as? ModeProfileStorage)?.allowsCategories(it) != true
+        } == true
+        val privateOnly = localOnly || privateMaterial || !allowCloudSpeech()
         val android = providers.first { it.metadata.id == "provider.android.tts" }
         val liveSelection = selector.ttsSelection.value.id
         require(requiredProviderId == null || requiredProviderId == liveSelection) {
@@ -44,11 +48,15 @@ class SpeechSynthesisRegistry(
         // Private material is never silently handed to a network voice, even if
         // an account's general assistant TTS preference is cloud-based.
         if (explicitPreviewProviderId != null && !allowCloudSpeech() && !configured.metadata.local)
-            error("Cloud voice needs Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval.")
-        val selected = if(privateOnly && !configured.metadata.local) android else configured
+            error("Cloud voice needs Full Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval.")
+        val selected = if (privateOnly && !configured.metadata.local) {
+            if (localOnly || privateMaterial) android else error("The selected speech provider needs Full Power. Choose an on-device voice in Mode profiles.")
+        } else configured
         // The only path around audible qualification is an explicit user-initiated
         // provider preview. Normal production turns never receive this flag.
-        val safeRequest = if(privateOnly && selected === android)
+        // The Android engine is an OS-owned service without Halo's remote dispatch
+        // contract. Admit only a voice explicitly marked offline in either profile.
+        val safeRequest = if(selected === android)
             request.copy(voiceSettings=request.voiceSettings + ("_haloOfflineOnly" to 1.0))
         else request
         val previewRequest = if (explicitPreviewProviderId == com.halo.app.audio.SupertonicSpeechProvider.ID)
@@ -56,7 +64,7 @@ class SpeechSynthesisRegistry(
         else safeRequest
         val pinned = (selected as? SegmentedPcmSpeechProvider)?.pinSpeechRequest(previewRequest)
             ?: (selected as? ElevenLabsTtsProvider)?.pin(previewRequest) ?: previewRequest
-        val allowFallback = explicitPreviewProviderId == null && storage.getBoolean(FALLBACK, true)
+        val allowFallback = explicitPreviewProviderId == null && storage.getBoolean(FALLBACK, true) && allowLocalFallback()
         Log.i("HALO_TTS_PROVIDER_RESOLVED", "requested=$id; effective=${selected.metadata.id}; fallbackAllowed=$allowFallback")
         var fallbackUsed = false
         var hasProducedPcm = false
@@ -67,10 +75,10 @@ class SpeechSynthesisRegistry(
                 throw CancellationException("Cloud speech permission changed")
         }
         fun androidRequest(request: SpeechRequest) = request.copy(voiceId = null, modelId = null,
-            voiceSettings = if (privateOnly || !allowCloudSpeech()) mapOf("_haloOfflineOnly" to 1.0) else emptyMap())
+            voiceSettings = mapOf("_haloOfflineOnly" to 1.0))
         fun primaryRequest(request: SpeechRequest): SpeechRequest {
             val current = pinned.copy(text = request.text)
-            return if (selected === android && !allowCloudSpeech())
+            return if (selected === android)
                 current.copy(voiceSettings = current.voiceSettings + ("_haloOfflineOnly" to 1.0)) else current
         }
         val wrapper = object : SegmentedPcmSpeechProvider, SpeechSynthesisProvider by selected {

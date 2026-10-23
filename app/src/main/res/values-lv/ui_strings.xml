@@ -580,25 +580,25 @@
     <string name="ui_13e10588f9f9" formatted="false">"Pakalpojumu sniedzēja iestatīšana"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Lokālais tīkls"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Mākonis"</string>
-    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
-    <string name="ui_d47b51ac5c4a" formatted="false">"Power režīms"</string>
-    <string name="ui_f7c25d67b4c2" formatted="false">"Privātais režīms / Power"</string>
-    <string name="ui_a0f62566edfc" formatted="false">"MI apstrāde paliek šajā tālrunī. Power funkcijas ir izslēgtas."</string>
-    <string name="ui_7be2dcda5a77" formatted="false">"MI apstrāde paliek šajā tālrunī. Power funkcijas ir izslēgtas."</string>
-    <string name="ui_f95736e4ba58" formatted="false">"Power režīmā sarunas, attēli, atmiņas un darbvieta var tikt nosūtīti atlasītajam pakalpojumu sniedzējam. Var tikt piemērota maksa."</string>
-    <string name="ui_91d1493a8e85" formatted="false">"Viens slēdzis ekrāna augšdaļā pārvalda datu kopīgošanu. Režīmu profilos tiek glabāti atsevišķi Private un Power iestatījumi."</string>
+    <string name="ui_848e96567d6b" formatted="false">"Pilna jauda"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Pilnas jaudas režīms"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Privāts / Pilna jauda"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"MI apstrāde notiek šajā tālrunī. Pilnas jaudas iespējas ir izslēgtas."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"MI apstrāde notiek šajā tālrunī. Pilnas jaudas iespējas ir izslēgtas."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"Pilnas jaudas režīmā sarunas, attēli, atmiņas un darbvietas materiāli var tikt nosūtīti izvēlētajam pakalpojumam. Pakalpojuma sniedzējs var iekasēt maksu."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"Slēdzis katra ekrāna augšdaļā nosaka kopīgošanu. Režīmu profilos privātā režīma un pilnas jaudas izvēles tiek glabātas atsevišķi."</string>
     <string name="ui_b78e8b0ee157" formatted="false">"Šis slēdzis pārvalda datu kopīgošanu halo atbalstītajām tiešsaistes funkcijām."</string>
-    <string name="ui_91e23dc2c14e" formatted="false">"Šai darbībai vajadzīgs Power režīms. Ieslēdziet to ar slēdzi halo ekrāna augšdaļā."</string>
-    <string name="ui_c3b89f7b634c" formatted="false">"Pārslēgt uz Power"</string>
-    <string name="ui_2ff19ca13b1f" formatted="false">"Neizdevās ieslēgt Power režīmu. Pārbaudiet bērnu režīma iestatījumus vai mēģiniet vēlreiz."</string>
-    <string name="ui_ec07e6b3552b" formatted="false">"Pieaugušajam jāatļauj Power režīms bērnu režīma iestatījumos."</string>
-    <string name="ui_7c81ad053a8f" formatted="false">"Ieslēdziet Power režīmu halo ekrāna augšdaļā."</string>
-    <string name="ui_914a820f10fd" formatted="false">"Mākoņa balsij vajadzīgs Power režīms. Ieslēdziet to ar slēdzi halo ekrāna augšdaļā. Bērnu sesijām vajadzīga arī pieaugušā atļauja."</string>
-    <string name="ui_b7b8b4725c30" formatted="false">"Mākoņa apstrāde ir izslēgta. Ieslēdziet Power režīmu ar slēdzi halo ekrāna augšdaļā vai izvēlieties ierīces modeli. Bērnu sesijām vajadzīga arī pieaugušā atļauja."</string>
-    <string name="ui_80bb16adde05" formatted="false">"Šo attēlu nedrīkst kopīgot mākonī. Izmantojiet Private / Power slēdzi halo ekrāna augšdaļā."</string>
-    <string name="ui_a8f9f96f6425" formatted="false">"Multivides kopīgošana ir atkarīga no Private / Power slēdža halo ekrāna augšdaļā."</string>
-    <string name="ui_e5a3e94e5574" formatted="false">"Failu kopīgošana ir atkarīga no Private / Power slēdža halo ekrāna augšdaļā."</string>
-    <string name="ui_eede4c33bb88" formatted="false">"Atmiņas kopīgošana ir atkarīga no Private / Power slēdža halo ekrāna augšdaļā."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"Šai darbībai vajadzīgs pilnas jaudas režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Ieslēgt pilnu jaudu"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Neizdevās ieslēgt pilnu jaudu. Pārbaudiet bērnu režīma iestatījumus un mēģiniet vēlreiz."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"Pieaugušajam jāatļauj pilnas jaudas režīms bērnu režīma iestatījumos."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Ieslēdziet pilnas jaudas režīmu Halo ekrāna augšdaļā."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Tiešsaistes balsij vajadzīgs pilnas jaudas režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā. Bērnu sesijām vajadzīga arī pieaugušā atļauja."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Attālinātā apstrāde ir izslēgta. Izmantojiet slēdzi Privāts / Pilna jauda Halo ekrāna augšdaļā vai izvēlieties ierīces modeli. Bērnu sesijām vajadzīga arī pieaugušā atļauja."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Šo attēlu nedrīkst kopīgot attālināti. Pārskatiet režīmu profilus un attēla piekļuves iestatījumus."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Multivides kopīgošanu nosaka aktīvā režīma profils."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"Failu kopīgošanu nosaka aktīvā režīma profils un faila piekļuves iestatījumi."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Atmiņu kopīgošanu nosaka aktīvā režīma profils."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Noklusējuma sarunu modelis"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Modeļu lomas"</string>
     <string name="ui_dff99ddda166" formatted="false">"Attēli un vizuālais konteksts"</string>

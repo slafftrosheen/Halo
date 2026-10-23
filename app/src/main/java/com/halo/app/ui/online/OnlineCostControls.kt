@@ -103,7 +103,23 @@ import java.util.Date
         }) { Text(stringResource(R.string.online_save)) }
         TextButton(onClick = { readLocal() }, enabled = !busy) { Text(stringResource(R.string.online_refresh)) }
         HorizontalDivider()
-        Text(com.halo.app.language.uiText("Media sharing follows the Private / Power switch at the top of Halo."), style = MaterialTheme.typography.bodySmall)
+        com.halo.app.ui.workspace.HaloWorkspaceToggleRow(stringResource(R.string.mode47_media_consent), enabled,
+            onCheckedChange = { allow ->
+                if (allow) confirmMedia = true
+                else scope.launch {
+                    busy = true
+                    try {
+                        withContext(Dispatchers.IO) {
+                            check(graph.kidsPreferences.loadedState.value && !graph.kidsPreferences.enabled.value)
+                            storage.putBoolean(PaidMediaPolicy.CONSENT_KEY, false)
+                        }
+                        readLocal()
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { error = OnlineProblem.LEDGER_UNAVAILABLE }
+                    finally { busy = false }
+                }
+            }, enabled = canChange && !busy)
+        Text(stringResource(R.string.mode47_media_explanation), style = MaterialTheme.typography.bodySmall)
         if (!kidsLoaded || kids) Text(stringResource(R.string.online_child_restricted), style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
         TextButton(onClick = { runCatching { uri.openUri("https://openrouter.ai/settings/keys") } }) {
@@ -132,4 +148,20 @@ import java.util.Date
         error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error)
             if (it == OnlineProblem.LOCAL_ONLY) com.halo.app.ui.components.CloudModeResolution() }
     }
+    if (confirmMedia) AlertDialog(onDismissRequest = { confirmMedia = false },
+        title = { Text(stringResource(R.string.mode47_media_consent)) },
+        text = { Text(stringResource(R.string.mode47_media_explanation)) },
+        confirmButton = { TextButton(enabled = canChange && !busy, onClick = { scope.launch {
+            busy = true
+            try {
+                withContext(Dispatchers.IO) {
+                    check(graph.kidsPreferences.loadedState.value && !graph.kidsPreferences.enabled.value)
+                    storage.putBoolean(PaidMediaPolicy.CONSENT_KEY, true)
+                }
+                confirmMedia = false; readLocal()
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { error = OnlineProblem.LEDGER_UNAVAILABLE }
+            finally { busy = false }
+        } }) { Text(stringResource(android.R.string.ok)) } },
+        dismissButton = { TextButton(onClick = { confirmMedia = false }) { Text(stringResource(android.R.string.cancel)) } })
 }

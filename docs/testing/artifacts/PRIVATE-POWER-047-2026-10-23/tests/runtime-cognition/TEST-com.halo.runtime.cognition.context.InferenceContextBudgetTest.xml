@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.context.InferenceContextBudgetTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:36:03.945Z" hostname="MINIFOXEY" time="0.43">
+  <properties/>
+  <testcase name="projectionRetainsNewestPairsAndNeverMutatesDurableHistory" classname="com.halo.runtime.cognition.context.InferenceContextBudgetTest" time="0.383"/>
+  <testcase name="provisionalProfileIsLimitedToSmallLocalModels" classname="com.halo.runtime.cognition.context.InferenceContextBudgetTest" time="0.016"/>
+  <testcase name="newestSuffixStopsAtFirstNonFittingPairAndCountsOriginalOmissions" classname="com.halo.runtime.cognition.context.InferenceContextBudgetTest" time="0.005"/>
+  <testcase name="requiredWorkingSetOutranksOldChatAndIsOutsideHistoryBudget" classname="com.halo.runtime.cognition.context.InferenceContextBudgetTest" time="0.016"/>
+  <testcase name="turnLimitAlsoKeepsCompletePairsWithoutInvokingSummarizer" classname="com.halo.runtime.cognition.context.InferenceContextBudgetTest" time="0.006"/>
+  <system-out><![CDATA[[HALO_TOOL_EXPOSURE] mode=AGENTIC count=0 reason=TOOLS_NOT_NEEDED
+HALO_CONTEXT_PROJECTION provider=unknown model=unknown location=ON_DEVICE surface=TEXT availableWindow=8192 performanceBudget=256 historyMessagesBefore=80 historyMessagesAfter=8 historyEstimatedTokensBefore=1910 historyEstimatedTokensAfter=192 compacted=true
+[HALO_CONTEXT_BUDGET] window=8192 reserved=1024 dynamic=7168 request=5 remaining=6971
+[HALO_TOOL_EXPOSURE] mode=AGENTIC count=0 reason=TOOLS_NOT_NEEDED
+HALO_CONTEXT_PROJECTION provider=unknown model=unknown location=ON_DEVICE surface=TEXT availableWindow=8192 performanceBudget=512 historyMessagesBefore=80 historyMessagesAfter=16 historyEstimatedTokensBefore=1910 historyEstimatedTokensAfter=384 compacted=true
+[HALO_CONTEXT_BUDGET] window=8192 reserved=1024 dynamic=7168 request=5 remaining=6779
+[HALO_TOOL_EXPOSURE] mode=AGENTIC count=0 reason=TOOLS_NOT_NEEDED
+HALO_CONTEXT_PROJECTION provider=unknown model=unknown location=ON_DEVICE surface=TEXT availableWindow=8192 performanceBudget=1024 historyMessagesBefore=80 historyMessagesAfter=32 historyEstimatedTokensBefore=1910 historyEstimatedTokensAfter=768 compacted=true
+[HALO_CONTEXT_BUDGET] window=8192 reserved=1024 dynamic=7168 request=5 remaining=6395
+[HALO_TOOL_EXPOSURE] mode=AGENTIC count=0 reason=TOOLS_NOT_NEEDED
+HALO_CONTEXT_PROJECTION provider=unknown model=unknown location=ON_DEVICE surface=TEXT availableWindow=4096 performanceBudget=256 historyMessagesBefore=60 historyMessagesAfter=2 historyEstimatedTokensBefore=4080 historyEstimatedTokensAfter=136 compacted=true
+[HALO_CONTEXT_BUDGET] window=4096 reserved=1024 dynamic=3072 request=3 remaining=2808
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

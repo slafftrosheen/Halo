@@ -14,7 +14,7 @@ class PrivacyModeRoutingTest {
         val router = ParentControlledAiRouter(delegate, { mode.value == PrivacyMode.CLOUD }, mode.map { it == PrivacyMode.CLOUD })
         router.selectProvider("cloud")
         try { router.execute(AiRequest(text = "private"), AiContext.EMPTY); fail("Cloud must stay blocked") }
-        catch (failure: AiProviderException) { assertTrue(failure.message.orEmpty().contains("Private / Cloud")) }
+        catch (failure: AiProviderException) { assertTrue(failure.message.orEmpty().contains("Private / Full Power")) }
         assertEquals(0, delegate.cloudCalls)
         mode.value = PrivacyMode.CLOUD
         assertEquals("cloud", router.execute(AiRequest(text = "synthetic"), AiContext.EMPTY).providerId)

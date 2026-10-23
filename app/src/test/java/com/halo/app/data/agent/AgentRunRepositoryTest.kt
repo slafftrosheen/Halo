@@ -19,6 +19,31 @@ import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 class AgentRunRepositoryTest {
+    @Test fun modelToolProvenanceSurvivesRoomReopenAndHistoricalMissingStaysUnknown() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "mode47-provenance-fixture.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name).allowMainThreadQueries().build()
+        var db = open()
+        try {
+            val at = Instant.now(); val id = AgentRunId("fixture")
+            val store = RoomAgentRunRepository(db)
+            store.create(AgentRun(id, InteractionId("fixture"), "synthetic", AgentRunState.WAITING_FOR_APPROVAL,
+                createdAt = at, updatedAt = at))
+            val prepared = AgentStep.ToolInvocationPrepared(AgentStepId("prepared"), id, at,
+                ToolInvocationId("invocation"), "call", "halo_fetch_url", "{}", "digest", "key", 1, "SAFE",
+                remoteDataCategories = setOf("WORKSPACE", "SCREEN"), remoteDispatchRevision = 71)
+            assertTrue(store.appendStep(prepared))
+            assertTrue(store.appendStep(prepared.copy(id = AgentStepId("historical"), toolCallId = "old-call",
+                idempotencyKey = "old-key", remoteDataCategories = null, remoteDispatchRevision = null)))
+            db.close(); db = open()
+            val rows = RoomAgentRunRepository(db).get(id)!!.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            assertEquals(setOf("WORKSPACE", "SCREEN"), rows.first { it.toolCallId == "call" }.remoteDataCategories)
+            assertEquals(71L, rows.first { it.toolCallId == "call" }.remoteDispatchRevision)
+            assertNull(rows.first { it.toolCallId == "old-call" }.remoteDataCategories)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
     @Test fun `phone workflow parent and child survive Room reopen with no executable payload`() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "native-phone-parent.db"

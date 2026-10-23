@@ -45,8 +45,7 @@ class ContextPrivacyViewModel(private val storage: Storage,
     }
     fun update(change: (AiContextPolicy) -> AiContextPolicy) {
         val requested = change(storage.readRuntimeAiContextPolicy())
-        val updated = requested.copy(allowCloudImages = requested.allowCloudImages &&
-            storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false))
+        val updated = requested
         storage.writeRuntimeAiContextPolicy(updated); current.value = updated
     }
 
@@ -65,8 +64,8 @@ fun ContextPrivacyScreen(viewModel: ContextPrivacyViewModel, onBack: () -> Unit,
     val policy by viewModel.policy.collectAsStateWithLifecycle()
     var costs by remember { mutableStateOf(false) }
     LaunchedEffect(viewModel) { viewModel.refresh() }
-    ContextPrivacyContent(policy, viewModel::update, onBack, onAdvanced, onPermissions,
-        onCosts = { costs = true })
+    ModeProfilesScreen(onBack, onAdvanced, onPermissions, onCosts = { costs = true },
+        clearLegacyHistory = { com.halo.app.di.ManualDependencyGraph.sharedAnswerHistory.clear() })
     if (costs) com.halo.app.ui.online.OnlineCostDialog {
         costs = false; viewModel.refresh()
     }
@@ -123,11 +122,11 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        item { HaloSettingsSection(uiText("Private / Power")) {
-            Text(uiText(if (policy.allowCloudImages) "Power mode" else "Private mode"), style = MaterialTheme.typography.titleMedium)
+        item { HaloSettingsSection(uiText("Private / Full Power")) {
+            Text(uiText(if (policy.allowCloudImages) "Full Power mode" else "Private mode"), style = MaterialTheme.typography.titleMedium)
             Text(uiText(if (policy.allowCloudImages)
-                "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."
-                else "Everything stays on this phone. Power features are off."))
+                "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."
+                else "Everything stays on this phone. Full Power features are off."))
             Text(uiText("This switch controls sharing for supported online Halo features."))
             Text(uiText("Android permissions, Kids restrictions, spending limits, and action confirmations still apply."), style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = onCosts) { Text(stringResource(R.string.online_costs)) }

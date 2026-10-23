@@ -204,6 +204,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("toolId", step.toolId).put("argumentsJson", step.argumentsJson)
                     .put("argumentsDigest", step.argumentsDigest).put("idempotencyKey", step.idempotencyKey)
                     .put("descriptorVersion", step.descriptorVersion).put("replaySafety", step.replaySafety)
+                step.remoteDataCategories?.let { payload.put("remoteDataCategories", JSONArray(it.toList())) }
+                step.remoteDispatchRevision?.let { payload.put("remoteDispatchRevision", it) }
                 "ToolInvocationPrepared"
             }
             is AgentStep.ToolExecutionClaimed -> {
@@ -408,7 +410,13 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             "ToolInvocationPrepared" -> AgentStep.ToolInvocationPrepared(step, run, at,
                 ToolInvocationId(p.getString("invocationId")), call, tool, p.optString("argumentsJson", "{}"),
                 p.optString("argumentsDigest"), p.optString("idempotencyKey", id),
-                p.optInt("descriptorVersion", 0), p.optString("replaySafety", "NEVER_REPLAY"))
+                p.optInt("descriptorVersion", 0), p.optString("replaySafety", "NEVER_REPLAY"),
+                remoteDataCategories = p.optJSONArray("remoteDataCategories")?.let { array ->
+                    require(array.length() <= com.halo.sdk.provider.RemoteDataCategory.entries.size)
+                    (0 until array.length()).map { array.getString(it) }.toSet()
+                },
+                remoteDispatchRevision = if (p.has("remoteDispatchRevision") && !p.isNull("remoteDispatchRevision"))
+                    p.getLong("remoteDispatchRevision") else null)
             "ToolExecutionClaimed" -> AgentStep.ToolExecutionClaimed(step, run, at,
                 ToolInvocationId(p.getString("invocationId")), call, tool,
                 p.optString("idempotencyKey", idempotencyKey ?: id), p.optString("replaySafety", "NEVER_REPLAY"))

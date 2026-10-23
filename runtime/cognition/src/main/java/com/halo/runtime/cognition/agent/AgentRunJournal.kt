@@ -247,6 +247,9 @@ sealed interface AgentStep {
         val idempotencyKey: String,
         val descriptorVersion: Int,
         val replaySafety: String,
+        /** Enum names only. Null denotes historical unknown provenance, never empty authority. */
+        val remoteDataCategories: Set<String>? = null,
+        val remoteDispatchRevision: Long? = null,
     ) : AgentStep
 
     /** Persisted before the executor runs. No proof of external dispatch. */

@@ -1,5 +1,8 @@
 package com.halo.providers.gemini
 
+import com.halo.sdk.provider.remoteAiContext
+import com.halo.sdk.provider.remoteImageContext
+
 import android.util.Base64
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
@@ -171,7 +174,7 @@ class GeminiProvider(
         }.distinctBy { it.id }
     }
 
-    override suspend fun generateImage(request: com.halo.sdk.provider.AiImageRequest): com.halo.sdk.provider.AiImageResult = withContext(Dispatchers.IO) {
+    override suspend fun generateImage(request: com.halo.sdk.provider.AiImageRequest): com.halo.sdk.provider.AiImageResult = withContext(Dispatchers.IO + storage.remoteImageContext(id, request)) {
         require(request.modelId.contains("image", true) && request.prompt.isNotBlank())
         val parts = JSONArray().put(JSONObject().put("text", request.prompt))
         request.reference?.let { bytes -> parts.put(JSONObject().put("inlineData", JSONObject()
@@ -189,7 +192,7 @@ class GeminiProvider(
         }
     }
 
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO + storage.remoteAiContext(id, request, context)) {
         val model = request.modelId?.takeIf { it.isNotBlank() }
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Select a Gemini model first")
         val body = buildRequestBody(request, context).toString().toRequestBody(JSON)
@@ -209,7 +212,7 @@ class GeminiProvider(
         } catch (error: Exception) {
             emit(AiStreamEvent.Failed(error))
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO + storage.remoteAiContext(id, request, context))
 
     private fun authenticatedRequest(url: String): Request.Builder {
         val builder = Request.Builder().url(url).header("content-type", "application/json")
@@ -468,7 +471,7 @@ class GeminiProvider(
         ProviderReadiness.ConfiguredCold,
     )
 
-    private companion object {
+    companion object {
         const val ID = "gemini"
         const val API_KEY_STORAGE = "gemini_api_key"
         const val PROJECT_ID_STORAGE = "gemini_project_id"

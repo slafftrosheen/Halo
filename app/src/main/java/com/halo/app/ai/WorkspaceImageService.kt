@@ -27,6 +27,8 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
     val providers get() = router.getAllProviders().filterIsInstance<AiImageProvider>()
     fun lastChoice(): Pair<String?, String?> = storage.getString("workspace_image_provider") to storage.getString("workspace_image_model")
     suspend fun catalogue(providerId: String? = null): WorkspaceImageCatalogue = withContext(Dispatchers.IO) {
+        if (!storage.remoteFeatureEnabled(OnlineFeature.IMAGES)) return@withContext WorkspaceImageCatalogue(emptyList(),
+            listOf("This online feature is off in the active mode profile. Review Mode profiles."))
         val choices = mutableListOf<WorkspaceImageChoice>(); val failures = mutableListOf<String>()
         for (provider in providers.filter { providerId == null || it.id == providerId }) {
             try {
@@ -72,7 +74,8 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
             validate(choice, prompt, bytes, mime, referenceObjectId)
             if (approvedFingerprint != fingerprint(provider, choice, prompt, bytes, mime, referenceObjectId))
                 throw OnlineOperationRejected(OnlineProblem.CONSENT_EXPIRED)
-            val result = whileCloudMode(privacyModes) { withTimeout(180_000) { provider.generateImage(AiImageRequest(choice.model.id, prompt.trim(), bytes, mime)) } }
+            val result = whileCloudMode(privacyModes) { withTimeout(180_000) { provider.generateImage(AiImageRequest(choice.model.id, prompt.trim(), bytes, mime,
+                contextCategories = if (bytes != null && referenceObjectId != null) setOf(RemoteDataCategory.WORKSPACE) else emptySet())) } }
             if (result.bytes.size !in 1..32_000_000)
                 throw WorkspaceImageUnavailable("This model returned an unsupported image format or size. Choose a raster image model and retry.")
             val bounds = android.graphics.BitmapFactory.Options().also { it.inJustDecodeBounds = true }
@@ -98,8 +101,11 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
         if (!allowImages()) throw WorkspaceImageUnavailable("Cloud images are off in Kids mode. Ask a grown-up, or draw in Canvas instead.")
         val policy = storage.readRuntimeAiContextPolicy()
         if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE)
-            throw WorkspaceImageUnavailable("This action needs Power mode. Use the switch at the top of Halo.")
-        if (!policy.allowCloudWorkspace || router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY)
+            throw WorkspaceImageUnavailable("This action needs Full Power mode. Use the switch at the top of Halo.")
+        if (!storage.remoteFeatureEnabled(OnlineFeature.IMAGES))
+            throw WorkspaceImageUnavailable("This online feature is off in the active mode profile. Review Mode profiles.")
+        if (reference != null && referenceObjectId != null && !policy.allowCloudWorkspace ||
+            storage !is ModeProfileStorage && router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY)
             throw WorkspaceImageUnavailable("Enable cloud workspace sharing in Privacy and allow cloud routing before generating images.")
         if (reference != null && !policy.allowCloudImages)
             throw WorkspaceImageUnavailable("Enable cloud image sharing in Privacy before sending a reference image for editing.")
@@ -107,7 +113,7 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
         if (reference == null && choice.model.requiresReference)
             throw WorkspaceImageUnavailable("This model needs a reference image. Open an image in Notebook or Canvas to edit it.")
         if (reference != null && referenceObjectId != null && !allowReference(referenceObjectId))
-            throw WorkspaceImageUnavailable("Cloud sharing is not allowed for this image. Use the Private / Power switch at the top of Halo.")
+            throw WorkspaceImageUnavailable("Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of Halo.")
         require(reference == null || (reference.size in 1..32_000_000 && mime in setOf("image/png", "image/jpeg", "image/webp")))
         if (reference != null && !choice.model.supportsEditing) throw WorkspaceImageUnavailable("Choose an image model that supports editing.")
         return providers.firstOrNull { it.id == choice.providerId } ?: throw WorkspaceImageUnavailable("Image provider is unavailable")

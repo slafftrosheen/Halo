@@ -1,5 +1,8 @@
 package com.halo.providers.openrouter
 
+import com.halo.sdk.provider.remoteImageContext
+import com.halo.sdk.provider.remoteAiContext
+
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import okhttp3.MediaType.Companion.toMediaType
@@ -165,7 +168,7 @@ class OpenRouterProvider(
         }
     }
 
-    override suspend fun generateImage(request: AiImageRequest): AiImageResult = withContext(Dispatchers.IO) {
+    override suspend fun generateImage(request: AiImageRequest): AiImageResult = withContext(Dispatchers.IO + storage.remoteImageContext(id, request)) {
         throwIfCoolingDown()
         val key = apiKey ?: throw missingApiKey()
         // The endpoint defaults to one image; some edit models do not accept the optional n parameter.
@@ -191,7 +194,7 @@ class OpenRouterProvider(
         } catch (error: AiProviderException) { _status.value = providerStatus(error); throw error }
     }
 
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO + storage.remoteAiContext(id, request, context)) {
         throwIfCoolingDown()
         val key = apiKey ?: throw missingApiKey()
         val actualModel = resolveModel(request.modelId ?: selectedModelId)
@@ -379,7 +382,7 @@ class OpenRouterProvider(
             _status.value = providerStatus(failure)
             emit(AiStreamEvent.Failed(failure))
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO + storage.remoteAiContext(id, request, context))
 
     override suspend fun refreshModels(): List<AiModel> {
         storage.remove(MODEL_CATALOG_REFRESHED_AT_KEY)
@@ -849,7 +852,7 @@ class OpenRouterProvider(
         readiness = ProviderReadiness.ConfiguredCold,
     )
 
-    private companion object {
+    companion object {
         const val FREE_ROUTER_ID = "openrouter/free"
         const val MODEL_CATALOG_CACHE_KEY = "openrouter_model_catalog_v1"
         const val MODEL_CATALOG_REFRESHED_AT_KEY = "openrouter_model_catalog_refreshed_at_ms"

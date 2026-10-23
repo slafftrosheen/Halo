@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.turn.CognitiveResponseCommitterLifecycleTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:36:06.062Z" hostname="MINIFOXEY" time="0.044">
+  <properties/>
+  <testcase name="spokenModelAnswerRetainsAdmittedCategoriesAndOriginalSharingRevision" classname="com.halo.runtime.cognition.turn.CognitiveResponseCommitterLifecycleTest" time="0.039"/>
+  <testcase name="actualModelReplyStillRecordsExactlyOneInference" classname="com.halo.runtime.cognition.turn.CognitiveResponseCommitterLifecycleTest" time="0.002"/>
+  <testcase name="nonterminalActionIsVisibleButNotRecordedAsCompletedAndTerminalReceiptIsIdempotent" classname="com.halo.runtime.cognition.turn.CognitiveResponseCommitterLifecycleTest" time="0.003"/>
+  <system-out><![CDATA[HALO_RESPONSE_COMMITTED conversationId=b6db071d-c45c-4830-be0c-59ba32a9f591 turnId=6ec42d71-ff40-4ec3-a0b7-0bbe33f9f737 interactionId=fixture requestId=fixture source=COMMITTED_CONVERSATION textLength=17
+HALO_RESPONSE_COMMITTED conversationId=88743b3e-9ec7-49a1-922c-7b6e178e5050 turnId=72b5bee1-b5ec-4bfb-bd6d-99713eb52d42 interactionId=real-turn requestId=real-request source=COMMITTED_CONVERSATION textLength=5
+HALO_RESPONSE_COMMITTED conversationId=4a64d413-ef45-4b1c-ace3-e79de5379ca3 turnId=292f4d06-93fc-44a3-ad39-63856ca7113f interactionId=interaction-1 requestId=request-1 source=COMMITTED_CONVERSATION textLength=25
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

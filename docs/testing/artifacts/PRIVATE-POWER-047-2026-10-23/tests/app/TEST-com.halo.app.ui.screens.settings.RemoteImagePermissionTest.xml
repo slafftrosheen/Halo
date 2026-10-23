@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.settings.RemoteImagePermissionTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:34:08.226Z" hostname="MINIFOXEY" time="0.017">
+  <properties/>
+  <testcase name="explicitApprovalPersistsBothGates" classname="com.halo.app.ui.screens.settings.RemoteImagePermissionTest" time="0.015"/>
+  <testcase name="childRestrictionIsRecheckedWhenApprovalIsApplied" classname="com.halo.app.ui.screens.settings.RemoteImagePermissionTest" time="0.001"/>
+  <testcase name="revokingImagePermissionRetainsLocalImagesAndDoesNotChangeSpendingConsent" classname="com.halo.app.ui.screens.settings.RemoteImagePermissionTest" time="0.0"/>
+  <testcase name="failedPersistenceDoesNotReportPermissionGranted" classname="com.halo.app.ui.screens.settings.RemoteImagePermissionTest" time="0.001"/>
+  <testcase name="contextToggleNeverGrantsSeparateSpendingConsent" classname="com.halo.app.ui.screens.settings.RemoteImagePermissionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

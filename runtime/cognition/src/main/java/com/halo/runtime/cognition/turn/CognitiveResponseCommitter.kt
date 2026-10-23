@@ -37,6 +37,7 @@ data class CognitiveResponseCommit(
     val metadata: Map<String, String>,
     val conversationId: String? = null,
     val terminal: Boolean = true,
+    val remoteProvenance: com.halo.sdk.provider.RemoteDispatchProvenance? = null,
 )
 
 interface CognitiveResponseCommitter {
@@ -218,7 +219,9 @@ class DefaultCognitiveResponseCommitter(
                         fallback = resolvedDelivery.fallback,
                         sourceCaptureId = commit.sourceCaptureId,
                         interactionId = interactionId.value,
-                        timestamp = System.currentTimeMillis()
+                        timestamp = System.currentTimeMillis(),
+                        remoteDataCategories = commit.remoteProvenance?.categories?.map { it.name }?.toSet(),
+                        remoteDispatchRevision = commit.remoteProvenance?.revision,
                     )
                 )
             }

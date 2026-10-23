@@ -72,7 +72,7 @@ class WebInsightTools(
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         if (privacyModes?.value == com.halo.app.ai.PrivacyMode.PRIVATE)
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
-                "This action needs Power mode. Use the switch at the top of Halo.", ToolRejectionKind.TOOL_DISABLED)
+                "This action needs Full Power mode. Use the switch at the top of Halo.", ToolRejectionKind.TOOL_DISABLED)
         return com.halo.app.ai.whileCloudMode(privacyModes, onPrivate = { client.dispatcher.cancelAll() }) { executeAllowed(toolCall) }
     }
 
@@ -459,7 +459,7 @@ class WebInsightTools(
         }
     }
 
-    private companion object {
+    companion object {
         const val MAX_URL_CHARS = 2_000
         const val MAX_TEXT_CHARS = 6_000
         const val MAX_LINKS = 40

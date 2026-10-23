@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.agent.AgentRunRepositoryTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:33:39.337Z" hostname="MINIFOXEY" time="5.802">
+  <properties/>
+  <testcase name="legacy prepared step has no invented conversation ownership" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="4.381"/>
+  <testcase name="redacted phone workflow checkpoint survives database reopen" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.203"/>
+  <testcase name="dogfood005 journal steps survive reopen without interrupting the run" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.205"/>
+  <testcase name="phone workflow parent and child survive Room reopen with no executable payload" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.22"/>
+  <testcase name="ordered history identity and failure survive database reopen" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.241"/>
+  <testcase name="two endpoint responses resolve exactly once and resume only the winning run" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.157"/>
+  <testcase name="legacy wearable endpoint and new accessories decode without schema migration" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.052"/>
+  <testcase name="modelToolProvenanceSurvivesRoomReopenAndHistoricalMissingStaysUnknown" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.161"/>
+  <testcase name="continuity journal and original route survive reopen without schema migration" classname="com.halo.app.data.agent.AgentRunRepositoryTest" time="0.17"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

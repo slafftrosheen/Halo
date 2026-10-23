@@ -109,7 +109,10 @@ class EngineGraph(
         val router = DefaultAiProviderRouter(
             responseLanguage = { ManualDependencyGraph.appLanguagePreferences.language.value.tag },
             qualifiedAutomaticTarget = { workload -> ManualDependencyGraph.workloadLab.automaticTarget(workload) },
-            mediaAnalysisAllowed = { ManualDependencyGraph.privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD &&
+            mediaAnalysisAllowed = { ManualDependencyGraph.storage.getBoolean(com.halo.sdk.provider.PaidMediaPolicy.CONSENT_KEY, false) &&
+                ManualDependencyGraph.privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD &&
+                ManualDependencyGraph.privacyModes.sharingAcknowledged && com.halo.app.ai.OnlineFeature.IMAGES in
+                    ManualDependencyGraph.privacyModes.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
                 ManualDependencyGraph.kidsPreferences.let { it.loadedState.value && (!it.enabled.value || it.cloudAllowed.value) } },
             providerRegistry = providerGraph.providers.aiRegistry,
             storage = ManualDependencyGraph.storage,
@@ -121,7 +124,10 @@ class EngineGraph(
         val kids = ManualDependencyGraph.kidsPreferences
         val privacy = ManualDependencyGraph.privacyModes
         com.halo.app.ai.ParentControlledAiRouter(router,
-            remoteAllowed = { privacy.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) },
+            profiles = privacy,
+            remoteAllowed = { privacy.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacy.sharingAcknowledged &&
+                com.halo.app.ai.OnlineFeature.INFERENCE in privacy.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
+                kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) },
             policyChanges = kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed, privacy.mode) { ready, enabled, cloud, mode ->
                 mode == com.halo.app.ai.PrivacyMode.CLOUD && ready && (!enabled || cloud)
             })

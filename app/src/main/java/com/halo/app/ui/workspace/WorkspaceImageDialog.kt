@@ -46,7 +46,7 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(uiText("Describe it, preview it, then save. The original stays intact."), style = MaterialTheme.typography.bodyMedium)
-                if (!cloudEnabled) Text(uiText("This action needs Power mode. Use the switch at the top of Halo."),
+                if (!cloudEnabled) Text(uiText("This action needs Full Power mode. Use the switch at the top of Halo."),
                     style = MaterialTheme.typography.bodySmall)
                 if (state.referenceUnavailable) {
                     Text(uiText("The reference image could not be read. Close and select the image again."), color = MaterialTheme.colorScheme.error)

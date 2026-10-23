@@ -101,7 +101,7 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.LANGUAGE, "Language", language.nativeName, { page = "Language" }, listOf("interface", "default replies")),
         )),
         SettingsMenuGroup("privacy", "Privacy", listOf(
-            SettingsMenuRow(HaloGlyph.SECURITY, "What halo can use", "Choose what halo can use", { onOpen(SettingsDestination.PRIVACY) }, listOf("context", "sharing")),
+            SettingsMenuRow(HaloGlyph.SECURITY, "Mode profiles", "Independent Private and Full Power settings", { onOpen(SettingsDestination.PRIVACY) }, listOf("context", "sharing")),
             SettingsMenuRow(HaloGlyph.CLOUD, "What left this phone", "Review what was shared", { onOpen(SettingsDestination.SHARED_REQUESTS) }),
             SettingsMenuRow(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) }),
             SettingsMenuRow(HaloGlyph.MEMORY, "Memory", "Review what halo remembers", { onOpen(SettingsDestination.MEMORY) }),
@@ -422,7 +422,7 @@ private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestinatio
                 Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (state.privacyMode != null) {
-                    Text(uiText(if (state.privacyMode == com.halo.app.ai.PrivacyMode.PRIVATE) "Private mode" else "Power mode"),
+                    Text(uiText(if (state.privacyMode == com.halo.app.ai.PrivacyMode.PRIVATE) "Private mode" else "Full Power mode"),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("·", style = MaterialTheme.typography.bodySmall)

@@ -13,6 +13,23 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 class ElevenLabsTtsProviderTest {
+    @Test fun profilePreparationReplacesVoiceAndModelBeforeReturningWithoutNetwork() = runBlocking {
+        val storage = RecordingStorage().apply {
+            putString(ElevenLabsTtsProvider.KEY, "fixture-credential")
+            putString(ElevenLabsTtsProvider.VOICE, "outgoing-voice")
+            putString(ElevenLabsTtsProvider.MODEL, "outgoing-model")
+        }
+        val provider = ElevenLabsTtsProvider(storage)
+        provider.reloadConfigurationNow()
+        assertEquals("outgoing-voice", provider.voiceId())
+        storage.putString(ElevenLabsTtsProvider.VOICE, "incoming-voice")
+        storage.putString(ElevenLabsTtsProvider.MODEL, "incoming-model")
+        provider.reloadConfigurationNow()
+        assertEquals("incoming-voice", provider.voiceId())
+        assertEquals("incoming-model", provider.modelId())
+        assertFalse(provider.state.value.loading)
+        provider.close()
+    }
     @Test
     fun saveVerifiesAndReloadsFromPersistence() = runBlocking {
         val storage = RecordingStorage()

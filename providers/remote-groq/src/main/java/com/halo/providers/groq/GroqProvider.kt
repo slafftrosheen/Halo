@@ -1,5 +1,7 @@
 package com.halo.providers.groq
 
+import kotlinx.coroutines.flow.flowOn
+
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.flow.Flow
@@ -45,8 +47,8 @@ class GroqProvider(
     override fun configurationChanged() = configured.configurationChanged()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
     override suspend fun testConnection(): Boolean = configured.testConnection()
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = configured.generate(request, context)
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = configured.stream(request, context)
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = kotlinx.coroutines.withContext(storage.remoteAiContext(id, request, context)) { configured.generate(request, context) }
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = configured.stream(request, context).flowOn(storage.remoteAiContext(id, request, context))
     override suspend fun listModels(): List<AiModel> = configured.listModels()
 
     companion object {

@@ -1,5 +1,10 @@
 package com.halo.runtime.cognition.turn
 
+import kotlinx.coroutines.asContextElement
+import com.halo.sdk.provider.RemoteDispatchContext
+import com.halo.sdk.provider.RemoteDispatchProvenance
+import com.halo.sdk.provider.RemoteDataCategory
+
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentInputRequest
 import com.halo.runtime.cognition.agent.AgentInputRequestId
@@ -496,6 +501,11 @@ class DefaultToolTurnExecutor(
             )
             val originalPrepared = runId?.let { agentRunStore?.get(it)?.steps?.filterIsInstance<AgentStep.ToolInvocationPrepared>()
                 ?.firstOrNull { step -> step.toolCallId == toolCall.id } }
+            val invocationProvenance = when {
+                originalPrepared == null -> RemoteDispatchContext.provenance.get()
+                originalPrepared.argumentsDigest != argumentsDigest -> RemoteDispatchProvenance(RemoteDataCategory.entries.toSet(), -1L)
+                else -> originalPrepared.remoteProvenance()
+            }
             val replaySafe = originalPrepared != null && originalPrepared.argumentsDigest == argumentsDigest && originalPrepared.replaySafety == ReplaySafety.SAFE.name &&
                 toolRegistry.descriptor(toolCall.functionName)?.security?.replaySafety == ReplaySafety.SAFE &&
                 toolRegistry.descriptor(toolCall.functionName)?.security?.risk == com.halo.runtime.cognition.tools.ToolRiskClass.READ_ONLY
@@ -535,6 +545,8 @@ class DefaultToolTurnExecutor(
                             newStepId(), runId, Instant.now(), invocationId, toolCall.id, toolCall.functionName,
                             canonicalArguments, argumentsDigest, idempotencyKey, descriptorVersion,
                             replaySafety.name,
+                            remoteDataCategories = invocationProvenance?.categories?.map { it.name }?.toSet() ?: emptySet(),
+                            remoteDispatchRevision = invocationProvenance?.revision,
                         )
                     )
                 }
@@ -816,15 +828,19 @@ class DefaultToolTurnExecutor(
                                         intent.target?.stableFingerprint, intent.argumentDigest, receipt = receipt)))
                                 null
                             })) {
-                            toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized,
-                                com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId.value,
-                                    runId?.let { directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest) } == true))
+                            withContext(RemoteDispatchContext.provenance.asContextElement(invocationProvenance)) {
+                                toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized,
+                                    com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId.value,
+                                        runId?.let { directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest) } == true))
+                            }
                         }
                     }
                 } else {
-                    toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized,
-                                com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId.value,
-                                    runId?.let { directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest) } == true))
+                    withContext(RemoteDispatchContext.provenance.asContextElement(invocationProvenance)) {
+                        toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized,
+                            com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId.value,
+                                runId?.let { directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest) } == true))
+                    }
                 }
             } finally {
                 // Released for success, rejection, executor failure, timeout,
@@ -982,4 +998,13 @@ class DefaultToolTurnExecutor(
             toolMessages = toolMessages,
         )
     }
+}
+
+/** Old pending invocations cannot acquire new sharing authority after restart or mode edits. */
+internal fun AgentStep.ToolInvocationPrepared.remoteProvenance(): RemoteDispatchProvenance? {
+    val categories = remoteDataCategories ?: return RemoteDispatchProvenance(RemoteDataCategory.entries.toSet(), -1L)
+    if (categories.isEmpty() && remoteDispatchRevision == null) return null // Explicit non-model native action.
+    return runCatching {
+        RemoteDispatchProvenance(categories.map { RemoteDataCategory.valueOf(it) }.toSet(), remoteDispatchRevision ?: -1L)
+    }.getOrElse { RemoteDispatchProvenance(RemoteDataCategory.entries.toSet(), -1L) }
 }

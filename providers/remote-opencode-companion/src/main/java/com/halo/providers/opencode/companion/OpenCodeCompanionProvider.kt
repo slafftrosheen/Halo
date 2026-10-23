@@ -1,5 +1,8 @@
 package com.halo.providers.opencode.companion
 
+import kotlinx.coroutines.flow.flowOn
+import com.halo.sdk.provider.remoteAiContext
+
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
@@ -101,13 +104,14 @@ class OpenCodeCompanionProvider(
         syncEndpoint()
         return configured.testConnection()
     }
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
+        kotlinx.coroutines.withContext(storage.remoteAiContext(id, request, context)) {
         syncEndpoint()
-        return companionGenerate(request, context)
+        companionGenerate(request, context)
     }
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> {
         syncEndpoint()
-        return companionStream(request, context)
+        return companionStream(request, context).flowOn(storage.remoteAiContext(id, request, context))
     }
     override suspend fun listModels(): List<AiModel> {
         syncEndpoint()

@@ -3,25 +3,26 @@ package com.halo.app.data
 import com.halo.runtime.cognition.context.ConversationContextPolicy
 import com.halo.runtime.cognition.context.ConversationContextPolicyRepository
 import com.halo.sdk.runtime.Storage
-import com.halo.app.ai.savedPrivacyMode
+import com.halo.app.ai.readRuntimeAiContextPolicy
 import org.json.JSONObject
 
 class StorageConversationContextPolicyRepository(
     private val storage: Storage,
 ) : ConversationContextPolicyRepository {
     override fun get(conversationId: String): ConversationContextPolicy? {
-        if (storage.savedPrivacyMode() != null) return null
         val raw = storage.getString(key(conversationId)) ?: return null
         return runCatching {
             val json = JSONObject(raw)
+            val base = storage.readRuntimeAiContextPolicy()
+            fun restricted(name: String, allowed: Boolean): Boolean? = if (!allowed) false else json.nullableBoolean(name)
             ConversationContextPolicy(
-                includeMemories = json.nullableBoolean("memories"),
-                includeSkillsAndTools = json.nullableBoolean("skillsTools"),
-                includeWorkspace = json.nullableBoolean("workspace"),
-                allowCloudWorkspace = json.nullableBoolean("cloudWorkspace"),
-                allowCloudScreenContext = json.nullableBoolean("cloudScreen"),
-                allowCloudImages = json.nullableBoolean("cloudImages"),
-                allowCloudMemories = json.nullableBoolean("cloudMemories"),
+                includeMemories = restricted("memories", base.includeMemories),
+                includeSkillsAndTools = restricted("skillsTools", base.includeAvailableTools),
+                includeWorkspace = restricted("workspace", base.includeWorkspace),
+                allowCloudWorkspace = restricted("cloudWorkspace", base.allowCloudWorkspace),
+                allowCloudScreenContext = restricted("cloudScreen", base.allowCloudScreenContext),
+                allowCloudImages = restricted("cloudImages", base.allowCloudImages),
+                allowCloudMemories = restricted("cloudMemories", base.allowCloudMemories),
             )
         }.getOrNull()
     }

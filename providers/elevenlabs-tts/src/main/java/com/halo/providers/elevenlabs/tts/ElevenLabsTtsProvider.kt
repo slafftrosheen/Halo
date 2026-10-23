@@ -55,14 +55,15 @@ data class ElevenLabsCatalogue(val voices: List<SpeechChoice>, val models: List<
 class ElevenLabsTtsProvider(
     private val storage: Storage,
     private val baseUrl: String = BASE,
+    private val client: OkHttpClient = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS).callTimeout(60, TimeUnit.SECONDS)
+        .followRedirects(false).followSslRedirects(false).build(),
 ) : PcmSpeechSynthesisProvider, CredentialProvider {
     override val metadata = ProviderMetadata(ID, "ElevenLabs", local = false, supportsStreaming = false)
-    private val client = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS).callTimeout(60, TimeUnit.SECONDS)
-        .followRedirects(false).followSslRedirects(false).build()
     private val calls = ConcurrentHashMap.newKeySet<Call>()
     private val discoveryMutex = Mutex()
     private val configurationVersion = java.util.concurrent.atomic.AtomicLong()
+    private val configurationSnapshotLock = Any()
     private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile private var authenticated = false
     @Volatile private var lastErrorCode: SpeechErrorCode? = null
@@ -103,40 +104,67 @@ class ElevenLabsTtsProvider(
 
     private fun publishState(error: String? = null) = publishSnapshot(error)
 
-    private suspend fun loadPersistedConfiguration() = withContext(Dispatchers.IO) {
-        val version = configurationVersion.get()
-        try {
-            val key = storage.getString(KEY)?.trim()?.takeIf { it.isNotEmpty() }
-            val voice = storage.getString(VOICE)?.takeIf { it.isNotBlank() }
-            val model = storage.getString(MODEL)?.takeIf { it.isNotBlank() }
-            val catalogue = decodeCatalogue(storage.getString(CACHE))
-            val style = mapOf(
-                "stability" to (storage.getString("elevenlabs_stability")?.toDoubleOrNull() ?: 0.5),
-                "similarity_boost" to (storage.getString("elevenlabs_similarity_boost")?.toDoubleOrNull() ?: 0.75),
-                "speed" to (storage.getString("elevenlabs_speed")?.toDoubleOrNull() ?: 1.0),
-            )
-
-            if (configurationVersion.get() != version) return@withContext
+    private fun loadPersistedConfiguration(version: Long) {
+        val key = storage.getString(KEY)?.trim()?.takeIf { it.isNotEmpty() }
+        val voice = storage.getString(VOICE)?.takeIf { it.isNotBlank() }
+        val model = storage.getString(MODEL)?.takeIf { it.isNotBlank() }
+        val catalogue = decodeCatalogue(storage.getString(CACHE))
+        val style = mapOf(
+            "stability" to (storage.getString("elevenlabs_stability")?.toDoubleOrNull() ?: 0.5),
+            "similarity_boost" to (storage.getString("elevenlabs_similarity_boost")?.toDoubleOrNull() ?: 0.75),
+            "speed" to (storage.getString("elevenlabs_speed")?.toDoubleOrNull() ?: 1.0),
+        )
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
             credentialSnapshot = key?.let { Credential(ID, it) }
             voiceIdSnapshot = voice
             modelIdSnapshot = model
             catalogueSnapshot = catalogue
             styleSnapshot = style
             publishSnapshot()
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Throwable) {
-            if (configurationVersion.get() != version) return@withContext
-            credentialSnapshot = null
-            healthy = false
-            authenticated = false
-            lastErrorCode = SpeechErrorCode.NOT_CONFIGURED
-            publishSnapshot("SECURE_STORAGE_UNREADABLE")
         }
     }
 
+    private fun invalidateConfiguration(): Long {
+        val version = synchronized(configurationSnapshotLock) {
+            val next = configurationVersion.incrementAndGet()
+            credentialSnapshot = null; voiceIdSnapshot = null; modelIdSnapshot = null; catalogueSnapshot = null
+            healthy = false; authenticated = false; lastErrorCode = null
+            _state.value = ElevenLabsTtsState(loading = true)
+            next
+        }
+        // Call cancellation completes the host lease and may acquire its policy lock.
+        // Never invoke it while holding the speech snapshot lock.
+        stopCurrent()
+        return version
+    }
+    private fun advanceConfigurationVersion(): Long = synchronized(configurationSnapshotLock) { configurationVersion.incrementAndGet() }
+
     fun reloadConfiguration() {
-        providerScope.launch { loadPersistedConfiguration() }
+        val version = invalidateConfiguration()
+        providerScope.launch(Dispatchers.IO) {
+            try { loadPersistedConfiguration(version) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                synchronized(configurationSnapshotLock) { if (configurationVersion.get() == version) {
+                    lastErrorCode = SpeechErrorCode.NOT_CONFIGURED
+                    publishSnapshot("SECURE_STORAGE_UNREADABLE")
+                } }
+            }
+        }
+    }
+
+    /** Called by atomic profile preparation on its existing IO owner. No network IO. */
+    fun reloadConfigurationNow() {
+        val version = invalidateConfiguration()
+        try { loadPersistedConfiguration(version) }
+        catch (_: Exception) {
+            synchronized(configurationSnapshotLock) { if (configurationVersion.get() == version) {
+                lastErrorCode = SpeechErrorCode.NOT_CONFIGURED
+                publishSnapshot("SECURE_STORAGE_UNREADABLE")
+            } }
+            throw IllegalStateException("Speech profile could not be restored")
+        }
     }
 
     override fun hasCredential(): Boolean = credentialSnapshot != null
@@ -145,27 +173,33 @@ class ElevenLabsTtsProvider(
     override fun setCredential(credential: Credential) {
         val value = credential.value.trim()
         require(value.isNotEmpty()) { "Credential is empty" }
-        configurationVersion.incrementAndGet()
+        val version = advanceConfigurationVersion()
         stopCurrent()
         storage.putString(KEY, value)
         check(storage.getString(KEY) == value) { "Secure credential verification failed" }
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
         credentialSnapshot = Credential(ID, value)
         healthy = false
         authenticated = false
         lastErrorCode = null
         publishSnapshot()
+        }
     }
 
     override fun clearCredential() {
-        configurationVersion.incrementAndGet()
+        val version = advanceConfigurationVersion()
         stopCurrent()
         storage.remove(KEY)
         check(storage.getString(KEY).isNullOrBlank()) { "Secure credential removal verification failed" }
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
         credentialSnapshot = null
         healthy = false
         authenticated = false
         lastErrorCode = null
         publishSnapshot()
+        }
     }
 
     fun voiceId(): String? = voiceIdSnapshot ?: storage.getString(VOICE)?.takeIf { it.isNotBlank() }
@@ -173,24 +207,26 @@ class ElevenLabsTtsProvider(
 
     fun selectVoice(id: String) {
         require(catalogueSnapshot?.voices?.any { it.id == id } == true)
+        val version = advanceConfigurationVersion()
         // Voice/model/style changes apply to the next pinned response.
         storage.putString(VOICE, id)
         check(storage.getString(VOICE) == id) { "Voice selection verification failed" }
-        voiceIdSnapshot = id
-        healthy = false
-        lastErrorCode = null
-        publishSnapshot()
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
+            voiceIdSnapshot = id; healthy = false; lastErrorCode = null; publishSnapshot()
+        }
     }
 
     fun selectModel(id: String) {
         require(catalogueSnapshot?.models?.any { it.id == id } == true)
+        val version = advanceConfigurationVersion()
         // Voice/model/style changes apply to the next pinned response.
         storage.putString(MODEL, id)
         check(storage.getString(MODEL) == id) { "Model selection verification failed" }
-        modelIdSnapshot = id
-        healthy = false
-        lastErrorCode = null
-        publishSnapshot()
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
+            modelIdSnapshot = id; healthy = false; lastErrorCode = null; publishSnapshot()
+        }
     }
 
     fun voiceStyle(): Map<String, Double> {
@@ -209,6 +245,7 @@ class ElevenLabsTtsProvider(
 
     fun saveVoiceStyle(stability: Double, similarity: Double, speed: Double) {
         require(stability.isFinite() && stability in 0.0..1.0 && similarity.isFinite() && similarity in 0.0..1.0 && speed.isFinite() && speed in 0.7..1.2)
+        val version = advanceConfigurationVersion()
         val updated = mapOf("stability" to stability, "similarity_boost" to similarity, "speed" to speed)
         storage.putBatch(strings = mapOf(
             "elevenlabs_stability" to stability.toString(),
@@ -216,17 +253,19 @@ class ElevenLabsTtsProvider(
             "elevenlabs_speed" to speed.toString(),
         ))
         // Voice/model/style changes apply to the next pinned response.
-        styleSnapshot = updated
-        healthy = false
-        lastErrorCode = null
-        publishSnapshot()
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
+            styleSnapshot = updated; healthy = false; lastErrorCode = null; publishSnapshot()
+        }
     }
 
-    fun pin(request: SpeechRequest) = request.copy(voiceId = voiceId(), modelId = modelId(), voiceSettings = voiceStyle())
+    fun pin(request: SpeechRequest) = synchronized(configurationSnapshotLock) {
+        request.copy(voiceId = voiceIdSnapshot, modelId = modelIdSnapshot, voiceSettings = styleSnapshot)
+    }
 
-    override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
+    override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? = withContext(storage.remoteSpeechContext(ID, request)) {
         val version = configurationVersion.get()
-        return try { synthesizeBounded(request) }
+        try { synthesizeBounded(request) }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (error: SpeechProviderException) {
             if (configurationVersion.get() == version) { healthy = false; lastErrorCode = error.code; publishState(error.message) }
@@ -358,10 +397,13 @@ class ElevenLabsTtsProvider(
         fun json(list: List<SpeechChoice>) = JSONArray().apply { list.forEach { put(JSONObject().put("id", it.id).put("name", it.name).put("category", it.category)) } }
         ensureConfiguration(version)
         storage.putString(CACHE, JSONObject().put("voices", json(result.voices)).put("models", json(models)).put("at", result.fetchedAtMs).toString())
-        catalogueSnapshot = result
-        authenticated = true
-        lastErrorCode = null
-        publishSnapshot()
+        synchronized(configurationSnapshotLock) {
+            ensureConfiguration(version)
+            catalogueSnapshot = result
+            authenticated = true
+            lastErrorCode = null
+            publishSnapshot()
+        }
         return result
     }
 

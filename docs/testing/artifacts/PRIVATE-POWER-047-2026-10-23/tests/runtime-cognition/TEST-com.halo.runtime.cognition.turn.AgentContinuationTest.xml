@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.turn.AgentContinuationTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:36:05.981Z" hostname="MINIFOXEY" time="0.027">
+  <properties/>
+  <testcase name="toolContinuationCarriesWorkspaceMemoryAndScreenProvenance" classname="com.halo.runtime.cognition.turn.AgentContinuationTest" time="0.015"/>
+  <testcase name="projectedHistoryCannotDropCurrentRequestOrSplitToolContinuation" classname="com.halo.runtime.cognition.turn.AgentContinuationTest" time="0.002"/>
+  <testcase name="discoveryContinuationRetainsGoalCallResultAndExpandedSchema" classname="com.halo.runtime.cognition.turn.AgentContinuationTest" time="0.001"/>
+  <testcase name="delegatedReferencesAndRecoveredChildResultsRetainConservativePrivateSourceProvenance" classname="com.halo.runtime.cognition.turn.AgentContinuationTest" time="0.008"/>
+  <testcase name="historicalPendingToolHasUnknownProvenanceAndCannotAcquireNewRemoteAuthority" classname="com.halo.runtime.cognition.turn.AgentContinuationTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

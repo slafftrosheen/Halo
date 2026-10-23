@@ -16,6 +16,7 @@ import com.halo.app.ui.components.VoiceFieldKind
 import java.math.BigDecimal
 
 @Composable fun onlineProblemText(problem: OnlineProblem): String = stringResource(when (problem) {
+    OnlineProblem.FEATURE_DISABLED -> R.string.mode47_feature_disabled
     OnlineProblem.CONSENT_REQUIRED -> R.string.online_consent_required
     OnlineProblem.CONSENT_EXPIRED -> R.string.online_consent_expired
     OnlineProblem.BUDGET_REACHED -> R.string.online_budget_reached

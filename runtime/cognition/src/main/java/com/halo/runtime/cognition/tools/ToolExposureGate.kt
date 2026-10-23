@@ -41,8 +41,8 @@ fun interface ToolExposureGate {
 class DefaultToolExposureGate(
     private val skillRegistry: SkillRegistry? = null
 ) : ToolExposureGate {
-    private companion object {
-        val CLOUD_SCREEN_GATED_TOOLS = setOf(
+    companion object {
+        internal val CLOUD_SCREEN_GATED_TOOLS = setOf(
             "halo_read_screen", "halo_find_on_screen", "halo_ui_click",
             "halo_ui_scroll", "halo_ui_set_text", "halo_ui_set_checked",
             "halo_ui_wait", "halo_ui_search", "halo_ui_global_action",

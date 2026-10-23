@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.components.ModeSharingVisualTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:33:48.153Z" hostname="MINIFOXEY" time="20.066">
+  <properties/>
+  <testcase name="russian200" classname="com.halo.app.ui.components.ModeSharingVisualTest" time="17.771"/>
+  <testcase name="english360" classname="com.halo.app.ui.components.ModeSharingVisualTest" time="0.424"/>
+  <testcase name="dark412" classname="com.halo.app.ui.components.ModeSharingVisualTest" time="0.404"/>
+  <testcase name="landscape200" classname="com.halo.app.ui.components.ModeSharingVisualTest" time="0.393"/>
+  <testcase name="latvian200Dark" classname="com.halo.app.ui.components.ModeSharingVisualTest" time="0.434"/>
+  <testcase name="dismissNeverConfirmsSharing" classname="com.halo.app.ui.components.ModeSharingVisualTest" time="0.339"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -33,6 +33,11 @@ import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.provider.RemoteProviderPresence
 import com.halo.sdk.provider.RemoteProviderPresenceRegistry
 import com.halo.sdk.provider.SpeechRecognitionProvider
+import com.halo.sdk.provider.withProviderDispatchPolicy
+import com.halo.sdk.provider.withRemoteDispatchPolicy
+import com.halo.sdk.provider.RemoteDispatchRequest
+import com.halo.sdk.provider.RemoteOperation
+import com.halo.sdk.provider.RemoteDataCategory
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
 import java.io.File
@@ -62,7 +67,13 @@ class AndroidProviderFactory(
         val sherpaModelDirectory = File(speechRoot, SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
         val speechSelector = DefaultSpeechProviderSelector(SpeechSelectionRepository(storage))
         val androidTts = AndroidTTSProvider(context)
-        val elevenLabsTts = com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider(storage)
+        val elevenLabsTts = com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider(storage,
+            client = okhttp3.OkHttpClient.Builder().connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS).callTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build().withRemoteDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy) { request ->
+                    RemoteDispatchRequest("provider.elevenlabs.tts", RemoteOperation.HOSTED_SPEECH,
+                        setOf(if (request.method == "GET") RemoteDataCategory.ACCOUNT_METADATA else RemoteDataCategory.TEXT))
+                })
         val kokoroTts = com.halo.app.audio.KokoroSpeechProvider(context,storage,nativeResourceCoordinator)
         val supertonicTts = com.halo.app.audio.SupertonicSpeechProvider(context,storage,nativeResourceCoordinator)
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
@@ -92,17 +103,17 @@ class AndroidProviderFactory(
         // failing preset can never prevent local inference from coming up.
         val remoteProviders = buildList<AiInferenceProvider> {
             listOf(
-                runCatching { GroqProvider(storage) }.getOrNull(),
-                runCatching { CerebrasProvider(storage) }.getOrNull(),
-                runCatching { OpenCodeZenProvider(storage) }.getOrNull(),
-                runCatching { XaiProvider(storage) }.getOrNull(),
+                runCatching { GroqProvider(storage, transport("groq", "https://api.groq.com/v1")) }.getOrNull(),
+                runCatching { CerebrasProvider(storage, transport("cerebras", "https://api.cerebras.ai/v1")) }.getOrNull(),
+                runCatching { OpenCodeZenProvider(storage, transport("opencode.zen", "https://opencode.ai/inference/v1")) }.getOrNull(),
+                runCatching { XaiProvider(storage, transport("xai", "https://api.x.ai/v1")) }.getOrNull(),
             ).forEach { provider -> provider?.let(::add) }
         
             runCatching {
                 CustomOpenAiCompatibleProvider(
                     storage = storage,
                     transport = OpenAiCompatibleTransport(
-                        OpenAiCompatibleTransport.defaultClient(),
+                        guardedClient(com.halo.sdk.provider.RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE),
                         storage.getString("custom_openai_compatible_endpoint")?.trim()?.takeIf { it.isNotBlank() }
                             ?: "http://localhost:8080/v1",
                         com.halo.sdk.provider.AiWireProtocol.OPENAI_CHAT_COMPLETIONS,
@@ -115,6 +126,7 @@ class AndroidProviderFactory(
                     OpenCodeCompanionProvider(
                         storage = storage,
                         secretStore = secretStore,
+                        client = guardedClient(com.halo.sdk.provider.RemoteProviderIds.OPENCODE_COMPANION),
                     )
                 }.getOrNull()?.let { add(it) }
             }
@@ -148,15 +160,21 @@ class AndroidProviderFactory(
             wakeWord = wakeWord,
             aiProviders = listOfNotNull(
                 localProvider,
-                runCatching { OllamaProvider(storage) }.getOrNull(),
-                runCatching { OpenRouterProvider(storage) }.getOrNull(),
-                runCatching { OpenAiProvider(storage) }.getOrNull(),
-                runCatching { AnthropicProvider(storage) }.getOrNull(),
-                runCatching { GeminiProvider(storage) }.getOrNull(),
+                runCatching { OllamaProvider(storage, ManualDependencyGraph.remoteDispatchPolicy) }.getOrNull(),
+                runCatching { OpenRouterProvider(storage, OpenRouterProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openrouter")) }.getOrNull(),
+                runCatching { OpenAiProvider(storage, OpenAiProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openai")) }.getOrNull(),
+                runCatching { AnthropicProvider(storage, AnthropicProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "anthropic")) }.getOrNull(),
+                runCatching { GeminiProvider(storage, GeminiProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "gemini")) }.getOrNull(),
                 *remoteProviders.toTypedArray(),
             ),
         )
     }
+
+    private fun guardedClient(id: String) = OpenAiCompatibleTransport.defaultClient()
+        .withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, id)
+
+    private fun transport(id: String, endpoint: String) = OpenAiCompatibleTransport(guardedClient(id), endpoint,
+        com.halo.sdk.provider.AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
 
     private fun AiInferenceProvider.isCredentialPresent(): Boolean =
         (this as? com.halo.sdk.provider.CredentialProvider)?.hasCredential() == true

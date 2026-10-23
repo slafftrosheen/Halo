@@ -176,7 +176,9 @@ class HaloSpeechOutputCoordinator(
             val first = response.chunks.tryReceive().getOrNull() ?: return
             speak(TtsRequested(text = first, transactionId = event.requestId, target = response.prepared.target,
                 fallback = response.prepared.fallback, sourceCaptureId = response.prepared.sourceCaptureId,
-                interactionId = response.prepared.interactionId), streamResponse = response)
+                interactionId = response.prepared.interactionId,
+                remoteDataCategories = response.prepared.remoteDataCategories,
+                remoteDispatchRevision = response.prepared.remoteDispatchRevision), streamResponse = response)
         }
         if (response.chunkCount != previousChunks) streamLog("CHUNK", response)
     }
@@ -415,16 +417,19 @@ class HaloSpeechOutputCoordinator(
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val sanitized = com.halo.runtime.cognition.turn.TtsSanitizer.sanitize(event.text)
                 check(sanitized.isNotBlank()) { "No speakable response" }
+                val remoteProvenance = speechEventProvenance(event)
                 val speechRequest = SpeechRequest(text = sanitized, language=event.language ?: defaultLanguage(),
                     modelId=previewIdentity?.modelId,voiceId=previewIdentity?.voiceId,
                     voiceSettings=mapOf("speed" to event.speechRate.coerceIn(0.6,1.5)),
+                    remoteProvenance = remoteProvenance,
                     onPlaybackRange=if(sanitized == event.text) { start,end ->
                         if(activeTransactionId == event.transactionId) scope.launch {
                             eventBus.publish(TtsRangeStarted(event.transactionId,start,end))
                         }
                     } else null)
                 val (pinnedProvider, initialRequest) = synthesisRegistry?.pin(speechRequest,
-                    previewProviderId, event.requiredProviderId, event.localOnly)
+                    previewProviderId, event.requiredProviderId,
+                    event.localOnly || (previewProviderId == null && remoteProvenance == null))
                     ?: (ttsProvider to speechRequest)
                 val request = (pinnedProvider as? com.halo.sdk.provider.SegmentedPcmSpeechProvider)
                     ?.pinSpeechRequest(initialRequest) ?: initialRequest
@@ -646,3 +651,12 @@ class HaloSpeechOutputCoordinator(
         }
     }
 }
+
+/** Unknown legacy events stay local; only exact metadata from the runtime can authorize sharing. */
+internal fun speechEventProvenance(event: com.halo.sdk.runtime.TtsRequested): com.halo.sdk.provider.RemoteDispatchProvenance? =
+    runCatching {
+        val names = event.remoteDataCategories ?: return null
+        val revision = event.remoteDispatchRevision ?: return null
+        require(names.size <= com.halo.sdk.provider.RemoteDataCategory.entries.size && revision >= 0)
+        com.halo.sdk.provider.RemoteDispatchProvenance(names.map { com.halo.sdk.provider.RemoteDataCategory.valueOf(it) }.toSet(), revision)
+    }.getOrNull()

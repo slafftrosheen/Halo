@@ -2,6 +2,8 @@ package com.halo.providers.ollama
 
 import android.util.Base64
 import android.util.Log
+import com.halo.sdk.provider.withProviderDispatchPolicy
+import com.halo.sdk.provider.remoteAiContext
 import com.halo.sdk.provider.AIConversation
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AIRequestLegacy
@@ -52,7 +54,9 @@ import org.json.JSONObject
  * tool-call/result round trip.
  */
 class OllamaProvider(
-    private val storage: Storage
+    private val storage: Storage,
+    private val dispatchPolicy: com.halo.sdk.provider.RemoteDispatchPolicy? = null,
+    private val baseClient: OkHttpClient? = null,
 ) : AiInferenceProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
 
     override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
@@ -75,11 +79,13 @@ class OllamaProvider(
     private val client: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor { Log.d(tag, it) }
         logging.level = HttpLoggingInterceptor.Level.NONE
-        OkHttpClient.Builder()
+        (baseClient ?: OkHttpClient.Builder()
             .addInterceptor(logging)
             .connectTimeout(3, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
-            .build()
+            .build()).let { client -> dispatchPolicy?.let { policy ->
+                client.withProviderDispatchPolicy(policy, "provider.ollama")
+            } ?: client }
     }
 
     private val moshi = com.squareup.moshi.Moshi.Builder()
@@ -165,7 +171,7 @@ class OllamaProvider(
         normalizedEndpointOrNull()?.let { fetchModels(it).error == null } == true
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO + storage.remoteAiContext(id, request, context)) {
             request.validateForTextGeneration()
             request.validateAgainst(getCapabilities())
             val endpoint = normalizedEndpointOrNull()
@@ -324,7 +330,7 @@ class OllamaProvider(
                 )
             )
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO + storage.remoteAiContext(id, request, context))
 
     private fun buildMessages(
         request: AiRequest,
@@ -358,7 +364,8 @@ class OllamaProvider(
     private suspend fun completeWithModel(
         request: AIRequestLegacy,
         model: String,
-    ): AIResponseLegacy = withContext(Dispatchers.IO) {
+    ): AIResponseLegacy = withContext(Dispatchers.IO + storage.remoteAiContext(id, AiRequest(),
+        AiContext(conversation = request.conversation.messages))) {
         val endpoint = normalizedEndpointOrNull()
             ?: throw AiProviderException(
                 AiErrorType.LOCAL_MODEL_UNAVAILABLE,
@@ -469,7 +476,7 @@ class OllamaProvider(
                 error,
             )
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO + storage.remoteAiContext(id, AiRequest(text = prompt), AiContext.EMPTY))
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         val probe = fetchModels(normalizedEndpointOrNull())

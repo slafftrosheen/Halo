@@ -11,6 +11,43 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AgentContinuationTest {
+    @Test fun delegatedReferencesAndRecoveredChildResultsRetainConservativePrivateSourceProvenance() {
+        val builder = com.halo.runtime.cognition.delegation.DelegatedContextBuilder { _, _ -> null }
+        val privateCategories = setOf(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE,
+            com.halo.sdk.provider.RemoteDataCategory.SCREEN, com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
+        val segment = com.halo.runtime.cognition.context.ContextSegment("fixture",
+            com.halo.runtime.cognition.context.ContextSegmentKind.WORKING_SET, 1, 1,
+            com.halo.runtime.cognition.context.SegmentContent.InlineText("synthetic"),
+            com.halo.runtime.cognition.context.ContextProvenance("fixture", com.halo.runtime.cognition.context.ContextTrust.USER_AUTHORED, false))
+        val child = builder.build(listOf(com.halo.runtime.cognition.delegation.ResolvedDelegatedInput(segment, "synthetic")), false, emptyList())
+        assertEquals(privateCategories, child.remoteDataCategories)
+        assertTrue(builder.build(listOf(com.halo.runtime.cognition.delegation.ResolvedDelegatedInput(segment, "synthetic")), true, emptyList()).conversation.isEmpty())
+        for (tool in listOf("halo_delegate_task", "halo_research"))
+            assertTrue(com.halo.runtime.cognition.tools.remoteToolResultCategories(tool).containsAll(privateCategories))
+    }
+
+    @Test fun historicalPendingToolHasUnknownProvenanceAndCannotAcquireNewRemoteAuthority() {
+        val step = com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared(
+            com.halo.runtime.cognition.agent.AgentStepId("legacy"), com.halo.runtime.cognition.agent.AgentRunId("run"),
+            java.time.Instant.now(), com.halo.runtime.cognition.agent.ToolInvocationId("invocation"), "call", "halo_fetch_url",
+            "{}", "digest", "key", 1, "SAFE")
+        val provenance = requireNotNull(step.remoteProvenance())
+        assertEquals(-1L, provenance.revision)
+        assertEquals(com.halo.sdk.provider.RemoteDataCategory.entries.toSet(), provenance.categories)
+    }
+
+    @Test fun toolContinuationCarriesWorkspaceMemoryAndScreenProvenance() {
+        for ((name, category) in listOf("halo_get_workspace_object" to com.halo.sdk.provider.RemoteDataCategory.WORKSPACE,
+            "halo_search_memory" to com.halo.sdk.provider.RemoteDataCategory.MEMORIES,
+            "halo_read_screen" to com.halo.sdk.provider.RemoteDataCategory.SCREEN)) {
+            val call = ToolCall("fixture", name, emptyMap())
+            val next = continueToolConversation(AiContext.EMPTY,
+                AiResponse("", toolCalls = listOf(call), providerId = "fixture"),
+                listOf(AIMessage(Role.TOOL, "synthetic result", toolCallId = "fixture")))
+            assertTrue(category in next.remoteDataCategories)
+            assertTrue(com.halo.sdk.provider.RemoteDataCategory.TOOLS in next.remoteDataCategories)
+        }
+    }
     @Test
     fun discoveryContinuationRetainsGoalCallResultAndExpandedSchema() {
         val original = AIMessage(Role.USER, "set an alarm for 7")

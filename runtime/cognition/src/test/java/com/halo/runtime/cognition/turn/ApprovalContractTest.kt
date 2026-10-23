@@ -1,5 +1,7 @@
 package com.halo.runtime.cognition.turn
 
+import kotlinx.coroutines.asContextElement
+
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentInputResolution
 import com.halo.runtime.cognition.agent.AgentInputRequestId
@@ -92,6 +94,33 @@ private class TestRunStore : AgentRunStore {
 }
 
 class ApprovalContractTest {
+    @Test fun resumedApprovalRetainsOriginalModelInputProvenanceAndRevision() = runTest {
+        var observed: com.halo.sdk.provider.RemoteDispatchProvenance? = null
+        val registry = createTestRegistry(createTestTool { observed = com.halo.sdk.provider.RemoteDispatchContext.provenance.get() })
+        val store = TestRunStore(); val bus = TestEventBus()
+        val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+        val executor = DefaultToolTurnExecutor(registry,
+            PolicyToolAuthorizer(descriptorProvider = { registry.descriptor(it) }), null, coordinator, store, bus)
+        val interaction = InteractionId("sharing-provenance")
+        val run = coordinator.start(AgentRequest(interactionId = interaction, text = "synthetic action"))
+        coordinator.transition(run, AgentRunState.PLANNING); coordinator.transition(run, AgentRunState.EXECUTING)
+        val call = ToolCall("derived-call", "test_action", mapOf("param" to "val"))
+        val original = com.halo.sdk.provider.RemoteDispatchProvenance(setOf(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE), 7)
+        val waiting = kotlinx.coroutines.withContext(com.halo.sdk.provider.RemoteDispatchContext.provenance
+            .asContextElement(original)) { executor.execute(run, interaction, "first", listOf(call), true) }
+        assertTrue(waiting is ToolTurnResult.WaitingForInput)
+        val pending = store.get(run)!!.steps.filterIsInstance<AgentStep.InputRequested>().single()
+        store.resolveInputIfPending(pending.requestId, AgentInputResolution.Approved)
+        val newer = com.halo.sdk.provider.RemoteDispatchProvenance(emptySet(), 999)
+        val completed = kotlinx.coroutines.withContext(com.halo.sdk.provider.RemoteDispatchContext.provenance
+            .asContextElement(newer)) { executor.execute(run, interaction, "resume", listOf(call), true) }
+        assertTrue(completed is ToolTurnResult.Completed)
+        assertEquals(original, observed)
+        val durable = store.get(run)!!.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>().single()
+        assertEquals(setOf("WORKSPACE"), durable.remoteDataCategories)
+        assertEquals(7L, durable.remoteDispatchRevision)
+    }
+
     @Test fun directCommandAuthorityRespectsDescriptorConfirmationAndRisk() = runTest {
         val store = TestRunStore()
         val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)

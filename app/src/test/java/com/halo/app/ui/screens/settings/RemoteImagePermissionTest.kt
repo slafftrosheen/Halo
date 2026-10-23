@@ -39,11 +39,11 @@ class RemoteImagePermissionTest {
         assertFalse(subject.paidMediaAllowed.value)
     }
 
-    @Test fun privacyToggleCannotSilentlySkipSeparateSpendingConsent() {
+    @Test fun contextToggleNeverGrantsSeparateSpendingConsent() {
         val storage = MemoryStorage()
         val subject = ContextPrivacyViewModel(storage)
         subject.update { it.copy(allowCloudImages = true) }
-        assertFalse(subject.policy.value.allowCloudImages)
+        assertTrue(subject.policy.value.allowCloudImages)
         assertFalse(storage.getBoolean(PaidMediaPolicy.CONSENT_KEY, false))
     }
 

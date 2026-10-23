@@ -60,4 +60,5 @@ data class PreparedCognitiveTurn(
     /** Captured when tools are first planned; never inferred from untrusted metadata. */
     val toolExposureMode: com.halo.runtime.cognition.context.CognitiveOperatingMode =
         com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO,
+    val remoteDispatchRevision: Long? = null,
 )

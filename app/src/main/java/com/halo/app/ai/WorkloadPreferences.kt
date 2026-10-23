@@ -8,14 +8,14 @@ import org.json.JSONObject
 class WorkloadPreferences(private val storage: Storage) {
     fun profile(workload: LocalWorkload): WorkloadExecutionProfile {
         val raw=storage.getString("workload.execution.v1.${workload.name}")
-        val profile = if (raw == null) WorkloadExecutionProfile() else try {
+        val profile = if (raw == null) WorkloadExecutionProfile(allowRemote = storage.savedPrivacyMode() == PrivacyMode.CLOUD) else try {
             val j=JSONObject(raw)
             WorkloadExecutionProfile(backend=WorkloadBackend.valueOf(j.getString("backend")),
                 residency=ResidencyPreference.valueOf(j.getString("residency")),timeoutMs=j.getLong("timeoutMs"),
                 maxOutputTokens=j.getInt("output"),contextTokens=j.getInt("context"),
                 allowRemote=j.getBoolean("remote"),allowFallback=j.getBoolean("fallback"),inheritRoutingPolicy=j.optBoolean("inheritRouting",true))
         } catch(_: Exception) { WorkloadExecutionProfile() }
-        return storage.savedPrivacyMode()?.let { profile.copy(allowRemote = it == PrivacyMode.CLOUD) } ?: profile
+        return if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE) profile.copy(allowRemote = false) else profile
     }
     fun save(workload: LocalWorkload,profile: WorkloadExecutionProfile) {
         val j=JSONObject().put("schema",1).put("backend",profile.backend.name).put("residency",profile.residency.name)

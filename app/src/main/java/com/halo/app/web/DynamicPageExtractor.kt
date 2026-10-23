@@ -119,6 +119,10 @@ object PublicPagePolicy {
 class AndroidDynamicPageExtractor(
     private val context: Context,
     private val enabled: () -> Boolean = { false },
+    private val dispatchPolicy: com.halo.sdk.provider.RemoteDispatchPolicy? = null,
+    /** Injectable public-network predicates for isolated loopback instrumentation. */
+    private val urlAllowed: (String) -> Boolean = PublicPagePolicy::isAllowed,
+    private val resolutionAllowed: (String) -> Boolean = PublicPagePolicy::resolvesPublicly,
 ) : DynamicPageExtractor {
 
     override val available: Boolean get() = enabled()
@@ -126,19 +130,24 @@ class AndroidDynamicPageExtractor(
     @SuppressLint("SetJavaScriptEnabled")
     override suspend fun extract(url: String, deadlineMs: Long): DynamicExtractionOutcome {
         if (!available) return DynamicExtractionOutcome.Unavailable("Rendered page extraction is disabled")
-        if (!PublicPagePolicy.isAllowed(url)) {
+        if (!urlAllowed(url)) {
             return DynamicExtractionOutcome.Failed("Refused: not a public http or https page")
         }
         val startedAt = System.currentTimeMillis()
+        val provenance = com.halo.sdk.provider.RemoteDispatchContext.provenance.get()
+        val dispatchRevision = provenance?.revision ?: dispatchPolicy?.revision
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { continuation ->
                 val handler = Handler(Looper.getMainLooper())
                 val finished = AtomicBoolean(false)
                 var webView: WebView? = null
                 var cookiePolicyHeld = false
+                var lease: com.halo.sdk.provider.RemoteDispatchLease? = null
 
                 fun finish(outcome: DynamicExtractionOutcome) {
                     if (!finished.compareAndSet(false, true)) return
+                    lease?.finish(if (outcome is DynamicExtractionOutcome.Extracted)
+                        com.halo.sdk.provider.RemoteDispatchOutcome.COMPLETED else com.halo.sdk.provider.RemoteDispatchOutcome.FAILED)
                     handler.removeCallbacksAndMessages(null)
                     webView?.let { view ->
                         runCatching {
@@ -154,6 +163,26 @@ class AndroidDynamicPageExtractor(
                         if (activeExtractions == 0) CookieManager.getInstance().setAcceptCookie(previousCookiePolicy)
                     }
                     if (continuation.isActive) continuation.resume(outcome)
+                }
+
+                if (dispatchPolicy != null) {
+                    lease = try {
+                        dispatchPolicy.acquire(com.halo.sdk.provider.RemoteDispatchRequest("web.public",
+                            com.halo.sdk.provider.RemoteOperation.WEB,
+                            setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT) + provenance?.categories.orEmpty()),
+                            requireNotNull(dispatchRevision)) {
+                            continuation.cancel(CancellationException("Mode profile changed"))
+                            handler.post { finish(DynamicExtractionOutcome.Failed("Mode profile changed")) }
+                        }
+                    } catch (_: Exception) {
+                        finish(DynamicExtractionOutcome.Unavailable("Rendered web reading needs Full Power with web enabled"))
+                        return@suspendCancellableCoroutine
+                    }
+                }
+
+                if (!continuation.isActive) {
+                    finish(DynamicExtractionOutcome.Failed("Cancelled"))
+                    return@suspendCancellableCoroutine
                 }
 
                 val view = WebView(context)
@@ -191,11 +220,12 @@ class AndroidDynamicPageExtractor(
                         request: WebResourceRequest?,
                     ): Boolean {
                         val target = request?.url?.toString() ?: return true
+                        if (runCatching { lease?.requireCurrent() }.isFailure) return true
                         // Every navigation, including in-page redirects, re-passes the public rule.
-                        if (!PublicPagePolicy.isAllowed(target)) {
+                        if (!urlAllowed(target)) {
                             finish(DynamicExtractionOutcome.Failed("Refused: navigation left the public network"))
                         }
-                        return !PublicPagePolicy.isAllowed(target)
+                        return !urlAllowed(target)
                     }
 
                     override fun shouldInterceptRequest(
@@ -203,7 +233,10 @@ class AndroidDynamicPageExtractor(
                         request: WebResourceRequest?,
                     ): WebResourceResponse? {
                         val target = request?.url?.toString()
-                        if (target != null && !PublicPagePolicy.resolvesPublicly(target)) {
+                        if (runCatching { lease?.requireCurrent() }.isFailure) {
+                            return WebResourceResponse("text/plain", "utf-8", java.io.ByteArrayInputStream(ByteArray(0)))
+                        }
+                        if (target != null && !resolutionAllowed(target)) {
                             return WebResourceResponse("text/plain", "utf-8", java.io.ByteArrayInputStream(ByteArray(0)))
                         }
                         return null
@@ -219,7 +252,7 @@ class AndroidDynamicPageExtractor(
                     handler.post { finish(DynamicExtractionOutcome.Failed("Cancelled")) }
                 }
 
-                runCatching { view.loadUrl(url) }
+                runCatching { lease?.requireCurrent(); view.loadUrl(url) }
                     .onFailure { finish(DynamicExtractionOutcome.Failed("Could not load the page")) }
             }
         }

@@ -151,7 +151,9 @@ class AiRouterTutorGateway(
                 supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
             val effectiveAllowRemote = allowRemote && remoteStillPermitted
             val result = router.execute(aiRequest, workload.copy(allowRemote = effectiveAllowRemote,
-                allowFallback = false, pinnedTarget = AiModelRef(selectedTarget.providerId, selectedTarget.modelId)), AiContext.EMPTY)
+                allowFallback = false, pinnedTarget = AiModelRef(selectedTarget.providerId, selectedTarget.modelId)),
+                AiContext(remoteDataCategories = if (supplied.isNotEmpty() || historyOrigins.isNotEmpty() || visual != null)
+                    setOf(RemoteDataCategory.WORKSPACE) else emptySet()))
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } ||
                 (visual != null && !permitsVisual(visual.objectId, true)))

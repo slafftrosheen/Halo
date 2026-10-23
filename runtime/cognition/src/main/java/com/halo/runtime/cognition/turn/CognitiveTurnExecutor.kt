@@ -1,5 +1,8 @@
 package com.halo.runtime.cognition.turn
 
+import com.halo.sdk.provider.remoteDispatchCategories
+import kotlinx.coroutines.asContextElement
+
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
@@ -77,6 +80,7 @@ class CognitiveTurnExecutor(
         interactionId: InteractionId,
         workload: com.halo.sdk.provider.AiWorkloadSpec,
         runId: AgentRunId?,
+        remoteDispatchRevision: Long?,
     ): ProviderTurnResult {
         val boundedContext = com.halo.runtime.cognition.context.CognitiveContextPlanner().fitProviderContext(
             (target.model.contextLength ?: 8192L).coerceIn(1, Int.MAX_VALUE.toLong()).toInt(), request, context)
@@ -105,7 +109,11 @@ class CognitiveTurnExecutor(
             com.halo.sdk.runtime.WorkloadStageSpec("inference:$requestId",
                 com.halo.sdk.provider.LocalWorkload.from(com.halo.sdk.provider.AiRoleRequirements.role(workload)).name,
                 deadlineAfterMs=(request.localExecutionProfile?.timeoutMs ?: guard?.remainingMs ?: 300_000L).coerceIn(1,600_000))) { stage ->
-            try { providerExecutor.execute(target,request,boundedContext,requestId,interactionId,workload) }
+            try {
+                kotlinx.coroutines.withContext(com.halo.sdk.provider.RemoteDispatchContext.provenance.asContextElement(
+                    com.halo.sdk.provider.RemoteDispatchProvenance(context.remoteDispatchCategories(request), remoteDispatchRevision ?: -1L)
+                )) { providerExecutor.execute(target,request,boundedContext,requestId,interactionId,workload) }
+            }
             finally { stage.observedExecution(target.providerId,target.modelId,
                 (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId)) }
         }
@@ -161,7 +169,9 @@ class CognitiveTurnExecutor(
         val turn = prepared.turn
         if (prepared.streamingSpeechEligible()) eventBus.publish(com.halo.sdk.runtime.StreamingSpeechPrepared(
             turn.requestId, turn.interactionId.value, com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
-            com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback), turn.sourceCaptureId))
+            com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback), turn.sourceCaptureId,
+            remoteDataCategories = prepared.context.remoteDispatchCategories(prepared.providerRequest).map { it.name }.toSet(),
+            remoteDispatchRevision = prepared.remoteDispatchRevision ?: -1L))
 
         var activeRunId = turn.runId
         val createDurableRunIfNeeded = suspend {
@@ -190,6 +200,8 @@ class CognitiveTurnExecutor(
         val turnId = ProviderTurnId(UUID.randomUUID().toString())
 
         var currentContext = prepared.context
+        fun responseProvenance() = com.halo.sdk.provider.RemoteDispatchProvenance(
+            currentContext.remoteDispatchCategories(prepared.providerRequest), prepared.remoteDispatchRevision ?: -1L)
         var currentRequest = prepared.providerRequest
         var currentTarget = prepared.target
         val recoveryRun = turn.runId?.let { agentRunStore?.get(it) }
@@ -267,11 +279,13 @@ class CognitiveTurnExecutor(
                 interactionId = turn.interactionId,
                 workload = prepared.workload.inference,
                 runId = durableRunId,
+                remoteDispatchRevision = prepared.remoteDispatchRevision,
             )
 
             var initialResponse = when (outcome) {
                 is ProviderTurnResult.HandoffStarted -> {
                     return CognitiveResponseCommit(
+                        remoteProvenance = responseProvenance(),
                         runId = durableRunId,
                         interactionId = turn.interactionId,
                         requestId = turn.requestId,
@@ -327,6 +341,7 @@ class CognitiveTurnExecutor(
                     )
                 }
                 return CognitiveResponseCommit(
+                    remoteProvenance = responseProvenance(),
                     runId = durableRunId,
                     interactionId = turn.interactionId,
                     requestId = turn.requestId,
@@ -397,6 +412,7 @@ class CognitiveTurnExecutor(
                             ),
                         )
                         return CognitiveResponseCommit(
+                            remoteProvenance = responseProvenance(),
                             runId = durableRunId,
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
@@ -451,18 +467,22 @@ class CognitiveTurnExecutor(
                         call.copy(arguments = call.arguments + ("timeExpression" to turn.request.text.orEmpty()))
                     } else call
                 }
-                val toolResult = toolExecutor.execute(
+                val toolProvenance = com.halo.sdk.provider.RemoteDispatchProvenance(
+                    currentContext.remoteDispatchCategories(prepared.providerRequest), prepared.remoteDispatchRevision ?: -1L)
+                val toolResult = kotlinx.coroutines.withContext(
+                    com.halo.sdk.provider.RemoteDispatchContext.provenance.asContextElement(toolProvenance)) { toolExecutor.execute(
                     runId = durableRun,
                     interactionId = turn.interactionId,
                     requestId = turn.requestId,
                     toolCalls = toolCalls,
                     workspaceReadAllowed = workspaceReadAllowed,
                     exposedToolIds = exposedToolIds,
-                )
+                ) }
 
                 when (toolResult) {
                     is ToolTurnResult.WaitingForInput -> {
                         return CognitiveResponseCommit(
+                            remoteProvenance = responseProvenance(),
                             runId = durableRun,
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
@@ -479,6 +499,7 @@ class CognitiveTurnExecutor(
                     }
                     is ToolTurnResult.WaitingForResource -> {
                         return CognitiveResponseCommit(
+                            remoteProvenance = responseProvenance(),
                             runId = durableRun,
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
@@ -495,6 +516,7 @@ class CognitiveTurnExecutor(
                     }
                     is ToolTurnResult.WaitingForCapability -> {
                         return CognitiveResponseCommit(
+                            remoteProvenance = responseProvenance(),
                             runId = durableRun,
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
@@ -522,6 +544,7 @@ class CognitiveTurnExecutor(
                             ),
                         )
                         return CognitiveResponseCommit(
+                            remoteProvenance = responseProvenance(),
                             runId = durableRun,
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
@@ -671,6 +694,7 @@ class CognitiveTurnExecutor(
                             interactionId = turn.interactionId,
                             workload = prepared.workload.inference,
                             runId = durableRun,
+                            remoteDispatchRevision = prepared.remoteDispatchRevision,
                         )
 
                         response = when (roundOutcome) {
@@ -726,6 +750,7 @@ class CognitiveTurnExecutor(
             }
 
             return CognitiveResponseCommit(
+                remoteProvenance = responseProvenance(),
                 runId = durableRun,
                 interactionId = turn.interactionId,
                 requestId = turn.requestId,
@@ -779,6 +804,7 @@ class CognitiveTurnExecutor(
                 interactionId = turn.interactionId,
                 workload = prepared.workload.inference,
                 runId = durableRun,
+                remoteDispatchRevision = prepared.remoteDispatchRevision,
             )
 
             response = when (roundOutcome) {
@@ -822,6 +848,7 @@ class CognitiveTurnExecutor(
             )
 
             return CognitiveResponseCommit(
+                remoteProvenance = responseProvenance(),
                 runId = durableRun,
                 interactionId = turn.interactionId,
                 requestId = turn.requestId,
@@ -852,6 +879,10 @@ internal fun continueToolConversation(
     response: AiResponse,
     toolMessages: List<AIMessage>,
 ): AiContext = context.copy(
+    remoteDataCategories = context.remoteDataCategories + toolMessages.flatMap { message ->
+        val toolName = response.toolCalls.firstOrNull { it.id == message.toolCallId }?.functionName
+        toolName?.let { com.halo.runtime.cognition.tools.remoteToolResultCategories(it) }.orEmpty()
+    },
     conversation = buildList {
         addAll(context.conversation)
         if (response.text.isNotBlank() || response.toolCalls.isNotEmpty()) {

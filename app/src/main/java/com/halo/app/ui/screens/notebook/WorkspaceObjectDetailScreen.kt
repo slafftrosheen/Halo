@@ -342,7 +342,7 @@ private fun FileDetailCard(
             })
         }
         if (file.mimeType.startsWith("image/") || file.mimeType.startsWith("text/") || file.mimeType in setOf("application/pdf", "application/json")) {
-            Text(uiText("File sharing follows the Private / Power switch at the top of Halo."),
+            Text(uiText("File sharing follows the Private / Full Power switch at the top of Halo."),
                 style = MaterialTheme.typography.bodySmall)
             mediaMessage?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
         }

@@ -44,6 +44,7 @@ class InferenceContextBudgetTest {
             setOf(AiCapability.TEXT), ContextAssemblyRequest(userText = "current", contextWindowTokens = 4096,
                 performanceBudget = InferenceContextBudget(256), acquisition = ContextAcquisitionResult(candidates = listOf(candidate))))
         assertTrue(result.context.conversation.any { reference in it.content })
+        assertTrue(RemoteDataCategory.WORKSPACE in result.context.remoteDataCategories)
         assertEquals(30, store.turns.value.size)
     }
 

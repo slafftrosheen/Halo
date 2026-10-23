@@ -4,12 +4,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 /** Read-only fixed Gmail endpoints. Access tokens stay in memory and never enter logs or storage. */
-internal class GoogleMailReader {
-    private val client = OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
-        .connectTimeout(8, TimeUnit.SECONDS).readTimeout(8, TimeUnit.SECONDS).callTimeout(10, TimeUnit.SECONDS).build()
+internal class GoogleMailReader(
+    private val client: OkHttpClient = com.halo.app.di.ManualDependencyGraph.googleMailClient(),
+) {
+    /* Production supplies a centrally guarded client, including direct native activity reads. */
     fun read(token: String, query: String, messageId: String?, active: () -> Boolean): String {
         fun get(path: String, parameters: Map<String, String>): JSONObject {
             check(active()) { "Request stopped" }

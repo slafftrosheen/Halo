@@ -195,6 +195,13 @@ class DefaultAiProviderRouter(
 
     override fun start() {}
 
+    @Synchronized
+    override fun reloadProcessingProfile() {
+        configurationCounter.incrementAndGet()
+        restoreStoredRoutingState()
+        updateDiagnosticsSelection()
+    }
+
     override fun stop() = Unit
 
     @Synchronized

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.ModeProfileRoutingTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T06:33:24.212Z" hostname="MINIFOXEY" time="9.484">
+  <properties/>
+  <testcase name="localFallbackRequiresAnExplicitProfileChoice" classname="com.halo.app.ai.ModeProfileRoutingTest" time="7.947"/>
+  <testcase name="disabledWebFeatureStopsBeforeChallengeOrBudgetReservation" classname="com.halo.app.ai.ModeProfileRoutingTest" time="0.376"/>
+  <testcase name="resolutionStartedBeforeModeRoundTripCannotBorrowTheNewProfileRevision" classname="com.halo.app.ai.ModeProfileRoutingTest" time="0.102"/>
+  <testcase name="currentExplicitTargetExecutesExactlyOnceWithItsModel" classname="com.halo.app.ai.ModeProfileRoutingTest" time="0.116"/>
+  <testcase name="configuredButUnselectedRemoteProviderCannotBeSubstituted" classname="com.halo.app.ai.ModeProfileRoutingTest" time="0.075"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

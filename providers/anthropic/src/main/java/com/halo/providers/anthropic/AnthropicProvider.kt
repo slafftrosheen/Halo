@@ -1,5 +1,7 @@
 package com.halo.providers.anthropic
 
+import com.halo.sdk.provider.remoteAiContext
+
 import android.util.Base64
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
@@ -125,7 +127,7 @@ class AnthropicProvider(
         models.distinctBy { it.id }.sortedBy { it.displayName.lowercase() }
     }
 
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO + storage.remoteAiContext(id, request, context)) {
         val key = apiKey ?: throw missingKey()
         val model = request.modelId?.takeIf { it.isNotBlank() }
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Select an Anthropic model first")
@@ -151,7 +153,7 @@ class AnthropicProvider(
         } catch (error: Exception) {
             emit(AiStreamEvent.Failed(error))
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO + storage.remoteAiContext(id, request, context))
 
     private fun modelsRequest(key: String): Request = Request.Builder()
         .url("$API_BASE/models?limit=100")
@@ -377,7 +379,7 @@ class AnthropicProvider(
         ProviderReadiness.ConfiguredCold,
     )
 
-    private companion object {
+    companion object {
         const val ID = "anthropic"
         const val API_KEY_STORAGE = "anthropic_api_key"
         const val API_BASE = "https://api.anthropic.com/v1"

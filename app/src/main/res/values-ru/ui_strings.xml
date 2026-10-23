@@ -580,25 +580,25 @@
     <string name="ui_13e10588f9f9" formatted="false">"Настройка провайдера"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Локальная сеть"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Облако"</string>
-    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
-    <string name="ui_d47b51ac5c4a" formatted="false">"Режим Power"</string>
-    <string name="ui_f7c25d67b4c2" formatted="false">"Приватный режим / Power"</string>
-    <string name="ui_a0f62566edfc" formatted="false">"Обработка ИИ остаётся на этом телефоне. Функции Power отключены."</string>
-    <string name="ui_7be2dcda5a77" formatted="false">"Обработка ИИ остаётся на этом телефоне. Функции Power отключены."</string>
-    <string name="ui_f95736e4ba58" formatted="false">"В режиме Power переписка, изображения, память и рабочее пространство могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера."</string>
-    <string name="ui_91d1493a8e85" formatted="false">"Один переключатель вверху экрана управляет передачей данных. Профили режимов хранят отдельные настройки Private и Power."</string>
+    <string name="ui_848e96567d6b" formatted="false">"Полная мощность"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Режим полной мощности"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Приватно / Полная мощность"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"В режиме полной мощности переписка, изображения, воспоминания и материалы рабочего пространства могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"Переключатель вверху каждого экрана управляет передачей данных. Профили хранят настройки приватного режима и полной мощности раздельно."</string>
     <string name="ui_b78e8b0ee157" formatted="false">"Этот переключатель управляет передачей данных для поддерживаемых онлайн-функций halo."</string>
-    <string name="ui_91e23dc2c14e" formatted="false">"Для этого действия нужен режим Power. Включите его переключателем вверху halo."</string>
-    <string name="ui_c3b89f7b634c" formatted="false">"Включить Power"</string>
-    <string name="ui_2ff19ca13b1f" formatted="false">"Не удалось включить режим Power. Проверьте настройки детского режима или повторите попытку."</string>
-    <string name="ui_ec07e6b3552b" formatted="false">"Взрослый должен разрешить режим Power в настройках детского режима."</string>
-    <string name="ui_7c81ad053a8f" formatted="false">"Включите режим Power в верхней части halo."</string>
-    <string name="ui_914a820f10fd" formatted="false">"Для облачного синтеза речи нужен режим Power. Включите его переключателем вверху halo. Для детских сеансов также требуется разрешение взрослого."</string>
-    <string name="ui_b7b8b4725c30" formatted="false">"Облачная обработка отключена. Включите режим Power переключателем вверху halo или выберите модель на устройстве. Для детских сеансов также требуется разрешение взрослого."</string>
-    <string name="ui_80bb16adde05" formatted="false">"Udostępnianie tego obrazu w chmurze jest niedozwolone. Użyj przełącznika Private / Power u góry halo."</string>
-    <string name="ui_a8f9f96f6425" formatted="false">"Передача медиафайлов зависит от переключателя Private / Power вверху halo."</string>
-    <string name="ui_e5a3e94e5574" formatted="false">"Передача файлов зависит от переключателя Private / Power вверху halo."</string>
-    <string name="ui_eede4c33bb88" formatted="false">"Передача памяти зависит от переключателя Private / Power вверху halo."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"Для этого действия нужна полная мощность. Используйте переключатель вверху Halo."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Включить полную мощность"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Не удалось включить полную мощность. Проверьте настройки детского режима и повторите попытку."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"Взрослый должен разрешить полную мощность в настройках детского режима."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Включите полную мощность в верхней части Halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Для онлайн-озвучивания нужна полная мощность. Используйте переключатель вверху Halo. Детским сеансам также требуется разрешение взрослого."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Удалённая обработка выключена. Используйте переключатель Приватно / Полная мощность вверху Halo или выберите модель на устройстве. Детским сеансам также требуется разрешение взрослого."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Передача этого изображения провайдеру запрещена. Проверьте профили режимов и настройки доступа к изображению."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Передача медиафайлов определяется профилем активного режима."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"Передача файлов определяется профилем активного режима и настройками доступа к файлу."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Передача воспоминаний определяется профилем активного режима."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Модель для разговоров по умолчанию"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Роли моделей"</string>
     <string name="ui_dff99ddda166" formatted="false">"Изображения и визуальный контекст"</string>

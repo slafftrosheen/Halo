@@ -110,11 +110,22 @@ The current mode owner is `PrivacyModeStore`, composed through `ManualDependency
 - Migration leaves conversations, provider credentials, model installations, and local workspace content unchanged.
 - EN/LV/RU/PL strings and accessibility labels stay synchronized.
 
-## Current implementation checkpoint — 2026-10-22
+## Current implementation checkpoint — 2026-10-23
 
-The current UI slice presents the legacy Cloud mode as **Power** in the persistent switch, privacy/settings summary, and mode-related recovery copy. The approved product name is now **Full Power**; internal `PrivacyMode.CLOUD` and its stored key remain for compatibility until profile migration is implemented. The current `PrivacyModeStore.set` still writes shared policy booleans and couples paid-media consent to the mode; provider/model/routing configuration is not yet isolated by profile. The Permissions screen exposes a hidden bulk request for a fixed skills/tools bundle rather than a build-aware setup pass. There is no complete capability setup guide or Full Power activity history.
+Issue #47 implements independent versioned profiles, atomic migration and activation,
+current-policy HTTP/WebView dispatch leases, first-enable sharing disclosure, profile
+editing, distinct spending consent and bounded content-free activity receipts. Turn
+provenance retains source categories and the original revision through inference,
+tools, approval recovery, native account handoff and ordinary/streaming speech.
+Legacy `PrivacyMode.CLOUD` and stored keys remain compatible; user-facing text says
+**Full Power**. Issue #48 delivered the separate build-aware Android capability guide.
 
-This document is the target contract. The mode redesign is not complete until implementation and verification cover the acceptance criteria above. Current behavior and phone evidence: `docs/testing/HALO-CLOUD-PRIVACY-2026-10-22.md`.
+This specification remains the target contract. Verification and limitations are
+recorded in [the issue #47 report](../testing/PRIVATE-POWER-047-VERIFICATION-2026-10-23.md).
+Final device reruns, live-provider qualification and other hardware-dependent
+acceptance stay explicit in issue #43; source completion does not establish them.
+Explicit public model installation and OS account authorization retain their setup
+owners; Private is a Halo processing-dispatch boundary, not a system-wide firewall.
 
 ## Source references
 

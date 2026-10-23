@@ -1,0 +1,21 @@
+{
+  "issue": 47,
+  "date": "2026-10-23",
+  "finalApkDeviceStatus": "NOT_RUN_PHONE_DISCONNECTED",
+  "adbDevicesAtFinalGate": [],
+  "previousAttempt": {
+    "status": "FAILED",
+    "evidence": "instrumentation-first-trace-write-failure.txt",
+    "reason": "HTTP fixture trace attempted a path outside the target UID cache. Corrected to targetContext.cacheDir before the final build. Earlier WebView test passed; this is not a final-APK device pass."
+  },
+  "pending": [
+    "Install and read back final app and instrumentation APK hashes",
+    "Run PrivateDispatchOwnerTraceTest; require explicit OK (2 tests) and extract target UID synthetic owner-network-trace.json",
+    "Check native profile/disclosure dismissal, Private persistence and 200% short-landscape controls",
+    "Restore phone display baseline and leave real profile Private"
+  ],
+  "qualificationIssue": 43,
+  "liveProviderCallsUsed": false,
+  "realProfilePowerEnabled": false,
+  "rawPersonalCapturesCommitted": false
+}

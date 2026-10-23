@@ -22,6 +22,17 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SpeechPlaybackLifecycleTest {
+    @Test fun streamingSpeechRetainsSourceCategoriesIntoThePinnedSynthesisRequest() = runBlocking {
+        val f = Fixture()
+        try {
+            f.owner.start()
+            f.bus.publish(StreamingSpeechPrepared("request", "interaction", SpeechOutputTarget.Phone,
+                SpeechOutputFallback.ALLOW_PHONE, "capture", remoteDataCategories = setOf("WORKSPACE"), remoteDispatchRevision = 47))
+            f.token("This is a synthetic complete sentence. ")
+            assertEquals(RemoteDispatchProvenance(setOf(RemoteDataCategory.WORKSPACE), 47), f.first.lastRemoteProvenance)
+        } finally { f.close() }
+    }
+
     @Test fun studyStopIsScopedAndDifferentPassageMayRestartItsGenerationCounter() = runBlocking {
         val f = Fixture(CompletableDeferred())
         val narration = com.halo.app.study.SpeechOutputStudyNarration(f.bus,
@@ -122,7 +133,8 @@ class SpeechPlaybackLifecycleTest {
         override val metadata = ProviderMetadata(id)
         val spoken = mutableListOf<String>()
         var lastLanguage: String? = null
-        override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech { lastLanguage = request.language; spoken += request.text; return PcmSpeech(24000, 1, PcmEncoding.SIGNED_16_LE, listOf(ByteArray(4))) }
+        var lastRemoteProvenance: RemoteDispatchProvenance? = null
+        override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech { lastRemoteProvenance = request.remoteProvenance; lastLanguage = request.language; spoken += request.text; return PcmSpeech(24000, 1, PcmEncoding.SIGNED_16_LE, listOf(ByteArray(4))) }
         override suspend fun synthesize(request: SpeechRequest) = SpeechResult(1, true)
         override fun stream(text: String) = emptyFlow<com.halo.sdk.host.AudioFrame>()
         override suspend fun health() = true

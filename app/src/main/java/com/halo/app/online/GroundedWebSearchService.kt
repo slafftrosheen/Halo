@@ -7,6 +7,9 @@ import kotlinx.coroutines.*
 import com.halo.app.ai.PrivacyMode
 import com.halo.app.ai.savedPrivacyMode
 import com.halo.app.ai.whileCloudMode
+import com.halo.app.ai.remoteFeatureEnabled
+import com.halo.app.ai.OnlineFeature
+import com.halo.app.ai.ModeProfileStorage
 import java.math.BigDecimal
 
 /** Explicit query-only lookup. A normal answer request never enables the paid search plugin. */
@@ -48,8 +51,12 @@ class GroundedWebSearchService(
             currentCoroutineContext().ensureActive()
             checkAccess(query)
             if (key() != credential) throw OnlineOperationRejected(OnlineProblem.CONSENT_EXPIRED)
-            val root = whileCloudMode(privacyModes) { client.search(credential, query.trim(), language) }
+            val costs = com.halo.sdk.provider.RemoteCostObservation()
+            val root = withContext(com.halo.sdk.provider.RemoteDispatchContext.costs.asContextElement(costs)) {
+                whileCloudMode(privacyModes) { client.search(credential, query.trim(), language) }
+            }
             reported = OpenRouterOnlineClient.reportedCost(root)
+            reported?.let { costs.providerReportedCostUsd(it.toPlainString()) }
             val result = OpenRouterOnlineClient.parseAnswer(root, System.currentTimeMillis())
             complete = true
             result
@@ -64,13 +71,17 @@ class GroundedWebSearchService(
     suspend fun usage(): OpenRouterKeyUsage = withContext(Dispatchers.IO) {
         if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (!allowOnline()) throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
-        if (router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
+        if (!storage.remoteFeatureEnabled(OnlineFeature.WEB)) throw OnlineOperationRejected(OnlineProblem.FEATURE_DISABLED)
+        if (storage !is ModeProfileStorage && router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY)
+            throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         whileCloudMode(privacyModes) { client.keyUsage(key()) }
     }
     private fun checkAccess(query: String?) {
         if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (!allowOnline()) throw OnlineOperationRejected(OnlineProblem.CHILD_RESTRICTED)
-        if (router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY) throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
+        if (!storage.remoteFeatureEnabled(OnlineFeature.WEB)) throw OnlineOperationRejected(OnlineProblem.FEATURE_DISABLED)
+        if (storage !is ModeProfileStorage && router.routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY)
+            throw OnlineOperationRejected(OnlineProblem.LOCAL_ONLY)
         if (query != null && query.trim().length !in 1..2000) throw OnlineOperationRejected(OnlineProblem.INVALID_RESPONSE)
         if (router.getAllProviders().none { it.id == "openrouter" }) throw OnlineOperationRejected(OnlineProblem.UNAVAILABLE)
     }

@@ -1,5 +1,8 @@
 package com.halo.providers.openai
 
+import com.halo.sdk.provider.remoteImageContext
+import com.halo.sdk.provider.remoteAiContext
+
 import android.util.Base64
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
@@ -151,7 +154,7 @@ class OpenAiProvider(
         }
     }
 
-    override suspend fun generateImage(request: com.halo.sdk.provider.AiImageRequest): com.halo.sdk.provider.AiImageResult = withContext(Dispatchers.IO) {
+    override suspend fun generateImage(request: com.halo.sdk.provider.AiImageRequest): com.halo.sdk.provider.AiImageResult = withContext(Dispatchers.IO + storage.remoteImageContext(id, request)) {
         val key = apiKey ?: throw missingKey()
         require(request.modelId.startsWith("gpt-image-") && request.prompt.isNotBlank())
         val reference = request.reference
@@ -169,7 +172,7 @@ class OpenAiProvider(
         }
     }
 
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO + storage.remoteAiContext(id, request, context)) {
         val key = apiKey ?: throw missingKey()
         val model = request.modelId?.takeIf { it.isNotBlank() }
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Select an OpenAI model first")
@@ -217,7 +220,7 @@ class OpenAiProvider(
         } catch (error: Exception) {
             emit(AiStreamEvent.Failed(error))
         }
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO + storage.remoteAiContext(id, request, context))
 
     private fun buildRequestBody(request: AiRequest, context: AiContext, model: String): JSONObject {
         val messages = JSONArray().put(
@@ -402,7 +405,7 @@ class OpenAiProvider(
         ProviderReadiness.ConfiguredCold,
     )
 
-    private companion object {
+    companion object {
         const val ID = "openai"
         const val API_KEY_STORAGE = "openai_api_key"
         const val API_BASE = "https://api.openai.com/v1"

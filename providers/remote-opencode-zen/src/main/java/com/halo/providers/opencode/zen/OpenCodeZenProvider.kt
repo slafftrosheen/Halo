@@ -1,5 +1,7 @@
 package com.halo.providers.opencode.zen
 
+import kotlinx.coroutines.flow.flowOn
+
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.flow.Flow
@@ -67,8 +69,8 @@ class OpenCodeZenProvider(
     override fun configurationChanged() { configured.configurationChanged(); responsesConfigured.configurationChanged() }
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
     override suspend fun testConnection(): Boolean = configured.testConnection()
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = generationProvider().generate(request, context)
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = generationProvider().stream(request, context)
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = kotlinx.coroutines.withContext(storage.remoteAiContext(id, request, context)) { generationProvider().generate(request, context) }
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = generationProvider().stream(request, context).flowOn(storage.remoteAiContext(id, request, context))
     override suspend fun listModels(): List<AiModel> = configured.listModels()
 }
 
