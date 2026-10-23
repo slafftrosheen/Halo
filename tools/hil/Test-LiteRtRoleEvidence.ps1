@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'LiteRtRoleEvidence.ps1')
 $identity = [pscustomobject]@{ runId='run'; sourceStamp='apk'; modelId='model'; sha256=('a'*64); backend='CPU'; language='LV'; repetitions=3; requestedContext=1024 }
-$row = [pscustomobject]@{ runId='run'; sourceStamp='apk'; modelId='model'; sha256=('a'*64); backend='CPU'; language='LV'; repetitions=3; requestedContext=1024; stage='COMPLETED'; role='CHAT'; grade='SUITABLE'; fixtureSuite=1 }
+$row = [pscustomobject]@{ runId='run'; sourceStamp='apk'; modelId='model'; sha256=('a'*64); backend='CPU'; language='LV'; repetitions=3; requestedContext=1024; stage='COMPLETED'; role='CHAT'; grade='SUITABLE'; fixtureSuite=2 }
 if (-not (Test-LiteRtRoleEvidence $row $identity)) { throw 'Matching completed evidence rejected' }
 foreach ($field in @('runId','sourceStamp','modelId','sha256','backend','language','repetitions','requestedContext')) {
     $changed = $row.PSObject.Copy()
@@ -12,7 +12,7 @@ $row.stage='CASE_FINISHED'
 if (Test-LiteRtRoleEvidence $row $identity) { throw 'Partial evidence accepted as complete' }
 $row.stage='COMPLETED'; $row.grade='NOT_SUITABLE'
 if (-not (Test-LiteRtRoleEvidence $row $identity)) { throw 'Completed negative result discarded' }
-$row.fixtureSuite=0
+$row.fixtureSuite=1
 if (Test-LiteRtRoleEvidence $row $identity) { throw 'Old suite accepted' }
 Write-Host 'PASS: 12 role evidence identity/completion cases'
 $shell = (Get-Process -Id $PID).Path
@@ -22,7 +22,7 @@ $result = Invoke-LiteRtBoundedProcess -Executable $shell -Arguments @('-NoProfil
 if ($result.ExitCode -ne 124 -or -not $result.TimedOut) { throw 'Hung process was not bounded' }
 Write-Host 'PASS: subprocess exit, stdout/stderr and timeout'
 $selection = @([pscustomobject]@{ id='model'; sha256=('a'*64); declaredTask='GENERATION' })
-$row.fixtureSuite=1; $row.grade='SUITABLE'; $row | Add-Member -NotePropertyName atMs -NotePropertyValue 1
+$row.fixtureSuite=2; $row.grade='SUITABLE'; $row | Add-Member -NotePropertyName atMs -NotePropertyValue 1
 $summary = @([pscustomobject]@{ ModelId='model'; Backend='CPU'; Language='LV'; Result='PASSED' })
 $report = @(Get-LiteRtSuitabilityRows -Evidence @($row) -Selection $selection -Summary $summary -RunId run -SourceStamp apk -Backends CPU -Languages LV -Repetitions 3 -ContextTokens 1024)
 if ($report.Count -ne 5 -or @($report | Where-Object grade -eq 'SUITABLE').Count -ne 1 -or @($report | Where-Object grade -eq 'NOT_TESTED').Count -ne 4) { throw 'Missing roles were not represented as untested' }
@@ -34,3 +34,27 @@ $newer=$row.PSObject.Copy(); $newer.grade='NOT_SUITABLE'; $newer.atMs=2
 $report = @(Get-LiteRtSuitabilityRows -Evidence @($row,$newer) -Selection $selection -Summary $summary -RunId run -SourceStamp apk -Backends CPU -Languages LV -Repetitions 3 -ContextTokens 1024)
 if (($report | Where-Object role -eq 'CHAT').grade -ne 'NOT_SUITABLE') { throw 'Older positive result hid newer failure' }
 Write-Host 'PASS: complete role matrix, interruption and latest negative evidence'
+
+$polishIdentity=$identity.PSObject.Copy(); $polishIdentity.language='PL'
+$polish=$row.PSObject.Copy(); $polish.language='PL'
+if (-not (Test-LiteRtRoleEvidence $polish $polishIdentity)) { throw 'Matching current Polish evidence rejected' }
+if (Test-LiteRtRoleEvidence $row $polishIdentity) { throw 'Latvian evidence promoted into Polish' }
+$legacyPolish=$polish.PSObject.Copy(); $legacyPolish.fixtureSuite=1
+if (Test-LiteRtRoleEvidence $legacyPolish $polishIdentity) { throw 'Legacy suite without Polish fixtures promoted' }
+$unknown=$polish.PSObject.Copy(); $unknown.language='DE'
+$unknownIdentity=$polishIdentity.PSObject.Copy(); $unknownIdentity.language='DE'
+if (Test-LiteRtRoleEvidence $unknown $unknownIdentity) { throw 'Unsupported fixture language accepted' }
+$polishSummary=@([pscustomobject]@{ ModelId='model'; Backend='CPU'; Language='PL'; Result='PASSED' })
+$report = @(Get-LiteRtSuitabilityRows -Evidence @($row) -Selection $selection -Summary $polishSummary -RunId run -SourceStamp apk -Backends CPU -Languages PL -Repetitions 3 -ContextTokens 1024)
+if (@($report | Where-Object grade -ne 'NOT_TESTED').Count -gt 0) { throw 'Missing Polish observations borrowed a different language result' }
+$report = @(Get-LiteRtSuitabilityRows -Evidence @($polish) -Selection $selection -Summary $polishSummary -RunId run -SourceStamp apk -Backends CPU -Languages PL -Repetitions 3 -ContextTokens 1024)
+if (($report | Where-Object role -eq 'CHAT').grade -ne 'SUITABLE' -or @($report | Where-Object grade -eq 'NOT_TESTED').Count -ne 4) { throw 'Polish role scope was broadened' }
+$runner=Get-Command (Join-Path $PSScriptRoot 'Run-LiteRtPhoneMatrix.ps1')
+$allowed=($runner.Parameters['Languages'].Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }).ValidValues
+if ('PL' -cnotin $allowed -or $allowed.Count -ne 4) { throw 'Physical runner does not accept exactly the four fixture languages' }
+$parseTokens=$null; $parseErrors=$null
+$ast=[System.Management.Automation.Language.Parser]::ParseFile($runner.Path,[ref]$parseTokens,[ref]$parseErrors)
+if ($parseErrors.Count -gt 0) { throw 'Physical runner has syntax errors' }
+$defaults=($ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'Languages' }).DefaultValue.SafeGetValue()
+if ('PL' -cnotin $defaults -or $defaults.Count -ne 4) { throw 'Default role campaign silently omits Polish' }
+Write-Host 'PASS: Polish evidence identity, no language borrowing, legacy rejection and four-language runner metadata'

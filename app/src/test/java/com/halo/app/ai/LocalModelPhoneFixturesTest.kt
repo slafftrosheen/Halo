@@ -6,7 +6,7 @@ import org.junit.Test
 
 class LocalModelPhoneFixturesTest {
     @Test fun everyLanguageHasScoredFastChatAndReasoningCases() {
-        for (language in listOf("EN", "LV", "RU")) {
+        for (language in listOf("EN", "LV", "RU", "PL")) {
             val cases = LocalModelPhoneFixtures.cases(language)
             assertEquals(cases.size, cases.map { it.id }.distinct().size)
             for (role in listOf(AiModelRole.FAST, AiModelRole.CHAT, AiModelRole.REASONING)) {
@@ -14,6 +14,30 @@ class LocalModelPhoneFixturesTest {
             }
             assertTrue(cases.any { it.history.isNotEmpty() })
         }
+    }
+
+    @Test fun polishCasesUsePolishQuestionsAnswersAndCorrectedHistory() {
+        assertEquals(2, LocalModelPhoneFixtures.VERSION)
+        val polish = LocalModelPhoneFixtures.cases("PL").associateBy { it.id }
+        val english = LocalModelPhoneFixtures.cases("EN").associateBy { it.id }
+        assertEquals(english.keys, polish.keys)
+        polish.forEach { (id, case) ->
+            assertNotEquals(english.getValue(id).prompt, case.prompt)
+            assertTrue(case.prompt.endsWith("Podaj tylko odpowiedź."))
+            assertTrue(case.matches(case.expected))
+            assertFalse(case.matches("Odpowiedź to ${case.expected}"))
+        }
+        assertEquals("bursztynowy", polish.getValue("fast-first").expected)
+        assertEquals("wtorek", polish.getValue("chat-grounding").expected)
+        assertEquals("Ryga", polish.getValue("chat-extraction").expected)
+        assertEquals("niebieski", polish.getValue("chat-negation").expected)
+        val correction = polish.getValue("chat-correction")
+        assertEquals("MAPLE-26", correction.expected)
+        assertEquals("Mój kod testowy to OAK-11.", correction.history[0].content)
+        assertEquals("Poprawka: zastąp go kodem MAPLE-26.", correction.history[2].content)
+        assertFalse(correction.matches("OAK-11"))
+        assertEquals("UNKNOWN", polish.getValue("chat-unknown").expected)
+        assertFalse(polish.getValue("chat-unknown").matches("18"))
     }
 
     @Test fun arbitraryTextCannotPassAndProseIsNotAnExactAnswer() {

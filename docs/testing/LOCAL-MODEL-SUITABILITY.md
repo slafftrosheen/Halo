@@ -17,7 +17,7 @@ $adb = 'C:/Users/slavd/AppData/Local/Android/Sdk/platform-tools/adb.exe'
 $phone = 'YOUR_PHONE_SERIAL'
 & $adb -s $phone install -r -t app/build/outputs/apk/debug/app-debug.apk
 & $adb -s $phone install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-./tools/hil/Run-LiteRtPhoneMatrix.ps1 -Adb $adb -Serial $phone -InstalledOnly -RoleSuite -Backend CPU -Languages EN,LV,RU -Repetitions 3 -ContextTokens 1024 -OutputDir phone-role-cpu-1024
+./tools/hil/Run-LiteRtPhoneMatrix.ps1 -Adb $adb -Serial $phone -InstalledOnly -RoleSuite -Backend CPU -Languages EN,LV,RU,PL -Repetitions 3 -ContextTokens 1024 -OutputDir phone-role-cpu-1024
 ```
 
 For a first bounded run, substitute `-Models qwen3-0.6b-dynamic-int4` for `-InstalledOnly`. For a second phone, select its serial explicitly and use a different output directory. Never combine device results into one recommendation cell.
@@ -26,7 +26,9 @@ To resume after a disconnect, rerun the same command with `-Resume`. Resume re-i
 
 `-TimeoutSeconds` bounds each instrumentation process (default 1800 seconds). Each extended text/vision case and tool loop also has a 120-second coroutine deadline. A host timeout kills its ADB subprocess, stops the target app, records an interrupted outcome and retains available evidence. These are diagnostic timeouts, not measured interactive latency guarantees. Use PowerShell 7 (`pwsh`); bounded process invocation uses .NET `ArgumentList` and avoids shell interpolation.
 
-### What fixture suite v1 actually runs
+### What fixture suite v2 actually runs
+
+Fixture suite2 extends the existing role screen to Polish. EN/LV/RU questions and expected answers are unchanged;15 Polish cases and corrected-history messages now use the same scorer. The host accepts EN/LV/RU/PL and includes all four by default. Current runs require `fixtureSuite=2`; version1 evidence remains historical and cannot satisfy/resume a current campaign. The separate native baseline role-probe suite has its own version.
 
 - The existing suite v2 first checks cold/warm generation, three CHAT and three REASONING answers with real session ownership and teardown.
 - Each requested language adds five FAST, five CHAT and five REASONING fixtures, repeated three times by default: 45 scored text cases per model/language. They cover instruction/extraction, grounding, negation, unknown answers, corrected history, arithmetic and constraints. Exact-answer scoring rejects arbitrary nonempty output. This is a compact controlled screen, not a general conversational or native-speaker quality certification.
@@ -48,7 +50,7 @@ The implemented grades are deliberately stricter and narrower than the future ca
 
 An instrumentation `OK (1 test)` means the campaign collected its observations. It does **not** mean every model role passed. Read `suitability.csv` and per-role grades. Failed/crashed/interrupted instrumentation cannot promote partial rows into suitable recommendations.
 
-Compatible English results are also saved through the existing `LocalRoleQualificationRepository` and `WorkloadQualificationStore` when context, backend, threads and vision configuration match the current user profile. Expanded fixture failures conservatively veto overall qualification in that legacy store; the baseline's actual three-question scores are preserved, and precise per-role suitability remains in the export. This conservative veto is broader than the per-role report because the legacy store lacks extended-fixture identity. Existing profile provenance checks gate retained tool-loop evidence. A context override may intentionally prevent publication; inspect `selectionEvidenceSaved`. LV/RU evidence remains in the exported matrix because the existing production store has no language key. No role binding, model download or model tuning preference is changed. Extending production selection with language-specific recommendation labels remains separate work; do not import these rows as universal multilingual suitability.
+Compatible English results are also saved through the existing `LocalRoleQualificationRepository` and `WorkloadQualificationStore` when context, backend, threads and vision configuration match the current user profile. Expanded fixture failures conservatively veto overall qualification in that legacy store; the baseline's actual three-question scores are preserved, and precise per-role suitability remains in the export. This conservative veto is broader than the per-role report because the legacy store lacks extended-fixture identity. Existing profile provenance checks gate retained tool-loop evidence. A context override may intentionally prevent publication; inspect `selectionEvidenceSaved`. LV/RU/PL evidence remains in the exported matrix because the existing production store has no language key. No role binding, model download or model tuning preference is changed. Extending production selection with language-specific recommendation labels remains separate work; do not import these rows as universal multilingual suitability.
 
 GPU role runs retain the existing `-AllowGpu`, `-CpuCycleEvidenceDir` and `-CpuResidentEvidenceDir` prerequisites for the exact artifact/device/APKs. A resolved CPU fallback is never a GPU recommendation. First use `-Cycles 3 -ContextTokens 1024` and `-ResidentTurns 5 -ContextTokens 1024` in separate CPU matrix directories, then pass those directories for explicit GPU trials. CPU/GPU evidence stays separate.
 
@@ -107,7 +109,7 @@ Compatibility key: repository and pinned revision, filename, SHA-256, task, phon
 
 ## Future broader coverage for every role and workload
 
-These are proposed initial acceptance gates, not measured results. Version the fixtures and thresholds before the first campaign. Run EN, LV and RU separately where language is applicable; native-speaker review is required for free-form language quality.
+These are proposed initial acceptance gates, not measured results. Version the fixtures and thresholds before the first campaign. Run EN, LV, RU and PL separately where language is applicable; native-speaker review is required for free-form language quality. Having executable Polish fixtures does not establish Polish model or speech suitability.
 
 | Role / workload | Minimum fixtures per language and run | Quality acceptance |
 | --- | --- | --- |

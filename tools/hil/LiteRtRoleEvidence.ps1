@@ -1,7 +1,7 @@
 # Completed semantic failures are evidence too. Partial/stale rows never support a recommendation.
 function Test-LiteRtRoleEvidence {
     param($Row, $Identity)
-    if ($Row.stage -ne 'COMPLETED' -or $Row.fixtureSuite -ne 1) { return $false }
+    if ($Row.stage -ne 'COMPLETED' -or $Row.fixtureSuite -ne 2 -or $Row.language -cnotin @('EN','LV','RU','PL')) { return $false }
     foreach ($field in @('runId','sourceStamp','modelId','sha256','backend','language','repetitions','requestedContext')) {
         if ([string]$Row.$field -cne [string]$Identity.$field) { return $false }
     }

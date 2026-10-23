@@ -22,7 +22,7 @@
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4 -Backend CPU -ResidentTurns 5 -ContextTokens 2048
 .EXAMPLE
-  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -RoleSuite -Languages EN,LV,RU -Repetitions 3 -Backend CPU
+  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -RoleSuite -Languages EN,LV,RU,PL -Repetitions 3 -Backend CPU
 #>
 [CmdletBinding()]
 param(
@@ -42,8 +42,8 @@ param(
     [switch] $InspectOnly,
     [switch] $VerifyProvider,
     [switch] $RoleSuite,
-    [ValidateSet('EN', 'LV', 'RU')]
-    [string[]] $Languages = @('EN', 'LV', 'RU'),
+    [ValidateSet('EN', 'LV', 'RU', 'PL')]
+    [string[]] $Languages = @('EN', 'LV', 'RU', 'PL'),
     [ValidateRange(1, 5)]
     [int] $Repetitions = 3,
     [switch] $Resume,
