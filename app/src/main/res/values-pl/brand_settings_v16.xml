@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_settings_search">"Szukaj w ustawieniach"</string>
+    <string name="brand_settings_clear">"Wyczyść"</string>
+    <string name="brand_settings_no_results">"Brak pasujących ustawień"</string>
+    <string name="brand_intelligence_where">"Gdzie halo przetwarza odpowiedzi"</string>
+    <string name="brand_intelligence_select_help">"Wybierz, gdzie mogą być przetwarzane odpowiedzi. Samo otwarcie opcji nie zmienia aktywnego modelu."</string>
+    <string name="brand_intelligence_phone">"Na tym telefonie"</string>
+    <string name="brand_intelligence_phone_summary">"Prywatnie · może działać offline z zainstalowanym modelem"</string>
+    <string name="brand_intelligence_network">"W Twojej sieci"</string>
+    <string name="brand_intelligence_network_summary">"Komputer lub serwer, nad którym masz kontrolę"</string>
+    <string name="brand_intelligence_cloud">"W chmurze"</string>
+    <string name="brand_intelligence_cloud_summary">"Zdalny dostawca AI · wymaga Twojej konfiguracji"</string>
+    <string name="brand_intelligence_current">"Bieżące miejsce przetwarzania"</string>
+    <string name="brand_intelligence_recommended">"Zalecane"</string>
+    <string name="brand_intelligence_configure">"Skonfiguruj"</string>
+    <string name="brand_intelligence_not_configured">"Nieskonfigurowane"</string>
+    <string name="brand_intelligence_no_auto_switch">"Bieżący dostawca pozostaje wybrany, dopóki samodzielnie go nie zmienisz."</string>
+    <string name="brand_intelligence_advanced_tools">"Zaawansowane narzędzia modeli"</string>
+    <string name="brand_intelligence_hide_tools">"Ukryj zaawansowane narzędzia modeli"</string>
+</resources>

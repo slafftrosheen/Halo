@@ -1,0 +1,416 @@
+{
+  "text": {
+    "ui_7028bf28db81": {
+      "en": "Only unkept changes are discarded. Saved projects stay in Workspace.",
+      "ru": "Будут отброшены только несохранённые изменения. Сохранённые проекты останутся в рабочем пространстве.",
+      "lv": "Tiks atmestas tikai nesaglabātās izmaiņas. Saglabātie projekti paliks darbvietā.",
+      "pl": "Odrzucone zostaną tylko niezachowane zmiany. Zapisane projekty pozostaną w przestrzeni roboczej."
+    },
+    "ui_905b081897e4": {
+      "en": "This removes its messages. Your other conversations and Workspace are kept.",
+      "pl": "Usunięte zostaną wiadomości z tej rozmowy. Pozostałe rozmowy i przestrzeń robocza zostaną zachowane."
+    },
+    "ui_9539cbd5feaf": {
+      "en": "This text draft could not be kept for later. Save my text to keep a Workspace copy.",
+      "pl": "Nie udało się zachować tej wersji roboczej na później. Wybierz Zapisz mój tekst, aby zachować kopię w przestrzeni roboczej."
+    },
+    "ui_d47b51ac5c4a": {
+      "en": "Full Power mode",
+      "ru": "Режим полной мощности",
+      "lv": "Pilnas jaudas režīms",
+      "pl": "Tryb Full Power"
+    },
+    "ui_f7c25d67b4c2": {
+      "en": "Private / Full Power",
+      "ru": "Приватно / Полная мощность",
+      "lv": "Privāts / Pilna jauda",
+      "pl": "Prywatny / Full Power"
+    },
+    "ui_a0f62566edfc": {
+      "en": "Everything stays on this phone. Full Power features are off.",
+      "ru": "Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены.",
+      "lv": "MI apstrāde notiek šajā tālrunī. Pilnas jaudas iespējas ir izslēgtas.",
+      "pl": "Przetwarzanie AI pozostaje na tym telefonie. Funkcje Full Power są wyłączone."
+    },
+    "ui_7be2dcda5a77": {
+      "en": "AI processing stays on this phone. Full Power features are off.",
+      "ru": "Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены.",
+      "lv": "MI apstrāde notiek šajā tālrunī. Pilnas jaudas iespējas ir izslēgtas.",
+      "pl": "Przetwarzanie AI pozostaje na tym telefonie. Funkcje Full Power są wyłączone."
+    },
+    "ui_f95736e4ba58": {
+      "en": "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply.",
+      "ru": "В режиме полной мощности переписка, изображения, воспоминания и материалы рабочего пространства могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера.",
+      "lv": "Pilnas jaudas režīmā sarunas, attēli, atmiņas un darbvietas materiāli var tikt nosūtīti izvēlētajam pakalpojumam. Pakalpojuma sniedzējs var iekasēt maksu.",
+      "pl": "W trybie Full Power rozmowy, obrazy, wspomnienia i przestrzeń robocza mogą być wysyłane do wybranego dostawcy. Mogą obowiązywać opłaty dostawcy."
+    },
+    "ui_91d1493a8e85": {
+      "en": "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Full Power choices separate.",
+      "ru": "Переключатель вверху каждого экрана управляет передачей данных. Профили хранят настройки приватного режима и полной мощности раздельно.",
+      "lv": "Slēdzis katra ekrāna augšdaļā nosaka kopīgošanu. Režīmu profilos privātā režīma un pilnas jaudas izvēles tiek glabātas atsevišķi.",
+      "pl": "Jeden przełącznik u góry każdego ekranu steruje udostępnianiem. Profile trybów przechowują osobne ustawienia trybu prywatnego i Full Power."
+    },
+    "ui_91e23dc2c14e": {
+      "en": "This action needs Full Power mode. Use the switch at the top of halo.",
+      "ru": "Для этого действия нужна полная мощность. Используйте переключатель вверху Halo.",
+      "lv": "Šai darbībai vajadzīgs pilnas jaudas režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā.",
+      "pl": "To działanie wymaga trybu Full Power. Włącz go przełącznikiem u góry Halo."
+    },
+    "ui_c3b89f7b634c": {
+      "en": "Switch to Full Power",
+      "ru": "Включить полную мощность",
+      "lv": "Ieslēgt pilnu jaudu",
+      "pl": "Przełącz na Full Power"
+    },
+    "ui_2ff19ca13b1f": {
+      "en": "Full Power mode could not be enabled. Check Kids settings or try again.",
+      "ru": "Не удалось включить полную мощность. Проверьте настройки детского режима и повторите попытку.",
+      "lv": "Neizdevās ieslēgt pilnu jaudu. Pārbaudiet bērnu režīma iestatījumus un mēģiniet vēlreiz.",
+      "pl": "Nie udało się włączyć trybu Full Power. Sprawdź ustawienia trybu Dzieci lub spróbuj ponownie."
+    },
+    "ui_ec07e6b3552b": {
+      "en": "A grown-up must allow Full Power mode in Kids settings.",
+      "ru": "Взрослый должен разрешить полную мощность в настройках детского режима.",
+      "lv": "Pieaugušajam jāatļauj pilnas jaudas režīms bērnu režīma iestatījumos.",
+      "pl": "Osoba dorosła musi zezwolić na tryb Full Power w ustawieniach trybu Dzieci."
+    },
+    "ui_7c81ad053a8f": {
+      "en": "Switch to Full Power mode at the top of halo.",
+      "ru": "Включите полную мощность в верхней части Halo.",
+      "lv": "Ieslēdziet pilnas jaudas režīmu Halo ekrāna augšdaļā.",
+      "pl": "Włącz tryb Full Power u góry Halo."
+    },
+    "ui_914a820f10fd": {
+      "en": "Cloud voice needs Full Power mode. Use the switch at the top of halo. Kids sessions also need grown-up approval.",
+      "ru": "Для онлайн-озвучивания нужна полная мощность. Используйте переключатель вверху Halo. Детским сеансам также требуется разрешение взрослого.",
+      "lv": "Tiešsaistes balsij vajadzīgs pilnas jaudas režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā. Bērnu sesijām vajadzīga arī pieaugušā atļauja.",
+      "pl": "Głos w chmurze wymaga trybu Full Power. Włącz go przełącznikiem u góry Halo. Sesje dzieci wymagają też zgody osoby dorosłej."
+    },
+    "ui_b7b8b4725c30": {
+      "en": "Cloud processing is off. Use the Private / Full Power switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval.",
+      "ru": "Удалённая обработка выключена. Используйте переключатель Приватно / Полная мощность вверху Halo или выберите модель на устройстве. Детским сеансам также требуется разрешение взрослого.",
+      "lv": "Attālinātā apstrāde ir izslēgta. Izmantojiet slēdzi Privāts / Pilna jauda Halo ekrāna augšdaļā vai izvēlieties ierīces modeli. Bērnu sesijām vajadzīga arī pieaugušā atļauja.",
+      "pl": "Przetwarzanie w chmurze jest wyłączone. Włącz tryb Full Power przełącznikiem u góry Halo lub wybierz model na urządzeniu. Sesje dzieci wymagają też zgody osoby dorosłej."
+    },
+    "ui_80bb16adde05": {
+      "en": "Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of halo.",
+      "ru": "Передача этого изображения провайдеру запрещена. Проверьте профили режимов и настройки доступа к изображению.",
+      "lv": "Šo attēlu nedrīkst kopīgot attālināti. Pārskatiet režīmu profilus un attēla piekļuves iestatījumus.",
+      "pl": "Udostępnianie tego obrazu dostawcy jest niedozwolone. Sprawdź profile trybów i ustawienia dostępu do obrazu."
+    },
+    "ui_a8f9f96f6425": {
+      "en": "Media sharing follows the Private / Full Power switch at the top of halo.",
+      "ru": "Передача медиафайлов определяется профилем активного режима.",
+      "lv": "Multivides kopīgošanu nosaka aktīvā režīma profils.",
+      "pl": "Udostępnianie multimediów zależy od profilu aktywnego trybu."
+    },
+    "ui_e5a3e94e5574": {
+      "en": "File sharing follows the Private / Full Power switch at the top of halo.",
+      "ru": "Передача файлов определяется профилем активного режима и настройками доступа к файлу.",
+      "lv": "Failu kopīgošanu nosaka aktīvā režīma profils un faila piekļuves iestatījumi.",
+      "pl": "Udostępnianie plików zależy od profilu aktywnego trybu i ustawień dostępu do pliku."
+    },
+    "ui_eede4c33bb88": {
+      "en": "Memory sharing follows the Private / Full Power switch at the top of halo.",
+      "ru": "Передача воспоминаний определяется профилем активного режима.",
+      "lv": "Atmiņu kopīgošanu nosaka aktīvā režīma profils.",
+      "pl": "Udostępnianie Pamięci zależy od profilu aktywnego trybu."
+    },
+    "ui_2b7d9d792580": {
+      "en": "Open Workspace object",
+      "ru": "Открыть объект рабочего пространства",
+      "lv": "Atvērt darbvietas objektu",
+      "pl": "Otwórz obiekt przestrzeni roboczej"
+    },
+    "ui_1eb16629ebc0": {
+      "en": "Create a portable copy of your Workspace, memory and conversations.",
+      "ru": "Создать переносимую копию рабочего пространства, памяти и диалогов.",
+      "lv": "Izveido pārnesamu darbvietas, atmiņas un sarunu kopiju.",
+      "pl": "Utwórz przenośną kopię przestrzeni roboczej, pamięci i rozmów."
+    },
+    "ui_deb55cc742c7": {
+      "en": "Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Workspace.",
+      "ru": "Контекст по умолчанию временный. Снимки удаляются после взаимодействия; явно сохранённые изображения попадают в рабочее пространство.",
+      "lv": "Konteksts pēc noklusējuma ir īslaicīgs. Attēli tiek dzēsti pēc mijiedarbības; īpaši saglabātie attēli nonāk darbvietā.",
+      "pl": "Przechwycony kontekst jest domyślnie tymczasowy. Obrazy są usuwane po interakcji; jawnie zapisane obrazy należą do przestrzeni roboczej."
+    },
+    "ui_7b2d05e3e1af": {
+      "en": "Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Workspace holds your documents and files.",
+      "ru": "Память хранит подтверждённые вами сведения и отмеченные импорты. Обучение управляет предложениями. В рабочем пространстве находятся документы и файлы.",
+      "lv": "Atmiņā glabājas tavas apstiprinātās ziņas un skaidri atzīmēti importi. Mācīšanās pārvalda ieteikumus. Darbvietā ir dokumenti un faili.",
+      "pl": "Pamięć to zatwierdzone zapisane informacje oraz wyraźnie oznaczone importy. Ustawienia uczenia kontrolują sugestie. Przestrzeń robocza przechowuje Twoje dokumenty i pliki."
+    },
+    "ui_83f7ee8a2d01": {
+      "en": "Review what becomes memory. The original note stays in Workspace.",
+      "ru": "Проверьте, что будет сохранено в памяти. Исходная заметка останется в рабочем пространстве.",
+      "lv": "Pārskati, kas tiks saglabāts atmiņā. Sākotnējā piezīme paliks darbvietā.",
+      "pl": "Sprawdź, co trafi do Pamięci. Oryginalna notatka pozostanie w przestrzeni roboczej."
+    },
+    "ui_8ef3bab9bfec": {
+      "en": "Image creation uses its own model selection in Canvas and Workspace.",
+      "ru": "Для создания изображений модель выбирается отдельно в холсте и рабочем пространстве.",
+      "lv": "Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un darbvietā.",
+      "pl": "Generowanie obrazów ma osobny wybór modelu w Canvas i przestrzeni roboczej."
+    },
+    "ui_55e5b8eb9b3d": {
+      "en": "Open in Workspace",
+      "ru": "Открыть в рабочем пространстве",
+      "lv": "Atvērt darbvietā",
+      "pl": "Otwórz w przestrzeni roboczej"
+    },
+    "ui_0dec07abf92d": {
+      "en": "Workspace",
+      "ru": "Рабочее пространство",
+      "lv": "Darbvieta",
+      "pl": "Przestrzeń robocza"
+    },
+    "ui_8932da95b7fc": {
+      "en": "Save result to Workspace?",
+      "ru": "Сохранить результат в рабочее пространство?",
+      "lv": "Saglabāt rezultātu darbvietā?",
+      "pl": "Zapisać wynik w przestrzeni roboczej?"
+    },
+    "ui_6fb7365efc3c": {
+      "en": "Save to Workspace",
+      "ru": "Сохранить в рабочее пространство",
+      "lv": "Saglabāt darbvietā",
+      "pl": "Zapisz w przestrzeni roboczej"
+    },
+    "ui_fcbc94dc1e25": {
+      "en": "Could not save to Workspace",
+      "ru": "Не удалось сохранить в рабочее пространство",
+      "lv": "Neizdevās saglabāt darbvietā",
+      "pl": "Nie udało się zapisać w przestrzeni roboczej"
+    },
+    "ui_9a9ace7c1a03": {
+      "en": "Edited image saved as a new Workspace item.",
+      "ru": "Отредактированное изображение сохранено в рабочем пространстве как новый элемент.",
+      "lv": "Rediģētais attēls saglabāts darbvietā kā jauns vienums.",
+      "pl": "Edytowany obraz zapisano jako nowy materiał w przestrzeni roboczej."
+    },
+    "ui_5d5a6923f356": {
+      "en": "Color palette saved as a Workspace note.",
+      "ru": "Цветовая палитра сохранена в рабочем пространстве как заметка.",
+      "lv": "Krāsu palete saglabāta darbvietā kā piezīme.",
+      "pl": "Paletę kolorów zapisano jako notatkę w przestrzeni roboczej."
+    },
+    "ui_83847a2b28a4": {
+      "en": "Combined image saved to Workspace.",
+      "ru": "Объединённое изображение сохранено в рабочем пространстве.",
+      "lv": "Apvienotais attēls saglabāts darbvietā.",
+      "pl": "Połączony obraz zapisano w przestrzeni roboczej."
+    },
+    "ui_7d29b1002f19": {
+      "en": "Save one PDF page as a new Workspace image. Original unchanged.",
+      "ru": "Сохраните одну страницу PDF как новое изображение в рабочем пространстве. Оригинал не изменится.",
+      "lv": "Saglabājiet vienu PDF lapu kā jaunu attēlu darbvietā. Oriģināls netiks mainīts.",
+      "pl": "Zapisz jedną stronę PDF jako nowy obraz w przestrzeni roboczej. Oryginał pozostaje bez zmian."
+    },
+    "ui_ba394bc0d3a4": {
+      "en": "PDF page saved as a Workspace image.",
+      "ru": "Страница PDF сохранена в рабочем пространстве как изображение.",
+      "lv": "PDF lapa saglabāta darbvietā kā attēls.",
+      "pl": "Stronę PDF zapisano jako obraz w przestrzeni roboczej."
+    },
+    "ui_e868ba77eded": {
+      "en": "Select up to six PDF pages to save in one Workspace note. Original unchanged.",
+      "pl": "Wybierz maksymalnie sześć stron PDF, aby zapisać je w jednej notatce przestrzeni roboczej. Oryginał pozostanie bez zmian."
+    },
+    "ui_07fb1eb9229a": {
+      "en": "PDF pages saved to Workspace.",
+      "ru": "Страницы PDF сохранены в рабочем пространстве.",
+      "lv": "PDF lapas saglabātas darbvietā.",
+      "pl": "Strony PDF zapisano w przestrzeni roboczej."
+    },
+    "ui_1b8394275f47": {
+      "en": "Workspace attachment",
+      "ru": "Вложение рабочего пространства",
+      "lv": "Darbvietas pielikums",
+      "pl": "Załącznik przestrzeni roboczej"
+    },
+    "ui_0899eeebe165": {
+      "en": "Saving to Workspace…",
+      "ru": "Сохраняем в рабочее пространство…",
+      "lv": "Saglabā darbvietā…",
+      "pl": "Zapisywanie w przestrzeni roboczej…"
+    },
+    "ui_7d5459cfa1b7": {
+      "en": "Return to Workspace to choose another canvas. Your other items are unchanged.",
+      "ru": "Вернитесь в рабочее пространство, чтобы выбрать другой холст. Остальные материалы не изменены.",
+      "lv": "Atgriezieties darbvietā un izvēlieties citu audeklu. Pārējie vienumi nav mainīti.",
+      "pl": "Wróć do przestrzeni roboczej, aby wybrać inną tablicę Canvas. Pozostałe materiały pozostają bez zmian."
+    },
+    "ui_081b0b3ac528": {
+      "en": "Memory holds saved information. Learning controls suggestions. Workspace holds documents and files. Learning history describes past tasks, not current facts.",
+      "ru": "Память хранит сохранённую информацию. Обучение управляет предложениями. Рабочее пространство хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты.",
+      "lv": "Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Darbvieta glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus.",
+      "pl": "Pamięć przechowuje zapisane informacje. Uczenie kontroluje sugestie. Przestrzeń robocza przechowuje dokumenty i pliki. Historia uczenia opisuje wcześniejsze zadania, a nie bieżące fakty."
+    },
+    "ui_f1e6c2dc638f": {
+      "en": "This replaces current Workspace, conversations and memory. halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation.",
+      "ru": "Это заменит текущий рабочее пространство, разговоры и память. halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив halo.",
+      "lv": "Tas aizstās pašreizējo darbvietu, sarunas un atmiņu. halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu halo arhīvu.",
+      "pl": "Zastąpi to bieżącą przestrzeń roboczą, rozmowy i Pamięć. halo najpierw utworzy lokalną kopię bezpieczeństwa. Wyeksportuj osobny zrzut danych, jeśli potrzebujesz kopii niezależnej od tej instalacji."
+    },
+    "ui_a447ada7678e": {
+      "en": "Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Workspace review.",
+      "ru": "Простые задачи не учитываются. Значимые завершённые задачи создают записи. Необязательное локальное осмысление ограничено, прерываемо и не использует инструменты. Предложенные воспоминания и поведение требуют проверки в рабочем пространстве.",
+      "lv": "Vienkārši uzdevumi netiek ņemti vērā. Nozīmīgi pabeigti uzdevumi veido ierakstus. Neobligāta lokāla pārdomāšana ir ierobežota, pārtraucama un neizmanto rīkus. Ierosinātās atmiņas un uzvedība jāpārskata darbvietā.",
+      "pl": "Błahe zadania: brak. Istotne ukończone zadania: deterministyczne zapisy zdarzeń. Opcjonalna, rozbudowana refleksja lokalnego modelu FAST: ograniczona, możliwa do przerwania, bez narzędzi. Wywnioskowane informacje i zachowania wymagają przeglądu w przestrzeni roboczej."
+    },
+    "ui_ee058baaafb9": {
+      "en": "The previous local snapshot will replace your current Workspace, memory and conversations. Export current changes first if you need them.",
+      "ru": "Предыдущая локальная копия заменит текущий рабочее пространство, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны.",
+      "lv": "Iepriekšējā lokālā kopija aizstās pašreizējo darbvietu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas.",
+      "pl": "Poprzednia lokalna kopia zastąpi bieżące dane przestrzeni roboczej, pamięci i rozmów. Jeśli chcesz zachować obecne zmiany, najpierw wyeksportuj kopię."
+    },
+    "ui_6ffb5aacf2c4": {
+      "en": "Open Workspace",
+      "ru": "Открыть рабочее пространство",
+      "lv": "Atvērt darbvietu",
+      "pl": "Otwórz Przestrzeń roboczą"
+    },
+    "ui_bdbc7afff3ef": {
+      "en": "From your Workspace",
+      "ru": "Из вашего рабочего пространства",
+      "lv": "No tavas darbvietas",
+      "pl": "Z Twojego przestrzeni roboczej"
+    },
+    "ui_0e52f12e6f1c": {
+      "en": "Could not restore the project. Your saved notes are still in Workspace.",
+      "ru": "Не удалось восстановить проект. Сохранённые заметки остались в рабочем пространстве.",
+      "lv": "Projektu neizdevās atjaunot. Saglabātās piezīmes joprojām ir darbvietā.",
+      "pl": "Nie udało się przywrócić projektu. Zapisane notatki nadal są w przestrzeni roboczej."
+    },
+    "ui_0d51a417b123": {
+      "en": "Saved to Workspace.",
+      "ru": "Сохранено в рабочее пространство.",
+      "lv": "Saglabāts darbvietā.",
+      "pl": "Zapisano w przestrzeni roboczej."
+    },
+    "ui_6c94d6afc9e9": {
+      "en": "Could not save this draft locally. Keep a copy in Workspace.",
+      "ru": "Не удалось сохранить черновик на устройстве. Сохрани копию в рабочее пространство.",
+      "lv": "Melnrakstu neizdevās saglabāt ierīcē. Saglabā kopiju darbvietā.",
+      "pl": "Nie udało się zapisać tego szkicu lokalnie. Zachowaj kopię w przestrzeni roboczej."
+    },
+    "ui_49b31501b1c2": {
+      "en": "Search selected Workspace, Canvas, Study and attached media privately on this phone. halo indexes only after you approve the sources and build local search.",
+      "lv": "Privāti meklē šajā tālrunī atlasītos darbvietas failos, Canvas, Study materiālos un pievienotajos multivides failos. halo sāk indeksēšanu tikai pēc tam, kad atļauj avotus un izveido lokālo meklēšanu.",
+      "pl": "Prywatnie wyszukuj na tym telefonie w wybranych źródłach Przestrzeni roboczej, Canvas, Nauki i załączonych multimediów. halo rozpocznie indeksowanie dopiero po zatwierdzeniu źródeł i utworzeniu wyszukiwania lokalnego."
+    },
+    "ui_3ce934646c98": {
+      "en": "No available Workspace, Canvas, Study or media sources. Add one or return to the Library to choose sources.",
+      "ru": "Нет доступных источников из рабочего пространства, Canvas, Study или медиа. Добавьте источник или вернитесь в библиотеку, чтобы выбрать материалы.",
+      "lv": "Nav pieejamu darbvietas, Canvas, Study vai multivides avotu. Pievienojiet avotu vai atgriezieties bibliotēkā, lai to atlasītu.",
+      "pl": "Brak dostępnych źródeł z Przestrzeni roboczej, Canvas, Nauki ani multimediów. Dodaj źródło lub wróć do Biblioteki, aby je wybrać."
+    },
+    "ui_c345ddcf3224": {
+      "en": "Continue in Workspace",
+      "ru": "Продолжить в рабочем пространстве",
+      "lv": "Turpināt darbvietā",
+      "pl": "Kontynuuj w przestrzeni roboczej"
+    },
+    "ui_9550bda45c3e": {
+      "en": "No app actions are available yet. You can still ask halo questions and work in Workspace.",
+      "ru": "Действия приложений пока недоступны. Вы можете задавать halo вопросы и работать в рабочем пространстве.",
+      "lv": "Lietotņu darbības vēl nav pieejamas. Jūs joprojām varat uzdot halo jautājumus un strādāt darbvietā.",
+      "pl": "Działania aplikacji nie są jeszcze dostępne. Nadal możesz zadawać pytania halo i pracować w przestrzeni roboczej."
+    },
+    "ui_4b88b3f65725": {
+      "en": "Back to Workspace",
+      "ru": "Назад в рабочее пространство",
+      "lv": "Atpakaļ uz darbvietu",
+      "pl": "Wróć do przestrzeni roboczej"
+    },
+    "ui_c0bacf57d866": {
+      "en": "The chat moves to Trash. You can restore it from Workspace.",
+      "ru": "Чат переместится в корзину. Его можно восстановить в рабочем пространстве.",
+      "lv": "Saruna tiks pārvietota uz atkritni. To var atjaunot darbvietā.",
+      "pl": "Rozmowa zostanie przeniesiona do Kosza. Możesz ją przywrócić w przestrzeni roboczej."
+    },
+    "ui_b932adb07c93": {
+      "en": "This chat may be in Trash. Restore it from Workspace to read it again.",
+      "ru": "Чат может быть в корзине. Восстановите его в рабочем пространстве.",
+      "lv": "Saruna var būt atkritnē. Atjaunojiet to darbvietā.",
+      "pl": "Ta rozmowa może znajdować się w Koszu. Przywróć ją z przestrzeni roboczej, aby ponownie ją odczytać."
+    },
+    "ui_0b88ed8d68e3": {
+      "en": "This temporary image is no longer available. Previously saved images are still in Workspace.",
+      "ru": "Это временное изображение больше недоступно. Сохранённые ранее изображения по-прежнему находятся в рабочем пространстве.",
+      "lv": "Šis pagaidu attēls vairs nav pieejams. Iepriekš saglabātie attēli joprojām ir darbvietā.",
+      "pl": "Ten tymczasowy obraz jest już niedostępny. Wcześniej zapisane obrazy nadal są w przestrzeni roboczej."
+    },
+    "ui_821a4cfb0ae6": {
+      "en": "Photos stay on your glasses until copied. Copied photos appear in Workspace.",
+      "ru": "Фото остаются на очках, пока вы их не скопируете. Скопированные фото появятся в рабочем пространстве.",
+      "lv": "Foto paliek brillēs, līdz tos nokopējat. Nokopētie foto parādās darbvietā.",
+      "pl": "Zdjęcia pozostają w okularach do skopiowania. Skopiowane zdjęcia pojawiają się w przestrzeni roboczej."
+    },
+    "ui_5b5abdaa832e": {
+      "en": "The saved connection will be removed. Photos already copied to this phone stay in Workspace.",
+      "ru": "Сохранённое подключение будет удалено. Фото, уже скопированные на телефон, останутся в рабочем пространстве.",
+      "lv": "Saglabātais savienojums tiks noņemts. Šajā tālrunī nokopētie foto paliks darbvietā.",
+      "pl": "Zapisane połączenie zostanie usunięte. Zdjęcia skopiowane już na telefon pozostaną w przestrzeni roboczej."
+    },
+    "ui_48572c5c9b6e": {
+      "en": "This replaces your Workspace, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy.",
+      "ru": "Это заменит рабочее пространство, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно.",
+      "lv": "Tas aizstās darbvietu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju.",
+      "pl": "Zastąpi to dane przestrzeni roboczej, rozmowy i pamięć. halo najpierw zachowa lokalną kopię do odzyskiwania. Wyeksportuj kopię zapasową, aby zachować dodatkową kopię."
+    },
+    "ui_fc1a856ef2c3": {
+      "en": "This model needs a reference image. Open an image in Workspace or Canvas to edit it.",
+      "ru": "Этой модели нужно исходное изображение. Открой изображение в рабочем пространстве или на холсте для редактирования.",
+      "lv": "Šim modelim vajadzīgs atsauces attēls. Atver attēlu darbvietā vai uz audekla, lai to rediģētu.",
+      "pl": "Ten model wymaga obrazu odniesienia. Otwórz obraz w przestrzeni roboczej lub Canvas, aby go edytować."
+    },
+    "ui_0ae95a0a9345": {
+      "en": "No notes yet. Save this image to Workspace first.",
+      "ru": "Заметок пока нет. Сначала сохраните изображение в рабочее пространство.",
+      "lv": "Piezīmju vēl nav. Vispirms saglabā šo attēlu darbvietā.",
+      "pl": "Nie ma jeszcze notatek. Najpierw zapisz ten obraz w przestrzeni roboczej."
+    },
+    "ui_a45d0de015bd": {
+      "en": "Search selected Workspace, Canvas, and Study text, pictures, audio, and short video clips locally on this phone. For videos, only four sampled frames are used; audio tracks are not processed. halo reads only the sources you approve when you build local search.",
+      "ru": "Ищите локально на этом телефоне текст, изображения, аудио и короткие видео из выбранных разделов рабочего пространства, Canvas и Study. Для видео используются только четыре выбранных кадра; звуковые дорожки не обрабатываются. halo читает только источники, разрешённые вами при создании локального поиска.",
+      "lv": "Šajā tālrunī lokāli meklējiet tekstu, attēlus, audio un īsus video atlasītajās darbvietas, Canvas un Study sadaļās. Video tiek izmantoti tikai četri atlasīti kadri; audio celiņi netiek apstrādāti. halo nolasa tikai avotus, kurus atļaujat, veidojot vietējo meklēšanu.",
+      "pl": "Wyszukuj lokalnie na tym telefonie tekst, obrazy, nagrania i krótkie filmy z wybranych źródeł przestrzeni roboczej, Canvas i Nauki. W przypadku filmów używane są tylko cztery wybrane klatki; ścieżki dźwiękowe nie są przetwarzane. halo odczytuje wyłącznie źródła zatwierdzone podczas tworzenia indeksu."
+    },
+    "ui_5ffa104f68c2": {
+      "en": "EmbeddingGemma 2 represents text, pictures, audio, and video. halo can search locally across text, explicitly selected Workspace and Canvas pictures, audio attachments, and four sampled frames from selected short videos. Video audio tracks are not processed. Picture search uses complete PNG/JPEG files; recordings are converted to mono 16 kHz. Media search requires compatible CPU encoders; device quality and performance are not yet qualified. The model finds related content but does not generate image descriptions.",
+      "ru": "EmbeddingGemma 2 создаёт представления текста, изображений, аудио и видео. halo может локально искать по тексту, явно выбранным изображениям из рабочего пространства и Canvas, аудиовложениям и четырём выбранным кадрам из коротких видео. Звуковые дорожки видео не обрабатываются. Для поиска по изображениям используются полные файлы PNG/JPEG, а записи преобразуются в моно 16 кГц. Для мультимедийного поиска нужны совместимые CPU-кодировщики; качество и скорость на устройствах ещё не проверены. Модель находит похожее содержимое, но не создаёт описания изображений.",
+      "lv": "EmbeddingGemma 2 veido teksta, attēlu, audio un video reprezentācijas. halo var lokāli meklēt tekstā, skaidri atlasītos darbvietas un Canvas attēlos, audio pielikumos un četros atlasītos īsu video kadros. Video skaņas celiņi netiek apstrādāti. Attēlu meklēšanā tiek izmantoti pilni PNG/JPEG faili, bet ieraksti tiek pārveidoti mono 16 kHz formātā. Multivides meklēšanai vajadzīgi saderīgi CPU kodētāji; kvalitāte un veiktspēja ierīcēs vēl nav pārbaudīta. Modelis atrod līdzīgu saturu, bet nerada attēlu aprakstus.",
+      "pl": "EmbeddingGemma 2 tworzy reprezentacje tekstu, obrazów, dźwięku i wideo. Halo może lokalnie wyszukiwać tekst, jawnie wybrane obrazy z przestrzeni roboczej i Canvas, załączone nagrania oraz cztery wybrane klatki z krótkich filmów. Ścieżki dźwiękowe filmów nie są przetwarzane. Do wyszukiwania obrazów używane są pełne pliki PNG/JPEG, a nagrania są konwertowane do mono 16 kHz. Wyszukiwanie multimediów wymaga zgodnych koderów CPU; jakość i wydajność na urządzeniach nie zostały jeszcze zakwalifikowane. Model znajduje podobne treści, ale nie tworzy opisów obrazów."
+    },
+    "ui_848e96567d6b": {
+      "ru": "Полная мощность",
+      "lv": "Pilna jauda",
+      "pl": "Full Power"
+    }
+  },
+  "aliases": {
+    "Mode profiles": "mode47_profiles",
+    "This online feature is off in the active mode profile. Review Mode profiles.": "mode47_feature_disabled",
+    "Independent Private and Full Power settings": "mode47_profile_summary",
+    "Full Power": "ui_848e96567d6b",
+    "Full Power mode": "ui_d47b51ac5c4a",
+    "Private / Full Power": "ui_f7c25d67b4c2",
+    "Everything stays on this phone. Full Power features are off.": "ui_a0f62566edfc",
+    "AI processing stays on this phone. Full Power features are off.": "ui_7be2dcda5a77",
+    "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply.": "ui_f95736e4ba58",
+    "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Full Power choices separate.": "ui_91d1493a8e85",
+    "This action needs Full Power mode. Use the switch at the top of Halo.": "ui_91e23dc2c14e",
+    "Switch to Full Power": "ui_c3b89f7b634c",
+    "Full Power mode could not be enabled. Check Kids settings or try again.": "ui_2ff19ca13b1f",
+    "A grown-up must allow Full Power mode in Kids settings.": "ui_ec07e6b3552b",
+    "Switch to Full Power mode at the top of Halo.": "ui_7c81ad053a8f",
+    "Cloud voice needs Full Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval.": "ui_914a820f10fd",
+    "Cloud processing is off. Use the Private / Full Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval.": "ui_b7b8b4725c30",
+    "Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of Halo.": "ui_80bb16adde05",
+    "Media sharing follows the Private / Full Power switch at the top of Halo.": "ui_a8f9f96f6425",
+    "File sharing follows the Private / Full Power switch at the top of Halo.": "ui_e5a3e94e5574",
+    "Memory sharing follows the Private / Full Power switch at the top of Halo.": "ui_eede4c33bb88",
+    "Quick capture": "workspace49_capture"
+  }
+}

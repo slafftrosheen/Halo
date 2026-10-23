@@ -3961,4 +3961,40 @@
     <string name="ui_cf3975c3bb90" formatted="false">"Explicit model only"</string>
     <string name="ui_d8da64e2a75e" formatted="false">"Preferred provider with fallback"</string>
     <string name="ui_0c3f86e41410" formatted="false">"Refresh selected provider metadata"</string>
+    <string name="ui_ecdc23a45a3e" formatted="false">"Media sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_04dedf8afeb8" formatted="false">"STOP"</string>
+    <string name="ui_29887a5ff984" formatted="false">"Share"</string>
+    <string name="ui_dda99bd2e8f7" formatted="false">"What should halo remember?"</string>
+    <string name="ui_3827f981a067" formatted="false">"⇤"</string>
+    <string name="ui_32eb267f0398" formatted="false">"⇥"</string>
+    <string name="ui_040d2b3689dd" formatted="false">"Attachment"</string>
+    <string name="ui_5e970ab2e158" formatted="false">"halo will stop using this memory. Your notes are kept. Copies in existing backups follow your storage settings."</string>
+    <string name="ui_7b0f33ec7e23" formatted="false">"File sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_d1e5ade9c63c" formatted="false">"Talk to halo from any app"</string>
+    <string name="ui_5236256f569d" formatted="false">"Private / Full Power"</string>
+    <string name="ui_47fa02ab7a5d" formatted="false">"Memory sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_fe32924b26f0" formatted="false">"Could not save. Try again."</string>
+    <string name="ui_ac83c14ed2a2" formatted="false">"Private voice and intent starter bundle"</string>
+    <string name="ui_fe1513423fca" formatted="false">"Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. halo checks the files but does not select models or claim device quality."</string>
+    <string name="ui_92a6b4173bd1" formatted="false">"No starter bundle setup is active."</string>
+    <string name="ui_6a782e490068" formatted="false">"I have tested all 10 voices in EN, LV, RU and PL"</string>
+    <string name="ui_c9396413a7c7" formatted="false">"Confirm this installed Supertonic pack"</string>
+    <string name="ui_2e0573f7e0a2" formatted="false">"This authorizes 40 voice/language combinations on the selected pack only. Confirm only if you personally heard all of them; a different model download will require its own confirmation."</string>
+    <string name="ui_c43379174ae7" formatted="false">"Confirm all 40 tested combinations"</string>
+    <string name="ui_96fdef56f6fd" formatted="false">"Recognition readiness is not a passed transcription probe."</string>
+    <string name="ui_513754c6e3ea" formatted="false">"Voice models use Speech output settings; installed does not imply an audible pass."</string>
+    <string name="ui_f066c520c325" formatted="false">"This runtime function uses the existing detector or deterministic command path."</string>
+    <string name="ui_cc43f0bb89a8" formatted="false">"A neural model is optional; this workload is not a conversational model."</string>
+    <string name="ui_3f4515e1a553" formatted="false">"Use this model for local semantic search"</string>
+    <string name="ui_c9f85270686f" formatted="false">"Imported model: inspect native task before any role qualification."</string>
+    <string name="ui_0931c93dff69" formatted="false">"Let halo see photos"</string>
+    <string name="ui_308373a20f92" formatted="false">"Try to answer without looking. Your answer stays in the draft. You can choose to compare it with halo’s answer."</string>
+    <string name="ui_61d06b0e190e" formatted="false">"This action needs Full Power mode. Use the switch at the top of halo."</string>
+    <string name="ui_6de4468dd1ad" formatted="false">"Original image"</string>
+    <string name="ui_6f62aa63353f" formatted="false">"Choose an image model"</string>
+    <string name="ui_1ef065d5f5b1" formatted="false">"Loading image models..."</string>
+    <string name="ui_653f42380fb9" formatted="false">"Creating your image..."</string>
+    <string name="ui_dc85af8f2b1d" formatted="false">"Saving..."</string>
+    <string name="ui_12ad4ee6d948" formatted="false">"Cancel generation"</string>
+    <string name="ui_fed2d9b8a028" formatted="false">"%1$s · %2$s"</string>
 </resources>

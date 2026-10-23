@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_voice_try_mic">"Sprawdź mikrofon"</string>
+    <string name="brand_voice_mic_explanation">"Powiedz krótkie zdanie. Rozpoznany tekst pozostaje w teście i nie uruchamia polecenia."</string>
+    <string name="brand_voice_start_test">"Rozpocznij test mikrofonu"</string>
+    <string name="brand_voice_finish">"Zakończ nagrywanie"</string>
+    <string name="brand_voice_recognizing">"Rozpoznawanie…"</string>
+    <string name="brand_voice_advanced">"Opcje rozmowy i kierowania dźwięku"</string>
+    <string name="brand_voice_hide_advanced">"Ukryj opcje rozmowy"</string>
+    <string name="brand_voice_mic_denied">"Nie przyznano dostępu do mikrofonu. Możesz nadal pisać lub włączyć dostęp w ustawieniach Androida."</string>
+</resources>

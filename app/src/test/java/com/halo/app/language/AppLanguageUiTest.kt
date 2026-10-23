@@ -24,7 +24,13 @@ import org.robolectric.annotation.Config
 @Config(sdk=[34],manifest=Config.NONE,application=Application::class)
 class AppLanguageUiTest {
     @get:Rule val compose = createComposeRule()
-    @Test fun switchingLanguagePreservesUnsentDraftAndPickerOwner() {
+    @Test fun switchingLanguagePreservesUnsentDraftAndPickerOwner() =
+        checkLanguageSwitch(AppLanguage.RUSSIAN, "Учёба", "Рабочее пространство")
+
+    @Test fun switchingToPolishPreservesUnsentDraftAndPickerOwner() =
+        checkLanguageSwitch(AppLanguage.POLISH, "Nauka", "Przestrzeń robocza")
+
+    private fun checkLanguageSwitch(target: AppLanguage, studyLabel: String, workspaceLabel: String) {
         val preferences = AppLanguagePreferences(MemoryStorage(), "en")
         compose.setContent {
             val activityContext = LocalContext.current
@@ -35,14 +41,16 @@ class AppLanguageUiTest {
                 var draft by remember { mutableStateOf("") }
                 Column {
                     Text(uiText("Study"))
+                    Text(uiText("Workspace"))
                     OutlinedTextField(draft, { draft = it }, Modifier.testTag("draft"))
-                    Button({ preferences.select(AppLanguage.RUSSIAN) }) { Text("Switch language") }
+                    Button({ preferences.select(target) }) { Text("Switch language") }
                 }
             }
         }
         compose.onNodeWithTag("draft").performTextInput("My question")
         compose.onNodeWithText("Switch language").performClick()
-        compose.onNodeWithText("Учёба").assertExists()
+        compose.onNodeWithText(studyLabel).assertExists()
+        compose.onNodeWithText(workspaceLabel).assertExists()
         compose.onNodeWithTag("draft").assertTextContains("My question")
     }
     private class MemoryStorage : Storage {

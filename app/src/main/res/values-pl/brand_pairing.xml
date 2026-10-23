@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_pairing_ready">"Przygotuj się"</string>
+    <string name="brand_pairing_find">"Znajdź"</string>
+    <string name="brand_pairing_connect">"Połącz"</string>
+    <string name="brand_pairing_unknown_device">"Urządzenie bez nazwy"</string>
+    <string name="brand_pairing_other_devices">"Inne urządzenia (%1$d)"</string>
+    <string name="brand_pairing_signal_strong">"Silny"</string>
+    <string name="brand_pairing_signal_good">"Dobry"</string>
+    <string name="brand_pairing_signal_weak">"Słaby"</string>
+    <string name="brand_pairing_device_suffix">"Końcówka identyfikatora urządzenia: %1$s"</string>
+    <string name="brand_pairing_search_again">"Wyszukaj ponownie"</string>
+    <string name="brand_pairing_signal">"Sygnał: %1$s"</string>
+</resources>

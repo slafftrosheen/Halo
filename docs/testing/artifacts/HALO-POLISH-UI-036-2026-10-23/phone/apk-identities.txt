@@ -1,0 +1,9 @@
+
+Algorithm : SHA256
+Hash      : 484174EECBF9F0B1D9AB9FCE548FA74DBDEE68D840F06898813C0080FF828CE4
+Path      : C:\Users\slavd\HaloEco\Halo-issues\app\build\outputs\apk\debug\app-debug.apk
+
+Algorithm : SHA256
+Hash      : BD4D247379031BBF0DF74AE73EF9660C3F8B0A9CDA1535FDE75EA1491C3F42DF
+Path      : C:\Users\slavd\HaloEco\Halo-issues\app\build\outputs\apk\androidTest\debug\app-debug-androidTest.apk
+

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.language.StudyProgressLocalizationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T19:37:05.200Z" hostname="MINIFOXEY" time="2.899">
+  <properties/>
+  <testcase name="russianLatvianAndPolishDoNotFallBackToEnglish" classname="com.halo.app.language.StudyProgressLocalizationTest" time="2.629"/>
+  <testcase name="percentageIsEscapedAndFormattedOnce" classname="com.halo.app.language.StudyProgressLocalizationTest" time="0.04"/>
+  <testcase name="allFourLanguagesRenderProgressNumbers" classname="com.halo.app.language.StudyProgressLocalizationTest" time="0.042"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

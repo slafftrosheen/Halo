@@ -3961,4 +3961,40 @@
     <string name="ui_cf3975c3bb90" formatted="false">"Tikai izvēlētais modelis"</string>
     <string name="ui_d8da64e2a75e" formatted="false">"Vēlamais pakalpojumu sniedzējs ar rezerves variantu"</string>
     <string name="ui_0c3f86e41410" formatted="false">"Atjaunināt izvēlētā pakalpojumu sniedzēja informāciju"</string>
+    <string name="ui_ecdc23a45a3e" formatted="false">"Multivides kopīgošanu nosaka Private / Full Power slēdzis halo augšpusē."</string>
+    <string name="ui_04dedf8afeb8" formatted="false">"STOP"</string>
+    <string name="ui_29887a5ff984" formatted="false">"Kopīgot"</string>
+    <string name="ui_dda99bd2e8f7" formatted="false">"Ko halo atcerēties?"</string>
+    <string name="ui_3827f981a067" formatted="false">"⇤"</string>
+    <string name="ui_32eb267f0398" formatted="false">"⇥"</string>
+    <string name="ui_040d2b3689dd" formatted="false">"Pielikums"</string>
+    <string name="ui_5e970ab2e158" formatted="false">"halo vairs neizmantos šo atmiņu. Piezīmes tiks saglabātas. Uz kopijām esošajos dublējumos attiecas jūsu krātuves iestatījumi."</string>
+    <string name="ui_7b0f33ec7e23" formatted="false">"Failu kopīgošanu nosaka Private / Full Power slēdzis halo augšpusē."</string>
+    <string name="ui_d1e5ade9c63c" formatted="false">"Runājiet ar halo no jebkuras lietotnes"</string>
+    <string name="ui_5236256f569d" formatted="false">"Private / Full Power"</string>
+    <string name="ui_47fa02ab7a5d" formatted="false">"Atmiņu kopīgošanu nosaka Private / Full Power slēdzis halo augšpusē."</string>
+    <string name="ui_fe32924b26f0" formatted="false">"Neizdevās saglabāt. Mēģiniet vēlreiz."</string>
+    <string name="ui_ac83c14ed2a2" formatted="false">"Privātas balss un nolūku sākuma komplekts"</string>
+    <string name="ui_fe1513423fca" formatted="false">"Pēc izvēles lejupielādējiet kopā Qwen nolūku kandidātu, Whisper Small, Silero VAD un Supertonic balss failus. halo pārbauda failus, bet neizvēlas modeļus un neapstiprina kvalitāti ierīcē."</string>
+    <string name="ui_92a6b4173bd1" formatted="false">"Sākuma komplekta iestatīšana nav aktīva."</string>
+    <string name="ui_6a782e490068" formatted="false">"Esmu pārbaudījis visus 10 balsu variantus EN, LV, RU un PL valodā"</string>
+    <string name="ui_c9396413a7c7" formatted="false">"Apstiprināt šo instalēto Supertonic pakotni"</string>
+    <string name="ui_2e0573f7e0a2" formatted="false">"Tas atļauj 40 balss un valodas kombinācijas tikai atlasītajai pakotnei. Apstipriniet tikai tad, ja personīgi noklausījāties tās visas; citai modeļa lejupielādei būs vajadzīgs atsevišķs apstiprinājums."</string>
+    <string name="ui_c43379174ae7" formatted="false">"Apstiprināt visas 40 pārbaudītās kombinācijas"</string>
+    <string name="ui_96fdef56f6fd" formatted="false">"Atpazīšanas gatavība nenozīmē sekmīgu transkripcijas pārbaudi."</string>
+    <string name="ui_513754c6e3ea" formatted="false">"Balss modeļi izmanto runas izvades iestatījumus; instalēšana nenozīmē sekmīgu dzirdamības pārbaudi."</string>
+    <string name="ui_f066c520c325" formatted="false">"Šī izpildlaika funkcija izmanto esošo detektoru vai determinētu komandu ceļu."</string>
+    <string name="ui_cc43f0bb89a8" formatted="false">"Neironu modelis nav obligāts; šis uzdevums nav sarunvalodas modelis."</string>
+    <string name="ui_3f4515e1a553" formatted="false">"Izmantot šo modeli vietējai semantiskai meklēšanai"</string>
+    <string name="ui_c9f85270686f" formatted="false">"Importēts modelis: pārbaudiet vietējo uzdevumu pirms jebkuras lomas kvalifikācijas."</string>
+    <string name="ui_0931c93dff69" formatted="false">"Ļaut halo redzēt fotoattēlus"</string>
+    <string name="ui_308373a20f92" formatted="false">"Mēģiniet atbildēt bez skatīšanās. Atbilde paliks melnrakstā. Varat izvēlēties salīdzināt to ar halo atbildi."</string>
+    <string name="ui_61d06b0e190e" formatted="false">"Šai darbībai vajadzīgs Full Power režīms. Izmantojiet slēdzi halo augšpusē."</string>
+    <string name="ui_6de4468dd1ad" formatted="false">"Sākotnējais attēls"</string>
+    <string name="ui_6f62aa63353f" formatted="false">"Izvēlēties attēlu modeli"</string>
+    <string name="ui_1ef065d5f5b1" formatted="false">"Ielādē attēlu modeļus…"</string>
+    <string name="ui_653f42380fb9" formatted="false">"Veido jūsu attēlu…"</string>
+    <string name="ui_dc85af8f2b1d" formatted="false">"Saglabā…"</string>
+    <string name="ui_12ad4ee6d948" formatted="false">"Atcelt ģenerēšanu"</string>
+    <string name="ui_fed2d9b8a028" formatted="false">"%1$s · %2$s"</string>
 </resources>

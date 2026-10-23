@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_phone_hear">"Słuchanie i mówienie"</string>
+    <string name="brand_phone_hear_summary">"Mikrofon, głośnik, głośność"</string>
+    <string name="brand_phone_screen">"Odczyt i obsługa ekranu"</string>
+    <string name="brand_phone_screen_summary">"Odczyt ekranu, dotykanie i wpisywanie tekstu"</string>
+    <string name="brand_phone_controls">"Sterowanie telefonem"</string>
+    <string name="brand_phone_controls_summary">"Alarmy, minutniki, latarka i dzwonek"</string>
+    <string name="brand_phone_apps">"Aplikacje i internet"</string>
+    <string name="brand_phone_apps_summary">"Otwieranie aplikacji, stron, map i wyszukiwania"</string>
+    <string name="brand_phone_calendar">"Kalendarz i kontakty"</string>
+    <string name="brand_phone_calendar_summary">"Odczyt i dodawanie wydarzeń, wyszukiwanie kontaktów"</string>
+    <string name="brand_phone_notifications">"Powiadomienia"</string>
+    <string name="brand_phone_notifications_summary">"Odczyt i podsumowywanie powiadomień"</string>
+    <string name="brand_phone_workspace">"Schowek i Przestrzeń robocza"</string>
+    <string name="brand_phone_workspace_summary">"Kopiowanie, wklejanie, odczyt i zapis notatek"</string>
+    <string name="brand_phone_available">"Dostępne"</string>
+    <string name="brand_phone_not_reported">"Brak danych"</string>
+    <string name="brand_phone_technical">"Nazwy techniczne"</string>
+    <string name="brand_phone_hide_technical">"Ukryj nazwy techniczne"</string>
+    <string name="brand_phone_access_note">"Te możliwości zgłasza halo. Uprawnieniami i zgodami zarządzasz oddzielnie."</string>
+    <string name="brand_phone_abilities">"Możliwości telefonu"</string>
+</resources>

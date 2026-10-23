@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="link53_continue">"Kontynuuj w…"</string>
+    <string name="link53_opening">"Otwieranie materiału…"</string>
+    <string name="link53_unavailable">"Ten materiał zmienił się lub jest już niedostępny. Otwórz Przestrzeń roboczą i wybierz go ponownie."</string>
+    <string name="link53_workspace">"Otwórz Przestrzeń roboczą"</string>
+    <string name="link53_open">"Otwórz oryginalny materiał"</string>
+    <string name="link53_files">"Edytuj w Narzędziach plików"</string>
+    <string name="link53_studio">"Kontynuuj w Studio"</string>
+    <string name="link53_study">"Ucz się z halo"</string>
+    <string name="link53_chat">"Użyj w czacie"</string>
+    <string name="link53_canvas">"Wstaw na tablicę Canvas"</string>
+    <string name="link53_context">"Dodaj do Zestawu roboczego"</string>
+    <string name="link53_memory_separate">"Źródło pozostaje nienaruszone. Otwarcie lub dołączenie dokumentu nie dodaje faktów do Pamięci."</string>
+    <string name="link53_sources">"Historia źródła"</string>
+    <string name="link53_source_current">"Powiązane źródło"</string>
+    <string name="link53_source_earlier">"Zapisano z wcześniejszej wersji"</string>
+    <string name="link53_source_missing">"Źródło niedostępne"</string>
+    <string name="link53_done">"Gotowe"</string>
+    <string name="link53_no_canvas">"Najpierw utwórz tablicę Canvas w Przestrzeni roboczej."</string>
+    <string name="link53_saved">"Dodano odwołanie"</string>
+    <string name="link53_source_changed">"Wybrane źródło zmieniło się. Usuń je i wybierz ponownie przed rozpoczęciem."</string>
+    <string name="link53_photo_selected">"Wybrano zdjęcie. halo sprawdzi je przed użyciem."</string>
+    <string name="link53_pdf_selected">"Wybrano PDF. Strony są odczytywane jako obrazy."</string>
+    <string name="link53_keep_copy">"Zachowaj lokalną kopię w Przestrzeni roboczej przed dołączeniem tego obrazu."</string>
+    <string name="link53_source_unverified">"Nie można zweryfikować oryginalnej wersji"</string>
+</resources>

@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(3961) {
+    buildMap(4014) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -17,6 +17,7 @@ internal val uiCatalogue: Map<String, Int> by lazy {
         putAll(uiCataloguePart11())
         putAll(uiCataloguePart12())
         putAll(uiCataloguePart13())
+        putAll(uiCatalogueAliases())
     }
 }
 
@@ -324,9 +325,6 @@ private fun uiCataloguePart0(): Map<String, Int> = mapOf(
 )
 
 private fun uiCataloguePart1(): Map<String, Int> = mapOf(
-    "Mode profiles" to R.string.mode47_profiles,
-    "This online feature is off in the active mode profile. Review Mode profiles." to R.string.mode47_feature_disabled,
-    "Independent Private and Full Power settings" to R.string.mode47_profile_summary,
     "Reveal" to R.string.ui_36b830bdb447,
     "Practice" to R.string.ui_d3857b12b4ce,
     "Back to tutor" to R.string.ui_a5cbc93cf868,
@@ -607,25 +605,25 @@ private fun uiCataloguePart1(): Map<String, Int> = mapOf(
     "Provider setup" to R.string.ui_13e10588f9f9,
     "Local network" to R.string.ui_4fda695d3e86,
     "Cloud" to R.string.ui_b977b950c1ae,
-    "Full Power" to R.string.ui_848e96567d6b,
-    "Full Power mode" to R.string.ui_d47b51ac5c4a,
-    "Private / Full Power" to R.string.ui_f7c25d67b4c2,
-    "Everything stays on this phone. Full Power features are off." to R.string.ui_a0f62566edfc,
-    "AI processing stays on this phone. Full Power features are off." to R.string.ui_7be2dcda5a77,
-    "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply." to R.string.ui_f95736e4ba58,
-    "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Full Power choices separate." to R.string.ui_91d1493a8e85,
+    "Power" to R.string.ui_848e96567d6b,
+    "Power mode" to R.string.ui_d47b51ac5c4a,
+    "Private / Power" to R.string.ui_f7c25d67b4c2,
+    "Everything stays on this phone. Power features are off." to R.string.ui_a0f62566edfc,
+    "AI processing stays on this phone. Power features are off." to R.string.ui_7be2dcda5a77,
+    "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply." to R.string.ui_f95736e4ba58,
+    "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Power choices separate." to R.string.ui_91d1493a8e85,
     "This switch controls sharing for supported online Halo features." to R.string.ui_b78e8b0ee157,
-    "This action needs Full Power mode. Use the switch at the top of Halo." to R.string.ui_91e23dc2c14e,
-    "Switch to Full Power" to R.string.ui_c3b89f7b634c,
-    "Full Power mode could not be enabled. Check Kids settings or try again." to R.string.ui_2ff19ca13b1f,
-    "A grown-up must allow Full Power mode in Kids settings." to R.string.ui_ec07e6b3552b,
-    "Switch to Full Power mode at the top of Halo." to R.string.ui_7c81ad053a8f,
-    "Cloud voice needs Full Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval." to R.string.ui_914a820f10fd,
-    "Cloud processing is off. Use the Private / Full Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval." to R.string.ui_b7b8b4725c30,
-    "Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of Halo." to R.string.ui_80bb16adde05,
-    "Media sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_a8f9f96f6425,
-    "File sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_e5a3e94e5574,
-    "Memory sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_eede4c33bb88,
+    "This action needs Power mode. Use the switch at the top of Halo." to R.string.ui_91e23dc2c14e,
+    "Switch to Power" to R.string.ui_c3b89f7b634c,
+    "Power mode could not be enabled. Check Kids settings or try again." to R.string.ui_2ff19ca13b1f,
+    "A grown-up must allow Power mode in Kids settings." to R.string.ui_ec07e6b3552b,
+    "Switch to Power mode at the top of Halo." to R.string.ui_7c81ad053a8f,
+    "Cloud voice needs Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval." to R.string.ui_914a820f10fd,
+    "Cloud processing is off. Use the Private / Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval." to R.string.ui_b7b8b4725c30,
+    "Cloud sharing is not allowed for this image. Use the Private / Power switch at the top of Halo." to R.string.ui_80bb16adde05,
+    "Media sharing follows the Private / Power switch at the top of Halo." to R.string.ui_a8f9f96f6425,
+    "File sharing follows the Private / Power switch at the top of Halo." to R.string.ui_e5a3e94e5574,
+    "Memory sharing follows the Private / Power switch at the top of Halo." to R.string.ui_eede4c33bb88,
     "Conversation default" to R.string.ui_824ddc4cb517,
 )
 
@@ -2503,7 +2501,6 @@ private fun uiCataloguePart8(): Map<String, Int> = mapOf(
     "Allow display over other apps to show the orb." to R.string.ui_258cc57c4649,
     "Add Halo from your launcher's widget picker." to R.string.ui_18d1cefb5726,
     "Capture" to R.string.ui_1900b478a586,
-    "Quick capture" to R.string.workspace49_capture,
     "In chat (%1\$d)" to R.string.ui_3cc713512e21,
     "In chat" to R.string.ui_f33564f63ae0,
     "Group" to R.string.ui_34ca0e766088,
@@ -4025,4 +4022,65 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Explicit model only" to R.string.ui_cf3975c3bb90,
     "Preferred provider with fallback" to R.string.ui_d8da64e2a75e,
     "Refresh selected provider metadata" to R.string.ui_0c3f86e41410,
+    "Media sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_ecdc23a45a3e,
+    "STOP" to R.string.ui_04dedf8afeb8,
+    "Share" to R.string.ui_29887a5ff984,
+    "What should halo remember?" to R.string.ui_dda99bd2e8f7,
+    "⇤" to R.string.ui_3827f981a067,
+    "⇥" to R.string.ui_32eb267f0398,
+    "Attachment" to R.string.ui_040d2b3689dd,
+    "halo will stop using this memory. Your notes are kept. Copies in existing backups follow your storage settings." to R.string.ui_5e970ab2e158,
+    "File sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_7b0f33ec7e23,
+    "Talk to halo from any app" to R.string.ui_d1e5ade9c63c,
+    "Private / Full Power" to R.string.ui_5236256f569d,
+    "Memory sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_47fa02ab7a5d,
+    "Could not save. Try again." to R.string.ui_fe32924b26f0,
+    "Private voice and intent starter bundle" to R.string.ui_ac83c14ed2a2,
+    "Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality." to R.string.ui_fe1513423fca,
+    "No starter bundle setup is active." to R.string.ui_92a6b4173bd1,
+    "I have tested all 10 voices in EN, LV, RU and PL" to R.string.ui_6a782e490068,
+    "Confirm this installed Supertonic pack" to R.string.ui_c9396413a7c7,
+    "This authorizes 40 voice/language combinations on the selected pack only. Confirm only if you personally heard all of them; a different model download will require its own confirmation." to R.string.ui_2e0573f7e0a2,
+    "Confirm all 40 tested combinations" to R.string.ui_c43379174ae7,
+    "Recognition readiness is not a passed transcription probe." to R.string.ui_96fdef56f6fd,
+    "Voice models use Speech output settings; installed does not imply an audible pass." to R.string.ui_513754c6e3ea,
+    "This runtime function uses the existing detector or deterministic command path." to R.string.ui_f066c520c325,
+    "A neural model is optional; this workload is not a conversational model." to R.string.ui_cc43f0bb89a8,
+    "Use this model for local semantic search" to R.string.ui_3f4515e1a553,
+    "Imported model: inspect native task before any role qualification." to R.string.ui_c9f85270686f,
+    "Let halo see photos" to R.string.ui_0931c93dff69,
+    "Try to answer without looking. Your answer stays in the draft. You can choose to compare it with halo’s answer." to R.string.ui_308373a20f92,
+    "This action needs Full Power mode. Use the switch at the top of Halo." to R.string.ui_61d06b0e190e,
+    "Original image" to R.string.ui_6de4468dd1ad,
+    "Choose an image model" to R.string.ui_6f62aa63353f,
+    "Loading image models..." to R.string.ui_1ef065d5f5b1,
+    "Creating your image..." to R.string.ui_653f42380fb9,
+    "Saving..." to R.string.ui_dc85af8f2b1d,
+    "Cancel generation" to R.string.ui_12ad4ee6d948,
+    "%1\$s · %2\$s" to R.string.ui_fed2d9b8a028,
+)
+
+private fun uiCatalogueAliases(): Map<String, Int> = mapOf(
+    "Mode profiles" to R.string.mode47_profiles,
+    "This online feature is off in the active mode profile. Review Mode profiles." to R.string.mode47_feature_disabled,
+    "Independent Private and Full Power settings" to R.string.mode47_profile_summary,
+    "Full Power" to R.string.ui_848e96567d6b,
+    "Full Power mode" to R.string.ui_d47b51ac5c4a,
+    "Private / Full Power" to R.string.ui_f7c25d67b4c2,
+    "Everything stays on this phone. Full Power features are off." to R.string.ui_a0f62566edfc,
+    "AI processing stays on this phone. Full Power features are off." to R.string.ui_7be2dcda5a77,
+    "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply." to R.string.ui_f95736e4ba58,
+    "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Full Power choices separate." to R.string.ui_91d1493a8e85,
+    "This action needs Full Power mode. Use the switch at the top of Halo." to R.string.ui_91e23dc2c14e,
+    "Switch to Full Power" to R.string.ui_c3b89f7b634c,
+    "Full Power mode could not be enabled. Check Kids settings or try again." to R.string.ui_2ff19ca13b1f,
+    "A grown-up must allow Full Power mode in Kids settings." to R.string.ui_ec07e6b3552b,
+    "Switch to Full Power mode at the top of Halo." to R.string.ui_7c81ad053a8f,
+    "Cloud voice needs Full Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval." to R.string.ui_914a820f10fd,
+    "Cloud processing is off. Use the Private / Full Power switch at the top of Halo, or choose an on-device model. Kids sessions also need grown-up approval." to R.string.ui_b7b8b4725c30,
+    "Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of Halo." to R.string.ui_80bb16adde05,
+    "Media sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_a8f9f96f6425,
+    "File sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_e5a3e94e5574,
+    "Memory sharing follows the Private / Full Power switch at the top of Halo." to R.string.ui_eede4c33bb88,
+    "Quick capture" to R.string.workspace49_capture,
 )

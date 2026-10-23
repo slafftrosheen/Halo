@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_note_revision">"Notatka · wersja %1$d"</string>
+    <string name="brand_note_saved_on_phone">"Zapisano na tym telefonie"</string>
+</resources>

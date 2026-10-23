@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pack39_intro">"Opcjonalne pliki startowe: kandydat Qwen do rozpoznawania intencji, Whisper Small, Silero VAD i pakiet głosu Supertonic. Pobieranie wymaga internetu i wolnego miejsca. Twoje dokumenty pozostają na tym telefonie. Instalacja nie wybiera modeli ani nie potwierdza ich jakości."</string>
+    <string name="pack39_complete">"Pliki startowe są zainstalowane i sprawdzone. Przed użyciem wybierz model rozpoznawania mowy i wypróbuj głos. Model intencji pozostaje niewybranym kandydatem."</string>
+    <string name="pack39_preflight">"Sprawdzanie wolnego miejsca…"</string>
+    <string name="pack39_intent">"Pobieranie kandydata do rozpoznawania intencji…"</string>
+    <string name="pack39_recognition">"Pobieranie modelu rozpoznawania mowy…"</string>
+    <string name="pack39_vad">"Instalowanie wykrywania aktywności głosowej…"</string>
+    <string name="pack39_tts">"Pobieranie pakietu głosu…"</string>
+    <string name="pack39_verify">"Sprawdzanie plików modeli…"</string>
+    <string name="pack39_pause">"Wstrzymaj konfigurację"</string>
+    <string name="pack39_paused">"Konfiguracja jest wstrzymana. Wznów ją, usuń tylko zweryfikowane pliki dodane w jej ramach lub zachowaj pliki."</string>
+    <string name="pack39_failed">"Konfiguracja nie została ukończona. Sprawdź połączenie i wolne miejsce, a następnie wznów ją lub zachowaj pobrane pliki."</string>
+    <string name="pack39_rollback_failed">"Część plików zachowano, ponieważ są używane, zmieniły się lub nie wiadomo, czy dodała je ta konfiguracja. Rozwiąż te problemy i spróbuj ponownie albo zachowaj wszystkie pliki."</string>
+    <string name="pack39_rolling_back">"Usuwanie plików należących do tej konfiguracji…"</string>
+    <string name="pack39_resume">"Wznów konfigurację startową"</string>
+    <string name="pack39_install">"Pobierz pliki startowe"</string>
+    <string name="pack39_retry_rollback">"Ponów usuwanie"</string>
+    <string name="pack39_rollback">"Usuń pliki pobrane w tej konfiguracji"</string>
+    <string name="pack39_keep_files">"Zachowaj pliki i zakończ konfigurację"</string>
+    <string name="pack39_keep_explanation">"Zachowanie plików usuwa zapis tej konfiguracji. Żaden plik nie zostanie usunięty ani wybrany; później możesz usuwać modele za pomocą ich osobnych ustawień."</string>
+</resources>

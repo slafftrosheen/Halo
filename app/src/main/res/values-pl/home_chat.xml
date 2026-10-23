@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_chat_options">"Opcje czatu"</string>
+    <string name="home_your_day">"Twój dzień"</string>
+    <string name="home_message_actions">"Działania wiadomości"</string>
+    <string name="home_history_empty">"Tutaj pojawią się zapisane rozmowy."</string>
+    <string name="home_current_chat">"Bieżąca rozmowa"</string>
+    <string name="home_share_failed">"Udostępnianie jest niedostępne. Zamiast tego możesz skopiować wiadomość."</string>
+    <string name="home_task_details">"Szczegóły zadania"</string>
+    <string name="home_hide_task_details">"Ukryj szczegóły zadania"</string>
+    <string name="home_load_earlier">"Wczytaj wcześniejsze wiadomości"</string>
+    <string name="home_remove_attachment">"Usuń %1$s"</string>
+    <string name="home_conversation_unavailable">"Nie udało się otworzyć tej rozmowy. Spróbuj ponownie."</string>
+</resources>

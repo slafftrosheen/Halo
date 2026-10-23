@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_study_material_first">"Zostaw to pole puste, jeśli wolisz wybrać plik lub notatkę w następnym kroku."</string>
+    <string name="brand_study_goal_or_material">"Dodaj cel nauki lub przejdź dalej, aby dodać własny materiał."</string>
+    <string name="brand_study_missing_input">"Wybierz materiał lub wpisz cel, zanim przejdziesz dalej."</string>
+</resources>

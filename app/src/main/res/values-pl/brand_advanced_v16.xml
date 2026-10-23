@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_advanced_title">"Zaawansowane"</string>
+    <string name="brand_advanced_subtitle">"Dla deweloperów i testerów"</string>
+    <string name="brand_advanced_right_now">"Teraz"</string>
+    <string name="brand_advanced_task_counts">"Aktywne zadania: %1$d · oczekujące: %2$d"</string>
+    <string name="brand_advanced_capability_counts">"Dostępne funkcje: %1$d · wymagające konfiguracji: %2$d"</string>
+    <string name="brand_advanced_tools">"Narzędzia"</string>
+    <string name="brand_advanced_runtime">"Stan środowiska wykonawczego"</string>
+    <string name="brand_advanced_runtime_summary">"Bieżące zadania, funkcje i zasoby"</string>
+    <string name="brand_advanced_check">"Kontrola systemu i raporty"</string>
+    <string name="brand_advanced_check_summary">"Uruchom diagnostykę i przejrzyj eksport przed udostępnieniem"</string>
+    <string name="brand_advanced_storage">"Pamięć urządzenia i kopie zapasowe"</string>
+    <string name="brand_advanced_storage_summary">"Sprawdź lokalne pliki i dostęp do kopii zapasowych"</string>
+    <string name="brand_advanced_note">"To podsumowanie pokazuje znane liczniki środowiska wykonawczego, a nie gwarancję sprawności całego systemu. Diagnostyka pozostaje w odpowiednich narzędziach. Reset halo nie jest dostępny bez sprawdzonej procedury odzyskiwania."</string>
+</resources>

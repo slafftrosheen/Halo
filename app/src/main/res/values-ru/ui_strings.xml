@@ -3961,4 +3961,40 @@
     <string name="ui_cf3975c3bb90" formatted="false">"Только выбранная модель"</string>
     <string name="ui_d8da64e2a75e" formatted="false">"Предпочтительный провайдер с резервным вариантом"</string>
     <string name="ui_0c3f86e41410" formatted="false">"Обновить данные выбранного провайдера"</string>
+    <string name="ui_ecdc23a45a3e" formatted="false">"Обмен медиа подчиняется переключателю Private / Full Power вверху halo."</string>
+    <string name="ui_04dedf8afeb8" formatted="false">"СТОП"</string>
+    <string name="ui_29887a5ff984" formatted="false">"Поделиться"</string>
+    <string name="ui_dda99bd2e8f7" formatted="false">"Что halo должен запомнить?"</string>
+    <string name="ui_3827f981a067" formatted="false">"⇤"</string>
+    <string name="ui_32eb267f0398" formatted="false">"⇥"</string>
+    <string name="ui_040d2b3689dd" formatted="false">"Вложение"</string>
+    <string name="ui_5e970ab2e158" formatted="false">"halo перестанет использовать это воспоминание. Заметки сохранятся. Копии в существующих резервных копиях подчиняются настройкам хранения."</string>
+    <string name="ui_7b0f33ec7e23" formatted="false">"Обмен файлами подчиняется переключателю Private / Full Power вверху halo."</string>
+    <string name="ui_d1e5ade9c63c" formatted="false">"Говорите с halo из любого приложения"</string>
+    <string name="ui_5236256f569d" formatted="false">"Private / Full Power"</string>
+    <string name="ui_47fa02ab7a5d" formatted="false">"Обмен воспоминаниями подчиняется переключателю Private / Full Power вверху halo."</string>
+    <string name="ui_fe32924b26f0" formatted="false">"Не удалось сохранить. Попробуйте ещё раз."</string>
+    <string name="ui_ac83c14ed2a2" formatted="false">"Начальный набор для приватного голоса и намерений"</string>
+    <string name="ui_fe1513423fca" formatted="false">"При желании скачайте вместе кандидат Qwen для намерений, Whisper Small, Silero VAD и файлы голоса Supertonic. halo проверяет файлы, но не выбирает модели и не подтверждает качество на устройстве."</string>
+    <string name="ui_92a6b4173bd1" formatted="false">"Настройка начального набора не запущена."</string>
+    <string name="ui_6a782e490068" formatted="false">"Я проверил(а) все 10 голосов на EN, LV, RU и PL"</string>
+    <string name="ui_c9396413a7c7" formatted="false">"Подтвердить этот установленный пакет Supertonic"</string>
+    <string name="ui_2e0573f7e0a2" formatted="false">"Это разрешает 40 сочетаний голоса и языка только для выбранного пакета. Подтверждайте лишь после личного прослушивания всех сочетаний; другой скачанный вариант модели потребует отдельного подтверждения."</string>
+    <string name="ui_c43379174ae7" formatted="false">"Подтвердить все 40 проверенных сочетаний"</string>
+    <string name="ui_96fdef56f6fd" formatted="false">"Готовность распознавания не означает успешную проверку транскрипции."</string>
+    <string name="ui_513754c6e3ea" formatted="false">"Голосовые модели используют настройки вывода речи; установка не означает успешного прослушивания."</string>
+    <string name="ui_f066c520c325" formatted="false">"Эта функция использует существующий детектор или детерминированный путь команд."</string>
+    <string name="ui_cc43f0bb89a8" formatted="false">"Нейросетевая модель необязательна; это не разговорная модель."</string>
+    <string name="ui_3f4515e1a553" formatted="false">"Использовать эту модель для локального семантического поиска"</string>
+    <string name="ui_c9f85270686f" formatted="false">"Импортированная модель: проверьте нативную задачу перед квалификацией любой роли."</string>
+    <string name="ui_0931c93dff69" formatted="false">"Разрешить halo видеть фотографии"</string>
+    <string name="ui_308373a20f92" formatted="false">"Попробуйте ответить без подсказки. Ответ останется в черновике. При желании сравните его с ответом halo."</string>
+    <string name="ui_61d06b0e190e" formatted="false">"Для этого действия нужен режим Full Power. Используйте переключатель вверху halo."</string>
+    <string name="ui_6de4468dd1ad" formatted="false">"Исходное изображение"</string>
+    <string name="ui_6f62aa63353f" formatted="false">"Выбрать модель изображений"</string>
+    <string name="ui_1ef065d5f5b1" formatted="false">"Загрузка моделей изображений…"</string>
+    <string name="ui_653f42380fb9" formatted="false">"Создание изображения…"</string>
+    <string name="ui_dc85af8f2b1d" formatted="false">"Сохранение…"</string>
+    <string name="ui_12ad4ee6d948" formatted="false">"Отменить создание"</string>
+    <string name="ui_fed2d9b8a028" formatted="false">"%1$s · %2$s"</string>
 </resources>

@@ -1,1 +1,1 @@
-<resources><string-array name="android_wear_capabilities"><item>halo_phone_endpoint</item></string-array></resources>
+<resources><string-array name="android_wear_capabilities" translatable="false"><item>halo_phone_endpoint</item></string-array></resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workspace49_open">"Otwórz"</string>
+    <string name="workspace49_collections">"Kolekcje"</string>
+    <string name="workspace49_memory_scope">"Pamięć zawiera informacje, które wybrano do zachowania. Import pliku nie dodaje go do Pamięci."</string>
+    <string name="workspace49_studio">"halo Studio"</string>
+    <string name="workspace49_studio_unavailable">"Warsztat graficzny jest niedostępny w tej wersji. Obecne narzędzia Canvas pozostają dostępne."</string>
+    <string name="workspace49_capture">"Szybkie przechwytywanie"</string>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_privacy_title">"Prywatność"</string>
+    <string name="brand_privacy_subtitle">"Z czego halo może korzystać i co udostępniać"</string>
+    <string name="brand_privacy_hero_title">"Ta strona nie weryfikuje dzisiejszych transferów danych"</string>
+    <string name="brand_privacy_hero_detail">"Ta strona kontroluje udostępnianie kontekstu AI, ale nie jest pełnym audytem ruchu sieciowego. Brak licznika transferów nie potwierdza, że żadne dane nie opuściły telefonu."</string>
+    <string name="brand_privacy_where">"Gdzie są Twoje dane"</string>
+    <string name="brand_privacy_conversations">"Rozmowy"</string>
+    <string name="brand_privacy_notebook">"Przestrzeń robocza"</string>
+    <string name="brand_privacy_local_storage">"Przechowywane lokalnie w halo"</string>
+    <string name="brand_privacy_remote">"Zdalna AI"</string>
+    <string name="brand_privacy_remote_explanation">"Używana tylko po wybraniu zdalnego dostawcy i gdy odpowiednie zasady zezwalają na przekazanie kontekstu"</string>
+    <string name="brand_privacy_remote_scope">"Te przełączniki zezwalają na przekazywanie odpowiednich kategorii kontekstu do zdalnego przetwarzania. Nie są jednorazowymi prośbami o zgodę."</string>
+    <string name="brand_privacy_backend_disclosure">"halo zaprojektowano bez serwera AI lub synchronizacji obsługiwanego przez dewelopera. Funkcje lokalne działają na Twoim urządzeniu. Gdy wybierzesz internetową usługę AI, mowy lub narzędzi, dane trafią bezpośrednio do tej firmy zgodnie z jej zasadami prywatności i przechowywania. Ewentualna przyszła usługa weryfikacji zakupów może przetwarzać wyłącznie dane licencyjne, nigdy rozmowy, nagrania, notatki ani klucze API."</string>
+    <string name="brand_privacy_permissions">"Uprawnienia"</string>
+    <string name="brand_privacy_permissions_summary">"Sprawdź dostęp Androida oddzielnie od udostępniania kontekstu AI"</string>
+</resources>

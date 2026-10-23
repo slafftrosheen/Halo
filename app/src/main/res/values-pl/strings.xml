@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">"Halo"</string>
+    <string name="halo_lab_consent_title">"Dostęp HaloModelLab"</string>
+    <string name="halo_lab_consent_body">"Po włączeniu halo udostępnia HaloModelLab informacje o zainstalowanych modelach i może wykonywać jawnie uruchomione lokalne testy. Pliki modeli i sterowanie pobieraniem pozostają w halo. Żądania laboratorium nie mogą zmieniać wybranego dostawcy ani ról, a testy nie korzystają z usług chmurowych."</string>
+    <string name="halo_lab_consent_enable">"Zezwól na HaloModelLab"</string>
+    <string name="halo_lab_consent_disable">"Wyłącz dostęp HaloModelLab"</string>
+    <string name="halo_lab_consent_close">"Zamknij"</string>
+    <string name="halo_lab_consent_manage">"Zarządzaj dostępem HaloModelLab"</string>
+</resources>

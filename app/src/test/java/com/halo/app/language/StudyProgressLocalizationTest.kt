@@ -24,9 +24,9 @@ class StudyProgressLocalizationTest {
         return resources.getString(requireNotNull(uiCatalogue[key]), *values)
     }
 
-    @Test fun allThreeLanguagesRenderProgressNumbers() {
+    @Test fun allFourLanguagesRenderProgressNumbers() {
         val key = "%1\$d cards due · %2\$d mastered"
-        for (language in listOf("en", "ru", "lv")) {
+        for (language in listOf("en", "ru", "lv", "pl")) {
             val label = message(language, key, 4, 2)
             assertTrue(label.contains("4"))
             assertTrue(label.contains("2"))
@@ -34,15 +34,16 @@ class StudyProgressLocalizationTest {
         }
     }
 
-    @Test fun russianAndLatvianDoNotFallBackToEnglish() {
+    @Test fun russianLatvianAndPolishDoNotFallBackToEnglish() {
         val key = "%1\$d attempts saved locally · %2\$d without help"
         val en = message("en", key, 3, 1)
         assertNotEquals(en, message("ru", key, 3, 1))
         assertNotEquals(en, message("lv", key, 3, 1))
+        assertNotEquals(en, message("pl", key, 3, 1))
     }
 
     @Test fun percentageIsEscapedAndFormattedOnce() {
-        for (language in listOf("en", "ru", "lv")) {
+        for (language in listOf("en", "ru", "lv", "pl")) {
             val percent = message(language, "Mastery %1\$d%%", 75)
             assertTrue(percent.contains("75%"))
             assertEquals(1, percent.count { it == '%' })

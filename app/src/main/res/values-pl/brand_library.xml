@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_library_description">"Wyszukuj i porządkuj zapisane materiały."</string>
+    <string name="brand_library_back">"Wróć do Przestrzeni roboczej"</string>
+    <string name="brand_library_see_all">"Zobacz wszystkie"</string>
+</resources>

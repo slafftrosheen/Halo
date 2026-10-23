@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_permissions_abilities">"Co halo może robić na Twoim telefonie"</string>
+    <string name="brand_permissions_scope">"Te kategorie odpowiadają kategoriom w sekcji Urządzenia. Uprawnienia Androida i zgody na umiejętności halo są oddzielne. Obecność kategorii nie oznacza zgody na każde działanie."</string>
+    <string name="brand_permissions_mic_allowed">"Dostęp do mikrofonu przyznany"</string>
+    <string name="brand_permissions_mic_off">"Mikrofon wyłączony"</string>
+    <string name="brand_permissions_check_access">"Sprawdź dostęp"</string>
+    <string name="brand_permissions_details">"Szczegóły uprawnień Androida"</string>
+    <string name="brand_permissions_hide_details">"Ukryj szczegóły Androida"</string>
+</resources>
