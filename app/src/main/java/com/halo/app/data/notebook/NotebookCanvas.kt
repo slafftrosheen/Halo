@@ -1,5 +1,8 @@
 package com.halo.app.data.notebook
 
+import com.halo.app.data.workspace.contentVersion
+import com.halo.app.data.workspace.isReadable
+
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -147,6 +150,9 @@ interface NotebookCanvasDao {
     @Query("SELECT * FROM canvas_documents WHERE objectId = :canvasId LIMIT 1")
     fun observeDocument(canvasId: String): Flow<CanvasDocumentEntity?>
 
+    @Query("SELECT * FROM canvas_documents WHERE objectId = :canvasId LIMIT 1")
+    suspend fun getDocument(canvasId: String): CanvasDocumentEntity?
+
     @Query("SELECT * FROM canvas_nodes WHERE canvasId = :canvasId ORDER BY zIndex ASC, createdAtEpochMs ASC")
     fun observeNodes(canvasId: String): Flow<List<CanvasNodeEntity>>
 
@@ -155,6 +161,10 @@ interface NotebookCanvasDao {
 
     @Query("SELECT * FROM canvas_nodes WHERE canvasId = :canvasId ORDER BY zIndex ASC")
     suspend fun getNodes(canvasId: String): List<CanvasNodeEntity>
+
+    @Query("SELECT * FROM canvas_nodes WHERE canvasId=:canvasId AND id=:nodeId LIMIT 1")
+    suspend fun getNode(canvasId: String, nodeId: String): CanvasNodeEntity?
+
 
     @Query("SELECT * FROM canvas_edges WHERE canvasId = :canvasId")
     suspend fun getEdges(canvasId: String): List<CanvasEdgeEntity>
@@ -523,7 +533,8 @@ class NotebookCanvasRepository(
         if (node.refObjectId == null || node.type !in setOf(CanvasNodeType.FILE.name, CanvasNodeType.IMAGE.name)) return@withTransaction false
         check(expectedText == null || node.text == expectedText) { "Annotations changed. Reopen the source before saving." }
         val file = database.workspaceFileDao().getFile(node.refObjectId)
-        val currentFileVersion = file?.sha256 ?: file?.modifiedAt?.let { "workspace-file:$it" }
+        check(notebookDao.getWorkspaceObject(node.refObjectId)?.lifecycle == "ACTIVE" && file?.isReadable() == true) { "Source unavailable" }
+        val currentFileVersion = requireNotNull(file).contentVersion()
         if (expectedFileVersion != null) check(expectedFileVersion == currentFileVersion) { "Source file changed. Reopen it before saving." }
         val text = CanvasFileMarkupCodec.merge(node.text, pages)
         if (selection != null) {
@@ -603,7 +614,7 @@ class NotebookCanvasRepository(
         if (source.refObjectId != null) {
             check(notebookDao.getWorkspaceObject(source.refObjectId)?.lifecycle == "ACTIVE") { "Source unavailable" }
             val file = database.workspaceFileDao().getFile(source.refObjectId)
-            check(expectedFileVersion == null || expectedFileVersion == (file?.sha256 ?: file?.modifiedAt?.let { "workspace-file:$it" })) { "Source file changed" }
+            check(expectedFileVersion == null || expectedFileVersion == (file?.contentVersion())) { "Source file changed" }
         }
         val noteId = "$operationId:note"
         val timestamp = now()
@@ -613,6 +624,7 @@ class NotebookCanvasRepository(
         database.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(noteId, sourceId,
             expectedFileVersion ?: source.updatedAtEpochMs.toString(), org.json.JSONObject()
                 .put("kind", kind).put("sourceNodeId", sourceNodeId).put("canvasId", canvasId)
+                .put("sourceDigest", java.security.MessageDigest.getInstance("SHA-256").digest(source.text.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) })
                 .put("reviewedAt", timestamp).put("sourceCreatedAt", source.createdAtEpochMs).toString()))
         canvasDao.insertNode(CanvasNodeEntity(operationId, canvasId, CanvasNodeType.NOTE.name, noteId, kind,
             source.x + source.width + 28f, source.y, 240f, 150f, source.zIndex + 1, timestamp, timestamp))

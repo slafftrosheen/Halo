@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceStudyContinuityTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T15:28:44.206Z" hostname="MINIFOXEY" time="0.218">
+  <properties/>
+  <testcase name="staleHandoffDoesNotCreateAStudySessionButExactCurrentSourceDoes" classname="com.halo.app.data.workspace.WorkspaceStudyContinuityTest" time="0.109"/>
+  <testcase name="exactHandoffCannotBypassAnUnavailableSourceResolver" classname="com.halo.app.data.workspace.WorkspaceStudyContinuityTest" time="0.053"/>
+  <testcase name="trashedHandoffCannotBeSilentlyTurnedIntoAGeneralKnowledgeLesson" classname="com.halo.app.data.workspace.WorkspaceStudyContinuityTest" time="0.052"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

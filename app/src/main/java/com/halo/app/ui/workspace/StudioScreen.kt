@@ -101,6 +101,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                             TextButton(onClick = { viewModel.edit(project.revision, "redo") }, enabled = !busy && project.session.redo.isNotEmpty()) {
                                 Text(stringResource(R.string.studio_redo))
                             }
+                            WorkspaceContinueButton(project.id, project.revision.toString(), enabled = !busy)
                             TextButton(onClick = { layers = true }, enabled = !busy) { Text(stringResource(R.string.studio_layers)) }
                             TextButton(onClick = { transforms = project }, enabled = !busy) { Text(stringResource(R.string.studio_transforms)) }
                         }
@@ -197,7 +198,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 items(images, key = { it.objectId.value }) { image ->
                     ListItem(headlineContent = { Text(image.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                         leadingContent = { CanvasAnnotatedFilePreview(image, "", Modifier.size(48.dp), maxDimension = 128) },
-                        modifier = Modifier.clickable(enabled = !busy) { viewModel.importExisting(image.objectId.value); importing = false })
+                        modifier = Modifier.clickable(enabled = !busy) { viewModel.importExisting(image.objectId.value, requireNotNull(image.version)); importing = false })
                 }
             }
         }
@@ -211,7 +212,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             }
         }, confirmButton = {}, dismissButton = { TextButton(onClick = viewModel::dismissVersions) { Text(stringResource(R.string.studio_close)) } })
     state.output?.let { output -> StudioAlertDialog(onDismissRequest = viewModel::dismissOutput,
-        title = { Text(stringResource(R.string.studio_output_saved)) }, text = { Text(output.displayName) },
+        title = { Text(stringResource(R.string.studio_output_saved)) }, text = { Column { Text(output.displayName); WorkspaceContinueButton(output.objectId.value, output.version) } },
         confirmButton = { TextButton(onClick = { viewModel.dismissOutput(); onOpenOutput(output) }) { Text(stringResource(R.string.studio_open_output)) } },
         dismissButton = { TextButton(onClick = { viewModel.dismissOutput(); onInsertOutput(output) }) { Text(stringResource(R.string.studio_insert_canvas)) } }) }
     activeInk?.let { session -> StudioInkDialog(viewModel.service, session, {

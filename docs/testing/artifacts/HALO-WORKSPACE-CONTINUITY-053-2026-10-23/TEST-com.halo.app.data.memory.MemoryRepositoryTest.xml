@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.memory.MemoryRepositoryTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-23T15:28:24.568Z" hostname="MINIFOXEY" time="6.284">
+  <properties/>
+  <testcase name="inferredSuggestionBecomesSavedOnlyAfterExplicitApprovalWithOriginRetained" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="4.807"/>
+  <testcase name="unclassifiedInferredContentRemainsRejected" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.079"/>
+  <testcase name="boundedMemoryContextSourceRetrievesRelevantMemories" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.074"/>
+  <testcase name="browsingAndSharedSearchLeaveUsageUntouchedAndSecretsCreateNothing" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.078"/>
+  <testcase name="explicitImportConfirmationPreservesOriginContentConfidenceScopeAndExpiry" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.066"/>
+  <testcase name="forgetDetachesWorkingSetAndLeavesRevisionHistory" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.078"/>
+  <testcase name="hubUsesSharedSearchAndRequiresExplicitConflictReviewWithoutUsageWrites" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.685"/>
+  <testcase name="reviewedNoteRetainsExactSourceRevisionAndLongNoteIsNotTruncated" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.072"/>
+  <testcase name="conflictReviewWritesNothingAndReinforcementKeepsOneRecord" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.059"/>
+  <testcase name="promoteCandidateCreatesMemoryRecordAndAllowsRevision" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.061"/>
+  <testcase name="neverAgainSuppressesOnlySameFingerprint" classname="com.halo.app.data.memory.MemoryRepositoryTest" time="0.079"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

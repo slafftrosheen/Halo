@@ -133,7 +133,7 @@ sealed interface StudyHandoff {
  * commit, so the durable draft always covers the window in which the process could die.
  */
 class NoteEditorViewModel(
-    private val noteId: String,
+    val noteId: String,
     private val useCases: NotebookUseCases,
     private val assets: NotebookAssetRepository? = null,
     private val document: NotebookDocumentRepository? = null,

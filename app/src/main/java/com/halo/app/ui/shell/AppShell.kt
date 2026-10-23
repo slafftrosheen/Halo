@@ -178,7 +178,7 @@ fun AppShell(
         onVerified = { parentRoute?.let(::performNavigation); parentRoute = null },
         onUnavailable = { parentRoute = null; parentUnavailable = true })
     fun navigateSafely(route: String) {
-        val childSurface = route in setOf("home", "mini_halo", "study") ||
+        val childSurface = route in setOf("home", "mini_halo", "study", "workspace_handoff") ||
             route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
         else performNavigation(route)
@@ -232,8 +232,8 @@ fun AppShell(
                     navigateSafely("study?captureSource=${android.net.Uri.encode(target.sourceId)}")
                 }
                 is com.halo.runtime.cognition.context.ContextualNextActionTarget.OpenSource -> {
-                    check(graph.workspaceContext.versionFor(target.objectId) != null) { "Source unavailable" }
-                    navigateSafely("notebook/note/${android.net.Uri.encode(target.objectId)}")
+                    val source = graph.workspaceContinuity.describe(target.objectId)
+                    navigateSafely(graph.workspaceContinuity.route(source.objectId, source.version, com.halo.app.data.workspace.WorkspaceDestination.OPEN))
                 }
                 is com.halo.runtime.cognition.context.ContextualNextActionTarget.ContinueStudy -> {
                     check(graph.studyUseCases.getSession(target.sessionId)?.lifecycle == com.halo.sdk.runtime.study.StudySessionLifecycle.ACTIVE) { "Study session unavailable" }
@@ -450,13 +450,14 @@ fun AppShell(
                     )
                     }
                 }
-                composable("study?captureSource={captureSource}&goal={goal}", arguments = listOf(
+                composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}", arguments = listOf(
                     navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null },
-                    navArgument("goal") { type = NavType.StringType; nullable = true; defaultValue = null }
+                    navArgument("goal") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("sourceVersion") { type = NavType.StringType; nullable = true; defaultValue = null }
                 )) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
-                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage))
-                    LaunchedEffect(model, entry.arguments?.getString("captureSource")) { entry.arguments?.getString("captureSource")?.let(model::select) }
+                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage, versionReader = ManualDependencyGraph.workspaceContext::versionFor))
+                    LaunchedEffect(model, entry.arguments?.getString("captureSource"), entry.arguments?.getString("sourceVersion")) { entry.arguments?.getString("captureSource")?.let { id -> model.select(id, entry.arguments?.getString("sourceVersion")) } }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
                         onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
                         onReview = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}?review=true") },
@@ -697,6 +698,15 @@ fun AppShell(
                         }
                     }
                 }
+                composable("workspace_handoff") {
+                    com.halo.app.ui.workspace.WorkspaceHandoffRoute(onNavigate = { route ->
+                        navController.popBackStack()
+                        navigateSafely(route)
+                    }, onBack = {
+                        navController.popBackStack()
+                        navigateSafely("notebook")
+                    })
+                }
                 composable("file_tools?objectId={objectId}", arguments = listOf(navArgument("objectId") {
                     type = NavType.StringType; nullable = true; defaultValue = null
                 })) { entry ->
@@ -708,8 +718,8 @@ fun AppShell(
                         onStudy = { id -> navigateSafely("study?captureSource=${android.net.Uri.encode(id)}") },
                         onOpenCanvas = { id, node -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}?nodeId=${android.net.Uri.encode(node)}") })
                 }
-                composable("studio?projectId={projectId}&sourceId={sourceId}&attachmentId={attachmentId}&canvasId={canvasId}",
-                    arguments = listOf("projectId", "sourceId", "attachmentId", "canvasId").map {
+                composable("studio?projectId={projectId}&sourceId={sourceId}&attachmentId={attachmentId}&canvasId={canvasId}&sourceVersion={sourceVersion}&handoffId={handoffId}",
+                    arguments = listOf("projectId", "sourceId", "attachmentId", "canvasId", "sourceVersion", "handoffId").map {
                         navArgument(it) { type = NavType.StringType; nullable = true; defaultValue = null }
                     }) { entry ->
                     com.halo.app.ui.workspace.StudioRoute(entry.arguments?.getString("projectId"),
@@ -718,7 +728,8 @@ fun AppShell(
                         onBack = { navController.popBackStack() },
                         onOpenFile = { navigateSafely("notebook/file/${android.net.Uri.encode(it)}") },
                         onOpenCanvas = { id, node -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}" +
-                            (node?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: "")) })
+                            (node?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: "")) },
+                        sourceVersion = entry.arguments?.getString("sourceVersion"), handoffId = entry.arguments?.getString("handoffId"))
                 }
                 composable("notebook/memory?section={section}&noteId={noteId}", arguments = listOf(
                     navArgument("section") { type = NavType.StringType; defaultValue = "Memories" },
@@ -731,7 +742,9 @@ fun AppShell(
                     val captureMemoryCandidate = remember(noteId) { ManualDependencyGraph.contextualCapture.takeMemoryCandidate() }
                     val noteReview by androidx.compose.runtime.produceState<Pair<Boolean, com.halo.app.data.memory.MemoryCandidate?>>(false to null, noteId) {
                         value = true to noteId?.let { ManualDependencyGraph.notebookRepository.getNote(it) }?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE }?.let {
-                            com.halo.app.data.memory.MemoryCandidate(it.body, com.halo.app.data.notebook.WorkspaceObjectId(it.id), it.revision)
+                            val document = ManualDependencyGraph.notebookDocumentRepository.load(it.id)
+                            val text = document?.blocks?.takeIf { blocks -> blocks.isNotEmpty() }?.let(com.halo.app.data.notebook.NotebookDocumentCodec::plainText) ?: it.body
+                            com.halo.app.data.memory.MemoryCandidate(text, com.halo.app.data.notebook.WorkspaceObjectId(it.id), it.revision)
                         }
                     }
                     LaunchedEffect(Unit) { ManualDependencyGraph.notebookViewModel.navigationEvents.collectLatest { event ->

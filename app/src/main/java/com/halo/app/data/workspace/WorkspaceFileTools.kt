@@ -19,7 +19,7 @@ class WorkspaceFileTools(private val database: AppDatabase, val text: WorkspaceT
     private val documents: NotebookDocumentRepository, private val canvases: NotebookCanvasRepository,
     val requests: WorkspaceFileToolsRequests) {
     suspend fun get(id: String): WorkspaceFileToolsObject {
-        require(id.matches(Regex("[A-Za-z0-9_-]{1,100}")))
+        require(WorkspaceActionIds.isValid(id))
         val item = requireNotNull(workspace.get(WorkspaceObjectId(id)))
         require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE)
         if (item.type == WorkspaceObjectType.FILE) {

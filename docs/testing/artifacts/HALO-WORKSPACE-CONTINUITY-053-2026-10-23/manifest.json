@@ -1,0 +1,29 @@
+{
+  "base": "de4b7349b6469de87327c209b415000622a78377",
+  "appMainTree": "9a2590265acc101b1bf51afeae2893ad61c4f95d",
+  "cognitionMainTree": "fe9b271e7191837eac038a9826ef0851b97792ae",
+  "appApk": {
+    "bytes": 287287643,
+    "sha256": "6d4833b9eca70edd1d37d0ed8544f598626631c645bb88f3dba75378a1d73ed0",
+    "installed": false
+  },
+  "testApk": {
+    "bytes": 1963558,
+    "sha256": "444a3066df5abc36ffbebd1a79fe64517e90da0ee815cf8b1106fb94201cbe87"
+  },
+  "desktop": {
+    "tests": 70,
+    "classes": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "native": "NOT_RUN; ADB inventory empty",
+  "runtime": {
+    "classes": 4,
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

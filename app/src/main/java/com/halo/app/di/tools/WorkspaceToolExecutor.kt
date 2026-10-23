@@ -22,6 +22,7 @@ class WorkspaceToolExecutor(
     private val studyStarter: StudySessionStarter? = null,
     /** Read-only Study description; the runtime sees the portable session contract, not storage. */
     private val studySessionDescriptions: (suspend (String) -> String?)? = null,
+    private val continuity: WorkspaceContinuityActions? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -121,9 +122,10 @@ class WorkspaceToolExecutor(
                 "additionalProperties" to false
             )
         )
-    )
+    ) + continuity?.definitions().orEmpty()
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        continuity?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         if (toolCall.functionName == "halo_create_empty_note") {

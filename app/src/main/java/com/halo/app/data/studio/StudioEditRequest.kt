@@ -8,7 +8,7 @@ sealed interface StudioEditRequest {
     data object Undo : StudioEditRequest
     data object Redo : StudioEditRequest
     data class Restore(val revision: Long) : StudioEditRequest
-    data class Import(val objectId: String) : StudioEditRequest
+    data class Import(val objectId: String, val sourceVersion: String) : StudioEditRequest
 }
 
 /** Closed data-only editing vocabulary. No scripts, paths, reflection or external URLs. */
@@ -20,7 +20,7 @@ object StudioEditParser {
             "undo" -> { only(); return StudioEditRequest.Undo }
             "redo" -> { only(); return StudioEditRequest.Redo }
             "restore_version" -> { only("version"); return StudioEditRequest.Restore(fields.long("version")) }
-            "import_image" -> { only("objectId"); return StudioEditRequest.Import(fields.text("objectId")) }
+            "import_image" -> { only("objectId", "sourceVersion"); return StudioEditRequest.Import(fields.text("objectId"), fields.text("sourceVersion").also { require(it.length in 1..200) }) }
             "add_text", "add_rectangle", "add_ellipse", "add_ink" -> {
                 only("name", "text", "color", "bounds", "ink")
                 val kind = when (operation) {

@@ -124,8 +124,28 @@ class StudioProjectRepository(private val database: AppDatabase,
         require(title.isNotBlank() && title.length <= 120)
         return StudioProject(row.objectId, title, row.revision, StudioDocumentCodec.decode(row.committed), StudioSession.decode(row.session))
     }
-    suspend fun create(title: String, document: StudioDocument = StudioDocument(), sourceProject: String? = null, sourceRevision: Long? = null): StudioProject = database.withTransaction {
+    suspend fun handoff(sourceId: String, handoffId: String, observedVersion: String, requestedTitle: String? = null): StudioProject? = database.withTransaction {
+        require(UUID.fromString(handoffId).toString() == handoffId && observedVersion.length in 1..200)
+        val rows = database.workspaceContextDao().handoffResults("%\"handoffId\":\"$handoffId\"%")
+        if (rows.isEmpty()) return@withTransaction null
+        val origin = rows.single()
+        val metadata = JSONObject(origin.metadata)
+        require(origin.sourceId == sourceId && metadata.getString("operation") == "studio-source-open" &&
+            metadata.getString("observedVersion") == observedVersion && metadata.getString("sourceVersion") == origin.revision) { "Handoff source changed" }
+        require(requestedTitle == null || metadata.getString("requestedTitle") == requestedTitle) { "Handoff intent changed" }
+        requireNotNull(current(origin.objectId)) { "Saved handoff result is unavailable" }
+    }
+    suspend fun create(title: String, document: StudioDocument = StudioDocument(), sourceProject: String? = null, sourceRevision: Long? = null,
+        sourceImage: StudioSource? = null, handoffId: String? = null, observedSourceVersion: String? = null,
+        validateSource: suspend () -> Unit = {}): StudioProject = database.withTransaction {
         document.requireValid(); require(title.isNotBlank() && title.length <= 120)
+        require(sourceProject == null || sourceImage == null)
+        if (sourceImage != null) require(document.layers.any { it.source == sourceImage })
+        if (handoffId != null) {
+            require(sourceImage != null && observedSourceVersion != null)
+            handoff(sourceImage.objectId, handoffId, observedSourceVersion, title)?.let { return@withTransaction it }
+        }
+        validateSource()
         val id = newId(); val timestamp = now()
         database.notebookDao().insertWorkspaceObject(WorkspaceObjectEntity(id, "ARTIFACT", title, timestamp, timestamp,
             "USER_CREATED", "ACTIVE", false, "READY", "studio:$id"))
@@ -139,6 +159,10 @@ class StudioProjectRepository(private val database: AppDatabase,
             database.workspaceContextDao().provenance(ObjectProvenance(id, source.id, revision.toString(),
                 JSONObject().put("operation", "studio-save-as").toString()))
         }
+        if (sourceImage != null) database.workspaceContextDao().provenance(ObjectProvenance(id, sourceImage.objectId, sourceImage.version,
+            JSONObject().put("operation", "studio-source-open").put("sourceVersion", sourceImage.version)
+                .put("observedVersion", observedSourceVersion ?: sourceImage.version).put("requestedTitle", title)
+                .put("handoffId", handoffId ?: JSONObject.NULL).toString()))
         requireNotNull(current(id))
     }
     suspend fun apply(id: String, expectedRevision: Long, command: StudioCommand): StudioProject =

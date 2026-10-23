@@ -267,6 +267,11 @@ object HaloToolDescriptors {
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
+        "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("workspace", "source", "history", "continue", "canvas"))
+        "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("workspace", "continue", "context", "studio", "study", "canvas"),
+            presentation = ToolPresentation(title = "Continue with this item", actionVerb = "Continue"))
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("studio", "image", "drawing", "layers", "project"),
             presentation = ToolPresentation(title = "Studio", actionVerb = "Open"))

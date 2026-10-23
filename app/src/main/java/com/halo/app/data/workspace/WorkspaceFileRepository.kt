@@ -171,7 +171,7 @@ class RoomWorkspaceFileRepository(
             val text = WorkspaceTextEncoding.decode(bytes)
             if (format == WorkspaceTextFormat.CSV) WorkspaceCsv.parse(text)
         }
-        require(sourceObjectId.matches(Regex("[A-Za-z0-9_-]{1,100}")) && sourceRevision.length in 1..200)
+        require(WorkspaceActionIds.isValid(sourceObjectId) && sourceRevision.length in 1..200)
         require(metadata.length <= 2_100_000)
         val id = newId()
         val directory = File(ownedRoot, safe(id)).also { check(it.exists() || it.mkdirs()) }
@@ -360,9 +360,6 @@ class RoomWorkspaceFileRepository(
         ownership = ContentOwnership.valueOf(ownership),
         availability = WorkspaceFileAvailability.valueOf(availability),
         sha256 = sha256,
-        version = sha256 ?: ("workspace-file:" + MessageDigest.getInstance("SHA-256").digest(
-            listOf(uri, mimeType, sizeBytes?.toString().orEmpty(), modifiedAt?.toString().orEmpty(), ownership,
-                ownedCopyPath.orEmpty(), permissionPersisted.toString()).joinToString("\u0000").toByteArray(Charsets.UTF_8)
-        ).joinToString("") { "%02x".format(it) }),
+        version = contentVersion(),
     )
 }

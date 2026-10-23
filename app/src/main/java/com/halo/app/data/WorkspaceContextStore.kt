@@ -1,6 +1,8 @@
 package com.halo.app.data
 
 import androidx.room.*
+import com.halo.app.data.workspace.contentVersion
+import com.halo.app.data.workspace.isReadable
 import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.ai.savedPrivacyMode
 import com.halo.app.data.notebook.*
@@ -39,6 +41,9 @@ interface WorkspaceContextDao {
     suspend fun provenanceMetadata(id: String): String?
     @Query("SELECT * FROM object_provenance WHERE objectId = :id LIMIT 1")
     suspend fun provenanceFor(id: String): ObjectProvenance?
+    @Query("SELECT * FROM object_provenance WHERE metadata LIKE :marker LIMIT 2")
+    suspend fun handoffResults(marker: String): List<ObjectProvenance>
+
 }
 
 /** Explicit promotion and selection. Notes enter context only through these actions. */
@@ -57,9 +62,12 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     val memories = database.memoryRecordDao().observeActiveRecords().map { rows -> rows.filter { it.id.startsWith("mem_") }.map { row ->
         Memory(row.id.removePrefix("mem_").toIntOrNull() ?: 0,row.content,row.updatedAt,row.sourceObjectId,row.sourceRevision)
     } }
-    suspend fun select(id: String) {
-        requireNotNull(database.notebookDao().getWorkspaceObject(id))
+    suspend fun select(id: String): Unit = database.withTransaction {
+        val item = requireNotNull(database.notebookDao().getWorkspaceObject(id))
+        require(item.lifecycle == "ACTIVE") { "Source is not active" }
+        database.workspaceFileDao().getFile(id)?.let { require(it.isReadable()) { "Source needs relinking" } }
         database.workspaceContextDao().add(WorkingSetEntry(id, System.currentTimeMillis()))
+        Unit
     }
     suspend fun selectInkSelection(canvasId: String, selectionNodeId: String) {
         require(selectionReferenceText(canvasId, selectionNodeId) != null) { "Selection is stale or unavailable." }
@@ -67,9 +75,13 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
             "$INK_SELECTION_SOURCE_PREFIX$selectionNodeId"))
     }
     suspend fun remove(id: String) = database.workspaceContextDao().remove(id)
-    suspend fun remember(id: String) {
+    suspend fun remember(id: String): Unit = database.withTransaction {
+        require(database.notebookDao().getWorkspaceObject(id)?.lifecycle == "ACTIVE") { "Source is not active" }
+        val marker = database.notebookDocumentDao().getBlocks(id).singleOrNull()?.language
+        require(marker !in setOf(com.halo.app.data.workspace.WorkspaceFileReceipts.LANGUAGE, com.halo.app.data.workspace.WorkspaceFileAnnotations.LANGUAGE)) { "Review an explicit text fact before adding it to Memory" }
         val note = requireNotNull(notes.getNote(id))
         com.halo.app.data.memory.RoomMemoryRepository(database).promoteCandidate(com.halo.app.data.memory.MemoryCandidate(note.body,WorkspaceObjectId(id),note.revision))
+        Unit
     }
     suspend fun correct(memory: Memory, text: String) {
         require(text.isNotBlank())
@@ -102,11 +114,16 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
                     "$revision:$hash"
                 }
             }
-            "FILE", "MEDIA", "ARTIFACT" -> database.workspaceFileDao().getFile(objectId)?.let { it.sha256 ?: it.modifiedAt?.let { stamp -> "workspace-file:$stamp" } }
+            "FILE", "MEDIA", "ARTIFACT" -> database.workspaceFileDao().getFile(objectId)?.takeIf { it.isReadable() }?.contentVersion()
+                ?: when {
+                    item.contentRef.startsWith("studio:") -> database.studioProjectDao().get(objectId)?.revision?.toString()
+                    item.contentRef.startsWith("canvas:") -> database.notebookCanvasDao().getDocument(objectId)?.revision?.let { "canvas:$it" }
+                    else -> null
+                }
             "CANVAS" -> {
                 val selectionEntry = database.workspaceContextDao().selectedEntry(objectId)
                     ?.takeIf { it.source.startsWith(INK_SELECTION_SOURCE_PREFIX) }
-                if (selectionEntry == null) item.updatedAt.toString() else {
+                if (selectionEntry == null) database.notebookCanvasDao().getDocument(objectId)?.revision?.let { "canvas:$it" } else {
                     val selectionId = selectionEntry.source.removePrefix(INK_SELECTION_SOURCE_PREFIX).takeIf { it.isNotBlank() }
                         ?: return null
                     val reference = selectionReferenceText(objectId, selectionId) ?: return null
@@ -115,6 +132,7 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
                         .joinToString("") { byte -> "%02x".format(byte) }
                 }
             }
+            "MEMORY" -> if (resolveContent(objectId) != null) item.updatedAt.toString() else null
             else -> item.updatedAt.toString()
         }
     }
@@ -142,7 +160,7 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         val source = nodes.firstOrNull { it.id == sourceId } ?: return null
         val type = runCatching { CanvasNodeType.valueOf(source.type) }.getOrNull() ?: return null
         val sourceVersion = source.refObjectId?.let { id ->
-            database.workspaceFileDao().getFile(id)?.let { it.sha256 ?: it.modifiedAt?.let { stamp -> "workspace-file:$stamp" } }
+            database.workspaceFileDao().getFile(id)?.takeIf { it.isReadable() }?.contentVersion()
         }
         if (InkSelectionBookmarkCodec.resolve(context, canvasId, type, source.id, source.refObjectId,
                 source.text, sourceVersion) == null) return null
@@ -153,11 +171,20 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         val item = database.notebookDao().getWorkspaceObject(id) ?: return null
         if (item.lifecycle != "ACTIVE") return null
         val text = when (item.type) {
-            "NOTE" -> notes.getNote(id)?.body
+            "NOTE" -> {
+                val blocks = database.notebookDocumentDao().getBlocks(id)
+                val literal = blocks.singleOrNull()?.takeIf { it.type == "CODE" &&
+                    com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) != null }
+                when (blocks.singleOrNull()?.language) {
+                    com.halo.app.data.workspace.WorkspaceFileReceipts.LANGUAGE -> "Local batch receipt. Open File tools to review its saved outputs."
+                    com.halo.app.data.workspace.WorkspaceFileAnnotations.LANGUAGE -> "PDF annotation note. Open its linked PDF or explicitly export a page image to use its content."
+                    else -> literal?.text ?: notes.getNote(id)?.body
+                }
+            }
             "MEMORY" -> database.memoryRecordDao().getRecord(id)?.takeIf { it.status == "ACTIVE" && (it.validUntil == null || it.validUntil > System.currentTimeMillis()) &&
                 (it.scope == "GLOBAL" || it.scopeId in database.workspaceContextDao().selectedIds().take(20)) &&
                 com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(it.content) != com.halo.runtime.cognition.memory.MemorySensitivity.SECRET }?.content
-            "FILE" -> database.workspaceFileDao().getFile(id)?.let {
+            "FILE", "MEDIA" -> database.workspaceFileDao().getFile(id)?.takeIf { it.isReadable() }?.let {
                 "${it.displayName} (${it.mimeType})"
             }
             "CANVAS", "ARTIFACT" -> if (item.contentRef.startsWith("canvas:")) {

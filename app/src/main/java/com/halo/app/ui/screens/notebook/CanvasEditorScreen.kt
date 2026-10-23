@@ -625,12 +625,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }, enabled = !recognizing) { Text(uiText("Recognize handwriting")) }
                 }
                 val selectedFile = selected.refObjectId?.let { state.files[it] }
+                selected.refObjectId?.let { id -> com.halo.app.ui.workspace.WorkspaceContinueButton(id, selectedFile?.version,
+                    enabled = !state.importing && !state.imageToolBusy) }
                 if (selectedFile?.mimeType?.startsWith("image/") == true) {
-                    TextButton(onClick = {
+                    if (onOpenStudio == null) TextButton(onClick = {
                         cardMenu = false
-                        if (onOpenStudio != null) onOpenStudio(selectedFile.objectId.value, null)
-                        else imageToolsNodeId = selected.id
-                    }) { Text(if (onOpenStudio != null) stringResource(com.halo.app.R.string.studio_open_in) else uiText("Image tools")) }
+                        imageToolsNodeId = selected.id
+                    }) { Text(uiText("Image tools")) }
                     TextButton(onClick = {
                         cardMenu = false
                         viewModel.saveImagePalette(selected.id, selectedFile.version)

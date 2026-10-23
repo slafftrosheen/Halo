@@ -54,6 +54,15 @@ class RoomMemoryRepository(private val db: AppDatabase, private val now: () -> L
         return MemoryConflict(if(different.isEmpty()) MemoryConflictKind.NEW else MemoryConflictKind.CONFLICTS, different.take(5).map { it.toDomain() })
     }
     override suspend fun promoteCandidate(candidate: MemoryCandidate): MemoryRecord = db.withTransaction {
+        candidate.sourceObjectId?.let { id ->
+            val source = requireNotNull(db.notebookDao().getWorkspaceObject(id.value)) { "Source unavailable" }
+            require(source.lifecycle == "ACTIVE") { "Source is not active" }
+            if (source.type == "NOTE") require(db.notebookDocumentDao().getBlocks(id.value).singleOrNull()?.language !in
+                setOf(com.halo.app.data.workspace.WorkspaceFileReceipts.LANGUAGE, com.halo.app.data.workspace.WorkspaceFileAnnotations.LANGUAGE)) { "Review a text fact before adding it to Memory" }
+            if (source.type == "NOTE" && candidate.sourceRevision != null)
+                require(db.notebookDocumentDao().getRevision(id.value) == candidate.sourceRevision) { "Source changed. Review the fact again." }
+            if (source.type == "MEMORY") require(db.memoryRecordDao().getRecord(id.value)?.status == "ACTIVE") { "Source was forgotten" }
+        }
         MemorySensitivityClassifier.requireWritable(candidate.content)
         require(candidate.confidence.isFinite() && candidate.confidence in 0f..1f)
         require(candidate.evidence.size <= MemoryLimits.EVIDENCE)

@@ -291,7 +291,7 @@ fun NoteEditorScreen(
         confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.moveToTrash() }) { Text(uiText("Move to trash")) } },
         dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text(uiText("Cancel")) } })
     if (showHaloSheet) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showHaloSheet = false }) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+        Column(Modifier.fillMaxWidth().heightIn(max = 680.dp).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -305,6 +305,8 @@ fun NoteEditorScreen(
                 showHaloSheet = false
                 showAssistMenu = true
             }
+            if (state.lifecycle == WorkspaceLifecycle.ACTIVE) com.halo.app.ui.workspace.WorkspaceContinueButton(viewModel.noteId,
+                enabled = state.status == SaveStatus.SAVED && !state.isGenerating)
             NoteHaloAction("Study this note", HaloGlyph.NOTE) {
                 showHaloSheet = false
                 startStudy(null)

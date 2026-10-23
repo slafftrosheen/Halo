@@ -83,17 +83,27 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     }
     val availableImages = combine(files.observeFiles(), workspace.observe(WorkspaceQuery())) { sources, objects ->
         val active = objects.mapTo(HashSet()) { it.id.value }
-        sources.filter { it.objectId.value in active && it.mimeType.startsWith("image/") &&
+        sources.filter { it.objectId.value in active && it.version != null && it.mimeType.startsWith("image/") &&
             it.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL) }
             .sortedBy { it.displayName.lowercase(java.util.Locale.ROOT) }.take(100)
     }
-    suspend fun importImage(projectId: String, expectedRevision: Long, objectId: String, ensureAbsent: Boolean = false): StudioProject {
+    suspend fun importImage(projectId: String, expectedRevision: Long, objectId: String, ensureAbsent: Boolean = false, expectedSourceVersion: String? = null): StudioProject {
         val project = current(projectId, expectedRevision)
+        val (file, size) = pinnedImage(objectId, expectedSourceVersion)
+        val version = requireNotNull(file.sha256)
+        if (ensureAbsent && project.session.current.layers.any { it.source == StudioSource(objectId, version) }) return project
+        val layer = StudioLayer(name = file.displayName.take(120).ifBlank { "Image" }, kind = StudioLayerKind.IMAGE,
+            source = StudioSource(objectId, version))
+        val command = if (project.session.current.layers.isEmpty()) StudioCommand.Batch(listOf(
+            StudioCommand.Resize(size.first, size.second), StudioCommand.Add(layer))) else StudioCommand.Add(layer)
+        return projects.apply(projectId, expectedRevision, command)
+    }
+    private suspend fun pinnedImage(objectId: String, expectedSourceVersion: String?): Pair<WorkspaceFile, Pair<Int, Int>> {
         require(workspace.get(WorkspaceObjectId(objectId))?.lifecycle == WorkspaceObjectLifecycle.ACTIVE) { "Image source unavailable" }
         val original = requireNotNull(files.getFile(WorkspaceObjectId(objectId)))
         require(original.mimeType.startsWith("image/")) { "Choose an image" }
         // Pin an immutable bounded managed copy before a layer can refer to mutable external bytes.
-        val file = files.keepLocalCopyBounded(WorkspaceObjectId(objectId), 20_000_000)
+        val file = files.pinLocalCopy(WorkspaceObjectId(objectId), expectedSourceVersion ?: requireNotNull(original.version), 20_000_000)
         val version = requireNotNull(file.sha256)
         val size = withContext(Dispatchers.IO) {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -104,12 +114,19 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         }
         require(files.getFile(WorkspaceObjectId(objectId))?.version == version &&
             workspace.get(WorkspaceObjectId(objectId))?.lifecycle == WorkspaceObjectLifecycle.ACTIVE) { "Image source changed" }
-        if (ensureAbsent && project.session.current.layers.any { it.source == StudioSource(objectId, version) }) return project
-        val layer = StudioLayer(name = file.displayName.take(120).ifBlank { "Image" }, kind = StudioLayerKind.IMAGE,
-            source = StudioSource(objectId, version))
-        val command = if (project.session.current.layers.isEmpty()) StudioCommand.Batch(listOf(
-            StudioCommand.Resize(size.first, size.second), StudioCommand.Add(layer))) else StudioCommand.Add(layer)
-        return projects.apply(projectId, expectedRevision, command)
+        return file to size
+    }
+    /** Explicit source handoff creates one independent valid project; it never appends to a previously open project. */
+    suspend fun createFromImage(title: String, objectId: String, expectedSourceVersion: String, handoffId: String? = null): StudioProject {
+        if (handoffId != null) projects.handoff(objectId, handoffId, expectedSourceVersion, title)?.let { return it }
+        val (file, size) = pinnedImage(objectId, expectedSourceVersion)
+        val source = StudioSource(objectId, requireNotNull(file.sha256))
+        val document = StudioDocument(size.first, size.second, layers = listOf(StudioLayer(name = file.displayName.take(120).ifBlank { "Image" },
+            kind = StudioLayerKind.IMAGE, source = source)))
+        return projects.create(title, document, sourceImage = source, handoffId = handoffId, observedSourceVersion = expectedSourceVersion, validateSource = {
+            require(workspace.get(WorkspaceObjectId(objectId))?.lifecycle == WorkspaceObjectLifecycle.ACTIVE &&
+                files.getFile(WorkspaceObjectId(objectId))?.version == source.version) { "Image source changed" }
+        })
     }
     suspend fun importAttachment(projectId: String, expectedRevision: Long, noteId: String, attachmentId: String, ensureAbsent: Boolean = false): StudioProject {
         current(projectId, expectedRevision)
@@ -151,7 +168,7 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
             StudioEditRequest.Undo -> projects.undo(id, expectedRevision)
             StudioEditRequest.Redo -> projects.redo(id, expectedRevision)
             is StudioEditRequest.Restore -> projects.restoreVersion(id, expectedRevision, request.revision)
-            is StudioEditRequest.Import -> importImage(id, expectedRevision, request.objectId)
+            is StudioEditRequest.Import -> importImage(id, expectedRevision, request.objectId, expectedSourceVersion = request.sourceVersion)
         }
     }
     suspend fun inkBackdrop(document: StudioDocument, layer: StudioLayer): Bitmap = renderer.inkBackdrop(document, layer)

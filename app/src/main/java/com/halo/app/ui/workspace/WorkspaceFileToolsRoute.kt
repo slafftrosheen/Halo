@@ -42,6 +42,7 @@ fun WorkspaceFileToolsRoute(objectId: String?, savedState: SavedStateHandle, onB
         StudioAlertDialog(onDismissRequest = model::dismissOutput, title = { Text(stringResource(R.string.file52_output_saved)) }, text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(output.displayName, style = MaterialTheme.typography.titleMedium)
+                WorkspaceContinueButton(output.objectId.value, output.version)
                 Text(stringResource(R.string.file52_output_source_scope), style = MaterialTheme.typography.bodySmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = { model.dismissOutput(); onOpenFile(output.objectId.value) }) { Text(stringResource(R.string.file52_open_saved)) }

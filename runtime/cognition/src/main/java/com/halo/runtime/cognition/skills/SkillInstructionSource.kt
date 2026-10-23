@@ -54,6 +54,10 @@ class BundledSkillInstructionSource(
             """.trimIndent(),
             "halo.notebook" to """
                 Search and manage Workspace notes and objects.
+                Use halo_workspace_describe for an exact active object/version, permitted handoffs and bounded source history. Source history is provenance, not current source content. An earlier or missing source never updates an already saved result.
+                For explicit continuation, use halo_workspace_open_with with the exact observed version and a supported destination; it returns DISPATCHED only. halo_workspace_handoff_status reports host delivery, never rendered-screen or provider truth. Never replay UNKNOWN/expired requests or stale writes.
+                halo_workspace_canvases returns exact destination versions for halo_workspace_insert; pass both source and Canvas versions. Export Studio graphics before inserting a file result. halo_workspace_select is an explicit Working Set choice; it does not promote facts into Memory.
+                Studio create can accept sourceId/sourceVersion together for a separate image-based project. import_image requires objectId/sourceVersion. Never substitute a fresh version after a conflict.
                 Studio is a separate local graphics workshop. Use halo_studio_current for an attached Studio reference; if none, disambiguate with halo_studio_list. Never guess a project/layer ID or revision.
                 Read halo_studio_get before edits and pass that exact revision. Studio edits are local drafts; save/export/copy and Canvas insertion are separate actions. Originals remain unchanged. A stale revision is a stop, not permission to refresh and replay a mutation.
                 Ink selection references are explicit and revision-bound; metadata is not handwriting recognition. AI image edits use halo_studio_ai_draft to request the existing provider sharing/spend proposal review, never the local edit tool. Open/review returns DISPATCHED only; inspect halo_studio_status for attachment or kept-copy identity. Never infer generation, delivery, acceptance or billing from a dispatch. UNKNOWN is not permission to replay.

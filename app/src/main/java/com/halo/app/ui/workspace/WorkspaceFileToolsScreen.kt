@@ -102,6 +102,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
             selected?.let { source ->
                 item {
                     Text(source.title, style = MaterialTheme.typography.headlineSmall)
+                    WorkspaceContinueButton(source.id, if (source.kind == WorkspaceFileToolsKind.FILE) source.version else null, enabled = !busy)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = { onAttach(source) }, enabled = !busy) { Text(stringResource(R.string.file52_attach_canvas)) }
                         if (source.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) TextButton(onClick = {

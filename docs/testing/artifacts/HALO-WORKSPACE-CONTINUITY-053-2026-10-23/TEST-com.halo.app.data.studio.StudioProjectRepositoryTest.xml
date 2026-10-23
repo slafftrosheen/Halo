@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.studio.StudioProjectRepositoryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T15:28:38.833Z" hostname="MINIFOXEY" time="3.512">
+  <properties/>
+  <testcase name="draftUndoAndRedoSurviveReopeningWithoutChangingSavedOriginal" classname="com.halo.app.data.studio.StudioProjectRepositoryTest" time="3.292"/>
+  <testcase name="concurrentStaleCommandsHaveOneWinnerAndNeverRefreshTheirAuthority" classname="com.halo.app.data.studio.StudioProjectRepositoryTest" time="0.07"/>
+  <testcase name="trashedOrCorruptProjectsAreNeverSilentlyRecreated" classname="com.halo.app.data.studio.StudioProjectRepositoryTest" time="0.058"/>
+  <testcase name="saveAsPinsSourceRevisionAndRestoringVersionIsUndoable" classname="com.halo.app.data.studio.StudioProjectRepositoryTest" time="0.084"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

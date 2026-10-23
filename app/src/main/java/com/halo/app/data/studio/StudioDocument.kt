@@ -41,7 +41,7 @@ data class StudioLayer(
         require(fontSize in 1..1000 && strokeWidth in 1..100)
         require(text.length <= 2000 && brightness in -1000..1000 && contrast in 0..3000 && saturation in 0..3000)
         if (kind == StudioLayerKind.IMAGE) {
-            requireNotNull(source).let { require(it.objectId.matches(Regex("[A-Za-z0-9_-]{1,100}")) && it.version.length in 1..200) }
+            requireNotNull(source).let { require(com.halo.app.data.workspace.WorkspaceActionIds.isValid(it.objectId) && it.version.length in 1..200) }
         } else require(source == null)
         if (kind == StudioLayerKind.INK) require(InkCodec.decode(ink) != null) else require(ink.isEmpty())
         if (kind != StudioLayerKind.TEXT) require(text.isEmpty())

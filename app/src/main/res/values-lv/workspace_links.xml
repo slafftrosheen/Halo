@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="link53_continue">Turpināt…</string>
+    <string name="link53_opening">Atver vienumu…</string>
+    <string name="link53_unavailable">Šis vienums ir mainījies vai vairs nav pieejams. Atver darbvietu un atlasi to vēlreiz.</string>
+    <string name="link53_workspace">Atvērt darbvietu</string>
+    <string name="link53_open">Atvērt sākotnējo vienumu</string>
+    <string name="link53_files">Rediģēt ar failu rīkiem</string>
+    <string name="link53_studio">Turpināt Studio</string>
+    <string name="link53_study">Mācīties ar halo</string>
+    <string name="link53_chat">Izmantot sarunā</string>
+    <string name="link53_canvas">Ievietot kanvā</string>
+    <string name="link53_context">Pievienot darba kopai</string>
+    <string name="link53_memory_separate">Sākotnējais vienums paliek nemainīts. Dokumenta atvēršana vai pievienošana nepievieno faktus atmiņai.</string>
+    <string name="link53_sources">Avotu vēsture</string>
+    <string name="link53_source_current">Saistītais avots</string>
+    <string name="link53_source_earlier">Saglabāts no agrākas versijas</string>
+    <string name="link53_source_missing">Avots nav pieejams</string>
+    <string name="link53_done">Gatavs</string>
+    <string name="link53_no_canvas">Vispirms izveido kanvu darbvietā.</string>
+    <string name="link53_saved">Atsauce pievienota</string>
+    <string name="link53_source_changed">Atlasītais avots ir mainījies. Pirms sākšanas noņem to un atlasi vēlreiz.</string>
+    <string name="link53_photo_selected">Fotoattēls ir atlasīts. Pirms izmantošanas halo to pārbaudīs.</string>
+    <string name="link53_pdf_selected">PDF ir atlasīts. Lapas tiek lasītas kā attēli.</string>
+    <string name="link53_keep_copy">Pirms attēla pievienošanas saglabā lokālu kopiju darbvietā.</string>
+    <string name="link53_source_unverified">Sākotnējo versiju nevar pārbaudīt</string>
+</resources>

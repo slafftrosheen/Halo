@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="link53_continue">Продолжить в…</string>
+    <string name="link53_opening">Открываем материал…</string>
+    <string name="link53_unavailable">Материал изменился или больше недоступен. Откройте рабочее пространство и выберите его снова.</string>
+    <string name="link53_workspace">Открыть рабочее пространство</string>
+    <string name="link53_open">Открыть исходный материал</string>
+    <string name="link53_files">Редактировать в инструментах файлов</string>
+    <string name="link53_studio">Продолжить в Studio</string>
+    <string name="link53_study">Учиться с halo</string>
+    <string name="link53_chat">Использовать в чате</string>
+    <string name="link53_canvas">Добавить на холст</string>
+    <string name="link53_context">Добавить в рабочий набор</string>
+    <string name="link53_memory_separate">Исходный материал остаётся без изменений. Открытие и прикрепление документа не добавляет факты в память.</string>
+    <string name="link53_sources">История источников</string>
+    <string name="link53_source_current">Связанный источник</string>
+    <string name="link53_source_earlier">Сохранено из более ранней версии</string>
+    <string name="link53_source_missing">Источник недоступен</string>
+    <string name="link53_done">Готово</string>
+    <string name="link53_no_canvas">Сначала создайте холст в рабочем пространстве.</string>
+    <string name="link53_saved">Ссылка добавлена</string>
+    <string name="link53_source_changed">Выбранный источник изменился. Удалите его из выбора и выберите снова перед началом.</string>
+    <string name="link53_photo_selected">Фото выбрано. halo проверит его перед использованием.</string>
+    <string name="link53_pdf_selected">PDF выбран. Страницы читаются как изображения.</string>
+    <string name="link53_keep_copy">Перед прикреплением изображения сохраните локальную копию в рабочем пространстве.</string>
+    <string name="link53_source_unverified">Не удаётся проверить исходную версию</string>
+</resources>

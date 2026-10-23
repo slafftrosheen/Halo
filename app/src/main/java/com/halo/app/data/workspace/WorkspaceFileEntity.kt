@@ -40,3 +40,12 @@ data class WorkspaceFileEntity(
     @ColumnInfo(defaultValue = "'AVAILABLE'") val availability: String = WorkspaceFileAvailability.AVAILABLE.name,
     val sha256: String? = null,
 )
+
+/** Canonical observed row identity. Availability is a separate state, never new content authority. */
+fun WorkspaceFileEntity.contentVersion(): String = sha256 ?: ("workspace-file:" + java.security.MessageDigest.getInstance("SHA-256").digest(
+    listOf(uri, mimeType, sizeBytes?.toString().orEmpty(), modifiedAt?.toString().orEmpty(), ownership,
+        ownedCopyPath.orEmpty(), permissionPersisted.toString()).joinToString("\u0000").toByteArray(Charsets.UTF_8)
+).joinToString("") { "%02x".format(it) })
+
+fun WorkspaceFileEntity.isReadable(): Boolean = availability in setOf(
+    WorkspaceFileAvailability.AVAILABLE.name, WorkspaceFileAvailability.OWNED_LOCAL.name)

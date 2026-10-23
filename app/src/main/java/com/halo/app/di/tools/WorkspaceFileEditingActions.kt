@@ -10,7 +10,7 @@ import org.json.JSONObject
 
 /** Typed editing extension of FileToolExecutor. All effects stay with existing local owners. */
 class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolExecutor {
-    private val id = mapOf("type" to "string", "pattern" to "^[A-Za-z0-9_-]{1,100}$")
+    private val id = mapOf("type" to "string", "pattern" to WorkspaceActionIds.PATTERN)
     private val version = mapOf("type" to "string", "minLength" to 1, "maxLength" to 200)
     private val revision = mapOf("type" to "integer", "minimum" to 1, "maximum" to Int.MAX_VALUE)
     private fun text(max: Int) = mapOf("type" to "string", "maxLength" to max)
@@ -72,7 +72,7 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
         val args = toolCall.arguments
         fun exact(required: Set<String>, optional: Set<String> = emptySet()) = require(args.keys.containsAll(required) && args.keys.all { it in required || it in optional })
         fun string(key: String) = args[key] as? String ?: error("Expected text")
-        fun id(key: String) = string(key).also { require(it.matches(Regex("[A-Za-z0-9_-]{1,100}"))) }
+        fun id(key: String) = string(key).also { require(WorkspaceActionIds.isValid(it)) }
         fun number(key: String, min: Int = 1, max: Int = Int.MAX_VALUE, default: Int? = null): Int =
             if (key !in args && default != null) default else exactInteger(args[key], min, max)
         fun source() = WorkspaceFileVersion(id("objectId"), string("version"))

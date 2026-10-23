@@ -41,6 +41,7 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         "ink" to mapOf("type" to "string", "maxLength" to 262144),
         "index" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 31),
         "objectId" to id, "version" to revision,
+        "sourceVersion" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 200),
         "width" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
         "height" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
         "quarterTurns" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 3),
@@ -56,8 +57,8 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         definition("halo_studio_current", "Read the project currently attached to Halo Studio UI, if any. This is a Studio document reference, not proof of OS foreground or file contents.", emptyMap()),
         definition("halo_studio_list", "Find saved local Studio projects. Results contain IDs and current revisions, never pixels.",
             mapOf("query" to mapOf("type" to "string", "maxLength" to 200)), emptyList()),
-        definition("halo_studio_create", "Create a separate local layered Studio project. No provider or network. Originals remain unchanged.",
-            mapOf("title" to text, "width" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
+        definition("halo_studio_create", "Create a separate local layered Studio project. Optional sourceId/sourceVersion together create a new project from that exact image; cannot combine with preset/dimensions. No provider or network. Originals remain unchanged.",
+            mapOf("title" to text, "handoffId" to id, "sourceId" to id, "sourceVersion" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 200), "width" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "height" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "preset" to mapOf("type" to "string", "enum" to StudioPreset.entries.map { it.name })), listOf("title")),
         definition("halo_studio_get", "Read one Studio project's revision, supported layer metadata, saved versions and fresh explicit Ink selection. Does not recognize handwriting or send pixels.", mapOf("projectId" to id)),
@@ -120,7 +121,11 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     return success(JSONObject().put("projects", values).put("more", rows.size > 20))
                 }
                 "halo_studio_create" -> {
-                    exact(setOf("title"), setOf("width", "height", "preset"))
+                    exact(setOf("title"), setOf("width", "height", "preset", "sourceId", "sourceVersion", "handoffId"))
+                    if ("sourceId" in args || "sourceVersion" in args || "handoffId" in args) {
+                        require(args.keys.containsAll(setOf("title", "sourceId", "sourceVersion")) && args.keys.all { it in setOf("title", "sourceId", "sourceVersion", "handoffId") })
+                        return success(summary(studio.createFromImage(string("title"), objectId("sourceId"), string("sourceVersion"), if ("handoffId" in args) objectId("handoffId") else null)))
+                    }
                     val title = string("title")
                     val document = if ("preset" in args) {
                         require("width" !in args && "height" !in args)

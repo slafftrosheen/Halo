@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T15:28:44.429Z" hostname="MINIFOXEY" time="0.632">
+  <properties/>
+  <testcase name="emptyTextPublishesAsDurableOwnedFileAndImportsExactly" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.085"/>
+  <testcase name="literalFilesSurviveEditReopenAndExactExport" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.123"/>
+  <testcase name="undoRedoIsRevisionBoundAndExternalEditStopsHistory" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.069"/>
+  <testcase name="attachmentRetainsExactSourceAndRejectsStaleVersion" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.104"/>
+  <testcase name="unfinishedCsvRemainsReadableButCannotExportAsValidTable" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.075"/>
+  <testcase name="staleRevisionAndWrongSelectedTextNeverOverwrite" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.062"/>
+  <testcase name="exactTextOutputsResolveInStudyAndTrashedSourcesAreRejected" classname="com.halo.app.data.workspace.WorkspaceTextDocumentsTest" time="0.11"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

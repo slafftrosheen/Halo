@@ -173,7 +173,7 @@ class ContextualCaptureTest {
                 val resolver=com.halo.app.study.WorkspaceStudySourceResolver(context,NotebookDocumentRepository(db.notebookDocumentDao(),db),RoomWorkspaceRepository(db.notebookDao()),files,pdf,assets)
                 val source=resolver.resolve(note.id,"") as com.halo.app.study.ResolvedStudySource.Visual
                 assertEquals("attachment:${note.id}:asset",source.asset.id)
-                val durable=WorkspaceMediaAssetResolver(context,files,store,NotebookAssetRepository(context,db))
+                val durable=WorkspaceMediaAssetResolver(context,files,store,NotebookAssetRepository(context,db),RoomWorkspaceRepository(db.notebookDao()))
                 assertArrayEquals(content.bytes,durable.open(source.asset).bytes)
                 val bound=WorkspaceInteractionMediaStore(store,durable).transferOwnership(source.asset,"new-question")
                 assertEquals(note.id,bound.workspaceObjectId)

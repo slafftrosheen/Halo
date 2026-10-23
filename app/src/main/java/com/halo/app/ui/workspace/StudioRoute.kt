@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.map
 @Composable
 fun StudioRoute(projectId: String?, sourceId: String?, attachmentId: String?, returnCanvasId: String?,
     savedState: SavedStateHandle, onBack: () -> Unit, onOpenFile: (String) -> Unit,
-    onOpenCanvas: (String, String?) -> Unit) {
+    onOpenCanvas: (String, String?) -> Unit, sourceVersion: String? = null, handoffId: String? = null) {
     val model: StudioViewModel = viewModel(key = "studio", factory = StudioViewModel.Factory(Graph.studioService,
         Graph.workspaceFileRepository, Graph.workspaceImageService, Graph.notebookAssetRepository, projectId, savedState))
     val state by model.state.collectAsStateWithLifecycle()
@@ -39,11 +39,11 @@ fun StudioRoute(projectId: String?, sourceId: String?, attachmentId: String?, re
             Graph.studioService.uiRequests.claim(request.id)?.let { model.acceptUiRequest(it, aiTitle) }
         }
     }
-    LaunchedEffect(model, sourceId, attachmentId) {
+    LaunchedEffect(model, sourceId, attachmentId, sourceVersion, handoffId) {
         sourceId?.let { id ->
             val source = Graph.workspaceRepository.get(WorkspaceObjectId(id))
             if (source == null) model.reportError()
-            else model.openSource(id, attachmentId, source.title.take(120).ifBlank { defaultName })
+            else model.openSource(id, attachmentId, source.title.take(120).ifBlank { defaultName }, sourceVersion, handoffId)
         }
     }
     StudioScreen(model, onBack, { onOpenFile(it.objectId.value) }, { output ->

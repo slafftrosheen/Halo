@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="link53_continue">Continue in…</string>
+    <string name="link53_opening">Opening your item…</string>
+    <string name="link53_unavailable">This item changed or is no longer available. Open Workspace and select it again.</string>
+    <string name="link53_workspace">Open Workspace</string>
+    <string name="link53_open">Open original item</string>
+    <string name="link53_files">Edit with File tools</string>
+    <string name="link53_studio">Continue in Studio</string>
+    <string name="link53_study">Study with halo</string>
+    <string name="link53_chat">Use in Chat</string>
+    <string name="link53_canvas">Insert on Canvas</string>
+    <string name="link53_context">Add to Working Set</string>
+    <string name="link53_memory_separate">Your source stays intact. Opening or attaching a document does not add facts to Memory.</string>
+    <string name="link53_sources">Source history</string>
+    <string name="link53_source_current">Linked source</string>
+    <string name="link53_source_earlier">Saved from an earlier version</string>
+    <string name="link53_source_missing">Source unavailable</string>
+    <string name="link53_done">Done</string>
+    <string name="link53_no_canvas">Create a Canvas in Workspace first.</string>
+    <string name="link53_saved">Reference added</string>
+    <string name="link53_source_changed">The selected source changed. Remove it and select it again before starting.</string>
+    <string name="link53_photo_selected">Photo selected. halo will check it before use.</string>
+    <string name="link53_pdf_selected">PDF selected. Pages are read as images.</string>
+    <string name="link53_keep_copy">Keep a local copy in Workspace before attaching this image.</string>
+    <string name="link53_source_unverified">The original version cannot be verified</string>
+</resources>

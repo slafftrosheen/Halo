@@ -64,15 +64,30 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         finishInk()
         observation?.cancel(); openedId = null; savedState["studioProject"] = null; mutable.value = StudioUiState()
     }
-    fun openSource(sourceId: String, attachmentId: String?, title: String) {
-        val handoff = sourceId + ":" + attachmentId.orEmpty()
+    fun openSource(sourceId: String, attachmentId: String?, title: String, expectedSourceVersion: String? = null, handoffId: String? = null) {
+        if (mutable.value.busy) return
+        val target = sourceId + ":" + attachmentId.orEmpty() + ":" + expectedSourceVersion.orEmpty()
+        val token = handoffId ?: savedState.get<String>("studioSourceToken")?.takeIf { savedState.get<String>("studioSourceTarget") == target }
+            ?: java.util.UUID.randomUUID().toString()
+        if (savedState.get<String>("studioSourceToken") != token) savedState["studioSourceObservedVersion"] = null
+        savedState["studioSourceToken"] = token; savedState["studioSourceTarget"] = target
+        val handoff = target + ":" + token
         if (savedState.get<String>("studioSourceImported") == handoff) return
         operation {
-            val existing = savedState.get<String>("studioProject")?.let { service.projects.get(it) }
-            val project = existing ?: service.projects.create(title)
-            openedId = project.id; savedState["studioProject"] = project.id
-            if (attachmentId != null) service.importAttachment(project.id, project.revision, sourceId, attachmentId, ensureAbsent = true)
-            else service.importImage(project.id, project.revision, sourceId, ensureAbsent = true)
+            val resuming = savedState.get<String>("studioSourcePending") == handoff
+            val existing = if (resuming) savedState.get<String>("studioProject")?.let { service.projects.get(it) } else null
+            val project = if (attachmentId == null && existing == null) {
+                val source = requireNotNull(files.getFile(com.halo.app.data.notebook.WorkspaceObjectId(sourceId)))
+                val observed = expectedSourceVersion ?: savedState.get<String>("studioSourceObservedVersion") ?: requireNotNull(source.version)
+                savedState["studioSourceObservedVersion"] = observed
+                service.createFromImage(title, sourceId, observed, token)
+            } else {
+                val target = existing ?: service.projects.create(title)
+                savedState["studioSourcePending"] = handoff; savedState["studioProject"] = target.id
+                if (attachmentId != null) service.importAttachment(target.id, target.revision, sourceId, attachmentId, ensureAbsent = true)
+                else service.importImage(target.id, target.revision, sourceId, ensureAbsent = true, expectedSourceVersion = expectedSourceVersion)
+            }
+            openedId = project.id; savedState["studioProject"] = project.id; savedState["studioSourcePending"] = null
             savedState["studioSourceImported"] = handoff
             attachAfterOperation(project.id)
         }
@@ -121,9 +136,9 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         }
     }
     fun dismissVersions() { mutable.value = mutable.value.copy(versions = emptyList()) }
-    fun importExisting(id: String) {
+    fun importExisting(id: String, sourceVersion: String) {
         val project = mutable.value.project ?: return
-        operation { service.importImage(project.id, project.revision, id) }
+        operation { service.importImage(project.id, project.revision, id, expectedSourceVersion = sourceVersion) }
     }
     fun importAttachment(noteId: String, attachmentId: String) {
         val project = mutable.value.project ?: return
@@ -133,7 +148,7 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         val project = mutable.value.project ?: return
         operation {
             val file = files.importFile(uri)
-            service.importImage(project.id, project.revision, file.objectId.value)
+            service.importImage(project.id, project.revision, file.objectId.value, expectedSourceVersion = requireNotNull(file.version))
         }
     }
     fun export(format: CanvasImageFormat) {

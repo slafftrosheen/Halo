@@ -100,6 +100,7 @@ enum class StudyUnavailableReason {
     SOURCE_STORE_UNAVAILABLE,
     SOURCE_NEEDS_RELINK,
     SOURCE_NOT_ACTIVE,
+    SOURCE_CHANGED,
     SOURCE_EMPTY_OR_UNSUPPORTED,
     ;
 
@@ -110,6 +111,7 @@ enum class StudyUnavailableReason {
             PERSISTENCE_FAILED -> "Halo could not save the study session, so it was not started"
             SOURCE_STORE_UNAVAILABLE -> "Halo cannot read the study source on this device"
             SOURCE_NEEDS_RELINK -> "Relink the material in Workspace before starting Study"
+            SOURCE_CHANGED -> "The selected source changed. Select it again before starting Study"
             SOURCE_NOT_ACTIVE -> "Restore the material to active Workspace before starting Study"
             SOURCE_EMPTY_OR_UNSUPPORTED -> "Choose readable note/text material or a supported image/PDF file"
         }
@@ -225,11 +227,16 @@ class StudyUseCases(
         style: StudySupportStyle = StudySupportStyle.GUIDED,
         policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY,
         conversationId: String? = null, runId: String? = null, interactionId: String? = null,
+        expectedVersions: Map<String, String> = emptyMap(),
     ): StudyStartResult {
         val ids = objectIds.distinct()
         if (ids.isEmpty() || ids.size > StudySourceLimits.MAX_SOURCES) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
-        val resolver = sourceResolver ?: return start(StartStudyRequest(ids.first(), languages.assignmentLanguage, languages.explanationLanguage, languages.strongestLanguage, goal))
+        val resolver = sourceResolver ?: return if (expectedVersions.isNotEmpty()) StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_STORE_UNAVAILABLE)
+            else start(StartStudyRequest(ids.first(), languages.assignmentLanguage, languages.explanationLanguage, languages.strongestLanguage, goal))
         val sources = ids.map { resolver.resolve(it, goal.orEmpty()) }
+        if (expectedVersions.keys.any { it !in ids } || sources.any { source ->
+            expectedVersions[source.objectId]?.let { it != source.revision || source is ResolvedStudySource.Unsupported } == true
+        }) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
         if (sources.all { it is ResolvedStudySource.Unsupported || (it is ResolvedStudySource.Text && it.passages.isEmpty()) } &&
             (goal.isNullOrBlank() || policy != StudyKnowledgePolicy.SOURCE_PLUS_GENERAL)) {
             val unsupported = sources.filterIsInstance<ResolvedStudySource.Unsupported>()

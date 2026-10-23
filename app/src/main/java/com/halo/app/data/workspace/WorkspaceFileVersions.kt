@@ -4,7 +4,7 @@ import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 
 data class WorkspaceFileVersion(val objectId: String, val version: String) {
-    init { require(objectId.matches(Regex("[A-Za-z0-9_-]{1,100}")) && version.length in 1..200) }
+    init { require(WorkspaceActionIds.isValid(objectId) && version.length in 1..200) }
 }
 
 /** Read/source-version adapter; Workspace and the file repository remain the actual owners. */

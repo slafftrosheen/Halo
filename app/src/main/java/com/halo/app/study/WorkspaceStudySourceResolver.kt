@@ -87,7 +87,9 @@ class WorkspaceStudySourceResolver(
                     val count = pdf.pageCount(file)
                     ResolvedStudySource.Pdf(objectId, file.version, item.title, count, 1)
                 }
-                file.mimeType in setOf("image/png", "image/jpeg", "image/webp") -> ResolvedStudySource.Visual(
+                file.mimeType in setOf("image/png", "image/jpeg", "image/webp") -> if (file.sha256 == null)
+                    ResolvedStudySource.Unsupported(objectId, item.title, "Keep a local copy in Workspace before attaching this image")
+                else ResolvedStudySource.Visual(
                     objectId, file.version, item.title,
                     MediaAssetRef("workspace:$objectId", MediaKind.IMAGE, file.mimeType, file.sizeBytes, file.sha256,
                         item.createdAt, MediaProvenance.WORKSPACE, MediaLifetime.WORKSPACE_PERSISTED, workspaceObjectId = objectId),

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceMediaContinuityTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T15:28:43.892Z" hostname="MINIFOXEY" time="0.234">
+  <properties/>
+  <testcase name="actualBytesMustMatchTheBoundedPersistedImageReference" classname="com.halo.app.data.workspace.WorkspaceMediaContinuityTest" time="0.054"/>
+  <testcase name="mediaChecksLifecycleAndAvailabilityBeforeOpeningOwnedBytes" classname="com.halo.app.data.workspace.WorkspaceMediaContinuityTest" time="0.056"/>
+  <testcase name="trashDuringByteReadDoesNotReturnContent" classname="com.halo.app.data.workspace.WorkspaceMediaContinuityTest" time="0.057"/>
+  <testcase name="sameClockRelinkUsesOneVersionAcrossFilesCanvasAndContext" classname="com.halo.app.data.workspace.WorkspaceMediaContinuityTest" time="0.062"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

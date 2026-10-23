@@ -168,38 +168,8 @@ fun WorkspaceObjectDetailScreen(
             }
 
               is WorkspaceDetailState.Ready -> {
-                if(type == "file") item {
-                    TextButton(
-                        onClick = {
-                            scope.launch {
-                                try {
-                                    val graph = com.halo.app.di.ManualDependencyGraph
-                                    graph.interactionContext.selectWorkspace(id)
-                                    graph.interactionContext.navigate(
-                                        com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
-                                            requireNotNull(graph.conversationStore.activeConversationId())
-                                        )
-                                    )
-                                } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                                    throw cancelled
-                                } catch (_: Exception) {
-                                    // Internal transport/provider details belong in Advanced.
-                                    actionMessage = "Could not attach this file. Try again."
-                                }
-                            }
-                        },
-                        enabled = !actionBusy && state.file != null,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) { Text(uiText("Ask about this")) }
-                }
-                if (type == "file" && onFileTools != null && state.file != null) {
-                    item { TextButton(onClick = { onFileTools(id) }, enabled = !actionBusy) { Text(stringResource(com.halo.app.R.string.file52_title)) } }
-                }
-                if (type == "file" && onStudio != null && state.file?.mimeType?.startsWith("image/") == true) {
-                    item { TextButton(onClick = { onStudio(id) }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.studio_open_in)) } }
-                }
-                if (type == "file" && onStudy != null && state.file?.let { it.mimeType.startsWith("text/") || it.mimeType.startsWith("image/") || it.mimeType in setOf("application/json", "application/pdf") } == true) {
-                    item { TextButton({ onStudy(id) }) { Text(uiText("Study this")) } }
+                if (type == "file" && state.file != null) item {
+                    com.halo.app.ui.workspace.WorkspaceContinueButton(id, state.file.version, enabled = !actionBusy)
                 }
                 if (type == "file") {
                     item {

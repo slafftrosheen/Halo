@@ -44,9 +44,10 @@ class MemoryRepositoryTest {
 
     @Test
     fun promoteCandidateCreatesMemoryRecordAndAllowsRevision() = runTest {
+        val source = com.halo.app.data.notebook.RoomNotebookRepository(db.notebookDao()).createNote("Prefer local inference when available")
         val candidate = MemoryCandidate(
             content = "Prefer local inference when available",
-            sourceObjectId = WorkspaceObjectId("note-99"),
+            sourceObjectId = WorkspaceObjectId(source.id),
             kind = MemoryKind.PREFERENCE,
             scope = MemoryScope.GLOBAL
         )

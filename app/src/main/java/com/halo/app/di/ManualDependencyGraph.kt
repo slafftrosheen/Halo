@@ -404,6 +404,9 @@ object ManualDependencyGraph {
         workspaceFileAnnotations, workspaceFileReceipts, workspaceFileRepository, workspaceRepository, workspaceFileVersions,
         notebookDocumentRepository, notebookCanvasRepository, com.halo.app.data.workspace.WorkspaceFileToolsRequests(infra.scope,
             { com.halo.app.ui.shell.HaloScreenLauncher.dispatch(applicationContext, "file_tools") })) }
+    val workspaceContinuity by lazy { com.halo.app.data.workspace.WorkspaceContinuity(appDatabase, workspaceContext,
+        workspaceFileRepository, workspaceFileTools, com.halo.app.data.workspace.WorkspaceHandoffRequests(infra.scope,
+            { com.halo.app.ui.shell.HaloScreenLauncher.dispatch(applicationContext, "workspace_handoff") })) }
     val studioProjectRepository by lazy { com.halo.app.data.studio.StudioProjectRepository(appDatabase) }
     val studioRenderer by lazy { com.halo.app.data.studio.StudioRenderer(applicationContext, workspaceFileRepository, workspaceRepository) }
     val studioService by lazy { com.halo.app.data.studio.StudioService(applicationContext, studioProjectRepository,
@@ -879,6 +882,7 @@ object ManualDependencyGraph {
                 )
             },
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
+            continuity = com.halo.app.di.tools.WorkspaceContinuityActions(workspaceContinuity),
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
             { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)
@@ -1250,7 +1254,7 @@ object ManualDependencyGraph {
             local.recordVisionLabSuccess(candidate.model.id, backend)
         }) }
     val imageInputPreparer by lazy { com.halo.app.capture.AndroidImageInputPreparer() }
-    val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore, notebookAssetRepository) }
+    val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore, notebookAssetRepository, workspaceRepository) }
     val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }
     val contextualCapture by lazy {
         com.halo.app.capture.ContextualCaptureController(applicationContext, interactionMediaStore, captures,

@@ -325,9 +325,13 @@ fun StudyHomeScreen(
                                     Text(source?.title ?: uiText("Loading material…"), style = MaterialTheme.typography.titleSmall)
                                     Text(when (source) {
                                         is ResolvedStudySource.Text -> if (source.coverage == SourceCoverage.FULL) uiText("Text ready") else uiText("Part of the text is ready")
-                                        is ResolvedStudySource.Pdf -> uiText("Some pages need halo to read photos")
-                                        is ResolvedStudySource.Visual -> uiText("halo needs permission to read this photo")
-                                        is ResolvedStudySource.Unsupported -> source.reason
+                                        is ResolvedStudySource.Pdf -> stringResource(R.string.link53_pdf_selected)
+                                        is ResolvedStudySource.Visual -> stringResource(R.string.link53_photo_selected)
+                                        is ResolvedStudySource.Unsupported -> when (source.reason) {
+                                            "Source changed. Select it again." -> stringResource(R.string.link53_source_changed)
+                                            "Keep a local copy in Workspace before attaching this image" -> stringResource(R.string.link53_keep_copy)
+                                            else -> uiText(source.reason)
+                                        }
                                         null -> uiText("Checking access")
                                     }, style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -404,7 +408,7 @@ fun StudyHomeScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
+                    notice?.let { Text(if (it == com.halo.app.study.StudyUnavailableReason.SOURCE_CHANGED.explanation) stringResource(R.string.link53_source_changed) else uiText(it), color = MaterialTheme.colorScheme.error) }
                 }
             }
 

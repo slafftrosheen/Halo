@@ -20,31 +20,42 @@ data class StudyLibrarySummary(val sources: Int, val cards: Int, val replies: In
 class StudyHomeViewModel(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
     private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
     private val lessons: StudyLessonStore? = null,
-    private val executionStorage: com.halo.sdk.runtime.Storage? = null) : ViewModel() {
+    private val executionStorage: com.halo.sdk.runtime.Storage? = null,
+    private val versionReader: (suspend (String) -> String?)? = null) : ViewModel() {
     val candidates = (workspace?.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.NOTE, WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA, WorkspaceObjectType.ARTIFACT))) ?: flowOf(emptyList()))
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val selected = MutableStateFlow<List<String>>(emptyList())
     val selectedIds = selected.asStateFlow()
     private val preview = MutableStateFlow<List<ResolvedStudySource>>(emptyList())
     val previews = preview.asStateFlow()
-    fun select(id: String) {
+    private val expectedContextVersions = mutableMapOf<String, String>()
+    fun select(id: String, expectedVersion: String? = null) {
         if (working.value || id in selected.value || selected.value.size >= StudySourceLimits.MAX_SOURCES) return
+        if (expectedVersion != null) expectedContextVersions[id] = expectedVersion
         selected.value = selected.value + id
         refreshPreview()
     }
-    fun remove(id: String) { if (!working.value) { selected.value = selected.value - id; refreshPreview() } }
+    fun remove(id: String) { if (!working.value) { selected.value = selected.value - id; expectedContextVersions.remove(id); refreshPreview() } }
     /** Clear an explicitly requested new lesson's material; never clear material
      * preselected by an external Study entry point on first composition.
      */
     fun resetDraft() {
         if (working.value) return
         selected.value = emptyList()
+        expectedContextVersions.clear()
         preview.value = emptyList()
         message.value = null
     }
     private fun refreshPreview() = viewModelScope.launch {
         val ids = selected.value
-        val sources = ids.mapNotNull { resolver?.resolve(it, "") }
+        val expected = expectedContextVersions.toMap()
+        val sources = ids.mapNotNull { id ->
+            val version = expected[id]
+            if (version != null && versionReader?.invoke(id) != version) ResolvedStudySource.Unsupported(id, "Material", "Source changed. Select it again.")
+            else resolver?.resolve(id, "")?.let { source ->
+                if (version != null && versionReader?.invoke(id) != version) ResolvedStudySource.Unsupported(id, source.title, "Source changed. Select it again.") else source
+            }
+        }
         if (selected.value == ids) preview.value = sources
     }
     fun importMaterial(uri: android.net.Uri) = viewModelScope.launch {
@@ -94,9 +105,15 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         working.value = true
         startJob = viewModelScope.launch {
             try {
+                if (expectedContextVersions.any { (id, expected) -> versionReader?.invoke(id) != expected ||
+                    preview.value.none { it.objectId == id && it !is ResolvedStudySource.Unsupported && it.revision != null } }) {
+                    message.value = StudyUnavailableReason.SOURCE_CHANGED.explanation
+                    return@launch
+                }
+                val expected = preview.value.mapNotNull { source -> source.revision?.takeIf { source !is ResolvedStudySource.Unsupported }?.let { source.objectId to it } }.toMap()
                 val languages = StudyLanguagePreferences(assignment.takeIf { it.isNotBlank() }, language.takeIf { it.isNotBlank() }, strongest.takeIf { it.isNotBlank() })
                 val result = if (selected.value.isEmpty()) study.startTopic(topic, language.trim().takeIf { it.isNotBlank() })
-                    else study.startMaterial(selected.value, languages, topic.takeIf { it.isNotBlank() }, level, style, policy)
+                    else study.startMaterial(selected.value, languages, topic.takeIf { it.isNotBlank() }, level, style, policy, expectedVersions = expected)
                 when (result) {
                     is StudyStartResult.Started -> {
                         if (executionChoice in setOf("phone", "cloud"))
@@ -117,8 +134,9 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     class Factory(private val study: StudyUseCases, private val workspace: WorkspaceRepository? = null,
         private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
         private val lessons: StudyLessonStore? = null,
-        private val executionStorage: com.halo.sdk.runtime.Storage? = null) : ViewModelProvider.Factory {
+        private val executionStorage: com.halo.sdk.runtime.Storage? = null,
+        private val versionReader: (suspend (String) -> String?)? = null) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,lessons, executionStorage) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,lessons, executionStorage, versionReader) as T
     }
 }

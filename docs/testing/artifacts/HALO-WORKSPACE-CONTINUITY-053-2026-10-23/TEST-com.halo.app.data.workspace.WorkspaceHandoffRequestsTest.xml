@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceHandoffRequestsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T15:28:43.788Z" hostname="MINIFOXEY" time="0.1">
+  <properties/>
+  <testcase name="abandonedAndFailedDispatchesAreTerminalAndCanBeReplacedExplicitly" classname="com.halo.app.data.workspace.WorkspaceHandoffRequestsTest" time="0.096"/>
+  <testcase name="aRequestIsClaimedOnceAndExpiryNeverReplaysIt" classname="com.halo.app.data.workspace.WorkspaceHandoffRequestsTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

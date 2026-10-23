@@ -14,7 +14,7 @@ class WorkspaceFileToolsRequests(private val scope: CoroutineScope, private val 
     private val mutable = MutableStateFlow<WorkspaceFileToolsRequest?>(null)
     val pending = mutable.asStateFlow()
     fun offer(objectId: String?): WorkspaceFileToolsRequest {
-        require(objectId == null || objectId.matches(Regex("[A-Za-z0-9_-]{1,100}")))
+        require(objectId == null || WorkspaceActionIds.isValid(objectId))
         val request = WorkspaceFileToolsRequest(UUID.randomUUID().toString(), objectId)
         check(mutable.compareAndSet(null, request)) { "An existing File tools request is pending" }
         try { launchUi() } catch (failure: Exception) { mutable.compareAndSet(request, null); throw failure }

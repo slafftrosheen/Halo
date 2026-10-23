@@ -107,15 +107,17 @@ class AndroidInteractionContextAdapter(
         } }
         message.value = null
     }
-    suspend fun selectWorkspace(objectId: String) = lock.withLock {
+    suspend fun selectWorkspace(objectId: String, expectedVersion: String? = null) = lock.withLock {
         val conversation = conversation()
         val item = database.notebookDao().getWorkspaceObject(objectId)?.takeIf { it.lifecycle == "ACTIVE" } ?: error("Source unavailable")
         check(policy.access(objectId) != com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI) { "Source excluded from AI" }
         val version = workspace.versionFor(objectId) ?: error("Source unavailable")
+        check(expectedVersion == null || version == expectedVersion) { "Source changed. Select it again." }
         // Resolve readability now, without a model call or permission change.
         val source = sources.resolveExplicitReference(objectId, "")
         if(source is ResolvedStudySource.Unsupported) error(source.reason)
         check(source !is ResolvedStudySource.Pdf) { "Choose a readable note, text file, or exact image. PDF pages stay in Study." }
+        check(workspace.versionFor(objectId) == version) { "Source changed. Select it again." }
         val reference = ContextReference.WorkspaceObject(objectId,version)
         titles[reference] = item.title.take(160)
         if(source is ResolvedStudySource.Visual) visualReferences.add(reference)
