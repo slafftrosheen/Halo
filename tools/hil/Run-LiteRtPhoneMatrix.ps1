@@ -16,6 +16,8 @@
   without treating them as accelerator qualification. Never downloads or selects models.
   -VerifyProvider additionally exercises Halo's provider on the explicit context/backend;
   it does not write model tuning or role bindings. Run after the resident baseline passes.
+  -EmbeddingSuite runs fixed synthetic text/image retrieval through the canonical CPU
+  embedding provider. No capability promotion; unavailable inputs are not quality passes.
   The app:testDebugAndroidTest APK must be installed separately.
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -InspectOnly
@@ -23,6 +25,8 @@
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Models qwen3-0.6b-dynamic-int4 -Backend CPU -ResidentTurns 5 -ContextTokens 2048
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -RoleSuite -Languages EN,LV,RU,PL -Repetitions 3 -Backend CPU
+.EXAMPLE
+  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -Models embeddinggemma2-740m -EmbeddingSuite -Backend CPU -TimeoutSeconds 480
 #>
 [CmdletBinding()]
 param(
@@ -42,6 +46,7 @@ param(
     [switch] $InspectOnly,
     [switch] $VerifyProvider,
     [switch] $RoleSuite,
+    [switch] $EmbeddingSuite,
     [ValidateSet('EN', 'LV', 'RU', 'PL')]
     [string[]] $Languages = @('EN', 'LV', 'RU', 'PL'),
     [ValidateRange(1, 5)]
@@ -68,6 +73,9 @@ if ($Serial -like 'emulator-*') { throw "Physical model qualification cannot use
 if (($Models.Count -gt 0) -eq [bool]$InstalledOnly) { throw "Choose explicit -Models or -InstalledOnly; no default model is permitted." }
 if (-not $InspectOnly -and $Backend -ne "CPU" -and -not $AllowGpu) { throw "GPU requires explicit operator approval through -AllowGpu after a CPU pass." }
 $deviceArgs = @("-s", $Serial.Trim())
+if ($EmbeddingSuite -and ($InspectOnly -or $VerifyProvider -or $RoleSuite -or $ResidentTurns -gt 0 -or $Cycles -ne 1 -or $ContextTokens -gt 0 -or $CaptureOnly -or $Resume -or $Backend -ne 'CPU')) {
+    throw '-EmbeddingSuite is a separate CPU-only synthetic retrieval probe; no generation, role, resume or capture modes.'
+}
 $packageName = "com.aistudio.braintool.xkqzps"
 $testRunner = "$packageName.test/androidx.test.runner.AndroidJUnitRunner"
 if ($InspectOnly -and ($ResidentTurns -gt 0 -or $Cycles -ne 1 -or $ContextTokens -gt 0)) {
@@ -84,7 +92,9 @@ if ($Resume -and -not (Test-Path -LiteralPath (Join-Path $OutputDir 'selected-in
     Write-Host 'No immutable selection exists yet; starting the first verified role batch.'
     $Resume = $false
 }
-$testClass = if ($RoleSuite) {
+$testClass = if ($EmbeddingSuite) {
+    'com.halo.app.audio.LocalEmbeddingPhoneTest#qualifyInstalledEmbedding'
+} elseif ($RoleSuite) {
     'com.halo.app.audio.LocalModelRolePhoneTest#qualifyInstalledRoles'
 } elseif ($InspectOnly) {
     "com.halo.app.audio.LocalArtifactInspectionTest#inspectInstalledArtifact"
@@ -127,7 +137,7 @@ if ($Resume) {
     $runId = $previous.runId
 } else {
 [pscustomobject]@{ schema=1; serial=$Serial; runId=$runId; sourceStamp=$inventory.sourceStamp; capturedAtMs=$inventory.capturedAtMs; models=$selected;
-    roleSuite=[bool]$RoleSuite; contextTokens=$ContextTokens; backend=$Backend; languages=$Languages; repetitions=$Repetitions } |
+    roleSuite=[bool]$RoleSuite; embeddingSuite=[bool]$EmbeddingSuite; contextTokens=$ContextTokens; backend=$Backend; languages=$Languages; repetitions=$Repetitions } |
     ConvertTo-Json -Depth 15 | Set-Content -LiteralPath $selectionFile -Encoding utf8
 (Get-Item -LiteralPath $selectionFile).IsReadOnly = $true
 }
@@ -146,8 +156,9 @@ try {
 foreach ($modelId in $Models) {
     if ($modelId -notmatch '^[a-z0-9][a-z0-9._-]{1,99}$') { throw "Unsafe model ID: $modelId" }
     $artifact = $selected | Where-Object { $_.id -eq $modelId } | Select-Object -First 1
-    if ($null -eq $artifact -or (-not $InspectOnly -and $artifact.declaredTask -ne "GENERATION")) {
-        $summary.Add([pscustomobject]@{ ModelId=$modelId; Backend=$Backend; Result=if($null -eq $artifact){if(@($inventory.models | Where-Object { $_.id -eq $modelId }).Count -gt 0){"FAILED_MODEL"}else{"SKIPPED_NOT_INSTALLED"}}else{"SKIPPED_TASK_NOT_GENERATION"}; ProcessExit=$null })
+    $expectedTask = if ($EmbeddingSuite) { 'EMBEDDING' } else { 'GENERATION' }
+    if ($null -eq $artifact -or (-not $InspectOnly -and $artifact.declaredTask -ne $expectedTask)) {
+        $summary.Add([pscustomobject]@{ ModelId=$modelId; Backend=$Backend; Result=if($null -eq $artifact){if(@($inventory.models | Where-Object { $_.id -eq $modelId }).Count -gt 0){"FAILED_MODEL"}else{"SKIPPED_NOT_INSTALLED"}}else{if($EmbeddingSuite){"SKIPPED_TASK_NOT_EMBEDDING"}else{"SKIPPED_TASK_NOT_GENERATION"}}; ProcessExit=$null })
         continue
     }
     foreach ($kind in $backends) {
@@ -167,6 +178,7 @@ foreach ($modelId in $Models) {
             if ([long]$Matches[1] * 1024 -lt [long]$artifact.bytes + 1GB) { throw "GPU conservative RAM headroom check failed." }
         }
         $label = if ($InspectOnly) { "$modelId-metadata" }
+                 elseif ($EmbeddingSuite) { "$modelId-CPU-embedding-synthetic-v1" }
                  elseif ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
                  else { "$modelId-$kind-ctx$ContextTokens-cycles$Cycles" }
         if ($VerifyProvider) { $label += "-provider" }
@@ -238,6 +250,9 @@ foreach ($modelId in $Models) {
         $instrumentOk = $exit -eq 0 -and $text -match 'INSTRUMENTATION_CODE:\s*-1' -and
             $text -match 'OK\s*\(1\s*test\)'
         $status = Resolve-LiteRtProbeStatus -ProcessExit $exit -RunnerText $text -CaptureOnly ([bool]$CaptureOnly)
+        if ($EmbeddingSuite) {
+            $status = Resolve-LiteRtEmbeddingProbeStatus -ProcessExit $exit -RunnerText $text -RunId $runId -Sha256 $artifact.sha256
+        }
         $summary.Add([pscustomobject]@{
             ModelId = $modelId
             Backend = $kind
@@ -260,7 +275,8 @@ Save-MatrixSummary
 
 # App is debuggable for androidTest. Reading the already-produced evidence does not
 # mutate settings, download models or allocate another inference engine.
-$jsonlFile = if ($RoleSuite) { 'local-model-role-evidence.jsonl' }
+$jsonlFile = if ($EmbeddingSuite) { 'local-embedding-evidence.jsonl' }
+             elseif ($RoleSuite) { 'local-model-role-evidence.jsonl' }
              elseif ($InspectOnly) { "local-artifact-inspection.jsonl" }
              elseif ($ResidentTurns -gt 0) { "resident-model-endurance.jsonl" }
              else { "downloaded-model-diagnostics.jsonl" }

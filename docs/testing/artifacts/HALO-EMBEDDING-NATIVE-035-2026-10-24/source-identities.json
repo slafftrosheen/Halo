@@ -1,0 +1,18 @@
+[
+  {
+    "path": "app/src/androidTest/java/com/halo/app/audio/LocalEmbeddingPhoneTest.kt",
+    "sha256": "30da3187b0e295a834e0a8355a9884d29b483079a275af7f98c6e54a179f9aac"
+  },
+  {
+    "path": "tools/hil/Run-LiteRtPhoneMatrix.ps1",
+    "sha256": "9eabf9feee78f9d42d59cedb89bb66880b67e56ab36d6e68da31caee747cf792"
+  },
+  {
+    "path": "tools/hil/LiteRtProbeStatus.ps1",
+    "sha256": "30fca49f5f5596a16e6d107d37fba00a8fd3eba0ea254c6230258f6b839d78dd"
+  },
+  {
+    "path": "tools/hil/Test-LiteRtProbeStatus.ps1",
+    "sha256": "8ecd3c1489a85c6a1f3f9fd5690432050fd2616f3167809601fef8a7849d8342"
+  }
+]

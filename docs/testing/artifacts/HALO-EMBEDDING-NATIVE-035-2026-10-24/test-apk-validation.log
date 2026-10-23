@@ -1,0 +1,802 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because output of the external process 'git' has changed.
+> Task :engines:ai:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:provider:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:provider:compileKotlin NO-SOURCE
+> Task :engines:provider:compileJava NO-SOURCE
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :runtime:provider-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :runtime:provider-core:compileKotlin UP-TO-DATE
+> Task :runtime:provider-core:compileJava NO-SOURCE
+> Task :engines:ai:compileKotlin UP-TO-DATE
+> Task :engines:ai:compileJava NO-SOURCE
+> Task :engines:ai:processResources NO-SOURCE
+> Task :engines:ai:classes UP-TO-DATE
+> Task :engines:ai:jar UP-TO-DATE
+> Task :runtime:cognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:cognition:compileKotlin UP-TO-DATE
+> Task :runtime:cognition:compileJava NO-SOURCE
+> Task :runtime:plugins:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:plugins:compileKotlin UP-TO-DATE
+> Task :runtime:plugins:compileJava NO-SOURCE
+> Task :runtime:services:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:driver-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:driver-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:driver-sdk:compileJava NO-SOURCE
+> Task :runtime:services:compileKotlin UP-TO-DATE
+> Task :runtime:services:compileJava NO-SOURCE
+> Task :runtime:services:processResources NO-SOURCE
+> Task :runtime:services:classes UP-TO-DATE
+> Task :runtime:services:jar UP-TO-DATE
+> Task :sdk:driver-sdk:processResources NO-SOURCE
+> Task :sdk:driver-sdk:classes UP-TO-DATE
+> Task :sdk:driver-sdk:jar UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar UP-TO-DATE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :runtime:cognition:processResources NO-SOURCE
+> Task :runtime:cognition:classes UP-TO-DATE
+> Task :runtime:cognition:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :runtime:events:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:events:compileKotlin UP-TO-DATE
+> Task :runtime:events:compileJava NO-SOURCE
+> Task :runtime:events:processResources NO-SOURCE
+> Task :runtime:events:classes UP-TO-DATE
+> Task :runtime:events:jar UP-TO-DATE
+> Task :runtime:commands:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:commands:compileKotlin UP-TO-DATE
+> Task :runtime:commands:compileJava NO-SOURCE
+> Task :runtime:commands:processResources NO-SOURCE
+> Task :runtime:commands:classes UP-TO-DATE
+> Task :runtime:commands:jar UP-TO-DATE
+> Task :runtime:queries:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:queries:compileKotlin UP-TO-DATE
+> Task :runtime:queries:compileJava NO-SOURCE
+> Task :runtime:queries:processResources NO-SOURCE
+> Task :runtime:queries:classes UP-TO-DATE
+> Task :runtime:queries:jar UP-TO-DATE
+> Task :runtime:scheduler:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:scheduler:compileKotlin UP-TO-DATE
+> Task :runtime:scheduler:compileJava NO-SOURCE
+> Task :runtime:scheduler:processResources NO-SOURCE
+> Task :runtime:scheduler:classes UP-TO-DATE
+> Task :runtime:scheduler:jar UP-TO-DATE
+> Task :runtime:registry:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:registry:compileKotlin UP-TO-DATE
+> Task :runtime:registry:compileJava NO-SOURCE
+> Task :runtime:registry:processResources NO-SOURCE
+> Task :runtime:registry:classes UP-TO-DATE
+> Task :runtime:registry:jar UP-TO-DATE
+> Task :runtime:kernel:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:kernel:compileKotlin UP-TO-DATE
+> Task :runtime:kernel:compileJava NO-SOURCE
+> Task :runtime:kernel:processResources NO-SOURCE
+> Task :runtime:kernel:classes UP-TO-DATE
+> Task :runtime:kernel:jar UP-TO-DATE
+> Task :engines:agents:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:execution:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:execution:compileKotlin UP-TO-DATE
+> Task :engines:execution:compileJava NO-SOURCE
+> Task :engines:interpretation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:speech:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:speech:compileKotlin UP-TO-DATE
+> Task :engines:speech:compileJava NO-SOURCE
+> Task :engines:interpretation:compileKotlin UP-TO-DATE
+> Task :engines:interpretation:compileJava NO-SOURCE
+> Task :engines:memory:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:memory:compileKotlin UP-TO-DATE
+> Task :engines:memory:compileJava NO-SOURCE
+> Task :engines:planning:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:planning:compileKotlin UP-TO-DATE
+> Task :engines:planning:compileJava NO-SOURCE
+> Task :engines:reasoning:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:reasoning:compileKotlin UP-TO-DATE
+> Task :engines:reasoning:compileJava NO-SOURCE
+> Task :engines:agents:compileKotlin UP-TO-DATE
+> Task :engines:agents:compileJava NO-SOURCE
+> Task :runtime:speech:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:speech:compileKotlin UP-TO-DATE
+> Task :runtime:speech:compileJava NO-SOURCE
+> Task :runtime:speech:processResources NO-SOURCE
+> Task :runtime:speech:classes UP-TO-DATE
+> Task :runtime:speech:jar UP-TO-DATE
+> Task :runtime:observer:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:observer:compileKotlin UP-TO-DATE
+> Task :runtime:observer:compileJava NO-SOURCE
+> Task :runtime:observer:processResources NO-SOURCE
+> Task :runtime:observer:classes UP-TO-DATE
+> Task :runtime:observer:jar UP-TO-DATE
+> Task :engines:execution:processResources NO-SOURCE
+> Task :engines:execution:classes UP-TO-DATE
+> Task :engines:execution:jar UP-TO-DATE
+> Task :libraries:testing:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:testing:compileKotlin UP-TO-DATE
+> Task :libraries:testing:compileJava NO-SOURCE
+> Task :libraries:testing:processResources NO-SOURCE
+> Task :libraries:testing:classes UP-TO-DATE
+> Task :libraries:testing:jar UP-TO-DATE
+> Task :libraries:logging:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:logging:compileKotlin UP-TO-DATE
+> Task :libraries:logging:compileJava NO-SOURCE
+> Task :libraries:logging:processResources NO-SOURCE
+> Task :libraries:logging:classes UP-TO-DATE
+> Task :libraries:logging:jar UP-TO-DATE
+> Task :engines:memory:processResources NO-SOURCE
+> Task :engines:memory:classes UP-TO-DATE
+> Task :engines:memory:jar UP-TO-DATE
+> Task :engines:diagnostics:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:diagnostics:compileKotlin UP-TO-DATE
+> Task :engines:diagnostics:compileJava NO-SOURCE
+> Task :engines:diagnostics:processResources NO-SOURCE
+> Task :engines:diagnostics:classes UP-TO-DATE
+> Task :engines:diagnostics:jar UP-TO-DATE
+> Task :engines:reasoning:processResources NO-SOURCE
+> Task :engines:reasoning:classes UP-TO-DATE
+> Task :engines:reasoning:jar UP-TO-DATE
+> Task :engines:interpretation:processResources NO-SOURCE
+> Task :engines:interpretation:classes UP-TO-DATE
+> Task :engines:interpretation:jar UP-TO-DATE
+> Task :engines:speech:processResources NO-SOURCE
+> Task :engines:speech:classes UP-TO-DATE
+> Task :engines:speech:jar UP-TO-DATE
+> Task :runtime:intents:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:intents:compileKotlin UP-TO-DATE
+> Task :runtime:intents:compileJava NO-SOURCE
+> Task :runtime:intents:processResources NO-SOURCE
+> Task :runtime:intents:classes UP-TO-DATE
+> Task :runtime:intents:jar UP-TO-DATE
+> Task :runtime:plugins:processResources NO-SOURCE
+> Task :runtime:plugins:classes UP-TO-DATE
+> Task :runtime:plugins:jar UP-TO-DATE
+> Task :engines:perception:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:perception:compileKotlin UP-TO-DATE
+> Task :engines:perception:compileJava NO-SOURCE
+> Task :engines:perception:processResources NO-SOURCE
+> Task :engines:perception:classes UP-TO-DATE
+> Task :engines:perception:jar UP-TO-DATE
+> Task :engines:planning:processResources NO-SOURCE
+> Task :engines:planning:classes UP-TO-DATE
+> Task :engines:planning:jar UP-TO-DATE
+> Task :engines:agents:processResources NO-SOURCE
+> Task :engines:agents:classes UP-TO-DATE
+> Task :engines:agents:jar UP-TO-DATE
+> Task :drivers:simulator:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :drivers:simulator:compileKotlin UP-TO-DATE
+> Task :drivers:simulator:compileJava NO-SOURCE
+> Task :drivers:simulator:processResources NO-SOURCE
+> Task :drivers:simulator:classes UP-TO-DATE
+> Task :drivers:simulator:jar UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:compileDebugAidl UP-TO-DATE
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :host-android:preBuild UP-TO-DATE
+> Task :host-android:preDebugBuild UP-TO-DATE
+> Task :host-android:processDebugNavigationResources UP-TO-DATE
+> Task :drivers:heycyan:preBuild UP-TO-DATE
+> Task :drivers:heycyan:preDebugBuild UP-TO-DATE
+> Task :drivers:heycyan:processDebugNavigationResources UP-TO-DATE
+> Task :providers:android-assistant:preBuild UP-TO-DATE
+> Task :providers:android-assistant:preDebugBuild UP-TO-DATE
+> Task :providers:android-assistant:processDebugNavigationResources UP-TO-DATE
+> Task :providers:android-tts:preBuild UP-TO-DATE
+> Task :providers:android-tts:preDebugBuild UP-TO-DATE
+> Task :providers:android-tts:processDebugNavigationResources UP-TO-DATE
+> Task :providers:anthropic:preBuild UP-TO-DATE
+> Task :providers:anthropic:preDebugBuild UP-TO-DATE
+> Task :providers:anthropic:processDebugNavigationResources UP-TO-DATE
+> Task :providers:elevenlabs-tts:preBuild UP-TO-DATE
+> Task :providers:elevenlabs-tts:preDebugBuild UP-TO-DATE
+> Task :providers:elevenlabs-tts:processDebugNavigationResources UP-TO-DATE
+> Task :providers:gemini:preBuild UP-TO-DATE
+> Task :providers:gemini:preDebugBuild UP-TO-DATE
+> Task :providers:gemini:processDebugNavigationResources UP-TO-DATE
+> Task :providers:litert:preBuild UP-TO-DATE
+> Task :providers:litert:preDebugBuild UP-TO-DATE
+> Task :providers:litert:processDebugNavigationResources UP-TO-DATE
+> Task :providers:ollama:preBuild UP-TO-DATE
+> Task :providers:ollama:preDebugBuild UP-TO-DATE
+> Task :providers:ollama:processDebugNavigationResources UP-TO-DATE
+> Task :providers:openai:preBuild UP-TO-DATE
+> Task :providers:openai:preDebugBuild UP-TO-DATE
+> Task :providers:openai:processDebugNavigationResources UP-TO-DATE
+> Task :providers:openrouter:preBuild UP-TO-DATE
+> Task :providers:openrouter:preDebugBuild UP-TO-DATE
+> Task :providers:openrouter:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-cerebras:preBuild UP-TO-DATE
+> Task :providers:remote-cerebras:preDebugBuild UP-TO-DATE
+> Task :providers:remote-cerebras:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:preBuild UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:preDebugBuild UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-gemini-oauth:preBuild UP-TO-DATE
+> Task :providers:remote-gemini-oauth:preDebugBuild UP-TO-DATE
+> Task :providers:remote-gemini-oauth:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-groq:preBuild UP-TO-DATE
+> Task :providers:remote-groq:preDebugBuild UP-TO-DATE
+> Task :providers:remote-groq:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-opencode-companion:preBuild UP-TO-DATE
+> Task :providers:remote-opencode-companion:preDebugBuild UP-TO-DATE
+> Task :providers:remote-opencode-companion:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-opencode-zen:preBuild UP-TO-DATE
+> Task :providers:remote-opencode-zen:preDebugBuild UP-TO-DATE
+> Task :providers:remote-opencode-zen:processDebugNavigationResources UP-TO-DATE
+> Task :providers:remote-xai:preBuild UP-TO-DATE
+> Task :providers:remote-xai:preDebugBuild UP-TO-DATE
+> Task :providers:remote-xai:processDebugNavigationResources UP-TO-DATE
+> Task :providers:sherpa-stt:preBuild UP-TO-DATE
+> Task :providers:sherpa-stt:preDebugBuild UP-TO-DATE
+> Task :providers:sherpa-stt:processDebugNavigationResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :host-android:generateDebugResources UP-TO-DATE
+> Task :host-android:packageDebugResources UP-TO-DATE
+> Task :host-android:parseDebugLocalResources UP-TO-DATE
+> Task :host-android:generateDebugRFile UP-TO-DATE
+> Task :host-android:compileDebugKotlin UP-TO-DATE
+> Task :host-android:javaPreCompileDebug UP-TO-DATE
+> Task :host-android:compileDebugJavaWithJavac NO-SOURCE
+> Task :host-android:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :drivers:heycyan:generateDebugResources UP-TO-DATE
+> Task :drivers:heycyan:packageDebugResources UP-TO-DATE
+> Task :drivers:heycyan:parseDebugLocalResources UP-TO-DATE
+> Task :drivers:heycyan:generateDebugRFile UP-TO-DATE
+> Task :drivers:heycyan:compileDebugKotlin UP-TO-DATE
+> Task :drivers:heycyan:javaPreCompileDebug UP-TO-DATE
+> Task :drivers:heycyan:compileDebugJavaWithJavac NO-SOURCE
+> Task :drivers:heycyan:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:android-assistant:generateDebugResources UP-TO-DATE
+> Task :providers:android-assistant:packageDebugResources UP-TO-DATE
+> Task :providers:android-assistant:parseDebugLocalResources UP-TO-DATE
+> Task :providers:android-assistant:generateDebugRFile UP-TO-DATE
+> Task :providers:android-assistant:compileDebugKotlin UP-TO-DATE
+> Task :providers:android-assistant:javaPreCompileDebug UP-TO-DATE
+> Task :providers:android-assistant:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:android-assistant:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:android-tts:generateDebugResources UP-TO-DATE
+> Task :providers:android-tts:packageDebugResources UP-TO-DATE
+> Task :providers:android-tts:parseDebugLocalResources UP-TO-DATE
+> Task :providers:android-tts:generateDebugRFile UP-TO-DATE
+> Task :providers:android-tts:compileDebugKotlin UP-TO-DATE
+> Task :providers:android-tts:javaPreCompileDebug UP-TO-DATE
+> Task :providers:android-tts:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:android-tts:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:anthropic:generateDebugResources UP-TO-DATE
+> Task :providers:anthropic:packageDebugResources UP-TO-DATE
+> Task :providers:anthropic:parseDebugLocalResources UP-TO-DATE
+> Task :providers:anthropic:generateDebugRFile UP-TO-DATE
+> Task :providers:anthropic:compileDebugKotlin UP-TO-DATE
+> Task :providers:anthropic:javaPreCompileDebug UP-TO-DATE
+> Task :providers:anthropic:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:anthropic:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:elevenlabs-tts:generateDebugResources UP-TO-DATE
+> Task :providers:elevenlabs-tts:packageDebugResources UP-TO-DATE
+> Task :providers:elevenlabs-tts:parseDebugLocalResources UP-TO-DATE
+> Task :providers:elevenlabs-tts:generateDebugRFile UP-TO-DATE
+> Task :providers:elevenlabs-tts:compileDebugKotlin UP-TO-DATE
+> Task :providers:elevenlabs-tts:javaPreCompileDebug UP-TO-DATE
+> Task :providers:elevenlabs-tts:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:elevenlabs-tts:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:gemini:generateDebugResources UP-TO-DATE
+> Task :providers:gemini:packageDebugResources UP-TO-DATE
+> Task :providers:gemini:parseDebugLocalResources UP-TO-DATE
+> Task :providers:gemini:generateDebugRFile UP-TO-DATE
+> Task :providers:gemini:compileDebugKotlin UP-TO-DATE
+> Task :providers:gemini:javaPreCompileDebug UP-TO-DATE
+> Task :providers:gemini:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:gemini:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:litert:generateDebugResources UP-TO-DATE
+> Task :providers:litert:packageDebugResources UP-TO-DATE
+> Task :providers:litert:parseDebugLocalResources UP-TO-DATE
+> Task :providers:litert:generateDebugRFile UP-TO-DATE
+> Task :providers:litert:compileDebugKotlin UP-TO-DATE
+> Task :providers:litert:javaPreCompileDebug UP-TO-DATE
+> Task :providers:litert:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:litert:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:ollama:generateDebugResources UP-TO-DATE
+> Task :providers:ollama:packageDebugResources UP-TO-DATE
+> Task :providers:ollama:parseDebugLocalResources UP-TO-DATE
+> Task :providers:ollama:generateDebugRFile UP-TO-DATE
+> Task :providers:ollama:compileDebugKotlin UP-TO-DATE
+> Task :providers:ollama:javaPreCompileDebug UP-TO-DATE
+> Task :providers:ollama:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:ollama:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:openai:generateDebugResources UP-TO-DATE
+> Task :providers:openai:packageDebugResources UP-TO-DATE
+> Task :providers:openai:parseDebugLocalResources UP-TO-DATE
+> Task :providers:openai:generateDebugRFile UP-TO-DATE
+> Task :providers:openai:compileDebugKotlin UP-TO-DATE
+> Task :providers:openai:javaPreCompileDebug UP-TO-DATE
+> Task :providers:openai:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:openai:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:openrouter:generateDebugResources UP-TO-DATE
+> Task :providers:openrouter:packageDebugResources UP-TO-DATE
+> Task :providers:openrouter:parseDebugLocalResources UP-TO-DATE
+> Task :providers:openrouter:generateDebugRFile UP-TO-DATE
+> Task :providers:openrouter:compileDebugKotlin UP-TO-DATE
+> Task :providers:openrouter:javaPreCompileDebug UP-TO-DATE
+> Task :providers:openrouter:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:openrouter:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-cerebras:generateDebugResources UP-TO-DATE
+> Task :providers:remote-cerebras:packageDebugResources UP-TO-DATE
+> Task :providers:remote-cerebras:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-cerebras:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-cerebras:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-cerebras:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-cerebras:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-cerebras:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:generateDebugResources UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:packageDebugResources UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-custom-openai-compatible:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-gemini-oauth:generateDebugResources UP-TO-DATE
+> Task :providers:remote-gemini-oauth:packageDebugResources UP-TO-DATE
+> Task :providers:remote-gemini-oauth:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-gemini-oauth:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-gemini-oauth:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-gemini-oauth:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-gemini-oauth:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-gemini-oauth:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-groq:generateDebugResources UP-TO-DATE
+> Task :providers:remote-groq:packageDebugResources UP-TO-DATE
+> Task :providers:remote-groq:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-groq:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-groq:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-groq:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-groq:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-groq:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-opencode-companion:generateDebugResources UP-TO-DATE
+> Task :providers:remote-opencode-companion:packageDebugResources UP-TO-DATE
+> Task :providers:remote-opencode-companion:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-opencode-companion:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-opencode-companion:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-opencode-companion:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-opencode-companion:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-opencode-companion:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-opencode-zen:generateDebugResources UP-TO-DATE
+> Task :providers:remote-opencode-zen:packageDebugResources UP-TO-DATE
+> Task :providers:remote-opencode-zen:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-opencode-zen:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-opencode-zen:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-opencode-zen:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-opencode-zen:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-opencode-zen:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:remote-xai:generateDebugResources UP-TO-DATE
+> Task :providers:remote-xai:packageDebugResources UP-TO-DATE
+> Task :providers:remote-xai:parseDebugLocalResources UP-TO-DATE
+> Task :providers:remote-xai:generateDebugRFile UP-TO-DATE
+> Task :providers:remote-xai:compileDebugKotlin UP-TO-DATE
+> Task :providers:remote-xai:javaPreCompileDebug UP-TO-DATE
+> Task :providers:remote-xai:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:remote-xai:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:sherpa-stt:generateDebugResources UP-TO-DATE
+> Task :providers:sherpa-stt:packageDebugResources UP-TO-DATE
+> Task :providers:sherpa-stt:parseDebugLocalResources UP-TO-DATE
+> Task :providers:sherpa-stt:generateDebugRFile UP-TO-DATE
+> Task :providers:sherpa-stt:compileDebugKotlin UP-TO-DATE
+> Task :providers:sherpa-stt:javaPreCompileDebug UP-TO-DATE
+> Task :providers:sherpa-stt:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:sherpa-stt:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/assistant/HaloVoiceInteractionSession.kt:387:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/audio/AndroidAudioAccessoryRegistry.kt:19:34 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.3.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/audio/SupertonicPackStore.kt:70:26 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/backup/ZipBrainExporter.kt:252:97 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/capture/MultimodalStatus.kt:27:95 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/data/study/StudyRepository.kt:244:20 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/data/study/StudyRepository.kt:315:27 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/di/tools/host/ApplicationTools.kt:42:54 The corresponding parameter in the supertype 'ToolExecutor' is named 'context'. This may cause problems when calling this function with named arguments.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/di/tools/host/MessagingTools.kt:22:34 The corresponding parameter in the supertype 'ToolExecutor' is named 'toolCall'. This may cause problems when calling this function with named arguments.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/lab/bridge/HaloLabJournal.kt:95:17 Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']. Reification of an intersection type results in the common supertype being used. This may lead to subtle issues and an explicit type argument is encouraged. This will become an error in a future release.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/lab/bridge/HaloLabJournal.kt:214:13 Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']. Reification of an intersection type results in the common supertype being used. This may lead to subtle issues and an explicit type argument is encouraged. This will become an error in a future release.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/lab/bridge/HaloLabJournal.kt:238:13 Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']. Reification of an intersection type results in the common supertype being used. This may lead to subtle issues and an explicit type argument is encouraged. This will become an error in a future release.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/mcp/McpTransport.kt:75:52 The corresponding parameter in the supertype 'Callback' is named 'e'. This may cause problems when calling this function with named arguments.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/mcp/McpTransport.kt:141:64 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'Any?'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/nativeactions/HaloNativeWidget.kt:125:70 'field scaledDensity: Float' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/nativeactions/HaloNativeWidget.kt:148:78 'field scaledDensity: Float' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/nativeactions/HaloNativeWidget.kt:169:76 'field scaledDensity: Float' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/online/OneShotConsent.kt:7:35 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.3.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/online/OpenRouterOnlineClient.kt:57:48 The corresponding parameter in the supertype 'Callback' is named 'e'. This may cause problems when calling this function with named arguments.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/icons/HaloGlyphRenderer.kt:19:39 'val Icons.Outlined.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.VolumeUp.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/icons/HaloGlyphRenderer.kt:27:42 'val Icons.Outlined.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.HelpOutline.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/icons/HaloGlyphRenderer.kt:53:45 'val Icons.Outlined.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.HelpOutline.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/online/GroundedWebSearchDialog.kt:28:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/presence/HaloOrb.kt:26:19 'data class HaloOrbPresentation : Any' is deprecated. Replaced by HaloSignalPresentation.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/devices/PhoneCapabilityGroups.kt:20:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/devices/PhoneCapabilityGroups.kt:21:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/discovery/PairingScreen.kt:61:9 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/discovery/PairingScreen.kt:63:5 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/home/HomeScreen.kt:193:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/home/HomeTranscriptMessage.kt:31:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/home/HomeViewModel.kt:77:39 'data class HaloOrbPresentation : Any' is deprecated. Replaced by HaloSignalPresentation.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/home/HomeViewModel.kt:77:86 'constructor(phase: HaloRuntimeState = ..., label: String = ..., source: String = ..., inputLevel: Float = ..., failed: Boolean = ..., transition: Int = ..., reducedMotion: Boolean = ...): HaloOrbPresentation' is deprecated. Replaced by HaloSignalPresentation.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/home/HomeViewModel.kt:445:48 'constructor(phase: HaloRuntimeState = ..., label: String = ..., source: String = ..., inputLevel: Float = ..., failed: Boolean = ..., transition: Int = ..., reducedMotion: Boolean = ...): HaloOrbPresentation' is deprecated. Replaced by HaloSignalPresentation.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/kids/KidsStoryPage.kt:21:9 'fun ClickableText(text: AnnotatedString, modifier: Modifier = ..., style: TextStyle = ..., softWrap: Boolean = ..., overflow: TextOverflow = ..., maxLines: Int = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., onClick: (Int) -> Unit): Unit' is deprecated. Use Text or BasicText and pass an AnnotatedString that contains a LinkAnnotation. Check LinkAnnotation's documentation for more details and samples.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorScreen.kt:334:29 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/notebook/CanvasInkSurface.kt:383:63 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/notebook/CanvasMediaCard.kt:62:36 'val Icons.Filled.OpenInNew: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.OpenInNew.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/notebook/CanvasMediaCard.kt:154:48 'val Icons.Filled.OpenInNew: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.OpenInNew.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorScreen.kt:1591:62 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/AutomationScreen.kt:227:9 'fun ScrollableTabRow(selectedTabIndex: Int, modifier: Modifier = ..., containerColor: Color = ..., contentColor: Color = ..., edgePadding: Dp = ..., indicator: @Composable() ComposableFunction1<@ParameterName(...) List<TabPosition>, Unit> = ..., divider: @Composable() ComposableFunction0<Unit> = ..., tabs: @Composable() ComposableFunction0<Unit>): Unit' is deprecated. Replaced with PrimaryScrollableTabRow and SecondaryScrollableTabRow tab variants.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/CheckUpScreen.kt:124:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt:109:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt:797:33 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/SettingsScreen.kt:183:24 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/SettingsScreen.kt:184:24 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/SpeechLabScreen.kt:33:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/SpeechOutputSettings.kt:152:49 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/SystemCheckScreen.kt:58:21 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/SystemCheckViewModel.kt:363:61 Condition is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/settings/WorkloadDiagnosticsPanel.kt:29:19 'val LocalClipboardManager: ProvidableCompositionLocal<ClipboardManager>' is deprecated. Use LocalClipboard instead which supports suspend functions.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/screens/study/HomeworkSourcePreview.kt:58:21 'fun rememberTransformableState(onTransformation: (@ParameterName(...) Float, @ParameterName(...) Offset, @ParameterName(...) Float) -> Unit): TransformableState' is deprecated. Prefer remembering a TransformableState with a onTransformation lambda that takes the centroid. This centroid (if specified) is the point at which zooming or rotation should happen around which allows for more natural transformations.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/ui/workspace/StudioScreen.kt:66:36 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/web/DynamicPageExtractor.kt:193:21 'var databaseEnabled: Boolean' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/main/java/com/halo/app/web/DynamicPageExtractor.kt:201:21 'var saveFormData: Boolean' is deprecated. Deprecated in Java.
+
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac
+> Task :host-android:writeDebugAarMetadata UP-TO-DATE
+> Task :drivers:heycyan:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:android-assistant:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:android-tts:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:anthropic:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:elevenlabs-tts:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:gemini:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:litert:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:ollama:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:openai:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:openrouter:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-cerebras:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-gemini-oauth:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-groq:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-opencode-companion:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-opencode-zen:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:remote-xai:writeDebugAarMetadata UP-TO-DATE
+> Task :providers:sherpa-stt:writeDebugAarMetadata UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :host-android:extractDeepLinksDebug UP-TO-DATE
+> Task :host-android:processDebugManifest UP-TO-DATE
+> Task :drivers:heycyan:extractDeepLinksDebug UP-TO-DATE
+> Task :drivers:heycyan:processDebugManifest UP-TO-DATE
+> Task :providers:android-assistant:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:android-assistant:processDebugManifest UP-TO-DATE
+> Task :providers:android-tts:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:android-tts:processDebugManifest UP-TO-DATE
+> Task :providers:anthropic:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:anthropic:processDebugManifest UP-TO-DATE
+> Task :providers:elevenlabs-tts:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:elevenlabs-tts:processDebugManifest UP-TO-DATE
+> Task :providers:gemini:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:gemini:processDebugManifest UP-TO-DATE
+> Task :providers:litert:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:litert:processDebugManifest UP-TO-DATE
+> Task :providers:ollama:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:ollama:processDebugManifest UP-TO-DATE
+> Task :providers:openai:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:openai:processDebugManifest UP-TO-DATE
+> Task :providers:openrouter:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:openrouter:processDebugManifest UP-TO-DATE
+> Task :providers:remote-cerebras:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-cerebras:processDebugManifest UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:processDebugManifest UP-TO-DATE
+> Task :providers:remote-gemini-oauth:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-gemini-oauth:processDebugManifest UP-TO-DATE
+> Task :providers:remote-groq:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-groq:processDebugManifest UP-TO-DATE
+> Task :providers:remote-opencode-companion:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-opencode-companion:processDebugManifest UP-TO-DATE
+> Task :providers:remote-opencode-zen:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-opencode-zen:processDebugManifest UP-TO-DATE
+> Task :providers:remote-xai:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:remote-xai:processDebugManifest UP-TO-DATE
+> Task :providers:sherpa-stt:extractDeepLinksDebug UP-TO-DATE
+> Task :providers:sherpa-stt:processDebugManifest UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :host-android:mapDebugSourceSetPaths UP-TO-DATE
+> Task :host-android:compileDebugLibraryResources UP-TO-DATE
+> Task :drivers:heycyan:mapDebugSourceSetPaths UP-TO-DATE
+> Task :drivers:heycyan:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:android-assistant:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:android-assistant:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:android-tts:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:android-tts:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:anthropic:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:anthropic:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:elevenlabs-tts:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:elevenlabs-tts:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:gemini:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:gemini:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:litert:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:litert:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:ollama:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:ollama:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:openai:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:openai:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:openrouter:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:openrouter:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-cerebras:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-cerebras:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-gemini-oauth:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-gemini-oauth:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-groq:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-groq:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-opencode-companion:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-opencode-companion:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-opencode-zen:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-opencode-zen:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:remote-xai:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:remote-xai:compileDebugLibraryResources UP-TO-DATE
+> Task :providers:sherpa-stt:mapDebugSourceSetPaths UP-TO-DATE
+> Task :providers:sherpa-stt:compileDebugLibraryResources UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:compileDebugAndroidTestAidl NO-SOURCE
+> Task :app:mergeDebugAndroidTestManifest UP-TO-DATE
+> Task :app:processDebugAndroidTestManifest UP-TO-DATE
+> Task :app:generateDebugAndroidTestBuildConfig
+> Task :app:generateDebugAndroidTestResources UP-TO-DATE
+> Task :app:packageDebugAndroidTestResources UP-TO-DATE
+> Task :app:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :app:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :app:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :app:kspDebugAndroidTestKotlin
+
+> Task :app:compileDebugAndroidTestKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/androidTest/java/com/halo/app/audio/DownloadedModelDiagnosticsTest.kt:133:17 Check for instance is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/androidTest/java/com/halo/app/language/PolishLanguageDeviceTest.kt:36:29 'fun createComposeRule(effectContext: CoroutineContext = ...): ComposeContentTestRule' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasPdfInspectionDeviceTest.kt:30:29 'fun createComposeRule(effectContext: CoroutineContext = ...): ComposeContentTestRule' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/androidTest/java/com/halo/app/ui/workspace/StudioDeviceTest.kt:32:29 'fun createComposeRule(effectContext: CoroutineContext = ...): ComposeContentTestRule' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceContinuityDeviceTest.kt:38:29 'fun createComposeRule(effectContext: CoroutineContext = ...): ComposeContentTestRule' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceFileToolsDeviceTest.kt:33:29 'fun createComposeRule(effectContext: CoroutineContext = ...): ComposeContentTestRule' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
+
+> Task :app:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :app:compileDebugAndroidTestJavaWithJavac
+> Task :app:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :host-android:generateDebugAssets UP-TO-DATE
+> Task :host-android:mergeDebugAssets UP-TO-DATE
+> Task :drivers:heycyan:generateDebugAssets UP-TO-DATE
+> Task :drivers:heycyan:mergeDebugAssets UP-TO-DATE
+> Task :providers:android-assistant:generateDebugAssets UP-TO-DATE
+> Task :providers:android-assistant:mergeDebugAssets UP-TO-DATE
+> Task :providers:android-tts:generateDebugAssets UP-TO-DATE
+> Task :providers:android-tts:mergeDebugAssets UP-TO-DATE
+> Task :providers:anthropic:generateDebugAssets UP-TO-DATE
+> Task :providers:anthropic:mergeDebugAssets UP-TO-DATE
+> Task :providers:elevenlabs-tts:generateDebugAssets UP-TO-DATE
+> Task :providers:elevenlabs-tts:mergeDebugAssets UP-TO-DATE
+> Task :providers:gemini:generateDebugAssets UP-TO-DATE
+> Task :providers:gemini:mergeDebugAssets UP-TO-DATE
+> Task :providers:litert:generateDebugAssets UP-TO-DATE
+> Task :providers:litert:mergeDebugAssets UP-TO-DATE
+> Task :providers:ollama:generateDebugAssets UP-TO-DATE
+> Task :providers:ollama:mergeDebugAssets UP-TO-DATE
+> Task :providers:openai:generateDebugAssets UP-TO-DATE
+> Task :providers:openai:mergeDebugAssets UP-TO-DATE
+> Task :providers:openrouter:generateDebugAssets UP-TO-DATE
+> Task :providers:openrouter:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-cerebras:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-cerebras:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-gemini-oauth:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-gemini-oauth:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-groq:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-groq:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-opencode-companion:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-opencode-companion:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-opencode-zen:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-opencode-zen:mergeDebugAssets UP-TO-DATE
+> Task :providers:remote-xai:generateDebugAssets UP-TO-DATE
+> Task :providers:remote-xai:mergeDebugAssets UP-TO-DATE
+> Task :providers:sherpa-stt:generateDebugAssets UP-TO-DATE
+> Task :providers:sherpa-stt:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :app:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :app:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :runtime:provider-core:processResources NO-SOURCE
+> Task :runtime:provider-core:classes UP-TO-DATE
+> Task :runtime:provider-core:jar UP-TO-DATE
+> Task :engines:provider:processResources NO-SOURCE
+> Task :engines:provider:classes UP-TO-DATE
+> Task :engines:provider:jar UP-TO-DATE
+> Task :app:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :host-android:processDebugJavaRes UP-TO-DATE
+> Task :drivers:heycyan:processDebugJavaRes UP-TO-DATE
+> Task :providers:android-assistant:processDebugJavaRes UP-TO-DATE
+> Task :providers:android-tts:processDebugJavaRes UP-TO-DATE
+> Task :providers:anthropic:processDebugJavaRes UP-TO-DATE
+> Task :providers:elevenlabs-tts:processDebugJavaRes UP-TO-DATE
+> Task :providers:gemini:processDebugJavaRes UP-TO-DATE
+> Task :providers:litert:processDebugJavaRes UP-TO-DATE
+> Task :providers:ollama:processDebugJavaRes UP-TO-DATE
+> Task :providers:openai:processDebugJavaRes UP-TO-DATE
+> Task :providers:openrouter:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-cerebras:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-gemini-oauth:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-groq:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-opencode-companion:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-opencode-zen:processDebugJavaRes UP-TO-DATE
+> Task :providers:remote-xai:processDebugJavaRes UP-TO-DATE
+> Task :providers:sherpa-stt:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :app:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :app:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :host-android:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :drivers:heycyan:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:litert:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:ollama:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:sherpa-stt:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:android-tts:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:elevenlabs-tts:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:android-assistant:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:openrouter:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:openai:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:anthropic:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:gemini:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-groq:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-cerebras:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-opencode-zen:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-xai:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-opencode-companion:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :providers:remote-gemini-oauth:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :app:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :app:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :app:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :app:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :app:processDebugAndroidTestResources UP-TO-DATE
+> Task :app:dexBuilderDebugAndroidTest
+> Task :app:mergeProjectDexDebugAndroidTest
+> Task :app:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :host-android:mergeDebugJniLibFolders UP-TO-DATE
+> Task :host-android:mergeDebugNativeLibs NO-SOURCE
+> Task :host-android:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :drivers:heycyan:mergeDebugJniLibFolders UP-TO-DATE
+> Task :drivers:heycyan:mergeDebugNativeLibs NO-SOURCE
+> Task :drivers:heycyan:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:android-assistant:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:android-assistant:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:android-assistant:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:android-tts:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:android-tts:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:android-tts:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:anthropic:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:anthropic:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:anthropic:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:elevenlabs-tts:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:elevenlabs-tts:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:elevenlabs-tts:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:gemini:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:gemini:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:gemini:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:litert:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:litert:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:litert:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:ollama:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:ollama:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:ollama:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:openai:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:openai:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:openai:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:openrouter:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:openrouter:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:openrouter:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-cerebras:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-cerebras:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-cerebras:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-custom-openai-compatible:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-custom-openai-compatible:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-gemini-oauth:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-gemini-oauth:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-gemini-oauth:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-groq:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-groq:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-groq:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-opencode-companion:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-opencode-companion:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-opencode-companion:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-opencode-zen:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-opencode-zen:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-opencode-zen:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:remote-xai:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:remote-xai:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:remote-xai:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :providers:sherpa-stt:mergeDebugJniLibFolders UP-TO-DATE
+> Task :providers:sherpa-stt:mergeDebugNativeLibs NO-SOURCE
+> Task :providers:sherpa-stt:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :app:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :app:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :app:packageDebugAndroidTest
+> Task :app:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebugAndroidTest
+
+BUILD SUCCESSFUL in 5m 9s
+464 actionable tasks: 12 executed, 452 up-to-date
+Configuration cache entry stored.

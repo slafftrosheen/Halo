@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "serial": "f01fe673",
+  "runId": "41edc9893ed6435296f3f04da4a08740",
+  "sourceStamp": "767abe6ca105b4195e9c00d00129915a10e74861-dirty-37d9ffe5598051af3a6033f7c0955d32a30a4e6cf014b92313979aa1a797c146-0151e5e1de4a3a9c0384da7df9ed04125f834bfdc2dc53e91396fa70d3ba1402",
+  "capturedAtMs": 1792798663930,
+  "models": [
+    {
+      "id": "embeddinggemma2-740m",
+      "filename": "embeddinggemma2-740m.litertlm",
+      "sha256": "e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c",
+      "bytes": 484622336,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "EMBEDDING",
+      "artifactVersion": "86b903a293f96d042bb92e1b7af333d94114458f",
+      "minimumRuntime": "0.18.0",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    }
+  ],
+  "roleSuite": false,
+  "embeddingSuite": true,
+  "contextTokens": 0,
+  "backend": "CPU",
+  "languages": [
+    "EN",
+    "LV",
+    "RU",
+    "PL"
+  ],
+  "repetitions": 3
+}

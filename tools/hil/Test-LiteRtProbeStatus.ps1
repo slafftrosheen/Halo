@@ -19,3 +19,28 @@ foreach ($case in $cases) {
 }
 if ((Resolve-LiteRtProbeStatus -ProcessExit 0 -RunnerText $success -CaptureOnly $true) -ne "CAPTURE_ONLY_NOT_QUALIFIED") { throw "Capture-only run was promoted" }
 Write-Host "PASS: 11 runner protocol cases"
+
+$runId = 'fixture-run-035'
+$sha = 'a' * 64
+$failureEnd = "`nFAILURES!!!`nTests run: 1, Failures: 1`nINSTRUMENTATION_CODE: -1"
+$quality = "EMBEDDING_OUTCOME run=$runId sha=$sha text=QUALITY_FAILED image=PASSED"
+$unavailable = "EMBEDDING_OUTCOME run=$runId sha=$sha text=PASSED image=UNAVAILABLE"
+$mixed = "EMBEDDING_OUTCOME run=$runId sha=$sha text=QUALITY_FAILED image=UNAVAILABLE"
+$embeddingCases = @(
+    @{ Exit=0; Text=$success; Expected='PASSED' },
+    @{ Exit=0; Text=($quality + $failureEnd); Expected='QUALITY_FAILED' },
+    @{ Exit=0; Text=($unavailable + $failureEnd); Expected='NATIVE_UNAVAILABLE' },
+    @{ Exit=0; Text=($mixed + $failureEnd); Expected='QUALITY_FAILED_AND_UNAVAILABLE' },
+    @{ Exit=1; Text=($quality + $failureEnd); Expected='RUNNER_INTERRUPTED' },
+    @{ Exit=0; Text=$quality; Expected='RUNNER_INTERRUPTED' },
+    @{ Exit=0; Text=($quality + $failureEnd + "`nshortMsg=Process crashed"); Expected='FAILED_RUNTIME' },
+    @{ Exit=0; Text=($quality + $failureEnd + "`nHOST_TIMEOUT"); Expected='FAILED_RUNTIME' },
+    @{ Exit=0; Text=($quality.Replace($runId, 'stale') + $failureEnd); Expected='FAILED_RUNTIME' },
+    @{ Exit=0; Text=($quality.Replace($sha, ('b' * 64)) + $failureEnd); Expected='FAILED_RUNTIME' },
+    @{ Exit=0; Text=($quality.Replace('QUALITY_FAILED', 'UNKNOWN') + $failureEnd); Expected='FAILED_RUNTIME' }
+)
+foreach ($case in $embeddingCases) {
+    $actual = Resolve-LiteRtEmbeddingProbeStatus -ProcessExit $case.Exit -RunnerText $case.Text -RunId $runId -Sha256 $sha
+    if ($actual -ne $case.Expected) { throw "Expected embedding $($case.Expected), got $actual" }
+}
+Write-Host 'PASS: 11 exact-run embedding protocol cases'
