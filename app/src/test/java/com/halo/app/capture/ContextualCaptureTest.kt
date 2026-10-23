@@ -55,6 +55,77 @@ class ContextualCaptureTest {
         try { block(EphemeralMediaAssetStore(root,scope=scope,eventBus=Events()),scope,db,Preferences()) }
         finally {scope.cancel();db.close();root.deleteRecursively()}
     }
+    @Test fun derivedImageChangedDuringIngestNeverBecomesSelectedAndReleasesItsBytes() = runBlocking {
+        fixture { store, _, _, _ ->
+            var changed = false
+            var derived: MediaAssetRef? = null
+            var guardCalls = 0
+            var selected = 0
+            val delayed = object : MediaAssetStore by store {
+                override suspend fun ingest(content: MediaAssetContent, provenance: MediaProvenance,
+                    interactionId: String, sourceDeviceId: String?, workspaceObjectId: String?): MediaAssetRef =
+                    store.ingest(content, provenance, interactionId, sourceDeviceId, workspaceObjectId).also {
+                        derived = it
+                        changed = true
+                    }
+            }
+            val attachments = VisualAttachmentStore(context, delayed, onSelected = { selected++ })
+            assertTrue(runCatching {
+                attachments.attachGeneratedImage(image().bytes, "Canvas selection", "canvas", validateSource = {
+                    guardCalls++
+                    check(!changed) { "Source changed" }
+                })
+            }.isFailure)
+            assertEquals(2, guardCalls)
+            assertEquals(0, selected)
+            assertNull(attachments.state.value)
+            assertNull(store.metadata(requireNotNull(derived)))
+        }
+    }
+
+    @Test fun cancellationBeforeIngestReturnsStillReleasesTheAllocatedAttachmentOwner() = runBlocking {
+        fixture { store, _, _, _ ->
+            var allocated: MediaAssetRef? = null
+            val interrupted = object : MediaAssetStore by store {
+                override suspend fun ingest(content: MediaAssetContent, provenance: MediaProvenance,
+                    interactionId: String, sourceDeviceId: String?, workspaceObjectId: String?): MediaAssetRef {
+                    allocated = store.ingest(content, provenance, interactionId, sourceDeviceId, workspaceObjectId)
+                    throw CancellationException("Ingest handoff cancelled")
+                }
+            }
+            val attachments = VisualAttachmentStore(context, interrupted)
+            assertTrue(runCatching { attachments.attachGeneratedImage(image().bytes, "Selection", "canvas") }
+                .exceptionOrNull() is CancellationException)
+            assertNull(attachments.state.value)
+            assertNull(store.metadata(requireNotNull(allocated)))
+        }
+    }
+
+    @Test fun derivedImageCancellationAtFinalGuardReleasesOnlyItsNewLease() = runBlocking {
+        fixture { store, _, _, _ ->
+            val existing = store.ingest(image(), MediaProvenance.PHONE_CAMERA, "existing-review")
+            var derived: MediaAssetRef? = null
+            var selected = false
+            var calls = 0
+            val tracked = object : MediaAssetStore by store {
+                override suspend fun ingest(content: MediaAssetContent, provenance: MediaProvenance,
+                    interactionId: String, sourceDeviceId: String?, workspaceObjectId: String?): MediaAssetRef =
+                    store.ingest(content, provenance, interactionId, sourceDeviceId, workspaceObjectId).also { derived = it }
+            }
+            val attachments = VisualAttachmentStore(context, tracked, onSelected = { selected = true })
+            val failure = runCatching {
+                attachments.attachGeneratedImage(image().bytes, "Canvas selection", "canvas", validateSource = {
+                    if (++calls == 2) throw CancellationException("Selection cancelled")
+                })
+            }.exceptionOrNull()
+            assertTrue(failure is CancellationException)
+            assertFalse(selected)
+            assertNull(attachments.state.value)
+            assertNull(store.metadata(requireNotNull(derived)))
+            assertNotNull(store.metadata(existing))
+        }
+    }
+
     @Test fun repeatedAttachmentIsIdempotentAndRetainsExactImage()=runBlocking {
         fixture { store,_,_,_->
             val x=store.ingest(image(),MediaProvenance.PHONE_CAMERA,"review:X")

@@ -12,7 +12,9 @@ import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.UUID
 
-data class VisualAttachment(val ref: MediaAssetRef, val source: String, val contextText: String? = null)
+data class VisualAttachment(val ref: MediaAssetRef, val source: String, val contextText: String? = null,
+    /** Ephemeral host guard; never serialized or sent to a provider. */
+    internal val commitSource: suspend (() -> Unit) -> Unit = { commit -> commit() })
 
 /** One explicit pending reference. Nothing may replace it with a newer camera observation. */
 class VisualAttachmentStore(private val context: Context, private val media: MediaAssetStore,
@@ -45,22 +47,32 @@ class VisualAttachmentStore(private val context: Context, private val media: Med
 
     /** Attach a bounded derived image through the same explicit context and privacy path as user-selected media. */
     suspend fun attachGeneratedImage(bytes: ByteArray, source: String, workspaceObjectId: String,
-        contextText: String? = null): VisualAttachment =
+        contextText: String? = null, validateSource: suspend () -> Unit = {},
+        commitSource: suspend (() -> Unit) -> Unit = { commit -> commit() }): VisualAttachment =
         withContext(Dispatchers.IO) {
             require(bytes.size in 1..ImageInputLimits().maxBytes)
             attachContent(MediaAssetContent(bytes, "image/png"), source, MediaProvenance.WORKSPACE,
-                workspaceObjectId, contextText)
+                workspaceObjectId, contextText, validateSource, commitSource)
         }
 
     private suspend fun attachContent(content: MediaAssetContent, source: String, provenance: MediaProvenance,
-        workspaceObjectId: String? = null, contextText: String? = null): VisualAttachment = lock.withLock {
+        workspaceObjectId: String? = null, contextText: String? = null,
+        validateSource: suspend () -> Unit = {},
+        commitSource: suspend (() -> Unit) -> Unit = { commit -> commit() }): VisualAttachment = lock.withLock {
         check(pending.value == null) { "Remove the attached image before selecting another" }
-        val ref = media.ingest(content, provenance, "attachment:${UUID.randomUUID()}", workspaceObjectId = workspaceObjectId)
-        val attachment = VisualAttachment(ref, source, contextText?.takeIf { it.isNotBlank() }?.take(2000))
-        try { onSelected(attachment) }
-        catch (error: Throwable) { withContext(kotlinx.coroutines.NonCancellable) { ref.interactionId?.let { media.releaseInteraction(it) } }; throw error }
-        pending.value = attachment
-        attachment
+        validateSource()
+        val interactionId = "attachment:${UUID.randomUUID()}"
+        try {
+            val ref = media.ingest(content, provenance, interactionId, workspaceObjectId = workspaceObjectId)
+            val attachment = VisualAttachment(ref, source, contextText?.takeIf { it.isNotBlank() }?.take(2000), commitSource)
+            validateSource()
+            onSelected(attachment)
+            pending.value = attachment
+            attachment
+        } catch (error: Throwable) {
+            withContext(kotlinx.coroutines.NonCancellable) { media.releaseInteraction(interactionId) }
+            throw error
+        }
     }
 
     suspend fun attachReference(ref: MediaAssetRef, source: String): VisualAttachment = lock.withLock {

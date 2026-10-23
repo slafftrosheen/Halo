@@ -57,6 +57,60 @@ class CanvasInkSelectionBookmarkTest {
             "x".repeat(com.halo.app.data.notebook.InkSelectionBookmarkCodec.MAX_ENCODED_CHARS + 1)))
     }
 
+    @Test fun exactHandoffRejectsReplacedBookmarkWithoutChangingWorkingSet() = runBlocking {
+        val canvasId = repository.create()
+        val document = ink("stable-stroke")
+        val sketchId = repository.addSketchNode(canvasId, 0f, 0f, InkCodec.encode(document))
+        val original = selection(document, canvasId, sketchId, "")
+        val bookmarkId = repository.addInkSelection(canvasId, original)
+        val store = WorkspaceContextStore(database, RoomNotebookRepository(database.notebookDao()), MemoryStorage())
+        store.selectInkSelection(canvasId, bookmarkId, original)
+        store.requireCurrentInkSelection(canvasId, bookmarkId, original)
+        val before = database.workspaceContextDao().selectedEntry(canvasId)
+        // The replacement remains valid for the same source and stroke; only the
+        // user's selected region changed while the old crop was being prepared.
+        val replacement = original.copy(bounds = InkSelectionBounds(450, 400, 650, 600), updatedAtMs = 3_000)
+        assertTrue(repository.updateText(canvasId, bookmarkId,
+            com.halo.app.data.notebook.InkSelectionBookmarkCodec.encode(replacement)))
+        assertTrue(runCatching { store.requireCurrentInkSelection(canvasId, bookmarkId, original) }.isFailure)
+        assertTrue(runCatching { store.selectInkSelection(canvasId, bookmarkId, original) }.isFailure)
+        assertEquals(before, database.workspaceContextDao().selectedEntry(canvasId))
+        store.selectInkSelection(canvasId, bookmarkId, replacement)
+        store.requireCurrentInkSelection(canvasId, bookmarkId, replacement)
+    }
+
+    @Test fun delayedHandoffCannotRestoreDeselectedRegion() = runBlocking {
+        val canvasId = repository.create()
+        val document = ink("stable-stroke")
+        val sketchId = repository.addSketchNode(canvasId, 0f, 0f, InkCodec.encode(document))
+        val selected = selection(document, canvasId, sketchId, "")
+        val bookmarkId = repository.addInkSelection(canvasId, selected)
+        val store = WorkspaceContextStore(database, RoomNotebookRepository(database.notebookDao()), MemoryStorage())
+        store.selectInkSelection(canvasId, bookmarkId, selected)
+        store.remove(canvasId)
+        assertTrue(runCatching { store.requireCurrentInkSelection(canvasId, bookmarkId, selected) }.isFailure)
+        assertTrue(database.workspaceContextDao().selectedIds().isEmpty())
+    }
+
+    @Test fun sourceEditDeletionOrCanvasArchivalRejectsPendingHandoff() = runBlocking {
+        for (mutation in listOf("edit", "delete", "archive")) {
+            val canvasId = repository.create()
+            val document = ink("stable-stroke")
+            val sketchId = repository.addSketchNode(canvasId, 0f, 0f, InkCodec.encode(document))
+            val selected = selection(document, canvasId, sketchId, "")
+            val bookmarkId = repository.addInkSelection(canvasId, selected)
+            val store = WorkspaceContextStore(database, RoomNotebookRepository(database.notebookDao()), MemoryStorage())
+            store.selectInkSelection(canvasId, bookmarkId, selected)
+            when (mutation) {
+                "edit" -> assertTrue(repository.updateText(canvasId, sketchId, InkCodec.encode(ink("new-stroke"))))
+                "delete" -> assertTrue(repository.deleteNode(canvasId, sketchId))
+                else -> database.notebookDao().setLifecycle(canvasId, "ARCHIVED", 3_000)
+            }
+            assertTrue(mutation, runCatching { store.requireCurrentInkSelection(canvasId, bookmarkId, selected) }.isFailure)
+            assertEquals(null, store.versionFor(canvasId))
+        }
+    }
+
     @Test fun savedSketchBookmarkResolvesUntilItsSourceChanges() = runBlocking {
         val canvasId = repository.create()
         val original = ink("stroke-original")
@@ -126,6 +180,24 @@ class CanvasInkSelectionBookmarkTest {
         assertTrue(workingContext.contains("recognitionStatus=NOT_AVAILABLE"))
         assertTrue(workingContext.contains("visualContentIncluded=false"))
         assertFalse(workingContext.contains(encoded))
+
+        // Source lifecycle and observed file identity remain authoritative even
+        // when the saved markup and bookmark themselves have not changed.
+        for (lifecycle in listOf("ARCHIVED", "TRASHED")) {
+            database.notebookDao().setLifecycle(fileId, lifecycle, 3_000)
+            assertTrue(contextStore.entries(includeMemories = false).isEmpty())
+            assertTrue(runCatching { contextStore.requireCurrentInkSelection(canvasId, bookmark.id, selection) }.isFailure)
+            assertTrue(runCatching { contextStore.selectInkSelection(canvasId, bookmark.id, selection) }.isFailure)
+            database.notebookDao().setLifecycle(fileId, "ACTIVE", 4_000)
+        }
+        val originalFile = requireNotNull(database.workspaceFileDao().getFile(fileId))
+        for (changedFile in listOf(originalFile.copy(sha256 = "file-v2"), originalFile.copy(availability = "NEEDS_RELINK"))) {
+            database.workspaceFileDao().insertFile(changedFile)
+            assertTrue(contextStore.entries(includeMemories = false).isEmpty())
+            assertTrue(runCatching { contextStore.requireCurrentInkSelection(canvasId, bookmark.id, selection) }.isFailure)
+            database.workspaceFileDao().insertFile(originalFile)
+        }
+        contextStore.requireCurrentInkSelection(canvasId, bookmark.id, selection)
 
         val changed = InkCodec.encode(ink("pdf-edited"))
         assertTrue(repository.saveFileMarkup(canvasId, sourceNodeId, mapOf(2 to changed),

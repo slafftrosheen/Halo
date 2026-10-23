@@ -76,7 +76,8 @@ class AndroidInteractionContextAdapter(
         } }
     }
     private suspend fun conversation(): String { conversations.awaitReady(); return requireNotNull(conversations.activeConversationId()) }
-    suspend fun selectImage(ref: MediaAssetRef, title: String, contextText: String? = null) = lock.withLock {
+    suspend fun selectImage(ref: MediaAssetRef, title: String, contextText: String? = null,
+        commitSource: suspend (() -> Unit) -> Unit = { commit -> commit() }) = lock.withLock {
         val conversation = conversation()
         require(media.metadata(ref) != null) { "That image is no longer available. Please attach it again." }
         check(owner.current(conversation).none { it.category == ContextCategory.VISUAL &&
@@ -89,19 +90,47 @@ class AndroidInteractionContextAdapter(
             requireNotNull(workspace.versionFor(objectId)) { "Selected region source is no longer available." }
         }
         releaseVisual(conversation)
-        val retained = media.transferOwnership(ref, "context:${UUID.randomUUID()}")
-        leases[conversation] = retained
-        while(leases.size > 8) { val oldest = leases.keys.first(); releaseVisual(oldest); owner.remove(oldest,ContextCategory.VISUAL) }
-        val reference = ContextReference.MediaAsset(retained.id,retained.interactionId)
-        titles[reference] = title.take(160)
-        contextText?.takeIf { it.isNotBlank() }?.take(2000)?.let { text ->
-            visualContextText[reference] = text
-            if (boundWorkspaceId != null && boundWorkspaceVersion != null)
-                visualWorkspaceBindings[reference] = VisualWorkspaceBinding(boundWorkspaceId, boundWorkspaceVersion)
-        }
-        visualReferences.add(reference)
+        val contextOwner = "context:${UUID.randomUUID()}"
+        val reference: ContextReference.MediaAsset
+        val retained: MediaAssetRef
         val expires = if (ref.lifetime == MediaLifetime.WORKSPACE_PERSISTED) null else minOf(nowMs() + 120_000, ref.createdAtMs + 15 * 60_000)
-        owner.select(InteractionContextFocus(conversation,reference,ContextCategory.VISUAL,ContextFocusReason.EXPLICIT_ATTACHMENT,nowMs(),expires))
+        try {
+            retained = media.transferOwnership(ref, contextOwner)
+            reference = ContextReference.MediaAsset(retained.id, retained.interactionId)
+            while (leases.size >= 8) {
+                val oldest = leases.keys.first()
+                releaseVisual(oldest)
+                owner.remove(oldest, ContextCategory.VISUAL)
+            }
+            // All suspending media preparation precedes the source owner's guarded,
+            // synchronous publication. A newer bookmark cannot authorize this crop.
+            commitSource {
+                leases[conversation] = retained
+                titles[reference] = title.take(160)
+                contextText?.takeIf { it.isNotBlank() }?.take(2000)?.let { text ->
+                    visualContextText[reference] = text
+                    if (boundWorkspaceId != null && boundWorkspaceVersion != null)
+                        visualWorkspaceBindings[reference] = VisualWorkspaceBinding(boundWorkspaceId, boundWorkspaceVersion)
+                }
+                visualReferences.add(reference)
+                owner.select(InteractionContextFocus(conversation,reference,ContextCategory.VISUAL,ContextFocusReason.EXPLICIT_ATTACHMENT,nowMs(),expires))
+            }
+        } catch (failure: Throwable) {
+            withContext(NonCancellable) {
+                // A failed handoff owns only this newly transferred context lease.
+                val failed = leases[conversation]?.takeIf { it.interactionId == contextOwner }
+                if (failed != null) {
+                    leases.remove(conversation)
+                    val failedRef = ContextReference.MediaAsset(failed.id, failed.interactionId)
+                    titles.remove(failedRef); visualContextText.remove(failedRef)
+                    visualWorkspaceBindings.remove(failedRef); visualReferences.remove(failedRef)
+                    if (owner.current(conversation).any { it.category == ContextCategory.VISUAL && it.reference == failedRef })
+                        owner.remove(conversation, ContextCategory.VISUAL)
+                }
+                media.releaseInteraction(contextOwner)
+            }
+            throw failure
+        }
         if (expires != null) scope.launch { delay((expires - nowMs()).coerceAtLeast(0)); lock.withLock {
             if(leases[conversation] == retained) { releaseVisual(conversation); owner.transition(conversation,reference,ContextReferenceState.EXPIRED) }
         } }

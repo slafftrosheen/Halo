@@ -72,7 +72,13 @@ class WorkspaceUseCases(
     suspend fun search(text: String): WorkspaceSearchResult =
         searchEngine.search(WorkspaceSearchQuery(text, maxHits = 100))
     suspend fun select(id: String) = context.select(id)
-    suspend fun selectInkSelection(canvasId: String, selectionNodeId: String) = context.selectInkSelection(canvasId, selectionNodeId)
+    suspend fun selectInkSelection(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext? = null) = context.selectInkSelection(canvasId, selectionNodeId, expected)
+    suspend fun requireCurrentInkSelection(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext) = context.requireCurrentInkSelection(canvasId, selectionNodeId, expected)
+    suspend fun withCurrentInkSelection(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext, commit: () -> Unit) =
+        context.withCurrentInkSelection(canvasId, selectionNodeId, expected, commit)
     suspend fun remove(id: String) = context.remove(id)
     suspend fun remember(id: String) {
         val note = notes.getNote(id) ?: return

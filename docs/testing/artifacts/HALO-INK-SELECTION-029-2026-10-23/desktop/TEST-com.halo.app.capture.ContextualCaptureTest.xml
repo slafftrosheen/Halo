@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.capture.ContextualCaptureTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:28:33.163Z" hostname="MINIFOXEY" time="8.301">
+  <properties/>
+  <testcase name="failedSelectionReleasesOnlyNewAttachmentLease" classname="com.halo.app.capture.ContextualCaptureTest" time="6.422"/>
+  <testcase name="forgedIdentityAndOwnerAreRejected" classname="com.halo.app.capture.ContextualCaptureTest" time="0.07"/>
+  <testcase name="textOnlyHeuristicAndDeniedCloudAreRejected" classname="com.halo.app.capture.ContextualCaptureTest" time="0.06"/>
+  <testcase name="duplicateEventProducesOneReviewAndNoWorkspaceItem" classname="com.halo.app.capture.ContextualCaptureTest" time="0.347"/>
+  <testcase name="cancellationBeforeIngestReturnsStillReleasesTheAllocatedAttachmentOwner" classname="com.halo.app.capture.ContextualCaptureTest" time="0.055"/>
+  <testcase name="notebookCaptureIsAnExactVisualStudySourceAfterReopening" classname="com.halo.app.capture.ContextualCaptureTest" time="0.224"/>
+  <testcase name="unsavedRestartNoticeDoesNotFabricateADurableSource" classname="com.halo.app.capture.ContextualCaptureTest" time="0.071"/>
+  <testcase name="derivedImageChangedDuringIngestNeverBecomesSelectedAndReleasesItsBytes" classname="com.halo.app.capture.ContextualCaptureTest" time="0.055"/>
+  <testcase name="derivedImageCancellationAtFinalGuardReleasesOnlyItsNewLease" classname="com.halo.app.capture.ContextualCaptureTest" time="0.055"/>
+  <testcase name="temporaryCloudNeedsExplicitGrantAndSavedPolicyWins" classname="com.halo.app.capture.ContextualCaptureTest" time="0.08"/>
+  <testcase name="releasingReviewDoesNotDeleteActiveInteraction" classname="com.halo.app.capture.ContextualCaptureTest" time="0.044"/>
+  <testcase name="repeatedAttachmentIsIdempotentAndRetainsExactImage" classname="com.halo.app.capture.ContextualCaptureTest" time="0.053"/>
+  <testcase name="invalidReceiptCannotBecomeReviewable" classname="com.halo.app.capture.ContextualCaptureTest" time="0.048"/>
+  <testcase name="failedTurnReleaseKeepsReviewBytesWithoutCopy" classname="com.halo.app.capture.ContextualCaptureTest" time="0.064"/>
+  <testcase name="successfulAcknowledgementWithoutMediaIsNotReceiptOrRetried" classname="com.halo.app.capture.ContextualCaptureTest" time="0.063"/>
+  <testcase name="failedFilePreparationLeavesTheOnlyImageReviewable" classname="com.halo.app.capture.ContextualCaptureTest" time="0.104"/>
+  <testcase name="duplicateStillRequestDoesNotRetakeAndKeepsActualImageMetadata" classname="com.halo.app.capture.ContextualCaptureTest" time="0.067"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -633,7 +633,14 @@ fun AppShell(
                                         val pageInk = event.pageInk
                                         val pageNumber = event.pageNumber
                                         val selection = event.selection
+                                        val selectionCanvasId = event.canvasId
+                                        val selectionBookmarkId = event.selectionNodeId
+                                        val validateSelection: suspend () -> Unit = {
+                                            ManualDependencyGraph.workspaceUseCases.requireCurrentInkSelection(
+                                                selectionCanvasId, selectionBookmarkId, requireNotNull(selection))
+                                        }
                                         val crop = try {
+                                            validateSelection()
                                             event.crop ?: if (sourceFile != null && pageInk != null &&
                                                 pageNumber != null && selection != null) {
                                                 com.halo.sdk.runtime.multimodal.MediaAssetContent(
@@ -653,10 +660,17 @@ fun AppShell(
                                             try {
                                                 ManualDependencyGraph.visualAttachments.attachGeneratedImage(
                                                     crop.bytes, "Canvas selection", event.canvasId,
-                                                    selection?.let { com.halo.app.data.notebook.InkSelectionBookmarkCodec.referenceText(it) })
+                                                    selection?.let { com.halo.app.data.notebook.InkSelectionBookmarkCodec.referenceText(it) },
+                                                    validateSource = validateSelection,
+                                                    commitSource = { commit ->
+                                                        ManualDependencyGraph.workspaceUseCases.withCurrentInkSelection(
+                                                            selectionCanvasId, selectionBookmarkId, requireNotNull(selection), commit)
+                                                    })
                                             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                                             catch (_: Exception) {
-                                                canvasViewModel.showNotice("Remove the current image attachment before asking about an ink selection.")
+                                                canvasViewModel.showNotice(if (ManualDependencyGraph.visualAttachments.state.value != null)
+                                                    "Remove the current image attachment before asking about an ink selection."
+                                                else "Could not prepare the selected-region image. Try selecting again.")
                                                 return@collectLatest
                                             }
                                         }

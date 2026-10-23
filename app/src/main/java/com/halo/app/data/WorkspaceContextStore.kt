@@ -69,10 +69,26 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         database.workspaceContextDao().add(WorkingSetEntry(id, System.currentTimeMillis()))
         Unit
     }
-    suspend fun selectInkSelection(canvasId: String, selectionNodeId: String) {
-        require(selectionReferenceText(canvasId, selectionNodeId) != null) { "Selection is stale or unavailable." }
+    suspend fun selectInkSelection(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext? = null): Unit = database.withTransaction {
+        require(selectionReferenceText(canvasId, selectionNodeId, expected) != null) { "Selection is stale or unavailable." }
         database.workspaceContextDao().add(WorkingSetEntry(canvasId, System.currentTimeMillis(),
             "$INK_SELECTION_SOURCE_PREFIX$selectionNodeId"))
+    }
+    /** Rendering cannot substitute a different bookmark or restore a deselected referent. */
+    suspend fun requireCurrentInkSelection(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext) =
+        withCurrentInkSelection(canvasId, selectionNodeId, expected) {}
+
+    /** The synchronous context commit shares the canonical source/selection read transaction. */
+    suspend fun withCurrentInkSelection(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext, commit: () -> Unit): Unit = database.withTransaction {
+        require(database.workspaceContextDao().selectedEntry(canvasId)?.source ==
+            "$INK_SELECTION_SOURCE_PREFIX$selectionNodeId" &&
+            selectionReferenceText(canvasId, selectionNodeId, expected) != null) {
+            "Source changed. Select the region again."
+        }
+        commit()
     }
     suspend fun remove(id: String) = database.workspaceContextDao().remove(id)
     suspend fun remember(id: String): Unit = database.withTransaction {
@@ -149,15 +165,19 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         return resolveContent(entry.objectId)
     }
 
-    private suspend fun selectionReferenceText(canvasId: String, selectionNodeId: String): String? {
+    private suspend fun selectionReferenceText(canvasId: String, selectionNodeId: String,
+        expected: com.halo.sdk.runtime.ink.InkSelectionContext? = null): String? {
         val item = database.notebookDao().getWorkspaceObject(canvasId)
             ?.takeIf { it.lifecycle == "ACTIVE" && it.type == WorkspaceObjectType.CANVAS.name } ?: return null
         val nodes = database.notebookCanvasDao().getNodes(canvasId)
         val selection = nodes.firstOrNull { it.id == selectionNodeId && it.type == CanvasNodeType.INK_SELECTION.name } ?: return null
         val context = InkSelectionBookmarkCodec.decode(selection.text) ?: return null
+        if (expected != null && context != expected) return null
         val sourceId = database.notebookCanvasDao().getEdges(canvasId)
             .firstOrNull { it.toNodeId == selectionNodeId && it.label == "selection" }?.fromNodeId ?: return null
         val source = nodes.firstOrNull { it.id == sourceId } ?: return null
+        if (source.refObjectId != null && database.notebookDao().getWorkspaceObject(source.refObjectId)
+                ?.lifecycle != WorkspaceObjectLifecycle.ACTIVE.name) return null
         val type = runCatching { CanvasNodeType.valueOf(source.type) }.getOrNull() ?: return null
         val sourceVersion = source.refObjectId?.let { id ->
             database.workspaceFileDao().getFile(id)?.takeIf { it.isReadable() }?.contentVersion()

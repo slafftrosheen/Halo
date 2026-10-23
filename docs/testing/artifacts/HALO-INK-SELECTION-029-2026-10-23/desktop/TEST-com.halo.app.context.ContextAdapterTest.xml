@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.context.ContextAdapterTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:28:41.569Z" hostname="MINIFOXEY" time="4.514">
+  <properties/>
+  <testcase name="expiryFailsInsteadOfCapturingOrReplacing" classname="com.halo.app.context.ContextAdapterTest" time="3.293"/>
+  <testcase name="clearingPreviousConversationKeepsCurrentSelection" classname="com.halo.app.context.ContextAdapterTest" time="0.081"/>
+  <testcase name="replacingAnAttachmentInvalidatesSelectionWithoutChangingNoteTextRevision" classname="com.halo.app.context.ContextAdapterTest" time="0.119"/>
+  <testcase name="exactFollowUpKeepsXAfterYArrivesAndVoiceModalityIsUnchanged" classname="com.halo.app.context.ContextAdapterTest" time="0.071"/>
+  <testcase name="objectPrivacyStillRejectsRemoteAndDeletionRejectsStaleReference" classname="com.halo.app.context.ContextAdapterTest" time="0.076"/>
+  <testcase name="secondExplicitImageCannotReplaceSelectedImage" classname="com.halo.app.context.ContextAdapterTest" time="0.066"/>
+  <testcase name="cancelledTurnRetainsExactSelectedImageForRetry" classname="com.halo.app.context.ContextAdapterTest" time="0.068"/>
+  <testcase name="completedVisualTurnRetainsExactImageForExplicitFollowUp" classname="com.halo.app.context.ContextAdapterTest" time="0.064"/>
+  <testcase name="newConversationDoesNotInheritImage" classname="com.halo.app.context.ContextAdapterTest" time="0.058"/>
+  <testcase name="reviewedResultDoubleSaveCreatesOneObjectAndKeepsExactConversation" classname="com.halo.app.context.ContextAdapterTest" time="0.088"/>
+  <testcase name="noteSelectionDoesNotWriteWorkingSetAndChangedRevisionRequiresReselection" classname="com.halo.app.context.ContextAdapterTest" time="0.085"/>
+  <testcase name="changedInkSelectionDuringContextTransferNeverPublishesOldCropOrRetainsLeases" classname="com.halo.app.context.ContextAdapterTest" time="0.243"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

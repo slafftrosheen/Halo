@@ -8,6 +8,8 @@ import com.halo.app.data.*
 import com.halo.app.data.notebook.*
 import com.halo.app.data.workspace.*
 import com.halo.app.capture.EphemeralMediaAssetStore
+import com.halo.app.capture.VisualAttachmentStore
+import com.halo.sdk.runtime.ink.*
 import com.halo.app.study.*
 import com.halo.runtime.cognition.context.*
 import com.halo.runtime.cognition.turn.CognitiveTurnRequest
@@ -28,6 +30,81 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[34],manifest=Config.NONE,application=Application::class)
 class ContextAdapterTest {
+    @Test fun changedInkSelectionDuringContextTransferNeverPublishesOldCropOrRetainsLeases() = runBlocking {
+        for (mutation in listOf("deselect", "replace", "cancel")) {
+            val entered = CompletableDeferred<Unit>()
+            val resume = CompletableDeferred<Unit>()
+            var transferred: MediaAssetRef? = null
+            var derived: MediaAssetRef? = null
+            var guardedMedia: MediaAssetStore? = null
+            fixture(mediaOverride = { actual ->
+                object : MediaAssetStore by actual {
+                    override suspend fun ingest(content: MediaAssetContent, provenance: MediaProvenance,
+                        interactionId: String, sourceDeviceId: String?, workspaceObjectId: String?): MediaAssetRef =
+                        actual.ingest(content, provenance, interactionId, sourceDeviceId, workspaceObjectId).also { derived = it }
+                    override suspend fun transferOwnership(ref: MediaAssetRef, interactionId: String): MediaAssetRef {
+                        val retained = actual.transferOwnership(ref, interactionId)
+                        if (interactionId.startsWith("context:")) {
+                            transferred = retained
+                            entered.complete(Unit)
+                            resume.await()
+                        }
+                        return retained
+                    }
+                }.also { guardedMedia = it }
+            }) { adapter, conversations, actual, db, notes, _, _ ->
+                val canvas = NotebookCanvasRepository(db, db.notebookCanvasDao(), db.notebookDao())
+                val canvasId = canvas.create()
+                val document = InkDocument(listOf(InkStroke(InkTool.STYLUS,
+                    listOf(InkPoint(100, 500), InkPoint(700, 500)), "selected-stroke")))
+                val encoded = InkCodec.encode(document)
+                val sketchId = canvas.addSketchNode(canvasId, 0f, 0f, encoded)
+                val revision = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(("\n" + encoded).toByteArray()).joinToString("") { "%02x".format(it) }
+                val selection = requireNotNull(InkSelections.create(document, canvasId, sketchId, revision,
+                    InkSelectionBounds(400, 400, 600, 600), InkSelectionOrigin.BOX, 1_000))
+                val bookmarkId = canvas.addInkSelection(canvasId, selection)
+                val working = WorkspaceContextStore(db, notes, Preferences())
+                working.selectInkSelection(canvasId, bookmarkId, selection)
+                val untouched = actual.ingest(MediaAssetContent(byteArrayOf(2), "image/png"), MediaProvenance.IMPORTED, "unrelated")
+                val attachments = VisualAttachmentStore(context, requireNotNull(guardedMedia), onSelected = {
+                    adapter.selectImage(it.ref, it.source, it.contextText, it.commitSource)
+                })
+                var failure: Throwable? = null
+                val selecting = launch(Dispatchers.Default) {
+                    failure = runCatching {
+                        attachments.attachGeneratedImage(byteArrayOf(1), "Canvas selection", canvasId,
+                            InkSelectionBookmarkCodec.referenceText(selection),
+                            validateSource = { working.requireCurrentInkSelection(canvasId, bookmarkId, selection) },
+                            commitSource = { commit -> working.withCurrentInkSelection(canvasId, bookmarkId, selection, commit) })
+                    }.exceptionOrNull()
+                }
+                try {
+                    withTimeout(5_000) { entered.await() }
+                    when (mutation) {
+                        "deselect" -> working.remove(canvasId)
+                        "replace" -> assertTrue(canvas.updateText(canvasId, bookmarkId,
+                            InkSelectionBookmarkCodec.encode(selection.copy(
+                                bounds = InkSelectionBounds(450, 400, 650, 600), updatedAtMs = 2_000))))
+                        else -> selecting.cancel()
+                    }
+                    resume.complete(Unit)
+                    withTimeout(5_000) { selecting.join() }
+                    assertNotNull(mutation, failure)
+                    assertNull(attachments.state.value)
+                    assertTrue(adapter.owner.current(requireNotNull(conversations.activeConversationId()))
+                        .none { it.category == ContextCategory.VISUAL })
+                    assertNull(actual.metadata(requireNotNull(transferred)))
+                    assertNull(actual.metadata(requireNotNull(derived)))
+                    assertNotNull(actual.metadata(untouched))
+                } finally {
+                    resume.complete(Unit)
+                    selecting.cancelAndJoin()
+                }
+            }
+        }
+    }
+
     @Test fun completedVisualTurnRetainsExactImageForExplicitFollowUp() = runBlocking {
         var publish: suspend (HaloEvent) -> Unit = {}
         fixture(eventAction = { publish = it::publish }) { adapter, conversations, store, _, _, _, _ ->
@@ -60,7 +137,8 @@ class ContextAdapterTest {
         override fun clear() {values.clear()}
     }
 
-    private suspend fun fixture(eventAction: (Events) -> Unit = {}, block:suspend (AndroidInteractionContextAdapter,RoomConversationStore,EphemeralMediaAssetStore,AppDatabase,RoomNotebookRepository,WorkspaceMediaAiPolicy,()->Unit)->Unit) {
+    private suspend fun fixture(eventAction: (Events) -> Unit = {},
+        mediaOverride: (EphemeralMediaAssetStore) -> MediaAssetStore = { it }, block:suspend (AndroidInteractionContextAdapter,RoomConversationStore,EphemeralMediaAssetStore,AppDatabase,RoomNotebookRepository,WorkspaceMediaAiPolicy,()->Unit)->Unit) {
         val scope=CoroutineScope(SupervisorJob()+Dispatchers.Unconfined)
         val db=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).allowMainThreadQueries().build()
         val root=File(context.cacheDir,"context-test-${java.util.UUID.randomUUID()}")
@@ -74,7 +152,7 @@ class ContextAdapterTest {
             if(note==null) ResolvedStudySource.Unsupported(id,"Missing","Unavailable") else
                 ResolvedStudySource.Text(id,note.revision.toString(),note.title,listOf(StudyPassage(note.body,StudySourceLocator.NoteBlocks(1,1))),note.body.length,SourceCoverage.FULL) }
         val adapter=AndroidInteractionContextAdapter(InteractionContextContinuity { now },conversations,db,
-            WorkspaceContextStore(db,notes,prefs),sources,store,DefaultInteractionMediaBinder(store,AssistantContextRepository()),policy,scope,{ now },events)
+            WorkspaceContextStore(db,notes,prefs),sources,mediaOverride(store),DefaultInteractionMediaBinder(store,AssistantContextRepository()),policy,scope,{ now },events)
         eventAction(events)
         try { block(adapter,conversations,store,db,notes,policy,{now += 120_001}) }
         finally { scope.cancel();db.close();root.deleteRecursively() }
