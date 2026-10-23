@@ -53,7 +53,7 @@ class BundledSkillInstructionSource(
                 Use halo_propose_memory only for non-sensitive Inbox suggestions; it never saves a fact. Use halo_remember for an explicit, user-confirmed request. Correct/forget exact ids only after disambiguation and confirmation. Historical episodes do not outrank current confirmed memory.
             """.trimIndent(),
             "halo.notebook" to """
-                Search and manage Notebook notes and objects.
+                Search and manage Workspace notes and objects.
                 Check existing notes before creating duplicates.
                 Use returned workspace object IDs with halo_get_workspace_object before referring to contents.
                 Add or remove an exact object from the working set only when requested; a working set is context, not a copy.

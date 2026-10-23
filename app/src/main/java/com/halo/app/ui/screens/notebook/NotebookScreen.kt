@@ -226,7 +226,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     ) {
         item(key = "header") {
             HaloScreenHeader(
-                title = uiText(if (showLibrary) "Library" else "Notebook"),
+                title = uiText(if (showLibrary) "Library" else "Workspace"),
                 subtitle = if (showLibrary) uiText("Items: %1\$d", visibleItems.size) else null,
                 navigation = if (showLibrary) ::leaveLibrary else null,
                 // The Round 2 Notebook home has a word-only header.
@@ -258,7 +258,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 Triple("Note", R.drawable.halo_ic_new_note, viewModel::createNote),
                 Triple("Canvas", R.drawable.halo_ic_canvas, viewModel::createCanvas),
                 Triple("Import", R.drawable.halo_ic_import, { importFile = true; showInboxCapture = true }),
-                Triple("Inbox", R.drawable.halo_ic_inbox, { showInboxCapture = true }),
+                Triple("Quick capture", R.drawable.halo_ic_inbox, { showInboxCapture = true }),
             )
             val columns = if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f) 2 else 4
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -313,6 +313,27 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                             }
                         }
                     }
+                }
+            }
+        }
+
+        if (!showLibrary) item(key = "workspace-destinations") {
+            WorkspaceHubDestinations { destination ->
+                if (destination == WorkspaceHubDestination.MEMORY) {
+                    viewModel.openMemoryHub()
+                } else {
+                    viewModel.clearSelection()
+                    selecting = false
+                    viewModel.setQuery("")
+                    viewModel.selectCollection(null)
+                    viewModel.setFilter(when (destination) {
+                        WorkspaceHubDestination.NOTES -> NotebookFilter.NOTES
+                        WorkspaceHubDestination.FILES -> NotebookFilter.FILES
+                        WorkspaceHubDestination.CANVAS -> NotebookFilter.CANVASES
+                        WorkspaceHubDestination.INBOX -> NotebookFilter.INBOX
+                        else -> NotebookFilter.ALL
+                    })
+                    libraryFocused = true
                 }
             }
         }

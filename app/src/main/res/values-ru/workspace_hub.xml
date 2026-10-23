@@ -1,0 +1,8 @@
+<resources>
+    <string name="workspace49_open">Открыть</string>
+    <string name="workspace49_collections">Коллекции</string>
+    <string name="workspace49_memory_scope">Память хранит сведения, которые вы решили сохранить. Импорт файла не добавляет его в память.</string>
+    <string name="workspace49_studio">halo Studio</string>
+    <string name="workspace49_studio_unavailable">Графическая мастерская пока недоступна в этой версии. Существующие инструменты холста остаются доступны.</string>
+    <string name="workspace49_capture">Быстрая запись</string>
+</resources>

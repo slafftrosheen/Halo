@@ -209,7 +209,7 @@ class DefaultSkillRegistry(
             ),
             SkillDescriptor(
                 id = SkillId("halo.notebook"),
-                name = "Notebook",
+                name = "Workspace",
                 description = "Create, search, and manage local notes and workspace items.",
                 category = SkillCategory.WORKSPACE,
                 tools = setOf("halo_save_screen_to_notebook", "halo_create_empty_note", "halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_add_to_working_set", "halo_remove_from_working_set"),

@@ -63,7 +63,7 @@
     <string name="home_tool_maps">Kartes un norādes</string>
     <string name="home_tool_maps_detail">Sagatavo maršruta pieprasījumu esošajai Android karšu darbībai. Halo neuztur savu karšu sistēmu un neapstiprina ierašanos.</string>
     <string name="home_tool_maps_prompt">Palīdzi iegūt maršruta norādes. Pirms nodošanas karšu lietotnei pajautā galamērķi un pārvietošanās veidu.</string>
-    <string name="home_tool_notebook">Piezīmes</string>
+    <string name="home_tool_notebook">Darbvieta</string>
     <string name="home_tool_notebook_detail">Atver saglabātās piezīmes, sarunas un avotus.</string>
     <string name="home_tool_inbox">Saglabāt iesūtnē</string>
     <string name="home_tool_inbox_detail">Saglabā piezīmi, fotoattēlu, failu vai balss piezīmi esošajā vietējā iesūtnē.</string>
@@ -74,7 +74,7 @@
     <string name="home_tool_image_read">Izprast attēlu</string>
     <string name="home_tool_image_read_detail">Izvēlies fotoattēlu vai precīzi atlasītu apgabalu. Atbalsts ir atkarīgs no redzes modeļa un kopīgošanas iestatījumiem.</string>
     <string name="home_tool_files">Faili un dokumenti</string>
-    <string name="home_tool_files_detail">Atver saglabātos failus Piezīmēs. Lasāmu tekstu un attēlus var pievienot sarunai; PDF lapas izmanto Mācībās. Citi formāti paliek saglabāti faili.</string>
+    <string name="home_tool_files_detail">Atver saglabātos failus darbvietā. Lasāmu tekstu un attēlus var pievienot sarunai; PDF lapas izmanto Mācībās. Citi formāti paliek saglabāti faili.</string>
     <string name="home_tool_calculator">Aprēķini</string>
     <string name="home_tool_calculator_future">Izstrādē. Šim katalogam vēl nav pievienots pārbaudīts aprēķinu rīks.</string>
     <string name="home_tool_python">Python / datu smilškaste</string>

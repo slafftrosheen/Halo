@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.CanvasNotebookStitchTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T07:12:02.844Z" hostname="MINIFOXEY" time="0.198">
+  <properties/>
+  <testcase name="twoDifferentAttachmentsInOneNoteCanCompose" classname="com.halo.app.data.workspace.CanvasNotebookStitchTest" time="0.087"/>
+  <testcase name="managedNotebookImagesAreComposedWithoutReplacingSources" classname="com.halo.app.data.workspace.CanvasNotebookStitchTest" time="0.056"/>
+  <testcase name="repeatedNotebookAssetCannotBeCombinedWithItself" classname="com.halo.app.data.workspace.CanvasNotebookStitchTest" time="0.046"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

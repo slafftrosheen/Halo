@@ -1,0 +1,128 @@
+﻿{
+    "issue":  49,
+    "compiledSourceTrees":  {
+                                "app":  "3d33b8f857194eee2b482c09ee0aa31986721440",
+                                "runtimeCognition":  "12f36e86aca88cb6ba1cb1a6942b7a3501db2331"
+                            },
+    "apk":  {
+                "bytes":  287170465,
+                "sha256":  "764d48140419a53c9d7093722d67e1fff9c4fb8cede9a418e1d8938ce9500e19",
+                "binaryCommitted":  false
+            },
+    "suites":  [
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.data.notebook.RoomNotebookRepositoryTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.data.search.WorkspaceSearchEngineTest",
+                       "tests":  3,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.data.workspace.CanvasNotebookStitchTest",
+                       "tests":  3,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.data.workspace.WorkspaceRepositoryTest",
+                       "tests":  7,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.data.WorkspaceMigrationTest",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.home.HomeToolsSheetTest",
+                       "tests":  8,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+                       "tests":  6,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.notebook.NotebookGuidanceTest",
+                       "tests":  3,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+                       "tests":  9,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.notebook.NotebookMemoryReviewTest",
+                       "tests":  3,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+                       "tests":  5,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "app",
+                       "name":  "com.halo.app.ui.shell.HaloScreenCatalogTest",
+                       "tests":  2,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   },
+                   {
+                       "module":  "runtime/cognition",
+                       "name":  "com.halo.runtime.cognition.skills.SkillToolOwnershipTest",
+                       "tests":  4,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0
+                   }
+               ],
+    "renders":  [
+                    "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest.dark412.png",
+                    "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest.latvian200Dark.png",
+                    "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest.light360.png",
+                    "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest.russian200.png",
+                    "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest.shortLandscape200.png"
+                ],
+    "deviceEvidence":  "device/device-observations.json",
+    "privateRawCapturesCommitted":  false,
+    "githubActionsRun":  false
+}

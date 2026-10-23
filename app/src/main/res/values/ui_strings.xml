@@ -19,7 +19,7 @@
     <string name="ui_524e15832df6" formatted="false">"My draft"</string>
     <string name="ui_04ab681eaf7d" formatted="false">"Change the idea"</string>
     <string name="ui_88984939a054" formatted="false">"Discard unkept changes?"</string>
-    <string name="ui_7028bf28db81" formatted="false">"Only unkept changes are discarded. Saved projects stay in Notebook."</string>
+    <string name="ui_7028bf28db81" formatted="false">"Only unkept changes are discarded. Saved projects stay in Workspace."</string>
     <string name="ui_8ce915057dc1" formatted="false">"Try my own answer"</string>
     <string name="ui_56b408f51622" formatted="false">"Hide my answer draft"</string>
     <string name="ui_dce7095cb88e" formatted="false">"Ask a grown-up"</string>
@@ -338,7 +338,7 @@
     <string name="ui_cdb80bb94da3" formatted="false">"Keep my draft"</string>
     <string name="ui_ed938cfc8979" formatted="false">"The earlier question will be copied into the message box for editing. Nothing is sent yet; saved messages stay unchanged."</string>
     <string name="ui_f907fd63ddc4" formatted="false">"Clear this conversation?"</string>
-    <string name="ui_905b081897e4" formatted="false">"This removes its messages. Your other conversations and Notebook are kept."</string>
+    <string name="ui_905b081897e4" formatted="false">"This removes its messages. Your other conversations and Workspace are kept."</string>
     <string name="ui_16299ad1abb8" formatted="false">"Clear conversation"</string>
     <string name="ui_2376e3cd01a1" formatted="false">"Keep messages"</string>
     <string name="ui_6defafa2caa6" formatted="false">"Configure"</string>
@@ -429,7 +429,7 @@
     <string name="ui_caacee257a28" formatted="false">"Stopping extraction; completed text is kept"</string>
     <string name="ui_e6dc798caaa6" formatted="false">"Finish or discard the current extraction review before starting another"</string>
     <string name="ui_4b40c0faeea9" formatted="false">"Could not restore the text draft. Your original files are still saved."</string>
-    <string name="ui_9539cbd5feaf" formatted="false">"This text draft could not be kept for later. Save my text to keep a Notebook copy."</string>
+    <string name="ui_9539cbd5feaf" formatted="false">"This text draft could not be kept for later. Save my text to keep a Workspace copy."</string>
     <string name="ui_13a110de771a" formatted="false">"Choose how halo thinks."</string>
     <string name="ui_d9c2529e6ca9" formatted="false">"Your conversation"</string>
     <string name="ui_a347e6d5c5ed" formatted="false">"System check"</string>
@@ -778,7 +778,7 @@
     <string name="ui_331551b0de41" formatted="false">"Pending"</string>
     <string name="ui_87c2227b8434" formatted="false">"Learning step failed; task result preserved"</string>
     <string name="ui_dc417ed8ebf8" formatted="false">"Model reflection skipped"</string>
-    <string name="ui_2b7d9d792580" formatted="false">"Open Notebook object"</string>
+    <string name="ui_2b7d9d792580" formatted="false">"Open Workspace object"</string>
     <string name="ui_08b041935798" formatted="false">"You"</string>
     <string name="ui_6ba0bdeccb42" formatted="false">"Device"</string>
     <string name="ui_5537023f37dd" formatted="false">"State Changed"</string>
@@ -815,7 +815,7 @@
     <string name="ui_d2cef118ca5a" formatted="false">"Access lost · Choose the folder again"</string>
     <string name="ui_311b3066b102" formatted="false">"No successful backup yet"</string>
     <string name="ui_02f71ba0ae71" formatted="false">"Existing backup files remain when access is removed."</string>
-    <string name="ui_1eb16629ebc0" formatted="false">"Create a portable copy of your Notebook, memory and conversations."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Create a portable copy of your Workspace, memory and conversations."</string>
     <string name="ui_f7f9e56ea8d1" formatted="false">"Replace creates a local safety snapshot first."</string>
     <string name="ui_62ae975d4b07" formatted="false">"Notification access: "</string>
     <string name="ui_6b4f92f9ada2" formatted="false">"Manage halo notification delivery"</string>
@@ -827,7 +827,7 @@
     <string name="ui_dcb3ff29f478" formatted="false">"Apps start blocked. Private and secret content is redacted. Retention: 24 hours. Summaries stay offline."</string>
     <string name="ui_0f5371bd2465" formatted="false">"Privacy, capability packs and advanced agent settings"</string>
     <string name="ui_8f652f79fc3e" formatted="false">"Used by the local model preferences. Remote providers retain their own sampling policy."</string>
-    <string name="ui_deb55cc742c7" formatted="false">"Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook."</string>
+    <string name="ui_deb55cc742c7" formatted="false">"Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Workspace."</string>
     <string name="ui_33ca72d960bb" formatted="false">"Only unreadable, permitted apps. Semantic screen context remains preferred."</string>
     <string name="ui_1eeaaf07e2eb" formatted="false">"Allow bounded page scripts when static extraction has little readable text."</string>
     <string name="ui_33059f720b9b" formatted="false">"Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply."</string>
@@ -948,10 +948,10 @@
     <string name="ui_7b3ccdbbf566" formatted="false">"No meaningful task history yet."</string>
     <string name="ui_8a4327addc21" formatted="false">"Keep in learning history"</string>
     <string name="ui_4c4f10f8a4d0" formatted="false">"Prevents normal retention cleanup from removing this historical task."</string>
-    <string name="ui_7b2d05e3e1af" formatted="false">"Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Notebook holds your documents and files."</string>
+    <string name="ui_7b2d05e3e1af" formatted="false">"Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Workspace holds your documents and files."</string>
     <string name="ui_2117986ea992" formatted="false">"Learning settings"</string>
     <string name="ui_1a7b7bc62d87" formatted="false">"Remember something"</string>
-    <string name="ui_83f7ee8a2d01" formatted="false">"Review what becomes memory. The original note stays in Notebook."</string>
+    <string name="ui_83f7ee8a2d01" formatted="false">"Review what becomes memory. The original note stays in Workspace."</string>
     <string name="ui_cd722d92bea3" formatted="false">"This note is too long to store as one memory. Write the concise fact halo should remember."</string>
     <string name="ui_5add58c708d0" formatted="false">"What should halo remember?"</string>
     <string name="ui_985959785319" formatted="false">"Project"</string>
@@ -1080,7 +1080,7 @@
     <string name="ui_446c267c2204" formatted="false">"Assign roles"</string>
     <string name="ui_04903063b2fd" formatted="false">"Refresh models"</string>
     <string name="ui_7989a7891ab6" formatted="false">"Browse image generation models"</string>
-    <string name="ui_8ef3bab9bfec" formatted="false">"Image creation uses its own model selection in Canvas and Notebook."</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Image creation uses its own model selection in Canvas and Workspace."</string>
     <string name="ui_25debf3f0e04" formatted="false">"Browse this provider’s models"</string>
     <string name="ui_6831ccaba643" formatted="false">"Manage local models"</string>
     <string name="ui_176695d85b77" formatted="false">"System check and diagnostics"</string>
@@ -1202,7 +1202,7 @@
     <string name="ui_8dd020233bfd" formatted="false">"The original conversation is unavailable."</string>
     <string name="ui_cde5efcc72da" formatted="false">"Continue in current conversation"</string>
     <string name="ui_a1d26b85bf20" formatted="false">"Cancel task"</string>
-    <string name="ui_55e5b8eb9b3d" formatted="false">"Open in Notebook"</string>
+    <string name="ui_55e5b8eb9b3d" formatted="false">"Open in Workspace"</string>
     <string name="ui_b03a2f22a4e1" formatted="false">"Use updated source"</string>
     <string name="ui_58e909c0f4cc" formatted="false">"Save image"</string>
     <string name="ui_5adc239482f7" formatted="false">"Image privacy"</string>
@@ -1211,8 +1211,8 @@
     <string name="ui_9daa3b4114fc" formatted="false">"Image and model setup"</string>
     <string name="ui_0633628fd5ad" formatted="false">"Choose context"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Import image"</string>
-    <string name="ui_0dec07abf92d" formatted="false">"Notebook"</string>
-    <string name="ui_8932da95b7fc" formatted="false">"Save result to Notebook?"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Workspace"</string>
+    <string name="ui_8932da95b7fc" formatted="false">"Save result to Workspace?"</string>
     <string name="ui_4ae6f416a5a4" formatted="false">"Model-generated result · saving does not verify its claims"</string>
     <string name="ui_2b065c7c9ce4" formatted="false">"Today"</string>
     <string name="ui_e68cbfcf62e4" formatted="false">"You're caught up"</string>
@@ -1324,8 +1324,8 @@
     <string name="ui_afb9ab558853" formatted="false">"Voice Mode could not start. Try again."</string>
     <string name="ui_af5016d82624" formatted="false">"Voice Mode is on. halo listens again after a spoken reply."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Voice Mode is on. Listening is paused."</string>
-    <string name="ui_6fb7365efc3c" formatted="false">"Save to Notebook"</string>
-    <string name="ui_fcbc94dc1e25" formatted="false">"Could not save to Notebook"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Save to Workspace"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Could not save to Workspace"</string>
     <string name="ui_40893b155e07" formatted="false">"Review requests and see what happened."</string>
     <string name="ui_fc63b46c9f3a" formatted="false">"No activity yet. Ask halo something on Home to get started."</string>
     <string name="ui_7333a4652b84" formatted="false">"No pending actions right now."</string>
@@ -1694,10 +1694,10 @@
     <string name="ui_1f1f7f3a89fb" formatted="false">"Image format"</string>
     <string name="ui_5c874c87eb42" formatted="false">"PNG retains transparency; JPEG uses a white background."</string>
     <string name="ui_75c5986a189a" formatted="false">"Save new image"</string>
-    <string name="ui_9a9ace7c1a03" formatted="false">"Edited image saved as a new Notebook item."</string>
+    <string name="ui_9a9ace7c1a03" formatted="false">"Edited image saved as a new Workspace item."</string>
     <string name="ui_91fa2dd9030b" formatted="false">"Image editing could not finish. The original is unchanged; check Inbox before retrying."</string>
     <string name="ui_7397326d2d90" formatted="false">"Extract color palette"</string>
-    <string name="ui_5d5a6923f356" formatted="false">"Color palette saved as a Notebook note."</string>
+    <string name="ui_5d5a6923f356" formatted="false">"Color palette saved as a Workspace note."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Couldn't extract colors. The original is unchanged; check Inbox before retrying."</string>
     <string name="ui_b5d02c5ded65" formatted="false">"Processing image locally…"</string>
     <string name="ui_d185969bb0d3" formatted="false">"Combine images"</string>
@@ -1712,23 +1712,23 @@
     <string name="ui_aac7e89fcd0e" formatted="false">"Transparent"</string>
     <string name="ui_da938a727367" formatted="false">"Images are arranged in Canvas reading order (top to bottom, then left to right)."</string>
     <string name="ui_27ad8eb8232c" formatted="false">"Save combined image"</string>
-    <string name="ui_83847a2b28a4" formatted="false">"Combined image saved to Notebook."</string>
+    <string name="ui_83847a2b28a4" formatted="false">"Combined image saved to Workspace."</string>
     <string name="ui_4b5a5fa9ad47" formatted="false">"Could not combine images. Sources are unchanged; check Inbox before retrying."</string>
     <string name="ui_194cfd210b75" formatted="false">"Extract PDF page"</string>
-    <string name="ui_7d29b1002f19" formatted="false">"Save one PDF page as a new Notebook image. Original unchanged."</string>
+    <string name="ui_7d29b1002f19" formatted="false">"Save one PDF page as a new Workspace image. Original unchanged."</string>
     <string name="ui_9046da16aea9" formatted="false">"Pages"</string>
     <string name="ui_05fa2e3b0a10" formatted="false">"Page number"</string>
     <string name="ui_b269a68f045a" formatted="false">"PDF preview unavailable"</string>
     <string name="ui_25b5f33b67ff" formatted="false">"Choose a page in this PDF."</string>
     <string name="ui_dfc74370203a" formatted="false">"Save page image"</string>
-    <string name="ui_ba394bc0d3a4" formatted="false">"PDF page saved as a Notebook image."</string>
+    <string name="ui_ba394bc0d3a4" formatted="false">"PDF page saved as a Workspace image."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Could not extract this PDF page. Original unchanged; check Inbox before retrying."</string>
-    <string name="ui_e868ba77eded" formatted="false">"Select up to six PDF pages to save in one Notebook note. Original unchanged."</string>
+    <string name="ui_e868ba77eded" formatted="false">"Select up to six PDF pages to save in one Workspace note. Original unchanged."</string>
     <string name="ui_111d4ca0505b" formatted="false">"Pages to extract (e.g. 1,3-5)"</string>
     <string name="ui_9dd05754a493" formatted="false">"Choose 1–6 valid, unique pages."</string>
     <string name="ui_ae3fa1a2c36e" formatted="false">"Pages selected"</string>
     <string name="ui_c0729795e4ec" formatted="false">"Save pages as images"</string>
-    <string name="ui_07fb1eb9229a" formatted="false">"PDF pages saved to Notebook."</string>
+    <string name="ui_07fb1eb9229a" formatted="false">"PDF pages saved to Workspace."</string>
     <string name="ui_6d2aa3e9432c" formatted="false">"Could not extract all PDF pages. Original unchanged; check Inbox before retrying."</string>
     <string name="ui_dbc7c3ff9962" formatted="false">"Image order"</string>
     <string name="ui_0b8f398a7a70" formatted="false">"The preview follows the image order above."</string>
@@ -1738,7 +1738,7 @@
     <string name="ui_a5875e58ee3c" formatted="false">"Could not load image attachments."</string>
     <string name="ui_567bcf9287a9" formatted="false">"No image attachments in selected cards."</string>
     <string name="ui_2eb03e4246d2" formatted="false">"Imported image"</string>
-    <string name="ui_1b8394275f47" formatted="false">"Notebook attachment"</string>
+    <string name="ui_1b8394275f47" formatted="false">"Workspace attachment"</string>
     <string name="ui_80e25d621620" formatted="false">"Continue to preview"</string>
     <string name="ui_e0a441205eca" formatted="false">"Hero collage"</string>
     <string name="ui_e536acc1978c" formatted="false">"The first image is featured. Images are center-cropped to fit."</string>
@@ -2006,8 +2006,8 @@
     <string name="ui_006e1fbb95ac" formatted="false">"Add content"</string>
     <string name="ui_e18896dee230" formatted="false">"Tap a card to select. Hold and drag to move. Pinch to zoom; drag the background to pan."</string>
     <string name="ui_ba988101c7a3" formatted="false">"Selected cards: %1$d"</string>
-    <string name="ui_0899eeebe165" formatted="false">"Saving to Notebook…"</string>
-    <string name="ui_7d5459cfa1b7" formatted="false">"Return to Notebook to choose another canvas. Your other items are unchanged."</string>
+    <string name="ui_0899eeebe165" formatted="false">"Saving to Workspace…"</string>
+    <string name="ui_7d5459cfa1b7" formatted="false">"Return to Workspace to choose another canvas. Your other items are unchanged."</string>
     <string name="ui_06f2fb1c0a6f" formatted="false">"Rewrite the selected text card."</string>
     <string name="ui_d62aeb730dc8" formatted="false">"Use the text and link labels on this board."</string>
     <string name="ui_04290d3c9842" formatted="false">"Review AI draft"</string>
@@ -2196,7 +2196,7 @@
     <string name="ui_7faa9446189c" formatted="false">"Last backup failed. Check folder access and available storage."</string>
     <string name="ui_8b45bb20e077" formatted="false">"Learning"</string>
     <string name="ui_9087f9cbaa17" formatted="false">"Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval."</string>
-    <string name="ui_081b0b3ac528" formatted="false">"Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts."</string>
+    <string name="ui_081b0b3ac528" formatted="false">"Memory holds saved information. Learning controls suggestions. Workspace holds documents and files. Learning history describes past tasks, not current facts."</string>
     <string name="ui_a34049538d9f" formatted="false">"Memory retrieval depends on available search capabilities and your privacy settings."</string>
     <string name="ui_4d289c1a05ef" formatted="false">"Model downloads cleared"</string>
     <string name="ui_3bc8c6ce7691" formatted="false">"Not negotiated"</string>
@@ -2216,7 +2216,7 @@
     <string name="ui_4d7e5b5b90b1" formatted="false">"This backup was created by a newer halo version"</string>
     <string name="ui_5277abbcdb93" formatted="false">"This connection is not encrypted. Use HTTP only for a server you control on a trusted local network."</string>
     <string name="ui_01c61c885b23" formatted="false">"This integration will need authorization again. Remote server data is kept."</string>
-    <string name="ui_f1e6c2dc638f" formatted="false">"This replaces current Notebook, conversations and memory. halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"This replaces current Workspace, conversations and memory. halo will first create a local safety snapshot. Export a separate Brain Dump if you need a copy beyond this installation."</string>
     <string name="ui_9430efee3c04" formatted="false">"Trust: %1$s"</string>
     <string name="ui_4646b6711d1d" formatted="false">"Use saved memory in conversations"</string>
     <string name="ui_18ef6af87453" formatted="false">"Using memory"</string>
@@ -2280,7 +2280,7 @@
     <string name="ui_50017ea75995" formatted="false">"Custom seconds"</string>
     <string name="ui_00f5157836c5" formatted="false">"Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation."</string>
     <string name="ui_7ae9c639c354" formatted="false">"ElevenLabs · "</string>
-    <string name="ui_a447ada7678e" formatted="false">"Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review."</string>
+    <string name="ui_a447ada7678e" formatted="false">"Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Workspace review."</string>
     <string name="ui_cffce8cb5595" formatted="false">"Describe it, preview it, then save. The original stays intact."</string>
     <string name="ui_f67e549c8680" formatted="false">"Edit preview"</string>
     <string name="ui_49e49bb4401e" formatted="false">"Generate"</string>
@@ -2311,7 +2311,7 @@
     <string name="ui_8b14bde391c7" formatted="false">"Data operation result"</string>
     <string name="ui_753faf7fceae" formatted="false">"Downloaded model files will be removed. Download them again before local inference. Notes and conversations are kept."</string>
     <string name="ui_e983dee4cc9a" formatted="false">"Saved diagnostic files will be removed. Notes, conversations and backups are kept."</string>
-    <string name="ui_ee058baaafb9" formatted="false">"The previous local snapshot will replace your current Notebook, memory and conversations. Export current changes first if you need them."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"The previous local snapshot will replace your current Workspace, memory and conversations. Export current changes first if you need them."</string>
     <string name="ui_e43690e26d1f" formatted="false">"Temporary files and the currently inspected backup will be cleared. Saved workspace content is kept."</string>
     <string name="ui_3fd737818828" formatted="false">"Enter the export password again after the interruption"</string>
     <string name="ui_c49a47ab9862" formatted="false">"The operation did not finish. Check access, storage and the password, then try again."</string>
@@ -2388,7 +2388,7 @@
     <string name="ui_5dd7c9692be8" formatted="false">"English and Chinese on this phone. Download the complete voice pack (365 MB). Latvian and Russian use Android speech when fallback is enabled."</string>
     <string name="ui_ecced17b7f72" formatted="false">"English and Chinese"</string>
     <string name="ui_eda32f284995" formatted="false">"English only"</string>
-    <string name="ui_6ffb5aacf2c4" formatted="false">"Open Notebook"</string>
+    <string name="ui_6ffb5aacf2c4" formatted="false">"Open Workspace"</string>
     <string name="ui_5b034ef5a489" formatted="false">"Call %1$s?"</string>
     <string name="ui_579f209c033d" formatted="false">"Review the exact number. Android may require phone permission. A permission grant alone does not place a call."</string>
     <string name="ui_d6e645b7d2b2" formatted="false">"Call"</string>
@@ -2584,7 +2584,7 @@
     <string name="ui_e53974be2c9c" formatted="false">"One step at a time."</string>
     <string name="ui_2838117f8536" formatted="false">"Open source · referenced %1$s"</string>
     <string name="ui_6d6f77764a96" formatted="false">"What should I learn from?"</string>
-    <string name="ui_bdbc7afff3ef" formatted="false">"From your Notebook"</string>
+    <string name="ui_bdbc7afff3ef" formatted="false">"From your Workspace"</string>
     <string name="ui_ee69519aac49" formatted="false">"Notes, canvases and chats"</string>
     <string name="ui_7bc3f18cd0a1" formatted="false">"PDF, document or image"</string>
     <string name="ui_fdfbb90a31cc" formatted="false">"Change age, languages and learning style"</string>
@@ -2813,15 +2813,15 @@
     <string name="ui_d0f75f53ae79" formatted="false">"Grown-up space"</string>
     <string name="ui_e2556ed76a61" formatted="false">"Could not save the photo. Please try again."</string>
     <string name="ui_e7f85ab594f5" formatted="false">"Draft ready. Review it before choosing Keep."</string>
-    <string name="ui_0e52f12e6f1c" formatted="false">"Could not restore the project. Your saved notes are still in Notebook."</string>
+    <string name="ui_0e52f12e6f1c" formatted="false">"Could not restore the project. Your saved notes are still in Workspace."</string>
     <string name="ui_9fce5fa3c485" formatted="false">"This took too long. Your idea is kept; try again or write it yourself."</string>
     <string name="ui_71a4d86f3628" formatted="false">"A local model could not make this draft. Set up an on-device model or write it yourself. Nothing was sent to the cloud."</string>
     <string name="ui_27288af33453" formatted="false">"Stopped. Your previous draft is kept."</string>
-    <string name="ui_0d51a417b123" formatted="false">"Saved to Notebook."</string>
+    <string name="ui_0d51a417b123" formatted="false">"Saved to Workspace."</string>
     <string name="ui_5ba9f983faea" formatted="false">"Could not save. Your draft is kept here; try again."</string>
     <string name="ui_1bdff2a51bb4" formatted="false">"Draft discarded. Saved notes are kept."</string>
     <string name="ui_44856bd88ae1" formatted="false">"Could not discard the draft. Try again."</string>
-    <string name="ui_6c94d6afc9e9" formatted="false">"Could not save this draft locally. Keep a copy in Notebook."</string>
+    <string name="ui_6c94d6afc9e9" formatted="false">"Could not save this draft locally. Keep a copy in Workspace."</string>
     <string name="ui_828aa165dc9f" formatted="false">"Could not save this learning step. Please try again."</string>
     <string name="ui_d7750d0f16db" formatted="false">"Choose an on-device voice in grown-up settings. Kids reading stays private."</string>
     <string name="ui_fbdd04608598" formatted="false">"Cancel voice preparation"</string>
@@ -3030,13 +3030,13 @@
     <string name="ui_4d5f2c34aff1" formatted="false">"Copy voice latency report"</string>
     <string name="ui_dc1968315454" formatted="false">"Measured voice turns: %1$d · Completed: %2$d · Cancelled: %3$d · Failed: %4$d"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Find related notes"</string>
-    <string name="ui_49b31501b1c2" formatted="false">"Search selected Notebook, Canvas, Study and attached media privately on this phone. halo indexes only after you approve the sources and build local search."</string>
+    <string name="ui_49b31501b1c2" formatted="false">"Search selected Workspace, Canvas, Study and attached media privately on this phone. halo indexes only after you approve the sources and build local search."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Local search model"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"No verified local search model is installed."</string>
     <string name="ui_128202399927" formatted="false">"Browse on-device models"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Use for local search"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Choose what halo can search"</string>
-    <string name="ui_3ce934646c98" formatted="false">"No available Notebook, Canvas, Study or media sources. Add one or return to the Library to choose sources."</string>
+    <string name="ui_3ce934646c98" formatted="false">"No available Workspace, Canvas, Study or media sources. Add one or return to the Library to choose sources."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"Only checked sources can enter the private search index."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Allow sources and build local search"</string>
     <string name="ui_986855e1bf05" formatted="false">"Update local search index"</string>
@@ -3155,7 +3155,7 @@
     <string name="ui_f1bd02f7ccbf" formatted="false">"Dim at night"</string>
     <string name="ui_c8a9cc92f54a" formatted="false">"Clock &amp; date"</string>
     <string name="ui_4d8d5ea3b434" formatted="false">"Reading &amp; interests"</string>
-    <string name="ui_c345ddcf3224" formatted="false">"Continue in Notebook"</string>
+    <string name="ui_c345ddcf3224" formatted="false">"Continue in Workspace"</string>
     <string name="ui_399e296978e1" formatted="false">"Card added"</string>
     <string name="ui_b30a44c0f684" formatted="false">"Card moved"</string>
     <string name="ui_59f297ef77e8" formatted="false">"Card updated"</string>
@@ -3176,7 +3176,7 @@
     <string name="ui_dd541994468a" formatted="false">"Apps &amp; services"</string>
     <string name="ui_83b9e5c1b14b" formatted="false">"Actions your apps make available to halo."</string>
     <string name="ui_72daff24bece" formatted="false">"Actions available in your apps"</string>
-    <string name="ui_9550bda45c3e" formatted="false">"No app actions are available yet. You can still ask halo questions and work in Notebook."</string>
+    <string name="ui_9550bda45c3e" formatted="false">"No app actions are available yet. You can still ask halo questions and work in Workspace."</string>
     <string name="ui_1997dfb83b61" formatted="false">"An app on this phone"</string>
     <string name="ui_7a7189fc4f96" formatted="false">"%1$d available actions"</string>
     <string name="ui_6c2d402a76d1" formatted="false">"%1$d actions halo can use in your apps"</string>
@@ -3307,7 +3307,7 @@
     <string name="ui_0333c2d158f3" formatted="false">"%1$d things halo could remember"</string>
     <string name="ui_3373a168ec11" formatted="false">"Only if you say yes"</string>
     <string name="ui_11e9037f6de2" formatted="false">"Open Library"</string>
-    <string name="ui_4b88b3f65725" formatted="false">"Back to Notebook"</string>
+    <string name="ui_4b88b3f65725" formatted="false">"Back to Workspace"</string>
     <string name="ui_cf9c7aa24a26" formatted="false">"When"</string>
     <string name="ui_a710ef69aa04" formatted="false">"Only if"</string>
     <string name="ui_30094e0bec00" formatted="false">"Do"</string>
@@ -3380,7 +3380,7 @@
     <string name="ui_488c5c7d85a5" formatted="false">"Chat restored"</string>
     <string name="ui_64a721c7cbe8" formatted="false">"This chat could not be changed. Try again."</string>
     <string name="ui_848dad9ba0a4" formatted="false">"Delete this chat?"</string>
-    <string name="ui_c0bacf57d866" formatted="false">"The chat moves to Trash. You can restore it from Notebook."</string>
+    <string name="ui_c0bacf57d866" formatted="false">"The chat moves to Trash. You can restore it from Workspace."</string>
     <string name="ui_780f6ca4950d" formatted="false">"Add to Canvas"</string>
     <string name="ui_ac796cdcc058" formatted="false">"Photo or voice memo"</string>
     <string name="ui_f334fbf1cf5d" formatted="false">"Add a file or PDF"</string>
@@ -3389,7 +3389,7 @@
     <string name="ui_ddecdde28ad2" formatted="false">"Connect selected cards?"</string>
     <string name="ui_6e70c3805327" formatted="false">"Connect selected cards"</string>
     <string name="ui_a45aae80dcc1" formatted="false">"Chat unavailable"</string>
-    <string name="ui_b932adb07c93" formatted="false">"This chat may be in Trash. Restore it from Notebook to read it again."</string>
+    <string name="ui_b932adb07c93" formatted="false">"This chat may be in Trash. Restore it from Workspace to read it again."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Labs, diagnostics and test sandboxes"</string>
     <string name="ui_e38b9d46e214" formatted="false">"Task progress"</string>
     <string name="ui_1017831c9d4b" formatted="false">"Action confirmed"</string>
@@ -3401,7 +3401,7 @@
     <string name="ui_07496b80e035" formatted="false">"Screen checked"</string>
     <string name="ui_93ff9273de4b" formatted="false">"Clock"</string>
     <string name="ui_c7a96053c42a" formatted="false">"Stopped safely"</string>
-    <string name="ui_0b88ed8d68e3" formatted="false">"This temporary image is no longer available. Previously saved images are still in Notebook."</string>
+    <string name="ui_0b88ed8d68e3" formatted="false">"This temporary image is no longer available. Previously saved images are still in Workspace."</string>
     <string name="ui_4e9f2de31a0f" formatted="false">"Needs your OK"</string>
     <string name="ui_d68761cc1eb2" formatted="false">"Text size"</string>
     <string name="ui_dc273117482b" formatted="false">"Connections"</string>
@@ -3453,7 +3453,7 @@
     <string name="ui_0e9b3412980a" formatted="false">"Opening photo…"</string>
     <string name="ui_b561d228a779" formatted="false">"Review a photo with halo"</string>
     <string name="ui_cb4ad90f8c00" formatted="false">"The photo could not be opened. Check the glasses connection and try again."</string>
-    <string name="ui_821a4cfb0ae6" formatted="false">"Photos stay on your glasses until copied. Copied photos appear in Notebook."</string>
+    <string name="ui_821a4cfb0ae6" formatted="false">"Photos stay on your glasses until copied. Copied photos appear in Workspace."</string>
     <string name="ui_938303489e2e" formatted="false">"Photos could not be copied. Keep the glasses nearby and try again."</string>
     <string name="ui_6a82012fba40" formatted="false">"Copying photos from your glasses…"</string>
     <string name="ui_19105f34e74b" formatted="false">"Waiting for the glasses to allow photo transfer."</string>
@@ -3474,7 +3474,7 @@
     <string name="ui_188a87cc140f" formatted="false">"Connect these glasses to change their buttons."</string>
     <string name="ui_8c0b88f93192" formatted="false">"Forget these glasses…"</string>
     <string name="ui_a87ea0823bf4" formatted="false">"Forget these glasses?"</string>
-    <string name="ui_5b5abdaa832e" formatted="false">"The saved connection will be removed. Photos already copied to this phone stay in Notebook."</string>
+    <string name="ui_5b5abdaa832e" formatted="false">"The saved connection will be removed. Photos already copied to this phone stay in Workspace."</string>
     <string name="ui_7adcf9a7aa3d" formatted="false">"The voice button starts a conversation with halo."</string>
     <string name="ui_8dfdf27d662e" formatted="false">"Touch and swipe keep the glasses’ own controls."</string>
     <string name="ui_5c42836193fb" formatted="false">"Press a button while identifying it to see whether it can be changed."</string>
@@ -3656,7 +3656,7 @@
     <string name="ui_574bdd965ffe" formatted="false">"Uses sensitive information"</string>
     <string name="ui_7e64bf746120" formatted="false">"Can make a non-reversible change"</string>
     <string name="ui_d5c25f87aeb6" formatted="false">"Replace data on this phone?"</string>
-    <string name="ui_48572c5c9b6e" formatted="false">"This replaces your Notebook, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy."</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"This replaces your Workspace, conversations and memory. halo first keeps a local recovery copy. Export a backup to keep a separate copy."</string>
     <string name="ui_ce1773ec5b12" formatted="false">"Replace data"</string>
     <string name="ui_aa0b0c0954a5" formatted="false">"halo will stop saving backups to this folder. Existing backups stay there."</string>
     <string name="ui_0810464d4842" formatted="false">"Your notes, conversations and memory stay on this phone. Choose where to keep your backups."</string>
@@ -3796,7 +3796,7 @@
     <string name="ui_0592aa13f4c4" formatted="false">"Media sharing follows the Private / Cloud switch at the top of halo."</string>
     <string name="ui_b4ec9b047647" formatted="false">"Open Android app permissions"</string>
     <string name="ui_44615c1caed8" formatted="false">"Reference image required"</string>
-    <string name="ui_fc1a856ef2c3" formatted="false">"This model needs a reference image. Open an image in Notebook or Canvas to edit it."</string>
+    <string name="ui_fc1a856ef2c3" formatted="false">"This model needs a reference image. Open an image in Workspace or Canvas to edit it."</string>
     <string name="ui_5b064d896dea" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Check provider credits"</string>
     <string name="ui_c1329b9fbe25" formatted="false">"Image model"</string>
@@ -3809,7 +3809,7 @@
     <string name="ui_19c6852ec231" formatted="false">"Generated image preview"</string>
     <string name="ui_33d40139aff3" formatted="false">"Captured image"</string>
     <string name="ui_644b4147de8a" formatted="false">"What should halo do?"</string>
-    <string name="ui_0ae95a0a9345" formatted="false">"No notes yet. Save this image to Notebook first."</string>
+    <string name="ui_0ae95a0a9345" formatted="false">"No notes yet. Save this image to Workspace first."</string>
     <string name="ui_fe062eaa6bcc" formatted="false">"No image models are available. Check provider setup, then refresh."</string>
     <string name="ui_b7ae4027f7ea" formatted="false">"The reference image could not be read. Close and select the image again."</string>
     <string name="ui_4c8f9e8e326c" formatted="false">"Attached image"</string>
@@ -3836,12 +3836,12 @@
     <string name="ui_583994585ca6" formatted="false">"Study the selected region"</string>
     <string name="ui_0255090bcdcd" formatted="false">"Open original Canvas"</string>
     <string name="ui_9acf9dcc1388" formatted="false">"The selected ink region changed. Return to Canvas and select it again."</string>
-    <string name="ui_a45d0de015bd" formatted="false">"Search selected Notebook, Canvas, and Study text, pictures, audio, and short video clips locally on this phone. For videos, only four sampled frames are used; audio tracks are not processed. halo reads only the sources you approve when you build local search."</string>
+    <string name="ui_a45d0de015bd" formatted="false">"Search selected Workspace, Canvas, and Study text, pictures, audio, and short video clips locally on this phone. For videos, only four sampled frames are used; audio tracks are not processed. halo reads only the sources you approve when you build local search."</string>
     <string name="ui_587513a42667" formatted="false">"Picture search needs the verified EmbeddingGemma 2 model. Deselect pictures to use text-only local search."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"This phone cannot run the image encoder on CPU. Deselect pictures to continue with text-only local search."</string>
     <string name="ui_00add6a49156" formatted="false">"This picture format or size is not supported for local search. Use a PNG or JPEG up to 4 MiB."</string>
     <string name="ui_fffa5f83baf0" formatted="false">"A selected picture is unavailable or no longer permitted. Reattach it or remove it from local search."</string>
-    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 represents text, pictures, audio, and video. halo can search locally across text, explicitly selected Notebook and Canvas pictures, audio attachments, and four sampled frames from selected short videos. Video audio tracks are not processed. Picture search uses complete PNG/JPEG files; recordings are converted to mono 16 kHz. Media search requires compatible CPU encoders; device quality and performance are not yet qualified. The model finds related content but does not generate image descriptions."</string>
+    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 represents text, pictures, audio, and video. halo can search locally across text, explicitly selected Workspace and Canvas pictures, audio attachments, and four sampled frames from selected short videos. Video audio tracks are not processed. Picture search uses complete PNG/JPEG files; recordings are converted to mono 16 kHz. Media search requires compatible CPU encoders; device quality and performance are not yet qualified. The model finds related content but does not generate image descriptions."</string>
     <string name="ui_e86583f2b967" formatted="false">"Audio search needs the verified EmbeddingGemma 2 model. Deselect audio to use text-only local search."</string>
     <string name="ui_c85c887657ab" formatted="false">"This phone cannot run the audio encoder on CPU. Deselect audio to continue with text-only local search."</string>
     <string name="ui_5bf1f3af4662" formatted="false">"This recording is not supported for local search. Use an audio file up to two minutes and 12 MB."</string>

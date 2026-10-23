@@ -98,7 +98,7 @@ sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) 
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
     data object Study : Screen("study", "Study", HaloGlyph.QUESTION)
     data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
-    data object Notebook : Screen("notebook", "Notebook", HaloGlyph.NOTE)
+    data object Notebook : Screen("notebook", "Workspace", HaloGlyph.NOTE)
     data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }

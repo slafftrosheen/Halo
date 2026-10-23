@@ -1,0 +1,8 @@
+<resources>
+    <string name="workspace49_open">Open</string>
+    <string name="workspace49_collections">Collections</string>
+    <string name="workspace49_memory_scope">Memory contains information you chose to keep. Importing a file does not add it to Memory.</string>
+    <string name="workspace49_studio">halo Studio</string>
+    <string name="workspace49_studio_unavailable">The graphics workshop is not available in this version. Your existing Canvas tools remain available.</string>
+    <string name="workspace49_capture">Quick capture</string>
+</resources>

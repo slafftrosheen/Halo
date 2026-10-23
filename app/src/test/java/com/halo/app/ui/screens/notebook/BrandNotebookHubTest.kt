@@ -29,15 +29,15 @@ class BrandNotebookHubTest {
                         { calls += "canvas" })
                     NotebookCreateAction("Import", com.halo.app.R.drawable.halo_ic_import, true,
                         { calls += "import" })
-                    NotebookCreateAction("Inbox", com.halo.app.R.drawable.halo_ic_inbox, true,
-                        { calls += "inbox" })
+                    NotebookCreateAction("Quick capture", com.halo.app.R.drawable.halo_ic_inbox, true,
+                        { calls += "capture" })
                 }
             }
         }
-        listOf("Note", "Canvas", "Import", "Inbox").forEach { name ->
+        listOf("Note", "Canvas", "Import", "Quick capture").forEach { name ->
             compose.onNodeWithText(name).assertExists().performClick()
         }
-        assertEquals(listOf("note", "canvas", "import", "inbox"), calls)
+        assertEquals(listOf("note", "canvas", "import", "capture"), calls)
     }
 
     @Test fun studyRemainsAnExplicitNotebookToolAlongsideMemory() {

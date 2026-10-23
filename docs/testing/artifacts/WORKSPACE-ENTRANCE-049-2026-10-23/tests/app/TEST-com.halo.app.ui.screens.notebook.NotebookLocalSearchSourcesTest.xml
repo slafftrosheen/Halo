@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-23T07:12:13.517Z" hostname="MINIFOXEY" time="0.331">
+  <properties/>
+  <testcase name="audioChoicesAreExactAttachmentsOwnedByVisibleActiveNotes" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.042"/>
+  <testcase name="canvasPictureChoicesAreExactImagesOnVisibleActiveBoards" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.035"/>
+  <testcase name="duplicateItemsDoNotExpandSourceAllowlist" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.034"/>
+  <testcase name="localSearchOnlyOffersActiveTextBackedNotebookRecords" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.036"/>
+  <testcase name="canvasImagesRemainAvailableWhenNotebookExceedsSourceLimit" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.037"/>
+  <testcase name="inboxVoiceMemoChoiceRequiresActiveAudioOwnerAndOwnCaptureUri" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.045"/>
+  <testcase name="pictureChoicesAreExactAttachmentsOwnedByVisibleActiveNotes" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.033"/>
+  <testcase name="lowMemoryAndUnknownFailuresUseBoundedUserLanguage" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.032"/>
+  <testcase name="videoChoicesAreExactAttachmentsOwnedByVisibleActiveNotes" classname="com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest" time="0.031"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

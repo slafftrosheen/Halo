@@ -1,0 +1,8 @@
+<resources>
+    <string name="workspace49_open">Atvērt</string>
+    <string name="workspace49_collections">Kolekcijas</string>
+    <string name="workspace49_memory_scope">Atmiņā ir informācija, ko izvēlējies paturēt. Faila importēšana to nepievieno atmiņai.</string>
+    <string name="workspace49_studio">halo Studio</string>
+    <string name="workspace49_studio_unavailable">Grafikas darbnīca šajā versijā vēl nav pieejama. Esošie Canvas rīki joprojām ir pieejami.</string>
+    <string name="workspace49_capture">Ātrā ievade</string>
+</resources>

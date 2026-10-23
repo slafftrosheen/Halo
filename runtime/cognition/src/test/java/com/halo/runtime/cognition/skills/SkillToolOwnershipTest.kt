@@ -23,6 +23,17 @@ class SkillToolOwnershipTest {
     private fun custom(tool: String) = SkillDescriptor(SkillId("custom.helper"), "AAA helper", "Custom guidance",
         SkillCategory.WORKSPACE, tools = setOf(tool), source = SkillSource.CUSTOM)
 
+    @Test fun `Workspace name retains legacy skill settings and tool ownership after reload`() = runTest {
+        val storage = MemoryStorage()
+        val original = DefaultSkillRegistry(storage)
+        val id = SkillId("halo.notebook")
+        original.setEnabled(id, false)
+        val restored = DefaultSkillRegistry(storage)
+        assertEquals(id, restored.skillIdForTool("halo_get_workspace_object"))
+        assertTrue(restored.enabledTools(listOf(ToolDefinition("halo_get_workspace_object",
+            "halo_get_workspace_object", "Read selected object", emptyMap()))).isEmpty())
+        assertEquals("Workspace", DefaultSkillRegistry.defaultBuiltInSkills().first { it.id == id }.name)
+    }
     @Test fun `custom ordering cannot replace native enablement or approval authority`() = runTest {
         val native = DefaultSkillRegistry.defaultBuiltInSkills().first { it.id.value == "halo.apps" }
         val custom = custom("halo_open_app")

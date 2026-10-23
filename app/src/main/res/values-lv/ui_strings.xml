@@ -19,7 +19,7 @@
     <string name="ui_524e15832df6" formatted="false">"Mans melnraksts"</string>
     <string name="ui_04ab681eaf7d" formatted="false">"Mainīt ideju"</string>
     <string name="ui_88984939a054" formatted="false">"Atmest nesaglabātās izmaiņas?"</string>
-    <string name="ui_7028bf28db81" formatted="false">"Tiks atmestas tikai nesaglabātās izmaiņas. Saglabātie projekti paliks Piezīmju grāmatā."</string>
+    <string name="ui_7028bf28db81" formatted="false">"Tiks atmestas tikai nesaglabātās izmaiņas. Saglabātie projekti paliks darbvietā."</string>
     <string name="ui_8ce915057dc1" formatted="false">"Mēģināt atbildēt pašam"</string>
     <string name="ui_56b408f51622" formatted="false">"Paslēpt atbildes melnrakstu"</string>
     <string name="ui_dce7095cb88e" formatted="false">"Palūdz pieaugušo"</string>
@@ -778,7 +778,7 @@
     <string name="ui_331551b0de41" formatted="false">"Gaida"</string>
     <string name="ui_87c2227b8434" formatted="false">"Mācīšanās solis neizdevās; uzdevuma rezultāts saglabāts"</string>
     <string name="ui_dc417ed8ebf8" formatted="false">"Modeļa refleksija izlaista"</string>
-    <string name="ui_2b7d9d792580" formatted="false">"Atvērt piezīmju grāmatiņas objektu"</string>
+    <string name="ui_2b7d9d792580" formatted="false">"Atvērt darbvietas objektu"</string>
     <string name="ui_08b041935798" formatted="false">"Tu"</string>
     <string name="ui_6ba0bdeccb42" formatted="false">"Ierīce"</string>
     <string name="ui_5537023f37dd" formatted="false">"Stāvoklis mainīts"</string>
@@ -815,7 +815,7 @@
     <string name="ui_d2cef118ca5a" formatted="false">"Piekļuve zaudēta · izvēlies mapi vēlreiz"</string>
     <string name="ui_311b3066b102" formatted="false">"Vēl nav veiksmīgu rezerves kopiju"</string>
     <string name="ui_02f71ba0ae71" formatted="false">"Noņemot piekļuvi, esošie rezerves faili paliks mapē."</string>
-    <string name="ui_1eb16629ebc0" formatted="false">"Izveido pārnesamu piezīmju, atmiņas un sarunu kopiju."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Izveido pārnesamu darbvietas, atmiņas un sarunu kopiju."</string>
     <string name="ui_f7f9e56ea8d1" formatted="false">"Pirms aizstāšanas tiek izveidots lokāls drošības momentuzņēmums."</string>
     <string name="ui_62ae975d4b07" formatted="false">"Piekļuve paziņojumiem:"</string>
     <string name="ui_6b4f92f9ada2" formatted="false">"Pārvaldīt halo paziņojumu piegādi"</string>
@@ -827,7 +827,7 @@
     <string name="ui_dcb3ff29f478" formatted="false">"Lietotņu paziņojumi sākotnēji ir bloķēti. Privāts un slepens saturs tiek aizklāts. Glabāšana: 24 stundas. Kopsavilkumi paliek ierīcē."</string>
     <string name="ui_0f5371bd2465" formatted="false">"Privātums, spēju pakotnes un papildu aģenta iestatījumi"</string>
     <string name="ui_8f652f79fc3e" formatted="false">"Izmanto lokālā modeļa iestatījumi. Attālinātie pakalpojumu sniedzēji saglabā savus ģenerēšanas parametrus."</string>
-    <string name="ui_deb55cc742c7" formatted="false">"Konteksts pēc noklusējuma ir īslaicīgs. Attēli tiek dzēsti pēc mijiedarbības; īpaši saglabātie attēli nonāk piezīmēs."</string>
+    <string name="ui_deb55cc742c7" formatted="false">"Konteksts pēc noklusējuma ir īslaicīgs. Attēli tiek dzēsti pēc mijiedarbības; īpaši saglabātie attēli nonāk darbvietā."</string>
     <string name="ui_33ca72d960bb" formatted="false">"Tikai atļautām lietotnēm, kuru saturu nevar citādi nolasīt. Priekšroka tiek dota semantiskajam ekrāna kontekstam."</string>
     <string name="ui_1eeaaf07e2eb" formatted="false">"Atļaut ierobežotu skriptu izpildi, ja statiskajā lapā ir maz lasāma teksta."</string>
     <string name="ui_33059f720b9b" formatted="false">"Apakšaģenti darbojas tikai lasīšanas režīmā. Izpēte, salīdzināšana un analīze izmanto Reasoning; apkopošana un izgūšana — Fast. Saglabājas esošie maršrutēšanas un mākoņa noteikumi."</string>
@@ -948,10 +948,10 @@
     <string name="ui_7b3ccdbbf566" formatted="false">"Vēl nav nozīmīgas uzdevumu vēstures."</string>
     <string name="ui_8a4327addc21" formatted="false">"Saglabāt mācīšanās vēsturē"</string>
     <string name="ui_4c4f10f8a4d0" formatted="false">"Neļauj parastajai glabāšanas termiņa tīrīšanai dzēst šo vēsturisko uzdevumu."</string>
-    <string name="ui_7b2d05e3e1af" formatted="false">"Atmiņā glabājas tavas apstiprinātās ziņas un skaidri atzīmēti importi. Mācīšanās pārvalda ieteikumus. Piezīmju sadaļā ir dokumenti un faili."</string>
+    <string name="ui_7b2d05e3e1af" formatted="false">"Atmiņā glabājas tavas apstiprinātās ziņas un skaidri atzīmēti importi. Mācīšanās pārvalda ieteikumus. Darbvietā ir dokumenti un faili."</string>
     <string name="ui_2117986ea992" formatted="false">"Mācīšanās iestatījumi"</string>
     <string name="ui_1a7b7bc62d87" formatted="false">"Atcerēties informāciju"</string>
-    <string name="ui_83f7ee8a2d01" formatted="false">"Pārskati, kas tiks saglabāts atmiņā. Sākotnējā piezīme paliks piezīmēs."</string>
+    <string name="ui_83f7ee8a2d01" formatted="false">"Pārskati, kas tiks saglabāts atmiņā. Sākotnējā piezīme paliks darbvietā."</string>
     <string name="ui_cd722d92bea3" formatted="false">"Piezīme ir pārāk gara vienam atmiņas ierakstam. Īsi formulē faktu, ko halo vajadzētu atcerēties."</string>
     <string name="ui_5add58c708d0" formatted="false">"Ko halo vajadzētu atcerēties?"</string>
     <string name="ui_985959785319" formatted="false">"Projekts"</string>
@@ -1080,7 +1080,7 @@
     <string name="ui_446c267c2204" formatted="false">"Piešķirt lomas"</string>
     <string name="ui_04903063b2fd" formatted="false">"Atjaunināt modeļu sarakstu"</string>
     <string name="ui_7989a7891ab6" formatted="false">"Pārlūkot attēlu ģenerēšanas modeļus"</string>
-    <string name="ui_8ef3bab9bfec" formatted="false">"Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un piezīmēs."</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Attēlu veidošanai modelis tiek izvēlēts atsevišķi kanvā un darbvietā."</string>
     <string name="ui_25debf3f0e04" formatted="false">"Pārlūkot šī pakalpojumu sniedzēja modeļus"</string>
     <string name="ui_6831ccaba643" formatted="false">"Pārvaldīt lokālos modeļus"</string>
     <string name="ui_176695d85b77" formatted="false">"Sistēmas pārbaude un diagnostika"</string>
@@ -1202,7 +1202,7 @@
     <string name="ui_8dd020233bfd" formatted="false">"Sākotnējā saruna nav pieejama."</string>
     <string name="ui_cde5efcc72da" formatted="false">"Turpināt pašreizējā sarunā"</string>
     <string name="ui_a1d26b85bf20" formatted="false">"Atcelt uzdevumu"</string>
-    <string name="ui_55e5b8eb9b3d" formatted="false">"Atvērt piezīmēs"</string>
+    <string name="ui_55e5b8eb9b3d" formatted="false">"Atvērt darbvietā"</string>
     <string name="ui_b03a2f22a4e1" formatted="false">"Izmantot atjauninātu avotu"</string>
     <string name="ui_58e909c0f4cc" formatted="false">"Saglabāt attēlu"</string>
     <string name="ui_5adc239482f7" formatted="false">"Attēlu privātums"</string>
@@ -1211,8 +1211,8 @@
     <string name="ui_9daa3b4114fc" formatted="false">"Attēlu un modeļu iestatīšana"</string>
     <string name="ui_0633628fd5ad" formatted="false">"Izvēlēties kontekstu"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Importēt attēlu"</string>
-    <string name="ui_0dec07abf92d" formatted="false">"Piezīmes"</string>
-    <string name="ui_8932da95b7fc" formatted="false">"Saglabāt rezultātu piezīmēs?"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Darbvieta"</string>
+    <string name="ui_8932da95b7fc" formatted="false">"Saglabāt rezultātu darbvietā?"</string>
     <string name="ui_4ae6f416a5a4" formatted="false">"Modeļa ģenerēts rezultāts · saglabāšana neapstiprina tā patiesumu"</string>
     <string name="ui_2b065c7c9ce4" formatted="false">"Šodien"</string>
     <string name="ui_e68cbfcf62e4" formatted="false">"Viss ir pārskatīts"</string>
@@ -1324,8 +1324,8 @@
     <string name="ui_afb9ab558853" formatted="false">"Neizdevās sākt balss režīmu. Mēģiniet vēlreiz."</string>
     <string name="ui_af5016d82624" formatted="false">"Balss režīms ir ieslēgts. halo klausīsies atkal pēc mutiskas atbildes."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Balss režīms ir ieslēgts. Klausīšanās ir apturēta."</string>
-    <string name="ui_6fb7365efc3c" formatted="false">"Saglabāt piezīmēs"</string>
-    <string name="ui_fcbc94dc1e25" formatted="false">"Neizdevās saglabāt piezīmēs"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Saglabāt darbvietā"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Neizdevās saglabāt darbvietā"</string>
     <string name="ui_40893b155e07" formatted="false">"Pārskatiet pieprasījumus un uzziniet, kas notika."</string>
     <string name="ui_fc63b46c9f3a" formatted="false">"Darbību vēl nav. Lai sāktu, uzdodiet halo jautājumu sākumlapā."</string>
     <string name="ui_7333a4652b84" formatted="false">"Pašlaik nav gaidošu darbību."</string>
@@ -1694,10 +1694,10 @@
     <string name="ui_1f1f7f3a89fb" formatted="false">"Attēla formāts"</string>
     <string name="ui_5c874c87eb42" formatted="false">"PNG saglabā caurspīdīgumu; JPEG izmanto baltu fonu."</string>
     <string name="ui_75c5986a189a" formatted="false">"Saglabāt jaunu attēlu"</string>
-    <string name="ui_9a9ace7c1a03" formatted="false">"Rediģētais attēls saglabāts Piezīmju blokā kā jauns vienums."</string>
+    <string name="ui_9a9ace7c1a03" formatted="false">"Rediģētais attēls saglabāts darbvietā kā jauns vienums."</string>
     <string name="ui_91fa2dd9030b" formatted="false">"Attēla rediģēšanu neizdevās pabeigt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_7397326d2d90" formatted="false">"Iegūt krāsu paleti"</string>
-    <string name="ui_5d5a6923f356" formatted="false">"Krāsu palete saglabāta Piezīmju blokā kā piezīme."</string>
+    <string name="ui_5d5a6923f356" formatted="false">"Krāsu palete saglabāta darbvietā kā piezīme."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Krāsas neizdevās iegūt. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_b5d02c5ded65" formatted="false">"Apstrādā attēlu ierīcē…"</string>
     <string name="ui_d185969bb0d3" formatted="false">"Apvienot attēlus"</string>
@@ -1712,23 +1712,23 @@
     <string name="ui_aac7e89fcd0e" formatted="false">"Caurspīdīgs"</string>
     <string name="ui_da938a727367" formatted="false">"Attēli tiek sakārtoti Canvas lasīšanas secībā: no augšas uz leju, pēc tam no kreisās uz labo."</string>
     <string name="ui_27ad8eb8232c" formatted="false">"Saglabāt apvienoto attēlu"</string>
-    <string name="ui_83847a2b28a4" formatted="false">"Apvienotais attēls saglabāts Piezīmju blokā."</string>
+    <string name="ui_83847a2b28a4" formatted="false">"Apvienotais attēls saglabāts darbvietā."</string>
     <string name="ui_4b5a5fa9ad47" formatted="false">"Attēlus neizdevās apvienot. Oriģināli nav mainīti; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_194cfd210b75" formatted="false">"Izvilkt PDF lapu"</string>
-    <string name="ui_7d29b1002f19" formatted="false">"Saglabājiet vienu PDF lapu kā jaunu attēlu Piezīmju blokā. Oriģināls netiks mainīts."</string>
+    <string name="ui_7d29b1002f19" formatted="false">"Saglabājiet vienu PDF lapu kā jaunu attēlu darbvietā. Oriģināls netiks mainīts."</string>
     <string name="ui_9046da16aea9" formatted="false">"Lapas"</string>
     <string name="ui_05fa2e3b0a10" formatted="false">"Lapas numurs"</string>
     <string name="ui_b269a68f045a" formatted="false">"PDF priekšskatījums nav pieejams"</string>
     <string name="ui_25b5f33b67ff" formatted="false">"Izvēlieties lapu šajā PDF."</string>
     <string name="ui_dfc74370203a" formatted="false">"Saglabāt lapas attēlu"</string>
-    <string name="ui_ba394bc0d3a4" formatted="false">"PDF lapa saglabāta Piezīmju blokā kā attēls."</string>
+    <string name="ui_ba394bc0d3a4" formatted="false">"PDF lapa saglabāta darbvietā kā attēls."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Neizdevās izvilkt PDF lapu. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_e868ba77eded" formatted="false">"Atlasiet līdz sešām PDF lapām, ko saglabāt vienā piezīmē. Oriģināls paliks nemainīts."</string>
     <string name="ui_111d4ca0505b" formatted="false">"Izvelkamās lapas (piem., 1,3-5)"</string>
     <string name="ui_9dd05754a493" formatted="false">"Izvēlieties 1–6 derīgas, neatkārtojošās lapas."</string>
     <string name="ui_ae3fa1a2c36e" formatted="false">"Atlasītās lapas"</string>
     <string name="ui_c0729795e4ec" formatted="false">"Saglabāt lapas kā attēlus"</string>
-    <string name="ui_07fb1eb9229a" formatted="false">"PDF lapas saglabātas Piezīmju blokā."</string>
+    <string name="ui_07fb1eb9229a" formatted="false">"PDF lapas saglabātas darbvietā."</string>
     <string name="ui_6d2aa3e9432c" formatted="false">"Neizdevās izvilkt visas PDF lapas. Oriģināls nav mainīts; pirms atkārtošanas pārbaudiet iesūtni."</string>
     <string name="ui_dbc7c3ff9962" formatted="false">"Attēlu secība"</string>
     <string name="ui_0b8f398a7a70" formatted="false">"Priekšskatījumā attēli ir tādā pašā secībā kā sarakstā."</string>
@@ -1738,7 +1738,7 @@
     <string name="ui_a5875e58ee3c" formatted="false">"Neizdevās ielādēt pievienotos attēlus."</string>
     <string name="ui_567bcf9287a9" formatted="false">"Atlasītajās kartītēs nav attēlu pielikumu."</string>
     <string name="ui_2eb03e4246d2" formatted="false">"Importēts attēls"</string>
-    <string name="ui_1b8394275f47" formatted="false">"Piezīmju bloka pielikums"</string>
+    <string name="ui_1b8394275f47" formatted="false">"Darbvietas pielikums"</string>
     <string name="ui_80e25d621620" formatted="false">"Turpināt uz priekšskatījumu"</string>
     <string name="ui_e0a441205eca" formatted="false">"Kolāža ar galveno attēlu"</string>
     <string name="ui_e536acc1978c" formatted="false">"Pirmais attēls ir galvenais. Attēli tiek apgriezti no centra, lai aizpildītu laukumu."</string>
@@ -2006,8 +2006,8 @@
     <string name="ui_006e1fbb95ac" formatted="false">"Pievienot saturu"</string>
     <string name="ui_e18896dee230" formatted="false">"Pieskarieties kartītei, lai atlasītu. Turiet un velciet, lai pārvietotu. Mainiet mērogu ar diviem pirkstiem; velciet fonu, lai pārlūkotu."</string>
     <string name="ui_ba988101c7a3" formatted="false">"Atlasītās kartītes: %1$d"</string>
-    <string name="ui_0899eeebe165" formatted="false">"Saglabā piezīmju grāmatā…"</string>
-    <string name="ui_7d5459cfa1b7" formatted="false">"Atgriezieties piezīmju grāmatā un izvēlieties citu audeklu. Pārējie vienumi nav mainīti."</string>
+    <string name="ui_0899eeebe165" formatted="false">"Saglabā darbvietā…"</string>
+    <string name="ui_7d5459cfa1b7" formatted="false">"Atgriezieties darbvietā un izvēlieties citu audeklu. Pārējie vienumi nav mainīti."</string>
     <string name="ui_06f2fb1c0a6f" formatted="false">"Pārrakstīt atlasīto teksta kartīti."</string>
     <string name="ui_d62aeb730dc8" formatted="false">"Izmantot tekstu un saišu nosaukumus šajā audeklā."</string>
     <string name="ui_04290d3c9842" formatted="false">"Pārskatīt MI melnrakstu"</string>
@@ -2196,7 +2196,7 @@
     <string name="ui_7faa9446189c" formatted="false">"Pēdējā dublēšana neizdevās. Pārbaudiet piekļuvi mapei un brīvo vietu."</string>
     <string name="ui_8b45bb20e077" formatted="false">"Mācīšanās"</string>
     <string name="ui_9087f9cbaa17" formatted="false">"Lokāla pārdomāšana ļauj piemērotam ierīces modelim ierosināt atmiņas pēc nozīmīgiem uzdevumiem. Pēc noklusējuma izslēgta, darbojas tikai piemērotos apstākļos un prasa jūsu apstiprinājumu."</string>
-    <string name="ui_081b0b3ac528" formatted="false">"Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Piezīmju grāmata glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus."</string>
+    <string name="ui_081b0b3ac528" formatted="false">"Atmiņa glabā saglabātu informāciju. Mācīšanās pārvalda ieteikumus. Darbvieta glabā dokumentus un failus. Mācīšanās vēsture apraksta iepriekšējos uzdevumus, nevis pašreizējos faktus."</string>
     <string name="ui_a34049538d9f" formatted="false">"Atmiņas meklēšana ir atkarīga no pieejamajām meklēšanas iespējām un jūsu privātuma iestatījumiem."</string>
     <string name="ui_4d289c1a05ef" formatted="false">"Lejupielādētie modeļi izdzēsti"</string>
     <string name="ui_3bc8c6ce7691" formatted="false">"Nav saskaņots"</string>
@@ -2216,7 +2216,7 @@
     <string name="ui_4d7e5b5b90b1" formatted="false">"Šo dublējumu izveidoja jaunāka halo versija"</string>
     <string name="ui_5277abbcdb93" formatted="false">"Šis savienojums nav šifrēts. Lietojiet HTTP tikai savam serverim uzticamā lokālajā tīklā."</string>
     <string name="ui_01c61c885b23" formatted="false">"Integrācijai būs vajadzīga atkārtota autorizācija. Attālā servera dati tiek saglabāti."</string>
-    <string name="ui_f1e6c2dc638f" formatted="false">"Tas aizstās pašreizējo Piezīmju grāmatu, sarunas un atmiņu. halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu halo arhīvu."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"Tas aizstās pašreizējo darbvietu, sarunas un atmiņu. halo vispirms izveidos lokālu drošības kopiju. Ja vajadzīga kopija ārpus šīs instalācijas, eksportējiet atsevišķu halo arhīvu."</string>
     <string name="ui_9430efee3c04" formatted="false">"Uzticamība: %1$s"</string>
     <string name="ui_4646b6711d1d" formatted="false">"Lietot saglabāto atmiņu sarunās"</string>
     <string name="ui_18ef6af87453" formatted="false">"Atmiņas izmantošana"</string>
@@ -2280,7 +2280,7 @@
     <string name="ui_50017ea75995" formatted="false">"Pielāgotas sekundes"</string>
     <string name="ui_00f5157836c5" formatted="false">"Atļaušana bez jautāšanas piemēro saglabāto politiku visām prasmēm. Android atļaujas tiek pieprasītas atsevišķi, un darbībām ar obligātu apstiprinājumu tas joprojām ir vajadzīgs."</string>
     <string name="ui_7ae9c639c354" formatted="false">"ElevenLabs ·"</string>
-    <string name="ui_a447ada7678e" formatted="false">"Vienkārši uzdevumi netiek ņemti vērā. Nozīmīgi pabeigti uzdevumi veido ierakstus. Neobligāta lokāla pārdomāšana ir ierobežota, pārtraucama un neizmanto rīkus. Ierosinātās atmiņas un uzvedība jāpārskata Piezīmju grāmatā."</string>
+    <string name="ui_a447ada7678e" formatted="false">"Vienkārši uzdevumi netiek ņemti vērā. Nozīmīgi pabeigti uzdevumi veido ierakstus. Neobligāta lokāla pārdomāšana ir ierobežota, pārtraucama un neizmanto rīkus. Ierosinātās atmiņas un uzvedība jāpārskata darbvietā."</string>
     <string name="ui_cffce8cb5595" formatted="false">"Aprakstiet izmaiņas, apskatiet priekšskatījumu un saglabājiet. Oriģināls paliek neskarts."</string>
     <string name="ui_f67e549c8680" formatted="false">"Izmaiņu priekšskatījums"</string>
     <string name="ui_49e49bb4401e" formatted="false">"Ģenerēt"</string>
@@ -2311,7 +2311,7 @@
     <string name="ui_8b14bde391c7" formatted="false">"Darbības ar datiem rezultāts"</string>
     <string name="ui_753faf7fceae" formatted="false">"Lejupielādētie modeļu faili tiks dzēsti. Pirms lokālo modeļu lietošanas lejupielādējiet tos vēlreiz. Piezīmes un sarunas tiek saglabātas."</string>
     <string name="ui_e983dee4cc9a" formatted="false">"Saglabātie diagnostikas faili tiks dzēsti. Piezīmes, sarunas un dublējumi tiek saglabāti."</string>
-    <string name="ui_ee058baaafb9" formatted="false">"Iepriekšējā lokālā kopija aizstās pašreizējo Piezīmju grāmatu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"Iepriekšējā lokālā kopija aizstās pašreizējo darbvietu, atmiņu un sarunas. Vispirms eksportējiet pašreizējās izmaiņas, ja tās vajadzīgas."</string>
     <string name="ui_e43690e26d1f" formatted="false">"Pagaidu faili un pašreiz pārbaudāmais dublējums tiks dzēsti. Saglabātais darbvietas saturs tiek saglabāts."</string>
     <string name="ui_3fd737818828" formatted="false">"Pēc pārtraukuma ievadiet eksporta paroli vēlreiz"</string>
     <string name="ui_c49a47ab9862" formatted="false">"Darbība netika pabeigta. Pārbaudiet piekļuvi, brīvo vietu un paroli, tad mēģiniet vēlreiz."</string>
@@ -2388,7 +2388,7 @@
     <string name="ui_5dd7c9692be8" formatted="false">"Angļu un ķīniešu valoda šajā tālrunī. Lejupielādējiet pilnu balss pakotni (365 MB). Latviešu un krievu valodai tiek izmantota Android balss, ja ieslēgta rezerves balss."</string>
     <string name="ui_ecced17b7f72" formatted="false">"Angļu un ķīniešu"</string>
     <string name="ui_eda32f284995" formatted="false">"Tikai angļu"</string>
-    <string name="ui_6ffb5aacf2c4" formatted="false">"Atvērt piezīmju grāmatu"</string>
+    <string name="ui_6ffb5aacf2c4" formatted="false">"Atvērt darbvietu"</string>
     <string name="ui_5b034ef5a489" formatted="false">"Zvanīt uz %1$s?"</string>
     <string name="ui_579f209c033d" formatted="false">"Pārbaudiet precīzo numuru. Android var pieprasīt tālruņa atļauju. Atļaujas piešķiršana pati par sevi nesāk zvanu."</string>
     <string name="ui_d6e645b7d2b2" formatted="false">"Zvanīt"</string>
@@ -2584,7 +2584,7 @@
     <string name="ui_e53974be2c9c" formatted="false">"Soli pa solim."</string>
     <string name="ui_2838117f8536" formatted="false">"Atvērt avotu · atsauce: %1$s"</string>
     <string name="ui_6d6f77764a96" formatted="false">"No kādiem materiāliem mācīsimies?"</string>
-    <string name="ui_bdbc7afff3ef" formatted="false">"No tava Notebook"</string>
+    <string name="ui_bdbc7afff3ef" formatted="false">"No tavas darbvietas"</string>
     <string name="ui_ee69519aac49" formatted="false">"Piezīmes, kanvas un tērzēšanas sarunas"</string>
     <string name="ui_7bc3f18cd0a1" formatted="false">"PDF, dokuments vai attēls"</string>
     <string name="ui_fdfbb90a31cc" formatted="false">"Vecums, valodas un mācīšanās stils"</string>
@@ -2813,15 +2813,15 @@
     <string name="ui_d0f75f53ae79" formatted="false">"Pieaugušo sadaļa"</string>
     <string name="ui_e2556ed76a61" formatted="false">"Foto neizdevās saglabāt. Mēģini vēlreiz."</string>
     <string name="ui_e7f85ab594f5" formatted="false">"Melnraksts ir gatavs. Pārbaudi to pirms saglabāšanas."</string>
-    <string name="ui_0e52f12e6f1c" formatted="false">"Projektu neizdevās atjaunot. Saglabātās piezīmes joprojām ir piezīmju grāmatā."</string>
+    <string name="ui_0e52f12e6f1c" formatted="false">"Projektu neizdevās atjaunot. Saglabātās piezīmes joprojām ir darbvietā."</string>
     <string name="ui_9fce5fa3c485" formatted="false">"Tas aizņēma pārāk ilgu laiku. Tava ideja ir saglabāta; mēģini vēlreiz vai raksti pats."</string>
     <string name="ui_71a4d86f3628" formatted="false">"Vietējais modelis nevarēja izveidot melnrakstu. Iestati modeli tālrunī vai raksti pats. Nekas netika nosūtīts mākonī."</string>
     <string name="ui_27288af33453" formatted="false">"Apturēts. Iepriekšējais melnraksts ir saglabāts."</string>
-    <string name="ui_0d51a417b123" formatted="false">"Saglabāts piezīmju grāmatā."</string>
+    <string name="ui_0d51a417b123" formatted="false">"Saglabāts darbvietā."</string>
     <string name="ui_5ba9f983faea" formatted="false">"Neizdevās saglabāt. Melnraksts ir tepat; mēģini vēlreiz."</string>
     <string name="ui_1bdff2a51bb4" formatted="false">"Melnraksts ir atmests. Saglabātās piezīmes ir paturētas."</string>
     <string name="ui_44856bd88ae1" formatted="false">"Melnrakstu neizdevās atmest. Mēģini vēlreiz."</string>
-    <string name="ui_6c94d6afc9e9" formatted="false">"Melnrakstu neizdevās saglabāt ierīcē. Saglabā kopiju piezīmju grāmatā."</string>
+    <string name="ui_6c94d6afc9e9" formatted="false">"Melnrakstu neizdevās saglabāt ierīcē. Saglabā kopiju darbvietā."</string>
     <string name="ui_828aa165dc9f" formatted="false">"Šo mācību soli neizdevās saglabāt. Mēģini vēlreiz."</string>
     <string name="ui_d7750d0f16db" formatted="false">"Pieaugušo iestatījumos izvēlieties balsi ierīcē. Bērnu lasīšana paliek privāta."</string>
     <string name="ui_fbdd04608598" formatted="false">"Atcelt balss sagatavošanu"</string>
@@ -3030,13 +3030,13 @@
     <string name="ui_4d5f2c34aff1" formatted="false">"Kopēt balss aiztures pārskatu"</string>
     <string name="ui_dc1968315454" formatted="false">"Balss pieprasījumi: %1$d · Pabeigti: %2$d · Atcelti: %3$d · Kļūdas: %4$d"</string>
     <string name="ui_fc90e099e9ab" formatted="false">"Atrast saistītās piezīmes"</string>
-    <string name="ui_49b31501b1c2" formatted="false">"Privāti meklējiet šajā tālrunī atlasītajās piezīmēs, Canvas, Study materiālos un pievienotajos multivides failos. halo sāks indeksēšanu tikai pēc tam, kad atļausiet avotus un izveidosiet lokālo meklēšanu."</string>
+    <string name="ui_49b31501b1c2" formatted="false">"Privāti meklē šajā tālrunī atlasītos darbvietas failos, Canvas, Study materiālos un pievienotajos multivides failos. halo sāk indeksēšanu tikai pēc tam, kad atļauj avotus un izveido lokālo meklēšanu."</string>
     <string name="ui_eb1fabd36b6b" formatted="false">"Lokālās meklēšanas modelis"</string>
     <string name="ui_68ebc8a1f456" formatted="false">"Nav instalēts pārbaudīts lokālās meklēšanas modelis."</string>
     <string name="ui_128202399927" formatted="false">"Pārlūkot ierīces modeļus"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Izmantot lokālajai meklēšanai"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Izvēlieties, kuros materiālos halo drīkst meklēt"</string>
-    <string name="ui_3ce934646c98" formatted="false">"Nav pieejamu Notebook, Canvas, Study vai multivides avotu. Pievienojiet avotu vai atgriezieties bibliotēkā, lai to atlasītu."</string>
+    <string name="ui_3ce934646c98" formatted="false">"Nav pieejamu darbvietas, Canvas, Study vai multivides avotu. Pievienojiet avotu vai atgriezieties bibliotēkā, lai to atlasītu."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"Privātajā meklēšanas indeksā iekļaus tikai atzīmētos avotus."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Atļaut avotus un izveidot lokālo meklēšanu"</string>
     <string name="ui_986855e1bf05" formatted="false">"Atjaunināt lokālās meklēšanas indeksu"</string>
@@ -3155,7 +3155,7 @@
     <string name="ui_f1bd02f7ccbf" formatted="false">"Aptumšot naktī"</string>
     <string name="ui_c8a9cc92f54a" formatted="false">"Pulkstenis un datums"</string>
     <string name="ui_4d8d5ea3b434" formatted="false">"Lasīšana un intereses"</string>
-    <string name="ui_c345ddcf3224" formatted="false">"Turpināt piezīmju grāmatiņā"</string>
+    <string name="ui_c345ddcf3224" formatted="false">"Turpināt darbvietā"</string>
     <string name="ui_399e296978e1" formatted="false">"Kartīte pievienota"</string>
     <string name="ui_b30a44c0f684" formatted="false">"Kartīte pārvietota"</string>
     <string name="ui_59f297ef77e8" formatted="false">"Kartīte atjaunināta"</string>
@@ -3176,7 +3176,7 @@
     <string name="ui_dd541994468a" formatted="false">"Lietotnes un pakalpojumi"</string>
     <string name="ui_83b9e5c1b14b" formatted="false">"Darbības, ko jūsu lietotnes piedāvā halo."</string>
     <string name="ui_72daff24bece" formatted="false">"Jūsu lietotnēs pieejamās darbības"</string>
-    <string name="ui_9550bda45c3e" formatted="false">"Lietotņu darbības vēl nav pieejamas. Jūs joprojām varat uzdot halo jautājumus un strādāt piezīmju grāmatiņā."</string>
+    <string name="ui_9550bda45c3e" formatted="false">"Lietotņu darbības vēl nav pieejamas. Jūs joprojām varat uzdot halo jautājumus un strādāt darbvietā."</string>
     <string name="ui_1997dfb83b61" formatted="false">"Lietotne šajā tālrunī"</string>
     <string name="ui_7a7189fc4f96" formatted="false">"Pieejamās darbības: %1$d"</string>
     <string name="ui_6c2d402a76d1" formatted="false">"Darbības, ko halo var izmantot jūsu lietotnēs: %1$d"</string>
@@ -3307,7 +3307,7 @@
     <string name="ui_0333c2d158f3" formatted="false">"halo varētu atcerēties %1$d lietas"</string>
     <string name="ui_3373a168ec11" formatted="false">"Tikai ar jūsu piekrišanu"</string>
     <string name="ui_11e9037f6de2" formatted="false">"Atvērt bibliotēku"</string>
-    <string name="ui_4b88b3f65725" formatted="false">"Atpakaļ uz piezīmju grāmatu"</string>
+    <string name="ui_4b88b3f65725" formatted="false">"Atpakaļ uz darbvietu"</string>
     <string name="ui_cf9c7aa24a26" formatted="false">"Kad"</string>
     <string name="ui_a710ef69aa04" formatted="false">"Tikai ja"</string>
     <string name="ui_30094e0bec00" formatted="false">"Darīt"</string>
@@ -3380,7 +3380,7 @@
     <string name="ui_488c5c7d85a5" formatted="false">"Saruna atjaunota"</string>
     <string name="ui_64a721c7cbe8" formatted="false">"Šo sarunu neizdevās mainīt. Mēģiniet vēlreiz."</string>
     <string name="ui_848dad9ba0a4" formatted="false">"Dzēst šo sarunu?"</string>
-    <string name="ui_c0bacf57d866" formatted="false">"Saruna tiks pārvietota uz atkritni. To var atjaunot Piezīmju grāmatiņā."</string>
+    <string name="ui_c0bacf57d866" formatted="false">"Saruna tiks pārvietota uz atkritni. To var atjaunot darbvietā."</string>
     <string name="ui_780f6ca4950d" formatted="false">"Pievienot audeklam"</string>
     <string name="ui_ac796cdcc058" formatted="false">"Fotoattēls vai balss piezīme"</string>
     <string name="ui_f334fbf1cf5d" formatted="false">"Pievienot failu vai PDF"</string>
@@ -3389,7 +3389,7 @@
     <string name="ui_ddecdde28ad2" formatted="false">"Savienot atlasītās kartītes?"</string>
     <string name="ui_6e70c3805327" formatted="false">"Savienot atlasītās kartītes"</string>
     <string name="ui_a45aae80dcc1" formatted="false">"Saruna nav pieejama"</string>
-    <string name="ui_b932adb07c93" formatted="false">"Saruna var būt atkritnē. Atjaunojiet to Piezīmju grāmatiņā."</string>
+    <string name="ui_b932adb07c93" formatted="false">"Saruna var būt atkritnē. Atjaunojiet to darbvietā."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Laboratorijas, diagnostika un testēšanas vides"</string>
     <string name="ui_e38b9d46e214" formatted="false">"Uzdevuma norise"</string>
     <string name="ui_1017831c9d4b" formatted="false">"Darbība apstiprināta"</string>
@@ -3401,7 +3401,7 @@
     <string name="ui_07496b80e035" formatted="false">"Ekrāns pārbaudīts"</string>
     <string name="ui_93ff9273de4b" formatted="false">"Pulkstenis"</string>
     <string name="ui_c7a96053c42a" formatted="false">"Droši apturēts"</string>
-    <string name="ui_0b88ed8d68e3" formatted="false">"Šis pagaidu attēls vairs nav pieejams. Iepriekš saglabātie attēli joprojām ir Piezīmju grāmatiņā."</string>
+    <string name="ui_0b88ed8d68e3" formatted="false">"Šis pagaidu attēls vairs nav pieejams. Iepriekš saglabātie attēli joprojām ir darbvietā."</string>
     <string name="ui_4e9f2de31a0f" formatted="false">"Vajadzīga jūsu piekrišana"</string>
     <string name="ui_d68761cc1eb2" formatted="false">"Teksta lielums"</string>
     <string name="ui_dc273117482b" formatted="false">"Savienojumi"</string>
@@ -3453,7 +3453,7 @@
     <string name="ui_0e9b3412980a" formatted="false">"Atver foto…"</string>
     <string name="ui_b561d228a779" formatted="false">"Pārskatīt foto ar halo"</string>
     <string name="ui_cb4ad90f8c00" formatted="false">"Foto neizdevās atvērt. Pārbaudiet briļļu savienojumu un mēģiniet vēlreiz."</string>
-    <string name="ui_821a4cfb0ae6" formatted="false">"Foto paliek brillēs, līdz tos nokopējat. Nokopētie foto parādās Piezīmju blokā."</string>
+    <string name="ui_821a4cfb0ae6" formatted="false">"Foto paliek brillēs, līdz tos nokopējat. Nokopētie foto parādās darbvietā."</string>
     <string name="ui_938303489e2e" formatted="false">"Foto neizdevās nokopēt. Turiet brilles tuvumā un mēģiniet vēlreiz."</string>
     <string name="ui_6a82012fba40" formatted="false">"Kopē foto no brillēm…"</string>
     <string name="ui_19105f34e74b" formatted="false">"Gaida, līdz brilles atļaus foto pārsūtīšanu."</string>
@@ -3474,7 +3474,7 @@
     <string name="ui_188a87cc140f" formatted="false">"Pievienojiet šīs brilles, lai mainītu pogu darbības."</string>
     <string name="ui_8c0b88f93192" formatted="false">"Aizmirst šīs brilles…"</string>
     <string name="ui_a87ea0823bf4" formatted="false">"Aizmirst šīs brilles?"</string>
-    <string name="ui_5b5abdaa832e" formatted="false">"Saglabātais savienojums tiks noņemts. Šajā tālrunī nokopētie foto paliks Piezīmju blokā."</string>
+    <string name="ui_5b5abdaa832e" formatted="false">"Saglabātais savienojums tiks noņemts. Šajā tālrunī nokopētie foto paliks darbvietā."</string>
     <string name="ui_7adcf9a7aa3d" formatted="false">"Balss poga sāk sarunu ar halo."</string>
     <string name="ui_8dfdf27d662e" formatted="false">"Pieskārieni un vilkšana saglabā briļļu sākotnējās darbības."</string>
     <string name="ui_5c42836193fb" formatted="false">"Ieslēdziet pogas noteikšanu un nospiediet to, lai uzzinātu, vai tās darbību var mainīt."</string>
@@ -3656,7 +3656,7 @@
     <string name="ui_574bdd965ffe" formatted="false">"Izmanto sensitīvu informāciju"</string>
     <string name="ui_7e64bf746120" formatted="false">"Var veikt neatgriezeniskas izmaiņas"</string>
     <string name="ui_d5c25f87aeb6" formatted="false">"Aizstāt datus šajā tālrunī?"</string>
-    <string name="ui_48572c5c9b6e" formatted="false">"Tas aizstās piezīmju grāmatu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju."</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"Tas aizstās darbvietu, sarunas un atmiņu. Vispirms halo saglabās vietēju atkopšanas kopiju. Eksportējiet dublējumu, lai paturētu atsevišķu kopiju."</string>
     <string name="ui_ce1773ec5b12" formatted="false">"Aizstāt datus"</string>
     <string name="ui_aa0b0c0954a5" formatted="false">"halo pārtrauks saglabāt dublējumus šajā mapē. Esošie dublējumi paliks."</string>
     <string name="ui_0810464d4842" formatted="false">"Jūsu piezīmes, sarunas un atmiņa paliek šajā tālrunī. Izvēlieties, kur glabāt dublējumus."</string>
@@ -3796,7 +3796,7 @@
     <string name="ui_0592aa13f4c4" formatted="false">"Multivides kopīgošanu pārvalda slēdzis «Privāti / Mākonis» halo augšdaļā."</string>
     <string name="ui_b4ec9b047647" formatted="false">"Atvērt lietotnes Android atļaujas"</string>
     <string name="ui_44615c1caed8" formatted="false">"Vajadzīgs atsauces attēls"</string>
-    <string name="ui_fc1a856ef2c3" formatted="false">"Šim modelim vajadzīgs atsauces attēls. Atver attēlu piezīmju grāmatiņā vai uz audekla, lai to rediģētu."</string>
+    <string name="ui_fc1a856ef2c3" formatted="false">"Šim modelim vajadzīgs atsauces attēls. Atver attēlu darbvietā vai uz audekla, lai to rediģētu."</string>
     <string name="ui_5b064d896dea" formatted="false">"Šī attēla kopīgošana mākonī nav atļauta. Izmanto slēdzi «Privāti / Mākonis» halo augšdaļā."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Pārbaudīt pakalpojuma kredītu"</string>
     <string name="ui_c1329b9fbe25" formatted="false">"Attēlu modelis"</string>
@@ -3809,7 +3809,7 @@
     <string name="ui_19c6852ec231" formatted="false">"Izveidotā attēla priekšskatījums"</string>
     <string name="ui_33d40139aff3" formatted="false">"Uzņemtais attēls"</string>
     <string name="ui_644b4147de8a" formatted="false">"Ko halo darīt?"</string>
-    <string name="ui_0ae95a0a9345" formatted="false">"Piezīmju vēl nav. Vispirms saglabā šo attēlu piezīmju grāmatā."</string>
+    <string name="ui_0ae95a0a9345" formatted="false">"Piezīmju vēl nav. Vispirms saglabā šo attēlu darbvietā."</string>
     <string name="ui_fe062eaa6bcc" formatted="false">"Nav pieejamu attēlu modeļu. Pārbaudi pakalpojuma iestatījumus un atjaunini sarakstu."</string>
     <string name="ui_b7ae4027f7ea" formatted="false">"Neizdevās nolasīt sākotnējo attēlu. Aizver logu un izvēlies attēlu vēlreiz."</string>
     <string name="ui_4c8f9e8e326c" formatted="false">"Pievienotais attēls"</string>
@@ -3836,12 +3836,12 @@
     <string name="ui_583994585ca6" formatted="false">"Mācīties atlasīto apgabalu"</string>
     <string name="ui_0255090bcdcd" formatted="false">"Atvērt sākotnējo kanvu"</string>
     <string name="ui_9acf9dcc1388" formatted="false">"Atlasītais tintes apgabals ir mainījies. Atgriezieties kanvā un atlasiet to vēlreiz."</string>
-    <string name="ui_a45d0de015bd" formatted="false">"Šajā tālrunī lokāli meklējiet tekstu, attēlus, audio un īsus video atlasītajās Notebook, Canvas un Study sadaļās. Video tiek izmantoti tikai četri atlasīti kadri; audio celiņi netiek apstrādāti. halo nolasa tikai avotus, kurus atļaujat, veidojot vietējo meklēšanu."</string>
+    <string name="ui_a45d0de015bd" formatted="false">"Šajā tālrunī lokāli meklējiet tekstu, attēlus, audio un īsus video atlasītajās darbvietas, Canvas un Study sadaļās. Video tiek izmantoti tikai četri atlasīti kadri; audio celiņi netiek apstrādāti. halo nolasa tikai avotus, kurus atļaujat, veidojot vietējo meklēšanu."</string>
     <string name="ui_587513a42667" formatted="false">"Attēlu meklēšanai vajadzīgs pārbaudītais EmbeddingGemma 2 modelis. Noņemiet attēlu atlasi, lai izmantotu tikai teksta meklēšanu."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"Šis tālrunis nevar darbināt attēlu kodētāju ar CPU. Noņemiet attēlu atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
     <string name="ui_00add6a49156" formatted="false">"Šis attēla formāts vai izmērs nav atbalstīts vietējai meklēšanai. Izmantojiet PNG vai JPEG līdz 4 MiB."</string>
     <string name="ui_fffa5f83baf0" formatted="false">"Atlasītais attēls nav pieejams vai tam vairs nav atļaujas. Pievienojiet to vēlreiz vai izņemiet no vietējās meklēšanas."</string>
-    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 veido teksta, attēlu, audio un video reprezentācijas. halo var lokāli meklēt tekstā, skaidri atlasītos Notebook un Canvas attēlos, audio pielikumos un četros atlasītos īsu video kadros. Video skaņas celiņi netiek apstrādāti. Attēlu meklēšanā tiek izmantoti pilni PNG/JPEG faili, bet ieraksti tiek pārveidoti mono 16 kHz formātā. Multivides meklēšanai vajadzīgi saderīgi CPU kodētāji; kvalitāte un veiktspēja ierīcēs vēl nav pārbaudīta. Modelis atrod līdzīgu saturu, bet nerada attēlu aprakstus."</string>
+    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 veido teksta, attēlu, audio un video reprezentācijas. halo var lokāli meklēt tekstā, skaidri atlasītos darbvietas un Canvas attēlos, audio pielikumos un četros atlasītos īsu video kadros. Video skaņas celiņi netiek apstrādāti. Attēlu meklēšanā tiek izmantoti pilni PNG/JPEG faili, bet ieraksti tiek pārveidoti mono 16 kHz formātā. Multivides meklēšanai vajadzīgi saderīgi CPU kodētāji; kvalitāte un veiktspēja ierīcēs vēl nav pārbaudīta. Modelis atrod līdzīgu saturu, bet nerada attēlu aprakstus."</string>
     <string name="ui_e86583f2b967" formatted="false">"Audio meklēšanai vajadzīgs pārbaudītais EmbeddingGemma 2 modelis. Noņemiet audio atlasi, lai izmantotu tikai teksta meklēšanu."</string>
     <string name="ui_c85c887657ab" formatted="false">"Šis tālrunis nevar darbināt audio kodētāju ar CPU. Noņemiet audio atlasi, lai turpinātu tikai ar teksta meklēšanu."</string>
     <string name="ui_5bf1f3af4662" formatted="false">"Šis ieraksts nav atbalstīts vietējai meklēšanai. Izmantojiet audio failu līdz divām minūtēm un 12 MB."</string>

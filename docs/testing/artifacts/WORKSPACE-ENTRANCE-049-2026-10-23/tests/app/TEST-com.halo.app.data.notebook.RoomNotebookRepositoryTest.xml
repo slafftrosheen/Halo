@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.RoomNotebookRepositoryTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T07:12:01.564Z" hostname="MINIFOXEY" time="0.605">
+  <properties/>
+  <testcase name="createSaveAndLiteralSearchStayConsistent" classname="com.halo.app.data.notebook.RoomNotebookRepositoryTest" time="0.176"/>
+  <testcase name="draftSurvivesUntilCommitAndIsDeletedWithItsNote" classname="com.halo.app.data.notebook.RoomNotebookRepositoryTest" time="0.09"/>
+  <testcase name="inboxIsIndependentFromArchiveAndCanBeCleared" classname="com.halo.app.data.notebook.RoomNotebookRepositoryTest" time="0.074"/>
+  <testcase name="migrationFromVersionOnePreservesMemoryAndAddsNotebook" classname="com.halo.app.data.notebook.RoomNotebookRepositoryTest" time="0.183"/>
+  <testcase name="archiveTrashRestoreAndPermanentDeleteUseOneLifecycle" classname="com.halo.app.data.notebook.RoomNotebookRepositoryTest" time="0.075"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

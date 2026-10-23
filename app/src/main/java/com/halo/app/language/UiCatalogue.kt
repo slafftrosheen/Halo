@@ -2503,6 +2503,7 @@ private fun uiCataloguePart8(): Map<String, Int> = mapOf(
     "Allow display over other apps to show the orb." to R.string.ui_258cc57c4649,
     "Add Halo from your launcher's widget picker." to R.string.ui_18d1cefb5726,
     "Capture" to R.string.ui_1900b478a586,
+    "Quick capture" to R.string.workspace49_capture,
     "In chat (%1\$d)" to R.string.ui_3cc713512e21,
     "In chat" to R.string.ui_f33564f63ae0,
     "Group" to R.string.ui_34ca0e766088,

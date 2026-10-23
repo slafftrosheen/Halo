@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.search.WorkspaceSearchEngineTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T07:12:02.264Z" hostname="MINIFOXEY" time="0.558">
+  <properties/>
+  <testcase name="staleDerivedIndexCannotResurrectEditedOrRemovedBoardCard" classname="com.halo.app.data.search.WorkspaceSearchEngineTest" time="0.247"/>
+  <testcase name="indexAndSearchWorkspaceObject" classname="com.halo.app.data.search.WorkspaceSearchEngineTest" time="0.071"/>
+  <testcase name="searchesLongMultilingualContentBeyondFirstPageAndExcludesCredentialsAnywhere" classname="com.halo.app.data.search.WorkspaceSearchEngineTest" time="0.233"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

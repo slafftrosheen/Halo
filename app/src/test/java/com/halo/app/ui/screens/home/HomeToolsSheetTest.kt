@@ -32,9 +32,9 @@ class HomeToolsSheetTest {
             HomeToolsSheet(snapshot("work.notebook"), false, {}, { resolved++; HomeToolAction.NOTEBOOK },
                 { action = it }, {}, {}, initialGroup = HomeToolGroup.WORK, initialEntry = "work.notebook")
         } }
-        compose.onNodeWithText("Open Notebook").assertExists()
+        compose.onNodeWithText("Open Workspace").assertExists()
         assertEquals(0, resolved); assertNull(action)
-        compose.onNodeWithText("Open Notebook").performScrollTo().performClick()
+        compose.onNodeWithText("Open Workspace").performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(1, resolved); assertEquals(HomeToolAction.NOTEBOOK, action)
     }

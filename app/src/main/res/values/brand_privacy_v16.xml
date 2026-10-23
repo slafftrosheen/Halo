@@ -6,7 +6,7 @@
     <string name="brand_privacy_hero_detail">This page controls AI context sharing, not a complete network-traffic audit. Do not interpret the absence of a transfer count as proof that nothing left the phone.</string>
     <string name="brand_privacy_where">Where your things live</string>
     <string name="brand_privacy_conversations">Conversations</string>
-    <string name="brand_privacy_notebook">Notebook</string>
+    <string name="brand_privacy_notebook">Workspace</string>
     <string name="brand_privacy_local_storage">Stored locally in Halo</string>
     <string name="brand_privacy_remote">Remote AI</string>
     <string name="brand_privacy_remote_explanation">Used only when a remote provider is selected and relevant policies allow context</string>

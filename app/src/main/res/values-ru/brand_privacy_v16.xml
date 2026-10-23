@@ -6,7 +6,7 @@
     <string name="brand_privacy_hero_detail">Эта страница управляет передачей контекста ИИ, но не отслеживает весь сетевой трафик. Отсутствие счётчика не доказывает, что данные не покидали телефон.</string>
     <string name="brand_privacy_where">Где находятся ваши данные</string>
     <string name="brand_privacy_conversations">Разговоры</string>
-    <string name="brand_privacy_notebook">Блокнот</string>
+    <string name="brand_privacy_notebook">Рабочее пространство</string>
     <string name="brand_privacy_local_storage">Хранится локально в Halo</string>
     <string name="brand_privacy_remote">Удалённый ИИ</string>
     <string name="brand_privacy_remote_explanation">Используется, когда выбран удалённый провайдер и настройки разрешают передачу контекста</string>

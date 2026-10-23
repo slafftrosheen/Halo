@@ -19,7 +19,7 @@
     <string name="ui_524e15832df6" formatted="false">"Мой черновик"</string>
     <string name="ui_04ab681eaf7d" formatted="false">"Изменить идею"</string>
     <string name="ui_88984939a054" formatted="false">"Отбросить несохранённые изменения?"</string>
-    <string name="ui_7028bf28db81" formatted="false">"Будут отброшены только несохранённые изменения. Сохранённые проекты останутся в Блокноте."</string>
+    <string name="ui_7028bf28db81" formatted="false">"Будут отброшены только несохранённые изменения. Сохранённые проекты останутся в рабочем пространстве."</string>
     <string name="ui_8ce915057dc1" formatted="false">"Попробовать ответить самому"</string>
     <string name="ui_56b408f51622" formatted="false">"Скрыть черновик ответа"</string>
     <string name="ui_dce7095cb88e" formatted="false">"Попроси взрослого"</string>
@@ -778,7 +778,7 @@
     <string name="ui_331551b0de41" formatted="false">"Ожидает"</string>
     <string name="ui_87c2227b8434" formatted="false">"Не удалось выполнить шаг обучения; результат задачи сохранён"</string>
     <string name="ui_dc417ed8ebf8" formatted="false">"Самоанализ модели пропущен"</string>
-    <string name="ui_2b7d9d792580" formatted="false">"Открыть объект блокнота"</string>
+    <string name="ui_2b7d9d792580" formatted="false">"Открыть объект рабочего пространства"</string>
     <string name="ui_08b041935798" formatted="false">"Вы"</string>
     <string name="ui_6ba0bdeccb42" formatted="false">"Устройство"</string>
     <string name="ui_5537023f37dd" formatted="false">"Состояние изменилось"</string>
@@ -815,7 +815,7 @@
     <string name="ui_d2cef118ca5a" formatted="false">"Доступ потерян · выберите папку заново"</string>
     <string name="ui_311b3066b102" formatted="false">"Успешных резервных копий пока нет"</string>
     <string name="ui_02f71ba0ae71" formatted="false">"При отзыве доступа существующие резервные копии останутся в папке."</string>
-    <string name="ui_1eb16629ebc0" formatted="false">"Создать переносимую копию заметок, памяти и диалогов."</string>
+    <string name="ui_1eb16629ebc0" formatted="false">"Создать переносимую копию рабочего пространства, памяти и диалогов."</string>
     <string name="ui_f7f9e56ea8d1" formatted="false">"Перед заменой создаётся локальная защитная копия."</string>
     <string name="ui_62ae975d4b07" formatted="false">"Доступ к уведомлениям: "</string>
     <string name="ui_6b4f92f9ada2" formatted="false">"Настроить доставку уведомлений halo"</string>
@@ -827,7 +827,7 @@
     <string name="ui_dcb3ff29f478" formatted="false">"Уведомления приложений изначально заблокированы. Личные и секретные данные скрываются. Хранение: 24 часа. Сводки остаются локальными."</string>
     <string name="ui_0f5371bd2465" formatted="false">"Конфиденциальность, пакеты возможностей и расширенные настройки агентов"</string>
     <string name="ui_8f652f79fc3e" formatted="false">"Используется настройками локальной модели. Удалённые провайдеры сохраняют собственные настройки генерации."</string>
-    <string name="ui_deb55cc742c7" formatted="false">"Контекст по умолчанию временный. Снимки удаляются после взаимодействия; явно сохранённые изображения попадают в блокнот."</string>
+    <string name="ui_deb55cc742c7" formatted="false">"Контекст по умолчанию временный. Снимки удаляются после взаимодействия; явно сохранённые изображения попадают в рабочее пространство."</string>
     <string name="ui_33ca72d960bb" formatted="false">"Только для разрешённых приложений, чьё содержимое нельзя прочитать иначе. Предпочтителен семантический контекст экрана."</string>
     <string name="ui_1eeaaf07e2eb" formatted="false">"Разрешить ограниченное выполнение скриптов, если в статической странице мало читаемого текста."</string>
     <string name="ui_33059f720b9b" formatted="false">"Дочерние агенты работают только на чтение. Поиск, сравнение и анализ используют Reasoning; сводка и извлечение — Fast. Действуют текущие правила маршрутизации и облака."</string>
@@ -948,10 +948,10 @@
     <string name="ui_7b3ccdbbf566" formatted="false">"Пока нет значимой истории задач."</string>
     <string name="ui_8a4327addc21" formatted="false">"Оставить в истории обучения"</string>
     <string name="ui_4c4f10f8a4d0" formatted="false">"Не позволяет обычной очистке истории удалить эту задачу."</string>
-    <string name="ui_7b2d05e3e1af" formatted="false">"Память хранит подтверждённые вами сведения и отмеченные импорты. Обучение управляет предложениями. В блокноте находятся документы и файлы."</string>
+    <string name="ui_7b2d05e3e1af" formatted="false">"Память хранит подтверждённые вами сведения и отмеченные импорты. Обучение управляет предложениями. В рабочем пространстве находятся документы и файлы."</string>
     <string name="ui_2117986ea992" formatted="false">"Настройки обучения"</string>
     <string name="ui_1a7b7bc62d87" formatted="false">"Запомнить информацию"</string>
-    <string name="ui_83f7ee8a2d01" formatted="false">"Проверьте, что будет сохранено в памяти. Исходная заметка останется в блокноте."</string>
+    <string name="ui_83f7ee8a2d01" formatted="false">"Проверьте, что будет сохранено в памяти. Исходная заметка останется в рабочем пространстве."</string>
     <string name="ui_cd722d92bea3" formatted="false">"Заметка слишком длинная для одной записи памяти. Кратко сформулируйте факт, который halo должен запомнить."</string>
     <string name="ui_5add58c708d0" formatted="false">"Что halo должен запомнить?"</string>
     <string name="ui_985959785319" formatted="false">"Проект"</string>
@@ -1080,7 +1080,7 @@
     <string name="ui_446c267c2204" formatted="false">"Назначить роли"</string>
     <string name="ui_04903063b2fd" formatted="false">"Обновить список моделей"</string>
     <string name="ui_7989a7891ab6" formatted="false">"Выбрать модели генерации изображений"</string>
-    <string name="ui_8ef3bab9bfec" formatted="false">"Для создания изображений модель выбирается отдельно в холсте и блокноте."</string>
+    <string name="ui_8ef3bab9bfec" formatted="false">"Для создания изображений модель выбирается отдельно в холсте и рабочем пространстве."</string>
     <string name="ui_25debf3f0e04" formatted="false">"Просмотреть модели провайдера"</string>
     <string name="ui_6831ccaba643" formatted="false">"Управление локальными моделями"</string>
     <string name="ui_176695d85b77" formatted="false">"Проверка системы и диагностика"</string>
@@ -1202,7 +1202,7 @@
     <string name="ui_8dd020233bfd" formatted="false">"Исходный разговор недоступен."</string>
     <string name="ui_cde5efcc72da" formatted="false">"Продолжить текущий диалог"</string>
     <string name="ui_a1d26b85bf20" formatted="false">"Отменить задачу"</string>
-    <string name="ui_55e5b8eb9b3d" formatted="false">"Открыть в блокноте"</string>
+    <string name="ui_55e5b8eb9b3d" formatted="false">"Открыть в рабочем пространстве"</string>
     <string name="ui_b03a2f22a4e1" formatted="false">"Использовать обновлённый источник"</string>
     <string name="ui_58e909c0f4cc" formatted="false">"Сохранить изображение"</string>
     <string name="ui_5adc239482f7" formatted="false">"Конфиденциальность изображений"</string>
@@ -1211,8 +1211,8 @@
     <string name="ui_9daa3b4114fc" formatted="false">"Настройка изображений и моделей"</string>
     <string name="ui_0633628fd5ad" formatted="false">"Выбрать контекст"</string>
     <string name="ui_bf2f1b18c1a0" formatted="false">"Импортировать изображение"</string>
-    <string name="ui_0dec07abf92d" formatted="false">"Блокнот"</string>
-    <string name="ui_8932da95b7fc" formatted="false">"Сохранить результат в блокнот?"</string>
+    <string name="ui_0dec07abf92d" formatted="false">"Рабочее пространство"</string>
+    <string name="ui_8932da95b7fc" formatted="false">"Сохранить результат в рабочее пространство?"</string>
     <string name="ui_4ae6f416a5a4" formatted="false">"Результат сгенерирован моделью · сохранение не подтверждает достоверность"</string>
     <string name="ui_2b065c7c9ce4" formatted="false">"Сегодня"</string>
     <string name="ui_e68cbfcf62e4" formatted="false">"Всё просмотрено"</string>
@@ -1324,8 +1324,8 @@
     <string name="ui_afb9ab558853" formatted="false">"Не удалось запустить голосовой режим. Попробуйте ещё раз."</string>
     <string name="ui_af5016d82624" formatted="false">"Голосовой режим включён. halo снова будет слушать после голосового ответа."</string>
     <string name="ui_6f8b9e7b5034" formatted="false">"Голосовой режим включён. Прослушивание приостановлено."</string>
-    <string name="ui_6fb7365efc3c" formatted="false">"Сохранить в блокнот"</string>
-    <string name="ui_fcbc94dc1e25" formatted="false">"Не удалось сохранить в блокнот"</string>
+    <string name="ui_6fb7365efc3c" formatted="false">"Сохранить в рабочее пространство"</string>
+    <string name="ui_fcbc94dc1e25" formatted="false">"Не удалось сохранить в рабочее пространство"</string>
     <string name="ui_40893b155e07" formatted="false">"Проверьте запросы и узнайте, что произошло."</string>
     <string name="ui_fc63b46c9f3a" formatted="false">"Действий пока нет. Задайте вопрос halo на главном экране."</string>
     <string name="ui_7333a4652b84" formatted="false">"Сейчас нет ожидающих действий."</string>
@@ -1694,10 +1694,10 @@
     <string name="ui_1f1f7f3a89fb" formatted="false">"Формат изображения"</string>
     <string name="ui_5c874c87eb42" formatted="false">"PNG сохраняет прозрачность, JPEG использует белый фон."</string>
     <string name="ui_75c5986a189a" formatted="false">"Сохранить новое изображение"</string>
-    <string name="ui_9a9ace7c1a03" formatted="false">"Отредактированное изображение сохранено в Блокноте как новый элемент."</string>
+    <string name="ui_9a9ace7c1a03" formatted="false">"Отредактированное изображение сохранено в рабочем пространстве как новый элемент."</string>
     <string name="ui_91fa2dd9030b" formatted="false">"Не удалось завершить обработку изображения. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
     <string name="ui_7397326d2d90" formatted="false">"Извлечь цветовую палитру"</string>
-    <string name="ui_5d5a6923f356" formatted="false">"Цветовая палитра сохранена в Блокноте как заметка."</string>
+    <string name="ui_5d5a6923f356" formatted="false">"Цветовая палитра сохранена в рабочем пространстве как заметка."</string>
     <string name="ui_4a6b3d18eb2c" formatted="false">"Не удалось извлечь цвета. Оригинал не изменён; проверьте «Входящие» перед повтором."</string>
     <string name="ui_b5d02c5ded65" formatted="false">"Обрабатываем изображение на устройстве…"</string>
     <string name="ui_d185969bb0d3" formatted="false">"Объединить изображения"</string>
@@ -1712,23 +1712,23 @@
     <string name="ui_aac7e89fcd0e" formatted="false">"Прозрачный"</string>
     <string name="ui_da938a727367" formatted="false">"Изображения располагаются в порядке чтения Canvas: сверху вниз, затем слева направо."</string>
     <string name="ui_27ad8eb8232c" formatted="false">"Сохранить объединённое изображение"</string>
-    <string name="ui_83847a2b28a4" formatted="false">"Объединённое изображение сохранено в Блокноте."</string>
+    <string name="ui_83847a2b28a4" formatted="false">"Объединённое изображение сохранено в рабочем пространстве."</string>
     <string name="ui_4b5a5fa9ad47" formatted="false">"Не удалось объединить изображения. Оригиналы не изменены; проверьте «Входящие» перед повторной попыткой."</string>
     <string name="ui_194cfd210b75" formatted="false">"Извлечь страницу PDF"</string>
-    <string name="ui_7d29b1002f19" formatted="false">"Сохраните одну страницу PDF как новое изображение в Блокноте. Оригинал не изменится."</string>
+    <string name="ui_7d29b1002f19" formatted="false">"Сохраните одну страницу PDF как новое изображение в рабочем пространстве. Оригинал не изменится."</string>
     <string name="ui_9046da16aea9" formatted="false">"Страницы"</string>
     <string name="ui_05fa2e3b0a10" formatted="false">"Номер страницы"</string>
     <string name="ui_b269a68f045a" formatted="false">"Предпросмотр PDF недоступен"</string>
     <string name="ui_25b5f33b67ff" formatted="false">"Выберите существующую страницу PDF."</string>
     <string name="ui_dfc74370203a" formatted="false">"Сохранить изображение страницы"</string>
-    <string name="ui_ba394bc0d3a4" formatted="false">"Страница PDF сохранена в Блокноте как изображение."</string>
+    <string name="ui_ba394bc0d3a4" formatted="false">"Страница PDF сохранена в рабочем пространстве как изображение."</string>
     <string name="ui_fa524a1fb9b0" formatted="false">"Не удалось извлечь страницу PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
     <string name="ui_e868ba77eded" formatted="false">"Выберите до шести страниц PDF для сохранения в одной заметке. Оригинал не изменится."</string>
     <string name="ui_111d4ca0505b" formatted="false">"Страницы для извлечения (например, 1,3-5)"</string>
     <string name="ui_9dd05754a493" formatted="false">"Выберите от 1 до 6 разных существующих страниц."</string>
     <string name="ui_ae3fa1a2c36e" formatted="false">"Выбрано страниц"</string>
     <string name="ui_c0729795e4ec" formatted="false">"Сохранить страницы как изображения"</string>
-    <string name="ui_07fb1eb9229a" formatted="false">"Страницы PDF сохранены в Блокноте."</string>
+    <string name="ui_07fb1eb9229a" formatted="false">"Страницы PDF сохранены в рабочем пространстве."</string>
     <string name="ui_6d2aa3e9432c" formatted="false">"Не удалось извлечь все страницы PDF. Оригинал не изменён; проверьте «Входящие» перед повторной попыткой."</string>
     <string name="ui_dbc7c3ff9962" formatted="false">"Порядок изображений"</string>
     <string name="ui_0b8f398a7a70" formatted="false">"Порядок изображений в предпросмотре соответствует списку выше."</string>
@@ -1738,7 +1738,7 @@
     <string name="ui_a5875e58ee3c" formatted="false">"Не удалось загрузить вложенные изображения."</string>
     <string name="ui_567bcf9287a9" formatted="false">"В выбранных карточках нет изображений."</string>
     <string name="ui_2eb03e4246d2" formatted="false">"Импортированное изображение"</string>
-    <string name="ui_1b8394275f47" formatted="false">"Вложение Блокнота"</string>
+    <string name="ui_1b8394275f47" formatted="false">"Вложение рабочего пространства"</string>
     <string name="ui_80e25d621620" formatted="false">"Перейти к предпросмотру"</string>
     <string name="ui_e0a441205eca" formatted="false">"Коллаж с главным изображением"</string>
     <string name="ui_e536acc1978c" formatted="false">"Первое изображение — главное. Изображения обрезаются по центру для заполнения."</string>
@@ -2006,8 +2006,8 @@
     <string name="ui_006e1fbb95ac" formatted="false">"Добавить материал"</string>
     <string name="ui_e18896dee230" formatted="false">"Нажмите на карточку для выбора. Удерживайте и перетащите для перемещения. Масштабируйте двумя пальцами; двигайте фон для прокрутки."</string>
     <string name="ui_ba988101c7a3" formatted="false">"Выбрано карточек: %1$d"</string>
-    <string name="ui_0899eeebe165" formatted="false">"Сохраняем в Блокнот…"</string>
-    <string name="ui_7d5459cfa1b7" formatted="false">"Вернитесь в Блокнот, чтобы выбрать другой холст. Остальные материалы не изменены."</string>
+    <string name="ui_0899eeebe165" formatted="false">"Сохраняем в рабочее пространство…"</string>
+    <string name="ui_7d5459cfa1b7" formatted="false">"Вернитесь в рабочее пространство, чтобы выбрать другой холст. Остальные материалы не изменены."</string>
     <string name="ui_06f2fb1c0a6f" formatted="false">"Переписать выбранную текстовую карточку."</string>
     <string name="ui_d62aeb730dc8" formatted="false">"Использовать текст и подписи связей на этом холсте."</string>
     <string name="ui_04290d3c9842" formatted="false">"Проверить черновик ИИ"</string>
@@ -2196,7 +2196,7 @@
     <string name="ui_7faa9446189c" formatted="false">"Последнее резервное копирование не удалось. Проверьте доступ к папке и свободное место."</string>
     <string name="ui_8b45bb20e077" formatted="false">"Обучение"</string>
     <string name="ui_9087f9cbaa17" formatted="false">"Локальное осмысление позволяет подходящей модели на устройстве предлагать воспоминания после значимых задач. По умолчанию выключено, работает только при подходящих условиях и требует вашего подтверждения."</string>
-    <string name="ui_081b0b3ac528" formatted="false">"Память хранит сохранённую информацию. Обучение управляет предложениями. Блокнот хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты."</string>
+    <string name="ui_081b0b3ac528" formatted="false">"Память хранит сохранённую информацию. Обучение управляет предложениями. Рабочее пространство хранит документы и файлы. История обучения описывает прошлые задачи, а не текущие факты."</string>
     <string name="ui_a34049538d9f" formatted="false">"Поиск в памяти зависит от доступных возможностей поиска и ваших настроек приватности."</string>
     <string name="ui_4d289c1a05ef" formatted="false">"Загруженные модели удалены"</string>
     <string name="ui_3bc8c6ce7691" formatted="false">"Не согласовано"</string>
@@ -2216,7 +2216,7 @@
     <string name="ui_4d7e5b5b90b1" formatted="false">"Эта резервная копия создана более новой версией halo"</string>
     <string name="ui_5277abbcdb93" formatted="false">"Это подключение не зашифровано. Используйте HTTP только для своего сервера в доверенной локальной сети."</string>
     <string name="ui_01c61c885b23" formatted="false">"Для интеграции потребуется повторная авторизация. Данные удалённого сервера сохраняются."</string>
-    <string name="ui_f1e6c2dc638f" formatted="false">"Это заменит текущий Блокнот, разговоры и память. halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив halo."</string>
+    <string name="ui_f1e6c2dc638f" formatted="false">"Это заменит текущий рабочее пространство, разговоры и память. halo сначала создаст локальную страховочную копию. Для копии вне этой установки экспортируйте отдельный архив halo."</string>
     <string name="ui_9430efee3c04" formatted="false">"Доверие: %1$s"</string>
     <string name="ui_4646b6711d1d" formatted="false">"Использовать сохранённую память в разговорах"</string>
     <string name="ui_18ef6af87453" formatted="false">"Использование памяти"</string>
@@ -2280,7 +2280,7 @@
     <string name="ui_50017ea75995" formatted="false">"Свои секунды"</string>
     <string name="ui_00f5157836c5" formatted="false">"Разрешение без запросов применяет сохранённую политику ко всем навыкам. Разрешения Android запрашиваются отдельно, а действия с обязательным подтверждением по-прежнему его требуют."</string>
     <string name="ui_7ae9c639c354" formatted="false">"ElevenLabs · "</string>
-    <string name="ui_a447ada7678e" formatted="false">"Простые задачи не учитываются. Значимые завершённые задачи создают записи. Необязательное локальное осмысление ограничено, прерываемо и не использует инструменты. Предложенные воспоминания и поведение требуют проверки в Блокноте."</string>
+    <string name="ui_a447ada7678e" formatted="false">"Простые задачи не учитываются. Значимые завершённые задачи создают записи. Необязательное локальное осмысление ограничено, прерываемо и не использует инструменты. Предложенные воспоминания и поведение требуют проверки в рабочем пространстве."</string>
     <string name="ui_cffce8cb5595" formatted="false">"Опишите изменение, просмотрите результат и сохраните. Оригинал останется нетронутым."</string>
     <string name="ui_f67e549c8680" formatted="false">"Предпросмотр изменений"</string>
     <string name="ui_49e49bb4401e" formatted="false">"Создать"</string>
@@ -2311,7 +2311,7 @@
     <string name="ui_8b14bde391c7" formatted="false">"Результат операции с данными"</string>
     <string name="ui_753faf7fceae" formatted="false">"Загруженные файлы моделей будут удалены. Перед использованием локальных моделей скачайте их снова. Заметки и разговоры сохраняются."</string>
     <string name="ui_e983dee4cc9a" formatted="false">"Сохранённые диагностические файлы будут удалены. Заметки, разговоры и резервные копии сохраняются."</string>
-    <string name="ui_ee058baaafb9" formatted="false">"Предыдущая локальная копия заменит текущий Блокнот, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны."</string>
+    <string name="ui_ee058baaafb9" formatted="false">"Предыдущая локальная копия заменит текущий рабочее пространство, память и разговоры. Сначала экспортируйте текущие изменения, если они нужны."</string>
     <string name="ui_e43690e26d1f" formatted="false">"Временные файлы и проверяемая резервная копия будут удалены. Сохранённое содержимое рабочего пространства сохраняется."</string>
     <string name="ui_3fd737818828" formatted="false">"После прерывания введите пароль экспорта снова"</string>
     <string name="ui_c49a47ab9862" formatted="false">"Операция не завершилась. Проверьте доступ, свободное место и пароль, затем повторите попытку."</string>
@@ -2388,7 +2388,7 @@
     <string name="ui_5dd7c9692be8" formatted="false">"Английский и китайский на этом телефоне. Загрузите полный пакет голоса (365 МБ). Для латышского и русского используется речь Android, если включено резервное озвучивание."</string>
     <string name="ui_ecced17b7f72" formatted="false">"Английский и китайский"</string>
     <string name="ui_eda32f284995" formatted="false">"Только английский"</string>
-    <string name="ui_6ffb5aacf2c4" formatted="false">"Открыть блокнот"</string>
+    <string name="ui_6ffb5aacf2c4" formatted="false">"Открыть рабочее пространство"</string>
     <string name="ui_5b034ef5a489" formatted="false">"Позвонить на %1$s?"</string>
     <string name="ui_579f209c033d" formatted="false">"Проверьте точный номер. Android может запросить доступ к телефону. Разрешение само по себе не начинает звонок."</string>
     <string name="ui_d6e645b7d2b2" formatted="false">"Позвонить"</string>
@@ -2584,7 +2584,7 @@
     <string name="ui_e53974be2c9c" formatted="false">"Шаг за шагом."</string>
     <string name="ui_2838117f8536" formatted="false">"Открыть источник · ссылка: %1$s"</string>
     <string name="ui_6d6f77764a96" formatted="false">"По каким материалам будем учиться?"</string>
-    <string name="ui_bdbc7afff3ef" formatted="false">"Из вашего блокнота"</string>
+    <string name="ui_bdbc7afff3ef" formatted="false">"Из вашего рабочего пространства"</string>
     <string name="ui_ee69519aac49" formatted="false">"Заметки, холсты и чаты"</string>
     <string name="ui_7bc3f18cd0a1" formatted="false">"PDF, документ или изображение"</string>
     <string name="ui_fdfbb90a31cc" formatted="false">"Возраст, языки и стиль обучения"</string>
@@ -2813,15 +2813,15 @@
     <string name="ui_d0f75f53ae79" formatted="false">"Для взрослых"</string>
     <string name="ui_e2556ed76a61" formatted="false">"Не удалось сохранить фото. Попробуй ещё раз."</string>
     <string name="ui_e7f85ab594f5" formatted="false">"Черновик готов. Проверь его перед сохранением."</string>
-    <string name="ui_0e52f12e6f1c" formatted="false">"Не удалось восстановить проект. Сохранённые заметки остались в блокноте."</string>
+    <string name="ui_0e52f12e6f1c" formatted="false">"Не удалось восстановить проект. Сохранённые заметки остались в рабочем пространстве."</string>
     <string name="ui_9fce5fa3c485" formatted="false">"Это заняло слишком много времени. Идея сохранена: попробуй ещё раз или напиши сам."</string>
     <string name="ui_71a4d86f3628" formatted="false">"Локальная модель не смогла создать черновик. Настрой модель на устройстве или напиши сам. В облако ничего не отправлено."</string>
     <string name="ui_27288af33453" formatted="false">"Остановлено. Предыдущий черновик сохранён."</string>
-    <string name="ui_0d51a417b123" formatted="false">"Сохранено в блокнот."</string>
+    <string name="ui_0d51a417b123" formatted="false">"Сохранено в рабочее пространство."</string>
     <string name="ui_5ba9f983faea" formatted="false">"Не удалось сохранить. Черновик остался здесь; попробуй ещё раз."</string>
     <string name="ui_1bdff2a51bb4" formatted="false">"Черновик удалён. Сохранённые заметки остались."</string>
     <string name="ui_44856bd88ae1" formatted="false">"Не удалось удалить черновик. Попробуй ещё раз."</string>
-    <string name="ui_6c94d6afc9e9" formatted="false">"Не удалось сохранить черновик на устройстве. Сохрани копию в блокнот."</string>
+    <string name="ui_6c94d6afc9e9" formatted="false">"Не удалось сохранить черновик на устройстве. Сохрани копию в рабочее пространство."</string>
     <string name="ui_828aa165dc9f" formatted="false">"Не удалось сохранить этот шаг. Попробуй ещё раз."</string>
     <string name="ui_d7750d0f16db" formatted="false">"Выберите голос на устройстве в настройках для взрослых. Детское чтение остаётся приватным."</string>
     <string name="ui_fbdd04608598" formatted="false">"Отменить подготовку голоса"</string>
@@ -3036,7 +3036,7 @@
     <string name="ui_128202399927" formatted="false">"Посмотреть локальные модели"</string>
     <string name="ui_d47872d6fa8e" formatted="false">"Использовать для локального поиска"</string>
     <string name="ui_ec5f5466e5dc" formatted="false">"Выберите доступные halo материалы"</string>
-    <string name="ui_3ce934646c98" formatted="false">"Нет доступных источников из Notebook, Canvas, Study или медиа. Добавьте источник или вернитесь в библиотеку, чтобы выбрать материалы."</string>
+    <string name="ui_3ce934646c98" formatted="false">"Нет доступных источников из рабочего пространства, Canvas, Study или медиа. Добавьте источник или вернитесь в библиотеку, чтобы выбрать материалы."</string>
     <string name="ui_aec8173d0ae8" formatted="false">"В приватный поисковый индекс попадут только отмеченные материалы."</string>
     <string name="ui_5044bf6d51e9" formatted="false">"Разрешить источники и создать локальный поиск"</string>
     <string name="ui_986855e1bf05" formatted="false">"Обновить индекс локального поиска"</string>
@@ -3155,7 +3155,7 @@
     <string name="ui_f1bd02f7ccbf" formatted="false">"Уменьшать яркость ночью"</string>
     <string name="ui_c8a9cc92f54a" formatted="false">"Часы и дата"</string>
     <string name="ui_4d8d5ea3b434" formatted="false">"Чтение и интересы"</string>
-    <string name="ui_c345ddcf3224" formatted="false">"Продолжить в блокноте"</string>
+    <string name="ui_c345ddcf3224" formatted="false">"Продолжить в рабочем пространстве"</string>
     <string name="ui_399e296978e1" formatted="false">"Карточка добавлена"</string>
     <string name="ui_b30a44c0f684" formatted="false">"Карточка перемещена"</string>
     <string name="ui_59f297ef77e8" formatted="false">"Карточка обновлена"</string>
@@ -3176,7 +3176,7 @@
     <string name="ui_dd541994468a" formatted="false">"Приложения и сервисы"</string>
     <string name="ui_83b9e5c1b14b" formatted="false">"Действия, которые ваши приложения предоставляют halo."</string>
     <string name="ui_72daff24bece" formatted="false">"Доступные действия в ваших приложениях"</string>
-    <string name="ui_9550bda45c3e" formatted="false">"Действия приложений пока недоступны. Вы можете задавать halo вопросы и работать в блокноте."</string>
+    <string name="ui_9550bda45c3e" formatted="false">"Действия приложений пока недоступны. Вы можете задавать halo вопросы и работать в рабочем пространстве."</string>
     <string name="ui_1997dfb83b61" formatted="false">"Приложение на этом телефоне"</string>
     <string name="ui_7a7189fc4f96" formatted="false">"Доступно действий: %1$d"</string>
     <string name="ui_6c2d402a76d1" formatted="false">"Действий, доступных halo в ваших приложениях: %1$d"</string>
@@ -3307,7 +3307,7 @@
     <string name="ui_0333c2d158f3" formatted="false">"halo мог бы запомнить: %1$d"</string>
     <string name="ui_3373a168ec11" formatted="false">"Только если вы согласитесь"</string>
     <string name="ui_11e9037f6de2" formatted="false">"Открыть библиотеку"</string>
-    <string name="ui_4b88b3f65725" formatted="false">"Назад в блокнот"</string>
+    <string name="ui_4b88b3f65725" formatted="false">"Назад в рабочее пространство"</string>
     <string name="ui_cf9c7aa24a26" formatted="false">"Когда"</string>
     <string name="ui_a710ef69aa04" formatted="false">"Только если"</string>
     <string name="ui_30094e0bec00" formatted="false">"Сделать"</string>
@@ -3380,7 +3380,7 @@
     <string name="ui_488c5c7d85a5" formatted="false">"Чат восстановлен"</string>
     <string name="ui_64a721c7cbe8" formatted="false">"Не удалось изменить этот чат. Попробуйте снова."</string>
     <string name="ui_848dad9ba0a4" formatted="false">"Удалить этот чат?"</string>
-    <string name="ui_c0bacf57d866" formatted="false">"Чат переместится в корзину. Его можно восстановить в Блокноте."</string>
+    <string name="ui_c0bacf57d866" formatted="false">"Чат переместится в корзину. Его можно восстановить в рабочем пространстве."</string>
     <string name="ui_780f6ca4950d" formatted="false">"Добавить на холст"</string>
     <string name="ui_ac796cdcc058" formatted="false">"Фото или голосовая заметка"</string>
     <string name="ui_f334fbf1cf5d" formatted="false">"Добавить файл или PDF"</string>
@@ -3389,7 +3389,7 @@
     <string name="ui_ddecdde28ad2" formatted="false">"Соединить выбранные карточки?"</string>
     <string name="ui_6e70c3805327" formatted="false">"Соединить выбранные карточки"</string>
     <string name="ui_a45aae80dcc1" formatted="false">"Чат недоступен"</string>
-    <string name="ui_b932adb07c93" formatted="false">"Чат может быть в корзине. Восстановите его в Блокноте."</string>
+    <string name="ui_b932adb07c93" formatted="false">"Чат может быть в корзине. Восстановите его в рабочем пространстве."</string>
     <string name="ui_2e4e0490d05d" formatted="false">"Лаборатории, диагностика и тестовые среды"</string>
     <string name="ui_e38b9d46e214" formatted="false">"Ход выполнения"</string>
     <string name="ui_1017831c9d4b" formatted="false">"Действие подтверждено"</string>
@@ -3401,7 +3401,7 @@
     <string name="ui_07496b80e035" formatted="false">"Экран проверен"</string>
     <string name="ui_93ff9273de4b" formatted="false">"Часы"</string>
     <string name="ui_c7a96053c42a" formatted="false">"Безопасно остановлено"</string>
-    <string name="ui_0b88ed8d68e3" formatted="false">"Это временное изображение больше недоступно. Сохранённые ранее изображения по-прежнему находятся в Блокноте."</string>
+    <string name="ui_0b88ed8d68e3" formatted="false">"Это временное изображение больше недоступно. Сохранённые ранее изображения по-прежнему находятся в рабочем пространстве."</string>
     <string name="ui_4e9f2de31a0f" formatted="false">"Нужно ваше согласие"</string>
     <string name="ui_d68761cc1eb2" formatted="false">"Размер текста"</string>
     <string name="ui_dc273117482b" formatted="false">"Подключения"</string>
@@ -3453,7 +3453,7 @@
     <string name="ui_0e9b3412980a" formatted="false">"Открываю фото…"</string>
     <string name="ui_b561d228a779" formatted="false">"Проверить фото с halo"</string>
     <string name="ui_cb4ad90f8c00" formatted="false">"Не удалось открыть фото. Проверьте подключение очков и попробуйте снова."</string>
-    <string name="ui_821a4cfb0ae6" formatted="false">"Фото остаются на очках, пока вы их не скопируете. Скопированные фото появятся в Блокноте."</string>
+    <string name="ui_821a4cfb0ae6" formatted="false">"Фото остаются на очках, пока вы их не скопируете. Скопированные фото появятся в рабочем пространстве."</string>
     <string name="ui_938303489e2e" formatted="false">"Не удалось скопировать фото. Держите очки рядом и попробуйте снова."</string>
     <string name="ui_6a82012fba40" formatted="false">"Копирую фото с очков…"</string>
     <string name="ui_19105f34e74b" formatted="false">"Жду разрешения очков на передачу фото."</string>
@@ -3474,7 +3474,7 @@
     <string name="ui_188a87cc140f" formatted="false">"Подключите эти очки, чтобы настроить их кнопки."</string>
     <string name="ui_8c0b88f93192" formatted="false">"Забыть эти очки…"</string>
     <string name="ui_a87ea0823bf4" formatted="false">"Забыть эти очки?"</string>
-    <string name="ui_5b5abdaa832e" formatted="false">"Сохранённое подключение будет удалено. Фото, уже скопированные на телефон, останутся в Блокноте."</string>
+    <string name="ui_5b5abdaa832e" formatted="false">"Сохранённое подключение будет удалено. Фото, уже скопированные на телефон, останутся в рабочем пространстве."</string>
     <string name="ui_7adcf9a7aa3d" formatted="false">"Кнопка голоса начинает разговор с halo."</string>
     <string name="ui_8dfdf27d662e" formatted="false">"Касания и смахивания сохраняют штатные действия очков."</string>
     <string name="ui_5c42836193fb" formatted="false">"Включите определение и нажмите кнопку, чтобы узнать, можно ли изменить её действие."</string>
@@ -3656,7 +3656,7 @@
     <string name="ui_574bdd965ffe" formatted="false">"Использует конфиденциальную информацию"</string>
     <string name="ui_7e64bf746120" formatted="false">"Может внести необратимое изменение"</string>
     <string name="ui_d5c25f87aeb6" formatted="false">"Заменить данные на этом телефоне?"</string>
-    <string name="ui_48572c5c9b6e" formatted="false">"Это заменит блокнот, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно."</string>
+    <string name="ui_48572c5c9b6e" formatted="false">"Это заменит рабочее пространство, разговоры и память. Сначала halo сохранит локальную копию для восстановления. Экспортируйте резервную копию, чтобы хранить её отдельно."</string>
     <string name="ui_ce1773ec5b12" formatted="false">"Заменить данные"</string>
     <string name="ui_aa0b0c0954a5" formatted="false">"halo перестанет сохранять резервные копии в эту папку. Уже сохранённые копии останутся."</string>
     <string name="ui_0810464d4842" formatted="false">"Заметки, разговоры и память хранятся на этом телефоне. Выберите, где сохранять резервные копии."</string>
@@ -3796,7 +3796,7 @@
     <string name="ui_0592aa13f4c4" formatted="false">"Передачей медиа управляет переключатель «Приватно / Облако» вверху halo."</string>
     <string name="ui_b4ec9b047647" formatted="false">"Открыть разрешения приложения в Android"</string>
     <string name="ui_44615c1caed8" formatted="false">"Нужно исходное изображение"</string>
-    <string name="ui_fc1a856ef2c3" formatted="false">"Этой модели нужно исходное изображение. Открой изображение в блокноте или на холсте для редактирования."</string>
+    <string name="ui_fc1a856ef2c3" formatted="false">"Этой модели нужно исходное изображение. Открой изображение в рабочем пространстве или на холсте для редактирования."</string>
     <string name="ui_5b064d896dea" formatted="false">"Облачная передача этого изображения недоступна. Используй переключатель «Приватно / Облако» вверху halo."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Проверить средства у провайдера"</string>
     <string name="ui_c1329b9fbe25" formatted="false">"Модель изображений"</string>
@@ -3809,7 +3809,7 @@
     <string name="ui_19c6852ec231" formatted="false">"Предпросмотр созданного изображения"</string>
     <string name="ui_33d40139aff3" formatted="false">"Полученное изображение"</string>
     <string name="ui_644b4147de8a" formatted="false">"Что сделать halo?"</string>
-    <string name="ui_0ae95a0a9345" formatted="false">"Заметок пока нет. Сначала сохраните изображение в блокнот."</string>
+    <string name="ui_0ae95a0a9345" formatted="false">"Заметок пока нет. Сначала сохраните изображение в рабочее пространство."</string>
     <string name="ui_fe062eaa6bcc" formatted="false">"Нет доступных моделей изображений. Проверьте настройки провайдера и обновите список."</string>
     <string name="ui_b7ae4027f7ea" formatted="false">"Не удалось прочитать исходное изображение. Закройте окно и выберите изображение ещё раз."</string>
     <string name="ui_4c8f9e8e326c" formatted="false">"Прикреплённое изображение"</string>
@@ -3836,12 +3836,12 @@
     <string name="ui_583994585ca6" formatted="false">"Изучить выделенную область"</string>
     <string name="ui_0255090bcdcd" formatted="false">"Открыть исходный холст"</string>
     <string name="ui_9acf9dcc1388" formatted="false">"Выбранная область рисунка изменилась. Вернитесь на холст и выделите её снова."</string>
-    <string name="ui_a45d0de015bd" formatted="false">"Ищите локально на этом телефоне текст, изображения, аудио и короткие видео из выбранных разделов Notebook, Canvas и Study. Для видео используются только четыре выбранных кадра; звуковые дорожки не обрабатываются. halo читает только источники, разрешённые вами при создании локального поиска."</string>
+    <string name="ui_a45d0de015bd" formatted="false">"Ищите локально на этом телефоне текст, изображения, аудио и короткие видео из выбранных разделов рабочего пространства, Canvas и Study. Для видео используются только четыре выбранных кадра; звуковые дорожки не обрабатываются. halo читает только источники, разрешённые вами при создании локального поиска."</string>
     <string name="ui_587513a42667" formatted="false">"Для поиска по изображениям нужна проверенная модель EmbeddingGemma 2. Снимите выбор с изображений, чтобы искать только по тексту."</string>
     <string name="ui_6c8f6c2d66fa" formatted="false">"Этот телефон не может запускать обработчик изображений на CPU. Снимите выбор с изображений, чтобы продолжить поиск только по тексту."</string>
     <string name="ui_00add6a49156" formatted="false">"Этот формат или размер изображения не поддерживается для локального поиска. Используйте PNG или JPEG размером до 4 МиБ."</string>
     <string name="ui_fffa5f83baf0" formatted="false">"Выбранное изображение недоступно или доступ к нему отозван. Прикрепите его снова или удалите из локального поиска."</string>
-    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 создаёт представления текста, изображений, аудио и видео. halo может локально искать по тексту, явно выбранным изображениям из Notebook и Canvas, аудиовложениям и четырём выбранным кадрам из коротких видео. Звуковые дорожки видео не обрабатываются. Для поиска по изображениям используются полные файлы PNG/JPEG, а записи преобразуются в моно 16 кГц. Для мультимедийного поиска нужны совместимые CPU-кодировщики; качество и скорость на устройствах ещё не проверены. Модель находит похожее содержимое, но не создаёт описания изображений."</string>
+    <string name="ui_5ffa104f68c2" formatted="false">"EmbeddingGemma 2 создаёт представления текста, изображений, аудио и видео. halo может локально искать по тексту, явно выбранным изображениям из рабочего пространства и Canvas, аудиовложениям и четырём выбранным кадрам из коротких видео. Звуковые дорожки видео не обрабатываются. Для поиска по изображениям используются полные файлы PNG/JPEG, а записи преобразуются в моно 16 кГц. Для мультимедийного поиска нужны совместимые CPU-кодировщики; качество и скорость на устройствах ещё не проверены. Модель находит похожее содержимое, но не создаёт описания изображений."</string>
     <string name="ui_e86583f2b967" formatted="false">"Для поиска по аудио нужна проверенная модель EmbeddingGemma 2. Снимите выбор с аудио, чтобы искать только по тексту."</string>
     <string name="ui_c85c887657ab" formatted="false">"Этот телефон не может запускать аудиокодировщик на CPU. Снимите выбор с аудио, чтобы продолжить поиск только по тексту."</string>
     <string name="ui_5bf1f3af4662" formatted="false">"Эта запись не поддерживается для локального поиска. Используйте аудиофайл длительностью до двух минут и размером до 12 МБ."</string>

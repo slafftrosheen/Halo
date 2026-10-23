@@ -281,7 +281,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 else -> "file"
             }
             ScreenDisplay("Continue", note.title, "Saved on this phone", "notebook/$kind/${android.net.Uri.encode(note.id.value)}", true, sourceSummary = true)
-        } ?: ScreenDisplay("Notebook", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
+        } ?: ScreenDisplay("Workspace", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
         "study" -> activeStudySessions.firstOrNull()?.let { session ->
             ScreenDisplay(session.goal?.take(160) ?: uiText("Continue studying"), uiText("Resume your saved Study session."),
                 uiText("Saved on this phone"), "notebook/study/${android.net.Uri.encode(session.id)}", true,

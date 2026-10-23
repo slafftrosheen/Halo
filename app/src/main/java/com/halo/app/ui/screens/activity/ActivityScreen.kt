@@ -792,7 +792,7 @@ private fun AgentRun.toStory(): ActivityStory {
             name.contains("message") || name.contains("send") -> "Messages"
             name.contains("search") -> "Search"
             name.contains("timer") || name.contains("alarm") -> "Clock"
-            name.contains("note") -> "Notebook"
+            name.contains("note") -> "Workspace"
             name.startsWith("halo_ui_") -> "Phone action"
             else -> "App action"
         }

@@ -99,14 +99,14 @@ class IntegrityTools(
 
         val id = WorkspaceObjectId(objectId)
         val item = workspace.get(id)
-            ?: return@withContext reject("Workspace object not found; search it in Notebook first", ToolRejectionKind.INVALID_ARGUMENTS)
+            ?: return@withContext reject("Workspace object not found; search it in Workspace first", ToolRejectionKind.INVALID_ARGUMENTS)
         if (item.lifecycle == WorkspaceObjectLifecycle.TRASHED) {
             return@withContext reject("That file is in the trash", ToolRejectionKind.INVALID_ARGUMENTS)
         }
         val file = files.getFile(id)
             ?: return@withContext reject("Imported file not found for $objectId", ToolRejectionKind.INVALID_ARGUMENTS)
         if (file.availability !in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)) {
-            return@withContext reject("File is unavailable; relink it in Notebook", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+            return@withContext reject("File is unavailable; relink it in Workspace", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         }
         if (file.sizeBytes != null && file.sizeBytes > MAX_FILE_BYTES) {
             return@withContext reject(
@@ -136,7 +136,7 @@ class IntegrityTools(
 
             respond(toolCall, algorithm, digest.digest().toHex(), bytes, expected)
         } catch (error: SecurityException) {
-            reject("Document access expired; relink the file in Notebook", ToolRejectionKind.PERMISSION_REQUIRED)
+            reject("Document access expired; relink the file in Workspace", ToolRejectionKind.PERMISSION_REQUIRED)
         } catch (error: java.io.IOException) {
             ToolExecutionResult.Failed(
                 toolCallId = toolCall.id,

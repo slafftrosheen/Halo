@@ -6,7 +6,7 @@
     <string name="brand_privacy_hero_detail">Šī lapa pārvalda AI konteksta kopīgošanu, nevis pilnu tīkla datplūsmas auditu. Pārsūtīšanas skaitītāja neesamība nepierāda, ka dati nav pametuši tālruni.</string>
     <string name="brand_privacy_where">Kur glabājas jūsu dati</string>
     <string name="brand_privacy_conversations">Sarunas</string>
-    <string name="brand_privacy_notebook">Piezīmes</string>
+    <string name="brand_privacy_notebook">Darbvieta</string>
     <string name="brand_privacy_local_storage">Saglabāts lokāli lietotnē Halo</string>
     <string name="brand_privacy_remote">Attālais AI</string>
     <string name="brand_privacy_remote_explanation">Tiek izmantots, ja izvēlēts attāls pakalpojums un politika atļauj kontekstu</string>

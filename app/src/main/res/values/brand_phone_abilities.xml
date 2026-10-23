@@ -12,7 +12,7 @@
     <string name="brand_phone_calendar_summary">"Read and add events, find contacts"</string>
     <string name="brand_phone_notifications">"Notifications"</string>
     <string name="brand_phone_notifications_summary">"Read and summarise notifications"</string>
-    <string name="brand_phone_workspace">"Clipboard and Notebook"</string>
+    <string name="brand_phone_workspace">"Clipboard and Workspace"</string>
     <string name="brand_phone_workspace_summary">"Copy, paste, read and write notes"</string>
     <string name="brand_phone_available">"Available"</string>
     <string name="brand_phone_not_reported">"Not reported"</string>

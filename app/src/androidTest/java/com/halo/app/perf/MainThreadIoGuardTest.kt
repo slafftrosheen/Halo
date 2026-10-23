@@ -38,7 +38,7 @@ class MainThreadIoGuardTest {
     fun homeToNotebookAndOpenNote() {
         device.wait(Until.hasObject(By.res("com.aistudio.braintool.xkqzps", "home_screen")), 5000)
         
-        val notebookTab = device.findObject(By.text("Notebook"))
+        val notebookTab = device.findObject(By.text("Workspace"))
         notebookTab?.click()
         device.wait(Until.hasObject(By.text("Your workspace")), 3000)
 

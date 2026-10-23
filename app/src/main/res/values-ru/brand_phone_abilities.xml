@@ -12,7 +12,7 @@
     <string name="brand_phone_calendar_summary">"Читать и добавлять события, искать контакты"</string>
     <string name="brand_phone_notifications">"Уведомления"</string>
     <string name="brand_phone_notifications_summary">"Читать и обобщать уведомления"</string>
-    <string name="brand_phone_workspace">"Буфер обмена и Блокнот"</string>
+    <string name="brand_phone_workspace">"Буфер обмена и рабочее пространство"</string>
     <string name="brand_phone_workspace_summary">"Копировать, вставлять, читать и записывать заметки"</string>
     <string name="brand_phone_available">"Доступно"</string>
     <string name="brand_phone_not_reported">"Нет данных"</string>

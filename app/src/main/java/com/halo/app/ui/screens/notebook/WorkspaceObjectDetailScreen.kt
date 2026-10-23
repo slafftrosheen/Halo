@@ -334,7 +334,7 @@ private fun FileDetailCard(
             HaloWorkspaceButton(text = uiText("Attach image to Home"), enabled = canOpen && !busy, onClick = {
                 mediaScope.launch {
                     try {
-                        com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(file.uri, "Notebook",
+                        com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(file.uri, "Workspace",
                             com.halo.sdk.runtime.multimodal.MediaProvenance.WORKSPACE, file.objectId.value)
                         mediaMessage = "Image attached. Open Home to ask about it or remove it."
                     } catch (_: Exception) { mediaMessage = "Image could not be attached." }

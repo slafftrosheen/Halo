@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="brand_library_description">Поиск и организация сохранённых материалов.</string>
-    <string name="brand_library_back">К Блокноту</string>
+    <string name="brand_library_back">К рабочему пространству</string>
     <string name="brand_library_see_all">Показать всё</string>
 </resources>

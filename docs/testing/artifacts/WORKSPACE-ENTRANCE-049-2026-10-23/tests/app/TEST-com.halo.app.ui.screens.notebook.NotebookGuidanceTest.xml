@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.NotebookGuidanceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T07:12:13.150Z" hostname="MINIFOXEY" time="0.281">
+  <properties/>
+  <testcase name="canvasGuidanceInvokesCanvasAndHonorsBusyState" classname="com.halo.app.ui.screens.notebook.NotebookGuidanceTest" time="0.116"/>
+  <testcase name="emptyCollectionRecoversWithoutCreatingOrDeletingAnything" classname="com.halo.app.ui.screens.notebook.NotebookGuidanceTest" time="0.104"/>
+  <testcase name="searchAndTrashDoNotSuggestCreatingReplacementData" classname="com.halo.app.ui.screens.notebook.NotebookGuidanceTest" time="0.056"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeToolsSheetTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-23T07:12:03.738Z" hostname="MINIFOXEY" time="8.7">
+  <properties/>
+  <testcase name="importedPdfOnlyOffersStudyAndNeverAttachesOnOpen" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="3.842"/>
+  <testcase name="stoppingHomeCancelsPendingStartWithoutDisposingSheet" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="3.008"/>
+  <testcase name="dismissalCancelsPendingUse" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.291"/>
+  <testcase name="explicitUseRechecksAndDoesNotExecuteRevokedAction" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.334"/>
+  <testcase name="stopIntentCannotTurnIntoStartWhileAvailabilityIsRead" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.322"/>
+  <testcase name="browsingAndPlannedDetailsNeverResolveOrExecute" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.265"/>
+  <testcase name="orbNotebookHandoffOpensExistingDetailWithoutResolvingUntilExplicitUse" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.202"/>
+  <testcase name="setupOpensOnlyTheAdvertisedRecovery" classname="com.halo.app.ui.screens.home.HomeToolsSheetTest" time="0.245"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
