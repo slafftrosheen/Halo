@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.workspace.StudioAlertDialog as WorkspaceToolDialog
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -83,9 +85,10 @@ internal fun CanvasSourceInkDialog(
     recovery: CanvasDrawingDraft? = null,
     onDraft: (CanvasDrawingDraft) -> Unit = {},
     onSave: (Map<Int, String>) -> Unit,
-    onSaveSelection: (com.halo.sdk.runtime.ink.InkSelectionContext, Map<Int, String>) -> Unit,
+    onSaveSelection: ((com.halo.sdk.runtime.ink.InkSelectionContext, Map<Int, String>) -> Unit)? = null,
     onDismiss: () -> Unit,
     onSelectionChanged: (com.halo.sdk.runtime.ink.InkSelectionContext?) -> Unit = {},
+    scopeLabel: String? = null,
 ) {
     val context = LocalContext.current
     val base = remember(markup) { CanvasFileMarkupCodec.decode(markup) }
@@ -120,9 +123,8 @@ internal fun CanvasSourceInkDialog(
     key(file.uri.toString(), page) {
         // Stable across draft callbacks; revisiting a page loads its latest completed local draft.
         val originalPage = remember { pending[page] ?: base.pages[page].orEmpty() }
-        AlertDialog(
-            modifier = Modifier.widthIn(max = 880.dp).fillMaxWidth().padding(horizontal = 16.dp),
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+        WorkspaceToolDialog(
+            maxWidth = 880.dp,
             onDismissRequest = onDismiss,
             title = { Text(uiText("Annotate source")) },
             text = {
@@ -151,18 +153,18 @@ internal fun CanvasSourceInkDialog(
                         }, selectionOwnerId = file.version?.let { file.objectId.value }, selectionPageId = "page-$page",
                             selectionBaseRevision = file.version ?: file.sha256,
                             onSelectionChanged = onSelectionChanged,
-                            onSaveSelection = { selection ->
+                            onSaveSelection = onSaveSelection?.let { save -> { selection ->
                                 try {
                                     val updates = pending.toMap()
                                     CanvasFileMarkupCodec.merge(markup, updates)
                                     draftFor(updates).encode()
-                                    onSaveSelection(selection, updates)
+                                    save(selection, updates)
                                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                                   catch (_: Exception) { saveError = true }
-                            })
+                            } })
                     }
                     if (saveError) Text(stringResource(R.string.ink_draft_rejected), color = MaterialTheme.colorScheme.error)
-                    Text(uiText("Marks are saved on this Canvas, not into the original file."), style = MaterialTheme.typography.bodySmall)
+                    Text(scopeLabel ?: uiText("Marks are saved on this Canvas, not into the original file."), style = MaterialTheme.typography.bodySmall)
                     Text(stringResource(R.string.ink_draft_help), style = MaterialTheme.typography.bodySmall)
                 }
             },

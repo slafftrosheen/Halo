@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.workspace.StudioAlertDialog as WorkspaceToolDialog
+
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -44,7 +46,7 @@ internal fun CanvasImageStitchDialog(
         catch (_: Exception) { previewError = true }
     }
     DisposableEffect(preview) { onDispose { preview?.recycle() } }
-    AlertDialog(
+    WorkspaceToolDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(uiText("Combine images")) },
         text = {

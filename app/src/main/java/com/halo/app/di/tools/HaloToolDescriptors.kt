@@ -297,6 +297,11 @@ object HaloToolDescriptors {
     }
 
     fun file(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_file_tool_capabilities", "halo_text_get", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_annotation_get" -> descriptor(definition.name, definition, ToolCategory.FILES,
+            readOnly(definition.name), keywords = setOf("file", "document", "csv", "pdf", "image"))
+        "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas" -> descriptor(definition.name, definition, ToolCategory.FILES,
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("file", "edit", "export", "csv", "pdf", "image"),
+            presentation = ToolPresentation(title = "Edit local files", actionVerb = "Apply"))
         "halo_file_handoff" -> descriptor(definition.name, definition, ToolCategory.FILES,
             ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
             keywords = setOf("file", "pdf", "document", "attachment", "share", "view"))

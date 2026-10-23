@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.backup.NoteBlockArchiveTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:55:00.553Z" hostname="MINIFOXEY" time="1.891">
+  <properties/>
+  <testcase name="unfinishedLargeAndFutureBlocksRemainOpaqueDuringRestoreAndDuplicate" classname="com.halo.app.backup.NoteBlockArchiveTest" time="1.673"/>
+  <testcase name="duplicateBlockIdentityIsRejectedAndLegacyArchivesRemainSupported" classname="com.halo.app.backup.NoteBlockArchiveTest" time="0.048"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

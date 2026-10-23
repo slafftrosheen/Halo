@@ -228,11 +228,11 @@ class DefaultSkillRegistry(
             SkillDescriptor(
                 id = SkillId("halo.files"),
                 name = "Files",
-                description = "Search and read metadata or text from user-imported documents, and checksum imported files or " +
-                    "user-provided text.",
+                description = "Create, edit and export local text, CSV, images and source-linked PDF page images; inspect exact files and checksums.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_search_files", "halo_get_file_metadata", "halo_read_text_file", "halo_checksum"),
-                risk = SkillRisk.READ_ONLY,
+                tools = setOf("halo_search_files", "halo_get_file_metadata", "halo_read_text_file", "halo_checksum",
+                    "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas"),
+                risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(

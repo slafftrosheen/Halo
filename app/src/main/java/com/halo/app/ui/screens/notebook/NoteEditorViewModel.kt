@@ -110,8 +110,11 @@ data class NoteEditorUiState(
         get() = status != SaveStatus.LOADING && status != SaveStatus.MISSING &&
             status != SaveStatus.TRASHED && mode == EditorMode.EDIT
 
+    val displayBody: String
+        get() = blocks.singleOrNull()?.takeIf { it.type == NoteBlockType.CODE &&
+            com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) != null }?.text ?: body
     val wordCount: Int
-        get() = InlineFormatting.stripInlineMarkers(body)
+        get() = if (displayBody.isEmpty()) 0 else InlineFormatting.stripInlineMarkers(displayBody)
             .trim()
             .split(Regex("\\s+"))
             .count(String::isNotBlank)
@@ -495,8 +498,14 @@ class NoteEditorViewModel(
 
     fun addDictatedParagraph(text: String) {
         if (text.isBlank()) return
-        dispatch(DocumentCommand.InsertBlock(mutableUiState.value.blocks.lastOrNull()?.id,
-            NoteBlockType.PARAGRAPH, text.take(12000)))
+        val state = mutableUiState.value
+        val literal = state.blocks.singleOrNull()?.takeIf { it.type == NoteBlockType.CODE &&
+            com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) != null }
+        if (literal != null) {
+            val selection = state.selection?.takeIf { it.blockId == literal.id }?.normalized(literal.text.length)
+            val start = selection?.start ?: literal.text.length; val end = selection?.end ?: start
+            dispatch(DocumentCommand.SetText(literal.id, literal.text.replaceRange(start, end, text.take(12000))))
+        } else dispatch(DocumentCommand.InsertBlock(state.blocks.lastOrNull()?.id, NoteBlockType.PARAGRAPH, text.take(12000)))
     }
 
     fun insertBlock(afterBlockId: String?, type: NoteBlockType = NoteBlockType.PARAGRAPH) {
@@ -633,6 +642,8 @@ class NoteEditorViewModel(
         val state = mutableUiState.value
         if (mode == state.mode) return
         if (mode == EditorMode.SOURCE) {
+            if (state.blocks.singleOrNull()?.let { it.type == NoteBlockType.CODE &&
+                com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) != null } == true) return
             mutableUiState.value = state.copy(
                 mode = mode,
                 sourceDraft = NotebookDocumentCodec.serialize(state.blocks),
@@ -916,7 +927,12 @@ class NoteEditorViewModel(
             return
         }
         val block = proposal.blockId?.let { id -> state.blocks.firstOrNull { it.id == id } }
-        when (proposal.operation.placement) {
+        val literal = state.blocks.singleOrNull()?.takeIf { it.type == NoteBlockType.CODE &&
+            com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) != null }
+        if (literal != null && proposal.operation.placement != ProposalPlacement.REPLACE_SELECTION) {
+            val separator = if (literal.text.isEmpty() || literal.text.endsWith('\n')) "" else "\n"
+            dispatch(DocumentCommand.SetText(literal.id, literal.text + separator + proposal.content))
+        } else when (proposal.operation.placement) {
             ProposalPlacement.REPLACE_SELECTION -> {
                 if (block == null) {
                     mutableUiState.value = state.copy(proposalError = "The selected passage no longer exists")

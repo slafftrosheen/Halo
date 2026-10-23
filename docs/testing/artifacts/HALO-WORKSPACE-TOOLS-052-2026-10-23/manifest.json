@@ -1,0 +1,117 @@
+{
+  "baseMain": "92370f6cd173affe1b9800fdc3b97a9e05559589",
+  "productionTrees": {
+    "appMain": "c5306e4f307aad5673fb685a7cd3097bff8ae6bb",
+    "cognitionMain": "ded5b1359e7a67d674c1f24684fe50882cd531a9"
+  },
+  "apk": {
+    "bytes": 287274279,
+    "sha256": "a0718cac91c98301842ef3696aeaf234dd7ceb673e0cb470bbd862a123e69e02",
+    "installed": false
+  },
+  "desktop": {
+    "classes": [
+      {
+        "class": "com.halo.app.backup.NoteBlockArchiveTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.data.workspace.WorkspaceFileEditingActionsTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.data.workspace.WorkspaceMediaFilesTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.data.workspace.WorkspaceTextDocumentsTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.data.workspace.WorkspaceTextFormatsTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "totals": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "runtime": {
+    "classes": [
+      {
+        "class": "com.halo.runtime.cognition.skills.SkillToolOwnershipTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.runtime.cognition.tools.FileEditingToolProvenanceTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "class": "com.halo.runtime.cognition.tools.StudioToolProvenanceTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "totals": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "phone": {
+    "target": "f01fe673",
+    "status": "NOT_RUN",
+    "reason": "Disconnected from ADB before deployment",
+    "compiledTests": 2
+  },
+  "renders": "EN light phone, LV 200% portrait, RU dark 200% short landscape; visually inspected",
+  "note": "Synthetic fixtures only; no real provider, user Workspace or OS preference changes; no performance qualification"
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceMediaFilesTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:54:49.047Z" hostname="MINIFOXEY" time="11.407">
+  <properties/>
+  <testcase name="staleSourceCannotProduceOutput" classname="com.halo.app.data.workspace.WorkspaceMediaFilesTest" time="8.062"/>
+  <testcase name="cancellationHasDurableReceiptAndInterruptedReceiptCannotPretendCompletion" classname="com.halo.app.data.workspace.WorkspaceMediaFilesTest" time="0.266"/>
+  <testcase name="managedPublicationAndReceiptRollBackTogetherOnFailure" classname="com.halo.app.data.workspace.WorkspaceMediaFilesTest" time="0.169"/>
+  <testcase name="partialBatchKeepsSavedOutputsAndReopeningNeverReplays" classname="com.halo.app.data.workspace.WorkspaceMediaFilesTest" time="0.176"/>
+  <testcase name="rotationConversionAndCollagePublishNewFilesPreservingOriginals" classname="com.halo.app.data.workspace.WorkspaceMediaFilesTest" time="2.269"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

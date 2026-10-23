@@ -49,6 +49,7 @@ interface WorkspaceFileRepository {
     /** Publish new local bytes through the canonical managed-file owner; never replace a source. */
     suspend fun createManagedFile(displayName: String, mimeType: String, bytes: ByteArray,
         sourceObjectId: String, sourceRevision: String, metadata: String,
+        published: suspend (WorkspaceFile) -> Unit = {},
         validateSource: suspend () -> Unit = {}): WorkspaceFile =
         error("Managed-file creation is unavailable")
 
@@ -60,6 +61,9 @@ interface WorkspaceFileRepository {
         require(getFile(objectId)?.sizeBytes?.let { it <= maxBytes } == true) { "Cannot establish a bounded local copy" }
         return keepLocalCopy(objectId)
     }
+    /** Compare the observed version under the same owner lock as relink/copy, before reading bytes. */
+    suspend fun pinLocalCopy(objectId: WorkspaceObjectId, expectedVersion: String, maxBytes: Long): WorkspaceFile =
+        error("Version-bound local copy is unavailable")
     suspend fun relink(objectId: WorkspaceObjectId, uri: Uri): WorkspaceFile
     suspend fun reconcileAvailability()
 }
@@ -151,25 +155,22 @@ class RoomWorkspaceFileRepository(
                     .put("mimeType", resolvedMime).put("permissionPersisted", permissionPersisted).toString()))
         }
 
-        return WorkspaceFile(
-            objectId = WorkspaceObjectId(id),
-            uri = uri,
-            displayName = finalName,
-            mimeType = resolvedMime,
-            sizeBytes = resolvedSize,
-            permissionMode = if (permissionPersisted) FilePermissionMode.PERSISTABLE_URI else FilePermissionMode.READ_ONLY,
-            ownership = ContentOwnership.EXTERNAL_REFERENCE,
-            availability = WorkspaceFileAvailability.AVAILABLE,
-            sha256 = null,
-            version = "workspace-file:$timestamp",
-        )
+        return fileEntity.toDomain()
     }
 
     override suspend fun createManagedFile(displayName: String, mimeType: String, bytes: ByteArray,
         sourceObjectId: String, sourceRevision: String, metadata: String,
+        published: suspend (WorkspaceFile) -> Unit,
         validateSource: suspend () -> Unit): WorkspaceFile = withContext(Dispatchers.IO) {
         require(displayName.isNotBlank() && displayName.length <= 120)
-        require(bytes.size in 1..20_000_000 && mimeType.startsWith("image/") && mimeType.length <= 100)
+        require(mimeType.length <= 100)
+        if (mimeType.startsWith("image/")) require(bytes.size in 1..20_000_000)
+        else {
+            val format = WorkspaceTextFormat.entries.firstOrNull { it.mime == mimeType }
+                ?: error("Unsupported managed output format")
+            val text = WorkspaceTextEncoding.decode(bytes)
+            if (format == WorkspaceTextFormat.CSV) WorkspaceCsv.parse(text)
+        }
         require(sourceObjectId.matches(Regex("[A-Za-z0-9_-]{1,100}")) && sourceRevision.length in 1..200)
         require(metadata.length <= 2_100_000)
         val id = newId()
@@ -194,6 +195,7 @@ class RoomWorkspaceFileRepository(
                     ownership = ContentOwnership.HALO_OWNED.name, availability = WorkspaceFileAvailability.OWNED_LOCAL.name,
                     sha256 = digest))
                 db.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(id, sourceObjectId, sourceRevision, metadata))
+                published(requireNotNull(db.workspaceFileDao().getFile(id)).toDomain())
             }
             requireNotNull(getFile(WorkspaceObjectId(id)))
         } catch (failure: Throwable) {
@@ -222,12 +224,16 @@ class RoomWorkspaceFileRepository(
 
     override suspend fun keepLocalCopy(objectId: WorkspaceObjectId): WorkspaceFile = copyLocal(objectId,Long.MAX_VALUE)
     override suspend fun keepLocalCopyBounded(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = copyLocal(objectId,maxBytes)
-    private suspend fun copyLocal(objectId: WorkspaceObjectId, maxBytes: Long): WorkspaceFile = copyMutex.withLock { withContext(Dispatchers.IO) {
+    override suspend fun pinLocalCopy(objectId: WorkspaceObjectId, expectedVersion: String, maxBytes: Long): WorkspaceFile =
+        copyLocal(objectId, maxBytes, expectedVersion)
+    private suspend fun copyLocal(objectId: WorkspaceObjectId, maxBytes: Long, expectedVersion: String? = null): WorkspaceFile = copyMutex.withLock { withContext(Dispatchers.IO) {
         require(maxBytes > 0)
         val entity = requireNotNull(db.workspaceFileDao().getFile(objectId.value))
+        require(expectedVersion == null || entity.toDomain().version == expectedVersion) { "Source changed before local copy" }
+        val minimumBytes = if (WorkspaceTextFormat.fromFile(entity.displayName, entity.mimeType) != null) 0L else 1L
         if (entity.ownership == ContentOwnership.HALO_OWNED.name) {
             val existing = entity.ownedCopyPath?.let(::File)
-            check(existing?.isFile == true && existing.length() in 1..maxBytes) { "Local copy unavailable" }
+            check(existing?.isFile == true && existing.length() in minimumBytes..maxBytes) { "Local copy unavailable" }
             val local = requireNotNull(existing)
             val digest = MessageDigest.getInstance("SHA-256")
             local.inputStream().use { input ->
@@ -273,8 +279,8 @@ class RoomWorkspaceFileRepository(
             }
         }
         } catch (error: Throwable) { temporary.delete(); throw error }
-        if (temporary.length() <= 0 || destination.exists() || !temporary.renameTo(destination)) {
-            temporary.delete(); error("Unable to keep a non-empty local copy")
+        if (temporary.length() < minimumBytes || destination.exists() || !temporary.renameTo(destination)) {
+            temporary.delete(); error("Unable to keep a supported local copy")
         }
         try {
         val updated = entity.copy(
@@ -354,6 +360,9 @@ class RoomWorkspaceFileRepository(
         ownership = ContentOwnership.valueOf(ownership),
         availability = WorkspaceFileAvailability.valueOf(availability),
         sha256 = sha256,
-        version = sha256 ?: modifiedAt?.let { "workspace-file:$it" },
+        version = sha256 ?: ("workspace-file:" + MessageDigest.getInstance("SHA-256").digest(
+            listOf(uri, mimeType, sizeBytes?.toString().orEmpty(), modifiedAt?.toString().orEmpty(), ownership,
+                ownedCopyPath.orEmpty(), permissionPersisted.toString()).joinToString("\u0000").toByteArray(Charsets.UTF_8)
+        ).joinToString("") { "%02x".format(it) }),
     )
 }

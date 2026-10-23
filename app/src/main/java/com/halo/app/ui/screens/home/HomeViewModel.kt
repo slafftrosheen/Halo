@@ -1353,6 +1353,7 @@ class HomeViewModel(
     fun openToolScreen(action: HomeToolAction) {
         val route = when (action) {
             HomeToolAction.STUDIO -> "studio"
+            HomeToolAction.FILE_TOOLS -> "file_tools"
             HomeToolAction.NOTEBOOK -> "notebook"
             HomeToolAction.STUDY -> "study"
             HomeToolAction.CONNECTIONS -> "integrations"

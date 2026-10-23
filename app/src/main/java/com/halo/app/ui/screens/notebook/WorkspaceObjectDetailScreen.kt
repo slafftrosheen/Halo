@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.halo.app.data.memory.MemoryRecord
 import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.workspace.ContentOwnership
@@ -75,6 +76,7 @@ fun WorkspaceObjectDetailScreen(
     onOpenSource: (WorkspaceObject) -> Unit = {},
     onStudy: ((String) -> Unit)? = null,
     onStudio: ((String) -> Unit)? = null,
+    onFileTools: ((String) -> Unit)? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -189,6 +191,9 @@ fun WorkspaceObjectDetailScreen(
                         enabled = !actionBusy && state.file != null,
                         modifier = Modifier.heightIn(min = 48.dp),
                     ) { Text(uiText("Ask about this")) }
+                }
+                if (type == "file" && onFileTools != null && state.file != null) {
+                    item { TextButton(onClick = { onFileTools(id) }, enabled = !actionBusy) { Text(stringResource(com.halo.app.R.string.file52_title)) } }
                 }
                 if (type == "file" && onStudio != null && state.file?.mimeType?.startsWith("image/") == true) {
                     item { TextButton(onClick = { onStudio(id) }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.studio_open_in)) } }

@@ -16,7 +16,7 @@ internal enum class WorkspaceHubDestination(val label: String) {
 }
 
 @Composable
-internal fun WorkspaceHubDestinations(onStudio: (() -> Unit)? = null, onSelect: (WorkspaceHubDestination) -> Unit) {
+internal fun WorkspaceHubDestinations(onStudio: (() -> Unit)? = null, onFileTools: (() -> Unit)? = null, onSelect: (WorkspaceHubDestination) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.workspace49_open), style = MaterialTheme.typography.titleSmall)
         val columns = if (LocalDensity.current.fontScale >= 1.4f) 1 else 2
@@ -33,6 +33,12 @@ internal fun WorkspaceHubDestinations(onStudio: (() -> Unit)? = null, onSelect: 
         }
         Text(stringResource(R.string.workspace49_memory_scope), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+        onFileTools?.let { open -> OutlinedButton(onClick = open, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Column(Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.file52_title), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodySmall)
+            }
+        } }
         if (onStudio != null) OutlinedButton(onClick = onStudio, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Column(Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.studio_title), style = MaterialTheme.typography.titleSmall)

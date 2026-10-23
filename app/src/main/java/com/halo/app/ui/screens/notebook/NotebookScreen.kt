@@ -109,7 +109,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @OptIn(ExperimentalLayoutApi::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
-    onOpenStudio: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}) {
+    onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -318,7 +318,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         if (!showLibrary) item(key = "workspace-destinations") {
-            WorkspaceHubDestinations(onStudio = onOpenStudio) { destination ->
+            WorkspaceHubDestinations(onStudio = onOpenStudio, onFileTools = onOpenFileTools) { destination ->
                 if (destination == WorkspaceHubDestination.MEMORY) {
                     viewModel.openMemoryHub()
                 } else {

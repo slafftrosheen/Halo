@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.workspace.StudioAlertDialog as WorkspaceToolDialog
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import android.graphics.Bitmap
@@ -16,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
 import com.halo.app.data.workspace.CanvasPdfPageTools
 import com.halo.app.data.workspace.WorkspaceFile
 import com.halo.app.language.uiText
@@ -28,6 +32,7 @@ internal fun CanvasPdfPageDialog(
     busy: Boolean,
     onSave: (List<Int>) -> Unit,
     onDismiss: () -> Unit,
+    singlePage: Boolean = false,
 ) {
     val context = LocalContext.current
     val key = file.objectId.value + "|" + file.version
@@ -40,7 +45,7 @@ internal fun CanvasPdfPageDialog(
     }
     val selection = pages?.let { count ->
         com.halo.app.data.workspace.CanvasPdfPageSelection.parse(pageInput, count)
-    }
+    }?.takeIf { !singlePage || it.size == 1 }
     val number = selection?.firstOrNull()
     val valid = selection != null
     var previewError by remember(key, number) { mutableStateOf(false) }
@@ -52,19 +57,19 @@ internal fun CanvasPdfPageDialog(
         }
     }
     DisposableEffect(bitmap) { onDispose { bitmap?.recycle() } }
-    AlertDialog(
+    WorkspaceToolDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(uiText("Extract PDF pages")) },
         text = {
             Column(Modifier.heightIn(max = 500.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText("Select up to six PDF pages to save in one Notebook note. Original unchanged."),
+                Text(if (singlePage) stringResource(R.string.file52_pdf_extract_help) else uiText("Select up to six PDF pages to save in one Notebook note. Original unchanged."),
                     style = MaterialTheme.typography.bodySmall)
                 Text(file.displayName.take(100), style = MaterialTheme.typography.labelSmall)
                 if (pages != null) Text(uiText("Pages") + ": " + pages)
                 HaloTextField(pageInput, { updated ->
                     if (!busy) pageInput = updated.filter { it.isDigit() || it in ",-– " }.take(90)
-                }, label = { Text(uiText("Pages to extract (e.g. 1,3-5)")) },
+                }, label = { Text(if (singlePage) stringResource(R.string.file52_page) else uiText("Pages to extract (e.g. 1,3-5)")) },
                     singleLine = true, enabled = !busy,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(), isError = !valid && pageInput.isNotEmpty(), kind = VoiceFieldKind.NUMBER)

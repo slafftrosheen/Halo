@@ -262,6 +262,7 @@ class StagedBrainImporter(
                 if (mode == BrainImportMode.REPLACE) clearBrain(dao)
                 dao.putWorkspaceObjects(room.workspace)
                 dao.putNotes(room.notes)
+                dao.putNoteBlocks(room.noteBlocks)
                 dao.putConversations(room.conversations)
                 dao.putTurns(room.turns)
                 room.memories.forEach { memory ->
@@ -452,6 +453,7 @@ class StagedBrainImporter(
         }
         val snapshot = readSnapshot(zip, manifest)
         StudioArchive.validate(snapshot)
+        NoteBlockArchive.validate(snapshot)
         require(snapshot.notes.all { note -> snapshot.workspace.any { it.id == note.objectId } }) { "Note references missing workspace object" }
         require(snapshot.turns.all { turn -> snapshot.conversations.any { it.id == turn.conversationId } }) { "Turn references missing conversation" }
         require(snapshot.files.all { file -> snapshot.workspace.any { it.id == file.objectId } }) { "File references missing workspace object" }
@@ -546,9 +548,11 @@ class StagedBrainImporter(
                 else -> ref.id
             }) })
         }
+        val blockIds = source.notes.filter { it.objectId in ids }.flatMap { it.blocks.orEmpty() }
+            .associate { it.id to UUID.randomUUID().toString() }
         return source.copy(
             workspace = source.workspace.map { it.copy(id = id(it.id), contentRef = it.contentRef.replaceAfter(':', id(it.id))) },
-            notes = source.notes.map { it.copy(objectId = id(it.objectId)) },
+            notes = source.notes.map { note -> NoteBlockArchive.remap(note, ids, blockIds) },
             conversations = source.conversations.map { it.copy(id = id(it.id)) },
             turns = turns,
             memories = source.memories.map { it.copy(id=id(it.id), sourceObjectId=it.sourceObjectId?.let(::id),scopeId=it.scopeId?.let(::id),evidenceJson=evidence(it.evidenceJson)) },
@@ -559,7 +563,7 @@ class StagedBrainImporter(
             },
             memoryRevisions = source.memoryRevisions.map { it.copy(id = if (it.memoryId in ids) UUID.randomUUID().toString() else it.id, memoryId = id(it.memoryId)) },
             workingSet = source.workingSet.map { it.copy(objectId = id(it.objectId)) },
-            provenance = source.provenance.map { it.copy(objectId = id(it.objectId), sourceId = id(it.sourceId), metadata = StudioArchive.metadata(it.metadata, ids)) },
+            provenance = source.provenance.map { it.copy(objectId = id(it.objectId), sourceId = id(it.sourceId), metadata = StudioArchive.metadata(NoteBlockArchive.metadata(it.metadata, ids, blockIds), ids)) },
             relations = source.relations.map { it.copy(id = if (it.fromId in ids || it.toId in ids) UUID.randomUUID().toString() else it.id, fromId = id(it.fromId), toId = id(it.toId)) },
             files = source.files.map { it.copy(objectId = id(it.objectId)) },
             studioProjects = source.studioProjects.map { it.copy(objectId = id(it.objectId), committed = StudioArchive.document(it.committed, ids), session = StudioArchive.session(it.session, ids)) },

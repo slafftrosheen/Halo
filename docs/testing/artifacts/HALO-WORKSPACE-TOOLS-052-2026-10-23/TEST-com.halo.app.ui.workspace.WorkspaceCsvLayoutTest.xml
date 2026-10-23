@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.workspace.WorkspaceCsvLayoutTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:55:15.480Z" hostname="MINIFOXEY" time="0.871">
+  <properties/>
+  <testcase name="lightPhone360" classname="com.halo.app.ui.workspace.WorkspaceCsvLayoutTest" time="0.443"/>
+  <testcase name="latvianLargePhone200" classname="com.halo.app.ui.workspace.WorkspaceCsvLayoutTest" time="0.233"/>
+  <testcase name="russianShortLandscape200" classname="com.halo.app.ui.workspace.WorkspaceCsvLayoutTest" time="0.189"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

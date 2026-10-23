@@ -42,12 +42,24 @@ class BrandNoteEditorControlsTest {
         assertEquals(1, attachments)
     }
 
+    @Test fun literalFileModesKeepRawEditorAndReadViewWithoutMarkdownWrapper() {
+        compose.setContent {
+            HaloTheme(darkTheme = true) {
+                var mode by remember { mutableStateOf(EditorMode.EDIT) }
+                ModeToggle(mode, onModeChange = { mode = it }, allowSource = false)
+            }
+        }
+        compose.onNodeWithText("Plain text view").assertDoesNotExist()
+        compose.onNodeWithText("Read").performClick()
+        compose.onNodeWithText("Edit").performClick()
+    }
+
     @Test fun modePickerHasExactlyThreeReachableChoices() {
         val choices = mutableListOf<EditorMode>()
         compose.setContent {
             HaloTheme(darkTheme = true) {
                 var mode by remember { mutableStateOf(EditorMode.EDIT) }
-                ModeToggle(mode) { value -> mode = value; choices += value }
+                ModeToggle(mode, onModeChange = { value -> mode = value; choices += value })
             }
         }
         compose.onNodeWithText("Read").performClick()

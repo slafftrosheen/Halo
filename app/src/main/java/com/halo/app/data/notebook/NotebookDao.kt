@@ -174,6 +174,9 @@ interface NotebookDao {
         return true
     }
 
+    @Query("UPDATE workspace_objects SET contentRef=:contentRef WHERE id=:id AND type='NOTE'")
+    suspend fun setNoteContentRef(id: String, contentRef: String): Int
+
     @Query("UPDATE workspace_objects SET lifecycle = :lifecycle, updatedAt = :updatedAt WHERE id = :id")
     suspend fun setLifecycle(id: String, lifecycle: String, updatedAt: Long): Int
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceTextFormatsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:55:06.768Z" hostname="MINIFOXEY" time="0.014">
+  <properties/>
+  <testcase name="utf8KeepsLiteralTextAndRejectsBinaryInvalidEncodingAndUnpairedSurrogates" classname="com.halo.app.data.workspace.WorkspaceTextFormatsTest" time="0.003"/>
+  <testcase name="csvQuotedMultilineEscapedQuotesAndTrailingCellsRoundTripWithoutEvaluation" classname="com.halo.app.data.workspace.WorkspaceTextFormatsTest" time="0.002"/>
+  <testcase name="malformedQuotesAndRowColumnBudgetsFailExplicitly" classname="com.halo.app.data.workspace.WorkspaceTextFormatsTest" time="0.005"/>
+  <testcase name="formatDetectionNeverTreatsOfficeOrExecutableBinaryAsText" classname="com.halo.app.data.workspace.WorkspaceTextFormatsTest" time="0.002"/>
+  <testcase name="csvEditsPreserveOtherCellsAndRejectUnsupportedStructure" classname="com.halo.app.data.workspace.WorkspaceTextFormatsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -28,7 +28,12 @@ import org.json.JSONObject
 @JsonClass(generateAdapter = true)
 data class WorkspaceObjectSnapshot(val id: String, val type: String, val title: String, val createdAt: Long, val updatedAt: Long, val source: String, val lifecycle: String, val inInbox: Boolean, val indexingState: String, val contentRef: String)
 @JsonClass(generateAdapter = true)
-data class NoteSnapshot(val objectId: String, val body: String, val revision: Int)
+data class NoteSnapshot(val objectId: String, val body: String, val revision: Int,
+    val blocks: List<NoteBlockSnapshot>? = null)
+@JsonClass(generateAdapter = true)
+data class NoteBlockSnapshot(val id: String, val position: Int, val type: String, val text: String,
+    val checked: Boolean, val indent: Int, val refObjectId: String?, val language: String?,
+    val createdAt: Long, val updatedAt: Long)
 @JsonClass(generateAdapter = true)
 data class ConversationSnapshot(val id: String, val createdAt: Long, val active: Boolean, val title: String, val updatedAt: Long, val archived: Boolean)
 @JsonClass(generateAdapter = true)
@@ -115,6 +120,7 @@ class RoomBrainSnapshotSource(
     override suspend fun snapshot(): BrainSnapshot = database.withTransaction {
         val dao = database.brainSnapshotDao()
         val notes = dao.notes()
+        val blocks = dao.noteBlocks().groupBy { it.noteId }
         val provenance = dao.provenance()
         val storedFiles = dao.files()
         val captureFiles = provenance.mapNotNull { record ->
@@ -132,7 +138,9 @@ class RoomBrainSnapshotSource(
             snapshotId = UUID.randomUUID().toString(),
             createdAt = System.currentTimeMillis(),
             workspace = dao.workspaceObjects().filterNot { it.id.startsWith("learning:") }.map { WorkspaceObjectSnapshot(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
-            notes = notes.map { NoteSnapshot(it.objectId, it.body, it.revision) },
+            notes = notes.map { note -> NoteSnapshot(note.objectId, note.body, note.revision,
+                blocks[note.objectId]?.map { block -> NoteBlockSnapshot(block.id, block.position, block.type, block.text,
+                    block.checked, block.indent, block.refObjectId, block.language, block.createdAtEpochMs, block.updatedAtEpochMs) }) },
             conversations = dao.conversations().map { ConversationSnapshot(it.id, it.createdAt, it.active, it.title, it.updatedAt, it.archived) },
             turns = dao.turns().map { TurnSnapshot(it.id, it.conversationId, it.userText, it.assistantText, it.timestamp, it.metadata) },
             memories = dao.memories().map { MemorySnapshot(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status,it.origin,it.evidenceJson,it.sourceEpisodeId,it.evidenceCount,it.lastConfirmedAt,it.usageCount,it.lastUsedAt,it.validUntil,it.fingerprint,it.userConfirmed) },
@@ -174,7 +182,7 @@ class RoomBrainSnapshotSource(
 
 internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
     workspace.map { WorkspaceObjectEntity(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
-    notes.map { NoteEntity(it.objectId, it.body, it.revision) },
+    notes.map { NoteEntity(it.objectId, it.body, it.revision, schemaVersion = if (it.blocks != null) com.halo.app.data.notebook.NotebookDocument.SCHEMA_VERSION else 1) },
     conversations.map { PersistedConversation(it.id, it.createdAt, it.active, it.title, it.updatedAt, it.archived) },
     turns.map { PersistedTurn(it.id, it.conversationId, it.userText, it.assistantText, it.timestamp, it.metadata) },
     memories.map { MemoryRecordEntity(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status,it.origin,it.evidenceJson,it.sourceEpisodeId,it.evidenceCount,it.lastConfirmedAt,it.usageCount,it.lastUsedAt,it.validUntil,it.fingerprint,it.userConfirmed) },
@@ -190,6 +198,8 @@ internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
     agentSteps.map { AgentStepEntity(it.id, it.runId, it.interactionId, it.ordinal, it.stepType, it.schemaVersion, it.payload, it.idempotencyKey, it.state, it.timestamp, it.timestamp) },
     studioProjects.map { com.halo.app.data.studio.StudioProjectEntity(it.objectId, it.revision, it.committed, it.session) },
     studioVersions.map { com.halo.app.data.studio.StudioProjectVersion(it.objectId, it.revision, it.document, it.savedAt) },
+    notes.flatMap { note -> note.blocks.orEmpty().map { block -> com.halo.app.data.notebook.NoteBlockEntity(block.id, note.objectId,
+        block.position, block.type, block.text, block.checked, block.indent, block.refObjectId, block.language, block.createdAt, block.updatedAt) } },
 )
 
 internal data class RoomBrainContent(
@@ -199,4 +209,5 @@ internal data class RoomBrainContent(
     val files: List<WorkspaceFileEntity>, val agentRuns: List<AgentRunEntity>, val agentSteps: List<AgentStepEntity>,
     val studioProjects: List<com.halo.app.data.studio.StudioProjectEntity> = emptyList(),
     val studioVersions: List<com.halo.app.data.studio.StudioProjectVersion> = emptyList(),
+    val noteBlocks: List<com.halo.app.data.notebook.NoteBlockEntity> = emptyList(),
 )

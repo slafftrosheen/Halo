@@ -228,6 +228,7 @@ object NotebookDocumentCodec {
         .joinToString("\n") { block ->
             when (block.type) {
                 NoteBlockType.DIVIDER -> "—"
+                NoteBlockType.CODE -> block.text
                 NoteBlockType.REFERENCE -> block.text.ifBlank { block.refObjectId.orEmpty() }
                 else -> InlineFormatting.stripInlineMarkers(block.text)
             }

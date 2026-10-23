@@ -159,6 +159,8 @@ fun NoteEditorScreen(
     val scope = rememberCoroutineScope()
     var toolsExpanded by androidx.compose.runtime.saveable.rememberSaveable(viewModel) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val literalFileFormat = state.blocks.singleOrNull()?.takeIf { it.type == NoteBlockType.CODE }
+        ?.let { com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val referenceCandidates by viewModel.referenceCandidates.collectAsStateWithLifecycle()
 
@@ -367,7 +369,7 @@ fun NoteEditorScreen(
     if (toolsExpanded) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { toolsExpanded = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            ModeToggle(state.mode, viewModel::setMode)
+            ModeToggle(state.mode, viewModel::setMode, allowSource = literalFileFormat == null)
             EditorToolbar(state, { showOutline = true }, { showFindBar = !showFindBar },
                 viewModel::undo, viewModel::redo)
             Spacer(Modifier.height(24.dp))
@@ -382,12 +384,17 @@ fun NoteEditorScreen(
             // Keep the selection toolbar directly above the keyboard instead of under it.
             .imePadding()
     ) {
-        EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.body, uiText("Untitled note")), toolsExpanded,
+        EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")), toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
-            subtitle = uiText("Your note"),
+            subtitle = when (literalFileFormat) {
+                com.halo.app.data.workspace.WorkspaceTextFormat.TXT -> stringResource(R.string.file52_text)
+                com.halo.app.data.workspace.WorkspaceTextFormat.MARKDOWN -> stringResource(R.string.file52_markdown)
+                com.halo.app.data.workspace.WorkspaceTextFormat.CSV -> stringResource(R.string.file52_csv)
+                else -> uiText("Your note")
+            },
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null,
-            fallbackTitle = uiText("Untitled note"), readText = state.body)
+            fallbackTitle = uiText("Untitled note"), readText = state.displayBody)
         if (state.status == SaveStatus.MISSING) {
             MissingNoteState(onBack, Modifier.weight(1f))
             return@Column
@@ -437,7 +444,7 @@ fun NoteEditorScreen(
             EditorMode.EDIT -> EditModeView(
                 state = state,
                 viewModel = viewModel,
-                showTools = toolsExpanded,
+                showTools = toolsExpanded && literalFileFormat == null,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
                 onStudio = onOpenStudio,
                 onAddAttachment = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
@@ -539,13 +546,13 @@ private fun EditorToolbar(
 
 /** Exactly one mode switch, sized for touch and screen readers. Read does not reveal editing controls. */
 @Composable
-internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit) {
+internal fun ModeToggle(mode: EditorMode, onModeChange: (EditorMode) -> Unit, allowSource: Boolean = true) {
     Row(
         Modifier.fillMaxWidth().selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        EditorMode.entries.forEach { entry ->
+        EditorMode.entries.filter { allowSource || it != EditorMode.SOURCE }.forEach { entry ->
             val active = entry == mode
             Surface(
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp).selectable(
@@ -1210,7 +1217,8 @@ private fun ReadBlock(block: NoteBlock) {
             Text(
                 block.text,
                 Modifier.padding(10.dp),
-                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = if (com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(block.language) ==
+                    com.halo.app.data.workspace.WorkspaceTextFormat.TXT) FontFamily.Default else FontFamily.Monospace),
             )
         }
         NoteBlockType.QUOTE -> Row(Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp)) {
@@ -1418,7 +1426,7 @@ private fun NoteBlockEditor(
                         val caret = value.selection.end
                         val insertedNewline = value.text.length == fieldValue.text.length + 1 &&
                             caret > 0 && value.text.getOrNull(caret - 1) == '\n'
-                        if (insertedNewline) {
+                        if (insertedNewline && block.type != NoteBlockType.CODE) {
                             // Enter splits the block instead of embedding a hard break.
                             val splitAt = caret - 1
                             val withoutNewline = value.text.removeRange(splitAt, splitAt + 1)
@@ -1445,7 +1453,8 @@ private fun NoteBlockEditor(
                         NoteBlockType.HEADING_3 -> MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onBackground)
                         NoteBlockType.CODE -> MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = if (com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(block.language) ==
+                                com.halo.app.data.workspace.WorkspaceTextFormat.TXT) FontFamily.Default else FontFamily.Monospace,
                         )
                         else -> MaterialTheme.typography.bodyLarge.copy(
                             color = MaterialTheme.colorScheme.onBackground,
@@ -1458,7 +1467,8 @@ private fun NoteBlockEditor(
                     decorationBox = { inner ->
                         if (block.text.isEmpty()) {
                             Text(
-                                uiText(placeholderFor(block.type)),
+                                if (com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(block.language) != null)
+                                    stringResource(R.string.file52_document_text) else uiText(placeholderFor(block.type)),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -1760,6 +1770,8 @@ private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewMod
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
         Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically) {
+            val literal = state.blocks.singleOrNull()?.let { com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) } != null
+            if (!literal) {
             NoteBlockAddMenu(onBlock = { type ->
                 viewModel.insertBlock(state.selection?.blockId ?: state.blocks.lastOrNull()?.id, type)
             }, onAttachment = onAdd)
@@ -1768,6 +1780,7 @@ private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewMod
             }
             IconButton(onClick = { viewModel.convertSelectionTo(NoteBlockType.BULLET_LIST) }, enabled = state.selection != null) {
                 Icon(painterResource(R.drawable.halo_ic_bullet_list), uiText("List"))
+            }
             }
             HaloVoiceTextActions(text = "", onText = viewModel::addDictatedParagraph,
                 enabled = !state.isGenerating, maxChars = 12000,

@@ -90,6 +90,7 @@ sealed interface NotebookNavigation {
     data class OpenFile(val id: String) : NotebookNavigation
     data class OpenMemory(val id: String) : NotebookNavigation
     data class OpenStudio(val id: String) : NotebookNavigation
+    data class OpenFileTools(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String, val nodeId: String? = null) : NotebookNavigation
     data class OpenStudy(val sessionId: String, val review: Boolean = false) : NotebookNavigation
     data class StartStudyFromSource(val objectId: String) : NotebookNavigation
@@ -244,7 +245,7 @@ class NotebookViewModel(
                 NotebookUiState(
                     isLoaded = true,
                     items = visible.sortedByDescending { it.updatedAt }.map { row ->
-                        NotebookWorkspaceItem(row, matches[row.id.value]?.snippet, matches[row.id.value]?.nodeId)
+                        NotebookWorkspaceItem(row, matches[row.id.value]?.snippet.takeUnless { row.contentRef == "file-tools:${row.id.value}" }, matches[row.id.value]?.nodeId)
                     },
                     query = rawText,
                     filter = selectedFilter,
@@ -428,7 +429,7 @@ class NotebookViewModel(
     fun openObject(item: WorkspaceObject) {
         val id = item.id.value
         navigationChannel.trySend(when (item.type) {
-            WorkspaceObjectType.NOTE -> NotebookNavigation.OpenNote(id)
+            WorkspaceObjectType.NOTE -> if (item.contentRef == "file-tools:$id") NotebookNavigation.OpenFileTools(id) else NotebookNavigation.OpenNote(id)
             WorkspaceObjectType.CONVERSATION -> NotebookNavigation.OpenConversation(id)
             WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("studio:")) {
                 NotebookNavigation.OpenStudio(id)

@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 
 /** Reads only files explicitly imported into the workspace, never arbitrary paths or URLs. */
 class FileToolExecutor(private val context: Context, private val files: WorkspaceFileRepository,
-    private val workspace: WorkspaceRepository) : ToolExecutor {
+    private val workspace: WorkspaceRepository, private val editing: WorkspaceFileEditingActions? = null) : ToolExecutor {
     override fun definitions() = listOf(
         definition("halo_search_files", "Find imported files by name; returns workspace IDs.", "query"),
         definition("halo_get_file_metadata", "Read metadata for an imported file ID.", "objectId"),
@@ -22,7 +22,7 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
                 "action" to mapOf("type" to "string", "enum" to listOf("view", "edit", "share", "export", "print", "install_apk")),
                 "objectIds" to mapOf("type" to "array", "minItems" to 1, "maxItems" to 16, "items" to mapOf("type" to "string"))),
                 "required" to listOf("action", "objectIds"), "additionalProperties" to false))
-    )
+    ) + editing?.definitions().orEmpty()
     private fun definition(id: String, description: String, key: String) = ToolDefinition(id, id, description,
         mapOf("type" to "object", "properties" to mapOf(key to mapOf("type" to "string", "maxLength" to 500)),
             "required" to listOf(key), "additionalProperties" to false))
@@ -30,6 +30,7 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult = withContext(Dispatchers.IO) {
         fun reject(message: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, message, kind)
         fun success(message: String) = ToolExecutionResult.Success(toolCall.id, toolCall.functionName, message.take(4000))
+        if (editing?.owns(toolCall.functionName) == true) return@withContext editing.execute(toolCall)
         if (toolCall.functionName == "halo_file_handoff") return@withContext handoff(toolCall)
         val key = if (toolCall.functionName == "halo_search_files") "query" else "objectId"
         val value = (toolCall.arguments[key] as? String)?.trim() ?: return@withContext reject("Expected $key")
@@ -46,7 +47,7 @@ class FileToolExecutor(private val context: Context, private val files: Workspac
         if (item.lifecycle == WorkspaceObjectLifecycle.TRASHED) return@withContext reject("File is in trash", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         val file = files.getFile(id) ?: return@withContext reject("Imported file not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         if (toolCall.functionName == "halo_get_file_metadata") return@withContext success(
-            "[${id.value}] ${file.displayName}\nType: ${file.mimeType}\nBytes: ${file.sizeBytes ?: "unknown"}\nAvailability: ${file.availability}")
+            "[${id.value}] ${file.displayName}\nType: ${file.mimeType}\nVersion: ${file.version ?: "unknown"}\nBytes: ${file.sizeBytes ?: "unknown"}\nAvailability: ${file.availability}")
         if (toolCall.functionName != "halo_read_text_file") return@withContext reject("Unsupported file operation", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
         if (file.availability !in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL))
             return@withContext reject("File unavailable; relink it in Notebook", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)

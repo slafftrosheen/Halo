@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.workspace.StudioAlertDialog as WorkspaceToolDialog
+
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -26,6 +28,8 @@ internal fun CanvasLocalImageToolsDialog(
     busy: Boolean,
     onSave: (CanvasImageRecipe) -> Unit,
     onDismiss: () -> Unit,
+    scopeLabel: String? = null,
+    saveLabel: String? = null,
 ) {
     val context = LocalContext.current
     var recipe by remember(file.uri, file.version) { mutableStateOf(CanvasImageRecipe()) }
@@ -38,7 +42,7 @@ internal fun CanvasLocalImageToolsDialog(
         catch (_: Exception) { previewFailed = true }
     }
     DisposableEffect(bitmap) { onDispose { bitmap?.recycle() } }
-    AlertDialog(
+    WorkspaceToolDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(uiText("Image tools")) },
         text = {
@@ -46,7 +50,7 @@ internal fun CanvasLocalImageToolsDialog(
                 Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(uiText("Edit locally. Your original image remains unchanged."),
+                Text(scopeLabel ?: uiText("Edit locally. Your original image remains unchanged."),
                     style = MaterialTheme.typography.bodySmall)
                 if (bitmap != null) Image(bitmap!!.asImageBitmap(), contentDescription = null,
                     modifier = Modifier.fillMaxWidth().height(185.dp), contentScale = ContentScale.Fit)
@@ -95,7 +99,7 @@ internal fun CanvasLocalImageToolsDialog(
         },
         confirmButton = {
             Button(onClick = { onSave(recipe) }, enabled = !busy && bitmap != null && !previewFailed) {
-                Text(uiText("Save new image"))
+                Text(saveLabel ?: uiText("Save new image"))
             }
         },
         dismissButton = {

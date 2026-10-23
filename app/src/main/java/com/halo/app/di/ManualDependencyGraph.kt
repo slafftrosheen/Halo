@@ -393,6 +393,17 @@ object ManualDependencyGraph {
         ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator)
     }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
+    val workspaceFileVersions by lazy { com.halo.app.data.workspace.WorkspaceFileVersions(workspaceFileRepository, workspaceRepository) }
+    val workspaceTextDocuments by lazy { com.halo.app.data.workspace.WorkspaceTextDocuments(applicationContext, appDatabase,
+        notebookRepository, notebookDocumentRepository, workspaceFileRepository, workspaceRepository) }
+    val workspaceFileReceipts by lazy { com.halo.app.data.workspace.WorkspaceFileReceipts(appDatabase, notebookRepository, notebookDocumentRepository) }
+    val workspaceMediaFiles by lazy { com.halo.app.data.workspace.WorkspaceMediaFiles(applicationContext, workspaceFileRepository, workspaceFileVersions, workspaceFileReceipts) }
+    val workspaceFileAnnotations by lazy { com.halo.app.data.workspace.WorkspaceFileAnnotations(applicationContext, appDatabase,
+        notebookRepository, notebookDocumentRepository, workspaceFileRepository, workspaceFileVersions) }
+    val workspaceFileTools by lazy { com.halo.app.data.workspace.WorkspaceFileTools(appDatabase, workspaceTextDocuments, workspaceMediaFiles,
+        workspaceFileAnnotations, workspaceFileReceipts, workspaceFileRepository, workspaceRepository, workspaceFileVersions,
+        notebookDocumentRepository, notebookCanvasRepository, com.halo.app.data.workspace.WorkspaceFileToolsRequests(infra.scope,
+            { com.halo.app.ui.shell.HaloScreenLauncher.dispatch(applicationContext, "file_tools") })) }
     val studioProjectRepository by lazy { com.halo.app.data.studio.StudioProjectRepository(appDatabase) }
     val studioRenderer by lazy { com.halo.app.data.studio.StudioRenderer(applicationContext, workspaceFileRepository, workspaceRepository) }
     val studioService by lazy { com.halo.app.data.studio.StudioService(applicationContext, studioProjectRepository,
@@ -853,7 +864,8 @@ object ManualDependencyGraph {
         val currentTimeExecutor = CurrentTimeToolExecutor()
         val notificationExecutor = notificationDigestTool
         val storageExecutor = StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository)
-        val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository)
+        val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository,
+            com.halo.app.di.tools.WorkspaceFileEditingActions(workspaceFileTools))
         val studioExecutor = com.halo.app.di.tools.StudioToolExecutor(studioService)
         val workspaceExecutor = WorkspaceToolExecutor(
             notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,

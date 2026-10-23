@@ -64,7 +64,11 @@ class BundledSkillInstructionSource(
                 Do not modify or delete existing notes unless explicitly requested.
             """.trimIndent(),
             "halo.files" to """
-                Read imported files in the workspace.
+                Read imported files and edit supported local documents through the shared file action owners.
+                Inspect halo_file_tool_capabilities and exact file metadata/version first. Create/import TXT/Markdown/CSV through canonical Notebook; read bounded chunks with offsets and total length.
+                Prefer replace_range with exact expectedText for targeted text edits. Never treat a truncated chunk as a full document. CSV values are literal; no formulas execute.
+                Every edit/export uses the observed revision or source version. Never refresh and replay after a conflict, partial/cancelled batch or uncertain dispatch; inspect the durable batch receipt instead.
+                PDF extraction/annotation exports are PNG page images, not native PDF editing. Native PDF/Office roundtrips are unavailable. Preserve originals and report exact saved output IDs; attach only when requested.
                 Summarize content accurately without fabricating facts.
                 Use halo_checksum only on text the user supplied or on a file already imported into the workspace;
                 Halo cannot hash an arbitrary path. Report a checksum mismatch as a measurement, never as a tool error.

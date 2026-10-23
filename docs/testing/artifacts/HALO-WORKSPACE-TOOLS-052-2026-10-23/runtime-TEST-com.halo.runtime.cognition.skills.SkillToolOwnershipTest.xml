@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.skills.SkillToolOwnershipTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:56:50.804Z" hostname="MINIFOXEY" time="0.279">
+  <properties/>
+  <testcase name="custom ordering cannot replace native enablement or approval authority" classname="com.halo.runtime.cognition.skills.SkillToolOwnershipTest" time="0.265"/>
+  <testcase name="custom skill retains ownership of its own extension tools" classname="com.halo.runtime.cognition.skills.SkillToolOwnershipTest" time="0.004"/>
+  <testcase name="Workspace name retains legacy skill settings and tool ownership after reload" classname="com.halo.runtime.cognition.skills.SkillToolOwnershipTest" time="0.003"/>
+  <testcase name="loading shared guidance cannot expose permission blocked native actions" classname="com.halo.runtime.cognition.skills.SkillToolOwnershipTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

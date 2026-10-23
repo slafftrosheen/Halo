@@ -24,6 +24,7 @@ interface BrainSnapshotDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putStudioProjects(values: List<com.halo.app.data.studio.StudioProjectEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putStudioVersions(values: List<com.halo.app.data.studio.StudioProjectVersion>)
     @Query("SELECT * FROM workspace_objects ORDER BY createdAt, id") suspend fun workspaceObjects(): List<WorkspaceObjectEntity>
+    @Query("SELECT * FROM note_blocks ORDER BY noteId, position") suspend fun noteBlocks(): List<com.halo.app.data.notebook.NoteBlockEntity>
     @Query("SELECT * FROM notes ORDER BY objectId") suspend fun notes(): List<NoteEntity>
     @Query("SELECT * FROM conversations ORDER BY createdAt, id") suspend fun conversations(): List<PersistedConversation>
     @Query("SELECT * FROM conversation_turns ORDER BY timestamp, id") suspend fun turns(): List<PersistedTurn>
@@ -37,6 +38,7 @@ interface BrainSnapshotDao {
     @Query("SELECT * FROM agent_steps ORDER BY createdAt, id") suspend fun agentSteps(): List<AgentStepEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putWorkspaceObjects(values: List<WorkspaceObjectEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putNoteBlocks(values: List<com.halo.app.data.notebook.NoteBlockEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putNotes(values: List<NoteEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putConversations(values: List<PersistedConversation>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putTurns(values: List<PersistedTurn>)

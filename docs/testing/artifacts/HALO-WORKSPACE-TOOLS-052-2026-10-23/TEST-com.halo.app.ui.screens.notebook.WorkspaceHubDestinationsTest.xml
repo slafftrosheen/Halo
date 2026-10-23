@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:55:11.443Z" hostname="MINIFOXEY" time="3.934">
+  <properties/>
+  <testcase name="russian200" classname="com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest" time="2.734"/>
+  <testcase name="shortLandscape200" classname="com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest" time="0.347"/>
+  <testcase name="light360" classname="com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest" time="0.284"/>
+  <testcase name="dark412" classname="com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest" time="0.282"/>
+  <testcase name="latvian200Dark" classname="com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest" time="0.276"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

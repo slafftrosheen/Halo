@@ -10,7 +10,7 @@ enum class HomeToolGroup(val title: Int) {
 }
 
 enum class HomeToolAction {
-    NEW_NOTE, ATTACH, WEB, RESEARCH_DRAFT, MAPS_DRAFT, NOTEBOOK, STUDIO, STUDY,
+    NEW_NOTE, ATTACH, WEB, RESEARCH_DRAFT, MAPS_DRAFT, NOTEBOOK, STUDIO, FILE_TOOLS, STUDY,
     TIMER, OPEN_APP, CONNECTIONS, VOICE_MODE, START_VOICE, END_VOICE, INBOX, REPEAT_VOICE, PLANNED,
 }
 
@@ -63,7 +63,7 @@ data class HomeToolDescriptor(
         HomeToolAction.CONNECTIONS -> HaloGlyph.INTEGRATIONS
         HomeToolAction.VOICE_MODE, HomeToolAction.START_VOICE, HomeToolAction.END_VOICE -> HaloGlyph.LISTEN
         HomeToolAction.REPEAT_VOICE -> HaloGlyph.SPEAK
-        HomeToolAction.STUDIO, HomeToolAction.PLANNED -> HaloGlyph.TOOL
+        HomeToolAction.STUDIO, HomeToolAction.FILE_TOOLS, HomeToolAction.PLANNED -> HaloGlyph.TOOL
     },
 )
 
@@ -108,6 +108,8 @@ internal object HomeToolCatalog {
     val descriptors = listOf(
         HomeToolDescriptor("create.studio", HomeToolGroup.CREATE, R.string.studio_title, R.string.studio_local,
             HomeToolAction.STUDIO),
+        HomeToolDescriptor("create.document", HomeToolGroup.CREATE, R.string.file52_new_document, R.string.file52_local_scope,
+            HomeToolAction.FILE_TOOLS),
         HomeToolDescriptor("create.note", HomeToolGroup.CREATE, R.string.home_tool_note, R.string.home_tool_note_detail,
             HomeToolAction.NEW_NOTE, setOf("halo_create_empty_note")),
         HomeToolDescriptor("create.image", HomeToolGroup.CREATE, R.string.home_tool_image_create, R.string.home_tool_image_detail,
@@ -129,8 +131,8 @@ internal object HomeToolCatalog {
             HomeToolAction.STUDY, setOf("halo_open_screen")),
         HomeToolDescriptor("work.image_read", HomeToolGroup.WORK, R.string.home_tool_image_read, R.string.home_tool_image_read_detail,
             HomeToolAction.ATTACH),
-        HomeToolDescriptor("work.files", HomeToolGroup.WORK, R.string.home_tool_files, R.string.home_tool_files_detail,
-            HomeToolAction.NOTEBOOK, setOf("halo_search_files"), editorOnly = true),
+        HomeToolDescriptor("work.files", HomeToolGroup.WORK, R.string.file52_title, R.string.file52_local_scope,
+            HomeToolAction.FILE_TOOLS),
         HomeToolDescriptor("work.calculate", HomeToolGroup.WORK, R.string.home_tool_calculator, R.string.home_tool_calculator_future,
             HomeToolAction.PLANNED),
         HomeToolDescriptor("work.python", HomeToolGroup.WORK, R.string.home_tool_python, R.string.home_tool_python_future,

@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.halo.app.R
@@ -23,11 +24,11 @@ import kotlinx.coroutines.CancellationException
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StudioAlertDialog(onDismissRequest: () -> Unit, title: @Composable () -> Unit,
-    text: @Composable () -> Unit, confirmButton: @Composable () -> Unit, dismissButton: @Composable () -> Unit) {
+    text: @Composable () -> Unit, confirmButton: @Composable () -> Unit, dismissButton: @Composable () -> Unit, maxWidth: Dp = 640.dp) {
     val density = LocalDensity.current
     Dialog(onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         CompositionLocalProvider(LocalDensity provides density) {
-            Surface(Modifier.imePadding().safeDrawingPadding().padding(16.dp).widthIn(max = 640.dp)
+            Surface(Modifier.imePadding().safeDrawingPadding().padding(16.dp).widthIn(max = maxWidth)
                 .fillMaxWidth().heightIn(max = 720.dp).testTag("studio-dialog"), shape = MaterialTheme.shapes.large) {
                 Column {
                     Row(Modifier.fillMaxWidth().padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {

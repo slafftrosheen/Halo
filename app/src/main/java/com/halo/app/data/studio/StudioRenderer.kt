@@ -155,28 +155,8 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
     private fun drawInk(canvas: Canvas, layer: StudioLayer, target: RectF, paint: Paint) {
         val document = requireNotNull(InkCodec.decode(layer.ink))
         val rect = inkFrame(layer, target)
-        paint.strokeCap = Paint.Cap.ROUND; paint.strokeJoin = Paint.Join.ROUND
-        fun x(point: com.halo.sdk.runtime.ink.InkPoint) = rect.left + point.x * rect.width() / 1000
-        fun y(point: com.halo.sdk.runtime.ink.InkPoint) = rect.top + point.y * rect.height() / 1000
-        fun width(point: com.halo.sdk.runtime.ink.InkPoint): Float =
-            (layer.strokeWidth * maxOf(canvas.width, canvas.height) / 1000f *
-                (point.pressure?.let { .3f + 1.4f * it / 1000f } ?: 1f)).coerceAtLeast(.75f)
-        for (stroke in document.strokes) {
-            val points = stroke.points
-            paint.style = Paint.Style.FILL
-            canvas.drawCircle(x(points.first()), y(points.first()), width(points.first()) / 2, paint)
-            paint.style = Paint.Style.STROKE
-            var startX = x(points.first()); var startY = y(points.first())
-            for (index in 1 until points.size) {
-                val before = points[index - 1]; val current = points[index]
-                val endX = if (index == points.lastIndex) x(current) else (x(before) + x(current)) / 2
-                val endY = if (index == points.lastIndex) y(current) else (y(before) + y(current)) / 2
-                paint.strokeWidth = (width(before) + width(current)) / 2
-                val path = Path().apply { moveTo(startX, startY); quadTo(x(before), y(before), endX, endY) }
-                canvas.drawPath(path, paint)
-                startX = endX; startY = endY
-            }
-        }
+        com.halo.app.data.workspace.WorkspaceInkBitmapRenderer.draw(canvas, document, rect, paint,
+            layer.strokeWidth * maxOf(canvas.width, canvas.height) / 1000f)
     }
 
     private fun StudioRect.pixels(width: Int, height: Int) = RectF(x * width / 1000f, y * height / 1000f,

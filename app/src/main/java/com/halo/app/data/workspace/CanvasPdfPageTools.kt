@@ -23,9 +23,13 @@ object CanvasPdfPageTools {
     suspend fun preview(context: Context, file: WorkspaceFile, page: Int): Bitmap =
         render(context, file, page, preview = true)
 
+    /** Successful caller owns this bounded raster page and must recycle it. Original PDF stays untouched. */
+    internal suspend fun exportBitmap(context: Context, file: WorkspaceFile, page: Int): Bitmap =
+        render(context, file, page, preview = false)
+
     suspend fun export(context: Context, file: WorkspaceFile, page: Int): ByteArray =
         withContext(Dispatchers.IO) {
-            val bitmap = render(context, file, page, preview = false)
+            val bitmap = exportBitmap(context, file, page)
             try {
                 coroutineContext.ensureActive()
                 val stream = ByteArrayOutputStream()
