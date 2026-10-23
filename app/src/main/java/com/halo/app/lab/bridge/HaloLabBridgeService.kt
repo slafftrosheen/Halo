@@ -120,7 +120,11 @@ class HaloLabBridgeService : Service() {
                 outputTruncated = attempt.payload.optBoolean("outputTruncated", false),
             ) ?: return null
             val pipe = ParcelFileDescriptor.createPipe()
-            scope.launch(Dispatchers.IO) {
+            val released = AtomicBoolean(false)
+            fun releaseTransferSlot() {
+                if (released.compareAndSet(false, true)) artifactTransfers.release()
+            }
+            val writer = scope.launch(Dispatchers.IO) {
                 try {
                     ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use { output ->
                         output.write(bytes)
@@ -129,8 +133,12 @@ class HaloLabBridgeService : Service() {
                 } catch (_: Exception) {
                     runCatching { pipe[1].close() }
                 } finally {
-                    artifactTransfers.release()
+                    releaseTransferSlot()
                 }
+            }
+            writer.invokeOnCompletion { cause ->
+                if (cause != null) runCatching { pipe[1].close() }
+                releaseTransferSlot()
             }
             acquired = false
             return pipe[0]
