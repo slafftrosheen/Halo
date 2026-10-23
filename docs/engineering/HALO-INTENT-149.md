@@ -46,3 +46,7 @@ The final `SpeechRule` used regex/deterministic matches for most routed voice an
 - Tune same-model warm affinity to prevent cold Qwen intent loading ahead of a fast local chat turn.
 - Translate any new product/tool-recovery strings and finish Polish whole-UI localization.
 - Native endpoint/action round-trip acceptance for all relevant phone skills; not inferred from these source commits.
+
+## Ready-only admission correction — 2026-10-24
+
+Phone measurements exposed a distinction the original two-second cutoff wording did not capture: native cold initialization and teardown can outlive coroutine cancellation. Optional classification now skips cold/unready, different, hybrid, changed-artifact/configuration and busy residency. It uses the canonical mutex and existing post-load inference/cleanup only, with a ready inventory snapshot; no engine loading/reset, inventory scanning, detached preload or alternative owner. Normal conversational execution retains its existing load/isolation path. The two-second advisory deadline is cooperative for admitted warm native work, not a hard wall-clock guarantee. Deterministic commands remain available; the current settings explanation has EN/RU/LV/PL source. Initial physical matrix was incomplete/no-advice and does not qualify Qwen labels or actual spoken behavior. See the current ready-intent/drawing-recovery verification report for subsequent measured evidence.

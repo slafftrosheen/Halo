@@ -1,0 +1,125 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.language.PolishLanguageDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.language.PolishLanguageDeviceTest:
+INSTRUMENTATION_STATUS: test=polishSwitchAtLargeTextPreservesDraftAndPickerContext
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.language.PolishLanguageDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=androidx.test.espresso.PerformException: Error performing 'close keyboard' on view 'Animations or transitions are enabled on the target device.
+For more info check: https://developer.android.com/training/testing/espresso/setup#set-up-environment
+
+view.getRootView() to equal view'.
+	at androidx.test.espresso.PerformException$Builder.build(PerformException.java:86)
+	at androidx.test.espresso.base.PerformExceptionHandler.handleSafely(PerformExceptionHandler.java:56)
+	at androidx.test.espresso.base.PerformExceptionHandler.handleSafely(PerformExceptionHandler.java:31)
+	at androidx.test.espresso.base.DefaultFailureHandler$TypedFailureHandler.handle(DefaultFailureHandler.java:158)
+	at androidx.test.espresso.base.DefaultFailureHandler.handle(DefaultFailureHandler.java:120)
+	at androidx.test.espresso.ViewInteraction.waitForAndHandleInteractionResults(ViewInteraction.java:385)
+	at androidx.test.espresso.ViewInteraction.desugaredPerform(ViewInteraction.java:212)
+	at androidx.test.espresso.ViewInteraction.perform(ViewInteraction.java:140)
+	at androidx.test.espresso.Espresso.closeSoftKeyboard(Espresso.java:206)
+	at com.halo.app.language.PolishLanguageDeviceTest.polishSwitchAtLargeTextPreservesDraftAndPickerContext(PolishLanguageDeviceTest.kt:64)
+	... 67 trimmed
+Caused by: java.util.concurrent.TimeoutException: Wait on operation result timed out.
+	at androidx.test.espresso.action.CloseKeyboardAction.tryToCloseKeyboard(CloseKeyboardAction.java:106)
+	at androidx.test.espresso.action.CloseKeyboardAction.perform(CloseKeyboardAction.java:64)
+	at androidx.test.espresso.ViewInteraction$SingleExecutionViewAction.perform(ViewInteraction.java:429)
+	at androidx.test.espresso.ViewInteraction.doPerform(ViewInteraction.java:297)
+	at androidx.test.espresso.ViewInteraction.-$$Nest$mdoPerform(ViewInteraction.java:0)
+	at androidx.test.espresso.ViewInteraction$1.call(ViewInteraction.java:193)
+	at androidx.test.espresso.ViewInteraction$1.call(ViewInteraction.java:182)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at android.os.Handler.handleCallback(Handler.java:959)
+	at android.os.Handler.dispatchMessage(Handler.java:100)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.app.ActivityThread.main(ActivityThread.java:9593)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:936)
+
+INSTRUMENTATION_STATUS: stream=
+Error in polishSwitchAtLargeTextPreservesDraftAndPickerContext(com.halo.app.language.PolishLanguageDeviceTest):
+androidx.test.espresso.PerformException: Error performing 'close keyboard' on view 'Animations or transitions are enabled on the target device.
+For more info check: https://developer.android.com/training/testing/espresso/setup#set-up-environment
+
+view.getRootView() to equal view'.
+	at androidx.test.espresso.PerformException$Builder.build(PerformException.java:86)
+	at androidx.test.espresso.base.PerformExceptionHandler.handleSafely(PerformExceptionHandler.java:56)
+	at androidx.test.espresso.base.PerformExceptionHandler.handleSafely(PerformExceptionHandler.java:31)
+	at androidx.test.espresso.base.DefaultFailureHandler$TypedFailureHandler.handle(DefaultFailureHandler.java:158)
+	at androidx.test.espresso.base.DefaultFailureHandler.handle(DefaultFailureHandler.java:120)
+	at androidx.test.espresso.ViewInteraction.waitForAndHandleInteractionResults(ViewInteraction.java:385)
+	at androidx.test.espresso.ViewInteraction.desugaredPerform(ViewInteraction.java:212)
+	at androidx.test.espresso.ViewInteraction.perform(ViewInteraction.java:140)
+	at androidx.test.espresso.Espresso.closeSoftKeyboard(Espresso.java:206)
+	at com.halo.app.language.PolishLanguageDeviceTest.polishSwitchAtLargeTextPreservesDraftAndPickerContext(PolishLanguageDeviceTest.kt:64)
+	... 67 trimmed
+Caused by: java.util.concurrent.TimeoutException: Wait on operation result timed out.
+	at androidx.test.espresso.action.CloseKeyboardAction.tryToCloseKeyboard(CloseKeyboardAction.java:106)
+	at androidx.test.espresso.action.CloseKeyboardAction.perform(CloseKeyboardAction.java:64)
+	at androidx.test.espresso.ViewInteraction$SingleExecutionViewAction.perform(ViewInteraction.java:429)
+	at androidx.test.espresso.ViewInteraction.doPerform(ViewInteraction.java:297)
+	at androidx.test.espresso.ViewInteraction.-$$Nest$mdoPerform(ViewInteraction.java:0)
+	at androidx.test.espresso.ViewInteraction$1.call(ViewInteraction.java:193)
+	at androidx.test.espresso.ViewInteraction$1.call(ViewInteraction.java:182)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at android.os.Handler.handleCallback(Handler.java:959)
+	at android.os.Handler.dispatchMessage(Handler.java:100)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.app.ActivityThread.main(ActivityThread.java:9593)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:936)
+
+INSTRUMENTATION_STATUS: test=polishSwitchAtLargeTextPreservesDraftAndPickerContext
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 12,378
+There was 1 failure:
+1) polishSwitchAtLargeTextPreservesDraftAndPickerContext(com.halo.app.language.PolishLanguageDeviceTest)
+androidx.test.espresso.PerformException: Error performing 'close keyboard' on view 'Animations or transitions are enabled on the target device.
+For more info check: https://developer.android.com/training/testing/espresso/setup#set-up-environment
+
+view.getRootView() to equal view'.
+	at androidx.test.espresso.PerformException$Builder.build(PerformException.java:86)
+	at androidx.test.espresso.base.PerformExceptionHandler.handleSafely(PerformExceptionHandler.java:56)
+	at androidx.test.espresso.base.PerformExceptionHandler.handleSafely(PerformExceptionHandler.java:31)
+	at androidx.test.espresso.base.DefaultFailureHandler$TypedFailureHandler.handle(DefaultFailureHandler.java:158)
+	at androidx.test.espresso.base.DefaultFailureHandler.handle(DefaultFailureHandler.java:120)
+	at androidx.test.espresso.ViewInteraction.waitForAndHandleInteractionResults(ViewInteraction.java:385)
+	at androidx.test.espresso.ViewInteraction.desugaredPerform(ViewInteraction.java:212)
+	at androidx.test.espresso.ViewInteraction.perform(ViewInteraction.java:140)
+	at androidx.test.espresso.Espresso.closeSoftKeyboard(Espresso.java:206)
+	at com.halo.app.language.PolishLanguageDeviceTest.polishSwitchAtLargeTextPreservesDraftAndPickerContext(PolishLanguageDeviceTest.kt:64)
+	... 67 trimmed
+Caused by: java.util.concurrent.TimeoutException: Wait on operation result timed out.
+	at androidx.test.espresso.action.CloseKeyboardAction.tryToCloseKeyboard(CloseKeyboardAction.java:106)
+	at androidx.test.espresso.action.CloseKeyboardAction.perform(CloseKeyboardAction.java:64)
+	at androidx.test.espresso.ViewInteraction$SingleExecutionViewAction.perform(ViewInteraction.java:429)
+	at androidx.test.espresso.ViewInteraction.doPerform(ViewInteraction.java:297)
+	at androidx.test.espresso.ViewInteraction.-$$Nest$mdoPerform(ViewInteraction.java:0)
+	at androidx.test.espresso.ViewInteraction$1.call(ViewInteraction.java:193)
+	at androidx.test.espresso.ViewInteraction$1.call(ViewInteraction.java:182)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at android.os.Handler.handleCallback(Handler.java:959)
+	at android.os.Handler.dispatchMessage(Handler.java:100)
+	at android.os.Looper.loopOnce(Looper.java:249)
+	at android.os.Looper.loop(Looper.java:337)
+	at android.app.ActivityThread.main(ActivityThread.java:9593)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:936)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

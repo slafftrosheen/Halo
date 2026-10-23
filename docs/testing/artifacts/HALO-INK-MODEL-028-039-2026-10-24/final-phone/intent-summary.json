@@ -1,0 +1,11 @@
+{
+  "p95Ms": 16641,
+  "minMs": 10102,
+  "lastStage": "INCOMPLETE",
+  "maxMs": 16641,
+  "preparedFinished": 18,
+  "casesFinished": 19,
+  "noAdvice": 19,
+  "medianMs": 10563,
+  "status": "NOT_TESTED"
+}

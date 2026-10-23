@@ -4014,4 +4014,5 @@
     <string name="ui_673f512ba46e" formatted="false">"halo paziņojumi"</string>
     <string name="ui_09567fef6b7d" formatted="false">"Teksta un rīku pārbaudēs izmanto angļu valodas piemērus. Citām valodām vajadzīgas atsevišķas pārbaudes."</string>
     <string name="ui_b2a91f770f7f" formatted="false">"Attēls pieejams halo"</string>
+    <string name="ui_bfe28eedbbdd" formatted="false">"halo izmanto šo modeli tikai tad, kad tas jau ir gatavs. Parastās komandas joprojām ir pieejamas."</string>
 </resources>

@@ -1,0 +1,78 @@
+{
+  "sourceStamp": "508f4daa-plus-exact-recovery-ready-intent",
+  "files": [
+    {
+      "path": "app/src/main/java/com/halo/app/ai/LocalIntentModelRouter.kt",
+      "sha256": "12f8d362b1d680ac12970af86ec64127ef42defb8d7397692bd3b2325af33009"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/notebook/CanvasDrawingDraft.kt",
+      "sha256": "e46c44357070d6ee11c93f9832711b8719530f002a17863a2fd6fa397f1c26a6"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/notebook/NotebookCanvas.kt",
+      "sha256": "567db8645b68e2a82a773be0802f8a0d0a644fd8186857b7d96cabd2d36ec1d4"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+      "sha256": "288f530986bb85960f976e2c4141777ce0e0297bef583522352da172e8b0cf20"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorScreen.kt",
+      "sha256": "73f33764d2b7f59ad597012634ffc8f4c9546970f81b53331ef8303f3447460f"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorViewModel.kt",
+      "sha256": "55ae1c55d1780bd47c83a8e4b5ca305d75a18f3a879d01724eae929681b34824"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasSourceInkDialog.kt",
+      "sha256": "3ed9797aa54d6a535f1c1553d1b92bbe2d3576eb41e745610c31dcb95cf2915e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt",
+      "sha256": "a68d249d4ca062105b2008015dd456a15d792efe848ee31e3cebfa0c1b4a7c65"
+    },
+    {
+      "path": "app/src/main/localization/ui.tsv",
+      "sha256": "54644db88073eadad3751430f69ecf665c5c3a5229a639b2c5baf47276849a54"
+    },
+    {
+      "path": "app/src/main/res/values-lv/ui_strings.xml",
+      "sha256": "c4e9c211052c33419619fb95f11edb01d8014d1141f85dbf53bc9d833d7ca130"
+    },
+    {
+      "path": "app/src/main/res/values-pl/ui_strings.xml",
+      "sha256": "d3f811f5af0547746048acd85bc6aa45cc7230f2188057980cce6907e6987cac"
+    },
+    {
+      "path": "app/src/main/res/values-ru/ui_strings.xml",
+      "sha256": "01f83aa581a0d4d382c01bc6b2b4517d8454223eac9908932c2d59ebeb4f57b2"
+    },
+    {
+      "path": "app/src/main/res/values/ui_strings.xml",
+      "sha256": "162f6a52f336a0e8245a3a3f152c9769615fed95a4018e1cab012c058b459004"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ai/LocalIntentModelRouterTest.kt",
+      "sha256": "8d560dd8761ca2301ae5226990d3f177c7227c29058c9f39bd7fd2a9eb47e299"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/notebook/CanvasDrawingDraftRepositoryTest.kt",
+      "sha256": "edf9fb45140a93fe2ab03fb90970a706ce8255bf10ff4dc90c8447590fc462f8"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/notebook/CanvasEditorPersistenceTest.kt",
+      "sha256": "53eb6049d7dc7d70033024f0f49f4ece6a999be347cfeb929476942fa288259e"
+    },
+    {
+      "path": "providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt",
+      "sha256": "0f80f6c16c0acc40e4ec0d870dffc42c188371dbe4822f2992a8b6f262fa54f3"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt",
+      "sha256": "1d778d7a1e6a9b45360d80f57895cb9b242ed071cd1df317ca8fd0ce4ff368af"
+    }
+  ],
+  "base": "508f4daa1a7f82b9f03de4724e71af945f049d81"
+}

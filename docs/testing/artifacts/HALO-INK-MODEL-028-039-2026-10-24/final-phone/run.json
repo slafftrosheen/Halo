@@ -1,0 +1,9 @@
+{
+  "testSha256": "dc747ee32fa44c9ba262095f9847f74260e6c692f21f5a6812025674ac56a9d6",
+  "appSha256": "58c642aff2626dadc0943778cc4b5f4d3e9f2edeaf727985b156e8e80234db91",
+  "expectedSha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+  "runId": "intent-v1-b6ac0f9c6fa9469fa4b15bd3928c1414",
+  "expectedBytes": 344671744,
+  "modelId": "qwen3-0.6b-dynamic-int4",
+  "sourceStamp": "a71bbf42-plus-erased-ink-model-manifest"
+}

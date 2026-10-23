@@ -4,6 +4,11 @@ import org.json.JSONObject
 
 data class CanvasDrawingDraft(val nodeId: String?, val kind: String, val original: String,
     val sketch: String = "", val pages: Map<Int, String> = emptyMap(), val page: Int = 1, val fileVersion: String? = null) {
+    /** A draft cannot acquire a newer source identity merely by reopening its editor. */
+    fun matchesSource(sourceNodeId: String?, sourceKind: String, sourceOriginal: String,
+        sourceFileVersion: String? = null): Boolean =
+        nodeId == sourceNodeId && kind == sourceKind && original == sourceOriginal && fileVersion == sourceFileVersion
+
     fun encode(): String {
         require(kind in setOf("sketch", "annotation") && page in 1..9999 && pages.size <= CanvasFileMarkupCodec.MAX_PAGES)
         return JSONObject().put("format", "canvas-drawing:v1").put("nodeId", nodeId).put("kind", kind)

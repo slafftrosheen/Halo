@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.LiteRtLocalProviderStreamTest" tests="26" skipped="0" failures="0" errors="0" timestamp="2026-10-23T21:56:13.316Z" hostname="MINIFOXEY" time="3.14">
+  <properties/>
+  <testcase name="exactReadinessDoesNotDependOnOrRewriteMissingConfiguredModel" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="2.044"/>
+  <testcase name="textOnlyModelRejectsAudioBeforeLoading" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.051"/>
+  <testcase name="admittedAdvisoryUsesCanonicalBoundedTextOnlyGenerationAndActualIdentity" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.097"/>
+  <testcase name="changedArtifactOrUnverifiedMetadataCannotReloadTheResidentModelForAdvice" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.03"/>
+  <testcase name="exactArtifactThinkingPolicyAndNoneToolsReachAllProviderBoundaries" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.063"/>
+  <testcase name="advisoryCannotReloadSameIdWithADifferentResidentConfiguration" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.025"/>
+  <testcase name="routedLocalModelOverridesConfiguredDefaultAndReusesOnlySameResident" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.041"/>
+  <testcase name="invalidAdvisoryInputCannotLoadOrGenerateAModel" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.027"/>
+  <testcase name="stream events are emitted from channelFlow without flow invariant violations" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.026"/>
+  <testcase name="emptyStreamIsReportedAsFailureInsteadOfBlankCompletion" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.027"/>
+  <testcase name="mediaAndCapabilityWiringReachBothGenerationPaths" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.028"/>
+  <testcase name="explicitBenchmarkUsesTheExistingCpuSafeAutoGate" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.028"/>
+  <testcase name="cancelledAdvisoryReleasesCanonicalMutexForNextRequest" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.032"/>
+  <testcase name="imageEncoderCanUseGpuIndependentlyOfCpuTextBackend" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.022"/>
+  <testcase name="missingArtifactIsNotMisreportedAsUnsupportedTextInEitherExecutionPath" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.021"/>
+  <testcase name="advisoryDoesNotWaitForOrRefreshAnUnavailableInventory" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.024"/>
+  <testcase name="nonThinkingArtifactIgnoresUnsupportedOverride" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.022"/>
+  <testcase name="roleDiagnosticOverrideIsTransientAndRecordsRequestedConfiguration" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.045"/>
+  <testcase name="advisoryNeverQueuesBehindActualConversationalGeneration" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.027"/>
+  <testcase name="coldAdvisoryNeverInitializesOrTearsDownANativeEngine" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.021"/>
+  <testcase name="failedAdditionalFixtureDoesNotBecomeAToolProtocolFailure" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.026"/>
+  <testcase name="advisoryPreservesHybridResidencyWithoutGeneratingOrResettingIt" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.026"/>
+  <testcase name="diagnosticBoundaryAlsoStripsNoneToolsAndDisablesThinking" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.025"/>
+  <testcase name="incompleteNativeReadinessIsNotAnAdvisoryEngine" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.022"/>
+  <testcase name="advisoryKeepsDifferentResidentChatWithoutNativeGenerationOrPreferenceWrites" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.02"/>
+  <testcase name="catalogThinkingClaimCannotEnableAnUnsupportedNativeControl" classname="com.halo.providers.litert.LiteRtLocalProviderStreamTest" time="0.02"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

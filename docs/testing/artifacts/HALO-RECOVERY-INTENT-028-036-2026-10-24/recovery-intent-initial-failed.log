@@ -1,0 +1,89 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :providers:litert:testDebugUnitTest --tests com.halo.providers.litert.LiteRtLocalProviderStreamTest :app:testDebugUnitTest --tests com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest --tests com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest --tests com.halo.app.ui.screens.notebook.CanvasErasedSketchUiTest --tests com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest --tests com.halo.app.ai.LocalIntentModelRouterTest --tests com.halo.app.language.AppLanguageTest --tests com.halo.app.di.BuiltInSkillManifestTest :app:assembleDebug :app:assembleDebugAndroidTest
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :runtime:cognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:provider-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :runtime:provider-core:compileKotlin UP-TO-DATE
+> Task :runtime:provider-core:compileJava NO-SOURCE
+> Task :runtime:cognition:compileKotlin UP-TO-DATE
+> Task :runtime:cognition:compileJava NO-SOURCE
+> Task :runtime:kernel:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:kernel:compileKotlin UP-TO-DATE
+> Task :runtime:kernel:compileJava NO-SOURCE
+> Task :runtime:kernel:processResources NO-SOURCE
+> Task :runtime:kernel:classes UP-TO-DATE
+> Task :runtime:kernel:jar UP-TO-DATE
+> Task :runtime:cognition:processResources NO-SOURCE
+> Task :runtime:cognition:classes UP-TO-DATE
+> Task :runtime:cognition:jar UP-TO-DATE
+> Task :runtime:provider-core:processResources NO-SOURCE
+> Task :runtime:provider-core:classes UP-TO-DATE
+> Task :runtime:provider-core:jar UP-TO-DATE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+> Task :providers:litert:preBuild UP-TO-DATE
+> Task :providers:litert:preDebugBuild UP-TO-DATE
+> Task :providers:litert:generateDebugResources UP-TO-DATE
+> Task :providers:litert:packageDebugResources UP-TO-DATE
+> Task :providers:litert:processDebugNavigationResources UP-TO-DATE
+> Task :providers:litert:parseDebugLocalResources UP-TO-DATE
+> Task :providers:litert:generateDebugRFile UP-TO-DATE
+
+> Task :providers:litert:compileDebugKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/providers/litert/src/main/java/com/halo/providers/litert/models/LiteRtDownloadWorker.kt:44:44 'constructor(p0: Int, p1: CharSequence!, p2: PendingIntent?): Notification.Action.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/providers/litert/src/main/java/com/halo/providers/litert/runtime/LiteRtRuntime.kt:860:94 Unchecked cast of 'Map<String, Any?>' to 'Map<String, Any>'.
+
+> Task :providers:litert:javaPreCompileDebug UP-TO-DATE
+> Task :providers:litert:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:litert:bundleLibRuntimeToJarDebug
+> Task :providers:litert:bundleLibCompileToJarDebug
+> Task :providers:litert:preDebugUnitTestBuild UP-TO-DATE
+> Task :providers:litert:generateDebugUnitTestStubRFile UP-TO-DATE
+
+> Task :providers:litert:compileDebugUnitTestKotlin FAILED
+e: file:///C:/Users/slavd/HaloEco/Halo-issues/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt:71:42 Assignment type mismatch: actual type is 'LocalModelInventoryState.Loading', but 'LocalModelInventoryState.Ready' was expected.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':providers:litert:compileDebugUnitTestKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 10s
+27 actionable tasks: 4 executed, 23 up-to-date
+Configuration cache entry stored.

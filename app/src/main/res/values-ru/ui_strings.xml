@@ -4014,4 +4014,5 @@
     <string name="ui_673f512ba46e" formatted="false">"Уведомления halo"</string>
     <string name="ui_09567fef6b7d" formatted="false">"Проверки текста и инструментов используют английские примеры. Для других языков нужны отдельные проверки."</string>
     <string name="ui_b2a91f770f7f" formatted="false">"Изображение доступно в halo"</string>
+    <string name="ui_bfe28eedbbdd" formatted="false">"halo использует эту модель, только когда она уже готова. Обычные команды остаются доступными."</string>
 </resources>

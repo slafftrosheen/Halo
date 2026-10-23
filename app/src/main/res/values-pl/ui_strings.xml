@@ -4014,4 +4014,5 @@
     <string name="ui_673f512ba46e" formatted="false">"Powiadomienia halo"</string>
     <string name="ui_09567fef6b7d" formatted="false">"Testy tekstu i narzędzi używają angielskich przykładów. Inne języki wymagają oddzielnych testów."</string>
     <string name="ui_b2a91f770f7f" formatted="false">"Obraz jest dostępny w halo"</string>
+    <string name="ui_bfe28eedbbdd" formatted="false">"halo używa tego modelu tylko wtedy, gdy jest już gotowy. Standardowe polecenia pozostają dostępne."</string>
 </resources>

@@ -274,6 +274,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                             style = MaterialTheme.typography.titleSmall)
                         Text(uiText("A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself."),
                             style = MaterialTheme.typography.bodySmall)
+                        Text(uiText("Halo uses this model only when it is already ready. Standard commands remain available."),
+                            style = MaterialTheme.typography.bodySmall)
                     }
                     Switch(checked = localIntentEnabled, onCheckedChange = { enabled ->
                         intentSettings.putBoolean(com.halo.app.ai.LocalIntentModelRouter.ENABLED_KEY,enabled)

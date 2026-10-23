@@ -24,7 +24,7 @@ class LocalIntentModelRouterTest {
     }
     @Test fun sharedLiteRtResidentChatIsNotEvictedForIntent() {
         val candidate = LocalIntentModelRouter.DEFAULT_ID
-        assertFalse(LocalIntentModelRouter.shouldDefer(null,candidate,false))
+        assertTrue(LocalIntentModelRouter.shouldDefer(null,candidate,false))
         assertFalse(LocalIntentModelRouter.shouldDefer(candidate,candidate,false))
         assertTrue(LocalIntentModelRouter.shouldDefer("lfm2.5-1.2b",candidate,false))
         assertTrue(LocalIntentModelRouter.shouldDefer(candidate,candidate,true))

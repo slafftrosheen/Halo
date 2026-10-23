@@ -45,6 +45,108 @@ import kotlinx.coroutines.withTimeout
 
 @RunWith(RobolectricTestRunner::class)
 class LiteRtLocalProviderStreamTest {
+    @Test fun coldAdvisoryNeverInitializesOrTearsDownANativeEngine() = runTest {
+        val runtime = FakeRuntime()
+        val storage = FakeStorage()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = storage, modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val writes = storage.writes.toList()
+        val response = withContext(Dispatchers.Default) { withTimeout(1_000) {
+            provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label")
+        } }
+        org.junit.Assert.assertNull(response)
+        assertTrue(runtime.loadedIds.isEmpty())
+        assertTrue(runtime.configs.isEmpty())
+        assertEquals(0, runtime.unloads)
+        assertEquals(writes, storage.writes)
+    }
+
+    @Test fun advisoryDoesNotWaitForOrRefreshAnUnavailableInventory() = runTest {
+        val runtime = FakeRuntime()
+        val inventory = FakeInventory()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = inventory,
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
+        assertTrue(!provider.inferenceBusyForIntent())
+        val resolves = inventory.resolveCalls
+        inventory.inventoryState.value = LocalModelInventoryState.Loading
+        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(resolves, inventory.resolveCalls)
+        assertTrue(runtime.configs.isEmpty())
+        assertEquals(0, runtime.unloads)
+    }
+
+    @Test fun incompleteNativeReadinessIsNotAnAdvisoryEngine() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
+        assertTrue(!provider.inferenceBusyForIntent())
+        runtime.nativeReady = false
+        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(listOf("test_model"), runtime.loadedIds)
+        assertTrue(runtime.configs.isEmpty())
+        assertEquals(0, runtime.unloads)
+    }
+
+    @Test fun advisoryPreservesHybridResidencyWithoutGeneratingOrResettingIt() = runTest {
+        val runtime = FakeRuntime()
+        val inventory = FakeInventory(ids = listOf("hybrid"))
+        val original = (inventory.inventoryState.value as LocalModelInventoryState.Ready).models.single()
+        inventory.inventoryState.value = LocalModelInventoryState.Ready(listOf(original.copy(
+            path = "my_LFM2.5-1.2B-Instruct_int4.litertlm")), 1)
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = inventory,
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("hybrid") }.await())
+        assertTrue(!provider.inferenceBusyForIntent())
+        val loads = runtime.loadedIds.toList()
+        val unloads = runtime.unloads
+        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("hybrid", "Open camera", "Reply with one label"))
+        assertEquals(loads, runtime.loadedIds)
+        assertEquals(unloads, runtime.unloads)
+        assertTrue(runtime.configs.isEmpty())
+        assertEquals("hybrid", provider.residentModelIdForIntent())
+    }
+
+    @Test fun changedArtifactOrUnverifiedMetadataCannotReloadTheResidentModelForAdvice() = runTest {
+        val runtime = FakeRuntime()
+        val inventory = FakeInventory()
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = inventory,
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
+        assertTrue(!provider.inferenceBusyForIntent())
+        val original = (inventory.inventoryState.value as LocalModelInventoryState.Ready).models.single()
+        val loads = runtime.loadedIds.toList()
+        val unloads = runtime.unloads
+        for (changed in listOf(original.copy(path = "replaced-path"), original.copy(sha256 = "replacement-hash"),
+            original.copy(validation = LocalModelValidation.UNVERIFIED), original.copy(supportsText = false))) {
+            inventory.inventoryState.value = LocalModelInventoryState.Ready(listOf(changed), 1)
+            org.junit.Assert.assertNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+            assertEquals(loads, runtime.loadedIds)
+            assertEquals(unloads, runtime.unloads)
+            assertTrue(runtime.configs.isEmpty())
+        }
+    }
+
+    @Test fun advisoryCannotReloadSameIdWithADifferentResidentConfiguration() = runTest {
+        val runtime = FakeRuntime()
+        val inventory = FakeInventory()
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = inventory,
+            storage = FakeStorage(), modelSession = session)
+        val descriptor = requireNotNull(inventory.resolveModel("test_model"))
+        val expectedConfig = provider.loadConfigFor(descriptor)
+        assertTrue(session.loadModel("test_model", descriptor.path, config = provider.loadConfigFor(descriptor)
+            .copy(contextSize = if (expectedConfig.contextSize == 1024) 2048 else 1024,
+                computeBackend = LocalComputeBackend.CPU, visionEnabled = false, audioEnabled = false),
+            artifactSha256 = descriptor.sha256).isSuccess)
+        val loads = runtime.loadedIds.toList()
+        val unloads = runtime.unloads
+        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(loads, runtime.loadedIds)
+        assertEquals(unloads, runtime.unloads)
+        assertTrue(runtime.configs.isEmpty())
+    }
     @Test fun invalidAdvisoryInputCannotLoadOrGenerateAModel() = runTest {
         val runtime = FakeRuntime()
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
@@ -94,8 +196,12 @@ class LiteRtLocalProviderStreamTest {
 
     @Test fun admittedAdvisoryUsesCanonicalBoundedTextOnlyGenerationAndActualIdentity() = runTest {
         val runtime = FakeRuntime().apply { nativeThinking = true }
-        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(thinking = true),
+        val inventory = FakeInventory(thinking = true)
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = inventory,
             storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
+        assertTrue(!provider.inferenceBusyForIntent())
+        val resolves = inventory.resolveCalls
         val response = requireNotNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
         assertEquals(provider.id, response.providerId)
         assertEquals("test_model", response.resolvedModelId)
@@ -104,6 +210,9 @@ class LiteRtLocalProviderStreamTest {
         assertTrue(config.availableTools.isEmpty())
         assertEquals(false, config.thinkingEnabled)
         assertEquals(0.0, config.temperature, 0.0)
+        assertEquals(listOf("test_model"), runtime.loadedIds)
+        assertEquals(0, runtime.unloads)
+        assertEquals(resolves, inventory.resolveCalls)
     }
 
     @Test fun cancelledAdvisoryReleasesCanonicalMutexForNextRequest() = runTest {
@@ -112,6 +221,8 @@ class LiteRtLocalProviderStreamTest {
         val runtime = FakeRuntime().apply { generationEntered = entered; generationRelease = release }
         val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
             storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
+        assertTrue(!provider.inferenceBusyForIntent())
         val advice = async(Dispatchers.Default) { provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label") }
         withContext(Dispatchers.Default) { withTimeout(5_000) { entered.await() } }
         advice.cancel()
@@ -173,6 +284,8 @@ class LiteRtLocalProviderStreamTest {
     private class FakeRuntime : LocalInferenceRuntime {
         val configs = mutableListOf<RuntimeGenerationConfig>()
         val loadedIds = mutableListOf<String>()
+        var unloads = 0
+        var nativeReady = true
         var lastLoadBackend: LocalComputeBackend? = null
         var emptyResponse = false
         var nativeThinking = false
@@ -183,7 +296,7 @@ class LiteRtLocalProviderStreamTest {
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
 
-        override fun isLoaded(): Boolean = true
+        override fun isLoaded(): Boolean = nativeReady
 
         override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
             // Simulate native metadata in this fake runtime; catalog flags alone are not proof.
@@ -213,13 +326,15 @@ class LiteRtLocalProviderStreamTest {
         }
 
         override suspend fun unloadModel(): Result<Unit> {
+            unloads++
             return Result.success(Unit)
         }
     }
 
     private class FakeInventory(ids: List<String> = listOf("test_model"), thinking: Boolean = false,
         audio: Boolean = false, vision: Boolean = false) : LocalModelInventoryRepository {
-        override val inventoryState = MutableStateFlow(
+        var resolveCalls = 0
+        override val inventoryState = MutableStateFlow<LocalModelInventoryState>(
             LocalModelInventoryState.Ready(
                 ids.map { id ->
                     LocalModelDescriptor(
@@ -243,6 +358,7 @@ class LiteRtLocalProviderStreamTest {
         override suspend fun verifyPhysicalArtifact(modelId: String) = resolveModel(modelId)
         override suspend fun refresh(reason: ModelInventoryRefreshReason) {}
         override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
+            resolveCalls++
             return (inventoryState.value as LocalModelInventoryState.Ready).models.firstOrNull { it.id == modelId }
         }
         override fun invalidate(reason: String) {}

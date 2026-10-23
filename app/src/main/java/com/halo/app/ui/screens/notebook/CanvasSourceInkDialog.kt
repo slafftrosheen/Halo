@@ -91,10 +91,11 @@ internal fun CanvasSourceInkDialog(
     scopeLabel: String? = null,
 ) {
     val context = LocalContext.current
+    val sourceRecovery = recovery?.takeIf { it.matchesSource(it.nodeId, "annotation", markup, file.version) }
     val base = remember(markup) { CanvasFileMarkupCodec.decode(markup) }
     val readable = !markup.startsWith("halo-markup:") || base.title != markup
-    var page by remember(file.uri.toString()) { mutableIntStateOf(if (file.mimeType == "application/pdf") (recovery?.page ?: 1).coerceIn(1, 9999) else 1) }
-    val pending = remember(file.uri.toString(), markup) { mutableStateMapOf<Int, String>().apply { putAll(recovery?.pages.orEmpty()) } }
+    var page by remember(file.uri.toString()) { mutableIntStateOf(if (file.mimeType == "application/pdf") (sourceRecovery?.page ?: 1).coerceIn(1, 9999) else 1) }
+    val pending = remember(file.uri.toString(), markup) { mutableStateMapOf<Int, String>().apply { putAll(sourceRecovery?.pages.orEmpty()) } }
     val validRecovery = pending.size <= CanvasFileMarkupCodec.MAX_PAGES && pending.all { (index, value) ->
         index in 1..9999 && InkCodec.decode(value) != null
     }
@@ -115,8 +116,8 @@ internal fun CanvasSourceInkDialog(
     LaunchedEffect(file.objectId.value, page) {
         selectionCallback(null)
     }
-    fun draftFor(pages: Map<Int, String>) = CanvasDrawingDraft(recovery?.nodeId, "annotation", markup,
-        pages = pages, page = page, fileVersion = recovery?.fileVersion)
+    fun draftFor(pages: Map<Int, String>) = CanvasDrawingDraft(sourceRecovery?.nodeId, "annotation", markup,
+        pages = pages, page = page, fileVersion = file.version)
     fun keepPosition() {
         if (readable && validRecovery) onDraft(draftFor(pending.toMap()))
     }

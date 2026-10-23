@@ -36,6 +36,100 @@ class CanvasEditorPersistenceTest {
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
+    @Test fun savingOrCancellingAnotherSketchRetainsTheUnrelatedRecoveryDraft() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val edited = "sketch:v1|300,300;400,400"
+        val first = repository.addSketchNode(board, 0f, 0f, original)
+        val other = repository.addSketchNode(board, 0f, 0f, original)
+        val draft = com.halo.app.data.notebook.CanvasDrawingDraft(other, "sketch", original, sketch = edited)
+        repository.saveDrawingDraft(board, draft)
+        val vm = editor(board)
+        vm.discardDrawingDraft(null).join()
+        assertEquals(draft, repository.drawingDraft(board))
+        vm.addSketch(edited, first, original).join()
+        assertEquals(edited, repository.observe(board).first()!!.nodes.single { it.id == first }.text)
+        assertEquals(draft, repository.drawingDraft(board))
+        vm.addSketch(edited).join()
+        assertEquals(3, repository.observe(board).first()!!.nodes.size)
+        assertEquals(draft, repository.drawingDraft(board))
+        vm.discardDrawingDraft(draft).join()
+        assertNull(repository.drawingDraft(board))
+    }
+
+    @Test fun reopeningChangedSketchCannotConsumeItsOlderRecoveryDraft() = runBlocking {
+        val board = repository.create()
+        val old = "sketch:v1|100,100;200,200"
+        val current = "sketch:v1|300,300;400,400"
+        val edited = "sketch:v1|500,500;600,600"
+        val card = repository.addSketchNode(board, 0f, 0f, current)
+        val draft = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", old, sketch = edited)
+        repository.saveDrawingDraft(board, draft)
+        val vm = editor(board)
+        vm.discardDrawingDraft(null).join()
+        assertEquals(draft, repository.drawingDraft(board))
+        vm.addSketch(edited, card, current).join()
+        assertEquals(edited, repository.observe(board).first()!!.nodes.single().text)
+        assertEquals(draft, repository.drawingDraft(board))
+        assertEquals(draft, vm.uiState.value.drawingDraft)
+    }
+
+    @Test fun annotationSaveClearsOnlyARecoveryDraftForTheExactFileVersion() = runBlocking {
+        val ink = "sketch:v1|100,100;200,200"
+        val changedInk = "sketch:v1|300,300;400,400"
+        for ((index, fixture) in listOf("file-v1" to ink, "file-v2" to ink, "file-v2" to changedInk).withIndex()) {
+            val (draftVersion, draftInk) = fixture
+            val board = repository.create()
+            val fileId = "annotation-source-$index"
+            db.notebookDao().insertWorkspaceObject(com.halo.app.data.notebook.WorkspaceObjectEntity(
+                fileId, "FILE", "Worksheet", 1, 1, "IMPORT", "ACTIVE", true, "READY", "file:$fileId"))
+            db.workspaceFileDao().insertFile(com.halo.app.data.workspace.WorkspaceFileEntity(
+                objectId = fileId, uri = "content://fixture/$fileId", displayName = "Worksheet", mimeType = "application/pdf",
+                sizeBytes = 4, modifiedAt = 1, ownedCopyPath = null, permissionPersisted = true, sha256 = "file-v2"))
+            val card = repository.addReference(board, fileId, 0f, 0f)
+            val original = repository.observe(board).first()!!.nodes.single().text
+            val draft = com.halo.app.data.notebook.CanvasDrawingDraft(card, "annotation", original,
+                pages = mapOf(1 to draftInk), fileVersion = draftVersion)
+            repository.saveDrawingDraft(board, draft)
+            val vm = editor(board)
+            vm.saveFileMarkup(card, mapOf(1 to ink), original, "file-v2", expectedDraft = draft).join()
+            assertEquals(setOf(1), com.halo.app.data.notebook.CanvasFileMarkupCodec.decode(
+                repository.observe(board).first()!!.nodes.single().text).pages.keys)
+            assertEquals(if (draftVersion == "file-v2" && draftInk == ink) null else draft, repository.drawingDraft(board))
+        }
+    }
+
+    @Test fun olderSaveAndCancelCannotConsumeANewerDraftForTheSameSource() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val olderInk = "sketch:v1|300,300;400,400"
+        val newerInk = "sketch:v1|500,500;600,600"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val older = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = olderInk)
+        val newer = older.copy(sketch = newerInk)
+        repository.saveDrawingDraft(board, newer)
+        val vm = editor(board)
+        vm.discardDrawingDraft(older).join()
+        assertEquals(newer, repository.drawingDraft(board))
+        vm.addSketch(olderInk, card, original, expectedDraft = older).join()
+        assertEquals(olderInk, repository.observe(board).first()!!.nodes.single().text)
+        assertEquals(newer, repository.drawingDraft(board))
+        assertEquals(newer, vm.uiState.value.drawingDraft)
+    }
+
+    @Test fun observedDraftCannotBeConsumedBySavingADifferentSketchPayload() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val savedInk = "sketch:v1|300,300;400,400"
+        val draftInk = "sketch:v1|500,500;600,600"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val observed = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = draftInk)
+        repository.saveDrawingDraft(board, observed)
+        val vm = editor(board)
+        vm.addSketch(savedInk, card, original, expectedDraft = observed).join()
+        assertEquals(savedInk, repository.observe(board).first()!!.nodes.single().text)
+        assertEquals(observed, repository.drawingDraft(board))
+    }
     @Test fun erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft() = runBlocking {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
@@ -47,8 +141,9 @@ class CanvasEditorPersistenceTest {
         val erased = com.halo.sdk.runtime.ink.InkCodec.encode(ink.document)
         assertTrue(ink.document.strokes.isEmpty())
         val vm = editor(board)
-        vm.keepDrawingDraft(com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = erased)).join()
-        vm.addSketch(erased, card, original).join()
+        val draft = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = erased)
+        vm.keepDrawingDraft(draft).join()
+        vm.addSketch(erased, card, original, expectedDraft = draft).join()
         val reopened = NotebookCanvasRepository(db, db.notebookCanvasDao(), db.notebookDao())
         val node = reopened.observe(board).first()!!.nodes.single()
         assertEquals(card, node.id)

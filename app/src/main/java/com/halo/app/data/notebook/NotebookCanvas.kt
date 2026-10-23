@@ -214,6 +214,11 @@ class NotebookCanvasRepository(
         notebookDao.upsertDraft(NoteDraftEntity(canvasId, "", now(), structureJson = draft.encode()))
     }
     suspend fun clearDrawingDraft(canvasId: String) = notebookDao.deleteLegacyDraft(canvasId)
+    /** Clear only the exact snapshot consumed by a completed edit or explicit cancellation. */
+    suspend fun clearDrawingDraft(canvasId: String, expected: CanvasDrawingDraft): Boolean = database.withTransaction {
+        if (drawingDraft(canvasId) != expected) return@withTransaction false
+        notebookDao.deleteLegacyDraft(canvasId) == 1
+    }
     suspend fun snapshot(canvasId: String): Pair<List<CanvasNodeEntity>, List<CanvasEdgeEntity>> = database.withTransaction {
         canvasDao.getNodes(canvasId) to canvasDao.getEdges(canvasId)
     }

@@ -735,18 +735,20 @@ class LiteRtLocalProvider(
         val descriptor = inventoryRepository.resolveModel(modelId)?.takeIf {
             it.valid && conversationalArtifactAllowed(it)
         } ?: return emptySet()
-        return buildSet {
-            add(AiCapability.TEXT)
-            add(AiCapability.STREAMING)
-            if (descriptor.supportsVision) add(AiCapability.IMAGE)
-            if (descriptor.supportsAudio) add(AiCapability.AUDIO)
-            /*
-             * AGENTIC-001: TOOLS describes whether Halo can complete a tool loop with this
-             * artifact, which is true for a prompt-mediated loop as well. The native flag
-             * stays artifact-scoped and is only set by an observed probe.
-             */
-            if (toolCallProtocolFor(descriptor).supportsToolLoop) add(AiCapability.TOOLS)
-        }
+        return capabilitiesForDescriptor(descriptor)
+    }
+
+    private fun capabilitiesForDescriptor(descriptor: LocalModelDescriptor): Set<AiCapability> = buildSet {
+        add(AiCapability.TEXT)
+        add(AiCapability.STREAMING)
+        if (descriptor.supportsVision) add(AiCapability.IMAGE)
+        if (descriptor.supportsAudio) add(AiCapability.AUDIO)
+        /*
+         * AGENTIC-001: TOOLS describes whether Halo can complete a tool loop with this
+         * artifact, which is true for a prompt-mediated loop as well. The native flag
+         * stays artifact-scoped and is only set by an observed probe.
+         */
+        if (toolCallProtocolFor(descriptor).supportsToolLoop) add(AiCapability.TOOLS)
     }
 
     /**
@@ -2024,20 +2026,33 @@ class LiteRtLocalProvider(
         loadMutex.withLock { generateLocked(request, context) }
     }
 
-    /** Text/token-bounded local advice never queues behind chat or replaces a different resident model.
-     * The caller owns its deadline and cancellation; no selection or qualification is granted here. */
+    /** Text/token-bounded advice uses only an exact, already-ready nonhybrid engine.
+     * Never load/reset an engine for optional advice. The caller's deadline is cooperative;
+     * no selection, native wall-clock guarantee or qualification is granted here. */
     suspend fun tryGenerateAdvisory(modelId: String, finalText: String, systemInstruction: String): AiResponse? =
         withContext(Dispatchers.IO) {
             require(modelId.isNotBlank() && finalText.length in 3..384 && systemInstruction.length in 1..8000)
             if (!loadMutex.tryLock()) return@withContext null
             try {
-                val resident = modelSession.loadedModelId
-                if (resident != null && resident != modelId || inferenceBusyForIntent()) return@withContext null
-                generateLocked(
-                    AiRequest(text = finalText, modelId = modelId, maxOutputTokens = 12,
+                if (!modelSession.isLoaded() || modelSession.loadedModelId != modelId ||
+                    inferenceBusyForIntent() || residentModelNeedsIsolation()) return@withContext null
+                // resolveModel may wait for a full fingerprint scan. Advice uses ready truth only.
+                val descriptor = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
+                    ?.models?.firstOrNull { it.id == modelId } ?: return@withContext null
+                if (!descriptor.valid || !descriptor.verified || descriptor.sha256.isNullOrBlank() ||
+                    !descriptor.supportsText || !conversationalArtifactAllowed(descriptor)) return@withContext null
+                val expectedConfig = loadConfigFor(descriptor).copy(
+                    computeBackend = backendResolutionForDescriptor(descriptor).effective,
+                    visionEnabled = false, audioEnabled = false)
+                if (!modelSession.isResidentFor(modelId, descriptor.path, descriptor.sha256, expectedConfig)) return@withContext null
+                val request = AiRequest(text = finalText, modelId = modelId, maxOutputTokens = 12,
                         toolUseMode = ToolUseMode.NONE, reasoningMode = AiReasoningMode.DISABLED,
-                        publishStreamingTokens = false, temperatureOverride = 0.0),
-                    AiContext(conversation = listOf(com.halo.sdk.provider.AIMessage(com.halo.sdk.provider.Role.SYSTEM, systemInstruction))))
+                        publishStreamingTokens = false, temperatureOverride = 0.0)
+                request.validateForTextGeneration()
+                request.validateAgainst(capabilitiesForDescriptor(descriptor))
+                generateLoadedLocked(request,
+                    AiContext(conversation = listOf(com.halo.sdk.provider.AIMessage(com.halo.sdk.provider.Role.SYSTEM, systemInstruction))),
+                    System.currentTimeMillis(), descriptor)
             } finally { loadMutex.unlock() }
         }
 
@@ -2051,10 +2066,15 @@ class LiteRtLocalProvider(
         if (!loadModelIfNeededLocked(request.modelId, request)) {
             throw failedLoad()
         }
+        return generateLoadedLocked(request, context, turnStartedAtMs)
+    }
 
+    /** Caller holds loadMutex and has already validated the resident artifact/configuration. */
+    private suspend fun generateLoadedLocked(request: AiRequest, context: AiContext, turnStartedAtMs: Long,
+        residentDescriptor: LocalModelDescriptor? = null): AiResponse {
         acquireExecutionLease("Inferring")
         return try {
-            val descriptor = descriptorForGeneration()
+            val descriptor = residentDescriptor ?: descriptorForGeneration()
             val mapped = LiteRtConversationMapper.map(request, context)
             val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
             val requestedTools = if (request.toolUseMode == ToolUseMode.NONE || protocol == ToolCallProtocol.NONE) emptyList() else toolDefinitionsFor(context)
@@ -2090,7 +2110,7 @@ class LiteRtLocalProvider(
                 throw error
             }
             recordReasoning(result.reasoningText)
-            descriptorForGeneration()?.let(::markGenerationProven)
+            (residentDescriptor ?: descriptorForGeneration())?.let(::markGenerationProven)
             recordConversationDiagnostics(
                 descriptor = descriptor,
                 genConfig = genConfig,

@@ -34,9 +34,9 @@ class LocalIntentModelRouter(
         const val DEFAULT_ID = LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4_ID
         const val TIMEOUT_MS = 2_000L
 
-        /** Pure gate for source tests; never cold-switch a different resident LLM. */
+        /** Optional advice cannot start a native engine on the user's final-turn path. */
         internal fun shouldDefer(residentId: String?, requestedId: String, busy: Boolean): Boolean =
-            busy || (residentId != null && residentId != requestedId)
+            busy || residentId != requestedId
 
         private const val INSTRUCTIONS = """
 You are Halo's intent gate. Classify whether the user's FINAL message asks the assistant to DO an external action or just ANSWER.
@@ -87,8 +87,8 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
             ?.models?.firstOrNull { it.id == id && it.valid && it.verified && it.sha256 == catalog.sha256 }
             ?: return null
         val local = provider() ?: return null
-        // The classifier shares the full LiteRT engine with chat. Never unload a
-        // different resident conversational model merely to decide intent.
+        // The classifier shares the full LiteRT engine with chat. Cold native
+        // initialization/teardown can outlive a coroutine deadline, so skip it.
         // Never wait behind a running native inference (including another classifier).
         if (installed.sha256 != catalog.sha256 ||
             shouldDefer(local.residentModelIdForIntent(), id, local.inferenceBusyForIntent()) ||

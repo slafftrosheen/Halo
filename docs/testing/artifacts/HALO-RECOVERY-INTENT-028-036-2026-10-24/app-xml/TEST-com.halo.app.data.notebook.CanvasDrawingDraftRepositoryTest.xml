@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T22:02:01.210Z" hostname="MINIFOXEY" time="7.353">
+  <properties/>
+  <testcase name="recoveryCannotBorrowANewerSourceOrAnotherEditorIdentity" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="3.936"/>
+  <testcase name="legacyUnknownFileVersionCannotAcquireACurrentVersionOnRecovery" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.07"/>
+  <testcase name="completedEditCannotClearAReplacementDraftWithTheSameSource" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="2.91"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

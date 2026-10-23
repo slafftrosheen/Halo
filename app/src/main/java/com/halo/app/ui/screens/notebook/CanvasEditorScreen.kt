@@ -286,21 +286,27 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     CanvasOrganizationDialog(viewModel, state)
     if (sketchOpen && !state.loading) {
         val target = state.nodes.firstOrNull { it.id == sketchTarget && it.type == CanvasNodeType.SKETCH }
+        val recovery = state.drawingDraft?.takeIf { it.matchesSource(sketchTarget, "sketch", sketchOriginal) }
+        var observedDraft by remember(sketchTarget, sketchOriginal) { mutableStateOf(recovery) }
         CanvasSketchPadDialog(
             initial = sketchOriginal,
             editingExisting = target != null,
-            recovery = state.drawingDraft?.takeIf { it.kind == "sketch" && it.nodeId == sketchTarget }?.sketch,
+            recovery = recovery?.sketch,
             selectionOwnerId = target?.let { viewModel.canvasId },
             selectionPageId = target?.id,
             onSelectionChanged = viewModel::setInkSelection,
             onSaveSelection = viewModel::saveInkSelection,
-            onDraft = { encoded -> viewModel.keepDrawingDraft(com.halo.app.data.notebook.CanvasDrawingDraft(sketchTarget, "sketch", sketchOriginal, sketch = encoded)) },
+            onDraft = { encoded ->
+                val draft = com.halo.app.data.notebook.CanvasDrawingDraft(sketchTarget, "sketch", sketchOriginal, sketch = encoded)
+                observedDraft = draft
+                viewModel.keepDrawingDraft(draft)
+            },
             onSave = { encoded ->
-                viewModel.addSketch(encoded, sketchTarget, sketchOriginal.takeIf { sketchTarget != null })
+                viewModel.addSketch(encoded, sketchTarget, sketchOriginal.takeIf { sketchTarget != null }, expectedDraft = observedDraft)
                 sketchOpen = false
                 sketchTarget = null
             },
-            onDismiss = { viewModel.discardDrawingDraft(); viewModel.setInkSelection(null); sketchOpen = false; sketchTarget = null },
+            onDismiss = { viewModel.discardDrawingDraft(observedDraft); viewModel.setInkSelection(null); sketchOpen = false; sketchTarget = null },
         )
     }
 
@@ -326,17 +332,23 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         val target = state.nodes.firstOrNull { it.id == nodeId }
         val file = target?.refObjectId?.let { state.files[it] }
         if (file != null && target != null) {
+            val recovery = state.drawingDraft?.takeIf { it.matchesSource(nodeId, "annotation", annotationOriginal, annotationVersion) }
+            var observedDraft by remember(nodeId, annotationOriginal, annotationVersion) { mutableStateOf(recovery) }
             CanvasSourceInkDialog(file, annotationOriginal,
-                recovery = state.drawingDraft?.takeIf { it.kind == "annotation" && it.nodeId == nodeId },
-                onDraft = { draft -> viewModel.keepDrawingDraft(draft.copy(nodeId = nodeId, fileVersion = annotationVersion)) },
-                onSave = { updates -> viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion); annotateNodeId = null },
+                recovery = recovery,
+                onDraft = { draft ->
+                    val owned = draft.copy(nodeId = nodeId, fileVersion = annotationVersion)
+                    observedDraft = owned
+                    viewModel.keepDrawingDraft(owned)
+                },
+                onSave = { updates -> viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion, expectedDraft = observedDraft); annotateNodeId = null },
                 onSaveSelection = { selection, updates ->
-                    viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion, selection) {
+                    viewModel.saveFileMarkup(nodeId, updates, annotationOriginal, annotationVersion, selection, expectedDraft = observedDraft) {
                         viewModel.setInkSelection(null)
                         annotateNodeId = null
                     }
                 },
-                onDismiss = { viewModel.discardDrawingDraft(); viewModel.setInkSelection(null); annotateNodeId = null },
+                onDismiss = { viewModel.discardDrawingDraft(observedDraft); viewModel.setInkSelection(null); annotateNodeId = null },
                 onSelectionChanged = viewModel::setInkSelection)
         }
     }

@@ -7,7 +7,6 @@ Base main `bca90bd9ae69e7ced5f98bcad8b2b309e25c2710`, fetched0/0 clean. Shared/n
 - [x] Share the existing resource lookup/format resolver between Compose/native hosts so no-argument literal percentages are not parsed as format instructions. Guard both uiText/nativeUi static lookup keys.
 - [x] Annotate legacy measured text/tool qualification UI and report as English-fixture scope, without promoting other-language exports or changing model/role selection.
 - [x] Add all missing labels in EN/RU/LV/PL, author focused resource/format/structured-result semantic and callback regressions, then regenerate and review exact existing-key/value parity before one gate.
-- [ ] Publish verified source/evidence; keep phone notification/TalkBack, real language quality and other original acceptance pending.
+- [x] Publish verified source/evidence; keep phone notification/TalkBack, real language quality and other original acceptance pending.
 
 Presentation-only changes, not new tool operations or authority. Runtime/user/model node text, native receipts, channel IDs, request IDs, callbacks, permission and privacy boundaries stay with their existing owners. Phone reconnected before the focused gate; assemble both matching APKs once for native validation.
-

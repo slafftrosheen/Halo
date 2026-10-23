@@ -16,3 +16,9 @@ The standalone Ink gate was intentionally cancelled at task-graph calculation af
 
 No real pen/palm/tablet, spoken conversation/provider, notification/TalkBack, or language-quality acceptance follows from these changes. Original issues remain open.
 
+
+## Completed phone follow-up
+
+Installed app SHA58c642aff2626dadc0943778cc4b5f4d3e9f2edeaf727985b156e8e80234db91 and test SHAdc747ee32fa44c9ba262095f9847f74260e6c692f21f5a6812025674ac56a9d6; installed readback matched. Corrected Polish fixture PASS6.08s at200%/landscape, draft and picker context preserved. MainActivity resumed after the run. The missing-manifest startup blocker is resolved: the real production-router intent probe reached inference admission.
+
+Intent matrix INCOMPLETE/NOT_TESTED:19 completed calls (first cold case plus18 prepared cases), all NO_ADVICE; cold return median10563ms, p9516641ms, range10102–16641ms. Native load cancellation at the2s coroutine deadline still waited for cold initialization/teardown, and the prepared matrix hit its180s outer deadline. No warm backend/label or model-quality conclusion. This is a newly measured #36 admission defect, addressed by the subsequent ready-only source batch. [Raw phone output and summary](artifacts/HALO-INK-MODEL-028-039-2026-10-24/final-phone). No CI/Actions or real spoken/pen acceptance.

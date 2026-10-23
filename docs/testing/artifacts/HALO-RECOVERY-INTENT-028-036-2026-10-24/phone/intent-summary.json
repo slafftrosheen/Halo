@@ -1,0 +1,15 @@
+{
+  "maxMs": 1,
+  "runId": "intent-v1-5a58acb23b954102ae5dfd1097c495e0",
+  "noAdvice": 49,
+  "p95Ms": 1,
+  "prepared": 48,
+  "staleRowsExcluded": 19,
+  "qualityStatus": "NOT_TESTED",
+  "terminalStage": "COMPLETED",
+  "minMs": 0,
+  "warmCases": 0,
+  "completed": 49,
+  "medianMs": 0,
+  "sourceStamp": "508f4daa-plus-exact-recovery-ready-intent"
+}

@@ -11,7 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.focus.FocusManager
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.test.*
@@ -33,8 +38,12 @@ class PolishLanguageDeviceTest {
     @Test fun polishSwitchAtLargeTextPreservesDraftAndPickerContext() {
         val preferences = AppLanguagePreferences(MemoryStorage(), "en")
         lateinit var draftFocus: FocusManager
+        lateinit var hostView: android.view.View
+        var keyboard: SoftwareKeyboardController? = null
         compose.setContent {
             draftFocus = LocalFocusManager.current
+            hostView = LocalView.current
+            keyboard = LocalSoftwareKeyboardController.current
             val activity = LocalContext.current
             val picker = LocalActivityResultRegistryOwner.current
             AppLanguageProvider(preferences) {
@@ -60,8 +69,13 @@ class PolishLanguageDeviceTest {
         // At 200% in landscape the IME can keep bringing the focused draft back
         // into view while the test scrolls to translated labels. End editing,
         // preserving its text, before checking those separate viewport positions.
-        compose.runOnIdle { draftFocus.clearFocus() }
-        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.runOnIdle { draftFocus.clearFocus(); keyboard?.hide() }
+        // Wait for observed insets, not an OEM keyboard's optional result callback.
+        compose.waitUntil(timeoutMillis = 5_000) {
+            compose.runOnIdle {
+                ViewCompat.getRootWindowInsets(hostView)?.isVisible(WindowInsetsCompat.Type.ime()) == false
+            }
+        }
         compose.onNodeWithTag("polish").performScrollTo().performClick()
         for (label in listOf("Nauka", "Przestrzeń robocza", "Narzędzia plików", "Strona 2 z 8", "Powiększenie: 150%")) {
             compose.onNodeWithText(label).performScrollTo().assertIsDisplayed()

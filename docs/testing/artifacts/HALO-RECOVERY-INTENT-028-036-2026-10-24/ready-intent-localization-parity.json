@@ -1,0 +1,34 @@
+{
+  "base": "508f4daa1a7f82b9f03de4724e71af945f049d81",
+  "priorMappingsUnchanged": 4036,
+  "locales": [
+    {
+      "locale": "values",
+      "priorValuesUnchanged": 4014,
+      "added": [
+        "ui_bfe28eedbbdd"
+      ]
+    },
+    {
+      "locale": "values-ru",
+      "priorValuesUnchanged": 4014,
+      "added": [
+        "ui_bfe28eedbbdd"
+      ]
+    },
+    {
+      "locale": "values-lv",
+      "priorValuesUnchanged": 4014,
+      "added": [
+        "ui_bfe28eedbbdd"
+      ]
+    },
+    {
+      "locale": "values-pl",
+      "priorValuesUnchanged": 4014,
+      "added": [
+        "ui_bfe28eedbbdd"
+      ]
+    }
+  ]
+}

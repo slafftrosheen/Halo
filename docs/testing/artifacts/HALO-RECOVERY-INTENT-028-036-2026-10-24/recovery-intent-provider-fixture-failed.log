@@ -1,0 +1,100 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Reusing configuration cache.
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :runtime:cognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:provider-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :runtime:provider-core:compileKotlin UP-TO-DATE
+> Task :runtime:provider-core:compileJava NO-SOURCE
+> Task :runtime:cognition:compileKotlin UP-TO-DATE
+> Task :runtime:cognition:compileJava NO-SOURCE
+> Task :runtime:kernel:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:kernel:compileKotlin UP-TO-DATE
+> Task :runtime:kernel:compileJava NO-SOURCE
+> Task :runtime:kernel:processResources NO-SOURCE
+> Task :runtime:kernel:classes UP-TO-DATE
+> Task :runtime:kernel:jar UP-TO-DATE
+> Task :runtime:cognition:processResources NO-SOURCE
+> Task :runtime:cognition:classes UP-TO-DATE
+> Task :runtime:cognition:jar UP-TO-DATE
+> Task :runtime:provider-core:processResources NO-SOURCE
+> Task :runtime:provider-core:classes UP-TO-DATE
+> Task :runtime:provider-core:jar UP-TO-DATE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+> Task :providers:litert:preBuild UP-TO-DATE
+> Task :providers:litert:preDebugBuild UP-TO-DATE
+> Task :providers:litert:generateDebugResources UP-TO-DATE
+> Task :providers:litert:packageDebugResources UP-TO-DATE
+> Task :providers:litert:processDebugNavigationResources UP-TO-DATE
+> Task :providers:litert:parseDebugLocalResources UP-TO-DATE
+> Task :providers:litert:generateDebugRFile UP-TO-DATE
+> Task :providers:litert:compileDebugKotlin UP-TO-DATE
+> Task :providers:litert:javaPreCompileDebug UP-TO-DATE
+> Task :providers:litert:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:litert:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :providers:litert:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:litert:preDebugUnitTestBuild UP-TO-DATE
+> Task :providers:litert:generateDebugUnitTestStubRFile UP-TO-DATE
+
+> Task :providers:litert:compileDebugUnitTestKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt:95:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt:197:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+
+> Task :providers:litert:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :providers:litert:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :providers:litert:processDebugJavaRes UP-TO-DATE
+> Task :providers:litert:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :providers:litert:testDebugUnitTest
+
+LiteRtLocalProviderStreamTest > admittedAdvisoryUsesCanonicalBoundedTextOnlyGenerationAndActualIdentity FAILED
+    java.lang.IllegalArgumentException at LiteRtLocalProviderStreamTest.kt:193
+
+LiteRtLocalProviderStreamTest > cancelledAdvisoryReleasesCanonicalMutexForNextRequest FAILED
+    kotlinx.coroutines.TimeoutCancellationException at CoroutineDebugging.kt:42
+        Caused by: kotlinx.coroutines.TimeoutCancellationException at Timeout.kt:281
+
+26 tests completed, 2 failed
+
+> Task :providers:litert:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':providers:litert:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///C:/Users/slavd/HaloEco/Halo-issues/providers/litert/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 38s
+31 actionable tasks: 2 executed, 29 up-to-date
+Configuration cache entry reused.

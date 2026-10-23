@@ -804,9 +804,14 @@ class CanvasEditorViewModel(
         repository.saveDrawingDraft(canvasId, draft)
         mutableState.value = mutableState.value.copy(drawingDraft = draft)
     }
-    fun discardDrawingDraft() = command {
-        repository.clearDrawingDraft(canvasId)
-        mutableState.value = mutableState.value.copy(drawingDraft = null)
+    fun discardDrawingDraft(expected: com.halo.app.data.notebook.CanvasDrawingDraft?) = command {
+        clearSavedDrawingDraft(expected)
+    }
+
+    private suspend fun clearSavedDrawingDraft(expected: com.halo.app.data.notebook.CanvasDrawingDraft?) {
+        if (expected != null) repository.clearDrawingDraft(canvasId, expected)
+        val currentDraft = repository.drawingDraft(canvasId)
+        mutableState.value = mutableState.value.copy(drawingDraft = currentDraft)
     }
 
     fun leave(onSaved: () -> Unit) {
@@ -874,10 +879,13 @@ class CanvasEditorViewModel(
         mutableState.value = mutableState.value.copy(undoAvailable = true)
     }
 
-    fun addSketch(strokes: String, nodeId: String? = null, expectedText: String? = null) = command {
+    fun addSketch(strokes: String, nodeId: String? = null, expectedText: String? = null,
+        expectedDraft: com.halo.app.data.notebook.CanvasDrawingDraft? = null) = command {
         val document = com.halo.sdk.runtime.ink.InkCodec.decode(strokes) ?: return@command
         if (nodeId == null && document.strokes.isEmpty()) return@command
         flushPendingEdits()
+        val consumedDraft = expectedDraft?.takeIf { (nodeId == null || expectedText != null) &&
+            it.matchesSource(nodeId, "sketch", expectedText.orEmpty()) && it.sketch == strokes }
         if (nodeId == null) {
             val (x, y) = insertionPoint()
             selectNode(repository.addSketchNode(canvasId, x, y, strokes))
@@ -887,8 +895,7 @@ class CanvasEditorViewModel(
             check(expectedText == null || node.text == expectedText) { "Sketch changed" }
             check(repository.updateText(canvasId, nodeId, strokes, expectedText))
         }
-        repository.clearDrawingDraft(canvasId)
-        mutableState.value = mutableState.value.copy(drawingDraft = null)
+        clearSavedDrawingDraft(consumedDraft)
     }
 
     /**
@@ -1235,11 +1242,13 @@ class CanvasEditorViewModel(
 
     fun saveFileMarkup(nodeId: String, pageUpdates: Map<Int, String>, expectedText: String? = null,
         expectedFileVersion: String? = null, selection: com.halo.sdk.runtime.ink.InkSelectionContext? = null,
+        expectedDraft: com.halo.app.data.notebook.CanvasDrawingDraft? = null,
         onSaved: () -> Unit = {}) = command {
         flushPendingEdits()
+        val consumedDraft = expectedDraft?.takeIf { expectedText != null &&
+            it.matchesSource(nodeId, "annotation", expectedText, expectedFileVersion) && it.pages == pageUpdates }
         check(repository.saveFileMarkup(canvasId, nodeId, pageUpdates, expectedText, expectedFileVersion, selection))
-        repository.clearDrawingDraft(canvasId)
-        mutableState.value = mutableState.value.copy(drawingDraft = null)
+        clearSavedDrawingDraft(consumedDraft)
         onSaved()
     }
 

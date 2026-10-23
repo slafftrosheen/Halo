@@ -4014,4 +4014,5 @@
     <string name="ui_673f512ba46e" formatted="false">"halo updates"</string>
     <string name="ui_09567fef6b7d" formatted="false">"Text and tool checks use English fixtures. Other languages require separate tests."</string>
     <string name="ui_b2a91f770f7f" formatted="false">"Image available in halo"</string>
+    <string name="ui_bfe28eedbbdd" formatted="false">"halo uses this model only when it is already ready. Standard commands remain available."</string>
 </resources>
