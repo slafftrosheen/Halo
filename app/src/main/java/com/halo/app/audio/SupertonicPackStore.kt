@@ -43,6 +43,19 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             check(!partial.exists() || partial.delete()) { "Unable to discard the partial Supertonic archive" }
         }
     }
+    suspend fun discardOwnedOfficialPartial(owner: String): Boolean {
+        requireOwner(owner)
+        check(acquisitionLock.tryLock()) { "Another voice acquisition is active. Retry rollback later." }
+        return try { withContext(Dispatchers.IO) {
+            val partial = File(root, "official-$OFFICIAL_SHA256.tar.bz2.part")
+            val receipt = File(root, partial.name + ".acquired")
+            if (runCatching { receipt.readText() == owner }.getOrDefault(false)) {
+                check(partial.canonicalFile.parentFile == root.canonicalFile && (!partial.exists() || partial.delete())) { "Unable to remove setup archive" }
+                check(receipt.delete()) { "Unable to remove setup archive receipt" }
+                true
+            } else false
+        } } finally { acquisitionLock.unlock() }
+    }
     private val required = SpeechPackRegistry.supertonic.requiredFiles
     private val hashPattern = Regex("[a-f0-9]{64}")
     private val languages = setOf("en", "lv", "ru", "pl")
@@ -117,12 +130,17 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
     /** The official publisher archive is pinned to its published bytes and SHA-256.
      * A successful download installs, but never selects or qualifies a voice.
      */
-    suspend fun downloadOfficial(): String = acquisitionLock.withLock {
+    suspend fun downloadOfficial(acquisitionOwner: String? = null): String = acquisitionLock.withLock {
+        acquisitionOwner?.let(::requireOwner)
         downloadJob=currentCoroutineContext()[Job]
         val part=File(root,"official-"+OFFICIAL_SHA256+".tar.bz2.part")
+        val ownership = File(root, part.name + ".acquired")
+        val publicationOwner = acquisitionOwner?.takeIf { !part.exists() || runCatching { ownership.readText() == it }.getOrDefault(false) }
         try {
             withContext(Dispatchers.IO) {
                 root.mkdirs()
+                if (publicationOwner == null) check(!ownership.exists() || ownership.delete()) { "Unable to retain independent archive" }
+                else ownership.writeText(publicationOwner)
                 require(root.usableSpace > remainingOfficialDownloadBytes() + INSTALL_RESERVE_BYTES) {
                     "Not enough free space to install the Supertonic voice pack"
                 }
@@ -130,8 +148,8 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             }
             KokoroModelDownload.acquire(part,progress={ downloadMutable.value=it },
                 url=OFFICIAL_URL,expectedBytes=OFFICIAL_BYTES,hash=OFFICIAL_SHA256)
-            val selected=importArchive(Uri.fromFile(part))
-            withContext(Dispatchers.IO) { part.delete() }
+            val selected=importArchive(Uri.fromFile(part), publicationOwner)
+            withContext(Dispatchers.IO) { part.delete(); ownership.delete() }
             selected
         } finally {
             downloadMutable.value=null
@@ -139,8 +157,9 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         }
     }
 
-    suspend fun importArchive(uri: Uri): String = withContext(Dispatchers.IO) { mutex.withLock {
+    suspend fun importArchive(uri: Uri, acquisitionOwner: String? = null): String = withContext(Dispatchers.IO) { mutex.withLock {
         root.mkdirs()
+        acquisitionOwner?.let(::requireOwner)
         require(root.usableSpace>INSTALL_RESERVE_BYTES) { "Supertonic requires at least 1 GiB free space for import" }
         val temp=File(root,"incoming-"+java.util.UUID.randomUUID()).apply { mkdirs() }
         try {
@@ -203,11 +222,22 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
                 setProperty("fingerprint",hash)
                 setProperty("runtime",RUNTIME)
                 setProperty("format","supertonic-3-int8")
+                acquisitionOwner?.let { setProperty("acquisition.owner", it) }
                 required.forEach { setProperty("sha."+it,sha(File(temp,it))) }
             }
             File(temp,"pack.properties").outputStream().use { p.store(it,null) }
             val destination=File(root,hash)
             if(!destination.exists()) require(temp.renameTo(destination)) { "Failed to install Supertonic pack" }
+            else if (acquisitionOwner == null) {
+                // An explicit independent import retains this pack; a previous setup may no longer remove it.
+                val manifest = File(destination, "pack.properties")
+                val retained = Properties().apply { manifest.inputStream().use { load(it) } }
+                if (retained.remove("acquisition.owner") != null) {
+                    val staged = File(destination, "pack.properties.retained")
+                    staged.outputStream().use { retained.store(it, null) }
+                    java.nio.file.Files.move(staged.toPath(), manifest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
             mutable.value=snapshot("Imported pack; select it before preview")
             hash
         } finally { temp.deleteRecursively() }
@@ -245,6 +275,31 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         val existing = storage.getString(key)?.split(',')?.filter { it.isNotBlank() }.orEmpty()
         storage.putString(key, (existing + allVoices).distinct().sorted().joinToString(","))
         mutable.value = snapshot("All 10 voices in EN, LV, RU and PL confirmed by tester")
+    } }
+    private fun requireOwner(owner: String) { require(java.util.UUID.fromString(owner).toString() == owner) }
+    /** Existing atomic manifest is the acquisition receipt. No baseline difference can confer ownership. */
+    suspend fun ownedBy(owner: String): Set<String> = withContext(Dispatchers.IO) { mutex.withLock {
+        requireOwner(owner)
+        root.listFiles().orEmpty().mapNotNull { directory ->
+            val hash = directory.name
+            if (!hashPattern.matches(hash) || directory.canonicalFile.parentFile != root.canonicalFile) null else runCatching {
+                Properties().apply { File(directory, "pack.properties").inputStream().use { load(it) } }
+                    .getProperty("acquisition.owner").takeIf { it == owner }?.let { hash }
+            }.getOrNull()
+        }.toSet()
+    } }
+    /** Called under the speech provider's pin/residency lock as well as this pack mutex. */
+    suspend fun removeOwned(hash: String, owner: String): Boolean = withContext(Dispatchers.IO) { mutex.withLock {
+        requireOwner(owner)
+        val directory = dir(hash) ?: return@withLock false
+        val properties = Properties().apply { File(directory, "pack.properties").inputStream().use { load(it) } }
+        if (properties.getProperty("acquisition.owner") != owner) return@withLock false
+        check(selection().fingerprint != hash) { "The pack is selected. Choose another voice before rollback." }
+        check(directory.canonicalFile.parentFile == root.canonicalFile && fingerprint(directory) == hash) { "Pack identity changed; it was retained." }
+        check(directory.deleteRecursively()) { "Unable to remove acquired pack" }
+        storage.putString("supertonic.qualified." + hash, "")
+        mutable.value = snapshot()
+        true
     } }
     suspend fun remove(hash: String) = withContext(Dispatchers.IO) { mutex.withLock {
         val directory=dir(hash) ?: return@withLock

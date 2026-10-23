@@ -17,6 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.*
@@ -173,28 +175,28 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Copy("Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report.")
                     val rolePack = remember { Graph.localRolePackInstaller }
                     val rolePackState by rolePack.state.collectAsStateWithLifecycle()
-                    Copy("Optional private starter bundle: pinned Qwen intent candidate, Whisper Small, Silero VAD and Supertonic speech output. Halo checks the installed files, but does not select candidates or claim device quality. You can continue with individual downloads instead.")
+                    Copy(stringResource(R.string.pack39_intro))
                     when (rolePackState.phase) {
-                        com.halo.app.ai.LocalRolePackPhase.COMPLETE -> Copy("Starter bundle files are installed and checked. Choose a listening model and audition a voice before use. The Qwen artifact remains an unselected candidate.")
-                        com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> Copy("Checking available storage…")
+                        com.halo.app.ai.LocalRolePackPhase.COMPLETE -> Copy(stringResource(R.string.pack39_complete))
+                        com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> Copy(stringResource(R.string.pack39_preflight))
                         com.halo.app.ai.LocalRolePackPhase.INSTALLING -> {
                             Copy(when (rolePackState.stage) {
-                                com.halo.app.ai.LocalRolePackStage.INTENT -> "Downloading intent candidate…"
-                                com.halo.app.ai.LocalRolePackStage.SPEECH_RECOGNITION -> "Downloading listening model…"
-                                com.halo.app.ai.LocalRolePackStage.SPEECH_ACTIVITY -> "Installing hands-free support…"
-                                com.halo.app.ai.LocalRolePackStage.SPEECH_OUTPUT -> "Downloading voice pack…"
-                                com.halo.app.ai.LocalRolePackStage.DONE -> "Verifying model files…"
+                                com.halo.app.ai.LocalRolePackStage.INTENT -> stringResource(R.string.pack39_intent)
+                                com.halo.app.ai.LocalRolePackStage.SPEECH_RECOGNITION -> stringResource(R.string.pack39_recognition)
+                                com.halo.app.ai.LocalRolePackStage.SPEECH_ACTIVITY -> stringResource(R.string.pack39_vad)
+                                com.halo.app.ai.LocalRolePackStage.SPEECH_OUTPUT -> stringResource(R.string.pack39_tts)
+                                com.halo.app.ai.LocalRolePackStage.DONE -> stringResource(R.string.pack39_verify)
                             })
                             if (rolePackState.totalBytes > 0L) LinearProgressIndicator(
                                 progress = { (rolePackState.downloadedBytes.toFloat() / rolePackState.totalBytes).coerceIn(0f, 1f) },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            Secondary("Pause setup") { rolePack.pause() }
+                            Secondary(stringResource(R.string.pack39_pause)) { rolePack.pause() }
                         }
-                        com.halo.app.ai.LocalRolePackPhase.PAUSED -> Copy("Model setup is paused. Resume it or roll back only the files added by this setup.")
-                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup.")
-                        com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy("Some new models are still in use. Close the task using them, then retry rollback.")
-                        com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Copy("Removing models added by this setup…")
+                        com.halo.app.ai.LocalRolePackPhase.PAUSED -> Copy(stringResource(R.string.pack39_paused))
+                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy(stringResource(R.string.pack39_failed))
+                        com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy(stringResource(R.string.pack39_rollback_failed))
+                        com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Copy(stringResource(R.string.pack39_rolling_back))
                         com.halo.app.ai.LocalRolePackPhase.IDLE -> Unit
                     }
                     if (rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
@@ -204,10 +206,12 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                             enabled = !rolePackState.busy,
                             onClick = rolePack::startOrResume,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                        ) { Text(uiText(if (rolePackState.canResume) "Resume private starter bundle" else "Install private starter bundle")) }
+                        ) { Text(stringResource(if (rolePackState.canResume) R.string.pack39_resume else R.string.pack39_install)) }
                     }
                     if (rolePackState.canRollback || rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
-                        Secondary(if (rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) "Retry rollback" else "Roll back starter bundle") { rolePack.rollback() }
+                        Secondary(stringResource(if (rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) R.string.pack39_retry_rollback else R.string.pack39_rollback)) { rolePack.rollback() }
+                        Secondary(stringResource(R.string.pack39_keep_files)) { rolePack.keepDownloadedFiles() }
+                        Copy(stringResource(R.string.pack39_keep_explanation))
                     }
                     val language by Graph.speechLanguageSettingsRepository.languageMode.collectAsStateWithLifecycle()
                     listOf("en" to "English", "ru" to "Русский", "lv" to "Latviešu", "pl" to "Polski").forEach { (tag,name) -> Choice(name, language == tag) { scope.launch { Graph.speechLanguageSettingsRepository.select(tag); Graph.voiceSettingsViewModel.refreshState() } } }

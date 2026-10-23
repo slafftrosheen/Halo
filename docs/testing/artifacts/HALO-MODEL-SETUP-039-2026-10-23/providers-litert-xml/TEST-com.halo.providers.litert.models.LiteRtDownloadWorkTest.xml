@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtDownloadWorkTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T17:00:57.083Z" hostname="MINIFOXEY" time="0.143">
+  <properties/>
+  <testcase name="owned work persists exact receipt identity and scoped cancellation tag" classname="com.halo.providers.litert.models.LiteRtDownloadWorkTest" time="0.048"/>
+  <testcase name="gated credentials cannot be queued persistently" classname="com.halo.providers.litert.models.LiteRtDownloadWorkTest" time="0.028"/>
+  <testcase name="persistent work carries only catalog identity and requires a network" classname="com.halo.providers.litert.models.LiteRtDownloadWorkTest" time="0.033"/>
+  <testcase name="malformed ownership cannot enter persistent work" classname="com.halo.providers.litert.models.LiteRtDownloadWorkTest" time="0.029"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -8,6 +8,42 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SpeechModelInventoryRemovalTest {
+    @Test fun failedOwnedVadRemovalRestoresRuntimeAndRetainsChangedFile() = runBlocking {
+        val root = java.nio.file.Files.createTempDirectory("halo-vad-rollback-").toFile()
+        try {
+            val file = SherpaSpeechModelCatalog.sileroVad.files.single()
+            val owner = "b88fe002-14e0-48dc-85bd-6dbcd038f709"
+            val target = File(root, file.name).apply { writeText("changed") }
+            File(root, file.name + ".acquired").writeText("$owner:${file.sha256}:${file.expectedBytes}")
+            var releases = 0
+            var reloads = 0
+            val repository = DefaultSpeechModelInventoryRepository({ root },
+                releaseSileroVad = { releases++ }, allowSileroVadReload = { reloads++ })
+            assertTrue(repository.removeOwned(SherpaSpeechModelCatalog.SILERO_VAD_ID, owner).isFailure)
+            assertEquals(1, releases)
+            assertEquals(1, reloads)
+            assertEquals("changed", target.readText())
+        } finally { root.deleteRecursively() }
+    }
+    @Test fun cancelledOwnedVadReleaseRestoresRuntimeAndPropagatesCancellation() = runBlocking {
+        val root = java.nio.file.Files.createTempDirectory("halo-vad-cancel-").toFile()
+        try {
+            val file = SherpaSpeechModelCatalog.sileroVad.files.single()
+            val owner = "b88fe002-14e0-48dc-85bd-6dbcd038f709"
+            val target = File(root, file.name).apply { writeText("retained") }
+            File(root, file.name + ".acquired").writeText("$owner:${file.sha256}:${file.expectedBytes}")
+            var reloads = 0
+            val repository = DefaultSpeechModelInventoryRepository({ root },
+                releaseSileroVad = { throw kotlinx.coroutines.CancellationException("fixture") },
+                allowSileroVadReload = { reloads++ })
+            var cancelled = false
+            try { repository.removeOwned(SherpaSpeechModelCatalog.SILERO_VAD_ID, owner) }
+            catch (_: kotlinx.coroutines.CancellationException) { cancelled = true }
+            assertTrue(cancelled)
+            assertEquals(1, reloads)
+            assertEquals("retained", target.readText())
+        } finally { root.deleteRecursively() }
+    }
     @Test
     fun remainingBytesCountsOnlyMissingBytesFromPinnedPartial() {
         val root = createTempDir(prefix = "halo-silero-budget-")

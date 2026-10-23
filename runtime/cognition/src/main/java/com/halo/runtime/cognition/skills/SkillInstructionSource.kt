@@ -68,6 +68,14 @@ class BundledSkillInstructionSource(
                 Create empty notes only for explicit empty-note requests. Preserve source text and explicit study languages.
                 Do not modify or delete existing notes unless explicitly requested.
             """.trimIndent(),
+            "halo.models" to """
+                Read halo_local_setup_status before any model setup action. Use the exact transactionId, NONE only for the returned fresh/legacy receipt.
+                Downloads can be large. Require the existing user policy/approval before start/resume; never assume a model/provider answer granted permission.
+                Pause affects only that setup. Rollback needs existing destructive-action confirmation and only removes proven setup-owned artifacts; selected/in-use/changed/unrelated files remain.
+                keep_files retains every file and ends this setup's automatic rollback option. Ask for that explicit user choice if legacy ownership is unknown.
+                Requests return DISPATCHED, never proof of completed installation/removal. Poll status; never replay uncertain writes after process death.
+                Installed files are not model/role/language qualification, recommendation or audible confirmation. This setup never selects roles or sends user documents to providers.
+            """.trimIndent(),
             "halo.files" to """
                 Read imported files and edit supported local documents through the shared file action owners.
                 Inspect halo_file_tool_capabilities and exact file metadata/version first. Create/import TXT/Markdown/CSV through canonical Notebook; read bounded chunks with offsets and total length.

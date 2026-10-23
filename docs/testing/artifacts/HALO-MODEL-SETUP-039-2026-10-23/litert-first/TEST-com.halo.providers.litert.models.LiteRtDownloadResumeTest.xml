@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtDownloadResumeTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:56:00.819Z" hostname="MINIFOXEY" time="3.379">
+  <properties/>
+  <testcase name="unexpected partial response without Range cannot install a file" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="2.123"/>
+  <testcase name="a stored partial surfaces as resumable and discard removes it" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.144"/>
+  <testcase name="partial metadata from a different pin is never resumed" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.089"/>
+  <testcase name="a transient network loss preserves the partial for resume" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.099"/>
+  <testcase name="content range parsing is strict" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.041"/>
+  <testcase name="a gated artifact never enters the downloader" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.052"/>
+  <testcase name="complete prefix is reverified without requesting the server" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.071"/>
+  <testcase name="an integrity failure discards the partial instead of resuming it" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.13"/>
+  <testcase name="inventory refresh preserves failures while different gated requests update concurrently" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.07"/>
+  <testcase name="a 206 response resumes from the stored offset and verifies the whole file" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.084"/>
+  <testcase name="a corrupt resumed prefix is rejected by whole-file hash verification" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.071"/>
+  <testcase name="a server that ignores the Range request restarts from zero" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.077"/>
+  <testcase name="process death after checkpoint keeps pinned prefix" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.093"/>
+  <testcase name="incorrect 206 offset retries once without Range and verifies full download" classname="com.halo.providers.litert.models.LiteRtDownloadResumeTest" time="0.094"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

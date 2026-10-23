@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.context.OnDemandSkillTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T17:13:03.239Z" hostname="MINIFOXEY" time="0.192">
+  <properties/>
+  <testcase name="use skill tool executor executes and returns instructions" classname="com.halo.runtime.cognition.context.OnDemandSkillTest" time="0.181"/>
+  <testcase name="bundled skill instruction source loads known skills" classname="com.halo.runtime.cognition.context.OnDemandSkillTest" time="0.002"/>
+  <testcase name="app and workspace guidance keep discovered identities and receipt boundaries" classname="com.halo.runtime.cognition.context.OnDemandSkillTest" time="0.002"/>
+  <testcase name="every shipped runtime skill has loadable operational guidance" classname="com.halo.runtime.cognition.context.OnDemandSkillTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

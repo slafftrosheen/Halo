@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.sample
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 class LiteRtDownloadWorker(context: Context, params: WorkerParameters): CoroutineWorker(context,params) {
     override suspend fun doWork(): Result = coroutineScope {
+        val owner = inputData.getString("acquisitionOwner")
+        if (owner != null && runCatching { requireModelAcquisitionOwner(owner) }.isFailure) return@coroutineScope Result.failure()
         val manager=LiteRtModelManager(applicationContext)
         val model=manager.catalogModel(inputData.getString("modelId").orEmpty())
             ?.takeIf { it.directDownloadAllowed } ?: return@coroutineScope Result.failure()
@@ -26,7 +28,7 @@ class LiteRtDownloadWorker(context: Context, params: WorkerParameters): Coroutin
             }
         }
         try {
-            manager.runDownload(model)
+            manager.runDownload(model, acquisitionOwner = owner)
             when(val state=manager.downloadStates.value[model.id]) {
                 DownloadState.Installed -> Result.success()
                 is DownloadState.Failed -> Result.failure(workDataOf("kind" to state.kind.name,"message" to state.userMessage))
@@ -47,10 +49,13 @@ class LiteRtDownloadWorker(context: Context, params: WorkerParameters): Coroutin
     companion object {
         const val TAG="halo-litert-download"
         private const val CHANNEL="halo-model-downloads"
-        fun request(model: LiteRtCatalogModel): OneTimeWorkRequest {
+        fun request(model: LiteRtCatalogModel, acquisitionOwner: String? = null): OneTimeWorkRequest {
+            acquisitionOwner?.let(::requireModelAcquisitionOwner)
             require(model.directDownloadAllowed) { "Gated credentials must not be persisted in background work" }
             return OneTimeWorkRequestBuilder<LiteRtDownloadWorker>()
-                .setInputData(workDataOf("modelId" to model.id))
+                .setInputData(Data.Builder().putString("modelId", model.id)
+                    .apply { acquisitionOwner?.let { putString("acquisitionOwner", it) } }.build())
+                .apply { acquisitionOwner?.let { addTag("halo-model-owner:$it:${model.id}") } }
                 .addTag(TAG).addTag("halo-model:${model.id}").addTag("halo-model-time:${System.currentTimeMillis()}")
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()

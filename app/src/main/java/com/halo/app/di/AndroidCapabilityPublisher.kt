@@ -166,6 +166,8 @@ class AndroidCapabilityPublisher(
             capability("host.settings.open", "Open Android settings",
                 "Open an Android settings screen that this device can actually display.",
                 ToolCategory.HOST_CONTROL, canOpenSettings),
+            capability("host.models.manage", "Manage local model setup",
+                "Inspect and explicitly acquire or recover pinned model files; qualification and selection remain separate.", ToolCategory.SYSTEM, true),
             capability("workspace.read", "Read workspace",
                 "Read user-curated notes and documents in the Halo workspace.", ToolCategory.WORKSPACE, true),
             capability("workspace.write", "Write workspace",

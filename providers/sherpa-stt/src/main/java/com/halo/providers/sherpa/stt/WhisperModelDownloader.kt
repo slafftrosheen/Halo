@@ -19,6 +19,13 @@ data class SpeechModelDownloadProgress(
 
 /** Only invoked by an explicit install action. Files and totals come from the catalog. */
 object SpeechModelInstaller {
+    private val transfers = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+    internal suspend fun <T> withTransferMutation(destination: File, block: suspend () -> T): T {
+        val mutex = transfers.computeIfAbsent(destination.canonicalPath) { kotlinx.coroutines.sync.Mutex() }
+        mutex.lock()
+        return try { block() } finally { mutex.unlock() }
+    }
+
     const val STORAGE_RESERVE_BYTES = 64L * 1024 * 1024
 
     /** Bytes still required by this exact pinned spec; completed files and resumable partials count. */
@@ -33,8 +40,9 @@ object SpeechModelInstaller {
         }
 
     suspend fun install(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
-        onProgress: (SpeechModelDownloadProgress) -> Unit = {}): Result<Unit> = withContext(Dispatchers.IO) {
+        acquisitionOwner: String? = null, onProgress: (SpeechModelDownloadProgress) -> Unit = {}): Result<Unit> = withContext(Dispatchers.IO) { withTransferMutation(destination) {
         try {
+            acquisitionOwner?.let { require(java.util.UUID.fromString(it).toString() == it) }
             check(destination.isDirectory || destination.mkdirs()) { "Unable to create model directory" }
             val remainingBytes = remainingBytes(spec, destination)
             check(destination.usableSpace >= remainingBytes + STORAGE_RESERVE_BYTES) {
@@ -45,6 +53,7 @@ object SpeechModelInstaller {
             for (file in spec.files) {
                 coroutineContext.ensureActive()
                 if(SherpaSpeechModelCatalog.validFile(destination,spec,file)) {
+                    if (acquisitionOwner == null) SherpaModelInstaller.retainFile(destination, file)
                     downloaded += File(destination,file.name).length()
                     onProgress(SpeechModelDownloadProgress(downloaded,spec.expectedBytes,file.name))
                     continue
@@ -52,6 +61,15 @@ object SpeechModelInstaller {
                 val url = if (spec.repository.isBlank()) spec.sourceUrl else
                     "https://huggingface.co/${spec.repository}/resolve/${spec.revision}/${file.name}"
                 val partial=File(destination,"${file.name}.${file.sha256 ?: spec.revision}.download")
+                if (acquisitionOwner != null && partial.exists() && file.expectedBytes > 0 && partial.length() > file.expectedBytes)
+                    error("An independent oversized partial was retained; manage it before resuming setup")
+                val partialReceipt = File(destination, partial.name + ".acquired")
+                val identity = acquisitionOwner?.let { "$it:${file.sha256}:${file.expectedBytes}" }
+                // An independent prefix is retained when this request completes it.
+                val publicationOwner = acquisitionOwner?.takeIf { !partial.exists() || runCatching { partialReceipt.readText() == identity }.getOrDefault(false) }
+                if (publicationOwner == null) {
+                    check(!partialReceipt.exists() || partialReceipt.delete()) { "Unable to retain independent partial" }
+                } else partialReceipt.writeText(identity!!)
                 if(file.expectedBytes > 0 && partial.length() > file.expectedBytes) partial.delete()
                 val prefix=partial.length()
                 val connection = (URL(url).openConnection() as HttpURLConnection).apply {
@@ -80,9 +98,9 @@ object SpeechModelInstaller {
                     if(file.expectedBytes>0 && partial.length()<file.expectedBytes)
                         throw IOException("Model download interrupted; retry to resume ${file.name}")
                     onProgress(SpeechModelDownloadProgress(downloaded+partial.length(),spec.expectedBytes,file.name,verifying=true))
-                    when(val result=SherpaModelInstaller.installFile(partial.inputStream(),destination,file)) {
-                        is SherpaModelInstaller.Result.Rejected -> { partial.delete(); throw IOException(result.reason) }
-                        is SherpaModelInstaller.Result.Installed -> { downloaded+=result.file.length(); partial.delete() }
+                    when(val result=SherpaModelInstaller.installFile(partial.inputStream(),destination,file, publicationOwner, requestedOwner = acquisitionOwner)) {
+                        is SherpaModelInstaller.Result.Rejected -> { if (acquisitionOwner == null || publicationOwner != null) { partial.delete(); partialReceipt.delete() }; throw IOException(result.reason) }
+                        is SherpaModelInstaller.Result.Installed -> { downloaded+=result.file.length(); partial.delete(); partialReceipt.delete() }
                     }
                 } finally { connection.disconnect() }
             }
@@ -91,7 +109,7 @@ object SpeechModelInstaller {
             Result.success(Unit)
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) { Result.failure(error) }
-    }
+    } }
 }
 
 /** Compatibility for callers of the original Tiny installer. */

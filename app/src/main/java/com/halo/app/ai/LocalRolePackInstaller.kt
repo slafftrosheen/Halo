@@ -26,6 +26,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 enum class LocalRolePackPhase { IDLE, PREFLIGHT, INSTALLING, PAUSED, FAILED, ROLLING_BACK, ROLLBACK_FAILED, COMPLETE }
+interface LocalRolePackControl {
+    val state: StateFlow<LocalRolePackInstallState>
+    val available: Boolean
+    fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean
+}
+
+enum class LocalRolePackCommand { START_OR_RESUME, PAUSE, ROLLBACK, KEEP_FILES }
+
 enum class LocalRolePackStage { INTENT, SPEECH_RECOGNITION, SPEECH_ACTIVITY, SPEECH_OUTPUT, DONE }
 
 data class LocalRolePackInstallState(
@@ -34,6 +42,7 @@ data class LocalRolePackInstallState(
     val downloadedBytes: Long = 0L,
     val totalBytes: Long = 0L,
     val message: String? = null,
+    val transactionId: String? = null,
 ) {
     val busy: Boolean get() = phase == LocalRolePackPhase.PREFLIGHT || phase == LocalRolePackPhase.INSTALLING || phase == LocalRolePackPhase.ROLLING_BACK
     val canResume: Boolean get() = phase == LocalRolePackPhase.PAUSED || phase == LocalRolePackPhase.FAILED
@@ -50,17 +59,19 @@ internal data class LocalRolePackJournal(
     val vadInstalled: Boolean,
     val ttsFingerprints: Set<String>,
     val message: String? = null,
+    /** Null only for legacy journals, whose artifact ownership cannot be inferred. */
+    val transactionId: String? = null,
 ) {
     fun encode(): String = listOf(
         phase.name, stage.name, intentExisted.toString(), intentVerified.toString(), planFingerprint,
         whisperSmallInstalled.toString(), vadInstalled.toString(), ttsFingerprints.sorted().joinToString(","),
-        message.orEmpty()
+        message.orEmpty(), transactionId.orEmpty()
     ).joinToString("\t")
 
     companion object {
         fun decode(value: String?): LocalRolePackJournal? = runCatching {
             val fields = value?.split('\t') ?: return null
-            require(fields.size == 9)
+            require(value.length <= 16000 && fields.size in 9..10)
             LocalRolePackJournal(
                 phase = LocalRolePackPhase.valueOf(fields[0]),
                 stage = LocalRolePackStage.valueOf(fields[1]),
@@ -69,8 +80,9 @@ internal data class LocalRolePackJournal(
                 planFingerprint = fields[4].also { require(it.matches(Regex("[a-f0-9]{64}"))) },
                 whisperSmallInstalled = fields[5].toBooleanStrict(),
                 vadInstalled = fields[6].toBooleanStrict(),
-                ttsFingerprints = fields[7].split(',').filter(String::isNotBlank).toSet(),
+                ttsFingerprints = fields[7].split(',').filter(String::isNotBlank).toSet().also { hashes -> require(hashes.size <= 64 && hashes.all { it.matches(Regex("[a-f0-9]{64}")) }) },
                 message = fields[8].ifBlank { null },
+                transactionId = fields.getOrNull(9)?.ifBlank { null }?.also { require(java.util.UUID.fromString(it).toString() == it) },
             )
         }.getOrNull()
     }
@@ -87,16 +99,17 @@ class LocalRolePackInstaller(
     private val speech: SpeechModelInventoryRepository,
     private val speechRoot: File,
     private val supertonic: SupertonicSpeechProvider?,
-) {
+) : LocalRolePackControl {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val transaction = Mutex()
     private val installJobLock = Any()
     private var installJob: Job? = null
     private val intentId = "qwen3-0.6b-dynamic-int4"
     private val intentCatalog get() = models.catalogModel(intentId)
-    private var journal = recoverJournal()
+    @Volatile private var journal = recoverJournal()
     private val mutableState = MutableStateFlow(journal?.toState() ?: LocalRolePackInstallState())
-    val state: StateFlow<LocalRolePackInstallState> = mutableState.asStateFlow()
+    override val state: StateFlow<LocalRolePackInstallState> = mutableState.asStateFlow()
+    override val available: Boolean get() = supertonic != null && intentCatalog != null
 
     init {
         // WorkManager may continue a LiteRT transfer across process death. Resume reconciles
@@ -113,27 +126,66 @@ class LocalRolePackInstaller(
         }
     }
 
-    fun startOrResume() {
+    /** Typed adapters use an observed receipt identity; the UI invokes these same owner methods. */
+    override fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean {
+        val observed = mutableState.value
+        if (expectedTransactionId != (observed.transactionId ?: "NONE")) return false
+        when (command) {
+            LocalRolePackCommand.START_OR_RESUME -> { if (observed.busy || observed.phase == LocalRolePackPhase.ROLLBACK_FAILED) return false; startOrResumeFor(expectedTransactionId) }
+            LocalRolePackCommand.PAUSE -> { if (!observed.busy || observed.phase == LocalRolePackPhase.ROLLING_BACK) return false; pauseFor(expectedTransactionId) }
+            LocalRolePackCommand.ROLLBACK -> { if (!observed.canRollback) return false; rollbackFor(expectedTransactionId) }
+            LocalRolePackCommand.KEEP_FILES -> { if (observed.busy || observed.transactionId == null && journal == null) return false; keepDownloadedFilesFor(expectedTransactionId) }
+        }
+        return true // Request accepted only; poll status for actual owner progress.
+    }
+    fun startOrResume() = startOrResumeFor(null)
+    private fun startOrResumeFor(expected: String?) {
         synchronized(installJobLock) {
             if (installJob?.isActive == true) return
-            installJob = scope.launch { transaction.withLock { installTransaction() } }
+            installJob = scope.launch { transaction.withLock {
+                if (expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
+                if (mutableState.value.phase == LocalRolePackPhase.ROLLBACK_FAILED) return@withLock
+                installTransaction()
+            } }
         }
     }
 
-    fun pause() {
-        val stage = mutableState.value.stage
-        synchronized(installJobLock) { installJob?.cancel() }
-        if (stage == LocalRolePackStage.INTENT) models.cancelDownload(intentId)
-        if (stage == LocalRolePackStage.SPEECH_OUTPUT) supertonic?.packs?.cancelDownload()
+    fun pause() = pauseFor(null)
+    private fun pauseFor(expected: String?) {
+        synchronized(installJobLock) {
+            if (!mutableState.value.busy || mutableState.value.phase == LocalRolePackPhase.ROLLING_BACK ||
+                expected != null && expected != (journal?.transactionId ?: "NONE")) return
+            val stage = mutableState.value.stage
+            installJob?.cancel()
+            if (stage == LocalRolePackStage.INTENT) journal?.transactionId?.let { models.cancelOwnedDownload(intentId, it) }
+            // Structured cancellation stops this setup's speech-output child, never an unrelated acquisition.
+        }
     }
 
-    fun rollback() {
+    fun rollback() = rollbackFor(null)
+    private fun rollbackFor(expected: String?) {
+        if (!mutableState.value.canRollback) return
         val running = synchronized(installJobLock) { installJob }
         running?.cancel()
         scope.launch {
             running?.cancelAndJoin()
-            transaction.withLock { rollbackTransaction() }
+            transaction.withLock {
+                if (expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
+                if (mutableState.value.canRollback) rollbackTransaction()
+            }
         }
+    }
+
+    /** Explicit receipt recovery only. Keeps every file, selection and role; never retries an acquisition. */
+    fun keepDownloadedFiles() = keepDownloadedFilesFor(null)
+    private fun keepDownloadedFilesFor(expected: String?) {
+        if (mutableState.value.busy) return
+        scope.launch { transaction.withLock {
+            if (mutableState.value.busy || expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
+            journal = null
+            storage.remove(JOURNAL_KEY)
+            publish(LocalRolePackInstallState())
+        } }
     }
 
     private suspend fun installTransaction() {
@@ -143,6 +195,12 @@ class LocalRolePackInstaller(
                 persist(initial.copy(phase = LocalRolePackPhase.PREFLIGHT))
                 requireNotNull(journal)
             } else requireNotNull(journal)
+            if (active.planFingerprint != currentPlanFingerprint()) {
+                persist(active.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED,
+                    message = "The pinned setup changed. Keep existing files and clear this receipt before starting again."))
+                return
+            }
+            check(active.transactionId != null) { "Keep existing downloads and start a new setup to establish ownership." }
             check(supertonic != null) { "The Supertonic speech provider is unavailable on this installation." }
             publish(active.copy(phase = LocalRolePackPhase.PREFLIGHT, message = null))
             preflight(active)
@@ -153,13 +211,13 @@ class LocalRolePackInstaller(
             require(intent.directDownloadAllowed) { "The intent candidate cannot be acquired by the built-in downloader." }
             current = current.copy(stage = LocalRolePackStage.INTENT)
             persist(current)
-            if (!current.intentVerified) installIntentCandidate(intent)
+            installIntentCandidate(intent)
 
             current = current.copy(stage = LocalRolePackStage.SPEECH_RECOGNITION)
             persist(current)
             speech.refresh()
-            if (!current.whisperSmallInstalled && speech.state.value.models[WhisperSmall.id] != true) {
-                val result = speech.install(WhisperSmall.id) { progress ->
+            if (speech.state.value.models[WhisperSmall.id] != true) {
+                val result = speech.installOwned(WhisperSmall.id, requireNotNull(current.transactionId)) { progress ->
                     mutableState.value = mutableState.value.copy(
                         phase = LocalRolePackPhase.INSTALLING,
                         stage = LocalRolePackStage.SPEECH_RECOGNITION,
@@ -176,8 +234,8 @@ class LocalRolePackInstaller(
             current = current.copy(stage = LocalRolePackStage.SPEECH_ACTIVITY)
             persist(current)
             speech.refresh()
-            if (!current.vadInstalled && !speech.state.value.sileroInstalled) {
-                val result = speech.install(SherpaSpeechModelCatalog.SILERO_VAD_ID) { progress ->
+            if (!speech.state.value.sileroInstalled) {
+                val result = speech.installOwned(SherpaSpeechModelCatalog.SILERO_VAD_ID, requireNotNull(current.transactionId)) { progress ->
                     mutableState.value = mutableState.value.copy(
                         phase = LocalRolePackPhase.INSTALLING,
                         stage = LocalRolePackStage.SPEECH_ACTIVITY,
@@ -199,7 +257,7 @@ class LocalRolePackInstaller(
             val retainedBaselinePack = current.ttsFingerprints.any(installedTts::contains)
             if (!retainedBaselinePack && newlyInstalled.isEmpty()) {
                 val fingerprint = coroutineScope {
-                    val download = async { tts.packs.downloadOfficial() }
+                    val download = async { tts.packs.downloadOfficial(requireNotNull(current.transactionId) { "Keep existing downloads and start a new setup to establish ownership." }) }
                     while (!download.isCompleted) {
                         mutableState.value = mutableState.value.copy(
                             downloadedBytes = tts.packs.downloadProgress.value ?: 0L,
@@ -257,6 +315,7 @@ class LocalRolePackInstaller(
             intentExisted = existing != null,
             intentVerified = existing?.verified == true && existing.sha256.equals(intentCatalog?.sha256, ignoreCase = true),
             planFingerprint = currentPlanFingerprint(),
+            transactionId = java.util.UUID.randomUUID().toString(),
             whisperSmallInstalled = speech.state.value.models[WhisperSmall.id] == true,
             vadInstalled = speech.state.value.sileroInstalled,
             ttsFingerprints = ttsFingerprints,
@@ -273,13 +332,13 @@ class LocalRolePackInstaller(
         val intentModel = requireNotNull(intentCatalog)
         val intentPartial = (models.partialDownloadBytes(intentId) ?: 0L).takeIf { it <= intentModel.expectedBytes } ?: 0L
         val intentRemaining = (intentModel.expectedBytes - intentPartial).coerceAtLeast(0L)
-        val intentBytes = if (baseline.intentVerified || intentNow) 0L else intentRemaining
+        val intentBytes = if (intentNow) 0L else intentRemaining
         val whisperRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(WhisperSmall, File(speechRoot, WhisperSmall.directoryName))
-        val speechBytes = if (baseline.whisperSmallInstalled || speech.state.value.models[WhisperSmall.id] == true) 0L else whisperRemaining
+        val speechBytes = if (speech.state.value.models[WhisperSmall.id] == true) 0L else whisperRemaining
         val vadRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(SherpaSpeechModelCatalog.sileroVad, speechRoot)
-        val vadBytes = if (baseline.vadInstalled || speech.state.value.sileroInstalled) 0L else vadRemaining
+        val vadBytes = if (speech.state.value.sileroInstalled) 0L else vadRemaining
         val ttsNowInstalled = supertonic?.installedPacks()?.isNotEmpty() == true
-        val ttsBytes = if (baseline.ttsFingerprints.isNotEmpty() || ttsNowInstalled) 0L else
+        val ttsBytes = if (ttsNowInstalled) 0L else
             (supertonic?.packs?.remainingOfficialDownloadBytes() ?: SupertonicPackStore.OFFICIAL_BYTES) + SupertonicPackStore.INSTALL_RESERVE_BYTES + 1L
         val liteRtHeadroom = if (intentBytes > 0L) {
             com.halo.providers.litert.models.LiteRtStoragePreflight.DEFAULT_RESERVE_BYTES +
@@ -310,7 +369,9 @@ class LocalRolePackInstaller(
     private suspend fun installIntentCandidate(model: com.halo.providers.litert.models.LiteRtCatalogModel) {
         val existing = models.verifyPhysicalArtifact(intentId)
         if (existing?.verified == true && existing.sha256.equals(model.sha256, ignoreCase = true)) return
-        models.downloadCatalogModel(model)
+        val owner = requireNotNull(journal?.transactionId) { "Keep existing downloads and start a new setup." }
+        check(!File(models.modelDir, "$intentId.litertlm").exists() || models.acquisitionOwner(intentId) == owner) { "An independent intent artifact needs repair; it was retained." }
+        models.downloadCatalogModel(model, acquisitionOwner = owner)
         while (true) {
             val download = models.downloadStates.value[intentId]
             val (bytes, total) = when (download) {
@@ -334,6 +395,7 @@ class LocalRolePackInstaller(
     }
 
     private suspend fun finish() {
+        check(journal?.planFingerprint == currentPlanFingerprint()) { "The pinned setup changed during acquisition." }
         val intent = requireNotNull(intentCatalog)
         val verifiedIntent = models.verifyPhysicalArtifact(intentId)
         check(verifiedIntent?.verified == true && verifiedIntent.sha256.equals(intent.sha256, ignoreCase = true)) {
@@ -349,6 +411,11 @@ class LocalRolePackInstaller(
 
     private suspend fun rollbackTransaction() {
         val baseline = journal ?: return publish(LocalRolePackInstallState())
+        if (baseline.transactionId == null || baseline.planFingerprint != currentPlanFingerprint()) {
+            persist(baseline.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED,
+                message = "Setup ownership cannot be verified after this update. Keep the files and clear this receipt, or manage downloads individually."))
+            return
+        }
         publish(baseline.copy(phase = LocalRolePackPhase.ROLLING_BACK, message = null))
         persist(baseline.copy(phase = LocalRolePackPhase.ROLLING_BACK, message = null))
         val failures = mutableListOf<String>()
@@ -359,34 +426,26 @@ class LocalRolePackInstaller(
         }
 
         if (baseline.stage.ordinal >= LocalRolePackStage.INTENT.ordinal && !baseline.intentExisted) attempt("intent") {
-            if (baseline.stage == LocalRolePackStage.INTENT) models.cancelDownload(intentId)
-            val artifact = File(models.modelDir, "$intentId.litertlm")
-            if (artifact.exists()) check(models.deleteModel(intentId)) { "Intent artifact is in use or could not be removed." }
-            else if (models.partialDownloadBytes(intentId) != null) models.discardPartial(intentId)
+            val owner = requireNotNull(baseline.transactionId) { "Legacy ownership unknown; keep downloads and clear this receipt." }
+            models.cancelOwnedDownload(intentId, owner)
+            if (models.acquisitionOwner(intentId) == owner) check(models.deleteModel(intentId, owner)) { "Intent artifact is in use, changed or could not be removed." }
+            models.discardOwnedPartial(intentId, owner)
         }
         if (baseline.stage.ordinal >= LocalRolePackStage.SPEECH_RECOGNITION.ordinal && !baseline.whisperSmallInstalled) attempt("recognition") {
-            speech.refresh()
-            if (File(speechRoot, WhisperSmall.directoryName).exists()) {
-                speech.remove(WhisperSmall.id).getOrElse { throw it }
-            }
+            speech.removeOwned(WhisperSmall.id, requireNotNull(baseline.transactionId)).getOrElse { throw it }
         }
         if (baseline.stage.ordinal >= LocalRolePackStage.SPEECH_ACTIVITY.ordinal && !baseline.vadInstalled) attempt("VAD") {
-            speech.refresh()
-            if (File(speechRoot, SherpaSpeechModelCatalog.SILERO_VAD_FILE).exists() ||
-                File(speechRoot, "${SherpaSpeechModelCatalog.SILERO_VAD_FILE}.partial").exists()) {
-                speech.remove(SherpaSpeechModelCatalog.SILERO_VAD_ID).getOrElse { throw it }
-            }
+            speech.removeOwned(SherpaSpeechModelCatalog.SILERO_VAD_ID, requireNotNull(baseline.transactionId)).getOrElse { throw it }
         }
         if (baseline.stage.ordinal >= LocalRolePackStage.SPEECH_OUTPUT.ordinal) {
             attempt("speech output") {
                 val tts = requireNotNull(supertonic)
-                if (baseline.stage == LocalRolePackStage.SPEECH_OUTPUT) tts.packs.cancelDownload()
-                val added = tts.installedPacks().map { it.fingerprint }.filterNot(baseline.ttsFingerprints::contains)
-                added.forEach { fingerprint ->
-                    check(tts.packs.selection().fingerprint != fingerprint) { "New speech output pack is selected and must be changed before rollback." }
-                    tts.removePack(fingerprint)
-                }
-                if (baseline.ttsFingerprints.isEmpty()) tts.packs.discardOfficialPartial()
+                // The setup job has already been cancelled and joined; do not cancel another downloader.
+                val owner = requireNotNull(baseline.transactionId) { "Legacy ownership is unknown; keep downloads and clear this setup receipt." }
+                tts.packs.ownedBy(owner).forEach { fingerprint -> check(tts.removeOwnedPack(fingerprint, owner)) { "An acquired pack changed or is incomplete; it was retained." } }
+                tts.packs.discardOwnedOfficialPartial(owner)
+                // Independent shared archives are retained; only the exact setup receipt can authorize cleanup.
+
             }
         }
         if (failures.isEmpty()) {
@@ -425,7 +484,7 @@ class LocalRolePackInstaller(
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 
-    private fun persist(value: LocalRolePackJournal) {
+    private fun persist(value: LocalRolePackJournal) = synchronized(installJobLock) {
         journal = value
         storage.putString(JOURNAL_KEY, value.encode())
         publish(value)
@@ -434,7 +493,7 @@ class LocalRolePackInstaller(
     private fun publish(value: LocalRolePackJournal) { mutableState.value = value.toState() }
     private fun publish(value: LocalRolePackInstallState) { mutableState.value = value }
 
-    private fun LocalRolePackJournal.toState() = LocalRolePackInstallState(phase = phase, stage = stage, message = message)
+    private fun LocalRolePackJournal.toState() = LocalRolePackInstallState(phase = phase, stage = stage, message = message, transactionId = transactionId)
 
     private fun safeMessage(error: Exception): String = when {
         error.message?.contains("Not enough free space", ignoreCase = true) == true -> error.message.orEmpty()

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.sherpa.stt.SpeechModelInventoryRemovalTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:55:05.890Z" hostname="MINIFOXEY" time="0.126">
+  <properties/>
+  <testcase name="remainingBytesCountsOnlyMissingBytesFromPinnedPartial" classname="com.halo.providers.sherpa.stt.SpeechModelInventoryRemovalTest" time="0.005"/>
+  <testcase name="failedOwnedVadRemovalRestoresRuntimeAndRetainsChangedFile" classname="com.halo.providers.sherpa.stt.SpeechModelInventoryRemovalTest" time="0.047"/>
+  <testcase name="removingSileroReleasesRuntimeAndDeletesOnlyItsFiles" classname="com.halo.providers.sherpa.stt.SpeechModelInventoryRemovalTest" time="0.022"/>
+  <testcase name="cancelledOwnedVadReleaseRestoresRuntimeAndPropagatesCancellation" classname="com.halo.providers.sherpa.stt.SpeechModelInventoryRemovalTest" time="0.045"/>
+  <testcase name="removingUnknownSpeechModelFailsWithoutDeletingFiles" classname="com.halo.providers.sherpa.stt.SpeechModelInventoryRemovalTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

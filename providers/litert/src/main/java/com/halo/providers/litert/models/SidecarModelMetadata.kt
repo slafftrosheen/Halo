@@ -29,8 +29,10 @@ data class InstalledLiteRtModelMetadata(
     val maturity: LiteRtModelMaturity? = null,
     val tier: LiteRtModelTier? = null,
     val minDeviceRamGb: Int? = null,
+    val acquisitionOwner: String? = null,
 ) {
     fun toJson(): String = JSONObject().apply {
+        put("acquisitionOwner", acquisitionOwner)
         put("id", id)
         put("displayName", displayName)
         put("sourceUrl", sourceUrl)
@@ -60,6 +62,7 @@ data class InstalledLiteRtModelMetadata(
             val json = JSONObject(jsonStr)
             val context = json.optInt("contextWindowTokens", UNKNOWN_CONTEXT_TOKENS)
             InstalledLiteRtModelMetadata(
+                acquisitionOwner = json.optString("acquisitionOwner").ifBlank { null }?.also(::requireModelAcquisitionOwner),
                 id = json.getString("id"),
                 displayName = json.getString("displayName"),
                 sourceUrl = json.optString("sourceUrl").ifBlank { null },

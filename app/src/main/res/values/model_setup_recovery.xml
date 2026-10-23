@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pack39_intro">Optional starter files: a Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice pack. Downloads need internet and storage. Your documents stay on this phone. Installing does not select models or prove their quality.</string>
+    <string name="pack39_complete">Starter files are installed and checked. Choose a listening model and try a voice before use. The intent model remains an unselected candidate.</string>
+    <string name="pack39_preflight">Checking storage…</string>
+    <string name="pack39_intent">Downloading intent candidate…</string>
+    <string name="pack39_recognition">Downloading listening model…</string>
+    <string name="pack39_vad">Installing voice activity support…</string>
+    <string name="pack39_tts">Downloading voice pack…</string>
+    <string name="pack39_verify">Checking model files…</string>
+    <string name="pack39_pause">Pause setup</string>
+    <string name="pack39_paused">Setup is paused. Resume it, remove only its verified additions, or keep the files.</string>
+    <string name="pack39_failed">Setup did not finish. Check connection and storage, then resume or keep the downloaded files.</string>
+    <string name="pack39_rollback_failed">Some files were kept because they are in use, changed, or their setup ownership is unknown. Retry after resolving this, or keep all files.</string>
+    <string name="pack39_rolling_back">Removing files owned by this setup…</string>
+    <string name="pack39_resume">Resume starter setup</string>
+    <string name="pack39_install">Download starter files</string>
+    <string name="pack39_retry_rollback">Retry removal</string>
+    <string name="pack39_rollback">Remove this setup’s downloads</string>
+    <string name="pack39_keep_files">Keep files and finish setup</string>
+    <string name="pack39_keep_explanation">Keeping files clears this setup receipt. Nothing is deleted or selected; later removal uses the individual model controls.</string>
+</resources>

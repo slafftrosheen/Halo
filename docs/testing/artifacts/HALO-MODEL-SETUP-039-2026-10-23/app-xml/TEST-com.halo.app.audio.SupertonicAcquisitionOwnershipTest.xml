@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.audio.SupertonicAcquisitionOwnershipTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:53:26.266Z" hostname="MINIFOXEY" time="5.795">
+  <properties/>
+  <testcase name="independent reimport retains previously acquired pack" classname="com.halo.app.audio.SupertonicAcquisitionOwnershipTest" time="4.786"/>
+  <testcase name="rollback keeps independent import alongside exact owned pack" classname="com.halo.app.audio.SupertonicAcquisitionOwnershipTest" time="0.139"/>
+  <testcase name="changed and incomplete owned packs remain recoverable without inferred deletion" classname="com.halo.app.audio.SupertonicAcquisitionOwnershipTest" time="0.194"/>
+  <testcase name="official archive partial is removed only by exact receipt owner" classname="com.halo.app.audio.SupertonicAcquisitionOwnershipTest" time="0.094"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

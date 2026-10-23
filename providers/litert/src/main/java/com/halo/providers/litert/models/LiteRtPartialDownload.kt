@@ -21,6 +21,7 @@ data class LiteRtPartialDownloadMetadata(
     val etag: String? = null,
     val lastModified: String? = null,
     val updatedAtMs: Long = System.currentTimeMillis(),
+    val acquisitionOwner: String? = null,
 ) {
     /** True only when the partial provably belongs to this exact pinned artifact. */
     fun matches(model: LiteRtCatalogModel): Boolean =
@@ -32,6 +33,7 @@ data class LiteRtPartialDownloadMetadata(
             expectedSha256.equals(model.sha256, ignoreCase = true)
 
     fun toJson(): String = JSONObject().apply {
+        put("acquisitionOwner", acquisitionOwner)
         put("modelId", modelId)
         put("repoId", repoId)
         put("revision", revision)
@@ -53,6 +55,7 @@ data class LiteRtPartialDownloadMetadata(
         fun fromJson(json: String): LiteRtPartialDownloadMetadata? = runCatching {
             val obj = JSONObject(json)
             LiteRtPartialDownloadMetadata(
+                acquisitionOwner = obj.optString("acquisitionOwner").ifBlank { null }?.also(::requireModelAcquisitionOwner),
                 modelId = obj.getString("modelId"),
                 repoId = obj.getString("repoId"),
                 revision = obj.getString("revision"),

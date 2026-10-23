@@ -96,6 +96,14 @@ class SupertonicSpeechProvider(
         }
         packs.remove(hash)
     }
+    suspend fun removeOwnedPack(hash: String, owner: String): Boolean = lock.withLock {
+        check(pinnedStreams[hash] == null) { "The Supertonic version is in use" }
+        if (residentIdentity?.substringBefore(':') == hash) {
+            releaseEngine()
+            resources.release(this@SupertonicSpeechProvider)
+        }
+        packs.removeOwned(hash, owner)
+    }
     suspend fun setWarm(enabled: Boolean)=lock.withLock {
         withContext(Dispatchers.IO) { storage.putBoolean("supertonic_warm",enabled) }
         if(!enabled && pinnedStreams.isEmpty()) {

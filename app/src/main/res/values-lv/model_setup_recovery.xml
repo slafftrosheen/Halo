@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pack39_intro">Papildu sākuma faili: Qwen nodomu atpazīšanas kandidāts, Whisper Small, Silero VAD un Supertonic balss pakotne. Lejupielādei vajadzīgs internets un vieta ierīcē. Dokumenti paliek šajā tālrunī. Instalēšana neizvēlas modeļus un neapliecina to kvalitāti.</string>
+    <string name="pack39_complete">Sākuma faili ir instalēti un pārbaudīti. Pirms lietošanas izvēlieties runas atpazīšanas modeli un izmēģiniet balsi. Nodomu modelis paliek neizvēlēts kandidāts.</string>
+    <string name="pack39_preflight">Pārbauda brīvo vietu…</string>
+    <string name="pack39_intent">Lejupielādē nodomu modeli…</string>
+    <string name="pack39_recognition">Lejupielādē runas atpazīšanas modeli…</string>
+    <string name="pack39_vad">Instalē balss aktivitātes noteikšanu…</string>
+    <string name="pack39_tts">Lejupielādē balss pakotni…</string>
+    <string name="pack39_verify">Pārbauda modeļu failus…</string>
+    <string name="pack39_pause">Apturēt iestatīšanu</string>
+    <string name="pack39_paused">Iestatīšana ir apturēta. Turpiniet to, noņemiet tikai pārbaudītos papildinājumus vai paturiet failus.</string>
+    <string name="pack39_failed">Iestatīšana netika pabeigta. Pārbaudiet savienojumu un brīvo vietu, pēc tam turpiniet vai paturiet lejupielādētos failus.</string>
+    <string name="pack39_rollback_failed">Daži faili ir paturēti, jo tiek lietoti, ir mainīti vai nav zināms, vai tie pieder šai iestatīšanai. Novērsiet iemeslu un mēģiniet vēlreiz vai paturiet visus failus.</string>
+    <string name="pack39_rolling_back">Noņem šai iestatīšanai piederošos failus…</string>
+    <string name="pack39_resume">Turpināt sākuma iestatīšanu</string>
+    <string name="pack39_install">Lejupielādēt sākuma failus</string>
+    <string name="pack39_retry_rollback">Atkārtot noņemšanu</string>
+    <string name="pack39_rollback">Noņemt šīs iestatīšanas lejupielādes</string>
+    <string name="pack39_keep_files">Paturēt failus un beigt iestatīšanu</string>
+    <string name="pack39_keep_explanation">Paturēšana dzēš tikai šīs iestatīšanas ierakstu. Faili netiek dzēsti un modeļi netiek izvēlēti; vēlāk failus var noņemt modeļu pārvaldībā.</string>
+</resources>

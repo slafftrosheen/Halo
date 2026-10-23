@@ -870,6 +870,7 @@ object ManualDependencyGraph {
         val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository,
             com.halo.app.di.tools.WorkspaceFileEditingActions(workspaceFileTools))
         val studioExecutor = com.halo.app.di.tools.StudioToolExecutor(studioService)
+        val modelSetupExecutor = com.halo.app.di.tools.LocalModelSetupToolExecutor(localRolePackInstaller)
         val workspaceExecutor = WorkspaceToolExecutor(
             notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
@@ -990,6 +991,7 @@ object ManualDependencyGraph {
                 storageExecutor,
                 fileExecutor,
                 workspaceExecutor,
+                modelSetupExecutor,
                 studioExecutor,
                 memoryExecutor,
                 longTaskExecutor,
@@ -1009,6 +1011,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.STORAGE_STATUS to storageExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.FILE to fileExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to workspaceExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MODEL_SETUP to modelSetupExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to studioExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEMORY to memoryExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.INTEGRITY to hostExecutor,

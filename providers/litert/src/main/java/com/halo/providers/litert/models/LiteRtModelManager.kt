@@ -104,6 +104,9 @@ class LiteRtModelManager(
     @Volatile
     private var residentModelIdProvider: () -> String? = { null }
 
+    @Volatile private var protectedModelIdsProvider: () -> Set<String> = { emptySet() }
+    fun observeProtectedModels(provider: () -> Set<String>) { protectedModelIdsProvider = provider }
+
     fun observeResidentModel(provider: () -> String?) {
         residentModelIdProvider = provider
     }
@@ -112,6 +115,7 @@ class LiteRtModelManager(
     private val inventoryMutex = Mutex()
     private val downloadLock = Any()
     private val downloadJobs = mutableMapOf<String, Job>()
+    private val downloadOwners = mutableMapOf<String, String?>()
 
     /** path|length|modified -> physical SHA-256. Avoids rehashing an unchanged multi-GB artifact. */
     private val physicalFingerprints = ConcurrentHashMap<String, String>()
@@ -273,7 +277,8 @@ class LiteRtModelManager(
     // Download
     // ---------------------------------------------------------------------------------------
 
-    fun downloadCatalogModel(model: LiteRtCatalogModel, hubToken: String? = null, licenseAcknowledged: Boolean = false) {
+    fun downloadCatalogModel(model: LiteRtCatalogModel, hubToken: String? = null, licenseAcknowledged: Boolean = false, acquisitionOwner: String? = null) {
+        acquisitionOwner?.let(::requireModelAcquisitionOwner)
         Log.i(TAG, "$EVENT_REQUESTED id=${model.id}")
         val token = hubToken?.trim()?.takeIf { it.isNotBlank() } ?: sessionHubToken
         val validToken = token?.takeIf(::isHuggingFaceReadToken)
@@ -301,7 +306,7 @@ class LiteRtModelManager(
         }
         if(backgroundDownloads && validToken == null) {
             setDownloadState(model.id,DownloadState.Queued)
-            val request=LiteRtDownloadWorker.request(model)
+            val request=LiteRtDownloadWorker.request(model, acquisitionOwner)
             androidx.work.WorkManager.getInstance(context).enqueueUniqueWork("halo-model:${model.id}",androidx.work.ExistingWorkPolicy.KEEP,request)
             return
         }
@@ -311,11 +316,12 @@ class LiteRtModelManager(
                 return
             }
             setDownloadState(model.id, DownloadState.Queued)
+            downloadOwners[model.id] = acquisitionOwner
             downloadJobs[model.id] = scope.launch {
                 try {
-                    runDownload(model, validToken)
+                    runDownload(model, validToken, acquisitionOwner)
                 } finally {
-                    synchronized(downloadLock) { downloadJobs.remove(model.id) }
+                    synchronized(downloadLock) { downloadJobs.remove(model.id); downloadOwners.remove(model.id) }
                 }
             }
         }
@@ -334,10 +340,36 @@ class LiteRtModelManager(
         job?.cancel(CancellationException("Model download cancelled by user"))
     }
 
+    /** Cancel only work explicitly acquired by this setup; an independent download is never cancelled. */
+    fun cancelOwnedDownload(modelId: String, owner: String) {
+        requireModelAcquisitionOwner(owner)
+        if (backgroundDownloads) androidx.work.WorkManager.getInstance(context).cancelAllWorkByTag("halo-model-owner:$owner:$modelId")
+        synchronized(downloadLock) { if (downloadOwners[modelId] == owner) downloadJobs[modelId]?.cancel(CancellationException("Setup paused")) }
+    }
+
     /** Bytes of a stored partial, or null when there is nothing to resume. */
     fun partialDownloadBytes(modelId: String): Long? {
         val part = File(modelRoot, "$modelId.litertlm.part")
         return part.takeIf { it.exists() && it.length() > 0L }?.length()
+    }
+
+    suspend fun acquisitionOwner(modelId: String): String? = withContext(Dispatchers.IO) {
+        require(modelId.matches(Regex("[A-Za-z0-9_-]{1,100}")))
+        runCatching { InstalledLiteRtModelMetadata.fromJson(File(modelRoot, "$modelId.halo-model.json").readText())?.acquisitionOwner }.getOrNull()
+    }
+    /** Owner-checked partial removal shares the transfer mutex; a later independent resume clears ownership. */
+    suspend fun discardOwnedPartial(modelId: String, owner: String): Boolean = withContext(Dispatchers.IO) {
+        requireModelAcquisitionOwner(owner)
+        require(modelId.matches(Regex("[A-Za-z0-9_-]{1,100}")))
+        val key = modelRoot.canonicalPath + "/" + modelId
+        transferMutexes.computeIfAbsent(key) { Mutex() }.withLock {
+            val part = File(modelRoot, "$modelId.litertlm.part")
+            val metadata = LiteRtPartialDownloadMetadata.sidecarFor(part)
+            if (LiteRtPartialDownloadMetadata.fromFile(metadata)?.acquisitionOwner != owner) return@withLock false
+            check(!part.exists() || part.delete()) { "Unable to remove setup partial" }
+            check(!metadata.exists() || metadata.delete()) { "Unable to remove setup receipt" }
+            true
+        }
     }
 
     /** Explicit "discard download": removes the partial artifact and its metadata. */
@@ -355,23 +387,31 @@ class LiteRtModelManager(
     fun storagePreflight(model: LiteRtCatalogModel): LiteRtStoragePreflightResult =
         LiteRtStoragePreflight.check(modelRoot, model.expectedBytes)
 
-    internal suspend fun runDownload(model: LiteRtCatalogModel, hubToken: String? = null) {
+    internal suspend fun runDownload(model: LiteRtCatalogModel, hubToken: String? = null, acquisitionOwner: String? = null) {
+        acquisitionOwner?.let(::requireModelAcquisitionOwner)
         val key=modelRoot.canonicalPath + "/" + model.id
-        transferMutexes.computeIfAbsent(key) { Mutex() }.withLock { runDownloadLocked(model,hubToken) }
+        transferMutexes.computeIfAbsent(key) { Mutex() }.withLock { runDownloadLocked(model,hubToken,acquisitionOwner) }
     }
-    private suspend fun runDownloadLocked(model: LiteRtCatalogModel, hubToken: String?) {
+    private suspend fun runDownloadLocked(model: LiteRtCatalogModel, hubToken: String?, acquisitionOwner: String?) {
         val partFile = File(modelRoot, "${model.id}.litertlm.part")
         val finalFile = File(modelRoot, "${model.id}.litertlm")
         val sidecarFile = File(modelRoot, "${model.id}.halo-model.json")
         val sidecarPart = File(modelRoot, "${model.id}.halo-model.json.part")
         val partialMetaFile = LiteRtPartialDownloadMetadata.sidecarFor(partFile)
 
+        // A pre-existing independent partial is retained, even if this setup finishes its bytes.
+        val publicationOwner = acquisitionOwner?.takeIf { !partFile.exists() || LiteRtPartialDownloadMetadata.fromFile(partialMetaFile)?.acquisitionOwner == it }
         try {
             setDownloadState(model.id, DownloadState.Preparing)
             Log.i(TAG, "$EVENT_PREPARING id=${model.id}")
             // 1. model directory
             if (!modelRoot.exists() && !modelRoot.mkdirs()) {
                 throw IOException("Unable to create model directory ${modelRoot.absolutePath}")
+            }
+            if (acquisitionOwner != null && partFile.exists() && LiteRtPartialDownloadMetadata.fromFile(partialMetaFile)?.matches(model) != true) {
+                setDownloadState(model.id, DownloadState.Failed(ModelDownloadFailure.IO_FAILURE,
+                    "An independent partial download needs review. It was kept; manage it before resuming this setup.", "INDEPENDENT_PARTIAL_RETAINED", resumable = false))
+                return
             }
             if (sidecarPart.exists()) sidecarPart.delete()
 
@@ -403,7 +443,7 @@ class LiteRtModelManager(
             if (resumeFrom > 0L) {
                 Log.i(TAG, "$EVENT_RESUME id=${model.id} from=$resumeFrom expected=${model.expectedBytes}")
             }
-            writePartialMetadata(partialMetaFile, model, resumeFrom)
+            writePartialMetadata(partialMetaFile, model, resumeFrom, acquisitionOwner = publicationOwner)
 
             setDownloadState(
                 model.id,
@@ -431,7 +471,7 @@ class LiteRtModelManager(
                 }
                 if (progress.downloadedBytes - lastMetadataBytes >= PROGRESS_METADATA_INTERVAL_BYTES) {
                     lastMetadataBytes = progress.downloadedBytes
-                    writePartialMetadata(partialMetaFile, model, progress.downloadedBytes)
+                    writePartialMetadata(partialMetaFile, model, progress.downloadedBytes, acquisitionOwner = publicationOwner)
                 }
                 setDownloadState(
                     model.id,
@@ -445,7 +485,7 @@ class LiteRtModelManager(
             }, resumeFrom)
 
             when (result) {
-                is DownloadResult.Failure -> handleDownloadFailure(model, partFile, partialMetaFile, result)
+                is DownloadResult.Failure -> handleDownloadFailure(model, partFile, partialMetaFile, result, publicationOwner, acquisitionOwner != null && publicationOwner == null)
                 is DownloadResult.Success -> {
                     partialMetaFile.delete()
                     installVerifiedArtifact(
@@ -454,6 +494,8 @@ class LiteRtModelManager(
                         finalFile = finalFile,
                         sidecarFile = sidecarFile,
                         sidecarPart = sidecarPart,
+                        acquisitionOwner = publicationOwner,
+                        requestedOwner = acquisitionOwner,
                     )
                 }
             }
@@ -462,10 +504,9 @@ class LiteRtModelManager(
             val partialBytes = partFile.takeIf { it.exists() }?.length() ?: 0L
             val resumable = partialBytes in 1 until model.expectedBytes
             if (resumable) {
-                writePartialMetadata(partialMetaFile, model, partialBytes)
+                writePartialMetadata(partialMetaFile, model, partialBytes, acquisitionOwner = publicationOwner)
             } else {
-                partFile.delete()
-                partialMetaFile.delete()
+                if (acquisitionOwner == null || publicationOwner != null) { partFile.delete(); partialMetaFile.delete() }
             }
             _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
                 modelId = model.id,
@@ -484,7 +525,7 @@ class LiteRtModelManager(
         } catch (error: Throwable) {
             val partialBytes = partFile.takeIf { it.exists() }?.length() ?: 0L
             val resumable = partialBytes in 1 until model.expectedBytes
-            if (resumable) writePartialMetadata(partialMetaFile, model, partialBytes)
+            if (resumable) writePartialMetadata(partialMetaFile, model, partialBytes, acquisitionOwner = publicationOwner)
             _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
                 modelId = model.id,
                 stage = LiteRtFailureStage.DOWNLOAD,
@@ -510,15 +551,16 @@ class LiteRtModelManager(
         partFile: File,
         partialMetaFile: File,
         failure: DownloadResult.Failure,
+        acquisitionOwner: String?,
+        preserveIndependentPartial: Boolean,
     ) {
         val partialBytes = partFile.takeIf { it.exists() }?.length() ?: 0L
         val resumable = failure.kind.isResumable && partialBytes in 1 until model.expectedBytes
         if (resumable) {
-            writePartialMetadata(partialMetaFile, model, partialBytes)
+            writePartialMetadata(partialMetaFile, model, partialBytes, acquisitionOwner = acquisitionOwner)
         } else {
             // Hash mismatch, oversized partial, or a dead revision: never keep it.
-            partFile.delete()
-            partialMetaFile.delete()
+            if (!preserveIndependentPartial) { partFile.delete(); partialMetaFile.delete() }
         }
         _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
             modelId = model.id,
@@ -584,10 +626,11 @@ class LiteRtModelManager(
         downloadedBytes: Long,
         etag: String? = null,
         lastModified: String? = null,
+        acquisitionOwner: String? = null,
     ) {
         runCatching {
             val metadata = LiteRtPartialDownloadMetadata.forArtifact(model, downloadedBytes)
-                .copy(etag = etag, lastModified = lastModified)
+                .copy(etag = etag, lastModified = lastModified, acquisitionOwner = acquisitionOwner)
             partialMetaFile.writeText(metadata.toJson())
         }.onFailure { error ->
             Log.w(TAG, "HALO_LITERT_PARTIAL_METADATA_WRITE_FAILED id=${model.id}", error)
@@ -600,6 +643,8 @@ class LiteRtModelManager(
         finalFile: File,
         sidecarFile: File,
         sidecarPart: File,
+        acquisitionOwner: String?,
+        requestedOwner: String?,
     ) {
         val mutationLease = ModelArtifactFileLocks.tryAcquireWrite(modelRoot, model.id)
             ?: throw IOException("ARTIFACT_LEASE_ACTIVE")
@@ -607,8 +652,12 @@ class LiteRtModelManager(
         setDownloadState(model.id, DownloadState.Verifying(verifiedFile.length(), model.expectedBytes))
         Log.i(TAG, "$EVENT_VERIFY id=${model.id} bytes=${verifiedFile.length()} sha256=${model.sha256}")
 
+        if (requestedOwner != null && finalFile.exists()) {
+            val prior = runCatching { InstalledLiteRtModelMetadata.fromJson(sidecarFile.readText()) }.getOrNull()
+            check(prior?.acquisitionOwner == requestedOwner) { "An independently installed artifact is retained. Refresh the inventory before resuming." }
+        }
         // 9. sidecar staged as .json.part
-        val metadata = InstalledLiteRtModelMetadata.fromCatalog(model, sourceUrl = model.downloadUrl)
+        val metadata = InstalledLiteRtModelMetadata.fromCatalog(model, sourceUrl = model.downloadUrl).copy(acquisitionOwner = acquisitionOwner)
         sidecarPart.writeText(metadata.toJson())
 
         // 10-11. move model, then sidecar, into their final paths
@@ -827,7 +876,7 @@ class LiteRtModelManager(
     // Deletion
     // ---------------------------------------------------------------------------------------
 
-    suspend fun deleteModel(modelId: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun deleteModel(modelId: String, expectedAcquisitionOwner: String? = null): Boolean = withContext(Dispatchers.IO) {
         if (residentModelIdProvider() == modelId || isDownloading(modelId)) return@withContext false
         val mutationLease = ModelArtifactFileLocks.tryAcquireWrite(modelRoot, modelId) ?: return@withContext false
         try {
@@ -835,14 +884,23 @@ class LiteRtModelManager(
         val modelFile = File(descriptor.path)
         val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
         val cacheFolder = File(context.filesDir, "litertlm_cache")
+        if (expectedAcquisitionOwner != null) {
+            requireModelAcquisitionOwner(expectedAcquisitionOwner)
+            if (runCatching { modelId in protectedModelIdsProvider() }.getOrDefault(true)) return@withContext false
+            val metadata = runCatching { InstalledLiteRtModelMetadata.fromJson(sidecarFile.readText()) }.getOrNull() ?: return@withContext false
+            if (metadata.acquisitionOwner != expectedAcquisitionOwner || metadata.sha256 != physicalFingerprint(modelFile).sha256 || metadata.bytes != modelFile.length()) return@withContext false
+        }
 
         var deleted = false
         if (modelFile.exists()) deleted = modelFile.delete()
         if (sidecarFile.exists()) sidecarFile.delete()
         val partFile = File(modelRoot, "$modelId.litertlm.part")
-        partFile.delete()
-        LiteRtPartialDownloadMetadata.sidecarFor(partFile).delete()
-        File(modelRoot, "$modelId.halo-model.json.part").delete()
+        val partialMetadata = LiteRtPartialDownloadMetadata.sidecarFor(partFile)
+        if (expectedAcquisitionOwner == null || LiteRtPartialDownloadMetadata.fromFile(partialMetadata)?.acquisitionOwner == expectedAcquisitionOwner) {
+            partFile.delete()
+            partialMetadata.delete()
+            File(modelRoot, "$modelId.halo-model.json.part").delete()
+        }
         physicalFingerprints.remove(fingerprintKey(modelFile))
 
         if (cacheFolder.exists()) {

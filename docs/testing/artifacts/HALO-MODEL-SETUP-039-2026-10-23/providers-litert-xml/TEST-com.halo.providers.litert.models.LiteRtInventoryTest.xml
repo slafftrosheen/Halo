@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtInventoryTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-23T17:00:57.271Z" hostname="MINIFOXEY" time="1.035">
+  <properties/>
+  <testcase name="explicit refresh detects replacement even when size and timestamp match" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.12"/>
+  <testcase name="a truncated known artifact is CORRUPT" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.054"/>
+  <testcase name="a stale sidecar hash can never override the physical fingerprint" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.075"/>
+  <testcase name="completed background work reconciles installed artifact" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.059"/>
+  <testcase name="concurrent refresh cannot turn a resolved or verified snapshot into missing" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.245"/>
+  <testcase name="a known id with a stale sha is CORRUPT and not selectable" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.051"/>
+  <testcase name="a byte-identical import is canonicalized to the known artifact id" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.051"/>
+  <testcase name="an unknown artifact is UNVERIFIED and uses the model default context" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.049"/>
+  <testcase name="a known artifact with matching bytes and sha is VERIFIED_ARTIFACT" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.067"/>
+  <testcase name="cached verified model disappears from readiness after physical deletion" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.056"/>
+  <testcase name="an empty file is INCOMPATIBLE rather than valid" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.035"/>
+  <testcase name="resolveModel refreshes instead of reporting MODEL_MISSING during startup" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.06"/>
+  <testcase name="completed background work with missing artifact reports failure" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.037"/>
+  <testcase name="an unknown artifact whose sidecar disagrees with its bytes is CORRUPT" classname="com.halo.providers.litert.models.LiteRtInventoryTest" time="0.068"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

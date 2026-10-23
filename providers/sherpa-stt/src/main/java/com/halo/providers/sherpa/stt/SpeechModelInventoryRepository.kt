@@ -24,6 +24,10 @@ interface SpeechModelInventoryRepository {
     suspend fun refresh(languageMode: String? = null)
     suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit>
     suspend fun remove(modelId: String): Result<Unit>
+    suspend fun installOwned(modelId: String, owner: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Acquisition ownership is unavailable"))
+    suspend fun removeOwned(modelId: String, owner: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Acquisition ownership is unavailable"))
     suspend fun installWhisperTiny(onProgress: (Float, String) -> Unit): Result<Unit> =
         install(SherpaSpeechModelCatalog.WHISPER_TINY_ID) { onProgress(it.fraction, it.currentFile) }
 }
@@ -66,10 +70,13 @@ class DefaultSpeechModelInventoryRepository(
                 )
             }
         }.onSuccess { _state.value = it }
-            .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
+            .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; _state.value = _state.value.copy(loading = false, error = it.message) }
     }
 
-    override suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> {
+    override suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> = installWithOwner(modelId, null, onProgress)
+    override suspend fun installOwned(modelId: String, owner: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> =
+        installWithOwner(modelId, owner, onProgress)
+    private suspend fun installWithOwner(modelId: String, owner: String?, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> {
         val spec = SherpaSpeechModelCatalog.byId(modelId)
             ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
             ?: return Result.failure(IllegalArgumentException("Unknown speech model"))
@@ -77,13 +84,47 @@ class DefaultSpeechModelInventoryRepository(
             if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot()
             else File(speechRoot(), spec.directoryName)
         }
-        return SpeechModelInstaller.install(spec, destination, onProgress).also {
+        return SpeechModelInstaller.install(spec, destination, owner, onProgress).also {
             if (it.isSuccess && modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) allowSileroVadReload()
             refresh()
         }
     }
 
+    override suspend fun removeOwned(modelId: String, owner: String): Result<Unit> = withContext(dispatchers.io) {
+        var vadSuspended = false
+        try {
+            require(java.util.UUID.fromString(owner).toString() == owner)
+            val spec = SherpaSpeechModelCatalog.byId(modelId) ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
+                ?: error("Unknown speech model")
+            val directory = if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot() else File(speechRoot(), spec.directoryName)
+            SpeechModelInstaller.withTransferMutation(directory) {
+                if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) {
+                    if (spec.files.any { SherpaModelInstaller.hasOwnedFile(directory, it, owner) }) { vadSuspended = true; releaseSileroVad() }
+                } else {
+                    val selection = selectedProviderId()
+                    val automatic = SherpaSpeechModelCatalog.resolve(selection) { SherpaSpeechModelCatalog.isInstalled(File(speechRoot(), it.directoryName), it) }
+                    check(selection != spec.providerId && automatic != spec && activeProviderId() != spec.providerId) { "The speech model is selected or in use" }
+                }
+                SherpaModelInstaller.removeOwnedFiles(directory, spec, owner)
+            }
+            refresh()
+            Result.success(Unit)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            if (vadSuspended) runCatching { allowSileroVadReload() }
+            throw cancelled
+        } catch (error: Exception) {
+            if (vadSuspended) runCatching { allowSileroVadReload() }
+            Result.failure(error)
+        }
+    }
+
     override suspend fun remove(modelId: String): Result<Unit> = withContext(dispatchers.io) {
+        val spec = SherpaSpeechModelCatalog.byId(modelId) ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
+            ?: return@withContext Result.failure(IllegalArgumentException("Unknown speech model"))
+        val directory = if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot() else File(speechRoot(), spec.directoryName)
+        SpeechModelInstaller.withTransferMutation(directory) { removeCurrent(modelId) }
+    }
+    private suspend fun removeCurrent(modelId: String): Result<Unit> = withContext(dispatchers.io) {
         try {
             if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) {
                 releaseSileroVad()
@@ -94,9 +135,12 @@ class DefaultSpeechModelInventoryRepository(
                 require(proof.parentFile == root) { "Invalid VAD verification file" }
                 val partial = File(root, "${SherpaSpeechModelCatalog.SILERO_VAD_FILE}.partial").canonicalFile
                 require(partial.parentFile == root) { "Invalid VAD partial file" }
-                check(!model.exists() || model.delete()) { "Unable to remove VAD model" }
-                check(!proof.exists() || proof.delete()) { "Unable to remove VAD verification file" }
-                check(!partial.exists() || partial.delete()) { "Unable to remove partial VAD download" }
+                SherpaModelInstaller.withFileMutation(root) {
+                    check(!model.exists() || model.delete()) { "Unable to remove VAD model" }
+                    check(!proof.exists() || proof.delete()) { "Unable to remove VAD verification file" }
+                    check(!partial.exists() || partial.delete()) { "Unable to remove partial VAD download" }
+                    File(root, model.name + ".acquired").delete()
+                }
                 refresh()
                 return@withContext Result.success(Unit)
             }
@@ -111,9 +155,12 @@ class DefaultSpeechModelInventoryRepository(
             val root = speechRoot().canonicalFile
             val directory = File(root, spec.directoryName).canonicalFile
             require(directory.parentFile == root) { "Invalid speech model directory" }
-            check(!directory.exists() || directory.deleteRecursively()) { "Unable to remove speech model" }
+            SherpaModelInstaller.withFileMutation(directory) { check(!directory.exists() || directory.deleteRecursively()) { "Unable to remove speech model" } }
             refresh()
             Result.success(Unit)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) runCatching { allowSileroVadReload() }
+            throw cancelled
         } catch (error: Exception) {
             if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) runCatching { allowSileroVadReload() }
             Result.failure(error)

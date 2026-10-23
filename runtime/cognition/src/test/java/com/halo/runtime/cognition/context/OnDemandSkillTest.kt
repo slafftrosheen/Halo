@@ -34,7 +34,7 @@ class OnDemandSkillTest {
 
         assertNotNull(notebookSkill)
         assertEquals("halo.notebook", notebookSkill?.skillId?.value)
-        assertTrue(notebookSkill!!.body.contains("Search and manage Notebook"))
+        assertTrue(notebookSkill!!.body.contains("Search and manage Workspace"))
     }
 
     @Test

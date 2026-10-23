@@ -7,6 +7,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LocalRolePackJournalTest {
+    @Test fun legacyReceiptNeverInventsOwnershipAndNewReceiptRetainsExactToken() {
+        val legacy = "PAUSED\tINTENT\tfalse\tfalse\t${"f".repeat(64)}\tfalse\tfalse\t\t"
+        val restored = requireNotNull(LocalRolePackJournal.decode(legacy))
+        assertNull(restored.transactionId)
+        val token = "b88fe002-14e0-48dc-85bd-6dbcd038f709"
+        assertEquals(token, LocalRolePackJournal.decode(restored.copy(transactionId = token).encode())?.transactionId)
+        assertNull(LocalRolePackJournal.decode(legacy + "\t../unknown"))
+        assertNull(LocalRolePackJournal.decode(legacy + "\t" + token + "\textra"))
+    }
     @Test
     fun transactionJournalRoundTripsExactBaselineAndStage() {
         val journal = LocalRolePackJournal(

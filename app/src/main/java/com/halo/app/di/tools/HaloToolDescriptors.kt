@@ -265,6 +265,34 @@ object HaloToolDescriptors {
                 backgroundCompatible = true, argumentsPersistable = true, requiresModel = false))
     }
 
+    fun modelSetup(definition: ToolDefinition): ToolDescriptor? {
+        val operation = when (definition.name) {
+            "halo_local_setup_status" -> com.halo.runtime.cognition.tools.ToolOperation.QUERY
+            "halo_local_setup_start" -> com.halo.runtime.cognition.tools.ToolOperation.CREATE
+            "halo_local_setup_pause", "halo_local_setup_keep_files", "halo_local_setup_rollback" -> com.halo.runtime.cognition.tools.ToolOperation.EDIT
+            else -> return null
+        }
+        val policy = when (definition.name) {
+            "halo_local_setup_status" -> ToolSecurityPolicy.READ_ONLY
+            "halo_local_setup_rollback" -> ToolSecurityPolicy.DESTRUCTIVE
+            "halo_local_setup_pause" -> ToolSecurityPolicy(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.NONE, ReplaySafety.NEVER_REPLAY)
+            "halo_local_setup_start" -> sensitive(ReplaySafety.NEVER_REPLAY)
+            else -> reversible(ReplaySafety.NEVER_REPLAY)
+        }
+        return descriptor(definition.name, definition, ToolCategory.SYSTEM, policy,
+            keywords = setOf("model", "models", "setup", "starter", "download", "listening", "voice", "local", "pause", "rollback"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.models.manage"))),
+            presentation = ToolPresentation(title = "Local model setup", actionVerb = if (definition.name == "halo_local_setup_rollback") "Remove setup downloads" else "Manage setup"))
+            .copy(operability = com.halo.runtime.cognition.tools.ToolOperability(capabilityId = CapabilityId("host.models.manage"),
+                owner = "LocalRolePackInstaller", operation = operation, resultEncoding = com.halo.runtime.cognition.tools.ToolResultEncoding.JSON,
+                resultSchema = mapOf("type" to "object", "properties" to mapOf("transactionId" to mapOf("type" to "string"),
+                    "phase" to mapOf("type" to "string"), "stage" to mapOf("type" to "string"), "state" to mapOf("type" to "string"),
+                    "available" to mapOf("type" to "boolean")), "required" to listOf("transactionId"), "additionalProperties" to true),
+                sourceVersionArguments = if (definition.name == "halo_local_setup_status") emptySet() else setOf("transactionId"),
+                resultIdFields = setOf("transactionId"), limitations = setOf("Dispatch only; poll canonical status. No role selection or qualification.",
+                    "Same semantic owner for typed and voice-final requests; real speech/device/provider acceptance is separate.")))
+    }
+
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
@@ -694,6 +722,7 @@ object HaloToolDescriptors {
             ExecutorKind.NOTIFICATION_DIGEST -> notificationDigest(definition)
             ExecutorKind.ROUTINE_MESSAGE -> routineMessage(definition)
             ExecutorKind.WORKSPACE -> workspace(definition)
+            ExecutorKind.MODEL_SETUP -> modelSetup(definition)
             ExecutorKind.FILE -> file(definition)
             ExecutorKind.INTEGRITY -> integrity(definition)
             ExecutorKind.MEMORY -> memory(definition)
@@ -725,6 +754,7 @@ object HaloToolDescriptors {
         NOTIFICATION_DIGEST,
         ROUTINE_MESSAGE,
         WORKSPACE,
+        MODEL_SETUP,
         FILE,
         INTEGRITY,
         MEMORY,
