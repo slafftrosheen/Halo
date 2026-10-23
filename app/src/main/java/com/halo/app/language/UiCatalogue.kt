@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4032) {
+    buildMap(4034) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4076,6 +4076,8 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Text and tool checks use English fixtures. Other languages require separate tests." to R.string.ui_09567fef6b7d,
     "Image available in Halo" to R.string.ui_b2a91f770f7f,
     "Halo uses this model only when it is already ready. Standard commands remain available." to R.string.ui_bfe28eedbbdd,
+    "Remove cards" to R.string.ui_6fcd0219a70b,
+    "Remove connection" to R.string.ui_e9e9e26c6c2f,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

@@ -296,6 +296,25 @@ object HaloToolDescriptors {
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
+        "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect" -> descriptor(
+            definition.name, definition, ToolCategory.WORKSPACE, ToolSecurityPolicy.DESTRUCTIVE,
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 16000),
+            keywords = setOf("canvas", "board", "card", "group", "connection", "remove", "delete", "ungroup"),
+            presentation = ToolPresentation(title = when (definition.name) {
+                "halo_canvas_delete" -> "Remove cards"
+                "halo_canvas_ungroup" -> "Ungroup"
+                else -> "Remove connection"
+            }, actionVerb = "Remove"))
+        "halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange" -> descriptor(
+            definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 16000),
+            keywords = setOf("canvas", "board", "card", "rename", "group", "tag", "duplicate", "arrange", "layer"),
+            presentation = ToolPresentation(title = when (definition.name) {
+                "halo_canvas_rename" -> "Rename canvas"
+                "halo_canvas_add_group" -> "Add group"
+                "halo_canvas_duplicate" -> "Duplicate"
+                else -> "Edit"
+            }, actionVerb = "Edit"))
         "halo_canvas_clear_sketch" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, ToolSecurityPolicy.DESTRUCTIVE,
             keywords = setOf("canvas", "sketch", "drawing", "clear", "erase", "strokes"),
             presentation = ToolPresentation(title = "Clear sketch", actionVerb = "Clear"))

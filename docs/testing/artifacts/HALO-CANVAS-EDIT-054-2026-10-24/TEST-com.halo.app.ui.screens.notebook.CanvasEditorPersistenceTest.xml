@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-23T23:04:08.156Z" hostname="MINIFOXEY" time="0.867">
+  <properties/>
+  <testcase name="leavingImmediatelyFlushesLatestTextPositionAndViewport" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.124"/>
+  <testcase name="reopeningChangedSketchCannotConsumeItsOlderRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.064"/>
+  <testcase name="savingOrCancellingAnotherSketchRetainsTheUnrelatedRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.056"/>
+  <testcase name="assistantClearCannotBeReversedByAnAlreadyOpenEditorOrItsRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.055"/>
+  <testcase name="corruptSketchAndEmptyNewSketchCannotPublishOrDiscardDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.05"/>
+  <testcase name="observedDraftCannotBeConsumedBySavingADifferentSketchPayload" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.049"/>
+  <testcase name="manualOrganizationWorksWithoutProviderAndCancelDoesNotMutate" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.076"/>
+  <testcase name="erasedEditRejectsChangedSourceAndRetainsRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.049"/>
+  <testcase name="selectingGroupAndMemberMovesEachOnlyOnce" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.049"/>
+  <testcase name="annotationSaveClearsOnlyARecoveryDraftForTheExactFileVersion" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.081"/>
+  <testcase name="olderSaveAndCancelCannotConsumeANewerDraftForTheSameSource" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.05"/>
+  <testcase name="editorAndAssistantGroupMovesPersistTheSameMemberPositions" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.093"/>
+  <testcase name="erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.06"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

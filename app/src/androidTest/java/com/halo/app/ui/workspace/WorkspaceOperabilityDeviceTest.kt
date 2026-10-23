@@ -80,6 +80,33 @@ class WorkspaceOperabilityDeviceTest {
             assertTrue(requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(canvases.observe(boardId).first()!!.nodes.single { it.id == sketch }.text)).strokes.isEmpty())
             assertTrue(call("halo_canvas_clear_sketch", clearArgs) is ToolExecutionResult.Rejected)
             assertEquals("Reviewed", canvases.observe(boardId).first()!!.nodes.single { it.id == card.getString("nodeId") }.text)
+            suspend fun edit(name: String, fields: Map<String, Any>) = JSONObject((call(name,
+                mapOf("canvasId" to boardId, "version" to "canvas:${database.notebookCanvasDao().getDocument(boardId)!!.revision}") + fields) as ToolExecutionResult.Success).output)
+            edit("halo_canvas_rename", mapOf("title" to "Saved native board"))
+            assertEquals("Saved native board", canvases.observe(boardId).first()!!.title)
+            val group = edit("halo_canvas_add_group", mapOf("title" to "Native group", "x" to -500, "y" to -400)).getString("nodeId")
+            val selectedCards = listOf(card.getString("nodeId"), sketch)
+            val tag = edit("halo_canvas_tag", mapOf("nodeIds" to selectedCards, "label" to "Review")).getString("nodeId")
+            val copy = edit("halo_canvas_duplicate", mapOf("nodeId" to card.getString("nodeId"))).getString("nodeId")
+            edit("halo_canvas_arrange", mapOf("nodeIds" to selectedCards, "operation" to "GRID"))
+            edit("halo_canvas_arrange", mapOf("nodeIds" to selectedCards, "operation" to "BRING_FORWARD"))
+            val memberPositions = canvases.observe(boardId).first()!!.nodes.filter { it.id in selectedCards }.associate { it.id to (it.x to it.y) }
+            selectedCards.forEach { canvases.connect(boardId, group, it, "group") }
+            edit("halo_canvas_move", mapOf("nodeId" to group, "x" to -400, "y" to -300))
+            val movedMembers = canvases.observe(boardId).first()!!.nodes.filter { it.id in selectedCards }
+            movedMembers.forEach { assertEquals(memberPositions.getValue(it.id).let { p -> p.first + 100f to p.second + 100f }, it.x to it.y) }
+            val edge = canvases.connect(boardId, group, copy, "Remove this link")
+            edit("halo_canvas_disconnect", mapOf("edgeId" to edge))
+            assertTrue(canvases.observe(boardId).first()!!.edges.none { it.id == edge })
+            edit("halo_canvas_ungroup", mapOf("nodeIds" to listOf(group)))
+            assertTrue(canvases.observe(boardId).first()!!.nodes.any { it.id == copy })
+            val beforeDelete = "canvas:${database.notebookCanvasDao().getDocument(boardId)!!.revision}"
+            edit("halo_canvas_delete", mapOf("nodeIds" to listOf(copy, tag)))
+            val remaining = canvases.observe(boardId).first()!!
+            assertEquals(selectedCards.toSet(), remaining.nodes.map { it.id }.toSet())
+            assertEquals("Reviewed", remaining.nodes.single { it.id == card.getString("nodeId") }.text)
+            assertTrue(remaining.edges.isEmpty())
+            assertTrue(call("halo_canvas_delete", mapOf("canvasId" to boardId, "version" to beforeDelete, "nodeIds" to selectedCards)) is ToolExecutionResult.Rejected)
             val note = notes.createNote("Synthetic lesson material", title = "Study source")
             database.workspaceAssetDao().insertAsset(WorkspaceAssetEntity("native-audio", note.id, "AUDIO", "audio/wav", "MANAGED_FILE", "synthetic-no-read", true, "Audio", 10, null, null, 100, 1))
             database.workspaceAssetDao().insertAttachment(NoteAttachmentEntity("native-audio-link", note.id, "native-audio", 0, null, 1))

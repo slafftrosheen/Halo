@@ -6,8 +6,7 @@ import android.os.Debug
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.ai.edge.litertlm.ModelInfo
-import com.google.ai.edge.litertlm.Modality
+import com.halo.providers.litert.LiteRtArtifactInspector
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.providers.litert.LiteRtLocalProvider
 import kotlinx.coroutines.runBlocking
@@ -56,26 +55,18 @@ class LocalArtifactInspectionTest {
             .put("processPssBeforeKb", Debug.MemoryInfo().also { Debug.getMemoryInfo(it) }.totalPss)
 
         val started = System.currentTimeMillis()
-        ModelInfo.from(descriptor.path).use { info ->
-            row.put("modelType", info.modelType.name)
-                .put("isConversationGenerator", info is ModelInfo.Llm)
-                .put("inputModalities", info.inputModalities().toString())
-                .put("minimumRuntime", info.minRuntimeVersion())
-                .put("maxContext", info.maxContextTokens())
-                .put("textBackends", runCatching {
-                    info.supportedBackends(Modality.TEXT).joinToString(",") { it.name }
-                }.getOrDefault("NOT_REPORTED"))
-                .put("visionBackends", runCatching {
-                    info.supportedBackends(Modality.VISION).joinToString(",") { it.name }
-                }.getOrDefault("NOT_REPORTED"))
-                .put("audioBackends", runCatching {
-                    info.supportedBackends(Modality.AUDIO).joinToString(",") { it.name }
-                }.getOrDefault("NOT_REPORTED"))
-            if (info is ModelInfo.Llm) {
-                row.put("nativeThinkingDeclared", info.supportsThinking())
-                    .put("nativeFunctionsDeclared", info.supportsFunctionCalling())
-            }
-        }
+        // Use the same pinned native/resource lifetime as production inspection. Never open
+        // an independent ModelInfo handle that can race file removal or another native owner.
+        val info = LiteRtArtifactInspector(graph.nativeResourceCoordinator, graph.modelManager).inspect(descriptor)
+        row.put("modelType", info.task)
+            .put("isConversationGenerator", info.task == "LLM")
+            .put("textBackends", info.textBackends.joinToString(","))
+            .put("nativeVisionDeclared", info.vision)
+            .put("nativeFunctionsDeclared", info.nativeTools)
+            .put("embeddingDimension", info.embeddingDimension ?: JSONObject.NULL)
+            .put("metadataScope", "CANONICAL_INSPECTOR_FIELDS")
+        // This owner does not expose complete audio/runtime/context/backend metadata.
+        // Missing fields remain unqualified; never infer them from catalogue modalities.
         manager.getMemoryInfo(memory)
         row.put("inspectionMs", System.currentTimeMillis() - started)
             .put("ramAvailableAfterBytes", memory.availMem)

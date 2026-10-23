@@ -36,6 +36,31 @@ class CanvasEditorPersistenceTest {
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
+    @Test fun editorAndAssistantGroupMovesPersistTheSameMemberPositions() = runBlocking {
+        for (explicit in listOf(false, true)) {
+            val results = mutableListOf<List<Triple<String, Float, Float>>>()
+            for (assistant in listOf(false, true)) {
+                val board = repository.create()
+                val group = repository.addGroupNode(board, 0f, 0f, "Group")
+                repository.addTextNode(board, 10f, 20f, "Inside")
+                val outside = repository.addTextNode(board, 900f, 900f, "Outside")
+                repository.addGroupNode(board, 20f, 20f, "Nested")
+                if (explicit) repository.connect(board, group, outside, "group")
+                if (assistant) {
+                    val action = com.halo.app.di.tools.WorkspaceCanvasActions(db, repository)
+                    val version = "canvas:${db.notebookCanvasDao().getDocument(board)!!.revision}"
+                    assertTrue(action.execute(com.halo.sdk.provider.ToolCall("move", "halo_canvas_move", mapOf("canvasId" to board, "version" to version, "nodeId" to group, "x" to 100, "y" to 200))) is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+                } else {
+                    val vm = editor(board)
+                    vm.beginDrag(group)
+                    vm.moveNode(group, 100f, 200f)
+                    vm.persistPending().join()
+                }
+                results += repository.observe(board).first()!!.nodes.map { Triple(it.text, it.x, it.y) }.sortedBy { it.first }
+            }
+            assertEquals(results[0], results[1])
+        }
+    }
     @Test fun assistantClearCannotBeReversedByAnAlreadyOpenEditorOrItsRecoveryDraft() = runBlocking {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"

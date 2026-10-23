@@ -17,6 +17,7 @@ class WorkspaceCanvasActions(private val database: AppDatabase, private val canv
     private val version = mapOf("type" to "string", "pattern" to "^canvas:[1-9][0-9]{0,9}$")
     private val text = mapOf("type" to "string", "maxLength" to 8000)
     private val coordinate = mapOf("type" to "number", "minimum" to -100000, "maximum" to 100000)
+    private val selectedNodes = mapOf("type" to "array", "items" to id, "minItems" to 1, "maxItems" to 100, "uniqueItems" to true)
     private fun definition(name: String, description: String, fields: Map<String, Any>, required: List<String> = fields.keys.toList()) = ToolDefinition(name, name, description,
         mapOf("type" to "object", "properties" to fields, "required" to required, "additionalProperties" to false))
     override fun definitions() = listOf(
@@ -25,13 +26,28 @@ class WorkspaceCanvasActions(private val database: AppDatabase, private val canv
         definition("halo_canvas_add_text", "Add a text card to an exact current Canvas revision. Returns saved card ID and new board version. Never writes to a linked source note or simulates pen gestures.", mapOf("canvasId" to id, "version" to version, "text" to text, "x" to coordinate, "y" to coordinate)),
         definition("halo_canvas_edit_text", "Replace one local text/group/tag card at the exact current board revision. Linked source documents, drawings and Ink are not editable through this operation.", mapOf("canvasId" to id, "version" to version, "nodeId" to id, "text" to text)),
         definition("halo_canvas_clear_sketch", "Clear all strokes from one saved local sketch after approval at the exact observed board revision. Preserves the sketch card, dimensions and links. Does not clear linked image/PDF annotations or source files. Read before changing; never replay an uncertain clear.", mapOf("canvasId" to id, "version" to version, "nodeId" to id)),
-        definition("halo_canvas_move", "Move an exact existing Canvas card using board coordinates at the current revision. Source content remains unchanged.", mapOf("canvasId" to id, "version" to version, "nodeId" to id, "x" to coordinate, "y" to coordinate)),
-        definition("halo_canvas_connect", "Connect two existing cards on the exact current Canvas revision. A repeated pair returns the existing saved edge. Does not alter source documents.", mapOf("canvasId" to id, "version" to version, "fromNodeId" to id, "toNodeId" to id, "label" to mapOf("type" to "string", "maxLength" to 100)))
+        definition("halo_canvas_move", "Move an exact existing Canvas card using board coordinates at the current revision. A group moves its explicit members, or spatially contained cards when no group links exist, using the same rule as editor dragging. Source content remains unchanged.", mapOf("canvasId" to id, "version" to version, "nodeId" to id, "x" to coordinate, "y" to coordinate)),
+        definition("halo_canvas_connect", "Connect two existing cards on the exact current Canvas revision. A repeated pair returns the existing saved edge. Does not alter source documents.", mapOf("canvasId" to id, "version" to version, "fromNodeId" to id, "toNodeId" to id, "label" to mapOf("type" to "string", "maxLength" to 100))),
+        definition("halo_canvas_rename", "Rename the exact active board at its observed revision. Returns saved board identity/version/title. Never replay after a conflict.", mapOf("canvasId" to id, "version" to version, "title" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 160))),
+        definition("halo_canvas_add_group", "Create a local group zone using the editor's existing group owner at the exact board revision. This creates a zone; it does not move or regroup cards automatically.", mapOf("canvasId" to id, "version" to version, "title" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 80), "x" to coordinate, "y" to coordinate)),
+        definition("halo_canvas_tag", "Create a local tag card linked to every explicitly selected existing card at the exact board revision. Existing notes/files remain unchanged. Clarify the selection first.", mapOf("canvasId" to id, "version" to version, "nodeIds" to selectedNodes, "label" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 50))),
+        definition("halo_canvas_duplicate", "Duplicate one exact existing local card using the editor owner, retaining its linked source reference and saved card content. This does not copy or repair source bytes or source availability. Returns the new card ID.", mapOf("canvasId" to id, "version" to version, "nodeId" to id)),
+        definition("halo_canvas_arrange", "Apply the editor's existing GRID or BRING_FORWARD edit to all explicitly selected cards at the exact board revision. No AI grouping or source rewrite. Read back the saved board before another edit.", mapOf("canvasId" to id, "version" to version, "nodeIds" to selectedNodes, "operation" to mapOf("type" to "string", "enum" to listOf("GRID", "BRING_FORWARD")))),
+        definition("halo_canvas_delete", "After approval, remove exactly the selected cards and their incident links from the current board revision. Linked source documents/files and other cards remain intact. This is not source deletion; no automatic undo or replay.", mapOf("canvasId" to id, "version" to version, "nodeIds" to selectedNodes)),
+        definition("halo_canvas_ungroup", "After approval, remove only the explicitly selected GROUP zones and their incident links at the observed board revision. All member/content cards and source objects remain intact. Never replay an uncertain removal.", mapOf("canvasId" to id, "version" to version, "nodeIds" to selectedNodes)),
+        definition("halo_canvas_disconnect", "After approval, remove one exact existing board connection at the observed revision. Both cards and their linked sources remain intact. Never replay an uncertain removal.", mapOf("canvasId" to id, "version" to version, "edgeId" to id))
     )
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         val args = toolCall.arguments
         fun string(key: String, max: Int = 100) = (args[key] as? String ?: error("Expected text")).also { require(it.length <= max) }
         fun id(key: String) = string(key).also { require(WorkspaceActionIds.isValid(it)) }
+        fun nodeIds(): List<String> {
+            val values = args["nodeIds"] as? List<*> ?: error("Expected selected cards")
+            require(values.size in 1..100)
+            val ids = values.map { requireNotNull(it as? String).also { value -> require(WorkspaceActionIds.isValid(value)) } }
+            require(ids.distinct().size == ids.size)
+            return ids
+        }
         fun coordinate(key: String): Float = (args[key] as? Number ?: error("Expected number")).toDouble().also { require(it.isFinite() && it in -100000.0..100000.0) }.toFloat()
         fun success(json: JSONObject) = ToolExecutionResult.Success(toolCall.id, toolCall.functionName, json.toString())
         try {
@@ -90,6 +106,38 @@ class WorkspaceCanvasActions(private val database: AppDatabase, private val canv
                         result.put("nodeId", node).put("changed", canvases.clearSketch(canvas, node))
                     }
                     "halo_canvas_connect" -> result.put("edgeId", canvases.connect(canvas, id("fromNodeId"), id("toNodeId"), string("label", 100)))
+                    "halo_canvas_rename" -> {
+                        val title = string("title", 160).trim().also { require(it.isNotEmpty()) }
+                        check(canvases.rename(canvas, title))
+                        result.put("title", requireNotNull(database.notebookDao().getWorkspaceObject(canvas)).title)
+                    }
+                    "halo_canvas_add_group" -> {
+                        val title = string("title", 80).trim().also { require(it.isNotEmpty()) }
+                        result.put("nodeId", canvases.addGroupNode(canvas, coordinate("x"), coordinate("y"), title))
+                    }
+                    "halo_canvas_tag" -> result.put("nodeId", canvases.tagNodes(canvas, nodeIds().toSet(), string("label", 50)).first)
+                    "halo_canvas_duplicate" -> result.put("nodeId", canvases.duplicateNode(canvas, id("nodeId")))
+                    "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup" -> {
+                        val ids = nodeIds()
+                        val nodes = database.notebookCanvasDao().getNodes(canvas).associateBy { it.id }
+                        require(ids.all { it in nodes })
+                        val action = when (toolCall.functionName) {
+                            "halo_canvas_delete" -> "Clear"
+                            "halo_canvas_ungroup" -> { require(ids.all { nodes.getValue(it).type == "GROUP" }); "Ungroup" }
+                            else -> when (string("operation", 20)) {
+                                "GRID" -> "Arrange"
+                                "BRING_FORWARD" -> "Bring forward"
+                                else -> error("Unsupported arrangement")
+                            }
+                        }
+                        canvases.manualEdit(canvas, ids.toSet(), action)
+                        result.put("nodeIds", JSONArray(ids))
+                    }
+                    "halo_canvas_disconnect" -> {
+                        val edge = id("edgeId")
+                        check(canvases.disconnect(canvas, edge))
+                        result.put("edgeId", edge)
+                    }
                 }
                 success(result.put("version", "canvas:${requireNotNull(database.notebookCanvasDao().getDocument(canvas)).revision}"))
             }

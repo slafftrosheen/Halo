@@ -98,6 +98,19 @@ data class CanvasNode(
 
 data class CanvasEdge(val id: String, val fromNodeId: String, val toNodeId: String, val label: String?)
 
+/** Shared saved/editor drag semantics: explicit group membership wins over spatial fallback. */
+fun canvasDragTargets(nodes: List<CanvasNode>, edges: List<CanvasEdge>, selectedIds: Set<String>): Set<String> {
+    val targets = selectedIds.toMutableSet()
+    nodes.filter { it.id in selectedIds && it.type == CanvasNodeType.GROUP }.forEach { group ->
+        val explicit = edges.filter { it.fromNodeId == group.id && it.label == "group" }.map { it.toNodeId }
+        if (explicit.isNotEmpty()) targets.addAll(explicit)
+        else targets.addAll(nodes.filter { other -> other.type != CanvasNodeType.GROUP &&
+            other.x + other.width / 2 in group.x..(group.x + group.width) &&
+            other.y + other.height / 2 in group.y..(group.y + group.height) }.map { it.id })
+    }
+    return targets
+}
+
 data class NotebookCanvas(
     val id: String,
     val title: String,
@@ -601,9 +614,17 @@ class NotebookCanvasRepository(
     suspend fun moveNode(canvasId: String, nodeId: String, x: Float, y: Float): Boolean = database.withTransaction {
         requireWritable(canvasId)
         require(x.isFinite() && y.isFinite())
-        val changed = canvasDao.updateNodePosition(canvasId, nodeId, x, y, now()) == 1
-        if (changed) touch(canvasId)
-        changed
+        val nodes = canvasDao.getNodes(canvasId)
+        val root = nodes.firstOrNull { it.id == nodeId } ?: return@withTransaction false
+        val domain = nodes.map { CanvasNode(it.id, CanvasNodeType.valueOf(it.type), it.refObjectId,
+            it.text, it.x, it.y, it.width, it.height, it.zIndex, it.updatedAtEpochMs) }
+        val edges = canvasDao.getEdges(canvasId).map { CanvasEdge(it.id, it.fromNodeId, it.toNodeId, it.label) }
+        val targets = canvasDragTargets(domain, edges, setOf(nodeId))
+        val dx = x - root.x
+        val dy = y - root.y
+        moveNodes(canvasId, nodes.filter { it.id in targets }.associate {
+            it.id to if (it.id == nodeId) (x to y) else (it.x + dx to it.y + dy)
+        })
     }
 
     suspend fun deleteNode(canvasId: String, nodeId: String): Boolean = database.withTransaction {

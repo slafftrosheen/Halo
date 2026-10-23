@@ -10,6 +10,21 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class BuiltInSkillManifestTest {
+    @Test fun canvasEditingParityKeepsPerToolRisksAcrossAllManifestPhases() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val loader = BuiltInSkillManifestLoader(context)
+        val destructive = setOf("halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect")
+        val names = destructive + setOf("halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange")
+        for (skills in listOf(com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills(), loader.loadBundledManifests(), loader.load())) {
+            for (name in names) {
+                val skill = skills.single { name in it.tools }
+                assertEquals("halo.notebook", skill.id.value)
+                val definition = skill.toolDefinitions.single { it.toolId == name }
+                assertEquals(if (name in destructive) com.halo.sdk.runtime.skills.SkillRisk.DESTRUCTIVE else com.halo.sdk.runtime.skills.SkillRisk.REVERSIBLE, definition.risk)
+                assertTrue(definition.requiredPermissions.isEmpty())
+            }
+        }
+    }
     @Test fun canvasClearHasDestructiveRiskInRuntimeBundledAndMergedWorkspaceSkill() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val loader = BuiltInSkillManifestLoader(context)

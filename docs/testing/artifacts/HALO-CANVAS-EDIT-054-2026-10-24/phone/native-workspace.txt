@@ -1,0 +1,23 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest:
+INSTRUMENTATION_STATUS: test=nativeCanvasAndExactAttachedStudyUseTheRegisteredSemanticOwners
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativeCanvasAndExactAttachedStudyUseTheRegisteredSemanticOwners
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 1,244
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1

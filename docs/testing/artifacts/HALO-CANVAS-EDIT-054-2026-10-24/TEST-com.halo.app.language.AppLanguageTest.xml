@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.language.AppLanguageTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T23:04:05.639Z" hostname="MINIFOXEY" time="2.377">
+  <properties/>
+  <testcase name="polishDeviceLanguageAndSavedSelectionRemainPolishAfterRestart" classname="com.halo.app.language.AppLanguageTest" time="1.829"/>
+  <testcase name="compiledPolishResourcesCoverSharedTextAndNativeFeatureControls" classname="com.halo.app.language.AppLanguageTest" time="0.102"/>
+  <testcase name="explicitSelectionPersistsAndUnsupportedDeviceLanguageFallsBackSafely" classname="com.halo.app.language.AppLanguageTest" time="0.041"/>
+  <testcase name="sharedHostFormatterLocalizesLabelsAndLeavesUnformattedPercentagesLiteral" classname="com.halo.app.language.AppLanguageTest" time="0.036"/>
+  <testcase name="compiledResourcesKeepEnglishAndRenderCyrillicAndLatvianDiacritics" classname="com.halo.app.language.AppLanguageTest" time="0.179"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

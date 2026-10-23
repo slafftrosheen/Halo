@@ -17,6 +17,33 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = android.app.Application::class)
 class WorkspaceOperabilityTest {
+    @Test fun canvasEditingDescriptorsKeepDestructiveApprovalAndExactContractsWithoutRestrictingOrdinaryAllowedEdits() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val actions = WorkspaceCanvasActions(f.database, f.canvases)
+            val destructive = setOf("halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect")
+            val names = destructive + setOf("halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange")
+            for (name in names) {
+                val descriptor = requireNotNull(HaloToolDescriptors.workspace(actions.definitions().single { it.name == name }))
+                val contract = requireNotNull(descriptor.operability)
+                assertEquals(CapabilityId("workspace.write"), contract.capabilityId)
+                assertEquals(setOf("version"), contract.sourceVersionArguments)
+                assertTrue((contract.resultSchema["required"] as List<*>).contains("version"))
+                assertEquals(ReplaySafety.NEVER_REPLAY, descriptor.security.replaySafety)
+                assertNull(descriptor.presentation!!.targetArgument)
+                val policy = PolicyToolAuthorizer(defaultPolicyProvider = { ToolApprovalPolicy.ALWAYS_ALLOW }, descriptorProvider = { descriptor })
+                val authorization = policy.authorize(ToolCall("fixture", name, emptyMap()))
+                if (name in destructive) {
+                    assertEquals(ToolRiskClass.DESTRUCTIVE, descriptor.security.risk)
+                    assertEquals(ConfirmationPolicy.ALWAYS, descriptor.security.confirmation)
+                    assertTrue(authorization is ToolAuthorization.Rejected)
+                } else {
+                    assertEquals(ToolRiskClass.REVERSIBLE, descriptor.security.risk)
+                    assertEquals(ConfirmationPolicy.USER_POLICY, descriptor.security.confirmation)
+                    assertTrue(authorization is ToolAuthorization.Authorized)
+                }
+            }
+        }
+    }
     @Test fun actualHighValueOperationsHaveVersionedContractsAndSafeReplayMetadata() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val context = f.contextOwner()

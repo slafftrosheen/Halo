@@ -12,7 +12,15 @@
     "halo_get_workspace_object",
     "halo_create_empty_note",
     "halo_save_screen_to_notebook",
-    "halo_canvas_clear_sketch"
+    "halo_canvas_clear_sketch",
+    "halo_canvas_rename",
+    "halo_canvas_add_group",
+    "halo_canvas_tag",
+    "halo_canvas_duplicate",
+    "halo_canvas_arrange",
+    "halo_canvas_delete",
+    "halo_canvas_ungroup",
+    "halo_canvas_disconnect"
   ],
   "toolDefinitions": [
     {
@@ -45,6 +53,38 @@
     },
     {
       "toolId": "halo_canvas_clear_sketch",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_canvas_rename",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_add_group",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_tag",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_duplicate",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_arrange",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_delete",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_canvas_ungroup",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_canvas_disconnect",
       "risk": "DESTRUCTIVE"
     }
   ]

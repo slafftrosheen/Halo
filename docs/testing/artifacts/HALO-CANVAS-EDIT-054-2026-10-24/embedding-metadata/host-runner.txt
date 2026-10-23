@@ -1,0 +1,8 @@
+LiteRT physical probe: embeddinggemma2-740m-metadata (captureOnly=False)
+  PASSED; inspect embeddinggemma2-740m-metadata.txt
+
+ModelId              Backend Language Cycles ResidentTurns ContextTokens Result ProcessExit OutputFile
+-------              ------- -------- ------ ------------- ------------- ------ ----------- ----------
+embeddinggemma2-740m INFO    NONE          1             0 PROFILE       PASSED           0 embeddinggemma2-740m-metada…
+
+Saved evidence to: C:\Users\slavd\HaloEco\verification-2026-10-24-embedding-metadata

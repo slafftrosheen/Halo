@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.turn.ApprovalContractTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T22:54:20.591Z" hostname="MINIFOXEY" time="0.3">
+  <properties/>
+  <testcase name="approval flow - needs approval then approves and executes exactly once" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.267"/>
+  <testcase name="alwaysConfirmCannotReuseLegacyScopeApproval" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.003"/>
+  <testcase name="directCommandAuthorityRespectsDescriptorConfirmationAndRisk" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.006"/>
+  <testcase name="approval flow - needs approval then denies and executes zero times" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.012"/>
+  <testcase name="resumedApprovalRetainsOriginalModelInputProvenanceAndRevision" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.011"/>
+  <system-out><![CDATA[[HALO_TOOL_VALIDATED] run=8058df8f-7144-42a4-9012-d7d92219eb49 requestId=req-1 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_WAITING_INPUT] run=8058df8f-7144-42a4-9012-d7d92219eb49 interactionId=interaction-1 requestId=req-1 tool=test_action toolCallId=call-1
+DEBUG_RESULT1 = WaitingForInput(request=Approval(id=cf6bc176-2131-439b-9386-074db586cdad, runId=AgentRunId(value=8058df8f-7144-42a4-9012-d7d92219eb49), createdAt=2026-10-23T22:54:20.784552Z, expiresAt=null, invocationId=cb439012-be5b-4e62-a35b-49dfca93aa04, toolId=test_action, action=Confirm test_action, detail=null, risk=EXTERNAL_SIDE_EFFECT, argumentsDigest=93cab821ad6afe008a9cad5c2e19833f8e5f631d48a597dbc7484de901669847, speechPrompt=null))
+[HALO_TOOL_VALIDATED] run=8058df8f-7144-42a4-9012-d7d92219eb49 requestId=req-2 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_AUTHORIZATION] run=8058df8f-7144-42a4-9012-d7d92219eb49 requestId=req-2 tool=test_action toolCallId=call-1
+[HALO_TOOL_EXECUTION_START] run=8058df8f-7144-42a4-9012-d7d92219eb49 interactionId=interaction-1 requestId=req-2 tool=test_action toolCallId=call-1
+[HALO_TOOL_EXECUTION_RESULT] run=8058df8f-7144-42a4-9012-d7d92219eb49 interactionId=interaction-1 requestId=req-2 tool=test_action actionTruth=CONFIRMED durationMs=15
+DEBUG_RESULT2 = Completed(response=AiResponse(text=, toolCalls=[], finishReason=null, providerId=, modelId=, metrics=null, requestedModelId=, resolvedModelId=, executionBackend=null, payloadRefId=null, coldStart=null), hasUnconfirmedAction=false, toolMessages=[AIMessage(role=TOOL, content=tool_result:
+status=success
+action_truth=CONFIRMED
+reason_code=NONE
+
+details:
+Action executed successfully, toolCalls=[], toolCallId=call-1)])
+[HALO_TOOL_VALIDATED] run=49c6b538-63be-420c-9012-df2810d0e310 requestId=req-1 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_WAITING_INPUT] run=49c6b538-63be-420c-9012-df2810d0e310 interactionId=interaction-2 requestId=req-1 tool=test_action toolCallId=call-1
+[HALO_TOOL_VALIDATED] run=49c6b538-63be-420c-9012-df2810d0e310 requestId=req-2 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_REJECTED] run=49c6b538-63be-420c-9012-df2810d0e310 interactionId=interaction-2 requestId=req-2 tool=test_action reasonCode=USER_REJECTED reason=user_rejected
+[HALO_TOOL_VALIDATED] run=9dff8238-97ce-41ad-a54b-06c97b8741b8 requestId=first tool=test_action digest=93cab821ad6a
+[HALO_TOOL_WAITING_INPUT] run=9dff8238-97ce-41ad-a54b-06c97b8741b8 interactionId=sharing-provenance requestId=first tool=test_action toolCallId=derived-call
+[HALO_TOOL_VALIDATED] run=9dff8238-97ce-41ad-a54b-06c97b8741b8 requestId=resume tool=test_action digest=93cab821ad6a
+[HALO_TOOL_AUTHORIZATION] run=9dff8238-97ce-41ad-a54b-06c97b8741b8 requestId=resume tool=test_action toolCallId=derived-call
+[HALO_TOOL_EXECUTION_START] run=9dff8238-97ce-41ad-a54b-06c97b8741b8 interactionId=sharing-provenance requestId=resume tool=test_action toolCallId=derived-call
+[HALO_TOOL_EXECUTION_RESULT] run=9dff8238-97ce-41ad-a54b-06c97b8741b8 interactionId=sharing-provenance requestId=resume tool=test_action actionTruth=CONFIRMED durationMs=0
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -563,14 +563,7 @@ class CanvasEditorViewModel(
         val state = mutableState.value
         val root = state.nodes.firstOrNull { it.id == nodeId } ?: return
         val selectedIds = if (nodeId in state.selectedNodeIds) state.selectedNodeIds else setOf(nodeId)
-        val targets = selectedIds.toMutableSet()
-        state.nodes.filter { it.id in selectedIds && it.type == com.halo.app.data.notebook.CanvasNodeType.GROUP }.forEach { group ->
-            val explicit = state.edges.filter { it.fromNodeId == group.id && it.label == "group" }.map { it.toNodeId }
-            if (explicit.isNotEmpty()) targets.addAll(explicit)
-            else targets.addAll(state.nodes.filter { other -> other.type != com.halo.app.data.notebook.CanvasNodeType.GROUP &&
-                other.x + other.width / 2 in group.x..(group.x + group.width) &&
-                other.y + other.height / 2 in group.y..(group.y + group.height) }.map { it.id })
-        }
+        val targets = com.halo.app.data.notebook.canvasDragTargets(state.nodes, state.edges, selectedIds)
         val scale = state.viewportScale
         val updated = state.nodes.map { if (it.id in targets) it.copy(x = it.x + dx / scale, y = it.y + dy / scale) else it }
         mutableState.value = state.copy(nodes = updated, selectedNodeId = root.id)

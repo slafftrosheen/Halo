@@ -1,0 +1,74 @@
+[
+  {
+    "path": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceOperabilityDeviceTest.kt",
+    "sha256": "ac1730d58e44a93054445643864516e82c680cd49205775b8f9a40213d3a5b98"
+  },
+  {
+    "path": "app/src/main/assets/skills/halo.notebook.json",
+    "sha256": "7e48b1d7c20439701875f5f9056a9538f06c5c64f60a518802f2b2193224fe08"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/HaloToolDescriptors.kt",
+    "sha256": "7b72af9997a4c765736774c22c47749f6d9dac15147f6073ea568dd2f11fdfc5"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceCanvasActions.kt",
+    "sha256": "add2027fc7cb4d225e2ad335bc2a2394706a59aa24d2d1b0ece0dbe7ed9a0468"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceOperabilityContracts.kt",
+    "sha256": "2a0e08ec8ea31ef781582a79e57d8ceb8af7229840ed47266e47e7fca9195322"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+    "sha256": "9a0411d5cdbef5c7dd7d51b8da2c6727362ccfd0b8be6a7b73c296691df5dc7c"
+  },
+  {
+    "path": "app/src/main/localization/ui.tsv",
+    "sha256": "e288e8ed8f6e7aaf1801e49f1d25c05be9f6851dcd0417a84d8f194b77ca4947"
+  },
+  {
+    "path": "app/src/main/res/values-lv/ui_strings.xml",
+    "sha256": "327a7f39f17b0b1cdd392076b887a70f75d63fda0b56eff4111ae8c7f3b9a9ee"
+  },
+  {
+    "path": "app/src/main/res/values-pl/ui_strings.xml",
+    "sha256": "97f41703c7f62a21b272cc7fb55afafedd57a599b1490d74eab2c317fe6693e2"
+  },
+  {
+    "path": "app/src/main/res/values-ru/ui_strings.xml",
+    "sha256": "99d25fdebaf11d08ca2e5b4ed1d6fece16b1487ea204fb5d2db63cda81306d7c"
+  },
+  {
+    "path": "app/src/main/res/values/ui_strings.xml",
+    "sha256": "37011c999ba044f490e81a1fb6b0022b9ba4a37fb94eb423c174232b1dff980c"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/workspace/WorkspaceCanvasEditingParityTest.kt",
+    "sha256": "f9fad69fa1999cb50f4e4120c9b498c65d08f79d652151b70dbb6124d1559492"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/workspace/WorkspaceOperabilityTest.kt",
+    "sha256": "c1f7595311c98213a1827be480120b795cf41be8a0c5062ee29d37452ad53a80"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/di/BuiltInSkillManifestTest.kt",
+    "sha256": "12e3c95ce258c9fb7ee560504b8130aaaedec65200212501587f38bafab9357a"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillInstructionSource.kt",
+    "sha256": "1227158faba59e84a9c85895a36e6777b7d3b4a36c19e590e5bc8bb9ad7673f0"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillRegistry.kt",
+    "sha256": "78938fffcabe37a74d8e0b5827b5ee0e3b6c91947bfcb767891e7b713c9fbdab"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/tools/WorkspaceToolAccess.kt",
+    "sha256": "7c38ecd9c206a4b5d86c1b45f83448fdcd04e411ad054d4774fd66d5c47cd0ec"
+  },
+  {
+    "path": "runtime/cognition/src/test/java/com/halo/runtime/cognition/tools/WorkspaceContinuityPolicyTest.kt",
+    "sha256": "aa2468a1934f94ed399818fa4073b38bf2efdc87deca7005887c8f6f92b9350b"
+  }
+]

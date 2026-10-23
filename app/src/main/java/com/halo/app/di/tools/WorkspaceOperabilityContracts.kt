@@ -12,8 +12,10 @@ object WorkspaceOperabilityContracts {
         }
         group("NotebookCanvasRepository", ToolOperation.QUERY, "halo_canvas_get")
         group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_create", "halo_canvas_add_text")
+        group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate")
         group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_connect")
         group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_clear_sketch")
+        group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_rename", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect")
         group("WorkspaceContinuity", ToolOperation.QUERY, "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status")
         group("WorkspaceContinuity", ToolOperation.PRESENT, "halo_workspace_open_with")
         group("WorkspaceContinuity", ToolOperation.EDIT, "halo_workspace_insert")
@@ -38,15 +40,18 @@ object WorkspaceOperabilityContracts {
         val operation = operations[definition.name] ?: return null
         val fields = definition.parameters["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
         val resultFields = when (operation.owner) {
-            "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "edgeId" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean")
+            "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "nodeIds" to "array", "edgeId" to "string", "title" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean")
             "StudioService" -> mapOf("projectId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "outputId" to "string", "fileVersion" to "string", "requestId" to "string", "nodeId" to "string")
             "WorkspaceFileTools" -> mapOf("noteId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string")
             else -> mapOf("objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string", "resultId" to "string", "resultVersion" to "string")
         }
         val resultIds = when (definition.name) {
             "halo_canvas_create", "halo_canvas_get" -> setOf("canvasId")
+            "halo_canvas_rename" -> setOf("canvasId")
+            "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate" -> setOf("canvasId", "nodeId")
+            "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup" -> setOf("canvasId", "nodeIds")
             "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_clear_sketch" -> setOf("canvasId", "nodeId")
-            "halo_canvas_connect" -> setOf("canvasId", "edgeId")
+            "halo_canvas_connect", "halo_canvas_disconnect" -> setOf("canvasId", "edgeId")
             "halo_studio_create", "halo_studio_get", "halo_studio_edit", "halo_studio_save" -> setOf("projectId")
             "halo_studio_export" -> setOf("outputId")
             "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status", "halo_file_tools_open", "halo_workspace_open_with", "halo_workspace_handoff_status" -> setOf("requestId")
@@ -59,7 +64,8 @@ object WorkspaceOperabilityContracts {
             operation = operation.operation, resultEncoding = operation.encoding,
             resultSchema = if (operation.encoding == ToolResultEncoding.TEXT) mapOf("type" to "string", "maxLength" to 24000)
                 else mapOf("type" to "object", "properties" to resultFields.mapValues { mapOf("type" to listOf(it.value, "null")) },
-                    "required" to (resultIds + if (definition.name == "halo_canvas_clear_sketch") setOf("version", "changed") else emptySet()).toList(), "additionalProperties" to true),
+                    "required" to (resultIds + (if (operation.owner == "NotebookCanvasRepository") setOf("version") else emptySet()) +
+                        (if (definition.name == "halo_canvas_clear_sketch") setOf("changed") else emptySet())).toList(), "additionalProperties" to true),
             sourceVersionArguments = fields.keys.filterIsInstance<String>().filter { it in setOf("version", "revision", "sourceVersion", "canvasVersion", "expectedRevision") }.toSet(),
             resultIdFields = resultIds,
             limitations = setOf("Voice-final and typed requests share the registered semantic action; metadata is not STT/device acceptance.",

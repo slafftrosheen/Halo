@@ -1,0 +1,2 @@
+"ModelId","Backend","Language","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile","Reason"
+"embeddinggemma2-740m","INFO","NONE","1","0","PROFILE","PASSED","0","embeddinggemma2-740m-metadata.txt",

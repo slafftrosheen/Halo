@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.di.BuiltInSkillManifestTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T23:04:02.147Z" hostname="MINIFOXEY" time="3.423">
+  <properties/>
+  <testcase name="permissionPlannerCoversToolOnlyAndSpecialAndroidAccess" classname="com.halo.app.di.BuiltInSkillManifestTest" time="2.892"/>
+  <testcase name="everyBundledSkillManifestLoadsUnderTheApkPolicy" classname="com.halo.app.di.BuiltInSkillManifestTest" time="0.101"/>
+  <testcase name="mergingBuiltInsPreservesPerToolPermissions" classname="com.halo.app.di.BuiltInSkillManifestTest" time="0.052"/>
+  <testcase name="canvasEditingParityKeepsPerToolRisksAcrossAllManifestPhases" classname="com.halo.app.di.BuiltInSkillManifestTest" time="0.063"/>
+  <testcase name="modelSetupManifestPreservesEveryRegisteredOperationAndItsRisk" classname="com.halo.app.di.BuiltInSkillManifestTest" time="0.058"/>
+  <testcase name="canvasClearHasDestructiveRiskInRuntimeBundledAndMergedWorkspaceSkill" classname="com.halo.app.di.BuiltInSkillManifestTest" time="0.058"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
