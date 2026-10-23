@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "scope": "FINAL_TEXT_ADVISORY_ONLY",
+  "cases": [
+    {
+      "id": "EN-V01",
+      "language": "EN",
+      "preparedInput": "Voice",
+      "prompt": "Could you get the phone ready so I can take a picture?",
+      "expected": "ACTION"
+    },
+    {
+      "id": "EN-V02",
+      "language": "EN",
+      "preparedInput": "Voice",
+      "prompt": "How do I get the phone ready so I can take a picture?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "EN-V03",
+      "language": "EN",
+      "preparedInput": "Voice",
+      "prompt": "Would you mind setting up a five-minute timer on my phone?",
+      "expected": "ACTION"
+    },
+    {
+      "id": "EN-V04",
+      "language": "EN",
+      "preparedInput": "Voice",
+      "prompt": "How can I set up a five-minute timer on my phone?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "EN-V05",
+      "language": "EN",
+      "preparedInput": "Voice",
+      "prompt": "Don't send that message, even if it looks ready.",
+      "expected": "UNCERTAIN"
+    },
+    {
+      "id": "EN-V06",
+      "language": "EN",
+      "preparedInput": "Voice",
+      "prompt": "What does “send that message” mean in this example?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "EN-K01",
+      "language": "EN",
+      "preparedInput": "Keyboard",
+      "prompt": "Please check Gmail and let me know whether an invoice came in today.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "EN-K02",
+      "language": "EN",
+      "preparedInput": "Keyboard",
+      "prompt": "How can I check Gmail for an invoice from today?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "EN-K03",
+      "language": "EN",
+      "preparedInput": "Keyboard",
+      "prompt": "I need tomorrow's team meeting put on my calendar with Maya invited.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "EN-K04",
+      "language": "EN",
+      "preparedInput": "Keyboard",
+      "prompt": "What information is usually needed to add a team meeting to a calendar?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "EN-K05",
+      "language": "EN",
+      "preparedInput": "Keyboard",
+      "prompt": "Can you take care of finding a route to the airport in Maps for me?",
+      "expected": "ACTION"
+    },
+    {
+      "id": "EN-K06",
+      "language": "EN",
+      "preparedInput": "Keyboard",
+      "prompt": "What does “find a route to the airport in Maps” mean?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "RU-V01",
+      "language": "RU",
+      "preparedInput": "Voice",
+      "prompt": "Помоги подготовить телефон, чтобы я мог сфотографировать это.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "RU-V02",
+      "language": "RU",
+      "preparedInput": "Voice",
+      "prompt": "Как подготовить телефон, чтобы сфотографировать это?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "RU-V03",
+      "language": "RU",
+      "preparedInput": "Voice",
+      "prompt": "Поставь, пожалуйста, таймер на пять минут на моём телефоне.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "RU-V04",
+      "language": "RU",
+      "preparedInput": "Voice",
+      "prompt": "Как поставить таймер на пять минут на телефоне?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "RU-V05",
+      "language": "RU",
+      "preparedInput": "Voice",
+      "prompt": "Пожалуйста, не отправляй это сообщение, даже если оно готово.",
+      "expected": "UNCERTAIN"
+    },
+    {
+      "id": "RU-V06",
+      "language": "RU",
+      "preparedInput": "Voice",
+      "prompt": "Что означает фраза «отправь это сообщение» в этом примере?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "RU-K01",
+      "language": "RU",
+      "preparedInput": "Keyboard",
+      "prompt": "Проверь Gmail и скажи, пришёл ли сегодня счёт.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "RU-K02",
+      "language": "RU",
+      "preparedInput": "Keyboard",
+      "prompt": "Как найти в Gmail счёт, который пришёл сегодня?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "RU-K03",
+      "language": "RU",
+      "preparedInput": "Keyboard",
+      "prompt": "Добавь завтрашнюю командную встречу в календарь и пригласи Майю.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "RU-K04",
+      "language": "RU",
+      "preparedInput": "Keyboard",
+      "prompt": "Какие данные обычно нужны, чтобы добавить командную встречу в календарь?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "RU-K05",
+      "language": "RU",
+      "preparedInput": "Keyboard",
+      "prompt": "Организуй мне маршрут до аэропорта в Maps.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "RU-K06",
+      "language": "RU",
+      "preparedInput": "Keyboard",
+      "prompt": "Что означает просьба «проложить маршрут до аэропорта в Maps»?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "LV-V01",
+      "language": "LV",
+      "preparedInput": "Voice",
+      "prompt": "Sagatavo, lūdzu, tālruni, lai es varētu nofotografēt šo.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "LV-V02",
+      "language": "LV",
+      "preparedInput": "Voice",
+      "prompt": "Kā sagatavot tālruni, lai nofotografētu šo?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "LV-V03",
+      "language": "LV",
+      "preparedInput": "Voice",
+      "prompt": "Vai vari tālrunī uzlikt piecu minūšu taimeri?",
+      "expected": "ACTION"
+    },
+    {
+      "id": "LV-V04",
+      "language": "LV",
+      "preparedInput": "Voice",
+      "prompt": "Kā tālrunī uzlikt piecu minūšu taimeri?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "LV-V05",
+      "language": "LV",
+      "preparedInput": "Voice",
+      "prompt": "Lūdzu, nesūti šo ziņu, pat ja tā jau ir sagatavota.",
+      "expected": "UNCERTAIN"
+    },
+    {
+      "id": "LV-V06",
+      "language": "LV",
+      "preparedInput": "Voice",
+      "prompt": "Ko šajā piemērā nozīmē frāze “nosūti šo ziņu”?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "LV-K01",
+      "language": "LV",
+      "preparedInput": "Keyboard",
+      "prompt": "Pārbaudi Gmail un pasaki, vai šodien pienāca rēķins.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "LV-K02",
+      "language": "LV",
+      "preparedInput": "Keyboard",
+      "prompt": "Kā Gmail atrast šodien saņemtu rēķinu?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "LV-K03",
+      "language": "LV",
+      "preparedInput": "Keyboard",
+      "prompt": "Pievieno rītdienas komandas sapulci kalendāram un uzaicini Maiju.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "LV-K04",
+      "language": "LV",
+      "preparedInput": "Keyboard",
+      "prompt": "Kādu informāciju parasti vajag, lai pievienotu komandas sapulci kalendāram?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "LV-K05",
+      "language": "LV",
+      "preparedInput": "Keyboard",
+      "prompt": "Nokārto man maršrutu līdz lidostai pakalpojumā Maps.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "LV-K06",
+      "language": "LV",
+      "preparedInput": "Keyboard",
+      "prompt": "Ko nozīmē lūgums “atrast maršrutu līdz lidostai pakalpojumā Maps”?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "PL-V01",
+      "language": "PL",
+      "preparedInput": "Voice",
+      "prompt": "Przygotuj proszę telefon, żebym mógł zrobić to zdjęcie.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "PL-V02",
+      "language": "PL",
+      "preparedInput": "Voice",
+      "prompt": "Jak przygotować telefon do zrobienia tego zdjęcia?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "PL-V03",
+      "language": "PL",
+      "preparedInput": "Voice",
+      "prompt": "Ustaw proszę minutnik na pięć minut w moim telefonie.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "PL-V04",
+      "language": "PL",
+      "preparedInput": "Voice",
+      "prompt": "Jak ustawić pięciominutowy minutnik w telefonie?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "PL-V05",
+      "language": "PL",
+      "preparedInput": "Voice",
+      "prompt": "Proszę, nie wysyłaj tej wiadomości, nawet jeśli jest gotowa.",
+      "expected": "UNCERTAIN"
+    },
+    {
+      "id": "PL-V06",
+      "language": "PL",
+      "preparedInput": "Voice",
+      "prompt": "Co w tym przykładzie oznacza wyrażenie „wyślij tę wiadomość”?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "PL-K01",
+      "language": "PL",
+      "preparedInput": "Keyboard",
+      "prompt": "Sprawdź Gmaila i daj mi znać, czy dziś przyszła faktura.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "PL-K02",
+      "language": "PL",
+      "preparedInput": "Keyboard",
+      "prompt": "Jak znaleźć w Gmailu fakturę, która przyszła dzisiaj?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "PL-K03",
+      "language": "PL",
+      "preparedInput": "Keyboard",
+      "prompt": "Dodaj jutrzejsze spotkanie zespołu do kalendarza i zaproś Maję.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "PL-K04",
+      "language": "PL",
+      "preparedInput": "Keyboard",
+      "prompt": "Jakie informacje są zwykle potrzebne, żeby dodać spotkanie zespołu do kalendarza?",
+      "expected": "ANSWER"
+    },
+    {
+      "id": "PL-K05",
+      "language": "PL",
+      "preparedInput": "Keyboard",
+      "prompt": "Przygotuj mi trasę na lotnisko w Mapach.",
+      "expected": "ACTION"
+    },
+    {
+      "id": "PL-K06",
+      "language": "PL",
+      "preparedInput": "Keyboard",
+      "prompt": "Co oznacza prośba „wyznacz trasę na lotnisko w Mapach”?",
+      "expected": "ANSWER"
+    }
+  ]
+}

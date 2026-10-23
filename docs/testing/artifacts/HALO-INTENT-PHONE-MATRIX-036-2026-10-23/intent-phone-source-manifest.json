@@ -1,0 +1,5 @@
+{
+  "app/src/androidTest/java/com/halo/app/audio/LocalIntentClassifierPhoneTest.kt": "f57b0432e334c4a5c0758d591e19d3f29704bca6ca7ba1157c1628615ddcae15",
+  "app/src/androidTest/assets/intent-classification-v1.json": "13437f06ffe3f1ca3cb89a781ce06701ce1a1a2bf51248dfeb6b86daee0425ef",
+  "sourceStamp": "intent-phone-v1-8f811077e4d682007282"
+}
