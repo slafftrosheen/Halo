@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.di.tools.HostToolDescriptorDispatchTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:03:09.320Z" hostname="MINIFOXEY" time="3.542">
+  <properties/>
+  <testcase name="each definition is claimed exactly once, by a kind that owns it" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="2.957"/>
+  <testcase name="each host family owns its own category" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.059"/>
+  <testcase name="expanded native handoffs retain mandatory approval and never replay" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.04"/>
+  <testcase name="every registered host definition is described by some kind" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.04"/>
+  <testcase name="accessibility mutations keep their mandatory confirmation" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.041"/>
+  <testcase name="new native abilities carry their own capability requirements" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.043"/>
+  <testcase name="kinds bound to single-tool executors describe nothing here" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.041"/>
+  <testcase name="mutating native abilities are classified for consent, not convenience" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.04"/>
+  <testcase name="no host tool is silently classified by a fallback descriptor" classname="com.halo.app.di.tools.HostToolDescriptorDispatchTest" time="0.042"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

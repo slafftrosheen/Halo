@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:05:03.960Z" hostname="MINIFOXEY" time="0.118">
+  <properties/>
+  <testcase name="skill activation directives are parsed separately from tool directives" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.062"/>
+  <testcase name="cloud screen privacy is enforced again when schemas are shown to provider" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.027"/>
+  <testcase name="local bootstrap exposure contains only the three bootstrap schemas" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.0"/>
+  <testcase name="local exposure never includes tools outside the allowlist" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.0"/>
+  <testcase name="exposure directives are read only from declared lines" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.001"/>
+  <testcase name="skill activation exposes that skill's tools and only after activation" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.002"/>
+  <testcase name="schema budget bounds what a local model is shown" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.001"/>
+  <testcase name="remote semantic app tools also respect screen consent" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.0"/>
+  <testcase name="discovery expands the next turn" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.001"/>
+  <testcase name="searchable discovery matches plain words a user would say" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.021"/>
+  <testcase name="the exposure gate still denies a tool whose skill is disabled" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.002"/>
+  <testcase name="a tool outside the local allowlist cannot be widened by declaring it" classname="com.halo.runtime.cognition.tools.ToolExposurePolicyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

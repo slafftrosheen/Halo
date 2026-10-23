@@ -167,6 +167,8 @@ sealed interface PracticeRegeneration {
  * Every write is idempotent or revision-bound: starting persists before reporting success, attempts
  * carry a submission key, and feedback is validated against the exercise that is actually active.
  */
+private class StudySourceChanged : IllegalStateException()
+
 class StudyUseCases(
     private val repository: StudyRepository,
     private val documents: NotebookDocumentRepository? = null,
@@ -228,6 +230,7 @@ class StudyUseCases(
         policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY,
         conversationId: String? = null, runId: String? = null, interactionId: String? = null,
         expectedVersions: Map<String, String> = emptyMap(),
+        validateSources: suspend () -> Boolean = { true },
     ): StudyStartResult {
         val ids = objectIds.distinct()
         if (ids.isEmpty() || ids.size > StudySourceLimits.MAX_SOURCES) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
@@ -250,9 +253,23 @@ class StudyUseCases(
         }
         return try {
             StudyStartResult.Started(repository.createMaterialSession(sources.map { StudySessionSource(it.objectId, it.revision) },
-                languages, goal, level, style, policy, conversationId, runId, interactionId))
+                languages, goal, level, style, policy, conversationId, runId, interactionId,
+                validateSources = { if (!validateSources()) throw StudySourceChanged() }))
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: StudySourceChanged) { StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED) }
         catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
+    }
+
+    /** Context identity includes attachments; Study citations use the resolved material revision. Keep both guards. */
+    suspend fun startExactMaterial(objectId: String, contextVersion: String, versionReader: suspend (String) -> String?): StudyStartResult {
+        if (versionReader(objectId) != contextVersion) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
+        val source = sourceResolver?.resolve(objectId, "")
+            ?: return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_STORE_UNAVAILABLE)
+        val revision = source.revision
+        if (source is ResolvedStudySource.Unsupported || revision == null || versionReader(objectId) != contextVersion)
+            return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
+        return startMaterial(listOf(objectId), StudyLanguagePreferences(), null,
+            expectedVersions = mapOf(objectId to revision), validateSources = { versionReader(objectId) == contextVersion })
     }
 
     suspend fun updateSetup(sessionId: String, level: StudyLearnerLevel, style: StudySupportStyle, policy: StudyKnowledgePolicy): Boolean {

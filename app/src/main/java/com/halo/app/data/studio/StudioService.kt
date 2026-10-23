@@ -205,7 +205,7 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
                 kind = StudioLayerKind.IMAGE, source = StudioSource(file.objectId.value, requireNotNull(file.sha256)))))
         return projects.create(title.take(120), document, source.id, source.revision)
     }
-    suspend fun insertOutput(canvasId: String, outputId: String, expectedFileVersion: String): String {
+    suspend fun insertOutput(canvasId: String, outputId: String, expectedFileVersion: String, expectedCanvasVersion: String? = null): String {
         val file = requireNotNull(files.getFile(WorkspaceObjectId(outputId)))
         require(file.version == expectedFileVersion && file.ownership == ContentOwnership.HALO_OWNED &&
             file.mimeType in setOf("image/png", "image/jpeg") &&
@@ -214,7 +214,7 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         require(JSONObject(origin.metadata).optString("operation") == "studio-export") { "Choose a saved Studio output" }
         val board = requireNotNull(canvases.observe(canvasId).first()) { "Canvas unavailable" }
         val x = board.nodes.maxOfOrNull { it.x.toDouble() + it.width }?.plus(24.0)?.coerceIn(-100_000.0, 100_000.0)?.toFloat() ?: 0f
-        return canvases.addReference(canvasId, outputId, x, 0f, image = true)
+        return canvases.addReference(canvasId, outputId, x, 0f, image = true, expectedCanvasVersion = expectedCanvasVersion)
     }
     suspend fun export(id: String, expectedRevision: Long, format: CanvasImageFormat): WorkspaceFile {
         val project = current(id, expectedRevision)

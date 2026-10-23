@@ -128,7 +128,13 @@ class ToolDiscoveryService(
             val descriptor = registry.descriptor(id) ?: continue
             if (descriptor.visibility != ToolVisibility.DISCOVERABLE) continue
             if (availabilityResolver?.isAvailable(descriptor) == false) continue
-            expanded.add(descriptor.definition)
+            val contract = descriptor.operability
+            val definition = if (contract == null) descriptor.definition else descriptor.definition.copy(description =
+                descriptor.definition.description + "\nOperation contract v${contract.version}: ${contract.operation.name}; result ${contract.resultEncoding.name}. " +
+                    "Result IDs: ${contract.resultIdFields.sorted().joinToString().ifBlank { "see result" }}. " +
+                    "Source-version fields: ${contract.sourceVersionArguments.sorted().joinToString().ifBlank { "none" }}. " +
+                    "Replay: ${descriptor.security.replaySafety.name}. Typed and voice-final requests use this same action; device/speech success is never implied by this schema.")
+            expanded.add(definition)
         }
         return expanded.toList()
     }

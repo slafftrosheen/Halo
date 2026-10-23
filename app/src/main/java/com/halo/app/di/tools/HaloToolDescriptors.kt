@@ -45,10 +45,11 @@ object HaloToolDescriptors {
         keywords = keywords,
         visibility = visibility,
         dependencies = dependencies,
-        requirements = requirements,
+        requirements = requirements + WorkspaceOperabilityContracts.forDefinition(definition)?.let { setOf(ToolRequirement.Capability(it.capabilityId)) }.orEmpty(),
         security = security,
         execution = execution,
         presentation = presentation,
+        operability = WorkspaceOperabilityContracts.forDefinition(definition),
     )
 
     private fun readOnly(id: String) = ToolSecurityPolicy.READ_ONLY.copy(
@@ -267,6 +268,13 @@ object HaloToolDescriptors {
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
+        "halo_canvas_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
+            keywords = setOf("canvas", "board", "cards", "read", "drawing"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
+        "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_connect" -> descriptor(
+            definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("canvas", "board", "card", "text", "move", "connect", "drawing"),
+            presentation = ToolPresentation(title = "Edit Canvas", actionVerb = "Edit"))
         "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("workspace", "source", "history", "continue", "canvas"))
         "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
@@ -282,14 +290,14 @@ object HaloToolDescriptors {
         "halo_get_workspace_object" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("note", "workspace", "read"))
         "halo_create_note", "halo_create_empty_note" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            reversible(ReplaySafety.IDEMPOTENT_WITH_KEY), keywords = setOf("note", "create", "write"),
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("note", "create", "write"),
             presentation = ToolPresentation(title = "Create a note", actionVerb = "Create note"))
         "halo_search_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("note", "search", "find"))
         "halo_save_screen_to_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            reversible(ReplaySafety.IDEMPOTENT_WITH_KEY), keywords = setOf("screen", "capture", "note"))
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("screen", "capture", "note"))
         "halo_study_with_halo" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            reversible(ReplaySafety.IDEMPOTENT_WITH_KEY),
+            reversible(ReplaySafety.NEVER_REPLAY),
             keywords = setOf("study", "tutor", "learn"),
             presentation = ToolPresentation(title = "Start a study session", actionVerb = "Start study"))
         "halo_get_study_session" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,

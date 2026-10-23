@@ -1,0 +1,66 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :runtime:cognition:test --tests com.halo.runtime.cognition.tools.ToolOperabilityReviewTest --tests com.halo.runtime.cognition.tools.ToolExposurePolicyTest --tests com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest --tests com.halo.runtime.cognition.tools.WorkspaceContinuityPolicyTest --tests com.halo.runtime.cognition.tools.FileEditingToolProvenanceTest --tests com.halo.runtime.cognition.tools.StudioToolProvenanceTest --tests com.halo.runtime.cognition.skills.SkillToolOwnershipTest
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :runtime:cognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:provider-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :runtime:provider-core:compileKotlin UP-TO-DATE
+> Task :runtime:provider-core:compileJava NO-SOURCE
+> Task :runtime:cognition:compileKotlin UP-TO-DATE
+> Task :runtime:cognition:compileJava NO-SOURCE
+> Task :runtime:cognition:processResources NO-SOURCE
+> Task :runtime:cognition:classes UP-TO-DATE
+> Task :runtime:cognition:jar UP-TO-DATE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :runtime:cognition:compileTestKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/agent/AgentRunCoordinatorTest.kt:46:19 'suspend fun reconcileInterruptedRuns(): Unit' is deprecated. Replaced by prepareOutstandingRunsForRecovery.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/agent/AgentRunCoordinatorTest.kt:62:60 'suspend fun reconcileInterruptedRuns(): Unit' is deprecated. Replaced by prepareOutstandingRunsForRecovery.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:125:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:135:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:140:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:140:31 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:142:48 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:145:51 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/native/NativeCapabilityDispatcherTest.kt:145:80 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/session/CognitiveSessionHandoffTest.kt:128:20 Check for instance is always 'true'.
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/runtime/cognition/src/test/java/com/halo/runtime/cognition/session/InterpretationRouteTest.kt:40:68 Check for instance is always 'true'.
+
+> Task :runtime:cognition:compileTestJava NO-SOURCE
+> Task :runtime:cognition:processTestResources NO-SOURCE
+> Task :runtime:cognition:testClasses UP-TO-DATE
+> Task :runtime:provider-core:processResources NO-SOURCE
+> Task :runtime:provider-core:classes UP-TO-DATE
+> Task :runtime:provider-core:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar UP-TO-DATE
+> Task :runtime:cognition:test
+
+BUILD SUCCESSFUL in 1m 3s
+16 actionable tasks: 2 executed, 14 up-to-date
+Configuration cache entry stored.

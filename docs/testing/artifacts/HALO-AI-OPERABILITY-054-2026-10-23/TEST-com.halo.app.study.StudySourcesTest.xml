@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.study.StudySourcesTest" tests="41" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:03:13.890Z" hostname="MINIFOXEY" time="2.071">
+  <properties/>
+  <testcase name="revokedSourceWhileInferenceRunsCannotBecomeAcceptedLesson" classname="com.halo.app.study.StudySourcesTest" time="0.088"/>
+  <testcase name="selectionChangeAfterVisionPreflightKeepsTheVerifiedTarget" classname="com.halo.app.study.StudySourcesTest" time="0.061"/>
+  <testcase name="selectedPdfPageAndNoteBUseOneImageAndBoundedText" classname="com.halo.app.study.StudySourcesTest" time="0.033"/>
+  <testcase name="selectorNeverExceedsCharacterAndPassageBudget" classname="com.halo.app.study.StudySourcesTest" time="0.033"/>
+  <testcase name="legacyMultiSourceRevisionBelongsOnlyToFirstObject" classname="com.halo.app.study.StudySourcesTest" time="0.037"/>
+  <testcase name="simpleCardGrammarKeepsExactSourceAndRejectsUnknownSources" classname="com.halo.app.study.StudySourcesTest" time="0.034"/>
+  <testcase name="policyChangeDuringPreparationStopsGeneration" classname="com.halo.app.study.StudySourcesTest" time="0.037"/>
+  <testcase name="allLearnerLevelsReachBoundedPromptAndGeneralPolicyIsExplicit" classname="com.halo.app.study.StudySourcesTest" time="0.041"/>
+  <testcase name="shortMultiBlockNoteSuppliesAllRealBlocks" classname="com.halo.app.study.StudySourcesTest" time="0.034"/>
+  <testcase name="missingSourceDoesNotBlockOtherReadableMaterial" classname="com.halo.app.study.StudySourcesTest" time="0.034"/>
+  <testcase name="missingOrInactiveVisualCannotBeCited" classname="com.halo.app.study.StudySourcesTest" time="0.037"/>
+  <testcase name="childLessonCannotUseAdultCloudConsentWithoutTheChildGrant" classname="com.halo.app.study.StudySourcesTest" time="0.04"/>
+  <testcase name="canonicalLongNoteRetrievesLaterExercise" classname="com.halo.app.study.StudySourcesTest" time="0.174"/>
+  <testcase name="localOnlyLessonHistoryCannotBecomeRemoteContext" classname="com.halo.app.study.StudySourcesTest" time="0.035"/>
+  <testcase name="fourSourcesRespectCombinedBudgetAndDistinctVersions" classname="com.halo.app.study.StudySourcesTest" time="0.085"/>
+  <testcase name="recreatedRepositoryRestoresStagePreferencesAndIdempotentAttempt" classname="com.halo.app.study.StudySourcesTest" time="0.094"/>
+  <testcase name="utf8FileCapAndPartialCoverageAreHonest" classname="com.halo.app.study.StudySourcesTest" time="0.092"/>
+  <testcase name="solutionRequiresExplicitReveal" classname="com.halo.app.study.StudySourcesTest" time="0.027"/>
+  <testcase name="sourceOnlyAndLevelLanguageInstructionsReachProvider" classname="com.halo.app.study.StudySourcesTest" time="0.032"/>
+  <testcase name="compactExplanationRetainsSourceAndRevealRules" classname="com.halo.app.study.StudySourcesTest" time="0.028"/>
+  <testcase name="topicLessonUsesQuestionWithoutCitations" classname="com.halo.app.study.StudySourcesTest" time="0.033"/>
+  <testcase name="initialAskIncludesBeginningAndGoalWhereBudgetAllows" classname="com.halo.app.study.StudySourcesTest" time="0.034"/>
+  <testcase name="laterPassageWinsLexicalSelection" classname="com.halo.app.study.StudySourcesTest" time="0.029"/>
+  <testcase name="onlyCanonicalFourSourceKeysCanCreateCitations" classname="com.halo.app.study.StudySourcesTest" time="0.032"/>
+  <testcase name="reviewRetainsCardIdentityAndEditedCardRejectsRegeneration" classname="com.halo.app.study.StudySourcesTest" time="0.108"/>
+  <testcase name="strictPracticeCardsCarryExactProvenance" classname="com.halo.app.study.StudySourcesTest" time="0.039"/>
+  <testcase name="bomIsRemovedAndInvalidUtf8IsUnsupported" classname="com.halo.app.study.StudySourcesTest" time="0.123"/>
+  <testcase name="staleReviewSnapshotCannotDuplicateMasteryOrScheduleUpdates" classname="com.halo.app.study.StudySourcesTest" time="0.091"/>
+  <testcase name="oversizedPdfDimensionsAreBoundedWithoutChangingPageIdentity" classname="com.halo.app.study.StudySourcesTest" time="0.035"/>
+  <testcase name="startingFromUnavailableSourcesRequiresReadableMaterialOrPermittedTopic" classname="com.halo.app.study.StudySourcesTest" time="0.076"/>
+  <testcase name="unknownMarkerAndUnmarkedTextHaveNoCitations" classname="com.halo.app.study.StudySourcesTest" time="0.028"/>
+  <testcase name="invalidCardsAreRejectedAsWholeBatch" classname="com.halo.app.study.StudySourcesTest" time="0.03"/>
+  <testcase name="workspaceSharingOffRefusesRemoteText" classname="com.halo.app.study.StudySourcesTest" time="0.027"/>
+  <testcase name="onlyActualSecondMarkerCreatesCitation" classname="com.halo.app.study.StudySourcesTest" time="0.025"/>
+  <testcase name="uriPermissionLossIsExplicit" classname="com.halo.app.study.StudySourcesTest" time="0.066"/>
+  <testcase name="smallBudgetPreservesRelevantLaterPassage" classname="com.halo.app.study.StudySourcesTest" time="0.027"/>
+  <testcase name="unknownLegacyHistoryIsOmittedFromNewPrompts" classname="com.halo.app.study.StudySourcesTest" time="0.04"/>
+  <testcase name="missingMaterialNeedsExplicitGeneralPermissionForTopic" classname="com.halo.app.study.StudySourcesTest" time="0.041"/>
+  <testcase name="textOnlyTargetNeverReceivesVisualBytes" classname="com.halo.app.study.StudySourcesTest" time="0.033"/>
+  <testcase name="localOnlyVisualExcludesRemoteProviderBeforePreparation" classname="com.halo.app.study.StudySourcesTest" time="0.03"/>
+  <testcase name="perSourceVersionsAndLanguagesRoundTripIndependently" classname="com.halo.app.study.StudySourcesTest" time="0.03"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

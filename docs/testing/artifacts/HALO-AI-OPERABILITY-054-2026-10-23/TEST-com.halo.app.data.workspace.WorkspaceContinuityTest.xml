@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceContinuityTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:03:07.459Z" hostname="MINIFOXEY" time="0.806">
+  <properties/>
+  <testcase name="photoStudioSaveReopenExportCanvasStudyAndChatPreserveIdentityAndOriginal" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.181"/>
+  <testcase name="trashRejectsNewSourceUseButRetainedOutputKeepsHonestHistoricalLink" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.108"/>
+  <testcase name="staleInkSelectionDoesNotHideItsActiveCanvasDestination" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.068"/>
+  <testcase name="memoryPromotionRequiresLiveExactSourceAndForgettingStopsRetrieval" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.111"/>
+  <testcase name="canvasReviewedNotesKeepTheirCanonicalDerivedIdAndSourceNodeHistory" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.113"/>
+  <testcase name="workingSetKeepsLiteralTextAndRejectsChangedOrTrashedObjects" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.066"/>
+  <testcase name="completedHandoffReopensItsResultAfterOwnerRestartWithoutUndoingUserEdits" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.079"/>
+  <testcase name="existingJsonTextRetainsChatAndStudyWithoutAdvertisingUnsupportedEditing" classname="com.halo.app.data.workspace.WorkspaceContinuityTest" time="0.073"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

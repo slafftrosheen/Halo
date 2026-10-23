@@ -67,7 +67,7 @@ class HomeToolCatalogTest {
         assertEquals(HomeToolReason.UNCHECKED, e.reason)
     }
     @Test fun imageEditorIsLimitedAndMissingConfigurationHasEditorRecovery() {
-        assertEquals(HomeToolReason.EDITOR, entry("create.image").reason)
+        assertEquals(HomeToolReason.IMAGE_REVIEW, entry("create.image").reason)
         assertEquals(HomeToolRecovery.NOTEBOOK, entry("create.image", ready.copy(imageConfigured = false)).recovery)
         assertEquals(HomeToolAction.NOTEBOOK, entry("create.image").descriptor.action)
     }
@@ -111,4 +111,16 @@ class HomeToolCatalogTest {
             assertFalse(HomeImportedSource("saved", "Source", homeImportedSourceKind(it)).canAttach)
         }
     }
+    @Test fun studioFileCanvasAndStudyEntriesBindFunctionalOperationsAndUnavailableOwnersHaveRecovery() {
+        val expected = mapOf("create.studio" to "halo_studio_create", "create.document" to "halo_text_create",
+            "work.files" to "halo_text_edit", "work.canvas" to "halo_canvas_add_text", "work.study" to "halo_study_with_halo")
+        expected.forEach { (id, operation) ->
+            val current = entry(id)
+            assertTrue(operation in current.descriptor.toolIds)
+            assertFalse(current.descriptor.editorOnly)
+            assertEquals(HomeToolStatus.READY, current.status)
+            assertFalse(entry(id, ready.copy(runtimeTools = emptyMap())).canUse)
+        }
+    }
+
 }

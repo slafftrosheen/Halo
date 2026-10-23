@@ -61,11 +61,11 @@ class WorkspaceFileTools(private val database: AppDatabase, val text: WorkspaceT
         if (id != null) get(id)
         return requests.offer(id)
     }
-    suspend fun attachToCanvas(canvasId: String, sourceId: String, expectedVersion: String): String = database.withTransaction {
+    suspend fun attachToCanvas(canvasId: String, sourceId: String, expectedVersion: String, expectedCanvasVersion: String? = null): String = database.withTransaction {
         val source = get(sourceId)
         require(source.version == expectedVersion)
         val canvas = requireNotNull(canvases.observe(canvasId).first())
         val x = canvas.nodes.maxOfOrNull { it.x.toDouble() + it.width }?.plus(24.0)?.coerceIn(-100_000.0, 100_000.0)?.toFloat() ?: 0f
-        canvases.addReference(canvasId, sourceId, x, 0f, image = source.mimeType?.startsWith("image/") == true)
+        canvases.addReference(canvasId, sourceId, x, 0f, image = source.mimeType?.startsWith("image/") == true, expectedCanvasVersion = expectedCanvasVersion)
     }
 }

@@ -107,15 +107,15 @@ data class HomeToolCatalogSnapshot(val entries: List<HomeToolEntry> = emptyList(
 internal object HomeToolCatalog {
     val descriptors = listOf(
         HomeToolDescriptor("create.studio", HomeToolGroup.CREATE, R.string.studio_title, R.string.studio_local,
-            HomeToolAction.STUDIO),
+            HomeToolAction.STUDIO, setOf("halo_studio_create", "halo_studio_get", "halo_studio_edit", "halo_studio_export")),
         HomeToolDescriptor("create.document", HomeToolGroup.CREATE, R.string.file52_new_document, R.string.file52_local_scope,
-            HomeToolAction.FILE_TOOLS),
+            HomeToolAction.FILE_TOOLS, setOf("halo_text_create", "halo_text_get", "halo_text_edit", "halo_text_export")),
         HomeToolDescriptor("create.note", HomeToolGroup.CREATE, R.string.home_tool_note, R.string.home_tool_note_detail,
             HomeToolAction.NEW_NOTE, setOf("halo_create_empty_note")),
         HomeToolDescriptor("create.image", HomeToolGroup.CREATE, R.string.home_tool_image_create, R.string.home_tool_image_detail,
-            HomeToolAction.NOTEBOOK, setOf("halo_open_screen"), onlineOnly = true, editorOnly = true),
+            HomeToolAction.NOTEBOOK, setOf("halo_studio_ai_draft"), onlineOnly = true),
         HomeToolDescriptor("create.image_edit", HomeToolGroup.CREATE, R.string.home_tool_image_edit, R.string.home_tool_image_detail,
-            HomeToolAction.NOTEBOOK, setOf("halo_open_screen"), onlineOnly = true, editorOnly = true),
+            HomeToolAction.NOTEBOOK, setOf("halo_studio_ai_draft"), onlineOnly = true),
         HomeToolDescriptor("find.web", HomeToolGroup.FIND, R.string.online_title, R.string.home_tool_web_detail, HomeToolAction.WEB, onlineOnly = true),
         HomeToolDescriptor("find.research", HomeToolGroup.FIND, R.string.home_tool_research, R.string.home_tool_research_detail,
             HomeToolAction.RESEARCH_DRAFT, setOf("halo_research"), needsAnswers = true),
@@ -126,13 +126,13 @@ internal object HomeToolCatalog {
         HomeToolDescriptor("work.inbox", HomeToolGroup.WORK, R.string.home_tool_inbox, R.string.home_tool_inbox_detail,
             HomeToolAction.INBOX, setOf("halo_create_empty_note")),
         HomeToolDescriptor("work.canvas", HomeToolGroup.WORK, R.string.home_tool_canvas, R.string.home_tool_canvas_detail,
-            HomeToolAction.NOTEBOOK, setOf("halo_open_screen"), editorOnly = true),
+            HomeToolAction.NOTEBOOK, setOf("halo_canvas_create", "halo_canvas_get", "halo_canvas_add_text", "halo_workspace_insert")),
         HomeToolDescriptor("work.study", HomeToolGroup.WORK, R.string.home_tool_study, R.string.home_tool_study_detail,
-            HomeToolAction.STUDY, setOf("halo_open_screen")),
+            HomeToolAction.STUDY, setOf("halo_study_with_halo", "halo_get_study_session")),
         HomeToolDescriptor("work.image_read", HomeToolGroup.WORK, R.string.home_tool_image_read, R.string.home_tool_image_read_detail,
             HomeToolAction.ATTACH),
         HomeToolDescriptor("work.files", HomeToolGroup.WORK, R.string.file52_title, R.string.file52_local_scope,
-            HomeToolAction.FILE_TOOLS),
+            HomeToolAction.FILE_TOOLS, setOf("halo_file_tool_capabilities", "halo_text_edit", "halo_image_transform", "halo_pdf_annotation_create")),
         HomeToolDescriptor("work.calculate", HomeToolGroup.WORK, R.string.home_tool_calculator, R.string.home_tool_calculator_future,
             HomeToolAction.PLANNED),
         HomeToolDescriptor("work.python", HomeToolGroup.WORK, R.string.home_tool_python, R.string.home_tool_python_future,
@@ -196,6 +196,7 @@ internal object HomeToolCatalog {
             HomeAnswerReadiness.UNCHECKED -> return limited(HomeToolReason.UNCHECKED)
             HomeAnswerReadiness.READY -> Unit
         }
+        if (d.id.startsWith("create.image")) return limited(HomeToolReason.IMAGE_REVIEW)
         if (d.editorOnly) return limited(HomeToolReason.EDITOR)
         if (d.action == HomeToolAction.MAPS_DRAFT) return limited(HomeToolReason.HANDOFF)
         return HomeToolEntry(d, HomeToolStatus.READY, HomeToolReason.READY)

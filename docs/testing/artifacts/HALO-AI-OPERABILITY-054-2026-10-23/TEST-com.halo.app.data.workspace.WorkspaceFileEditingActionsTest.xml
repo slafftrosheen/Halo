@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceFileEditingActionsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:03:08.352Z" hostname="MINIFOXEY" time="0.174">
+  <properties/>
+  <testcase name="everyOperationHasCanonicalPolicyAndWorkspaceContentBoundary" classname="com.halo.app.data.workspace.WorkspaceFileEditingActionsTest" time="0.059"/>
+  <testcase name="sharedActionsUseExactRevisionBoundedReadsAndDispatchTruth" classname="com.halo.app.data.workspace.WorkspaceFileEditingActionsTest" time="0.111"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

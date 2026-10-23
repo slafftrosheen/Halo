@@ -92,6 +92,10 @@ class ToolRegistry(
     /** All registered descriptors. Bare tools receive a conservative fallback descriptor. */
     fun descriptors(): List<ToolDescriptor> = bindings().map { it.descriptor }
 
+    /** Review actual registered function schemas; never runs a tool or changes authorization. */
+    fun operabilityReport(features: List<ToolFeatureOperability>): List<ToolOperabilityProblem> =
+        ToolOperabilityReview.inspect(features, descriptors())
+
     private fun binding(toolName: String): Binding? = bindings().firstOrNull {
         it.definition.name == toolName || it.definition.id == toolName
     }

@@ -872,17 +872,10 @@ object ManualDependencyGraph {
         val studioExecutor = com.halo.app.di.tools.StudioToolExecutor(studioService)
         val workspaceExecutor = WorkspaceToolExecutor(
             notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,
-            studyStarter = com.halo.app.study.StudySessionStarter { sourceObjectId, interactionId ->
-                studyUseCases.start(
-                    com.halo.app.study.StartStudyRequest(
-                        sourceObjectId = sourceObjectId,
-                        interactionId = interactionId,
-                        actor = com.halo.app.study.StudyStarter.TOOL,
-                    )
-                )
-            },
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
             continuity = com.halo.app.di.tools.WorkspaceContinuityActions(workspaceContinuity),
+            canvas = com.halo.app.di.tools.WorkspaceCanvasActions(appDatabase, notebookCanvasRepository),
+            exactStudyStarter = { sourceId, sourceVersion -> studyUseCases.startExactMaterial(sourceId, sourceVersion, workspaceContext::versionFor) },
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
             { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)

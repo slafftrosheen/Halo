@@ -4,7 +4,6 @@ import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.notebook.NotebookRepository
 import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.workspace.WorkspaceRepository
-import com.halo.app.study.StudySessionStarter
 import com.halo.app.study.StudyStartResult
 import com.halo.runtime.cognition.context.AssistantContextRepository
 import com.halo.runtime.cognition.tools.ToolExecutionResult
@@ -18,11 +17,11 @@ class WorkspaceToolExecutor(
     private val workspaceRepository: WorkspaceRepository,
     private val workspaceContextStore: WorkspaceContextStore,
     private val assistantContextRepository: AssistantContextRepository? = null,
-    /** Durable Study starter. Null means Study has no session store, so the tool must refuse. */
-    private val studyStarter: StudySessionStarter? = null,
     /** Read-only Study description; the runtime sees the portable session contract, not storage. */
     private val studySessionDescriptions: (suspend (String) -> String?)? = null,
     private val continuity: WorkspaceContinuityActions? = null,
+    private val canvas: WorkspaceCanvasActions? = null,
+    private val exactStudyStarter: (suspend (String, String) -> StudyStartResult)? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -73,13 +72,14 @@ class WorkspaceToolExecutor(
         ToolDefinition(
             id = "halo_study_with_halo",
             name = "halo_study_with_halo",
-            description = "Start a durable guided study session from an exact Workspace note or supported text/image/PDF object.",
+            description = "Start a durable guided study session from an exact Workspace source and observed sourceVersion. Describe the source first; stale versions are rejected. No automatic replay of uncertain session creation.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
-                    "noteId" to mapOf("type" to "string", "description" to "Exact Workspace material object ID (legacy parameter name)")
+                    "noteId" to mapOf("type" to "string", "maxLength" to 100, "description" to "Exact Workspace material object ID (legacy parameter name)"),
+                    "sourceVersion" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 200)
                 ),
-                "required" to listOf("noteId"),
+                "required" to listOf("noteId", "sourceVersion"),
                 "additionalProperties" to false
             )
         ),
@@ -122,10 +122,11 @@ class WorkspaceToolExecutor(
                 "additionalProperties" to false
             )
         )
-    ) + continuity?.definitions().orEmpty()
+    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty()
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         continuity?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
+        canvas?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         if (toolCall.functionName == "halo_create_empty_note") {
@@ -147,7 +148,8 @@ class WorkspaceToolExecutor(
             "query" -> 500
             else -> 100
         }
-        if (toolCall.arguments.keys != setOf(key) || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
+        val expectedKeys = if (toolCall.functionName == "halo_study_with_halo") setOf(key, "sourceVersion") else setOf(key)
+        if (toolCall.arguments.keys != expectedKeys || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
         if (key == "objectId" || key == "noteId") {
             val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
             if (item.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED) return reject("Workspace object is in trash", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
@@ -190,9 +192,12 @@ class WorkspaceToolExecutor(
                     com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)) {
                     return reject("This Workspace object is not Study material; ${item.type} is unsupported", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
                 }
-                val starter = studyStarter
-                    ?: return reject("Study is unavailable: no durable study session store is configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
-                when (val result = starter.start(objectId, null)) {
+                val sourceVersion = (toolCall.arguments["sourceVersion"] as? String)?.takeIf { it.length in 1..200 }
+                    ?: return reject("An exact sourceVersion is required")
+                if (workspaceContextStore.versionFor(objectId) != sourceVersion) return reject("Study source changed. Describe and select it again.", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                val starter = exactStudyStarter
+                    ?: return reject("Study is unavailable: no exact source session owner is configured", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+                when (val result = starter(objectId, sourceVersion)) {
                     is StudyStartResult.Started -> ToolExecutionResult.Success(
                         toolCall.id,
                         toolCall.functionName,

@@ -73,7 +73,9 @@ class StudyRepository(
 
     suspend fun createMaterialSession(sources: List<com.halo.sdk.runtime.study.StudySessionSource>, languages: StudyLanguagePreferences,
         goal: String?, level: com.halo.sdk.runtime.study.StudyLearnerLevel, style: com.halo.sdk.runtime.study.StudySupportStyle,
-        policy: com.halo.sdk.runtime.study.StudyKnowledgePolicy, conversationId: String?, runId: String?, interactionId: String?): StudySessionRecord = database.withTransaction {
+        policy: com.halo.sdk.runtime.study.StudyKnowledgePolicy, conversationId: String?, runId: String?, interactionId: String?,
+        validateSources: suspend () -> Unit = {}): StudySessionRecord = database.withTransaction {
+        validateSources()
         val session = createSession(sources.map { it.objectId }, sources.firstOrNull()?.revision?.toLongOrNull(), languages, goal, conversationId, runId, interactionId)
         check(updateSetup(session.id, sources, level, style, policy))
         requireNotNull(getSession(session.id))

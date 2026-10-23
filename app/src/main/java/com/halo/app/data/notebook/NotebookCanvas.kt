@@ -457,7 +457,8 @@ class NotebookCanvasRepository(
         return id
     }
 
-    suspend fun addReference(canvasId: String, objectId: String, x: Float, y: Float, image: Boolean = false): String = database.withTransaction {
+    suspend fun addReference(canvasId: String, objectId: String, x: Float, y: Float, image: Boolean = false, expectedCanvasVersion: String? = null): String = database.withTransaction {
+        if (expectedCanvasVersion != null) check(canvasDao.getDocument(canvasId)?.revision?.let { "canvas:$it" } == expectedCanvasVersion) { "Canvas changed" }
         require(objectId != canvasId)
         val item = requireNotNull(notebookDao.getWorkspaceObject(objectId))
         require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE.name)

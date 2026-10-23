@@ -63,8 +63,8 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
             mapOf("noteId" to id, "revision" to revision, "page" to integer(1, 9999), "ink" to text(262144))),
         definition("halo_pdf_annotation_export_page_image", "Export an exact annotation-note page as a new PNG, retaining original PDF and vector annotation note. Raster output, not native PDF editing.",
             mapOf("noteId" to id, "revision" to revision, "page" to integer(1, 9999))),
-        definition("halo_file_attach_canvas", "Add an exact active file/note version as a Canvas reference. Source remains authoritative in Workspace; this never shares it externally.",
-            mapOf("canvasId" to id, "objectId" to id, "version" to version))
+        definition("halo_file_attach_canvas", "Requires exact current canvasVersion from halo_workspace_canvases as well as source version. Add an exact active file/note version as a Canvas reference. Source remains authoritative in Workspace; this never shares it externally.",
+            mapOf("canvasId" to id, "canvasVersion" to version, "objectId" to id, "version" to version))
     )
     private val names by lazy { definitions().map { it.name }.toSet() }
     fun owns(name: String) = name in names
@@ -135,7 +135,7 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
                 }
                 "halo_pdf_annotation_edit" -> { exact(setOf("noteId", "revision", "page", "ink")); success(annotation(tools.annotations.setPage(id("noteId"), number("revision").toLong(), number("page", 1, 9999), string("ink")))) }
                 "halo_pdf_annotation_export_page_image" -> { exact(setOf("noteId", "revision", "page")); success(file(tools.annotations.exportPageImage(id("noteId"), number("revision").toLong(), number("page", 1, 9999)))) }
-                "halo_file_attach_canvas" -> { exact(setOf("canvasId", "objectId", "version")); success(JSONObject().put("nodeId", tools.attachToCanvas(id("canvasId"), id("objectId"), string("version")))) }
+                "halo_file_attach_canvas" -> { exact(setOf("canvasId", "canvasVersion", "objectId", "version")); success(JSONObject().put("nodeId", tools.attachToCanvas(id("canvasId"), id("objectId"), string("version"), string("canvasVersion")))) }
                 else -> ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unsupported file action", ToolRejectionKind.TOOL_UNKNOWN)
             }
         } catch (cancelled: CancellationException) { throw cancelled }

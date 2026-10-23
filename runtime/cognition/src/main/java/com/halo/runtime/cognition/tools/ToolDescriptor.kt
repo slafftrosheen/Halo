@@ -220,6 +220,7 @@ data class ToolDescriptor(
     val execution: ToolExecutionPolicy = ToolExecutionPolicy(),
     val presentation: ToolPresentation? = null,
     val automation: ToolAutomationMetadata = ToolAutomationMetadata(),
+    val operability: ToolOperability? = null,
 ) {
     val name: String get() = definition.name
 }

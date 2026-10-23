@@ -71,8 +71,8 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                 "title" to text), listOf("projectId", "revision", "action")),
         definition("halo_studio_export", "Render an exact local Studio draft into a new immutable Workspace PNG/JPEG with durable source/version metadata. Does not overwrite or automatically insert/share anything.",
             mapOf("projectId" to id, "revision" to revision, "format" to mapOf("type" to "string", "enum" to listOf("PNG", "JPEG")))),
-        definition("halo_studio_insert", "Insert a previously exported exact Studio image as a new Canvas reference. The managed Workspace copy remains authoritative.",
-            mapOf("canvasId" to id, "outputId" to id, "fileVersion" to mapOf("type" to "string", "maxLength" to 200)))
+        definition("halo_studio_insert", "Insert a previously exported exact Studio image on an exact current Canvas revision as a new reference. The managed Workspace copy remains authoritative.",
+            mapOf("canvasId" to id, "canvasVersion" to mapOf("type" to "string", "maxLength" to 30), "outputId" to id, "fileVersion" to mapOf("type" to "string", "maxLength" to 200)))
     )
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun rejected(kind: ToolRejectionKind = ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(
@@ -138,10 +138,10 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     return success(summary(studio.projects.create(title, document)))
                 }
                 "halo_studio_insert" -> {
-                    exact(setOf("canvasId", "outputId", "fileVersion"))
+                    exact(setOf("canvasId", "canvasVersion", "outputId", "fileVersion"))
                     val version = string("fileVersion").also { require(it.length in 1..200) }
                     val canvas = objectId("canvasId"); val output = objectId("outputId")
-                    val node = studio.insertOutput(canvas, output, version)
+                    val node = studio.insertOutput(canvas, output, version, string("canvasVersion"))
                     return success(JSONObject().put("canvasId", canvas).put("outputId", output).put("nodeId", node).put("inserted", true))
                 }
                 "halo_studio_get" -> {

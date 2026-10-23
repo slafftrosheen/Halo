@@ -1,0 +1,30 @@
+{
+  "base": "559eda6da73e73e1440033b594d2da23a112cf34",
+  "appMainTree": "c1fef6355a831a6fdb3f8714c2dd3f3b72d170df",
+  "cognitionMainTree": "1f20c2bb968c9bc09cbd92868f3d2cfcf7c5dfe3",
+  "appApk": {
+    "bytes": 287287643,
+    "sha256": "25e747daac917f4c5de09e13230af49a2ee6210a5033532ed2820d1e3c7c45df",
+    "installed": false
+  },
+  "testApk": {
+    "bytes": 1963558,
+    "sha256": "ed5fdc7171020809bf8ef429c53d8b031cfcb530398b885554f5822550ded434"
+  },
+  "desktop": {
+    "tests": 100,
+    "classes": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "runtime": {
+    "classes": 7,
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "native": "NOT_RUN; ADB inventory empty",
+  "actualSpokenAndPowerWorkflows": "NOT_RUN"
+}
