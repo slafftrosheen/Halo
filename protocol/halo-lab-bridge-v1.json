@@ -1,7 +1,7 @@
 {
   "schema": "halo-lab-bridge",
   "protocolMajor": 1,
-  "protocolMinor": 0,
+  "protocolMinor": 1,
   "transport": "android-aidl-bounded-json-v1",
   "canonicalOwner": "Halo",
   "clientPackage": "com.slafftrosheen.halomodellab",
@@ -19,13 +19,15 @@
     "acknowledgeEvents",
     "acquireModel",
     "queryAcquisition",
-    "cancelAcquisition"
+    "cancelAcquisition",
+    "openEvidenceArtifact"
   ],
   "implementedFeatures": [
     "MODEL_INVENTORY",
     "ARTIFACT_LEASES",
     "TEXT_EXECUTION",
-    "EVENT_REPLAY"
+    "EVENT_REPLAY",
+    "EVIDENCE_ARTIFACT_READ"
   ],
   "textExecution": {
     "workerProcess": ":modelbench",
@@ -48,7 +50,9 @@
     "eventsPerPage": 64,
     "eventPayloadBytes": 16384,
     "outstandingRunsPerClient": 1,
-    "maxPromptCharacters": 512
+    "maxPromptCharacters": 512,
+    "evidenceArtifactBytes": 2048,
+    "concurrentEvidenceArtifactTransfers": 2
   },
   "authentication": {
     "signaturePermission": "com.aistudio.braintool.xkqzps.permission.HALO_LAB_BRIDGE",
@@ -67,6 +71,13 @@
       "bytes": "UTF-8 bytes in preview",
       "sha256": "SHA-256 of exact preview bytes",
       "truncation": "explicit boolean; null when unavailable"
+    },
+    "transferablePayload": {
+      "artifactId": "output-<terminal-attempt-uuid>",
+      "kind": "complete fixed-smoke text output",
+      "maximumBytes": 2048,
+      "modelArtifactBytesAllowed": false,
+      "requiresTerminalAttemptAndConsent": true
     },
     "terminalMetrics": ["loadMs", "timeToFirstTokenMs", "generationMs", "effectiveBackendCode", "runtimeVersion"]
   }
