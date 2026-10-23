@@ -67,6 +67,19 @@ class WorkspaceOperabilityDeviceTest {
             assertTrue(changed is ToolExecutionResult.Success)
             assertTrue(call("halo_canvas_edit_text", mapOf("canvasId" to board.getString("canvasId"), "version" to card.getString("version"), "nodeId" to card.getString("nodeId"), "text" to "Stale")) is ToolExecutionResult.Rejected)
             assertEquals("Reviewed", canvases.observe(board.getString("canvasId")).first()!!.nodes.single().text)
+            val boardId = board.getString("canvasId")
+            val sketch = canvases.addSketchNode(boardId, 0f, 0f, "sketch:v1|100,100;200,200")
+            val sketchVersion = "canvas:${database.notebookCanvasDao().getDocument(boardId)!!.revision}"
+            val clearArgs = mapOf("canvasId" to boardId, "version" to sketchVersion, "nodeId" to sketch)
+            val clearPolicy = requireNotNull(registry.descriptor("halo_canvas_clear_sketch")).security
+            assertEquals(ConfirmationPolicy.ALWAYS, clearPolicy.confirmation)
+            assertEquals(ReplaySafety.NEVER_REPLAY, clearPolicy.replaySafety)
+            // Isolated semantic-owner fixture only; actual approval/STT/Power acceptance is separate.
+            val cleared = JSONObject((call("halo_canvas_clear_sketch", clearArgs) as ToolExecutionResult.Success).output)
+            assertTrue(cleared.getBoolean("changed"))
+            assertTrue(requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(canvases.observe(boardId).first()!!.nodes.single { it.id == sketch }.text)).strokes.isEmpty())
+            assertTrue(call("halo_canvas_clear_sketch", clearArgs) is ToolExecutionResult.Rejected)
+            assertEquals("Reviewed", canvases.observe(boardId).first()!!.nodes.single { it.id == card.getString("nodeId") }.text)
             val note = notes.createNote("Synthetic lesson material", title = "Study source")
             database.workspaceAssetDao().insertAsset(WorkspaceAssetEntity("native-audio", note.id, "AUDIO", "audio/wav", "MANAGED_FILE", "synthetic-no-read", true, "Audio", 10, null, null, 100, 1))
             database.workspaceAssetDao().insertAttachment(NoteAttachmentEntity("native-audio-link", note.id, "native-audio", 0, null, 1))

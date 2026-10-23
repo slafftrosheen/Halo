@@ -49,7 +49,8 @@ class WorkspaceContinuityDeviceTest {
     }
     @Test fun nativePhotoStudioCanvasStudyAndChatReopenTheSameSavedResult() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        val databaseName = "continuity-restart-${UUID.randomUUID()}.db"
+        var database = Room.databaseBuilder(context, AppDatabase::class.java, databaseName).allowMainThreadQueries().build()
         val root = File(context.cacheDir, "continuity-device-" + UUID.randomUUID()).also { it.mkdirs() }
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
@@ -103,8 +104,28 @@ class WorkspaceContinuityDeviceTest {
             workspace.trash(source.objectId)
             assertTrue(runCatching { studio.createFromImage("No reuse", source.objectId.value, source.version!!) }.isFailure)
             assertEquals(WorkspaceSourceState.UNAVAILABLE, owner.describe(output.objectId.value).sources.single { it.objectId == source.objectId.value }.state)
+            // Reconstruct readers after a real database close/open, without replaying handoffs.
+            val savedOutputBytes = media.open(material.asset).bytes
+            database.close()
+            database = Room.databaseBuilder(context, AppDatabase::class.java, databaseName).allowMainThreadQueries().build()
+            val reopenedWorkspace = RoomWorkspaceRepository(database.notebookDao())
+            val reopenedFiles = RoomWorkspaceFileRepository(context, database, root, ownedUri = Uri::fromFile)
+            val reopenedDocuments = NotebookDocumentRepository(database.notebookDocumentDao(), database)
+            val reopenedCanvases = NotebookCanvasRepository(database, database.notebookCanvasDao(), database.notebookDao())
+            assertEquals(saved, StudioProjectRepository(database).get(saved.id))
+            assertEquals(output.objectId.value, reopenedCanvases.observe(canvas).first()!!.nodes.single { it.id == node }.refObjectId)
+            val reopenedMaterial = WorkspaceStudySourceResolver(context, reopenedDocuments, reopenedWorkspace, reopenedFiles, pdf).resolveExplicitReference(output.objectId.value, "") as ResolvedStudySource.Visual
+            val reopenedMedia = WorkspaceMediaAssetResolver(context, reopenedFiles, ephemeral, NotebookAssetRepository(context, database), reopenedWorkspace)
+            assertArrayEquals(savedOutputBytes, reopenedMedia.open(reopenedMaterial.asset).bytes)
+            val restartedFound = reopenedWorkspace.observe(WorkspaceQuery(search = "Local continuity")).first().map { it.id.value }
+            assertTrue(saved.id in restartedFound && output.objectId.value in restartedFound)
+            assertEquals(WorkspaceObjectLifecycle.TRASHED, reopenedWorkspace.get(source.objectId)!!.lifecycle)
+            assertTrue(WorkspaceStudySourceResolver(context, reopenedDocuments, reopenedWorkspace, reopenedFiles, pdf).resolveExplicitReference(source.objectId.value, "") is ResolvedStudySource.Unsupported)
+            assertTrue(database.memoryRecordDao().observeActiveRecords().first().isEmpty())
         } finally {
             scope.cancel(); database.close()
+            check(databaseName.startsWith("continuity-restart-") && !databaseName.contains('/') && !databaseName.contains('\\'))
+            context.deleteDatabase(databaseName)
             check(root.canonicalFile.parentFile == context.cacheDir.canonicalFile)
             root.deleteRecursively()
         }

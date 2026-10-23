@@ -27,3 +27,9 @@ Runtime verification passed **6 tests / 3 classes**, zero failures/errors/skips,
 ## Remaining qualification
 
 Native PDF/Office format-preserving editing is unavailable. Full navigation/interruption matrices, tablet/stylus/eraser behavior, accessibility services and sustained performance need their own evidence under release issue #43. Connected phone availability alone is not acceptance. All device fixtures use synthetic cache files and isolated Room databases, without live providers, user documents or OS preference changes.
+
+## Current native offline acceptance — 2026-10-24
+
+[Current report and exact installed/source identities](HALO-CANVAS-CLEAR-054-VERIFICATION-2026-10-24.md) supersede the earlier NOT_RUN/install status. Five native Workspace cases passed in14.385s on f01fe673/API35 with installed app/test readback matching. The strengthened file fixture now creates/edits/exports/imports each initial literal format (TXT/Markdown/CSV), closes an actual unique file-backed database, reconstructs all readers and verifies saved content/bytes, Canvas references and Study material resolution. It also verifies persisted PDF vector annotations/raster page output, JPEG rotation/dimensions and preserved PNG/PDF originals. RU200% table Done remains reachable. Existing desktop36-case file/action/publication/backup evidence and shared typed owners remain applicable; no unsupported native PDF/Office capability was added.
+
+The initial supported toolkit acceptance is complete against source, desktop and native offline-owner evidence. Future faithful Office/native-PDF editing remains explicitly unavailable; full release navigation/performance/accessibility belongs to #43, while actual spoken/permitted Power workflows remain #54 acceptance. Database restart is not an OS process-kill result; Study material resolution is not saved Study-session restart. No user data or global preference changes.

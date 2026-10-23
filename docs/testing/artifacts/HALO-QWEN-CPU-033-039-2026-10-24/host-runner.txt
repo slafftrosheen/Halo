@@ -1,0 +1,8 @@
+LiteRT physical probe: qwen3-0.6b-dynamic-int4-CPU-ctx2048-resident3 (captureOnly=False)
+  PASSED; inspect qwen3-0.6b-dynamic-int4-CPU-ctx2048-resident3.txt
+
+ModelId                 Backend Language Cycles ResidentTurns ContextTokens Result ProcessExit OutputFile
+-------                 ------- -------- ------ ------------- ------------- ------ ----------- ----------
+qwen3-0.6b-dynamic-int4 CPU     NONE          0             3          2048 PASSED           0 qwen3-0.6b-dynamic-int4-…
+
+Saved evidence to: C:\Users\slavd\HaloEco\verification-2026-10-24-qwen-cpu-resident

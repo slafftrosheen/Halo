@@ -1,0 +1,6 @@
+"modelId","sha256","backend","effectiveBackend","language","role","grade","scope","passed","attempted","expected","medianAnswerMs","effectiveContext","stable","baselinePass","memoryPressure","sampledPeakPssKb","suiteFailure","selectionEvidenceSaved"
+"qwen3-0.6b-dynamic-int4","03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856","CPU",,"EN","FAST","NOT_TESTED","CONTROLLED_FIXTURES_ONLY","0","0",,,,,,,,"NO_COMPLETED_MATCHING_RUN","False"
+"qwen3-0.6b-dynamic-int4","03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856","CPU",,"EN","CHAT","NOT_TESTED","CONTROLLED_FIXTURES_ONLY","0","0",,,,,,,,"NO_COMPLETED_MATCHING_RUN","False"
+"qwen3-0.6b-dynamic-int4","03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856","CPU",,"EN","REASONING","NOT_TESTED","CONTROLLED_FIXTURES_ONLY","0","0",,,,,,,,"NO_COMPLETED_MATCHING_RUN","False"
+"qwen3-0.6b-dynamic-int4","03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856","CPU",,"EN","AGENTIC","NOT_TESTED","CONTROLLED_FIXTURES_ONLY","0","0",,,,,,,,"NO_COMPLETED_MATCHING_RUN","False"
+"qwen3-0.6b-dynamic-int4","03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856","CPU",,"EN","VISION","NOT_TESTED","CONTROLLED_FIXTURES_ONLY","0","0",,,,,,,,"NO_COMPLETED_MATCHING_RUN","False"

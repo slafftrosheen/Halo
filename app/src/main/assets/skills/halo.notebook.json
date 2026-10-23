@@ -11,7 +11,8 @@
     "halo_remove_from_working_set",
     "halo_get_workspace_object",
     "halo_create_empty_note",
-    "halo_save_screen_to_notebook"
+    "halo_save_screen_to_notebook",
+    "halo_canvas_clear_sketch"
   ],
   "toolDefinitions": [
     {
@@ -41,6 +42,10 @@
     {
       "toolId": "halo_save_screen_to_notebook",
       "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_clear_sketch",
+      "risk": "DESTRUCTIVE"
     }
   ]
 }

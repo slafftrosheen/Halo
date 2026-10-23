@@ -10,6 +10,17 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class BuiltInSkillManifestTest {
+    @Test fun canvasClearHasDestructiveRiskInRuntimeBundledAndMergedWorkspaceSkill() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val loader = BuiltInSkillManifestLoader(context)
+        val defaults = com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills()
+        for (skills in listOf(defaults, loader.loadBundledManifests(), loader.load())) {
+            val skill = skills.single { "halo_canvas_clear_sketch" in it.tools }
+            assertEquals("halo.notebook", skill.id.value)
+            assertEquals(com.halo.sdk.runtime.skills.SkillRisk.DESTRUCTIVE, skill.toolDefinitions.single { it.toolId == "halo_canvas_clear_sketch" }.risk)
+            assertTrue(skill.toolDefinitions.single { it.toolId == "halo_canvas_clear_sketch" }.requiredPermissions.isEmpty())
+        }
+    }
     @Test
     fun modelSetupManifestPreservesEveryRegisteredOperationAndItsRisk() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()

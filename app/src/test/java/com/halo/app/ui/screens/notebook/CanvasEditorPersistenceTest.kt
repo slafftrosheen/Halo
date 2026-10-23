@@ -36,6 +36,25 @@ class CanvasEditorPersistenceTest {
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
+    @Test fun assistantClearCannotBeReversedByAnAlreadyOpenEditorOrItsRecoveryDraft() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val edited = "sketch:v1|300,300;400,400"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val draft = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = edited)
+        repository.saveDrawingDraft(board, draft)
+        val vm = editor(board)
+        val version = "canvas:${db.notebookCanvasDao().getDocument(board)!!.revision}"
+        val action = com.halo.app.di.tools.WorkspaceCanvasActions(db, repository)
+        assertTrue(action.execute(com.halo.sdk.provider.ToolCall("clear", "halo_canvas_clear_sketch", mapOf("canvasId" to board, "version" to version, "nodeId" to card))) is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+        vm.addSketch(edited, card, original, draft).join()
+        val cleared = repository.observe(board).first()!!.nodes.single().text
+        assertTrue(requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(cleared)).strokes.isEmpty())
+        assertFalse(draft.matchesSource(card, "sketch", cleared))
+        assertEquals(draft, repository.drawingDraft(board))
+        val reopened = editor(board)
+        assertEquals(cleared, reopened.uiState.value.nodes.single().text)
+    }
     @Test fun savingOrCancellingAnotherSketchRetainsTheUnrelatedRecoveryDraft() = runBlocking {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"

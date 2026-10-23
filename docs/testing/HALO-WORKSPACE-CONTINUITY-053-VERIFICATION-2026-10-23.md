@@ -27,3 +27,9 @@ ADB inventory immediately before the gate listed no attached target. Both new is
 Issue #53 remains OPEN until required acceptance has evidence. Release qualification #43 remains open.
 
 Compiled production tree identities: app/src/main `9a2590265acc101b1bf51afeae2893ad61c4f95d`; runtime/cognition/src/main `fe9b271e7191837eac038a9826ef0851b97792ae`. Evidence is retained in the adjacent issue53 artifact folder.
+
+## Current native saved-object acceptance — 2026-10-24
+
+[Current source/installed identities and raw evidence](HALO-CANVAS-CLEAR-054-VERIFICATION-2026-10-24.md) supersede earlier NOT_RUN/install status. Five native Workspace cases passed in14.385s on f01fe673/API35, including photo -> Studio edit/save -> Workspace export -> Canvas -> Study/Chat source bytes with exact source provenance and original preservation. The continuity fixture now closes/reopens a unique actual on-disk database and reconstructs Studio/Canvas/Study/media/search readers; saved project/result/card IDs, media bytes, lexical discovery, trashed source rejection and empty Memory survive reconstruction. Literal note/file persistence is independently covered by the strengthened #52 native case. RU200% Continue/Chat/Done interaction passed with technical IDs absent.
+
+The scoped saved-object continuity acceptance is complete against source, existing70 desktop cases, runtime policies and current native readback. Study material resolution is verified, not saved Study-session restart. Database close/open is not OS process-kill acceptance. Actual spoken/provider/remote-consent flows remain #54/#47 qualification, broad lifecycle/accessibility/performance remains #43. No automatic Memory promotion, replay, provider or user-document mutation was introduced.

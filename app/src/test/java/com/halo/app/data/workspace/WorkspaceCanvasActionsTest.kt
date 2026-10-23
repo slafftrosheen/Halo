@@ -15,6 +15,68 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = android.app.Application::class)
 class WorkspaceCanvasActionsTest {
+    @Test fun clearSketchPersistsThroughCanonicalOwnerPreservingCardAspectLinksAndOtherContent() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val canvas = f.canvases.create("Drawing")
+            val ink = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode("sketch:v1|100,100;200,200")).copy(aspectMilli = 1800)
+            val sketch = f.canvases.addSketchNode(canvas, 20f, 30f, com.halo.sdk.runtime.ink.InkCodec.encode(ink))
+            val text = f.canvases.addTextNode(canvas, 0f, 0f, "Retain")
+            f.canvases.connect(canvas, sketch, text, "Keep link")
+            val before = f.canvases.observe(canvas).first()!!
+            val revision = f.continuity().describe(canvas).version
+            val actions = WorkspaceCanvasActions(f.database, f.canvases)
+            val args = mapOf("canvasId" to canvas, "version" to revision, "nodeId" to sketch)
+            val receipt = JSONObject((actions.execute(ToolCall("clear", "halo_canvas_clear_sketch", args)) as ToolExecutionResult.Success).output)
+            assertTrue(receipt.getBoolean("changed"))
+            assertEquals(sketch, receipt.getString("nodeId"))
+            val after = f.canvases.observe(canvas).first()!!
+            val saved = after.nodes.single { it.id == sketch }
+            val cleared = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(saved.text))
+            assertTrue(cleared.strokes.isEmpty())
+            assertEquals(1800, cleared.aspectMilli)
+            assertEquals(before.nodes.single { it.id == sketch }.let { listOf(it.id, it.x, it.y, it.width, it.height) }, listOf(saved.id, saved.x, saved.y, saved.width, saved.height))
+            assertEquals(before.edges, after.edges)
+            assertEquals("Retain", after.nodes.single { it.id == text }.text)
+            assertNotEquals(revision, receipt.getString("version"))
+            assertEquals(receipt.getString("version"), f.continuity().describe(canvas).version)
+            // An uncertain old command cannot clear strokes drawn after the original approval.
+            assertTrue(actions.execute(ToolCall("duplicate", "halo_canvas_clear_sketch", args)) is ToolExecutionResult.Rejected)
+            val noOp = JSONObject((actions.execute(ToolCall("empty", "halo_canvas_clear_sketch", args + ("version" to receipt.getString("version")))) as ToolExecutionResult.Success).output)
+            assertFalse(noOp.getBoolean("changed"))
+            assertEquals(receipt.getString("version"), noOp.getString("version"))
+        }
+    }
+
+    @Test fun clearRejectsStaleMalformedMissingForeignAndNonSketchTargetsWithoutMutation() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val canvas = f.canvases.create("Drawing")
+            val sketch = f.canvases.addSketchNode(canvas, 0f, 0f, "sketch:v1|100,100;200,200")
+            val text = f.canvases.addTextNode(canvas, 0f, 0f, "Keep")
+            val source = f.text.create("Source", WorkspaceTextFormat.TXT, "Intact")
+            val linked = f.canvases.addReference(canvas, source.id, 0f, 0f)
+            val foreignBoard = f.canvases.create("Other")
+            val foreign = f.canvases.addSketchNode(foreignBoard, 0f, 0f, "sketch:v1|100,100;200,200")
+            val version = f.continuity().describe(canvas).version
+            val actions = WorkspaceCanvasActions(f.database, f.canvases)
+            val base = mapOf("canvasId" to canvas, "version" to version, "nodeId" to sketch)
+            val before = f.canvases.observe(canvas).first()!!
+            for (args in listOf(base + ("version" to "canvas:1"), base + ("nodeId" to text), base + ("nodeId" to linked), base + ("nodeId" to foreign), base + ("nodeId" to "missing"), base + ("text" to "inject"), base - "version")) {
+                assertTrue(actions.execute(ToolCall("invalid", "halo_canvas_clear_sketch", args)) is ToolExecutionResult.Rejected)
+                assertEquals(before, f.canvases.observe(canvas).first())
+            }
+            assertEquals("Intact", f.text.get(source.id)!!.text)
+            // Imported/future/corrupt data cannot be mistaken for an empty known drawing.
+            for (bad in listOf("sketch:v3|broken", "sketch:v99|future")) {
+                f.database.notebookCanvasDao().updateNodeText(canvas, sketch, bad, 1)
+                assertTrue(actions.execute(ToolCall("bad-ink", "halo_canvas_clear_sketch", base)) is ToolExecutionResult.Rejected)
+                assertEquals(bad, f.canvases.observe(canvas).first()!!.nodes.single { it.id == sketch }.text)
+                assertEquals(version, f.continuity().describe(canvas).version)
+            }
+            f.workspace.trash(com.halo.app.data.notebook.WorkspaceObjectId(canvas))
+            assertTrue(actions.execute(ToolCall("trash", "halo_canvas_clear_sketch", base)) is ToolExecutionResult.Rejected)
+        }
+    }
+
     @Test fun typedCanvasChangesAreSavedInTheEditorOwnerAndRejectStaleOrLinkedTextWrites() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val actions = WorkspaceCanvasActions(f.database, f.canvases)

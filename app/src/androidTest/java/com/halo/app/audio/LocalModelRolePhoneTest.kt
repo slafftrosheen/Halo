@@ -24,6 +24,22 @@ import java.io.File
 /** Agent entry point: one installed artifact/backend/language, no downloads or role setters. */
 @RunWith(AndroidJUnit4::class)
 class LocalModelRolePhoneTest {
+    private fun toolPrompt(language: String): String = when (language) {
+        "EN" -> "Call fixture_lookup with key=sample. After receiving its result, reply with only the returned code."
+        "LV" -> "Izsauc fixture_lookup ar key=sample. Pēc rezultāta saņemšanas atbildi tikai ar iegūto kodu."
+        "RU" -> "Вызови fixture_lookup с key=sample. После получения результата ответь только полученным кодом."
+        "PL" -> "Wywołaj fixture_lookup z key=sample. Po otrzymaniu wyniku odpowiedz wyłącznie zwróconym kodem."
+        else -> error("Unsupported tool fixture language")
+    }
+
+    @Test fun toolFixtureUsesTheRequestedLanguageAndRejectsUnknownLanguages() {
+        val prompts = listOf("EN", "LV", "RU", "PL").map(::toolPrompt)
+        org.junit.Assert.assertEquals(4, prompts.distinct().size)
+        org.junit.Assert.assertTrue(toolPrompt("PL").startsWith("Wywołaj "))
+        org.junit.Assert.assertTrue(prompts.all { "fixture_lookup" in it && "key=sample" in it })
+        org.junit.Assert.assertThrows(IllegalStateException::class.java) { toolPrompt("DE") }
+    }
+
     private data class Observation(val role: AiModelRole, val pass: Boolean, val elapsedMs: Long)
 
     @Test fun qualifyInstalledRoles() = runBlocking {
@@ -143,11 +159,7 @@ class LocalModelRolePhoneTest {
                                 withTimeout(120_000) {
                                     val tool = ToolDefinition("fixture_lookup", "fixture_lookup", "Look up a synthetic test code; no real action.",
                                         mapOf("type" to "object", "properties" to mapOf("key" to mapOf("type" to "string")), "required" to listOf("key")))
-                                    val prompt = when (language) {
-                                        "LV" -> "Izsauc fixture_lookup ar key=sample. Pēc rezultāta saņemšanas atbildi tikai ar iegūto kodu."
-                                        "RU" -> "Вызови fixture_lookup с key=sample. После получения результата ответь только полученным кодом."
-                                        else -> "Call fixture_lookup with key=sample. After receiving its result, reply with only the returned code."
-                                    }
+                                    val prompt = toolPrompt(language)
                                     val request = AiRequest(text = prompt, modelId = modelId, maxOutputTokens = 256,
                                         toolUseMode = ToolUseMode.REQUIRED, reasoningMode = AiReasoningMode.DISABLED)
                                     val toolContext = AiContext(availableTools = listOf(tool))

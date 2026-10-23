@@ -1,0 +1,1 @@
+Starting: Intent { cmp=com.aistudio.braintool.xkqzps/com.halo.app.MainActivity }

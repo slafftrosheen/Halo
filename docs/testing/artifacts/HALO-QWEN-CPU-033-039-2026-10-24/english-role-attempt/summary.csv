@@ -1,0 +1,2 @@
+"ModelId","Backend","Language","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile","Reason"
+"qwen3-0.6b-dynamic-int4","CPU","EN","1","0","2048","RUNNER_INTERRUPTED","124","qwen3-0.6b-dynamic-int4-CPU-ctx2048-cycles1-roles-EN-r3.txt",

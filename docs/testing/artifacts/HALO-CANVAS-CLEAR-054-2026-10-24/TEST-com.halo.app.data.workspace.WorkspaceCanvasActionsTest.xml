@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceCanvasActionsTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T22:29:49.418Z" hostname="MINIFOXEY" time="8.232">
+  <properties/>
+  <testcase name="malformedArgumentsAndUnknownCoordinatesCannotCreateOrMoveAnything" classname="com.halo.app.data.workspace.WorkspaceCanvasActionsTest" time="7.288"/>
+  <testcase name="typedCanvasChangesAreSavedInTheEditorOwnerAndRejectStaleOrLinkedTextWrites" classname="com.halo.app.data.workspace.WorkspaceCanvasActionsTest" time="0.23"/>
+  <testcase name="clearRejectsStaleMalformedMissingForeignAndNonSketchTargetsWithoutMutation" classname="com.halo.app.data.workspace.WorkspaceCanvasActionsTest" time="0.166"/>
+  <testcase name="clearSketchPersistsThroughCanonicalOwnerPreservingCardAspectLinksAndOtherContent" classname="com.halo.app.data.workspace.WorkspaceCanvasActionsTest" time="0.093"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -296,6 +296,9 @@ object HaloToolDescriptors {
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
+        "halo_canvas_clear_sketch" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, ToolSecurityPolicy.DESTRUCTIVE,
+            keywords = setOf("canvas", "sketch", "drawing", "clear", "erase", "strokes"),
+            presentation = ToolPresentation(title = "Clear sketch", actionVerb = "Clear"))
         "halo_canvas_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
             keywords = setOf("canvas", "board", "cards", "read", "drawing"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))

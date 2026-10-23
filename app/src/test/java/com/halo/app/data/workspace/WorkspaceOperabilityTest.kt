@@ -32,6 +32,36 @@ class WorkspaceOperabilityTest {
             val discovery = ToolDiscoveryService(registry)
             assertTrue(discovery.expand(listOf("halo_canvas_add_text")).single { it.name == "halo_canvas_add_text" }.description.contains("Operation contract v1"))
             assertTrue(registry.descriptors().any { it.name == "halo_canvas_add_text" && "canvas" in it.keywords })
+            val clear = requireNotNull(registry.descriptor("halo_canvas_clear_sketch"))
+            assertEquals(ToolRiskClass.DESTRUCTIVE, clear.security.risk)
+            assertEquals(ConfirmationPolicy.ALWAYS, clear.security.confirmation)
+            assertEquals(ReplaySafety.NEVER_REPLAY, clear.security.replaySafety)
+            assertEquals(CapabilityId("workspace.write"), clear.operability!!.capabilityId)
+            assertEquals(setOf("version"), clear.operability!!.sourceVersionArguments)
+            assertEquals(setOf("canvasId", "nodeId"), clear.operability!!.resultIdFields)
+            assertTrue(discovery.expand(listOf(clear.name)).single { it.name == clear.name }.description.contains("Operation contract v1"))
+        }
+    }
+    @Test fun canvasClearCannotUseAlwaysAllowOrReuseAnEarlierScopeApproval() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val actions = WorkspaceCanvasActions(f.database, f.canvases)
+            val descriptor = requireNotNull(HaloToolDescriptors.workspace(actions.definitions().single { it.name == "halo_canvas_clear_sketch" }))
+            val call = ToolCall("clear", descriptor.name, mapOf("canvasId" to "board", "version" to "canvas:1", "nodeId" to "sketch"))
+            val unattended = PolicyToolAuthorizer(defaultPolicyProvider = { ToolApprovalPolicy.ALWAYS_ALLOW }, descriptorProvider = { descriptor })
+            assertTrue(unattended.authorize(call) is ToolAuthorization.Rejected)
+            var approvals = 0
+            val interactive = PolicyToolAuthorizer(defaultPolicyProvider = { ToolApprovalPolicy.ALWAYS_ALLOW }, descriptorProvider = { descriptor },
+                coordinator = object : ToolAuthorizationCoordinator {
+                    override suspend fun authorizeRequest(toolCall: ToolCall, preview: ToolActionPreview): ToolAuthorization {
+                        approvals++
+                        assertEquals(com.halo.sdk.runtime.skills.SkillRisk.DESTRUCTIVE, preview.risk)
+                        assertNull(preview.target)
+                        return ToolAuthorization.Authorized(toolCall)
+                    }
+                })
+            interactive.authorize(call, "scope")
+            interactive.authorize(call.copy(id = "second"), "scope")
+            assertEquals(2, approvals)
         }
     }
     @Test fun assistantStudyRequiresExactObservedVersionAndPersistsThroughTheSameStudyOwner() = runBlocking {

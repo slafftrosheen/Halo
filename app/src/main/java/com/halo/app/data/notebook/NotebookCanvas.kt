@@ -532,6 +532,17 @@ class NotebookCanvasRepository(
         changed
     }
 
+    /** The same saved result as the editor's Clear + Save, without inventing pen gestures. */
+    suspend fun clearSketch(canvasId: String, nodeId: String): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        val node = requireNotNull(canvasDao.getNode(canvasId, nodeId)) { "Sketch unavailable" }
+        require(node.type == CanvasNodeType.SKETCH.name && node.refObjectId == null) { "Local sketch required" }
+        val ink = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(node.text)) { "Sketch format unavailable" }
+        if (ink.strokes.isEmpty()) return@withTransaction false
+        check(updateText(canvasId, nodeId, com.halo.sdk.runtime.ink.InkCodec.encode(ink.copy(strokes = emptyList())), node.text))
+        true
+    }
+
     /** Keep imported PDF/image original bytes unchanged; only card-local marks are saved. */
     suspend fun saveFileMarkup(canvasId: String, nodeId: String, pages: Map<Int, String>, expectedText: String? = null,
         expectedFileVersion: String? = null, selection: com.halo.sdk.runtime.ink.InkSelectionContext? = null): Boolean = database.withTransaction {

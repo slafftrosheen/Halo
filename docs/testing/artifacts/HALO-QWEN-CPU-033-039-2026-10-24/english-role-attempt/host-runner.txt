@@ -1,0 +1,8 @@
+LiteRT physical probe: qwen3-0.6b-dynamic-int4-CPU-ctx2048-cycles1-roles-EN-r3 (captureOnly=False)
+  RUNNER_INTERRUPTED; inspect qwen3-0.6b-dynamic-int4-CPU-ctx2048-cycles1-roles-EN-r3.txt
+
+ModelId                 Backend Language Cycles ResidentTurns ContextTokens Result             ProcessExit OutputFile
+-------                 ------- -------- ------ ------------- ------------- ------             ----------- ----------
+qwen3-0.6b-dynamic-int4 CPU     EN            1             0          2048 RUNNER_INTERRUPTED         124 qwen3-0.6b-d…
+
+Saved evidence to: C:\Users\slavd\HaloEco\verification-2026-10-24-qwen-cpu-role-en
