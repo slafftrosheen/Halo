@@ -312,7 +312,7 @@ class HomeViewModel(
     fun recordDailyAction(action: com.halo.app.daily.DailyAssistantAction) { dailyController?.recordAction(action) }
 
     private val mapper = HomeUiMapper()
-    private val listeningCommandMutex = Mutex()
+    private val voiceInputCommands = VoiceInputCommandQueue()
     private val conversationNavigationMutex = Mutex()
     private val _conversationChanging = MutableStateFlow(false)
     val conversationChanging = _conversationChanging.asStateFlow()
@@ -1011,7 +1011,7 @@ class HomeViewModel(
         _listeningRequested.value = false
         stopSpeechOutput()
         com.halo.app.ui.components.VoiceFieldCancellation.stop()
-        listeningCommandMutex.withLock {
+        voiceInputCommands.withLock {
             speechInput.value.turn?.let { turn ->
                 cognitiveSession.cancelInteraction(turn.captureId)
                 ManualDependencyGraph.audioPerceptionEngine.cancelExternalInput(turn.captureId)
@@ -1045,12 +1045,13 @@ class HomeViewModel(
         cognitiveSession.cancelInteraction(turn.captureId)
         _speechRejectionNotice.value = SpeechRejectionNotice("Input interrupted. You can try again or type your question.", conversationId = turn.conversationId)
         viewModelScope.launch {
-            listeningCommandMutex.withLock { ManualDependencyGraph.audioPerceptionEngine.cancelExternalInput(turn.captureId) }
+            voiceInputCommands.withLock { ManualDependencyGraph.audioPerceptionEngine.cancelExternalInput(turn.captureId) }
         }
     }
 
     fun stopSpeakingAndListen() {
         val conversationAtTap = conversations?.activeConversationId()
+        val ticket = voiceInputCommands.supersede()
         synchronized(voiceModeLock) {
             if (_voiceModeActive.value) {
                 _voiceModeListeningPaused.value = false
@@ -1064,11 +1065,16 @@ class HomeViewModel(
         _publishedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
-            listeningCommandMutex.withLock {
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                !_conversationChanging.value && speechAvailability.value && microphonePermission.value &&
+                    conversations?.activeConversationId() == conversationAtTap
+            }, onDenied = ::rejectQueuedVoiceStart) {
                 runCatching {
                     stopSpeechOutput()
                     commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap))
                 }.onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    if (!voiceInputCommands.isCurrent(ticket)) return@onFailure
                     _listeningRequested.value = false
                     Log.e("HomeViewModel", "Failed to stop speaking and listen", it)
                 }
@@ -1083,16 +1089,22 @@ class HomeViewModel(
             if (_voiceModeActive.value) _voiceModeListeningPaused.value = false
         }
         if (!shouldStart) stopVoiceModeStateOnly()
+        val ticket = voiceInputCommands.supersede()
         if (shouldStart) _publishedResponse.value = null
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
-            listeningCommandMutex.withLock {
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                !shouldStart || (!_conversationChanging.value && speechAvailability.value && microphonePermission.value &&
+                    conversations?.activeConversationId() == conversationAtTap)
+            }, onDenied = ::rejectQueuedVoiceStart) {
                 val command = if (shouldStart) StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap) else StopListening
                 runCatching {
                     if (shouldStart) { cognitiveSession.cancel(); stopSpeechOutput() }
                     commandBus.dispatch(command)
                 }
                     .onFailure {
+                        if (it is kotlinx.coroutines.CancellationException) throw it
+                        if (!voiceInputCommands.isCurrent(ticket)) return@onFailure
                         if (shouldStart) _listeningRequested.value = false
                         Log.e("HomeViewModel", "Failed to dispatch speech command", it)
                     }
@@ -1100,11 +1112,18 @@ class HomeViewModel(
         }
     }
 
+    /** Called only for the still-current request rejected at the command boundary. */
+    private fun rejectQueuedVoiceStart() {
+        _listeningRequested.value = false
+        stopVoiceMode()
+    }
+
     fun startListening() = startListeningIfCurrent(null)
 
-    private fun startListeningIfCurrent(voiceGeneration: Long?) {
+    private fun startListeningIfCurrent(voiceGeneration: Long?, commandTicket: Long? = null) {
         if (_conversationChanging.value) return
         val conversationAtTap = conversations?.activeConversationId()
+        val ticket = commandTicket ?: voiceInputCommands.supersede()
         synchronized(voiceModeLock) {
             if (_voiceModeActive.value) _voiceModeListeningPaused.value = false
         }
@@ -1112,15 +1131,21 @@ class HomeViewModel(
         _publishedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
-            listeningCommandMutex.withLock {
-                if (voiceGeneration != null && (voiceGeneration != voiceStartGeneration || !_voiceModeActive.value ||
-                        conversationAtTap != conversations?.activeConversationId())) return@withLock
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                !_conversationChanging.value && conversationAtTap == conversations?.activeConversationId() &&
+                    speechAvailability.value && microphonePermission.value &&
+                    (voiceGeneration == null || synchronized(voiceModeLock) {
+                        voiceGeneration == voiceStartGeneration && _voiceModeActive.value && !_voiceModeListeningPaused.value
+                    })
+            }, onDenied = ::rejectQueuedVoiceStart) {
                 runCatching {
                     cognitiveSession.cancel()
                     stopSpeechOutput()
                     commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap))
                 }
                     .onFailure {
+                        if (it is kotlinx.coroutines.CancellationException) throw it
+                        if (!voiceInputCommands.isCurrent(ticket)) return@onFailure
                         _listeningRequested.value = false
                         stopVoiceModeStateOnly()
                         Log.e("HomeViewModel", "Failed to start listening", it)
@@ -1132,10 +1157,14 @@ class HomeViewModel(
     fun stopListening() {
         stopVoiceModeStateOnly()
         _listeningRequested.value = false
+        val ticket = voiceInputCommands.current()
         viewModelScope.launch {
-            listeningCommandMutex.withLock {
+            voiceInputCommands.runIfCurrent(ticket) {
                 runCatching { commandBus.dispatch(StopListening) }
-                    .onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) }
+                    .onFailure {
+                        if (it is kotlinx.coroutines.CancellationException) throw it
+                        Log.e("HomeViewModel", "Failed to stop listening", it)
+                    }
             }
         }
     }
@@ -1157,24 +1186,27 @@ class HomeViewModel(
         if (!voiceStartAllowed() || _voiceModeActive.value || !speechAvailability.value || !microphonePermission.value) return
         val conversationStore = conversations ?: return
         val generation = voiceStartGeneration
+        val pendingTicket = voiceInputCommands.current()
         val conversationAtTap = conversationStore.activeConversationId()
         viewModelScope.launch {
             try {
                 conversationStore.awaitReady()
-                if (generation != voiceStartGeneration ||
+                if (!voiceInputCommands.isCurrent(pendingTicket) || generation != voiceStartGeneration ||
                     (conversationAtTap != null && conversationAtTap != conversationStore.activeConversationId()) ||
                     !voiceStartAllowed() || _voiceModeActive.value || !speechAvailability.value || !microphonePermission.value) return@launch
                 val conversation = conversationStore.activeConversationId()
                     ?: error("VOICE_MODE_CONVERSATION_UNAVAILABLE")
-                synchronized(voiceModeLock) {
+                val ticket = synchronized(voiceModeLock) {
+                    if (!voiceInputCommands.isCurrent(pendingTicket)) return@launch
                     voiceModeConversationId = conversation
                     voiceModeCaptureId = null
-            voiceModeBargeInInteractionId = null
+                    voiceModeBargeInInteractionId = null
                     voiceResponseCaptures.clear()
                     _voiceModeListeningPaused.value = false
                     _voiceModeActive.value = true
+                    voiceInputCommands.supersede()
                 }
-                startListeningIfCurrent(generation)
+                startListeningIfCurrent(generation, ticket)
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -1187,11 +1219,16 @@ class HomeViewModel(
     fun stopVoiceMode() {
         val wasActive = stopVoiceModeStateOnly()
         if (!wasActive) return
+        val ticket = voiceInputCommands.current()
         _listeningRequested.value = false
         cognitiveSession.cancel()
         stopSpeechOutput()
         viewModelScope.launch {
-            listeningCommandMutex.withLock { runCatching { commandBus.dispatch(StopListening) } }
+            voiceInputCommands.runIfCurrent(ticket) {
+                try { commandBus.dispatch(StopListening) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (failure: Exception) { Log.e("HomeViewModel", "Failed to end Voice Mode listening", failure) }
+            }
         }
     }
 
@@ -1209,36 +1246,32 @@ class HomeViewModel(
             if (!_voiceModeActive.value) return
             val paused = !_voiceModeListeningPaused.value
             _voiceModeListeningPaused.value = paused
-            voiceModeConversationId?.let { it to paused }
+            val ticket = voiceInputCommands.supersede()
+            voiceModeConversationId?.let { Triple(it, paused, ticket) }
         } ?: return
-        val (conversation, shouldPause) = request
-        if (shouldPause) {
-            _listeningRequested.value = false
-            viewModelScope.launch {
-                listeningCommandMutex.withLock {
-                    runCatching { commandBus.dispatch(StopListening) }
-                        .onFailure {
-                            Log.e("HomeViewModel", "Failed to pause Voice Mode listening", it)
-                            stopVoiceMode()
-                        }
-                }
-            }
-        } else {
-            if (!speechAvailability.value || !microphonePermission.value) {
-                stopVoiceMode()
-                return
-            }
-            _listeningRequested.value = true
-            viewModelScope.launch {
-                listeningCommandMutex.withLock {
-                    runCatching {
-                        commandBus.dispatch(StartListeningWithActivation(
-                            SpeechActivationKind.EXPLICIT_USER, conversation))
-                    }.onFailure {
-                        _listeningRequested.value = false
-                        stopVoiceModeStateOnly()
-                        Log.e("HomeViewModel", "Failed to resume Voice Mode listening", it)
-                    }
+        val (conversation, shouldPause, ticket) = request
+        if (!shouldPause && (!speechAvailability.value || !microphonePermission.value)) {
+            stopVoiceMode()
+            return
+        }
+        _listeningRequested.value = !shouldPause
+        viewModelScope.launch {
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                synchronized(voiceModeLock) {
+                    _voiceModeActive.value && voiceModeConversationId == conversation &&
+                        _voiceModeListeningPaused.value == shouldPause
+                } && !_conversationChanging.value && conversations?.activeConversationId() == conversation &&
+                    (shouldPause || speechAvailability.value && microphonePermission.value)
+            }, onDenied = ::rejectQueuedVoiceStart) {
+                runCatching {
+                    if (shouldPause) commandBus.dispatch(StopListening)
+                    else commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversation))
+                }.onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    if (!voiceInputCommands.isCurrent(ticket)) return@onFailure
+                    _listeningRequested.value = false
+                    stopVoiceModeStateOnly()
+                    Log.e("HomeViewModel", "Failed to change Voice Mode listening", it)
                 }
             }
         }
@@ -1249,11 +1282,12 @@ class HomeViewModel(
         val source = lastVoiceResponseRequest ?: return
         val conversation = conversations?.activeConversationId() ?: return
         if (_lastVoiceResponseConversation.value != conversation || source.text.isBlank()) return
-        val pauseCapture = synchronized(voiceModeLock) {
+        val (pauseCapture, ticket) = synchronized(voiceModeLock) {
+            val ticket = voiceInputCommands.supersede()
             if (_voiceModeActive.value && !_voiceModeListeningPaused.value) {
                 _voiceModeListeningPaused.value = true
-                true
-            } else false
+                true to ticket
+            } else false to ticket
         }
         val replay = source.copy(
             id = UUID.randomUUID().toString(),
@@ -1263,19 +1297,29 @@ class HomeViewModel(
             interactionId = UUID.randomUUID().toString(),
         )
         viewModelScope.launch {
-            listeningCommandMutex.withLock {
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                !_conversationChanging.value && conversations?.activeConversationId() == conversation &&
+                    _lastVoiceResponseConversation.value == conversation && lastVoiceResponseRequest === source
+            }, onDenied = { if (pauseCapture) rejectQueuedVoiceStart() }) {
                 if (pauseCapture) {
                     _listeningRequested.value = false
                     val stopped = runCatching { commandBus.dispatch(StopListening) }
+                    stopped.exceptionOrNull()?.let { if (it is kotlinx.coroutines.CancellationException) throw it }
                     if (stopped.isFailure) {
                         Log.e("HomeViewModel", "Failed to stop listening before repeating a reply", stopped.exceptionOrNull())
-                        stopVoiceMode()
-                        return@withLock
+                        if (voiceInputCommands.isCurrent(ticket)) stopVoiceMode()
+                        return@runIfCurrent
                     }
                 }
+                // Stopping capture can suspend. A later stop/conversation change owns the next action.
+                if (!voiceInputCommands.isCurrent(ticket) || conversations?.activeConversationId() != conversation ||
+                    _lastVoiceResponseConversation.value != conversation || lastVoiceResponseRequest !== source) return@runIfCurrent
                 stopSpeechOutput()
                 runCatching { eventBus.publish(replay) }
-                    .onFailure { Log.e("HomeViewModel", "Failed to repeat the last voice response", it) }
+                    .onFailure {
+                        if (it is kotlinx.coroutines.CancellationException) throw it
+                        Log.e("HomeViewModel", "Failed to repeat the last voice response", it)
+                    }
             }
         }
     }
@@ -1290,6 +1334,7 @@ class HomeViewModel(
     }
 
     private fun endVoiceModeState() {
+        voiceInputCommands.supersede()
         _voiceModeActive.value = false
         _voiceModeListeningPaused.value = false
         voiceModeConversationId = null
@@ -1315,25 +1360,33 @@ class HomeViewModel(
             if (!_voiceModeActive.value || voiceModeCaptureId != captureId) return
             if (_voiceModeListeningPaused.value) return
             voiceModeCaptureId = null
-            voiceModeConversationId
+            voiceModeConversationId?.let { it to voiceInputCommands.current() }
         } ?: return
+        val (conversation, ticket) = generationConversation
         if (!speechAvailability.value || !microphonePermission.value ||
-            conversations?.activeConversationId() != generationConversation) {
+            conversations?.activeConversationId() != conversation) {
             stopVoiceMode()
             return
         }
         viewModelScope.launch {
             kotlinx.coroutines.delay(250)
-            listeningCommandMutex.withLock {
-                val canResume = synchronized(voiceModeLock) {
-                    _voiceModeActive.value && voiceModeConversationId == generationConversation && voiceModeCaptureId == null
-                } && speechAvailability.value && microphonePermission.value &&
-                    conversations?.activeConversationId() == generationConversation
-                if (!canResume) { _listeningRequested.value = false; return@withLock }
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                synchronized(voiceModeLock) {
+                    _voiceModeActive.value && !_voiceModeListeningPaused.value &&
+                        voiceModeConversationId == conversation && voiceModeCaptureId == null
+                } && !_conversationChanging.value && speechAvailability.value && microphonePermission.value &&
+                    conversations?.activeConversationId() == conversation
+            }, onDenied = {
+                // A newer capture in the same session is not a failed continuation.
+                if (_conversationChanging.value || !speechAvailability.value || !microphonePermission.value ||
+                    conversations?.activeConversationId() != conversation) rejectQueuedVoiceStart()
+            }) {
                 _listeningRequested.value = true
                 runCatching {
-                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.AUTOMATIC, generationConversation))
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.AUTOMATIC, conversation))
                 }.onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    if (!voiceInputCommands.isCurrent(ticket)) return@onFailure
                     _listeningRequested.value = false
                     stopVoiceModeStateOnly()
                     Log.e("HomeViewModel", "Voice Mode could not resume listening", it)

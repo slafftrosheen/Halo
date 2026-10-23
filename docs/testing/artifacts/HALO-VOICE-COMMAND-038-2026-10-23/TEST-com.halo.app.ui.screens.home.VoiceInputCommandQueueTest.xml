@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-23T17:28:12.377Z" hostname="MINIFOXEY" time="0.149">
+  <properties/>
+  <testcase name="muteDuringAutomaticContinuationDelayNeverStartsCapture" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.086"/>
+  <testcase name="oldStopCannotStopNewerExplicitCapture" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.018"/>
+  <testcase name="rapidControlChangesDispatchOnlyLatestQueuedIntent" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.012"/>
+  <testcase name="permissionAndConversationAreReadAfterWaitingForCommandSerialization" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.004"/>
+  <testcase name="cancellingQueuedCaptureReleasesWaitWithoutSideEffects" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.006"/>
+  <testcase name="failedCommandDoesNotPoisonLaterControl" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.003"/>
+  <testcase name="currentStartDeniedAfterWaitReconcilesOptimisticListeningAndSessionState" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.004"/>
+  <testcase name="staleDenialNeverClearsNewerListeningOrSessionState" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.004"/>
+  <testcase name="cancellingSuspendedCommandPropagatesAndReleasesSerialization" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.004"/>
+  <testcase name="stoppedQueuedUnmuteCannotReactivateMicrophone" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.006"/>
+  <testcase name="leavingAndReturningToSameConversationCannotRestoreOldAuthority" classname="com.halo.app.ui.screens.home.VoiceInputCommandQueueTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
