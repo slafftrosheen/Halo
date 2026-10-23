@@ -1,0 +1,10 @@
+
+    topResumedActivity=ActivityRecord{dac492f u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity t3213}
+    * Hist  #0: ActivityRecord{dac492f u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity t3213}
+      Intent { flg=0x10000000 cmp=com.aistudio.braintool.xkqzps/com.halo.app.MainActivity }
+      mActivityComponent=com.aistudio.braintool.xkqzps/com.halo.app.MainActivity
+      windows=[Window{5883660 u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity}]
+    Resumed: ActivityRecord{dac492f u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity t3213}
+  ResumedActivity: ActivityRecord{dac492f u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity t3213}
+  deepestLastOrientationSource=ActivityRecord{dac492f u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity t3213}
+
