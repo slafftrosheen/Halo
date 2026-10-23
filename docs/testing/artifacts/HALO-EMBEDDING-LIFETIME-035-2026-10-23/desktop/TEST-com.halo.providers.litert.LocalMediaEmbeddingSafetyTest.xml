@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.LocalMediaEmbeddingSafetyTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:07:39.040Z" hostname="MINIFOXEY" time="0.007">
+  <properties/>
+  <testcase name="mediaRequestDoesNotExposeItsValidatedByteSnapshot" classname="com.halo.providers.litert.LocalMediaEmbeddingSafetyTest" time="0.002"/>
+  <testcase name="batchAndIdentityCannotBeForged" classname="com.halo.providers.litert.LocalMediaEmbeddingSafetyTest" time="0.001"/>
+  <testcase name="mediaRequestSnapshotsCallerOwnedCollectionsAndBytes" classname="com.halo.providers.litert.LocalMediaEmbeddingSafetyTest" time="0.0"/>
+  <testcase name="imageAndAudioRequireBoundedEncodings" classname="com.halo.providers.litert.LocalMediaEmbeddingSafetyTest" time="0.002"/>
+  <testcase name="mediaRequestDoesNotSilentlyBecomeTextEmbeddingSpace" classname="com.halo.providers.litert.LocalMediaEmbeddingSafetyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

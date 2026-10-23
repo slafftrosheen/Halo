@@ -243,7 +243,7 @@ class WorkloadLabController(private val context: android.content.Context,private
     }
 
     private suspend fun inspect(artifact: LocalModelDescriptor,row: WorkloadLabResult): WorkloadLabResult {
-        val info=com.halo.providers.litert.LiteRtArtifactInspector(resources).inspect(artifact)
+        val info=com.halo.providers.litert.LiteRtArtifactInspector(resources, models).inspect(artifact)
         val j=JSONObject().put("task",info.task).put("runtime",LiteRtLocalProvider.RUNTIME_VERSION)
             .put("device",device).put("android",android.os.Build.VERSION.SDK_INT)
             .put("epoch",WorkloadQualificationStore.EPOCH).put("backends",JSONArray(info.textBackends))

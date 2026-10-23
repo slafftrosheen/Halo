@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.ModelArtifactFileLocksTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:07:39.499Z" hostname="MINIFOXEY" time="0.025">
+  <properties/>
+  <testcase name="readerPinBlocksManagerMutationAndReleasesAfterClose" classname="com.halo.providers.litert.models.ModelArtifactFileLocksTest" time="0.012"/>
+  <testcase name="leasesCanBeClosedAfterCoroutineThreadHandoffWithoutLeakingPins" classname="com.halo.providers.litert.models.ModelArtifactFileLocksTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

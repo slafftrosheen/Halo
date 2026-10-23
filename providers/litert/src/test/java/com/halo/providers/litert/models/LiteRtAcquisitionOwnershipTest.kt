@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import java.io.File
 import java.security.MessageDigest
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,6 +15,37 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
 class LiteRtAcquisitionOwnershipTest {
+    @Test fun `cancellation at dispatcher handoff cannot orphan returned artifact pin`() = fixture { root, manager ->
+        install(root)
+        val queued = java.util.concurrent.ConcurrentLinkedQueue<Runnable>()
+        val dispatcher = object : kotlinx.coroutines.CoroutineDispatcher() {
+            override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) { queued.add(block) }
+        }
+        val scopeJob = kotlinx.coroutines.SupervisorJob()
+        val scope = kotlinx.coroutines.CoroutineScope(scopeJob + dispatcher)
+        val acquisition = scope.launch { manager.acquirePhysicalArtifactLease(model.id, hash)?.second?.close() }
+        try {
+            // Run only the initial request. Deliberately withhold its IO result continuation.
+            requireNotNull(queued.poll()).run()
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                kotlinx.coroutines.withTimeout(5_000) {
+                    while (queued.isEmpty()) kotlinx.coroutines.delay(10)
+                }
+            }
+            val writerWhileHandoffPending = ModelArtifactFileLocks.tryAcquireWrite(root, model.id)
+            writerWhileHandoffPending?.close()
+            assertNull(writerWhileHandoffPending)
+            acquisition.cancel()
+            kotlinx.coroutines.withTimeout(5_000) {
+                while (!acquisition.isCompleted) {
+                    while (true) { val continuation = queued.poll() ?: break; continuation.run() }
+                    kotlinx.coroutines.delay(10)
+                }
+            }
+            assertTrue(acquisition.isCancelled)
+            requireNotNull(ModelArtifactFileLocks.tryAcquireWrite(root, model.id)).close()
+        } finally { scopeJob.cancel() }
+    }
     private val owner = "b88fe002-14e0-48dc-85bd-6dbcd038f709"
     private val other = "c88fe002-14e0-48dc-85bd-6dbcd038f709"
     private val bytes = ByteArray(1_200_000) { (it % 251).toByte() }

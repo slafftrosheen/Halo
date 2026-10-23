@@ -111,7 +111,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             val physical = models.verifyPhysicalArtifact(modelId)
                 ?.takeIf { it.valid && it.verified && it.sha256 == catalog.sha256 }
                 ?: error("SEARCH_MODEL_NOT_VERIFIED")
-            val metadata = LiteRtArtifactInspector(resources).inspect(physical)
+            val metadata = LiteRtArtifactInspector(resources, models).inspect(physical)
             require(metadata.task == "EMBEDDING" && "CPU" in metadata.textBackends) {
                 "SEARCH_MODEL_NOT_SUPPORTED_ON_DEVICE"
             }

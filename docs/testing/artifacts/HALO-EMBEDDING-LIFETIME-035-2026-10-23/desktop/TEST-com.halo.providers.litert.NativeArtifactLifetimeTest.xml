@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.NativeArtifactLifetimeTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:07:35.193Z" hostname="MINIFOXEY" time="3.842">
+  <properties/>
+  <testcase name="unavailableOrChangedLeaseNeverOpensNativeMetadata" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="2.694"/>
+  <testcase name="physicalInspectionPreservesUnverifiedImportWithoutGrantingVerifiedLease" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.155"/>
+  <testcase name="failedNativeTeardownRetainsPinUntilCoordinatorRetryActuallyCloses" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.092"/>
+  <testcase name="inspectorUsesExactFilePinAndRetainsItAcrossMetadataCloseFailure" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.079"/>
+  <testcase name="cancellationDuringAdmissionReleasesComputeLeaseAndArtifactPin" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.078"/>
+  <testcase name="cancellationAndInitializationFailureReleaseNativeAndFileOwnership" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.11"/>
+  <testcase name="unsupportedNativeMetadataNeverInitializesEmbeddingAndReleasesFilePin" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.14"/>
+  <testcase name="deniedMemoryBudgetReleasesPinBeforeAnyNativeHandleIsOpened" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.06"/>
+  <testcase name="cancellationRemainsPrimaryWhenTeardownAlsoFailsAndPinIsRetained" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.068"/>
+  <testcase name="embeddingPinsExactFileThroughInspectionInitializationComputationAndClose" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.061"/>
+  <testcase name="inventoryWithoutLeaseSupportFailsClosedForExecutionAndInspection" classname="com.halo.providers.litert.NativeArtifactLifetimeTest" time="0.048"/>
+  <system-out><![CDATA[NATIVE_EXECUTION_ACQUIRE owner=workload.manual-inspection:c5a2cc62-9d6e-4faf-a294-185cf865c68d kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:c5a2cc62-9d6e-4faf-a294-185cf865c68d kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=workload.manual-inspection:c5a2cc62-9d6e-4faf-a294-185cf865c68d kind=HEAVY_LLM resource=compute.inference operation=none waitMs=16 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:c5a2cc62-9d6e-4faf-a294-185cf865c68d kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Native metadata initialization
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:c5a2cc62-9d6e-4faf-a294-185cf865c68d kind=HEAVY_LLM state=IN_USE executionLeaseHeld=true resource=compute.inference operation=none reason=Native metadata inspection
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding initialization
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=IN_USE executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding computation
+NATIVE_EXECUTION_RELEASE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none state=RESIDENT reason=Embedding teardown pending
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=compute.inference operation=none reason=Embedding teardown pending
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RELEASED executionLeaseHeld=false resource=compute.inference operation=none reason=idle grace elapsed
+NATIVE_EXECUTION_ACQUIRE owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Native metadata initialization
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM state=IN_USE executionLeaseHeld=true resource=compute.inference operation=none reason=Native metadata inspection
+NATIVE_EXECUTION_RELEASE owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM resource=compute.inference operation=none state=RESIDENT reason=Native metadata teardown pending
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=compute.inference operation=none reason=Native metadata teardown pending
+NATIVE_RESIDENCY_CHANGED owner=workload.manual-inspection:d18c6943-25d2-4508-8e97-8cfc339609fc kind=HEAVY_LLM state=RELEASED executionLeaseHeld=false resource=compute.inference operation=none reason=idle grace elapsed
+NATIVE_EXECUTION_ACQUIRE owner=fixture:admission-blocker kind=HEAVY_TTS resource=compute.tts operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=fixture:admission-blocker kind=HEAVY_TTS state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=fixture:admission-blocker kind=HEAVY_TTS resource=compute.tts operation=none waitMs=9 state=GRANTED
+NATIVE_EXECUTION_RELEASE owner=fixture:admission-blocker kind=HEAVY_TTS resource=compute.tts operation=none state=RESIDENT reason=fixture idle
+NATIVE_RESIDENCY_CHANGED owner=fixture:admission-blocker kind=HEAVY_TTS state=RESIDENT executionLeaseHeld=false resource=compute.tts operation=none reason=fixture idle
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=fixture:admission-blocker kind=HEAVY_TTS state=RELEASED executionLeaseHeld=false resource=compute.tts operation=none reason=block admission
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding initialization
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=1 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding initialization
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=IN_USE executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding computation
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=1 state=GRANTED
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding initialization
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=IN_USE executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding computation
+NATIVE_EXECUTION_RELEASE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none state=RESIDENT reason=Embedding teardown pending
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=compute.inference operation=none reason=Embedding teardown pending
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RELEASED executionLeaseHeld=false resource=compute.inference operation=none reason=retry cancelled teardown
+NATIVE_EXECUTION_ACQUIRE owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM resource=compute.inference operation=none waitMs=0 state=GRANTED
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=LOADING executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding initialization
+NATIVE_RESIDENCY_CHANGED owner=provider.litert.embedding:native-fixture kind=HEAVY_LLM state=IN_USE executionLeaseHeld=true resource=compute.inference operation=none reason=Embedding computation
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

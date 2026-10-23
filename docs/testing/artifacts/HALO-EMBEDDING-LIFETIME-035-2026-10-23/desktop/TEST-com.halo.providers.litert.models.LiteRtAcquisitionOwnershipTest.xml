@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtAcquisitionOwnershipTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:07:39.054Z" hostname="MINIFOXEY" time="0.43">
+  <properties/>
+  <testcase name="cancellation at dispatcher handoff cannot orphan returned artifact pin" classname="com.halo.providers.litert.models.LiteRtAcquisitionOwnershipTest" time="0.102"/>
+  <testcase name="independent and differently owned artifacts are retained" classname="com.halo.providers.litert.models.LiteRtAcquisitionOwnershipTest" time="0.123"/>
+  <testcase name="partial cleanup is scoped to transaction and never deletes installed file" classname="com.halo.providers.litert.models.LiteRtAcquisitionOwnershipTest" time="0.056"/>
+  <testcase name="selected unloaded candidate is protected from setup rollback" classname="com.halo.providers.litert.models.LiteRtAcquisitionOwnershipTest" time="0.069"/>
+  <testcase name="changed physical bytes fail closed despite matching receipt" classname="com.halo.providers.litert.models.LiteRtAcquisitionOwnershipTest" time="0.077"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

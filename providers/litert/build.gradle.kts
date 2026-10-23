@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.litertlm.android)
     implementation(libs.okhttp)
 
+    testImplementation(project(":runtime:kernel"))
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)

@@ -128,6 +128,9 @@ class NotebookLocalSearchSourcesTest {
     }
 
     @Test fun lowMemoryAndUnknownFailuresUseBoundedUserLanguage() {
+        val unavailable = localSearchUserErrorMessage(IllegalStateException("ARTIFACT_LEASE_UNAVAILABLE"))
+        assertTrue(unavailable.contains("model is not ready"))
+        assertFalse(unavailable.contains("LEASE"))
         assertTrue(localSearchUserErrorMessage(IllegalStateException("MEMORY_NOT_ADMITTED")).contains("memory"))
         assertTrue(localSearchUserErrorMessage(IllegalStateException("AUDIO_SOURCE_COUNT_LIMIT")).contains("eight"))
         val raw = IllegalArgumentException("private/source/path/export.json")

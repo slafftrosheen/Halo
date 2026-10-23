@@ -145,7 +145,7 @@ internal fun notebookSearchSources(items: List<NotebookWorkspaceItem>,
 internal fun localSearchUserErrorMessage(error: Throwable): String = when (error.message) {
     "VOICE_INTERACTION_ACTIVE", "NATIVE_RESOURCE_BUSY", "UNLOAD_RESIDENT_LITERT_FIRST" ->
         "Finish the current voice or model response, then try local search again."
-    "SEARCH_MODEL_NOT_VERIFIED", "SEARCH_MODEL_NOT_IN_CATALOG", "ARTIFACT_NOT_INSTALLED", "ARTIFACT_CHANGED" ->
+    "SEARCH_MODEL_NOT_VERIFIED", "SEARCH_MODEL_NOT_IN_CATALOG", "ARTIFACT_NOT_INSTALLED", "ARTIFACT_CHANGED", "ARTIFACT_LEASE_UNAVAILABLE" ->
         "The selected search model is not ready. Check the model download in On-device models."
     "SEARCH_MODEL_NOT_SUPPORTED_ON_DEVICE", "SEARCH_MODEL_DIMENSION_UNAVAILABLE", "NOT_AN_EMBEDDING_MODEL",
     "DIMENSION_UNSUPPORTED", "CPU_UNSUPPORTED", "TASK_NOT_EMBEDDING" ->

@@ -59,7 +59,7 @@ class LocalModelRolePhoneTest {
             return state is CognitiveSessionState.Idle || state is CognitiveSessionState.Completed || state is CognitiveSessionState.Failed
         }
         check(admissionAllowed()) { "RESOURCE_BUSY" }
-        val metadata = LiteRtArtifactInspector(graph.nativeResourceCoordinator).inspect(descriptor)
+        val metadata = LiteRtArtifactInspector(graph.nativeResourceCoordinator, graph.modelManager).inspect(descriptor)
         require(metadata.task == "LLM") { "Installed model task is non-generative" }
         val visionSupported = metadata.vision && descriptor.supportsVision
         val original = provider.loadConfigFor(descriptor)

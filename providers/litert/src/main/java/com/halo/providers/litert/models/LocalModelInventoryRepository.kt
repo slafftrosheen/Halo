@@ -80,5 +80,9 @@ interface LocalModelInventoryRepository {
     suspend fun resolveModel(modelId: String): LocalModelDescriptor?
     /** Explicit verification must bypass cached physical fingerprints. Never called per turn. */
     suspend fun verifyPhysicalArtifact(modelId: String): LocalModelDescriptor? = resolveModel(modelId)
+    /** Pins a valid physical import by measured hash; does not confer catalog provenance. */
+    suspend fun acquirePhysicalArtifactLease(modelId: String, expectedSha256: String): Pair<LocalModelDescriptor, java.io.Closeable>? = null
+    /** Exact physical generation pinned against replacement/deletion until the native owner closes it. */
+    suspend fun acquireVerifiedArtifactLease(modelId: String, expectedSha256: String): Pair<LocalModelDescriptor, java.io.Closeable>? = null
     fun invalidate(reason: String)
 }

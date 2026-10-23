@@ -171,18 +171,32 @@ class LiteRtModelManager(
     }
 
     /** Pins the exact verified artifact generation against manager deletion and replacement. */
-    suspend fun acquireVerifiedArtifactLease(modelId: String, expectedSha256: String): Pair<LocalModelDescriptor, Closeable>? =
-        withContext(Dispatchers.IO) {
-            val lease = ModelArtifactFileLocks.acquireRead(modelRoot, modelId) ?: return@withContext null
-            val descriptor = try { verifyPhysicalArtifact(modelId) } catch (failure: Throwable) {
-                lease.close()
-                throw failure
-            }
-            if (descriptor?.verified != true || descriptor.sha256 != expectedSha256) {
-                lease.close()
-                null
-            } else descriptor to lease
+    override suspend fun acquireVerifiedArtifactLease(modelId: String, expectedSha256: String): Pair<LocalModelDescriptor, Closeable>? =
+        acquirePhysicalArtifactLease(modelId, expectedSha256)?.let { (descriptor, lease) ->
+            if (descriptor.verified) descriptor to lease else { lease.close(); null }
         }
+
+    override suspend fun acquirePhysicalArtifactLease(modelId: String, expectedSha256: String): Pair<LocalModelDescriptor, Closeable>? {
+        val pending = java.util.concurrent.atomic.AtomicReference<Closeable?>()
+        try {
+            val result = withContext(Dispatchers.IO) {
+                val lease = ModelArtifactFileLocks.acquireRead(modelRoot, modelId) ?: return@withContext null
+                pending.set(lease)
+                val descriptor = verifyPhysicalArtifact(modelId)
+                if (descriptor?.valid != true || descriptor.sha256 != expectedSha256) {
+                    pending.getAndSet(null)?.close()
+                    null
+                } else descriptor to lease
+            }
+            // A cancelled dispatcher handoff must not orphan the returned native/file resource.
+            pending.set(null)
+            return result
+        } catch (failure: Throwable) {
+            try { pending.getAndSet(null)?.close() }
+            catch (closeFailure: Throwable) { failure.addSuppressed(closeFailure) }
+            throw failure
+        }
+    }
 
     override fun invalidate(reason: String) {
         scope.launch { refresh(ModelInventoryRefreshReason.INVALIDATED) }

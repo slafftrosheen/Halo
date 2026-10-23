@@ -1,7 +1,5 @@
 package com.halo.providers.litert
 
-import com.google.ai.edge.litertlm.*
-import com.google.ai.edge.litertlm.Modality
 import android.graphics.BitmapFactory
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.sdk.provider.*
@@ -106,7 +104,8 @@ object LocalMediaEmbeddingSafety {
  * Exactly one heavy LiteRT owner is admitted at a time.
  */
 class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryRepository,
-    private val resources: NativeResourceCoordinator, private val modelId: String):
+    private val resources: NativeResourceCoordinator, private val modelId: String,
+    private val nativeFactory: LiteRtNativeArtifactFactory = SdkLiteRtNativeArtifactFactory):
     EmbeddingProvider, NativeResourceOwner {
     override val id = "provider.litert.embedding"
     override val nativeResourceId get() = "$id:$modelId"
@@ -115,7 +114,7 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
     override val defaultResourcePolicy
         get() = WorkloadResourcePolicy(RuntimeWorkloadClass.TEXT_CHAT, estimate, true)
     private val lock = Mutex()
-    private var pendingTeardown: EmbeddingEngine? = null
+    private var pendingTeardown: PinnedLiteRtNativeArtifact? = null
     private val mutableMetrics = MutableStateFlow<EmbeddingExecutionMetrics?>(null)
     val metrics = mutableMetrics.asStateFlow()
 
@@ -124,7 +123,7 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
         return try {
             pendingTeardown?.close()
             pendingTeardown = null
-            resources.unregister(this)
+            // The coordinator owns callback bookkeeping; never re-enter its mutex here.
             true
         } catch (_: Exception) { false } finally { lock.unlock() }
     }
@@ -163,90 +162,84 @@ class LiteRtEmbeddingProvider(private val inventory: LocalModelInventoryReposito
                 pendingTeardown = null
                 resources.unregister(this@LiteRtEmbeddingProvider)
             }
-            val artifact = inventory.verifyPhysicalArtifact(modelId)
-                ?: throw EmbeddingUnavailableException("ARTIFACT_NOT_INSTALLED")
-            if (!artifact.verified || artifact.sha256 != sha)
-                throw EmbeddingUnavailableException("ARTIFACT_CHANGED")
-            // Media encoders have extra allocations. This conservative budget is admission,
-            // not a measured peak-RSS claim.
-            estimate = artifact.bytes + (if (usesVision || usesAudio) 512L else 256L) * 1024 * 1024
-            resources.budgetReevaluation?.invoke()
-            if (resources.budget.value.pressure != NativeMemoryPressure.NORMAL ||
-                resources.budget.value.availableBytes < estimate)
-                throw EmbeddingUnavailableException("MEMORY_NOT_ADMITTED")
-            if (resources.snapshot.value.any {
-                    it.kind == NativeResourceKind.HEAVY_LLM &&
-                        it.ownerId != nativeResourceId && it.state != NativeResourceState.RELEASED
-                }) throw EmbeddingUnavailableException("UNLOAD_RESIDENT_LITERT_FIRST")
-            if (!resources.acquire(this@LiteRtEmbeddingProvider)) {
-                resources.unregister(this@LiteRtEmbeddingProvider)
-                throw EmbeddingUnavailableException("NATIVE_RESOURCE_BUSY")
-            }
-            var engine: EmbeddingEngine? = null
-            var primaryFailure: Throwable? = null
+            val pinned = PinnedLiteRtNativeArtifact.acquire(inventory, modelId, sha, nativeFactory)
+                ?: throw EmbeddingUnavailableException("ARTIFACT_LEASE_UNAVAILABLE")
+            var retained = false
             try {
-                ModelInfo.from(artifact.path).use { info ->
-                    if (info !is ModelInfo.Embedding)
-                        throw EmbeddingUnavailableException("TASK_NOT_EMBEDDING")
-                    if (info.dimension() != dimension)
-                        throw EmbeddingUnavailableException("DIMENSION_UNSUPPORTED")
-                    if (BackendType.CPU !in info.supportedBackends(Modality.TEXT))
-                        throw EmbeddingUnavailableException("CPU_UNSUPPORTED")
-                    val modalities = info.inputModalities()
-                    if (usesVision && (!modalities.vision ||
-                            BackendType.CPU !in info.supportedBackends(Modality.VISION)))
+                val artifact = pinned.artifact
+                // Media encoders have extra allocations. This conservative budget is admission,
+                // not a measured peak-RSS claim.
+                estimate = artifact.bytes + (if (usesVision || usesAudio) 512L else 256L) * 1024 * 1024
+                resources.budgetReevaluation?.invoke()
+                if (resources.budget.value.pressure != NativeMemoryPressure.NORMAL ||
+                    resources.budget.value.availableBytes < estimate)
+                    throw EmbeddingUnavailableException("MEMORY_NOT_ADMITTED")
+                if (resources.snapshot.value.any {
+                        it.kind == NativeResourceKind.HEAVY_LLM &&
+                            it.ownerId != nativeResourceId && it.state != NativeResourceState.RELEASED
+                    }) throw EmbeddingUnavailableException("UNLOAD_RESIDENT_LITERT_FIRST")
+                if (!resources.acquire(this@LiteRtEmbeddingProvider)) {
+                    throw EmbeddingUnavailableException("NATIVE_RESOURCE_BUSY")
+                }
+                var primaryFailure: Throwable? = null
+                try {
+                    currentCoroutineContext().ensureActive()
+                    val native = pinned.native()
+                    val info = native.inspect()
+                    if (!info.embedding) throw EmbeddingUnavailableException("TASK_NOT_EMBEDDING")
+                    if (info.embeddingDimension != dimension) throw EmbeddingUnavailableException("DIMENSION_UNSUPPORTED")
+                    if ("CPU" !in info.textBackends) throw EmbeddingUnavailableException("CPU_UNSUPPORTED")
+                    if (usesVision && !info.visionCpu)
                         throw EmbeddingUnavailableException(if (identity == LocalMediaEmbeddingSafety.CROSS_MODAL_VIDEO_FRAME_SEARCH_V2)
                             "VIDEO_CPU_UNSUPPORTED" else "VISION_CPU_UNSUPPORTED")
-                    if (usesAudio && (!modalities.audio ||
-                            BackendType.CPU !in info.supportedBackends(Modality.AUDIO)))
-                        throw EmbeddingUnavailableException("AUDIO_CPU_UNSUPPORTED")
-                }
-                resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.LOADING, "Embedding initialization")
-                val started = System.nanoTime()
-                engine = EmbeddingEngine(EmbeddingEngineConfig(
-                    modelPath = artifact.path, backend = Backend.CPU(),
-                    visionBackend = if (usesVision) Backend.CPU() else null,
-                    audioBackend = if (usesAudio) Backend.CPU() else null))
-                engine.initialize()
-                val loaded = System.nanoTime()
-                resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.IN_USE, "Embedding computation")
-                val vectors = inputs.map { item ->
+                    if (usesAudio && !info.audioCpu) throw EmbeddingUnavailableException("AUDIO_CPU_UNSUPPORTED")
+                    resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.LOADING, "Embedding initialization")
+                    val started = System.nanoTime()
                     currentCoroutineContext().ensureActive()
-                    val native = when (item) {
-                        is LocalEmbeddingInput.Text -> InputData.Text(item.text)
-                        is LocalEmbeddingInput.Image -> InputData.Image(item.encodedPngOrJpeg.copyOf())
-                        is LocalEmbeddingInput.Audio -> InputData.Audio(item.encodedWav.copyOf())
+                    native.initializeEmbedding(usesVision, usesAudio)
+                    val loaded = System.nanoTime()
+                    resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.IN_USE, "Embedding computation")
+                    val vectors = inputs.map { item ->
+                        currentCoroutineContext().ensureActive()
+                        native.computeEmbedding(item)
                     }
-                    requireNotNull(engine).computeEmbedding(listOf(native),
-                        EmbeddingOptions(normalize = true, insertSpecialTokens = true)).embedding.toList()
+                    currentCoroutineContext().ensureActive()
+                    val result = EmbeddingBatch(EmbeddingSpace(sha, dimension, true,
+                        "litertlm/0.18.0", identity), vectors, System.currentTimeMillis())
+                    mutableMetrics.value = EmbeddingExecutionMetrics(sha, dimension, inputs.size, "CPU",
+                        (loaded-started)/1_000_000, (System.nanoTime()-loaded)/1_000_000, estimate)
+                    result
+                } catch (cancelled: CancellationException) {
+                    primaryFailure = cancelled; throw cancelled
+                } catch (unsupported: EmbeddingUnavailableException) {
+                    primaryFailure = unsupported; throw unsupported
+                } catch (error: Exception) {
+                    val failure = EmbeddingUnavailableException("NATIVE_${error.javaClass.simpleName.take(64)}", error)
+                    primaryFailure = failure
+                    throw failure
+                } catch (fatal: Throwable) {
+                    primaryFailure = fatal
+                    throw fatal
+                } finally {
+                    withContext(NonCancellable) {
+                        val cleanupFailure = try { pinned.close(); null } catch (failure: Throwable) { failure }
+                        if (cleanupFailure != null) {
+                            pendingTeardown = pinned
+                            retained = true
+                            resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.RESIDENT,
+                                "Embedding teardown pending")
+                            val primary = primaryFailure
+                            if (primary != null) primary.addSuppressed(cleanupFailure)
+                            else throw EmbeddingUnavailableException("NATIVE_TEARDOWN_FAILED", cleanupFailure)
+                        }
+                    }
                 }
-                currentCoroutineContext().ensureActive()
-                val result = EmbeddingBatch(EmbeddingSpace(sha, dimension, true,
-                    "litertlm/0.18.0", identity), vectors, System.currentTimeMillis())
-                mutableMetrics.value = EmbeddingExecutionMetrics(sha, dimension, inputs.size, "CPU",
-                    (loaded-started)/1_000_000, (System.nanoTime()-loaded)/1_000_000, estimate)
-                result
-            } catch (cancelled: CancellationException) {
-                primaryFailure = cancelled; throw cancelled
-            } catch (unsupported: EmbeddingUnavailableException) {
-                primaryFailure = unsupported; throw unsupported
-            } catch (error: Exception) {
-                val failure = EmbeddingUnavailableException("NATIVE_${error.javaClass.simpleName.take(64)}", error)
-                primaryFailure = failure
-                throw failure
             } finally {
-                withContext(NonCancellable) {
-                    val cleanupFailure = try { engine?.close(); null } catch (failure: Exception) { failure }
-                    if (cleanupFailure == null) {
-                        resources.unregister(this@LiteRtEmbeddingProvider)
-                    } else {
-                        pendingTeardown = engine
-                        resources.mark(this@LiteRtEmbeddingProvider, NativeResourceState.RESIDENT,
-                            "Embedding teardown pending")
-                        val primary = primaryFailure
-                        if (primary != null) primary.addSuppressed(cleanupFailure)
-                        else throw EmbeddingUnavailableException("NATIVE_TEARDOWN_FAILED", cleanupFailure)
-                    }
+                if (!retained) withContext(NonCancellable) {
+                    // Admission can suspend after obtaining compute but before registering this
+                    // owner. Cleanup must cover that attempt as well as native execution.
+                    try { pinned.close() }
+                    finally { resources.unregister(this@LiteRtEmbeddingProvider) }
                 }
             }
         } }
