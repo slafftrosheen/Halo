@@ -11,6 +11,10 @@ interface WorkspaceFileDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFile(entity: WorkspaceFileEntity)
 
+    @Query("UPDATE workspace_files SET availability=:availability WHERE objectId=:id AND uri=:uri AND ownership=:ownership AND sha256 IS :sha256 AND modifiedAt IS :modifiedAt AND permissionPersisted=:permissionPersisted")
+    suspend fun updateAvailabilityIfCurrent(id: String, uri: String, ownership: String, sha256: String?,
+        modifiedAt: Long?, permissionPersisted: Boolean, availability: String): Int
+
     @Query("SELECT * FROM workspace_files WHERE objectId = :id LIMIT 1")
     fun observeFile(id: String): Flow<WorkspaceFileEntity?>
 

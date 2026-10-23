@@ -109,6 +109,15 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
             throw WorkspaceImageUnavailable("Enable cloud workspace sharing in Privacy and allow cloud routing before generating images.")
         if (reference != null && !policy.allowCloudImages)
             throw WorkspaceImageUnavailable("Enable cloud image sharing in Privacy before sending a reference image for editing.")
+        // Deferred assistant proposals retain their original input authority, including policy revision.
+        RemoteDispatchContext.provenance.get()?.let { origin ->
+            val dispatch = (storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy
+                ?: throw RemoteDispatchBlocked()
+            val categories = origin.categories + RemoteDataCategory.TEXT +
+                if (reference != null) setOf(RemoteDataCategory.IMAGES, RemoteDataCategory.WORKSPACE) else emptySet()
+            dispatch.acquire(RemoteDispatchRequest(choice.providerId, RemoteOperation.IMAGE, categories),
+                origin.revision, recordActivity = false, cancel = {}).use { it.requireCurrent() }
+        }
         require(prompt.isNotBlank() && prompt.length <= 4000)
         if (reference == null && choice.model.requiresReference)
             throw WorkspaceImageUnavailable("This model needs a reference image. Open an image in Notebook or Canvas to edit it.")

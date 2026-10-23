@@ -10,7 +10,7 @@ enum class HomeToolGroup(val title: Int) {
 }
 
 enum class HomeToolAction {
-    NEW_NOTE, ATTACH, WEB, RESEARCH_DRAFT, MAPS_DRAFT, NOTEBOOK, STUDY,
+    NEW_NOTE, ATTACH, WEB, RESEARCH_DRAFT, MAPS_DRAFT, NOTEBOOK, STUDIO, STUDY,
     TIMER, OPEN_APP, CONNECTIONS, VOICE_MODE, START_VOICE, END_VOICE, INBOX, REPEAT_VOICE, PLANNED,
 }
 
@@ -63,7 +63,7 @@ data class HomeToolDescriptor(
         HomeToolAction.CONNECTIONS -> HaloGlyph.INTEGRATIONS
         HomeToolAction.VOICE_MODE, HomeToolAction.START_VOICE, HomeToolAction.END_VOICE -> HaloGlyph.LISTEN
         HomeToolAction.REPEAT_VOICE -> HaloGlyph.SPEAK
-        HomeToolAction.PLANNED -> HaloGlyph.TOOL
+        HomeToolAction.STUDIO, HomeToolAction.PLANNED -> HaloGlyph.TOOL
     },
 )
 
@@ -106,6 +106,8 @@ data class HomeToolCatalogSnapshot(val entries: List<HomeToolEntry> = emptyList(
 
 internal object HomeToolCatalog {
     val descriptors = listOf(
+        HomeToolDescriptor("create.studio", HomeToolGroup.CREATE, R.string.studio_title, R.string.studio_local,
+            HomeToolAction.STUDIO),
         HomeToolDescriptor("create.note", HomeToolGroup.CREATE, R.string.home_tool_note, R.string.home_tool_note_detail,
             HomeToolAction.NEW_NOTE, setOf("halo_create_empty_note")),
         HomeToolDescriptor("create.image", HomeToolGroup.CREATE, R.string.home_tool_image_create, R.string.home_tool_image_detail,

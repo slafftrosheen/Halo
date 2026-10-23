@@ -93,6 +93,8 @@ data class BrainSnapshot(
     val episodes: List<EpisodeSnapshot> = emptyList(),
     val suggestionDecisions: List<SuggestionDecisionSnapshot> = emptyList(),
     val reflectionStatuses: List<ReflectionStatusSnapshot> = emptyList(),
+    val studioProjects: List<StudioProjectSnapshot> = emptyList(),
+    val studioVersions: List<StudioVersionSnapshot> = emptyList(),
 )
 
 @JsonClass(generateAdapter = true)
@@ -125,6 +127,8 @@ class RoomBrainSnapshotSource(
             FileSnapshot(record.objectId, uri, source.name, metadata.optString("mimeType", "image/jpeg"), source.length(), source.lastModified(), source.absolutePath, false, "HALO_OWNED", "OWNED_LOCAL", null)
         }
         BrainSnapshot(
+            studioProjects = dao.studioProjects().map { StudioProjectSnapshot(it.objectId, it.revision, it.committed, it.session) },
+            studioVersions = dao.studioVersions().map { StudioVersionSnapshot(it.objectId, it.revision, it.document, it.savedAt) },
             snapshotId = UUID.randomUUID().toString(),
             createdAt = System.currentTimeMillis(),
             workspace = dao.workspaceObjects().filterNot { it.id.startsWith("learning:") }.map { WorkspaceObjectSnapshot(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
@@ -184,6 +188,8 @@ internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
         delegationDepth = it.delegationDepth, pinnedProviderId = it.pinnedProviderId, pinnedModelId = it.pinnedModelId,
         pinnedTargetLocal = it.pinnedTargetLocal, delegatedInputRefs = it.delegatedInputRefs) },
     agentSteps.map { AgentStepEntity(it.id, it.runId, it.interactionId, it.ordinal, it.stepType, it.schemaVersion, it.payload, it.idempotencyKey, it.state, it.timestamp, it.timestamp) },
+    studioProjects.map { com.halo.app.data.studio.StudioProjectEntity(it.objectId, it.revision, it.committed, it.session) },
+    studioVersions.map { com.halo.app.data.studio.StudioProjectVersion(it.objectId, it.revision, it.document, it.savedAt) },
 )
 
 internal data class RoomBrainContent(
@@ -191,4 +197,6 @@ internal data class RoomBrainContent(
     val turns: List<PersistedTurn>, val memories: List<MemoryRecordEntity>, val memoryRevisions: List<MemoryRevisionEntity>,
     val workingSet: List<WorkingSetEntry>, val provenance: List<ObjectProvenance>, val relations: List<WorkspaceRelationEntity>,
     val files: List<WorkspaceFileEntity>, val agentRuns: List<AgentRunEntity>, val agentSteps: List<AgentStepEntity>,
+    val studioProjects: List<com.halo.app.data.studio.StudioProjectEntity> = emptyList(),
+    val studioVersions: List<com.halo.app.data.studio.StudioProjectVersion> = emptyList(),
 )

@@ -78,7 +78,8 @@ import kotlin.math.roundToInt
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
     androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null, onBack: () -> Unit) {
+fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null,
+    onOpenStudio: ((String, String?) -> Unit)? = null, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var requestedPreviewId by remember(viewModel.canvasId) { mutableStateOf<String?>(null) }
@@ -625,13 +626,22 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
                 val selectedFile = selected.refObjectId?.let { state.files[it] }
                 if (selectedFile?.mimeType?.startsWith("image/") == true) {
-                    TextButton(onClick = { cardMenu = false; imageToolsNodeId = selected.id }) {
-                        Text(uiText("Image tools"))
-                    }
+                    TextButton(onClick = {
+                        cardMenu = false
+                        if (onOpenStudio != null) onOpenStudio(selectedFile.objectId.value, null)
+                        else imageToolsNodeId = selected.id
+                    }) { Text(if (onOpenStudio != null) stringResource(com.halo.app.R.string.studio_open_in) else uiText("Image tools")) }
                     TextButton(onClick = {
                         cardMenu = false
                         viewModel.saveImagePalette(selected.id, selectedFile.version)
                     }, enabled = !state.importing && !state.imageToolBusy) { Text(uiText("Extract color palette")) }
+                }
+                if (selectedFile?.mimeType?.startsWith("image/") != true && onOpenStudio != null) {
+                    selected.refObjectId?.let { state.images[it] }?.takeIf { it.type == "IMAGE" }?.let { attachment ->
+                        TextButton(onClick = { cardMenu = false; onOpenStudio(attachment.noteId, attachment.id) }) {
+                            Text(stringResource(com.halo.app.R.string.studio_open_in))
+                        }
+                    }
                 }
                 if (selectedFile?.mimeType == "application/pdf") {
                     TextButton(onClick = { cardMenu = false; pdfPageNodeId = selected.id },

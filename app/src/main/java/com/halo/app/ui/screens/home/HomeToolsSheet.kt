@@ -143,6 +143,7 @@ internal fun homeToolActionLabel(action: HomeToolAction, voiceModeActive: Boolea
     HomeToolAction.ATTACH -> R.string.home_tools_attach
     HomeToolAction.WEB -> R.string.home_tools_open_search
     HomeToolAction.RESEARCH_DRAFT, HomeToolAction.MAPS_DRAFT -> R.string.home_tools_prepare
+    HomeToolAction.STUDIO -> R.string.studio_open
     HomeToolAction.NOTEBOOK -> R.string.home_tools_open_notebook
     HomeToolAction.STUDY -> R.string.home_tools_open_study
     HomeToolAction.CONNECTIONS -> R.string.home_tools_open_connections

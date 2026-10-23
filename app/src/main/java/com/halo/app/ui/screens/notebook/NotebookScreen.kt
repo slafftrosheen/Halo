@@ -109,7 +109,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @OptIn(ExperimentalLayoutApi::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
-    onStartVoiceMode: () -> Unit = {}) {
+    onOpenStudio: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -318,7 +318,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
 
         if (!showLibrary) item(key = "workspace-destinations") {
-            WorkspaceHubDestinations { destination ->
+            WorkspaceHubDestinations(onStudio = onOpenStudio) { destination ->
                 if (destination == WorkspaceHubDestination.MEMORY) {
                     viewModel.openMemoryHub()
                 } else {
@@ -924,7 +924,7 @@ private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
     WorkspaceObjectType.MEDIA -> "Media"
     WorkspaceObjectType.CONVERSATION -> "Saved chat"
     WorkspaceObjectType.MEMORY -> "Memory"
-    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) "Canvas" else "Artifact"
+    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("studio:")) "Studio" else if (row.contentRef.startsWith("canvas:")) "Canvas" else "Artifact"
 }
 
 /** Display only. A memory suggestion is never an approved personal fact.
@@ -1061,5 +1061,5 @@ private fun workspaceIconResource(row: WorkspaceObject): Int = when (row.type) {
     WorkspaceObjectType.CONVERSATION -> com.halo.app.R.drawable.halo_ic_saved_chat
     WorkspaceObjectType.MEMORY -> com.halo.app.R.drawable.halo_ic_memory
     WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> com.halo.app.R.drawable.halo_ic_file_doc
-    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) com.halo.app.R.drawable.halo_ic_canvas else com.halo.app.R.drawable.halo_ic_file_doc
+    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("studio:")) com.halo.app.R.drawable.halo_ic_sketch else if (row.contentRef.startsWith("canvas:")) com.halo.app.R.drawable.halo_ic_canvas else com.halo.app.R.drawable.halo_ic_file_doc
 }

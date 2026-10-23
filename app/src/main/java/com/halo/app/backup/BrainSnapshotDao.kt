@@ -19,6 +19,10 @@ import com.halo.app.data.workspace.WorkspaceRelationEntity
 
 @Dao
 interface BrainSnapshotDao {
+    @Query("SELECT * FROM studio_projects ORDER BY objectId") suspend fun studioProjects(): List<com.halo.app.data.studio.StudioProjectEntity>
+    @Query("SELECT * FROM studio_project_versions ORDER BY objectId, revision") suspend fun studioVersions(): List<com.halo.app.data.studio.StudioProjectVersion>
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putStudioProjects(values: List<com.halo.app.data.studio.StudioProjectEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putStudioVersions(values: List<com.halo.app.data.studio.StudioProjectVersion>)
     @Query("SELECT * FROM workspace_objects ORDER BY createdAt, id") suspend fun workspaceObjects(): List<WorkspaceObjectEntity>
     @Query("SELECT * FROM notes ORDER BY objectId") suspend fun notes(): List<NoteEntity>
     @Query("SELECT * FROM conversations ORDER BY createdAt, id") suspend fun conversations(): List<PersistedConversation>

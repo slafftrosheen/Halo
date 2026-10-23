@@ -46,6 +46,12 @@ interface WorkspaceFileRepository {
         source: WorkspaceObjectSource = WorkspaceObjectSource.IMPORT
     ): WorkspaceFile
 
+    /** Publish new local bytes through the canonical managed-file owner; never replace a source. */
+    suspend fun createManagedFile(displayName: String, mimeType: String, bytes: ByteArray,
+        sourceObjectId: String, sourceRevision: String, metadata: String,
+        validateSource: suspend () -> Unit = {}): WorkspaceFile =
+        error("Managed-file creation is unavailable")
+
     suspend fun getFile(objectId: WorkspaceObjectId): WorkspaceFile?
     fun observeFile(id: WorkspaceObjectId): Flow<WorkspaceFile?> = observeFiles().map { list -> list.firstOrNull { it.objectId == id } }
     fun observeFiles(): Flow<List<WorkspaceFile>>
@@ -159,6 +165,48 @@ class RoomWorkspaceFileRepository(
         )
     }
 
+    override suspend fun createManagedFile(displayName: String, mimeType: String, bytes: ByteArray,
+        sourceObjectId: String, sourceRevision: String, metadata: String,
+        validateSource: suspend () -> Unit): WorkspaceFile = withContext(Dispatchers.IO) {
+        require(displayName.isNotBlank() && displayName.length <= 120)
+        require(bytes.size in 1..20_000_000 && mimeType.startsWith("image/") && mimeType.length <= 100)
+        require(sourceObjectId.matches(Regex("[A-Za-z0-9_-]{1,100}")) && sourceRevision.length in 1..200)
+        require(metadata.length <= 2_100_000)
+        val id = newId()
+        val directory = File(ownedRoot, safe(id)).also { check(it.exists() || it.mkdirs()) }
+        val destination = File(directory, safe(displayName))
+        check(!destination.exists())
+        val temporary = File(directory, ".${destination.name}.creating")
+        try {
+            temporary.outputStream().use { it.write(bytes) }
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            check(temporary.renameTo(destination)) { "Cannot publish local image" }
+            val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+            val timestamp = now()
+            db.withTransaction {
+                require(db.notebookDao().getWorkspaceObject(sourceObjectId)?.lifecycle == "ACTIVE") { "Source unavailable" }
+                validateSource() // Local owner revalidation runs in the publication transaction.
+                db.notebookDao().insertWorkspaceObject(WorkspaceObjectEntity(id, "FILE", displayName, timestamp, timestamp,
+                    "USER_CREATED", "ACTIVE", true, "READY", "file:$id"))
+                db.workspaceFileDao().insertFile(WorkspaceFileEntity(objectId = id, uri = ownedUri(destination).toString(),
+                    displayName = displayName, mimeType = mimeType, sizeBytes = bytes.size.toLong(), modifiedAt = timestamp,
+                    ownedCopyPath = destination.absolutePath, permissionPersisted = false,
+                    ownership = ContentOwnership.HALO_OWNED.name, availability = WorkspaceFileAvailability.OWNED_LOCAL.name,
+                    sha256 = digest))
+                db.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(id, sourceObjectId, sourceRevision, metadata))
+            }
+            requireNotNull(getFile(WorkspaceObjectId(id)))
+        } catch (failure: Throwable) {
+            withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                temporary.delete()
+                // A commit can win cancellation. On uncertainty preserve bytes still owned by Workspace.
+                val referenced = runCatching { db.workspaceFileDao().getFile(id) != null }.getOrDefault(true)
+                if (!referenced) { destination.delete(); directory.delete() }
+            }
+            throw failure
+        }
+    }
+
     override suspend fun getFile(objectId: WorkspaceObjectId): WorkspaceFile? {
         val entity = db.workspaceFileDao().getFile(objectId.value) ?: return null
         return entity.toDomain()
@@ -180,9 +228,31 @@ class RoomWorkspaceFileRepository(
         if (entity.ownership == ContentOwnership.HALO_OWNED.name) {
             val existing = entity.ownedCopyPath?.let(::File)
             check(existing?.isFile == true && existing.length() in 1..maxBytes) { "Local copy unavailable" }
-            return@withContext entity.toDomain()
+            val local = requireNotNull(existing)
+            val digest = MessageDigest.getInstance("SHA-256")
+            local.inputStream().use { input ->
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                var total = 0L
+                while (true) {
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    total += read; require(total <= maxBytes)
+                    digest.update(buffer, 0, read)
+                }
+            }
+            val hash = digest.digest().joinToString("") { "%02x".format(it) }
+            require(entity.sha256 == null || entity.sha256 == hash) { "Local source bytes changed" }
+            val verified = entity.copy(sha256 = hash, sizeBytes = local.length(),
+                availability = WorkspaceFileAvailability.OWNED_LOCAL.name)
+            db.workspaceFileDao().insertFile(verified)
+            return@withContext verified.toDomain()
         }
-        val destination = File(ownedRoot, "${safe(entity.objectId)}/${safe(entity.displayName)}")
+        val originalDestination = File(ownedRoot, "${safe(entity.objectId)}/${safe(entity.displayName)}")
+        // A process may have stopped after rename but before publication. Preserve those bytes;
+        // a fresh attempt can publish a separate file without overwriting an uncertain original.
+        val destination = if (originalDestination.exists()) File(originalDestination.parentFile,
+            UUID.randomUUID().toString() + "_" + safe(entity.displayName)) else originalDestination
         destination.parentFile?.mkdirs()
         val temporary = File(destination.parentFile, ".${destination.name}.copying")
         val digest = MessageDigest.getInstance("SHA-256")
@@ -218,10 +288,16 @@ class RoomWorkspaceFileRepository(
         )
         db.workspaceFileDao().insertFile(updated)
         requireNotNull(getFile(objectId))
-        } catch (failure: Throwable) { destination.delete(); throw failure }
+        } catch (failure: Throwable) {
+            withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                val referenced = runCatching { db.workspaceFileDao().getFile(entity.objectId)?.ownedCopyPath == destination.absolutePath }.getOrDefault(true)
+                if (!referenced) destination.delete()
+            }
+            throw failure
+        }
     } }
 
-    override suspend fun relink(objectId: WorkspaceObjectId, uri: Uri): WorkspaceFile = withContext(Dispatchers.IO) {
+    override suspend fun relink(objectId: WorkspaceObjectId, uri: Uri): WorkspaceFile = copyMutex.withLock { withContext(Dispatchers.IO) {
         val entity = requireNotNull(db.workspaceFileDao().getFile(objectId.value))
         require(entity.ownership == ContentOwnership.EXTERNAL_REFERENCE.name) { "Owned files cannot be relinked" }
         val metadata = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { cursor ->
@@ -245,7 +321,7 @@ class RoomWorkspaceFileRepository(
         context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         db.workspaceFileDao().insertFile(entity.copy(uri = uri.toString(), modifiedAt = if (uri.toString() == entity.uri) entity.modifiedAt else maxOf(now(), (entity.modifiedAt ?: 0) + 1), permissionPersisted = true, availability = WorkspaceFileAvailability.AVAILABLE.name))
         requireNotNull(getFile(objectId))
-    }
+    } }
 
     override suspend fun reconcileAvailability() = withContext(Dispatchers.IO) {
         val grants = context.contentResolver.persistedUriPermissions.filter { it.isReadPermission }.map { it.uri }.toSet()
@@ -258,7 +334,8 @@ class RoomWorkspaceFileRepository(
                 val readable = runCatching { context.contentResolver.openFileDescriptor(Uri.parse(entity.uri), "r")?.use { true } ?: false }.getOrDefault(false)
                 if (readable) WorkspaceFileAvailability.AVAILABLE else WorkspaceFileAvailability.NEEDS_RELINK
             }
-            if (availability.name != entity.availability) db.workspaceFileDao().insertFile(entity.copy(availability = availability.name))
+            if (availability.name != entity.availability) db.workspaceFileDao().updateAvailabilityIfCurrent(entity.objectId,
+                entity.uri, entity.ownership, entity.sha256, entity.modifiedAt, entity.permissionPersisted, availability.name)
         }
     }
 

@@ -385,7 +385,7 @@ fun HomeScreen(
                 HomeToolAction.WEB -> webSearchDraft = textInput
                 HomeToolAction.RESEARCH_DRAFT -> prepareEarlierQuestion(researchPrompt)
                 HomeToolAction.MAPS_DRAFT -> prepareEarlierQuestion(mapsPrompt)
-                HomeToolAction.NOTEBOOK, HomeToolAction.STUDY, HomeToolAction.CONNECTIONS -> viewModel.openToolScreen(action)
+                HomeToolAction.NOTEBOOK, HomeToolAction.STUDIO, HomeToolAction.STUDY, HomeToolAction.CONNECTIONS -> viewModel.openToolScreen(action)
                 HomeToolAction.TIMER -> { quickValue = "120"; quickAction = "Timer" }
                 HomeToolAction.OPEN_APP -> { quickValue = ""; quickAction = "Open app" }
                 HomeToolAction.START_VOICE -> viewModel.startVoiceMode()

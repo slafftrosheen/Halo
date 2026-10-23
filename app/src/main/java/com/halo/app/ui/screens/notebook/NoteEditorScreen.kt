@@ -152,6 +152,7 @@ fun NoteEditorScreen(
     onOpenCanvas: (String, String) -> Unit = { _, _ -> },
     onStartStudySetup: ((String?) -> Unit)? = null,
     onReviewMemory: (String) -> Unit = {},
+    onOpenStudio: ((String, String) -> Unit)? = null,
 ) {
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -438,6 +439,7 @@ fun NoteEditorScreen(
                 viewModel = viewModel,
                 showTools = toolsExpanded,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
+                onStudio = onOpenStudio,
                 onAddAttachment = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
                 onPickReference = {
                     relinkBlockId = null
@@ -657,6 +659,7 @@ private fun ColumnScope.EditModeView(
     viewModel: NoteEditorViewModel,
     onAddAttachment: () -> Unit,
     onImage: (NoteAttachment?) -> Unit,
+    onStudio: ((String, String) -> Unit)?,
     onPickReference: () -> Unit,
     onPickExistingReference: (String) -> Unit,
     onAssist: () -> Unit,
@@ -739,6 +742,7 @@ private fun ColumnScope.EditModeView(
                     },
                     onRemove = { viewModel.removeAttachment(attachment.id) },
                     onEdit = { onImage(attachment) },
+                    onStudio = onStudio?.let { open -> { open(attachment.noteId, attachment.id) } },
                 )
             }
         }
@@ -1499,7 +1503,7 @@ private fun placeholderFor(type: NoteBlockType): String = when (type) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRemove: () -> Unit, onEdit: () -> Unit) {
+private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRemove: () -> Unit, onEdit: () -> Unit, onStudio: (() -> Unit)?) {
     Surface(
         modifier = Modifier.width(if (attachment.type == "IMAGE") 248.dp else 220.dp),
         shape = com.halo.app.ui.design.HaloShapes.control,
@@ -1510,7 +1514,10 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
             if (attachment.type == "IMAGE") {
                 AttachmentImage(attachment)
             }
-            if (attachment.type == "IMAGE") TextButton(onClick = onEdit) { Text(uiText("Edit with AI")) } else {
+            if (attachment.type == "IMAGE") {
+                onStudio?.let { open -> TextButton(onClick = open) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.studio_open_in)) } }
+                TextButton(onClick = onEdit) { Text(uiText("Edit with AI")) }
+            } else {
                 Row(
                     modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,

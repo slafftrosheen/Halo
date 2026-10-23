@@ -64,6 +64,7 @@ class StagedBrainImporter(
         TurnSnapshot::class.java, MemorySnapshot::class.java, LegacyMemorySnapshot::class.java, MemoryRevisionSnapshot::class.java,
         EpisodeSnapshot::class.java, SuggestionDecisionSnapshot::class.java, ReflectionStatusSnapshot::class.java,
         WorkingSetSnapshot::class.java, ProvenanceSnapshot::class.java, RelationSnapshot::class.java,
+        StudioProjectSnapshot::class.java, StudioVersionSnapshot::class.java,
         FileSnapshot::class.java, AgentRunSnapshot::class.java, AgentStepSnapshot::class.java,
         ReminderSnapshot::class.java, DeviceConfigurationSnapshot::class.java,
     ).associateWith { moshi.adapter(it) }
@@ -108,6 +109,7 @@ class StagedBrainImporter(
             }
             val localObjects = database.brainSnapshotDao().workspaceObjects().associateBy { it.id }
             val localNotes = database.brainSnapshotDao().notes().associateBy { it.objectId }
+            val localStudio = database.brainSnapshotDao().studioProjects().associateBy { it.objectId }
             val create = mutableListOf<ImportOperation>()
             val update = mutableListOf<ImportOperation>()
             val conflicts = mutableListOf<ImportConflict>()
@@ -118,7 +120,11 @@ class StagedBrainImporter(
                     update += ImportOperation(incoming.id, incoming.type, incoming.title)
                     val incomingRevision = parsed.snapshot.notes.firstOrNull { it.objectId == incoming.id }?.revision
                     val localRevision = localNotes[incoming.id]?.revision
-                    if (incoming.updatedAt != local.updatedAt || incomingRevision != localRevision) {
+                    val studio = parsed.snapshot.studioProjects.firstOrNull { it.objectId == incoming.id }
+                    val studioConflict = studio != null && localStudio[incoming.id]?.let {
+                        it.revision != studio.revision || it.committed != studio.committed || it.session != studio.session
+                    } != false
+                    if (incoming.updatedAt != local.updatedAt || incomingRevision != localRevision || studioConflict) {
                         conflicts += ImportConflict(incoming.id, incoming.type, localRevision, incomingRevision, local.updatedAt, incoming.updatedAt)
                     }
                 }
@@ -293,6 +299,8 @@ class StagedBrainImporter(
                 dao.putProvenance(room.provenance)
                 dao.putRelations(room.relations)
                 dao.putFiles(room.files)
+                dao.putStudioProjects(room.studioProjects)
+                dao.putStudioVersions(room.studioVersions)
                 val normalizedAgentRuns = room.agentRuns.map { run ->
                     if (run.state in setOf("EXECUTING", "PLANNING", "WAITING_FOR_APPROVAL", "WAITING_FOR_CLARIFICATION", "CREATED")) {
                         run.copy(state = "INTERRUPTED")
@@ -443,6 +451,7 @@ class StagedBrainImporter(
             return ParsedArchive(zip, manifest, emptySnapshot(manifest), emptyMap(), prepared.encrypted)
         }
         val snapshot = readSnapshot(zip, manifest)
+        StudioArchive.validate(snapshot)
         require(snapshot.notes.all { note -> snapshot.workspace.any { it.id == note.objectId } }) { "Note references missing workspace object" }
         require(snapshot.turns.all { turn -> snapshot.conversations.any { it.id == turn.conversationId } }) { "Turn references missing conversation" }
         require(snapshot.files.all { file -> snapshot.workspace.any { it.id == file.objectId } }) { "File references missing workspace object" }
@@ -477,6 +486,8 @@ class StagedBrainImporter(
         provenance = readLines(zip, "workspace/provenance.jsonl", ProvenanceSnapshot::class.java),
         relations = readLines(zip, "relations/relations.jsonl", RelationSnapshot::class.java),
         files = readLines(zip, "files/index.jsonl", FileSnapshot::class.java),
+        studioProjects = readLines(zip, "studio/projects.jsonl", StudioProjectSnapshot::class.java),
+        studioVersions = readLines(zip, "studio/versions.jsonl", StudioVersionSnapshot::class.java),
         agentRuns = readLines(zip, "agent/runs.jsonl", AgentRunSnapshot::class.java),
         agentSteps = readLines(zip, "agent/steps.jsonl", AgentStepSnapshot::class.java),
         reminders = readLines(zip, "reminders/reminders.jsonl", ReminderSnapshot::class.java),
@@ -548,9 +559,11 @@ class StagedBrainImporter(
             },
             memoryRevisions = source.memoryRevisions.map { it.copy(id = if (it.memoryId in ids) UUID.randomUUID().toString() else it.id, memoryId = id(it.memoryId)) },
             workingSet = source.workingSet.map { it.copy(objectId = id(it.objectId)) },
-            provenance = source.provenance.map { it.copy(objectId = id(it.objectId), sourceId = id(it.sourceId)) },
+            provenance = source.provenance.map { it.copy(objectId = id(it.objectId), sourceId = id(it.sourceId), metadata = StudioArchive.metadata(it.metadata, ids)) },
             relations = source.relations.map { it.copy(id = if (it.fromId in ids || it.toId in ids) UUID.randomUUID().toString() else it.id, fromId = id(it.fromId), toId = id(it.toId)) },
             files = source.files.map { it.copy(objectId = id(it.objectId)) },
+            studioProjects = source.studioProjects.map { it.copy(objectId = id(it.objectId), committed = StudioArchive.document(it.committed, ids), session = StudioArchive.session(it.session, ids)) },
+            studioVersions = source.studioVersions.map { it.copy(objectId = id(it.objectId), document = StudioArchive.document(it.document, ids)) },
         )
     }
 
@@ -560,6 +573,7 @@ class StagedBrainImporter(
         memories = source.memories.filterNot { it.id in skipped }, memoryRevisions = source.memoryRevisions.filterNot { it.memoryId in skipped },
         workingSet = source.workingSet.filterNot { it.objectId in skipped }, provenance = source.provenance.filterNot { it.objectId in skipped },
         relations = source.relations.filterNot { it.fromId in skipped || it.toId in skipped }, files = source.files.filterNot { it.objectId in skipped },
+        studioProjects = source.studioProjects.filterNot { it.objectId in skipped }, studioVersions = source.studioVersions.filterNot { it.objectId in skipped },
     )
 
     private suspend fun clearBrain(dao: BrainSnapshotDao) {

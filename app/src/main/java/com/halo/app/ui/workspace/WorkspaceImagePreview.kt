@@ -117,7 +117,9 @@ fun InspectableImage(bitmap: Bitmap, label: String, modifier: Modifier = Modifie
 private fun ImageViewer(bitmap: Bitmap, label: String, onDismiss: () -> Unit) {
     var scale by remember(bitmap) { mutableFloatStateOf(1f) }
     var offset by remember(bitmap) { mutableStateOf(Offset.Zero) }
+    val hostDensity = androidx.compose.ui.platform.LocalDensity.current
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides hostDensity) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.safeDrawingPadding()) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -144,6 +146,7 @@ private fun ImageViewer(bitmap: Bitmap, label: String, onDismiss: () -> Unit) {
                     TextButton(onClick = { scale = (scale * 1.5f).coerceAtMost(4f) }, enabled = scale < 4f) { Text(uiText("Zoom in")) }
                 }
             }
+        }
         }
     }
 }

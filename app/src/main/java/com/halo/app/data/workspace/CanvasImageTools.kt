@@ -24,27 +24,27 @@ object CanvasImageTools {
     suspend fun export(context: Context, file: WorkspaceFile, recipe: CanvasImageRecipe): ByteArray =
         withContext(Dispatchers.IO) {
             val bitmap = render(context, file, recipe, preview = false)
-            try {
-                coroutineContext.ensureActive()
-                val stream = ByteArrayOutputStream()
-                val format = when (recipe.format) {
-                    CanvasImageFormat.PNG -> Bitmap.CompressFormat.PNG
-                    CanvasImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
-                }
-                if (recipe.format == CanvasImageFormat.JPEG && bitmap.hasAlpha()) {
-                    val opaque = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-                    try {
-                        opaque.eraseColor(android.graphics.Color.WHITE)
-                        android.graphics.Canvas(opaque).drawBitmap(bitmap, 0f, 0f, null)
-                        check(opaque.compress(format, 86, stream))
-                    } finally { opaque.recycle() }
-                } else check(bitmap.compress(format, 86, stream))
-                val bytes = stream.toByteArray()
-                require(bytes.size in 1..MAX_OUTPUT_BYTES) { "Edited image exceeds 20 MB." }
-                coroutineContext.ensureActive()
-                bytes
-            } finally { bitmap.recycle() }
+            try { encodeBitmap(bitmap, recipe.format) } finally { bitmap.recycle() }
         }
+
+    /** Encoding is shared by local transformations and Studio, including JPEG's explicit white matte. */
+    internal suspend fun encodeBitmap(bitmap: Bitmap, format: CanvasImageFormat): ByteArray = withContext(Dispatchers.IO) {
+        coroutineContext.ensureActive()
+        val stream = ByteArrayOutputStream()
+        val compression = if (format == CanvasImageFormat.PNG) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+        if (format == CanvasImageFormat.JPEG && bitmap.hasAlpha()) {
+            val opaque = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+            try {
+                opaque.eraseColor(android.graphics.Color.WHITE)
+                android.graphics.Canvas(opaque).drawBitmap(bitmap, 0f, 0f, null)
+                check(opaque.compress(compression, 86, stream))
+            } finally { opaque.recycle() }
+        } else check(bitmap.compress(compression, 86, stream))
+        stream.toByteArray().also {
+            require(it.size in 1..MAX_OUTPUT_BYTES) { "Edited image exceeds 20 MB." }
+            coroutineContext.ensureActive()
+        }
+    }
 
     suspend fun extractPalette(context: Context, file: WorkspaceFile): List<String> =
         withContext(Dispatchers.IO) {
@@ -66,61 +66,79 @@ object CanvasImageTools {
 
     /** Reuse the existing bounded, availability-checked decoder for image composition. */
     internal suspend fun stitchSource(context: Context, file: WorkspaceFile, preview: Boolean): Bitmap =
-        render(context, file, CanvasImageRecipe(maxEdge = if (preview) 512 else 4096), preview = false)
+        render(context, file, CanvasImageRecipe(maxEdge = if (preview) 512 else 4096), preview = preview)
 
-    private suspend fun render(context: Context, file: WorkspaceFile, recipe: CanvasImageRecipe, preview: Boolean): Bitmap =
-        withContext(Dispatchers.IO) {
-            require(file.mimeType.startsWith("image/")) { "Select an image file." }
-            require(file.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)) {
-                "Image unavailable. Relink it in Workspace."
-            }
-            val resolver = context.contentResolver
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            resolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-            require(bounds.outWidth in 1..32768 && bounds.outHeight in 1..32768) { "Unsupported image dimensions." }
-            val sourceLimit = if (preview) 640 else 4096
-            var sample = 1
-            while (maxOf(bounds.outWidth / sample, bounds.outHeight / sample) > sourceLimit ||
-                bounds.outWidth.toLong() * bounds.outHeight / sample / sample > MAX_PIXELS) sample *= 2
-            coroutineContext.ensureActive()
-            var working: Bitmap? = resolver.openInputStream(file.uri)?.use {
-                BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply {
-                    inSampleSize = sample
-                    inPreferredConfig = Bitmap.Config.ARGB_8888
-                })
-            }
-            checkNotNull(working) { "Image could not be decoded." }
-            try {
-                if (recipe.squareCrop) {
-                    val current = requireNotNull(working)
-                    val side = minOf(current.width, current.height)
-                    val cropped = Bitmap.createBitmap(current, (current.width - side) / 2, (current.height - side) / 2, side, side)
-                    if (cropped !== current) { current.recycle(); working = cropped }
+    private suspend fun render(context: Context, file: WorkspaceFile, recipe: CanvasImageRecipe, preview: Boolean): Bitmap {
+        var owned: Bitmap? = null
+        try {
+            val result = withContext(Dispatchers.IO) {
+                require(file.mimeType.startsWith("image/")) { "Select an image file." }
+                require(file.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)) {
+                    "Image unavailable. Relink it in Workspace."
                 }
-                if (recipe.quarterTurns != 0 || recipe.mirrorHorizontal) {
-                    val current = requireNotNull(working)
-                    val matrix = Matrix().apply {
-                        if (recipe.mirrorHorizontal) postScale(-1f, 1f)
-                        if (recipe.quarterTurns != 0) postRotate(recipe.quarterTurns * 90f)
-                    }
-                    val adjusted = Bitmap.createBitmap(current, 0, 0, current.width, current.height, matrix, true)
-                    if (adjusted !== current) { current.recycle(); working = adjusted }
-                }
-                val current = requireNotNull(working)
-                // The bitmap is already cropped and rotated. Applying recipe.outputDimensions
-                // here would rotate/square-crop its dimensions a second time.
-                val bound = minOf(recipe.maxEdge, if (preview) 640 else recipe.maxEdge)
-                val scale = minOf(1.0, bound.toDouble() / maxOf(current.width, current.height))
-                val width = (current.width * scale).toInt().coerceAtLeast(1)
-                val height = (current.height * scale).toInt().coerceAtLeast(1)
-                if (current.width != width || current.height != height) {
-                    val resized = Bitmap.createScaledBitmap(current, width, height, true)
-                    if (resized !== current) { current.recycle(); working = resized }
-                }
+                val resolver = context.contentResolver
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                resolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+                require(bounds.outWidth in 1..32768 && bounds.outHeight in 1..32768) { "Unsupported image dimensions." }
+                val sourceLimit = if (preview) 640 else 4096
+                var sample = 1
+                while (maxOf(bounds.outWidth / sample, bounds.outHeight / sample) > sourceLimit ||
+                    bounds.outWidth.toLong() * bounds.outHeight / sample / sample > MAX_PIXELS) sample *= 2
                 coroutineContext.ensureActive()
-                val result = requireNotNull(working)
-                working = null
-                result
-            } finally { working?.takeUnless { it.isRecycled }?.recycle() }
-        }
+                val working: Bitmap? = resolver.openInputStream(file.uri)?.use {
+                    BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply {
+                        inSampleSize = sample
+                        inPreferredConfig = Bitmap.Config.ARGB_8888
+                    })
+                }
+                owned = checkNotNull(working) { "Image could not be decoded." }
+                transformOwnedBitmap(requireNotNull(owned), recipe, preview).also { owned = it }
+            }
+            owned = null
+            return result
+        } finally { owned?.takeUnless { it.isRecycled }?.recycle() }
+    }
+
+    /** Takes ownership even on failure/cancellation; the successful caller owns the returned bitmap. */
+    internal suspend fun transformOwnedBitmap(source: Bitmap, recipe: CanvasImageRecipe, preview: Boolean): Bitmap {
+        var working: Bitmap? = source
+        return try {
+            coroutineContext.ensureActive()
+            if (recipe.crop != null) {
+                val current = requireNotNull(working)
+                val rect = recipe.crop.pixels(current.width, current.height)
+                val cropped = Bitmap.createBitmap(current, rect.left, rect.top, rect.width, rect.height)
+                if (cropped !== current) { current.recycle(); working = cropped }
+            } else if (recipe.squareCrop) {
+                val current = requireNotNull(working)
+                val side = minOf(current.width, current.height)
+                val cropped = Bitmap.createBitmap(current, (current.width - side) / 2, (current.height - side) / 2, side, side)
+                if (cropped !== current) { current.recycle(); working = cropped }
+            }
+            if (recipe.quarterTurns != 0 || recipe.mirrorHorizontal) {
+                val current = requireNotNull(working)
+                val matrix = Matrix().apply {
+                    if (recipe.mirrorHorizontal) postScale(-1f, 1f)
+                    if (recipe.quarterTurns != 0) postRotate(recipe.quarterTurns * 90f)
+                }
+                val adjusted = Bitmap.createBitmap(current, 0, 0, current.width, current.height, matrix, true)
+                if (adjusted !== current) { current.recycle(); working = adjusted }
+            }
+            val current = requireNotNull(working)
+            // The bitmap is already cropped and rotated. Applying recipe.outputDimensions
+            // here would rotate/square-crop its dimensions a second time.
+            val bound = minOf(recipe.maxEdge, if (preview) 640 else recipe.maxEdge)
+            val scale = minOf(1.0, bound.toDouble() / maxOf(current.width, current.height))
+            val width = (current.width * scale).toInt().coerceAtLeast(1)
+            val height = (current.height * scale).toInt().coerceAtLeast(1)
+            if (current.width != width || current.height != height) {
+                val resized = Bitmap.createScaledBitmap(current, width, height, true)
+                if (resized !== current) { current.recycle(); working = resized }
+            }
+            coroutineContext.ensureActive()
+            val result = requireNotNull(working)
+            working = null
+            result
+        } finally { working?.takeUnless { it.isRecycled }?.recycle() }
+    }
 }

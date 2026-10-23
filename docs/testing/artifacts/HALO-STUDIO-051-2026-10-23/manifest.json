@@ -1,0 +1,56 @@
+{
+  "issue": 51,
+  "baseMain": "64202f92e325d6a7f090762c1c71d5b8c1a92d74",
+  "productionAppMainTree": "c33119fc46e72abfe49408be589247d523f821b8",
+  "productionCognitionMainTree": "deb65ff3fe12241bfb00a6cc64d725ac9ab65462",
+  "apk": {
+    "bytes": 287221991,
+    "sha256": "9c9a451575a572f661aaeec96bad448c2121f0914566244527f11d9a55e9a951",
+    "installedHashMatched": true,
+    "productionUnchangedAfterAssembly": true
+  },
+  "build": {
+    "appAssembled": true,
+    "testApkAssembled": true,
+    "initialGate": "15m; 36/44 desktop passed before fixture corrections",
+    "desktopRetry": "3m 20s; no APK rebuild",
+    "runtimeGate": "1m 35s"
+  },
+  "desktop": {
+    "tests": 44,
+    "classes": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "runtime": {
+    "tests": 5,
+    "classes": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device": {
+    "serial": "f01fe673",
+    "model": "23124RA7EO",
+    "api": 35,
+    "tests": 2,
+    "result": "OK",
+    "productionStudioKnownLabelsObserved": true,
+    "userDataPreserved": true,
+    "osPreferencesChanged": false
+  },
+  "renders": {
+    "count": 3,
+    "visuallyInspected": true
+  },
+  "notQualified": [
+    "tablet/stylus/physical pressure and eraser",
+    "sustained memory/frame times",
+    "camera hardware",
+    "TalkBack interaction",
+    "real provider/billing",
+    "full navigation and interruption matrix"
+  ],
+  "evidenceLogFormatting": "Trailing whitespace normalized; original first-run log/XML retained outside repository in verification-2026-10-23-issue51/first-desktop"
+}

@@ -2,7 +2,7 @@ package com.halo.app.backup
 
 import com.squareup.moshi.JsonClass
 
-object BrainArchiveSchema { const val CURRENT = 2 }
+object BrainArchiveSchema { const val CURRENT = 3 }
 
 enum class BrainExportProfile { BRAIN_ONLY, BRAIN_WITH_FILES, FULL_USER_BACKUP }
 enum class BrainImportMode { MERGE, REPLACE }

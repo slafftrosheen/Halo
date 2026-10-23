@@ -393,6 +393,12 @@ object ManualDependencyGraph {
         ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator)
     }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
+    val studioProjectRepository by lazy { com.halo.app.data.studio.StudioProjectRepository(appDatabase) }
+    val studioRenderer by lazy { com.halo.app.data.studio.StudioRenderer(applicationContext, workspaceFileRepository, workspaceRepository) }
+    val studioService by lazy { com.halo.app.data.studio.StudioService(applicationContext, studioProjectRepository,
+        workspaceFileRepository, workspaceRepository, studioRenderer, notebookAssetRepository, notebookCanvasRepository, appDatabase.workspaceContextDao(), com.halo.app.data.studio.StudioUiRequests(infra.scope,
+            { com.halo.app.ui.shell.HaloScreenLauncher.dispatch(applicationContext, "studio") })) }
+
     val workloadQualifications by lazy { com.halo.app.ai.WorkloadQualificationStore(applicationContext,storage) }
     val workloadLab by lazy { com.halo.app.ai.WorkloadLabController(applicationContext,modelManager,
         { providers.inference as? com.halo.providers.litert.LiteRtLocalProvider },providerGraph.nativeResourceCoordinator,
@@ -848,6 +854,7 @@ object ManualDependencyGraph {
         val notificationExecutor = notificationDigestTool
         val storageExecutor = StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository)
         val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository)
+        val studioExecutor = com.halo.app.di.tools.StudioToolExecutor(studioService)
         val workspaceExecutor = WorkspaceToolExecutor(
             notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,
             studyStarter = com.halo.app.study.StudySessionStarter { sourceObjectId, interactionId ->
@@ -974,6 +981,7 @@ object ManualDependencyGraph {
                 storageExecutor,
                 fileExecutor,
                 workspaceExecutor,
+                studioExecutor,
                 memoryExecutor,
                 longTaskExecutor,
                 hostExecutor,
@@ -992,6 +1000,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.STORAGE_STATUS to storageExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.FILE to fileExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to workspaceExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to studioExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEMORY to memoryExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.INTEGRITY to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NAVIGATION to hostExecutor,

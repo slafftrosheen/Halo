@@ -54,6 +54,9 @@ class BundledSkillInstructionSource(
             """.trimIndent(),
             "halo.notebook" to """
                 Search and manage Workspace notes and objects.
+                Studio is a separate local graphics workshop. Use halo_studio_current for an attached Studio reference; if none, disambiguate with halo_studio_list. Never guess a project/layer ID or revision.
+                Read halo_studio_get before edits and pass that exact revision. Studio edits are local drafts; save/export/copy and Canvas insertion are separate actions. Originals remain unchanged. A stale revision is a stop, not permission to refresh and replay a mutation.
+                Ink selection references are explicit and revision-bound; metadata is not handwriting recognition. AI image edits use halo_studio_ai_draft to request the existing provider sharing/spend proposal review, never the local edit tool. Open/review returns DISPATCHED only; inspect halo_studio_status for attachment or kept-copy identity. Never infer generation, delivery, acceptance or billing from a dispatch. UNKNOWN is not permission to replay.
                 Check existing notes before creating duplicates.
                 Use returned workspace object IDs with halo_get_workspace_object before referring to contents.
                 Add or remove an exact object from the working set only when requested; a working set is context, not a copy.

@@ -1352,6 +1352,7 @@ class HomeViewModel(
     fun navigateToDevices() { viewModelScope.launch { _navigationEvents.emit("devices") } }
     fun openToolScreen(action: HomeToolAction) {
         val route = when (action) {
+            HomeToolAction.STUDIO -> "studio"
             HomeToolAction.NOTEBOOK -> "notebook"
             HomeToolAction.STUDY -> "study"
             HomeToolAction.CONNECTIONS -> "integrations"

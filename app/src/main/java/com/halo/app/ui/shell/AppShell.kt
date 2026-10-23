@@ -301,7 +301,7 @@ fun AppShell(
     val mini = backStackEntry?.destination?.route == "mini_halo"
     LaunchedEffect(mini) { onCompactChanged(mini) }
     val editingWorkspace = backStackEntry?.destination?.route?.let {
-        it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/") || it.startsWith("notebook/study/")
+        it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/") || it.startsWith("notebook/study/") || it.startsWith("studio")
     } == true
     val homeKeyboardVisible = currentRoute == "home" &&
         WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
@@ -480,8 +480,8 @@ fun AppShell(
                                 com.halo.app.data.notebook.WorkspaceObjectType.MEMORY -> "notebook/memory/$id"
                                 WorkspaceObjectType.CANVAS -> "notebook/canvas/$id"
                                 com.halo.app.data.notebook.WorkspaceObjectType.FILE,
-                                com.halo.app.data.notebook.WorkspaceObjectType.MEDIA,
-                                com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT -> "notebook/file/$id"
+                                com.halo.app.data.notebook.WorkspaceObjectType.MEDIA -> "notebook/file/$id"
+                                com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("studio:")) "studio?projectId=${android.net.Uri.encode(id)}" else if (item.contentRef.startsWith("canvas:")) "notebook/canvas/$id" else "notebook/file/$id"
                                 null -> Screen.Notebook.route
                             }
                             navigateSafely(route)
@@ -500,6 +500,7 @@ fun AppShell(
                                 is NotebookNavigation.OpenConversation -> navigateSafely("notebook/conversation/${event.id}")
                                 is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
                                 is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
+                                is NotebookNavigation.OpenStudio -> navigateSafely("studio?projectId=${android.net.Uri.encode(event.id)}")
                                 is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}" + (event.nodeId?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: ""))
                                 is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
                                 NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
@@ -515,6 +516,7 @@ fun AppShell(
                         onOpenStudy = { navigateSafely(Screen.Study.route) },
                         onSkills = { navigateSafely("skills") },
                         onOpenModels = { navigateSafely("settings/intelligence/on-device") },
+                        onOpenStudio = { navigateSafely("studio") },
                         onStartVoiceMode = requestVoiceModeFromSurface)
                 }
 
@@ -554,6 +556,7 @@ fun AppShell(
                                 } ?: ""))
                             },
                             onReviewMemory = { id -> navigateSafely("notebook/memory?noteId=${android.net.Uri.encode(id)}") },
+                            onOpenStudio = { id, attachment -> navigateSafely("studio?sourceId=${android.net.Uri.encode(id)}&attachmentId=${android.net.Uri.encode(attachment)}") },
                         )
                     }
                 }
@@ -665,21 +668,24 @@ fun AppShell(
                                             WorkspaceObjectType.CANVAS -> "canvas"
                                             WorkspaceObjectType.CONVERSATION -> "conversation"
                                             WorkspaceObjectType.MEMORY -> "memory"
-                                            else -> if (item.contentRef.startsWith("canvas:")) "canvas" else "file"
+                                            else -> if (item.contentRef.startsWith("studio:")) "studio" else if (item.contentRef.startsWith("canvas:")) "canvas" else "file"
                                         }
-                                        navigateSafely("notebook/$kind/${android.net.Uri.encode(item.id.value)}")
+                                        navigateSafely(if (kind == "studio") "studio?projectId=${android.net.Uri.encode(item.id.value)}" else "notebook/$kind/${android.net.Uri.encode(item.id.value)}")
                                     }
                                 }
                             }
                         }
-                        CanvasEditorScreen(canvasViewModel, focusNodeId = entry.arguments?.getString("nodeId")) { navController.popBackStack() }
+                        CanvasEditorScreen(canvasViewModel, focusNodeId = entry.arguments?.getString("nodeId"),
+                            onOpenStudio = { source, attachment -> navigateSafely("studio?sourceId=${android.net.Uri.encode(source)}&canvasId=${android.net.Uri.encode(canvasId)}" +
+                                (attachment?.let { "&attachmentId=${android.net.Uri.encode(it)}" } ?: "")) }) { navController.popBackStack() }
                     }
                 }
 
                 composable("notebook/file/{objectId}",
                     arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->
                     entry.arguments?.getString("objectId")?.let { id ->
-                        WorkspaceObjectDetailScreen(id, "file", ManualDependencyGraph.workspaceUseCases, onStudy = { sourceId ->
+                        WorkspaceObjectDetailScreen(id, "file", ManualDependencyGraph.workspaceUseCases,
+                            onStudio = { sourceId -> navigateSafely("studio?sourceId=${android.net.Uri.encode(sourceId)}") }, onStudy = { sourceId ->
                             // Source preselection only; Study's own wizard owns
                             // the explicit device/cloud execution choice.
                             navigateSafely("study?captureSource=${android.net.Uri.encode(sourceId)}")
@@ -687,6 +693,18 @@ fun AppShell(
                             navController.popBackStack()
                         }
                     }
+                }
+                composable("studio?projectId={projectId}&sourceId={sourceId}&attachmentId={attachmentId}&canvasId={canvasId}",
+                    arguments = listOf("projectId", "sourceId", "attachmentId", "canvasId").map {
+                        navArgument(it) { type = NavType.StringType; nullable = true; defaultValue = null }
+                    }) { entry ->
+                    com.halo.app.ui.workspace.StudioRoute(entry.arguments?.getString("projectId"),
+                        entry.arguments?.getString("sourceId"), entry.arguments?.getString("attachmentId"),
+                        entry.arguments?.getString("canvasId"), entry.savedStateHandle,
+                        onBack = { navController.popBackStack() },
+                        onOpenFile = { navigateSafely("notebook/file/${android.net.Uri.encode(it)}") },
+                        onOpenCanvas = { id, node -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}" +
+                            (node?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: "")) })
                 }
                 composable("notebook/memory?section={section}&noteId={noteId}", arguments = listOf(
                     navArgument("section") { type = NavType.StringType; defaultValue = "Memories" },
@@ -727,10 +745,10 @@ fun AppShell(
                                     WorkspaceObjectType.CONVERSATION -> "conversation"
                                     WorkspaceObjectType.MEMORY -> "memory"
                                     WorkspaceObjectType.CANVAS -> "canvas"
-                                    WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("canvas:")) "canvas" else "file"
+                                    WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("studio:")) "studio" else if (item.contentRef.startsWith("canvas:")) "canvas" else "file"
                                     else -> "file"
                                 }
-                                navigateSafely("notebook/$route/${item.id.value}")
+                                navigateSafely(if (route == "studio") "studio?projectId=${android.net.Uri.encode(item.id.value)}" else "notebook/$route/${item.id.value}")
                             }) {
                             navController.popBackStack()
                         }

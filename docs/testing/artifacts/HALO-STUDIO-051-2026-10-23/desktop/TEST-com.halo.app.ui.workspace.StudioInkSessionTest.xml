@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.workspace.StudioInkSessionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:20:15.745Z" hostname="MINIFOXEY" time="7.464">
+  <properties/>
+  <testcase name="completedSnapshotsCoalesceAndExternalEditsStopWithoutOverwritingTheirWinner" classname="com.halo.app.ui.workspace.StudioInkSessionTest" time="7.259"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

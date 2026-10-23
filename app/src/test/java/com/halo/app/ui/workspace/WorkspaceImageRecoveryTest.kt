@@ -27,7 +27,7 @@ class WorkspaceImageRecoveryTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
             val storage = MemoryStorage()
-            PrivacyModeStore(storage).set(PrivacyMode.CLOUD)
+            PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
             val provider = CreditBlockedProvider()
             val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage),
                 NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
@@ -51,7 +51,7 @@ class WorkspaceImageRecoveryTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
             val storage = MemoryStorage()
-            PrivacyModeStore(storage).set(PrivacyMode.CLOUD)
+            PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
             val provider = CreditBlockedProvider()
             val service = WorkspaceImageService(Router(provider), storage)
             val studio = WorkspaceImageStudio(scope, service, NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.workspace.StudioLayerLayoutTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:20:34.897Z" hostname="MINIFOXEY" time="1.68">
+  <properties/>
+  <testcase name="lightPhone360" classname="com.halo.app.ui.workspace.StudioLayerLayoutTest" time="1.116"/>
+  <testcase name="latvianLargePhone200" classname="com.halo.app.ui.workspace.StudioLayerLayoutTest" time="0.28"/>
+  <testcase name="russianShortLandscape200" classname="com.halo.app.ui.workspace.StudioLayerLayoutTest" time="0.278"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

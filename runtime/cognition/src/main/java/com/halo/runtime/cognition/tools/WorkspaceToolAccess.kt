@@ -4,7 +4,8 @@ package com.halo.runtime.cognition.tools
 object WorkspaceToolAccess {
     val readTools = setOf("halo_search_notebook", "halo_get_workspace_object", "halo_search_memory",
         "halo_search_files", "halo_get_file_metadata", "halo_read_text_file", "halo_list_reminders", "halo_notification_digest",
-        "halo_get_study_session")
+        "halo_get_study_session",
+        "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status")
 }
 
 /** Content-free provenance from canonical tool identities; never inspect or parse result text. */

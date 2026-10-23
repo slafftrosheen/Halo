@@ -57,6 +57,8 @@ internal fun CanvasInkSurface(
     selectionBaseRevision: String? = null,
     onSelectionChanged: (InkSelectionContext?) -> Unit = {},
     onSaveSelection: ((InkSelectionContext) -> Unit)? = null,
+    strokeColor: Color? = null,
+    strokeWidthFraction: Float? = null,
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -200,7 +202,7 @@ internal fun CanvasInkSurface(
             }
         }
         val height = (LocalConfiguration.current.screenHeightDp * 0.42f).coerceIn(180f, 440f).dp
-        val inkColor = if (background != null) Color.Black else MaterialTheme.colorScheme.onSurface
+        val inkColor = strokeColor ?: if (background != null) Color.Black else MaterialTheme.colorScheme.onSurface
         val selectionColor = MaterialTheme.colorScheme.primary
         Canvas(Modifier.fillMaxWidth().height(height).clipToBounds()
             .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -287,10 +289,10 @@ internal fun CanvasInkSurface(
                     drawRect(selectionColor, topLeft, androidx.compose.ui.geometry.Size(selectionRect.width, selectionRect.height),
                         style = Stroke(2.dp.toPx() / zoom))
                 }
-                drawInk(preview, inkColor, rect)
+                drawInk(preview, inkColor, rect, strokeWidthFraction?.let { rect.width * it })
                 selectionContext?.let { selected ->
                     val ids = selected.selectedStrokeIds.toSet()
-                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }), selectionColor, rect)
+                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }), selectionColor, rect, strokeWidthFraction?.let { rect.width * it })
                 }
                 val dragStart = selectionStart
                 val dragEnd = selectionEnd
@@ -352,14 +354,14 @@ internal fun inkBounds(width: Float, height: Float, aspectMilli: Int): Rect {
 }
 
 /** Same normalized coordinates for editing, thumbnails and page overlays. */
-internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect) {
+internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect, baseWidth: Float? = null) {
     fun InkPoint.pixel() = Offset(rect.left + x / 1000f * rect.width, rect.top + y / 1000f * rect.height)
-    fun width(point: InkPoint) = (minOf(rect.width, rect.height) * 0.006f *
+    fun width(point: InkPoint) = ((baseWidth ?: (minOf(rect.width, rect.height) * 0.006f)) *
         (point.pressure?.let { 0.3f + 1.4f * it / 1000f } ?: 1f)).coerceAtLeast(0.75f)
     for (stroke in document.strokes) {
         val points = stroke.points
         if (points.isEmpty()) continue
-        if (stroke.tool == InkTool.LEGACY) {
+        if (stroke.tool == InkTool.LEGACY && baseWidth == null) {
             if (points.size == 1) drawCircle(ink, 2.5.dp.toPx(), points.first().pixel())
             else {
                 val path = Path().apply {

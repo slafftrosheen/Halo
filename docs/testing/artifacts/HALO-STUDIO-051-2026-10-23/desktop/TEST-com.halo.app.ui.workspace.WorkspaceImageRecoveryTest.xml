@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.workspace.WorkspaceImageRecoveryTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:20:23.214Z" hostname="MINIFOXEY" time="3.489">
+  <properties/>
+  <testcase name="providerCreditRejectionKeepsDraftAndOffersCreditRecoveryWithoutRetry" classname="com.halo.app.ui.workspace.WorkspaceImageRecoveryTest" time="3.171"/>
+  <testcase name="unreadableReferenceStaysInEditModeAndCannotGenerateAfterCatalogueRefresh" classname="com.halo.app.ui.workspace.WorkspaceImageRecoveryTest" time="0.071"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

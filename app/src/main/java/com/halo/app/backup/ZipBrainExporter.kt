@@ -35,6 +35,7 @@ class ZipBrainExporter(
         TurnSnapshot::class.java, MemorySnapshot::class.java, LegacyMemorySnapshot::class.java, MemoryRevisionSnapshot::class.java,
         EpisodeSnapshot::class.java, SuggestionDecisionSnapshot::class.java, ReflectionStatusSnapshot::class.java,
         WorkingSetSnapshot::class.java, ProvenanceSnapshot::class.java, RelationSnapshot::class.java,
+        StudioProjectSnapshot::class.java, StudioVersionSnapshot::class.java,
         FileSnapshot::class.java, AgentRunSnapshot::class.java, AgentStepSnapshot::class.java,
         ReminderSnapshot::class.java, DeviceConfigurationSnapshot::class.java,
     ).associateWith { moshi.adapter(it) }
@@ -50,6 +51,7 @@ class ZipBrainExporter(
         val includeFiles = request.profile != BrainExportProfile.BRAIN_ONLY
         val sections = buildList {
             add(BrainArchiveSection("workspace", itemCount = snapshot.workspace.size))
+            add(BrainArchiveSection("studio", itemCount = snapshot.studioProjects.size + snapshot.studioVersions.size))
             add(BrainArchiveSection("notes", itemCount = snapshot.notes.size))
             add(BrainArchiveSection("conversations", itemCount = snapshot.conversations.size + snapshot.turns.size))
             add(BrainArchiveSection("memory", itemCount = snapshot.memories.size + snapshot.legacyMemories.size + snapshot.memoryRevisions.size))
@@ -87,6 +89,8 @@ class ZipBrainExporter(
             writeBytes(zip, "manifest.json", manifestBytes, checksums)
             writeBytes(zip, "README.md", readme(manifest).toByteArray(Charsets.UTF_8), checksums)
             writeJsonLines(zip, "workspace/objects.jsonl", snapshot.workspace, checksums, progress)
+            writeJsonLines(zip, "studio/projects.jsonl", snapshot.studioProjects, checksums, progress)
+            writeJsonLines(zip, "studio/versions.jsonl", snapshot.studioVersions, checksums, progress)
             writeJsonLines(zip, "notes/metadata.jsonl", snapshot.notes, checksums, progress)
             val notePaths = mutableSetOf<String>()
             snapshot.notes.forEach { note ->

@@ -16,7 +16,7 @@ internal enum class WorkspaceHubDestination(val label: String) {
 }
 
 @Composable
-internal fun WorkspaceHubDestinations(onSelect: (WorkspaceHubDestination) -> Unit) {
+internal fun WorkspaceHubDestinations(onStudio: (() -> Unit)? = null, onSelect: (WorkspaceHubDestination) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.workspace49_open), style = MaterialTheme.typography.titleSmall)
         val columns = if (LocalDensity.current.fontScale >= 1.4f) 1 else 2
@@ -33,7 +33,12 @@ internal fun WorkspaceHubDestinations(onSelect: (WorkspaceHubDestination) -> Uni
         }
         Text(stringResource(R.string.workspace49_memory_scope), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+        if (onStudio != null) OutlinedButton(onClick = onStudio, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Column(Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.studio_title), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.studio_local), style = MaterialTheme.typography.bodySmall)
+            }
+        } else Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
             color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(R.string.workspace49_studio), style = MaterialTheme.typography.titleSmall)

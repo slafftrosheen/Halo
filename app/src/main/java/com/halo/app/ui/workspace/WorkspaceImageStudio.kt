@@ -42,11 +42,13 @@ class WorkspaceImageStudio(
     private var referenceLoading = false
     private var referenceFailed = false
     private fun loadingChanged() { mutable.value = mutable.value.copy(loading = modelsLoading || referenceLoading) }
+    private var origin: com.halo.sdk.provider.RemoteDispatchProvenance? = null
     private var reference: ByteArray? = null
     private var referenceMime = "image/png"
     private var referenceObjectId: String? = null
     private data class Pending(val choice: WorkspaceImageChoice, val prompt: String, val input: ByteArray?, val mime: String,
-        val preview: ImageSpendPreview, val referenceObjectId: String?)
+        val preview: ImageSpendPreview, val referenceObjectId: String?,
+        val provenance: com.halo.sdk.provider.RemoteDispatchProvenance?)
     private var pending: Pending? = null
     private fun invalidateApproval() {
         service.discardSpend(pending?.preview)
@@ -82,6 +84,7 @@ class WorkspaceImageStudio(
         if (mutable.value.busy || mutable.value.saving) return
         invalidateApproval()
         val version = ++preparation
+        origin = null
         reference = null; referenceFailed = false
         referenceObjectId = attachment?.noteId
         referenceLoading = attachment != null; loadingChanged()
@@ -97,6 +100,36 @@ class WorkspaceImageStudio(
             finally { if (version == preparation) { referenceLoading = false; loadingChanged(); refresh() } }
         }
     }
+    /** Existing proposal/consent owner can also edit a bounded local Studio composition. */
+    fun prepareReference(bytes: ByteArray, mime: String, objectId: String, label: String,
+        provenance: com.halo.sdk.provider.RemoteDispatchProvenance? = null) {
+        if (mutable.value.busy || mutable.value.saving) return
+        invalidateApproval()
+        val version = ++preparation
+        origin = provenance?.copy(categories = provenance.categories.toSet())
+        reference = null; referenceFailed = false; referenceObjectId = objectId; referenceMime = mime
+        referenceLoading = true; loadingChanged()
+        mutable.value = mutable.value.copy(result = null, resultLabel = null, resultPrompt = "", referenceBytes = null,
+            editing = true, referenceUnavailable = false, prompt = "", referenceLabel = label, error = null, onlineError = null)
+        scope.launch {
+            try {
+                val snapshot = withContext(Dispatchers.IO) {
+                    require(bytes.size in 1..32_000_000 && mime in setOf("image/png", "image/jpeg", "image/webp"))
+                    val copy = bytes.copyOf()
+                    val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    android.graphics.BitmapFactory.decodeByteArray(copy, 0, copy.size, bounds)
+                    require(bounds.outWidth in 1..16384 && bounds.outHeight in 1..16384)
+                    copy
+                }
+                if (version == preparation) { reference = snapshot; mutable.value = mutable.value.copy(referenceBytes = snapshot) }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { if (version == preparation) {
+                referenceFailed = true; mutable.value = mutable.value.copy(referenceUnavailable = true,
+                    error = "The reference image could not be read. Close and select the image again.")
+            } }
+            finally { if (version == preparation) { referenceLoading = false; loadingChanged(); refresh() } }
+        }
+    }
     /** First tap prepares a local quote/consent screen; it never sends a generation request. */
     fun generate(editPreview: Boolean = false) {
         val current = mutable.value
@@ -105,14 +138,17 @@ class WorkspaceImageStudio(
         invalidateApproval()
         val input = if (editPreview) current.result?.bytes ?: reference else reference
         val mime = if (editPreview) current.result?.mimeType ?: referenceMime else referenceMime
+        val provenance = origin
         val version = ++generation
         mutable.value = mutable.value.copy(busy = true, preparingSpend = true, error = null, onlineError = null)
         job = scope.launch {
             try {
                 val sourceId = referenceObjectId
-                val preview = service.prepareSpend(choice, current.prompt, input, mime, sourceId)
+                val preview = withContext(com.halo.sdk.provider.RemoteDispatchContext.provenance.asContextElement(provenance)) {
+                    service.prepareSpend(choice, current.prompt, input, mime, sourceId)
+                }
                 if (version == generation) {
-                    pending = Pending(choice, current.prompt, input, mime, preview, sourceId)
+                    pending = Pending(choice, current.prompt, input, mime, preview, sourceId, provenance)
                     mutable.value = mutable.value.copy(spendPreview = preview)
                 } else service.discardSpend(preview)
             } catch (cancelled: CancellationException) { throw cancelled }
@@ -130,8 +166,10 @@ class WorkspaceImageStudio(
         mutable.value = mutable.value.copy(busy = true, spendPreview = null, error = null, onlineError = null)
         job = scope.launch {
             try {
-                val image = service.generate(request.choice, request.prompt, request.input, request.mime,
-                    request.preview, reservationUsd, acknowledgeUnknownCost = true, referenceObjectId = request.referenceObjectId)
+                val image = withContext(com.halo.sdk.provider.RemoteDispatchContext.provenance.asContextElement(request.provenance)) {
+                    service.generate(request.choice, request.prompt, request.input, request.mime,
+                        request.preview, reservationUsd, acknowledgeUnknownCost = true, referenceObjectId = request.referenceObjectId)
+                }
                 if (version == generation) mutable.value = mutable.value.copy(result = image, resultPrompt = request.prompt,
                     resultLabel = "${request.choice.providerName} · ${request.choice.model.displayName}")
             } catch (cancelled: TimeoutCancellationException) { if (version == generation) mutable.value = mutable.value.copy(error = "Image generation timed out. Your previous preview is kept.") }
@@ -144,6 +182,12 @@ class WorkspaceImageStudio(
         }
     }
     fun cancel() { generation++; job?.cancel(); invalidateApproval(); mutable.value = mutable.value.copy(busy = false, preparingSpend = false) }
+    fun discardDraft() {
+        preparation++; cancel()
+        origin = null; reference = null; referenceObjectId = null; referenceFailed = false; referenceLoading = false
+        val current = mutable.value
+        mutable.value = ImageStudioState(choices = current.choices, selected = current.selected)
+    }
     fun saveResult(onSaved: () -> Unit) {
         val current = mutable.value; val image = current.result ?: return
         if (current.busy || current.saving) return

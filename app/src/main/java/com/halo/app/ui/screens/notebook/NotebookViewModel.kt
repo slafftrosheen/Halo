@@ -89,6 +89,7 @@ sealed interface NotebookNavigation {
     data class OpenConversation(val id: String) : NotebookNavigation
     data class OpenFile(val id: String) : NotebookNavigation
     data class OpenMemory(val id: String) : NotebookNavigation
+    data class OpenStudio(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String, val nodeId: String? = null) : NotebookNavigation
     data class OpenStudy(val sessionId: String, val review: Boolean = false) : NotebookNavigation
     data class StartStudyFromSource(val objectId: String) : NotebookNavigation
@@ -429,7 +430,9 @@ class NotebookViewModel(
         navigationChannel.trySend(when (item.type) {
             WorkspaceObjectType.NOTE -> NotebookNavigation.OpenNote(id)
             WorkspaceObjectType.CONVERSATION -> NotebookNavigation.OpenConversation(id)
-            WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("canvas:")) {
+            WorkspaceObjectType.ARTIFACT -> if (item.contentRef.startsWith("studio:")) {
+                NotebookNavigation.OpenStudio(id)
+            } else if (item.contentRef.startsWith("canvas:")) {
                 NotebookNavigation.OpenCanvas(id)
             } else {
                 NotebookNavigation.OpenFile(id)

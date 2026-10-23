@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.studio.StudioUiRequestsTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:20:28.212Z" hostname="MINIFOXEY" time="0.155">
+  <properties/>
+  <testcase name="launchFailureClearsPendingAndRetainsOnlyBoundedReceipts" classname="com.halo.app.data.studio.StudioUiRequestsTest" time="0.144"/>
+  <testcase name="expiryRemovesUndeliveredPromptAndDoesNotReplayIt" classname="com.halo.app.data.studio.StudioUiRequestsTest" time="0.004"/>
+  <testcase name="claimIsSingleUseAndPreservesOriginalPrivacyAuthority" classname="com.halo.app.data.studio.StudioUiRequestsTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

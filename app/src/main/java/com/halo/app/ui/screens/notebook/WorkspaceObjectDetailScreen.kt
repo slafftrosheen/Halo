@@ -74,6 +74,7 @@ fun WorkspaceObjectDetailScreen(
     workspace: WorkspaceUseCases,
     onOpenSource: (WorkspaceObject) -> Unit = {},
     onStudy: ((String) -> Unit)? = null,
+    onStudio: ((String) -> Unit)? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -188,6 +189,9 @@ fun WorkspaceObjectDetailScreen(
                         enabled = !actionBusy && state.file != null,
                         modifier = Modifier.heightIn(min = 48.dp),
                     ) { Text(uiText("Ask about this")) }
+                }
+                if (type == "file" && onStudio != null && state.file?.mimeType?.startsWith("image/") == true) {
+                    item { TextButton(onClick = { onStudio(id) }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.studio_open_in)) } }
                 }
                 if (type == "file" && onStudy != null && state.file?.let { it.mimeType.startsWith("text/") || it.mimeType.startsWith("image/") || it.mimeType in setOf("application/json", "application/pdf") } == true) {
                     item { TextButton({ onStudy(id) }) { Text(uiText("Study this")) } }

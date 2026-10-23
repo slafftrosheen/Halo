@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.studio.StudioLocalWorkflowTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:20:01.891Z" hostname="MINIFOXEY" time="13.447">
+  <properties/>
+  <testcase name="changedOrTrashedImageFailsClosedAndManagedPublicationRollsBack" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="11.516"/>
+  <testcase name="staleAvailabilityObservationCannotOverwriteAnOwnedPromotion" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.125"/>
+  <testcase name="cropRotateAndMirrorReuseCanonicalPixelTransform" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.12"/>
+  <testcase name="keepingAiProposalCreatesIndependentCopyAndPreservesConcurrentLocalEdits" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.152"/>
+  <testcase name="assistantUsesSameRevisionGuardAndDispatchReceiptsAsLocalEditing" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.17"/>
+  <testcase name="localImportEditExportReopenAndCanvasInsertRetainExactSource" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.523"/>
+  <testcase name="legacyOwnedCopyGetsVerifiedHashAndCorruptOwnedCopyIsNotReimported" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.121"/>
+  <testcase name="previewIsBoundedAndMaskClipsPixelsWithoutChangingSourceDocument" classname="com.halo.app.data.studio.StudioLocalWorkflowTest" time="0.161"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

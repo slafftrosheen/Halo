@@ -19,7 +19,7 @@ import com.halo.app.ui.online.*
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
+fun WorkspaceImageDialog(studio: WorkspaceImageStudio, saveLabel: String? = null, scopeLabel: String? = null, dismissLabel: String? = null, onDismiss: () -> Unit) {
     val state by studio.state.collectAsStateWithLifecycle()
     val privacyMode by com.halo.app.di.ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
     val cloudEnabled = privacyMode == com.halo.app.ai.PrivacyMode.CLOUD
@@ -45,7 +45,7 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
         },
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(uiText("Describe it, preview it, then save. The original stays intact."), style = MaterialTheme.typography.bodyMedium)
+                Text(scopeLabel ?: uiText("Describe it, preview it, then save. The original stays intact."), style = MaterialTheme.typography.bodyMedium)
                 if (!cloudEnabled) Text(uiText("This action needs Full Power mode. Use the switch at the top of Halo."),
                     style = MaterialTheme.typography.bodySmall)
                 if (state.referenceUnavailable) {
@@ -92,9 +92,9 @@ fun WorkspaceImageDialog(studio: WorkspaceImageStudio, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            if (state.result != null) Button(onClick = { studio.saveResult(onDismiss) }, enabled = !state.busy && !state.saving) { Text(uiText(if (state.saving) "Saving..." else "Save image")) }
+            if (state.result != null) Button(onClick = { studio.saveResult(onDismiss) }, enabled = !state.busy && !state.saving) { Text(if (state.saving) uiText("Saving...") else saveLabel ?: uiText("Save image")) }
             else Button(onClick = { studio.generate() }, enabled = cloudEnabled && !state.referenceUnavailable && state.selected != null && state.prompt.isNotBlank() && !state.busy && !state.loading) { Text(uiText("Generate")) }
-        }, dismissButton = { TextButton(onClick = { studio.cancel(); onDismiss() }, enabled = !state.saving) { Text(uiText(if (state.busy) "Cancel generation" else "Close")) } })
+        }, dismissButton = { TextButton(onClick = { studio.cancel(); onDismiss() }, enabled = !state.saving) { Text(if (state.busy) uiText("Cancel generation") else dismissLabel ?: uiText("Close")) } })
     if (menu) AlertDialog(onDismissRequest = { menu = false }, title = { Text(uiText("Choose an image model")) }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             HaloTextField(search, { search = it }, label = { Text(uiText("Search image models")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)

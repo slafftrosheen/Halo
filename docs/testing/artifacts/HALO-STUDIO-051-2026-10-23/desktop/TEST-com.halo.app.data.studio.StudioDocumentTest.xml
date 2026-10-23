@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.studio.StudioDocumentTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:20:27.031Z" hostname="MINIFOXEY" time="0.414">
+  <properties/>
+  <testcase name="unsupportedOrMalformedDataNeverBecomesAnEmptyDocument" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.063"/>
+  <testcase name="historyIsPersistedBoundedAndSelectionDoesNotConsumeUndo" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.072"/>
+  <testcase name="documentAndCropLimitsAreEnforcedBeforeRendering" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.06"/>
+  <testcase name="parserRejectsPathsSourceRewritesAndFractionalGeometry" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.057"/>
+  <testcase name="lockedLayersNeedAnExplicitUnlockBeforeAnyEdit" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.051"/>
+  <testcase name="templatesRemainOrdinaryEditableLayers" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.054"/>
+  <testcase name="exactSourceAndNonDestructiveEditsSurviveRoundTrip" classname="com.halo.app.data.studio.StudioDocumentTest" time="0.048"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

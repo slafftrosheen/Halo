@@ -48,8 +48,7 @@ class AssistantTools(
                 "halo_open_screen" -> {
                     val screen = toolCall.arguments["screen"] as? String ?: return reject("Missing screen")
                     if (screen !in HaloScreenCatalog.screens) return reject("Unknown Halo screen")
-                    context.startActivity(Intent(context, MainActivity::class.java).putExtra(HaloScreenCatalog.EXTRA_SCREEN, screen)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+                    com.halo.app.ui.shell.HaloScreenLauncher.dispatch(context, screen)
                     success("screen=$screen; page render unconfirmed", ActionTruth.DISPATCHED)
                 }
                 "halo_get_preferences" -> { appearance.awaitLoaded(); val value = preferences.get()

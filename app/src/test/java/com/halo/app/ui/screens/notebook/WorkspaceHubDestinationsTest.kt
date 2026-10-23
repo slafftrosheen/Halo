@@ -49,7 +49,7 @@ class WorkspaceHubDestinationsTest {
                 scope = stringResource(R.string.workspace49_memory_scope)
                 Surface(Modifier.fillMaxSize()) {
                     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp)) {
-                        WorkspaceHubDestinations(chosen::add)
+                        WorkspaceHubDestinations(onSelect = chosen::add)
                     }
                 }
             }
