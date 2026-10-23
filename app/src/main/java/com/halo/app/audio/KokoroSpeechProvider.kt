@@ -292,9 +292,9 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
                 (System.nanoTime()-timingStart)/1_000_000,null,it.chunks.sumOf { chunk -> chunk.size.toLong() }*1000/(2L*it.sampleRateHz),null)
             return@withLock it
         }
-            var lease=false; var native: OfflineTts?=null; var succeeded=false
+        var native: OfflineTts?=null; var succeeded=false
         try {
-            check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry speech when the current turn finishes" }; lease=true
+            check(resources.acquire(this@KokoroSpeechProvider)) { "Native runtime busy; retry speech when the current turn finishes" }
             resources.mark(this@KokoroSpeechProvider,NativeResourceState.LOADING,"Kokoro synthesis")
             val acquiredAt=System.nanoTime()
             val threads=(pinned.voiceSettings["_kokoroThreads"]?.toInt() ?: 2).coerceIn(1,4)
@@ -337,11 +337,12 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             pcm
         } catch(cancelled: CancellationException) { throw cancelled }
         catch(error: Exception) { mutable.value=KokoroStatus("Failed",error.message ?: "Synthesis failed",directory.name); throw error }
-        finally { withContext(NonCancellable) { if(lease) {
+        finally { withContext(NonCancellable) {
+                // A cancelled acquire can already own a partial compute reservation.
                 if (succeeded && (storage.getBoolean("kokoro_warm",false) || streamPacks.isNotEmpty()) && resources.budget.value.pressure==NativeMemoryPressure.NORMAL)
                     resources.mark(this@KokoroSpeechProvider, NativeResourceState.RESIDENT,"Kokoro idle")
                 else { releaseEngine(); resources.release(this@KokoroSpeechProvider) }
-            } } }
+            } }
     } } }
     override fun stopCurrent() { generation.incrementAndGet() }
     override suspend fun health()=withContext(Dispatchers.IO) { directory()?.let { dir ->

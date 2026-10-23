@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.audio.NativeSpeechAdmissionTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T18:37:30.218Z" hostname="MINIFOXEY" time="4.464">
+  <properties/>
+  <testcase name="cancelledKokoroAdmissionReleasesPartialComputeReservation" classname="com.halo.app.audio.NativeSpeechAdmissionTest" time="3.887"/>
+  <testcase name="cancelledSupertonicAdmissionReleasesPartialComputeReservation" classname="com.halo.app.audio.NativeSpeechAdmissionTest" time="0.181"/>
+  <system-out><![CDATA[NATIVE_EXECUTION_ACQUIRE owner=fixture:independent-asr kind=HEAVY_ASR resource=compute.asr operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=fixture:independent-asr kind=HEAVY_ASR state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=fixture:independent-asr kind=HEAVY_ASR resource=compute.asr operation=none waitMs=35 state=GRANTED
+NATIVE_EXECUTION_RELEASE owner=fixture:independent-asr kind=HEAVY_ASR resource=compute.asr operation=none state=RESIDENT reason=Fixture idle
+NATIVE_RESIDENCY_CHANGED owner=fixture:independent-asr kind=HEAVY_ASR state=RESIDENT executionLeaseHeld=false resource=compute.asr operation=none reason=Fixture idle
+NATIVE_EXECUTION_ACQUIRE owner=provider.kokoro.tts kind=HEAVY_TTS resource=compute.tts operation=none reason=acquire
+NATIVE_EXECUTION_RELEASE owner=provider.kokoro.tts kind=HEAVY_TTS resource=none operation=none state=RELEASED reason=released
+NATIVE_EXECUTION_RELEASE owner=provider.kokoro.tts kind=HEAVY_TTS resource=none operation=none state=RELEASED reason=released
+NATIVE_EXECUTION_ACQUIRE owner=fixture:independent-asr kind=HEAVY_ASR resource=compute.asr operation=none reason=acquire
+NATIVE_RESIDENCY_CHANGED owner=fixture:independent-asr kind=HEAVY_ASR state=RESIDENT executionLeaseHeld=false resource=none operation=none reason=lease acquired
+NATIVE_EXECUTION_GRANTED owner=fixture:independent-asr kind=HEAVY_ASR resource=compute.asr operation=none waitMs=0 state=GRANTED
+NATIVE_EXECUTION_RELEASE owner=fixture:independent-asr kind=HEAVY_ASR resource=compute.asr operation=none state=RESIDENT reason=Fixture idle
+NATIVE_RESIDENCY_CHANGED owner=fixture:independent-asr kind=HEAVY_ASR state=RESIDENT executionLeaseHeld=false resource=compute.asr operation=none reason=Fixture idle
+NATIVE_EXECUTION_ACQUIRE owner=provider.supertonic.tts kind=HEAVY_TTS resource=compute.tts operation=none reason=acquire
+NATIVE_EXECUTION_RELEASE owner=provider.supertonic.tts kind=HEAVY_TTS resource=none operation=none state=RELEASED reason=released
+NATIVE_EXECUTION_RELEASE owner=provider.supertonic.tts kind=HEAVY_TTS resource=none operation=none state=RELEASED reason=released
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

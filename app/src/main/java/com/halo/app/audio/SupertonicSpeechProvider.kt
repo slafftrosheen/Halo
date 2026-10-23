@@ -209,12 +209,14 @@ class SupertonicSpeechProvider(
                 "Confirm audible Supertonic output for this language and voice in Speech output settings")
         }
         val operationStart=System.nanoTime()
-        check(resources.acquire(this@SupertonicSpeechProvider)) { "Native runtime busy" }
-        val acquiredAt=System.nanoTime()
         var initMs: Long?=null
         var reused=false
         var succeeded=false
         try {
+            // Admission may reserve compute before suspending on the coordinator.
+            // The existing owner cleanup must cover an interrupted acquisition too.
+            check(resources.acquire(this@SupertonicSpeechProvider)) { "Native runtime busy" }
+            val acquiredAt=System.nanoTime()
             currentCoroutineContext().ensureActive()
             if(token!=generation.get()) throw CancellationException("Supertonic speech stopped")
             resources.mark(this@SupertonicSpeechProvider,NativeResourceState.LOADING,"Supertonic TTS")
