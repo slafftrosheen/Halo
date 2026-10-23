@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.online.OnlineAdmissionTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:10:51.109Z" hostname="MINIFOXEY" time="1.032">
+  <properties/>
+  <testcase name="changedQueryOrCredentialInvalidatesConsent" classname="com.halo.app.online.OnlineAdmissionTest" time="0.246"/>
+  <testcase name="savedImageReferenceMustAllowCloudBeforeApproval" classname="com.halo.app.online.OnlineAdmissionTest" time="0.055"/>
+  <testcase name="revokedAccessDuringReservationStopsImageBeforeProvider" classname="com.halo.app.online.OnlineAdmissionTest" time="0.08"/>
+  <testcase name="budgetRejectionMakesNoRequest" classname="com.halo.app.online.OnlineAdmissionTest" time="0.054"/>
+  <testcase name="imageWithoutApprovalCannotCallProvider" classname="com.halo.app.online.OnlineAdmissionTest" time="0.044"/>
+  <testcase name="referenceRequiredModelCannotPrepareTextOnlyGeneration" classname="com.halo.app.online.OnlineAdmissionTest" time="0.042"/>
+  <testcase name="falseAcknowledgementCannotSpend" classname="com.halo.app.online.OnlineAdmissionTest" time="0.043"/>
+  <testcase name="missingSourcesFailButDoNotEraseReportedCharge" classname="com.halo.app.online.OnlineAdmissionTest" time="0.114"/>
+  <testcase name="searchPreflightAndDismissMakeNoRequest" classname="com.halo.app.online.OnlineAdmissionTest" time="0.038"/>
+  <testcase name="discoveryPreflightDoesNotCreateSpendOrTransportAndTracksAccessChanges" classname="com.halo.app.online.OnlineAdmissionTest" time="0.034"/>
+  <testcase name="approvedSearchIsSingleUseAndReportsCostWithoutPrivateContent" classname="com.halo.app.online.OnlineAdmissionTest" time="0.046"/>
+  <testcase name="imageApprovalIsConsumedEvenOnProviderFailure" classname="com.halo.app.online.OnlineAdmissionTest" time="0.046"/>
+  <testcase name="revokedAccessDuringReservationStopsSearchBeforeTransport" classname="com.halo.app.online.OnlineAdmissionTest" time="0.058"/>
+  <testcase name="keyChangedDuringReservationStopsSearchBeforeTransport" classname="com.halo.app.online.OnlineAdmissionTest" time="0.042"/>
+  <testcase name="revokedReferenceAccessStopsApprovedImageBeforeDispatch" classname="com.halo.app.online.OnlineAdmissionTest" time="0.04"/>
+  <testcase name="revokedKidsOrLocalOnlyAccessBlocksBeforeRequest" classname="com.halo.app.online.OnlineAdmissionTest" time="0.041"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

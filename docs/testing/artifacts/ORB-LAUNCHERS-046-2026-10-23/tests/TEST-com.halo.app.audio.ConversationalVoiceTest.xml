@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.audio.ConversationalVoiceTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:10:40.544Z" hostname="MINIFOXEY" time="0.191">
+  <properties/>
+  <testcase name="cancellationDropsThreeQueuedChunksAndLateTokens" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.082"/>
+  <testcase name="longIncompleteRemainderCannotForceSentenceModeToSpeakAFragment" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.002"/>
+  <testcase name="fallbackAndAudibleSuffixEachHaveOnlyOneFinalAuthority" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.006"/>
+  <testcase name="requestedSpeechAndStaleCaptureNeverEstablishInterruptionAuthority" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.085"/>
+  <testcase name="firstSentenceIsReadyBeforeFinalAndFinalNeverReplaysIt" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.001"/>
+  <testcase name="realClassifierCanRejectBackchannelAndAbsentClassifierUsesDuration" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.005"/>
+  <testcase name="finalMismatchNeverReplaysAnAudibleAnswer" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.001"/>
+  <testcase name="markupAndIncompleteSentencesDoNotReachSynthesis" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.0"/>
+  <testcase name="terminalStreamCannotBeCancelledOrFinalizedAgain" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.001"/>
+  <testcase name="disabledOrdinaryInterruptionStillAcceptsPhysicalActivation" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.002"/>
+  <testcase name="shortBackchannelDoesNotInterruptButSustainedSpeechDoes" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.002"/>
+  <testcase name="shortAnswerUsesWholeResponseWithoutAChunk" classname="com.halo.app.audio.ConversationalVoiceTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

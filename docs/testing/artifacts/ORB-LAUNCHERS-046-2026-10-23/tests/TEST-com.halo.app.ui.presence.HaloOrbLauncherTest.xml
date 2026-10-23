@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.presence.HaloOrbLauncherTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:15.065Z" hostname="MINIFOXEY" time="3.353">
+  <properties/>
+  <testcase name="activeOrbUsesStopThenInterruptionWithoutOpeningAnotherVoiceOwner" classname="com.halo.app.ui.presence.HaloOrbLauncherTest" time="0.104"/>
+  <testcase name="emptyPreferencesKeepAllToolsAndCustomizationDoesNotExecute" classname="com.halo.app.ui.presence.HaloOrbLauncherTest" time="0.355"/>
+  <testcase name="openingOrbOnlyDiscoversAndShortcutDelegatesTypedGroup" classname="com.halo.app.ui.presence.HaloOrbLauncherTest" time="0.216"/>
+  <testcase name="approvalMenuKeepsStopSeparateFromReview" classname="com.halo.app.ui.presence.HaloOrbLauncherTest" time="0.254"/>
+  <testcase name="stateTransitionCollapsesStaleChooserAndKeepsCriticalStop" classname="com.halo.app.ui.presence.HaloOrbLauncherTest" time="0.216"/>
+  <testcase name="backgroundDismissesChooserWithoutPerformingItsAction" classname="com.halo.app.ui.presence.HaloOrbLauncherTest" time="2.201"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

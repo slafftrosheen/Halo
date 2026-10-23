@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.TextSubmissionStateTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:50.093Z" hostname="MINIFOXEY" time="0.019">
+  <properties/>
+  <testcase name="acceptedRequestIsNotTimedOutByAdmissionDeadline" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.012"/>
+  <testcase name="partialOutputFailurePreservesDraftWithoutRetrySuggestion" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.002"/>
+  <testcase name="nativePendingAnswerRequiresReviewInsteadOfClaimingTaskCompleted" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.001"/>
+  <testcase name="lateFailureCannotChangeRetry" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.0"/>
+  <testcase name="acceptedNativeCancellationRestoresDraftWithoutRetrySuggestion" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.0"/>
+  <testcase name="pendingNativeRunCanFailOrBeCancelledWithoutSuggestingBlindRetry" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.002"/>
+  <testcase name="doubleSendKeepsFirstIdentityAndDraft" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.0"/>
+  <testcase name="missingTerminalReceiptReconcilesCommittedTurn" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.0"/>
+  <testcase name="pendingNativeRunBecomesCompletedOnlyAfterARealTerminalReceipt" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.0"/>
+  <testcase name="admissionExpiryPreservesPromptAndAllowsRetry" classname="com.halo.app.ui.screens.home.TextSubmissionStateTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

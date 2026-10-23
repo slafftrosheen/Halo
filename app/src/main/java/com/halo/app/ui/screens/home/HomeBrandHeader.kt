@@ -50,20 +50,25 @@ internal fun HomePresenceHeader(
     aura: Boolean = false,
     orbModifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
+    orbControl: (@Composable (com.halo.app.ui.presence.HaloOrbFace) -> Unit)? = null,
 ) {
     val folded = compact || LocalDensity.current.fontScale >= 1.5f
     // H01: an on-page presence, not the full-screen onboarding hero.
     // The smaller ring leaves the feed visible at 360dp and 200% text.
     val size = if (folded) 48.dp else 112.dp
     val presence: @Composable () -> Unit = {
+        val face: @Composable ((() -> Unit)?, String) -> Unit = { onClick, label ->
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
             HomeVoiceSummonFx(micOpen)
             HaloRipple(micOpen = micOpen, level = inputLevel, ringSize = size,
                 accent = MaterialTheme.colorScheme.primary)
-            HaloSignalFace(signal, size = size,
+            HaloSignalFace(signal, size = size, onClick = onClick, contentDescription = label, onClickLabel = label,
                 modifier = orbModifier.then(if (aura)
                     Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer) else Modifier))
         }
+        }
+        if (orbControl != null) orbControl(com.halo.app.ui.presence.HaloOrbFace(size) { click, label -> face(click, label) })
+        else face(null, "Halo presence")
     }
     val words: @Composable (Modifier) -> Unit = { modifier ->
         Column(modifier, horizontalAlignment = if (folded) Alignment.Start else Alignment.CenterHorizontally,

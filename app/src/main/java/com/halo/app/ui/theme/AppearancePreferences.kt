@@ -42,6 +42,10 @@ class AppearancePreferences(
 
     private val mutableMode = MutableStateFlow(AppearanceMode.SYSTEM)
     val mode: StateFlow<AppearanceMode> = mutableMode.asStateFlow()
+    private val shortcutGeneration = AtomicLong(0L)
+    private val mutableOrbShortcuts = MutableStateFlow(com.halo.app.ui.presence.HaloOrbShortcut.defaults)
+    val orbShortcuts: StateFlow<Set<com.halo.app.ui.presence.HaloOrbShortcut>> = mutableOrbShortcuts.asStateFlow()
+    private val initialShortcutGeneration = shortcutGeneration.get()
 
     private val initialGeneration = mutationGeneration.get()
     private val initialLoad: Deferred<Unit> = scope.async {
@@ -49,10 +53,26 @@ class AppearancePreferences(
         if (mutationGeneration.get() == initialGeneration) {
             mutableMode.value = restored
         }
+        val restoredShortcuts = com.halo.app.ui.presence.HaloOrbShortcut.decode(preferences().getStringSet(KEY_ORB_SHORTCUTS, null))
+        if (shortcutGeneration.get() == initialShortcutGeneration) mutableOrbShortcuts.value = restoredShortcuts
     }
 
     @Volatile
     private var persistenceJob: Job? = null
+    @Volatile private var shortcutPersistenceJob: Job? = null
+
+    fun setOrbShortcuts(shortcuts: Set<com.halo.app.ui.presence.HaloOrbShortcut>) {
+        val bounded = shortcuts.toSet()
+        val generation = shortcutGeneration.incrementAndGet()
+        mutableOrbShortcuts.value = bounded
+        shortcutPersistenceJob = scope.launch {
+            writes.withLock {
+                if (shortcutGeneration.get() != generation) return@withLock
+                if (!preferences().edit().putStringSet(KEY_ORB_SHORTCUTS, bounded.map { it.name }.toSet()).commit())
+                    Log.w(TAG, "Could not persist Halo shortcut preferences")
+            }
+        }
+    }
 
     fun setMode(mode: AppearanceMode) {
         // The initial SYSTEM value is only a placeholder until disk has loaded.
@@ -88,10 +108,15 @@ class AppearancePreferences(
 
     suspend fun reloadFromDisk() {
         val generation = mutationGeneration.incrementAndGet()
+        val shortcutReload = shortcutGeneration.incrementAndGet()
         val restored = withContext(ioDispatcher) { readModeFromDisk() }
         if (mutationGeneration.get() == generation) {
             mutableMode.value = restored
         }
+        val restoredShortcuts = withContext(ioDispatcher) {
+            com.halo.app.ui.presence.HaloOrbShortcut.decode(preferences().getStringSet(KEY_ORB_SHORTCUTS, null))
+        }
+        if (shortcutGeneration.get() == shortcutReload) mutableOrbShortcuts.value = restoredShortcuts
     }
 
     internal suspend fun awaitLoaded() {
@@ -100,6 +125,7 @@ class AppearancePreferences(
 
     internal suspend fun awaitPersistence() {
         persistenceJob?.join()
+        shortcutPersistenceJob?.join()
     }
 
     private fun readModeFromDisk(): AppearanceMode {
@@ -116,5 +142,6 @@ class AppearancePreferences(
         const val TAG = "HaloAppearance"
         const val PREFERENCES_NAME = "halo_appearance"
         const val KEY_MODE = "mode"
+        const val KEY_ORB_SHORTCUTS = "orb_shortcuts"
     }
 }

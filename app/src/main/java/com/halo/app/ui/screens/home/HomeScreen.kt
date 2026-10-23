@@ -73,6 +73,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloSignalFace
@@ -286,8 +287,8 @@ fun HomeScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer); viewModel.onHomeStopped() }
     }
 
-    val isListening = uiState.speechActive || listeningRequested
-    val isSpeechProcessing = uiState.speechProcessing
+    val isListening = uiState.inputStatus.capturing || uiState.speechActive || listeningRequested
+    val isSpeechProcessing = uiState.speechProcessing || uiState.runtimeState == HaloRuntimeState.Recognizing
     val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking
     val isActiveSession = uiState.sessionState != CognitiveSessionState.Idle &&
         uiState.sessionState !is CognitiveSessionState.Completed &&
@@ -333,6 +334,18 @@ fun HomeScreen(
     // Attachments and quick actions live next to the pinned composer, never inside the scrolled feed.
     var showContext by rememberSaveable { mutableStateOf(false) }
     var showActions by rememberSaveable { mutableStateOf(false) }
+    var toolGroup by rememberSaveable { mutableStateOf(HomeToolGroup.CREATE.name) }
+    var toolEntry by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.orbCatalogRequest.collect { request -> request?.let {
+                toolGroup = it.group.name; toolEntry = it.entry
+                focusManager.clearFocus()
+                viewModel.refreshToolCatalog(); showActions = true
+                viewModel.consumeOrbCatalog(it)
+            } }
+        }
+    }
     var showSelectionHelp by rememberSaveable { mutableStateOf(false) }
     var showHistory by rememberSaveable { mutableStateOf(false) }
     var showToday by rememberSaveable { mutableStateOf(false) }
@@ -388,7 +401,8 @@ fun HomeScreen(
                 catch (_: android.content.ActivityNotFoundException) { viewModel.captureMessage.value = context.getString(com.halo.app.R.string.home_tools_open_failed) }
                 catch (_: SecurityException) { viewModel.captureMessage.value = context.getString(com.halo.app.R.string.home_tools_open_failed) }
             } else viewModel.openToolRecovery(recovery)
-        }, onDismiss = { showActions = false })
+        }, onDismiss = { showActions = false },
+        initialGroup = HomeToolGroup.entries.firstOrNull { it.name == toolGroup } ?: HomeToolGroup.CREATE, initialEntry = toolEntry)
     importedSource?.let { source -> HomeImportedSourceDialog(source,
         onAttach = viewModel::attachImportedSource, onStudy = viewModel::openImportedSourceInStudy,
         onNotebook = { viewModel.dismissImportedSource(); viewModel.openToolScreen(HomeToolAction.NOTEBOOK) },
@@ -423,8 +437,7 @@ fun HomeScreen(
     val actingOnPhone = (uiState.sessionState as? CognitiveSessionState.ExecutingTool)
         ?.toolId?.let(::homeIsPhoneAction) == true
     val feedScroll = rememberScrollState()
-    val followThreshold = with(LocalDensity.current) { 140.dp.roundToPx() }
-    var followLatest by remember(draftKey) { mutableStateOf(true) }
+    var followLatest by rememberHomeFeedFollowing(feedScroll, draftKey)
     var observedResponse by remember(draftKey) { mutableStateOf(responseText) }
     var unseenReply by remember(draftKey) { mutableStateOf(false) }
     // H01: announce a new reply only when the response actually changes while
@@ -434,15 +447,6 @@ fun HomeScreen(
         observedResponse = responseText
         if (followLatest) unseenReply = false
         else if (changed && responseText.isNotBlank()) unseenReply = true
-    }
-    // Follow new content while reading the latest turn; a user's upward scroll
-    // releases the latch, and returning to the bottom enables it again.
-    LaunchedEffect(draftKey,feedScroll,followThreshold) {
-        snapshotFlow { Triple(feedScroll.value, feedScroll.maxValue, feedScroll.isScrollInProgress) }
-            .collect { (position, bottom, scrolling) ->
-                if (scrolling) followLatest = bottom - position <= followThreshold
-                else if (followLatest && bottom > position) feedScroll.scrollTo(bottom)
-            }
     }
     var receiptBloom by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(receiptBloom) { if (receiptBloom != null) { kotlinx.coroutines.delay(1200); receiptBloom = null } }
@@ -502,9 +506,10 @@ fun HomeScreen(
             .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
             HomePresenceHeader(
-                signal = uiState.sessionState.toSignalPresentation(
+                signal = com.halo.app.ui.presence.haloOrbInputPresentation(uiState.sessionState.toSignalPresentation(
                     fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
-                    reducedMotion = reducedMotion).let { signal ->
+                    reducedMotion = reducedMotion), uiState.inputStatus.capturing, listeningRequested || uiState.speechActive,
+                    isSpeechProcessing).let { signal ->
                     signal.copy(label = uiText(presentation.status), detail = null,
                         state = if (presentation.needsReview) HaloSignalState.WAITING else signal.state,
                         glyph = if (presentation.needsReview) HaloGlyph.APPROVAL else signal.glyph,
@@ -520,6 +525,11 @@ fun HomeScreen(
                 inputLevel = uiState.inputStatus.inputLevel,
                 aura = false,
                 orbModifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
+                orbControl = { face -> com.halo.app.ui.presence.HomeOrbControl(viewModel,
+                    onRequestMicrophonePermission, onOpen = { route -> when (route) {
+                        "activity" -> onOpenActivity()
+                        "voice_settings" -> viewModel.navigateToVoice()
+                    } }, face = face, forceReview = presentation.needsReview) },
                 action = when {
                     presentation.needsReview -> ({ IconButton(onClick = onOpenActivity, modifier = Modifier.size(48.dp)) {
                         HaloIcon(HaloGlyph.APPROVAL, uiText("Review"))
@@ -762,7 +772,8 @@ fun HomeScreen(
                 }),
                 showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
                 onAttach = { focusManager.clearFocus(); showContext = true },
-                onTools = { focusManager.clearFocus(); viewModel.refreshToolCatalog(); showActions = true },
+                onTools = { focusManager.clearFocus(); toolGroup = HomeToolGroup.CREATE.name; toolEntry = null
+                    viewModel.refreshToolCatalog(); showActions = true },
             )
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }

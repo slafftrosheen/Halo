@@ -25,12 +25,13 @@ internal fun homeFlowPresentation(
         else -> null
     }
     return when {
-        state.speechActive || listeningRequested -> HomeFlowPresentation("Listening…")
-        state.speechProcessing -> HomeFlowPresentation("Turning your voice into text…")
-        state.runtimeState == HaloRuntimeState.Speaking -> HomeFlowPresentation("Speaking…")
-        submission.busy && !currentReceipt -> HomeFlowPresentation("Another conversation is busy. Stop it to send here.")
         reviewStatus != null -> HomeFlowPresentation(reviewStatus,
             needsReview = state.runtimeWaitingState in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION))
+        state.inputStatus.capturing -> HomeFlowPresentation("Listening…")
+        state.speechProcessing || state.runtimeState == HaloRuntimeState.Recognizing -> HomeFlowPresentation("Turning your voice into text…")
+        state.speechActive || listeningRequested -> HomeFlowPresentation("Getting ready…")
+        state.runtimeState == HaloRuntimeState.Speaking -> HomeFlowPresentation("Speaking…")
+        submission.busy && !currentReceipt -> HomeFlowPresentation("Another conversation is busy. Stop it to send here.")
         currentReceipt && submission.phase == TextSubmissionPhase.WAITING_FOR_INPUT ->
             HomeFlowPresentation("Needs your review", needsReview = true)
         currentReceipt && submission.phase == TextSubmissionPhase.SUBMITTING -> HomeFlowPresentation("Sending…")

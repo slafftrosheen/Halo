@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeFeedFollowingTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:39.075Z" hostname="MINIFOXEY" time="4.264">
+  <properties/>
+  <testcase name="returningToTheBottomRearmsFollowingForTheNextReply" classname="com.halo.app.ui.screens.home.HomeFeedFollowingTest" time="3.416"/>
+  <testcase name="replyGrowthFollowsUntilAnUpwardGestureReleasesIt" classname="com.halo.app.ui.screens.home.HomeFeedFollowingTest" time="0.196"/>
+  <testcase name="successiveSmallGesturesKeepTheirProgressTowardTheOrb" classname="com.halo.app.ui.screens.home.HomeFeedFollowingTest" time="0.466"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.presence.HaloOrbActionsTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:14.949Z" hostname="MINIFOXEY" time="0.018">
+  <properties/>
+  <testcase name="recognitionAndClosedCaptureCannotKeepAFalseLiveMicrophone" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.003"/>
+  <testcase name="idleOffersTalkWithoutClaimingCapture" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.001"/>
+  <testcase name="notebookShortcutUsesAnExistingDescriptorAndEveryGroupIsCanonical" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.012"/>
+  <testcase name="speakingOffersInterruptionWhileReviewKeepsCancellationAvailable" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.0"/>
+  <testcase name="aRequestedMicrophoneIsWaitingUntilCaptureActuallyOpens" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.0"/>
+  <testcase name="shortcutDecodeIsBoundedAndEmptyIsAnExplicitPreference" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.0"/>
+  <testcase name="offlineAndFailureRemainActualSignalsWhenCaptureIsClosed" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.0"/>
+  <testcase name="everyActiveInputAndWorkPhaseOffersStop" classname="com.halo.app.ui.presence.HaloOrbActionsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

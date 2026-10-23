@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeThreadPresentationTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:43.723Z" hostname="MINIFOXEY" time="0.003">
+  <properties/>
+  <testcase name="failedFollowUpWithoutPartialTextKeepsTheSavedAnswerInTheThread" classname="com.halo.app.ui.screens.home.HomeThreadPresentationTest" time="0.001"/>
+  <testcase name="streamingTextDoesNotHideAnEqualSavedReply" classname="com.halo.app.ui.screens.home.HomeThreadPresentationTest" time="0.0"/>
+  <testcase name="pendingQuestionNeverLeaksAcrossChatsOrAppearsBeforeSubmission" classname="com.halo.app.ui.screens.home.HomeThreadPresentationTest" time="0.0"/>
+  <testcase name="requestIdentityCanResolveAnOlderCommitFormatButCannotOverrideContradictoryInteraction" classname="com.halo.app.ui.screens.home.HomeThreadPresentationTest" time="0.001"/>
+  <testcase name="identicalEarlierRepliesRemainVisible" classname="com.halo.app.ui.screens.home.HomeThreadPresentationTest" time="0.0"/>
+  <testcase name="pendingQuestionAppearsBeforeCommitAndOnlyItsExactInteractionRemovesIt" classname="com.halo.app.ui.screens.home.HomeThreadPresentationTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

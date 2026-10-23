@@ -29,9 +29,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 internal fun HomeToolsSheet(snapshot: HomeToolCatalogSnapshot, voiceModeActive: Boolean,
     onRefresh: () -> Unit, resolve: suspend (String) -> HomeToolAction?,
     onAction: (HomeToolAction) -> Unit, onRecovery: (HomeToolRecovery) -> Unit,
-    onDismiss: () -> Unit) {
-    var groupName by rememberSaveable { mutableStateOf(HomeToolGroup.CREATE.name) }
-    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
+    onDismiss: () -> Unit, initialGroup: HomeToolGroup = HomeToolGroup.CREATE, initialEntry: String? = null) {
+    var groupName by rememberSaveable(initialGroup, initialEntry) { mutableStateOf(initialGroup.name) }
+    var selectedId by rememberSaveable(initialGroup, initialEntry) { mutableStateOf(initialEntry) }
     var using by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
     val group = HomeToolGroup.entries.firstOrNull { it.name == groupName } ?: HomeToolGroup.CREATE

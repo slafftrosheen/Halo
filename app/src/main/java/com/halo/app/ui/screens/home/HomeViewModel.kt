@@ -223,6 +223,17 @@ class HomeViewModel(
     private val _providerRows = MutableStateFlow<List<com.halo.app.ai.ProviderControlRow>>(emptyList())
     private val _toolCatalog = MutableStateFlow(HomeToolCatalogSnapshot())
     val toolCatalog = _toolCatalog.asStateFlow()
+    private val _orbCatalogRequest = MutableStateFlow<com.halo.app.ui.presence.HaloToolCatalogRequest?>(null)
+    val orbCatalogRequest = _orbCatalogRequest.asStateFlow()
+    fun requestOrbCatalog(request: com.halo.app.ui.presence.HaloToolCatalogRequest) { _orbCatalogRequest.value = request }
+    fun consumeOrbCatalog(request: com.halo.app.ui.presence.HaloToolCatalogRequest) { _orbCatalogRequest.compareAndSet(request, null) }
+    fun stopOrbInteraction() {
+        val current = uiState.value
+        if (current.inputStatus.capturing || current.speechActive || current.speechProcessing || listeningRequested.value ||
+            current.runtimeState == HaloRuntimeState.Recognizing)
+            cancelVoiceInput()
+        else cancelSession()
+    }
     private var toolCatalogRefresh: kotlinx.coroutines.Job? = null
     private val _importedSource = MutableStateFlow<HomeImportedSource?>(null)
     val importedSource = _importedSource.asStateFlow()

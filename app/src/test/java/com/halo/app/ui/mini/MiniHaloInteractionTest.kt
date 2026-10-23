@@ -22,7 +22,7 @@ class MiniHaloInteractionTest {
         var sends = 0
         compose.setContent { HaloTheme { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
-                { talks++ }, { sends++ }, {}, {}, {}, {})
+                { talks++ }, { sends++ }, {}, {}, {})
         } } }
         compose.onNodeWithContentDescription("Talk").assertIsDisplayed().performClick()
         assertEquals(1, talks)
@@ -31,23 +31,21 @@ class MiniHaloInteractionTest {
     }
     @Test fun pendingReviewOpensActivityAndBlocksNewToolRequests() {
         var screen: String? = null
-        var requests = 0
         compose.setContent { HaloTheme { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
-                {}, {}, {}, { requests++ }, { screen = it }, {}, reviewRequired = true)
+                {}, {}, {}, { screen = it }, {}, reviewRequired = true)
         } } }
         compose.onNodeWithText("Review").performClick()
         assertEquals("activity", screen)
         compose.onNode(hasSetTextAction()).assertDoesNotExist()
-        compose.onNodeWithText("My tools").performClick()
-        compose.onNodeWithText("Open camera").performScrollTo().assertIsNotEnabled()
-        assertEquals(0, requests)
+        compose.onNodeWithText("My tools").assertDoesNotExist()
+        compose.onNodeWithText("Open camera").assertDoesNotExist()
     }
     @Test fun busyKeepsStopAndEditingAvailableWithoutSendingAgain() {
         var sent = 0; var stopped = 0; var edited = ""
         compose.setContent { HaloTheme(darkTheme = false) { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "My draft", { edited = it }, true,
-                null, null, {}, { sent++ }, { stopped++ }, {}, {}, {})
+                null, null, {}, { sent++ }, { stopped++ }, {}, {})
         } } }
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNodeWithText("Stop").performClick()
@@ -57,24 +55,33 @@ class MiniHaloInteractionTest {
     @Test fun longReplyCannotHideTheComposerOrFullAppHandoff() {
         compose.setContent { HaloTheme(darkTheme = false) { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "Follow up", {}, false,
-                "A long answer. ".repeat(400), null, {}, {}, {}, {}, {}, {})
+                "A long answer. ".repeat(400), null, {}, {}, {}, {}, {})
         } } }
         compose.onNodeWithContentDescription("Send").assertIsDisplayed()
         compose.onNodeWithText("Open halo").assertIsDisplayed()
         compose.onNodeWithContentDescription("Close").assertIsDisplayed()
     }
 
-    @Test fun toolsUseTheExistingRequestCallbackAndOpenIsSeparate() {
-        var requested: String? = null; var screen: String? = null
+    @Test fun orbShortcutOpensTypedCatalogDiscoveryWithoutSubmittingCameraText() {
+        var request: com.halo.app.ui.presence.HaloToolCatalogRequest? = null
+        var talks = 0
+        var screen: String? = null
         compose.setContent { HaloTheme(darkTheme = false) { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
-                {}, {}, {}, { requested = it }, { screen = it }, {})
+                { talks++ }, {}, {}, { screen = it }, {}, orbControl = { size ->
+                    com.halo.app.ui.presence.HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true),
+                        com.halo.app.ui.presence.HaloOrbInteraction(com.halo.app.ui.presence.HaloOrbPrimary.TALK, false),
+                        com.halo.app.ui.presence.HaloOrbShortcut.defaults, {}, {}, {}, { request = it }, size)
+                })
         } } }
-        compose.onNodeWithText("My tools").performClick()
-        assertNull(requested)
-        compose.onNodeWithText("Open camera").performScrollTo().performClick()
-        assertEquals("open camera",requested); assertNull(screen)
+        compose.onAllNodesWithContentDescription("Halo actions").onFirst().performClick()
+        assertNull(request)
+        assertEquals(0, talks)
+        compose.onNodeWithText("Find").performScrollTo().performClick()
+        assertEquals(com.halo.app.ui.screens.home.HomeToolGroup.FIND, request?.group)
+        assertNull(screen)
+        compose.onNodeWithText("Open camera").assertDoesNotExist()
         compose.onNodeWithText("Open halo").performClick()
-        assertEquals("home",screen)
+        assertEquals("home", screen)
     }
 }

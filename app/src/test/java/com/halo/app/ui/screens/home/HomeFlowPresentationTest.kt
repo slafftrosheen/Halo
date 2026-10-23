@@ -35,8 +35,14 @@ class HomeFlowPresentationTest {
 
     @Test fun speakingAndListeningHaveDistinctFeedback() {
         assertEquals("Speaking…", present(HomeUiState(runtimeState = HaloRuntimeState.Speaking)).status)
-        assertEquals("Listening…", present(HomeUiState(speechActive = true)).status)
+        assertEquals("Getting ready…", present(HomeUiState(speechActive = true)).status)
+        assertEquals("Listening…", present(HomeUiState(inputStatus = com.halo.sdk.runtime.SpeechInputStatus(capturing = true))).status)
         assertEquals("Turning your voice into text…", present(HomeUiState(speechProcessing = true)).status)
+    }
+
+    @Test fun recognitionAfterCaptureClosesIsTranscriptionRatherThanMicrophoneStartup() {
+        val result = present(HomeUiState(speechActive = true, runtimeState = HaloRuntimeState.Recognizing))
+        assertEquals("Turning your voice into text…", result.status)
     }
 
     @Test fun waitingReceiptSurvivesAnIdleSessionProjection() {

@@ -64,7 +64,8 @@ private data class ScreenDisplay(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Boolean) -> Unit,
-    onOpen: (String) -> Unit, onTalk: () -> Unit, onChat: () -> Unit = {}) {
+    onOpen: (String) -> Unit, onTalk: () -> Unit, onChat: () -> Unit = {},
+    orbControl: (@Composable (androidx.compose.ui.unit.Dp) -> Unit)? = null, orbActive: Boolean = false) {
     val layout by store.layout.collectAsStateWithLifecycle()
     val routineItems by store.items.collectAsStateWithLifecycle()
     val hidePrivate by store.hidePrivate.collectAsStateWithLifecycle()
@@ -263,14 +264,16 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         .padding(horizontal = if (fullScreen) 24.dp else 16.dp)) {
         if (!fullScreen) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            HomeSurfaceSwitch(true, { if (!it) onChat() }, Modifier.weight(1f))
-            TextButton(onClick = { settings = true }) { Text(uiText(layout?.name ?: "Your Screen")) }
-            IconButton(onClick = onTalk) { HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo")) }
+            HomeSurfaceSwitch(true, { if (!it) onChat() }, Modifier.weight(1f), compact = LocalDensity.current.fontScale >= 1.4f)
+            IconButton(onClick = { settings = true }, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.SETTINGS, uiText("Screen settings")) }
+            if (orbControl != null && layout != null) orbControl(48.dp)
+            else if (orbControl == null) IconButton(onClick = onTalk) { HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo")) }
         }
         if (layout == null) {
             Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                HaloSignalFace(HaloSignalPresentation(label = "Your Screen"), size = 112.dp)
+                if (orbControl != null) orbControl(112.dp)
+                else HaloSignalFace(HaloSignalPresentation(label = "Your Screen"), size = 112.dp)
                 Text(uiText("A little clarity, at a glance."), style = MaterialTheme.typography.headlineSmall)
                 Text(uiText("Choose a starting layout. You can change every card."), modifier = Modifier.padding(vertical = 16.dp))
                 listOf("Morning", "Focus", "Quiet").forEach { name ->
@@ -279,7 +282,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 }
             }
         } else {
-            if (!fullScreen || chromeVisible) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!fullScreen || chromeVisible || orbActive) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!fullScreen) {
                     TextButton(onClick = { setCustomizing(!customizing) }) { Text(uiText(if (customizing) "Done" else "Customize")) }
                     TextButton(onClick = { picker = true }) { Text(uiText("Add card")) }
@@ -288,7 +291,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 TextButton(onClick = { onFullScreen(!fullScreen) }) { Text(uiText(if (fullScreen) "Exit full screen" else "Full screen")) }
                 if (fullScreen) {
                     TextButton(onClick = { onFullScreen(false); settings = true }) { Text(uiText("Screen settings")) }
-                    TextButton(onClick = onTalk) { Text(uiText("Talk to halo")) }
+                    if (orbControl != null) orbControl(48.dp)
+                    else TextButton(onClick = onTalk) { Text(uiText("Talk to halo")) }
                 }
             }
             notice?.let { message ->

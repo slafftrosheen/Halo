@@ -403,6 +403,9 @@ fun AppShell(
                         onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") })
                     else Column(Modifier.fillMaxSize()) {
                         if (screenMode) {
+                            val orbUi by homeViewModel.uiState.collectAsStateWithLifecycle()
+                            val orbStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
+                            val orbSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
                             val screenDensity = androidx.compose.ui.platform.LocalDensity.current
                             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides
                                 androidx.compose.ui.unit.Density(screenDensity.density, screenDensity.fontScale * if (screenFull) 1.4f else 1f)) {
@@ -413,7 +416,18 @@ fun AppShell(
                                 if (!current.microphonePermissionGranted) onRequestPermissions()
                                 else if (!current.speechReady) navigateSafely("voice_settings")
                                 else homeViewModel.startListening()
-                            }, onChat = { screenMode = false; screenFull = false })
+                            }, onChat = { screenMode = false; screenFull = false },
+                            orbControl = { size -> com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions,
+                                onOpen = { route ->
+                                    if (route == "home") { screenMode = false; screenFull = false }
+                                    navigateSafely(route)
+                                }, size = size) },
+                            orbActive = orbStarting || orbUi.inputStatus.capturing || orbUi.speechActive || orbUi.speechProcessing || orbSubmission.busy ||
+                                orbUi.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Recognizing ||
+                                orbUi.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Speaking ||
+                                orbUi.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
+                                orbUi.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed &&
+                                orbUi.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle)
                             }
                         } else HomeScreen(
                         surfaceSwitcher = { com.halo.app.screen.HomeSurfaceSwitch(false,

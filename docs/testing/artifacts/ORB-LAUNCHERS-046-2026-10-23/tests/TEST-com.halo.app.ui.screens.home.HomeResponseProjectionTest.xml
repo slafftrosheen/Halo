@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeResponseProjectionTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:43.713Z" hostname="MINIFOXEY" time="0.007">
+  <properties/>
+  <testcase name="completedBeforeHomeSubscribesComesFromCommittedConversation" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.004"/>
+  <testcase name="clearConversationDisplaysNothing" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="incompleteResponseKeepsExactIdentityAndDoesNotMoveConversations" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="processStyleReconstructionDoesNotRequirePublishedEvent" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.001"/>
+  <testcase name="completedWhileHomeObservingUsesDurableIdentity" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.001"/>
+  <testcase name="activityNavigationRoundTripUsesSameDurableTurn" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="identicalAnswersKeepTheLatestExactTurnIdentity" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="pendingApprovalCannotLeakIntoAnotherConversationOrOverwriteItsOwnCommit" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="uncommittedCompletionUsesActualResponseProvider" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="newConversationDoesNotReplayPreviousConversation" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="pendingApprovalIsMoreRecentThanPreviousCommittedConversationAnswer" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.001"/>
+  <testcase name="committedCloudProvenanceIsDurableAndNeverUsesSelectedProvider" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="streamingHasHighestPriority" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <testcase name="viewModelStyleReconstructionUsesSameDurableTurn" classname="com.halo.app.ui.screens.home.HomeResponseProjectionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

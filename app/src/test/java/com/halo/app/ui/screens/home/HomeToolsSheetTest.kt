@@ -26,6 +26,19 @@ class HomeToolsSheetTest {
         reason: HomeToolReason = HomeToolReason.READY, recovery: HomeToolRecovery = HomeToolRecovery.NONE) =
         HomeToolCatalogSnapshot(listOf(HomeToolEntry(HomeToolCatalog.descriptors.single { it.id == id }, status, reason, recovery)), false)
 
+    @Test fun orbNotebookHandoffOpensExistingDetailWithoutResolvingUntilExplicitUse() {
+        var resolved = 0; var action: HomeToolAction? = null
+        compose.setContent { HostlessHaloTheme {
+            HomeToolsSheet(snapshot("work.notebook"), false, {}, { resolved++; HomeToolAction.NOTEBOOK },
+                { action = it }, {}, {}, initialGroup = HomeToolGroup.WORK, initialEntry = "work.notebook")
+        } }
+        compose.onNodeWithText("Open Notebook").assertExists()
+        assertEquals(0, resolved); assertNull(action)
+        compose.onNodeWithText("Open Notebook").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(1, resolved); assertEquals(HomeToolAction.NOTEBOOK, action)
+    }
+
     @Test fun browsingAndPlannedDetailsNeverResolveOrExecute() {
         var resolved = 0; var actions = 0
         compose.setContent { HostlessHaloTheme {

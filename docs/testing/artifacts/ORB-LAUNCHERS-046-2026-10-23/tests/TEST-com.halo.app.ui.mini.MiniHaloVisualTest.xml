@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.mini.MiniHaloVisualTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T00:11:03.467Z" hostname="MINIFOXEY" time="11.48">
+  <properties/>
+  <testcase name="compactWindow" classname="com.halo.app.ui.mini.MiniHaloVisualTest" time="10.646"/>
+  <testcase name="dark" classname="com.halo.app.ui.mini.MiniHaloVisualTest" time="0.169"/>
+  <testcase name="light" classname="com.halo.app.ui.mini.MiniHaloVisualTest" time="0.146"/>
+  <testcase name="latvianLarge" classname="com.halo.app.ui.mini.MiniHaloVisualTest" time="0.194"/>
+  <testcase name="russianLarge" classname="com.halo.app.ui.mini.MiniHaloVisualTest" time="0.17"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

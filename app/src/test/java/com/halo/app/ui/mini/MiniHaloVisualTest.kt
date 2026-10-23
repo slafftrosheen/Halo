@@ -22,7 +22,11 @@ class MiniHaloVisualTest {
         HaloTheme(darkTheme = dark, fontScale = scale, palette = HaloPalette(HaloAccent.LILAC,HaloTone.COOL)) {
             Surface(Modifier.width(width.dp).height(height.dp)) {
                 MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
-                    {}, {}, {}, {}, {}, {})
+                    {}, {}, {}, {}, {}, orbControl = { size ->
+                        com.halo.app.ui.presence.HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true),
+                            com.halo.app.ui.presence.HaloOrbInteraction(com.halo.app.ui.presence.HaloOrbPrimary.TALK, false),
+                            com.halo.app.ui.presence.HaloOrbShortcut.defaults, {}, {}, {}, {}, size)
+                    })
             }
         }
     }
