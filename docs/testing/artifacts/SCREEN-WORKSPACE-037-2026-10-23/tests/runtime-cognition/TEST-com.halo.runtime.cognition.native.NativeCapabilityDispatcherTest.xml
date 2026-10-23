@@ -1,0 +1,1032 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:21:35.534Z" hostname="MINIFOXEY" time="0.879">
+  <properties/>
+  <testcase name="screenResultNeverSpeaksUntrustedAccessibilityTextOrTypedContent" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.009"/>
+  <testcase name="scriptedPhoneActionsAreProviderIndependentAndStopOnUnconfirmedUiEffects" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.475"/>
+  <testcase name="stopCancelsAllOutstandingNativeRunsButLeavesScheduledRoutinesAlone" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.004"/>
+  <testcase name="startupInterruptsParentAndScriptedStepWithoutOfferingStaleApproval" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.005"/>
+  <testcase name="nativeMatrixHasSameExecutionAcrossChatSelectionsAndNoProviderJournal" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.358"/>
+  <testcase name="durableNoteApprovalResolutionWhileStillWaitingUsesCanonicalAuthorityExactlyOnce" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.027"/>
+  <testcase name="scriptAdvanceRequiresConfirmedEffectsExceptVerifiedAppScreenHandoff" classname="com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest" time="0.0"/>
+  <system-out><![CDATA[[HALO_NATIVE_ACTION_ROUTE] interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=0a46ed51-b40d-4cdf-8453-961296bd1dd0 requestId=0a46ed51-b40d-4cdf-8453-961296bd1dd0 tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=0a46ed51-b40d-4cdf-8453-961296bd1dd0 interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=0a46ed51-b40d-4cdf-8453-961296bd1dd0 requestId=0a46ed51-b40d-4cdf-8453-961296bd1dd0 tool=halo_open_app toolCallId=c2a1162e-ce60-4468-8cef-0659b50f8199
+[HALO_TOOL_EXECUTION_START] run=0a46ed51-b40d-4cdf-8453-961296bd1dd0 interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a requestId=0a46ed51-b40d-4cdf-8453-961296bd1dd0 tool=halo_open_app toolCallId=c2a1162e-ce60-4468-8cef-0659b50f8199
+[HALO_TOOL_EXECUTION_RESULT] run=0a46ed51-b40d-4cdf-8453-961296bd1dd0 interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a requestId=0a46ed51-b40d-4cdf-8453-961296bd1dd0 tool=halo_open_app actionTruth=DISPATCHED durationMs=44
+HALO_NATIVE_ACTION_TRUTH interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a run=0a46ed51-b40d-4cdf-8453-961296bd1dd0 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=ed0cf256-e720-4eec-ad0d-5dd9f5c0220a intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=161 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=742c13ab-21ed-4ff9-8d88-8280956be3b7 intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_click reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=7da36d99-bd78-47cf-b9a6-84a1548b6fff requestId=7da36d99-bd78-47cf-b9a6-84a1548b6fff tool=halo_ui_click digest=b4ac9d4b18f5
+[HALO_TOOL_AUTHORIZATION] run=7da36d99-bd78-47cf-b9a6-84a1548b6fff requestId=7da36d99-bd78-47cf-b9a6-84a1548b6fff tool=halo_ui_click toolCallId=2dab709b-0309-442d-aedc-1b91d5b20766
+[HALO_TOOL_EXECUTION_START] run=7da36d99-bd78-47cf-b9a6-84a1548b6fff interactionId=742c13ab-21ed-4ff9-8d88-8280956be3b7 requestId=7da36d99-bd78-47cf-b9a6-84a1548b6fff tool=halo_ui_click toolCallId=2dab709b-0309-442d-aedc-1b91d5b20766
+[HALO_TOOL_EXECUTION_RESULT] run=7da36d99-bd78-47cf-b9a6-84a1548b6fff interactionId=742c13ab-21ed-4ff9-8d88-8280956be3b7 requestId=7da36d99-bd78-47cf-b9a6-84a1548b6fff tool=halo_ui_click actionTruth=CONFIRMED durationMs=5
+HALO_NATIVE_ACTION_TRUTH interactionId=742c13ab-21ed-4ff9-8d88-8280956be3b7 run=7da36d99-bd78-47cf-b9a6-84a1548b6fff tool=halo_ui_click runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=742c13ab-21ed-4ff9-8d88-8280956be3b7 tool=halo_ui_click outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=742c13ab-21ed-4ff9-8d88-8280956be3b7 intent=NativeScreenAction tool=halo_ui_click totalMs=12 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=487b6a88-5bdc-4e46-9ef7-f7d1ae5c0f19 intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_set_text reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=0bc9d71e-f822-4174-b047-cdbe8e316392 requestId=0bc9d71e-f822-4174-b047-cdbe8e316392 tool=halo_ui_set_text digest=1972a0760166
+[HALO_TOOL_AUTHORIZATION] run=0bc9d71e-f822-4174-b047-cdbe8e316392 requestId=0bc9d71e-f822-4174-b047-cdbe8e316392 tool=halo_ui_set_text toolCallId=aff11777-4a90-4d49-b920-a548a2965b15
+[HALO_TOOL_EXECUTION_START] run=0bc9d71e-f822-4174-b047-cdbe8e316392 interactionId=487b6a88-5bdc-4e46-9ef7-f7d1ae5c0f19 requestId=0bc9d71e-f822-4174-b047-cdbe8e316392 tool=halo_ui_set_text toolCallId=aff11777-4a90-4d49-b920-a548a2965b15
+[HALO_TOOL_EXECUTION_RESULT] run=0bc9d71e-f822-4174-b047-cdbe8e316392 interactionId=487b6a88-5bdc-4e46-9ef7-f7d1ae5c0f19 requestId=0bc9d71e-f822-4174-b047-cdbe8e316392 tool=halo_ui_set_text actionTruth=CONFIRMED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=487b6a88-5bdc-4e46-9ef7-f7d1ae5c0f19 run=0bc9d71e-f822-4174-b047-cdbe8e316392 tool=halo_ui_set_text runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=487b6a88-5bdc-4e46-9ef7-f7d1ae5c0f19 tool=halo_ui_set_text outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=487b6a88-5bdc-4e46-9ef7-f7d1ae5c0f19 intent=NativeScreenAction tool=halo_ui_set_text totalMs=6 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 requestId=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 requestId=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 tool=halo_open_app toolCallId=6e0000b8-e033-44ae-95d2-30dd6c9e7c1e
+[HALO_TOOL_EXECUTION_START] run=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 requestId=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 tool=halo_open_app toolCallId=6e0000b8-e033-44ae-95d2-30dd6c9e7c1e
+[HALO_TOOL_EXECUTION_RESULT] run=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 requestId=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 run=54e1ec8b-7ea7-4f7c-a465-e7fc4e369a57 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=165aefb7-67da-4d88-b3a1-4518806ef192 intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=4e2b8939-8f8a-48ae-9641-926f2d861c6b intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_scroll reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=3b76a605-538d-4672-9c0a-084b8d74605e requestId=3b76a605-538d-4672-9c0a-084b8d74605e tool=halo_ui_scroll digest=4c99546ac78e
+[HALO_TOOL_AUTHORIZATION] run=3b76a605-538d-4672-9c0a-084b8d74605e requestId=3b76a605-538d-4672-9c0a-084b8d74605e tool=halo_ui_scroll toolCallId=f2a4c768-38c9-4824-87aa-84ab98e44c54
+[HALO_TOOL_EXECUTION_START] run=3b76a605-538d-4672-9c0a-084b8d74605e interactionId=4e2b8939-8f8a-48ae-9641-926f2d861c6b requestId=3b76a605-538d-4672-9c0a-084b8d74605e tool=halo_ui_scroll toolCallId=f2a4c768-38c9-4824-87aa-84ab98e44c54
+[HALO_TOOL_EXECUTION_RESULT] run=3b76a605-538d-4672-9c0a-084b8d74605e interactionId=4e2b8939-8f8a-48ae-9641-926f2d861c6b requestId=3b76a605-538d-4672-9c0a-084b8d74605e tool=halo_ui_scroll actionTruth=CONFIRMED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=4e2b8939-8f8a-48ae-9641-926f2d861c6b run=3b76a605-538d-4672-9c0a-084b8d74605e tool=halo_ui_scroll runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=4e2b8939-8f8a-48ae-9641-926f2d861c6b tool=halo_ui_scroll outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=4e2b8939-8f8a-48ae-9641-926f2d861c6b intent=NativeScreenAction tool=halo_ui_scroll totalMs=3 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=fbb2a099-6d73-43b2-a0c0-e79aac6f6589 intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_click reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e3fc39e5-460d-419a-9c18-2561c7580956 requestId=e3fc39e5-460d-419a-9c18-2561c7580956 tool=halo_ui_click digest=b4ac9d4b18f5
+[HALO_TOOL_AUTHORIZATION] run=e3fc39e5-460d-419a-9c18-2561c7580956 requestId=e3fc39e5-460d-419a-9c18-2561c7580956 tool=halo_ui_click toolCallId=a8afea8d-0672-4f15-b9ac-fac5721ddc0d
+[HALO_TOOL_EXECUTION_START] run=e3fc39e5-460d-419a-9c18-2561c7580956 interactionId=fbb2a099-6d73-43b2-a0c0-e79aac6f6589 requestId=e3fc39e5-460d-419a-9c18-2561c7580956 tool=halo_ui_click toolCallId=a8afea8d-0672-4f15-b9ac-fac5721ddc0d
+[HALO_TOOL_EXECUTION_RESULT] run=e3fc39e5-460d-419a-9c18-2561c7580956 interactionId=fbb2a099-6d73-43b2-a0c0-e79aac6f6589 requestId=e3fc39e5-460d-419a-9c18-2561c7580956 tool=halo_ui_click actionTruth=CONFIRMED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=fbb2a099-6d73-43b2-a0c0-e79aac6f6589 run=e3fc39e5-460d-419a-9c18-2561c7580956 tool=halo_ui_click runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=fbb2a099-6d73-43b2-a0c0-e79aac6f6589 tool=halo_ui_click outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=fbb2a099-6d73-43b2-a0c0-e79aac6f6589 intent=NativeScreenAction tool=halo_ui_click totalMs=4 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=1dd6b89d-5365-49d1-b2e1-e78cb152f91c requestId=1dd6b89d-5365-49d1-b2e1-e78cb152f91c tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=1dd6b89d-5365-49d1-b2e1-e78cb152f91c interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=1dd6b89d-5365-49d1-b2e1-e78cb152f91c requestId=1dd6b89d-5365-49d1-b2e1-e78cb152f91c tool=halo_open_app toolCallId=fb852576-4953-4f24-99b4-a22501ed911f
+[HALO_TOOL_EXECUTION_START] run=1dd6b89d-5365-49d1-b2e1-e78cb152f91c interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf requestId=1dd6b89d-5365-49d1-b2e1-e78cb152f91c tool=halo_open_app toolCallId=fb852576-4953-4f24-99b4-a22501ed911f
+[HALO_TOOL_EXECUTION_RESULT] run=1dd6b89d-5365-49d1-b2e1-e78cb152f91c interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf requestId=1dd6b89d-5365-49d1-b2e1-e78cb152f91c tool=halo_open_app actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf run=1dd6b89d-5365-49d1-b2e1-e78cb152f91c tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=36c004ad-24a8-4767-b1f7-d7496aed9daf intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=aab6c4ce-f203-4664-8334-0b2ef20818ce intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_global_action reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a requestId=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a tool=halo_ui_global_action digest=987d1ffe1446
+[HALO_TOOL_AUTHORIZATION] run=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a requestId=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a tool=halo_ui_global_action toolCallId=117a439c-eea8-44e0-8cff-76c36a4135d5
+[HALO_TOOL_EXECUTION_START] run=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a interactionId=aab6c4ce-f203-4664-8334-0b2ef20818ce requestId=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a tool=halo_ui_global_action toolCallId=117a439c-eea8-44e0-8cff-76c36a4135d5
+[HALO_TOOL_EXECUTION_RESULT] run=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a interactionId=aab6c4ce-f203-4664-8334-0b2ef20818ce requestId=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a tool=halo_ui_global_action actionTruth=CONFIRMED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=aab6c4ce-f203-4664-8334-0b2ef20818ce run=689eeacd-b5bf-4c47-a0fa-6d9ddb19372a tool=halo_ui_global_action runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=aab6c4ce-f203-4664-8334-0b2ef20818ce tool=halo_ui_global_action outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=aab6c4ce-f203-4664-8334-0b2ef20818ce intent=NativeScreenAction tool=halo_ui_global_action totalMs=2 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=42f52fb4-3f31-4873-9922-4f5093704d2b intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_global_action reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 requestId=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 tool=halo_ui_global_action digest=db607d416442
+[HALO_TOOL_AUTHORIZATION] run=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 requestId=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 tool=halo_ui_global_action toolCallId=811220ca-8c18-4b08-9a96-bf3127a522f2
+[HALO_TOOL_EXECUTION_START] run=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 interactionId=42f52fb4-3f31-4873-9922-4f5093704d2b requestId=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 tool=halo_ui_global_action toolCallId=811220ca-8c18-4b08-9a96-bf3127a522f2
+[HALO_TOOL_EXECUTION_RESULT] run=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 interactionId=42f52fb4-3f31-4873-9922-4f5093704d2b requestId=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 tool=halo_ui_global_action actionTruth=CONFIRMED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=42f52fb4-3f31-4873-9922-4f5093704d2b run=9c6d782c-07b6-46f6-b1f2-b4f6bb6adcf6 tool=halo_ui_global_action runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=42f52fb4-3f31-4873-9922-4f5093704d2b tool=halo_ui_global_action outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=42f52fb4-3f31-4873-9922-4f5093704d2b intent=NativeScreenAction tool=halo_ui_global_action totalMs=3 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=178c0481-8ef4-4385-952d-fb6c07bd4cbb intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_click reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=fc2e2de0-c99e-4566-8e33-36808703bcd8 requestId=fc2e2de0-c99e-4566-8e33-36808703bcd8 tool=halo_ui_click digest=b4ac9d4b18f5
+[HALO_TOOL_AUTHORIZATION] run=fc2e2de0-c99e-4566-8e33-36808703bcd8 requestId=fc2e2de0-c99e-4566-8e33-36808703bcd8 tool=halo_ui_click toolCallId=61519b8a-d15b-418c-9ae1-b21e413566da
+[HALO_TOOL_EXECUTION_START] run=fc2e2de0-c99e-4566-8e33-36808703bcd8 interactionId=178c0481-8ef4-4385-952d-fb6c07bd4cbb requestId=fc2e2de0-c99e-4566-8e33-36808703bcd8 tool=halo_ui_click toolCallId=61519b8a-d15b-418c-9ae1-b21e413566da
+[HALO_TOOL_EXECUTION_RESULT] run=fc2e2de0-c99e-4566-8e33-36808703bcd8 interactionId=178c0481-8ef4-4385-952d-fb6c07bd4cbb requestId=fc2e2de0-c99e-4566-8e33-36808703bcd8 tool=halo_ui_click actionTruth=CONFIRMED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=178c0481-8ef4-4385-952d-fb6c07bd4cbb run=fc2e2de0-c99e-4566-8e33-36808703bcd8 tool=halo_ui_click runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=178c0481-8ef4-4385-952d-fb6c07bd4cbb tool=halo_ui_click outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=178c0481-8ef4-4385-952d-fb6c07bd4cbb intent=NativeScreenAction tool=halo_ui_click totalMs=3 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=86b3a34b-edc2-41cb-abb8-6d138dbafde6 intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_click reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f requestId=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f tool=halo_ui_click digest=b4ac9d4b18f5
+[HALO_TOOL_AUTHORIZATION] run=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f requestId=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f tool=halo_ui_click toolCallId=05255788-d595-4aab-aad6-a4aeebd3d3e9
+[HALO_TOOL_EXECUTION_START] run=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f interactionId=86b3a34b-edc2-41cb-abb8-6d138dbafde6 requestId=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f tool=halo_ui_click toolCallId=05255788-d595-4aab-aad6-a4aeebd3d3e9
+[HALO_TOOL_EXECUTION_RESULT] run=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f interactionId=86b3a34b-edc2-41cb-abb8-6d138dbafde6 requestId=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f tool=halo_ui_click actionTruth=CONFIRMED durationMs=2
+HALO_NATIVE_ACTION_TRUTH interactionId=86b3a34b-edc2-41cb-abb8-6d138dbafde6 run=38fc7e49-67d4-49c6-b9f8-b0d89c215f5f tool=halo_ui_click runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=86b3a34b-edc2-41cb-abb8-6d138dbafde6 tool=halo_ui_click outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=86b3a34b-edc2-41cb-abb8-6d138dbafde6 intent=NativeScreenAction tool=halo_ui_click totalMs=3 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=46a8e1e4-8b97-4ca9-b70e-4106db68309e requestId=46a8e1e4-8b97-4ca9-b70e-4106db68309e tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=46a8e1e4-8b97-4ca9-b70e-4106db68309e interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=46a8e1e4-8b97-4ca9-b70e-4106db68309e requestId=46a8e1e4-8b97-4ca9-b70e-4106db68309e tool=halo_open_app toolCallId=816f898d-4095-4229-826d-9b3b7d8ad062
+[HALO_TOOL_EXECUTION_START] run=46a8e1e4-8b97-4ca9-b70e-4106db68309e interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de requestId=46a8e1e4-8b97-4ca9-b70e-4106db68309e tool=halo_open_app toolCallId=816f898d-4095-4229-826d-9b3b7d8ad062
+[HALO_TOOL_EXECUTION_RESULT] run=46a8e1e4-8b97-4ca9-b70e-4106db68309e interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de requestId=46a8e1e4-8b97-4ca9-b70e-4106db68309e tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de run=46a8e1e4-8b97-4ca9-b70e-4106db68309e tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=19b21e60-46fb-45ea-9967-b2f1fc0869de intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=2a43ed50-e7af-46fb-8067-a3ebcbca532d requestId=2a43ed50-e7af-46fb-8067-a3ebcbca532d tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=2a43ed50-e7af-46fb-8067-a3ebcbca532d interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=2a43ed50-e7af-46fb-8067-a3ebcbca532d requestId=2a43ed50-e7af-46fb-8067-a3ebcbca532d tool=halo_open_app toolCallId=721308cc-78e5-486b-a4c2-3cbe6bce64b8
+[HALO_TOOL_EXECUTION_START] run=2a43ed50-e7af-46fb-8067-a3ebcbca532d interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac requestId=2a43ed50-e7af-46fb-8067-a3ebcbca532d tool=halo_open_app toolCallId=721308cc-78e5-486b-a4c2-3cbe6bce64b8
+[HALO_TOOL_EXECUTION_RESULT] run=2a43ed50-e7af-46fb-8067-a3ebcbca532d interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac requestId=2a43ed50-e7af-46fb-8067-a3ebcbca532d tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac run=2a43ed50-e7af-46fb-8067-a3ebcbca532d tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1f06bdc0-5f69-49fe-8467-160a009371ac intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=97668113-3332-4403-956a-728081d5fff0 requestId=97668113-3332-4403-956a-728081d5fff0 tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=97668113-3332-4403-956a-728081d5fff0 interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=97668113-3332-4403-956a-728081d5fff0 requestId=97668113-3332-4403-956a-728081d5fff0 tool=halo_open_app toolCallId=02bbe4fa-ccc0-4a66-83c1-d5c6f42aed00
+[HALO_TOOL_EXECUTION_START] run=97668113-3332-4403-956a-728081d5fff0 interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f requestId=97668113-3332-4403-956a-728081d5fff0 tool=halo_open_app toolCallId=02bbe4fa-ccc0-4a66-83c1-d5c6f42aed00
+[HALO_TOOL_EXECUTION_RESULT] run=97668113-3332-4403-956a-728081d5fff0 interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f requestId=97668113-3332-4403-956a-728081d5fff0 tool=halo_open_app actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f run=97668113-3332-4403-956a-728081d5fff0 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=e96ffc15-1ec6-4de2-86e3-76b63da2d30f intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=442f44de-3112-447c-a565-0ca61a485650 intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=796cc4b6-7625-490d-af5d-2c7f62e60fc5 requestId=796cc4b6-7625-490d-af5d-2c7f62e60fc5 tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=796cc4b6-7625-490d-af5d-2c7f62e60fc5 interactionId=442f44de-3112-447c-a565-0ca61a485650 tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=796cc4b6-7625-490d-af5d-2c7f62e60fc5 requestId=796cc4b6-7625-490d-af5d-2c7f62e60fc5 tool=halo_open_app toolCallId=13f03270-594d-42ff-80d8-da502aee7785
+[HALO_TOOL_EXECUTION_START] run=796cc4b6-7625-490d-af5d-2c7f62e60fc5 interactionId=442f44de-3112-447c-a565-0ca61a485650 requestId=796cc4b6-7625-490d-af5d-2c7f62e60fc5 tool=halo_open_app toolCallId=13f03270-594d-42ff-80d8-da502aee7785
+[HALO_TOOL_EXECUTION_RESULT] run=796cc4b6-7625-490d-af5d-2c7f62e60fc5 interactionId=442f44de-3112-447c-a565-0ca61a485650 requestId=796cc4b6-7625-490d-af5d-2c7f62e60fc5 tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=442f44de-3112-447c-a565-0ca61a485650 run=796cc4b6-7625-490d-af5d-2c7f62e60fc5 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=442f44de-3112-447c-a565-0ca61a485650 tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=442f44de-3112-447c-a565-0ca61a485650 intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=82c947a2-d872-44a0-ba78-e88372dda0c1 requestId=82c947a2-d872-44a0-ba78-e88372dda0c1 tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=82c947a2-d872-44a0-ba78-e88372dda0c1 interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=82c947a2-d872-44a0-ba78-e88372dda0c1 requestId=82c947a2-d872-44a0-ba78-e88372dda0c1 tool=halo_open_app toolCallId=25b2ff91-d83d-4258-bf3e-c649e0d18180
+[HALO_TOOL_EXECUTION_START] run=82c947a2-d872-44a0-ba78-e88372dda0c1 interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 requestId=82c947a2-d872-44a0-ba78-e88372dda0c1 tool=halo_open_app toolCallId=25b2ff91-d83d-4258-bf3e-c649e0d18180
+[HALO_TOOL_EXECUTION_RESULT] run=82c947a2-d872-44a0-ba78-e88372dda0c1 interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 requestId=82c947a2-d872-44a0-ba78-e88372dda0c1 tool=halo_open_app actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 run=82c947a2-d872-44a0-ba78-e88372dda0c1 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=f1d5644b-8fda-4d54-a275-2ed9aedf1ad8 intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=2d600162-2f52-4f14-ba76-3e9338e59d43 intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_click reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=436733ba-2d76-4199-bb6e-025d59614c63 requestId=436733ba-2d76-4199-bb6e-025d59614c63 tool=halo_ui_click digest=b4ac9d4b18f5
+[HALO_TOOL_AUTHORIZATION] run=436733ba-2d76-4199-bb6e-025d59614c63 requestId=436733ba-2d76-4199-bb6e-025d59614c63 tool=halo_ui_click toolCallId=74fd93c3-9a4f-4e77-92b0-eaa6f92bccc3
+[HALO_TOOL_EXECUTION_START] run=436733ba-2d76-4199-bb6e-025d59614c63 interactionId=2d600162-2f52-4f14-ba76-3e9338e59d43 requestId=436733ba-2d76-4199-bb6e-025d59614c63 tool=halo_ui_click toolCallId=74fd93c3-9a4f-4e77-92b0-eaa6f92bccc3
+[HALO_TOOL_EXECUTION_RESULT] run=436733ba-2d76-4199-bb6e-025d59614c63 interactionId=2d600162-2f52-4f14-ba76-3e9338e59d43 requestId=436733ba-2d76-4199-bb6e-025d59614c63 tool=halo_ui_click actionTruth=CONFIRMED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=2d600162-2f52-4f14-ba76-3e9338e59d43 run=436733ba-2d76-4199-bb6e-025d59614c63 tool=halo_ui_click runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=2d600162-2f52-4f14-ba76-3e9338e59d43 tool=halo_ui_click outcome=CONFIRMED
+HALO_NATIVE_ACTION_TIMING interactionId=2d600162-2f52-4f14-ba76-3e9338e59d43 intent=NativeScreenAction tool=halo_ui_click totalMs=1 result=CONFIRMED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=d850d972-cd5a-407a-a3f8-0ecc5c69182c requestId=d850d972-cd5a-407a-a3f8-0ecc5c69182c tool=halo_open_app digest=76248c6ec26b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=d850d972-cd5a-407a-a3f8-0ecc5c69182c interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 tool=halo_open_app digest=76248c6ec26b
+[HALO_TOOL_AUTHORIZATION] run=d850d972-cd5a-407a-a3f8-0ecc5c69182c requestId=d850d972-cd5a-407a-a3f8-0ecc5c69182c tool=halo_open_app toolCallId=c6906466-e06a-4cd0-a00d-e9aaf505cb6d
+[HALO_TOOL_EXECUTION_START] run=d850d972-cd5a-407a-a3f8-0ecc5c69182c interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 requestId=d850d972-cd5a-407a-a3f8-0ecc5c69182c tool=halo_open_app toolCallId=c6906466-e06a-4cd0-a00d-e9aaf505cb6d
+[HALO_TOOL_EXECUTION_RESULT] run=d850d972-cd5a-407a-a3f8-0ecc5c69182c interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 requestId=d850d972-cd5a-407a-a3f8-0ecc5c69182c tool=halo_open_app actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 run=d850d972-cd5a-407a-a3f8-0ecc5c69182c tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=37287bf1-944d-4a2c-a142-abb41bdff9d2 intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=de34aa76-ac8c-4e76-a24f-e3019696a7d1 intent=NativeScreenAction capability=host.ui.semantic tool=halo_ui_click reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=a89c76ee-821d-4f43-be5c-1b83df71dd37 requestId=a89c76ee-821d-4f43-be5c-1b83df71dd37 tool=halo_ui_click digest=b4ac9d4b18f5
+[HALO_TOOL_AUTHORIZATION] run=a89c76ee-821d-4f43-be5c-1b83df71dd37 requestId=a89c76ee-821d-4f43-be5c-1b83df71dd37 tool=halo_ui_click toolCallId=7e397035-48f5-45b5-ae72-320cec61bbca
+[HALO_TOOL_EXECUTION_START] run=a89c76ee-821d-4f43-be5c-1b83df71dd37 interactionId=de34aa76-ac8c-4e76-a24f-e3019696a7d1 requestId=a89c76ee-821d-4f43-be5c-1b83df71dd37 tool=halo_ui_click toolCallId=7e397035-48f5-45b5-ae72-320cec61bbca
+[HALO_TOOL_EXECUTION_RESULT] run=a89c76ee-821d-4f43-be5c-1b83df71dd37 interactionId=de34aa76-ac8c-4e76-a24f-e3019696a7d1 requestId=a89c76ee-821d-4f43-be5c-1b83df71dd37 tool=halo_ui_click actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=de34aa76-ac8c-4e76-a24f-e3019696a7d1 run=a89c76ee-821d-4f43-be5c-1b83df71dd37 tool=halo_ui_click runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=de34aa76-ac8c-4e76-a24f-e3019696a7d1 tool=halo_ui_click outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=de34aa76-ac8c-4e76-a24f-e3019696a7d1 intent=NativeScreenAction tool=halo_ui_click totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 intent=TimerIntent capability=host.timer.set tool=halo_timer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=a0c54e0a-b7d2-47f7-b2be-296001bd034d requestId=a0c54e0a-b7d2-47f7-b2be-296001bd034d tool=halo_timer digest=c40f8c2e3b82
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=a0c54e0a-b7d2-47f7-b2be-296001bd034d interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 tool=halo_timer digest=c40f8c2e3b82
+[HALO_TOOL_AUTHORIZATION] run=a0c54e0a-b7d2-47f7-b2be-296001bd034d requestId=a0c54e0a-b7d2-47f7-b2be-296001bd034d tool=halo_timer toolCallId=ff07cb29-4ef8-4e79-9369-c2e70c45e0d6
+[HALO_TOOL_EXECUTION_START] run=a0c54e0a-b7d2-47f7-b2be-296001bd034d interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 requestId=a0c54e0a-b7d2-47f7-b2be-296001bd034d tool=halo_timer toolCallId=ff07cb29-4ef8-4e79-9369-c2e70c45e0d6
+[HALO_TOOL_EXECUTION_RESULT] run=a0c54e0a-b7d2-47f7-b2be-296001bd034d interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 requestId=a0c54e0a-b7d2-47f7-b2be-296001bd034d tool=halo_timer actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 run=a0c54e0a-b7d2-47f7-b2be-296001bd034d tool=halo_timer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 tool=halo_timer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=9528d745-ab59-4ef9-a43b-82ac91bce7e9 intent=TimerIntent tool=halo_timer totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=27eb194a-99f0-41fa-a878-046fd4cce36a intent=NativeClockIntent capability=host.clock.view tool=halo_clock_view reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=25a95514-f215-4138-b93b-fe65b17d2a06 requestId=25a95514-f215-4138-b93b-fe65b17d2a06 tool=halo_clock_view digest=026ea37c8f81
+[HALO_TOOL_AUTHORIZATION] run=25a95514-f215-4138-b93b-fe65b17d2a06 requestId=25a95514-f215-4138-b93b-fe65b17d2a06 tool=halo_clock_view toolCallId=7e229e55-5a70-4c39-839e-ce18c4116157
+[HALO_TOOL_EXECUTION_START] run=25a95514-f215-4138-b93b-fe65b17d2a06 interactionId=27eb194a-99f0-41fa-a878-046fd4cce36a requestId=25a95514-f215-4138-b93b-fe65b17d2a06 tool=halo_clock_view toolCallId=7e229e55-5a70-4c39-839e-ce18c4116157
+[HALO_TOOL_EXECUTION_RESULT] run=25a95514-f215-4138-b93b-fe65b17d2a06 interactionId=27eb194a-99f0-41fa-a878-046fd4cce36a requestId=25a95514-f215-4138-b93b-fe65b17d2a06 tool=halo_clock_view actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=27eb194a-99f0-41fa-a878-046fd4cce36a run=25a95514-f215-4138-b93b-fe65b17d2a06 tool=halo_clock_view runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=27eb194a-99f0-41fa-a878-046fd4cce36a tool=halo_clock_view outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=27eb194a-99f0-41fa-a878-046fd4cce36a intent=NativeClockIntent tool=halo_clock_view totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=e59fa79b-acf9-4f55-8897-b5b03c6bf99a intent=NativeClockIntent capability=host.clock.modify tool=halo_clock_modify reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 requestId=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 tool=halo_clock_modify digest=b5a78d65c89c
+[HALO_TOOL_AUTHORIZATION] run=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 requestId=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 tool=halo_clock_modify toolCallId=194c8eb3-157e-4203-a647-99d7a764e556
+[HALO_TOOL_EXECUTION_START] run=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 interactionId=e59fa79b-acf9-4f55-8897-b5b03c6bf99a requestId=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 tool=halo_clock_modify toolCallId=194c8eb3-157e-4203-a647-99d7a764e556
+[HALO_TOOL_EXECUTION_RESULT] run=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 interactionId=e59fa79b-acf9-4f55-8897-b5b03c6bf99a requestId=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 tool=halo_clock_modify actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=e59fa79b-acf9-4f55-8897-b5b03c6bf99a run=fc736c4a-a9a8-4fe0-8378-d9b543fb2f16 tool=halo_clock_modify runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=e59fa79b-acf9-4f55-8897-b5b03c6bf99a tool=halo_clock_modify outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=e59fa79b-acf9-4f55-8897-b5b03c6bf99a intent=NativeClockIntent tool=halo_clock_modify totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=6c2b91c4-bbe5-478b-9ea2-bc7951313e57 intent=NativeContactEditorIntent capability=host.contacts.editor tool=halo_contact_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=69645865-a70b-46e2-bb32-8eef82e5b6fd requestId=69645865-a70b-46e2-bb32-8eef82e5b6fd tool=halo_contact_editor digest=d96f8a7ff533
+[HALO_TOOL_AUTHORIZATION] run=69645865-a70b-46e2-bb32-8eef82e5b6fd requestId=69645865-a70b-46e2-bb32-8eef82e5b6fd tool=halo_contact_editor toolCallId=d9441434-763d-4c83-9d71-f52f4d2015a4
+[HALO_TOOL_EXECUTION_START] run=69645865-a70b-46e2-bb32-8eef82e5b6fd interactionId=6c2b91c4-bbe5-478b-9ea2-bc7951313e57 requestId=69645865-a70b-46e2-bb32-8eef82e5b6fd tool=halo_contact_editor toolCallId=d9441434-763d-4c83-9d71-f52f4d2015a4
+[HALO_TOOL_EXECUTION_RESULT] run=69645865-a70b-46e2-bb32-8eef82e5b6fd interactionId=6c2b91c4-bbe5-478b-9ea2-bc7951313e57 requestId=69645865-a70b-46e2-bb32-8eef82e5b6fd tool=halo_contact_editor actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=6c2b91c4-bbe5-478b-9ea2-bc7951313e57 run=69645865-a70b-46e2-bb32-8eef82e5b6fd tool=halo_contact_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=6c2b91c4-bbe5-478b-9ea2-bc7951313e57 tool=halo_contact_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=6c2b91c4-bbe5-478b-9ea2-bc7951313e57 intent=NativeContactEditorIntent tool=halo_contact_editor totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=79d7dc37-7641-4ef4-ac4e-ead5f6458653 intent=NativeCalendarEditorIntent capability=host.calendar.editor tool=halo_calendar_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e322089d-9087-4c8c-a2e1-aadb45fc69ec requestId=e322089d-9087-4c8c-a2e1-aadb45fc69ec tool=halo_calendar_editor digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=e322089d-9087-4c8c-a2e1-aadb45fc69ec requestId=e322089d-9087-4c8c-a2e1-aadb45fc69ec tool=halo_calendar_editor toolCallId=59551927-c82a-4edc-82be-87f099db02ae
+[HALO_TOOL_EXECUTION_START] run=e322089d-9087-4c8c-a2e1-aadb45fc69ec interactionId=79d7dc37-7641-4ef4-ac4e-ead5f6458653 requestId=e322089d-9087-4c8c-a2e1-aadb45fc69ec tool=halo_calendar_editor toolCallId=59551927-c82a-4edc-82be-87f099db02ae
+[HALO_TOOL_EXECUTION_RESULT] run=e322089d-9087-4c8c-a2e1-aadb45fc69ec interactionId=79d7dc37-7641-4ef4-ac4e-ead5f6458653 requestId=e322089d-9087-4c8c-a2e1-aadb45fc69ec tool=halo_calendar_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=79d7dc37-7641-4ef4-ac4e-ead5f6458653 run=e322089d-9087-4c8c-a2e1-aadb45fc69ec tool=halo_calendar_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=79d7dc37-7641-4ef4-ac4e-ead5f6458653 tool=halo_calendar_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=79d7dc37-7641-4ef4-ac4e-ead5f6458653 intent=NativeCalendarEditorIntent tool=halo_calendar_editor totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=729315b5-162c-47ec-af06-d89dcce09664 intent=NativeHaloScreenIntent capability=host.assistant.screen tool=halo_open_screen reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=0eb2f53a-b680-4996-8470-191e464d38f1 requestId=0eb2f53a-b680-4996-8470-191e464d38f1 tool=halo_open_screen digest=fd5cd525d132
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=0eb2f53a-b680-4996-8470-191e464d38f1 interactionId=729315b5-162c-47ec-af06-d89dcce09664 tool=halo_open_screen digest=fd5cd525d132
+[HALO_TOOL_AUTHORIZATION] run=0eb2f53a-b680-4996-8470-191e464d38f1 requestId=0eb2f53a-b680-4996-8470-191e464d38f1 tool=halo_open_screen toolCallId=972f8ad1-03cf-491d-902d-e912719ff903
+[HALO_TOOL_EXECUTION_START] run=0eb2f53a-b680-4996-8470-191e464d38f1 interactionId=729315b5-162c-47ec-af06-d89dcce09664 requestId=0eb2f53a-b680-4996-8470-191e464d38f1 tool=halo_open_screen toolCallId=972f8ad1-03cf-491d-902d-e912719ff903
+[HALO_TOOL_EXECUTION_RESULT] run=0eb2f53a-b680-4996-8470-191e464d38f1 interactionId=729315b5-162c-47ec-af06-d89dcce09664 requestId=0eb2f53a-b680-4996-8470-191e464d38f1 tool=halo_open_screen actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=729315b5-162c-47ec-af06-d89dcce09664 run=0eb2f53a-b680-4996-8470-191e464d38f1 tool=halo_open_screen runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=729315b5-162c-47ec-af06-d89dcce09664 tool=halo_open_screen outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=729315b5-162c-47ec-af06-d89dcce09664 intent=NativeHaloScreenIntent tool=halo_open_screen totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 intent=OpenIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 requestId=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 tool=halo_open_app digest=74bf6055505c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 tool=halo_open_app digest=74bf6055505c
+[HALO_TOOL_AUTHORIZATION] run=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 requestId=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 tool=halo_open_app toolCallId=04ab2045-8254-47ee-a80e-84ed6b44d215
+[HALO_TOOL_EXECUTION_START] run=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 requestId=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 tool=halo_open_app toolCallId=04ab2045-8254-47ee-a80e-84ed6b44d215
+[HALO_TOOL_EXECUTION_RESULT] run=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 requestId=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 run=b0f8dea0-c4ad-498e-9744-cc28c4baa3b4 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=7ffdfb49-f60f-401b-8bfb-c6f98c7e7a04 intent=OpenIntent tool=halo_open_app totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 requestId=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 tool=halo_volume digest=4185b01985a6
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 tool=halo_volume digest=4185b01985a6
+[HALO_TOOL_AUTHORIZATION] run=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 requestId=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 tool=halo_volume toolCallId=fa784152-3082-4be6-bbf2-3d9be465714c
+[HALO_TOOL_EXECUTION_START] run=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 requestId=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 tool=halo_volume toolCallId=fa784152-3082-4be6-bbf2-3d9be465714c
+[HALO_TOOL_EXECUTION_RESULT] run=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 requestId=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 tool=halo_volume actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 run=f45f3f4c-877a-4b81-b8c3-63e472e6f0f4 tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=03f1c52c-d7ec-48f0-949a-3fe8c997b753 intent=VolumeIntent tool=halo_volume totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff intent=FlashlightIntent capability=host.flashlight.control tool=halo_flashlight reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 requestId=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 tool=halo_flashlight digest=76f241646b0c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff tool=halo_flashlight digest=76f241646b0c
+[HALO_TOOL_AUTHORIZATION] run=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 requestId=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 tool=halo_flashlight toolCallId=b98eec1e-738f-428b-81db-e177a2cc8cab
+[HALO_TOOL_EXECUTION_START] run=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff requestId=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 tool=halo_flashlight toolCallId=b98eec1e-738f-428b-81db-e177a2cc8cab
+[HALO_TOOL_EXECUTION_RESULT] run=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff requestId=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 tool=halo_flashlight actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff run=eefdc1f2-c3a5-4d25-a1cd-c134ae5a8862 tool=halo_flashlight runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff tool=halo_flashlight outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=200611f2-b9a0-46bb-b613-19ef62f5d7ff intent=FlashlightIntent tool=halo_flashlight totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 intent=RingerIntent capability=host.ringer.control tool=halo_ringer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=2fb1a767-ed2a-4994-afb0-ee68b14e6bba requestId=2fb1a767-ed2a-4994-afb0-ee68b14e6bba tool=halo_ringer digest=40109d56f5a9
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=2fb1a767-ed2a-4994-afb0-ee68b14e6bba interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 tool=halo_ringer digest=40109d56f5a9
+[HALO_TOOL_AUTHORIZATION] run=2fb1a767-ed2a-4994-afb0-ee68b14e6bba requestId=2fb1a767-ed2a-4994-afb0-ee68b14e6bba tool=halo_ringer toolCallId=fca62fab-2fb6-4d54-a143-ec748eb57448
+[HALO_TOOL_EXECUTION_START] run=2fb1a767-ed2a-4994-afb0-ee68b14e6bba interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 requestId=2fb1a767-ed2a-4994-afb0-ee68b14e6bba tool=halo_ringer toolCallId=fca62fab-2fb6-4d54-a143-ec748eb57448
+[HALO_TOOL_EXECUTION_RESULT] run=2fb1a767-ed2a-4994-afb0-ee68b14e6bba interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 requestId=2fb1a767-ed2a-4994-afb0-ee68b14e6bba tool=halo_ringer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 run=2fb1a767-ed2a-4994-afb0-ee68b14e6bba tool=halo_ringer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 tool=halo_ringer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1a6d5d50-f98b-4d0c-a243-217b37521058 intent=RingerIntent tool=halo_ringer totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=a434ee91-b313-4efe-a26f-6c600064606c intent=BrightnessIntent capability=host.screen.brightness tool=halo_brightness reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 requestId=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 tool=halo_brightness digest=0436f38df35b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 interactionId=a434ee91-b313-4efe-a26f-6c600064606c tool=halo_brightness digest=0436f38df35b
+[HALO_TOOL_AUTHORIZATION] run=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 requestId=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 tool=halo_brightness toolCallId=044b5c84-e9ad-4176-8a0e-dc306c1b353e
+[HALO_TOOL_EXECUTION_START] run=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 interactionId=a434ee91-b313-4efe-a26f-6c600064606c requestId=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 tool=halo_brightness toolCallId=044b5c84-e9ad-4176-8a0e-dc306c1b353e
+[HALO_TOOL_EXECUTION_RESULT] run=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 interactionId=a434ee91-b313-4efe-a26f-6c600064606c requestId=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 tool=halo_brightness actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=a434ee91-b313-4efe-a26f-6c600064606c run=1213a733-b5f1-4c5e-a37e-5d4dd9b5c6a6 tool=halo_brightness runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=a434ee91-b313-4efe-a26f-6c600064606c tool=halo_brightness outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=a434ee91-b313-4efe-a26f-6c600064606c intent=BrightnessIntent tool=halo_brightness totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 intent=OpenSettingsIntent capability=host.settings.open tool=halo_open_settings reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=26c15f39-2d43-44f6-99ad-a37b4c5a663d requestId=26c15f39-2d43-44f6-99ad-a37b4c5a663d tool=halo_open_settings digest=734c77ad5936
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=26c15f39-2d43-44f6-99ad-a37b4c5a663d interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 tool=halo_open_settings digest=734c77ad5936
+[HALO_TOOL_AUTHORIZATION] run=26c15f39-2d43-44f6-99ad-a37b4c5a663d requestId=26c15f39-2d43-44f6-99ad-a37b4c5a663d tool=halo_open_settings toolCallId=f412b350-403f-483c-a389-f5b08f7d1c3e
+[HALO_TOOL_EXECUTION_START] run=26c15f39-2d43-44f6-99ad-a37b4c5a663d interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 requestId=26c15f39-2d43-44f6-99ad-a37b4c5a663d tool=halo_open_settings toolCallId=f412b350-403f-483c-a389-f5b08f7d1c3e
+[HALO_TOOL_EXECUTION_RESULT] run=26c15f39-2d43-44f6-99ad-a37b4c5a663d interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 requestId=26c15f39-2d43-44f6-99ad-a37b4c5a663d tool=halo_open_settings actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 run=26c15f39-2d43-44f6-99ad-a37b4c5a663d tool=halo_open_settings runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 tool=halo_open_settings outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=d83524ec-4c19-4c01-9677-5db694291ed3 intent=OpenSettingsIntent tool=halo_open_settings totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=9a8bb01a-7623-43ef-be12-fcd3a328b301 intent=ShareIntent capability=host.sharing.share tool=halo_share_text reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 requestId=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 tool=halo_share_text digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 requestId=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 tool=halo_share_text toolCallId=58d0990f-0c94-4170-af00-32014fbadfd9
+[HALO_TOOL_EXECUTION_START] run=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 interactionId=9a8bb01a-7623-43ef-be12-fcd3a328b301 requestId=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 tool=halo_share_text toolCallId=58d0990f-0c94-4170-af00-32014fbadfd9
+[HALO_TOOL_EXECUTION_RESULT] run=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 interactionId=9a8bb01a-7623-43ef-be12-fcd3a328b301 requestId=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 tool=halo_share_text actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=9a8bb01a-7623-43ef-be12-fcd3a328b301 run=a0b90d22-1dd8-4dcb-9ce1-b48b2d47cd40 tool=halo_share_text runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=9a8bb01a-7623-43ef-be12-fcd3a328b301 tool=halo_share_text outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=9a8bb01a-7623-43ef-be12-fcd3a328b301 intent=ShareIntent tool=halo_share_text totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=e13dfbd4-7874-4f74-8c08-7466fd1124bb intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=cabc6fe4-bd99-44a0-8137-46a79965ab91 requestId=cabc6fe4-bd99-44a0-8137-46a79965ab91 tool=halo_clipboard_read digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=cabc6fe4-bd99-44a0-8137-46a79965ab91 requestId=cabc6fe4-bd99-44a0-8137-46a79965ab91 tool=halo_clipboard_read toolCallId=4bf1e15a-0cdc-45d8-aa8c-3b1c3f9f128e
+[HALO_TOOL_EXECUTION_START] run=cabc6fe4-bd99-44a0-8137-46a79965ab91 interactionId=e13dfbd4-7874-4f74-8c08-7466fd1124bb requestId=cabc6fe4-bd99-44a0-8137-46a79965ab91 tool=halo_clipboard_read toolCallId=4bf1e15a-0cdc-45d8-aa8c-3b1c3f9f128e
+[HALO_TOOL_EXECUTION_RESULT] run=cabc6fe4-bd99-44a0-8137-46a79965ab91 interactionId=e13dfbd4-7874-4f74-8c08-7466fd1124bb requestId=cabc6fe4-bd99-44a0-8137-46a79965ab91 tool=halo_clipboard_read actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=e13dfbd4-7874-4f74-8c08-7466fd1124bb run=cabc6fe4-bd99-44a0-8137-46a79965ab91 tool=halo_clipboard_read runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=e13dfbd4-7874-4f74-8c08-7466fd1124bb tool=halo_clipboard_read outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=e13dfbd4-7874-4f74-8c08-7466fd1124bb intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=084f33f3-c437-45b2-bf9a-f5c55348db0c intent=ClipboardWriteIntent capability=host.clipboard.write tool=halo_clipboard_write reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad requestId=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad tool=halo_clipboard_write digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad requestId=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad tool=halo_clipboard_write toolCallId=ef9e6c79-eec6-4462-9995-ac8b4bb30074
+[HALO_TOOL_EXECUTION_START] run=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad interactionId=084f33f3-c437-45b2-bf9a-f5c55348db0c requestId=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad tool=halo_clipboard_write toolCallId=ef9e6c79-eec6-4462-9995-ac8b4bb30074
+[HALO_TOOL_EXECUTION_RESULT] run=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad interactionId=084f33f3-c437-45b2-bf9a-f5c55348db0c requestId=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad tool=halo_clipboard_write actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=084f33f3-c437-45b2-bf9a-f5c55348db0c run=7ae85b70-2fa6-4f80-9d13-e1d43fe32fad tool=halo_clipboard_write runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=084f33f3-c437-45b2-bf9a-f5c55348db0c tool=halo_clipboard_write outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=084f33f3-c437-45b2-bf9a-f5c55348db0c intent=ClipboardWriteIntent tool=halo_clipboard_write totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad intent=BatteryStatusIntent capability=host.battery.read tool=halo_battery_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef requestId=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef tool=halo_battery_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad tool=halo_battery_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef requestId=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef tool=halo_battery_status toolCallId=80277ab6-6fa3-452e-ab5c-328c46e94fea
+[HALO_TOOL_EXECUTION_START] run=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad requestId=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef tool=halo_battery_status toolCallId=80277ab6-6fa3-452e-ab5c-328c46e94fea
+[HALO_TOOL_EXECUTION_RESULT] run=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad requestId=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef tool=halo_battery_status actionTruth=DISPATCHED durationMs=2
+HALO_NATIVE_ACTION_TRUTH interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad run=bdec17f7-a65b-41a0-ac4f-29d634ecb3ef tool=halo_battery_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad tool=halo_battery_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1168cec2-a573-4a4b-9a04-474b3d54f5ad intent=BatteryStatusIntent tool=halo_battery_status totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 intent=NetworkStatusIntent capability=host.network.read tool=halo_network_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=bdc4923d-af46-4c90-9637-761597b55b55 requestId=bdc4923d-af46-4c90-9637-761597b55b55 tool=halo_network_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=bdc4923d-af46-4c90-9637-761597b55b55 interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 tool=halo_network_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=bdc4923d-af46-4c90-9637-761597b55b55 requestId=bdc4923d-af46-4c90-9637-761597b55b55 tool=halo_network_status toolCallId=7f6d317d-00a0-4775-b435-2a89eee1eeb1
+[HALO_TOOL_EXECUTION_START] run=bdc4923d-af46-4c90-9637-761597b55b55 interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 requestId=bdc4923d-af46-4c90-9637-761597b55b55 tool=halo_network_status toolCallId=7f6d317d-00a0-4775-b435-2a89eee1eeb1
+[HALO_TOOL_EXECUTION_RESULT] run=bdc4923d-af46-4c90-9637-761597b55b55 interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 requestId=bdc4923d-af46-4c90-9637-761597b55b55 tool=halo_network_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 run=bdc4923d-af46-4c90-9637-761597b55b55 tool=halo_network_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 tool=halo_network_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=0e9cc481-d082-4449-a9ef-58e5a42396c6 intent=NetworkStatusIntent tool=halo_network_status totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 intent=DeviceInfoIntent capability=host.device.inspect tool=halo_device_info reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=05d78f96-0cd1-4ec6-9534-d684f26c5644 requestId=05d78f96-0cd1-4ec6-9534-d684f26c5644 tool=halo_device_info digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=05d78f96-0cd1-4ec6-9534-d684f26c5644 interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 tool=halo_device_info digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=05d78f96-0cd1-4ec6-9534-d684f26c5644 requestId=05d78f96-0cd1-4ec6-9534-d684f26c5644 tool=halo_device_info toolCallId=4df1ff5d-106d-49df-8886-1d23be163901
+[HALO_TOOL_EXECUTION_START] run=05d78f96-0cd1-4ec6-9534-d684f26c5644 interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 requestId=05d78f96-0cd1-4ec6-9534-d684f26c5644 tool=halo_device_info toolCallId=4df1ff5d-106d-49df-8886-1d23be163901
+[HALO_TOOL_EXECUTION_RESULT] run=05d78f96-0cd1-4ec6-9534-d684f26c5644 interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 requestId=05d78f96-0cd1-4ec6-9534-d684f26c5644 tool=halo_device_info actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 run=05d78f96-0cd1-4ec6-9534-d684f26c5644 tool=halo_device_info runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 tool=halo_device_info outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=c45482a7-388d-4228-aa53-4eb99dd20203 intent=DeviceInfoIntent tool=halo_device_info totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=0be8876b-c7fd-4919-888d-c330312cda93 intent=TimerIntent capability=host.timer.set tool=halo_timer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e50f9e14-c334-4a70-8f50-bd2f829c19ff requestId=e50f9e14-c334-4a70-8f50-bd2f829c19ff tool=halo_timer digest=c40f8c2e3b82
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=e50f9e14-c334-4a70-8f50-bd2f829c19ff interactionId=0be8876b-c7fd-4919-888d-c330312cda93 tool=halo_timer digest=c40f8c2e3b82
+[HALO_TOOL_AUTHORIZATION] run=e50f9e14-c334-4a70-8f50-bd2f829c19ff requestId=e50f9e14-c334-4a70-8f50-bd2f829c19ff tool=halo_timer toolCallId=3512530a-6eae-4019-8cca-6a9d86bc58fb
+[HALO_TOOL_EXECUTION_START] run=e50f9e14-c334-4a70-8f50-bd2f829c19ff interactionId=0be8876b-c7fd-4919-888d-c330312cda93 requestId=e50f9e14-c334-4a70-8f50-bd2f829c19ff tool=halo_timer toolCallId=3512530a-6eae-4019-8cca-6a9d86bc58fb
+[HALO_TOOL_EXECUTION_RESULT] run=e50f9e14-c334-4a70-8f50-bd2f829c19ff interactionId=0be8876b-c7fd-4919-888d-c330312cda93 requestId=e50f9e14-c334-4a70-8f50-bd2f829c19ff tool=halo_timer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=0be8876b-c7fd-4919-888d-c330312cda93 run=e50f9e14-c334-4a70-8f50-bd2f829c19ff tool=halo_timer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=0be8876b-c7fd-4919-888d-c330312cda93 tool=halo_timer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=0be8876b-c7fd-4919-888d-c330312cda93 intent=TimerIntent tool=halo_timer totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3285370d-1351-43ce-9ee2-3e401435a457 intent=NativeClockIntent capability=host.clock.view tool=halo_clock_view reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 requestId=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 tool=halo_clock_view digest=026ea37c8f81
+[HALO_TOOL_AUTHORIZATION] run=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 requestId=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 tool=halo_clock_view toolCallId=dfc25c5c-874f-48da-9f37-9928607517da
+[HALO_TOOL_EXECUTION_START] run=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 interactionId=3285370d-1351-43ce-9ee2-3e401435a457 requestId=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 tool=halo_clock_view toolCallId=dfc25c5c-874f-48da-9f37-9928607517da
+[HALO_TOOL_EXECUTION_RESULT] run=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 interactionId=3285370d-1351-43ce-9ee2-3e401435a457 requestId=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 tool=halo_clock_view actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=3285370d-1351-43ce-9ee2-3e401435a457 run=fb6d7c06-394c-4aef-8b7d-f9bb35266ba4 tool=halo_clock_view runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3285370d-1351-43ce-9ee2-3e401435a457 tool=halo_clock_view outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3285370d-1351-43ce-9ee2-3e401435a457 intent=NativeClockIntent tool=halo_clock_view totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=18176b25-8e4e-4a8a-976a-124fdb86d3e9 intent=NativeClockIntent capability=host.clock.modify tool=halo_clock_modify reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=b61c7af1-ce34-4945-a5b7-34133c79471e requestId=b61c7af1-ce34-4945-a5b7-34133c79471e tool=halo_clock_modify digest=b5a78d65c89c
+[HALO_TOOL_AUTHORIZATION] run=b61c7af1-ce34-4945-a5b7-34133c79471e requestId=b61c7af1-ce34-4945-a5b7-34133c79471e tool=halo_clock_modify toolCallId=bde72d8f-0b4b-4aed-935c-822c900160a8
+[HALO_TOOL_EXECUTION_START] run=b61c7af1-ce34-4945-a5b7-34133c79471e interactionId=18176b25-8e4e-4a8a-976a-124fdb86d3e9 requestId=b61c7af1-ce34-4945-a5b7-34133c79471e tool=halo_clock_modify toolCallId=bde72d8f-0b4b-4aed-935c-822c900160a8
+[HALO_TOOL_EXECUTION_RESULT] run=b61c7af1-ce34-4945-a5b7-34133c79471e interactionId=18176b25-8e4e-4a8a-976a-124fdb86d3e9 requestId=b61c7af1-ce34-4945-a5b7-34133c79471e tool=halo_clock_modify actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=18176b25-8e4e-4a8a-976a-124fdb86d3e9 run=b61c7af1-ce34-4945-a5b7-34133c79471e tool=halo_clock_modify runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=18176b25-8e4e-4a8a-976a-124fdb86d3e9 tool=halo_clock_modify outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=18176b25-8e4e-4a8a-976a-124fdb86d3e9 intent=NativeClockIntent tool=halo_clock_modify totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=05230b2b-af88-469e-a3fe-59ae0dd1bb4d intent=NativeContactEditorIntent capability=host.contacts.editor tool=halo_contact_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=995b4a1c-c81e-430a-8678-2c4a2d7d5183 requestId=995b4a1c-c81e-430a-8678-2c4a2d7d5183 tool=halo_contact_editor digest=d96f8a7ff533
+[HALO_TOOL_AUTHORIZATION] run=995b4a1c-c81e-430a-8678-2c4a2d7d5183 requestId=995b4a1c-c81e-430a-8678-2c4a2d7d5183 tool=halo_contact_editor toolCallId=bf736a3c-d494-48b0-a859-8a6b01623a25
+[HALO_TOOL_EXECUTION_START] run=995b4a1c-c81e-430a-8678-2c4a2d7d5183 interactionId=05230b2b-af88-469e-a3fe-59ae0dd1bb4d requestId=995b4a1c-c81e-430a-8678-2c4a2d7d5183 tool=halo_contact_editor toolCallId=bf736a3c-d494-48b0-a859-8a6b01623a25
+[HALO_TOOL_EXECUTION_RESULT] run=995b4a1c-c81e-430a-8678-2c4a2d7d5183 interactionId=05230b2b-af88-469e-a3fe-59ae0dd1bb4d requestId=995b4a1c-c81e-430a-8678-2c4a2d7d5183 tool=halo_contact_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=05230b2b-af88-469e-a3fe-59ae0dd1bb4d run=995b4a1c-c81e-430a-8678-2c4a2d7d5183 tool=halo_contact_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=05230b2b-af88-469e-a3fe-59ae0dd1bb4d tool=halo_contact_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=05230b2b-af88-469e-a3fe-59ae0dd1bb4d intent=NativeContactEditorIntent tool=halo_contact_editor totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=021ee2a9-8658-4d11-afc3-ccffb5ea3a31 intent=NativeCalendarEditorIntent capability=host.calendar.editor tool=halo_calendar_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=c8753d08-e447-4219-8b80-2a5a5a66b3ef requestId=c8753d08-e447-4219-8b80-2a5a5a66b3ef tool=halo_calendar_editor digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=c8753d08-e447-4219-8b80-2a5a5a66b3ef requestId=c8753d08-e447-4219-8b80-2a5a5a66b3ef tool=halo_calendar_editor toolCallId=94ba6f7f-93f3-4043-a1cf-497ed1bf4cd5
+[HALO_TOOL_EXECUTION_START] run=c8753d08-e447-4219-8b80-2a5a5a66b3ef interactionId=021ee2a9-8658-4d11-afc3-ccffb5ea3a31 requestId=c8753d08-e447-4219-8b80-2a5a5a66b3ef tool=halo_calendar_editor toolCallId=94ba6f7f-93f3-4043-a1cf-497ed1bf4cd5
+[HALO_TOOL_EXECUTION_RESULT] run=c8753d08-e447-4219-8b80-2a5a5a66b3ef interactionId=021ee2a9-8658-4d11-afc3-ccffb5ea3a31 requestId=c8753d08-e447-4219-8b80-2a5a5a66b3ef tool=halo_calendar_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=021ee2a9-8658-4d11-afc3-ccffb5ea3a31 run=c8753d08-e447-4219-8b80-2a5a5a66b3ef tool=halo_calendar_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=021ee2a9-8658-4d11-afc3-ccffb5ea3a31 tool=halo_calendar_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=021ee2a9-8658-4d11-afc3-ccffb5ea3a31 intent=NativeCalendarEditorIntent tool=halo_calendar_editor totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 intent=NativeHaloScreenIntent capability=host.assistant.screen tool=halo_open_screen reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 requestId=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 tool=halo_open_screen digest=fd5cd525d132
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 tool=halo_open_screen digest=fd5cd525d132
+[HALO_TOOL_AUTHORIZATION] run=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 requestId=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 tool=halo_open_screen toolCallId=3266d74c-bb40-4005-946c-fbad73c7988e
+[HALO_TOOL_EXECUTION_START] run=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 requestId=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 tool=halo_open_screen toolCallId=3266d74c-bb40-4005-946c-fbad73c7988e
+[HALO_TOOL_EXECUTION_RESULT] run=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 requestId=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 tool=halo_open_screen actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 run=e4674f70-c1c3-45ca-9d49-39baa4ad59d8 tool=halo_open_screen runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 tool=halo_open_screen outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=4487cf0e-83c3-44fa-a693-8013eb6b6945 intent=NativeHaloScreenIntent tool=halo_open_screen totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb intent=OpenIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff requestId=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff tool=halo_open_app digest=74bf6055505c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb tool=halo_open_app digest=74bf6055505c
+[HALO_TOOL_AUTHORIZATION] run=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff requestId=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff tool=halo_open_app toolCallId=8ca45bdf-10f0-469e-8209-02b4a8805c6a
+[HALO_TOOL_EXECUTION_START] run=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb requestId=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff tool=halo_open_app toolCallId=8ca45bdf-10f0-469e-8209-02b4a8805c6a
+[HALO_TOOL_EXECUTION_RESULT] run=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb requestId=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb run=bf15cab7-7aca-4db5-ac9c-96e4b60fcaff tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=2fff79aa-6a44-492d-a23d-395510c9fddb intent=OpenIntent tool=halo_open_app totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=87df0f6b-c401-48ed-9e07-632431dba386 requestId=87df0f6b-c401-48ed-9e07-632431dba386 tool=halo_volume digest=4185b01985a6
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=87df0f6b-c401-48ed-9e07-632431dba386 interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 tool=halo_volume digest=4185b01985a6
+[HALO_TOOL_AUTHORIZATION] run=87df0f6b-c401-48ed-9e07-632431dba386 requestId=87df0f6b-c401-48ed-9e07-632431dba386 tool=halo_volume toolCallId=689fde69-69e9-4338-bcc0-8ccf89643b2b
+[HALO_TOOL_EXECUTION_START] run=87df0f6b-c401-48ed-9e07-632431dba386 interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 requestId=87df0f6b-c401-48ed-9e07-632431dba386 tool=halo_volume toolCallId=689fde69-69e9-4338-bcc0-8ccf89643b2b
+[HALO_TOOL_EXECUTION_RESULT] run=87df0f6b-c401-48ed-9e07-632431dba386 interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 requestId=87df0f6b-c401-48ed-9e07-632431dba386 tool=halo_volume actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 run=87df0f6b-c401-48ed-9e07-632431dba386 tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=08e51ee8-0e5c-4ace-a594-45f94bdef324 intent=VolumeIntent tool=halo_volume totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1e861b94-393c-4e51-a2b1-280f922d653d intent=FlashlightIntent capability=host.flashlight.control tool=halo_flashlight reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=05c2bc4d-ab98-4777-b30c-db7e08c925ac requestId=05c2bc4d-ab98-4777-b30c-db7e08c925ac tool=halo_flashlight digest=76f241646b0c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=05c2bc4d-ab98-4777-b30c-db7e08c925ac interactionId=1e861b94-393c-4e51-a2b1-280f922d653d tool=halo_flashlight digest=76f241646b0c
+[HALO_TOOL_AUTHORIZATION] run=05c2bc4d-ab98-4777-b30c-db7e08c925ac requestId=05c2bc4d-ab98-4777-b30c-db7e08c925ac tool=halo_flashlight toolCallId=dab101ed-d55f-4745-ba75-0dac4d597fe0
+[HALO_TOOL_EXECUTION_START] run=05c2bc4d-ab98-4777-b30c-db7e08c925ac interactionId=1e861b94-393c-4e51-a2b1-280f922d653d requestId=05c2bc4d-ab98-4777-b30c-db7e08c925ac tool=halo_flashlight toolCallId=dab101ed-d55f-4745-ba75-0dac4d597fe0
+[HALO_TOOL_EXECUTION_RESULT] run=05c2bc4d-ab98-4777-b30c-db7e08c925ac interactionId=1e861b94-393c-4e51-a2b1-280f922d653d requestId=05c2bc4d-ab98-4777-b30c-db7e08c925ac tool=halo_flashlight actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=1e861b94-393c-4e51-a2b1-280f922d653d run=05c2bc4d-ab98-4777-b30c-db7e08c925ac tool=halo_flashlight runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1e861b94-393c-4e51-a2b1-280f922d653d tool=halo_flashlight outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1e861b94-393c-4e51-a2b1-280f922d653d intent=FlashlightIntent tool=halo_flashlight totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 intent=RingerIntent capability=host.ringer.control tool=halo_ringer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=dfc82804-975d-4dfa-8e20-7c53afd76a03 requestId=dfc82804-975d-4dfa-8e20-7c53afd76a03 tool=halo_ringer digest=40109d56f5a9
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=dfc82804-975d-4dfa-8e20-7c53afd76a03 interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 tool=halo_ringer digest=40109d56f5a9
+[HALO_TOOL_AUTHORIZATION] run=dfc82804-975d-4dfa-8e20-7c53afd76a03 requestId=dfc82804-975d-4dfa-8e20-7c53afd76a03 tool=halo_ringer toolCallId=56144630-5052-48a8-a677-d179023c418f
+[HALO_TOOL_EXECUTION_START] run=dfc82804-975d-4dfa-8e20-7c53afd76a03 interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 requestId=dfc82804-975d-4dfa-8e20-7c53afd76a03 tool=halo_ringer toolCallId=56144630-5052-48a8-a677-d179023c418f
+[HALO_TOOL_EXECUTION_RESULT] run=dfc82804-975d-4dfa-8e20-7c53afd76a03 interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 requestId=dfc82804-975d-4dfa-8e20-7c53afd76a03 tool=halo_ringer actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 run=dfc82804-975d-4dfa-8e20-7c53afd76a03 tool=halo_ringer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 tool=halo_ringer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=9fe04259-3366-450a-bbe9-bcf9f449f620 intent=RingerIntent tool=halo_ringer totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 intent=BrightnessIntent capability=host.screen.brightness tool=halo_brightness reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=7489c4ed-6095-4888-95e0-3a197eec0322 requestId=7489c4ed-6095-4888-95e0-3a197eec0322 tool=halo_brightness digest=0436f38df35b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=7489c4ed-6095-4888-95e0-3a197eec0322 interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 tool=halo_brightness digest=0436f38df35b
+[HALO_TOOL_AUTHORIZATION] run=7489c4ed-6095-4888-95e0-3a197eec0322 requestId=7489c4ed-6095-4888-95e0-3a197eec0322 tool=halo_brightness toolCallId=98a6edf9-fd06-4767-a9dd-7389fe445861
+[HALO_TOOL_EXECUTION_START] run=7489c4ed-6095-4888-95e0-3a197eec0322 interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 requestId=7489c4ed-6095-4888-95e0-3a197eec0322 tool=halo_brightness toolCallId=98a6edf9-fd06-4767-a9dd-7389fe445861
+[HALO_TOOL_EXECUTION_RESULT] run=7489c4ed-6095-4888-95e0-3a197eec0322 interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 requestId=7489c4ed-6095-4888-95e0-3a197eec0322 tool=halo_brightness actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 run=7489c4ed-6095-4888-95e0-3a197eec0322 tool=halo_brightness runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 tool=halo_brightness outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=cb2379c5-44fc-4fb0-99b2-3db285a5cc52 intent=BrightnessIntent tool=halo_brightness totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=de59c316-e76d-4155-861b-ca80b6adab06 intent=OpenSettingsIntent capability=host.settings.open tool=halo_open_settings reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc requestId=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc tool=halo_open_settings digest=734c77ad5936
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc interactionId=de59c316-e76d-4155-861b-ca80b6adab06 tool=halo_open_settings digest=734c77ad5936
+[HALO_TOOL_AUTHORIZATION] run=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc requestId=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc tool=halo_open_settings toolCallId=29301db9-1350-4bb2-8103-a18d48bae0a0
+[HALO_TOOL_EXECUTION_START] run=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc interactionId=de59c316-e76d-4155-861b-ca80b6adab06 requestId=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc tool=halo_open_settings toolCallId=29301db9-1350-4bb2-8103-a18d48bae0a0
+[HALO_TOOL_EXECUTION_RESULT] run=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc interactionId=de59c316-e76d-4155-861b-ca80b6adab06 requestId=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc tool=halo_open_settings actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=de59c316-e76d-4155-861b-ca80b6adab06 run=ad16b1cf-5905-4cf5-9be7-d2b36f7d90fc tool=halo_open_settings runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=de59c316-e76d-4155-861b-ca80b6adab06 tool=halo_open_settings outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=de59c316-e76d-4155-861b-ca80b6adab06 intent=OpenSettingsIntent tool=halo_open_settings totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=c7e9c78f-949c-4795-aa6a-659ec81c35e7 intent=ShareIntent capability=host.sharing.share tool=halo_share_text reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=be2d5786-0f4f-4528-87bc-39a8b877cd68 requestId=be2d5786-0f4f-4528-87bc-39a8b877cd68 tool=halo_share_text digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=be2d5786-0f4f-4528-87bc-39a8b877cd68 requestId=be2d5786-0f4f-4528-87bc-39a8b877cd68 tool=halo_share_text toolCallId=f9796e3b-a6e6-4708-848c-a43dc858d0a3
+[HALO_TOOL_EXECUTION_START] run=be2d5786-0f4f-4528-87bc-39a8b877cd68 interactionId=c7e9c78f-949c-4795-aa6a-659ec81c35e7 requestId=be2d5786-0f4f-4528-87bc-39a8b877cd68 tool=halo_share_text toolCallId=f9796e3b-a6e6-4708-848c-a43dc858d0a3
+[HALO_TOOL_EXECUTION_RESULT] run=be2d5786-0f4f-4528-87bc-39a8b877cd68 interactionId=c7e9c78f-949c-4795-aa6a-659ec81c35e7 requestId=be2d5786-0f4f-4528-87bc-39a8b877cd68 tool=halo_share_text actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=c7e9c78f-949c-4795-aa6a-659ec81c35e7 run=be2d5786-0f4f-4528-87bc-39a8b877cd68 tool=halo_share_text runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=c7e9c78f-949c-4795-aa6a-659ec81c35e7 tool=halo_share_text outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=c7e9c78f-949c-4795-aa6a-659ec81c35e7 intent=ShareIntent tool=halo_share_text totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3ef58f8a-5a51-47c8-b29d-a6b85fa5b1b4 intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=df08c315-be7c-4d11-85c0-e8aeecd25848 requestId=df08c315-be7c-4d11-85c0-e8aeecd25848 tool=halo_clipboard_read digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=df08c315-be7c-4d11-85c0-e8aeecd25848 requestId=df08c315-be7c-4d11-85c0-e8aeecd25848 tool=halo_clipboard_read toolCallId=5fe6e5be-e349-4596-bfed-8da0a72948d3
+[HALO_TOOL_EXECUTION_START] run=df08c315-be7c-4d11-85c0-e8aeecd25848 interactionId=3ef58f8a-5a51-47c8-b29d-a6b85fa5b1b4 requestId=df08c315-be7c-4d11-85c0-e8aeecd25848 tool=halo_clipboard_read toolCallId=5fe6e5be-e349-4596-bfed-8da0a72948d3
+[HALO_TOOL_EXECUTION_RESULT] run=df08c315-be7c-4d11-85c0-e8aeecd25848 interactionId=3ef58f8a-5a51-47c8-b29d-a6b85fa5b1b4 requestId=df08c315-be7c-4d11-85c0-e8aeecd25848 tool=halo_clipboard_read actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=3ef58f8a-5a51-47c8-b29d-a6b85fa5b1b4 run=df08c315-be7c-4d11-85c0-e8aeecd25848 tool=halo_clipboard_read runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3ef58f8a-5a51-47c8-b29d-a6b85fa5b1b4 tool=halo_clipboard_read outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3ef58f8a-5a51-47c8-b29d-a6b85fa5b1b4 intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1b2170d4-9e74-41b0-9389-dc396f81f708 intent=ClipboardWriteIntent capability=host.clipboard.write tool=halo_clipboard_write reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=9140d699-6e72-4c1d-8992-1ed0ef02f097 requestId=9140d699-6e72-4c1d-8992-1ed0ef02f097 tool=halo_clipboard_write digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=9140d699-6e72-4c1d-8992-1ed0ef02f097 requestId=9140d699-6e72-4c1d-8992-1ed0ef02f097 tool=halo_clipboard_write toolCallId=f2dc6a72-ae8b-4a76-ab99-0960c87c2803
+[HALO_TOOL_EXECUTION_START] run=9140d699-6e72-4c1d-8992-1ed0ef02f097 interactionId=1b2170d4-9e74-41b0-9389-dc396f81f708 requestId=9140d699-6e72-4c1d-8992-1ed0ef02f097 tool=halo_clipboard_write toolCallId=f2dc6a72-ae8b-4a76-ab99-0960c87c2803
+[HALO_TOOL_EXECUTION_RESULT] run=9140d699-6e72-4c1d-8992-1ed0ef02f097 interactionId=1b2170d4-9e74-41b0-9389-dc396f81f708 requestId=9140d699-6e72-4c1d-8992-1ed0ef02f097 tool=halo_clipboard_write actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=1b2170d4-9e74-41b0-9389-dc396f81f708 run=9140d699-6e72-4c1d-8992-1ed0ef02f097 tool=halo_clipboard_write runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1b2170d4-9e74-41b0-9389-dc396f81f708 tool=halo_clipboard_write outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1b2170d4-9e74-41b0-9389-dc396f81f708 intent=ClipboardWriteIntent tool=halo_clipboard_write totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a intent=BatteryStatusIntent capability=host.battery.read tool=halo_battery_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 requestId=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 tool=halo_battery_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a tool=halo_battery_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 requestId=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 tool=halo_battery_status toolCallId=f0b3ff3d-a6cd-412e-bca8-8becae1a41b7
+[HALO_TOOL_EXECUTION_START] run=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a requestId=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 tool=halo_battery_status toolCallId=f0b3ff3d-a6cd-412e-bca8-8becae1a41b7
+[HALO_TOOL_EXECUTION_RESULT] run=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a requestId=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 tool=halo_battery_status actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a run=9ce50bd3-3489-49f2-a79c-04e0ae0aa3d3 tool=halo_battery_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a tool=halo_battery_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=f02b77d8-7817-4aa2-98f2-f1e7afa7013a intent=BatteryStatusIntent tool=halo_battery_status totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 intent=NetworkStatusIntent capability=host.network.read tool=halo_network_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=4d616639-82bd-46e0-8fef-10e66e5a9be0 requestId=4d616639-82bd-46e0-8fef-10e66e5a9be0 tool=halo_network_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=4d616639-82bd-46e0-8fef-10e66e5a9be0 interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 tool=halo_network_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=4d616639-82bd-46e0-8fef-10e66e5a9be0 requestId=4d616639-82bd-46e0-8fef-10e66e5a9be0 tool=halo_network_status toolCallId=108f1d01-b60b-4add-a40d-0aa84960a26f
+[HALO_TOOL_EXECUTION_START] run=4d616639-82bd-46e0-8fef-10e66e5a9be0 interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 requestId=4d616639-82bd-46e0-8fef-10e66e5a9be0 tool=halo_network_status toolCallId=108f1d01-b60b-4add-a40d-0aa84960a26f
+[HALO_TOOL_EXECUTION_RESULT] run=4d616639-82bd-46e0-8fef-10e66e5a9be0 interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 requestId=4d616639-82bd-46e0-8fef-10e66e5a9be0 tool=halo_network_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 run=4d616639-82bd-46e0-8fef-10e66e5a9be0 tool=halo_network_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 tool=halo_network_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=8d4f8cad-4568-48b2-bcc4-3f2defb98806 intent=NetworkStatusIntent tool=halo_network_status totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb intent=DeviceInfoIntent capability=host.device.inspect tool=halo_device_info reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=143bd7d3-a882-43a7-8180-a25377875862 requestId=143bd7d3-a882-43a7-8180-a25377875862 tool=halo_device_info digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=143bd7d3-a882-43a7-8180-a25377875862 interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb tool=halo_device_info digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=143bd7d3-a882-43a7-8180-a25377875862 requestId=143bd7d3-a882-43a7-8180-a25377875862 tool=halo_device_info toolCallId=43140bbb-719c-45ed-a395-0f701efb258b
+[HALO_TOOL_EXECUTION_START] run=143bd7d3-a882-43a7-8180-a25377875862 interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb requestId=143bd7d3-a882-43a7-8180-a25377875862 tool=halo_device_info toolCallId=43140bbb-719c-45ed-a395-0f701efb258b
+[HALO_TOOL_EXECUTION_RESULT] run=143bd7d3-a882-43a7-8180-a25377875862 interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb requestId=143bd7d3-a882-43a7-8180-a25377875862 tool=halo_device_info actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb run=143bd7d3-a882-43a7-8180-a25377875862 tool=halo_device_info runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb tool=halo_device_info outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=d218959e-df52-42a7-97fe-d4f8df68b1cb intent=DeviceInfoIntent tool=halo_device_info totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 intent=TimerIntent capability=host.timer.set tool=halo_timer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=50c37187-0557-45f9-9a4d-b05f609b728e requestId=50c37187-0557-45f9-9a4d-b05f609b728e tool=halo_timer digest=c40f8c2e3b82
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=50c37187-0557-45f9-9a4d-b05f609b728e interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 tool=halo_timer digest=c40f8c2e3b82
+[HALO_TOOL_AUTHORIZATION] run=50c37187-0557-45f9-9a4d-b05f609b728e requestId=50c37187-0557-45f9-9a4d-b05f609b728e tool=halo_timer toolCallId=2f587af1-dbaf-4649-8341-0b287aee32c1
+[HALO_TOOL_EXECUTION_START] run=50c37187-0557-45f9-9a4d-b05f609b728e interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 requestId=50c37187-0557-45f9-9a4d-b05f609b728e tool=halo_timer toolCallId=2f587af1-dbaf-4649-8341-0b287aee32c1
+[HALO_TOOL_EXECUTION_RESULT] run=50c37187-0557-45f9-9a4d-b05f609b728e interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 requestId=50c37187-0557-45f9-9a4d-b05f609b728e tool=halo_timer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 run=50c37187-0557-45f9-9a4d-b05f609b728e tool=halo_timer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 tool=halo_timer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=c18d9e03-bce4-403d-873b-f295efe06b49 intent=TimerIntent tool=halo_timer totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1131b424-6a0c-4d68-853e-8458c4920862 intent=NativeClockIntent capability=host.clock.view tool=halo_clock_view reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=1c30cfaa-8c1c-433b-9665-067fb65b0c4c requestId=1c30cfaa-8c1c-433b-9665-067fb65b0c4c tool=halo_clock_view digest=026ea37c8f81
+[HALO_TOOL_AUTHORIZATION] run=1c30cfaa-8c1c-433b-9665-067fb65b0c4c requestId=1c30cfaa-8c1c-433b-9665-067fb65b0c4c tool=halo_clock_view toolCallId=f49e741e-58a6-4494-8895-a90fcee7deb8
+[HALO_TOOL_EXECUTION_START] run=1c30cfaa-8c1c-433b-9665-067fb65b0c4c interactionId=1131b424-6a0c-4d68-853e-8458c4920862 requestId=1c30cfaa-8c1c-433b-9665-067fb65b0c4c tool=halo_clock_view toolCallId=f49e741e-58a6-4494-8895-a90fcee7deb8
+[HALO_TOOL_EXECUTION_RESULT] run=1c30cfaa-8c1c-433b-9665-067fb65b0c4c interactionId=1131b424-6a0c-4d68-853e-8458c4920862 requestId=1c30cfaa-8c1c-433b-9665-067fb65b0c4c tool=halo_clock_view actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=1131b424-6a0c-4d68-853e-8458c4920862 run=1c30cfaa-8c1c-433b-9665-067fb65b0c4c tool=halo_clock_view runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1131b424-6a0c-4d68-853e-8458c4920862 tool=halo_clock_view outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1131b424-6a0c-4d68-853e-8458c4920862 intent=NativeClockIntent tool=halo_clock_view totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=8e572ce2-a400-4bc6-bcc0-6e93e6fe480d intent=NativeClockIntent capability=host.clock.modify tool=halo_clock_modify reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=fa481fe5-0ae7-4330-b7dd-422669f90371 requestId=fa481fe5-0ae7-4330-b7dd-422669f90371 tool=halo_clock_modify digest=b5a78d65c89c
+[HALO_TOOL_AUTHORIZATION] run=fa481fe5-0ae7-4330-b7dd-422669f90371 requestId=fa481fe5-0ae7-4330-b7dd-422669f90371 tool=halo_clock_modify toolCallId=90f5268f-00df-477b-95b1-2e1a1cfd9989
+[HALO_TOOL_EXECUTION_START] run=fa481fe5-0ae7-4330-b7dd-422669f90371 interactionId=8e572ce2-a400-4bc6-bcc0-6e93e6fe480d requestId=fa481fe5-0ae7-4330-b7dd-422669f90371 tool=halo_clock_modify toolCallId=90f5268f-00df-477b-95b1-2e1a1cfd9989
+[HALO_TOOL_EXECUTION_RESULT] run=fa481fe5-0ae7-4330-b7dd-422669f90371 interactionId=8e572ce2-a400-4bc6-bcc0-6e93e6fe480d requestId=fa481fe5-0ae7-4330-b7dd-422669f90371 tool=halo_clock_modify actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=8e572ce2-a400-4bc6-bcc0-6e93e6fe480d run=fa481fe5-0ae7-4330-b7dd-422669f90371 tool=halo_clock_modify runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=8e572ce2-a400-4bc6-bcc0-6e93e6fe480d tool=halo_clock_modify outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=8e572ce2-a400-4bc6-bcc0-6e93e6fe480d intent=NativeClockIntent tool=halo_clock_modify totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=16c8356e-f261-446c-a643-4897f5915b71 intent=NativeContactEditorIntent capability=host.contacts.editor tool=halo_contact_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=773178cf-8fa2-48a0-832e-361e6e1bf1f4 requestId=773178cf-8fa2-48a0-832e-361e6e1bf1f4 tool=halo_contact_editor digest=d96f8a7ff533
+[HALO_TOOL_AUTHORIZATION] run=773178cf-8fa2-48a0-832e-361e6e1bf1f4 requestId=773178cf-8fa2-48a0-832e-361e6e1bf1f4 tool=halo_contact_editor toolCallId=22c59721-c950-4132-8619-395625806a54
+[HALO_TOOL_EXECUTION_START] run=773178cf-8fa2-48a0-832e-361e6e1bf1f4 interactionId=16c8356e-f261-446c-a643-4897f5915b71 requestId=773178cf-8fa2-48a0-832e-361e6e1bf1f4 tool=halo_contact_editor toolCallId=22c59721-c950-4132-8619-395625806a54
+[HALO_TOOL_EXECUTION_RESULT] run=773178cf-8fa2-48a0-832e-361e6e1bf1f4 interactionId=16c8356e-f261-446c-a643-4897f5915b71 requestId=773178cf-8fa2-48a0-832e-361e6e1bf1f4 tool=halo_contact_editor actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=16c8356e-f261-446c-a643-4897f5915b71 run=773178cf-8fa2-48a0-832e-361e6e1bf1f4 tool=halo_contact_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=16c8356e-f261-446c-a643-4897f5915b71 tool=halo_contact_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=16c8356e-f261-446c-a643-4897f5915b71 intent=NativeContactEditorIntent tool=halo_contact_editor totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=1d86e4c5-4e0b-4889-8c0e-a3fcc76c3869 intent=NativeCalendarEditorIntent capability=host.calendar.editor tool=halo_calendar_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=3cf65679-0fe4-47e3-9221-2004c012ab4c requestId=3cf65679-0fe4-47e3-9221-2004c012ab4c tool=halo_calendar_editor digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=3cf65679-0fe4-47e3-9221-2004c012ab4c requestId=3cf65679-0fe4-47e3-9221-2004c012ab4c tool=halo_calendar_editor toolCallId=69256d5b-e5df-4ef9-9cec-fa3b795ee593
+[HALO_TOOL_EXECUTION_START] run=3cf65679-0fe4-47e3-9221-2004c012ab4c interactionId=1d86e4c5-4e0b-4889-8c0e-a3fcc76c3869 requestId=3cf65679-0fe4-47e3-9221-2004c012ab4c tool=halo_calendar_editor toolCallId=69256d5b-e5df-4ef9-9cec-fa3b795ee593
+[HALO_TOOL_EXECUTION_RESULT] run=3cf65679-0fe4-47e3-9221-2004c012ab4c interactionId=1d86e4c5-4e0b-4889-8c0e-a3fcc76c3869 requestId=3cf65679-0fe4-47e3-9221-2004c012ab4c tool=halo_calendar_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=1d86e4c5-4e0b-4889-8c0e-a3fcc76c3869 run=3cf65679-0fe4-47e3-9221-2004c012ab4c tool=halo_calendar_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=1d86e4c5-4e0b-4889-8c0e-a3fcc76c3869 tool=halo_calendar_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=1d86e4c5-4e0b-4889-8c0e-a3fcc76c3869 intent=NativeCalendarEditorIntent tool=halo_calendar_editor totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b intent=NativeHaloScreenIntent capability=host.assistant.screen tool=halo_open_screen reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=4cd485e5-3013-471f-b45e-a0375e33882f requestId=4cd485e5-3013-471f-b45e-a0375e33882f tool=halo_open_screen digest=fd5cd525d132
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=4cd485e5-3013-471f-b45e-a0375e33882f interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b tool=halo_open_screen digest=fd5cd525d132
+[HALO_TOOL_AUTHORIZATION] run=4cd485e5-3013-471f-b45e-a0375e33882f requestId=4cd485e5-3013-471f-b45e-a0375e33882f tool=halo_open_screen toolCallId=29487176-d64c-4902-b3e0-a75eda85b220
+[HALO_TOOL_EXECUTION_START] run=4cd485e5-3013-471f-b45e-a0375e33882f interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b requestId=4cd485e5-3013-471f-b45e-a0375e33882f tool=halo_open_screen toolCallId=29487176-d64c-4902-b3e0-a75eda85b220
+[HALO_TOOL_EXECUTION_RESULT] run=4cd485e5-3013-471f-b45e-a0375e33882f interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b requestId=4cd485e5-3013-471f-b45e-a0375e33882f tool=halo_open_screen actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b run=4cd485e5-3013-471f-b45e-a0375e33882f tool=halo_open_screen runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b tool=halo_open_screen outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=0ad109fe-b842-4bc4-be70-abe9d0758e4b intent=NativeHaloScreenIntent tool=halo_open_screen totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae intent=OpenIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=c6130ce2-9f60-4e86-9783-7bec2930772a requestId=c6130ce2-9f60-4e86-9783-7bec2930772a tool=halo_open_app digest=74bf6055505c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=c6130ce2-9f60-4e86-9783-7bec2930772a interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae tool=halo_open_app digest=74bf6055505c
+[HALO_TOOL_AUTHORIZATION] run=c6130ce2-9f60-4e86-9783-7bec2930772a requestId=c6130ce2-9f60-4e86-9783-7bec2930772a tool=halo_open_app toolCallId=7a8b95fe-6288-43b1-9f67-7a5a669a4b15
+[HALO_TOOL_EXECUTION_START] run=c6130ce2-9f60-4e86-9783-7bec2930772a interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae requestId=c6130ce2-9f60-4e86-9783-7bec2930772a tool=halo_open_app toolCallId=7a8b95fe-6288-43b1-9f67-7a5a669a4b15
+[HALO_TOOL_EXECUTION_RESULT] run=c6130ce2-9f60-4e86-9783-7bec2930772a interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae requestId=c6130ce2-9f60-4e86-9783-7bec2930772a tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae run=c6130ce2-9f60-4e86-9783-7bec2930772a tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3b4a7526-6ae7-4c4b-aac8-a879c42862ae intent=OpenIntent tool=halo_open_app totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 requestId=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 tool=halo_volume digest=4185b01985a6
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 tool=halo_volume digest=4185b01985a6
+[HALO_TOOL_AUTHORIZATION] run=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 requestId=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 tool=halo_volume toolCallId=587b22c1-2e64-4cae-946c-e93606d00822
+[HALO_TOOL_EXECUTION_START] run=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 requestId=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 tool=halo_volume toolCallId=587b22c1-2e64-4cae-946c-e93606d00822
+[HALO_TOOL_EXECUTION_RESULT] run=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 requestId=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 tool=halo_volume actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 run=6a65fba5-a9ff-4d10-8da8-5074ee0f1aa7 tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=d4c0ef78-9f64-46a6-9cc0-5b290840b908 intent=VolumeIntent tool=halo_volume totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 intent=FlashlightIntent capability=host.flashlight.control tool=halo_flashlight reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=68845754-a5d4-4f5d-88ab-1c40a53bcab8 requestId=68845754-a5d4-4f5d-88ab-1c40a53bcab8 tool=halo_flashlight digest=76f241646b0c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=68845754-a5d4-4f5d-88ab-1c40a53bcab8 interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 tool=halo_flashlight digest=76f241646b0c
+[HALO_TOOL_AUTHORIZATION] run=68845754-a5d4-4f5d-88ab-1c40a53bcab8 requestId=68845754-a5d4-4f5d-88ab-1c40a53bcab8 tool=halo_flashlight toolCallId=9dcb46f9-d585-47a7-b5e5-3834cb08d1d8
+[HALO_TOOL_EXECUTION_START] run=68845754-a5d4-4f5d-88ab-1c40a53bcab8 interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 requestId=68845754-a5d4-4f5d-88ab-1c40a53bcab8 tool=halo_flashlight toolCallId=9dcb46f9-d585-47a7-b5e5-3834cb08d1d8
+[HALO_TOOL_EXECUTION_RESULT] run=68845754-a5d4-4f5d-88ab-1c40a53bcab8 interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 requestId=68845754-a5d4-4f5d-88ab-1c40a53bcab8 tool=halo_flashlight actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 run=68845754-a5d4-4f5d-88ab-1c40a53bcab8 tool=halo_flashlight runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 tool=halo_flashlight outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=fc9fa6d4-2b92-4ebd-a7da-4f4e5b9b3b69 intent=FlashlightIntent tool=halo_flashlight totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 intent=RingerIntent capability=host.ringer.control tool=halo_ringer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=0333f835-8a8f-4098-acba-ada9a4dd8e01 requestId=0333f835-8a8f-4098-acba-ada9a4dd8e01 tool=halo_ringer digest=40109d56f5a9
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=0333f835-8a8f-4098-acba-ada9a4dd8e01 interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 tool=halo_ringer digest=40109d56f5a9
+[HALO_TOOL_AUTHORIZATION] run=0333f835-8a8f-4098-acba-ada9a4dd8e01 requestId=0333f835-8a8f-4098-acba-ada9a4dd8e01 tool=halo_ringer toolCallId=b0e63a20-e75f-46c9-ad8a-c2fc1509dd19
+[HALO_TOOL_EXECUTION_START] run=0333f835-8a8f-4098-acba-ada9a4dd8e01 interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 requestId=0333f835-8a8f-4098-acba-ada9a4dd8e01 tool=halo_ringer toolCallId=b0e63a20-e75f-46c9-ad8a-c2fc1509dd19
+[HALO_TOOL_EXECUTION_RESULT] run=0333f835-8a8f-4098-acba-ada9a4dd8e01 interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 requestId=0333f835-8a8f-4098-acba-ada9a4dd8e01 tool=halo_ringer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 run=0333f835-8a8f-4098-acba-ada9a4dd8e01 tool=halo_ringer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 tool=halo_ringer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=c9032359-6ac8-49df-a9cc-7bdb0470b9d2 intent=RingerIntent tool=halo_ringer totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 intent=BrightnessIntent capability=host.screen.brightness tool=halo_brightness reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=92ee4c5a-2070-49e2-a1f7-151952b9f105 requestId=92ee4c5a-2070-49e2-a1f7-151952b9f105 tool=halo_brightness digest=0436f38df35b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=92ee4c5a-2070-49e2-a1f7-151952b9f105 interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 tool=halo_brightness digest=0436f38df35b
+[HALO_TOOL_AUTHORIZATION] run=92ee4c5a-2070-49e2-a1f7-151952b9f105 requestId=92ee4c5a-2070-49e2-a1f7-151952b9f105 tool=halo_brightness toolCallId=688075c4-0322-4eb7-9dbe-fadce7f4f096
+[HALO_TOOL_EXECUTION_START] run=92ee4c5a-2070-49e2-a1f7-151952b9f105 interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 requestId=92ee4c5a-2070-49e2-a1f7-151952b9f105 tool=halo_brightness toolCallId=688075c4-0322-4eb7-9dbe-fadce7f4f096
+[HALO_TOOL_EXECUTION_RESULT] run=92ee4c5a-2070-49e2-a1f7-151952b9f105 interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 requestId=92ee4c5a-2070-49e2-a1f7-151952b9f105 tool=halo_brightness actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 run=92ee4c5a-2070-49e2-a1f7-151952b9f105 tool=halo_brightness runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 tool=halo_brightness outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3135187a-7d1e-4a7f-9cd2-f644d7c61f70 intent=BrightnessIntent tool=halo_brightness totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 intent=OpenSettingsIntent capability=host.settings.open tool=halo_open_settings reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=5c1d067b-8fae-45ff-a56f-cb95856429da requestId=5c1d067b-8fae-45ff-a56f-cb95856429da tool=halo_open_settings digest=734c77ad5936
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=5c1d067b-8fae-45ff-a56f-cb95856429da interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 tool=halo_open_settings digest=734c77ad5936
+[HALO_TOOL_AUTHORIZATION] run=5c1d067b-8fae-45ff-a56f-cb95856429da requestId=5c1d067b-8fae-45ff-a56f-cb95856429da tool=halo_open_settings toolCallId=da7e2718-aa3b-43df-af5d-06833112b17b
+[HALO_TOOL_EXECUTION_START] run=5c1d067b-8fae-45ff-a56f-cb95856429da interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 requestId=5c1d067b-8fae-45ff-a56f-cb95856429da tool=halo_open_settings toolCallId=da7e2718-aa3b-43df-af5d-06833112b17b
+[HALO_TOOL_EXECUTION_RESULT] run=5c1d067b-8fae-45ff-a56f-cb95856429da interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 requestId=5c1d067b-8fae-45ff-a56f-cb95856429da tool=halo_open_settings actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 run=5c1d067b-8fae-45ff-a56f-cb95856429da tool=halo_open_settings runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 tool=halo_open_settings outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=e9d76a73-2b16-4089-9d50-884406b40a41 intent=OpenSettingsIntent tool=halo_open_settings totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=5641c094-f41f-4316-93f0-6e45ede4fba3 intent=ShareIntent capability=host.sharing.share tool=halo_share_text reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 requestId=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 tool=halo_share_text digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 requestId=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 tool=halo_share_text toolCallId=5da8301f-1935-4505-ab06-e4850b9aee8b
+[HALO_TOOL_EXECUTION_START] run=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 interactionId=5641c094-f41f-4316-93f0-6e45ede4fba3 requestId=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 tool=halo_share_text toolCallId=5da8301f-1935-4505-ab06-e4850b9aee8b
+[HALO_TOOL_EXECUTION_RESULT] run=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 interactionId=5641c094-f41f-4316-93f0-6e45ede4fba3 requestId=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 tool=halo_share_text actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=5641c094-f41f-4316-93f0-6e45ede4fba3 run=0cc46bb7-cea0-433f-87c0-8f0b54ecba88 tool=halo_share_text runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=5641c094-f41f-4316-93f0-6e45ede4fba3 tool=halo_share_text outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=5641c094-f41f-4316-93f0-6e45ede4fba3 intent=ShareIntent tool=halo_share_text totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=940db924-b81e-4980-a165-c2ec6be4fd70 intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=a51966f7-ac7b-4157-bd54-3da8cb43fbec requestId=a51966f7-ac7b-4157-bd54-3da8cb43fbec tool=halo_clipboard_read digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=a51966f7-ac7b-4157-bd54-3da8cb43fbec requestId=a51966f7-ac7b-4157-bd54-3da8cb43fbec tool=halo_clipboard_read toolCallId=f04ac150-26d6-4ac2-bb34-ede14eda2c5d
+[HALO_TOOL_EXECUTION_START] run=a51966f7-ac7b-4157-bd54-3da8cb43fbec interactionId=940db924-b81e-4980-a165-c2ec6be4fd70 requestId=a51966f7-ac7b-4157-bd54-3da8cb43fbec tool=halo_clipboard_read toolCallId=f04ac150-26d6-4ac2-bb34-ede14eda2c5d
+[HALO_TOOL_EXECUTION_RESULT] run=a51966f7-ac7b-4157-bd54-3da8cb43fbec interactionId=940db924-b81e-4980-a165-c2ec6be4fd70 requestId=a51966f7-ac7b-4157-bd54-3da8cb43fbec tool=halo_clipboard_read actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=940db924-b81e-4980-a165-c2ec6be4fd70 run=a51966f7-ac7b-4157-bd54-3da8cb43fbec tool=halo_clipboard_read runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=940db924-b81e-4980-a165-c2ec6be4fd70 tool=halo_clipboard_read outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=940db924-b81e-4980-a165-c2ec6be4fd70 intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=5465e57c-2f61-4286-8ee5-52df78127484 intent=ClipboardWriteIntent capability=host.clipboard.write tool=halo_clipboard_write reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 requestId=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 tool=halo_clipboard_write digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 requestId=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 tool=halo_clipboard_write toolCallId=8be1d97f-2299-4f0b-ac4a-752e93388429
+[HALO_TOOL_EXECUTION_START] run=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 interactionId=5465e57c-2f61-4286-8ee5-52df78127484 requestId=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 tool=halo_clipboard_write toolCallId=8be1d97f-2299-4f0b-ac4a-752e93388429
+[HALO_TOOL_EXECUTION_RESULT] run=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 interactionId=5465e57c-2f61-4286-8ee5-52df78127484 requestId=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 tool=halo_clipboard_write actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=5465e57c-2f61-4286-8ee5-52df78127484 run=b1bb7b90-c7a4-448f-9bd3-4a9a82367095 tool=halo_clipboard_write runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=5465e57c-2f61-4286-8ee5-52df78127484 tool=halo_clipboard_write outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=5465e57c-2f61-4286-8ee5-52df78127484 intent=ClipboardWriteIntent tool=halo_clipboard_write totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f intent=BatteryStatusIntent capability=host.battery.read tool=halo_battery_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e125f4fd-0999-4d17-8257-18ce905e8dfc requestId=e125f4fd-0999-4d17-8257-18ce905e8dfc tool=halo_battery_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=e125f4fd-0999-4d17-8257-18ce905e8dfc interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f tool=halo_battery_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=e125f4fd-0999-4d17-8257-18ce905e8dfc requestId=e125f4fd-0999-4d17-8257-18ce905e8dfc tool=halo_battery_status toolCallId=84e65252-f3df-4d2a-9b17-1286e6ae2c90
+[HALO_TOOL_EXECUTION_START] run=e125f4fd-0999-4d17-8257-18ce905e8dfc interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f requestId=e125f4fd-0999-4d17-8257-18ce905e8dfc tool=halo_battery_status toolCallId=84e65252-f3df-4d2a-9b17-1286e6ae2c90
+[HALO_TOOL_EXECUTION_RESULT] run=e125f4fd-0999-4d17-8257-18ce905e8dfc interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f requestId=e125f4fd-0999-4d17-8257-18ce905e8dfc tool=halo_battery_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f run=e125f4fd-0999-4d17-8257-18ce905e8dfc tool=halo_battery_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f tool=halo_battery_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=ab056636-30e4-4c09-9f5e-9661631fc50f intent=BatteryStatusIntent tool=halo_battery_status totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 intent=NetworkStatusIntent capability=host.network.read tool=halo_network_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c requestId=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c tool=halo_network_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 tool=halo_network_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c requestId=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c tool=halo_network_status toolCallId=164dd7e0-d617-4652-aea4-c18570db84cf
+[HALO_TOOL_EXECUTION_START] run=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 requestId=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c tool=halo_network_status toolCallId=164dd7e0-d617-4652-aea4-c18570db84cf
+[HALO_TOOL_EXECUTION_RESULT] run=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 requestId=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c tool=halo_network_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 run=f2e047b3-66cf-4ed6-9885-ce6701fd9c9c tool=halo_network_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 tool=halo_network_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=a9b408d9-4f52-4a57-a9cc-9b0318637bf6 intent=NetworkStatusIntent tool=halo_network_status totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 intent=DeviceInfoIntent capability=host.device.inspect tool=halo_device_info reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=4fc9068a-ecc4-4a00-94bf-7ad64007354c requestId=4fc9068a-ecc4-4a00-94bf-7ad64007354c tool=halo_device_info digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=4fc9068a-ecc4-4a00-94bf-7ad64007354c interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 tool=halo_device_info digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=4fc9068a-ecc4-4a00-94bf-7ad64007354c requestId=4fc9068a-ecc4-4a00-94bf-7ad64007354c tool=halo_device_info toolCallId=61cb5448-f75e-4dc9-a597-ca9eb3fbefbe
+[HALO_TOOL_EXECUTION_START] run=4fc9068a-ecc4-4a00-94bf-7ad64007354c interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 requestId=4fc9068a-ecc4-4a00-94bf-7ad64007354c tool=halo_device_info toolCallId=61cb5448-f75e-4dc9-a597-ca9eb3fbefbe
+[HALO_TOOL_EXECUTION_RESULT] run=4fc9068a-ecc4-4a00-94bf-7ad64007354c interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 requestId=4fc9068a-ecc4-4a00-94bf-7ad64007354c tool=halo_device_info actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 run=4fc9068a-ecc4-4a00-94bf-7ad64007354c tool=halo_device_info runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 tool=halo_device_info outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=5bc13858-5640-4763-8c2d-1fea4f3bb418 intent=DeviceInfoIntent tool=halo_device_info totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=997c07b5-be76-420e-b78b-779488ba4279 intent=TimerIntent capability=host.timer.set tool=halo_timer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=706f4f27-a6e2-4180-be85-e1ac104d9648 requestId=706f4f27-a6e2-4180-be85-e1ac104d9648 tool=halo_timer digest=c40f8c2e3b82
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=706f4f27-a6e2-4180-be85-e1ac104d9648 interactionId=997c07b5-be76-420e-b78b-779488ba4279 tool=halo_timer digest=c40f8c2e3b82
+[HALO_TOOL_AUTHORIZATION] run=706f4f27-a6e2-4180-be85-e1ac104d9648 requestId=706f4f27-a6e2-4180-be85-e1ac104d9648 tool=halo_timer toolCallId=c3f9e2d1-447e-4adc-93c7-004acc38151e
+[HALO_TOOL_EXECUTION_START] run=706f4f27-a6e2-4180-be85-e1ac104d9648 interactionId=997c07b5-be76-420e-b78b-779488ba4279 requestId=706f4f27-a6e2-4180-be85-e1ac104d9648 tool=halo_timer toolCallId=c3f9e2d1-447e-4adc-93c7-004acc38151e
+[HALO_TOOL_EXECUTION_RESULT] run=706f4f27-a6e2-4180-be85-e1ac104d9648 interactionId=997c07b5-be76-420e-b78b-779488ba4279 requestId=706f4f27-a6e2-4180-be85-e1ac104d9648 tool=halo_timer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=997c07b5-be76-420e-b78b-779488ba4279 run=706f4f27-a6e2-4180-be85-e1ac104d9648 tool=halo_timer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=997c07b5-be76-420e-b78b-779488ba4279 tool=halo_timer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=997c07b5-be76-420e-b78b-779488ba4279 intent=TimerIntent tool=halo_timer totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=2440e406-438c-40f0-8f8c-288e77c6571e intent=NativeClockIntent capability=host.clock.view tool=halo_clock_view reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 requestId=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 tool=halo_clock_view digest=026ea37c8f81
+[HALO_TOOL_AUTHORIZATION] run=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 requestId=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 tool=halo_clock_view toolCallId=f48e7a1f-73ca-41a4-b017-2413e90268ea
+[HALO_TOOL_EXECUTION_START] run=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 interactionId=2440e406-438c-40f0-8f8c-288e77c6571e requestId=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 tool=halo_clock_view toolCallId=f48e7a1f-73ca-41a4-b017-2413e90268ea
+[HALO_TOOL_EXECUTION_RESULT] run=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 interactionId=2440e406-438c-40f0-8f8c-288e77c6571e requestId=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 tool=halo_clock_view actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=2440e406-438c-40f0-8f8c-288e77c6571e run=9e0917f7-0221-4c70-8f0c-f72cb6b8ea57 tool=halo_clock_view runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=2440e406-438c-40f0-8f8c-288e77c6571e tool=halo_clock_view outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=2440e406-438c-40f0-8f8c-288e77c6571e intent=NativeClockIntent tool=halo_clock_view totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3b2ac38e-26c2-45a3-945c-41bd346c1f90 intent=NativeClockIntent capability=host.clock.modify tool=halo_clock_modify reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=4ceddbd2-b9cc-4392-a287-19a0670a91e9 requestId=4ceddbd2-b9cc-4392-a287-19a0670a91e9 tool=halo_clock_modify digest=b5a78d65c89c
+[HALO_TOOL_AUTHORIZATION] run=4ceddbd2-b9cc-4392-a287-19a0670a91e9 requestId=4ceddbd2-b9cc-4392-a287-19a0670a91e9 tool=halo_clock_modify toolCallId=3de11a36-522d-4806-ad76-fa1d972965ea
+[HALO_TOOL_EXECUTION_START] run=4ceddbd2-b9cc-4392-a287-19a0670a91e9 interactionId=3b2ac38e-26c2-45a3-945c-41bd346c1f90 requestId=4ceddbd2-b9cc-4392-a287-19a0670a91e9 tool=halo_clock_modify toolCallId=3de11a36-522d-4806-ad76-fa1d972965ea
+[HALO_TOOL_EXECUTION_RESULT] run=4ceddbd2-b9cc-4392-a287-19a0670a91e9 interactionId=3b2ac38e-26c2-45a3-945c-41bd346c1f90 requestId=4ceddbd2-b9cc-4392-a287-19a0670a91e9 tool=halo_clock_modify actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=3b2ac38e-26c2-45a3-945c-41bd346c1f90 run=4ceddbd2-b9cc-4392-a287-19a0670a91e9 tool=halo_clock_modify runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3b2ac38e-26c2-45a3-945c-41bd346c1f90 tool=halo_clock_modify outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3b2ac38e-26c2-45a3-945c-41bd346c1f90 intent=NativeClockIntent tool=halo_clock_modify totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=febe5804-07df-4eae-ab88-826f0bae6705 intent=NativeContactEditorIntent capability=host.contacts.editor tool=halo_contact_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e5a515d1-66db-4317-8d6c-46bfbf56711b requestId=e5a515d1-66db-4317-8d6c-46bfbf56711b tool=halo_contact_editor digest=d96f8a7ff533
+[HALO_TOOL_AUTHORIZATION] run=e5a515d1-66db-4317-8d6c-46bfbf56711b requestId=e5a515d1-66db-4317-8d6c-46bfbf56711b tool=halo_contact_editor toolCallId=48f66d40-49f6-4bf1-bece-e58ae915e896
+[HALO_TOOL_EXECUTION_START] run=e5a515d1-66db-4317-8d6c-46bfbf56711b interactionId=febe5804-07df-4eae-ab88-826f0bae6705 requestId=e5a515d1-66db-4317-8d6c-46bfbf56711b tool=halo_contact_editor toolCallId=48f66d40-49f6-4bf1-bece-e58ae915e896
+[HALO_TOOL_EXECUTION_RESULT] run=e5a515d1-66db-4317-8d6c-46bfbf56711b interactionId=febe5804-07df-4eae-ab88-826f0bae6705 requestId=e5a515d1-66db-4317-8d6c-46bfbf56711b tool=halo_contact_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=febe5804-07df-4eae-ab88-826f0bae6705 run=e5a515d1-66db-4317-8d6c-46bfbf56711b tool=halo_contact_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=febe5804-07df-4eae-ab88-826f0bae6705 tool=halo_contact_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=febe5804-07df-4eae-ab88-826f0bae6705 intent=NativeContactEditorIntent tool=halo_contact_editor totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=bd25a6d5-5565-46f6-9f78-b55cb9c27226 intent=NativeCalendarEditorIntent capability=host.calendar.editor tool=halo_calendar_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=c71ffb25-bba6-426c-8cf6-d600e8df79f8 requestId=c71ffb25-bba6-426c-8cf6-d600e8df79f8 tool=halo_calendar_editor digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=c71ffb25-bba6-426c-8cf6-d600e8df79f8 requestId=c71ffb25-bba6-426c-8cf6-d600e8df79f8 tool=halo_calendar_editor toolCallId=cdca9d64-2f0b-48aa-a5cd-9be435b8265c
+[HALO_TOOL_EXECUTION_START] run=c71ffb25-bba6-426c-8cf6-d600e8df79f8 interactionId=bd25a6d5-5565-46f6-9f78-b55cb9c27226 requestId=c71ffb25-bba6-426c-8cf6-d600e8df79f8 tool=halo_calendar_editor toolCallId=cdca9d64-2f0b-48aa-a5cd-9be435b8265c
+[HALO_TOOL_EXECUTION_RESULT] run=c71ffb25-bba6-426c-8cf6-d600e8df79f8 interactionId=bd25a6d5-5565-46f6-9f78-b55cb9c27226 requestId=c71ffb25-bba6-426c-8cf6-d600e8df79f8 tool=halo_calendar_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=bd25a6d5-5565-46f6-9f78-b55cb9c27226 run=c71ffb25-bba6-426c-8cf6-d600e8df79f8 tool=halo_calendar_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=bd25a6d5-5565-46f6-9f78-b55cb9c27226 tool=halo_calendar_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=bd25a6d5-5565-46f6-9f78-b55cb9c27226 intent=NativeCalendarEditorIntent tool=halo_calendar_editor totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 intent=NativeHaloScreenIntent capability=host.assistant.screen tool=halo_open_screen reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=2b084473-6635-4656-b9a6-1dce9fb2cbc4 requestId=2b084473-6635-4656-b9a6-1dce9fb2cbc4 tool=halo_open_screen digest=fd5cd525d132
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=2b084473-6635-4656-b9a6-1dce9fb2cbc4 interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 tool=halo_open_screen digest=fd5cd525d132
+[HALO_TOOL_AUTHORIZATION] run=2b084473-6635-4656-b9a6-1dce9fb2cbc4 requestId=2b084473-6635-4656-b9a6-1dce9fb2cbc4 tool=halo_open_screen toolCallId=313f68b8-4b02-4491-a891-faf85cbbcb02
+[HALO_TOOL_EXECUTION_START] run=2b084473-6635-4656-b9a6-1dce9fb2cbc4 interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 requestId=2b084473-6635-4656-b9a6-1dce9fb2cbc4 tool=halo_open_screen toolCallId=313f68b8-4b02-4491-a891-faf85cbbcb02
+[HALO_TOOL_EXECUTION_RESULT] run=2b084473-6635-4656-b9a6-1dce9fb2cbc4 interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 requestId=2b084473-6635-4656-b9a6-1dce9fb2cbc4 tool=halo_open_screen actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 run=2b084473-6635-4656-b9a6-1dce9fb2cbc4 tool=halo_open_screen runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 tool=halo_open_screen outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=9cfd7ca1-d86c-4e6d-96b9-55b59e4a09c5 intent=NativeHaloScreenIntent tool=halo_open_screen totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb intent=OpenIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=fe1eae6a-957c-492a-b7d4-f6170c839ca8 requestId=fe1eae6a-957c-492a-b7d4-f6170c839ca8 tool=halo_open_app digest=74bf6055505c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=fe1eae6a-957c-492a-b7d4-f6170c839ca8 interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb tool=halo_open_app digest=74bf6055505c
+[HALO_TOOL_AUTHORIZATION] run=fe1eae6a-957c-492a-b7d4-f6170c839ca8 requestId=fe1eae6a-957c-492a-b7d4-f6170c839ca8 tool=halo_open_app toolCallId=0d69cbfe-97ea-4d1e-b516-487100c4b81b
+[HALO_TOOL_EXECUTION_START] run=fe1eae6a-957c-492a-b7d4-f6170c839ca8 interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb requestId=fe1eae6a-957c-492a-b7d4-f6170c839ca8 tool=halo_open_app toolCallId=0d69cbfe-97ea-4d1e-b516-487100c4b81b
+[HALO_TOOL_EXECUTION_RESULT] run=fe1eae6a-957c-492a-b7d4-f6170c839ca8 interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb requestId=fe1eae6a-957c-492a-b7d4-f6170c839ca8 tool=halo_open_app actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb run=fe1eae6a-957c-492a-b7d4-f6170c839ca8 tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3604023e-b80b-4ec8-bc15-6ce385718dfb intent=OpenIntent tool=halo_open_app totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=64b7181e-94a2-4e1f-8d2b-bd917efacfee requestId=64b7181e-94a2-4e1f-8d2b-bd917efacfee tool=halo_volume digest=4185b01985a6
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=64b7181e-94a2-4e1f-8d2b-bd917efacfee interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 tool=halo_volume digest=4185b01985a6
+[HALO_TOOL_AUTHORIZATION] run=64b7181e-94a2-4e1f-8d2b-bd917efacfee requestId=64b7181e-94a2-4e1f-8d2b-bd917efacfee tool=halo_volume toolCallId=419ab1a7-e265-406f-89a3-8ad06171f4d9
+[HALO_TOOL_EXECUTION_START] run=64b7181e-94a2-4e1f-8d2b-bd917efacfee interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 requestId=64b7181e-94a2-4e1f-8d2b-bd917efacfee tool=halo_volume toolCallId=419ab1a7-e265-406f-89a3-8ad06171f4d9
+[HALO_TOOL_EXECUTION_RESULT] run=64b7181e-94a2-4e1f-8d2b-bd917efacfee interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 requestId=64b7181e-94a2-4e1f-8d2b-bd917efacfee tool=halo_volume actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 run=64b7181e-94a2-4e1f-8d2b-bd917efacfee tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=6b8112e3-b28b-4b4d-880f-1a3a5f3580c8 intent=VolumeIntent tool=halo_volume totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 intent=FlashlightIntent capability=host.flashlight.control tool=halo_flashlight reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=256da74f-4d4d-4c6d-a9ba-bb59919b2045 requestId=256da74f-4d4d-4c6d-a9ba-bb59919b2045 tool=halo_flashlight digest=76f241646b0c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=256da74f-4d4d-4c6d-a9ba-bb59919b2045 interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 tool=halo_flashlight digest=76f241646b0c
+[HALO_TOOL_AUTHORIZATION] run=256da74f-4d4d-4c6d-a9ba-bb59919b2045 requestId=256da74f-4d4d-4c6d-a9ba-bb59919b2045 tool=halo_flashlight toolCallId=a518db52-589b-4c50-bd22-fd5af554ee44
+[HALO_TOOL_EXECUTION_START] run=256da74f-4d4d-4c6d-a9ba-bb59919b2045 interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 requestId=256da74f-4d4d-4c6d-a9ba-bb59919b2045 tool=halo_flashlight toolCallId=a518db52-589b-4c50-bd22-fd5af554ee44
+[HALO_TOOL_EXECUTION_RESULT] run=256da74f-4d4d-4c6d-a9ba-bb59919b2045 interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 requestId=256da74f-4d4d-4c6d-a9ba-bb59919b2045 tool=halo_flashlight actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 run=256da74f-4d4d-4c6d-a9ba-bb59919b2045 tool=halo_flashlight runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 tool=halo_flashlight outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=0fa186a6-b93c-477d-9c16-024c5a9c84b0 intent=FlashlightIntent tool=halo_flashlight totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=e4140721-d24e-4c8d-afcf-be7815234dad intent=RingerIntent capability=host.ringer.control tool=halo_ringer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=d870db32-16ed-494e-beb2-feda0c1e775b requestId=d870db32-16ed-494e-beb2-feda0c1e775b tool=halo_ringer digest=40109d56f5a9
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=d870db32-16ed-494e-beb2-feda0c1e775b interactionId=e4140721-d24e-4c8d-afcf-be7815234dad tool=halo_ringer digest=40109d56f5a9
+[HALO_TOOL_AUTHORIZATION] run=d870db32-16ed-494e-beb2-feda0c1e775b requestId=d870db32-16ed-494e-beb2-feda0c1e775b tool=halo_ringer toolCallId=ba95fa7d-a816-409c-b203-c58d63126be0
+[HALO_TOOL_EXECUTION_START] run=d870db32-16ed-494e-beb2-feda0c1e775b interactionId=e4140721-d24e-4c8d-afcf-be7815234dad requestId=d870db32-16ed-494e-beb2-feda0c1e775b tool=halo_ringer toolCallId=ba95fa7d-a816-409c-b203-c58d63126be0
+[HALO_TOOL_EXECUTION_RESULT] run=d870db32-16ed-494e-beb2-feda0c1e775b interactionId=e4140721-d24e-4c8d-afcf-be7815234dad requestId=d870db32-16ed-494e-beb2-feda0c1e775b tool=halo_ringer actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=e4140721-d24e-4c8d-afcf-be7815234dad run=d870db32-16ed-494e-beb2-feda0c1e775b tool=halo_ringer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=e4140721-d24e-4c8d-afcf-be7815234dad tool=halo_ringer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=e4140721-d24e-4c8d-afcf-be7815234dad intent=RingerIntent tool=halo_ringer totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d intent=BrightnessIntent capability=host.screen.brightness tool=halo_brightness reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=149179b9-b280-40ad-a773-26c5e107ab2d requestId=149179b9-b280-40ad-a773-26c5e107ab2d tool=halo_brightness digest=0436f38df35b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=149179b9-b280-40ad-a773-26c5e107ab2d interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d tool=halo_brightness digest=0436f38df35b
+[HALO_TOOL_AUTHORIZATION] run=149179b9-b280-40ad-a773-26c5e107ab2d requestId=149179b9-b280-40ad-a773-26c5e107ab2d tool=halo_brightness toolCallId=274cf496-ac74-4d65-b65b-160084039e3f
+[HALO_TOOL_EXECUTION_START] run=149179b9-b280-40ad-a773-26c5e107ab2d interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d requestId=149179b9-b280-40ad-a773-26c5e107ab2d tool=halo_brightness toolCallId=274cf496-ac74-4d65-b65b-160084039e3f
+[HALO_TOOL_EXECUTION_RESULT] run=149179b9-b280-40ad-a773-26c5e107ab2d interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d requestId=149179b9-b280-40ad-a773-26c5e107ab2d tool=halo_brightness actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d run=149179b9-b280-40ad-a773-26c5e107ab2d tool=halo_brightness runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d tool=halo_brightness outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=d53fddb4-cc86-4078-a4ac-b99dd844a17d intent=BrightnessIntent tool=halo_brightness totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=afd46328-b78a-4343-bbc5-d690c55e969d intent=OpenSettingsIntent capability=host.settings.open tool=halo_open_settings reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=39f1f0e5-dc80-4275-862e-93ede947195f requestId=39f1f0e5-dc80-4275-862e-93ede947195f tool=halo_open_settings digest=734c77ad5936
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=39f1f0e5-dc80-4275-862e-93ede947195f interactionId=afd46328-b78a-4343-bbc5-d690c55e969d tool=halo_open_settings digest=734c77ad5936
+[HALO_TOOL_AUTHORIZATION] run=39f1f0e5-dc80-4275-862e-93ede947195f requestId=39f1f0e5-dc80-4275-862e-93ede947195f tool=halo_open_settings toolCallId=52af55cf-13a9-47b7-b54a-2ccf557c2545
+[HALO_TOOL_EXECUTION_START] run=39f1f0e5-dc80-4275-862e-93ede947195f interactionId=afd46328-b78a-4343-bbc5-d690c55e969d requestId=39f1f0e5-dc80-4275-862e-93ede947195f tool=halo_open_settings toolCallId=52af55cf-13a9-47b7-b54a-2ccf557c2545
+[HALO_TOOL_EXECUTION_RESULT] run=39f1f0e5-dc80-4275-862e-93ede947195f interactionId=afd46328-b78a-4343-bbc5-d690c55e969d requestId=39f1f0e5-dc80-4275-862e-93ede947195f tool=halo_open_settings actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=afd46328-b78a-4343-bbc5-d690c55e969d run=39f1f0e5-dc80-4275-862e-93ede947195f tool=halo_open_settings runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=afd46328-b78a-4343-bbc5-d690c55e969d tool=halo_open_settings outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=afd46328-b78a-4343-bbc5-d690c55e969d intent=OpenSettingsIntent tool=halo_open_settings totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=cf610479-580e-4947-8c8c-629c0f113135 intent=ShareIntent capability=host.sharing.share tool=halo_share_text reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=53232a1b-4bbb-4ed7-a547-d96536cb373d requestId=53232a1b-4bbb-4ed7-a547-d96536cb373d tool=halo_share_text digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=53232a1b-4bbb-4ed7-a547-d96536cb373d requestId=53232a1b-4bbb-4ed7-a547-d96536cb373d tool=halo_share_text toolCallId=0dff94af-6fea-4d84-950d-c87559f8c7fd
+[HALO_TOOL_EXECUTION_START] run=53232a1b-4bbb-4ed7-a547-d96536cb373d interactionId=cf610479-580e-4947-8c8c-629c0f113135 requestId=53232a1b-4bbb-4ed7-a547-d96536cb373d tool=halo_share_text toolCallId=0dff94af-6fea-4d84-950d-c87559f8c7fd
+[HALO_TOOL_EXECUTION_RESULT] run=53232a1b-4bbb-4ed7-a547-d96536cb373d interactionId=cf610479-580e-4947-8c8c-629c0f113135 requestId=53232a1b-4bbb-4ed7-a547-d96536cb373d tool=halo_share_text actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=cf610479-580e-4947-8c8c-629c0f113135 run=53232a1b-4bbb-4ed7-a547-d96536cb373d tool=halo_share_text runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=cf610479-580e-4947-8c8c-629c0f113135 tool=halo_share_text outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=cf610479-580e-4947-8c8c-629c0f113135 intent=ShareIntent tool=halo_share_text totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=f0096288-2eb2-4244-bbc0-6a92d99e916b intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 requestId=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 tool=halo_clipboard_read digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 requestId=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 tool=halo_clipboard_read toolCallId=ec21f617-9649-411f-b9ec-db2c238d591b
+[HALO_TOOL_EXECUTION_START] run=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 interactionId=f0096288-2eb2-4244-bbc0-6a92d99e916b requestId=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 tool=halo_clipboard_read toolCallId=ec21f617-9649-411f-b9ec-db2c238d591b
+[HALO_TOOL_EXECUTION_RESULT] run=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 interactionId=f0096288-2eb2-4244-bbc0-6a92d99e916b requestId=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 tool=halo_clipboard_read actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=f0096288-2eb2-4244-bbc0-6a92d99e916b run=284c1dd9-d9db-43ff-9de0-e1f19964fbc7 tool=halo_clipboard_read runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=f0096288-2eb2-4244-bbc0-6a92d99e916b tool=halo_clipboard_read outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=f0096288-2eb2-4244-bbc0-6a92d99e916b intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=489f9d0f-51c4-406e-b81a-d4e9e167f532 intent=ClipboardWriteIntent capability=host.clipboard.write tool=halo_clipboard_write reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=333d6e53-6614-42cb-8902-5816038df8cd requestId=333d6e53-6614-42cb-8902-5816038df8cd tool=halo_clipboard_write digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=333d6e53-6614-42cb-8902-5816038df8cd requestId=333d6e53-6614-42cb-8902-5816038df8cd tool=halo_clipboard_write toolCallId=0ae0034e-e438-4af5-abf3-08d19765e45c
+[HALO_TOOL_EXECUTION_START] run=333d6e53-6614-42cb-8902-5816038df8cd interactionId=489f9d0f-51c4-406e-b81a-d4e9e167f532 requestId=333d6e53-6614-42cb-8902-5816038df8cd tool=halo_clipboard_write toolCallId=0ae0034e-e438-4af5-abf3-08d19765e45c
+[HALO_TOOL_EXECUTION_RESULT] run=333d6e53-6614-42cb-8902-5816038df8cd interactionId=489f9d0f-51c4-406e-b81a-d4e9e167f532 requestId=333d6e53-6614-42cb-8902-5816038df8cd tool=halo_clipboard_write actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=489f9d0f-51c4-406e-b81a-d4e9e167f532 run=333d6e53-6614-42cb-8902-5816038df8cd tool=halo_clipboard_write runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=489f9d0f-51c4-406e-b81a-d4e9e167f532 tool=halo_clipboard_write outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=489f9d0f-51c4-406e-b81a-d4e9e167f532 intent=ClipboardWriteIntent tool=halo_clipboard_write totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 intent=BatteryStatusIntent capability=host.battery.read tool=halo_battery_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 requestId=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 tool=halo_battery_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 tool=halo_battery_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 requestId=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 tool=halo_battery_status toolCallId=a0fbd7c4-a50a-4b73-82ce-2350e18e929f
+[HALO_TOOL_EXECUTION_START] run=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 requestId=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 tool=halo_battery_status toolCallId=a0fbd7c4-a50a-4b73-82ce-2350e18e929f
+[HALO_TOOL_EXECUTION_RESULT] run=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 requestId=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 tool=halo_battery_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 run=40a33af7-123d-44fe-a961-5d4cfd6f1ba6 tool=halo_battery_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 tool=halo_battery_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=b6115bec-18eb-445a-8043-ffb3abf8cd46 intent=BatteryStatusIntent tool=halo_battery_status totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd intent=NetworkStatusIntent capability=host.network.read tool=halo_network_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=52a9441f-0f8b-45fb-85ff-3eeac663323c requestId=52a9441f-0f8b-45fb-85ff-3eeac663323c tool=halo_network_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=52a9441f-0f8b-45fb-85ff-3eeac663323c interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd tool=halo_network_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=52a9441f-0f8b-45fb-85ff-3eeac663323c requestId=52a9441f-0f8b-45fb-85ff-3eeac663323c tool=halo_network_status toolCallId=87cacb65-41a4-4840-b0c1-155f54a3ef64
+[HALO_TOOL_EXECUTION_START] run=52a9441f-0f8b-45fb-85ff-3eeac663323c interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd requestId=52a9441f-0f8b-45fb-85ff-3eeac663323c tool=halo_network_status toolCallId=87cacb65-41a4-4840-b0c1-155f54a3ef64
+[HALO_TOOL_EXECUTION_RESULT] run=52a9441f-0f8b-45fb-85ff-3eeac663323c interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd requestId=52a9441f-0f8b-45fb-85ff-3eeac663323c tool=halo_network_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd run=52a9441f-0f8b-45fb-85ff-3eeac663323c tool=halo_network_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd tool=halo_network_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=cccc9671-d375-4c23-8caa-8aba5f8affbd intent=NetworkStatusIntent tool=halo_network_status totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=c889ee95-41c5-49de-80bc-222487f39a07 intent=DeviceInfoIntent capability=host.device.inspect tool=halo_device_info reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 requestId=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 tool=halo_device_info digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 interactionId=c889ee95-41c5-49de-80bc-222487f39a07 tool=halo_device_info digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 requestId=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 tool=halo_device_info toolCallId=920efbe5-baf8-43c8-b0aa-6f5e964c777c
+[HALO_TOOL_EXECUTION_START] run=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 interactionId=c889ee95-41c5-49de-80bc-222487f39a07 requestId=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 tool=halo_device_info toolCallId=920efbe5-baf8-43c8-b0aa-6f5e964c777c
+[HALO_TOOL_EXECUTION_RESULT] run=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 interactionId=c889ee95-41c5-49de-80bc-222487f39a07 requestId=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 tool=halo_device_info actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=c889ee95-41c5-49de-80bc-222487f39a07 run=9a01f25e-fe39-4bbf-ad7a-cbb6d3a5c127 tool=halo_device_info runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=c889ee95-41c5-49de-80bc-222487f39a07 tool=halo_device_info outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=c889ee95-41c5-49de-80bc-222487f39a07 intent=DeviceInfoIntent tool=halo_device_info totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 intent=TimerIntent capability=host.timer.set tool=halo_timer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=b5cf3950-e053-47a6-9f85-ab1c36499196 requestId=b5cf3950-e053-47a6-9f85-ab1c36499196 tool=halo_timer digest=c40f8c2e3b82
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=b5cf3950-e053-47a6-9f85-ab1c36499196 interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 tool=halo_timer digest=c40f8c2e3b82
+[HALO_TOOL_AUTHORIZATION] run=b5cf3950-e053-47a6-9f85-ab1c36499196 requestId=b5cf3950-e053-47a6-9f85-ab1c36499196 tool=halo_timer toolCallId=24898d9e-1eb7-4665-8354-987240ac9663
+[HALO_TOOL_EXECUTION_START] run=b5cf3950-e053-47a6-9f85-ab1c36499196 interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 requestId=b5cf3950-e053-47a6-9f85-ab1c36499196 tool=halo_timer toolCallId=24898d9e-1eb7-4665-8354-987240ac9663
+[HALO_TOOL_EXECUTION_RESULT] run=b5cf3950-e053-47a6-9f85-ab1c36499196 interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 requestId=b5cf3950-e053-47a6-9f85-ab1c36499196 tool=halo_timer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 run=b5cf3950-e053-47a6-9f85-ab1c36499196 tool=halo_timer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 tool=halo_timer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=a11b6d19-a119-4e8b-bb0c-c64023112c85 intent=TimerIntent tool=halo_timer totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=f0c34923-329f-4aa3-a7e9-a42c19cd4c14 intent=NativeClockIntent capability=host.clock.view tool=halo_clock_view reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=ab1039bf-fede-4379-bdd0-2a87470f4643 requestId=ab1039bf-fede-4379-bdd0-2a87470f4643 tool=halo_clock_view digest=026ea37c8f81
+[HALO_TOOL_AUTHORIZATION] run=ab1039bf-fede-4379-bdd0-2a87470f4643 requestId=ab1039bf-fede-4379-bdd0-2a87470f4643 tool=halo_clock_view toolCallId=06ecb98d-df77-405a-b551-1de086a4045b
+[HALO_TOOL_EXECUTION_START] run=ab1039bf-fede-4379-bdd0-2a87470f4643 interactionId=f0c34923-329f-4aa3-a7e9-a42c19cd4c14 requestId=ab1039bf-fede-4379-bdd0-2a87470f4643 tool=halo_clock_view toolCallId=06ecb98d-df77-405a-b551-1de086a4045b
+[HALO_TOOL_EXECUTION_RESULT] run=ab1039bf-fede-4379-bdd0-2a87470f4643 interactionId=f0c34923-329f-4aa3-a7e9-a42c19cd4c14 requestId=ab1039bf-fede-4379-bdd0-2a87470f4643 tool=halo_clock_view actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=f0c34923-329f-4aa3-a7e9-a42c19cd4c14 run=ab1039bf-fede-4379-bdd0-2a87470f4643 tool=halo_clock_view runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=f0c34923-329f-4aa3-a7e9-a42c19cd4c14 tool=halo_clock_view outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=f0c34923-329f-4aa3-a7e9-a42c19cd4c14 intent=NativeClockIntent tool=halo_clock_view totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=cac5b918-f501-4c8c-a638-00fe7e42ede2 intent=NativeClockIntent capability=host.clock.modify tool=halo_clock_modify reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=5fc17fd4-9f1f-491b-9237-2e1443c59983 requestId=5fc17fd4-9f1f-491b-9237-2e1443c59983 tool=halo_clock_modify digest=b5a78d65c89c
+[HALO_TOOL_AUTHORIZATION] run=5fc17fd4-9f1f-491b-9237-2e1443c59983 requestId=5fc17fd4-9f1f-491b-9237-2e1443c59983 tool=halo_clock_modify toolCallId=9a8f6746-9647-4505-b4ad-c5df637ed49f
+[HALO_TOOL_EXECUTION_START] run=5fc17fd4-9f1f-491b-9237-2e1443c59983 interactionId=cac5b918-f501-4c8c-a638-00fe7e42ede2 requestId=5fc17fd4-9f1f-491b-9237-2e1443c59983 tool=halo_clock_modify toolCallId=9a8f6746-9647-4505-b4ad-c5df637ed49f
+[HALO_TOOL_EXECUTION_RESULT] run=5fc17fd4-9f1f-491b-9237-2e1443c59983 interactionId=cac5b918-f501-4c8c-a638-00fe7e42ede2 requestId=5fc17fd4-9f1f-491b-9237-2e1443c59983 tool=halo_clock_modify actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=cac5b918-f501-4c8c-a638-00fe7e42ede2 run=5fc17fd4-9f1f-491b-9237-2e1443c59983 tool=halo_clock_modify runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=cac5b918-f501-4c8c-a638-00fe7e42ede2 tool=halo_clock_modify outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=cac5b918-f501-4c8c-a638-00fe7e42ede2 intent=NativeClockIntent tool=halo_clock_modify totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=f59e4084-c503-4568-a732-9355d12345d5 intent=NativeContactEditorIntent capability=host.contacts.editor tool=halo_contact_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c requestId=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c tool=halo_contact_editor digest=d96f8a7ff533
+[HALO_TOOL_AUTHORIZATION] run=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c requestId=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c tool=halo_contact_editor toolCallId=cb65b382-d8df-491f-85d5-48902410ec28
+[HALO_TOOL_EXECUTION_START] run=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c interactionId=f59e4084-c503-4568-a732-9355d12345d5 requestId=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c tool=halo_contact_editor toolCallId=cb65b382-d8df-491f-85d5-48902410ec28
+[HALO_TOOL_EXECUTION_RESULT] run=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c interactionId=f59e4084-c503-4568-a732-9355d12345d5 requestId=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c tool=halo_contact_editor actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=f59e4084-c503-4568-a732-9355d12345d5 run=9d2db52b-532a-4fb4-a9ee-03a0966f2b6c tool=halo_contact_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=f59e4084-c503-4568-a732-9355d12345d5 tool=halo_contact_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=f59e4084-c503-4568-a732-9355d12345d5 intent=NativeContactEditorIntent tool=halo_contact_editor totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=80c5dec8-7cac-4d48-8e8f-95a579881e0d intent=NativeCalendarEditorIntent capability=host.calendar.editor tool=halo_calendar_editor reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 requestId=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 tool=halo_calendar_editor digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 requestId=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 tool=halo_calendar_editor toolCallId=2259c6cc-14c5-49c8-92b3-5efb37fee3be
+[HALO_TOOL_EXECUTION_START] run=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 interactionId=80c5dec8-7cac-4d48-8e8f-95a579881e0d requestId=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 tool=halo_calendar_editor toolCallId=2259c6cc-14c5-49c8-92b3-5efb37fee3be
+[HALO_TOOL_EXECUTION_RESULT] run=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 interactionId=80c5dec8-7cac-4d48-8e8f-95a579881e0d requestId=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 tool=halo_calendar_editor actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=80c5dec8-7cac-4d48-8e8f-95a579881e0d run=edfc8bf5-dfee-4f33-92c8-23f05f21ae33 tool=halo_calendar_editor runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=80c5dec8-7cac-4d48-8e8f-95a579881e0d tool=halo_calendar_editor outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=80c5dec8-7cac-4d48-8e8f-95a579881e0d intent=NativeCalendarEditorIntent tool=halo_calendar_editor totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=e215014d-edad-402e-9c32-37d12be83b07 intent=NativeHaloScreenIntent capability=host.assistant.screen tool=halo_open_screen reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=29f55af7-bc5a-434d-8df4-9dce925cf6bd requestId=29f55af7-bc5a-434d-8df4-9dce925cf6bd tool=halo_open_screen digest=fd5cd525d132
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=29f55af7-bc5a-434d-8df4-9dce925cf6bd interactionId=e215014d-edad-402e-9c32-37d12be83b07 tool=halo_open_screen digest=fd5cd525d132
+[HALO_TOOL_AUTHORIZATION] run=29f55af7-bc5a-434d-8df4-9dce925cf6bd requestId=29f55af7-bc5a-434d-8df4-9dce925cf6bd tool=halo_open_screen toolCallId=70b10302-1773-408e-a6ee-3156766f99c0
+[HALO_TOOL_EXECUTION_START] run=29f55af7-bc5a-434d-8df4-9dce925cf6bd interactionId=e215014d-edad-402e-9c32-37d12be83b07 requestId=29f55af7-bc5a-434d-8df4-9dce925cf6bd tool=halo_open_screen toolCallId=70b10302-1773-408e-a6ee-3156766f99c0
+[HALO_TOOL_EXECUTION_RESULT] run=29f55af7-bc5a-434d-8df4-9dce925cf6bd interactionId=e215014d-edad-402e-9c32-37d12be83b07 requestId=29f55af7-bc5a-434d-8df4-9dce925cf6bd tool=halo_open_screen actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=e215014d-edad-402e-9c32-37d12be83b07 run=29f55af7-bc5a-434d-8df4-9dce925cf6bd tool=halo_open_screen runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=e215014d-edad-402e-9c32-37d12be83b07 tool=halo_open_screen outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=e215014d-edad-402e-9c32-37d12be83b07 intent=NativeHaloScreenIntent tool=halo_open_screen totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 intent=OpenIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=3961c1d2-f039-4233-9cf8-42cbbad6ceee requestId=3961c1d2-f039-4233-9cf8-42cbbad6ceee tool=halo_open_app digest=74bf6055505c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=3961c1d2-f039-4233-9cf8-42cbbad6ceee interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 tool=halo_open_app digest=74bf6055505c
+[HALO_TOOL_AUTHORIZATION] run=3961c1d2-f039-4233-9cf8-42cbbad6ceee requestId=3961c1d2-f039-4233-9cf8-42cbbad6ceee tool=halo_open_app toolCallId=4a57f335-c029-4ed0-8ad7-12c572b36cb4
+[HALO_TOOL_EXECUTION_START] run=3961c1d2-f039-4233-9cf8-42cbbad6ceee interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 requestId=3961c1d2-f039-4233-9cf8-42cbbad6ceee tool=halo_open_app toolCallId=4a57f335-c029-4ed0-8ad7-12c572b36cb4
+[HALO_TOOL_EXECUTION_RESULT] run=3961c1d2-f039-4233-9cf8-42cbbad6ceee interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 requestId=3961c1d2-f039-4233-9cf8-42cbbad6ceee tool=halo_open_app actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 run=3961c1d2-f039-4233-9cf8-42cbbad6ceee tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=709e16c5-bde6-42d1-b5f3-9906d3dca7e4 intent=OpenIntent tool=halo_open_app totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 requestId=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 tool=halo_volume digest=4185b01985a6
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 tool=halo_volume digest=4185b01985a6
+[HALO_TOOL_AUTHORIZATION] run=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 requestId=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 tool=halo_volume toolCallId=5a7adb1d-aedb-4e59-b426-45aeb04b78ee
+[HALO_TOOL_EXECUTION_START] run=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 requestId=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 tool=halo_volume toolCallId=5a7adb1d-aedb-4e59-b426-45aeb04b78ee
+[HALO_TOOL_EXECUTION_RESULT] run=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 requestId=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 tool=halo_volume actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 run=85eb1dc7-dc5a-4da8-b2d2-16ddb29eab69 tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=f12ccf08-56cc-4242-80e6-c6703f6854f8 intent=VolumeIntent tool=halo_volume totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 intent=FlashlightIntent capability=host.flashlight.control tool=halo_flashlight reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=5caa579d-e444-4ee8-9872-3fff078e09ae requestId=5caa579d-e444-4ee8-9872-3fff078e09ae tool=halo_flashlight digest=76f241646b0c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=5caa579d-e444-4ee8-9872-3fff078e09ae interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 tool=halo_flashlight digest=76f241646b0c
+[HALO_TOOL_AUTHORIZATION] run=5caa579d-e444-4ee8-9872-3fff078e09ae requestId=5caa579d-e444-4ee8-9872-3fff078e09ae tool=halo_flashlight toolCallId=bbde0df3-37af-4cad-a1a9-bd9df07e54de
+[HALO_TOOL_EXECUTION_START] run=5caa579d-e444-4ee8-9872-3fff078e09ae interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 requestId=5caa579d-e444-4ee8-9872-3fff078e09ae tool=halo_flashlight toolCallId=bbde0df3-37af-4cad-a1a9-bd9df07e54de
+[HALO_TOOL_EXECUTION_RESULT] run=5caa579d-e444-4ee8-9872-3fff078e09ae interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 requestId=5caa579d-e444-4ee8-9872-3fff078e09ae tool=halo_flashlight actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 run=5caa579d-e444-4ee8-9872-3fff078e09ae tool=halo_flashlight runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 tool=halo_flashlight outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=202b1832-339f-42ce-bbd5-0fffdb5668a4 intent=FlashlightIntent tool=halo_flashlight totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 intent=RingerIntent capability=host.ringer.control tool=halo_ringer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 requestId=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 tool=halo_ringer digest=40109d56f5a9
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 tool=halo_ringer digest=40109d56f5a9
+[HALO_TOOL_AUTHORIZATION] run=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 requestId=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 tool=halo_ringer toolCallId=2f22f5c9-b0ad-411b-bd8f-445ec4f1c37f
+[HALO_TOOL_EXECUTION_START] run=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 requestId=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 tool=halo_ringer toolCallId=2f22f5c9-b0ad-411b-bd8f-445ec4f1c37f
+[HALO_TOOL_EXECUTION_RESULT] run=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 requestId=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 tool=halo_ringer actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 run=eaa0608e-3ff0-40c3-9825-81cb4d24cff8 tool=halo_ringer runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 tool=halo_ringer outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=41ad1b83-31b3-49b2-ab77-15eb5823d772 intent=RingerIntent tool=halo_ringer totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 intent=BrightnessIntent capability=host.screen.brightness tool=halo_brightness reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=7cadb82f-e370-4b75-913d-b966671dbdd3 requestId=7cadb82f-e370-4b75-913d-b966671dbdd3 tool=halo_brightness digest=0436f38df35b
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=7cadb82f-e370-4b75-913d-b966671dbdd3 interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 tool=halo_brightness digest=0436f38df35b
+[HALO_TOOL_AUTHORIZATION] run=7cadb82f-e370-4b75-913d-b966671dbdd3 requestId=7cadb82f-e370-4b75-913d-b966671dbdd3 tool=halo_brightness toolCallId=9999c3d1-ede7-4720-988b-fa85edd0ac06
+[HALO_TOOL_EXECUTION_START] run=7cadb82f-e370-4b75-913d-b966671dbdd3 interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 requestId=7cadb82f-e370-4b75-913d-b966671dbdd3 tool=halo_brightness toolCallId=9999c3d1-ede7-4720-988b-fa85edd0ac06
+[HALO_TOOL_EXECUTION_RESULT] run=7cadb82f-e370-4b75-913d-b966671dbdd3 interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 requestId=7cadb82f-e370-4b75-913d-b966671dbdd3 tool=halo_brightness actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 run=7cadb82f-e370-4b75-913d-b966671dbdd3 tool=halo_brightness runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 tool=halo_brightness outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=56b02f4e-674b-4a17-aeb5-44230e2b5724 intent=BrightnessIntent tool=halo_brightness totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 intent=OpenSettingsIntent capability=host.settings.open tool=halo_open_settings reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=03027727-70ba-430e-ae61-e531bf4a85ae requestId=03027727-70ba-430e-ae61-e531bf4a85ae tool=halo_open_settings digest=734c77ad5936
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=03027727-70ba-430e-ae61-e531bf4a85ae interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 tool=halo_open_settings digest=734c77ad5936
+[HALO_TOOL_AUTHORIZATION] run=03027727-70ba-430e-ae61-e531bf4a85ae requestId=03027727-70ba-430e-ae61-e531bf4a85ae tool=halo_open_settings toolCallId=a2bbbe16-4d24-4480-a581-a715a5e80b41
+[HALO_TOOL_EXECUTION_START] run=03027727-70ba-430e-ae61-e531bf4a85ae interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 requestId=03027727-70ba-430e-ae61-e531bf4a85ae tool=halo_open_settings toolCallId=a2bbbe16-4d24-4480-a581-a715a5e80b41
+[HALO_TOOL_EXECUTION_RESULT] run=03027727-70ba-430e-ae61-e531bf4a85ae interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 requestId=03027727-70ba-430e-ae61-e531bf4a85ae tool=halo_open_settings actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 run=03027727-70ba-430e-ae61-e531bf4a85ae tool=halo_open_settings runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 tool=halo_open_settings outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=3b71a704-fe4c-4dd6-8520-36dd0433ebe9 intent=OpenSettingsIntent tool=halo_open_settings totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=90af6a52-1703-41b6-8c2e-f02fa9b871f4 intent=ShareIntent capability=host.sharing.share tool=halo_share_text reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=55117f27-71d3-40f5-a6b3-d1c734f326a9 requestId=55117f27-71d3-40f5-a6b3-d1c734f326a9 tool=halo_share_text digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=55117f27-71d3-40f5-a6b3-d1c734f326a9 requestId=55117f27-71d3-40f5-a6b3-d1c734f326a9 tool=halo_share_text toolCallId=fa41bb74-6b9d-4e6f-a90b-4f2eb0efffe0
+[HALO_TOOL_EXECUTION_START] run=55117f27-71d3-40f5-a6b3-d1c734f326a9 interactionId=90af6a52-1703-41b6-8c2e-f02fa9b871f4 requestId=55117f27-71d3-40f5-a6b3-d1c734f326a9 tool=halo_share_text toolCallId=fa41bb74-6b9d-4e6f-a90b-4f2eb0efffe0
+[HALO_TOOL_EXECUTION_RESULT] run=55117f27-71d3-40f5-a6b3-d1c734f326a9 interactionId=90af6a52-1703-41b6-8c2e-f02fa9b871f4 requestId=55117f27-71d3-40f5-a6b3-d1c734f326a9 tool=halo_share_text actionTruth=DISPATCHED durationMs=2
+HALO_NATIVE_ACTION_TRUTH interactionId=90af6a52-1703-41b6-8c2e-f02fa9b871f4 run=55117f27-71d3-40f5-a6b3-d1c734f326a9 tool=halo_share_text runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=90af6a52-1703-41b6-8c2e-f02fa9b871f4 tool=halo_share_text outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=90af6a52-1703-41b6-8c2e-f02fa9b871f4 intent=ShareIntent tool=halo_share_text totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=73abe751-57da-43c7-8ef9-e0bc83f78ee1 intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 requestId=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 tool=halo_clipboard_read digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 requestId=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 tool=halo_clipboard_read toolCallId=975b6eac-5dcd-4726-a7ad-1d57ac001c97
+[HALO_TOOL_EXECUTION_START] run=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 interactionId=73abe751-57da-43c7-8ef9-e0bc83f78ee1 requestId=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 tool=halo_clipboard_read toolCallId=975b6eac-5dcd-4726-a7ad-1d57ac001c97
+[HALO_TOOL_EXECUTION_RESULT] run=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 interactionId=73abe751-57da-43c7-8ef9-e0bc83f78ee1 requestId=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 tool=halo_clipboard_read actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=73abe751-57da-43c7-8ef9-e0bc83f78ee1 run=cd9ed46e-19d4-4151-bf2e-bc212e1136a0 tool=halo_clipboard_read runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=73abe751-57da-43c7-8ef9-e0bc83f78ee1 tool=halo_clipboard_read outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=73abe751-57da-43c7-8ef9-e0bc83f78ee1 intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=6539ea32-6ac4-4a61-a159-131b0fa6419a intent=ClipboardWriteIntent capability=host.clipboard.write tool=halo_clipboard_write reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=b9327027-09a2-428c-81b9-b7a34813d9b0 requestId=b9327027-09a2-428c-81b9-b7a34813d9b0 tool=halo_clipboard_write digest=cbbbdcd27692
+[HALO_TOOL_AUTHORIZATION] run=b9327027-09a2-428c-81b9-b7a34813d9b0 requestId=b9327027-09a2-428c-81b9-b7a34813d9b0 tool=halo_clipboard_write toolCallId=ad4e9003-e05c-423f-ae6d-b7dbb7ad9713
+[HALO_TOOL_EXECUTION_START] run=b9327027-09a2-428c-81b9-b7a34813d9b0 interactionId=6539ea32-6ac4-4a61-a159-131b0fa6419a requestId=b9327027-09a2-428c-81b9-b7a34813d9b0 tool=halo_clipboard_write toolCallId=ad4e9003-e05c-423f-ae6d-b7dbb7ad9713
+[HALO_TOOL_EXECUTION_RESULT] run=b9327027-09a2-428c-81b9-b7a34813d9b0 interactionId=6539ea32-6ac4-4a61-a159-131b0fa6419a requestId=b9327027-09a2-428c-81b9-b7a34813d9b0 tool=halo_clipboard_write actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=6539ea32-6ac4-4a61-a159-131b0fa6419a run=b9327027-09a2-428c-81b9-b7a34813d9b0 tool=halo_clipboard_write runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=6539ea32-6ac4-4a61-a159-131b0fa6419a tool=halo_clipboard_write outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=6539ea32-6ac4-4a61-a159-131b0fa6419a intent=ClipboardWriteIntent tool=halo_clipboard_write totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b intent=BatteryStatusIntent capability=host.battery.read tool=halo_battery_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc requestId=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc tool=halo_battery_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b tool=halo_battery_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc requestId=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc tool=halo_battery_status toolCallId=b9f667c6-dba8-4eac-8e05-da6d355fe1b7
+[HALO_TOOL_EXECUTION_START] run=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b requestId=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc tool=halo_battery_status toolCallId=b9f667c6-dba8-4eac-8e05-da6d355fe1b7
+[HALO_TOOL_EXECUTION_RESULT] run=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b requestId=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc tool=halo_battery_status actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b run=0e681427-2bca-4b9b-8ed0-ef28ed72a6cc tool=halo_battery_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b tool=halo_battery_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=8c7a4492-e822-4a43-9101-d2d9ca12b63b intent=BatteryStatusIntent tool=halo_battery_status totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 intent=NetworkStatusIntent capability=host.network.read tool=halo_network_status reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=08ce6c1b-f6a4-4297-8cac-777606337238 requestId=08ce6c1b-f6a4-4297-8cac-777606337238 tool=halo_network_status digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=08ce6c1b-f6a4-4297-8cac-777606337238 interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 tool=halo_network_status digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=08ce6c1b-f6a4-4297-8cac-777606337238 requestId=08ce6c1b-f6a4-4297-8cac-777606337238 tool=halo_network_status toolCallId=b836e62f-0887-4c6c-a10a-524ecdc55be8
+[HALO_TOOL_EXECUTION_START] run=08ce6c1b-f6a4-4297-8cac-777606337238 interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 requestId=08ce6c1b-f6a4-4297-8cac-777606337238 tool=halo_network_status toolCallId=b836e62f-0887-4c6c-a10a-524ecdc55be8
+[HALO_TOOL_EXECUTION_RESULT] run=08ce6c1b-f6a4-4297-8cac-777606337238 interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 requestId=08ce6c1b-f6a4-4297-8cac-777606337238 tool=halo_network_status actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 run=08ce6c1b-f6a4-4297-8cac-777606337238 tool=halo_network_status runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 tool=halo_network_status outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=ce70e9b0-e41d-4168-95f3-9d40f4bb2800 intent=NetworkStatusIntent tool=halo_network_status totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 intent=DeviceInfoIntent capability=host.device.inspect tool=halo_device_info reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 requestId=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 tool=halo_device_info digest=44136fa355b3
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 tool=halo_device_info digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 requestId=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 tool=halo_device_info toolCallId=9f16f7a3-2f2d-4a54-8152-fc77142e5faf
+[HALO_TOOL_EXECUTION_START] run=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 requestId=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 tool=halo_device_info toolCallId=9f16f7a3-2f2d-4a54-8152-fc77142e5faf
+[HALO_TOOL_EXECUTION_RESULT] run=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 requestId=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 tool=halo_device_info actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 run=f7820e0d-9bb9-4e45-ba91-6c2214f2ba38 tool=halo_device_info runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 tool=halo_device_info outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=4edb4eda-4fc6-40ae-9783-57a39df91ce4 intent=DeviceInfoIntent tool=halo_device_info totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=wearable-capture intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=e0331889-ab03-4d21-860a-17e397452bdf requestId=e0331889-ab03-4d21-860a-17e397452bdf tool=halo_volume digest=c8fe3d07ba5e
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=e0331889-ab03-4d21-860a-17e397452bdf interactionId=wearable-capture tool=halo_volume digest=c8fe3d07ba5e
+[HALO_TOOL_AUTHORIZATION] run=e0331889-ab03-4d21-860a-17e397452bdf requestId=e0331889-ab03-4d21-860a-17e397452bdf tool=halo_volume toolCallId=28f47576-2fe6-44a7-8dc6-a72eabc722c7
+[HALO_TOOL_EXECUTION_START] run=e0331889-ab03-4d21-860a-17e397452bdf interactionId=wearable-capture requestId=e0331889-ab03-4d21-860a-17e397452bdf tool=halo_volume toolCallId=28f47576-2fe6-44a7-8dc6-a72eabc722c7
+[HALO_TOOL_EXECUTION_RESULT] run=e0331889-ab03-4d21-860a-17e397452bdf interactionId=wearable-capture requestId=e0331889-ab03-4d21-860a-17e397452bdf tool=halo_volume actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=wearable-capture run=e0331889-ab03-4d21-860a-17e397452bdf tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=wearable-capture tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=wearable-capture intent=VolumeIntent tool=halo_volume totalMs=2 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b intent=NativeOpenApplicationIntent capability=host.application.launch tool=halo_open_app reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=c11f0530-9975-4264-817f-1ba95209785b requestId=c11f0530-9975-4264-817f-1ba95209785b tool=halo_open_app digest=74bf6055505c
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=c11f0530-9975-4264-817f-1ba95209785b interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b tool=halo_open_app digest=74bf6055505c
+[HALO_TOOL_AUTHORIZATION] run=c11f0530-9975-4264-817f-1ba95209785b requestId=c11f0530-9975-4264-817f-1ba95209785b tool=halo_open_app toolCallId=c226ef55-e26d-45cd-b324-8b172217219a
+[HALO_TOOL_EXECUTION_START] run=c11f0530-9975-4264-817f-1ba95209785b interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b requestId=c11f0530-9975-4264-817f-1ba95209785b tool=halo_open_app toolCallId=c226ef55-e26d-45cd-b324-8b172217219a
+[HALO_TOOL_EXECUTION_RESULT] run=c11f0530-9975-4264-817f-1ba95209785b interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b requestId=c11f0530-9975-4264-817f-1ba95209785b tool=halo_open_app actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b run=c11f0530-9975-4264-817f-1ba95209785b tool=halo_open_app runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b tool=halo_open_app outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=77a3fb17-8796-4c04-97db-3c411ea7a45b intent=NativeOpenApplicationIntent tool=halo_open_app totalMs=3 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=56b46915-4443-43fb-a3c3-ec7a2657ba34 requestId=56b46915-4443-43fb-a3c3-ec7a2657ba34 tool=halo_volume digest=8d55f790fdd2
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=56b46915-4443-43fb-a3c3-ec7a2657ba34 interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed tool=halo_volume digest=8d55f790fdd2
+[HALO_TOOL_AUTHORIZATION] run=56b46915-4443-43fb-a3c3-ec7a2657ba34 requestId=56b46915-4443-43fb-a3c3-ec7a2657ba34 tool=halo_volume toolCallId=ca7c9511-d71c-417a-86db-86a0cf7ffcc7
+[HALO_TOOL_EXECUTION_START] run=56b46915-4443-43fb-a3c3-ec7a2657ba34 interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed requestId=56b46915-4443-43fb-a3c3-ec7a2657ba34 tool=halo_volume toolCallId=ca7c9511-d71c-417a-86db-86a0cf7ffcc7
+[HALO_TOOL_EXECUTION_RESULT] run=56b46915-4443-43fb-a3c3-ec7a2657ba34 interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed requestId=56b46915-4443-43fb-a3c3-ec7a2657ba34 tool=halo_volume actionTruth=DISPATCHED durationMs=0
+HALO_NATIVE_ACTION_TRUTH interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed run=56b46915-4443-43fb-a3c3-ec7a2657ba34 tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=c0307b30-59d1-4bdb-8120-1008ba3894ed intent=VolumeIntent tool=halo_volume totalMs=1 result=DISPATCHED
+[HALO_REFERENCE_RESOLVED] intent=VolumeIntent
+[HALO_NATIVE_ACTION_ROUTE] interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c intent=VolumeIntent capability=host.volume.control tool=halo_volume reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=b94e8080-4ff3-41af-8f0b-7d8e42c15756 requestId=b94e8080-4ff3-41af-8f0b-7d8e42c15756 tool=halo_volume digest=f1108461c686
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=b94e8080-4ff3-41af-8f0b-7d8e42c15756 interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c tool=halo_volume digest=f1108461c686
+[HALO_TOOL_AUTHORIZATION] run=b94e8080-4ff3-41af-8f0b-7d8e42c15756 requestId=b94e8080-4ff3-41af-8f0b-7d8e42c15756 tool=halo_volume toolCallId=2338d773-e392-4f4d-ad38-d6bbcff4855e
+[HALO_TOOL_EXECUTION_START] run=b94e8080-4ff3-41af-8f0b-7d8e42c15756 interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c requestId=b94e8080-4ff3-41af-8f0b-7d8e42c15756 tool=halo_volume toolCallId=2338d773-e392-4f4d-ad38-d6bbcff4855e
+[HALO_TOOL_EXECUTION_RESULT] run=b94e8080-4ff3-41af-8f0b-7d8e42c15756 interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c requestId=b94e8080-4ff3-41af-8f0b-7d8e42c15756 tool=halo_volume actionTruth=DISPATCHED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c run=b94e8080-4ff3-41af-8f0b-7d8e42c15756 tool=halo_volume runState=COMPLETED toolResult=true actionTruth=DISPATCHED resolvedOutcome=DISPATCHED
+[HALO_NATIVE_ACTION_RESULT] interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c tool=halo_volume outcome=DISPATCHED
+HALO_NATIVE_ACTION_TIMING interactionId=b14d6b4c-93f8-49d6-bd3d-d81ed3a5603c intent=VolumeIntent tool=halo_volume totalMs=1 result=DISPATCHED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=195ca9bc-e89f-45db-899a-718ce52b1742 intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+HALO_NATIVE_ACTION_TRUTH interactionId=195ca9bc-e89f-45db-899a-718ce52b1742 run=60719845-e6c8-4cba-8fe5-3c47f4b3c778 tool=halo_clipboard_read runState=FAILED toolResult=REJECTED actionTruth=NONE resolvedOutcome=REJECTED
+[HALO_NATIVE_ACTION_RESULT] interactionId=195ca9bc-e89f-45db-899a-718ce52b1742 tool=halo_clipboard_read outcome=REJECTED
+HALO_NATIVE_ACTION_TIMING interactionId=195ca9bc-e89f-45db-899a-718ce52b1742 intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=3 result=REJECTED
+[HALO_NATIVE_ACTION_ROUTE] interactionId=97bdcc0c-c16d-409d-9891-55575cf52705 intent=ClipboardReadIntent capability=host.clipboard.read tool=halo_clipboard_read reason=DETERMINISTIC
+HALO_NATIVE_ACTION_TRUTH interactionId=97bdcc0c-c16d-409d-9891-55575cf52705 run=26679824-374f-4648-9b4b-1aa51b45153f tool=halo_clipboard_read runState=FAILED toolResult=REJECTED actionTruth=NONE resolvedOutcome=REJECTED
+[HALO_NATIVE_ACTION_RESULT] interactionId=97bdcc0c-c16d-409d-9891-55575cf52705 tool=halo_clipboard_read outcome=REJECTED
+HALO_NATIVE_ACTION_TIMING interactionId=97bdcc0c-c16d-409d-9891-55575cf52705 intent=ClipboardReadIntent tool=halo_clipboard_read totalMs=1 result=REJECTED
+[HALO_INTENT_CLASSIFIED] knowledgeId=slow-native intent=TimerIntent confidence=1.0
+[HALO_EXECUTION_ROUTE] knowledgeId=slow-native intent=TimerIntent route=DeterministicAction executor=runtime.native_capability
+[HALO_CONVERSATION_ROUTE] intentType=TimerIntent confidence=1.0 route=DeterministicAction toolUseMode=HOST preferredRole=HOST
+[HALO_NATIVE_ACTION_ROUTE] interactionId=native-owned intent=TimerIntent capability=host.timer.set tool=halo_timer reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=f0d51c74-bcad-4948-bfce-8d6e82f93d56 requestId=f0d51c74-bcad-4948-bfce-8d6e82f93d56 tool=halo_timer digest=c40f8c2e3b82
+[HALO_DIRECT_COMMAND_AUTHORITY_USED] run=f0d51c74-bcad-4948-bfce-8d6e82f93d56 interactionId=native-owned tool=halo_timer digest=c40f8c2e3b82
+[HALO_TOOL_AUTHORIZATION] run=f0d51c74-bcad-4948-bfce-8d6e82f93d56 requestId=f0d51c74-bcad-4948-bfce-8d6e82f93d56 tool=halo_timer toolCallId=9c9f3baf-0483-427e-b308-7641ed204ab7
+[HALO_TOOL_EXECUTION_START] run=f0d51c74-bcad-4948-bfce-8d6e82f93d56 interactionId=native-owned requestId=f0d51c74-bcad-4948-bfce-8d6e82f93d56 tool=halo_timer toolCallId=9c9f3baf-0483-427e-b308-7641ed204ab7
+[HALO_TOOL_VALIDATED] run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 requestId=request tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_WAITING_INPUT] run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 interactionId=note-Approved requestId=request tool=halo_create_empty_note toolCallId=note-call
+[HALO_NATIVE_ACTION_ROUTE] interactionId=note-Approved intent=NativeResume capability=host.native tool=halo_create_empty_note reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 requestId=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_AUTHORIZATION] run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 requestId=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 tool=halo_create_empty_note toolCallId=note-call
+[HALO_TOOL_EXECUTION_START] run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 interactionId=note-Approved requestId=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 tool=halo_create_empty_note toolCallId=note-call
+[HALO_TOOL_EXECUTION_RESULT] run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 interactionId=note-Approved requestId=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 tool=halo_create_empty_note actionTruth=CONFIRMED durationMs=1
+HALO_NATIVE_ACTION_TRUTH interactionId=note-Approved run=65cb18a2-29ea-45dc-a2d6-3e38acfe6f77 tool=halo_create_empty_note runState=COMPLETED toolResult=true actionTruth=CONFIRMED resolvedOutcome=CONFIRMED
+[HALO_NATIVE_ACTION_RESULT] interactionId=note-Approved tool=halo_create_empty_note outcome=CONFIRMED
+[HALO_TOOL_VALIDATED] run=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 requestId=request tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_WAITING_INPUT] run=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 interactionId=note-Denied requestId=request tool=halo_create_empty_note toolCallId=note-call
+[HALO_NATIVE_ACTION_ROUTE] interactionId=note-Denied intent=NativeResume capability=host.native tool=halo_create_empty_note reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 requestId=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_REJECTED] run=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 interactionId=note-Denied requestId=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 tool=halo_create_empty_note reasonCode=USER_REJECTED reason=user_rejected
+HALO_NATIVE_ACTION_TRUTH interactionId=note-Denied run=aff2dc51-7b9b-4b76-88fb-bbf30040dce2 tool=halo_create_empty_note runState=FAILED toolResult=REJECTED actionTruth=NONE resolvedOutcome=REJECTED
+[HALO_NATIVE_ACTION_RESULT] interactionId=note-Denied tool=halo_create_empty_note outcome=REJECTED
+[HALO_TOOL_VALIDATED] run=446a7965-bb43-48e8-bd78-fedf36eff74a requestId=request tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_WAITING_INPUT] run=446a7965-bb43-48e8-bd78-fedf36eff74a interactionId=note-Cancelled requestId=request tool=halo_create_empty_note toolCallId=note-call
+[HALO_NATIVE_ACTION_ROUTE] interactionId=note-Cancelled intent=NativeResume capability=host.native tool=halo_create_empty_note reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=446a7965-bb43-48e8-bd78-fedf36eff74a requestId=446a7965-bb43-48e8-bd78-fedf36eff74a tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_REJECTED] run=446a7965-bb43-48e8-bd78-fedf36eff74a interactionId=note-Cancelled requestId=446a7965-bb43-48e8-bd78-fedf36eff74a tool=halo_create_empty_note reasonCode=INTERACTION_CANCELLED reason=interaction_cancelled
+HALO_NATIVE_ACTION_TRUTH interactionId=note-Cancelled run=446a7965-bb43-48e8-bd78-fedf36eff74a tool=halo_create_empty_note runState=FAILED toolResult=REJECTED actionTruth=NONE resolvedOutcome=REJECTED
+[HALO_NATIVE_ACTION_RESULT] interactionId=note-Cancelled tool=halo_create_empty_note outcome=REJECTED
+[HALO_TOOL_VALIDATED] run=4741e2f5-74b9-4b5f-826c-b52b78ae98cc requestId=request tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_WAITING_INPUT] run=4741e2f5-74b9-4b5f-826c-b52b78ae98cc interactionId=note-Expired requestId=request tool=halo_create_empty_note toolCallId=note-call
+[HALO_NATIVE_ACTION_ROUTE] interactionId=note-Expired intent=NativeResume capability=host.native tool=halo_create_empty_note reason=DETERMINISTIC
+[HALO_TOOL_VALIDATED] run=4741e2f5-74b9-4b5f-826c-b52b78ae98cc requestId=4741e2f5-74b9-4b5f-826c-b52b78ae98cc tool=halo_create_empty_note digest=44136fa355b3
+[HALO_TOOL_REJECTED] run=4741e2f5-74b9-4b5f-826c-b52b78ae98cc interactionId=note-Expired requestId=4741e2f5-74b9-4b5f-826c-b52b78ae98cc tool=halo_create_empty_note reasonCode=USER_REJECTED reason=user_rejected
+HALO_NATIVE_ACTION_TRUTH interactionId=note-Expired run=4741e2f5-74b9-4b5f-826c-b52b78ae98cc tool=halo_create_empty_note runState=FAILED toolResult=REJECTED actionTruth=NONE resolvedOutcome=REJECTED
+[HALO_NATIVE_ACTION_RESULT] interactionId=note-Expired tool=halo_create_empty_note outcome=REJECTED
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

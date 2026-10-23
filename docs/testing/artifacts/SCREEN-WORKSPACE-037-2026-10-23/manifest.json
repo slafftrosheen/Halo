@@ -1,0 +1,227 @@
+{
+  "issue": 37,
+  "compiledSourceTrees": {
+    "app": "72d3531c6428854e77b3c8723918ed8f4f28b939",
+    "runtimeCognition": "ca13fa6fcdf7aa02ca470a059c69c4592cce0b6e"
+  },
+  "apk": {
+    "bytes": 292026581,
+    "sha256": "dcf574348846ba3ad771104a5686aab4fdbdece74e719af8fc8a67c2ac4da991",
+    "binaryCommitted": false
+  },
+  "suites": [
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.LocalScreenStoreTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenAmbientPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenAppearanceSheetTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenGridInteractionTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenGridTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenLayoutPersistenceTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenLayoutRequestsTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenWindowPolicyTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenWorkspaceChromeTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.mini.MiniHaloInteractionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.mini.MiniHaloVisualTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.presence.HaloOrbActionsTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.presence.HaloOrbLauncherTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.presence.HaloOrbVisualTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.home.HomeFlowPresentationTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.home.HomeNoteHandoffTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.home.HomeOrbHeaderVisualTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.home.HomeToolsSheetTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "runtime/cognition",
+      "name": "com.halo.runtime.cognition.interaction.InteractionSurfaceReconciliationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "runtime/cognition",
+      "name": "com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "runtime/cognition",
+      "name": "com.halo.runtime.cognition.turn.ApprovalContractTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "renders": [
+    "com.halo.app.screen.ScreenAppearanceSheetTest.shortSheetPreserves200PercentTextAndPinnedDoneWhileOptionsScroll.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.ambientPrivateMasks.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.darkPhone412.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.editPreview200.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.latvian200.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.lightPhone360.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.nativeSetupPermissionOfflineAndErrorStates.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.russian200.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.shortLandscape200ActiveStop.png",
+    "com.halo.app.screen.ScreenWorkspaceVisualTest.widePlacement.png",
+    "com.halo.app.ui.mini.MiniHaloVisualTest.compactWindow.png",
+    "com.halo.app.ui.mini.MiniHaloVisualTest.dark.png",
+    "com.halo.app.ui.mini.MiniHaloVisualTest.latvianLarge.png",
+    "com.halo.app.ui.mini.MiniHaloVisualTest.light.png",
+    "com.halo.app.ui.mini.MiniHaloVisualTest.russianLarge.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.approval360.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.collapsed360.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.failure360.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.latvianCapture412LargeText.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.offline360.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.russianOpen360LargeText.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.tabletInlineSatellites.png",
+    "com.halo.app.ui.presence.HaloOrbVisualTest.tabletReducedMotionUsesList.png",
+    "com.halo.app.ui.screens.home.HomeOrbHeaderVisualTest.homeHeaderAt360And200PercentKeepsOrbAndWords.png"
+  ],
+  "deviceEvidence": "device/device-observations.json",
+  "privateRawCapturesCommitted": false,
+  "githubActionsRun": false
+}

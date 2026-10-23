@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.LocalScreenStoreTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:01.317Z" hostname="MINIFOXEY" time="5.138">
+  <properties/>
+  <testcase name="backgroundBindingDoesNotReplaceUserUndo" classname="com.halo.app.screen.LocalScreenStoreTest" time="4.191"/>
+  <testcase name="sourcedResearchAndCitationLinksSurviveRestart" classname="com.halo.app.screen.LocalScreenStoreTest" time="0.123"/>
+  <testcase name="layoutConfigurationAndTopicsSurviveRestart" classname="com.halo.app.screen.LocalScreenStoreTest" time="0.077"/>
+  <testcase name="researchTimestampIncludesLocalizedDateAndTime" classname="com.halo.app.screen.LocalScreenStoreTest" time="0.095"/>
+  <testcase name="morningLayoutIncludesNativeStudyResumeCard" classname="com.halo.app.screen.LocalScreenStoreTest" time="0.055"/>
+  <testcase name="layoutsWithoutArchiveFieldRemainCurrentAfterUpgrade" classname="com.halo.app.screen.LocalScreenStoreTest" time="0.056"/>
+  <testcase name="automationResultUpdatesOneStableScreenCardAcrossRestart" classname="com.halo.app.screen.LocalScreenStoreTest" time="0.061"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

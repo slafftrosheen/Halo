@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.presence.HaloOrbVisualTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:31.006Z" hostname="MINIFOXEY" time="1.721">
+  <properties/>
+  <testcase name="russianOpen360LargeText" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.262"/>
+  <testcase name="latvianCapture412LargeText" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.228"/>
+  <testcase name="approval360" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.238"/>
+  <testcase name="tabletReducedMotionUsesList" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.235"/>
+  <testcase name="failure360" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.208"/>
+  <testcase name="offline360" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.246"/>
+  <testcase name="tabletInlineSatellites" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.199"/>
+  <testcase name="collapsed360" classname="com.halo.app.ui.presence.HaloOrbVisualTest" time="0.099"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

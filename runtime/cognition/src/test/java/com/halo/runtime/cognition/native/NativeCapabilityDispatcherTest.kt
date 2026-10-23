@@ -469,6 +469,72 @@ class NativeCapabilityDispatcherTest {
         assertFalse(store.get(routine)!!.state.isTerminal)
     }
 
+    @Test fun durableNoteApprovalResolutionWhileStillWaitingUsesCanonicalAuthorityExactlyOnce() = runTest {
+        for (resolution in listOf(AgentInputResolution.Approved, AgentInputResolution.Denied,
+            AgentInputResolution.Cancelled, AgentInputResolution.Expired)) {
+            val store = Store()
+            val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+            var executed = 0
+            val executor = object : ToolExecutor {
+                override fun definitions() = listOf(ToolDefinition("halo_create_empty_note", "halo_create_empty_note", "Create a note"))
+                override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+                    executed++
+                    return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Created note: note-37 - 'Untitled'", ActionTruth.CONFIRMED)
+                }
+            }
+            val definition = executor.definitions().single()
+            val registry = ToolRegistry(listOf(executor), listOf(ToolDescriptor(ToolId(definition.id), definition,
+                ToolCategory.WORKSPACE, security = ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS))))
+            val skills = DefaultSkillRegistry(MemoryStorage(), listOf(SkillDescriptor(SkillId("notes"), "Notes", "Local notes",
+                SkillCategory.DEVICE, tools = setOf(definition.name))))
+            val bus = object : EventBus {
+                override suspend fun publish(event: HaloEvent) {}
+                override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+                override fun events(): Flow<HaloEvent> = emptyFlow()
+            }
+            val authorizer = PolicyToolAuthorizer(agentRunStore = store, descriptorProvider = { registry.descriptor(it) })
+            val delegate = DefaultToolTurnExecutor(registry, authorizer, null, coordinator, store, bus)
+            val service = SkillExecutionService(skills, registry, ToolAvailabilityResolver(registry, skills), delegate, coordinator = coordinator)
+            val dispatcher = NativeCapabilityDispatcher(service, coordinator, store)
+            val interaction = InteractionId("note-${resolution::class.simpleName}")
+            val runId = coordinator.start(AgentRequest(interaction, "Create an empty note", kind = AgentRunKind.NATIVE))
+            coordinator.transition(runId, AgentRunState.EXECUTING)
+            val call = ToolCall("note-call", definition.name, emptyMap())
+            val waiting = service.execute(runId, interaction, "request", listOf(call), true, setOf(definition.name)) as ToolTurnResult.WaitingForInput
+            assertEquals(AgentRunState.WAITING_FOR_APPROVAL, store.get(runId)!!.state)
+            assertNull(dispatcher.resume(runId)) // No resolution is never permission to execute.
+            assertEquals(0, executed)
+            val beforeResolution = store.get(runId)!!
+            val wrongRequest = (waiting.request as AgentInputRequest.Approval).copy(id = AgentInputRequestId("wrong"),
+                invocationId = ToolInvocationId("unrelated-invocation"))
+            store.update(beforeResolution.copy(steps = beforeResolution.steps +
+                AgentStep.InputRequested(AgentStepId("wrong-request"), runId, java.time.Instant.now(), wrongRequest.id, wrongRequest) +
+                AgentStep.InputResolved(AgentStepId("wrong-resolution"), runId, java.time.Instant.now(), wrongRequest.id, "Approved")))
+            assertNull(dispatcher.resume(runId))
+            assertEquals(0, executed)
+            store.update(beforeResolution.copy(steps = beforeResolution.steps + AgentStep.InputResolved(AgentStepId("malformed"),
+                runId, java.time.Instant.now(), waiting.request.id, "Maybe")))
+            assertNull(dispatcher.resume(runId))
+            assertEquals(0, executed)
+            store.update(beforeResolution)
+            coordinator.recordStep(AgentStep.InputResolved(AgentStepId("resolution"), runId, java.time.Instant.now(),
+                waiting.request.id, AgentInputResolutions.encode(resolution)))
+            assertEquals(AgentRunState.WAITING_FOR_APPROVAL, store.get(runId)!!.state)
+            assertNotNull(dispatcher.resume(runId))
+            val terminal = store.get(runId)!!
+            if (resolution == AgentInputResolution.Approved) {
+                assertEquals(1, executed)
+                assertEquals(AgentRunState.COMPLETED, terminal.state)
+            } else {
+                assertEquals(0, executed)
+                assertEquals(AgentRunState.FAILED, terminal.state)
+                assertTrue(terminal.steps.any { it is AgentStep.ToolRejected })
+            }
+            assertNull(dispatcher.resume(runId))
+            assertFalse(terminal.steps.any { it is AgentStep.ProviderTurnStarted })
+        }
+    }
+
     private class Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
         var rejectWorkflowCheckpoints = false

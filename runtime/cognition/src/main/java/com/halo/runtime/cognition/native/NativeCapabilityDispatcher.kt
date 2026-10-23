@@ -713,15 +713,22 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                     "The phone workflow was interrupted. Review the current app, then request the remaining steps. Halo will not replay an old screen action.")
             }
         }
-        // "Continue" cannot approve an action. Only an explicit, matching durable
-        // approval resolution can authorize a WAITING_FOR_APPROVAL invocation.
+        // "Continue" cannot approve an action. A durable refusal must also reach
+        // the existing tool authority, which records rejection without dispatch
+        // and terminalizes the run instead of leaving a resolved request waiting.
         if (run.state == AgentRunState.WAITING_FOR_APPROVAL) {
             val pendingApproval = run.steps.filterIsInstance<AgentStep.InputRequested>()
                 .lastOrNull()?.input as? AgentInputRequest.Approval ?: return null
-            val approved = run.steps.filterIsInstance<AgentStep.InputResolved>().any {
-                it.requestId == pendingApproval.id && it.resolution == "Approved"
-            }
-            if (!approved) return null
+            val pendingInvocation = run.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>().lastOrNull() ?: return null
+            if (pendingApproval.invocationId != pendingInvocation.invocationId ||
+                pendingApproval.toolId.value != pendingInvocation.toolId ||
+                pendingApproval.argumentsDigest != pendingInvocation.argumentsDigest) return null
+            val resolution = run.steps.filterIsInstance<AgentStep.InputResolved>().lastOrNull {
+                it.requestId == pendingApproval.id
+            }?.resolution
+            if (resolution !in setOf(AgentInputResolutions.encode(AgentInputResolution.Approved),
+                    AgentInputResolutions.encode(AgentInputResolution.Denied),
+                    AgentInputResolutions.encode(AgentInputResolution.Cancelled), AgentInputResolutions.EXPIRED)) return null
         }
         if (run.hasUnknownAction) { coordinator.fail(runId, "Native action outcome unknown; do not replay"); return null }
         val takeover = run.steps.filterIsInstance<AgentStep.SemanticAppOperationRecorded>().lastOrNull()?.receipt

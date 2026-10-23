@@ -22,12 +22,15 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     val dimAtNight = _dimAtNight.asStateFlow()
     private val _topics = MutableStateFlow(preferences.getString("topics", "").orEmpty())
     val topics = _topics.asStateFlow()
+    private val _presets = MutableStateFlow(readPresets())
+    val presets = _presets.asStateFlow()
     fun setTopics(value: String) {
         val cleaned = value.trim().take(1000)
         preferences.edit().putString("topics", cleaned).apply()
         _topics.value = cleaned
     }
-    private var undoLayout: ScreenLayout? = null
+    private var undoLayout: ScreenLayout? = ScreenLayoutCodec.decode(preferences.getString("undo_layout", null))
+    fun hasUndo(): Boolean = synchronized(lock) { undoLayout != null }
 
     override suspend fun publish(item: ScreenItem) = synchronized(lock) {
         validateItem(item)
@@ -39,13 +42,14 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     /** Atomically writes a locally sourced item and the layout card that displays it. */
     suspend fun publishAndSaveLayout(item: ScreenItem, value: ScreenLayout, recordUndo: Boolean = false) = synchronized(lock) {
         validateItem(item)
-        require(value.cards.size <= 24 && value.cards.all { it.widgetType in ScreenWidgets.types })
+        val checkedLayout = checkedLayout(value)
         val old = _items.value.firstOrNull { it.id == item.id }
         val updated = if (old?.updatedAt != null && item.updatedAt != null && old.updatedAt > item.updatedAt) _items.value
             else (_items.value.filterNot { it.id == item.id } + item).takeLast(100)
-        val nextLayout = value.copy(version = (_layout.value?.version ?: 0) + 1)
+        val nextLayout = checkedLayout.copy(version = (_layout.value?.version ?: 0) + 1)
         if (recordUndo) undoLayout = _layout.value
-        preferences.edit().putString("items", itemsJson(updated)).putString("layout", nextLayout.toJson().toString()).apply()
+        preferences.edit().putString("items", itemsJson(updated)).putString("layout", ScreenLayoutCodec.encode(nextLayout))
+            .putString("undo_layout", undoLayout?.let(ScreenLayoutCodec::encode)).apply()
         _items.value = updated
         _layout.value = nextLayout
     }
@@ -58,9 +62,9 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     override fun observe(ids: Set<String>): Flow<List<ScreenItem>> = items.map { values -> values.filter { it.id in ids } }
 
     fun saveLayout(value: ScreenLayout, recordUndo: Boolean = true) = synchronized(lock) {
-        require(value.cards.size <= 24 && value.cards.all { it.widgetType in ScreenWidgets.types })
+        val checked = checkedLayout(value)
         if (recordUndo) undoLayout = _layout.value
-        persistLayout(value.copy(version = (_layout.value?.version ?: 0) + 1))
+        persistLayout(checked.copy(version = (_layout.value?.version ?: 0) + 1))
     }
 
     fun undo() = synchronized(lock) { undoLayout?.let { previous ->
@@ -68,13 +72,52 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         persistLayout(previous)
     } }
 
+    /** A preview never overwrites a layout changed by another source while it was open. */
+    fun applyDraft(base: ScreenLayout, draft: ScreenLayout): Boolean = synchronized(lock) {
+        if (_layout.value != base) return@synchronized false
+        if (base == draft) return@synchronized true
+        saveLayout(draft)
+        true
+    }
+
+    fun savePreset(name: String, value: ScreenLayout): Boolean = synchronized(lock) {
+        val label = name.trim().filterNot(Char::isISOControl).take(64)
+        if (label.isBlank() || value.cards.size > 24 || value.cards.any { it.widgetType !in ScreenWidgets.types }) return@synchronized false
+        val existing = _presets.value.firstOrNull { it.name.equals(label, ignoreCase = true) }
+        if (existing == null && _presets.value.size >= 12) return@synchronized false
+        val preset = checkedLayout(value).copy(id = existing?.id ?: java.util.UUID.randomUUID().toString(), name = label)
+        persistPresets(_presets.value.filterNot { it.id == preset.id } + preset)
+        true
+    }
+
+    fun removePreset(id: String) = synchronized(lock) { persistPresets(_presets.value.filterNot { it.id == id }) }
+
+    private fun persistPresets(values: List<ScreenLayout>) {
+        preferences.edit().putString("presets", JSONArray().apply {
+            values.forEach { put(JSONObject(ScreenLayoutCodec.encode(it))) }
+        }.toString()).apply()
+        _presets.value = values
+    }
+
+    private fun readPresets(): List<ScreenLayout> = runCatching {
+        val array = JSONArray(preferences.getString("presets", "[]"))
+        (0 until minOf(array.length(), 12)).mapNotNull { ScreenLayoutCodec.decode(array.optJSONObject(it)?.toString()) }
+            .distinctBy { it.id }
+    }.getOrDefault(emptyList())
+
     fun setPrivacy(enabled: Boolean) { preferences.edit().putBoolean("hide_private", enabled).apply(); _hidePrivate.value = enabled }
     fun setKeepCharging(enabled: Boolean) { preferences.edit().putBoolean("keep_charging", enabled).apply(); _keepCharging.value = enabled }
     fun setDimAtNight(enabled: Boolean) { preferences.edit().putBoolean("dim_night", enabled).apply(); _dimAtNight.value = enabled }
 
     private fun persistLayout(value: ScreenLayout) {
-        preferences.edit().putString("layout", value.toJson().toString()).apply()
+        preferences.edit().putString("layout", ScreenLayoutCodec.encode(value))
+            .putString("undo_layout", undoLayout?.let(ScreenLayoutCodec::encode)).apply()
         _layout.value = value
+    }
+
+    private fun checkedLayout(value: ScreenLayout): ScreenLayout {
+        require(value.cards.size <= 24 && value.cards.all { it.widgetType in ScreenWidgets.types })
+        return value.copy(cards = screenCardIdentities(value.cards).map { it.copy(placement = it.placement?.bounded(), typography = it.typography.bounded()) })
     }
 
     private fun validateItem(item: ScreenItem) {
@@ -91,28 +134,7 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 
     private fun itemsJson(items: List<ScreenItem>) = JSONArray().apply { items.forEach { put(it.toJson()) } }.toString()
 
-    private fun ScreenLayout.toJson() = JSONObject().put("id", id).put("name", name).put("version", version)
-        .put("cards", JSONArray().apply { cards.forEach { card ->
-            put(JSONObject().put("type", card.widgetType).put("itemId", card.itemId)
-                .put("size", card.size.name).put("pinned", card.pinned).put("archived", card.archived)
-                .put("config", JSONObject(card.config)))
-        } })
-
-    private fun readLayout(): ScreenLayout? = runCatching {
-        val json = JSONObject(preferences.getString("layout", null) ?: return@runCatching null)
-        val cards = json.getJSONArray("cards")
-        val recoveredCards = (0 until cards.length()).mapNotNull { index ->
-            runCatching {
-                val c = cards.getJSONObject(index)
-                ScreenCard(c.getString("type"), c.optString("itemId").takeUnless { it.isBlank() || it == "null" },
-                    CardSize.valueOf(c.getString("size")), c.optBoolean("pinned"),
-                    c.optJSONObject("config")?.let { config ->
-                        config.keys().asSequence().associateWith { config.optString(it) }
-                    }.orEmpty(), c.optBoolean("archived", false))
-            }.getOrNull()?.takeIf { it.widgetType in ScreenWidgets.types }
-        }.take(24)
-        ScreenLayout(json.getString("id"), json.getString("name"), recoveredCards, json.optInt("version", 1))
-    }.getOrNull()
+    private fun readLayout(): ScreenLayout? = ScreenLayoutCodec.decode(preferences.getString("layout", null))
 
     private fun readItems(): List<ScreenItem> = runCatching {
         val array = JSONArray(preferences.getString("items", "[]"))
@@ -166,7 +188,7 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 }
 
 object ScreenWidgets {
-    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "halo_activity", "interests", "research")
+    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "halo_activity", "interests", "research", "device")
     fun starter(name: String): ScreenLayout {
         val types = when (name) {
             "Focus" -> listOf("clock", "tasks", "notebook")

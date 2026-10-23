@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.mini.MiniHaloInteractionTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:25.104Z" hostname="MINIFOXEY" time="1.595">
+  <properties/>
+  <testcase name="longReplyCannotHideTheComposerOrFullAppHandoff" classname="com.halo.app.ui.mini.MiniHaloInteractionTest" time="0.588"/>
+  <testcase name="orbShortcutOpensTypedCatalogDiscoveryWithoutSubmittingCameraText" classname="com.halo.app.ui.mini.MiniHaloInteractionTest" time="0.528"/>
+  <testcase name="emptyComposerMicrophoneStartsTheConversationDirectly" classname="com.halo.app.ui.mini.MiniHaloInteractionTest" time="0.118"/>
+  <testcase name="pendingReviewOpensActivityAndBlocksNewToolRequests" classname="com.halo.app.ui.mini.MiniHaloInteractionTest" time="0.122"/>
+  <testcase name="busyKeepsStopAndEditingAvailableWithoutSendingAgain" classname="com.halo.app.ui.mini.MiniHaloInteractionTest" time="0.233"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

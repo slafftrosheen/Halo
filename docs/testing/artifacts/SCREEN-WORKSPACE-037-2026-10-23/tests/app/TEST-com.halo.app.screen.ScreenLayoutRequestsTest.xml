@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.ScreenLayoutRequestsTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:20.338Z" hostname="MINIFOXEY" time="0.024">
+  <properties/>
+  <testcase name="eachNativeChangeAndResearchHandoffCanBeIndependentlyExcluded" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.008"/>
+  <testcase name="nativeResizeStillWorksAfterTwoDimensionalCustomization" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.003"/>
+  <testcase name="compositionAddsOnlyNamedCardsAndRoutesResearchTopicToGroundedSearch" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.008"/>
+  <testcase name="applyingPreviewPreservesSourcesAndRejectsNoOps" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.002"/>
+  <testcase name="proposalsAreBoundedAndNeverGuessAnUnknownRequest" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.0"/>
+  <testcase name="compositionDoesNotGuessUnsupportedRequests" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.001"/>
+  <testcase name="researchRefreshCanRunWhenItsCardAlreadyExists" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.002"/>
+  <testcase name="nativeMoveToTopPreservesSourceReferencesButChangesActualPlacement" classname="com.halo.app.screen.ScreenLayoutRequestsTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

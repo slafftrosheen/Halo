@@ -1,0 +1,102 @@
+{
+  "issue": 37,
+  "device": {
+    "model": "Samsung SM_G990B2",
+    "androidApi": 36,
+    "appLanguage": "RU",
+    "operatingMode": "Private"
+  },
+  "finalApk": {
+    "sha256": "dcf574348846ba3ad771104a5686aab4fdbdece74e719af8fc8a67c2ac4da991",
+    "bytes": 292026581,
+    "installedHashMatched": true
+  },
+  "earlierApk": {
+    "sha256": "74907a8383cb6746a4b159895af9384bd16bec0ef4bba7a1029fa65a870060f8",
+    "installedHashMatched": true,
+    "passed": [
+      "legacy_four_card_upgrade",
+      "draft_unchanged_until_apply",
+      "appearance_preserves_pending_resize",
+      "style_and_height_restart",
+      "persisted_undo_restores_sources",
+      "named_preset_preview_cancel_remove",
+      "physical_width_resize",
+      "ambient_portrait_masks",
+      "ambient_landscape_200_exit",
+      "charged_keep_awake_and_background_release"
+    ]
+  },
+  "failedCandidate": {
+    "sha256": "bee36a5486066214ea7b5e2471f5c73ccc5f8d6dad1f8c646da226dc4a32a475",
+    "test": "note_decline",
+    "result": "FAIL",
+    "exception": "IllegalStateException at DefaultInteractionSurfaceCoordinator.syncRun:203",
+    "retestedOnFinalApk": true
+  },
+  "finalPassed": [
+    "note_decline_survives",
+    "new_explicit_note_tap_after_decline",
+    "one_time_approval_opens_canonical_note_editor",
+    "note_back_returns_to_screen",
+    "physical_width_height_and_long_press_move",
+    "geometry_restart_column6_row1_width6_height2",
+    "undo_restores_original_layout",
+    "atkinson_mint_apply",
+    "dark_theme_readability",
+    "412dp_200_percent_header_controls",
+    "412dp_200_percent_ambient_exit",
+    "confirmed_rotation1_landscape_200_percent_exit",
+    "orb_find_opens_canonical_catalog_without_execution"
+  ],
+  "runtimeOutcomes": {
+    "declinedNote": "FAILED / REJECTED",
+    "approvedNote": "COMPLETED / CONFIRMED",
+    "approvedExecutionCount": 1
+  },
+  "rejectedEvidence": [
+    "transient_null_root_restart_capture",
+    "missing_or_offscreen_control_matches",
+    "synthetic_stop_draft_without_confirmed_stop_outcome"
+  ],
+  "cleanup": {
+    "temporaryNamedPresetRemoved": true,
+    "emptyTestNotesMovedToTrash": 2,
+    "exactNoteIdentityReadbackVerified": true,
+    "temporaryDatabaseCopiesRemoved": true,
+    "syntheticQueriesAndDraftCleared": true,
+    "testStyleUndoRetained": true,
+    "earlierCrashTestRunRemainsSuspended": true,
+    "rawPreferenceWritesPerformed": false
+  },
+  "restoreReadback": {
+    "originalCardCount": 4,
+    "originalSourceReferencesAndConfigurationMatch": true,
+    "originalGeometryAndStyleRestored": true,
+    "appearanceMode": "SYSTEM",
+    "originalOrbShortcutsRestored": true,
+    "keepCharging": false,
+    "physicalDensity": 480,
+    "densityOverride": null,
+    "fontScale": 1,
+    "rotation": "free",
+    "accelerometerRotation": 1,
+    "userRotation": 0
+  },
+  "physicalNotTested": [
+    "low_battery",
+    "severe_thermal",
+    "prolonged_power_and_burn_in",
+    "TalkBack",
+    "hardware_keyboard",
+    "locked_device_privacy",
+    "live_calendar",
+    "provider_research",
+    "actual_voice_capture_interruption_Stop"
+  ],
+  "providerQuestionSent": false,
+  "spendingApprovalSent": false,
+  "oneTimeLocalEmptyNoteApprovals": 2,
+  "rawPersonalCapturesCommitted": false,
+  "windowPolicyEvidenceApk": "74907a8383cb6746a4b159895af9384bd16bec0ef4bba7a1029fa65a870060f8"
+}

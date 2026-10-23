@@ -408,7 +408,7 @@ fun AppShell(
                             val orbSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
                             val screenDensity = androidx.compose.ui.platform.LocalDensity.current
                             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides
-                                androidx.compose.ui.unit.Density(screenDensity.density, screenDensity.fontScale * if (screenFull) 1.4f else 1f)) {
+                                androidx.compose.ui.unit.Density(screenDensity.density, com.halo.app.screen.screenAmbientFontScale(screenDensity.fontScale, screenFull))) {
                             com.halo.app.screen.HaloScreen(ManualDependencyGraph.screenStore, screenFull, { screenFull = it },
                             onOpen = ::navigateSafely, onTalk = {
                                 screenMode = false; screenFull = false
@@ -427,7 +427,8 @@ fun AppShell(
                                 orbUi.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Speaking ||
                                 orbUi.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
                                 orbUi.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed &&
-                                orbUi.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle)
+                                orbUi.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle,
+                            onQuickNote = { screenFull = false; homeViewModel.createNote() })
                             }
                         } else HomeScreen(
                         surfaceSwitcher = { com.halo.app.screen.HomeSurfaceSwitch(false,

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.ScreenGridTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:19.535Z" hostname="MINIFOXEY" time="0.046">
+  <properties/>
+  <testcase name="deskFontEmphasisIsMonotonicAndNeverShrinksTheOsChoice" classname="com.halo.app.screen.ScreenGridTest" time="0.001"/>
+  <testcase name="enlargedTextReflowDoesNotMutateSavedHorizontalPlacement" classname="com.halo.app.screen.ScreenGridTest" time="0.003"/>
+  <testcase name="touchWithoutMovementOrBoundaryResizeDoesNotRewriteTheLayout" classname="com.halo.app.screen.ScreenGridTest" time="0.001"/>
+  <testcase name="narrowScreenMovesAndHeightChangesPreserveCanonicalWidths" classname="com.halo.app.screen.ScreenGridTest" time="0.0"/>
+  <testcase name="movingOntoAnotherCardDisplacesItWithoutChangingItsSourceOrStyle" classname="com.halo.app.screen.ScreenGridTest" time="0.0"/>
+  <testcase name="availableWidthAndOsTextScaleChooseTheSameResponsivePolicy" classname="com.halo.app.screen.ScreenGridTest" time="0.0"/>
+  <testcase name="widthAndHeightResizeIndependentlyAndRemainBounded" classname="com.halo.app.screen.ScreenGridTest" time="0.0"/>
+  <testcase name="boundedProposalReorderActuallyMovesAnExplicitlyPlacedCard" classname="com.halo.app.screen.ScreenGridTest" time="0.0"/>
+  <testcase name="oneColumnReorderPreservesSourcesAndWidthsAndCanBeSaved" classname="com.halo.app.screen.ScreenGridTest" time="0.0"/>
+  <testcase name="responsivePackingNeverDropsCardsOrOverlapsEvenWithConflictingSavedPositions" classname="com.halo.app.screen.ScreenGridTest" time="0.04"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

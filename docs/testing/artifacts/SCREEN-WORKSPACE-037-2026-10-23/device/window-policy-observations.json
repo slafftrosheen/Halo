@@ -1,0 +1,26 @@
+[
+  {
+    "capture": "ambient-window",
+    "secure": true,
+    "keepAwake": false,
+    "brightness": "0.1"
+  },
+  {
+    "capture": "after-exit-window",
+    "secure": false,
+    "keepAwake": false,
+    "brightness": ""
+  },
+  {
+    "capture": "charging-ambient-window",
+    "secure": true,
+    "keepAwake": true,
+    "brightness": "0.1"
+  },
+  {
+    "capture": "background-ambient-window",
+    "secure": true,
+    "keepAwake": false,
+    "brightness": ""
+  }
+]

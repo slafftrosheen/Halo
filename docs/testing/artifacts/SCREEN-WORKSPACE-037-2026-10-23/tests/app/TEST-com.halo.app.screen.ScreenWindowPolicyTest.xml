@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.ScreenWindowPolicyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:20.371Z" hostname="MINIFOXEY" time="1.826">
+  <properties/>
+  <testcase name="ambientFlagsAndDimmingRestoreOnBackgroundExitAndDisposal" classname="com.halo.app.screen.ScreenWindowPolicyTest" time="1.598"/>
+  <testcase name="flagsOwnedBeforeScreenArePreservedAndOrdinaryScreenDoesNotOwnBrightness" classname="com.halo.app.screen.ScreenWindowPolicyTest" time="0.112"/>
+  <testcase name="lowBatteryReleasesOnlyTheKeepAwakeFlagThatScreenAdded" classname="com.halo.app.screen.ScreenWindowPolicyTest" time="0.105"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

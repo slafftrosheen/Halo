@@ -13,6 +13,7 @@ internal object ScreenLayoutRequests {
         "automation_result" to listOf("routine results", "automation results", "routine", "automātika", "процедуры", "rutyny"),
         "halo_activity" to listOf("halo activity", "what halo did", "activity"),
         "interests" to listOf("reading", "interests", "intereses", "интересы", "zainteresowania"),
+        "device" to listOf("phone status", "this phone", "battery", "tālruņa stāvoklis", "akumulators", "состояние телефона", "батарея"),
     )
 
     fun propose(text: String, names: Map<String, String>): LayoutChange? {
@@ -80,9 +81,15 @@ internal object ScreenLayoutRequests {
         return Plan(additions, query)
     }
 
-    fun apply(layout: ScreenLayout, plan: Plan): ScreenLayout? = plan.changes.fold(layout) { current, change ->
-        apply(current, change) ?: if (change is LayoutChange.Add && current.cards.any { it.widgetType == change.widgetType }) current else return null
-    }.takeIf { it.cards != layout.cards || !plan.researchQuery.isNullOrBlank() }
+    fun select(plan: Plan, indices: Set<Int>, research: Boolean): Plan = Plan(
+        plan.changes.filterIndexed { index, _ -> index in indices }, plan.researchQuery.takeIf { research })
+
+    fun apply(layout: ScreenLayout, plan: Plan): ScreenLayout? {
+        if (plan.changes.size > 24) return null
+        return plan.changes.fold(layout) { current, change ->
+            apply(current, change) ?: if (change is LayoutChange.Add && current.cards.any { it.widgetType == change.widgetType }) current else return null
+        }.takeIf { it.cards != layout.cards || !plan.researchQuery.isNullOrBlank() }
+    }
 
     private fun extractResearchQuery(body: String, names: Map<String, String>, researchTerms: List<String>): String? {
         var query = body
@@ -117,18 +124,23 @@ internal object ScreenLayoutRequests {
         when (change) {
             is LayoutChange.Add -> {
                 if (change.widgetType !in ScreenWidgets.types || cards.size >= 24 || cards.any { it.widgetType == change.widgetType }) return null
-                cards.add(ScreenCard(change.widgetType, null, CardSize.STANDARD, false))
+                cards.add(ScreenCard(change.widgetType, null, CardSize.STANDARD, false, config = change.config))
             }
             is LayoutChange.Remove -> { if (!cards.removeAll { it.widgetType == change.widgetType }) return null }
             is LayoutChange.Resize -> {
                 val index = cards.indexOfFirst { it.widgetType == change.widgetType }
-                if (index < 0 || cards[index].size == change.size) return null
-                cards[index] = cards[index].copy(size = change.size)
+                if (index < 0) return null
+                val resized = cards[index].copy(size = change.size, placement = cards[index].placement?.let {
+                    it.copy(width = if (change.size == CardSize.COMPACT) 6 else 12,
+                        height = if (change.size == CardSize.EXPANDED) 2 else 1).bounded()
+                })
+                if (resized == cards[index]) return null
+                cards[index] = resized
             }
             is LayoutChange.Move -> {
                 val index = cards.indexOfFirst { it.widgetType == change.widgetType }
                 if (index < 0 || change.toIndex !in cards.indices || index == change.toIndex) return null
-                cards.add(change.toIndex, cards.removeAt(index))
+                return layout.copy(cards = ScreenGrid.reorder(cards, index, change.toIndex))
             }
         }
         return layout.copy(cards = cards)

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.ScreenAppearanceSheetTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:06.533Z" hostname="MINIFOXEY" time="11.864">
+  <properties/>
+  <testcase name="shortSheetPreserves200PercentTextAndPinnedDoneWhileOptionsScroll" classname="com.halo.app.screen.ScreenAppearanceSheetTest" time="11.702"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

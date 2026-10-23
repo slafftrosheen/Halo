@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.turn.ApprovalContractTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:21:36.415Z" hostname="MINIFOXEY" time="0.043">
+  <properties/>
+  <testcase name="approval flow - needs approval then approves and executes exactly once" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.019"/>
+  <testcase name="alwaysConfirmCannotReuseLegacyScopeApproval" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.015"/>
+  <testcase name="directCommandAuthorityRespectsDescriptorConfirmationAndRisk" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.003"/>
+  <testcase name="approval flow - needs approval then denies and executes zero times" classname="com.halo.runtime.cognition.turn.ApprovalContractTest" time="0.004"/>
+  <system-out><![CDATA[[HALO_TOOL_VALIDATED] run=b1975557-88d8-45bd-aae7-ecb4c8c17784 requestId=req-1 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_WAITING_INPUT] run=b1975557-88d8-45bd-aae7-ecb4c8c17784 interactionId=interaction-1 requestId=req-1 tool=test_action toolCallId=call-1
+DEBUG_RESULT1 = WaitingForInput(request=Approval(id=eec8ad15-1f2e-48a4-b6f9-b5a823157b0b, runId=AgentRunId(value=b1975557-88d8-45bd-aae7-ecb4c8c17784), createdAt=2026-10-23T02:21:36.421788700Z, expiresAt=null, invocationId=71532f49-2d72-4e8b-8081-b82cd3f978b2, toolId=test_action, action=Confirm test_action, detail=null, risk=EXTERNAL_SIDE_EFFECT, argumentsDigest=93cab821ad6afe008a9cad5c2e19833f8e5f631d48a597dbc7484de901669847, speechPrompt=null))
+[HALO_TOOL_VALIDATED] run=b1975557-88d8-45bd-aae7-ecb4c8c17784 requestId=req-2 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_AUTHORIZATION] run=b1975557-88d8-45bd-aae7-ecb4c8c17784 requestId=req-2 tool=test_action toolCallId=call-1
+[HALO_TOOL_EXECUTION_START] run=b1975557-88d8-45bd-aae7-ecb4c8c17784 interactionId=interaction-1 requestId=req-2 tool=test_action toolCallId=call-1
+[HALO_TOOL_EXECUTION_RESULT] run=b1975557-88d8-45bd-aae7-ecb4c8c17784 interactionId=interaction-1 requestId=req-2 tool=test_action actionTruth=CONFIRMED durationMs=1
+DEBUG_RESULT2 = Completed(response=AiResponse(text=, toolCalls=[], finishReason=null, providerId=, modelId=, metrics=null, requestedModelId=, resolvedModelId=, executionBackend=null, payloadRefId=null, coldStart=null), hasUnconfirmedAction=false, toolMessages=[AIMessage(role=TOOL, content=tool_result:
+status=success
+action_truth=CONFIRMED
+reason_code=NONE
+
+details:
+Action executed successfully, toolCalls=[], toolCallId=call-1)])
+[HALO_TOOL_VALIDATED] run=00f83b22-6395-4a1c-b07e-6377ecf52dbb requestId=req-1 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_WAITING_INPUT] run=00f83b22-6395-4a1c-b07e-6377ecf52dbb interactionId=interaction-2 requestId=req-1 tool=test_action toolCallId=call-1
+[HALO_TOOL_VALIDATED] run=00f83b22-6395-4a1c-b07e-6377ecf52dbb requestId=req-2 tool=test_action digest=93cab821ad6a
+[HALO_TOOL_REJECTED] run=00f83b22-6395-4a1c-b07e-6377ecf52dbb interactionId=interaction-2 requestId=req-2 tool=test_action reasonCode=USER_REJECTED reason=user_rejected
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

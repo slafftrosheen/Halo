@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeNoteHandoffTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:34.307Z" hostname="MINIFOXEY" time="0.29">
+  <properties/>
+  <testcase name="declinedCancelledFailedOrInterruptedRunsNeverOpenANote" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.243"/>
+  <testcase name="immediateCompletionUsesTheSameConfirmedJournalEvidence" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.008"/>
+  <testcase name="durableRefusalReleasesTheWaitEvenWhenTheRuntimeRunRemainsNonterminal" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.008"/>
+  <testcase name="approvalWaitFollowsOnlyTheOriginalRunAndReturnsItsConfirmedNoteOnce" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.008"/>
+  <testcase name="cancellingAnObserverDoesNotMutateTheRun" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.006"/>
+  <testcase name="proposedUnknownFailedWrongCallOrDifferentToolNeverAuthorizesNavigation" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.0"/>
+  <testcase name="malformedOrUnboundedNoteIdentifiersAreRejected" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.004"/>
+  <testcase name="olderRefusalDoesNotOverrideANewerApprovalRequestForTheSameInvocation" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.005"/>
+  <testcase name="unrelatedInvocationRefusalDoesNotReleaseTheOriginalWait" classname="com.halo.app.ui.screens.home.HomeNoteHandoffTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

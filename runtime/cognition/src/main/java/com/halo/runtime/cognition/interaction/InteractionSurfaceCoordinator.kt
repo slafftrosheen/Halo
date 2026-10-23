@@ -183,7 +183,6 @@ class DefaultInteractionSurfaceCoordinator(
 
     private suspend fun syncRun(run: AgentRun) {
         val pending = pendingRequestsFor(run)
-        val surfaceIds = pending.map { InteractionSurfaceIds.forInput(it.id) }.toSet()
         val currentInputSurfaces = surfaceStore.active.value.filter {
             it.runId == run.id && it.inputRequestId != null
         }
@@ -199,8 +198,9 @@ class DefaultInteractionSurfaceCoordinator(
                     surfaceStore.publish(surface)
                 }
             }
-        // Surfaces already projected stay untouched (stable ids, no churn).
-        check(surfaceIds.isNotEmpty() || currentInputSurfaces.isEmpty())
+        // Surfaces already projected stay untouched. currentInputSurfaces is a
+        // pre-dismissal snapshot: resolving the last request legitimately leaves
+        // pending empty while that snapshot still contains its removed surface.
     }
 
     /**

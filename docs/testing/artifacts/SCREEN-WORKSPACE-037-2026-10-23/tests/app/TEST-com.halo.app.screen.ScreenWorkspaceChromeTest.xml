@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.ScreenWorkspaceChromeTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:22.254Z" hostname="MINIFOXEY" time="1.163">
+  <properties/>
+  <testcase name="deskEntryBeforeAnyLayoutStillHasAnExplicitExit" classname="com.halo.app.screen.ScreenWorkspaceChromeTest" time="0.556"/>
+  <testcase name="previewControlsRequireExplicitApplyOrCancel" classname="com.halo.app.screen.ScreenWorkspaceChromeTest" time="0.345"/>
+  <testcase name="noteDelegatesOnceAndLeavesDeskWithoutOpeningAnotherExecutor" classname="com.halo.app.screen.ScreenWorkspaceChromeTest" time="0.107"/>
+  <testcase name="shortLargeTextDeskKeepsExitAndActiveStopWhileDecorativeChromeIsHidden" classname="com.halo.app.screen.ScreenWorkspaceChromeTest" time="0.148"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

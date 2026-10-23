@@ -908,7 +908,10 @@ class HomeViewModel(
         catch (_: Exception) { captureMessage.value = "Image could not be reviewed. Finish the current capture first." }
     }
 
-    fun createNote() { viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+    private var createNoteJob: kotlinx.coroutines.Job? = null
+    fun createNote() {
+        if (createNoteJob?.isActive == true) return
+        createNoteJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO, start = CoroutineStart.LAZY) {
         val graph = com.halo.app.di.ManualDependencyGraph
         val id = UUID.randomUUID().toString()
         val run = graph.agentRunCoordinator.start(com.halo.runtime.cognition.agent.AgentRequest(
@@ -918,16 +921,22 @@ class HomeViewModel(
             val result = graph.skillExecutionService.execute(run, com.halo.cognition.language.InteractionId(id), id,
                 listOf(ToolCall(id, "halo_create_empty_note", emptyMap())), true, setOf("halo_create_empty_note"))
             if (result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed) {
-                val output = result.toolMessages.joinToString("\n") { it.content }
-                if ("Created note: " in output) {
-                    graph.agentRunCoordinator.complete(run)
-                    val noteId = output.substringAfter("Created note: ").substringBefore(" -")
-                    _navigationEvents.emit("notebook/note/$noteId")
-                } else { graph.agentRunCoordinator.fail(run, "Note creation rejected"); captureMessage.value = "Note creation needs permission or setup" }
+                val recorded = graph.agentRunStore.get(run)
+                if (recorded != null && createdHomeNoteId(recorded, id) != null) graph.agentRunCoordinator.complete(run)
+                else graph.agentRunCoordinator.fail(run, "Note creation rejected")
+            } else if (result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped) {
+                captureMessage.value = "Note creation needs permission or setup"
+                return@launch
             } else captureMessage.value = "Review note creation in the approval panel"
+            val noteId = awaitCreatedHomeNote(graph.agentRunStore.observeRuns(), run, id)
+            if (noteId != null && graph.notebookRepository.getNote(noteId) != null) {
+                captureMessage.value = null
+                _navigationEvents.emit("notebook/note/$noteId")
+            } else captureMessage.value = "Note creation needs permission or setup"
         } catch (cancelled: kotlinx.coroutines.CancellationException) { graph.agentRunCoordinator.cancel(run, "Cancelled"); throw cancelled }
           catch (_: Exception) { graph.agentRunCoordinator.fail(run, "Note creation failed"); captureMessage.value = "Could not create note" }
-    } }
+        }.also { it.start() }
+    }
     fun saveResponse(response: PresentedAssistantResponse) { viewModelScope.launch {
         val turnId = response.turnId ?: return@launch
         saveReview.value = ManualDependencyGraph.contextResultSave.review(response.conversationId, turnId)

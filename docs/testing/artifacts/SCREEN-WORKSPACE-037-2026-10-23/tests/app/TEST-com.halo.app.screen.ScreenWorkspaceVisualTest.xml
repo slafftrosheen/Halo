@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.screen.ScreenWorkspaceVisualTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-23T02:20:23.499Z" hostname="MINIFOXEY" time="1.572">
+  <properties/>
+  <testcase name="shortLandscape200ActiveStop" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.232"/>
+  <testcase name="russian200" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.199"/>
+  <testcase name="lightPhone360" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.171"/>
+  <testcase name="ambientPrivateMasks" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.175"/>
+  <testcase name="darkPhone412" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.158"/>
+  <testcase name="nativeSetupPermissionOfflineAndErrorStates" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.125"/>
+  <testcase name="editPreview200" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.157"/>
+  <testcase name="latvian200" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.181"/>
+  <testcase name="widePlacement" classname="com.halo.app.screen.ScreenWorkspaceVisualTest" time="0.161"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
