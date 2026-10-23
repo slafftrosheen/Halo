@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T21:32:47.933Z" hostname="MINIFOXEY" time="3.432">
+  <properties/>
+  <testcase name="leavingImmediatelyFlushesLatestTextPositionAndViewport" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="2.917"/>
+  <testcase name="corruptSketchAndEmptyNewSketchCannotPublishOrDiscardDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.098"/>
+  <testcase name="manualOrganizationWorksWithoutProviderAndCancelDoesNotMutate" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.147"/>
+  <testcase name="erasedEditRejectsChangedSourceAndRetainsRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.086"/>
+  <testcase name="selectingGroupAndMemberMovesEachOnlyOnce" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.092"/>
+  <testcase name="erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft" classname="com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest" time="0.082"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

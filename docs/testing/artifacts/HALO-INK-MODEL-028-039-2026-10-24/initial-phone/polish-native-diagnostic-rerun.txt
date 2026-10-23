@@ -1,0 +1,38 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.language.PolishLanguageDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.language.PolishLanguageDeviceTest:
+INSTRUMENTATION_STATUS: test=polishSwitchAtLargeTextPreservesDraftAndPickerContext
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.language.PolishLanguageDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'Przestrze┼Д robocza' (ignoreCase: false) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at com.halo.app.language.PolishLanguageDeviceTest.polishSwitchAtLargeTextPreservesDraftAndPickerContext(PolishLanguageDeviceTest.kt:58)
+
+INSTRUMENTATION_STATUS: stream=
+Error in polishSwitchAtLargeTextPreservesDraftAndPickerContext(com.halo.app.language.PolishLanguageDeviceTest):
+java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'Przestrze┼Д robocza' (ignoreCase: false) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at com.halo.app.language.PolishLanguageDeviceTest.polishSwitchAtLargeTextPreservesDraftAndPickerContext(PolishLanguageDeviceTest.kt:58)
+
+INSTRUMENTATION_STATUS: test=polishSwitchAtLargeTextPreservesDraftAndPickerContext
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 6,031
+There was 1 failure:
+1) polishSwitchAtLargeTextPreservesDraftAndPickerContext(com.halo.app.language.PolishLanguageDeviceTest)
+java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'Przestrze┼Д robocza' (ignoreCase: false) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at com.halo.app.language.PolishLanguageDeviceTest.polishSwitchAtLargeTextPreservesDraftAndPickerContext(PolishLanguageDeviceTest.kt:58)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

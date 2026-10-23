@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.test.*
@@ -30,7 +32,9 @@ class PolishLanguageDeviceTest {
 
     @Test fun polishSwitchAtLargeTextPreservesDraftAndPickerContext() {
         val preferences = AppLanguagePreferences(MemoryStorage(), "en")
+        lateinit var draftFocus: FocusManager
         compose.setContent {
+            draftFocus = LocalFocusManager.current
             val activity = LocalContext.current
             val picker = LocalActivityResultRegistryOwner.current
             AppLanguageProvider(preferences) {
@@ -53,6 +57,11 @@ class PolishLanguageDeviceTest {
             }
         }
         compose.onNodeWithTag("draft").performScrollTo().performTextInput("Synthetic question")
+        // At 200% in landscape the IME can keep bringing the focused draft back
+        // into view while the test scrolls to translated labels. End editing,
+        // preserving its text, before checking those separate viewport positions.
+        compose.runOnIdle { draftFocus.clearFocus() }
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithTag("polish").performScrollTo().performClick()
         for (label in listOf("Nauka", "Przestrzeń robocza", "Narzędzia plików", "Strona 2 z 8", "Powiększenie: 150%")) {
             compose.onNodeWithText(label).performScrollTo().assertIsDisplayed()

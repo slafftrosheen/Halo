@@ -875,7 +875,8 @@ class CanvasEditorViewModel(
     }
 
     fun addSketch(strokes: String, nodeId: String? = null, expectedText: String? = null) = command {
-        if (CanvasSketchCodec.decode(strokes).isEmpty()) return@command
+        val document = com.halo.sdk.runtime.ink.InkCodec.decode(strokes) ?: return@command
+        if (nodeId == null && document.strokes.isEmpty()) return@command
         flushPendingEdits()
         if (nodeId == null) {
             val (x, y) = insertionPoint()

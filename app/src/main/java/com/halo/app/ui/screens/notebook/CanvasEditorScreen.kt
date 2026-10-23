@@ -288,6 +288,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         val target = state.nodes.firstOrNull { it.id == sketchTarget && it.type == CanvasNodeType.SKETCH }
         CanvasSketchPadDialog(
             initial = sketchOriginal,
+            editingExisting = target != null,
             recovery = state.drawingDraft?.takeIf { it.kind == "sketch" && it.nodeId == sketchTarget }?.sketch,
             selectionOwnerId = target?.let { viewModel.canvasId },
             selectionPageId = target?.id,

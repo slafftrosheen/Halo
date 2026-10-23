@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T21:32:55.226Z" hostname="MINIFOXEY" time="0.562">
+  <properties/>
+  <testcase name="bookmarkDecoderRejectsOversizedPayloadBeforeParsing" classname="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" time="0.057"/>
+  <testcase name="pdfSelectionCommitsMarkupAndBookmarkTogetherAndTracksFileVersion" classname="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" time="0.206"/>
+  <testcase name="savedSketchBookmarkResolvesUntilItsSourceChanges" classname="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" time="0.083"/>
+  <testcase name="sourceEditDeletionOrCanvasArchivalRejectsPendingHandoff" classname="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" time="0.082"/>
+  <testcase name="exactHandoffRejectsReplacedBookmarkWithoutChangingWorkingSet" classname="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" time="0.069"/>
+  <testcase name="delayedHandoffCannotRestoreDeselectedRegion" classname="com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest" time="0.059"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

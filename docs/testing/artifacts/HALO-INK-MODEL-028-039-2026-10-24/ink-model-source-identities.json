@@ -1,0 +1,42 @@
+{
+  "sourceStamp": "a71bbf42-plus-erased-ink-model-manifest",
+  "base": "a71bbf42df51784dcb71549e5ae56b00d37b79cc",
+  "files": [
+    {
+      "path": "app/src/androidTest/java/com/halo/app/language/PolishLanguageDeviceTest.kt",
+      "sha256": "60395ad5f2a75e36ad6ddb2d368a6f79e5b2ed8266986c13691e26ac1aebf7f5"
+    },
+    {
+      "path": "app/src/main/assets/skills/halo.models.json",
+      "sha256": "01a47ae2b10c59e5944f86685748fc96b4ad097045379fceb2d48141c873be57"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/notebook/NotebookCanvas.kt",
+      "sha256": "4fcbb736b97600701c15531b5da706a4d5ba44a0770d65bed9731bf9429050cb"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorScreen.kt",
+      "sha256": "5d206cb5a0a94dd59cb0fea07357261a645b3450f3578c7aa5034184e2925daa"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorViewModel.kt",
+      "sha256": "8e85d7a2d9e97b198611ea41aaed27cee9b76c072e4dc3e91dc57c380050e770"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasSketchEditor.kt",
+      "sha256": "466ff9775f30ddb51118dd5531585760bb6aade5073a6617f661557377e8900a"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/di/BuiltInSkillManifestTest.kt",
+      "sha256": "8e25a60c1ee7194446273293029568f5095e268bfdd842014c2a784f8cd918ab"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/notebook/CanvasEditorPersistenceTest.kt",
+      "sha256": "ca3f50e3ec5d7c8f1499c49427fd148fd1780aed38d95fefa783372000b0be22"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/notebook/CanvasErasedSketchUiTest.kt",
+      "sha256": "9e448406d543697355c74c359b5a3eab14fe9a9d941b5882fddcefa6c8eb3697"
+    }
+  ]
+}

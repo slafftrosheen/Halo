@@ -59,6 +59,7 @@ internal fun CanvasSketchPadDialog(
     onDraft: (String) -> Unit = {},
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
+    editingExisting: Boolean = false,
 ) {
     // Keep the source stable while the parent receives drafts. Unchanged v1 is saved byte-for-byte.
     val source = remember(initial) { recovery ?: initial }
@@ -80,7 +81,7 @@ internal fun CanvasSketchPadDialog(
         },
         confirmButton = {
             com.halo.app.ui.components.HaloActionButton(onClick = { onSave(draft) },
-                enabled = document?.strokes?.isNotEmpty() == true) { Text(uiText("Save")) }
+                enabled = document != null && (editingExisting || document.strokes.isNotEmpty())) { Text(uiText("Save")) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },
     )

@@ -36,6 +36,57 @@ class CanvasEditorPersistenceTest {
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
+    @Test fun erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val ink = com.halo.sdk.runtime.ink.InkEditor(requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(original)))
+        assertTrue(ink.begin(com.halo.sdk.runtime.ink.InkTool.STYLUS, erasing = true))
+        assertTrue(ink.sample(com.halo.sdk.runtime.ink.InkPoint(150, 150)))
+        assertTrue(ink.finish())
+        val erased = com.halo.sdk.runtime.ink.InkCodec.encode(ink.document)
+        assertTrue(ink.document.strokes.isEmpty())
+        val vm = editor(board)
+        vm.keepDrawingDraft(com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = erased)).join()
+        vm.addSketch(erased, card, original).join()
+        val reopened = NotebookCanvasRepository(db, db.notebookCanvasDao(), db.notebookDao())
+        val node = reopened.observe(board).first()!!.nodes.single()
+        assertEquals(card, node.id)
+        assertEquals(erased, node.text)
+        assertNull(reopened.drawingDraft(board))
+        assertNull(vm.uiState.value.drawingDraft)
+    }
+
+    @Test fun erasedEditRejectsChangedSourceAndRetainsRecoveryDraft() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val changed = "sketch:v1|300,300;400,400"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val vm = editor(board)
+        val erased = com.halo.sdk.runtime.ink.InkCodec.encode(com.halo.sdk.runtime.ink.InkDocument())
+        val draft = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = erased)
+        vm.keepDrawingDraft(draft).join()
+        assertTrue(repository.updateText(board, card, changed, original))
+        vm.addSketch(erased, card, original).join()
+        assertEquals(changed, repository.observe(board).first()!!.nodes.single().text)
+        assertEquals(draft, repository.drawingDraft(board))
+        assertNotNull(vm.uiState.value.notice)
+    }
+
+    @Test fun corruptSketchAndEmptyNewSketchCannotPublishOrDiscardDraft() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val vm = editor(board)
+        val draft = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = original)
+        vm.keepDrawingDraft(draft).join()
+        vm.addSketch("sketch:v3|broken", card, original).join()
+        vm.addSketch(com.halo.sdk.runtime.ink.InkCodec.encode(com.halo.sdk.runtime.ink.InkDocument())).join()
+        assertTrue(runCatching { repository.updateText(board, card, "sketch:v3|broken", original) }.isFailure)
+        assertTrue(runCatching { repository.addSketchNode(board, 0f, 0f, "sketch:v3|1400") }.isFailure)
+        assertEquals(original, repository.observe(board).first()!!.nodes.single().text)
+        assertEquals(draft, repository.drawingDraft(board))
+    }
     @Test fun leavingImmediatelyFlushesLatestTextPositionAndViewport() = runBlocking {
         val board = repository.create()
         val card = repository.addTextNode(board, 0f, 0f, "original")

@@ -8,3 +8,5 @@ Added17 EN/RU/LV/PL catalogue entries. Coverage checker now guards nativeUi keys
 
 First focused gate PASS in7m49s:12 desktop cases across AppLanguageTest(5), AppLanguageUiTest(4), StudyProgressLocalizationTest(3), zero failures/errors/skips. Both matching APKs assembled. [Raw gate/XML/parity](artifacts/HALO-HOST-UI-036-2026-10-24). Phone reconnected; installation and isolated native checks are running, results pending. This does not establish real speech, TalkBack, live notification behavior, per-language model quality, or full original issue acceptance.
 
+
+Phone follow-up: matching APK install/readback succeeded. Locale fixture failed visibility twice in landscape/200% with focused keyboard; independent intent fixture failed103.169s before cases because the separately registered halo.models skill lacked a bundled manifest. Both are addressed in the [follow-up source/report](HALO-INK-MODEL-028-039-VERIFICATION-2026-10-24.md). No initial intent suitability result exists.

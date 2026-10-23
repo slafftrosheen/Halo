@@ -11,6 +11,28 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class BuiltInSkillManifestTest {
     @Test
+    fun modelSetupManifestPreservesEveryRegisteredOperationAndItsRisk() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val defaults = com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills()
+            .single { it.id.value == "halo.models" }
+        val bundled = BuiltInSkillManifestLoader(context).loadBundledManifests()
+            .single { it.id == defaults.id }
+        val merged = BuiltInSkillManifestLoader(context).load().single { it.id == defaults.id }
+        val expectedRisks = mapOf(
+            "halo_local_setup_status" to com.halo.sdk.runtime.skills.SkillRisk.READ_ONLY,
+            "halo_local_setup_start" to com.halo.sdk.runtime.skills.SkillRisk.SENSITIVE,
+            "halo_local_setup_pause" to com.halo.sdk.runtime.skills.SkillRisk.REVERSIBLE,
+            "halo_local_setup_rollback" to com.halo.sdk.runtime.skills.SkillRisk.DESTRUCTIVE,
+            "halo_local_setup_keep_files" to com.halo.sdk.runtime.skills.SkillRisk.REVERSIBLE,
+        )
+        for (skill in listOf(defaults, bundled, merged)) {
+            assertEquals(expectedRisks.keys, skill.tools)
+            assertEquals(expectedRisks, skill.toolDefinitions.associate { it.toolId to it.risk })
+            assertTrue(skill.requiredPermissions.isEmpty())
+            assertTrue(skill.toolDefinitions.all { it.requiredPermissions.isEmpty() })
+        }
+    }
+    @Test
     fun everyBundledSkillManifestLoadsUnderTheApkPolicy() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val assetNames = context.assets.list("skills").orEmpty().filter { it.endsWith(".json") }.sorted()

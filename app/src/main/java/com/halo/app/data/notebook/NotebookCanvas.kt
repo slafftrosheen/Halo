@@ -520,7 +520,8 @@ class NotebookCanvasRepository(
         val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
         if (node.refObjectId != null) return@withTransaction false
         check(expectedText == null || node.text == expectedText) { "Source changed. Review it again." }
-        if (node.type == CanvasNodeType.SKETCH.name) require(CanvasSketchCodec.decode(text).isNotEmpty())
+        // Clearing the final stroke is a valid edit; corrupt input must still fail closed.
+        if (node.type == CanvasNodeType.SKETCH.name) require(com.halo.sdk.runtime.ink.InkCodec.decode(text) != null)
         val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
         if (changed) touch(canvasId)
         changed

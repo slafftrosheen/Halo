@@ -1,0 +1,9 @@
+{
+  "expectedSha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+  "runId": "intent-v1-24134a3fef534b42afc0157ddabeee12",
+  "modelId": "qwen3-0.6b-dynamic-int4",
+  "sourceStamp": "bca90bd9-plus-host-ui-localization-036",
+  "testSha256": "9c19e5c0a4381b6f8ba89732752ad9b976f31a7d946d7145e3605368976e06ef",
+  "appSha256": "5a32a7d7cc4a2f1a6b25a482e08177abfd825a9d25c88b1ee324f57bad1c075b",
+  "expectedBytes": 344671744
+}
