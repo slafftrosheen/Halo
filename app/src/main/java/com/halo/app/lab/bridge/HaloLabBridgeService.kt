@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.lab.worker.HaloModelBenchService
@@ -43,6 +44,7 @@ import org.json.JSONObject
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.Semaphore
 
 /** Authenticated opt-in AIDL endpoint. Only verified LiteRT CPU text smoke is implemented. */
 class HaloLabBridgeService : Service() {
@@ -67,6 +69,7 @@ class HaloLabBridgeService : Service() {
         override fun acquireModel(requestJson: String?) = dispatch(requestJson) { unsupported("HALO_ACQUISITION_NOT_IMPLEMENTED") }
         override fun queryAcquisition(requestJson: String?) = dispatch(requestJson) { unsupported("HALO_ACQUISITION_NOT_IMPLEMENTED") }
         override fun cancelAcquisition(requestJson: String?) = dispatch(requestJson) { unsupported("HALO_ACQUISITION_NOT_IMPLEMENTED") }
+        override fun openEvidenceArtifact(requestJson: String?): ParcelFileDescriptor? = openEvidenceArtifactPipe(requestJson)
     }
 
     override fun onCreate() {
@@ -97,6 +100,57 @@ class HaloLabBridgeService : Service() {
         catch (failure: Throwable) { error("BRIDGE_${failure.javaClass.simpleName.take(48)}") }
     }
 
+    private fun openEvidenceArtifactPipe(raw: String?): ParcelFileDescriptor? {
+        var acquired = false
+        try {
+            authenticate()
+            if (raw.isNullOrEmpty() || raw.toByteArray(Charsets.UTF_8).size > HaloLabProtocol.MAX_REQUEST_BYTES) return null
+            if (!HaloLabConsentStore(this).isEnabled() || !artifactTransfers.tryAcquire()) return null
+            acquired = true
+            val request = JSONObject(raw)
+            val attemptId = request.optString("remoteRunId")
+            val artifactId = request.optString("artifactId")
+            val attempt = journal.query(attemptId) ?: return null
+            val bytes = HaloLabEvidenceArtifact.resolve(
+                attemptId = attempt.attemptId,
+                requestedArtifactId = artifactId,
+                terminal = attempt.terminal,
+                fixtureId = attempt.payload.optString("fixtureId").takeIf { attempt.payload.has("fixtureId") },
+                response = attempt.payload.optString("response").takeIf { attempt.payload.has("response") && !attempt.payload.isNull("response") },
+                outputTruncated = attempt.payload.optBoolean("outputTruncated", false),
+            ) ?: return null
+            val pipe = ParcelFileDescriptor.createPipe()
+            val released = AtomicBoolean(false)
+            fun releaseTransferSlot() {
+                if (released.compareAndSet(false, true)) artifactTransfers.release()
+            }
+            val writer = scope.launch(Dispatchers.IO) {
+                try {
+                    ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use { output ->
+                        output.write(bytes)
+                        output.flush()
+                    }
+                } catch (_: Exception) {
+                    runCatching { pipe[1].close() }
+                } finally {
+                    releaseTransferSlot()
+                }
+            }
+            writer.invokeOnCompletion { cause ->
+                if (cause != null) runCatching { pipe[1].close() }
+                releaseTransferSlot()
+            }
+            acquired = false
+            return pipe[0]
+        } catch (_: SecurityException) {
+            return null
+        } catch (_: Throwable) {
+            return null
+        } finally {
+            if (acquired) artifactTransfers.release()
+        }
+    }
+
     private fun authenticate() {
         val uid = Binder.getCallingUid()
         if (checkCallingOrSelfPermission(HaloLabProtocol.BRIDGE_PERMISSION) != PackageManager.PERMISSION_GRANTED) throw SecurityException()
@@ -113,7 +167,7 @@ class HaloLabBridgeService : Service() {
             return JSONObject().put("status", "PROTOCOL_MISMATCH").toString()
         }
         val consent = JSONArray(listOf("MODEL_INSPECTION", "LOCAL_TEST_EXECUTION"))
-        val features = JSONArray(listOf("MODEL_INVENTORY", "ARTIFACT_LEASES", "TEXT_EXECUTION", "EVENT_REPLAY"))
+        val features = JSONArray(listOf("MODEL_INVENTORY", "ARTIFACT_LEASES", "TEXT_EXECUTION", "EVENT_REPLAY", "EVIDENCE_ARTIFACT_READ"))
         val capturedAt = System.currentTimeMillis()
         val sourceId = com.halo.app.BuildConfig.HALO_SOURCE_ID
         val runtimeVersion = com.halo.providers.litert.LiteRtLocalProvider.RUNTIME_VERSION
@@ -703,6 +757,7 @@ class HaloLabBridgeService : Service() {
         private val WORKER_STAGES = setOf("LOAD", "EXECUTE", "UNLOAD")
         private val UUID_PATTERN = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
         private val SHA_PATTERN = Regex("[0-9a-f]{64}")
+        private val artifactTransfers = Semaphore(2)
         private fun sha256(value: String): String = java.security.MessageDigest.getInstance("SHA-256")
             .digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
         private fun sha256Bytes(value: ByteArray): String = java.security.MessageDigest.getInstance("SHA-256")

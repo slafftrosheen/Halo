@@ -1,5 +1,7 @@
 package com.halo.lab.bridge.v1;
 
+import android.os.ParcelFileDescriptor;
+
 /** Narrow versioned JSON envelope transport. Every method applies protocol bounds server-side. */
 interface IHaloLabBridge {
     String handshake(String requestJson);
@@ -15,4 +17,5 @@ interface IHaloLabBridge {
     String acquireModel(String requestJson);
     String queryAcquisition(String requestJson);
     String cancelAcquisition(String requestJson);
+    ParcelFileDescriptor openEvidenceArtifact(String requestJson);
 }
