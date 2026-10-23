@@ -1,0 +1,10 @@
+<resources>
+    <string name="canvas50_inspect">Skatīt priekšskatījumu</string>
+    <string name="canvas50_select">Atlasīt kartīti</string>
+    <string name="canvas50_deferred">Atlasi šo kartīti, lai ielādētu tās priekšskatījumu.</string>
+    <string name="canvas50_fit">Ietilpināt priekšskatījumu</string>
+    <string name="canvas50_previous_page">Iepriekšējā lapa</string>
+    <string name="canvas50_next_page">Nākamā lapa</string>
+    <string name="canvas50_page">%1$d. lapa no %2$d</string>
+    <string name="canvas50_zoom_level">Mērogs %1$d%%</string>
+</resources>

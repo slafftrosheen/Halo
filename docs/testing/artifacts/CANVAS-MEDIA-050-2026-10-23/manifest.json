@@ -1,0 +1,79 @@
+{
+  "issue": 50,
+  "compiledSourceTrees": {
+    "app": "3f6d62d6888f6a229fefcef3c4258c55a1c1fa09"
+  },
+  "apk": {
+    "bytes": 289019053,
+    "sha256": "28349e247104d78d174e23f755ba2240a189545809a6a13979165135c919f67d",
+    "binaryCommitted": false
+  },
+  "suites": [
+    {
+      "module": "app",
+      "name": "com.halo.app.data.notebook.CanvasFileMarkupCodecTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.notebook.CanvasAnnotatedPreviewTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.notebook.CanvasCardFrameTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.workspace.WorkspaceImagePreviewTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.workspace.WorkspacePreviewConcurrencyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "renders": [
+    "com.halo.app.ui.screens.notebook.CanvasAnnotatedPreviewTest.imageAndLegacyInkUseExactlyTheSameFittedBounds.png",
+    "com.halo.app.ui.screens.notebook.CanvasMediaCardTest.bodySelectsAndOnlyExplicitInspectionOpensZoomWithoutChangingSource.png",
+    "com.halo.app.ui.screens.notebook.CanvasMediaCardTest.latvianCard200.png",
+    "com.halo.app.ui.screens.notebook.CanvasMediaCardTest.tallPhotoUsesMostOfTheCardViewportInDark200.png",
+    "com.halo.app.ui.screens.notebook.CanvasMediaCardTest.widePhotoKeepsItsAspectWithoutCropping.png"
+  ],
+  "deviceEvidence": "device/device-observations.json",
+  "privateRawCapturesCommitted": false,
+  "githubActionsRun": false
+}

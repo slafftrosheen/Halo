@@ -25,18 +25,38 @@ import com.halo.app.ui.design.HaloShapes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.io.InputStream
 
 private data class ImagePreviewState(val bitmap: Bitmap? = null, val loading: Boolean = true)
 
 /** Reopen the source for bounds and pixels, keeping large originals off the main thread. */
-internal fun decodeWorkspacePreview(open: () -> InputStream?): Bitmap? {
+internal fun decodeWorkspacePreview(maxDimension: Int = 1024, open: () -> InputStream?): Bitmap? {
+    val limit = maxDimension.coerceIn(128, 1536)
     val bounds = BitmapFactory.Options().also { it.inJustDecodeBounds = true }
     open()?.use { BitmapFactory.decodeStream(it, null, bounds) }
-    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-    val options = BitmapFactory.Options().also { it.inSampleSize = 1 }
-    while (bounds.outWidth / options.inSampleSize > 1024 || bounds.outHeight / options.inSampleSize > 1024) options.inSampleSize *= 2
+    if (bounds.outWidth !in 1..32768 || bounds.outHeight !in 1..32768) return null
+    val options = BitmapFactory.Options().also { it.inSampleSize = 1; it.inPreferredConfig = Bitmap.Config.ARGB_8888 }
+    while (bounds.outWidth / options.inSampleSize > limit || bounds.outHeight / options.inSampleSize > limit) options.inSampleSize *= 2
     return open()?.use { BitmapFactory.decodeStream(it, null, options) }
+}
+
+private val workspacePreviewDecodes = Semaphore(2)
+
+/** Shared only by local display decoders; no network, persistence or execution policy. */
+internal suspend fun <T> withWorkspacePreviewDecode(block: suspend () -> T): T =
+    workspacePreviewDecodes.withPermit { block() }
+
+internal suspend fun decodeWorkspacePreviewAsync(maxDimension: Int = 1024, open: () -> InputStream?): Bitmap? {
+    var owned: Bitmap? = null
+    try {
+        val decoded = withWorkspacePreviewDecode {
+            withContext(Dispatchers.IO) { decodeWorkspacePreview(maxDimension, open).also { owned = it } }
+        }
+        owned = null
+        return decoded
+    } finally { owned?.takeUnless { it.isRecycled }?.recycle() }
 }
 
 @Composable
@@ -45,31 +65,34 @@ fun GeneratedImagePreview(bytes: ByteArray, modifier: Modifier = Modifier, label
 }
 
 @Composable
-fun WorkspaceAttachmentPreview(attachment: NoteAttachment, modifier: Modifier = Modifier, onOpen: (() -> Unit)? = null) {
+fun WorkspaceAttachmentPreview(attachment: NoteAttachment, modifier: Modifier = Modifier, onOpen: (() -> Unit)? = null,
+    maxDimension: Int = 1024, inspectable: Boolean = true, onAspectRatio: (Float) -> Unit = {}) {
     val resolver = androidx.compose.ui.platform.LocalContext.current.contentResolver
-    ImageSourcePreview(attachment.pathOrUri, attachment.displayName ?: uiText("Image"), modifier, onOpen) {
+    ImageSourcePreview(attachment, attachment.displayName ?: uiText("Image"), modifier, onOpen, maxDimension, inspectable, onAspectRatio) {
         if (attachment.storageType == "MANAGED_FILE") java.io.File(attachment.pathOrUri).inputStream()
         else resolver.openInputStream(android.net.Uri.parse(attachment.pathOrUri))
     }
 }
 
 @Composable
-private fun ImageSourcePreview(key: Any, label: String, modifier: Modifier, onOpen: (() -> Unit)? = null, open: () -> InputStream?) {
+private fun ImageSourcePreview(key: Any, label: String, modifier: Modifier, onOpen: (() -> Unit)? = null,
+    maxDimension: Int = 1024, inspectable: Boolean = true, onAspectRatio: (Float) -> Unit = {}, open: () -> InputStream?) {
     var retry by remember(key) { mutableIntStateOf(0) }
-    val state by produceState(ImagePreviewState(), key, retry) {
+    val state by androidx.compose.runtime.key(key, maxDimension, retry) { produceState(ImagePreviewState()) {
         value = ImagePreviewState()
-        val bitmap = withContext(Dispatchers.IO) {
-            try { decodeWorkspacePreview(open) }
+        val bitmap = try { decodeWorkspacePreviewAsync(maxDimension, open) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { null }
-        }
         value = ImagePreviewState(bitmap, loading = false)
-    }
+    } }
+    LaunchedEffect(state.bitmap) { state.bitmap?.let { onAspectRatio(it.width.toFloat() / it.height) } }
+    DisposableEffect(state.bitmap) { val owned = state.bitmap; onDispose { owned?.takeUnless { it.isRecycled }?.recycle() } }
     Surface(modifier, shape = HaloShapes.control, color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val bitmap = state.bitmap
             when {
-                bitmap != null -> InspectableImage(bitmap, label, Modifier.fillMaxSize(), onOpen)
+                bitmap != null -> if (inspectable) InspectableImage(bitmap, label, Modifier.fillMaxSize(), onOpen)
+                    else Image(bitmap.asImageBitmap(), label, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
                 state.loading -> CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.dp)
                 else -> Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(uiText("Preview unavailable"), style = MaterialTheme.typography.bodySmall)

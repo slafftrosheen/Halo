@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-23",
+  "deviceModel": "23124RA7EO",
+  "androidApi": 35,
+  "apkSha256": "28349e247104d78d174e23f755ba2240a189545809a6a13979165135c919f67d",
+  "apkBytes": 289019053,
+  "installedReadBackHashMatches": true,
+  "instrumentation": "OK (3 tests)",
+  "fixture": [
+    "com.halo.app.ui.screens.notebook.CanvasPreviewDeviceTest",
+    "com.halo.app.ui.screens.notebook.CanvasPdfInspectionDeviceTest"
+  ],
+  "qualified": [
+    "20 repeated 512-edge image decodes and separate 1536-edge inspection",
+    "Real PDF page count, page pixels and bounded render",
+    "Original synthetic source SHA256 unchanged",
+    "Real PDF page navigation, actual Russian 200% text, Fit and Close in read-only inspection"
+  ],
+  "notQualified": [
+    "Whole-board sustained memory or pan frame times",
+    "Physical card gesture/accessibility acceptance",
+    "Tablet/stylus",
+    "Live providers"
+  ],
+  "userWorkspaceDataModified": false,
+  "temporaryFixtureFilesDeletedByTests": true,
+  "osSettingsModified": false,
+  "syntheticCapture": "pdf-inspection.png",
+  "syntheticCaptureVisuallyInspected": true
+}

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -25,6 +26,7 @@ import com.halo.app.data.notebook.CanvasFileMarkupCodec
 import com.halo.app.data.workspace.WorkspaceFile
 import com.halo.app.language.uiText
 import com.halo.sdk.runtime.ink.InkCodec
+import com.halo.app.ui.workspace.withWorkspacePreviewDecode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -32,37 +34,41 @@ import kotlinx.coroutines.withContext
 internal data class InkPage(val bitmap: Bitmap, val count: Int, val page: Int = 1)
 internal suspend fun renderInkPage(context: Context, file: WorkspaceFile, index: Int, maxDimension: Int = 1200): InkPage? {
     var owned: Bitmap? = null
+    val limit = maxDimension.coerceIn(128, 1536)
     try {
-        val result = withContext(Dispatchers.IO) {
-    if (file.mimeType == "application/pdf") {
-        context.contentResolver.openFileDescriptor(file.uri, "r")?.use { descriptor ->
-            PdfRenderer(descriptor).use { renderer ->
-                if (index !in 1..renderer.pageCount) return@use null
-                renderer.openPage(index - 1).use { pdfPage ->
-                    val maxEdge = maxOf(pdfPage.width, pdfPage.height).coerceAtLeast(1)
-                    val factor = minOf(1f, maxDimension.toFloat() / maxEdge)
-                    val bitmap = Bitmap.createBitmap((pdfPage.width * factor).toInt().coerceAtLeast(1),
-                        (pdfPage.height * factor).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
-                    owned = bitmap
-                    try {
-                        bitmap.eraseColor(Color.WHITE)
-                        pdfPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        InkPage(bitmap, renderer.pageCount, index)
-                    } catch (failure: Exception) { bitmap.recycle(); throw failure }
+        val result = withWorkspacePreviewDecode {
+            withContext(Dispatchers.IO) {
+                when {
+                    file.mimeType == "application/pdf" -> context.contentResolver.openFileDescriptor(file.uri, "r")?.use { descriptor ->
+                        PdfRenderer(descriptor).use { renderer ->
+                            if (index !in 1..renderer.pageCount) return@withContext null
+                            renderer.openPage(index - 1).use { page ->
+                                val factor = limit.toFloat() / maxOf(page.width, page.height).coerceAtLeast(1)
+                                val bitmap = Bitmap.createBitmap((page.width * factor).toInt().coerceAtLeast(1),
+                                    (page.height * factor).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+                                owned = bitmap
+                                bitmap.eraseColor(Color.WHITE)
+                                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                                InkPage(bitmap, renderer.pageCount, index)
+                            }
+                        }
+                    }
+                    file.mimeType.startsWith("image/") -> {
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        context.contentResolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+                        if (bounds.outWidth !in 1..32768 || bounds.outHeight !in 1..32768) return@withContext null
+                        var sample = 1
+                        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > limit) sample *= 2
+                        val bitmap = context.contentResolver.openInputStream(file.uri)?.use {
+                            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply {
+                                inSampleSize = sample; inPreferredConfig = Bitmap.Config.ARGB_8888
+                            })
+                        }
+                        bitmap?.let { owned = it; InkPage(it, 1) }
+                    }
+                    else -> null
                 }
             }
-        }
-    } else if (file.mimeType.startsWith("image/")) {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(file.uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        if (bounds.outWidth !in 1..32768 || bounds.outHeight !in 1..32768) return@withContext null
-        var sample = 1
-        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxDimension) sample *= 2
-        val bitmap = context.contentResolver.openInputStream(file.uri)?.use {
-            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
-        }
-        bitmap?.let { owned = it; InkPage(it, 1) }
-    } else null
         }
         owned = null
         return result
@@ -91,14 +97,14 @@ internal fun CanvasSourceInkDialog(
     }
     var error by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf(false) }
-    val rendered by produceState<InkPage?>(null, file.uri.toString(), file.version, page) {
+    val rendered by key(file.uri.toString(), file.version, page) { produceState<InkPage?>(null) {
         value = null
         value = try {
             error = false
             renderInkPage(context, file, page).also { if (it == null) error = true }
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
           catch (_: Exception) { error = true; null }
-    }
+    } }
     val currentPage = rendered?.takeIf { it.page == page }
     val displayedBitmap = rendered?.bitmap
     DisposableEffect(displayedBitmap) { onDispose { displayedBitmap?.recycle() } }
@@ -176,26 +182,37 @@ internal fun CanvasSourceInkDialog(
 
 /** Lightweight first-page thumbnail with the same source/page-coordinate ink overlay. */
 @Composable
-internal fun CanvasAnnotatedFilePreview(file: WorkspaceFile, encoded: String, modifier: Modifier = Modifier) {
+internal fun CanvasAnnotatedFilePreview(file: WorkspaceFile, encoded: String, modifier: Modifier = Modifier,
+    page: Int = 1, maxDimension: Int = 512, onPageCount: (Int) -> Unit = {}, onAspectRatio: (Float) -> Unit = {}) {
     val context = LocalContext.current
-    val rendered by produceState<InkPage?>(null, file.uri.toString(), file.version) {
+    var loading by remember(file.uri.toString(), file.version, page, maxDimension) { mutableStateOf(true) }
+    var retry by remember(file.uri.toString(), file.version, page, maxDimension) { mutableIntStateOf(0) }
+    val rendered by key(file.uri.toString(), file.version, page, maxDimension, retry) { produceState<InkPage?>(null) {
+        loading = true
         value = null
-        value = try { renderInkPage(context, file, 1, maxDimension = 512) }
-            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) { null }
-    }
+        try { value = renderInkPage(context, file, page, maxDimension) }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { value = null }
+        finally { loading = false }
+    } }
     val previewBitmap = rendered?.bitmap
-    DisposableEffect(previewBitmap) { onDispose { previewBitmap?.recycle() } }
-    val strokes = remember(encoded) { CanvasFileMarkupCodec.decode(encoded).pages[1].orEmpty() }
+    DisposableEffect(previewBitmap) { onDispose { previewBitmap?.takeUnless { it.isRecycled }?.recycle() } }
+    LaunchedEffect(rendered) { rendered?.let { onPageCount(it.count); onAspectRatio(it.bitmap.width.toFloat() / it.bitmap.height) } }
+    val strokes = remember(encoded, page) { CanvasFileMarkupCodec.decode(encoded).pages[page].orEmpty() }
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
         rendered?.let { image ->
             val aspect = image.bitmap.width.toFloat() / image.bitmap.height
             val fittedWidth = minOf(maxWidth, maxHeight * aspect)
-            Box(Modifier.width(fittedWidth).height(fittedWidth / aspect)) {
-                Image(image.bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize(),
+            Box(Modifier.width(fittedWidth).height(fittedWidth / aspect).testTag("canvas-source-fit")) {
+                Image(image.bitmap.asImageBitmap(), contentDescription = if (file.mimeType == "application/pdf")
+                    stringResource(R.string.canvas50_page, image.page, image.count) else file.displayName, modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.FillBounds)
-                if (strokes.isNotBlank()) CanvasSketchPreview(strokes, Modifier.fillMaxSize())
+                if (strokes.isNotBlank()) CanvasSketchPreview(strokes, Modifier.fillMaxSize().testTag("canvas-source-ink"))
             }
-        } ?: Text(uiText("Preview unavailable"), Modifier.align(Alignment.Center), style = MaterialTheme.typography.bodySmall)
+        } ?: if (loading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+        else Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(uiText("Preview unavailable"), style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { retry++ }) { Text(uiText("Try again")) }
+        }
     }
 }

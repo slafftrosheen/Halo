@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.workspace.WorkspaceImagePreviewTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-23T09:04:30.621Z" hostname="MINIFOXEY" time="0.594">
+  <properties/>
+  <testcase name="managedGeneratedFileCanBeReadAndLargeSourceIsSampled" classname="com.halo.app.ui.workspace.WorkspaceImagePreviewTest" time="0.257"/>
+  <testcase name="invalidOrMissingImageHasAnExplicitFailedResult" classname="com.halo.app.ui.workspace.WorkspaceImagePreviewTest" time="0.041"/>
+  <testcase name="CanvasThumbnailAndExplicitInspectionUseSeparateBoundedAllocations" classname="com.halo.app.ui.workspace.WorkspaceImagePreviewTest" time="0.29"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

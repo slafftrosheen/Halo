@@ -1,0 +1,278 @@
+{
+  "schema": 1,
+  "evidence": "ANDROID_LOOPBACK_TLS_PRODUCTION_OWNERS",
+  "rows": [
+    {
+      "owner": "openai",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "anthropic",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "gemini",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "openrouter",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "groq",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "cerebras",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "xai",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "opencode.zen",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "custom.openaicompatible",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "provider.ollama",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "companion.opencode",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "provider.elevenlabs.tts",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "openrouter.web",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "web.public",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "mcp.configured",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "google.mail",
+      "mode": "PRIVATE",
+      "dns": 0,
+      "connects": 0,
+      "requests": 0
+    },
+    {
+      "owner": "openai",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "anthropic",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "gemini",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "openrouter",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "groq",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "cerebras",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "xai",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "opencode.zen",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "custom.openaicompatible",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "provider.ollama",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "companion.opencode",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "provider.elevenlabs.tts",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "openrouter.web",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "web.public",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "mcp.configured",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "google.mail",
+      "mode": "CLOUD",
+      "requests": 1
+    },
+    {
+      "owner": "web.public",
+      "case": "LOCAL_WORKSPACE_DERIVED_TOOL_BLOCKED",
+      "requests": 0
+    },
+    {
+      "owner": "provider.elevenlabs.tts",
+      "case": "LOCAL_WORKSPACE_DERIVED_SPEECH_BLOCKED",
+      "requests": 0
+    },
+    {
+      "owner": "web.public",
+      "case": "STALE_LOCAL_TOOL_BLOCKED",
+      "requests": 0
+    },
+    {
+      "owner": "openai",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "anthropic",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "gemini",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "openrouter",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "groq",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "cerebras",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "xai",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "opencode.zen",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "custom.openaicompatible",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "provider.ollama",
+      "case": "CONVERSATION_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "openai",
+      "case": "IMAGE_FEATURE_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "gemini",
+      "case": "IMAGE_FEATURE_DISABLED",
+      "requests": 0
+    },
+    {
+      "owner": "openrouter",
+      "case": "IMAGE_FEATURE_DISABLED",
+      "requests": 0
+    }
+  ]
+}

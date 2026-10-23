@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-23",
+  "sourceCommit": "c1ab70710b0b3211276b60eaef48625caa7bf0a9",
+  "deviceModel": "23124RA7EO",
+  "androidApi": 35,
+  "apkSha256": "764d48140419a53c9d7093722d67e1fff9c4fb8cede9a418e1d8938ce9500e19",
+  "installedReadBackHashMatches": true,
+  "instrumentation": "OK (2 tests)",
+  "fixture": "PrivateDispatchOwnerTraceTest",
+  "traceRows": 48,
+  "qualified": "Production HTTP owner loopback-TLS dispatch policy cases and rendered WebView cancellation, including derived/stale sharing provenance",
+  "notQualified": [
+    "Live provider quality/billing",
+    "Global UID traffic silence",
+    "Ordinary user profile disclosure/navigation",
+    "Physical speech/Stop/TalkBack",
+    "Final future issue50 APK"
+  ],
+  "realProfilePowerEnabledForTests": false,
+  "externalProviderRequestsUsed": false
+}

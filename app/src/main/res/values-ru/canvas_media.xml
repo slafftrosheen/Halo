@@ -1,0 +1,10 @@
+<resources>
+    <string name="canvas50_inspect">Открыть предпросмотр</string>
+    <string name="canvas50_select">Выбрать карточку</string>
+    <string name="canvas50_deferred">Выберите карточку, чтобы загрузить её предпросмотр.</string>
+    <string name="canvas50_fit">Вписать предпросмотр</string>
+    <string name="canvas50_previous_page">Предыдущая страница</string>
+    <string name="canvas50_next_page">Следующая страница</string>
+    <string name="canvas50_page">Страница %1$d из %2$d</string>
+    <string name="canvas50_zoom_level">Масштаб %1$d%%</string>
+</resources>

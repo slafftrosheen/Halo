@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T09:04:28.295Z" hostname="MINIFOXEY" time="2.174">
+  <properties/>
+  <testcase name="deferredCardDoesNotDecodeUntilExplicitlySelectedAndDraggingDoesNotInspect" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.406"/>
+  <testcase name="widePhotoKeepsItsAspectWithoutCropping" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.232"/>
+  <testcase name="bodySelectsAndOnlyExplicitInspectionOpensZoomWithoutChangingSource" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.791"/>
+  <testcase name="missingCanonicalFileCannotFallBackToAnOldAttachment" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.136"/>
+  <testcase name="replacingTheSourceClosesItsOldInspection" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.206"/>
+  <testcase name="tallPhotoUsesMostOfTheCardViewportInDark200" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.179"/>
+  <testcase name="latvianCard200" classname="com.halo.app.ui.screens.notebook.CanvasMediaCardTest" time="0.211"/>
+  <system-out><![CDATA[Roborazzi: It seems that there are multiple windows.We capture all windows using captureScreenRoboImage(). We can add a flag to disable this behavior so please let us know if you need it.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

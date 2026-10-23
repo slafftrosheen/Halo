@@ -89,3 +89,8 @@ installation and Google SDK account authorization are explicit OS/setup boundari
 mode selection cannot recall an already-issued OS authorization. Local model quality,
 wearable/audio hardware, live provider behavior and broader device qualification remain
 in issue #43. The capability guide was delivered separately in issue #48.
+
+
+## API35 phone supplement — 2026-10-23
+
+After the phone reconnected, the already built c1ab70710b0b3211276b60eaef48625caa7bf0a9 app and test APKs were installed on model 23124RA7EO / API35 without rebuilding. Installed SHA256 matched `764d48140419a53c9d7093722d67e1fff9c4fb8cede9a418e1d8938ce9500e19`. PrivateDispatchOwnerTraceTest passed both cases (production HTTP loopback-TLS owners and rendered WebView cancellation), producing 48 content-free trace rows: 16 Private, 16 cloud-enabled, 3 derived/stale policy blocks, 10 conversation-disabled, and 3 image-feature-disabled. Evidence is under `artifacts/PRIVATE-POWER-047-2026-10-23/device/API35-c1ab`. This supplements the historical disconnected-final-gate record; it does not rewrite that earlier result. No real provider credentials/requests, billing, global UID silence, real Power profile activation, or broader speech/TalkBack acceptance are claimed. These results qualify the recorded c1ab binary, not subsequent integrated source.

@@ -81,6 +81,8 @@ import kotlin.math.roundToInt
 fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var requestedPreviewId by remember(viewModel.canvasId) { mutableStateOf<String?>(null) }
+    LaunchedEffect(state.selectedNodeId) { requestedPreviewId = state.selectedNodeId }
     var observedOrganizationCommit by remember(viewModel.canvasId) {
         mutableLongStateOf(state.organizationCommitRevision)
     }
@@ -868,6 +870,24 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     onHalo = { showAi = true }
                 )
             }
+            val previewCandidates = state.nodes.mapNotNull { node ->
+                when (node.type) {
+                    CanvasNodeType.GROUP, CanvasNodeType.TAG, CanvasNodeType.SKETCH, CanvasNodeType.INK_SELECTION -> return@mapNotNull null
+                    else -> Unit
+                }
+                val ref = node.refObjectId ?: return@mapNotNull null
+                val source = canvasMediaSource(state.images[ref], state.files[ref])
+                if (source.attachment == null && source.file?.isCanvasPreviewAvailable() != true)
+                    return@mapNotNull null
+                val motion = cardMotion[node.id]
+                CanvasPreviewCandidate(node.id,
+                    with(density) { ((motion?.x?.value ?: node.x).dp * state.viewportScale).toPx() } + state.viewportX,
+                    with(density) { ((motion?.y?.value ?: node.y).dp * state.viewportScale).toPx() } + state.viewportY,
+                    with(density) { (node.width * state.viewportScale).dp.toPx() },
+                    with(density) { (node.height * state.viewportScale).dp.toPx() }, node.zIndex)
+            }
+            val admittedPreviews = admittedCanvasPreviews(previewCandidates, boardWidth.toFloat(),
+                boardHeight.toFloat(), requestedPreviewId ?: state.selectedNodeId)
             state.nodes.sortedWith(compareBy<CanvasNode> { it.type != CanvasNodeType.GROUP }
                 .thenBy { it.zIndex }).forEach { node ->
                 key(node.id) {
@@ -995,18 +1015,19 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 }
                             },
                         )
+                        else if (state.images[node.refObjectId] != null || state.files[node.refObjectId]?.isCanvasVisualSource() == true) {
+                            val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
+                            val attachment = state.images[node.refObjectId]
+                            val file = state.files[node.refObjectId]
+                            CanvasMediaCard(reference?.title ?: attachment?.displayName ?: file?.displayName ?: uiText("Image"),
+                                attachment, file, node.text, previewEnabled = node.id in admittedPreviews,
+                                canOpenSource = reference != null,
+                                onSelect = { requestedPreviewId = node.id; viewModel.selectNode(node.id) },
+                                onOpenSource = { viewModel.openReference(node.id) })
+                        }
                         else Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
                             val localFile = state.files[node.refObjectId]
-                            state.images[node.refObjectId]?.let { image ->
-                                com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image,
-                                    Modifier.fillMaxWidth().height(110.dp))
-                            }
-                            if (localFile?.mimeType?.startsWith("image/") == true ||
-                                localFile?.mimeType == "application/pdf") {
-                                CanvasAnnotatedFilePreview(localFile, node.text,
-                                    Modifier.fillMaxWidth().height(110.dp))
-                            }
                             Text(uiText(when {
                                 state.images[node.refObjectId] != null || localFile?.mimeType?.startsWith("image/") == true -> "Image"
                                 localFile?.mimeType?.startsWith("audio/") == true -> "Audio file"
