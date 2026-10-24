@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.runtime.ink.InkSelectionContextTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:19:13.778Z" hostname="MINIFOXEY" time="0.009">
+  <properties/>
+  <testcase name="emptyRegionDoesNotBecomeAnActionableSelectionAndDeletedStrokeIsRejected" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.004"/>
+  <testcase name="invalidOrAmbiguousSelectionReferencesAreRejected" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.001"/>
+  <testcase name="selectionCapturesExactIntersectingStrokeIdsAndResolvesOnlyOnItsSourceRevision" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.001"/>
+  <testcase name="sourceAndRevisionReferencesCannotInjectBookmarkFields" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.0"/>
+  <testcase name="selectionStrokeReferencesCannotExceedTheSourceDocumentStrokeQuota" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.001"/>
+  <testcase name="selectionStrokeReferencesUseTheCanonicalInkStrokeIdFormat" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.001"/>
+  <testcase name="stableSelectionRetainsDocumentRegionAndProvenance" classname="com.halo.sdk.runtime.ink.InkSelectionContextTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

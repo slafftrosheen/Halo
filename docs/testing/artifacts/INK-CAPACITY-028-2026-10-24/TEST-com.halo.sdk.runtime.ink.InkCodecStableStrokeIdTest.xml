@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.runtime.ink.InkCodecStableStrokeIdTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:19:13.646Z" hostname="MINIFOXEY" time="0.053">
+  <properties/>
+  <testcase name="legacyFormatsReceiveRepeatableIdsWhenOpened" classname="com.halo.sdk.runtime.ink.InkCodecStableStrokeIdTest" time="0.028"/>
+  <testcase name="v3RoundTripPreservesStrokeIdentityAcrossEdits" classname="com.halo.sdk.runtime.ink.InkCodecStableStrokeIdTest" time="0.001"/>
+  <testcase name="previewKeepsTheSameIdentityUntilTheStrokeIsCommitted" classname="com.halo.sdk.runtime.ink.InkCodecStableStrokeIdTest" time="0.004"/>
+  <testcase name="regionSelectionIncludesCrossingSegmentsButExcludesDistantStrokes" classname="com.halo.sdk.runtime.ink.InkCodecStableStrokeIdTest" time="0.017"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

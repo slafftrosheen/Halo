@@ -1,0 +1,39 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :sdk:runtime-sdk:test --tests com.halo.sdk.runtime.ink.*
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+
+> Task :sdk:runtime-sdk:compileTestKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-issues/sdk/runtime-sdk/src/test/java/com/halo/sdk/runtime/embodiment/HeyCyanSessionTest.kt:390:61 Unchecked cast of 'HaloEvent' to 'T (of fun <T : HaloEvent> observe)'.
+
+> Task :sdk:runtime-sdk:compileTestJava NO-SOURCE
+> Task :sdk:runtime-sdk:processTestResources NO-SOURCE
+> Task :sdk:runtime-sdk:testClasses UP-TO-DATE
+> Task :sdk:runtime-sdk:test
+
+BUILD SUCCESSFUL in 57s
+10 actionable tasks: 4 executed, 6 up-to-date
+Configuration cache entry stored.

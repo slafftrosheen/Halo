@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.runtime.ink.InkEncodingCapacityTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:19:13.702Z" hostname="MINIFOXEY" time="0.073">
+  <properties/>
+  <testcase name="wireCapacityRejectsContactBeforeChangingDocumentOrRedo" classname="com.halo.sdk.runtime.ink.InkEncodingCapacityTest" time="0.038"/>
+  <testcase name="predictedSizeMatchesAllToolsOptionalAxesAndSignedValues" classname="com.halo.sdk.runtime.ink.InkEncodingCapacityTest" time="0.001"/>
+  <testcase name="exactWireBoundaryAndOneCharacterOverflow" classname="com.halo.sdk.runtime.ink.InkEncodingCapacityTest" time="0.034"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

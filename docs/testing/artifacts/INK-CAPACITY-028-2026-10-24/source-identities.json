@@ -1,0 +1,14 @@
+[
+  {
+    "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/ink/InkCodec.kt",
+    "sha256": "e706b03e1d88376f4175dcc232a4a45a53b7abb1ad17dde14f373a560eaa8649"
+  },
+  {
+    "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/ink/InkEditor.kt",
+    "sha256": "2aab46dccee240bf5e6937e59aba1e0cfb2dc7d48ab07acf7265db474a3eed8a"
+  },
+  {
+    "path": "sdk/runtime-sdk/src/test/kotlin/com/halo/sdk/runtime/ink/InkEncodingCapacityTest.kt",
+    "sha256": "ba8dbae8fc7af930625d40762bf1c0e76d41a41fc8464241f74a87c1fad33927"
+  }
+]

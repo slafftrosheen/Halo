@@ -94,10 +94,18 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     private fun commit(next: InkDocument): Boolean {
         if (next == document) return false
         InkLimits.requireValid(next)
+        // Admit the final persisted geometry before touching either history stack.
+        // UI rollback after encoding failure would otherwise discard the old redo branch.
+        val committed = if (next.aspectMilli == 0 && editAspectMilli != null)
+            next.copy(aspectMilli = editAspectMilli) else next
+        if (InkCodec.encodedLength(committed) > InkLimits.MAX_ENCODED_CHARS) {
+            limitReached = true
+            return false
+        }
         past.addLast(document); trim(past); future.clear()
         // Bind legacy geometry to the editing rectangle only after an actual edit. Undo
         // restores the old zero-aspect document, and untouched v1 never migrates.
-        document = if (next.aspectMilli == 0 && editAspectMilli != null) next.copy(aspectMilli = editAspectMilli) else next
+        document = committed
         return true
     }
     private fun trim(history: ArrayDeque<InkDocument>) {

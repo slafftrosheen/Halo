@@ -8,7 +8,9 @@ object InkCodec {
 
     fun encode(document: InkDocument): String {
         InkLimits.requireValid(document)
-        return buildString {
+        val length = encodedLength(document)
+        require(length <= InkLimits.MAX_ENCODED_CHARS)
+        return buildString(length) {
             append(V3).append(document.aspectMilli)
             document.strokes.forEach { stroke ->
                 append('|').append(stroke.tool.wire).append('@').append(stroke.strokeId).append('@')
@@ -23,6 +25,25 @@ object InkCodec {
                 }
             }
         }.also { require(it.length <= InkLimits.MAX_ENCODED_CHARS) }
+    }
+
+    /** Exact v3 size for a validated document, without allocating the serialized payload. */
+    internal fun encodedLength(document: InkDocument): Int {
+        var length = V3.length + document.aspectMilli.toString().length
+        document.strokes.forEach { stroke ->
+            length += 4 + stroke.strokeId.length // |tool@id@
+            stroke.points.forEachIndexed { index, point ->
+                if (index > 0) length++
+                length += point.x.toString().length + 1 + point.y.toString().length
+                if (stroke.tool != InkTool.LEGACY) {
+                    length += 5 + point.timeMs.toString().length +
+                        (point.pressure?.toString()?.length ?: 1) +
+                        (point.tilt?.toString()?.length ?: 1) +
+                        (point.orientation?.toString()?.length ?: 1) + point.buttons.toString().length
+                }
+            }
+        }
+        return length
     }
 
     fun decode(encoded: String): InkDocument? {
