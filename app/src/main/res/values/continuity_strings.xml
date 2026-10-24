@@ -1,0 +1,7 @@
+<resources>
+    <string name="continuity_route_summary">Input: %1$s · Reply: %2$s · View: %3$s</string>
+    <string name="continuity_continue_audio">Continue audio on %1$s</string>
+    <string name="continuity_continue_view">Continue view on %1$s</string>
+    <string name="continuity_audio_accessory">Audio accessory</string>
+    <string name="continuity_watch">Watch</string>
+</resources>

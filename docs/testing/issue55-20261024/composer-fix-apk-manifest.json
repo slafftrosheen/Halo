@@ -1,0 +1,12 @@
+[
+  {
+    "path": "app/build/outputs/apk/debug/app-debug.apk",
+    "package": "com.aistudio.braintool.xkqzps",
+    "sha256": "dd41f42f4d3be9b621d874870068c2ebc9844e4e1c201b50b4ee9ba6fb3b3929"
+  },
+  {
+    "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+    "package": "com.aistudio.braintool.xkqzps.test",
+    "sha256": "3c3e956ab0ba34e8f966b23cb92ac9456ab9316bce02a4ff80c80e53c47e2425"
+  }
+]

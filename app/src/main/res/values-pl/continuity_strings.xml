@@ -1,0 +1,7 @@
+<resources>
+    <string name="continuity_route_summary">Wejście: %1$s · Odpowiedź: %2$s · Ekran: %3$s</string>
+    <string name="continuity_continue_audio">Kontynuuj dźwięk na %1$s</string>
+    <string name="continuity_continue_view">Kontynuuj wyświetlanie na %1$s</string>
+    <string name="continuity_audio_accessory">Urządzenie audio</string>
+    <string name="continuity_watch">Zegarek</string>
+</resources>

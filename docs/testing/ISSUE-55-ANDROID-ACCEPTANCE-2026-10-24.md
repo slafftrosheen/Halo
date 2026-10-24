@@ -1,0 +1,45 @@
+# Issue 55 Android acceptance campaign
+
+Status: **IN PROGRESS — do not close #55 from this checkpoint.**
+
+Starting main: `1b60a66c6c8ce402b4aaafcf21a999ae67175cca` (fetched and clean). Physical Redmi 23124RA7EO, Android 15 / API 35. Baseline installed app/test SHA-256 values match `ANDROID-MAIN-BASELINE-2026-10-24.md`.
+
+## Evidence so far
+
+| Check | Result | Scope / evidence |
+| --- | --- | --- |
+| Baseline 34 JVM / 26 native checks | PASS | Prior exact-build baseline report; not repeated as new evidence |
+| Broader cognition/provider/Android regressions | PASS | 450 tests: cognition 343 in 87 suites, OpenRouter 26 in 2 suites, Android 81 in 13 suites; zero failures/errors/skips |
+| Continuous 10-turn real voice | PASS for delivery/continuation | User spoke ten Russian test questions; confirmed all ten replies audible and automatic listening resumed each time. Runtime requests used openrouter/free, remote, no fallback |
+| Saved voice-turn uniqueness / process restart | PASS | Read-only database snapshot after force-stop: conversation `094481f6-9ae8-4e8b-9b68-2d3c6629eb6d`, 10 saved turns, 10 unique IDs, all answers nonempty. Reopened conversation after process restart |
+| Voice semantic quality | PARTIAL | Arithmetic and code-word recall succeeded. Turn 6 used the earlier code word instead of the hiking item from turn 5. Preserve this provider answer-quality miss; do not report perfect semantic acceptance |
+| Empty-capture end/mute | PASS after fix | Original silent end showed raw `No audio captured`. Corrected end/mute/replay to discard the exact capture through the existing cancellation owner. On-device silent start → pause → end now finishes without the recording error |
+| Typed full-draft submission | PASS after fix | Physical input initially submitted only `C`. The progressive-typing Compose test reproduced it, then passed after replacing stale local callable references with current-state lambdas. Corrected phone UI displayed the whole submitted request |
+| Explicit workspace action routing | PASS for routing; workflows pending | Full create-note → Canvas request originally classified as ConversationIntent. Language regressions reproduced it and pass with anchored EN/RU/LV/PL workspace writes. Physical trace now reports ToolActionIntent → Agentic; permissions/policy owners unchanged |
+| Microphone denial / restoration | PASS on baseline build | Revoked permission, denied actual Android prompt, Home remained available with Enable voice. Restored original grant; normal background/foreground restored Talk |
+| Camera denial / restoration | PASS on baseline build | Denied actual Android prompt. App showed localized recovery with image import/settings/dismissal, then returned to Home. Restored original camera grant |
+| Bluetooth equipment | AVAILABLE, qualification pending | User connected Sony WH-CH520; Android A2DP/SCO device inventory observed. No audible-headset PASS inferred from connectivity |
+| Provider transient failure | OBSERVED | Initial free-router typed retry produced EMPTY_RESPONSE, no tools and no persisted effects claimed |
+| Explicit free tool model setup | PASS for connection/answer probe | Selected nvidia/nemotron-3.5-lightning:free through model UI. Public endpoint metadata: zero prompt/completion pricing and tools/tool_choice support. Effective Full Power profile verified; real answer probe reported checked. No paid model/fallback selected |
+| Localization | PASS for affected route labels | Corrected phone UI shows Russian input/reply/view labels. Archived two uncalled historical components with untranslated labels. Polish coverage/placeholder audit passes 4,841 strings. Full presentation campaign remains pending |
+
+Corrected build gates: 46 language tests, 25 interpretation tests, 35 Android regressions (including the formerly failing full-draft test), all passing. Installed corrected app SHA-256: `dd41f42f4d3be9b621d874870068c2ebc9844e4e1c201b50b4ee9ba6fb3b3929`; test APK: `3c3e956ab0ba34e8f966b23cb92ac9456ab9316bce02a4ff80c80e53c47e2425`.
+
+An old explicit AGENTIC role binding initially selected local SmolLM2 despite the cloud default. That attempt was stopped and is excluded from cloud acceptance. Read-only persisted-object inspection found no QA55 objects afterward. Through Settings → Advanced → Model roles, changed Actions and tools to inherit the selected free OpenRouter model. FAST and deeper analysis were already inherited. Verify actual role/target traces on each subsequent workflow.
+
+## Pending acceptance
+
+- Complete audible replay/interruption checks on the corrected APK. Progressive typing, silent pause/end, installed checksums and affected regression gates are verified above.
+- Three real typed and three real spoken cross-tool workflows with persisted objects/version/readback; cancellation, stale versions and replay protection.
+- Barge-in, pause/resume, replay, Bluetooth capture/playback, foreground/background and supported-language voice checks.
+- Network/offline/recovery and Private outbound denial; provider error cases remain distinct from Android-owned behavior.
+- Draft/IME/history/rotation/process-death/memory-pressure recovery and startup/onboarding checks.
+- Real Study/Kids/media/Workspace/Ink/Studio journeys; representative 360/412dp, 200% text, EN/RU/LV/PL, light/dark, keyboard, TalkBack and navigation checks.
+- Commerce disclosure/recovery checks. Actual Play listing/purchase/refund requires owner access; no transaction authorized or attempted.
+- Document unavailable equipment and any remaining Android-owned limitation for explicit user acceptance before closure.
+
+## Consent and artifacts
+
+User explicitly approved temporary microphone/camera permission changes, network disconnection and rotation/font/light-dark changes with restoration. Original system settings are saved locally. At this checkpoint microphone and camera grants are restored; network/font/rotation/theme changes have not started. The headset remains connected by the user.
+
+Raw test-only UI captures, filtered routing logs, exact-build manifests, test XML summaries and read-only database snapshots are in sibling `verification-2026-10-24-issue55/`. Database snapshots include unrelated app data and must never be committed or published. Publish only sanitized, scenario-scoped evidence.

@@ -1,0 +1,7 @@
+<resources>
+    <string name="continuity_route_summary">Ввод: %1$s · Ответ: %2$s · Экран: %3$s</string>
+    <string name="continuity_continue_audio">Продолжить звук на %1$s</string>
+    <string name="continuity_continue_view">Продолжить просмотр на %1$s</string>
+    <string name="continuity_audio_accessory">Аудиоустройство</string>
+    <string name="continuity_watch">Часы</string>
+</resources>

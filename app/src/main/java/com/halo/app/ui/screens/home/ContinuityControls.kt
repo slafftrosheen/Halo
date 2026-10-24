@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.halo.app.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.runtime.cognition.continuity.*
 
@@ -29,7 +31,12 @@ internal fun ContinuityControls(model: HomeViewModel, relevant: Boolean, openCap
     val alternatives = endpoints.filter { (it.endpoint == InteractionEndpoint.Phone && !explicitPhone) || !sameEndpoint(it.endpoint, if (it.capabilities.visualOutput && !it.capabilities.audioOutput) continuity.presentationEndpoint else continuity.audioOutputEndpoint) }
     if ((relevant || continuity.executing) && continuity.interactionId != null) {
         Row(Modifier.fillMaxWidth()) {
-            Text("Input: ${endpointLabel(continuity.inputEndpoint)} · Reply: $replyLabel · View: ${endpointLabel(continuity.presentationEndpoint)}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+            val localizedReply = when (replyLabel) {
+                "System audio", "Phone", "Android assistant", "Wearable" -> uiText(replyLabel)
+                else -> replyLabel
+            }
+            Text(stringResource(R.string.continuity_route_summary, endpointLabel(continuity.inputEndpoint),
+                localizedReply, endpointLabel(continuity.presentationEndpoint)), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
             if (alternatives.any { it.ready }) TextButton(onClick = { chooser = true }) { Text(uiText("Continue on…")) }
         }
         if (continuity.status == InteractionHandoffStatus.UNAVAILABLE) Text(uiText("That endpoint is unavailable. Your reply route has not changed."), style = MaterialTheme.typography.bodySmall)
@@ -38,10 +45,12 @@ internal fun ContinuityControls(model: HomeViewModel, relevant: Boolean, openCap
     if (chooser && (relevant || continuity.executing)) ModalBottomSheet(onDismissRequest = { chooser = false }) {
         Text(uiText("Continue on"), style = MaterialTheme.typography.titleMedium)
         alternatives.forEach { item -> TextButton(enabled = item.ready, onClick = { model.handoff(item.endpoint); chooser = false }) {
-            Text((if (item.capabilities.audioOutput) "Continue audio on " else "Continue view on ") + item.label + " · " + listOfNotNull(
-                "Screen".takeIf { item.capabilities.visualOutput },
-                (if (item.capabilities.audioInput) "Voice" else "Audio").takeIf { item.capabilities.audioOutput },
-                "Camera".takeIf { item.capabilities.camera }, "Controls".takeIf { item.capabilities.controls }).joinToString(" + ") + if (item.ready) "" else " · unavailable")
+            Text(stringResource(if (item.capabilities.audioOutput) R.string.continuity_continue_audio else R.string.continuity_continue_view,
+                item.label) + " · " + listOfNotNull(
+                uiText("Screen").takeIf { item.capabilities.visualOutput },
+                uiText(if (item.capabilities.audioInput) "Voice" else "Audio").takeIf { item.capabilities.audioOutput },
+                stringResource(R.string.capability_camera).takeIf { item.capabilities.camera }, uiText("Controls").takeIf { item.capabilities.controls }).joinToString(" + ") +
+                if (item.ready) "" else " · " + uiText("Unavailable"))
         } }
         Text(uiText("The conversation and computation stay on your phone."), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(24.dp))
@@ -59,10 +68,11 @@ internal fun ContinuityControls(model: HomeViewModel, relevant: Boolean, openCap
         }
     }
 }
+@Composable
 private fun endpointLabel(endpoint: InteractionEndpoint?): String = when (endpoint) {
-    is InteractionEndpoint.ManagedDevice -> endpoint.displayName?.takeIf { it.isNotBlank() } ?: "Wearable"
-    is InteractionEndpoint.AudioAccessory -> endpoint.displayName ?: "Audio accessory"
-    is InteractionEndpoint.WearOs -> endpoint.displayName ?: "Watch"
-    InteractionEndpoint.AndroidAssistant -> "Android assistant"
-    else -> "Phone"
+    is InteractionEndpoint.ManagedDevice -> endpoint.displayName?.takeIf { it.isNotBlank() } ?: uiText("Wearable")
+    is InteractionEndpoint.AudioAccessory -> endpoint.displayName ?: stringResource(R.string.continuity_audio_accessory)
+    is InteractionEndpoint.WearOs -> endpoint.displayName ?: stringResource(R.string.continuity_watch)
+    InteractionEndpoint.AndroidAssistant -> uiText("Android assistant")
+    else -> uiText("Phone")
 }

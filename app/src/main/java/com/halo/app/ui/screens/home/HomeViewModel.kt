@@ -345,6 +345,7 @@ class HomeViewModel(
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
     private val _speechRejectionNotice = MutableStateFlow<SpeechRejectionNotice?>(null)
+    private var intentionallyCancelledVoiceCapture: String? = null
 
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
@@ -540,6 +541,8 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             eventBus.observe(SpeechRejected::class.java).collect { rejected ->
+                if ((rejected.input?.captureId ?: rejected.captureId) == intentionallyCancelledVoiceCapture &&
+                    intentionallyCancelledVoiceCapture != null) return@collect
                 _listeningRequested.value = false
                 rejected.input?.captureId?.let(::endVoiceModeForCapture)
                 val friendlyReason = when (rejected.reason) {
@@ -560,6 +563,7 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             eventBus.observe(com.halo.engines.speech.RecognitionFailed::class.java).collect { failed ->
+                if (failed.id == intentionallyCancelledVoiceCapture) return@collect
                 if (speechInput.value.turn?.captureId?.let { it != failed.id } == true) return@collect
                 _listeningRequested.value = false
                 endVoiceModeForCapture(failed.id)
@@ -1225,7 +1229,7 @@ class HomeViewModel(
         stopSpeechOutput()
         viewModelScope.launch {
             voiceInputCommands.runIfCurrent(ticket) {
-                try { commandBus.dispatch(StopListening) }
+                try { cancelVoiceModeCapture() }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (failure: Exception) { Log.e("HomeViewModel", "Failed to end Voice Mode listening", failure) }
             }
@@ -1264,7 +1268,7 @@ class HomeViewModel(
                     (shouldPause || speechAvailability.value && microphonePermission.value)
             }, onDenied = ::rejectQueuedVoiceStart) {
                 runCatching {
-                    if (shouldPause) commandBus.dispatch(StopListening)
+                    if (shouldPause) cancelVoiceModeCapture()
                     else commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversation))
                 }.onFailure {
                     if (it is kotlinx.coroutines.CancellationException) throw it
@@ -1303,7 +1307,7 @@ class HomeViewModel(
             }, onDenied = { if (pauseCapture) rejectQueuedVoiceStart() }) {
                 if (pauseCapture) {
                     _listeningRequested.value = false
-                    val stopped = runCatching { commandBus.dispatch(StopListening) }
+                    val stopped = runCatching { cancelVoiceModeCapture() }
                     stopped.exceptionOrNull()?.let { if (it is kotlinx.coroutines.CancellationException) throw it }
                     if (stopped.isFailure) {
                         Log.e("HomeViewModel", "Failed to stop listening before repeating a reply", stopped.exceptionOrNull())
@@ -1326,6 +1330,13 @@ class HomeViewModel(
 
     /** A foreground Voice Mode does not keep the microphone when Home is no longer visible. */
     fun onHomeStopped() { voiceStartGeneration++; stopVoiceMode() }
+
+    /** End/mute/replay discard a capture; StopListening instead finalizes it for recognition. */
+    private suspend fun cancelVoiceModeCapture() {
+        val capture = speechInput.value.turn?.captureId ?: return
+        intentionallyCancelledVoiceCapture = capture
+        ManualDependencyGraph.audioPerceptionEngine.cancelExternalInput(capture)
+    }
 
     private fun stopVoiceModeStateOnly(): Boolean = synchronized(voiceModeLock) {
         val wasActive = _voiceModeActive.value

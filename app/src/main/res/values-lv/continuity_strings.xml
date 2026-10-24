@@ -1,0 +1,7 @@
+<resources>
+    <string name="continuity_route_summary">Ievade: %1$s · Atbilde: %2$s · Ekrāns: %3$s</string>
+    <string name="continuity_continue_audio">Turpināt audio ierīcē %1$s</string>
+    <string name="continuity_continue_view">Turpināt skatīšanu ierīcē %1$s</string>
+    <string name="continuity_audio_accessory">Audioierīce</string>
+    <string name="continuity_watch">Pulkstenis</string>
+</resources>

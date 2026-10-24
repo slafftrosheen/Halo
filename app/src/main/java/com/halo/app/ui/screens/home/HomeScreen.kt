@@ -535,7 +535,7 @@ fun HomeScreen(
                         HaloIcon(HaloGlyph.APPROVAL, uiText("Review"))
                     } })
                     submission.retryable && submission.conversationId == draftKey -> ({
-                        TextButton(onClick = ::submitText, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
+                        TextButton(onClick = { submitText() }, enabled = canSend && textInput.isNotBlank()) { Text(uiText("Retry")) }
                     })
                     submission.needsRecovery && submission.conversationId == draftKey -> ({
                         IconButton(onClick = onOpenActivity, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.ACTIVITY, uiText("Open Activity")) }
@@ -646,7 +646,7 @@ fun HomeScreen(
                                   onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text(uiText("Edit as text")) }
                           }
                           androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                              if (!notice.outputFailure) TextButton(onClick = ::togglePresence) { Text(uiText("Try again")) }
+                              if (!notice.outputFailure) TextButton(onClick = { togglePresence() }) { Text(uiText("Try again")) }
                               TextButton(onClick = { viewModel.navigateToVoice() }) { Text(uiText("Speech settings")) }
                               TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text(uiText("Dismiss")) }
                           }
@@ -749,8 +749,8 @@ fun HomeScreen(
             HaloComposer(
                 focusAllowed = true,
                 focusRequester = composerFocusRequester,
-                value = textInput, onValueChange = ::updateDraft, onSubmit = ::submitText,
-                onVoice = ::togglePresence,
+                value = textInput, onValueChange = { updateDraft(it) }, onSubmit = { submitText() },
+                onVoice = { togglePresence() },
                 onStop = {
                     com.halo.app.ui.fx.HaloMotionEvents.stop()
                     when {

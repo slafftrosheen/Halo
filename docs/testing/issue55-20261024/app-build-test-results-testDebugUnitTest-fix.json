@@ -1,0 +1,30 @@
+[
+  {
+    "suite": "com.halo.app.ai.PrivacyModeRoutingTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.halo.app.audio.ConversationalVoiceTest",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.halo.app.ui.screens.home.HomeComposerInteractionTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.halo.app.ui.screens.home.VoiceInputCommandQueueTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

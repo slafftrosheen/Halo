@@ -1,0 +1,23 @@
+[
+  {
+    "suite": "com.halo.engines.interpretation.ReminderInterpretationTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.halo.engines.interpretation.rules.PhoneCommandsRuleTest",
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.halo.engines.interpretation.rules.SmallIntentSpeechRuleTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

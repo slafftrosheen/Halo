@@ -27,6 +27,25 @@ import org.robolectric.annotation.Config
 class HomeComposerInteractionTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun progressiveTypingSubmitsTheWholeVisibleDraft() {
+        val drafts = mutableStateOf(hashMapOf<String, String>())
+        var submitted = ""
+        compose.setContent {
+            val current = drafts.value["conversation"].orEmpty()
+            fun update(value: String) { drafts.value = HashMap(drafts.value).apply { put("conversation", value) } }
+            fun submit() { submitted = current }
+            HaloTheme {
+                HaloComposer(current, { update(it) }, { submit() }, {}, {}, true, true, false, "Talk", false)
+            }
+        }
+        compose.onNode(hasSetTextAction()).performTextInput("C")
+        compose.waitForIdle()
+        compose.onNode(hasSetTextAction()).performTextInput("reate a note containing QA55")
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Send").performClick()
+        assertEquals("Create a note containing QA55", submitted)
+    }
+
     @Test fun idleComposerLeavesRoomForTheConversation() {
         compose.setContent {
             HaloTheme {
