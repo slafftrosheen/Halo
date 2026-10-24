@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.host.ink.PenInputLifetimeTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-24T12:59:01.141Z" hostname="MINIFOXEY" time="0.013">
+  <properties/>
+  <testcase name="cancellationStopUnblocksTheActualReader" classname="com.halo.host.ink.PenInputLifetimeTest" time="0.008"/>
+  <testcase name="ownerCancellationStopsBlockedInputBeforeWaitingForCompletion" classname="com.halo.host.ink.PenInputLifetimeTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

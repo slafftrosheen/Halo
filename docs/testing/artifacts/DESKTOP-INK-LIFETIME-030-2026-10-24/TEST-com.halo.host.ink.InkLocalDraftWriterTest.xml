@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.host.ink.InkLocalDraftWriterTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-24T12:58:40.344Z" hostname="MINIFOXEY" time="0.083">
+  <properties/>
+  <testcase name="explicitCloseDrainsLocalRecoveryAndSuppressesQueuedRemotePublication" classname="com.halo.host.ink.InkLocalDraftWriterTest" time="0.072"/>
+  <testcase name="olderSaveCannotAcknowledgeAQueuedNewerCompletedEdit" classname="com.halo.host.ink.InkLocalDraftWriterTest" time="0.008"/>
+  <testcase name="failedLocalWriteDoesNotSendAndACompletedRecoveryCanBeRetriedLocally" classname="com.halo.host.ink.InkLocalDraftWriterTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

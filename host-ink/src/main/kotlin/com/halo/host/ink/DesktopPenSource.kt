@@ -40,9 +40,14 @@ class DesktopPenSource(
             loaded = true; nativeInUse = true; nativeOwner = this
         }
         job = scope.launch(Dispatchers.IO) {
-            try { if (activation.enabled()) read() }
+            try {
+                readPenUntilCancelled(stop = ::stopIfCurrent) {
+                    if (activation.enabled()) read()
+                }
+            }
             finally {
                 synchronized(this@DesktopPenSource) { editor.cancel(); pointer = -1 }
+                sender.close()
                 synchronized(NATIVE_OWNER) { if (nativeOwner === this@DesktopPenSource) { nativeInUse = false; nativeOwner = null } }
             }
         }
@@ -83,8 +88,11 @@ class DesktopPenSource(
     }
 
     override fun close() {
-        synchronized(NATIVE_OWNER) { if (loaded && nativeOwner === this) stopNative() }
+        stopIfCurrent()
         job?.cancel(); sender.close()
+    }
+    private fun stopIfCurrent() {
+        synchronized(NATIVE_OWNER) { if (loaded && nativeOwner === this) stopNative() }
     }
     private external fun prepareNative()
     private external fun readWindows()

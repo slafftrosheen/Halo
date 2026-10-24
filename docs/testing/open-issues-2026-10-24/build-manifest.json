@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "scope": "DEBUG_BUILD_AND_NATIVE_FIXTURES_ONLY",
-  "sourceBase": "32f02942e337dccce29aa3fb9c855b3b0777ecb0",
-  "sourceStamp": "d7f63af55a3888c197abd45992984b26694c110076c6e28fcb189b43c351012a",
+  "sourceBase": "34bc271c3bdcf0a15fd484ce459c8a958e263274",
+  "sourceStamp": "2383adbd3aabda84bf07a389bced41e8e770236f3bac8422b0e7a1a160cb11b7",
   "sourceWitnesses": [
     {
       "path": "app/build.gradle.kts",
@@ -130,7 +130,7 @@
     },
     {
       "path": "host-ink/src/main/kotlin/com/halo/host/ink/DesktopPenSource.kt",
-      "sha256": "23c7a0bf48b2ebd4f251e2a8705d794ed52f3dc1c60ae1e89b08698916f0499a"
+      "sha256": "fa9fcf0dfdbd80fe2bc05ee90967c28e120dabcf8083ae2efc4ce716d0c516f2"
     },
     {
       "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkConnectionInvitation.kt",
@@ -165,6 +165,10 @@
       "sha256": "a5e21c55718ee8198be169aa6e6670a9a56b7e22679a560b24ff786b6f5ef1a1"
     },
     {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/PenInputLifetime.kt",
+      "sha256": "0ebde57a5d0f0c119dd63ab960ce5d676bf2de7d64a4628bb801e5574bd58beb"
+    },
+    {
       "path": "host-ink/src/main/kotlin/com/halo/host/ink/RemoteInkConnection.kt",
       "sha256": "e0fc3397be28e8cab6bb3ac4ebf6f49be4bde4a8fd1faac24fca2de87c9b2079"
     },
@@ -179,6 +183,10 @@
     {
       "path": "host-ink/src/test/kotlin/com/halo/host/ink/InkTlsChannelTest.kt",
       "sha256": "6d875c6f58a3a2f6de36abbb657839c0cdd48e82667deff34de0e997fb5ea300"
+    },
+    {
+      "path": "host-ink/src/test/kotlin/com/halo/host/ink/PenInputLifetimeTest.kt",
+      "sha256": "55223665f774adf05313040a34dbbdcc3fc5d3bc6406b978b9219d5cb9d53cf8"
     },
     {
       "path": "host-ink/src/test/kotlin/com/halo/host/ink/RemoteInkConnectionTest.kt",
@@ -237,16 +245,16 @@
       "sha256": "f7a85124361492d4585798b946e917c4635972a673ab46e2fab99e81b4db1bab"
     }
   ],
-  "sealedAt": "2026-10-24T15:41:39.0689597+03:00",
-  "buildLogSha256": "5b66eba5fe0669e08d754e97e879982934918e8d1a98cc46acc0694d62811e4e",
+  "sealedAt": "2026-10-24T16:08:08.9010191+03:00",
+  "buildLogSha256": "2d3bc7839cf3c1c4e72510cad7148d9c28ecfc8a27205cc5f6f5d482d05ade56",
   "app": {
     "path": "app/build/outputs/apk/debug/app-debug.apk",
-    "sha256": "0b8c192d36a938f87da3e31d115f672e08e5b92d00f6f07cfee5066fa2bf219d",
-    "package": "com.aistudio.braintool.xkqzps"
+    "package": "com.aistudio.braintool.xkqzps",
+    "sha256": "ed7e8276bce399447917cb07d18d6695ff1133894d52847fac41011a07bb3722"
   },
   "test": {
     "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
-    "sha256": "d7e31faa3f5486ae35d6240591cdd75ef1f8f79d786af4051f384a823431d889",
-    "package": "com.aistudio.braintool.xkqzps.test"
+    "package": "com.aistudio.braintool.xkqzps.test",
+    "sha256": "aeb28fca52a9ea9af428d46456428904aec7d296fc15fced26f9ea0a8f51f959"
   }
 }

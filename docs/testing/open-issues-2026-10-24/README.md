@@ -29,6 +29,14 @@ The complete human protocols and original requirement rows remain NOT_TESTED;
 these automated results do not prove them. `closure-audit.json` retains all 11
 issues as KEEP_OPEN pending their requirement-by-requirement evidence review.
 
+A subsequent [desktop input lifetime correction](../HALO-DESKTOP-INK-LIFETIME-030-2026-10-24.md)
+passed all 21 host tests and rebuilt both APKs. The current `build-manifest.json`
+seals this newer pair, source stamp
+`2383adbd3aabda84bf07a389bced41e8e770236f3bac8422b0e7a1a160cb11b7`.
+The phone disconnected; these newer APKs are **NOT_INSTALLED / NOT_PHONE_TESTED**.
+The 35-case phone pass above applies to the preceding pair retained in its own
+artifact manifest. Install/read back the current pair before a new phone run.
+
 ### Repeat against the sealed APKs
 
 Use PowerShell 7 from the repository root. The compiled APKs must first be sealed
@@ -36,8 +44,8 @@ against the successful build log and the exact pre-build source witness:
 
 ```powershell
 pwsh -File scripts/verification/run_open_issue_tests.ps1 -Phase Seal `
-  -BuildLog C:\Users\slavd\HaloEco\ink30-validation-2026-10-24.log `
-  -SourceWitness C:\Users\slavd\HaloEco\ink30-source-identities-2026-10-24.json
+  -BuildLog docs/testing/artifacts/DESKTOP-INK-LIFETIME-030-2026-10-24/gradle.log `
+  -SourceWitness docs/testing/artifacts/DESKTOP-INK-LIFETIME-030-2026-10-24/source-identities.json
 ```
 
 Then install/read back the exact app and test packages and run the fixture groups:

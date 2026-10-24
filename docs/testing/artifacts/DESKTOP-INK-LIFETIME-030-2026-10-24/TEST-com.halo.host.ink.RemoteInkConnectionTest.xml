@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.host.ink.RemoteInkConnectionTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-24T12:59:01.157Z" hostname="MINIFOXEY" time="0.012">
+  <properties/>
+  <testcase name="conflictNeverAdvancesRevisionOrReplaysAsAnotherCheckpoint" classname="com.halo.host.ink.RemoteInkConnectionTest" time="0.002"/>
+  <testcase name="checkpointRetryIsByteIdenticalAndRequiresExactReceiptBeforeNextEdit" classname="com.halo.host.ink.RemoteInkConnectionTest" time="0.001"/>
+  <testcase name="offerRoundTripPreservesOwnersGeometryAndEditableStrokeIdentity" classname="com.halo.host.ink.RemoteInkConnectionTest" time="0.001"/>
+  <testcase name="wrongOrMalformedReceiptCannotConfirmPersistence" classname="com.halo.host.ink.RemoteInkConnectionTest" time="0.001"/>
+  <testcase name="pairingBundleContainsOnlyPublicMaterialAndDoesNotInventCapabilities" classname="com.halo.host.ink.RemoteInkConnectionTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
