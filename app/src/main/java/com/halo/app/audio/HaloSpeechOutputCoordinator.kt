@@ -81,7 +81,8 @@ class HaloSpeechOutputCoordinator(
     }
 
     private val interruption = VoiceInterruptionCoordinator(voiceSettings,
-        { stop("Barge-in") }, cancelGeneration, log = { Log.i("HALO_VOICE_INTERRUPTION", it) })
+        { stop("Barge-in") }, cancelGeneration, log = { Log.i("HALO_VOICE_INTERRUPTION", it) },
+        onAccepted = { eventBus.publish(it) })
 
     private val mutablePlaybackActive = kotlinx.coroutines.flow.MutableStateFlow(false)
     val playbackActive = mutablePlaybackActive.asStateFlow()

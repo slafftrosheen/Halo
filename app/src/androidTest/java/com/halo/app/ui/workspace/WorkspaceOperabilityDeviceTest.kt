@@ -110,7 +110,11 @@ class WorkspaceOperabilityDeviceTest {
             val note = notes.createNote("Synthetic lesson material", title = "Study source")
             database.workspaceAssetDao().insertAsset(WorkspaceAssetEntity("native-audio", note.id, "AUDIO", "audio/wav", "MANAGED_FILE", "synthetic-no-read", true, "Audio", 10, null, null, 100, 1))
             database.workspaceAssetDao().insertAttachment(NoteAttachmentEntity("native-audio-link", note.id, "native-audio", 0, null, 1))
-            val version = selected.versionFor(note.id)!!
+            val noteReader = WorkspaceNoteActions(database, documents, com.halo.app.notebook.NotebookUseCases(notes), selected)
+            val noteReceipt = JSONObject((noteReader.execute(ToolCall("native-note-read", "halo_note_get",
+                mapOf("noteId" to note.id))) as ToolExecutionResult.Success).output)
+            val version = noteReceipt.getString("sourceVersion")
+            assertEquals(selected.versionFor(note.id), version)
             assertTrue(version.contains(":"))
             assertTrue(call("halo_study_with_halo", mapOf("noteId" to note.id, "sourceVersion" to version)) is ToolExecutionResult.Success)
             assertEquals(note.revision.toString(), study.observeActiveSessions().first().single().sources.single().revision)

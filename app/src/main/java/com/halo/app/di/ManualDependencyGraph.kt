@@ -1892,6 +1892,8 @@ object ManualDependencyGraph {
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value
+    fun canCaptureDuringReply(transactionId: String): Boolean = com.halo.app.audio.speechReplyCaptureSafe(
+        haloSpeechOutputCoordinator.session.state.value, transactionId, hostGraph.phoneAudioSource.echoCancellationActive)
     fun startAndroidSpeaker() {
         scopedSpeechMediaControls
         speechOutputCoordinatorDelegate.value.start()

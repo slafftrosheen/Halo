@@ -321,6 +321,12 @@ class DefaultProviderTurnExecutor(
             provider.generate(request, outboundContext)
         }
 
+        if (response.text.isBlank() && response.toolCalls.isEmpty()) {
+            val finish = response.finishReason?.take(40)?.replace(Regex("[^A-Za-z0-9_-]"), "_") ?: "UNKNOWN"
+            println("[HALO_PROVIDER_EMPTY_SHAPE] interactionId=${interactionId.value} requestId=$requestId " +
+                "provider=${target.providerId} model=${target.modelId} finishReason=$finish " +
+                "outputBudgetTokens=${request.maxOutputTokens} outputTokens=${response.metrics?.outputTokens}")
+        }
         val validatedResponse = AiResponseValidator.validate(
             provider = provider,
             capabilities = target.providerCapabilities,

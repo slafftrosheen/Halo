@@ -80,7 +80,21 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
                             recoveryJob?.cancel()
                             captureId = null
                             mutableState.value = SpeechSessionState.Idle
+                        } else if (event.captureId != null) {
+                            event.captureId?.let(::closeCapture)
+                            recoveryJob?.cancel()
+                            captureId = null
+                            cognitiveRequestId = null
+                            mutableState.value = if (outputId != null) SpeechSessionState.Speaking else SpeechSessionState.Idle
                         } else finishThinking()
+                    }
+                    is InteractionTurnChanged -> if (event.state is InteractionTurnState.Cancelled &&
+                        event.state.interactionId == captureId) {
+                        captureId?.let(::closeCapture)
+                        recoveryJob?.cancel()
+                        captureId = null
+                        cognitiveRequestId = null
+                        mutableState.value = SpeechSessionState.Idle
                     }
                     is CognitiveFailed -> if (matchesActiveCognitiveTurn(event.requestId)) {
                         cognitiveRequestId = null

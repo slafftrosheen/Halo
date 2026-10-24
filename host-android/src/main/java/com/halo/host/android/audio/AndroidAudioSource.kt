@@ -7,6 +7,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
 import android.util.Log
 import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.host.AudioSource
@@ -47,6 +48,11 @@ class AndroidAudioSource(
     @Volatile
     private var audioRecord: AudioRecord? = null
 
+    @Volatile private var echoCanceler: AcousticEchoCanceler? = null
+    /** Native readiness only; actual duplex echo rejection still needs device qualification. */
+    val echoCancellationActive: Boolean
+        get() = runCatching { echoCanceler?.enabled == true }.getOrDefault(false)
+
     private val recorderMutex = Mutex()
 
     private val sampleRate = 16_000
@@ -74,7 +80,7 @@ class AndroidAudioSource(
         }
 
         return AudioRecord(
-            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
             sampleRate,
             channelConfig,
             audioFormat,
@@ -84,7 +90,21 @@ class AndroidAudioSource(
                 recorder.release()
                 error("AudioRecord failed to initialize")
             }
+            val effect = runCatching {
+                if (AcousticEchoCanceler.isAvailable()) AcousticEchoCanceler.create(recorder.audioSessionId) else null
+            }.getOrNull()
+            if (effect != null) {
+                if (runCatching { effect.enabled = true; effect.enabled }.getOrDefault(false)) echoCanceler = effect
+                else runCatching { effect.release() }
+            }
+            Log.i("HaloAudio", "MIC_ECHO_CONTROL enabled=$echoCancellationActive")
         }
+    }
+
+    private fun releaseEchoControl() {
+        val effect = echoCanceler
+        echoCanceler = null
+        runCatching { effect?.release() }
     }
 
     @SuppressLint("MissingPermission")
@@ -119,6 +139,7 @@ class AndroidAudioSource(
                     // A failed platform recorder is unusable. Retire it before a later start.
                     isRecording = false
                     audioRecord = null
+                    releaseEchoControl()
                     runCatching { recorder.release() }
                     _state.value = AudioSourceState.ERROR
                     throw IllegalStateException("Unable to start AudioRecord", exception)
@@ -147,6 +168,7 @@ class AndroidAudioSource(
                 isRecording = false
                 val recorder = audioRecord
                 audioRecord = null
+                releaseEchoControl()
                 if (recorder != null) {
                     runCatching {
                         if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {

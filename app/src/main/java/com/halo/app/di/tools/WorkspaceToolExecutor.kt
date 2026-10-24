@@ -77,7 +77,7 @@ class WorkspaceToolExecutor(
         ToolDefinition(
             id = "halo_study_with_halo",
             name = "halo_study_with_halo",
-            description = "Start a durable guided study session from an exact Workspace source and observed sourceVersion. Describe the source first; stale versions are rejected. No automatic replay of uncertain session creation.",
+            description = "Start a durable guided study session from an exact Workspace source and observed sourceVersion. For notes, first call halo_note_get and use its sourceVersion, NOT its editor version or numeric revision. For other materials use halo_workspace_describe. Stale versions are rejected. No automatic replay of uncertain session creation.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(

@@ -1,0 +1,31 @@
+{
+  "note": {
+    "objectId": "a899d94a-cc21-4ceb-9d1c-5097c381627e",
+    "body": "QA55-T1D bring water and a map",
+    "revision": 1
+  },
+  "canvas": {
+    "objectId": "8e83232b-59bf-4fd8-8835-2f0e16b47f0c",
+    "viewportX": 0.0,
+    "viewportY": 0.0,
+    "viewportScale": 1.0,
+    "revision": 2
+  },
+  "nodes": [
+    {
+      "id": "58871e21-85c8-432d-981d-ce7bf303cc6e",
+      "type": "TEXT",
+      "refObjectId": null,
+      "text": "QA55-T1D bring water and a map"
+    }
+  ],
+  "run": {
+    "id": "88ed3218-f51c-47f9-8712-06c18a3269c7",
+    "interactionId": "a2d9f162-51b7-4340-a545-94214647e66c",
+    "state": "COMPLETED",
+    "failureReason": null,
+    "pinnedProviderId": "openrouter",
+    "pinnedModelId": "nvidia/nemotron-3.5-lightning:free",
+    "pinnedTargetLocal": 0
+  }
+}

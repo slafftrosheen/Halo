@@ -437,7 +437,8 @@ fun HomeScreen(
     val actingOnPhone = (uiState.sessionState as? CognitiveSessionState.ExecutingTool)
         ?.toolId?.let(::homeIsPhoneAction) == true
     val feedScroll = rememberScrollState()
-    var followLatest by rememberHomeFeedFollowing(feedScroll, draftKey)
+    var followLatest by rememberHomeFeedFollowing(feedScroll, draftKey,
+        submission.interactionId?.takeIf { submission.needsRecovery && submission.conversationId == draftKey })
     var observedResponse by remember(draftKey) { mutableStateOf(responseText) }
     var unseenReply by remember(draftKey) { mutableStateOf(false) }
     // H01: announce a new reply only when the response actually changes while

@@ -1,0 +1,8 @@
+QA55-T2 Water Cycle
+This lesson has four stages: evaporation, condensation, precipitation, and collection.
+Evaporation changes liquid water into water vapor when energy heats it.
+Condensation changes water vapor into liquid droplets as it cools. These droplets form clouds.
+Precipitation returns water from clouds as rain or snow.
+Collection gathers water in rivers, lakes, and oceans. The cycle then repeats.
+Recall question: Which stage changes water vapor into liquid droplets?
+Expected answer: condensation.

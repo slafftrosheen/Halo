@@ -1,0 +1,8 @@
+{
+  "sourceBase": "e1e4d5dc1",
+  "source": "Base plus the source changes in the accompanying commit; embedded build identity predates commit",
+  "appSha256": "132ead014585341e9d9b0431728da49491bd0a8a42352107407f2f3fc7a66baf",
+  "testSha256": "34cedc5ea0b062afa105774fe6c3fb86fef6585846ae815d3ab9dd01071f10ed",
+  "physicalBargeInAppSha256": "ef3d605f9e026ecf79d9a10b6277fc584c22fc886dac28b0c561bf12338c7615",
+  "physicalBargeIn": "Interruption confirmed; recorded follow-up was Stop Stop, not arithmetic; later unvoiced rejection ended mode before recapture fix"
+}

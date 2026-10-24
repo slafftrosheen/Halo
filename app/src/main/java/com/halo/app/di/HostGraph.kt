@@ -77,10 +77,14 @@ class HostGraph(
         )
     }
 
+    val phoneAudioSource by lazy {
+        AndroidAudioSource(context) { androidInteractionAudioManager.expectedInputDeviceId }
+    }
+
     val audioPerceptionEngine by lazy {
         com.halo.engines.speech.AudioPerceptionEngine(
             audioSource = ForegroundAudioSource(context,
-                AndroidAudioSource(context) { androidInteractionAudioManager.expectedInputDeviceId },
+                phoneAudioSource,
                 com.halo.app.audio.HaloAudioForegroundService.Kind.PHONE_INPUT),
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,

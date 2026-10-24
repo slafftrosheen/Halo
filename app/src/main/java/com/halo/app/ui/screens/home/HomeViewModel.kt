@@ -51,6 +51,8 @@ data class SpeechRejectionNotice(
     val outputFailure: Boolean = false
 )
 
+private data class VoiceModeReplyCapture(val transactionId: String, val interactionId: String)
+
 data class HomeUiState(
     val contextualText: String = "Ready when you are",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
@@ -333,6 +335,7 @@ class HomeViewModel(
     private var voiceModeConversationId: String? = null
     private var voiceModeCaptureId: String? = null
     private var voiceModeBargeInInteractionId: String? = null
+    private var voiceModeReplyCapture: VoiceModeReplyCapture? = null
     private val voiceResponseCaptures = LinkedHashMap<String, String>()
     private val _publishedResponse = MutableStateFlow<PresentedAssistantResponse?>(null)
     private val _sessionPresentationEnabled = MutableStateFlow(true)
@@ -498,8 +501,17 @@ class HomeViewModel(
                             _lastVoiceResponseConversation.value = sourceConversation
                         }
                     }
+                    is TtsStarted -> armVoiceModeReplyCapture(event)
+                    is SpeechInterruptionAccepted -> synchronized(voiceModeLock) {
+                        val reply = voiceModeReplyCapture
+                        if (reply?.transactionId == event.outputTransactionId && voiceModeCaptureId == event.captureId) {
+                            voiceModeBargeInInteractionId = reply.interactionId
+                            voiceModeReplyCapture = null
+                        }
+                    }
                     is TtsCompleted -> {
                         val (captureId, interruptedByUser) = event.interactionId?.let { interactionId -> synchronized(voiceModeLock) {
+                            if (voiceModeReplyCapture?.transactionId == event.transactionId) voiceModeReplyCapture = null
                             val capture = voiceResponseCaptures.remove(interactionId)
                             val interrupted = voiceModeBargeInInteractionId == interactionId
                             if (interrupted) voiceModeBargeInInteractionId = null
@@ -513,13 +525,21 @@ class HomeViewModel(
                             is TtsFailed -> event.interactionId
                             else -> null
                         }
-                        val (captureId, interruptedByUser) = interactionId?.let { id -> synchronized(voiceModeLock) {
+                        val transactionId = when (event) {
+                            is TtsCancelled -> event.transactionId
+                            is TtsFailed -> event.transactionId
+                            else -> null
+                        }
+                        val (captureId, interruptedByUser, replyCaptureCancelled) = interactionId?.let { id -> synchronized(voiceModeLock) {
                             val capture = voiceResponseCaptures.remove(id)
                             val interrupted = voiceModeBargeInInteractionId == id
                             if (interrupted) voiceModeBargeInInteractionId = null
-                            capture to interrupted
-                        } } ?: (null to false)
-                        if (captureId != null && !interruptedByUser) endVoiceModeForCapture(captureId)
+                            val replyCancelled = voiceModeReplyCapture?.transactionId == transactionId
+                            if (replyCancelled) voiceModeReplyCapture = null
+                            Triple(capture, interrupted, replyCancelled)
+                        } } ?: Triple(null, false, false)
+                        if (replyCaptureCancelled && !interruptedByUser) stopVoiceMode()
+                        else if (captureId != null && !interruptedByUser) endVoiceModeForCapture(captureId)
                     }
                     else -> Unit
                 }
@@ -544,6 +564,18 @@ class HomeViewModel(
                 if ((rejected.input?.captureId ?: rejected.captureId) == intentionallyCancelledVoiceCapture &&
                     intentionallyCancelledVoiceCapture != null) return@collect
                 _listeningRequested.value = false
+                val capture = rejected.input?.captureId ?: rejected.captureId
+                val mayRecapture = com.halo.engines.speech.SpeechRejectionReason.entries
+                    .firstOrNull { it.name == rejected.reason }?.allowsAutomaticRecapture == true
+                val continueVoiceMode = capture != null && mayRecapture && synchronized(voiceModeLock) {
+                    _voiceModeActive.value && !_voiceModeListeningPaused.value && voiceModeCaptureId == capture &&
+                        voiceModeConversationId != null && voiceModeConversationId == conversations?.activeConversationId()
+                } && !_conversationChanging.value && speechAvailability.value && microphonePermission.value
+                if (continueVoiceMode) {
+                    _speechRejectionNotice.value = null
+                    resumeVoiceModeAfterReply(requireNotNull(capture))
+                    return@collect
+                }
                 rejected.input?.captureId?.let(::endVoiceModeForCapture)
                 val friendlyReason = when (rejected.reason) {
                     "REPETITIVE_HALLUCINATION" -> "repetitive recognition"
@@ -1205,6 +1237,7 @@ class HomeViewModel(
                     voiceModeConversationId = conversation
                     voiceModeCaptureId = null
                     voiceModeBargeInInteractionId = null
+                    voiceModeReplyCapture = null
                     voiceResponseCaptures.clear()
                     _voiceModeListeningPaused.value = false
                     _voiceModeActive.value = true
@@ -1351,6 +1384,7 @@ class HomeViewModel(
         voiceModeConversationId = null
         voiceModeCaptureId = null
         voiceModeBargeInInteractionId = null
+        voiceModeReplyCapture = null
         voiceResponseCaptures.clear()
     }
 
@@ -1363,6 +1397,44 @@ class HomeViewModel(
     private fun endVoiceModeForCapture(captureId: String) {
         synchronized(voiceModeLock) {
             if (_voiceModeActive.value && !_voiceModeListeningPaused.value && voiceModeCaptureId == captureId) endVoiceModeState()
+        }
+    }
+
+    private fun armVoiceModeReplyCapture(event: TtsStarted) {
+        val interactionId = event.interactionId ?: return
+        val (conversation, sourceCapture, ticket) = synchronized(voiceModeLock) {
+            val conversation = voiceModeConversationId ?: return
+            val capture = voiceResponseCaptures[interactionId] ?: return
+            if (!_voiceModeActive.value || _voiceModeListeningPaused.value ||
+                voiceModeCaptureId != capture || voiceModeReplyCapture != null) return
+            Triple(conversation, capture, voiceInputCommands.current())
+        }
+        viewModelScope.launch {
+            voiceInputCommands.runIfCurrent(ticket, allowed = {
+                synchronized(voiceModeLock) {
+                    _voiceModeActive.value && !_voiceModeListeningPaused.value &&
+                        voiceModeConversationId == conversation && voiceModeCaptureId == sourceCapture &&
+                        voiceModeReplyCapture == null
+                } && !_conversationChanging.value && speechAvailability.value && microphonePermission.value &&
+                    conversations?.activeConversationId() == conversation && !speechInput.value.capturing &&
+                    ManualDependencyGraph.voiceExperienceSettings.state.value.spokenInterruptionEnabled &&
+                    ManualDependencyGraph.canCaptureDuringReply(event.transactionId)
+            }) {
+                synchronized(voiceModeLock) {
+                    voiceModeReplyCapture = VoiceModeReplyCapture(event.transactionId, interactionId)
+                }
+                _listeningRequested.value = true
+                runCatching {
+                    commandBus.dispatch(StartListeningWithActivation(SpeechActivationKind.VOICE_ACTIVITY, conversation))
+                }.onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    synchronized(voiceModeLock) {
+                        if (voiceModeReplyCapture?.transactionId == event.transactionId) voiceModeReplyCapture = null
+                    }
+                    _listeningRequested.value = false
+                    Log.e("HomeViewModel", "Voice Mode could not listen during the reply", it)
+                }
+            }
         }
     }
 

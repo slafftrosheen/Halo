@@ -136,6 +136,15 @@ data class TtsCompleted(
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
+/** Local interruption policy accepted this capture before stopping its correlated output. */
+data class SpeechInterruptionAccepted(
+    val captureId: String,
+    val outputTransactionId: String,
+    val activation: SpeechActivationKind,
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
 data class TtsCancelled(
     override val id: String = UUID.randomUUID().toString(),
     val transactionId: String,

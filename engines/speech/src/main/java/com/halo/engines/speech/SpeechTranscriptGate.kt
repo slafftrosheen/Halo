@@ -3,7 +3,11 @@ package com.halo.engines.speech
 enum class SpeechRejectionReason {
     EMPTY, PUNCTUATION_ONLY, NO_SPEECH, INSUFFICIENT_VOICED_AUDIO,
     LOW_RECOGNIZER_CONFIDENCE, REPETITIVE_HALLUCINATION, LANGUAGE_MISMATCH,
-    ANNOTATION_ONLY, CANCELLED
+    ANNOTATION_ONLY, CANCELLED;
+
+    /** Recapture never admits the rejected text or authorizes another cloud request. */
+    val allowsAutomaticRecapture: Boolean
+        get() = this == NO_SPEECH || this == INSUFFICIENT_VOICED_AUDIO
 }
 
 data class SpeechAdmissionPolicy(

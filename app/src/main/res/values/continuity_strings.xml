@@ -13,4 +13,6 @@
     <string name="next_action_continue_study">Continue Study</string>
     <string name="next_action_review_task">Review task</string>
     <string name="next_action_notebook_search">Search your Notebook</string>
+    <string name="voice_quality_quiet">No clear speech was heard. Try again.</string>
+    <string name="voice_quality_no_speech">No speech was heard. Try again.</string>
 </resources>

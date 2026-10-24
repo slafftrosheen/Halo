@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.home
 
 import android.app.Application
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,18 +28,36 @@ class HomeFeedFollowingTest {
     private lateinit var scroll: ScrollState
     private lateinit var following: MutableState<Boolean>
     private var rows by mutableIntStateOf(12)
+    private var recoveryRequest by mutableStateOf<String?>(null)
+    private var retries = 0
 
     private fun show() {
         compose.setContent {
             scroll = rememberScrollState()
-            following = rememberHomeFeedFollowing(scroll, "chat")
+            following = rememberHomeFeedFollowing(scroll, "chat", recoveryRequest)
             Column(Modifier.width(320.dp).height(120.dp).testTag("feed").verticalScroll(scroll)) {
-                Text("Orb header", Modifier.height(60.dp))
+                Column(Modifier.height(60.dp)) {
+                    Text("Orb header")
+                    if (recoveryRequest != null) Text("Retry", Modifier.clickable { retries++ })
+                }
                 repeat(rows) { Text("Turn $it", Modifier.height(60.dp)) }
             }
         }
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(scroll.maxValue, scroll.value) }
+    }
+
+    @Test fun failureRevealsRecoveryAndRetryRearmsFollowing() {
+        show()
+        compose.runOnIdle { recoveryRequest = "failed-request" }
+        compose.waitForIdle()
+        compose.onNodeWithText("Retry").assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(1, retries); assertFalse(following.value); rows += 2 }
+        compose.waitForIdle()
+        compose.onNodeWithText("Retry").assertIsDisplayed()
+        compose.runOnIdle { recoveryRequest = null }
+        compose.waitForIdle()
+        compose.runOnIdle { assertTrue(following.value); assertEquals(scroll.maxValue, scroll.value) }
     }
 
     @Test fun successiveSmallGesturesKeepTheirProgressTowardTheOrb() {

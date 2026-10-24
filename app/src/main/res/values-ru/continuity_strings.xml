@@ -13,4 +13,6 @@
     <string name="next_action_continue_study">Продолжить учёбу</string>
     <string name="next_action_review_task">Проверить задачу</string>
     <string name="next_action_notebook_search">Поиск в заметках</string>
+    <string name="voice_quality_quiet">Не удалось разобрать речь. Попробуйте ещё раз.</string>
+    <string name="voice_quality_no_speech">Речь не обнаружена. Попробуйте ещё раз.</string>
 </resources>

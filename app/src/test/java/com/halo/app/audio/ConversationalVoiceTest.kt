@@ -7,6 +7,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ConversationalVoiceTest {
+    @Test fun acceptedCaptureIsPublishedBeforeOutputAndGenerationAreStopped() = runBlocking {
+        val effects = mutableListOf<String>()
+        val owner = VoiceInterruptionCoordinator({ VoiceExperienceSettings() },
+            { effects += "stop" }, { effects += "cancel" },
+            onAccepted = { effects += "accepted:${it.captureId}:${it.outputTransactionId}:${it.activation}" })
+        owner.onEvent(TtsStarted(transactionId = "reply"))
+        owner.onEvent(ListeningStarted(captureId = "next", activation = SpeechActivationKind.VOICE_ACTIVITY))
+        owner.onEvent(SpeechActivityObserved("next", null, true, 100, true))
+        assertTrue(effects.isEmpty())
+        owner.onEvent(SpeechActivityObserved("stale", null, true, 900, true))
+        assertTrue(effects.isEmpty())
+        owner.onEvent(SpeechActivityObserved("next", null, true, 900, true))
+        assertEquals(listOf("accepted:next:reply:VOICE_ACTIVITY", "stop", "cancel"), effects)
+    }
+
     private fun prepared() = StreamingSpeechPrepared("response", "interaction", SpeechOutputTarget.Phone,
         SpeechOutputFallback.ALLOW_PHONE, "capture")
     @Test fun firstSentenceIsReadyBeforeFinalAndFinalNeverReplaysIt() {

@@ -1424,6 +1424,8 @@ private fun uiCataloguePart4(): Map<String, Int> = mapOf(
     "Reviewed %1\$d times" to R.string.ui_9834368c7bd7,
     "Listening stopped" to R.string.ui_57d1aec01657,
     "Input interrupted. You can try again or type your question." to R.string.ui_5a368817236c,
+    "audio was too quiet or short" to R.string.voice_quality_quiet,
+    "no speech detected" to R.string.voice_quality_no_speech,
     "Import file" to R.string.ui_6a9e73cf0d42,
     "Sketch" to R.string.ui_0f9b002dd25f,
     "Edit sketch" to R.string.ui_379256e3da81,

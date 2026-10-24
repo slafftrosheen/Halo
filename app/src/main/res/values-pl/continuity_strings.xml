@@ -13,4 +13,6 @@
     <string name="next_action_continue_study">Kontynuuj naukę</string>
     <string name="next_action_review_task">Sprawdź zadanie</string>
     <string name="next_action_notebook_search">Szukaj w notatniku</string>
+    <string name="voice_quality_quiet">Nie udało się wyraźnie rozpoznać mowy. Spróbuj ponownie.</string>
+    <string name="voice_quality_no_speech">Nie wykryto mowy. Spróbuj ponownie.</string>
 </resources>

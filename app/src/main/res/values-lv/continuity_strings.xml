@@ -13,4 +13,6 @@
     <string name="next_action_continue_study">Turpināt mācīties</string>
     <string name="next_action_review_task">Pārskatīt uzdevumu</string>
     <string name="next_action_notebook_search">Meklēt piezīmēs</string>
+    <string name="voice_quality_quiet">Neizdevās skaidri saklausīt runu. Mēģiniet vēlreiz.</string>
+    <string name="voice_quality_no_speech">Runa netika uztverta. Mēģiniet vēlreiz.</string>
 </resources>

@@ -7,6 +7,66 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class EarlySpeechStateTest {
+    @Test fun rejectedUnvoicedCaptureReleasesRecognitionAndPreservesPlayingReply() = runBlocking {
+        val events = MutableSharedFlow<HaloEvent>(extraBufferCapacity = 16)
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) { events.emit(event) }
+            override fun events() = events
+            override fun <T : HaloEvent> observe(type: Class<T>) = emptyFlow<T>()
+        }
+        val commands = object : CommandBus {
+            override suspend fun dispatch(command: RuntimeCommand) = Unit
+            override fun commands() = emptyFlow<RuntimeCommand>()
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val manager = SpeechSessionManager(bus, commands, scope)
+        try {
+            manager.start()
+            bus.publish(com.halo.engines.speech.ListeningStarted(captureId = "noise"))
+            bus.publish(com.halo.engines.speech.RecognitionStarted("noise"))
+            bus.publish(SpeechRejected(text = "Synthetic noise", reason = "INSUFFICIENT_VOICED_AUDIO", captureId = "noise"))
+            assertEquals(SpeechSessionState.Idle, manager.sessionState.value)
+            bus.publish(TtsStarted(transactionId = "reply"))
+            bus.publish(com.halo.engines.speech.ListeningStarted(captureId = "next"))
+            bus.publish(com.halo.engines.speech.RecognitionStarted("next"))
+            bus.publish(SpeechRejected(text = "", reason = "NO_SPEECH", captureId = "next"))
+            assertEquals(SpeechSessionState.Speaking, manager.sessionState.value)
+            bus.publish(com.halo.engines.speech.RecognitionStarted("next"))
+            assertEquals(SpeechSessionState.Speaking, manager.sessionState.value)
+            bus.publish(com.halo.engines.speech.ListeningStarted(captureId = "retry"))
+            bus.publish(TtsCompleted(transactionId = "reply"))
+            assertEquals(SpeechSessionState.Capturing, manager.sessionState.value)
+        } finally { manager.stop(); scope.cancel() }
+    }
+
+    @Test fun cancellingRecognizedInteractionReleasesBusyStateWithoutClosingNewInput() = runBlocking {
+        val events = MutableSharedFlow<HaloEvent>(extraBufferCapacity = 16)
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) { events.emit(event) }
+            override fun events() = events
+            override fun <T : HaloEvent> observe(type: Class<T>) = emptyFlow<T>()
+        }
+        val commands = object : CommandBus {
+            override suspend fun dispatch(command: RuntimeCommand) = Unit
+            override fun commands() = emptyFlow<RuntimeCommand>()
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val manager = SpeechSessionManager(bus, commands, scope)
+        try {
+            manager.start()
+            bus.publish(com.halo.engines.speech.ListeningStarted(captureId = "old"))
+            bus.publish(SpeechRecognized(id = "old", text = "Synthetic request", locale = "en", timestamp = 0))
+            bus.publish(CognitiveRequestStarted(requestId = "request"))
+            assertEquals(SpeechSessionState.Thinking, manager.sessionState.value)
+            bus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled("old", "User ended Voice Mode")))
+            assertEquals(SpeechSessionState.Idle, manager.sessionState.value)
+            bus.publish(com.halo.engines.speech.ListeningStarted(captureId = "new"))
+            bus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled("old", "Late cancellation")))
+            bus.publish(CognitiveCompleted(requestId = "request", response = "Late answer"))
+            assertEquals(SpeechSessionState.Capturing, manager.sessionState.value)
+        } finally { manager.stop(); scope.cancel() }
+    }
+
     @Test fun cancelledRecognitionReturnsIdleAndLateCompletionCannotReopenIt() = runBlocking {
         val events = MutableSharedFlow<HaloEvent>(extraBufferCapacity = 16)
         val bus = object : EventBus {

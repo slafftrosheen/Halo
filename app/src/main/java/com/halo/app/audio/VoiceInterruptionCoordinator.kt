@@ -11,6 +11,7 @@ class VoiceInterruptionCoordinator(
     private val classifier: BargeInSemanticClassifier? = null,
     private val stopExternal: () -> Unit = {},
     private val log: (String) -> Unit = {},
+    private val onAccepted: suspend (SpeechInterruptionAccepted) -> Unit = {},
 ) {
     private var outputId: String? = null
     private var captureId: String? = null
@@ -37,14 +38,20 @@ class VoiceInterruptionCoordinator(
         }
     }
     private fun finished(id: String) { if (outputId == id) outputId = null }
-    private fun evaluate(evidence: BargeInEvidence, activation: SpeechActivationKind) {
+    private suspend fun evaluate(evidence: BargeInEvidence, activation: SpeechActivationKind) {
         val configuration = settings()
         val decision = BargeInPolicy.decide(evidence, outputId != null, configuration.interruptionPolicy())
         log("decision=$decision activation=$activation outputActive=${outputId != null} " +
             "durationBucket=${(evidence.sustainedSpeechMs ?: 0) / 100} classifierAvailable=${classifier?.available == true} " +
             "semanticModeEnabled=${configuration.semanticInterruptionEnabled} sourceKind=${if (evidence.sourceDeviceId == null) "PHONE" else "DEVICE"}")
         when (decision) {
-            BargeInDecision.ACCEPT -> { outputId = null; stopOutput(); cancelGeneration() }
+            BargeInDecision.ACCEPT -> {
+                val output = outputId ?: return
+                val capture = captureId ?: return
+                outputId = null
+                try { onAccepted(SpeechInterruptionAccepted(capture, output, activation)) }
+                finally { stopOutput(); cancelGeneration() }
+            }
             BargeInDecision.STOP_EXTERNAL_ONLY -> stopExternal()
             BargeInDecision.REJECT_ECHO -> Unit
         }

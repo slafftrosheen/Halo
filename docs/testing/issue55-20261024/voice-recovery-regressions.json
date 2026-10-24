@@ -1,0 +1,50 @@
+[
+  {
+    "module": "sdk/runtime-sdk/build/test-results/test",
+    "tests": 91,
+    "suites": 16,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "host-android/build/test-results/testDebugUnitTest",
+    "tests": 20,
+    "suites": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "engines/speech/build/test-results/test",
+    "tests": 24,
+    "suites": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "runtime/speech/build/test-results/test",
+    "tests": 7,
+    "suites": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "runtime/cognition/build/test-results/test",
+    "tests": 343,
+    "suites": 87,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "app/build/test-results/testDebugUnitTest",
+    "tests": 60,
+    "suites": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]
