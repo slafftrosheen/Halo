@@ -349,14 +349,14 @@ object HaloToolDescriptors {
             readOnly(definition.name), keywords = setOf("note", "search", "find"))
         "halo_save_screen_to_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("screen", "capture", "note"))
-        "halo_note_get", "halo_note_read_block" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+        "halo_note_get", "halo_note_read_block", "halo_note_purge_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("note", "notebook", "read", "block"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_note_replace_content" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "notebook", "replace", "source"),
             presentation = ToolPresentation(title = "Notebook", actionVerb = "Save"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
-        "halo_note_delete_block", "halo_note_trash" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+        "halo_note_delete_block", "halo_note_trash", "halo_note_purge", "halo_note_purge_retry" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "notebook", "delete", "replace", "trash"),
             presentation = ToolPresentation(title = "Notebook", actionVerb = "Delete"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))

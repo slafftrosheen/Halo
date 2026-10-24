@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-24T05:25:38.474Z" hostname="MINIFOXEY" time="0.045">
+  <properties/>
+  <testcase name="reregisteringSourceUpdatesMetadataWithoutCreatingAnotherOwner" classname="com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest" time="0.043"/>
+  <testcase name="staticToolsAndAliasesCannotBeShadowedOrDuplicated" classname="com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest" time="0.001"/>
+  <testcase name="duplicateDynamicToolsKeepSecurityAndDispatchWithTheSameOwner" classname="com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest" time="0.0"/>
+  <testcase name="dynamicDependenciesAreAvailableUntilTheirSourceIsRemoved" classname="com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest" time="0.001"/>
+  <testcase name="removingDisabledOwnerPromotesRemainingSourceWithItsOwnDescriptor" classname="com.halo.runtime.cognition.tools.ToolRegistryOwnershipTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

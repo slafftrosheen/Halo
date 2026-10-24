@@ -1,0 +1,142 @@
+[
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\androidTest\\java\\com\\halo\\app\\notebook\\NotePurgeDeviceTest.kt",
+    "sha256": "bd79572c789c51f71971410584c3599c3c6af3de43c5c51a1b26170e88d84e16"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\assets\\skills\\halo.notebook.json",
+    "sha256": "8bc68217e238b3547721c3c06ab2837c9be3b46fb57f8788ec8c1304d83228b3"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\AppDatabase.kt",
+    "sha256": "2e37325efa7f37d25fa6f8cbaded07c0236e296d361216b86ee23e93cc9ec4a2"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\notebook\\NotebookDao.kt",
+    "sha256": "c194a3b6d94e43f40eb23660446f17a14028edcb532c3fac92803cb597ca4af2"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\notebook\\NotebookNoteIdentity.kt",
+    "sha256": "ea205dbb6625f12ec43a84fe7c07b125e65676340b023be1c249f9e73f395306"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\notebook\\NotebookPurgeModels.kt",
+    "sha256": "49ea8d86aec2a56946aefd20cb349795abd5ebb6bb30aded0269f1f34b6c118d"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\notebook\\NotebookPurgeOwner.kt",
+    "sha256": "a707fece336e3736335663c7a423d67bfc078f60b9630d82336b6455c6b5c494"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\notebook\\NotebookRepository.kt",
+    "sha256": "659c75dba2078fc4b8083abf9316ee68c154e90224622f114b50c9da0c30afc3"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\workspace\\NotebookAssetRepository.kt",
+    "sha256": "7d65ed1f1ad055362c519f3ea58041a173061605b59ff10dde00fd36f173581c"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\workspace\\WorkspaceAssetEntity.kt",
+    "sha256": "eee5b0b15aea04220c5d6e4b972f4bd14bfc3eb450aba06f88e310590c158f60"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\ManualDependencyGraph.kt",
+    "sha256": "f0172a1c2d3341dddc60f4d3a0ed0f6ea2a8c66a853e9218d333e972a79e1c5c"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\HaloToolDescriptors.kt",
+    "sha256": "eb57c576a0c0d152a437d5c882855abb7ae17aad7a7fdbec511dea37cdd29755"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceNoteActions.kt",
+    "sha256": "29313e1c3e36a71c9bf22bc6ded30b1f9645f873b226f42d33695f3311e7f99e"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceNotePurgeActions.kt",
+    "sha256": "2c84869e96a569bbce5440bfca73f2a6971dc86723403ff91fb4bc7e20a82544"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceOperabilityContracts.kt",
+    "sha256": "cdab4141d01f753be30784b3703d10b60d4a78b426a3ba56e623f49bd652a6de"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceToolExecutor.kt",
+    "sha256": "1249d153bed691849ef8d211fdc4b4c9402f750c6a9cdd5236661264b8f6d44a"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\language\\UiCatalogue.kt",
+    "sha256": "a3580cd3d42064ab4b12e9b23ad564b307ac6f8581a2c45e4d800e126aa05f8d"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\notebook\\NotebookPurgeCleanupWorker.kt",
+    "sha256": "2d0b2063de0603064842496c24ecfb1bf16cf8dadb2be02d98edea064071fca5"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\notebook\\NotebookUseCases.kt",
+    "sha256": "493c5574274592b839f59591fe729e62b1be0e2d7f756ad11be8db823921ade5"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\home\\HomeToolCatalog.kt",
+    "sha256": "699c068622b82b03144fcc72eeb2263f41e09a2307c32883355523915cac5e95"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\notebook\\NotebookScreen.kt",
+    "sha256": "536cb3f3e0db2a828802670399327f44150f640ee7683223d61e926c6c6e35e8"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\notebook\\NotebookViewModel.kt",
+    "sha256": "d5cd9ee213fb58f14c62d2788e4316d342f6fe2c9dd647e4c047d91d397c9bfd"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\localization\\ui.tsv",
+    "sha256": "608e8f0c0a0a16127fde55ba82168f31dcc017fd9f1249102322010750a4aa56"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\res\\values-lv\\ui_strings.xml",
+    "sha256": "da9a4b82bb55353388ec46b62a3d49560042d363b800f4013870f37aba24b7ec"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\res\\values-pl\\ui_strings.xml",
+    "sha256": "fa222f0362603d552a3a23de2dd5106b48a8b37b3ecfc2d8948d5fefe056c1a7"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\res\\values-ru\\ui_strings.xml",
+    "sha256": "de2c406cffe7ab85f5fb91278b377b9a9bc1782cb4d9eed686c263b64a78907a"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\res\\values\\ui_strings.xml",
+    "sha256": "a6c0e94dc372b8f66c053dec438de8f0baab0f14e8ab4697f14a9d5f2a107143"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\test\\java\\com\\halo\\app\\data\\notebook\\NotebookPurgeMigrationTest.kt",
+    "sha256": "cf933b5362c1402c6def19c104681da6e8a4d95bfcaed826cec42310878917f8"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\test\\java\\com\\halo\\app\\data\\notebook\\RoomNotebookRepositoryTest.kt",
+    "sha256": "ca0ccec2a3a09b4967a093301f1ad5550c1260c992079feb037e01d277472ade"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\test\\java\\com\\halo\\app\\data\\workspace\\NotebookPurgeOwnerTest.kt",
+    "sha256": "320138f0fcc147b2a6ab89945f133a52fc7bdd6e1be8d515998406ede9dffc1e"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\test\\java\\com\\halo\\app\\data\\workspace\\WorkspaceOperabilityTest.kt",
+    "sha256": "f0ba3a5e3f80d4d42745676ca92b809a75f81421718cc79d85e02ad14f82a498"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\skills\\SkillInstructionSource.kt",
+    "sha256": "a035747ba8edcc9fb525a6730bd0e22aff51b8d3a82c19af24c02b568c48c327"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\skills\\SkillRegistry.kt",
+    "sha256": "f6d322fb3f4ec25531101f2ef47bb549e321d19fdc6c148d083212724c137160"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\tools\\WorkspaceToolAccess.kt",
+    "sha256": "6d2f06ec67140af746e4a2e69d5697251e609557b3e22aac48e0c112482aaa53"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\test\\java\\com\\halo\\runtime\\cognition\\tools\\NoteToolProvenanceTest.kt",
+    "sha256": "a70f8e5227e7e5b0b411d5faf156e4f760513dfb71edfdfa9b216691f797df25"
+  }
+]

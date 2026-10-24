@@ -482,5 +482,17 @@ class NotebookViewModel(
         else workspace.restore(id)
     }
     fun removeFromInbox(id: String) = viewModelScope.launch { workspace.removeFromInbox(id) }
-    fun deletePermanently(id: String) = viewModelScope.launch { notes.permanentlyDelete(id) }
+    fun deletePermanently(id: String) = viewModelScope.launch {
+        try {
+            val result = notes.purgeNote(id, includeRecovery = true)
+            mutableNotice.value = when {
+                result !is com.halo.app.data.notebook.NotebookPurgeResult.Saved || result.receipt.sourcePresent -> "The note could not be deleted. Try again."
+                result.receipt.record.state == "COMPLETE" && result.receipt.record.sharedRetained == 0 -> "Note deleted."
+                result.receipt.record.state == "COMPLETE" -> "Note deleted. Shared attachment files were kept."
+                result.receipt.record.state == "PENDING" -> "Note deleted. Attachment cleanup is still pending."
+                else -> "Note deleted. Some attachments could not be removed."
+            }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableNotice.value = "Deletion could not be confirmed. Check Trash before trying again." }
+    }
 }

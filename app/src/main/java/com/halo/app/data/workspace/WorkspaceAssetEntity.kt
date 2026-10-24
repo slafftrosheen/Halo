@@ -94,6 +94,10 @@ interface WorkspaceAssetDao {
         """
     )
     fun observeAttachments(noteId: String): Flow<List<NoteAttachment>>
+    @Query("""SELECT a.id,a.noteId,a.assetId,a.position,a.caption,s.type,s.mimeType,s.storageType,s.pathOrUri,
+        s.permissionPersisted,s.displayName,s.bytes,s.width,s.height,s.durationMs FROM note_attachments a
+        INNER JOIN workspace_assets s ON s.id=a.assetId WHERE a.noteId=:noteId AND a.id=:attachmentId""")
+    suspend fun attachment(noteId: String, attachmentId: String): NoteAttachment?
 
     /** Metadata only; callers must opt in to each returned attachment before reading its bytes. */
     @Query(

@@ -454,7 +454,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         if (!showLibrary) notice?.let { message ->
             item(key = "hub_notice") {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall,
+                    Text(uiText(message), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
                 }
@@ -502,7 +502,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 }
             }
             notice?.let { message -> Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                Text(uiText(message), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
             } }
         }

@@ -41,4 +41,8 @@ class NotebookUseCases(private val repository: NotebookRepository) {
     suspend fun removeFromInbox(id: String): Boolean = repository.removeFromInbox(id)
 
     suspend fun permanentlyDelete(id: String): Boolean = repository.permanentlyDelete(id)
+    suspend fun purgeNote(id: String, version: String? = null, recoveryVersion: String? = null, includeRecovery: Boolean = false, priorReceiptVersion: String? = null) =
+        repository.purgeWithReceipt(id, version, recoveryVersion, includeRecovery, priorReceiptVersion)
+    suspend fun purgeStatus(id: String) = repository.purgeStatus(id)
+    suspend fun retryPurge(id: String, version: String) = repository.retryPurge(id, version)
 }

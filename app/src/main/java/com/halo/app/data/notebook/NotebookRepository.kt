@@ -20,6 +20,9 @@ interface NotebookRepository {
     suspend fun setLifecycle(id: String, lifecycle: WorkspaceLifecycle): Boolean
     suspend fun removeFromInbox(id: String): Boolean
     suspend fun permanentlyDelete(id: String): Boolean
+    suspend fun purgeWithReceipt(id: String, version: String? = null, recoveryVersion: String? = null, includeRecovery: Boolean = false, priorReceiptVersion: String? = null): NotebookPurgeResult = NotebookPurgeResult.Refused("PURGE_OWNER_UNAVAILABLE")
+    suspend fun purgeStatus(id: String): NotebookPurgeReceipt? = null
+    suspend fun retryPurge(id: String, receiptVersion: String): NotebookPurgeResult = NotebookPurgeResult.Refused("PURGE_OWNER_UNAVAILABLE")
 }
 
 class RoomNotebookRepository(
@@ -31,6 +34,7 @@ class RoomNotebookRepository(
      * desynchronise the derived projection: it is re-routed through the command path instead.
      */
     private val documents: NotebookDocumentRepository? = null,
+    private val purgeOwner: NotebookPurgeOwner? = null,
 ) : NotebookRepository {
     override fun observeNotes(
         query: String,
@@ -104,8 +108,20 @@ class RoomNotebookRepository(
     override suspend fun removeFromInbox(id: String): Boolean =
         dao.setInbox(id, false, now()) == 1
 
-    override suspend fun permanentlyDelete(id: String): Boolean =
-        dao.purgePermanently(id)
+    override suspend fun permanentlyDelete(id: String): Boolean {
+        if (purgeOwner == null) return false
+        return (purgeWithReceipt(id, includeRecovery = true) as? NotebookPurgeResult.Saved)?.receipt?.sourcePresent == false
+    }
+    override suspend fun purgeWithReceipt(id: String, version: String?, recoveryVersion: String?, includeRecovery: Boolean, priorReceiptVersion: String?): NotebookPurgeResult {
+        val owner = purgeOwner ?: return NotebookPurgeResult.Refused("PURGE_OWNER_UNAVAILABLE")
+        // The local UI has just explicitly confirmed this current note. Assistant calls always
+        // supply their observed source/receipt identities instead of acquiring authority here.
+        val prior = priorReceiptVersion ?: if (version == null) owner.status(id)?.takeIf { it.sourcePresent }?.version else null
+        return owner.purge(id, version, recoveryVersion, includeRecovery, prior)
+    }
+    override suspend fun purgeStatus(id: String): NotebookPurgeReceipt? = purgeOwner?.status(id)
+    override suspend fun retryPurge(id: String, receiptVersion: String): NotebookPurgeResult =
+        purgeOwner?.retry(id, receiptVersion) ?: NotebookPurgeResult.Refused("PURGE_OWNER_UNAVAILABLE")
 
     private fun String.toLikePattern(): String {
         if (isBlank()) return ""

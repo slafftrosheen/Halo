@@ -1,0 +1,9 @@
+{
+  "inputs": 35,
+  "changedInputs": 1,
+  "fixtureOnly": true,
+  "reusedAppPasses": 93,
+  "purgeOwnerPasses": 25,
+  "failedFixtureDatabasePathChars": 274,
+  "correctedFixtureDatabasePathChars": 227
+}

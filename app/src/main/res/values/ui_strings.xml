@@ -4021,4 +4021,10 @@
     <string name="ui_9c39220de137" formatted="false">"Install a small local model to try on-device request recognition. Standard commands work without it."</string>
     <string name="ui_29d4b3b72533" formatted="false">"halo can't verify the previous setup record. Keep the downloaded files and clear the record before starting again."</string>
     <string name="ui_740783493047" formatted="false">"The setup record could not be cleared. Reopen halo and try again. Your downloaded files are still kept."</string>
+    <string name="ui_cca933093012" formatted="false">"Note deleted."</string>
+    <string name="ui_647c9b1f230f" formatted="false">"The note could not be deleted. Try again."</string>
+    <string name="ui_10cc184ad99c" formatted="false">"Note deleted. Shared attachment files were kept."</string>
+    <string name="ui_7ba2528e247f" formatted="false">"Note deleted. Attachment cleanup is still pending."</string>
+    <string name="ui_6cf537897a11" formatted="false">"Note deleted. Some attachments could not be removed."</string>
+    <string name="ui_6e8cdc9e0c89" formatted="false">"Deletion could not be confirmed. Check Trash before trying again."</string>
 </resources>

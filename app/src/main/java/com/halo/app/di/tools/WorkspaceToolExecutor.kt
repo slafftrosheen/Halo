@@ -24,6 +24,7 @@ class WorkspaceToolExecutor(
     private val exactStudyStarter: (suspend (String, String) -> StudyStartResult)? = null,
     private val studyActions: WorkspaceStudyActions? = null,
     private val noteActions: WorkspaceNoteActions? = null,
+    private val notePurgeActions: WorkspaceNotePurgeActions? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -124,13 +125,14 @@ class WorkspaceToolExecutor(
                 "additionalProperties" to false
             )
         )
-    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty() + studyActions?.definitions().orEmpty() + noteActions?.definitions().orEmpty()
+    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty() + studyActions?.definitions().orEmpty() + noteActions?.definitions().orEmpty() + notePurgeActions?.definitions().orEmpty()
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         continuity?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         canvas?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         studyActions?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         noteActions?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
+        notePurgeActions?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
 
         if (toolCall.functionName == "halo_create_empty_note") {

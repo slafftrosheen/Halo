@@ -4021,4 +4021,10 @@
     <string name="ui_9c39220de137" formatted="false">"Zainstaluj mały model lokalny, aby wypróbować rozpoznawanie poleceń i pytań na telefonie. Standardowe polecenia działają również bez niego."</string>
     <string name="ui_29d4b3b72533" formatted="false">"halo nie może zweryfikować zapisu poprzedniej konfiguracji. Zachowaj pobrane pliki i usuń ten zapis, zanim zaczniesz ponownie."</string>
     <string name="ui_740783493047" formatted="false">"Nie udało się usunąć zapisu konfiguracji. Otwórz halo ponownie i spróbuj jeszcze raz. Pobrane pliki zostały zachowane."</string>
+    <string name="ui_cca933093012" formatted="false">"Notatka została usunięta."</string>
+    <string name="ui_647c9b1f230f" formatted="false">"Nie udało się usunąć notatki. Spróbuj ponownie."</string>
+    <string name="ui_10cc184ad99c" formatted="false">"Notatka została usunięta. Pliki wspólnych załączników zostały zachowane."</string>
+    <string name="ui_7ba2528e247f" formatted="false">"Notatka została usunięta. Czyszczenie załączników jeszcze się nie zakończyło."</string>
+    <string name="ui_6cf537897a11" formatted="false">"Notatka została usunięta. Nie udało się usunąć niektórych załączników."</string>
+    <string name="ui_6e8cdc9e0c89" formatted="false">"Nie udało się potwierdzić usunięcia. Sprawdź kosz przed ponowną próbą."</string>
 </resources>

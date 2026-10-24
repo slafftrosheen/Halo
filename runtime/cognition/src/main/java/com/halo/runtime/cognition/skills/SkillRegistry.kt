@@ -156,6 +156,7 @@ class DefaultSkillRegistry(
 
     companion object {
         private fun noteTools() = listOf(
+            "halo_note_purge_status" to SkillRisk.READ_ONLY, "halo_note_purge" to SkillRisk.DESTRUCTIVE, "halo_note_purge_retry" to SkillRisk.DESTRUCTIVE,
             "halo_note_get" to SkillRisk.READ_ONLY, "halo_note_read_block" to SkillRisk.READ_ONLY,
             "halo_note_delete_block" to SkillRisk.DESTRUCTIVE, "halo_note_replace_content" to SkillRisk.DESTRUCTIVE, "halo_note_trash" to SkillRisk.DESTRUCTIVE,
             "halo_note_rename" to SkillRisk.REVERSIBLE, "halo_note_insert_block" to SkillRisk.REVERSIBLE, "halo_note_edit_block" to SkillRisk.REVERSIBLE,

@@ -1,0 +1,11 @@
+{
+  "inputs": 35,
+  "changedInputs": 0,
+  "appChecks": 94,
+  "runtimeChecks": 10,
+  "localizationChecks": 15,
+  "failed": 0,
+  "skipped": 0,
+  "native": "NOT_RUN",
+  "sourceReview": "CLEAR"
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "path": "app/build/outputs/apk/debug/app-debug.apk",
+    "sha256": "98a7b33a3e7d1e5953c5d534899e240302b6e8b496f220f2ae82e44fbb373a1b",
+    "bytes": 287557769,
+    "installed": false
+  },
+  {
+    "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+    "sha256": "e15c21e1a18112b63eba7cd22dcb107a53ea18fddef19b9418d823e9a165a5ce",
+    "bytes": 2122214,
+    "installed": false
+  }
+]

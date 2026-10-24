@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.NotebookPurgeMigrationTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-24T05:21:35.194Z" hostname="MINIFOXEY" time="5.42">
+  <properties/>
+  <testcase name="additiveReceiptMigrationKeepsExistingSourceAndReceiptDoesNotCascadeWithTheNote" classname="com.halo.app.data.notebook.NotebookPurgeMigrationTest" time="5.222">
+    <failure message="android.database.sqlite.SQLiteCantOpenDatabaseException: Cannot open database 'C:\Users\slavd\AppData\Local\Temp\robolectric-NotebookPurgeMigrationTest_additiveReceiptMigrationKeepsExistingSourceAndReceiptDoesNotCascadeWithTheNote5139478367766739293\com.aistudio.braintool.xkqzps-dataDir\databases\purge-migration-59dbe906-b8d0-4162-baed-8db3cecd3662.db' with flags 0x10000000: File C:\Users\slavd\AppData\Local\Temp\robolectric-NotebookPurgeMigrationTest_additiveReceiptMigrationKeepsExistingSourceAndReceiptDoesNotCascadeWithTheNote5139478367766739293\com.aistudio.braintool.xkqzps-dataDir\databases\purge-migration-59dbe906-b8d0-4162-baed-8db3cecd3662.db doesn't exist and CREATE_IF_NECESSARY is set, check directory permissions" type="android.database.sqlite.SQLiteCantOpenDatabaseException">android.database.sqlite.SQLiteCantOpenDatabaseException: Cannot open database 'C:\Users\slavd\AppData\Local\Temp\robolectric-NotebookPurgeMigrationTest_additiveReceiptMigrationKeepsExistingSourceAndReceiptDoesNotCascadeWithTheNote5139478367766739293\com.aistudio.braintool.xkqzps-dataDir\databases\purge-migration-59dbe906-b8d0-4162-baed-8db3cecd3662.db' with flags 0x10000000: File C:\Users\slavd\AppData\Local\Temp\robolectric-NotebookPurgeMigrationTest_additiveReceiptMigrationKeepsExistingSourceAndReceiptDoesNotCascadeWithTheNote5139478367766739293\com.aistudio.braintool.xkqzps-dataDir\databases\purge-migration-59dbe906-b8d0-4162-baed-8db3cecd3662.db doesn't exist and CREATE_IF_NECESSARY is set, check directory permissions
+	at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:262)
+	at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:205)
+	at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:512)
+	at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:210)
+	at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:202)
+	at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:1085)
+	at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:1065)
+	at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:929)
+	at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:918)
+	at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:373)
+	at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:316)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getWritableOrReadableDatabase(FrameworkSQLiteOpenHelper.android.kt:224)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.innerGetDatabase(FrameworkSQLiteOpenHelper.android.kt:180)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getSupportDatabase(FrameworkSQLiteOpenHelper.android.kt:141)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper.getWritableDatabase(FrameworkSQLiteOpenHelper.android.kt:96)
+	at com.halo.app.data.notebook.NotebookPurgeMigrationTest.additiveReceiptMigrationKeepsExistingSourceAndReceiptDoesNotCascadeWithTheNote(NotebookPurgeMigrationTest.kt:31)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:524)
+	at org.robolectric.internal.SandboxTestRunner.executeInSandbox(SandboxTestRunner.java:494)
+	at org.robolectric.internal.SandboxTestRunner.access$900(SandboxTestRunner.java:67)
+	at org.robolectric.internal.SandboxTestRunner$7.evaluate(SandboxTestRunner.java:442)
+	at org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)
+	at org.robolectric.internal.SandboxTestRunner.access$600(SandboxTestRunner.java:67)
+	at org.robolectric.internal.SandboxTestRunner$6.evaluate(SandboxTestRunner.java:333)
+	at org.robolectric.internal.SandboxTestRunner$3.evaluate(SandboxTestRunner.java:233)
+	at org.robolectric.internal.SandboxTestRunner$5.lambda$evaluate$0(SandboxTestRunner.java:317)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14 SQLITE_CANTOPEN): Could not open database
+	at org.robolectric.nativeruntime.SQLiteConnectionNatives.nativeOpen(Native Method)
+	at org.robolectric.shadows.ShadowNativeSQLiteConnection.lambda$nativeOpen$0(ShadowNativeSQLiteConnection.java:45)
+	at org.robolectric.util.PerfStatsCollector.measure(PerfStatsCollector.java:52)
+	at org.robolectric.shadows.ShadowNativeSQLiteConnection.nativeOpen(ShadowNativeSQLiteConnection.java:42)
+	at android.database.sqlite.SQLiteConnection.nativeOpen(SQLiteConnection.java)
+	at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:224)
+	... 39 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

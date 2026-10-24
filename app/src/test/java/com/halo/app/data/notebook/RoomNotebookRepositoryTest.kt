@@ -37,7 +37,8 @@ class RoomNotebookRepositoryTest {
         repository = RoomNotebookRepository(
             dao = database.notebookDao(),
             now = { timestamp++ },
-            newId = { "note-${nextId++}" }
+            newId = { "note-${nextId++}" },
+            purgeOwner = NotebookPurgeOwner(database, java.io.File(context.cacheDir, "repository-purge-fixture").canonicalFile)
         )
     }
 
@@ -76,7 +77,7 @@ class RoomNotebookRepositoryTest {
         assertEquals(note.id, repository.observeNotes(lifecycle = WorkspaceLifecycle.TRASHED).first().single().id)
         assertTrue(repository.permanentlyDelete(note.id))
         assertNull(repository.getNote(note.id))
-        assertFalse(repository.permanentlyDelete(note.id))
+        assertTrue(repository.permanentlyDelete(note.id)) // Reads the durable receipt; no second deletion.
     }
 
     @Test
@@ -138,7 +139,8 @@ class RoomNotebookRepositoryTest {
             .addMigrations(*AppDatabase.ALL_MIGRATIONS)
             .allowMainThreadQueries()
             .build()
-        repository = RoomNotebookRepository(database.notebookDao(), newId = { "migrated-note" })
+        repository = RoomNotebookRepository(database.notebookDao(), newId = { "migrated-note" },
+            purgeOwner = NotebookPurgeOwner(database, java.io.File(context.cacheDir, "repository-purge-fixture").canonicalFile))
 
         assertEquals("preserved", database.memoryDao().getAllMemories().first().single().content)
         assertEquals("migrated-note", repository.createNote("After migration").id)

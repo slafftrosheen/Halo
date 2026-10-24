@@ -14,7 +14,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
 import org.json.JSONObject
-import java.security.MessageDigest
 import java.util.UUID
 
 /** Typed adapter to the editor's command/revision owner; never acknowledges an editor draft. */
@@ -106,13 +105,17 @@ class WorkspaceNoteActions(
                 val saved = documents.loadLegacyDocument(noteId) ?: throw NoteConflict()
                 require(saved.blocks.none { it.language?.startsWith("halo-") == true }) { "Use the specialized document owner" }
                 val attachments = database.workspaceAssetDao().observeAttachments(noteId).first()
-                val observedVersion = version(saved, header.inInbox, attachments)
+                val assets = database.notebookDao().getAssetsForObject(noteId)
+                val observedVersion = version(saved, header.inInbox, attachments, assets)
                 if ("version" in args && string("version", 69, 69) != observedVersion) throw NoteConflict()
-                val recovery = notes.getDraft(noteId)
+                val recovery = database.notebookDao().getDraft(noteId)
+                val purgeReceipt = notes.purgeStatus(noteId)
                 suspend fun receipt(document: NotebookDocument = saved) = JSONObject().put("noteId", noteId)
-                    .put("version", version(document, database.notebookDao().getWorkspaceObject(noteId)?.inInbox ?: header.inInbox, attachments))
+                    .put("version", version(document, database.notebookDao().getWorkspaceObject(noteId)?.inInbox ?: header.inInbox, attachments, assets))
                     .put("revision", document.revision).put("title", document.title.take(120))
                     .put("lifecycle", document.lifecycle.name).put("hasRecoveryDraft", recovery != null).put("attachmentCount", attachments.size)
+                    .put("recoveryVersion", NotebookNoteIdentity.recovery(recovery))
+                    .put("purgeReceiptVersion", purgeReceipt?.version ?: JSONObject.NULL)
                 val selected = if ("blockId" in fields) saved.blocks.firstOrNull { it.id == id("blockId") } ?: throw NoteConflict() else null
                 if (toolCall.functionName == "halo_note_get") {
                     val offset = integer("offset", 0, 2000, 0)
@@ -236,15 +239,7 @@ class WorkspaceNoteActions(
 
     private class NoteConflict : Exception()
     companion object {
-        fun version(note: NotebookDocument, inInbox: Boolean, attachments: List<NoteAttachment> = emptyList()): String {
-            val value = JSONArray().put(note.noteId).put(note.title).put(note.revision).put(note.lifecycle.name)
-                .put(note.updatedAt).put(note.createdAt).put(note.schemaVersion).put(inInbox)
-                .put(JSONArray(note.blocks.map { block -> JSONArray().put(block.id).put(block.position).put(block.type.name)
-                    .put(block.text).put(block.checked).put(block.indent).put(block.refObjectId).put(block.language) }))
-                .put(JSONArray(attachments.sortedBy { it.id }.map { item -> JSONArray().put(item.id).put(item.assetId).put(item.position)
-                    .put(item.caption).put(item.type).put(item.mimeType).put(item.storageType).put(item.pathOrUri).put(item.permissionPersisted)
-                    .put(item.displayName).put(item.bytes).put(item.width).put(item.height).put(item.durationMs) })).toString()
-            return "note:" + MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
-        }
+        fun version(note: NotebookDocument, inInbox: Boolean, attachments: List<NoteAttachment> = emptyList(), assets: List<com.halo.app.data.workspace.WorkspaceAssetEntity> = emptyList()): String =
+            NotebookNoteIdentity.content(note, inInbox, attachments, assets)
     }
 }

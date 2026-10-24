@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4038) {
+    buildMap(4044) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4082,6 +4082,12 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Install a small local model to try on-device request recognition. Standard commands work without it." to R.string.ui_9c39220de137,
     "halo can't verify the previous setup record. Keep the downloaded files and clear the record before starting again." to R.string.ui_29d4b3b72533,
     "The setup record could not be cleared. Reopen halo and try again. Your downloaded files are still kept." to R.string.ui_740783493047,
+    "Note deleted." to R.string.ui_cca933093012,
+    "The note could not be deleted. Try again." to R.string.ui_647c9b1f230f,
+    "Note deleted. Shared attachment files were kept." to R.string.ui_10cc184ad99c,
+    "Note deleted. Attachment cleanup is still pending." to R.string.ui_7ba2528e247f,
+    "Note deleted. Some attachments could not be removed." to R.string.ui_6cf537897a11,
+    "Deletion could not be confirmed. Check Trash before trying again." to R.string.ui_6e8cdc9e0c89,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

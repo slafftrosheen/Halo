@@ -240,6 +240,9 @@ class NotebookAssetRepository(
     /** Add another note reference to the same owned image bytes; never replace note content. */
     suspend fun attachExistingImage(noteId: String, source: NoteAttachment) = database.withTransaction {
         require(source.type == "IMAGE" && source.storageType in setOf("APP_OWNED", "MANAGED_FILE"))
+        require(database.workspaceAssetDao().attachment(source.noteId, source.id) == source) { "Source attachment changed" }
+        require(database.notebookDao().getWorkspaceObject(source.noteId)?.lifecycle in setOf("ACTIVE", "ARCHIVED")) { "Source is unavailable" }
+        if (source.storageType == "MANAGED_FILE") require(File(source.pathOrUri).isFile) { "Source image is unavailable" }
         require(database.notebookDao().getWorkspaceObject(noteId)?.lifecycle == "ACTIVE")
         requireNotNull(database.notebookDao().getNote(noteId))
         if(database.workspaceAssetDao().attachmentAssetCount(noteId, source.pathOrUri) > 0) return@withTransaction

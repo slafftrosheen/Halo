@@ -133,11 +133,18 @@ object ManualDependencyGraph {
     val engineGraph: EngineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
+    val notebookPurgeOwner by lazy {
+        com.halo.app.data.notebook.NotebookPurgeOwner(appDatabase, com.halo.app.storage.haloStorageLayout(applicationContext).managedWorkspaceFiles,
+            schedule = { com.halo.app.notebook.NotebookPurgeCleanupWorker.enqueue(applicationContext) }).also {
+            runCatching { com.halo.app.notebook.NotebookPurgeCleanupWorker.enqueue(applicationContext) }
+        }
+    }
     val notebookRepository by lazy {
         RoomNotebookRepository(
             dao = appDatabase.notebookDao(),
             // Legacy body writers are routed through the canonical document path.
             documents = notebookDocumentRepository,
+            purgeOwner = notebookPurgeOwner,
         )
     }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
@@ -880,6 +887,7 @@ object ManualDependencyGraph {
             exactStudyStarter = { sourceId, sourceVersion -> studyUseCases.startExactMaterial(sourceId, sourceVersion, workspaceContext::versionFor) },
             studyActions = com.halo.app.di.tools.WorkspaceStudyActions(appDatabase, studyRepository, studyUseCases),
             noteActions = com.halo.app.di.tools.WorkspaceNoteActions(appDatabase, notebookDocumentRepository, notebookUseCases, workspaceContext),
+            notePurgeActions = com.halo.app.di.tools.WorkspaceNotePurgeActions(notebookUseCases),
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
             { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)
