@@ -1,0 +1,67 @@
+[
+  {
+    "class": "com.halo.app.ink.AndroidInkInputTest",
+    "expectedTests": 10,
+    "sourceSha256": "4c646f30fe88be27d93f6f36343470b81e871e3ac34760ef36ed32ecf4e73f69"
+  },
+  {
+    "class": "com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "b97116c86f92f2bc9c660f75a6d6028000a6f5fab24df67cf0fd8ab101413237"
+  },
+  {
+    "class": "com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest",
+    "expectedTests": 2,
+    "sourceSha256": "6ad7718cc692ede2bf3cb1defcd37df6e1885fa0f16d3a070745fce31886a266"
+  },
+  {
+    "class": "com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest",
+    "expectedTests": 2,
+    "sourceSha256": "6ac3501be184276d3c3731d258b8c047f684350a40c63b8e0fcfaf6cdf48d9ab"
+  },
+  {
+    "class": "com.halo.app.ui.workspace.StudioDeviceTest",
+    "expectedTests": 2,
+    "sourceSha256": "9d5eafd43fb85e637c3148bf67d69b5ff235dc4ec1b44b392589951d6c6337c5"
+  },
+  {
+    "class": "com.halo.app.notebook.NoteEditorControlsDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "9abca0c02493fa3cf04d6df91d4c070f0dbc590e2b560df48ffe29f04970bf02"
+  },
+  {
+    "class": "com.halo.app.notebook.NotePurgeDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "5618a7a7d5c056f30ace97985e2fbdbe2b9046135d49a25e6b388e128ebfb845"
+  },
+  {
+    "class": "com.halo.app.notebook.NoteAttachmentControlsDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "354be809134caa6e4a396154445cf880919ac01c84912cd1710de398cea020f2"
+  },
+  {
+    "class": "com.halo.app.study.StudyLearnerControlsDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "4d8de0e5b3077c57281fdd17c069f6b6c966d860047479c8c1e5ddbaeef96b1f"
+  },
+  {
+    "class": "com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "0f025bab49f1adb0f77288a63f85c629d76f5c7f1781a7337c05ec7fe7dcfa3b"
+  },
+  {
+    "class": "com.halo.app.ui.screens.notebook.CanvasPreviewDeviceTest",
+    "expectedTests": 2,
+    "sourceSha256": "6df89b27ae99530107a223304bd64c61096bafe1323d68ff392fd75bebd55a6b"
+  },
+  {
+    "class": "com.halo.app.ui.screens.notebook.CanvasPdfInspectionDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "09733235f4675a26921c5917a4b94859a17ee6069cbda08f2e6d5cc8d855b7d0"
+  },
+  {
+    "class": "com.halo.app.language.PolishLanguageDeviceTest",
+    "expectedTests": 1,
+    "sourceSha256": "4739a4ff964e4515718270a29fb055b02f35cbedf8cbb8b78513d52ef0068ab0"
+  }
+]
