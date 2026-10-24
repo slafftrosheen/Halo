@@ -485,7 +485,9 @@ class NotebookCanvasRepository(
             WorkspaceObjectType.MEDIA.name -> CanvasNodeType.IMAGE
             else -> CanvasNodeType.FILE
         }
-        val imageSource = image || notebookDao.getAssetsForObject(objectId).any { it.type == "IMAGE" }
+        val imageSource = image || if (item.type == WorkspaceObjectType.NOTE.name)
+            database.workspaceAssetDao().hasImageAttachment(objectId)
+        else notebookDao.getAssetsForObject(objectId).any { it.type == "IMAGE" }
         addNode(canvasId, if (imageSource) CanvasNodeType.IMAGE else type, objectId, item.title, x, y)
     }
 

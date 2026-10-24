@@ -1,0 +1,74 @@
+[
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\androidTest\\java\\com\\halo\\app\\notebook\\NoteAttachmentControlsDeviceTest.kt",
+    "sha256": "5d2fb31937a873238f552963e100e9446beac8cb156d3f3ddaa4731cd20a4a7c"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\assets\\skills\\halo.notebook.json",
+    "sha256": "3ea379ee3cc85fe157afc45e7c2ddde9874d67f7b9307326d28d84748d75e8a6"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\notebook\\NotebookCanvas.kt",
+    "sha256": "f70e19d806e0d3f28920f3451dac317ea893d6d0287b83ca7f659c07412cae4e"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\workspace\\NotebookAssetRepository.kt",
+    "sha256": "049a2c0ebc033ea88b35f8a7fb5cb6bfa3bd0c8988a893759ba7d5a966595dde"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\workspace\\NotebookAttachmentState.kt",
+    "sha256": "47a57b74611ea56014bd7bcf765756538cd40aa883e6ac3728bdfe9df60182f9"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\data\\workspace\\WorkspaceAssetEntity.kt",
+    "sha256": "168cdd8a6477b44ed68c70eb749e5a4a0c4af0b0d739c2e8c9d6baeab505b80b"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\ManualDependencyGraph.kt",
+    "sha256": "bb921131bb68bd205991c857ac10eb09d1a8a360670d31be3ef745eb88efa1d0"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\HaloToolDescriptors.kt",
+    "sha256": "ef3bff0e3091c0a16f6f6c9de1634924bc6723c6033d0e464b918ad43898146e"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceNoteAttachmentActions.kt",
+    "sha256": "011ec9cf18a05a414e0dbad51f23fa07b51acb92baec22d9074e89e23a6ed425"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceOperabilityContracts.kt",
+    "sha256": "029fbadcbdc713e7770db4ef1507ba7b97ffb5b4fe9a064a9cd2a4e748796fdf"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\di\\tools\\WorkspaceToolExecutor.kt",
+    "sha256": "2972bb40a0c36d7ecd1c7439b1b6cc4a8b0bb841d31db1b8546cbd3a6318d356"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\home\\HomeToolCatalog.kt",
+    "sha256": "7b73fc07860db0cce7a11008209fd619b17071e5a77b8c3c348df80300c2e785"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\test\\java\\com\\halo\\app\\data\\workspace\\NotebookAttachmentControlsTest.kt",
+    "sha256": "474da6197aa8ca54ca947d8a5374ee51289d53bacd1c78f29fa92e9d59a38626"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\app\\src\\test\\java\\com\\halo\\app\\data\\workspace\\WorkspaceOperabilityTest.kt",
+    "sha256": "d7f06bc7780e66785b26a8df558a04a8173822fb6bfcde2a32a85d646f6274de"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\skills\\SkillInstructionSource.kt",
+    "sha256": "8c919803bd6d8faeb3f399c2134e64fbcb124da48e2656200acdcf24b2480647"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\skills\\SkillRegistry.kt",
+    "sha256": "bc1184fd82aaa21814b26fe5b92ca29588a161f4011e9ae05809a2b39e1e1609"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\tools\\WorkspaceToolAccess.kt",
+    "sha256": "fda2bfa2112e1ded3f0e058fc49cd078ed0d413ebc2ed3e3b750e7b3721f1e23"
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\test\\java\\com\\halo\\runtime\\cognition\\tools\\NoteToolProvenanceTest.kt",
+    "sha256": "fc701f3da0eb9b03ba33cef46182e5a68482b807e276801c41a7a26b043f3f4a"
+  }
+]

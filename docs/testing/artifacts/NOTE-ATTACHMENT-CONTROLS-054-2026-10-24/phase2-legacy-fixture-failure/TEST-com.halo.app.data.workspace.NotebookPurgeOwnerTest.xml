@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.NotebookPurgeOwnerTest" tests="25" skipped="0" failures="0" errors="0" timestamp="2026-10-24T05:53:50.071Z" hostname="MINIFOXEY" time="3.029">
+  <properties/>
+  <testcase name="aliasedSharedOwnershipAndWorkspaceFileOwnershipProtectTheSameBytes" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.113"/>
+  <testcase name="cleanupTransactionFailureKeepsTheCommittedDeletionAndCanReconcileAnAlreadyAbsentFile" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.065"/>
+  <testcase name="claimRollbackCannotDeleteSourceBytesOrLeaveADeletionReceipt" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.058"/>
+  <testcase name="callerTransactionCannotMakeCleanupRunBeforeTheNoteDeletionCommit" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.048"/>
+  <testcase name="cancellationAfterLogicalDeletionStillPreservesCleanupAndSchedulesItsRecovery" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.061"/>
+  <testcase name="aRestoredParentBlocksCleanupAndStatusDoesNotClaimThatNewSourceIsDeleted" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.06"/>
+  <testcase name="boundedCleanupContinuesFromItsDurableQueueAndIgnoresUnapprovedOrphans" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.241"/>
+  <testcase name="malformedPurgeChoicesAndReceiptIdentitiesCannotMutateAnything" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.056"/>
+  <testcase name="changedNoteOrUnattachedAssetRefusesAnOldPermanentDeletionApproval" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.049"/>
+  <testcase name="cachedAttachmentsCannotResurrectAPurgedSourceButValidCopiesKeepSharedBytes" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.085"/>
+  <testcase name="boundedReconciliationDoesNotStarveLaterReceiptsBehindBusyFiles" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="1.284"/>
+  <testcase name="deletionCascadesOnlyTheObservedNoteAndKeepsDurableContentFreeReceipt" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.055"/>
+  <testcase name="activeMissingNonNoteAndUnconfiguredOwnersCannotDeleteOrCreateAReceipt" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.048"/>
+  <testcase name="restoredNoteNeedsAFreshSourceAndPriorReceiptApprovalBeforeANewPurgeGeneration" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.075"/>
+  <testcase name="outsideRootAndTraversalPathsRemainForReviewAndAreNeverDeleted" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.075"/>
+  <testcase name="actualRegistrationHasClosedContractsSoleOwnerBundledRisksAndMandatoryApproval" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.034"/>
+  <testcase name="recoveryDeletionNeedsExplicitChoiceAndExactVersionAndCannotChangeUnderOneReceipt" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.05"/>
+  <testcase name="ambiguousOwnedUriRequiresReviewWhileUnrelatedProvidersDoNotBlockCleanup" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.061"/>
+  <testcase name="busyFileKeepsOwnershipAndExplicitReceiptRetryCompletesWithoutReplayingTheOriginalPurge" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.062"/>
+  <testcase name="duplicateClaimsInTheDeletedNoteDoNotPretendToBeOtherReaders" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.058"/>
+  <testcase name="unsafeChangedOrMissingAssetMetadataNeverAuthorizesAFileEffect" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.052"/>
+  <testcase name="ownerRecreationResumesOnlyItsCommittedPendingReceipt" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.111"/>
+  <testcase name="noteWithoutManagedBytesHasANewCompleteReceipt" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.045"/>
+  <testcase name="uriOnlyWorkspaceFilesAndAppOwnedContentAliasesRetainSharedBytes" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.088"/>
+  <testcase name="sharedAndExternalFilesStayOwnedByOtherNotesAndOnlyExclusiveBytesAreCleared" classname="com.halo.app.data.workspace.NotebookPurgeOwnerTest" time="0.082"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

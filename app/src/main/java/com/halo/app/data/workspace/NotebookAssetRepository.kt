@@ -7,6 +7,10 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.notebook.DocumentReducer
+import com.halo.app.data.notebook.NotebookDocumentCodec
+import com.halo.app.data.notebook.NotebookDocumentRepository
+import com.halo.app.data.notebook.NotebookNoteIdentity
 import com.halo.app.storage.haloStorageLayout
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +26,50 @@ class NotebookAssetRepository(
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
     private val resolver: ContentResolver get() = context.contentResolver
+
+    /** Exact saved metadata only: does not decode bytes or initialize legacy note blocks. */
+    suspend fun attachmentState(noteId: String): NotebookAttachmentState? = database.withTransaction {
+        val header = database.notebookDao().getWorkspaceObject(noteId)?.takeIf { it.type == "NOTE" }
+            ?: return@withTransaction null
+        val document = NotebookDocumentRepository(database.notebookDocumentDao(), database).load(noteId)
+            ?: return@withTransaction null
+        if (document.blocks.any { it.language?.startsWith("halo-") == true }) return@withTransaction null
+        val raw = database.notebookDao().getNote(noteId) ?: return@withTransaction null
+        if (document.blocks.isEmpty()) {
+            val parsed = NotebookDocumentCodec.parse(raw.body) { UUID.randomUUID().toString() }
+            if (parsed.sourceBlockCount > DocumentReducer.MAX_BLOCKS ||
+                parsed.blocks.any { it.language?.startsWith("halo-") == true }) return@withTransaction null
+        }
+        val links = observe(noteId).first().sortedWith(compareBy<NoteAttachment> { it.position }.thenBy { it.id })
+        val draft = database.notebookDao().getDraft(noteId)
+        val identity = NotebookNoteIdentity
+        val content = identity.content(document, header.inInbox, links, database.notebookDao().getAssetsForObject(noteId),
+            raw.body.takeIf { document.blocks.isEmpty() })
+        NotebookAttachmentState(noteId, "note-attachments:" + identity.digest(content + ":" + identity.recovery(draft)),
+            header.lifecycle, document.isWritable, draft != null, links)
+    }
+
+    /** Shares the editor's exact existing-image admission; never accepts a caller-provided path. */
+    suspend fun reuseImage(noteId: String, version: String, sourceNoteId: String, sourceVersion: String, attachmentId: String): NotebookAttachmentMutation = database.withTransaction {
+        val target = requireNotNull(attachmentState(noteId))
+        val source = requireNotNull(attachmentState(sourceNoteId))
+        check(target.version == version && source.version == sourceVersion) { "Attachment source changed" }
+        check(target.lifecycle == "ACTIVE" && !target.hasRecoveryDraft) { "Use an active note and recover its saved editor draft before editing" }
+        check(source.lifecycle in setOf("ACTIVE", "ARCHIVED")) { "Source unavailable" }
+        val selected = requireNotNull(source.attachments.firstOrNull { it.id == attachmentId })
+        val before = target.attachments.firstOrNull { it.pathOrUri == selected.pathOrUri }
+        attachExistingImage(noteId, selected)
+        val after = requireNotNull(attachmentState(noteId))
+        val saved = requireNotNull(after.attachments.firstOrNull { it.pathOrUri == selected.pathOrUri })
+        NotebookAttachmentMutation(after, saved.id, before == null)
+    }
+
+    suspend fun unlinkAttachment(noteId: String, version: String, attachmentId: String): NotebookAttachmentMutation = database.withTransaction {
+        val before = requireNotNull(attachmentState(noteId))
+        check(before.version == version && before.writable && !before.hasRecoveryDraft) { "Attachment source changed or needs recovery" }
+        check(remove(noteId, attachmentId)) { "Attachment unavailable" }
+        NotebookAttachmentMutation(requireNotNull(attachmentState(noteId)), attachmentId, true)
+    }
 
     fun observe(noteId: String): Flow<List<NoteAttachment>> =
         database.workspaceAssetDao().observeAttachments(noteId)
@@ -281,11 +329,9 @@ class NotebookAssetRepository(
 
     suspend fun remove(noteId: String, attachmentId: String): Boolean = withContext(Dispatchers.IO) {
         database.withTransaction {
-            val assetId = database.workspaceAssetDao().attachmentAssetId(noteId, attachmentId)
-                ?: return@withTransaction false
-            val removed = database.workspaceAssetDao().deleteAttachment(noteId, attachmentId) == 1
-            if (removed) database.workspaceAssetDao().deleteAsset(assetId)
-            removed
+            // Unlink only. Keep the original note's asset ownership until its durable purge can
+            // verify shared readers and cleanup. Dropping this row strands the managed bytes.
+            database.workspaceAssetDao().deleteAttachment(noteId, attachmentId) == 1
         }
     }
 }

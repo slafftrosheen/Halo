@@ -99,6 +99,9 @@ interface WorkspaceAssetDao {
         INNER JOIN workspace_assets s ON s.id=a.assetId WHERE a.noteId=:noteId AND a.id=:attachmentId""")
     suspend fun attachment(noteId: String, attachmentId: String): NoteAttachment?
 
+    @Query("SELECT EXISTS(SELECT 1 FROM note_attachments a INNER JOIN workspace_assets s ON s.id=a.assetId WHERE a.noteId=:noteId AND s.type='IMAGE')")
+    suspend fun hasImageAttachment(noteId: String): Boolean
+
     /** Metadata only; callers must opt in to each returned attachment before reading its bytes. */
     @Query(
         """

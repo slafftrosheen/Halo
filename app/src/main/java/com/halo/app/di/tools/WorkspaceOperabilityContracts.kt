@@ -37,6 +37,8 @@ object WorkspaceOperabilityContracts {
         group("NotebookUseCases", ToolOperation.EDIT, "halo_note_archive", "halo_note_trash", "halo_note_restore", "halo_note_remove_from_inbox")
         group("NotebookPurgeOwner", ToolOperation.QUERY, "halo_note_purge_status")
         group("NotebookPurgeOwner", ToolOperation.EDIT, "halo_note_purge", "halo_note_purge_retry")
+        group("NotebookAssetRepository", ToolOperation.QUERY, "halo_note_attachments")
+        group("NotebookAssetRepository", ToolOperation.EDIT, "halo_note_reuse_image", "halo_note_unlink_attachment")
         group("WorkspaceRepository", ToolOperation.QUERY, "halo_search_notebook", "halo_get_workspace_object", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.CREATE, "halo_study_with_halo", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.QUERY, "halo_get_study_session", encoding = ToolResultEncoding.TEXT)
@@ -51,6 +53,7 @@ object WorkspaceOperabilityContracts {
         val operation = operations[definition.name] ?: return null
         val fields = definition.parameters["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
         val resultFields = when (operation.owner) {
+            "NotebookAssetRepository" -> mapOf("noteId" to "string", "version" to "string", "attachmentId" to "string", "attachmentCount" to "integer", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "attachments" to "array", "nextOffset" to "integer", "saved" to "boolean", "changed" to "boolean", "fileCleanupPerformed" to "boolean")
             "NotebookPurgeOwner" -> mapOf("noteId" to "string", "receiptVersion" to "string", "sourceVersion" to "string", "status" to "string", "originalDeletionRecorded" to "boolean", "deleted" to "boolean", "sourcePresent" to "boolean", "cleanupComplete" to "boolean", "pendingAssets" to "integer", "exclusiveAssetsCleared" to "integer", "sharedAssetsRetained" to "integer", "externalAssetsRetained" to "integer", "reason" to "string")
             "NotebookDocumentRepository", "NotebookUseCases" -> mapOf("noteId" to "string", "version" to "string", "revision" to "integer", "title" to "string", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "blocks" to "array", "block" to "object", "blockIds" to "array", "saved" to "boolean", "changed" to "boolean")
             "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "nodeIds" to "array", "edgeId" to "string", "title" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean")
@@ -60,6 +63,8 @@ object WorkspaceOperabilityContracts {
             else -> mapOf("objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string", "resultId" to "string", "resultVersion" to "string")
         }
         val resultIds = when (definition.name) {
+            "halo_note_attachments" -> setOf("noteId")
+            "halo_note_reuse_image", "halo_note_unlink_attachment" -> setOf("noteId", "attachmentId")
             "halo_note_purge", "halo_note_purge_status", "halo_note_purge_retry" -> setOf("noteId")
             "halo_note_get", "halo_note_read_block", "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
             "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_delete_block", "halo_note_insert_reference", "halo_note_set_reference", "halo_note_replace_content",
@@ -84,13 +89,15 @@ object WorkspaceOperabilityContracts {
         }
         return ToolOperability(capabilityId = CapabilityId(if (operation.operation in setOf(ToolOperation.QUERY, ToolOperation.PRESENT)) "workspace.read" else "workspace.write"), owner = operation.owner,
             operation = operation.operation, resultEncoding = operation.encoding,
-            resultSchema = if (operation.encoding == ToolResultEncoding.TEXT) mapOf("type" to "string", "maxLength" to 24000)
+            resultSchema = if (operation.owner == "NotebookAssetRepository") WorkspaceNoteAttachmentActions.resultSchema(definition.name)
+                else if (operation.encoding == ToolResultEncoding.TEXT) mapOf("type" to "string", "maxLength" to 24000)
                 else mapOf("type" to "object", "properties" to resultFields.mapValues { mapOf("type" to listOf(it.value, "null")) },
                     "required" to (resultIds + (if (operation.owner == "NotebookCanvasRepository") setOf("version") else emptySet()) +
                         (if (definition.name == "halo_canvas_clear_sketch") setOf("changed") else emptySet()) +
                         (if (operation.owner == "StudyUseCases" && operation.encoding == ToolResultEncoding.JSON && definition.name != "halo_study_sessions") setOf("version") else emptySet()) +
                         (if (definition.name in setOf("halo_study_state", "halo_study_delete")) setOf("localDataVersion") else emptySet()) +
                         (if (operation.owner in setOf("NotebookDocumentRepository", "NotebookUseCases")) setOf("version", "revision") else emptySet()) +
+                        (if (operation.owner == "NotebookAssetRepository") setOf("version", "attachmentCount", "hasRecoveryDraft") else emptySet()) +
                         (if ("itemId" in resultIds) setOf("itemVersion") else emptySet())).toList(), "additionalProperties" to true),
             sourceVersionArguments = fields.keys.filterIsInstance<String>().filter { it in setOf("version", "recoveryVersion", "priorReceiptVersion", "receiptVersion", "targetVersion", "itemVersion", "localDataVersion", "revision", "sourceVersion", "canvasVersion", "expectedRevision") }.toSet(),
             resultIdFields = resultIds,

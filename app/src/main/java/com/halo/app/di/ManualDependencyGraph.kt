@@ -888,6 +888,7 @@ object ManualDependencyGraph {
             studyActions = com.halo.app.di.tools.WorkspaceStudyActions(appDatabase, studyRepository, studyUseCases),
             noteActions = com.halo.app.di.tools.WorkspaceNoteActions(appDatabase, notebookDocumentRepository, notebookUseCases, workspaceContext),
             notePurgeActions = com.halo.app.di.tools.WorkspaceNotePurgeActions(notebookUseCases),
+            noteAttachmentActions = com.halo.app.di.tools.WorkspaceNoteAttachmentActions(notebookAssetRepository),
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
             { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)

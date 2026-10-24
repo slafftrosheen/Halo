@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.NotebookAttachmentControlsTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-24T05:53:48.570Z" hostname="MINIFOXEY" time="1.364">
+  <properties/>
+  <testcase name="unlinkRetainsOwnershipForLaterPurgeAndCannotReplayAsSuccess" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.159"/>
+  <testcase name="recoveryDraftRefusesAssistantWritesWhileExistingEditorRemovalStillWorks" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.093"/>
+  <testcase name="trashedMissingUnsupportedAndUnavailableSourcesNeverAttach" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.148"/>
+  <testcase name="failedCanonicalAttachmentInsertRollsBackItsNewAssetAndKeepsObservedVersions" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.09"/>
+  <testcase name="maximallyEscapedMetadataFitsTheDeclaredReceiptBudget" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.168"/>
+  <testcase name="changedTargetOrSourceCannotConsumeAnOldApproval" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.087"/>
+  <testcase name="registrationContractsRisksAndPrivacyAreOwnedByNotebookAssets" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.099"/>
+  <testcase name="reuseSavesAnActualTargetAttachmentAndDuplicateIsAnUnchangedReceipt" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.077"/>
+  <testcase name="unlinkedCleanupOnlyAssetsDoNotTurnTextNotesIntoCanvasImageCards" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.054"/>
+  <testcase name="archiveAndSpecializedDocumentBoundariesMatchExistingOwners" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.077"/>
+  <testcase name="invalidFieldsAndForeignAttachmentIdsNeverMutate" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.061"/>
+  <testcase name="metadataPagingIsBoundedAndCannotMixVersionsOrExposePaths" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.09"/>
+  <testcase name="editorRemovalUsesTheSameOwnershipRetentionAndSharedReadersStayReadable" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.088"/>
+  <testcase name="legacyReadsDoNotInitializeBlocksAndDraftChangesInvalidateTheObservedSet" classname="com.halo.app.data.workspace.NotebookAttachmentControlsTest" time="0.063"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -34,6 +34,10 @@ class CanvasDailyRepositoryTest {
             "photo-asset", photo.id, "IMAGE", "image/jpeg", "APP_OWNED", "content://capture/photo", true,
             "photo.jpg", 100, 800, 600, null, 1,
         ))
+        // LocalCaptureStore.receive persists both the asset and its visible attachment link.
+        db.workspaceAssetDao().insertAttachment(com.halo.app.data.workspace.NoteAttachmentEntity(
+            "photo-link", photo.id, "photo-asset", 0, null, 1,
+        ))
         repository.addReferences(board, listOf(photo.id))
         repository.addReferences(board, listOf(photo.id))
         val card = repository.observe(board).first()!!.nodes.single()

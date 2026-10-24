@@ -1,0 +1,9 @@
+{
+  "existingInputs": 18,
+  "changedExistingInputs": 0,
+  "addedFixtureInput": "CanvasDailyRepositoryTest.kt",
+  "reusedAppPasses": 81,
+  "rerunClass": "CanvasDailyRepositoryTest",
+  "newAttachmentCasesPassed": 14,
+  "productionAndNativeInputsUnchanged": true
+}
