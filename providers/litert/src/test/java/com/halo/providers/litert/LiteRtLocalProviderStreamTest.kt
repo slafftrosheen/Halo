@@ -215,6 +215,52 @@ class LiteRtLocalProviderStreamTest {
         assertEquals(resolves, inventory.resolveCalls)
     }
 
+    @Test fun explicitDisabledThinkingSurvivesUnadvertisedNativeSupportAcrossProviderPaths() = runTest {
+        val runtime = FakeRuntime() // metadata does not advertise enable-thinking support
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val request = AiRequest(text = "Hello", modelId = "test_model", reasoningMode = AiReasoningMode.DISABLED)
+        provider.generate(request, AiContext.EMPTY)
+        provider.stream(request, AiContext.EMPTY).toList()
+        requireNotNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(3, runtime.configs.size)
+        assertTrue(runtime.configs.all { it.thinkingEnabled == false && it.thinkingTokenBudget == null })
+        assertTrue(!provider.nativeThinkingSupported("test_model"))
+        provider.generate(request.copy(reasoningMode = AiReasoningMode.DEFAULT), AiContext.EMPTY)
+        assertEquals(null, runtime.configs.last().thinkingEnabled)
+    }
+
+    @Test fun cancelledAdviceCannotAdvertiseIdleOrReleaseItsMutexBeforeNativeCleanup() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val cleaning = CompletableDeferred<Unit>()
+        val releaseCleanup = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply {
+            generationEntered = entered
+            generationRelease = CompletableDeferred()
+            generationCleanupEntered = cleaning
+            generationCleanupRelease = releaseCleanup
+        }
+        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
+        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
+        val advice = async(Dispatchers.Default) { provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label") }
+        withContext(Dispatchers.Default) { withTimeout(5_000) { entered.await() } }
+        advice.cancel()
+        withContext(Dispatchers.Default) { withTimeout(5_000) { cleaning.await() } }
+        assertTrue(!advice.isCompleted)
+        assertTrue(provider.inferenceBusyForIntent())
+        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(1, runtime.configs.size)
+        releaseCleanup.complete(Unit)
+        advice.join()
+        assertTrue(!provider.inferenceBusyForIntent())
+        runtime.generationRelease = null
+        runtime.generationCleanupEntered = null
+        runtime.generationCleanupRelease = null
+        requireNotNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
+        assertEquals(2, runtime.configs.size)
+    }
+
     @Test fun cancelledAdvisoryReleasesCanonicalMutexForNextRequest() = runTest {
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
@@ -292,6 +338,8 @@ class LiteRtLocalProviderStreamTest {
         var failPrompt: String? = null
         var generationEntered: CompletableDeferred<Unit>? = null
         var generationRelease: CompletableDeferred<Unit>? = null
+        var generationCleanupEntered: CompletableDeferred<Unit>? = null
+        var generationCleanupRelease: CompletableDeferred<Unit>? = null
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
@@ -309,7 +357,12 @@ class LiteRtLocalProviderStreamTest {
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
             configs += config
             generationEntered?.complete(Unit)
-            generationRelease?.await()
+            try { generationRelease?.await() } finally {
+                withContext(kotlinx.coroutines.NonCancellable) {
+                    generationCleanupEntered?.complete(Unit)
+                    generationCleanupRelease?.await()
+                }
+            }
             if (config.prompt == failPrompt) return Result.failure(IllegalStateException("SYNTHETIC_FIXTURE_FAILURE"))
             if (emptyResponse) return Result.success(RuntimeGenerationResult("", emptyList(), 0, 0L, 0.0, 1L))
             state.value = LocalModelSessionState.INFERRING

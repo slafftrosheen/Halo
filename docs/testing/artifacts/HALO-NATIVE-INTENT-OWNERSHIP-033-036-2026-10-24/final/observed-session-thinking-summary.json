@@ -1,0 +1,23 @@
+{
+  "evidenceKind": "DERIVED_OBSERVED_XML_SUMMARY",
+  "provenance": "XML summaries read by exec_command after gate11578, before the subsequent provider-only Gradle run replaced the test-result directory. Terminal gate log is preserved; these are summaries, not raw XML.",
+  "gate": "11578",
+  "suites": [
+    {
+      "name": "com.halo.providers.litert.runtime.LocalModelSessionResidencyTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "timestamp": "2026-10-24T01:04:50.218Z"
+    },
+    {
+      "name": "com.halo.providers.litert.runtime.ThinkingConfigTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "timestamp": "2026-10-24T01:04:53.301Z"
+    }
+  ]
+}

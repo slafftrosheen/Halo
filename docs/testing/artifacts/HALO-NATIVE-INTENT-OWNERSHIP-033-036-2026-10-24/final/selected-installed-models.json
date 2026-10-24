@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "serial": "f01fe673",
+  "runId": "1ad51f9a9c944429b50c5e9501f15741",
+  "sourceStamp": "09f09fe408775e9e25ac2442570c9f4cf3a41835-dirty-128a2975e7ad7e562def475f3bcdb74c8a7c7ba612eaa5db98043de1ec0ab7d1-36a1ac36f4f9554e968a12ce700a9dcb11367a166117b5dbbed79bc4847b33db",
+  "capturedAtMs": 1792804310263,
+  "models": [
+    {
+      "id": "qwen3-0.6b-dynamic-int4",
+      "filename": "qwen3-0.6b-dynamic-int4.litertlm",
+      "sha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+      "bytes": 344671744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    }
+  ],
+  "roleSuite": false,
+  "embeddingSuite": false,
+  "warmIntentSuite": true,
+  "contextTokens": 0,
+  "backend": "CPU",
+  "languages": [
+    "EN",
+    "LV",
+    "RU",
+    "PL"
+  ],
+  "repetitions": 3
+}

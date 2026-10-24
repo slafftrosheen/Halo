@@ -1,0 +1,22 @@
+[
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt",
+    "sha256": "94d787f29ccb32af530c9265adc9b5d3341da24f3db35b91f376202bd308d211"
+  },
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/runtime/LocalModelSession.kt",
+    "sha256": "382404171e42e144a6286dc3c84d857cba95d994356905f89416eedc0adc3e42"
+  },
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/runtime/LiteRtRuntime.kt",
+    "sha256": "025a6d7866f84af7abb4e41a4b959fa3660b5bbca8c86a56a97d6d937e0ea9a7"
+  },
+  {
+    "path": "providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt",
+    "sha256": "20e5f97c32459e936dd12477027c7ef49083142b36eddc2ef89df987760fe4cb"
+  },
+  {
+    "path": "providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt",
+    "sha256": "59f568ec430362c875bc4732e9da35e01a6deb8daaba51333350ea336ee75d95"
+  }
+]

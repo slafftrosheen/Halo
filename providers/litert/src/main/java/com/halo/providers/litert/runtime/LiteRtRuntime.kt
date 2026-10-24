@@ -25,6 +25,8 @@ import com.halo.sdk.provider.RuntimeLoadResult
 import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.ToolCall
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -178,6 +180,9 @@ class LiteRtRuntime(
 
     private val stateMutex = Mutex()
     private val inferenceMutex = Mutex()
+    // cancelProcess may run from another coroutine while JNI prefill is blocked.
+    // Serialize native Conversation cancellation with close without holding stateMutex.
+    private val conversationLifetimeMutex = Mutex()
     private val loadMutex = Mutex()
     private val cancelRequested = AtomicBoolean(false)
 
@@ -258,8 +263,10 @@ class LiteRtRuntime(
     private suspend fun closeConversationQuietly(target: Conversation?, cancel: Boolean) {
         if (target == null) return
         withContext(NonCancellable + Dispatchers.Default) {
-            if (cancel) runCatching { target.cancelProcess() }
-            runCatching { target.close() }
+            conversationLifetimeMutex.withLock {
+                if (cancel) runCatching { target.cancelProcess() }
+                runCatching { target.close() }
+            }
         }
     }
 
@@ -799,10 +806,15 @@ class LiteRtRuntime(
                 )
             }
             val conversationCreateMs = System.currentTimeMillis() - conversationCreateStart
-            stateMutex.withLock {
-                activeConversation = conversation
-                conversationCreateDurationMs = conversationCreateMs
+            // Publish a blocking native allocation before delivering cancellation so
+            // finally always owns its close, even when createConversation returned late.
+            withContext(NonCancellable) {
+                stateMutex.withLock {
+                    activeConversation = conversation
+                    conversationCreateDurationMs = conversationCreateMs
+                }
             }
+            currentCoroutineContext().ensureActive()
             Log.i(TAG, "$EVENT_CONVERSATION_READY model=$_loadedModelId durationMs=$conversationCreateMs")
 
             val outgoingContents = LiteRtMultimodalInput.contents(config)
@@ -938,10 +950,7 @@ class LiteRtRuntime(
             )
         } catch (e: CancellationException) {
             withContext(NonCancellable + Dispatchers.Default) {
-                val conversation = stateMutex.withLock { activeConversation }
-                if (conversation != null) {
-                    runCatching { conversation.cancelProcess() }
-                }
+                cancelGeneration()
             }
             _state.value = LocalModelSessionState.IDLE
             throw e
@@ -984,10 +993,10 @@ class LiteRtRuntime(
 
     override suspend fun cancelGeneration() {
         cancelRequested.set(true)
-        val conversation = stateMutex.withLock { activeConversation }
-        if (conversation != null) {
-            withContext(Dispatchers.Default) {
-                runCatching { conversation.cancelProcess() }
+        withContext(NonCancellable + Dispatchers.Default) {
+            conversationLifetimeMutex.withLock {
+                val conversation = stateMutex.withLock { activeConversation }
+                if (conversation != null) runCatching { conversation.cancelProcess() }
             }
         }
     }
@@ -1004,10 +1013,12 @@ class LiteRtRuntime(
                     val owned = stateMutex.withLock { DetachedRuntimeResources(engine, activeConversation) }
                     // Keep ownership until native teardown confirms success. A
                     // swallowed close error must not permit another allocation.
-                    owned.conversation?.let { conversation ->
-                        runCatching { conversation.cancelProcess() }
-                        conversation.close()
-                        stateMutex.withLock { if (activeConversation === conversation) activeConversation = null }
+                    conversationLifetimeMutex.withLock {
+                        owned.conversation?.let { conversation ->
+                            runCatching { conversation.cancelProcess() }
+                            conversation.close()
+                            stateMutex.withLock { if (activeConversation === conversation) activeConversation = null }
+                        }
                     }
                     owned.engine?.let { if (it.isInitialized()) it.close() }
                     stateMutex.withLock { detachRuntimeState(); _state.value = LocalModelSessionState.IDLE }

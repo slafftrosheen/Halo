@@ -1,0 +1,216 @@
+diff --git a/providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt b/providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt
+index deef777ec..3bae112dc 100644
+--- a/providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt
++++ b/providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt
+@@ -319,7 +319,9 @@ class LiteRtLocalProvider(
+     fun residentModelIdForIntent(): String? =
+         modelSession.loadedModelId.takeIf { modelSession.isLoaded() }
+ 
+-    fun inferenceBusyForIntent(): Boolean = activeComputeJob?.isActive == true
++    fun inferenceBusyForIntent(): Boolean = activeComputeJob?.isCompleted == false ||
++        modelSession.activity.value is LocalModelActivityState.Generating ||
++        modelSession.activity.value is LocalModelActivityState.Benchmarking
+ 
+     override suspend fun preemptForVoiceInput(): Boolean {
+         val job = activeComputeJob ?: return true
+@@ -1931,7 +1933,10 @@ class LiteRtLocalProvider(
+         val tuning = descriptor?.let { preferences.tuning(it.id) }
+         val nativeThinking = descriptor?.sha256?.let { nativeThinkingByArtifact[it] } == true
+         return RuntimeGenerationConfig(
+-            thinkingEnabled = if (!nativeThinking) null else when (reasoningMode) {
++            // Disabling reasoning is a request constraint, not a claim the artifact can
++            // enable it. Do not silently restore an artifact's thinking default when
++            // metadata does not advertise an enable-thinking control.
++            thinkingEnabled = if (reasoningMode == AiReasoningMode.DISABLED) false else if (!nativeThinking) null else when (reasoningMode) {
+                 AiReasoningMode.DEFAULT -> when (tuning?.thinkingMode) {
+                     com.halo.providers.litert.models.LiteRtThinkingMode.ON -> true
+                     com.halo.providers.litert.models.LiteRtThinkingMode.OFF -> false
+diff --git a/providers/litert/src/main/java/com/halo/providers/litert/runtime/LocalModelSession.kt b/providers/litert/src/main/java/com/halo/providers/litert/runtime/LocalModelSession.kt
+index c85cdb64e..90633ab21 100644
+--- a/providers/litert/src/main/java/com/halo/providers/litert/runtime/LocalModelSession.kt
++++ b/providers/litert/src/main/java/com/halo/providers/litert/runtime/LocalModelSession.kt
+@@ -141,6 +141,7 @@ class LocalModelSession(
+         val deferred: CompletableDeferred<Result<RuntimeGenerationResult>>,
+         val residencyVersion: Long,
+         val runtime: LocalInferenceRuntime,
++        val finished: CompletableDeferred<Unit> = CompletableDeferred(),
+         val benchmarkRequestId: String? = null,
+         val timestamp: Long = System.currentTimeMillis(),
+     ) : Comparable<QueuedGeneration> {
+@@ -166,9 +167,13 @@ class LocalModelSession(
+                 while (true) {
+                     val nextItem = queueMutex.withLock { pollNextFairly() } ?: break
+ 
+-                    if (nextItem.deferred.isCancelled) continue
+-
+-                    processGenerationItem(nextItem)
++                    try {
++                        if (!nextItem.deferred.isCancelled) processGenerationItem(nextItem)
++                    } finally {
++                        // The caller's cancellation must not release provider/native compute
++                        // ownership while this worker still owns native inference or cleanup.
++                        nextItem.finished.complete(Unit)
++                    }
+                 }
+             }
+         }
+@@ -414,9 +419,18 @@ class LocalModelSession(
+         return try {
+             deferred.await()
+         } catch (c: CancellationException) {
+-            deferred.cancel(c)
+-            queueMutex.withLock { pendingQueue.remove(item) }
+-            activeGeneration.get()?.takeIf { it.id == item.id }?.job?.cancel(c)
++            withContext(NonCancellable) {
++                deferred.cancel(c)
++                val removedBeforeDispatch = queueMutex.withLock { pendingQueue.remove(item) }
++                if (removedBeforeDispatch) {
++                    item.finished.complete(Unit)
++                } else {
++                    // If dispatch is between dequeue and publication, it sees the cancelled
++                    // deferred before starting its job. Never cancel another request's job.
++                    activeGeneration.get()?.takeIf { it.id == item.id }?.job?.cancel(c)
++                    item.finished.await()
++                }
++            }
+             throw c
+         }
+     }
+diff --git a/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt b/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt
+index 3c7d4e030..54cda200e 100644
+--- a/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt
++++ b/providers/litert/src/test/java/com/halo/providers/litert/LiteRtLocalProviderStreamTest.kt
+@@ -215,6 +215,52 @@ class LiteRtLocalProviderStreamTest {
+         assertEquals(resolves, inventory.resolveCalls)
+     }
+ 
++    @Test fun explicitDisabledThinkingSurvivesUnadvertisedNativeSupportAcrossProviderPaths() = runTest {
++        val runtime = FakeRuntime() // metadata does not advertise enable-thinking support
++        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
++            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
++        val request = AiRequest(text = "Hello", modelId = "test_model", reasoningMode = AiReasoningMode.DISABLED)
++        provider.generate(request, AiContext.EMPTY)
++        provider.stream(request, AiContext.EMPTY).toList()
++        requireNotNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
++        assertEquals(3, runtime.configs.size)
++        assertTrue(runtime.configs.all { it.thinkingEnabled == false && it.thinkingTokenBudget == null })
++        assertTrue(!provider.nativeThinkingSupported("test_model"))
++        provider.generate(request.copy(reasoningMode = AiReasoningMode.DEFAULT), AiContext.EMPTY)
++        assertEquals(null, runtime.configs.last().thinkingEnabled)
++    }
++
++    @Test fun cancelledAdviceCannotAdvertiseIdleOrReleaseItsMutexBeforeNativeCleanup() = runTest {
++        val entered = CompletableDeferred<Unit>()
++        val cleaning = CompletableDeferred<Unit>()
++        val releaseCleanup = CompletableDeferred<Unit>()
++        val runtime = FakeRuntime().apply {
++            generationEntered = entered
++            generationRelease = CompletableDeferred()
++            generationCleanupEntered = cleaning
++            generationCleanupRelease = releaseCleanup
++        }
++        val provider = LiteRtLocalProvider(ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
++            storage = FakeStorage(), modelSession = LocalModelSession({ runtime }, backgroundScope))
++        assertTrue(async(Dispatchers.Default) { provider.loadModelIfNeeded("test_model") }.await())
++        val advice = async(Dispatchers.Default) { provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label") }
++        withContext(Dispatchers.Default) { withTimeout(5_000) { entered.await() } }
++        advice.cancel()
++        withContext(Dispatchers.Default) { withTimeout(5_000) { cleaning.await() } }
++        assertTrue(!advice.isCompleted)
++        assertTrue(provider.inferenceBusyForIntent())
++        org.junit.Assert.assertNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
++        assertEquals(1, runtime.configs.size)
++        releaseCleanup.complete(Unit)
++        advice.join()
++        assertTrue(!provider.inferenceBusyForIntent())
++        runtime.generationRelease = null
++        runtime.generationCleanupEntered = null
++        runtime.generationCleanupRelease = null
++        requireNotNull(provider.tryGenerateAdvisory("test_model", "Open camera", "Reply with one label"))
++        assertEquals(2, runtime.configs.size)
++    }
++
+     @Test fun cancelledAdvisoryReleasesCanonicalMutexForNextRequest() = runTest {
+         val entered = CompletableDeferred<Unit>()
+         val release = CompletableDeferred<Unit>()
+@@ -292,6 +338,8 @@ class LiteRtLocalProviderStreamTest {
+         var failPrompt: String? = null
+         var generationEntered: CompletableDeferred<Unit>? = null
+         var generationRelease: CompletableDeferred<Unit>? = null
++        var generationCleanupEntered: CompletableDeferred<Unit>? = null
++        var generationCleanupRelease: CompletableDeferred<Unit>? = null
+         override val format = LocalModelFormat.LITERT_LM
+         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
+         override val loadedModelId: String? = "test_model"
+@@ -309,7 +357,12 @@ class LiteRtLocalProviderStreamTest {
+         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
+             configs += config
+             generationEntered?.complete(Unit)
+-            generationRelease?.await()
++            try { generationRelease?.await() } finally {
++                withContext(kotlinx.coroutines.NonCancellable) {
++                    generationCleanupEntered?.complete(Unit)
++                    generationCleanupRelease?.await()
++                }
++            }
+             if (config.prompt == failPrompt) return Result.failure(IllegalStateException("SYNTHETIC_FIXTURE_FAILURE"))
+             if (emptyResponse) return Result.success(RuntimeGenerationResult("", emptyList(), 0, 0L, 0.0, 1L))
+             state.value = LocalModelSessionState.INFERRING
+diff --git a/providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt b/providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt
+index c173ad3fe..d2fb167d9 100644
+--- a/providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt
++++ b/providers/litert/src/test/java/com/halo/providers/litert/runtime/LocalModelSessionResidencyTest.kt
+@@ -182,6 +182,53 @@ class LocalModelSessionResidencyTest {
+         assertEquals("ready", session.generate(RuntimeGenerationConfig(prompt = "next")).getOrThrow().text)
+     }
+ 
++    @Test fun cancelledCallerRetainsOwnershipUntilNonCancellableNativeCleanupFinishes() = runTest {
++        val entered = CompletableDeferred<Unit>()
++        val cleaning = CompletableDeferred<Unit>()
++        val releaseCleanup = CompletableDeferred<Unit>()
++        val runtime = FakeRuntime().apply { generateBody = {
++            entered.complete(Unit)
++            try { awaitCancellation() } finally {
++                withContext(NonCancellable) { cleaning.complete(Unit); releaseCleanup.await() }
++            }
++        } }
++        val session = LocalModelSession({ runtime }, backgroundScope)
++        session.loadModel("A", "/a").getOrThrow()
++        val request = launch { session.generate(RuntimeGenerationConfig(prompt = "first")) }
++        entered.await()
++        request.cancel()
++        cleaning.await()
++        assertFalse(request.isCompleted)
++        assertTrue(session.activity.value is LocalModelActivityState.Generating)
++        val replacement = async { session.loadModel("B", "/b") }
++        runCurrent()
++        assertFalse(replacement.isCompleted)
++        assertEquals(0, runtime.unloads)
++        releaseCleanup.complete(Unit)
++        request.join()
++        replacement.await().getOrThrow()
++        assertEquals(1, runtime.unloads)
++    }
++
++    @Test fun cancellingQueuedRequestDoesNotWaitForOrCancelAnotherNativeOwner() = runTest {
++        val entered = CompletableDeferred<Unit>()
++        val release = CompletableDeferred<Unit>()
++        val runtime = FakeRuntime().apply { generateBody = {
++            entered.complete(Unit); release.await(); RuntimeGenerationResult("ready", tokenCount = 1)
++        } }
++        val session = LocalModelSession({ runtime }, backgroundScope)
++        session.loadModel("A", "/a").getOrThrow()
++        val owner = async { session.generate(RuntimeGenerationConfig(prompt = "owner")) }
++        entered.await()
++        val queued = launch { session.generate(RuntimeGenerationConfig(prompt = "queued")) }
++        runCurrent()
++        queued.cancelAndJoin()
++        assertFalse(owner.isCompleted)
++        assertTrue(session.activity.value is LocalModelActivityState.Generating)
++        release.complete(Unit)
++        assertEquals("ready", owner.await().getOrThrow().text)
++    }
++
+     @Test fun replacementWaitsForActiveInferenceBeforeDisposingRuntime() = runTest {
+         val entered = CompletableDeferred<Unit>()
+         val finish = CompletableDeferred<Unit>()

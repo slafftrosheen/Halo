@@ -1,0 +1,10 @@
+10-24 03:41:58.819   970  1062 I LiteRtRuntime: HALO_LITERT_GENERATION_START model=qwen3-0.6b-dynamic-int4 backend=CPU thinking=DEFAULT thinkingBudget=default tools=0 maxTokens=12 runtimeResidency=COLD
+10-24 03:41:58.897   970  1062 I LiteRtRuntime: HALO_LITERT_CONVERSATION_READY model=qwen3-0.6b-dynamic-int4 durationMs=12
+10-24 03:42:22.473   970  1062 I LiteRtRuntime: HALO_LITERT_GENERATION_START model=qwen3-0.6b-dynamic-int4 backend=CPU thinking=DEFAULT thinkingBudget=default tools=0 maxTokens=12 runtimeResidency=WARM
+10-24 03:42:22.547   970  1062 I LiteRtRuntime: HALO_LITERT_CONVERSATION_READY model=qwen3-0.6b-dynamic-int4 durationMs=3
+10-24 03:42:43.880   970  1062 I LiteRtRuntime: HALO_LITERT_GENERATION_START model=qwen3-0.6b-dynamic-int4 backend=CPU thinking=DEFAULT thinkingBudget=default tools=0 maxTokens=12 runtimeResidency=WARM
+10-24 03:42:43.931   970  1062 I LiteRtRuntime: HALO_LITERT_CONVERSATION_READY model=qwen3-0.6b-dynamic-int4 durationMs=3
+10-24 03:43:05.846   970  1064 I LiteRtRuntime: HALO_LITERT_GENERATION_START model=qwen3-0.6b-dynamic-int4 backend=CPU thinking=DEFAULT thinkingBudget=default tools=0 maxTokens=12 runtimeResidency=WARM
+10-24 03:43:05.903   970  1064 I LiteRtRuntime: HALO_LITERT_CONVERSATION_READY model=qwen3-0.6b-dynamic-int4 durationMs=3
+10-24 03:43:27.937   970  1093 I LiteRtRuntime: HALO_LITERT_GENERATION_START model=qwen3-0.6b-dynamic-int4 backend=CPU thinking=DEFAULT thinkingBudget=default tools=0 maxTokens=12 runtimeResidency=WARM
+10-24 03:43:28.004   970  1093 I LiteRtRuntime: HALO_LITERT_CONVERSATION_READY model=qwen3-0.6b-dynamic-int4 durationMs=3

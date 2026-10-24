@@ -128,7 +128,8 @@ class LocalModelSession(
     private val generationMutex = Mutex()
     private val generationCounter = AtomicLong(0L)
     private val currentGenerationId = AtomicLong(0L)
-    private data class ActiveGeneration(val id: Long, val job: Deferred<Result<RuntimeGenerationResult>>)
+    private data class ActiveGeneration(val id: Long, val job: Deferred<Result<RuntimeGenerationResult>>,
+        val cancellationMutex: Mutex = Mutex())
     private val activeGeneration = AtomicReference<ActiveGeneration?>(null)
     private val residencyVersion = AtomicLong(0L)
     private var consecutiveInteractive = 0
@@ -141,6 +142,7 @@ class LocalModelSession(
         val deferred: CompletableDeferred<Result<RuntimeGenerationResult>>,
         val residencyVersion: Long,
         val runtime: LocalInferenceRuntime,
+        val finished: CompletableDeferred<Unit> = CompletableDeferred(),
         val benchmarkRequestId: String? = null,
         val timestamp: Long = System.currentTimeMillis(),
     ) : Comparable<QueuedGeneration> {
@@ -166,9 +168,13 @@ class LocalModelSession(
                 while (true) {
                     val nextItem = queueMutex.withLock { pollNextFairly() } ?: break
 
-                    if (nextItem.deferred.isCancelled) continue
-
-                    processGenerationItem(nextItem)
+                    try {
+                        if (!nextItem.deferred.isCancelled) processGenerationItem(nextItem)
+                    } finally {
+                        // The caller's cancellation must not release provider/native compute
+                        // ownership while this worker still owns native inference or cleanup.
+                        nextItem.finished.complete(Unit)
+                    }
                 }
             }
         }
@@ -234,7 +240,11 @@ class LocalModelSession(
                         job.start()
                         job.await()
                     } finally {
-                        activeGeneration.compareAndSet(active, null)
+                        withContext(NonCancellable) {
+                            // A stop API call must finish before this generation is detached
+                            // and the next request can acquire the same runtime.
+                            active.cancellationMutex.withLock { activeGeneration.compareAndSet(active, null) }
+                        }
                     }
                 }
                 item.deferred.complete(result)
@@ -414,9 +424,27 @@ class LocalModelSession(
         return try {
             deferred.await()
         } catch (c: CancellationException) {
-            deferred.cancel(c)
-            queueMutex.withLock { pendingQueue.remove(item) }
-            activeGeneration.get()?.takeIf { it.id == item.id }?.job?.cancel(c)
+            withContext(NonCancellable) {
+                deferred.cancel(c)
+                val removedBeforeDispatch = queueMutex.withLock { pendingQueue.remove(item) }
+                if (removedBeforeDispatch) {
+                    item.finished.complete(Unit)
+                } else {
+                    // If dispatch is between dequeue and publication, it sees the cancelled
+                    // deferred before starting its job. Never cancel another request's job.
+                    activeGeneration.get()?.takeIf { it.id == item.id }?.let { active ->
+                        active.cancellationMutex.withLock {
+                            if (activeGeneration.get() === active) {
+                                active.job.cancel(c)
+                                // Coroutine cancellation alone cannot interrupt a blocking JNI
+                                // prefill. Forward stop to this still-owned native generation.
+                                runCatching { runtime.cancelGeneration() }
+                            }
+                        }
+                    }
+                    item.finished.await()
+                }
+            }
             throw c
         }
     }

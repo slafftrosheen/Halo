@@ -1,0 +1,1 @@
+    topResumedActivity=ActivityRecord{7abd9c3 u0 com.aistudio.braintool.xkqzps/com.halo.app.MainActivity t3231}

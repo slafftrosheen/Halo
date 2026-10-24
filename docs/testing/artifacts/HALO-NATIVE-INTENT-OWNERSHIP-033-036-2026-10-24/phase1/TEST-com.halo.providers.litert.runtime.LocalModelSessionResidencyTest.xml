@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-24T00:50:59.476Z" hostname="MINIFOXEY" time="0.219">
+  <properties/>
+  <testcase name="differentProfilePathOrShaRequiresRealReload" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.019"/>
+  <testcase name="sameIdentityAndRequestedProfileReusesOneEngine" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.018"/>
+  <testcase name="previousLoadFailureCanRecoverOnNextAttempt" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.015"/>
+  <testcase name="replacementWaitsForActiveInferenceBeforeDisposingRuntime" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.024"/>
+  <testcase name="failedTeardownBlocksNewModelAllocationUntilReleased" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.018"/>
+  <testcase name="cancelledCallerCancelsItsBackendJobAndDoesNotPoisonNextRequest" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.02"/>
+  <testcase name="cancelledNativeLoadCompletingLateCannotPublishOverReplacement" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.021"/>
+  <testcase name="cancelledCallerRetainsOwnershipUntilNonCancellableNativeCleanupFinishes" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.022"/>
+  <testcase name="failedLoadCleanupRetainsOwnerUntilNativeTeardownSucceeds" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.02"/>
+  <testcase name="initializingAndFailedNativeOwnersKeepTheirArtifactProtected" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.018"/>
+  <testcase name="cancellingQueuedRequestDoesNotWaitForOrCancelAnotherNativeOwner" classname="com.halo.providers.litert.runtime.LocalModelSessionResidencyTest" time="0.02"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

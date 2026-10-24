@@ -42,7 +42,9 @@ class LocalModelSessionResidencyTest {
         }
         override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit) =
             Result.success(generateBody?.invoke() ?: RuntimeGenerationResult("ready", tokenCount = 1))
-        override suspend fun cancelGeneration() = Unit
+        var nativeCancelCalls = 0
+        var cancelBody: (suspend () -> Unit)? = null
+        override suspend fun cancelGeneration() { nativeCancelCalls++; cancelBody?.invoke() }
         override suspend fun unloadModel(): Result<Unit> {
             unloads++
             if (failUnload) return Result.failure(IllegalStateException("Native engine is still mapped"))
@@ -180,6 +182,99 @@ class LocalModelSessionResidencyTest {
         cancelled.await()
         runtime.generateBody = null
         assertEquals("ready", session.generate(RuntimeGenerationConfig(prompt = "next")).getOrThrow().text)
+    }
+
+    @Test fun cancelledCallerRetainsOwnershipUntilNonCancellableNativeCleanupFinishes() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val cleaning = CompletableDeferred<Unit>()
+        val releaseCleanup = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply { generateBody = {
+            entered.complete(Unit)
+            try { awaitCancellation() } finally {
+                withContext(NonCancellable) { cleaning.complete(Unit); releaseCleanup.await() }
+            }
+        } }
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        session.loadModel("A", "/a").getOrThrow()
+        val request = launch { session.generate(RuntimeGenerationConfig(prompt = "first")) }
+        entered.await()
+        request.cancel()
+        cleaning.await()
+        assertFalse(request.isCompleted)
+        assertTrue(session.activity.value is LocalModelActivityState.Generating)
+        val replacement = async { session.loadModel("B", "/b") }
+        runCurrent()
+        assertFalse(replacement.isCompleted)
+        assertEquals(0, runtime.unloads)
+        releaseCleanup.complete(Unit)
+        request.join()
+        replacement.await().getOrThrow()
+        assertEquals(1, runtime.unloads)
+    }
+
+    @Test fun cancellingQueuedRequestDoesNotWaitForOrCancelAnotherNativeOwner() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply { generateBody = {
+            entered.complete(Unit); release.await(); RuntimeGenerationResult("ready", tokenCount = 1)
+        } }
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        session.loadModel("A", "/a").getOrThrow()
+        val owner = async { session.generate(RuntimeGenerationConfig(prompt = "owner")) }
+        entered.await()
+        val queued = launch { session.generate(RuntimeGenerationConfig(prompt = "queued")) }
+        runCurrent()
+        queued.cancelAndJoin()
+        assertEquals(0, runtime.nativeCancelCalls)
+        assertFalse(owner.isCompleted)
+        assertTrue(session.activity.value is LocalModelActivityState.Generating)
+        release.complete(Unit)
+        assertEquals("ready", owner.await().getOrThrow().text)
+    }
+
+    @Test fun cancellationForwardsNativeStopBeforeWaitingForBlockedWorkerCleanup() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val nativeStopped = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply {
+            generateBody = {
+                entered.complete(Unit)
+                try { awaitCancellation() } finally { withContext(NonCancellable) { nativeStopped.await() } }
+            }
+            cancelBody = { nativeStopped.complete(Unit) }
+        }
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        session.loadModel("A", "/a").getOrThrow()
+        val request = launch { session.generate(RuntimeGenerationConfig(prompt = "first")) }
+        entered.await()
+        request.cancelAndJoin()
+        assertEquals(1, runtime.nativeCancelCalls)
+        runtime.generateBody = null
+        assertEquals("ready", session.generate(RuntimeGenerationConfig(prompt = "next")).getOrThrow().text)
+    }
+
+    @Test fun slowNativeStopCannotReachANewerGeneration() = runTest {
+        val entered = CompletableDeferred<Unit>()
+        val stopEntered = CompletableDeferred<Unit>()
+        val releaseStop = CompletableDeferred<Unit>()
+        val runtime = FakeRuntime().apply {
+            generateBody = { entered.complete(Unit); awaitCancellation() }
+            cancelBody = { stopEntered.complete(Unit); releaseStop.await() }
+        }
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        session.loadModel("A", "/a").getOrThrow()
+        val request = launch { session.generate(RuntimeGenerationConfig(prompt = "first")) }
+        entered.await()
+        request.cancel()
+        stopEntered.await()
+        runtime.generateBody = null
+        val next = async { session.generate(RuntimeGenerationConfig(prompt = "next")) }
+        runCurrent()
+        assertFalse(request.isCompleted)
+        assertFalse(next.isCompleted)
+        releaseStop.complete(Unit)
+        request.join()
+        assertEquals("ready", next.await().getOrThrow().text)
+        assertEquals(1, runtime.nativeCancelCalls)
     }
 
     @Test fun replacementWaitsForActiveInferenceBeforeDisposingRuntime() = runTest {

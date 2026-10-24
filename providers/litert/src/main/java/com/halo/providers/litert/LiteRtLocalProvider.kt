@@ -319,7 +319,9 @@ class LiteRtLocalProvider(
     fun residentModelIdForIntent(): String? =
         modelSession.loadedModelId.takeIf { modelSession.isLoaded() }
 
-    fun inferenceBusyForIntent(): Boolean = activeComputeJob?.isActive == true
+    fun inferenceBusyForIntent(): Boolean = activeComputeJob?.isCompleted == false ||
+        modelSession.activity.value is LocalModelActivityState.Generating ||
+        modelSession.activity.value is LocalModelActivityState.Benchmarking
 
     override suspend fun preemptForVoiceInput(): Boolean {
         val job = activeComputeJob ?: return true
@@ -1931,7 +1933,10 @@ class LiteRtLocalProvider(
         val tuning = descriptor?.let { preferences.tuning(it.id) }
         val nativeThinking = descriptor?.sha256?.let { nativeThinkingByArtifact[it] } == true
         return RuntimeGenerationConfig(
-            thinkingEnabled = if (!nativeThinking) null else when (reasoningMode) {
+            // Disabling reasoning is a request constraint, not a claim the artifact can
+            // enable it. Do not silently restore an artifact's thinking default when
+            // metadata does not advertise an enable-thinking control.
+            thinkingEnabled = if (reasoningMode == AiReasoningMode.DISABLED) false else if (!nativeThinking) null else when (reasoningMode) {
                 AiReasoningMode.DEFAULT -> when (tuning?.thinkingMode) {
                     com.halo.providers.litert.models.LiteRtThinkingMode.ON -> true
                     com.halo.providers.litert.models.LiteRtThinkingMode.OFF -> false

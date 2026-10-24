@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.runtime.ThinkingConfigTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T00:50:59.698Z" hostname="MINIFOXEY" time="0.011">
+  <properties/>
+  <testcase name="exactQwenThinkingCapabilityPreservesOtherArtifactTruth" classname="com.halo.providers.litert.runtime.ThinkingConfigTest" time="0.006"/>
+  <testcase name="thinkingPolicyIsPartOfConfigurationIdentity" classname="com.halo.providers.litert.runtime.ThinkingConfigTest" time="0.002"/>
+  <testcase name="realSdkConversationReceivesDisabledThinkingAndZeroBudget" classname="com.halo.providers.litert.runtime.ThinkingConfigTest" time="0.002"/>
+  <testcase name="enabledUsesExplicitBudgetAndDefaultRemainsNull" classname="com.halo.providers.litert.runtime.ThinkingConfigTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

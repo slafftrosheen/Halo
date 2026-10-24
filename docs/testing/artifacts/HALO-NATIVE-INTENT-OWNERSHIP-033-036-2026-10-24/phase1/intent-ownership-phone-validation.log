@@ -1,0 +1,14 @@
+LiteRT physical probe: qwen3-0.6b-dynamic-int4-CPU-ctx0-warm-intent48-v1 (captureOnly=False)
+  FAILED_RUNTIME; inspect qwen3-0.6b-dynamic-int4-CPU-ctx0-warm-intent48-v1.txt
+
+ModelId                 Backend Language Cycles ResidentTurns ContextTokens Result         ProcessExit OutputFile
+-------                 ------- -------- ------ ------------- ------------- ------         ----------- ----------
+qwen3-0.6b-dynamic-int4 CPU     NONE          1             0 PROFILE       FAILED_RUNTIME           0 qwen3-0.6b-dyna…
+
+Saved evidence to: C:\Users\slavd\HaloEco\verification-2026-10-24-intent-ownership
+Exception: C:\Users\slavd\HaloEco\Halo-issues\tools\hil\Run-LiteRtPhoneMatrix.ps1:333
+Line |
+ 333 |      throw "One or more physical probes failed or were interrupted/not …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | One or more physical probes failed or were interrupted/not run. See saved logs and JSONL; incomplete runs do not
+     | establish model or backend qualification.
