@@ -34,6 +34,11 @@ object WorkspaceOperabilityContracts {
         group("WorkspaceRepository", ToolOperation.QUERY, "halo_search_notebook", "halo_get_workspace_object", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.CREATE, "halo_study_with_halo", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.QUERY, "halo_get_study_session", encoding = ToolResultEncoding.TEXT)
+        group("StudyUseCases", ToolOperation.QUERY, "halo_study_sessions", "halo_study_state", "halo_study_card_get")
+        group("StudyUseCases", ToolOperation.SELECT, "halo_study_select_exercise")
+        group("StudyUseCases", ToolOperation.CREATE, "halo_study_submit_attempt", "halo_study_card_create")
+        group("StudyUseCases", ToolOperation.EDIT, "halo_study_set_preferences", "halo_study_complete", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review")
+        group("StudyUseCases", ToolOperation.EDIT, "halo_study_delete", "halo_study_card_delete")
         group("WorkspaceContextStore", ToolOperation.SELECT, "halo_add_to_working_set", "halo_remove_from_working_set", encoding = ToolResultEncoding.TEXT)
     }
     fun forDefinition(definition: ToolDefinition): ToolOperability? {
@@ -43,9 +48,14 @@ object WorkspaceOperabilityContracts {
             "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "nodeIds" to "array", "edgeId" to "string", "title" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean")
             "StudioService" -> mapOf("projectId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "outputId" to "string", "fileVersion" to "string", "requestId" to "string", "nodeId" to "string")
             "WorkspaceFileTools" -> mapOf("noteId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string")
+            "StudyUseCases" -> mapOf("sessionId" to "string", "version" to "string", "localDataVersion" to "string", "itemId" to "string", "itemVersion" to "string", "attemptId" to "string", "sessions" to "array", "cards" to "array", "saved" to "boolean", "deleted" to "boolean", "graded" to "boolean")
             else -> mapOf("objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string", "resultId" to "string", "resultVersion" to "string")
         }
         val resultIds = when (definition.name) {
+            "halo_study_sessions" -> emptySet()
+            "halo_study_state", "halo_study_select_exercise", "halo_study_set_preferences", "halo_study_complete", "halo_study_delete" -> setOf("sessionId")
+            "halo_study_submit_attempt" -> setOf("sessionId", "attemptId")
+            "halo_study_card_get", "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review", "halo_study_card_delete" -> setOf("sessionId", "itemId")
             "halo_canvas_create", "halo_canvas_get" -> setOf("canvasId")
             "halo_canvas_rename" -> setOf("canvasId")
             "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate" -> setOf("canvasId", "nodeId")
@@ -65,8 +75,11 @@ object WorkspaceOperabilityContracts {
             resultSchema = if (operation.encoding == ToolResultEncoding.TEXT) mapOf("type" to "string", "maxLength" to 24000)
                 else mapOf("type" to "object", "properties" to resultFields.mapValues { mapOf("type" to listOf(it.value, "null")) },
                     "required" to (resultIds + (if (operation.owner == "NotebookCanvasRepository") setOf("version") else emptySet()) +
-                        (if (definition.name == "halo_canvas_clear_sketch") setOf("changed") else emptySet())).toList(), "additionalProperties" to true),
-            sourceVersionArguments = fields.keys.filterIsInstance<String>().filter { it in setOf("version", "revision", "sourceVersion", "canvasVersion", "expectedRevision") }.toSet(),
+                        (if (definition.name == "halo_canvas_clear_sketch") setOf("changed") else emptySet()) +
+                        (if (operation.owner == "StudyUseCases" && operation.encoding == ToolResultEncoding.JSON && definition.name != "halo_study_sessions") setOf("version") else emptySet()) +
+                        (if (definition.name in setOf("halo_study_state", "halo_study_delete")) setOf("localDataVersion") else emptySet()) +
+                        (if ("itemId" in resultIds) setOf("itemVersion") else emptySet())).toList(), "additionalProperties" to true),
+            sourceVersionArguments = fields.keys.filterIsInstance<String>().filter { it in setOf("version", "itemVersion", "localDataVersion", "revision", "sourceVersion", "canvasVersion", "expectedRevision") }.toSet(),
             resultIdFields = resultIds,
             limitations = setOf("Voice-final and typed requests share the registered semantic action; metadata is not STT/device acceptance.",
                 "Existing permission, Kids, Private/Power and confirmation owners remain mandatory; success truth comes from the result receipt.",

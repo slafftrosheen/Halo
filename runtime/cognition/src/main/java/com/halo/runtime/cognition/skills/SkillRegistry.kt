@@ -155,6 +155,23 @@ class DefaultSkillRegistry(
         if (risk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW else ToolApprovalPolicy.ASK_EVERY_TIME
 
     companion object {
+        private fun studySkill(): SkillDescriptor {
+            val tools = listOf(
+                "halo_study_with_halo" to SkillRisk.REVERSIBLE, "halo_get_study_session" to SkillRisk.READ_ONLY,
+                "halo_study_sessions" to SkillRisk.READ_ONLY, "halo_study_state" to SkillRisk.READ_ONLY,
+                "halo_study_card_get" to SkillRisk.READ_ONLY,
+                "halo_study_select_exercise" to SkillRisk.REVERSIBLE, "halo_study_submit_attempt" to SkillRisk.REVERSIBLE,
+                "halo_study_set_preferences" to SkillRisk.REVERSIBLE, "halo_study_complete" to SkillRisk.REVERSIBLE,
+                "halo_study_card_create" to SkillRisk.REVERSIBLE, "halo_study_card_edit" to SkillRisk.REVERSIBLE,
+                "halo_study_card_accept" to SkillRisk.REVERSIBLE, "halo_study_card_review" to SkillRisk.REVERSIBLE,
+                "halo_study_delete" to SkillRisk.DESTRUCTIVE, "halo_study_card_delete" to SkillRisk.DESTRUCTIVE,
+            )
+            return SkillDescriptor(id = SkillId("halo.study"), name = "Study", category = SkillCategory.WORKSPACE,
+                description = "Study local material, save learner attempts and manage practice cards and sessions.",
+                tools = tools.map { it.first }.toSet(),
+                toolDefinitions = tools.map { com.halo.sdk.runtime.skills.SkillToolDefinition(it.first, it.second) },
+                risk = SkillRisk.DESTRUCTIVE)
+        }
         private val NATIVE_COMPATIBILITY_IDS = setOf("halo.contacts", "halo.media", "halo.sharing", "halo.alarms", "halo.settings")
         fun defaultBuiltInSkills(): List<SkillDescriptor> = listOf(
             SkillDescriptor(id = SkillId("halo.messaging"), name = "Messaging", description = "Prepare messages in a platform composer.", category = SkillCategory.INFORMATION,
@@ -163,7 +180,7 @@ class DefaultSkillRegistry(
                 tools = setOf("halo_current_app_capabilities", "halo_current_app_action"), risk = SkillRisk.SENSITIVE),
             SkillDescriptor(id = SkillId("halo.system.panels"), name = "System panels", description = "Open Android controls that require user action.", category = SkillCategory.INFORMATION,
                 tools = setOf("halo_open_settings"), risk = SkillRisk.REVERSIBLE),
-            SkillDescriptor(id = SkillId("halo.study"), name = "Study", description = "Study local workspace material and inspect sessions.", category = SkillCategory.WORKSPACE, tools = setOf("halo_study_with_halo", "halo_get_study_session"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_study_with_halo", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_get_study_session", SkillRisk.READ_ONLY)), risk = SkillRisk.REVERSIBLE),
+            studySkill(),
             SkillDescriptor(id = SkillId("halo.research"), name = "Research & delegation", description = "Run bounded reasoning tasks through the configured agentic lane.", category = SkillCategory.INFORMATION, tools = setOf("halo_research", "halo_delegate_task"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_research", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_delegate_task", SkillRisk.READ_ONLY)), risk = SkillRisk.READ_ONLY),
             SkillDescriptor(id = SkillId("halo.context"), name = "Conversation & payload reading", description = "Read bounded local conversation history and tool payloads under context policy.", category = SkillCategory.WORKSPACE, tools = setOf("halo_read_payload", "halo_search_conversations"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_read_payload", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_search_conversations", SkillRisk.READ_ONLY)), risk = SkillRisk.READ_ONLY),
             SkillDescriptor(id = SkillId("halo.automation"), name = "Routines & procedures", description = "Propose procedures and approve saving a procedure or scheduled routine.", category = SkillCategory.AUTOMATION, tools = setOf("halo_create_routine", "halo_propose_procedure", "halo_save_procedure", "halo_use_procedure"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_create_routine", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_propose_procedure", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_save_procedure", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_use_procedure", SkillRisk.READ_ONLY)), risk = SkillRisk.SENSITIVE),

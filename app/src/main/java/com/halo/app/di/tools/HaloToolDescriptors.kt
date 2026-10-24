@@ -349,6 +349,18 @@ object HaloToolDescriptors {
             readOnly(definition.name), keywords = setOf("note", "search", "find"))
         "halo_save_screen_to_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("screen", "capture", "note"))
+        "halo_study_sessions", "halo_study_state", "halo_study_card_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("study", "session", "practice", "card", "review", "learn"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
+        "halo_study_delete", "halo_study_card_delete" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("study", "session", "practice", "card", "delete", "remove"),
+            presentation = ToolPresentation(title = "Study", actionVerb = "Delete"))
+        "halo_study_select_exercise", "halo_study_submit_attempt", "halo_study_set_preferences", "halo_study_complete",
+        "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review" -> descriptor(
+            definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("study", "session", "practice", "card", "attempt", "review", "learn", "finish"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000),
+            presentation = ToolPresentation(title = "Study", actionVerb = "Save"))
         "halo_study_with_halo" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(ReplaySafety.NEVER_REPLAY),
             keywords = setOf("study", "tutor", "learn"),

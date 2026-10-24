@@ -4,7 +4,9 @@ import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.study.TutorStage
 import com.halo.app.data.study.StudyCitation
 import com.halo.app.data.study.StudyVerdict
+import com.halo.app.study.StudySessionLocalData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -19,8 +21,10 @@ data class StudyRecoveryState(val draft: String = "", val submissionKey: String?
     val submittedDraft: String? = null, val pendingRequestId: String? = null)
 
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
-class StudyLessonStore(private val storage: Storage) {
+class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     private val recoveryMutex = Mutex()
+    private fun deletedKey(id: String) = "study_deleted_v1_$id"
+    private fun requireWritable(id: String) { check(!storage.getBoolean(deletedKey(id), false)) { "Study session was deleted" } }
     private fun recoveryKey(id: String) = "study_recovery_v1_$id"
     private fun readRecovery(id: String): StudyRecoveryState = try {
         val raw = storage.getString(recoveryKey(id))
@@ -32,8 +36,10 @@ class StudyLessonStore(private val storage: Storage) {
         }
     } catch (_: Exception) { StudyRecoveryState() }
     suspend fun loadRecovery(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) { readRecovery(id) } }
-    private suspend fun updateRecovery(id: String, update: (StudyRecoveryState) -> StudyRecoveryState): StudyRecoveryState =
+    private suspend fun updateRecovery(id: String, allowDeletedCleanup: Boolean = false, update: (StudyRecoveryState) -> StudyRecoveryState): StudyRecoveryState =
         recoveryMutex.withLock { withContext(Dispatchers.IO) {
+            if (allowDeletedCleanup && storage.getBoolean(deletedKey(id), false)) return@withContext StudyRecoveryState()
+            requireWritable(id)
             val previous = readRecovery(id)
             val next = update(previous)
             if (next == previous) return@withContext next
@@ -51,7 +57,7 @@ class StudyLessonStore(private val storage: Storage) {
         else it.copy(draft = text.take(4000), submissionKey = candidateKey, submittedDraft = text.take(4000))
     }.submissionKey)
     suspend fun markPendingTurn(id: String, requestId: String) { updateRecovery(id) { it.copy(pendingRequestId = requestId) } }
-    suspend fun clearPendingTurn(id: String, requestId: String) { updateRecovery(id) {
+    suspend fun clearPendingTurn(id: String, requestId: String) { updateRecovery(id, allowDeletedCleanup = true) {
         if (it.pendingRequestId == requestId) it.copy(pendingRequestId = null) else it
     } }
     private val revision = MutableStateFlow(0L)
@@ -77,7 +83,8 @@ class StudyLessonStore(private val storage: Storage) {
             }
         }.getOrDefault(emptyList())
     }
-    suspend fun save(id: String, turns: List<StudyTurn>) = withContext(Dispatchers.IO) {
+    suspend fun save(id: String, turns: List<StudyTurn>) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        requireWritable(id)
         val array = JSONArray()
         turns.filter { it.failure == null }.takeLast(30).forEach { turn ->
             val citations = JSONArray()
@@ -91,7 +98,7 @@ class StudyLessonStore(private val storage: Storage) {
         while (array.length() > 1 && array.toString().length > 590_000) array.remove(0)
         storage.putString(key(id), array.toString())
         revision.update { it + 1 }
-    }
+    } }
     suspend fun loadJourney(id: String): LearningJourney? = withContext(Dispatchers.IO) {
         val raw = storage.getString("study_journey_v1_$id") ?: return@withContext null
         runCatching {
@@ -124,7 +131,8 @@ class StudyLessonStore(private val storage: Storage) {
                 })
         }.getOrNull()
     }
-    suspend fun saveJourney(id: String, journey: LearningJourney) = withContext(Dispatchers.IO) {
+    suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        requireWritable(id)
         storage.putString("study_journey_v1_$id", JSONObject()
             .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
             .put("branches", JSONArray(journey.branches.takeLast(40)))
@@ -143,8 +151,42 @@ class StudyLessonStore(private val storage: Storage) {
                     .put("source", exercise.sourceObjectId.orEmpty()).put("locator", exercise.locator.orEmpty())
                     .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed).put("finished", exercise.finished))
             } }).toString())
-    }
-    suspend fun delete(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
-        storage.remove(key(id)); storage.remove("study_journey_v1_$id"); storage.remove(recoveryKey(id)); revision.update { it + 1 }
     } }
+    private fun snapshot(id: String) = listOf(key(id), "study_journey_v1_$id", recoveryKey(id)).associateWith { storage.getString(it) }
+    private fun fingerprint(id: String, values: Map<String, String?>): String {
+        val encoded = JSONArray(values.values.toList() + storage.getBoolean(deletedKey(id), false)).toString()
+        return "study-local:" + java.security.MessageDigest.getInstance("SHA-256").digest(encoded.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+    }
+    override suspend fun version(sessionId: String): String = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        fingerprint(sessionId, snapshot(sessionId))
+    } }
+
+    override suspend fun deleteWith(sessionId: String, expectedVersion: String?, deleteRecords: suspend (() -> Unit) -> Boolean): Boolean =
+        recoveryMutex.withLock { withContext(NonCancellable + Dispatchers.IO) {
+            // Once admitted, finish the bounded local transaction and its outcome handoff.
+            // Cancellation after SQLite commits must not restore deleted local history.
+            val before = snapshot(sessionId)
+            val wasDeleted = storage.getBoolean(deletedKey(sessionId), false)
+            if (expectedVersion != null && expectedVersion != fingerprint(sessionId, before)) return@withContext false
+            var changed = false
+            fun restore() {
+                storage.putBatch(strings = before.filterValues { it != null }, booleans = mapOf(deletedKey(sessionId) to wasDeleted))
+                revision.update { it + 1 }
+            }
+            try {
+                val result = deleteRecords {
+                    changed = true
+                    storage.putBatch(strings = before.mapValues { null }, booleans = mapOf(deletedKey(sessionId) to true))
+                    revision.update { it + 1 }
+                }
+                if (!result && changed) restore()
+                result
+            } catch (failure: Exception) {
+                if (changed) try { restore() } catch (restoreFailure: Exception) { failure.addSuppressed(restoreFailure) }
+                throw failure
+            }
+        } }
+
+    suspend fun delete(id: String) { check(deleteWith(id, null) { clear -> clear(); true }) }
 }

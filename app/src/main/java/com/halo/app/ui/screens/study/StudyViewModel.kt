@@ -1330,7 +1330,6 @@ class StudyViewModel(
         cancelTurn("Session deleted")
         try {
             check(study.deleteSessionData(sessionId))
-            lessons?.delete(sessionId)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Session deletion could not finish. Try again.") }
     }

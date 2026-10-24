@@ -36,6 +36,19 @@ class StudyRepository(
 
     suspend fun getSession(sessionId: String): StudySessionRecord? = dao.getSession(sessionId)?.toRecord()
 
+    suspend fun sessionPage(includeFinished: Boolean, offset: Int): List<StudySessionRecord> {
+        require(offset in 0..100_000)
+        return dao.sessionPage(includeFinished, 21, offset).map(StudySessionEntity::toRecord)
+    }
+
+    suspend fun practicePage(sessionId: String, offset: Int): List<StudyPracticeItem> {
+        require(offset in 0..100_000)
+        return dao.practicePage(sessionId, 21, offset).map(StudyPracticeItemEntity::toDomain)
+    }
+
+    suspend fun recentAttempts(sessionId: String): List<StudyAttempt> =
+        dao.recentAttempts(sessionId, 5).map(StudyAttemptEntity::toDomain)
+
     suspend fun createSession(
         sourceObjectIds: List<String>,
         sourceRevision: Long?,
@@ -127,8 +140,8 @@ class StudyRepository(
         stage: TutorStage,
         helpRevealed: List<TutorStage>,
         submissionKey: String,
-    ): StudyAttempt {
-        dao.findAttemptBySubmissionKey(submissionKey)?.let { return it.toDomain() }
+    ): StudyAttempt = database.withTransaction {
+        dao.findAttemptBySubmissionKey(submissionKey)?.let { return@withTransaction it.toDomain() }
         val entity = StudyAttemptEntity(
             id = newId(),
             sessionId = sessionId,
@@ -139,14 +152,16 @@ class StudyRepository(
             submissionKey = submissionKey,
             submittedAtEpochMs = now(),
         )
-        return runCatching {
+        try {
             dao.insertAttempt(entity)
-            entity.toDomain()
-        }.getOrElse { error ->
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (error: Exception) {
             // Lost a race with an identical submission: the stored attempt is the truth.
-            dao.findAttemptBySubmissionKey(submissionKey)?.toDomain()
+            return@withTransaction dao.findAttemptBySubmissionKey(submissionKey)?.toDomain()
                 ?: throw error
         }
+        check(dao.touchSession(sessionId, now()) == 1)
+        entity.toDomain()
     }
 
     suspend fun findAttempt(submissionKey: String): StudyAttempt? =
@@ -167,7 +182,7 @@ class StudyRepository(
         nextStep: String,
         uncertainty: String?,
         citations: List<StudyCitation>,
-    ): StudyFeedback {
+    ): StudyFeedback = database.withTransaction {
         val entity = StudyFeedbackEntity(
             id = newId(),
             sessionId = sessionId,
@@ -181,7 +196,8 @@ class StudyRepository(
             createdAtEpochMs = now(),
         )
         dao.insertFeedback(entity)
-        return entity.toDomain()
+        check(dao.touchSession(sessionId, now()) == 1)
+        entity.toDomain()
     }
 
     fun observeFeedback(sessionId: String): Flow<List<StudyFeedback>> =
@@ -206,7 +222,7 @@ class StudyRepository(
         sourceVersion: String? = sourceRevision?.toString(),
         sourceLocator: String? = null,
         dueAtEpochMs: Long? = null,
-    ): StudyPracticeItem {
+    ): StudyPracticeItem = database.withTransaction {
         val timestamp = now()
         val entity = StudyPracticeItemEntity(
             id = newId(),
@@ -228,7 +244,8 @@ class StudyRepository(
             lastReviewedAtEpochMs = null,
         )
         dao.insertPracticeItem(entity)
-        return entity.toDomain()
+        check(dao.touchSession(sessionId, now()) == 1)
+        entity.toDomain()
     }
 
     fun observePracticeItems(sessionId: String): Flow<List<StudyPracticeItem>> =
@@ -248,16 +265,23 @@ class StudyRepository(
         dao.getPracticeItem(itemId)?.toDomain()
 
     suspend fun setPracticeItemAccepted(itemId: String, accepted: Boolean): Boolean =
-        dao.setPracticeAccepted(itemId, accepted) == 1
+        mutatePracticeItem(itemId) { dao.setPracticeAccepted(itemId, accepted) == 1 }
 
     /**
      * Editing card content marks it as user-owned. Regeneration refuses to overwrite such a card
      * unless the learner explicitly asks for it.
      */
     suspend fun updatePracticeItem(itemId: String, question: String, answer: String, accepted: Boolean): Boolean =
-        dao.updatePracticeItemContent(itemId, question.trim().take(600), answer.trim().take(2_000), accepted) == 1
+        mutatePracticeItem(itemId) { dao.updatePracticeItemContent(itemId, question.trim().take(600), answer.trim().take(2_000), accepted) == 1 }
 
-    suspend fun deletePracticeItem(itemId: String): Boolean = dao.deletePracticeItem(itemId) == 1
+    suspend fun deletePracticeItem(itemId: String): Boolean = mutatePracticeItem(itemId) { dao.deletePracticeItem(itemId) == 1 }
+
+    private suspend fun mutatePracticeItem(itemId: String, change: suspend () -> Boolean): Boolean = database.withTransaction {
+        val item = dao.getPracticeItem(itemId) ?: return@withTransaction false
+        if (!change()) return@withTransaction false
+        check(dao.touchSession(item.sessionId, now()) == 1)
+        true
+    }
 
     /**
      * Store one review pass: the item's schedule fields and the immutable event in one transaction,
@@ -295,6 +319,7 @@ class StudyRepository(
             reviewedAtEpochMs = reviewedAt,
         )
         dao.insertReviewEvent(event)
+        check(dao.touchSession(item.sessionId, now()) == 1)
         event.toDomain()
     }
 
@@ -307,7 +332,13 @@ class StudyRepository(
     suspend fun getReviewEventsForSession(sessionId: String): List<StudyReviewEvent> =
         dao.getReviewEventsForSession(sessionId).map(StudyReviewEventEntity::toDomain)
 
-    suspend fun deleteSessionData(sessionId: String): Boolean = dao.deleteSessionData(sessionId) == 1
+    suspend fun deleteSessionData(sessionId: String, validateSession: suspend () -> Boolean = { true },
+        clearLocalData: () -> Unit = {}): Boolean = database.withTransaction {
+        if (!validateSession()) return@withTransaction false
+        if (dao.deleteSessionData(sessionId) != 1) return@withTransaction false
+        clearLocalData()
+        true
+    }
 
     private fun flushDueQuery(limit: Int): Flow<List<StudyPracticeItem>> {
         // Time is an input, not a captured constant. While collected by the visible Study UI this

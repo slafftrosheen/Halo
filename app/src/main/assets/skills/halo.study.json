@@ -2,12 +2,25 @@
   "id": "halo.study",
   "schemaVersion": 2,
   "name": "Study",
-  "description": "Study local workspace material and inspect sessions.",
+  "description": "Study local material, save learner attempts and manage practice cards and sessions.",
   "category": "WORKSPACE",
-  "risk": "REVERSIBLE",
+  "risk": "DESTRUCTIVE",
   "tools": [
     "halo_study_with_halo",
-    "halo_get_study_session"
+    "halo_get_study_session",
+    "halo_study_sessions",
+    "halo_study_state",
+    "halo_study_card_get",
+    "halo_study_select_exercise",
+    "halo_study_submit_attempt",
+    "halo_study_set_preferences",
+    "halo_study_complete",
+    "halo_study_card_create",
+    "halo_study_card_edit",
+    "halo_study_card_accept",
+    "halo_study_card_review",
+    "halo_study_delete",
+    "halo_study_card_delete"
   ],
   "requiredPermissions": [],
   "toolDefinitions": [
@@ -18,6 +31,58 @@
     {
       "toolId": "halo_get_study_session",
       "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_study_sessions",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_study_state",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_study_card_get",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_study_select_exercise",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_submit_attempt",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_set_preferences",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_complete",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_card_create",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_card_edit",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_card_accept",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_card_review",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_study_delete",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_study_card_delete",
+      "risk": "DESTRUCTIVE"
     }
   ]
 }

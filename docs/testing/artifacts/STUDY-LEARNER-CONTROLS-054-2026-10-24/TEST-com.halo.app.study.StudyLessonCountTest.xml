@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.study.StudyLessonCountTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-24T03:57:31.018Z" hostname="MINIFOXEY" time="2.244">
+  <properties/>
+  <testcase name="interruptedAttemptKeepsDraftAndSubmissionIdentityAcrossStoreRecreation" classname="com.halo.app.study.StudyLessonCountTest" time="1.939"/>
+  <testcase name="repliesCountWithoutGradingAndStayCorrectAcrossRestoreAndDeletion" classname="com.halo.app.study.StudyLessonCountTest" time="0.133"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -39,7 +39,7 @@ class SpeechOutputStudyNarration(
     private val mutableEvents = MutableSharedFlow<NarrationEvent>(extraBufferCapacity = 16)
     override val events: Flow<NarrationEvent> = mutableEvents.asSharedFlow()
 
-    private data class ActiveNarration(val generationId: String, val transactionId: String)
+    private data class ActiveNarration(val sessionId: String, val generationId: String, val transactionId: String)
     private val active = java.util.concurrent.atomic.AtomicReference<ActiveNarration?>(null)
     private var publishing: Job? = null
 
@@ -91,7 +91,7 @@ class SpeechOutputStudyNarration(
             order < generationOrder(previous.generationId)) return
         val transactionId = "study:$sessionId:$generationId"
         if (previous?.transactionId == transactionId) return
-        active.set(ActiveNarration(generationId, transactionId))
+        active.set(ActiveNarration(sessionId, generationId, transactionId))
         previous?.let { cancelSpeech(it.transactionId) }
         publishAsync(TtsRequested(
             text = text,
@@ -108,6 +108,10 @@ class SpeechOutputStudyNarration(
         publishing?.cancel()
         publishing = null
         active.getAndSet(null)?.let { cancelSpeech(it.transactionId) }
+    }
+
+    @Synchronized override fun stopSession(sessionId: String, reason: String) {
+        if (active.get()?.sessionId == sessionId) stop(reason)
     }
 
     /** Cancels the collector; the coordinator stays alive because the process owns it. */

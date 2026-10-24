@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceOperabilityTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-24T03:57:03.795Z" hostname="MINIFOXEY" time="7.726">
+  <properties/>
+  <testcase name="actualHighValueOperationsHaveVersionedContractsAndSafeReplayMetadata" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="4.101"/>
+  <testcase name="canvasEditingDescriptorsKeepDestructiveApprovalAndExactContractsWithoutRestrictingOrdinaryAllowedEdits" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="0.09"/>
+  <testcase name="attachmentChangeBetweenResolutionAndPersistenceCannotCreateAStudySession" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="2.69"/>
+  <testcase name="assistantStudyRequiresExactObservedVersionAndPersistsThroughTheSameStudyOwner" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="0.132"/>
+  <testcase name="attachedPhotoUsesContextIdentityAndItsDistinctStudyCitationRevision" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="0.115"/>
+  <testcase name="canvasClearCannotUseAlwaysAllowOrReuseAnEarlierScopeApproval" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="0.054"/>
+  <testcase name="fileInsertionChecksTargetRevisionWithoutOverwritingEitherSource" classname="com.halo.app.data.workspace.WorkspaceOperabilityTest" time="0.151"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

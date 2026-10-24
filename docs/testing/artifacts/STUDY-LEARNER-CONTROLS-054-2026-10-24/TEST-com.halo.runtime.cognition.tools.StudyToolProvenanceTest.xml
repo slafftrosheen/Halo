@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.tools.StudyToolProvenanceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-24T03:50:06.647Z" hostname="MINIFOXEY" time="0.01">
+  <properties/>
+  <testcase name="savedStudyResultsRetainWorkspacePrivacyAndOneNativeOwnerIncludingWriteReceipts" classname="com.halo.runtime.cognition.tools.StudyToolProvenanceTest" time="0.01"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

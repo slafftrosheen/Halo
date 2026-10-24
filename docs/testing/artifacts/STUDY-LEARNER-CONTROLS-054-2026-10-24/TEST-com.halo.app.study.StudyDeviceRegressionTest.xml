@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.study.StudyDeviceRegressionTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-24T03:57:27.051Z" hostname="MINIFOXEY" time="3.903">
+  <properties/>
+  <testcase name="childLessonStartsLocallyWithoutGrantAndUsesCloudOnlyWithGrant" classname="com.halo.app.study.StudyDeviceRegressionTest" time="3.33"/>
+  <testcase name="discoveryPersistsLearnerWordsWhileTutorReceivesTeachingInstruction" classname="com.halo.app.study.StudyDeviceRegressionTest" time="0.233"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

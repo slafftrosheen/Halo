@@ -49,9 +49,11 @@ class SpeechPlaybackLifecycleTest {
             val current = "study:lesson:lesson:source-b:reader:0:1"
             assertEquals("Second passage", f.first.spoken.last())
             assertTrue(f.owner.ownsTransaction(current))
+            narration.stopSession("another-lesson", "Old session finished")
+            assertTrue(f.owner.ownsTransaction(current))
             f.bus.publish(TtsCompleted(transactionId = old))
             assertTrue(f.owner.ownsTransaction(current))
-            narration.stop("Stop current Study passage")
+            narration.stopSession("lesson", "Finish current Study session")
             assertFalse(f.owner.ownsTransaction(current))
         } finally { narration.shutdown(); f.close() }
     }

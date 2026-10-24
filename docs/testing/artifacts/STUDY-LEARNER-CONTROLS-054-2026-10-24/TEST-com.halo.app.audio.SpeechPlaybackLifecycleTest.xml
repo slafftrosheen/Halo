@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.audio.SpeechPlaybackLifecycleTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-24T03:56:51.392Z" hostname="MINIFOXEY" time="4.444">
+  <properties/>
+  <testcase name="studyStopIsScopedAndDifferentPassageMayRestartItsGenerationCounter" classname="com.halo.app.audio.SpeechPlaybackLifecycleTest" time="4.027"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

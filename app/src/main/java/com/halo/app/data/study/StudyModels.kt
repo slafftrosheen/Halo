@@ -303,8 +303,21 @@ data class StudyReviewEvent(
 
 @Dao
 interface StudyDao {
-    @Query("UPDATE study_sessions SET sourcesJson = :sources, sourceObjectIdsJson = :ids, learnerLevel = :level, supportStyle = :style, knowledgePolicy = :policy, schemaVersion = 3, updatedAtEpochMs = :at WHERE id = :id")
+    @Query("SELECT * FROM study_sessions WHERE :includeFinished OR lifecycle = 'ACTIVE' ORDER BY updatedAtEpochMs DESC, id ASC LIMIT :limit OFFSET :offset")
+    suspend fun sessionPage(includeFinished: Boolean, limit: Int, offset: Int): List<StudySessionEntity>
+
+    @Query("SELECT * FROM study_practice_items WHERE sessionId = :sessionId ORDER BY createdAtEpochMs ASC, id ASC LIMIT :limit OFFSET :offset")
+    suspend fun practicePage(sessionId: String, limit: Int, offset: Int): List<StudyPracticeItemEntity>
+
+    @Query("SELECT * FROM study_attempts WHERE sessionId = :sessionId ORDER BY submittedAtEpochMs DESC, id ASC LIMIT :limit")
+    suspend fun recentAttempts(sessionId: String, limit: Int): List<StudyAttemptEntity>
+
+    @Query("UPDATE study_sessions SET sourcesJson = :sources, sourceObjectIdsJson = :ids, learnerLevel = :level, supportStyle = :style, knowledgePolicy = :policy, schemaVersion = 3, updatedAtEpochMs = MAX(:at, updatedAtEpochMs + 1) WHERE id = :id")
     suspend fun updateSetup(id: String, sources: String, ids: String, level: String, style: String, policy: String, at: Long): Int
+
+    /** Child writes invalidate an observed session/deletion even within one clock millisecond. */
+    @Query("UPDATE study_sessions SET updatedAtEpochMs = MAX(:at, updatedAtEpochMs + 1) WHERE id = :sessionId")
+    suspend fun touchSession(sessionId: String, at: Long): Int
 
     @Query("SELECT COUNT(*) FROM study_sessions WHERE lifecycle = 'ACTIVE'")
     suspend fun activeCount(): Int
@@ -318,7 +331,7 @@ interface StudyDao {
         """
         UPDATE study_sessions
         SET tutorStage = :stage, currentExerciseId = :exerciseId, solutionRevealed = :solutionRevealed,
-            lifecycle = :lifecycle, completedAtEpochMs = :completedAt, updatedAtEpochMs = :updatedAt
+            lifecycle = :lifecycle, completedAtEpochMs = :completedAt, updatedAtEpochMs = MAX(:updatedAt, updatedAtEpochMs + 1)
         WHERE id = :sessionId
         """
     )
@@ -339,7 +352,7 @@ interface StudyDao {
             strongestLanguage = :strongestLanguage,
             assignmentLanguage = COALESCE(:assignmentLanguage, assignmentLanguage),
             goal = COALESCE(:goal, goal),
-            updatedAtEpochMs = :updatedAt
+            updatedAtEpochMs = MAX(:updatedAt, updatedAtEpochMs + 1)
         WHERE id = :sessionId
         """
     )

@@ -1,0 +1,78 @@
+[
+  {
+    "path": "app/src/androidTest/java/com/halo/app/study/StudyLearnerControlsDeviceTest.kt",
+    "sha256": "2a078b7bd7d2c6ffc3014a5e407fe576a0f5dd0bdb9dc449d8771b00863e7443"
+  },
+  {
+    "path": "app/src/main/assets/skills/halo.study.json",
+    "sha256": "7463b6ec464ed7647ab8962b1a4cee82faf14d7016c748904a9762227f2cea6c"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/study/StudyModels.kt",
+    "sha256": "1fd2f46493ec37c5a32228454d48d729cdf7f32168c6939f84590217c0feb9ae"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/study/StudyRepository.kt",
+    "sha256": "98160b39d74d42f0e63029d5ceb857347847a042cd0b065e05941f3796fa6c98"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+    "sha256": "5dabb57b4ec7fb97324ff65310b3e09749ca5ed26fb8f3bdcdcada4b1451399e"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/HaloToolDescriptors.kt",
+    "sha256": "b13b65d48b6fc6558cc41504a1a6a29b15c234e23e69ea501d588a9b4b40b51e"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceOperabilityContracts.kt",
+    "sha256": "0f9e10c8e3532f91b84515418a3d69ed7c2fb72e5a2c224df90050e95138f513"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceStudyActions.kt",
+    "sha256": "47d9fce036107ca856e7b38296d86146e5d7bcf1f8d2939bd383c2b710c58607"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceToolExecutor.kt",
+    "sha256": "901686afdedd38af003f07dcc77702fb8ff1b2da3967edc82f738cd9c52c245f"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/study/SpeechOutputStudyNarration.kt",
+    "sha256": "f99c0ea3e492270dbd628d3cd9782146e92ae9f22cd3b6cd5fd0e01bcb709f61"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/study/StudyUseCases.kt",
+    "sha256": "22e7f07ba9955133f05af16cd20e08e3c0aaf9f78991a837316f7961402a4417"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ui/screens/home/HomeToolCatalog.kt",
+    "sha256": "4629f96c8d9052e1d3b89b12d489df44ab4988870760db43c9720956c7577cb1"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/audio/SpeechPlaybackLifecycleTest.kt",
+    "sha256": "381defe70016de14a888bcb833fd6ad5951b40e4051a814c9647d6dd430aa0cf"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/workspace/WorkspaceOperabilityTest.kt",
+    "sha256": "b7ef8916b02de93da6ffec419994b898e9528ca73b92d706442449f21075f927"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/workspace/WorkspaceStudyActionsTest.kt",
+    "sha256": "f0247bbe9e66d17e0152aec56bd972778623275f82834541e8d885a7da33445a"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillInstructionSource.kt",
+    "sha256": "577033982c33c3edfb738ab9767884cb09b61159cb905378ffa1174294d6365a"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillRegistry.kt",
+    "sha256": "d04d01f99f22c74283c59d74fd0139639cd4919fe654551e927882d7f73fe09d"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/tools/WorkspaceToolAccess.kt",
+    "sha256": "e3b79879a5d0f612d6341cc6bc0cf339a4c137a23688455e21f2ffdf16fa6169"
+  },
+  {
+    "path": "runtime/cognition/src/test/java/com/halo/runtime/cognition/tools/StudyToolProvenanceTest.kt",
+    "sha256": "133839b5d297013646b5dc138aa3079e350ec3aebb9f377180c168b96d9bb095"
+  }
+]

@@ -36,6 +36,8 @@ interface StudyNarrationController {
     fun narrate(text: String, sessionId: String, generationId: String, speed: Double, language: String?) = narrate(text,sessionId,generationId)
 
     fun stop(reason: String)
+    /** Implementations without scoped ownership must not stop another lesson. */
+    fun stopSession(sessionId: String, reason: String) = Unit
 }
 
 sealed interface NarrationEvent {
@@ -178,6 +180,7 @@ class StudyUseCases(
     private val narration: StudyNarrationController? = null,
     private val sourceResolver: StudySourceResolver? = null,
     private val reviewIntensity: StudyReviewIntensityController? = null,
+    private val localSessionData: StudySessionLocalData? = null,
 ) {
     val narrationAvailable: Boolean get() = narration?.available == true
 
@@ -647,16 +650,25 @@ class StudyUseCases(
             lifecycle = StudySessionLifecycle.COMPLETED,
             completedAtEpochMs = now(),
         )
-        narration?.stop("Study session completed")
+        narration?.stopSession(sessionId, "Study session completed")
         val updated = repository.getSession(sessionId)
             ?: return StudyTransitionResult.Rejected("This study session is no longer available")
         return StudyTransitionResult.Moved(updated, StageMove.REPEAT)
     }
 
     /** Removes attempts, feedback, practice items and review history for one session. */
-    suspend fun deleteSessionData(sessionId: String): Boolean {
-        narration?.stop("Study data deleted")
-        return repository.deleteSessionData(sessionId)
+    suspend fun localSessionDataVersion(sessionId: String): String =
+        localSessionData?.version(sessionId) ?: StudySessionLocalData.EMPTY_VERSION
+
+    suspend fun deleteSessionData(sessionId: String, expectedLocalVersion: String? = null,
+        validateSession: suspend () -> Boolean = { true }): Boolean {
+        val local = localSessionData
+        return if (local != null) local.deleteWith(sessionId, expectedLocalVersion) { clear ->
+            repository.deleteSessionData(sessionId, validateSession) { clear(); narration?.stopSession(sessionId, "Study data deleted") }
+        } else {
+            if (expectedLocalVersion != null && expectedLocalVersion != StudySessionLocalData.EMPTY_VERSION) return false
+            repository.deleteSessionData(sessionId, validateSession) { narration?.stopSession(sessionId, "Study data deleted") }
+        }
     }
 
     /**
