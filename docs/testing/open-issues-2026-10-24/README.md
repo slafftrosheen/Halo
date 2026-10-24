@@ -61,6 +61,12 @@ full-JDK paths. Its [executed report](../HALO-WINDOWS-INK-BUILD-030-2026-10-24.m
 records a passing x86_64 build/load and reproducible command. It does not open a
 pen window or replace the physical native-loop/second-host protocols below.
 
+The separate `build_desktop_ink_linux.ps1` runner also passed a Linux x86_64
+cross-compile/link/export check, using an explicitly selected Debian sysroot and
+Unix JNI headers. Its [executed report and exact inputs](../HALO-LINUX-INK-CROSS-BUILD-030-2026-10-24.md)
+distinguish that result from a Linux JVM load, evdev/physical input or ARM64/Pi
+qualification, all of which remain NOT_TESTED.
+
 Choose the actual current serial if it changes. The runner preserves app data,
 refuses a different signed/installed binary, checks source hashes, counts actual
 JUnit cases, rejects skips/crashes/timeouts, and records separate per-suite
@@ -135,8 +141,9 @@ TLS; it does not enable production pairing or claim a second device. Full physic
 qualification must exercise an explicitly qualified host configuration before a
 release activation decision. Windows/Linux native source and a JNI bridge are in
 `host-ink/native`. Windows x86_64 direct compilation, JNI exports and JVM load
-have now passed; actual pen/native-loop behavior remains NOT_TESTED. Linux is
-SOURCE_ONLY. Each hardware/toolchain/architecture and Huion/OpenTabletDriver/Pi
+have now passed; actual pen/native-loop behavior remains NOT_TESTED. Linux x86_64
+cross-compilation/link/exports passed; Linux loading and input are NOT_TESTED.
+Each hardware/toolchain/architecture and Huion/OpenTabletDriver/Pi
 combination needs its own compatibility record. This pack never promises physical
 compatibility from source, DLL load or Android compilation.
 

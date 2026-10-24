@@ -1,0 +1,433 @@
+
+File: C:\Users\slavd\HaloEco\verification-2026-10-24-linux-ink-build\libhalo_ink_pen.so
+Format: elf64-x86-64
+Arch: x86_64
+AddressSize: 64bit
+LoadName: <Not found>
+ElfHeader {
+  Ident {
+    Magic: (7F 45 4C 46)
+    Class: 64-bit (0x2)
+    DataEncoding: LittleEndian (0x1)
+    FileVersion: 1
+    OS/ABI: SystemV (0x0)
+    ABIVersion: 0
+    Unused: (00 00 00 00 00 00 00)
+  }
+  Type: SharedObject (0x3)
+  Machine: EM_X86_64 (0x3E)
+  Version: 1
+  Entry: 0x0
+  ProgramHeaderOffset: 0x40
+  SectionHeaderOffset: 0x4088
+  Flags [ (0x0)
+  ]
+  HeaderSize: 64
+  ProgramHeaderEntrySize: 56
+  ProgramHeaderCount: 9
+  SectionHeaderEntrySize: 64
+  SectionHeaderCount: 29
+  StringTableSectionIndex: 27
+}
+DynamicSection [ (27 entries)
+  Tag                Type         Name/Value
+  0x0000000000000001 NEEDED       Shared library: [libstdc++.so.6]
+  0x0000000000000001 NEEDED       Shared library: [libm.so.6]
+  0x0000000000000001 NEEDED       Shared library: [libgcc_s.so.1]
+  0x0000000000000001 NEEDED       Shared library: [libc.so.6]
+  0x0000000000000007 RELA         0xE10
+  0x0000000000000008 RELASZ       192 (bytes)
+  0x0000000000000009 RELAENT      24 (bytes)
+  0x000000006FFFFFF9 RELACOUNT    3
+  0x0000000000000017 JMPREL       0xED0
+  0x0000000000000002 PLTRELSZ     768 (bytes)
+  0x0000000000000003 PLTGOT       0x5E90
+  0x0000000000000014 PLTREL       RELA
+  0x0000000000000006 SYMTAB       0x238
+  0x000000000000000B SYMENT       24 (bytes)
+  0x0000000000000005 STRTAB       0x7A4
+  0x000000000000000A STRSZ        1639 (bytes)
+  0x000000006FFFFEF5 GNU_HASH     0x6D8
+  0x0000000000000019 INIT_ARRAY   0x4CA8
+  0x000000000000001B INIT_ARRAYSZ 8 (bytes)
+  0x000000000000001A FINI_ARRAY   0x4CA0
+  0x000000000000001C FINI_ARRAYSZ 8 (bytes)
+  0x000000000000000C INIT         0x3A64
+  0x000000000000000D FINI         0x3A7C
+  0x000000006FFFFFF0 VERSYM       0x610
+  0x000000006FFFFFFE VERNEED      0x664
+  0x000000006FFFFFFF VERNEEDNUM   2
+  0x0000000000000000 NULL         0x0
+]
+DynamicSymbols [
+  Symbol {
+    Name:  (0)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: __gmon_start__ (1)
+    Value: 0x0
+    Size: 0
+    Binding: Weak (0x2)
+    Type: None (0x0)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: _ITM_deregisterTMCloneTable (16)
+    Value: 0x0
+    Size: 0
+    Binding: Weak (0x2)
+    Type: None (0x0)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: _ITM_registerTMCloneTable (44)
+    Value: 0x0
+    Size: 0
+    Binding: Weak (0x2)
+    Type: None (0x0)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: __cxa_finalize@GLIBC_2.2.5 (70)
+    Value: 0x0
+    Size: 0
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: open@GLIBC_2.2.5 (281)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: memset@GLIBC_2.2.5 (335)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: fstat@GLIBC_2.33 (342)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: ioctl@GLIBC_2.2.5 (348)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: close@GLIBC_2.2.5 (354)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: poll@GLIBC_2.2.5 (382)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: read@GLIBC_2.2.5 (387)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: _ZNSt6chrono3_V212steady_clock3nowEv@GLIBCXX_3.4.19 (665)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: __cxa_begin_catch@CXXABI_1.3 (1160)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: _ZSt9terminatev@GLIBCXX_3.4 (1178)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: __gxx_personality_v0@CXXABI_1.3 (1508)
+    Value: 0x0
+    Size: 0
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: Java_com_halo_host_ink_DesktopPenSource_readLinux (187)
+    Value: 0x2910
+    Size: 2301
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_17GetStringUTFCharsEP8_jstringPh (237)
+    Value: 0x3550
+    Size: 50
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_11GetMethodIDEP7_jclassPKcS3_ (491)
+    Value: 0x3790
+    Size: 58
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZStanSt12memory_orderSt23__memory_order_modifier (532)
+    Value: 0x3700
+    Size: 18
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_14ExceptionCheckEv (582)
+    Value: 0x3800
+    Size: 31
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNKSt6chrono8durationIlSt5ratioILl1ELl1000EEE5countEv (975)
+    Value: 0x3910
+    Size: 17
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: Java_com_halo_host_ink_DesktopPenSource_stopNative (1109)
+    Value: 0x34E0
+    Size: 39
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: Java_com_halo_host_ink_DesktopPenSource_prepareNative (85)
+    Value: 0x28E0
+    Size: 36
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_21ReleaseStringUTFCharsEP8_jstringPKc (286)
+    Value: 0x3590
+    Size: 50
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZSt3maxIlERKT_S2_S2_ (1464)
+    Value: 0x3A30
+    Size: 52
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZSt3minIlERKT_S2_S2_ (1486)
+    Value: 0x39F0
+    Size: 52
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNSt13__atomic_baseIbEaSEb (159)
+    Value: 0x3650
+    Size: 164
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNKSt6atomicIbEcvbEv (360)
+    Value: 0x35D0
+    Size: 122
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_8ThrowNewEP7_jclassPKc (418)
+    Value: 0x3730
+    Size: 47
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_14CallVoidMethodEP8_jobjectP10_jmethodIDz (612)
+    Value: 0x3820
+    Size: 159
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNKSt6chrono10time_pointINS_3_V212steady_clockENS_8durationIlSt5ratioILl1ELl1000000000EEEEE16time_since_epochEv (702)
+    Value: 0x38F0
+    Size: 25
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNSt6chrono13duration_castINS_8durationIlSt5ratioILl1ELl1000EEEElS2_ILl1ELl1000000000EEEENSt9enable_ifIXsr13__is_durationIT_EE5valueES7_E4typeERKNS1_IT0_T1_EE (815)
+    Value: 0x38C0
+    Size: 35
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZSt5clampIlERKT_S2_S2_S2_ (1030)
+    Value: 0x39B0
+    Size: 53
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNSt6chrono20__duration_cast_implINS_8durationIlSt5ratioILl1ELl1000EEEES2_ILl1ELl1000000EElLb1ELb0EE6__castIlS2_ILl1ELl1000000000EEEES4_RKNS1_IT_T0_EE (1194)
+    Value: 0x3930
+    Size: 58
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNSt6atomicIbEaSEb (139)
+    Value: 0x3510
+    Size: 50
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_9FindClassEPKc (392)
+    Value: 0x3760
+    Size: 39
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZN7JNIEnv_14GetObjectClassEP8_jobject (452)
+    Value: 0x37D0
+    Size: 42
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: Java_com_halo_host_ink_DesktopPenSource_readWindows (1057)
+    Value: 0x34B0
+    Size: 38
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNKSt6chrono8durationIlSt5ratioILl1ELl1000000000EEE5countEv (1346)
+    Value: 0x3970
+    Size: 17
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+  Symbol {
+    Name: _ZNSt6chrono8durationIlSt5ratioILl1ELl1000EEEC2IlvEERKT_ (1407)
+    Value: 0x3990
+    Size: 28
+    Binding: Weak (0x2)
+    Type: Function (0x2)
+    Other: 0
+    Section: .text (0xC)
+  }
+]
+

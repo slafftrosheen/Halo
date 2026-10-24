@@ -32,10 +32,16 @@
       "platform": "Linux",
       "adapter": "Explicit read-only evdev absolute pen JNI source",
       "hardware": "Exact model, kernel, architecture and read permission required",
-      "build": "SOURCE_ONLY",
+      "build": "LINUX_X86_64_CROSS_COMPILE_LINK_AND_EXPORT_PASS",
       "physicalPen": "NOT_TESTED",
       "secondHost": "NOT_TESTED",
-      "evidence": []
+      "evidence": [
+        "../artifacts/LINUX-INK-CROSS-BUILD-030-2026-10-24/build-result.json",
+        "../artifacts/LINUX-INK-CROSS-BUILD-030-2026-10-24/inspection.txt"
+      ],
+      "nativeLoad": "NOT_TESTED",
+      "nativeLoop": "NOT_TESTED",
+      "cmake": "NOT_TESTED"
     },
     {
       "platform": "OpenTabletDriver",

@@ -1,0 +1,14 @@
+{
+  "publisher": "Debian bookworm main amd64",
+  "indexUrl": "https://deb.debian.org/debian/dists/bookworm/main/binary-amd64/Packages.gz",
+  "releaseUrl": "https://deb.debian.org/debian/dists/bookworm/Release",
+  "releaseSha256": "abcf5882746e0f68171f41adbb4ac01b74b49d62d203379befb9265804311a4f",
+  "indexVerification": "SHA256_AND_SIZE_MATCHED_HTTPS_RELEASE_METADATA",
+  "packageVerification": "EACH_ARCHIVE_SHA256_AND_SIZE_MATCHED_PACKAGES_INDEX",
+  "signatureVerification": "NOT_PERFORMED",
+  "extraction": "LOCAL_ISOLATED_SYSROOT_NO_PACKAGE_INSTALL_SCRIPTS_OR_LINUX_EXECUTION",
+  "jniUrl": "https://raw.githubusercontent.com/openjdk/jdk17u/jdk-17.0.20%2B8/src/java.base/unix/native/include/jni_md.h",
+  "jniSha256": "88cb5c33e306900dd35a78d5a439087123b8e91b0986bb5acb42cc9bd2fcc42e",
+  "compiler": "LLVM 23.1.4 from previously SHA256-verified LLVM-MinGW20261020",
+  "hostOs": "Microsoft Windows NT 10.0.26300.0"
+}

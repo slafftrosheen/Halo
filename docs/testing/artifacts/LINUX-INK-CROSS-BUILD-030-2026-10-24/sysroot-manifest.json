@@ -1,0 +1,125 @@
+{
+  "indexSha256": "6777ea16514725f9427f48c240d92e0a6b8496138e37a1491d8597e66774e309",
+  "indexBytes": 12084798,
+  "packages": [
+    {
+      "Package": "libgcc-12-dev",
+      "Version": "12.2.0-14+deb12u1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-12/libgcc-12-dev_12.2.0-14+deb12u1_amd64.deb",
+      "Size": "2437204",
+      "SHA256": "d720259380a84f2ffc6fe516eff5cbe9c8a005138e8d6a5748747ba4b3404a82"
+    },
+    {
+      "Package": "libgcc-s1",
+      "Version": "12.2.0-14+deb12u1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-12/libgcc-s1_12.2.0-14+deb12u1_amd64.deb",
+      "Size": "49856",
+      "SHA256": "3016e62cb4b7cd8038822870601f5ed131befe942774d0f745622cc77d8a88f7"
+    },
+    {
+      "Package": "libstdc++-12-dev",
+      "Version": "12.2.0-14+deb12u1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-12/libstdc++-12-dev_12.2.0-14+deb12u1_amd64.deb",
+      "Size": "2047292",
+      "SHA256": "d28def6c23630432b57cb38a4c2fd67a79d4e0484027386ca6e8d6005c3d7a73"
+    },
+    {
+      "Package": "libstdc++6",
+      "Version": "12.2.0-14+deb12u1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-12/libstdc++6_12.2.0-14+deb12u1_amd64.deb",
+      "Size": "612604",
+      "SHA256": "5cd3171216d4ab0fc911cfe9c35509bf2dd8f47761c43b7f6a4296701551a24d"
+    },
+    {
+      "Package": "libc6",
+      "Version": "2.36-9+deb12u14",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/glibc/libc6_2.36-9+deb12u14_amd64.deb",
+      "Size": "2759320",
+      "SHA256": "ba4f88f73dbc3ae9055f3c20f4523bfdbaf1ad13ff95e258924f77d20b4fbedf"
+    },
+    {
+      "Package": "libc6-dev",
+      "Version": "2.36-9+deb12u14",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/glibc/libc6-dev_2.36-9+deb12u14_amd64.deb",
+      "Size": "1903668",
+      "SHA256": "0218fc2befcd784c1b0c6292c0a137ce89fad054efaa579ad083bee0f2c01aae"
+    },
+    {
+      "Package": "linux-libc-dev",
+      "Version": "6.1.176-1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/l/linux/linux-libc-dev_6.1.176-1_amd64.deb",
+      "Size": "2303828",
+      "SHA256": "8bb258735b9dffbb111da778ebdd024750878e435ffd9dfcadcb6762ede6b4cf"
+    }
+  ],
+  "unmaterializedLinks": [
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libasan.so",
+      "../../../x86_64-linux-gnu/libasan.so.8",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libatomic.so",
+      "../../../x86_64-linux-gnu/libatomic.so.1",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libgomp.so",
+      "../../../x86_64-linux-gnu/libgomp.so.1",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libitm.so",
+      "../../../x86_64-linux-gnu/libitm.so.1",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/liblsan.so",
+      "../../../x86_64-linux-gnu/liblsan.so.0",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libquadmath.so",
+      "../../../x86_64-linux-gnu/libquadmath.so.0",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libtsan.so",
+      "../../../x86_64-linux-gnu/libtsan.so.2",
+      true
+    ],
+    [
+      "./usr/lib/gcc/x86_64-linux-gnu/12/libubsan.so",
+      "../../../x86_64-linux-gnu/libubsan.so.1",
+      true
+    ],
+    [
+      "./usr/share/doc/libgcc-12-dev",
+      "gcc-12-base",
+      true
+    ],
+    [
+      "./usr/share/doc/libgcc-s1",
+      "gcc-12-base",
+      true
+    ],
+    [
+      "./usr/share/doc/libstdc++-12-dev",
+      "gcc-12-base",
+      true
+    ],
+    [
+      "./usr/share/doc/libstdc++6",
+      "gcc-12-base",
+      true
+    ]
+  ],
+  "scope": "CROSS_COMPILE_SYSROOT_ONLY_NO_LINUX_EXECUTION"
+}
