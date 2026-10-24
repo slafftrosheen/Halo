@@ -1,0 +1,18 @@
+[
+  {
+    "path": "app/src/main/java/com/halo/app/ai/WorkloadQualificationStore.kt",
+    "sha256": "b934b6c1b37ea9c5bf78f682ed24c20cf01c803f258c089c3385adacc62fb2ae"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/WorkloadQualificationStoreTest.kt",
+    "sha256": "1f750c60269baf65cb890e09e8a2254f290713e2f43ba86455ba533cf1c36361"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalIntentQualificationTest.kt",
+    "sha256": "79ca7e88a9fe418ed5dfd87c74a621c792923db465dbbca2ce250bf9228f1529"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/IntentQualificationFixture.kt",
+    "sha256": "c2e7f80fa79fa9cd032e1139d73bc70e5a0c74ee006582b5838abb532dc904e9"
+  }
+]

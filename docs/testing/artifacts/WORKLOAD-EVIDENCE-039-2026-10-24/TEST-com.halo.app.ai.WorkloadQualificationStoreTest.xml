@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.WorkloadQualificationStoreTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:36:12.442Z" hostname="MINIFOXEY" time="3.17">
+  <properties/>
+  <testcase name="laterValidMeasurementCanQualifyAgain" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="2.366"/>
+  <testcase name="sameInstallationCanReopenAndUseItsEvidence" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.056"/>
+  <testcase name="failureIsScopedToItsActualBackendAndWorkload" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.056"/>
+  <testcase name="otherTargetsAndEnvironmentsCannotRevokeOrSupplyEvidence" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.054"/>
+  <testcase name="latestFailureWinsAfterWallClockRollback" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.062"/>
+  <testcase name="missingInstallationIdentityCannotExposeEvenMatchingPassingHistory" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.053"/>
+  <testcase name="latestFailureWinsEqualTimestamp" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.053"/>
+  <testcase name="revokedProofCannotProduceAutomaticRecommendation" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.061"/>
+  <testcase name="packageReplacementInvalidatesEveryGeneralWorkloadButKeepsHistory" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.062"/>
+  <testcase name="futureFailureDoesNotResurrectPriorPass" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.049"/>
+  <testcase name="unknownInstallationCannotPublishRoleMeasurement" classname="com.halo.app.ai.WorkloadQualificationStoreTest" time="0.057"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

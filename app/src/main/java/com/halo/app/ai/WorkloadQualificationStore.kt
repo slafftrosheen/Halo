@@ -35,7 +35,8 @@ class WorkloadQualificationStore(private val context: Context,private val storag
             else provider.loadConfigFor(artifact).toString()
         val tuning=if(workload==LocalWorkload.EMBED) "EMBED_NATIVE" else provider.preferences.tuning(artifact.id).toString()
         val workloadPolicy=WorkloadPreferences(storage).profile(workload)
-        val identity="native=$configuration|tuning=$tuning|workload=$workloadPolicy|concurrent=$concurrency|"+
+        val identity="package=$packageRevision|source=${com.halo.app.BuildConfig.HALO_SOURCE_ID}|"+
+            "platform=${Build.ID}|native=$configuration|tuning=$tuning|workload=$workloadPolicy|concurrent=$concurrency|"+
             "qualification-suite=$ROLE_PROBE_SUITE_VERSION; deterministic-chat; declared-thinking-reasoning"
         return WorkloadEnvironment("litertlm/${LiteRtLocalProvider.RUNTIME_VERSION}",EPOCH,device,Build.VERSION.SDK_INT.toString(),hash(identity))
     }
@@ -85,7 +86,7 @@ class WorkloadQualificationStore(private val context: Context,private val storag
 
     suspend fun recordRoleSuite(row: LocalModelRoleQualification,provider: LiteRtLocalProvider,
         artifact: LocalModelDescriptor,concurrency: Boolean) {
-        if(row.artifactFingerprint!=artifact.sha256 || !artifact.verified || row.backend==null || row.contextTokens==null ||
+        if(packageRevision==null || row.artifactFingerprint!=artifact.sha256 || !artifact.verified || row.backend==null || row.contextTokens==null ||
             row.threads==null || row.gpuLayers==null || ROLE_PROBE_SUITE_VERSION<2) return
         val config=provider.loadConfigFor(artifact)
         // A suite for a different native configuration is historical, never relabelled as current.
@@ -126,9 +127,17 @@ class WorkloadQualificationStore(private val context: Context,private val storag
         // failed row and making an older pass authoritative again.
         (0 until array.length()).map { i -> decode(array.getJSONObject(i)) }
     } catch(_: Exception) { emptyList() }
-    fun current(target: WorkloadTarget,environment: WorkloadEnvironment): List<WorkloadTaskProof> = history()
-        .filter { it.target==target && it.environment==environment && it.measuredAtMs<=System.currentTimeMillis()+300_000 }
-        .groupBy { it.workload to it.backend }.values.mapNotNull { rows -> rows.maxByOrNull { it.measuredAtMs } }
+    fun current(target: WorkloadTarget,environment: WorkloadEnvironment): List<WorkloadTaskProof> {
+        if (packageRevision == null) return emptyList()
+        val now = System.currentTimeMillis()
+        // Persisted append order is authoritative even across equal timestamps or
+        // wall-clock changes. Select the latest row before rejecting invalid times;
+        // discarding it first could resurrect an older pass for the same task/backend.
+        return history().filter { it.target == target && it.environment == environment }
+            .groupBy { it.workload to it.backend }.values.mapNotNull { rows ->
+                rows.last().takeIf { it.measuredAtMs in 1..now }
+            }
+    }
     private fun encode(p: WorkloadTaskProof)=JSONObject().put("provider",p.target.providerId).put("model",p.target.modelId)
         .put("sha",p.target.artifactSha256).put("workload",p.workload.name).put("backend",p.backend.name)
         .put("runtime",p.environment.runtime).put("epoch",p.environment.compatibilityEpoch).put("device",p.environment.device)
