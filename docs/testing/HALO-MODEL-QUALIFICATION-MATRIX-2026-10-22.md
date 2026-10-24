@@ -61,6 +61,7 @@ are reviewed.
 ### Audit outcome
 
 - Qwen has a declared upstream Apache-2.0 license at the pinned publisher revision.
+- Source follow-up, 2026-10-24: the Qwen catalog entry now records `license = "apache-2.0"` from that exact publisher revision's README. The baseline inventory row's unset-field observation above is historical. Artifact/revision/SHA/size, candidate status, access and runtime settings are unchanged; this metadata correction is not distribution approval or model qualification.
 - Silero's upstream project declares MIT, but the exact Sherpa ONNX export lineage still needs confirmation.
 - OpenAI's original Whisper weights have an MIT license, while the exact pinned Sherpa conversion package has no license declaration or source-checkpoint mapping. This remains unresolved for the packaged conversion.
 - Supertonic model weights are OpenRAIL-M; the Sherpa archive's exact upstream revision and derivative mapping remain unresolved. The MIT code license does not clear these weights.

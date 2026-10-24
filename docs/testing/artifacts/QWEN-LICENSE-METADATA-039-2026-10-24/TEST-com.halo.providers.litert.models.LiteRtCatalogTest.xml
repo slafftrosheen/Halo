@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtCatalogTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-24T07:13:13.942Z" hostname="MINIFOXEY" time="0.01">
+  <properties/>
+  <testcase name="lookup by id sha and filename resolves each artifact" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="gemma is catalogued for identity but never directly downloadable" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.001"/>
+  <testcase name="placeholder sha256 values are rejected" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.001"/>
+  <testcase name="download url is derived from the pinned revision" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.001"/>
+  <testcase name="qwen control artifact keeps its original pins" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="deepseek reasoning artifact is experimental and thinking-capable" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="qwen2 half billion experimental challenger is fully pinned and cpu first" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="mutable revisions, tiny payloads and non-litertlm files are rejected" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.005"/>
+  <testcase name="pinned byte counts are real artifact sizes, not rounded guesses" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="qwen 2 point 5 q8 artifact carries the upstream sampling profile" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="catalog exposes the development matrix and six downloadable models" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="qwen 1 point 7b development artifact is pinned and gpu preferred" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.0"/>
+  <testcase name="embeddinggemma is byte pinned but never considered a chat model" classname="com.halo.providers.litert.models.LiteRtCatalogTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

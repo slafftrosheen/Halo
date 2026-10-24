@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-24T07:13:13.871Z" hostname="MINIFOXEY" time="0.066">
+  <properties/>
+  <testcase name="every OPEN_DIRECT model pins an immutable revision sha size filename and url" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.052"/>
+  <testcase name="runtime profiles are self-consistent" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.003"/>
+  <testcase name="a catalog with unique identity validates" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.0"/>
+  <testcase name="catalog identity is unique across id filename and sha256" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.0"/>
+  <testcase name="gated models are catalogued but excluded from the direct downloader" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.0"/>
+  <testcase name="unproven capabilities are not claimed" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.002"/>
+  <testcase name="gated identity is still resolvable for imported-file canonicalization" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.0"/>
+  <testcase name="duplicate catalog identity is rejected" classname="com.halo.providers.litert.models.LiteRtCatalogIntegrityTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

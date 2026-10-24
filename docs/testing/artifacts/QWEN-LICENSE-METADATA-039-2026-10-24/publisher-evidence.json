@@ -1,0 +1,12 @@
+{
+  "publisher": "litert-community/Qwen3-0.6B",
+  "revision": "a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76",
+  "source": "https://huggingface.co/litert-community/Qwen3-0.6B/raw/a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76/README.md",
+  "declaredLicense": "apache-2.0",
+  "baseModel": "Qwen/Qwen3-0.6B",
+  "baseModelRelation": "quantized",
+  "scope": "PUBLISHER_DECLARATION_ONLY",
+  "distributionApproval": "NOT_ASSERTED",
+  "qualification": "NOT_ASSERTED",
+  "retrievedDate": "2026-10-24"
+}

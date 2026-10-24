@@ -44,6 +44,7 @@ object LiteRtModelCatalog {
         supportsTools = false,
         minLiteRtLmVersion = "0.17.1",
         family = "Qwen3",
+        license = "apache-2.0",
         supportsThinking = true,
         evaluationPurposes = setOf(LocalModelEvaluationPurpose.LATENCY, LocalModelEvaluationPurpose.GENERAL_CHAT),
         quantizationLabel = "dynamic_wi4b32_afp32",
