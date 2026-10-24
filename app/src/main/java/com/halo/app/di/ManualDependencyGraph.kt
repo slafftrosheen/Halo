@@ -1382,7 +1382,11 @@ object ManualDependencyGraph {
     val recentCaptureProjection by lazy { com.halo.app.continuity.RecentCaptureProjection(eventBus, infra.scope) }
 
     val localIntentModelRouter by lazy {
-        com.halo.app.ai.LocalIntentModelRouter(storage,modelManager) {
+        com.halo.app.ai.LocalIntentModelRouter(storage, modelManager, qualified = { artifact, provider ->
+            val resources = providerGraph.nativeResourceCoordinator
+            resources.budget.value.pressure == com.halo.sdk.runtime.NativeMemoryPressure.NORMAL &&
+                resources.snapshot.value.none { it.executing } && workloadQualifications.isIntentQualified(provider, artifact)
+        }) {
             aiProviderRouter.getAllProviders()
                 .filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>()
                 .firstOrNull()

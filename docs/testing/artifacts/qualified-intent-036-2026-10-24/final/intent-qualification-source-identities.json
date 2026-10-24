@@ -1,0 +1,62 @@
+[
+  {
+    "path": "app/src/androidTest/assets/intent-classification-v1.json",
+    "sha256": "13437f06ffe3f1ca3cb89a781ce06701ce1a1a2bf51248dfeb6b86daee0425ef"
+  },
+  {
+    "path": "app/src/androidTest/java/com/halo/app/audio/LocalIntentClassifierPhoneTest.kt",
+    "sha256": "a52bc3ef669c858e16c2ac79aac3f98f6c2adc4b9eb65d68a747147d7d6c950e"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ai/LocalIntentModelRouter.kt",
+    "sha256": "d4ce5900110d626a7f9eb1caa1663d82afbb94dddbf844a73c14c4c09d05f25c"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ai/WorkloadQualificationStore.kt",
+    "sha256": "084294ee4970a0cbfc3b1e349b847d064ec44da67c5e7dad9db730eea1d78060"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+    "sha256": "33553ea65534f3130991e8925144bc35f39ecfebc9afb196630bf51d7aacfc19"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+    "sha256": "9af6282f07fcb12215b1d5fc0d80a033830fe444690c9eb46a6828a9bdfa6286"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt",
+    "sha256": "4db903ab6b170dd298285e423fe832eac005ecf05dcc2a05cc7603a65f392f9c"
+  },
+  {
+    "path": "app/src/main/localization/ui.tsv",
+    "sha256": "f54a9ae0b1d5ad3adc3065dc7419cb69fba5c5959f4306654ab2d92fc1983d2d"
+  },
+  {
+    "path": "app/src/main/res/values-lv/ui_strings.xml",
+    "sha256": "851099d56dd3b7c595214a28725aceff0dc528f867bac2219bd75acdd32614c9"
+  },
+  {
+    "path": "app/src/main/res/values-pl/ui_strings.xml",
+    "sha256": "e889163e2365a6890c62d645134afc09eae383f8619c59542c92bb1b1953c684"
+  },
+  {
+    "path": "app/src/main/res/values-ru/ui_strings.xml",
+    "sha256": "ea9f826b5b4608018e3dfa45f75bf1e73b7d36ec433c143d322149f355bbf581"
+  },
+  {
+    "path": "app/src/main/res/values/ui_strings.xml",
+    "sha256": "cf4dc785cc9816e9e0c674472a90b3ec0f3c41cdc6fe4cba6dc3cf4bf6cf0e0e"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/IntentQualificationFixture.kt",
+    "sha256": "c2e7f80fa79fa9cd032e1139d73bc70e5a0c74ee006582b5838abb532dc904e9"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalIntentQualificationTest.kt",
+    "sha256": "ca8a2219d928600e3cc23d18c753fd1b69a56e36c90d739af234ddf16d93b472"
+  },
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/runtime/LocalModelSession.kt",
+    "sha256": "39c8fd2c9c736e93cce2fac5186cd920f70dcf2af59488c4f5d570f58e414b15"
+  }
+]

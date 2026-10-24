@@ -127,6 +127,8 @@ class LocalModelSession(
     private val lifecycleMutex = Mutex()
     private val generationMutex = Mutex()
     private val generationCounter = AtomicLong(0L)
+    /** Content-free queue-entry counter; a zero delta proves admission did not enqueue native work. */
+    val generationRequestCount: Long get() = generationCounter.get()
     private val currentGenerationId = AtomicLong(0L)
     private data class ActiveGeneration(val id: Long, val job: Deferred<Result<RuntimeGenerationResult>>,
         val cancellationMutex: Mutex = Mutex())

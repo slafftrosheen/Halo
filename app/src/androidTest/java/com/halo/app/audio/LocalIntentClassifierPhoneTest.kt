@@ -40,7 +40,9 @@ class LocalIntentClassifierPhoneTest {
         check(cases.groupingBy { it.language }.eachCount() == mapOf("EN" to 12, "RU" to 12, "LV" to 12, "PL" to 12))
         check(cases.all { it.prompt.length in 3..384 && it.expected in setOf("ACTION", "ANSWER", "UNCERTAIN") &&
             it.preparedInput in setOf("Voice", "Keyboard") })
-        return Matrix(cases, MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) })
+        val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        check(sha == LocalIntentModelRouter.FIXTURE_SHA256)
+        return Matrix(cases, sha)
     }
 
     @Test fun classifyPreparedFinalTextMatrix() = runBlocking {
@@ -71,7 +73,7 @@ class LocalIntentClassifierPhoneTest {
             putString(LocalIntentModelRouter.MODEL_KEY, modelId)
             putBoolean(LocalIntentModelRouter.ENABLED_KEY, true)
         }
-        val router = LocalIntentModelRouter(preferences, graph.modelManager) { provider }
+        val router = LocalIntentModelRouter(preferences, graph.modelManager, qualified = { _, _ -> true }) { provider }
         val output = File(instrumentation.targetContext.filesDir, "intent-model-acceptance.jsonl")
         fun record(stage: String, fill: JSONObject.() -> Unit = {}) {
             val row = JSONObject().put("schema", 1).put("scope", "FINAL_TEXT_ADVISORY_ONLY")
@@ -136,7 +138,7 @@ class LocalIntentClassifierPhoneTest {
         assertTrue(output.isFile)
     }
 
-    /** Explicit lab setup on the existing owner, then the unmodified production router. */
+    /** Explicit assessment admits measurement without a prior pass; never a production bypass. */
     @Test fun classifyWarmFinalTextMatrix() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val args = InstrumentationRegistry.getArguments()
@@ -163,7 +165,7 @@ class LocalIntentClassifierPhoneTest {
         // Reuse the graph's single native owner and its existing configuration. A second
         // provider would collide with resource identity and the inventory's resident observer.
         val configured = provider.loadConfigFor(descriptor)
-        val router = LocalIntentModelRouter(storage, graph.modelManager) { provider }
+        val router = LocalIntentModelRouter(storage, graph.modelManager, qualified = { _, _ -> true }) { provider }
         val output = File(instrumentation.targetContext.filesDir, "intent-warm-acceptance.jsonl")
         fun record(stage: String, fill: JSONObject.() -> Unit = {}) {
             val row = JSONObject().put("schema", 1).put("scope", "WARM_FINAL_TEXT_ADVISORY_ONLY")
@@ -191,6 +193,17 @@ class LocalIntentClassifierPhoneTest {
         var noAdvice = 0
         var warm = 0
         var withinBudget = 0
+        var proofEnvironment: com.halo.sdk.provider.WorkloadEnvironment? = null
+        var suiteCompleted = false
+        var proofSaved = false
+        fun standalone(): Boolean = graph.nativeResourceCoordinator.budget.value.pressure == com.halo.sdk.runtime.NativeMemoryPressure.NORMAL &&
+            graph.nativeResourceCoordinator.snapshot.value.none { it.executing }
+        suspend fun saveProof(completed: Boolean): Boolean = withContext(NonCancellable) {
+            val env = proofEnvironment ?: return@withContext false
+            if (!standalone()) return@withContext false
+            Graph.workloadQualifications.recordIntentSuite(provider, descriptor, env, matrix.sha256,
+                completed, attempted, warm, matched, noAdvice, durations)
+        }
         try {
             record("STARTED")
             check(idle()) { "INTERACTION_ACTIVE" }
@@ -209,16 +222,19 @@ class LocalIntentClassifierPhoneTest {
             check(initialized.second == "CPU" && (expectedContext == null || provider.modelSession.effectiveContextSize == expectedContext))
             check(provider.modelSession.loadedArtifactSha256 == descriptor.sha256) { "WARM_ARTIFACT_CHANGED" }
             check(provider.residentModelIdForIntent() == modelId && !provider.inferenceBusyForIntent())
+            check(standalone()) { "CONCURRENT_NATIVE_WORK" }
+            proofEnvironment = requireNotNull(Graph.workloadQualifications.intentEnvironment(provider, descriptor))
             record("EXPLICIT_WARM_SETUP_FINISHED") { put("initMs", initialized.first) }
             withTimeout(180_000) {
                 for (case in matrix.cases) {
-                    check(idle()) { "INTERACTION_BECAME_ACTIVE" }
+                    check(idle() && standalone()) { "INTERACTION_OR_NATIVE_WORK_BECAME_ACTIVE" }
                     val resident = provider.residentModelIdForIntent() == modelId && !provider.inferenceBusyForIntent()
                     record("CASE_STARTED") { put("caseId", case.id).put("language", case.language).put("warmAtStart", resident) }
                     val previousGeneration = provider.conversationDiagnostics.value?.generationId
                     val started = SystemClock.elapsedRealtime()
                     val label = router.classify(case.prompt)?.name
                     val elapsed = SystemClock.elapsedRealtime() - started
+                    check(standalone()) { "CONCURRENT_NATIVE_WORK" }
                     val diagnostics = provider.conversationDiagnostics.value?.takeIf { it.generationId != previousGeneration }
                     durations += elapsed
                     attempted++
@@ -242,13 +258,15 @@ class LocalIntentClassifierPhoneTest {
             val passed = complete && noAdvice == 0 && matched == attempted && withinBudget == attempted
             val grade = if (!complete || noAdvice > 0) "NOT_TESTED" else if (passed) "FIXTURES_MATCHED_WITHIN_BUDGET" else "FIXTURE_OR_LATENCY_MISSES"
             val sorted = durations.sorted()
+            suiteCompleted = true
+            proofSaved = saveProof(completed = true)
             record("COMPLETED") {
                 put("attempted", attempted).put("expectedCases", matrix.cases.size).put("matched", matched)
                 put("warmAtStartCases", warm).put("noAdvice", noAdvice).put("withinBudgetCases", withinBudget)
                 put("medianMs", sorted[sorted.size / 2]).put("p95Ms", sorted[(kotlin.math.ceil(sorted.size * .95).toInt() - 1)])
-                put("status", grade)
+                put("status", grade).put("intentQualificationEvidenceSaved", proofSaved)
             }
-            assertTrue("INTENT_OUTCOME run=$runId sha=${descriptor.sha256} result=$grade", passed)
+            assertTrue("INTENT_OUTCOME run=$runId sha=${descriptor.sha256} result=$grade", passed && proofSaved)
         } catch (failure: Throwable) {
             record("TERMINATED") { put("attempted", attempted).put("failureType", failure.javaClass.simpleName) }
             throw failure
@@ -257,12 +275,67 @@ class LocalIntentClassifierPhoneTest {
             // Normal residency/eviction owns its cleanup. An outside-predicate followed
             // by unload could race and destroy a newer user's generation or model load.
             sampler.close()
+            if (!suiteCompleted) proofSaved = runCatching { saveProof(completed = false) }.getOrDefault(false)
             record("RETURNED_TO_RESIDENCY_OWNER") {
                 put("manualUnload", false).put("nativeOwnershipRetained", provider.modelSession.hasRuntimeOwnership)
+                put("intentQualificationEvidenceSaved", proofSaved)
                 put("sampledPeakPssKb", sampler.peakPssKb.get())
                 put("sampledPeakNativeHeapBytes", sampler.peakNativeHeapBytes.get()).put("sampleIntervalMs", 200)
             }
         }
+    }
+
+    /** Admission proof only: explicit warm owner, opt-in true, unknown task proof, no inference. */
+    @Test fun unqualifiedWarmAdmissionNeverEnqueuesNativeWork() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val args = InstrumentationRegistry.getArguments()
+        val modelId = requireNotNull(args.getString("modelId"))
+        val runId = requireNotNull(args.getString("runId"))
+        val stamp = requireNotNull(args.getString("sourceStamp"))
+        require(args.getString("backend") == "CPU")
+        val graph = Graph.providerGraph
+        val descriptor = requireNotNull(graph.modelManager.verifyPhysicalArtifact(modelId))
+        requireSelectedInstalledArtifact(descriptor, args)
+        check(descriptor.sha256 == LiteRtModelCatalog.byId(modelId)?.sha256)
+        val provider = graph.providers.inference as LiteRtLocalProvider
+        check(provider.residentModelIdForIntent() == null && !provider.inferenceBusyForIntent())
+        val configured = provider.loadConfigFor(descriptor)
+        check(provider.backendResolutionForDescriptor(descriptor).effective == LocalComputeBackend.CPU)
+        val beforeEnabled = LocalIntentModelRouter.isEnabled(Graph.storage)
+        val initialized = withTimeout(120_000) { provider.initializeForWorkloadLab(modelId, fresh = false) }
+        check(initialized.second == "CPU" && provider.modelSession.loadedArtifactSha256 == descriptor.sha256)
+        check(!Graph.workloadQualifications.isIntentQualified(provider, descriptor)) { "CURRENT_INTENT_PROOF_ALREADY_EXISTS" }
+        val storage = MemoryStorage().apply {
+            putString(LocalIntentModelRouter.MODEL_KEY, modelId)
+            putBoolean(LocalIntentModelRouter.ENABLED_KEY, true)
+        }
+        val router = LocalIntentModelRouter(storage, graph.modelManager,
+            qualified = { artifact, local -> Graph.workloadQualifications.isIntentQualified(local, artifact) }) { provider }
+        val sequence = provider.modelSession.generationRequestCount
+        var maximumMs = 0L
+        val fixture = matrix()
+        for (case in fixture.cases) {
+            val started = SystemClock.elapsedRealtime()
+            assertEquals(null, router.classify(case.prompt))
+            val elapsed = SystemClock.elapsedRealtime() - started
+            maximumMs = maxOf(maximumMs, elapsed)
+            assertTrue("Unqualified advice exceeded caller budget", elapsed <= LocalIntentModelRouter.TIMEOUT_MS)
+        }
+        assertEquals(sequence, provider.modelSession.generationRequestCount)
+        assertEquals(configured, provider.loadConfigFor(descriptor))
+        assertEquals(beforeEnabled, LocalIntentModelRouter.isEnabled(Graph.storage))
+        check(!provider.inferenceBusyForIntent())
+        val row = JSONObject().put("scope", "UNQUALIFIED_WARM_ADMISSION_ONLY").put("runId", runId)
+            .put("sourceStamp", stamp).put("modelId", modelId).put("sha256", descriptor.sha256)
+            .put("fixtureSha256", fixture.sha256).put("blockedCases", fixture.cases.size)
+            .put("generationQueueDelta", provider.modelSession.generationRequestCount - sequence)
+            .put("maximumCallerMs", maximumMs).put("initMs", initialized.first)
+            .put("effectiveBackend", provider.modelSession.activeBackend?.name)
+            .put("effectiveContext", provider.modelSession.effectiveContextSize)
+            .put("nativeOwnershipRetained", provider.modelSession.hasRuntimeOwnership).put("manualUnload", false)
+            .put("modelQuality", "NOT_TESTED").put("spokenRecognition", "NOT_RUN").put("toolExecution", "NOT_RUN")
+        File(instrumentation.targetContext.filesDir, "intent-admission-acceptance.jsonl").appendText(row.toString() + "\n")
+        println("INTENT_ADMISSION run=$runId sha=${descriptor.sha256} blocked=${fixture.cases.size} queueDelta=0 maxMs=$maximumMs")
     }
 
     private class MemoryStorage : Storage {

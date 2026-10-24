@@ -17,10 +17,15 @@ import org.json.JSONObject
 import java.security.MessageDigest
 
 /** Additive workload evidence, not a replacement for the existing LLM role/performance repositories. */
-class WorkloadQualificationStore(context: Context,private val storage: Storage) {
+class WorkloadQualificationStore(private val context: Context,private val storage: Storage) {
     private val device by lazy { DeviceRuntimeIdentity.current(context).fingerprint }
+    // A new installed package must be measured again, including another dirty APK
+    // from the same source revision. Never hash APK/model files on the final-turn path.
+    private val packageRevision by lazy { runCatching {
+        context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime.takeIf { it > 0 }
+    }.getOrNull() }
     private val lock=Mutex()
-    @Volatile private var cached: List<WorkloadTaskProof>?=null
+    private val cached = java.util.concurrent.atomic.AtomicReference<List<WorkloadTaskProof>?>(null)
     fun environment(provider: LiteRtLocalProvider,artifact: LocalModelDescriptor,workload: LocalWorkload,
         concurrency: Boolean): WorkloadEnvironment {
         // EMBED is a separate LiteRT EmbeddingEngine task, not a language
@@ -34,6 +39,50 @@ class WorkloadQualificationStore(context: Context,private val storage: Storage) 
             "qualification-suite=$ROLE_PROBE_SUITE_VERSION; deterministic-chat; declared-thinking-reasoning"
         return WorkloadEnvironment("litertlm/${LiteRtLocalProvider.RUNTIME_VERSION}",EPOCH,device,Build.VERSION.SDK_INT.toString(),hash(identity))
     }
+    /** Ready, exact native configuration plus package/task identity, not a role recommendation. */
+    fun intentEnvironment(provider: LiteRtLocalProvider, artifact: LocalModelDescriptor): WorkloadEnvironment? {
+        val installedAt = packageRevision ?: return null
+        if (!artifact.verified || !artifact.supportsText || artifact.sha256 == null ||
+            !provider.modelSession.isLoaded() || provider.modelSession.loadedModelId != artifact.id ||
+            provider.modelSession.loadedArtifactSha256 != artifact.sha256) return null
+        val execution = provider.localExecutionIdentity(artifact.id) ?: return null
+        return environment(provider, artifact, LocalWorkload.INTENT, false).let { base ->
+            base.copy(settingsFingerprint = hash("${base.settingsFingerprint}|package=$installedAt|" +
+                "source=${com.halo.app.BuildConfig.HALO_SOURCE_ID}|execution=$execution|" +
+                "intent=${LocalIntentModelRouter.qualificationProtocolIdentity}"))
+        }
+    }
+
+    fun isIntentQualified(provider: LiteRtLocalProvider, artifact: LocalModelDescriptor): Boolean {
+        val env = intentEnvironment(provider, artifact) ?: return false
+        val target = WorkloadTarget(provider.id, artifact.id, artifact.sha256)
+        val backend = provider.modelSession.activeBackend?.name?.let { WorkloadBackend.valueOf(it) } ?: return false
+        val now = System.currentTimeMillis()
+        // Append order is authoritative, including clock rollback and equal timestamps.
+        // Never discard a newer invalid failure and resurrect an older passing row.
+        val latest = history().asReversed().firstOrNull { it.target == target && it.environment == env &&
+            it.workload == LocalWorkload.INTENT && it.backend == backend } ?: return false
+        if (latest.measuredAtMs !in 1..now) return false
+        return latest.correct && latest.stable && latest.warmMs?.let { it in 0..LocalIntentModelRouter.TIMEOUT_MS } == true
+    }
+
+    /** Explicit measured fixture boundary. A partial/failed run revokes a prior matching pass. */
+    suspend fun recordIntentSuite(provider: LiteRtLocalProvider, artifact: LocalModelDescriptor,
+        environment: WorkloadEnvironment, fixtureSha256: String, completed: Boolean,
+        attempted: Int, warm: Int, matched: Int, noAdvice: Int, elapsedMs: List<Long>): Boolean {
+        if (fixtureSha256 != LocalIntentModelRouter.FIXTURE_SHA256 ||
+            intentEnvironment(provider, artifact) != environment) return false
+        val total = LocalIntentModelRouter.QUALIFICATION_CASES
+        require(attempted in 0..total && warm in 0..attempted && matched in 0..attempted && noAdvice in 0..attempted &&
+            matched + noAdvice <= attempted && elapsedMs.size == attempted && elapsedMs.all { it >= 0 })
+        val correct = completed && attempted == total && matched == total && noAdvice == 0
+        val stable = completed && attempted == total && warm == total && elapsedMs.all { it <= LocalIntentModelRouter.TIMEOUT_MS }
+        val backend = provider.modelSession.activeBackend?.name?.let { WorkloadBackend.valueOf(it) } ?: return false
+        append(WorkloadTaskProof(WorkloadTarget(provider.id, artifact.id, artifact.sha256), LocalWorkload.INTENT,
+            backend, environment, correct, stable, System.currentTimeMillis(), warmMs = elapsedMs.maxOrNull()))
+        return true
+    }
+
     suspend fun recordRoleSuite(row: LocalModelRoleQualification,provider: LiteRtLocalProvider,
         artifact: LocalModelDescriptor,concurrency: Boolean) {
         if(row.artifactFingerprint!=artifact.sha256 || !artifact.verified || row.backend==null || row.contextTokens==null ||
@@ -62,13 +111,20 @@ class WorkloadQualificationStore(context: Context,private val storage: Storage) 
         require(proof.environment.compatibilityEpoch==EPOCH && proof.measuredAtMs>0)
         val history=(history()+proof).takeLast(256)
         storage.putString(KEY,JSONArray().apply { history.forEach { put(encode(it)) } }.toString())
-        cached=history
+        cached.set(history)
     } }
-    fun history(): List<WorkloadTaskProof> = cached ?: readHistory().also { cached=it }
+    fun history(): List<WorkloadTaskProof> {
+        cached.get()?.let { return it }
+        val observed = readHistory()
+        // An initial disk read must not overwrite a failure published by append meanwhile.
+        return if (cached.compareAndSet(null, observed)) observed else requireNotNull(cached.get())
+    }
     private fun readHistory(): List<WorkloadTaskProof> = try {
         val text=storage.getString(KEY) ?: "[]"; require(text.length<=1024*1024)
         val array=JSONArray(text); require(array.length()<=256)
-        (0 until array.length()).mapNotNull { i -> runCatching { decode(array.getJSONObject(i)) }.getOrNull() }
+        // Treat malformed persisted history as unknown, rather than dropping a newer
+        // failed row and making an older pass authoritative again.
+        (0 until array.length()).map { i -> decode(array.getJSONObject(i)) }
     } catch(_: Exception) { emptyList() }
     fun current(target: WorkloadTarget,environment: WorkloadEnvironment): List<WorkloadTaskProof> = history()
         .filter { it.target==target && it.environment==environment && it.measuredAtMs<=System.currentTimeMillis()+300_000 }

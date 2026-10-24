@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "resourceCounts": {
+    "values": 4017,
+    "values-ru": 4017,
+    "values-lv": 4017,
+    "values-pl": 4017
+  },
+  "newKeysPerLocale": {
+    "values": 2,
+    "values-ru": 2,
+    "values-lv": 2,
+    "values-pl": 2
+  },
+  "preservedLookupCount": 4034,
+  "newLookupCount": 2
+}

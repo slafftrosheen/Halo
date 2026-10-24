@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "status": "INVENTORY_VERIFIED",
+  "verificationScope": "SELECTED_IDS",
+  "requestedModelIds": [
+    "qwen3-0.6b-dynamic-int4"
+  ],
+  "package": "com.aistudio.braintool.xkqzps",
+  "runtime": "0.18.0",
+  "sourceStamp": "39607cb6a272e4eef6110cfcd1f1f84090a77763-dirty-6b9921bf083e071560f816f87df4ba585c587fde352564c49239867bb0d04fb6-cd8fd24e39c2f7bd553b607c44b5faf6115800e121f55deedc1f3d91812bc27f",
+  "capturedAtMs": 1792806901750,
+  "models": [
+    {
+      "id": "qwen3-0.6b-dynamic-int4",
+      "filename": "qwen3-0.6b-dynamic-int4.litertlm",
+      "sha256": "03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856",
+      "bytes": 344671744,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    }
+  ],
+  "partials": [
+    "hf-c6c34050f734f21dae2b4d21.litertlm.part"
+  ],
+  "nativeInspection": "NOT_RUN",
+  "installedApks": [
+    {
+      "package": "com.aistudio.braintool.xkqzps",
+      "sha256": "6b9921bf083e071560f816f87df4ba585c587fde352564c49239867bb0d04fb6"
+    },
+    {
+      "package": "com.aistudio.braintool.xkqzps.test",
+      "sha256": "cd8fd24e39c2f7bd553b607c44b5faf6115800e121f55deedc1f3d91812bc27f"
+    }
+  ],
+  "serial": "f01fe673"
+}

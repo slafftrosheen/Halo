@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.LocalIntentQualificationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-24T01:49:07.803Z" hostname="MINIFOXEY" time="4.942">
+  <properties/>
+  <testcase name="qualificationIsRecheckedBeforeInferenceAndBeforeAcceptingTheReply" classname="com.halo.app.ai.LocalIntentQualificationTest" time="4.38"/>
+  <testcase name="exactPassedIntentSuiteAdmitsBoundedAdvisoryAndFailureRevokesIt" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.116"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -4,7 +4,8 @@ import com.halo.engines.interpretation.rules.ModelIntentDecision
 import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.providers.litert.models.LiteRtArtifactTask
 import com.halo.providers.litert.models.LiteRtModelCatalog
-import com.halo.providers.litert.models.LiteRtModelManager
+import com.halo.providers.litert.models.LocalModelDescriptor
+import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelInventoryState
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
@@ -22,7 +23,8 @@ import kotlinx.coroutines.sync.Mutex
  */
 class LocalIntentModelRouter(
     private val storage: Storage,
-    private val inventory: LiteRtModelManager,
+    private val inventory: LocalModelInventoryRepository,
+    private val qualified: (LocalModelDescriptor, LiteRtLocalProvider) -> Boolean = { _, _ -> false },
     private val provider: () -> LiteRtLocalProvider?,
 ) {
     /** Never queue two intent turns behind one another or behind an active generation. */
@@ -33,6 +35,16 @@ class LocalIntentModelRouter(
         const val ENABLED_KEY = "intent_classifier_enabled"
         const val DEFAULT_ID = LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4_ID
         const val TIMEOUT_MS = 2_000L
+        const val FIXTURE_SHA256 = "13437f06ffe3f1ca3cb89a781ce06701ce1a1a2bf51248dfeb6b86daee0425ef"
+        const val QUALIFICATION_CASES = 48
+        fun isEnabled(storage: Storage): Boolean = storage.getBoolean(ENABLED_KEY, false)
+
+        /** Dedicated task identity: generic FAST/chat timing cannot certify intent advice. */
+        val qualificationProtocolIdentity: String by lazy {
+            java.security.MessageDigest.getInstance("SHA-256").digest(
+                "intent48-v1|$FIXTURE_SHA256|$TIMEOUT_MS|labels-v1|12tokens|thinking-off|temp0|no-tools|$INSTRUCTIONS"
+                    .toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        }
 
         /** Optional advice cannot start a native engine on the user's final-turn path. */
         internal fun shouldDefer(residentId: String?, requestedId: String, busy: Boolean): Boolean =
@@ -78,7 +90,7 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
         ?.takeIf(String::isNotBlank) ?: DEFAULT_ID
 
     suspend fun classify(finalText: String): ModelIntentDecision? {
-        if (!storage.getBoolean(ENABLED_KEY, true) || finalText.length !in 3..384) return null
+        if (!isEnabled(storage) || finalText.length !in 3..384) return null
         val id = configuredModelId()
         val catalog = LiteRtModelCatalog.byId(id) ?: return null
         if (catalog.task != LiteRtArtifactTask.GENERATION || !catalog.supportsText ||
@@ -87,6 +99,9 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
             ?.models?.firstOrNull { it.id == id && it.valid && it.verified && it.sha256 == catalog.sha256 }
             ?: return null
         val local = provider() ?: return null
+        // Installation, residency and a generic speed/stability record do not establish
+        // a timely intent workload. Unknown/failed proof must not enter native prefill.
+        if (!runCatching { qualified(installed, local) }.getOrDefault(false)) return null
         // The classifier shares the full LiteRT engine with chat. Cold native
         // initialization/teardown can outlive a coroutine deadline, so skip it.
         // Never wait behind a running native inference (including another classifier).
@@ -97,12 +112,14 @@ Do not perform any action. Do not output JSON, text, quotes, thinking, or explan
             withTimeoutOrNull(TIMEOUT_MS) {
                 // Read again after acquiring the intent gate to avoid a competing
                 // model switch or a second queued intent turn.
-                if (!storage.getBoolean(ENABLED_KEY, true) || configuredModelId() != id ||
+                if (!isEnabled(storage) || configuredModelId() != id ||
                     shouldDefer(local.residentModelIdForIntent(), id,
                         local.inferenceBusyForIntent())) return@withTimeoutOrNull null
+                if (!runCatching { qualified(installed, local) }.getOrDefault(false)) return@withTimeoutOrNull null
                 val reply = local.tryGenerateAdvisory(id, finalText, INSTRUCTIONS) ?: return@withTimeoutOrNull null
+                if (!runCatching { qualified(installed, local) }.getOrDefault(false)) return@withTimeoutOrNull null
                 acceptReply(reply, local.id, id,
-                    storage.getBoolean(ENABLED_KEY, true), configuredModelId())
+                    isEnabled(storage), configuredModelId())
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { null }

@@ -95,7 +95,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val starterPack = remember { com.halo.app.di.ManualDependencyGraph.localRolePackInstaller }
     val starterPackState by starterPack.state.collectAsStateWithLifecycle()
     var localIntentEnabled by rememberSaveable {
-        mutableStateOf(intentSettings.getBoolean(com.halo.app.ai.LocalIntentModelRouter.ENABLED_KEY, true))
+        mutableStateOf(com.halo.app.ai.LocalIntentModelRouter.isEnabled(intentSettings))
     }
     var intentModelId by rememberSaveable {
         mutableStateOf(intentSettings.getString(com.halo.app.ai.LocalIntentModelRouter.MODEL_KEY)
@@ -274,7 +274,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                             style = MaterialTheme.typography.titleSmall)
                         Text(uiText("A small on-device model helps Halo distinguish actions from questions. It cannot perform actions itself."),
                             style = MaterialTheme.typography.bodySmall)
-                        Text(uiText("Halo uses this model only when it is already ready. Standard commands remain available."),
+                        Text(uiText("halo uses this model only after it passes the request check on this phone and is already ready. Standard commands remain available."),
                             style = MaterialTheme.typography.bodySmall)
                     }
                     Switch(checked = localIntentEnabled, onCheckedChange = { enabled ->
@@ -290,7 +290,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         local.sha256 == model.sha256 }
                 }
                 if (tinyCandidates.isEmpty())
-                    Text(uiText("Install a small local model to enable AI intent recognition. Without it, Halo uses deterministic commands."),
+                    Text(uiText("Install a small local model to try on-device request recognition. Standard commands work without it."),
                         style = MaterialTheme.typography.bodySmall)
                 else tinyCandidates.forEach { model ->
                     Row(verticalAlignment = Alignment.CenterVertically) {

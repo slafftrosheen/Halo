@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4034) {
+    buildMap(4036) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4078,6 +4078,8 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Halo uses this model only when it is already ready. Standard commands remain available." to R.string.ui_bfe28eedbbdd,
     "Remove cards" to R.string.ui_6fcd0219a70b,
     "Remove connection" to R.string.ui_e9e9e26c6c2f,
+    "halo uses this model only after it passes the request check on this phone and is already ready. Standard commands remain available." to R.string.ui_dbff9d02071f,
+    "Install a small local model to try on-device request recognition. Standard commands work without it." to R.string.ui_9c39220de137,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(
