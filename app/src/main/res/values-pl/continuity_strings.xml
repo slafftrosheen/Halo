@@ -4,4 +4,13 @@
     <string name="continuity_continue_view">Kontynuuj wyświetlanie na %1$s</string>
     <string name="continuity_audio_accessory">Urządzenie audio</string>
     <string name="continuity_watch">Zegarek</string>
+    <string name="next_action_follow_up">Zadaj kolejne pytanie</string>
+    <string name="next_action_save_result">Zapisz w notatniku</string>
+    <string name="next_action_study_source">Ucz się z tego materiału</string>
+    <string name="next_action_create_note">Nowa notatka</string>
+    <string name="next_action_review_memory">Sprawdź pamięć</string>
+    <string name="next_action_open_source">Otwórz źródło</string>
+    <string name="next_action_continue_study">Kontynuuj naukę</string>
+    <string name="next_action_review_task">Sprawdź zadanie</string>
+    <string name="next_action_notebook_search">Szukaj w notatniku</string>
 </resources>

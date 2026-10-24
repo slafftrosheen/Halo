@@ -132,7 +132,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
                     if (active?.configured == true) intelligenceLocationLabel(location) else "Choose a place to start", onProviderSetup, divider = true)
                 SettingsLink(HaloGlyph.MODEL, "Choose a model", if (modelId.isNullOrBlank()) "Nothing chosen yet" else "Everyday answers", onBrowseModels, divider = true)
                 SettingsLink(HaloGlyph.DOWNLOAD, "Downloads on this phone", "Manage what stays on your phone", onDevice, divider = true)
-                SettingsLink(HaloGlyph.SEARCH, "Search your Notebook", "Find saved notes on this phone", onNotebookSearch)
+                SettingsLink(HaloGlyph.SEARCH, stringResource(com.halo.app.R.string.next_action_notebook_search), "Find saved notes on this phone", onNotebookSearch)
             }
         }
         item {

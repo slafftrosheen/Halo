@@ -697,7 +697,7 @@ fun HomeScreen(
                 HomeTaskProgress(it)
             }
             if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(action.title) } }
+                nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(contextualNextActionLabel(action.kind)) } }
             }
 
 

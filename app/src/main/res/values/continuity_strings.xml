@@ -4,4 +4,13 @@
     <string name="continuity_continue_view">Continue view on %1$s</string>
     <string name="continuity_audio_accessory">Audio accessory</string>
     <string name="continuity_watch">Watch</string>
+    <string name="next_action_follow_up">Ask a follow-up</string>
+    <string name="next_action_save_result">Save to Notebook</string>
+    <string name="next_action_study_source">Study this material</string>
+    <string name="next_action_create_note">New note</string>
+    <string name="next_action_review_memory">Review memory</string>
+    <string name="next_action_open_source">Open source</string>
+    <string name="next_action_continue_study">Continue Study</string>
+    <string name="next_action_review_task">Review task</string>
+    <string name="next_action_notebook_search">Search your Notebook</string>
 </resources>

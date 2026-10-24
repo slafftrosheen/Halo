@@ -1,0 +1,34 @@
+[
+  {
+    "module": "engines/reasoning/build/test-results/test",
+    "tests": 8,
+    "suites": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "providers/openrouter/build/test-results/testDebugUnitTest",
+    "tests": 27,
+    "suites": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "runtime/cognition/build/test-results/test",
+    "tests": 343,
+    "suites": 87,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "app/build/test-results/testDebugUnitTest",
+    "tests": 35,
+    "suites": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

@@ -1,13 +1,13 @@
 package com.halo.engines.reasoning
 
-import com.halo.cognition.language.ConversationIntent
-import com.halo.cognition.language.QuestionIntent
 import com.halo.engines.reasoning.strategy.DefaultReasoningStrategy
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
 import com.halo.runtime.cognition.GoalCreated
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
+import com.halo.runtime.cognition.session.InterpretationExecutionRoute
+import com.halo.runtime.cognition.session.InterpretationRouteResolver
 import com.halo.sdk.runtime.Engine
 import com.halo.sdk.runtime.EngineContext
 import com.halo.sdk.runtime.EngineHealth
@@ -59,6 +59,7 @@ class ReasoningEngine(
     private var context: EngineContext? = null
     private var job: Job? = null
     private val processedKnowledgeIds = mutableSetOf<String>()
+    private val routeResolver = InterpretationRouteResolver()
 
     override suspend fun initialize(context: EngineContext) {
         check(_state.value != EngineState.Disposed)
@@ -87,12 +88,12 @@ class ReasoningEngine(
 
                         if (interpretation.metadata["clarificationOnly"] == "true" || hostOwnsIntent(interpretation.intent)) return@collect
 
-                        if (interpretation.intent is ConversationIntent ||
-                            interpretation.intent is QuestionIntent
-                        ) {
+                        val route = routeResolver.resolve(interpretation.intent)
+                        if (route !is InterpretationExecutionRoute.DeterministicAction ||
+                            !route.executorId.startsWith("engine.execution/")) {
                             runtimeContext.runtime.logger.debug(
                                 category = "reasoning",
-                                message = "Conversation knowledge $knowledgeId delegated to CognitiveSession"
+                                message = "Knowledge $knowledgeId delegated to its canonical interpretation owner"
                             )
                             return@collect
                         }

@@ -4,4 +4,13 @@
     <string name="continuity_continue_view">Продолжить просмотр на %1$s</string>
     <string name="continuity_audio_accessory">Аудиоустройство</string>
     <string name="continuity_watch">Часы</string>
+    <string name="next_action_follow_up">Задать ещё вопрос</string>
+    <string name="next_action_save_result">Сохранить в заметки</string>
+    <string name="next_action_study_source">Изучить материал</string>
+    <string name="next_action_create_note">Новая заметка</string>
+    <string name="next_action_review_memory">Проверить память</string>
+    <string name="next_action_open_source">Открыть источник</string>
+    <string name="next_action_continue_study">Продолжить учёбу</string>
+    <string name="next_action_review_task">Проверить задачу</string>
+    <string name="next_action_notebook_search">Поиск в заметках</string>
 </resources>

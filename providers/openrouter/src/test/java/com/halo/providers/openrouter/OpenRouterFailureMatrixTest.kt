@@ -338,6 +338,26 @@ class OpenRouterFailureMatrixTest {
     }
 
     @Test
+    fun `nullable SSE fields do not corrupt tool identity arguments or visible text`() = runBlocking {
+        val first = """{"choices":[{"delta":{"content":null,"tool_calls":[{"index":0,"id":"call_qa","function":{"name":"halo_discover_tools","arguments":"{\"query\":"}}]}}]}"""
+        val second = """{"choices":[{"delta":{"content":null,"tool_calls":[{"index":0,"id":null,"function":{"name":null,"arguments":"\"notebook\"}"}}]}}]}"""
+        val finish = """{"choices":[{"delta":{},"finish_reason":"tool_calls"}]}"""
+        server.enqueue(MockResponse().setResponseCode(200).setHeader("Content-Type", "text/event-stream")
+            .setBody("data: $first\n\ndata: $second\n\ndata: $finish\n\ndata: [DONE]\n\n"))
+        val events = provider().stream(request(), AiContext.EMPTY).toList()
+        assertTrue(events.filterIsInstance<AiStreamEvent.Failed>().isEmpty())
+        assertTrue("JSON null is absence, never spoken output", events.filterIsInstance<AiStreamEvent.Token>().isEmpty())
+        val completed = events.filterIsInstance<AiStreamEvent.Completed>().single().response
+        val call = completed.toolCalls.single()
+        assertEquals("call_qa", call.id)
+        assertEquals("halo_discover_tools", call.functionName)
+        assertEquals("notebook", call.arguments["query"])
+        val deltas = events.filterIsInstance<AiStreamEvent.ToolCallDelta>()
+        assertNull(deltas[1].name)
+        assertNull(deltas[1].id)
+    }
+
+    @Test
     fun `a rate limit opens an ephemeral cooldown that suppresses further calls`() {
         enqueueError(429, """{"error":{"message":"limited"}}""", mapOf("Retry-After" to "60"))
 

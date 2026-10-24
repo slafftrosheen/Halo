@@ -218,11 +218,11 @@ class OpenRouterProvider(
                 if (choices.length() == 0) throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no choices")
                 val first = choices.getJSONObject(0)
                 val message = first.getJSONObject("message")
-                val resolvedModel = responseJson.optString("model", actualModel)
+                val resolvedModel = responseJson.optionalString("model") ?: actualModel
                 val result = AiResponse(
-                    text = message.optString("content"),
+                    text = message.optionalString("content").orEmpty(),
                     toolCalls = parseToolCalls(message.optJSONArray("tool_calls")),
-                    finishReason = first.optString("finish_reason"),
+                    finishReason = first.optionalString("finish_reason"),
                     providerId = id,
                     modelId = actualModel,
                     requestedModelId = actualModel,
@@ -297,7 +297,7 @@ class OpenRouterProvider(
                     event.optJSONObject("error")?.let { error ->
                         throw streamError(error)
                     }
-                    event.optString("model").takeIf { it.isNotBlank() }?.let { resolvedModel = it }
+                    event.optionalString("model")?.takeIf { it.isNotBlank() }?.let { resolvedModel = it }
                     val choices = event.optJSONArray("choices") ?: continue
                     if (choices.length() == 0) continue
                     val choice = choices.getJSONObject(0)
@@ -305,7 +305,7 @@ class OpenRouterProvider(
                         it.isNotBlank() && it != "null"
                     } ?: finish
                     val delta = choice.optJSONObject("delta") ?: continue
-                    val token = delta.optString("content")
+                    val token = delta.optionalString("content").orEmpty()
                     if (token.isNotEmpty()) {
                         text.append(token)
                         emit(AiStreamEvent.Token(token))
@@ -316,14 +316,14 @@ class OpenRouterProvider(
                             val fn = tc.optJSONObject("function")
                             val index = tc.optInt("index", i)
                             val assembled = tools.getOrPut(index) { StreamToolCall() }
-                            tc.optString("id").takeIf { it.isNotBlank() }?.let { assembled.id = it }
-                            fn?.optString("name")?.takeIf { it.isNotBlank() }?.let { assembled.name = it }
-                            fn?.optString("arguments")?.let { assembled.arguments.append(it) }
+                            tc.optionalString("id")?.takeIf { it.isNotBlank() }?.let { assembled.id = it }
+                            fn?.optionalString("name")?.takeIf { it.isNotBlank() }?.let { assembled.name = it }
+                            fn?.optionalString("arguments")?.let { assembled.arguments.append(it) }
                             emit(AiStreamEvent.ToolCallDelta(
                                 index = index,
-                                name = fn?.optString("name"),
-                                argumentsDelta = fn?.optString("arguments"),
-                                id = tc.optString("id").takeIf { it.isNotBlank() },
+                                name = fn?.optionalString("name"),
+                                argumentsDelta = fn?.optionalString("arguments"),
+                                id = tc.optionalString("id")?.takeIf { it.isNotBlank() },
                             ))
                         }
                     }
@@ -650,6 +650,11 @@ class OpenRouterProvider(
             }
         }
     }
+
+    // Android org.json stringifies JSONObject.NULL as "null"; SSE null fields
+    // carry no new text/identity and must not overwrite an assembled tool call.
+    private fun JSONObject.optionalString(key: String): String? =
+        if (!has(key) || isNull(key)) null else optString(key)
 
     private fun parseArguments(json: String): Map<String, Any> = try {
         val obj = JSONObject(json)

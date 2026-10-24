@@ -4,4 +4,13 @@
     <string name="continuity_continue_view">Turpināt skatīšanu ierīcē %1$s</string>
     <string name="continuity_audio_accessory">Audioierīce</string>
     <string name="continuity_watch">Pulkstenis</string>
+    <string name="next_action_follow_up">Uzdot papildu jautājumu</string>
+    <string name="next_action_save_result">Saglabāt piezīmēs</string>
+    <string name="next_action_study_source">Mācīties šo materiālu</string>
+    <string name="next_action_create_note">Jauna piezīme</string>
+    <string name="next_action_review_memory">Pārskatīt atmiņu</string>
+    <string name="next_action_open_source">Atvērt avotu</string>
+    <string name="next_action_continue_study">Turpināt mācīties</string>
+    <string name="next_action_review_task">Pārskatīt uzdevumu</string>
+    <string name="next_action_notebook_search">Meklēt piezīmēs</string>
 </resources>
