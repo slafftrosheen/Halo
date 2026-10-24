@@ -44,3 +44,29 @@ foreach ($case in $embeddingCases) {
     if ($actual -ne $case.Expected) { throw "Expected embedding $($case.Expected), got $actual" }
 }
 Write-Host 'PASS: 11 exact-run embedding protocol cases'
+
+$intent = "INTENT_OUTCOME run=$runId sha=$sha result=FIXTURE_OR_LATENCY_MISSES"
+$intentNotTested = "INTENT_OUTCOME run=$runId sha=$sha result=NOT_TESTED"
+$intentPrerequisite = "INTENT_PREREQUISITE run=$runId sha=$sha reason=CPU_CONFIGURATION"
+$intentCases = @(
+    @{Exit=0;Text=$success;Expected='PASSED'},
+    @{Exit=0;Text=($intent+$failureEnd);Expected='INTENT_FIXTURE_OR_LATENCY_MISSES'},
+    @{Exit=0;Text=($intentNotTested+$failureEnd);Expected='INTENT_NOT_QUALIFIED'},
+    @{Exit=1;Text=($intent+$failureEnd);Expected='RUNNER_INTERRUPTED'},
+    @{Exit=0;Text=$intent;Expected='RUNNER_INTERRUPTED'},
+    @{Exit=0;Text=($intent+$failureEnd+"`nshortMsg=Process crashed");Expected='FAILED_RUNTIME'},
+    @{Exit=0;Text=($intent+$failureEnd+"`nHOST_TIMEOUT");Expected='FAILED_RUNTIME'},
+    @{Exit=0;Text=($intent+$failureEnd+"`nNATIVE_TEARDOWN_PENDING");Expected='FAILED_RUNTIME'},
+    @{Exit=0;Text=($intent.Replace($runId,'stale')+$failureEnd);Expected='FAILED_RUNTIME'},
+    @{Exit=0;Text=($intent.Replace($sha,('b'*64))+$failureEnd);Expected='FAILED_RUNTIME'},
+    @{Exit=0;Text=($intent.Replace('FIXTURE_OR_LATENCY_MISSES','UNKNOWN')+$failureEnd);Expected='FAILED_RUNTIME'}
+    @{Exit=0;Text=($intentPrerequisite+$failureEnd);Expected='INTENT_PREREQUISITE_UNMET'},
+    @{Exit=0;Text=($intentPrerequisite.Replace('CPU_CONFIGURATION','CONTEXT_CONFIGURATION')+$failureEnd);Expected='INTENT_PREREQUISITE_UNMET'},
+    @{Exit=0;Text=($intentPrerequisite.Replace($runId,'stale')+$failureEnd);Expected='FAILED_RUNTIME'},
+    @{Exit=0;Text=($intentPrerequisite+$failureEnd+"`nHOST_TIMEOUT");Expected='FAILED_RUNTIME'}
+)
+foreach($case in $intentCases){
+    $actual=Resolve-LiteRtIntentProbeStatus -ProcessExit $case.Exit -RunnerText $case.Text -RunId $runId -Sha256 $sha
+    if($actual -ne $case.Expected){throw "Expected intent $($case.Expected), got $actual"}
+}
+Write-Host 'PASS: 15 exact-run warm intent protocol cases'

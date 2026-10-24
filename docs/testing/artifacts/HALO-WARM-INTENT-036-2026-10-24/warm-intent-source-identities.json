@@ -1,0 +1,30 @@
+[
+  {
+    "path": "app/src/androidTest/java/com/halo/app/audio/InstalledLiteRtInventoryTest.kt",
+    "sha256": "5c2a607b0e24ebc8a6fbd45138900a4dd3502a7adc0748ecd0504d5ad940a59a"
+  },
+  {
+    "path": "app/src/androidTest/java/com/halo/app/audio/LocalIntentClassifierPhoneTest.kt",
+    "sha256": "80899e7c2781a9f335ec39a9ea25402098f3454ba338afbcb7c94e7e25c3fd43"
+  },
+  {
+    "path": "app/src/androidTest/assets/intent-classification-v1.json",
+    "sha256": "13437f06ffe3f1ca3cb89a781ce06701ce1a1a2bf51248dfeb6b86daee0425ef"
+  },
+  {
+    "path": "tools/hil/Get-InstalledLiteRtModels.ps1",
+    "sha256": "b09510b3cf0115552fafc25d7c9c030298d8fd54b5cbe9b6ff1da66c186db997"
+  },
+  {
+    "path": "tools/hil/LiteRtProbeStatus.ps1",
+    "sha256": "6ae342ebaf1ee0a778a55ce03bbf327d58c15c6c501e59c5e86c0471e43b95d6"
+  },
+  {
+    "path": "tools/hil/Run-LiteRtPhoneMatrix.ps1",
+    "sha256": "1479d31a550831377934db0763874d1463c9cb4e7fbfacf6074e7d624fceb689"
+  },
+  {
+    "path": "tools/hil/Test-LiteRtProbeStatus.ps1",
+    "sha256": "e5ccfd608755b09bcf922a9a527b0a27b58301b098dbc3c38215b09badf7cff4"
+  }
+]

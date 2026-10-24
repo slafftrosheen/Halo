@@ -31,3 +31,19 @@ function Resolve-LiteRtEmbeddingProbeStatus {
     if ('UNAVAILABLE' -in $statuses) { return 'NATIVE_UNAVAILABLE' }
     return $generic
 }
+
+function Resolve-LiteRtIntentProbeStatus {
+    param([int] $ProcessExit, [string] $RunnerText, [string] $RunId, [string] $Sha256)
+    $generic = Resolve-LiteRtProbeStatus -ProcessExit $ProcessExit -RunnerText $RunnerText
+    if ($generic -eq 'PASSED') { return $generic }
+    if ($ProcessExit -ne 0 -or $RunnerText -match 'shortMsg=Process crashed|INSTRUMENTATION_FAILED|HOST_TIMEOUT|NATIVE_TEARDOWN_PENDING' -or
+        $RunnerText -notmatch 'INSTRUMENTATION_CODE:\s*-1' -or $RunnerText -notmatch 'Tests run:\s*1,\s*Failures:\s*1') { return $generic }
+    $prerequisite = 'INTENT_PREREQUISITE run=' + [regex]::Escape($RunId) + ' sha=' + [regex]::Escape($Sha256) +
+        ' reason=(CPU_CONFIGURATION|CONTEXT_CONFIGURATION)(?=\s|$)'
+    if ($RunnerText -match $prerequisite) { return 'INTENT_PREREQUISITE_UNMET' }
+    $marker = 'INTENT_OUTCOME run=' + [regex]::Escape($RunId) + ' sha=' + [regex]::Escape($Sha256) +
+        ' result=(NOT_TESTED|FIXTURE_OR_LATENCY_MISSES)(?=\s|$)'
+    if ($RunnerText -notmatch $marker) { return $generic }
+    if ($Matches[1] -eq 'NOT_TESTED') { return 'INTENT_NOT_QUALIFIED' }
+    return 'INTENT_FIXTURE_OR_LATENCY_MISSES'
+}

@@ -4,12 +4,15 @@ param(
     [string] $Serial = "",
     [string] $Package = "com.aistudio.braintool.xkqzps",
     [string] $Adb = "adb",
+    [string[]] $ModelIds = @(),
     [string] $OutputDir = ("installed-litert-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 )
 $ErrorActionPreference = "Stop"
 if ($Serial -notmatch '^[A-Za-z0-9._:-]+$') { throw "Select an explicit attached device serial with -Serial." }
 if ($Serial -like "emulator-*") { throw "Installed qualification requires a physical device." }
 if ($Package -notmatch '^[A-Za-z0-9_.]+$') { throw "Unsafe package name." }
+if ($ModelIds.Count -gt 128 -or @($ModelIds | Select-Object -Unique).Count -ne $ModelIds.Count -or
+    @($ModelIds | Where-Object { $_ -cnotmatch '^[a-z0-9][a-z0-9._-]{1,99}$' }).Count -gt 0) { throw 'Invalid selected model IDs.' }
 $null = Get-Command $Adb -ErrorAction Stop
 if (Test-Path -LiteralPath (Join-Path $OutputDir "installed-models.json")) { throw "Use a fresh inventory OutputDir; snapshots are immutable." }
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
@@ -50,7 +53,10 @@ foreach ($apk in @("app/build/outputs/apk/debug/app-debug.apk", "app/build/outpu
     $source += "-" + $builtHash
 }
 $runner = "$Package.test/androidx.test.runner.AndroidJUnitRunner"
-$output = & $Adb -s $Serial shell am instrument -w -r -e class com.halo.app.audio.InstalledLiteRtInventoryTest#exportVerifiedInventory -e sourceStamp $source $runner 2>&1 | Tee-Object -FilePath (Join-Path $OutputDir "inventory-runner.txt")
+$inventoryArgs = @('shell','am','instrument','-w','-r','-e','class','com.halo.app.audio.InstalledLiteRtInventoryTest#exportVerifiedInventory','-e','sourceStamp',$source)
+if ($ModelIds.Count -gt 0) { $inventoryArgs += @('-e','requestedModelIds',($ModelIds -join ',')) }
+$inventoryArgs += $runner
+$output = & $Adb -s $Serial @inventoryArgs 2>&1 | Tee-Object -FilePath (Join-Path $OutputDir "inventory-runner.txt")
 $runnerExit = $LASTEXITCODE
 $text = $output | Out-String
 $text | Set-Content (Join-Path $OutputDir "inventory-runner.txt") -Encoding utf8
@@ -60,6 +66,11 @@ if ($runnerExit -ne 0 -or $text -notmatch 'INSTRUMENTATION_CODE:\s*-1' -or $text
 $json = (& $Adb -s $Serial exec-out run-as $Package cat files/installed-litert-models.json | Out-String)
 if ($LASTEXITCODE -ne 0) { return (Write-StoppedInventory "RUNNER_INTERRUPTED" "VERIFIED_SNAPSHOT_COULD_NOT_BE_READ") }
 $inventory = $json | ConvertFrom-Json
+if ($ModelIds.Count -gt 0 -and ($inventory.verificationScope -ne 'SELECTED_IDS' -or
+    @(Compare-Object $ModelIds @($inventory.requestedModelIds)).Count -ne 0 -or
+    @($inventory.models | Where-Object { $_.id -notin $ModelIds }).Count -gt 0)) {
+    return (Write-StoppedInventory 'RUNNER_INTERRUPTED' 'SELECTED_INVENTORY_SCOPE_MISMATCH')
+}
 if ($inventory.status -ne "INVENTORY_VERIFIED" -or $inventory.package -ne $Package -or $inventory.sourceStamp -ne $source) {
     return (Write-StoppedInventory "RUNNER_INTERRUPTED" "SNAPSHOT_PACKAGE_OR_SOURCE_MISMATCH")
 }

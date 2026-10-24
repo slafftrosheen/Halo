@@ -18,14 +18,24 @@ import java.io.File
 class InstalledLiteRtInventoryTest {
     @Test fun exportVerifiedInventory() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val requestedIds = InstrumentationRegistry.getArguments().getString("requestedModelIds")?.let { raw ->
+            val ids = raw.split(',')
+            require(ids.size in 1..128 && ids.distinct().size == ids.size &&
+                ids.all { it.matches(Regex("[a-z0-9][a-z0-9._-]{1,99}")) })
+            ids.toSet()
+        }
         val manager = ManualDependencyGraph.providerGraph.modelManager
-        manager.refresh(ModelInventoryRefreshReason.USER_REQUEST)
+        // Selected verification reuses startup discovery and bypasses only the selected
+        // fingerprints below. USER_REQUEST would clear every cached artifact first.
+        // A cold startup discovery may still hash installed files once.
+        if (requestedIds == null) manager.refresh(ModelInventoryRefreshReason.USER_REQUEST)
+        else manager.resolveModel(requestedIds.first())
         val initial = manager.inventoryState.value as? LocalModelInventoryState.Ready
             ?: error("Installed inventory is unavailable")
         val root = File(context.noBackupFilesDir, "models")
         val initialFiles = root.listFiles().orEmpty().map { it.name }.sorted()
         val rows = JSONArray()
-        initial.models.sortedBy { it.id }.forEach { initialDescriptor ->
+        initial.models.filter { requestedIds == null || it.id in requestedIds }.sortedBy { it.id }.forEach { initialDescriptor ->
             val verified = manager.verifyPhysicalArtifact(initialDescriptor.id)
             val current = (manager.inventoryState.value as? LocalModelInventoryState.Ready)
                 ?.models?.firstOrNull { it.id == initialDescriptor.id }
@@ -50,7 +60,8 @@ class InstalledLiteRtInventoryTest {
                 .put("knownNonRunnable", unsafe))
         }
         val representedFiles = initial.models.map { File(it.path).name }.toSet()
-        root.listFiles().orEmpty().filter { it.name.endsWith(".litertlm") && it.name !in representedFiles }
+        root.listFiles().orEmpty().filter { it.name.endsWith(".litertlm") && it.name !in representedFiles &&
+            (requestedIds == null || it.name.removeSuffix(".litertlm") in requestedIds) }
             .sortedBy { it.name }.forEach { file ->
                 rows.put(JSONObject().put("id", file.name.removeSuffix(".litertlm"))
                     .put("filename", file.name).put("sha256", JSONObject.NULL).put("bytes", file.length())
@@ -61,6 +72,8 @@ class InstalledLiteRtInventoryTest {
         val partials = root.listFiles().orEmpty().filter { it.name.endsWith(".litertlm.part") }
             .map { it.name }.sorted()
         val snapshot = JSONObject().put("schema", 1).put("status", "INVENTORY_VERIFIED")
+            .put("verificationScope", if (requestedIds == null) "ALL_INSTALLED" else "SELECTED_IDS")
+            .put("requestedModelIds", JSONArray(requestedIds?.sorted().orEmpty()))
             .put("package", context.packageName).put("runtime", LiteRtLocalProvider.RUNTIME_VERSION)
             .put("sourceStamp", InstrumentationRegistry.getArguments().getString("sourceStamp", "UNSTAMPED"))
             .put("capturedAtMs", System.currentTimeMillis()).put("models", rows)

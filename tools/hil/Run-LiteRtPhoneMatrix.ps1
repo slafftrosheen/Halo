@@ -18,6 +18,9 @@
   it does not write model tuning or role bindings. Run after the resident baseline passes.
   -EmbeddingSuite runs fixed synthetic text/image retrieval through the canonical CPU
   embedding provider. No capability promotion; unavailable inputs are not quality passes.
+  -WarmIntentSuite explicitly initializes one CPU model on the existing owner and
+  configured context, then executes all48 prepared final-text intent cases. Existing
+  backend resolution must allow CPU; no saved role/tuning changes or second provider.
   The app:testDebugAndroidTest APK must be installed separately.
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -InspectOnly
@@ -27,6 +30,8 @@
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -InstalledOnly -RoleSuite -Languages EN,LV,RU,PL -Repetitions 3 -Backend CPU
 .EXAMPLE
   .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -Models embeddinggemma2-740m -EmbeddingSuite -Backend CPU -TimeoutSeconds 480
+.EXAMPLE
+  .\tools\hil\Run-LiteRtPhoneMatrix.ps1 -Serial YOUR_ADB_ID -Models qwen3-0.6b-dynamic-int4 -WarmIntentSuite -Backend CPU -TimeoutSeconds 360
 #>
 [CmdletBinding()]
 param(
@@ -47,6 +52,7 @@ param(
     [switch] $VerifyProvider,
     [switch] $RoleSuite,
     [switch] $EmbeddingSuite,
+    [switch] $WarmIntentSuite,
     [ValidateSet('EN', 'LV', 'RU', 'PL')]
     [string[]] $Languages = @('EN', 'LV', 'RU', 'PL'),
     [ValidateRange(1, 5)]
@@ -73,8 +79,12 @@ if ($Serial -like 'emulator-*') { throw "Physical model qualification cannot use
 if (($Models.Count -gt 0) -eq [bool]$InstalledOnly) { throw "Choose explicit -Models or -InstalledOnly; no default model is permitted." }
 if (-not $InspectOnly -and $Backend -ne "CPU" -and -not $AllowGpu) { throw "GPU requires explicit operator approval through -AllowGpu after a CPU pass." }
 $deviceArgs = @("-s", $Serial.Trim())
-if ($EmbeddingSuite -and ($InspectOnly -or $VerifyProvider -or $RoleSuite -or $ResidentTurns -gt 0 -or $Cycles -ne 1 -or $ContextTokens -gt 0 -or $CaptureOnly -or $Resume -or $Backend -ne 'CPU')) {
+if ($EmbeddingSuite -and ($WarmIntentSuite -or $InspectOnly -or $VerifyProvider -or $RoleSuite -or $ResidentTurns -gt 0 -or $Cycles -ne 1 -or $ContextTokens -gt 0 -or $CaptureOnly -or $Resume -or $Backend -ne 'CPU')) {
     throw '-EmbeddingSuite is a separate CPU-only synthetic retrieval probe; no generation, role, resume or capture modes.'
+}
+if ($WarmIntentSuite -and ($EmbeddingSuite -or $InspectOnly -or $VerifyProvider -or $RoleSuite -or $ResidentTurns -gt 0 -or $Cycles -ne 1 -or $CaptureOnly -or $Resume -or $Backend -ne 'CPU' -or
+    @(Compare-Object @('EN','LV','RU','PL') $Languages).Count -ne 0)) {
+    throw '-WarmIntentSuite requires a separate CPU/all-four-language final-text fixture; no role, generation, resume or capture modes.'
 }
 $packageName = "com.aistudio.braintool.xkqzps"
 $testRunner = "$packageName.test/androidx.test.runner.AndroidJUnitRunner"
@@ -92,7 +102,9 @@ if ($Resume -and -not (Test-Path -LiteralPath (Join-Path $OutputDir 'selected-in
     Write-Host 'No immutable selection exists yet; starting the first verified role batch.'
     $Resume = $false
 }
-$testClass = if ($EmbeddingSuite) {
+$testClass = if ($WarmIntentSuite) {
+    'com.halo.app.audio.LocalIntentClassifierPhoneTest#classifyWarmFinalTextMatrix'
+} elseif ($EmbeddingSuite) {
     'com.halo.app.audio.LocalEmbeddingPhoneTest#qualifyInstalledEmbedding'
 } elseif ($RoleSuite) {
     'com.halo.app.audio.LocalModelRolePhoneTest#qualifyInstalledRoles'
@@ -113,7 +125,9 @@ function Save-MatrixSummary {
 }
 $existingInventory = Test-Path -LiteralPath (Join-Path $OutputDir 'inventory/installed-models.json')
 $inventoryDir = if ($Resume -or ($RoleSuite -and $existingInventory)) { 'inventory-resume-' + [guid]::NewGuid().ToString('N') } else { 'inventory' }
-$inventory = & (Join-Path $PSScriptRoot "Get-InstalledLiteRtModels.ps1") -Serial $Serial -Adb $Adb -OutputDir (Join-Path $OutputDir $inventoryDir)
+$inventoryParameters = @{Serial=$Serial;Adb=$Adb;OutputDir=(Join-Path $OutputDir $inventoryDir)}
+if ($WarmIntentSuite -and -not $InstalledOnly) { $inventoryParameters.ModelIds = $Models }
+$inventory = & (Join-Path $PSScriptRoot "Get-InstalledLiteRtModels.ps1") @inventoryParameters
 if ($inventory.status -ne "INVENTORY_VERIFIED") {
     $statusName = if ($Resume) { 'resume-status.csv' } else { 'summary.csv' }
     [pscustomobject]@{ Result=$inventory.status; Serial=$Serial; Reason=$inventory.reason } | Export-Csv (Join-Path $OutputDir $statusName) -NoTypeInformation
@@ -137,7 +151,7 @@ if ($Resume) {
     $runId = $previous.runId
 } else {
 [pscustomobject]@{ schema=1; serial=$Serial; runId=$runId; sourceStamp=$inventory.sourceStamp; capturedAtMs=$inventory.capturedAtMs; models=$selected;
-    roleSuite=[bool]$RoleSuite; embeddingSuite=[bool]$EmbeddingSuite; contextTokens=$ContextTokens; backend=$Backend; languages=$Languages; repetitions=$Repetitions } |
+    roleSuite=[bool]$RoleSuite; embeddingSuite=[bool]$EmbeddingSuite; warmIntentSuite=[bool]$WarmIntentSuite; contextTokens=$ContextTokens; backend=$Backend; languages=$Languages; repetitions=$Repetitions } |
     ConvertTo-Json -Depth 15 | Set-Content -LiteralPath $selectionFile -Encoding utf8
 (Get-Item -LiteralPath $selectionFile).IsReadOnly = $true
 }
@@ -178,6 +192,7 @@ foreach ($modelId in $Models) {
             if ([long]$Matches[1] * 1024 -lt [long]$artifact.bytes + 1GB) { throw "GPU conservative RAM headroom check failed." }
         }
         $label = if ($InspectOnly) { "$modelId-metadata" }
+                 elseif ($WarmIntentSuite) { "$modelId-CPU-ctx$ContextTokens-warm-intent48-v1" }
                  elseif ($EmbeddingSuite) { "$modelId-CPU-embedding-synthetic-v1" }
                  elseif ($ResidentTurns -gt 0) { "$modelId-$kind-ctx$ContextTokens-resident$ResidentTurns" }
                  else { "$modelId-$kind-ctx$ContextTokens-cycles$Cycles" }
@@ -253,6 +268,9 @@ foreach ($modelId in $Models) {
         if ($EmbeddingSuite) {
             $status = Resolve-LiteRtEmbeddingProbeStatus -ProcessExit $exit -RunnerText $text -RunId $runId -Sha256 $artifact.sha256
         }
+        if ($WarmIntentSuite) {
+            $status = Resolve-LiteRtIntentProbeStatus -ProcessExit $exit -RunnerText $text -RunId $runId -Sha256 $artifact.sha256
+        }
         $summary.Add([pscustomobject]@{
             ModelId = $modelId
             Backend = $kind
@@ -275,7 +293,8 @@ Save-MatrixSummary
 
 # App is debuggable for androidTest. Reading the already-produced evidence does not
 # mutate settings, download models or allocate another inference engine.
-$jsonlFile = if ($EmbeddingSuite) { 'local-embedding-evidence.jsonl' }
+$jsonlFile = if ($WarmIntentSuite) { 'intent-warm-acceptance.jsonl' }
+             elseif ($EmbeddingSuite) { 'local-embedding-evidence.jsonl' }
              elseif ($RoleSuite) { 'local-model-role-evidence.jsonl' }
              elseif ($InspectOnly) { "local-artifact-inspection.jsonl" }
              elseif ($ResidentTurns -gt 0) { "resident-model-endurance.jsonl" }
