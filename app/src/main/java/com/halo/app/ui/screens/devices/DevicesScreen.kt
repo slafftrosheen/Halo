@@ -565,6 +565,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
             HaloEmptyState(uiText("No saved devices"), uiText("halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
                 HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
         }
+        item { CrossDeviceInkPanel(com.halo.app.di.ManualDependencyGraph.crossDeviceInk) }
         listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
             val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
             if (group.isNotEmpty()) item {

@@ -26,6 +26,7 @@ class WorkspaceToolExecutor(
     private val noteActions: WorkspaceNoteActions? = null,
     private val notePurgeActions: WorkspaceNotePurgeActions? = null,
     private val noteAttachmentActions: WorkspaceNoteAttachmentActions? = null,
+    private val remoteInk: RemoteInkActions? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -126,9 +127,16 @@ class WorkspaceToolExecutor(
                 "additionalProperties" to false
             )
         )
-    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty() + studyActions?.definitions().orEmpty() + noteActions?.definitions().orEmpty() + notePurgeActions?.definitions().orEmpty() + noteAttachmentActions?.definitions().orEmpty()
+    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty() + studyActions?.definitions().orEmpty() + noteActions?.definitions().orEmpty() + notePurgeActions?.definitions().orEmpty() + noteAttachmentActions?.definitions().orEmpty() + remoteInk?.definitions().orEmpty()
+
+    override suspend fun execute(toolCall: ToolCall, context: com.halo.runtime.cognition.tools.ToolExecutionContext): ToolExecutionResult {
+        remoteInk?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }
+            ?.let { return it.execute(toolCall, context) }
+        return execute(toolCall)
+    }
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        remoteInk?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         continuity?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         canvas?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         studyActions?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }

@@ -10,7 +10,8 @@ data class DeviceRecord(
     val autoConnect: Boolean = true,
     val firmwareVersion: String? = null,
     val lastSeenMs: Long = 0L,
-    val descriptor: DeviceDescriptor = DeviceDescriptor.fromDeviceType(identity.deviceType)
+    val descriptor: DeviceDescriptor = DeviceDescriptor.fromDeviceType(identity.deviceType),
+    val inkAssociation: com.halo.sdk.runtime.ink.InkAssociation? = null,
 )
 
 /**

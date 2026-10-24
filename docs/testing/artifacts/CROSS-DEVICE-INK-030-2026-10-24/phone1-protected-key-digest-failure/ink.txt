@@ -1,0 +1,308 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ink.AndroidInkInputTest:
+INSTRUMENTATION_STATUS: test=cancellationNeverCommitsPalmInk
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=cancellationNeverCommitsPalmInk
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=barrelButtonAtContactStartSelectsEraser
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=barrelButtonAtContactStartSelectsEraser
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=hoverDoesNotBecomeAStroke
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=hoverDoesNotBecomeAStroke
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=physicalEraserRemovesWholeStrokeAndUndoRestoresIt
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=physicalEraserRemovesWholeStrokeAndUndoRestoresIt
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=mouseSecondaryButtonCannotDraw
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=mouseSecondaryButtonCannotDraw
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=pressureUsesAdvertisedRangeAndRejectsInvalidValues
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=pressureUsesAdvertisedRangeAndRejectsInvalidValues
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=penPreemptsFingerAndTracksIdAcrossReorderedIndexes
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=penPreemptsFingerAndTracksIdAcrossReorderedIndexes
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=fingerTapHasNoTouchSlopRequirement
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=fingerTapHasNoTouchSlopRequirement
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=flaggedPointerUpRollsBackContact
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=flaggedPointerUpRollsBackContact
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=batchedMoveSamplesRemainInOrder
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.AndroidInkInputTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=batchedMoveSamplesRemainInOrder
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.RemoteInkPhoneTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ink.RemoteInkPhoneTest:
+INSTRUMENTATION_STATUS: test=productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ink.RemoteInkPhoneTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stack=javax.net.ssl.SSLHandshakeException: Read error: ssl=0xb4000071da72af18: Failure in SSL library, usually a protocol error
+error:04000044:RSA routines:OPENSSL_internal:internal error (external/conscrypt/common/src/jni/main/cpp/conscrypt/native_crypto.cc:692 0x7177272bc6:0x00000000)
+	at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:372)
+	at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1041)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:820)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:647)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:612)
+	at com.android.org.conscrypt.ConscryptEngineSocket$SSLInputStream.processDataFromSocket(ConscryptEngineSocket.java:928)
+	at com.android.org.conscrypt.ConscryptEngineSocket$SSLInputStream.-$$Nest$mprocessDataFromSocket(ConscryptEngineSocket.java:0)
+	at com.android.org.conscrypt.ConscryptEngineSocket.doHandshake(ConscryptEngineSocket.java:244)
+	at com.android.org.conscrypt.ConscryptEngineSocket.startHandshake(ConscryptEngineSocket.java:226)
+	at com.halo.host.ink.InkTlsChannel$Companion.accept$lambda$6(InkTlsChannel.kt:135)
+	at com.halo.host.ink.InkTlsChannel$Companion$$ExternalSyntheticLambda1.invoke(D8$$SyntheticClass:0)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invokeSuspend(InkTlsChannel.kt:185)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invoke(InkTlsChannel.kt:8)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invoke(InkTlsChannel.kt:4)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatched(Undispatched.kt:66)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:497)
+	at kotlinx.coroutines.BuildersKt.withContext(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.host.ink.InkTlsChannelKt.cancellableIo(InkTlsChannel.kt:181)
+	at com.halo.host.ink.InkTlsChannelKt.access$cancellableIo(InkTlsChannel.kt:1)
+	at com.halo.host.ink.InkTlsChannel$Companion.accept$host_ink(InkTlsChannel.kt:133)
+	at com.halo.host.ink.InkTlsListener.accept(InkTlsChannel.kt:164)
+	at com.halo.app.ink.RemoteInkPhoneTest$productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback$1$2$accepted$1.invokeSuspend(RemoteInkPhoneTest.kt:40)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: javax.net.ssl.SSLProtocolException: Read error: ssl=0xb4000071da72af18: Failure in SSL library, usually a protocol error
+error:04000044:RSA routines:OPENSSL_internal:internal error (external/conscrypt/common/src/jni/main/cpp/conscrypt/native_crypto.cc:692 0x7177272bc6:0x00000000)
+	at com.android.org.conscrypt.NativeCrypto.ENGINE_SSL_read_direct(Native Method)
+	at com.android.org.conscrypt.NativeSsl.readDirectByteBuffer(NativeSsl.java:685)
+	at com.android.org.conscrypt.ConscryptEngine.readPlaintextDataDirect(ConscryptEngine.java:997)
+	at com.android.org.conscrypt.ConscryptEngine.readPlaintextData(ConscryptEngine.java:981)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:776)
+	... 28 more
+
+INSTRUMENTATION_STATUS: stream=
+Error in productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback(com.halo.app.ink.RemoteInkPhoneTest):
+javax.net.ssl.SSLHandshakeException: Read error: ssl=0xb4000071da72af18: Failure in SSL library, usually a protocol error
+error:04000044:RSA routines:OPENSSL_internal:internal error (external/conscrypt/common/src/jni/main/cpp/conscrypt/native_crypto.cc:692 0x7177272bc6:0x00000000)
+	at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:372)
+	at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1041)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:820)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:647)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:612)
+	at com.android.org.conscrypt.ConscryptEngineSocket$SSLInputStream.processDataFromSocket(ConscryptEngineSocket.java:928)
+	at com.android.org.conscrypt.ConscryptEngineSocket$SSLInputStream.-$$Nest$mprocessDataFromSocket(ConscryptEngineSocket.java:0)
+	at com.android.org.conscrypt.ConscryptEngineSocket.doHandshake(ConscryptEngineSocket.java:244)
+	at com.android.org.conscrypt.ConscryptEngineSocket.startHandshake(ConscryptEngineSocket.java:226)
+	at com.halo.host.ink.InkTlsChannel$Companion.accept$lambda$6(InkTlsChannel.kt:135)
+	at com.halo.host.ink.InkTlsChannel$Companion$$ExternalSyntheticLambda1.invoke(D8$$SyntheticClass:0)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invokeSuspend(InkTlsChannel.kt:185)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invoke(InkTlsChannel.kt:8)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invoke(InkTlsChannel.kt:4)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatched(Undispatched.kt:66)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:497)
+	at kotlinx.coroutines.BuildersKt.withContext(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.host.ink.InkTlsChannelKt.cancellableIo(InkTlsChannel.kt:181)
+	at com.halo.host.ink.InkTlsChannelKt.access$cancellableIo(InkTlsChannel.kt:1)
+	at com.halo.host.ink.InkTlsChannel$Companion.accept$host_ink(InkTlsChannel.kt:133)
+	at com.halo.host.ink.InkTlsListener.accept(InkTlsChannel.kt:164)
+	at com.halo.app.ink.RemoteInkPhoneTest$productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback$1$2$accepted$1.invokeSuspend(RemoteInkPhoneTest.kt:40)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: javax.net.ssl.SSLProtocolException: Read error: ssl=0xb4000071da72af18: Failure in SSL library, usually a protocol error
+error:04000044:RSA routines:OPENSSL_internal:internal error (external/conscrypt/common/src/jni/main/cpp/conscrypt/native_crypto.cc:692 0x7177272bc6:0x00000000)
+	at com.android.org.conscrypt.NativeCrypto.ENGINE_SSL_read_direct(Native Method)
+	at com.android.org.conscrypt.NativeSsl.readDirectByteBuffer(NativeSsl.java:685)
+	at com.android.org.conscrypt.ConscryptEngine.readPlaintextDataDirect(ConscryptEngine.java:997)
+	at com.android.org.conscrypt.ConscryptEngine.readPlaintextData(ConscryptEngine.java:981)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:776)
+	... 28 more
+
+INSTRUMENTATION_STATUS: test=productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest:
+INSTRUMENTATION_STATUS: test=identicalReplacementKeepsItsIdentityAcrossDatabaseReopen
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=12
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=identicalReplacementKeepsItsIdentityAcrossDatabaseReopen
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 2,198
+There was 1 failure:
+1) productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback(com.halo.app.ink.RemoteInkPhoneTest)
+javax.net.ssl.SSLHandshakeException: Read error: ssl=0xb4000071da72af18: Failure in SSL library, usually a protocol error
+error:04000044:RSA routines:OPENSSL_internal:internal error (external/conscrypt/common/src/jni/main/cpp/conscrypt/native_crypto.cc:692 0x7177272bc6:0x00000000)
+	at com.android.org.conscrypt.SSLUtils.toSSLHandshakeException(SSLUtils.java:372)
+	at com.android.org.conscrypt.ConscryptEngine.convertException(ConscryptEngine.java:1041)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:820)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:647)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:612)
+	at com.android.org.conscrypt.ConscryptEngineSocket$SSLInputStream.processDataFromSocket(ConscryptEngineSocket.java:928)
+	at com.android.org.conscrypt.ConscryptEngineSocket$SSLInputStream.-$$Nest$mprocessDataFromSocket(ConscryptEngineSocket.java:0)
+	at com.android.org.conscrypt.ConscryptEngineSocket.doHandshake(ConscryptEngineSocket.java:244)
+	at com.android.org.conscrypt.ConscryptEngineSocket.startHandshake(ConscryptEngineSocket.java:226)
+	at com.halo.host.ink.InkTlsChannel$Companion.accept$lambda$6(InkTlsChannel.kt:135)
+	at com.halo.host.ink.InkTlsChannel$Companion$$ExternalSyntheticLambda1.invoke(D8$$SyntheticClass:0)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invokeSuspend(InkTlsChannel.kt:185)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invoke(InkTlsChannel.kt:8)
+	at com.halo.host.ink.InkTlsChannelKt$cancellableIo$2.invoke(InkTlsChannel.kt:4)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatched(Undispatched.kt:66)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:497)
+	at kotlinx.coroutines.BuildersKt.withContext(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.host.ink.InkTlsChannelKt.cancellableIo(InkTlsChannel.kt:181)
+	at com.halo.host.ink.InkTlsChannelKt.access$cancellableIo(InkTlsChannel.kt:1)
+	at com.halo.host.ink.InkTlsChannel$Companion.accept$host_ink(InkTlsChannel.kt:133)
+	at com.halo.host.ink.InkTlsListener.accept(InkTlsChannel.kt:164)
+	at com.halo.app.ink.RemoteInkPhoneTest$productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback$1$2$accepted$1.invokeSuspend(RemoteInkPhoneTest.kt:40)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: javax.net.ssl.SSLProtocolException: Read error: ssl=0xb4000071da72af18: Failure in SSL library, usually a protocol error
+error:04000044:RSA routines:OPENSSL_internal:internal error (external/conscrypt/common/src/jni/main/cpp/conscrypt/native_crypto.cc:692 0x7177272bc6:0x00000000)
+	at com.android.org.conscrypt.NativeCrypto.ENGINE_SSL_read_direct(Native Method)
+	at com.android.org.conscrypt.NativeSsl.readDirectByteBuffer(NativeSsl.java:685)
+	at com.android.org.conscrypt.ConscryptEngine.readPlaintextDataDirect(ConscryptEngine.java:997)
+	at com.android.org.conscrypt.ConscryptEngine.readPlaintextData(ConscryptEngine.java:981)
+	at com.android.org.conscrypt.ConscryptEngine.unwrap(ConscryptEngine.java:776)
+	... 28 more
+
+FAILURES!!!
+Tests run: 12,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

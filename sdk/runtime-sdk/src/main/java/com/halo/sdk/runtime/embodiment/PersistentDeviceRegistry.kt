@@ -32,6 +32,7 @@ class PersistentDeviceRegistry(
         const val FIELD_AUTOCONNECT = "auto_connect"
         const val FIELD_FIRMWARE = "firmware"
         const val FIELD_LAST_SEEN = "last_seen"
+        const val FIELD_INK = "ink_association_v1"
         const val INDEX_SEPARATOR = "|"
     }
 
@@ -104,7 +105,8 @@ class PersistentDeviceRegistry(
             ),
             autoConnect = autoConnect,
             firmwareVersion = firmware,
-            lastSeenMs = lastSeen
+            lastSeenMs = lastSeen,
+            inkAssociation = readInk(deviceId, storage.getString("$base.$FIELD_INK")),
         )
     }
 
@@ -115,6 +117,14 @@ class PersistentDeviceRegistry(
         storage.putBoolean("$base.$FIELD_AUTOCONNECT", record.autoConnect)
         record.firmwareVersion?.let { storage.putString("$base.$FIELD_FIRMWARE", it) }
         storage.putString("$base.$FIELD_LAST_SEEN", record.lastSeenMs.toString())
+        val ink = record.inkAssociation
+        if (ink == null) storage.remove("$base.$FIELD_INK") else {
+            require(ink.endpoint.deviceId == record.identity.deviceId)
+            val e = ink.endpoint
+            // One storage value prevents partial field updates from becoming a new trusted peer.
+            storage.putString("$base.$FIELD_INK", listOf(ink.certificateSha256, e.width, e.height,
+                e.rotationDegrees, e.pressure, e.tilt, e.eraser, e.hover).joinToString("|"))
+        }
     }
 
     private fun removeRecord(deviceId: String) {
@@ -124,6 +134,20 @@ class PersistentDeviceRegistry(
         storage.remove("$base.$FIELD_AUTOCONNECT")
         storage.remove("$base.$FIELD_FIRMWARE")
         storage.remove("$base.$FIELD_LAST_SEEN")
+        storage.remove("$base.$FIELD_INK")
+    }
+
+    private fun readInk(deviceId: String, value: String?): com.halo.sdk.runtime.ink.InkAssociation? {
+        if (value == null || value.length > 160) return null
+        return try {
+            val fields = value.split('|')
+            require(fields.size == 8)
+            com.halo.sdk.runtime.ink.InkAssociation(com.halo.sdk.runtime.ink.InkEndpoint(
+                deviceId = deviceId, width = fields[1].toInt(), height = fields[2].toInt(),
+                rotationDegrees = fields[3].toInt(), pressure = fields[4].toBooleanStrict(),
+                tilt = fields[5].toBooleanStrict(), eraser = fields[6].toBooleanStrict(),
+                hover = fields[7].toBooleanStrict()), fields[0])
+        } catch (_: IllegalArgumentException) { null }
     }
 
     private fun key(deviceId: String): String = "$storagePrefix${encodeId(deviceId)}"

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ui.screens.home.HomeToolCatalogTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2026-10-24T12:23:27.755Z" hostname="MINIFOXEY" time="0.086">
+  <properties/>
+  <testcase name="repeatIsOnlyPresentWhenCurrentConversationHasAReply" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.063"/>
+  <testcase name="disabledAndDeniedBindingsKeepTheirActualRecovery" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.003"/>
+  <testcase name="canvasDiscoveryIncludesTheActualGatedInkOperations" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.001"/>
+  <testcase name="privateModeKeepsLocalToolsAndRejectsOnlineEntries" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="identitiesAreUniqueAndEveryGroupHasDiscoverableEntries" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.001"/>
+  <testcase name="unverifiedProviderIsLimitedAndNotAConnectionSuccess" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.001"/>
+  <testcase name="imageEditorIsLimitedAndMissingConfigurationHasEditorRecovery" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="localNetworkAnswerDoesNotRequireValidatedInternet" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="busyRuntimeCannotBeCancelledByStartingVoiceFromTools" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.006"/>
+  <testcase name="plannedToolsCannotBeUsedEvenWithAllOwnersAvailable" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.001"/>
+  <testcase name="studioFileCanvasAndStudyEntriesBindFunctionalOperationsAndUnavailableOwnersHaveRecovery" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.002"/>
+  <testcase name="mapsRequireHandlerAndOnlyPrepareAHandoff" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="webUsesCanonicalOwnerPreflightAndResearchUsesPolicy" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="staleRemoteAnswerInPrivateOffersLocalProviderRecovery" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="importsNeverTreatUnsupportedImagePdfOrAudioAsReadableChatContext" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.003"/>
+  <testcase name="stoppingVoiceIsAvailableEvenAfterAccessAndProviderAreRevoked" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="absentBindingCannotAdvertiseReady" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <testcase name="familyRestrictionBlocksRemoteButKeepsLocalEditing" classname="com.halo.app.ui.screens.home.HomeToolCatalogTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

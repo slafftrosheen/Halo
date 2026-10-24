@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_ink_title">Draw together</string>
+    <string name="remote_ink_pending">Drawing together is being checked. Keep drawing on this device for now.</string>
+    <string name="remote_ink_pair_help">Exchange drawing-device files directly with your other device, then ask halo to start with a saved sketch. Pairing alone does not start sharing.</string>
+    <string name="remote_ink_export">Save this drawing-device file</string>
+    <string name="remote_ink_import">Choose the other device file</string>
+    <string name="remote_ink_pressure">Pressure</string>
+    <string name="remote_ink_tilt">Tilt</string>
+    <string name="remote_ink_eraser">Eraser</string>
+    <string name="remote_ink_hover">Hover</string>
+    <string name="remote_ink_basic">Basic drawing</string>
+    <string name="remote_ink_connected">Drawing device connected</string>
+    <string name="remote_ink_waiting">Waiting for the drawing device</string>
+    <string name="remote_ink_stop">Stop drawing together</string>
+    <string name="remote_ink_pair_failed">The device file could not be used. Choose a fresh file shared directly by your device.</string>
+    <string name="remote_ink_trust_title">Trust this drawing device?</string>
+    <string name="remote_ink_trust_body">%1$s will be allowed to send drawing input only after you start a sharing session. Choose Trust only if this file came directly from your device.</string>
+    <string name="remote_ink_trust">Trust device</string>
+    <string name="remote_ink_connect_file">Open a drawing-session file</string>
+    <string name="remote_ink_session_file">Save a drawing-session file</string>
+    <string name="remote_ink_local_failed">Could not save locally. Keep this drawing open and free some storage.</string>
+    <string name="remote_ink_local_saving">Saving on this device…</string>
+    <string name="remote_ink_conflict">The other sketch changed. Your drawing stays on this device; review both before syncing.</string>
+    <string name="remote_ink_local_fallback">Disconnected. You can keep drawing here; completed edits stay on this device.</string>
+    <string name="remote_ink_recovery">A local drawing was recovered. Review it before sending it to the other device.</string>
+    <string name="remote_ink_saved">Drawing saved on both devices</string>
+    <string name="remote_ink_sync">Send this reviewed drawing</string>
+    <string name="remote_ink_geometry">Display: %1$d × %2$d · %3$d°</string>
+    <string name="remote_ink_forget">Forget drawing device</string>
+</resources>

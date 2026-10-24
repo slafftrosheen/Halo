@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_ink_title">Rysuj razem</string>
+    <string name="remote_ink_pending">Wspólne rysowanie jest jeszcze sprawdzane. Na razie rysuj na tym urządzeniu.</string>
+    <string name="remote_ink_pair_help">Wymień pliki urządzeń do rysowania bezpośrednio między swoimi urządzeniami, a potem poproś halo o rozpoczęcie pracy z zapisanym szkicem. Samo sparowanie nie rozpoczyna udostępniania.</string>
+    <string name="remote_ink_export">Zapisz plik tego urządzenia</string>
+    <string name="remote_ink_import">Wybierz plik drugiego urządzenia</string>
+    <string name="remote_ink_pressure">Nacisk</string>
+    <string name="remote_ink_tilt">Nachylenie</string>
+    <string name="remote_ink_eraser">Gumka</string>
+    <string name="remote_ink_hover">Unoszenie pióra</string>
+    <string name="remote_ink_basic">Podstawowe rysowanie</string>
+    <string name="remote_ink_connected">Urządzenie do rysowania połączone</string>
+    <string name="remote_ink_waiting">Oczekiwanie na urządzenie do rysowania</string>
+    <string name="remote_ink_stop">Zakończ wspólne rysowanie</string>
+    <string name="remote_ink_pair_failed">Nie można użyć pliku urządzenia. Wybierz nowy plik przekazany bezpośrednio z twojego urządzenia.</string>
+    <string name="remote_ink_trust_title">Zaufać temu urządzeniu do rysowania?</string>
+    <string name="remote_ink_trust_body">%1$s będzie mogło wysyłać rysunek dopiero po rozpoczęciu sesji udostępniania. Zaufaj tylko wtedy, gdy plik pochodzi bezpośrednio z twojego urządzenia.</string>
+    <string name="remote_ink_trust">Zaufaj urządzeniu</string>
+    <string name="remote_ink_connect_file">Otwórz plik sesji rysowania</string>
+    <string name="remote_ink_session_file">Zapisz plik sesji rysowania</string>
+    <string name="remote_ink_local_failed">Nie udało się zapisać na urządzeniu. Pozostaw rysunek otwarty i zwolnij miejsce.</string>
+    <string name="remote_ink_local_saving">Zapisywanie na tym urządzeniu…</string>
+    <string name="remote_ink_conflict">Szkic na drugim urządzeniu się zmienił. Twój rysunek pozostaje tutaj; sprawdź oba przed synchronizacją.</string>
+    <string name="remote_ink_local_fallback">Rozłączono. Możesz rysować dalej tutaj; ukończone zmiany pozostają na tym urządzeniu.</string>
+    <string name="remote_ink_recovery">Odzyskano lokalny rysunek. Sprawdź go przed wysłaniem na drugie urządzenie.</string>
+    <string name="remote_ink_saved">Rysunek zapisany na obu urządzeniach</string>
+    <string name="remote_ink_sync">Wyślij sprawdzony rysunek</string>
+    <string name="remote_ink_geometry">Ekran: %1$d × %2$d · %3$d°</string>
+    <string name="remote_ink_forget">Zapomnij urządzenie do rysowania</string>
+</resources>

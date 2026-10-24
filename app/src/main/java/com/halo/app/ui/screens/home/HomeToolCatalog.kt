@@ -128,7 +128,8 @@ internal object HomeToolCatalog {
         HomeToolDescriptor("work.inbox", HomeToolGroup.WORK, R.string.home_tool_inbox, R.string.home_tool_inbox_detail,
             HomeToolAction.INBOX, setOf("halo_create_empty_note")),
         HomeToolDescriptor("work.canvas", HomeToolGroup.WORK, R.string.home_tool_canvas, R.string.home_tool_canvas_detail,
-            HomeToolAction.NOTEBOOK, setOf("halo_canvas_create", "halo_canvas_get", "halo_canvas_add_text", "halo_workspace_insert")),
+            HomeToolAction.NOTEBOOK, setOf("halo_canvas_create", "halo_canvas_get", "halo_canvas_add_text", "halo_workspace_insert") +
+                com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools),
         HomeToolDescriptor("work.study", HomeToolGroup.WORK, R.string.home_tool_study, R.string.home_tool_study_detail,
             HomeToolAction.STUDY, setOf("halo_study_with_halo", "halo_get_study_session", "halo_study_sessions", "halo_study_state",
                 "halo_study_select_exercise", "halo_study_submit_attempt", "halo_study_set_preferences", "halo_study_complete", "halo_study_delete",

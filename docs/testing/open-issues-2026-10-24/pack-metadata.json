@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "preparedAtUtc": "2026-10-24T11:56:27.177255+00:00",
+  "repository": "slafftrosheen/Halo",
+  "openIssues": [
+    28,
+    29,
+    30,
+    33,
+    35,
+    36,
+    38,
+    39,
+    42,
+    43,
+    54
+  ],
+  "originalSnapshotSha256": "c67ab3b9f6c1e13feae56df72f0a020e6276a4559f93de536e18e6d9602c707c",
+  "requirements": 163,
+  "protocols": 38,
+  "nativeFixtureTests": 35,
+  "requirementsSpecSha256": "69b250acd69667e71b074e6b1c63a6cc69237e7d8c9a9f99b611469858ca5038",
+  "protocolsSpecSha256": "ed24feca203398eee2027ef2284e66d4c809e6ddc50a4f2be45e61d5529215f7",
+  "closure": "REQUIRES_ACTUAL_EVIDENCE_AND_REVIEW"
+}

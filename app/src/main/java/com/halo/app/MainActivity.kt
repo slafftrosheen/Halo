@@ -579,6 +579,7 @@ open class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        ManualDependencyGraph.stopRemoteInkOnBackground()
         com.halo.app.ui.mini.HaloHostVisibility.hidden(this)
         super.onPause()
     }

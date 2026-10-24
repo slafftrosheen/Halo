@@ -18,7 +18,8 @@ import com.halo.sdk.runtime.ink.InkSelectionContext
 
 @Composable
 internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier,
-    selection: InkSelectionContext? = null) {
+    selection: InkSelectionContext? = null,
+    ephemeralStroke: com.halo.sdk.runtime.ink.InkStroke? = null) {
     val document = remember(encoded, selection) {
         val source = InkCodec.decode(encoded) ?: return@remember null
         if (selection == null) source else {
@@ -34,6 +35,10 @@ internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier,
                 val frame = inkSelectionFrame(size.width, size.height, it.aspectMilli, selection.bounds)
                 val source = inkSelectionSourceRect(frame, selection.bounds)
                 clipRect(frame.left, frame.top, frame.right, frame.bottom) { drawInk(it, ink, source) }
+            }
+            if (selection == null && ephemeralStroke != null && it.strokes.none { saved -> saved.strokeId == ephemeralStroke.strokeId }) {
+                drawInk(com.halo.sdk.runtime.ink.InkDocument(listOf(ephemeralStroke), it.aspectMilli), ink.copy(alpha = 0.55f),
+                    inkBounds(size.width, size.height, it.aspectMilli))
             }
         }
     }

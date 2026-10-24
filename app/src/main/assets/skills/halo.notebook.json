@@ -5,6 +5,11 @@
   "category": "WORKSPACE",
   "risk": "REVERSIBLE",
   "tools": [
+    "halo_ink_status",
+    "halo_ink_document",
+    "halo_ink_selection",
+    "halo_ink_start",
+    "halo_ink_stop",
     "halo_create_note",
     "halo_search_notebook",
     "halo_add_to_working_set",
@@ -47,6 +52,11 @@
     "halo_note_unlink_attachment"
   ],
   "toolDefinitions": [
+    { "toolId": "halo_ink_status", "risk": "READ_ONLY" },
+    { "toolId": "halo_ink_document", "risk": "READ_ONLY" },
+    { "toolId": "halo_ink_selection", "risk": "READ_ONLY" },
+    { "toolId": "halo_ink_start", "risk": "SENSITIVE" },
+    { "toolId": "halo_ink_stop", "risk": "REVERSIBLE" },
     {
       "toolId": "halo_create_note",
       "risk": "REVERSIBLE"

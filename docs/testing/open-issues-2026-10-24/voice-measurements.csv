@@ -1,0 +1,1 @@
+configurationKey,runId,sourceStamp,appSha256,modelSha256,fixtureSha256,device,language,profile,temperature,actualBackend,contextTokens,endOfSpeechMs,firstAudibleMs,fullResponseMs,peakRssKb,thermalStart,thermalEnd,batteryStartPercent,batteryEndPercent,correct,humanAudibleConfirmed,evidencePath

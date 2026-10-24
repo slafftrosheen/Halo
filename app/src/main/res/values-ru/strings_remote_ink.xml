@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_ink_title">Рисовать вместе</string>
+    <string name="remote_ink_pending">Совместное рисование ещё проходит проверку. Пока продолжайте рисовать на этом устройстве.</string>
+    <string name="remote_ink_pair_help">Передайте файлы устройств для рисования напрямую между своими устройствами, затем попросите halo начать с сохранённого наброска. Сопряжение само по себе не запускает передачу.</string>
+    <string name="remote_ink_export">Сохранить файл этого устройства</string>
+    <string name="remote_ink_import">Выбрать файл другого устройства</string>
+    <string name="remote_ink_pressure">Нажим</string>
+    <string name="remote_ink_tilt">Наклон</string>
+    <string name="remote_ink_eraser">Ластик</string>
+    <string name="remote_ink_hover">Наведение пера</string>
+    <string name="remote_ink_basic">Обычное рисование</string>
+    <string name="remote_ink_connected">Устройство для рисования подключено</string>
+    <string name="remote_ink_waiting">Ожидание устройства для рисования</string>
+    <string name="remote_ink_stop">Остановить совместное рисование</string>
+    <string name="remote_ink_pair_failed">Не удалось использовать файл устройства. Выберите новый файл, переданный напрямую с вашего устройства.</string>
+    <string name="remote_ink_trust_title">Доверять этому устройству для рисования?</string>
+    <string name="remote_ink_trust_body">%1$s сможет передавать рисунок только после начала сеанса обмена. Подтвердите доверие, только если файл получен напрямую с вашего устройства.</string>
+    <string name="remote_ink_trust">Доверять устройству</string>
+    <string name="remote_ink_connect_file">Открыть файл сеанса рисования</string>
+    <string name="remote_ink_session_file">Сохранить файл сеанса рисования</string>
+    <string name="remote_ink_local_failed">Не удалось сохранить на устройстве. Оставьте рисунок открытым и освободите место.</string>
+    <string name="remote_ink_local_saving">Сохранение на этом устройстве…</string>
+    <string name="remote_ink_conflict">Набросок на другом устройстве изменился. Ваш рисунок остаётся здесь; проверьте оба перед синхронизацией.</string>
+    <string name="remote_ink_local_fallback">Соединение прервано. Можно продолжать рисовать здесь; завершённые изменения остаются на этом устройстве.</string>
+    <string name="remote_ink_recovery">Восстановлен локальный рисунок. Проверьте его перед отправкой на другое устройство.</string>
+    <string name="remote_ink_saved">Рисунок сохранён на обоих устройствах</string>
+    <string name="remote_ink_sync">Отправить проверенный рисунок</string>
+    <string name="remote_ink_geometry">Экран: %1$d × %2$d · %3$d°</string>
+    <string name="remote_ink_forget">Забыть устройство для рисования</string>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_ink_title">Zīmēt kopā</string>
+    <string name="remote_ink_pending">Kopīgā zīmēšana vēl tiek pārbaudīta. Pagaidām turpiniet zīmēt šajā ierīcē.</string>
+    <string name="remote_ink_pair_help">Apmainieties ar zīmēšanas ierīču failiem tieši starp savām ierīcēm, tad lūdziet halo sākt ar saglabātu skici. Savienošana pārī pati par sevi nesāk kopīgošanu.</string>
+    <string name="remote_ink_export">Saglabāt šīs zīmēšanas ierīces failu</string>
+    <string name="remote_ink_import">Izvēlēties otras ierīces failu</string>
+    <string name="remote_ink_pressure">Spiediens</string>
+    <string name="remote_ink_tilt">Slīpums</string>
+    <string name="remote_ink_eraser">Dzēšgumija</string>
+    <string name="remote_ink_hover">Irbuļa pietuvināšana</string>
+    <string name="remote_ink_basic">Pamata zīmēšana</string>
+    <string name="remote_ink_connected">Zīmēšanas ierīce ir savienota</string>
+    <string name="remote_ink_waiting">Gaida zīmēšanas ierīci</string>
+    <string name="remote_ink_stop">Pārtraukt kopīgo zīmēšanu</string>
+    <string name="remote_ink_pair_failed">Ierīces failu nevarēja izmantot. Izvēlieties jaunu failu, kas saņemts tieši no jūsu ierīces.</string>
+    <string name="remote_ink_trust_title">Uzticēties šai zīmēšanas ierīcei?</string>
+    <string name="remote_ink_trust_body">%1$s varēs nosūtīt zīmējumu tikai pēc tam, kad sāksiet kopīgošanas sesiju. Uzticieties ierīcei tikai tad, ja šis fails saņemts tieši no tās.</string>
+    <string name="remote_ink_trust">Uzticēties ierīcei</string>
+    <string name="remote_ink_connect_file">Atvērt zīmēšanas sesijas failu</string>
+    <string name="remote_ink_session_file">Saglabāt zīmēšanas sesijas failu</string>
+    <string name="remote_ink_local_failed">Neizdevās saglabāt ierīcē. Atstājiet zīmējumu atvērtu un atbrīvojiet vietu.</string>
+    <string name="remote_ink_local_saving">Saglabā šajā ierīcē…</string>
+    <string name="remote_ink_conflict">Otras ierīces skice ir mainījusies. Jūsu zīmējums paliek šajā ierīcē; pirms sinhronizācijas pārskatiet abus.</string>
+    <string name="remote_ink_local_fallback">Savienojums pārtraukts. Varat turpināt zīmēt šeit; pabeigtie labojumi paliek šajā ierīcē.</string>
+    <string name="remote_ink_recovery">Atgūts lokāls zīmējums. Pirms nosūtīšanas uz otru ierīci pārskatiet to.</string>
+    <string name="remote_ink_saved">Zīmējums saglabāts abās ierīcēs</string>
+    <string name="remote_ink_sync">Nosūtīt pārskatīto zīmējumu</string>
+    <string name="remote_ink_geometry">Displejs: %1$d × %2$d · %3$d°</string>
+    <string name="remote_ink_forget">Aizmirst zīmēšanas ierīci</string>
+</resources>

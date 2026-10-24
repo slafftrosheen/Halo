@@ -74,6 +74,7 @@ include(":engines:automation")
 include(":engines:notification")
 include(":engines:diagnostics")
 include(":host-android")
+include(":host-ink")
 
 include(":drivers:heycyan")
 include(":drivers:simulator")

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "note-purge-evidence.jsonl",
+    "sha256": "fc0a0ef7bd4a7ab6f33caff870d37df734b0ab2974a416f7930ad06c95c4edc9",
+    "rows": 1,
+    "runId": "open-issues-d4eb6f40a9394dcf915513083616af3c",
+    "sourceStamp": "d7f63af55a3888c197abd45992984b26694c110076c6e28fcb189b43c351012a"
+  },
+  {
+    "path": "note-attachment-controls-evidence.jsonl",
+    "sha256": "dfaeec5c479ff23988608b6e6a0a829875bdf59e62358746436017c8fc1ccbca",
+    "rows": 1,
+    "runId": "open-issues-d4eb6f40a9394dcf915513083616af3c",
+    "sourceStamp": "d7f63af55a3888c197abd45992984b26694c110076c6e28fcb189b43c351012a"
+  },
+  {
+    "path": "note-editor-controls-evidence.jsonl",
+    "sha256": "dbbf0655566498fe008a3381ea1e2f32291ef99ba35cde03dd47d4c862e1a81a",
+    "rows": 1,
+    "runId": "open-issues-d4eb6f40a9394dcf915513083616af3c",
+    "sourceStamp": "d7f63af55a3888c197abd45992984b26694c110076c6e28fcb189b43c351012a"
+  },
+  {
+    "path": "study-learner-controls-evidence.jsonl",
+    "sha256": "4a4e39e41a8b4b36bf6f3b5b4f623cd7e5132be4a2d5222655bf10212733a2cb",
+    "rows": 1,
+    "runId": "open-issues-d4eb6f40a9394dcf915513083616af3c",
+    "sourceStamp": "d7f63af55a3888c197abd45992984b26694c110076c6e28fcb189b43c351012a"
+  }
+]

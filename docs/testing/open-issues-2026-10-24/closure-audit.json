@@ -1,0 +1,883 @@
+[
+  {
+    "issue": 28,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 23,
+    "pending": [
+      {
+        "id": "I28-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R13",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R14",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R15",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R16",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R17",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R18",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-R19",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-P03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I28-P04",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 29,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 24,
+    "pending": [
+      {
+        "id": "I29-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R13",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R14",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R15",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R16",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R17",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R18",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R19",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-R20",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-P03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I29-P04",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 30,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 26,
+    "pending": [
+      {
+        "id": "I30-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R13",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R14",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R15",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R16",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R17",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R18",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R19",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R20",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-R21",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-P03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-P04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I30-P05",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 33,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 32,
+    "pending": [
+      {
+        "id": "I33-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R13",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R14",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R15",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R16",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R17",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R18",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R19",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R20",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R21",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R22",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R23",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R24",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R25",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R26",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R27",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R28",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-R29",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I33-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 35,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 10,
+    "pending": [
+      {
+        "id": "I35-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-P03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I35-P04",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 36,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 17,
+    "pending": [
+      {
+        "id": "I36-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R13",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-R14",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I36-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 38,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 14,
+    "pending": [
+      {
+        "id": "I38-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I38-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 39,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 14,
+    "pending": [
+      {
+        "id": "I39-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I39-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 42,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 11,
+    "pending": [
+      {
+        "id": "I42-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I42-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 43,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 15,
+    "pending": [
+      {
+        "id": "I43-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I43-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  },
+  {
+    "issue": 54,
+    "decision": "KEEP_OPEN",
+    "requirementsAndProtocols": 15,
+    "pending": [
+      {
+        "id": "I54-R01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R03",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R04",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R05",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R06",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R07",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R08",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R09",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R10",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R11",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-R12",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-P01",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-P02",
+        "reason": "NOT_TESTED"
+      },
+      {
+        "id": "I54-P03",
+        "reason": "NOT_TESTED"
+      }
+    ]
+  }
+]

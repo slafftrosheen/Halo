@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.RemoteInkCheckpointTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-24T12:22:27.269Z" hostname="MINIFOXEY" time="12.872">
+  <properties/>
+  <testcase name="receiptFailureRollsBackBothInkAndBoardRevision" classname="com.halo.app.data.notebook.RemoteInkCheckpointTest" time="11.73"/>
+  <testcase name="productionGateAndDeletedSketchRefuseDurableMutation" classname="com.halo.app.data.notebook.RemoteInkCheckpointTest" time="0.175"/>
+  <testcase name="saveAndIdenticalRetrySurviveDatabaseReopenWithoutDuplicatingStrokes" classname="com.halo.app.data.notebook.RemoteInkCheckpointTest" time="0.187"/>
+  <testcase name="concurrentLocalEditAndChangedRetryFailWithoutOverwriting" classname="com.halo.app.data.notebook.RemoteInkCheckpointTest" time="0.167"/>
+  <testcase name="localRecoveryCreatedAfterOfferBlocksRemoteCommitAndKeepsItsPayload" classname="com.halo.app.data.notebook.RemoteInkCheckpointTest" time="0.144"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

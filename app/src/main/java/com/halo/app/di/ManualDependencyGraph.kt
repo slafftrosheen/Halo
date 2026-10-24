@@ -106,7 +106,21 @@ object ManualDependencyGraph {
     val appLanguagePreferences by lazy { com.halo.app.language.AppLanguagePreferences(storage) }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository, releaseSileroVad = { hostGraph.releaseSileroVad() }, allowSileroVadReload = { hostGraph.allowSileroVadReload() }) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
-    val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
+    val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry,
+        inkCheckpoints = object : com.halo.sdk.runtime.ink.InkCheckpointStore {
+            override suspend fun commit(request: com.halo.sdk.runtime.ink.InkCheckpointRequest) = notebookCanvasRepository.commitRemoteInk(request)
+            override suspend fun selectionIsCurrent(session: com.halo.sdk.runtime.ink.InkSession, expectedRevision: String,
+                selection: com.halo.sdk.runtime.ink.InkSelectionContext) = notebookCanvasRepository.remoteInkSelectionIsCurrent(session, expectedRevision, selection)
+        }) }
+    private val crossDeviceInkOwner = lazy {
+        val hostId = storage.getString("ink.local.host.id.v1")?.takeIf { it.matches(Regex("[A-Za-z0-9_-]{1,200}")) }
+            ?: java.util.UUID.randomUUID().toString().also { storage.putString("ink.local.host.id.v1", it) }
+        com.halo.app.ink.CrossDeviceInkController(deviceSessionManager, notebookCanvasRepository, hostId)
+    }
+    val crossDeviceInk get() = crossDeviceInkOwner.value
+    fun stopRemoteInkOnBackground() {
+        if (crossDeviceInkOwner.isInitialized()) infra.scope.launch { crossDeviceInkOwner.value.disconnectHosts() }
+    }
     val accessoryActionOwners by lazy { com.halo.app.controls.ExistingAccessoryActionOwners().also { it.start() } }
     val accessoryControls by lazy {
         com.halo.app.controls.AccessoryControls(storage, infra.scope,
@@ -889,6 +903,7 @@ object ManualDependencyGraph {
             noteActions = com.halo.app.di.tools.WorkspaceNoteActions(appDatabase, notebookDocumentRepository, notebookUseCases, workspaceContext),
             notePurgeActions = com.halo.app.di.tools.WorkspaceNotePurgeActions(notebookUseCases),
             noteAttachmentActions = com.halo.app.di.tools.WorkspaceNoteAttachmentActions(notebookAssetRepository),
+            remoteInk = com.halo.app.di.tools.RemoteInkActions(crossDeviceInk),
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
             { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)

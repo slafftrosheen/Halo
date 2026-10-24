@@ -1,0 +1,226 @@
+{
+  "baseline": "32f02942e337dccce29aa3fb9c855b3b0777ecb0",
+  "capturedAt": "2026-10-24T14:43:41.5070924+03:00",
+  "files": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "cd24369980e223e86ad234e83fc5b99ed68e52afe67b18de8bc16ca41bdd2abc"
+    },
+    {
+      "path": "app/src/androidTest/java/com/halo/app/ink/RemoteInkPhoneTest.kt",
+      "sha256": "98deaa1f467900f0aff438982568d408eaa9b5603125cbd2a67e5eafeee78c6e"
+    },
+    {
+      "path": "app/src/main/assets/skills/halo.notebook.json",
+      "sha256": "fcaf77b8e2646155d910ee531860d5495e66903d99d373d62b25b8677d84adf6"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/notebook/NotebookCanvas.kt",
+      "sha256": "64263dcc2b234d2f86802559cbc584f493990f98861fef3cc336e1fc28c8e225"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+      "sha256": "fece9a6f517d9d43f487fe6fba3b54adb16755389590f3e49261cbaf879883bd"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/tools/HaloToolDescriptors.kt",
+      "sha256": "2726b6c020d411043c0a42570d2f907397eadc11039ad15af0adb25838234175"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/tools/RemoteInkActions.kt",
+      "sha256": "b0a67403221e325b4a10f55feb699a1eb305d674ef6e93f65014c4f385cf2c38"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceOperabilityContracts.kt",
+      "sha256": "6b00535dc10b595897753da22f44985f654f6124fba675d9d5ef46dab5fb21f1"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/tools/WorkspaceToolExecutor.kt",
+      "sha256": "75a88b733075557ff44a4ba4e2618dc3e2457c74d5fc97711a5dfee8d1baa671"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ink/CrossDeviceInkController.kt",
+      "sha256": "92fb5c8b51bf298db74004989d6cf46b3972abd74cd77f90d07010065911782d"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/MainActivity.kt",
+      "sha256": "f578dea58e934fd722747efb186f419e17be39a6d0931190b311472e6cac7f42"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/devices/CrossDeviceInkPanel.kt",
+      "sha256": "3914f71127cbb2295d628112373c2d3ad67d791192e0468909491d9c459af3a5"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/devices/DevicesScreen.kt",
+      "sha256": "0ba79e4e952e7dfec1a10f02ee2de810d9389630443101bae7fabc05840b7470"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/home/HomeToolCatalog.kt",
+      "sha256": "8be1dfbf8eeb0b74a5122da874abd59d0d66c7c044834859ada22dd249f99a2b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorScreen.kt",
+      "sha256": "0902f303881a4eb4dddb8fc854a0ba70b26bbb7203fca07c72036b1f792c51f1"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasSketchEditor.kt",
+      "sha256": "ff37236650286eb92bc382588a9f73a0b53b97b1c6e39294d5ea5dbb3af6e673"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/RemoteInkTabletDialog.kt",
+      "sha256": "509ccaff26cd6a4ea67715a85a33af840315c704cf1218aa90afaf2446091e31"
+    },
+    {
+      "path": "app/src/main/res/values-lv/strings_remote_ink.xml",
+      "sha256": "590a45c45f2cc0145443a4eed8d1b39d1608c0faecced1338a301a7d20825cf6"
+    },
+    {
+      "path": "app/src/main/res/values-pl/strings_remote_ink.xml",
+      "sha256": "b6e983977c107d25dc043a29f92e2d0569a6ca3a0411f8909086f8d47f830565"
+    },
+    {
+      "path": "app/src/main/res/values-ru/strings_remote_ink.xml",
+      "sha256": "9ac31468b3cab43f825007d1c30a6ff537b0beb5602defbf4269c16b0eb61e86"
+    },
+    {
+      "path": "app/src/main/res/values/strings_remote_ink.xml",
+      "sha256": "bffceb352d02b8ae984258707be1998d5a34534495cb20e538b894ceb2615c46"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/notebook/RemoteInkCheckpointTest.kt",
+      "sha256": "d3af4a5bdd39b27379807bdfd1c17f3efafc3f7db331c39e1dc626bb12190daf"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/workspace/RemoteInkActionsTest.kt",
+      "sha256": "4555550933452d409073c9a2cbd8d82a25f32660d874e1fd0316acacdc78f756"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/di/BuiltInSkillManifestTest.kt",
+      "sha256": "c3fcfd6601b752ff6060f2bfe49726ce7ea600a000e4599a5ac1004575ff8723"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/home/HomeToolCatalogTest.kt",
+      "sha256": "f96a42953e1226b125523ab0fdb2ba9c9972812f311c0e253f076a5095bdcc26"
+    },
+    {
+      "path": "host-android/build.gradle.kts",
+      "sha256": "045f759d8e84f468b35c8e822cca3cb0d7a2f08d66ec8e0c53cebb6834bfaa3f"
+    },
+    {
+      "path": "host-android/src/main/java/com/halo/host/android/ink/AndroidInkIdentity.kt",
+      "sha256": "458d43a0dc5c5b304d500a8960903a48f63bb0780b3c79cc913cd6bf46b36989"
+    },
+    {
+      "path": "host-android/src/main/java/com/halo/host/android/ink/AndroidInkTabletConnection.kt",
+      "sha256": "235a65891bf838d254dcf0620095c6b1063ba7d326b1254abe3edf3afcf1f5c7"
+    },
+    {
+      "path": "host-ink/build.gradle.kts",
+      "sha256": "711c8171c7c5839256a91f5d36fddb3dae82af8d5ea0e9ef96420477191d7a97"
+    },
+    {
+      "path": "host-ink/native/CMakeLists.txt",
+      "sha256": "aaa81183e3d05ce3713e2ad1601786476988a3e3f11ab30f3f0aa7afeb2a2487"
+    },
+    {
+      "path": "host-ink/native/pen_input.cpp",
+      "sha256": "ee5503d0ba314b64198f7981e813e01fa928fd94dfeb84964e61b07f0c4518f0"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/DesktopPenSource.kt",
+      "sha256": "23c7a0bf48b2ebd4f251e2a8705d794ed52f3dc1c60ae1e89b08698916f0499a"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkConnectionInvitation.kt",
+      "sha256": "d0b7f435372f9cf45a0a0a4e3f2bda26c2165d4a5728ef077191f9bb51b56c74"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkLocalDraftStore.kt",
+      "sha256": "51c2ee3f175c5d716be7e224b76f0ee9a7c7a5572fd01435a9dc7116cf817eaf"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkPairingBundle.kt",
+      "sha256": "914771cb5802e3a14cc7609c9f88386ed71d3fc0c2a84ecf172dc27db31acb0b"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkReceiverHost.kt",
+      "sha256": "48d3095f966a2829c90ae950df07aaddd790f2a3c745ed128ba6a80f5a7a8512"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkSenderHost.kt",
+      "sha256": "01f9787e4e399c7a646b7aaa7cd7be2606e5077313c0468c41f8b9f8a0dfd835"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/InkTlsChannel.kt",
+      "sha256": "a5e21c55718ee8198be169aa6e6670a9a56b7e22679a560b24ff786b6f5ef1a1"
+    },
+    {
+      "path": "host-ink/src/main/kotlin/com/halo/host/ink/RemoteInkConnection.kt",
+      "sha256": "e0fc3397be28e8cab6bb3ac4ebf6f49be4bde4a8fd1faac24fca2de87c9b2079"
+    },
+    {
+      "path": "host-ink/src/test/kotlin/com/halo/host/ink/InkLocalDraftStoreTest.kt",
+      "sha256": "00844cc75d3569a9f76efe502968f578510a33b4c2cbe6f1482b391046d50111"
+    },
+    {
+      "path": "host-ink/src/test/kotlin/com/halo/host/ink/InkTlsChannelTest.kt",
+      "sha256": "8fc6b14e64114a96b17e9bb74d9a2524f87e8b80c0bfa6d24ba9d46d5ed879b3"
+    },
+    {
+      "path": "host-ink/src/test/kotlin/com/halo/host/ink/RemoteInkConnectionTest.kt",
+      "sha256": "424f3643f513854a20a3e6f47daf0f1710eb1c4b1cafec1ac1873154392d8c57"
+    },
+    {
+      "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillInstructionSource.kt",
+      "sha256": "3b78c3c52f41e2c433559819821b6a2f7f84e9ffc19577ff01fbfc27c85437c2"
+    },
+    {
+      "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillRegistry.kt",
+      "sha256": "cc35b65568177285434f11dce124e7c93a01b2a5bbf4fc92af7633080d5632c6"
+    },
+    {
+      "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/tools/WorkspaceToolAccess.kt",
+      "sha256": "78346963194df64f3b30c790dee10feaaa5a5143009da0e9c5ea41e7de17e274"
+    },
+    {
+      "path": "runtime/cognition/src/test/java/com/halo/runtime/cognition/tools/WorkspaceContinuityPolicyTest.kt",
+      "sha256": "3c03b24dadfc53f10673a85a67f20f8225d3c35ad29694ef63de83e212c51d56"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/DeviceRegistry.kt",
+      "sha256": "ad7bd026e475e81de23dd7d3e336fd0d6b583803d69fa478cb5553ef9193a7bf"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/DeviceSessionManager.kt",
+      "sha256": "9fc4cc56b1b902ade0ec87b5d50fe26a9c35ddb9cd0267b002d972e1a2bfa8d8"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/PersistentDeviceRegistry.kt",
+      "sha256": "26e7e9902239851ed0c2fbcdcb24b08952691419f547366a36a18bfe62d514d0"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/ink/RemoteInkProtocol.kt",
+      "sha256": "4d1ba675ddd3b8b1b02238c8e4e2a1467d475520c27bb6dddbce35631764a916"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/ink/RemoteInkSessionOwner.kt",
+      "sha256": "01a2ee71597a197de4593923ff01050abd65cd82e292a09fdddee3242907ae12"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/test/java/com/halo/sdk/runtime/embodiment/PersistentDeviceRegistryTest.kt",
+      "sha256": "cb465f045662e44b19e75d688ee1f6edcae40fbbacd259bdf888d67319341ac4"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/test/kotlin/com/halo/sdk/runtime/ink/RemoteInkProtocolTest.kt",
+      "sha256": "0fc4554b3fdfe98478a47278e106af451eab664ac2df1a77d7581ac2e981de2d"
+    },
+    {
+      "path": "sdk/runtime-sdk/src/test/kotlin/com/halo/sdk/runtime/ink/RemoteInkSessionOwnerTest.kt",
+      "sha256": "5bac7c9fd577d2a493f394875bdc7b72b380f21c837c86c9fdfb9a64f4825355"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sha256": "f7a85124361492d4585798b946e917c4635972a673ab46e2fab99e81b4db1bab"
+    }
+  ]
+}

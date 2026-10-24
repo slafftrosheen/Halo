@@ -10,6 +10,20 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class BuiltInSkillManifestTest {
+    @Test fun remoteInkPerToolRisksAgreeAcrossRuntimeBundledAndMergedManifests() {
+        val loader = BuiltInSkillManifestLoader(ApplicationProvider.getApplicationContext())
+        for (skills in listOf(com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills(), loader.loadBundledManifests(), loader.load())) {
+            for (name in com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools) {
+                val skill = skills.single { name in it.tools }
+                assertEquals("halo.notebook", skill.id.value)
+                assertEquals(when (name) {
+                    "halo_ink_start" -> com.halo.sdk.runtime.skills.SkillRisk.SENSITIVE
+                    "halo_ink_stop" -> com.halo.sdk.runtime.skills.SkillRisk.REVERSIBLE
+                    else -> com.halo.sdk.runtime.skills.SkillRisk.READ_ONLY
+                }, skill.toolDefinitions.single { it.toolId == name }.risk)
+            }
+        }
+    }
     @Test fun canvasEditingParityKeepsPerToolRisksAcrossAllManifestPhases() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val loader = BuiltInSkillManifestLoader(context)

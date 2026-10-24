@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "productionActivation": "CLOSED_PENDING_QUALIFICATION",
+  "records": [
+    {
+      "platform": "Android",
+      "adapter": "AndroidInkInput / CanvasInkSurface + paired TLS tablet host",
+      "hardware": "Exact pressure pen and tablet required",
+      "build": "DEBUG_APK_AND_NATIVE_FIXTURE_PASS",
+      "physicalPen": "NOT_TESTED",
+      "secondHost": "NOT_TESTED",
+      "evidence": [
+        "../artifacts/CROSS-DEVICE-INK-030-2026-10-24/corrected-android-build/gradle.log",
+        "../artifacts/CROSS-DEVICE-INK-030-2026-10-24/phone2-corrected-pass/ink.txt"
+      ]
+    },
+    {
+      "platform": "Windows",
+      "adapter": "WM_POINTER / GetPointerPenInfo JNI source",
+      "hardware": "Exact model and Windows build required",
+      "build": "SOURCE_ONLY",
+      "physicalPen": "NOT_TESTED",
+      "secondHost": "NOT_TESTED",
+      "evidence": []
+    },
+    {
+      "platform": "Linux",
+      "adapter": "Explicit read-only evdev absolute pen JNI source",
+      "hardware": "Exact model, kernel, architecture and read permission required",
+      "build": "SOURCE_ONLY",
+      "physicalPen": "NOT_TESTED",
+      "secondHost": "NOT_TESTED",
+      "evidence": []
+    },
+    {
+      "platform": "OpenTabletDriver",
+      "adapter": "Compatibility investigation only",
+      "hardware": "Exact tablet/model, driver release, OS and architecture required",
+      "build": "NOT_TESTED",
+      "physicalPen": "NOT_TESTED",
+      "secondHost": "NOT_TESTED",
+      "evidence": []
+    },
+    {
+      "platform": "Huion",
+      "adapter": "Vendor-neutral OS input; no guessed vendor protocol",
+      "hardware": "Exact model and OS/driver required",
+      "build": "NOT_TESTED",
+      "physicalPen": "NOT_TESTED",
+      "secondHost": "NOT_TESTED",
+      "evidence": []
+    },
+    {
+      "platform": "Pi 5 ARM64",
+      "adapter": "Test hypothesis only",
+      "hardware": "Actual Pi5/kernel/JVM/native build and selected pen required",
+      "build": "NOT_TESTED",
+      "physicalPen": "NOT_TESTED",
+      "secondHost": "NOT_TESTED",
+      "evidence": []
+    }
+  ],
+  "nativeApiReferences": [
+    "https://learn.microsoft.com/en-us/windows/win32/inputmsg/pen-mask-constants",
+    "https://cdn.kernel.org/doc/html/latest/input/event-codes.html"
+  ]
+}

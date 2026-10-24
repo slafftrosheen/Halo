@@ -299,6 +299,16 @@ object HaloToolDescriptors {
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
+        "halo_ink_status", "halo_ink_document", "halo_ink_selection" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("pen", "drawing", "tablet", "ink", "canvas"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 48000))
+        "halo_ink_start" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy(risk = ToolRiskClass.SENSITIVE, confirmation = ConfirmationPolicy.ALWAYS,
+                replaySafety = ReplaySafety.NEVER_REPLAY), keywords = setOf("pen", "drawing", "tablet", "ink", "canvas"),
+            presentation = ToolPresentation(title = "Draw together", actionVerb = "Start"))
+        "halo_ink_stop" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            reversible(ReplaySafety.SAFE), keywords = setOf("pen", "drawing", "tablet", "ink", "stop"),
+            presentation = ToolPresentation(title = "Stop drawing together", actionVerb = "Stop"))
         "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, ToolSecurityPolicy.DESTRUCTIVE,
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 16000),

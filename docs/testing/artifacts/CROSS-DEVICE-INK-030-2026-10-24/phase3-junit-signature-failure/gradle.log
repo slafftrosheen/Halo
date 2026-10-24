@@ -1,0 +1,57 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :host-ink:test :app:testDebugUnitTest --tests *RemoteInkCheckpointTest --tests *RemoteInkActionsTest --tests *BuiltInSkillManifestTest --tests *HomeToolCatalogTest --tests *WorkspaceOperabilityTest :app:assembleDebug :app:assembleDebugAndroidTest
+> Task :host-ink:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :host-ink:compileKotlin
+> Task :host-ink:compileJava NO-SOURCE
+> Task :host-ink:processResources NO-SOURCE
+> Task :host-ink:classes UP-TO-DATE
+> Task :host-ink:jar
+> Task :host-ink:compileTestKotlin
+> Task :host-ink:compileTestJava NO-SOURCE
+> Task :host-ink:processTestResources NO-SOURCE
+> Task :host-ink:testClasses UP-TO-DATE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar UP-TO-DATE
+
+> Task :host-ink:test FAILED
+
+InkTlsChannelTest > initializationError FAILED
+    org.junit.runners.model.InvalidTestClassError at ParentRunner.java:525
+
+13 tests completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':host-ink:test'.
+> There were failing tests. See the report at: file:///C:/Users/slavd/HaloEco/Halo-issues/host-ink/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 1m 9s
+12 actionable tasks: 4 executed, 8 up-to-date
+Configuration cache entry stored.

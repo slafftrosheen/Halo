@@ -1,0 +1,154 @@
+[
+  {
+    "id": "ink",
+    "classes": [
+      "com.halo.app.ink.AndroidInkInputTest",
+      "com.halo.app.ink.RemoteInkPhoneTest",
+      "com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest"
+    ],
+    "expectedTests": 12,
+    "sources": [
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ink/AndroidInkInputTest.kt",
+        "sha256": "4c646f30fe88be27d93f6f36343470b81e871e3ac34760ef36ed32ecf4e73f69",
+        "expectedTests": 10
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ink/RemoteInkPhoneTest.kt",
+        "sha256": "69bd4d2c6dbecf66b5e22e45bdbab123ffdad90c8d1fa1b856515fffcfd1c39c",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasDraftReceiptDeviceTest.kt",
+        "sha256": "f97aa9cc7bb4b954be37509cb5d0f4877d6b469282950c58fd339c6cff66c5bc",
+        "expectedTests": 1
+      }
+    ],
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "timeoutSeconds": 900
+  },
+  {
+    "id": "workspace",
+    "classes": [
+      "com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest",
+      "com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest",
+      "com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest",
+      "com.halo.app.ui.workspace.StudioDeviceTest"
+    ],
+    "expectedTests": 7,
+    "sources": [
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceOperabilityDeviceTest.kt",
+        "sha256": "b97116c86f92f2bc9c660f75a6d6028000a6f5fab24df67cf0fd8ab101413237",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceContinuityDeviceTest.kt",
+        "sha256": "6ad7718cc692ede2bf3cb1defcd37df6e1885fa0f16d3a070745fce31886a266",
+        "expectedTests": 2
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceFileToolsDeviceTest.kt",
+        "sha256": "6ac3501be184276d3c3731d258b8c047f684350a40c63b8e0fcfaf6cdf48d9ab",
+        "expectedTests": 2
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/workspace/StudioDeviceTest.kt",
+        "sha256": "9d5eafd43fb85e637c3148bf67d69b5ff235dc4ec1b44b392589951d6c6337c5",
+        "expectedTests": 2
+      }
+    ],
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "timeoutSeconds": 900
+  },
+  {
+    "id": "notes-study",
+    "classes": [
+      "com.halo.app.notebook.NoteEditorControlsDeviceTest",
+      "com.halo.app.notebook.NotePurgeDeviceTest",
+      "com.halo.app.notebook.NoteAttachmentControlsDeviceTest",
+      "com.halo.app.study.StudyLearnerControlsDeviceTest"
+    ],
+    "expectedTests": 4,
+    "sources": [
+      {
+        "path": "app/src/androidTest/java/com/halo/app/notebook/NoteEditorControlsDeviceTest.kt",
+        "sha256": "09bc48b7d2f127f012380628911de97fda1f72722f946074fa4fe9567b5f4543",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/notebook/NotePurgeDeviceTest.kt",
+        "sha256": "bd79572c789c51f71971410584c3599c3c6af3de43c5c51a1b26170e88d84e16",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/notebook/NoteAttachmentControlsDeviceTest.kt",
+        "sha256": "5d2fb31937a873238f552963e100e9446beac8cb156d3f3ddaa4731cd20a4a7c",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/study/StudyLearnerControlsDeviceTest.kt",
+        "sha256": "80c333e2d4df3e2af47394fab02b6dcc31ae54d3571f2e6ad849464f9970604c",
+        "expectedTests": 1
+      }
+    ],
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "timeoutSeconds": 900
+  },
+  {
+    "id": "display",
+    "classes": [
+      "com.halo.app.language.PolishLanguageDeviceTest",
+      "com.halo.app.ui.screens.notebook.CanvasPreviewDeviceTest",
+      "com.halo.app.ui.screens.notebook.CanvasPdfInspectionDeviceTest",
+      "com.halo.app.perf.MainThreadIoGuardTest"
+    ],
+    "expectedTests": 9,
+    "sources": [
+      {
+        "path": "app/src/androidTest/java/com/halo/app/language/PolishLanguageDeviceTest.kt",
+        "sha256": "b03a641483fe09266a1ae8f6c3bd8ad1920ce92a880bdbd5ac4e804114fb9642",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasPreviewDeviceTest.kt",
+        "sha256": "6df89b27ae99530107a223304bd64c61096bafe1323d68ff392fd75bebd55a6b",
+        "expectedTests": 2
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasPdfInspectionDeviceTest.kt",
+        "sha256": "09733235f4675a26921c5917a4b94859a17ee6069cbda08f2e6d5cc8d855b7d0",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/perf/MainThreadIoGuardTest.kt",
+        "sha256": "6000dce1c97a75ad5f1d5d23058c4e1865c6f8e23bdb12f30d50fa89856c73e6",
+        "expectedTests": 5
+      }
+    ],
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "timeoutSeconds": 900
+  },
+  {
+    "id": "setup-privacy",
+    "classes": [
+      "com.halo.app.ai.LocalRolePackRecoveryDeviceTest",
+      "com.halo.app.ai.PrivateDispatchOwnerTraceTest"
+    ],
+    "expectedTests": 3,
+    "sources": [
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ai/LocalRolePackRecoveryDeviceTest.kt",
+        "sha256": "debbc548a31a4025771eae6844b67259e68466caaa0b8b26675d923552f40d92",
+        "expectedTests": 1
+      },
+      {
+        "path": "app/src/androidTest/java/com/halo/app/ai/PrivateDispatchOwnerTraceTest.kt",
+        "sha256": "7ad266925580ed4b4249930a9512945c9ed0a6c2221d036b824b753dc77a5132",
+        "expectedTests": 2
+      }
+    ],
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "timeoutSeconds": 900
+  }
+]

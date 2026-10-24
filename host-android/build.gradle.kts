@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.androidx.media3.common)
     api(project(":sdk:driver-sdk"))
     implementation(project(":sdk:runtime-sdk"))
+    implementation(project(":host-ink"))
     implementation(project(":sdk:host-sdk"))
     implementation(project(":engines:speech"))
     implementation(project(":libraries:halo-cognition-language"))

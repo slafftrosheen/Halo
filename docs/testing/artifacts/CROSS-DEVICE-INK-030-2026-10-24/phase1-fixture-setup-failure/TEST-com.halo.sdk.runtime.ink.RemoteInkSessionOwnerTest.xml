@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-24T11:18:39.942Z" hostname="MINIFOXEY" time="0.149">
+  <properties/>
+  <testcase name="abandonedPreviewExpiresWithoutPersistingAnIncompleteContact" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.039"/>
+  <testcase name="remoteSelectionRequiresSameInteractionAndFreshCanonicalSource" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.013"/>
+  <testcase name="forgetRevokesTrustAndRestartHasNoActiveConsent" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.009"/>
+  <testcase name="conflictDoesNotAcknowledgeSaveOrErasePreview" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.008"/>
+  <testcase name="productionDefaultsRefuseAssociationAndStart" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.007"/>
+  <testcase name="expirationAndFutureTimestampsCannotExtendAConsentSession" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.006"/>
+  <testcase name="previewReorderingAndCheckpointLossDoNotTurnPreviewIntoDurableInk" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.008"/>
+  <testcase name="previewFloodDoesNotConsumeCheckpointBudget" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.026"/>
+  <testcase name="wrongCertificateSourceAndInteractionNeverReachPersistence" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.005"/>
+  <testcase name="gateRevocationAndClockRollbackClearEphemeralState" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.005"/>
+  <testcase name="stopSerializesWithInFlightCommitAndRejectsLaterWrites" classname="com.halo.sdk.runtime.ink.RemoteInkSessionOwnerTest" time="0.021"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

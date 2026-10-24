@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.host.ink.InkTlsChannelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-24T11:21:50.128Z" hostname="MINIFOXEY" time="31.356">
+  <properties/>
+  <testcase name="cancellingReadClosesTheSocketPromptly" classname="com.halo.host.ink.InkTlsChannelTest" time="0.654"/>
+  <testcase name="unassociatedServerFailsTlsBeforeApplicationData" classname="com.halo.host.ink.InkTlsChannelTest" time="0.11"/>
+  <testcase name="cancelledReceiverClearsItsPreviewEvenWhenAnotherCommitHoldsTheOwnerLock" classname="com.halo.host.ink.InkTlsChannelTest" time="10.362"/>
+  <testcase name="mutuallyAuthenticatedLocalPeersExchangeBoundedFrames" classname="com.halo.host.ink.InkTlsChannelTest" time="10.078"/>
+  <testcase name="unassociatedClientCannotReadAnApplicationFrame" classname="com.halo.host.ink.InkTlsChannelTest" time="0.056"/>
+  <testcase name="oversizedLengthIsRejectedWithoutAllocatingItsClaimedBody" classname="com.halo.host.ink.InkTlsChannelTest" time="10.095"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

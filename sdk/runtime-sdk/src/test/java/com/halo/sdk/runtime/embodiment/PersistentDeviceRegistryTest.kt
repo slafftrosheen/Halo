@@ -29,6 +29,30 @@ class PersistentDeviceRegistryTest {
         lastSeenMs = 1234L
     )
 
+    @Test fun inkTrustAndCapabilitiesSurviveReopenAndForget() = runTest {
+        val storage = FakeStorage()
+        val association = com.halo.sdk.runtime.ink.InkAssociation(com.halo.sdk.runtime.ink.InkEndpoint(
+            "tablet", pressure = true, tilt = true, eraser = true, hover = true,
+            width = 1920, height = 1200, rotationDegrees = 90), "a".repeat(64))
+        val registry = PersistentDeviceRegistry(storage)
+        registry.saveDevice(record("tablet", false).copy(inkAssociation = association))
+        val reopened = PersistentDeviceRegistry(storage)
+        assertEquals(association, reopened.getDevice("tablet")!!.inkAssociation)
+        reopened.saveDevice(reopened.getDevice("tablet")!!.copy(inkAssociation = null))
+        assertEquals(null, PersistentDeviceRegistry(storage).getDevice("tablet")!!.inkAssociation)
+    }
+
+    @Test fun corruptOrPartialInkAssociationNeverBecomesTrusted() = runTest {
+        val storage = FakeStorage()
+        val registry = PersistentDeviceRegistry(storage)
+        registry.saveDevice(record("tablet", false))
+        val key = "halo.device." + "tablet".toByteArray().joinToString("") { "%02x".format(it) } + ".ink_association_v1"
+        listOf("a".repeat(64), "a".repeat(64) + "|1920|1200|0|yes|true|true|true", "x".repeat(161)).forEach {
+            storage.putString(key, it)
+            assertEquals(null, PersistentDeviceRegistry(storage).getDevice("tablet")!!.inkAssociation)
+        }
+    }
+
     @Test
     fun saveAndReloadPreservesDevice() = runTest {
         val storage = FakeStorage()

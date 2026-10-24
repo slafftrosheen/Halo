@@ -220,6 +220,7 @@ class NotebookCanvasRepository(
     private val notebookDao: NotebookDao,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val remoteInkActivation: com.halo.sdk.runtime.ink.InkActivationPolicy = com.halo.sdk.runtime.ink.InkActivationPolicy.QUALIFICATION_PENDING,
 ) {
     suspend fun drawingDraft(canvasId: String): CanvasDrawingDraft? = notebookDao.getDraft(canvasId)?.structureJson?.let(CanvasDrawingDraft::decode)
     suspend fun saveDrawingDraft(canvasId: String, draft: CanvasDrawingDraft) {
@@ -546,6 +547,80 @@ class NotebookCanvasRepository(
         if (changed) touch(canvasId)
         changed
     }
+
+    /** Exact board + node content version, valid only for an active local sketch. */
+    suspend fun remoteInkSnapshot(canvasId: String, nodeId: String): Pair<String, com.halo.sdk.runtime.ink.InkDocument>? = database.withTransaction {
+        val revision = remoteInkRevision(canvasId, nodeId) ?: return@withTransaction null
+        val node = canvasDao.getNode(canvasId, nodeId) ?: return@withTransaction null
+        val ink = com.halo.sdk.runtime.ink.InkCodec.decode(node.text) ?: return@withTransaction null
+        revision to ink
+    }
+
+    suspend fun remoteInkSelectionIsCurrent(session: com.halo.sdk.runtime.ink.InkSession, expectedRevision: String,
+        selection: com.halo.sdk.runtime.ink.InkSelectionContext): Boolean = database.withTransaction {
+        if (!remoteInkActivation.enabled() || remoteInkRevision(session.boardId, session.documentId) != expectedRevision)
+            return@withTransaction false
+        val node = canvasDao.getNode(session.boardId, session.documentId) ?: return@withTransaction false
+        InkSelectionBookmarkCodec.resolve(selection, session.boardId, CanvasNodeType.SKETCH, node.id, null, node.text) != null
+    }
+
+    suspend fun remoteInkRevision(canvasId: String, nodeId: String): String? = database.withTransaction {
+        if (notebookDao.getWorkspaceObject(canvasId)?.lifecycle != WorkspaceObjectLifecycle.ACTIVE.name)
+            return@withTransaction null
+        // A local editor recovery draft is newer local intent even before its board save.
+        // Keep it intact and require explicit recovery before accepting remote checkpoints.
+        if (notebookDao.getDraft(canvasId) != null) return@withTransaction null
+        val node = canvasDao.getNode(canvasId, nodeId) ?: return@withTransaction null
+        if (node.type != CanvasNodeType.SKETCH.name || node.refObjectId != null) return@withTransaction null
+        val board = canvasDao.getDocument(canvasId) ?: return@withTransaction null
+        val digest = java.security.MessageDigest.getInstance("SHA-256").digest(node.text.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+        "ink-${board.revision}-$digest"
+    }
+
+    /** Ink and its retry receipt are committed together in the existing canonical Canvas DB. */
+    suspend fun commitRemoteInk(request: com.halo.sdk.runtime.ink.InkCheckpointRequest): com.halo.sdk.runtime.ink.InkReceiveReceipt =
+        database.withTransaction {
+            fun receipt(status: com.halo.sdk.runtime.ink.InkReceiveStatus, revision: String? = null) =
+                com.halo.sdk.runtime.ink.InkReceiveReceipt(status, revision)
+            if (!remoteInkActivation.enabled()) return@withTransaction receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.DISABLED)
+            val canvasId = request.session.boardId
+            val nodeId = request.session.documentId
+            val revision = remoteInkRevision(canvasId, nodeId)
+                ?: return@withTransaction receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.CONFLICT)
+            val provenance = database.workspaceContextDao().provenanceFor(canvasId)
+            // Never replace unreadable provenance with empty metadata.
+            val metadata = provenance?.metadata?.let { org.json.JSONObject(it) } ?: org.json.JSONObject()
+            val receipts = metadata.optJSONObject("remoteInkReceiptsV1") ?: org.json.JSONObject()
+            val previous = receipts.optJSONObject(nodeId)
+            if (previous != null && previous.optString("session") == request.session.sessionId) {
+                val sequence = previous.getLong("sequence")
+                if (request.sequence == sequence) {
+                    return@withTransaction if (previous.getString("digest") == request.payloadSha256)
+                        receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.DUPLICATE, previous.getString("revision"))
+                    else receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.CONFLICT)
+                }
+                if (request.sequence < sequence) return@withTransaction receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.CONFLICT)
+            }
+            if (revision != request.expectedRevision) return@withTransaction receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.CONFLICT)
+            val board = requireNotNull(canvasDao.getDocument(canvasId))
+            if (board.revision == Int.MAX_VALUE) return@withTransaction receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.CONFLICT)
+            // Bound retained metadata; deleted cards do not keep an unbounded receipt journal.
+            val liveNodes = canvasDao.getNodes(canvasId).map { it.id }.toSet()
+            receipts.keys().asSequence().toList().filterNot { it in liveNodes }.forEach(receipts::remove)
+            if (!receipts.has(nodeId) && receipts.length() >= 256)
+                return@withTransaction receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.STORAGE_UNAVAILABLE)
+            val text = com.halo.sdk.runtime.ink.InkCodec.encode(request.document)
+            check(canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1)
+            touch(canvasId)
+            val nextRevision = requireNotNull(remoteInkRevision(canvasId, nodeId))
+            receipts.put(nodeId, org.json.JSONObject().put("session", request.session.sessionId)
+                .put("sequence", request.sequence).put("digest", request.payloadSha256).put("revision", nextRevision))
+            metadata.put("remoteInkReceiptsV1", receipts)
+            database.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(canvasId,
+                provenance?.sourceId ?: canvasId, provenance?.revision ?: nextRevision, metadata.toString()))
+            receipt(com.halo.sdk.runtime.ink.InkReceiveStatus.SAVED, nextRevision)
+        }
 
     /** The same saved result as the editor's Clear + Save, without inventing pen gestures. */
     suspend fun clearSketch(canvasId: String, nodeId: String): Boolean = database.withTransaction {

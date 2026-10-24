@@ -82,6 +82,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     onOpenStudio: ((String, String?) -> Unit)? = null, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val remoteInk = com.halo.app.di.ManualDependencyGraph.deviceSessionManager.ink
+    val remoteSessions by remoteInk.sessions.collectAsStateWithLifecycle()
+    val remotePreviews by remoteInk.previews.collectAsStateWithLifecycle()
+    LaunchedEffect(remoteSessions.isNotEmpty()) {
+        if (remoteSessions.isNotEmpty()) while (true) { delay(1000); remoteInk.refresh() }
+    }
     var requestedPreviewId by remember(viewModel.canvasId) { mutableStateOf<String?>(null) }
     LaunchedEffect(state.selectedNodeId) { requestedPreviewId = state.selectedNodeId }
     var observedOrganizationCommit by remember(viewModel.canvasId) {
@@ -1008,7 +1014,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         }
                         else if (node.type == CanvasNodeType.SKETCH) Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(uiText("Sketch"), style = MaterialTheme.typography.labelSmall)
-                            CanvasSketchPreview(node.text, Modifier.fillMaxWidth().weight(1f))
+                            val remoteSession = remoteSessions.firstOrNull { it.boardId == viewModel.canvasId && it.documentId == node.id }
+                            CanvasSketchPreview(node.text, Modifier.fillMaxWidth().weight(1f),
+                                ephemeralStroke = remoteSession?.let { remotePreviews[it.sessionId] })
                             TextButton(onClick = { viewModel.selectNode(node.id); sketchTarget = node.id; sketchOriginal = node.text; sketchOpen = true }) {
                                 Text(uiText("Edit sketch"))
                             }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.runtime.ink.RemoteInkProtocolTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T11:18:39.892Z" hostname="MINIFOXEY" time="0.037">
+  <properties/>
+  <testcase name="checkpointAndPreviewRoundTripPreserveAxesAndIdentity" classname="com.halo.sdk.runtime.ink.RemoteInkProtocolTest" time="0.031"/>
+  <testcase name="rejectsUnboundedReferencesInvalidSequenceAndPreviewCapacity" classname="com.halo.sdk.runtime.ink.RemoteInkProtocolTest" time="0.003"/>
+  <testcase name="snapshotsCannotBeChangedThroughCallerOwnedLists" classname="com.halo.sdk.runtime.ink.RemoteInkProtocolTest" time="0.002"/>
+  <testcase name="rejectsFutureVersionTruncationTrailingDataAndOversizeBeforeParsing" classname="com.halo.sdk.runtime.ink.RemoteInkProtocolTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

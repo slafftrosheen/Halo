@@ -11,6 +11,9 @@ object WorkspaceOperabilityContracts {
             names.forEach { put(it, Operation(owner, operation, encoding)) }
         }
         group("NotebookCanvasRepository", ToolOperation.QUERY, "halo_canvas_get")
+        group("CrossDeviceInkController", ToolOperation.QUERY, "halo_ink_status", "halo_ink_document", "halo_ink_selection")
+        group("CrossDeviceInkController", ToolOperation.CREATE, "halo_ink_start")
+        group("CrossDeviceInkController", ToolOperation.EDIT, "halo_ink_stop")
         group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_create", "halo_canvas_add_text")
         group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate")
         group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_connect")
@@ -53,6 +56,10 @@ object WorkspaceOperabilityContracts {
         val operation = operations[definition.name] ?: return null
         val fields = definition.parameters["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
         val resultFields = when (operation.owner) {
+            "CrossDeviceInkController" -> mapOf("enabled" to "boolean", "devices" to "array", "sessions" to "array",
+                "boardId" to "string", "documentId" to "string", "sessionId" to "string", "revision" to "string",
+                "started" to "boolean", "stopped" to "boolean", "connected" to "boolean", "sourceRevision" to "string",
+                "strokeIds" to "array", "bounds" to "object")
             "NotebookAssetRepository" -> mapOf("noteId" to "string", "version" to "string", "attachmentId" to "string", "attachmentCount" to "integer", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "attachments" to "array", "nextOffset" to "integer", "saved" to "boolean", "changed" to "boolean", "fileCleanupPerformed" to "boolean")
             "NotebookPurgeOwner" -> mapOf("noteId" to "string", "receiptVersion" to "string", "sourceVersion" to "string", "status" to "string", "originalDeletionRecorded" to "boolean", "deleted" to "boolean", "sourcePresent" to "boolean", "cleanupComplete" to "boolean", "pendingAssets" to "integer", "exclusiveAssetsCleared" to "integer", "sharedAssetsRetained" to "integer", "externalAssetsRetained" to "integer", "reason" to "string")
             "NotebookDocumentRepository", "NotebookUseCases" -> mapOf("noteId" to "string", "version" to "string", "revision" to "integer", "title" to "string", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "blocks" to "array", "block" to "object", "blockIds" to "array", "saved" to "boolean", "changed" to "boolean")
@@ -63,6 +70,8 @@ object WorkspaceOperabilityContracts {
             else -> mapOf("objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string", "resultId" to "string", "resultVersion" to "string")
         }
         val resultIds = when (definition.name) {
+            "halo_ink_document" -> setOf("boardId", "documentId")
+            "halo_ink_start", "halo_ink_stop", "halo_ink_selection" -> setOf("sessionId")
             "halo_note_attachments" -> setOf("noteId")
             "halo_note_reuse_image", "halo_note_unlink_attachment" -> setOf("noteId", "attachmentId")
             "halo_note_purge", "halo_note_purge_status", "halo_note_purge_retry" -> setOf("noteId")
@@ -90,6 +99,7 @@ object WorkspaceOperabilityContracts {
         return ToolOperability(capabilityId = CapabilityId(if (operation.operation in setOf(ToolOperation.QUERY, ToolOperation.PRESENT)) "workspace.read" else "workspace.write"), owner = operation.owner,
             operation = operation.operation, resultEncoding = operation.encoding,
             resultSchema = if (operation.owner == "NotebookAssetRepository") WorkspaceNoteAttachmentActions.resultSchema(definition.name)
+                else if (operation.owner == "CrossDeviceInkController") RemoteInkActions.resultSchema(definition.name)
                 else if (operation.encoding == ToolResultEncoding.TEXT) mapOf("type" to "string", "maxLength" to 24000)
                 else mapOf("type" to "object", "properties" to resultFields.mapValues { mapOf("type" to listOf(it.value, "null")) },
                     "required" to (resultIds + (if (operation.owner == "NotebookCanvasRepository") setOf("version") else emptySet()) +

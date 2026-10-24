@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ink",
+    "status": "FAIL",
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "expectedTests": 12,
+    "observedTests": 0,
+    "runId": "open-issues-d5dc2e3ff76e4d5b8c371b1568b3c97f",
+    "sourceStamp": "ef546bdf96eaf12d370b1ca1c3296aba0da729c945b7f9f33a31f4575954a9c8",
+    "elapsedSeconds": 8.775526,
+    "logSha256": "7efa469b21d525ebeb3271251fe9f5e30183b5f71f6763db11fdba27e3e03d5e",
+    "log": "ink.txt"
+  },
+  {
+    "id": "workspace",
+    "status": "PASS",
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "expectedTests": 7,
+    "observedTests": 7,
+    "runId": "open-issues-d5dc2e3ff76e4d5b8c371b1568b3c97f",
+    "sourceStamp": "ef546bdf96eaf12d370b1ca1c3296aba0da729c945b7f9f33a31f4575954a9c8",
+    "elapsedSeconds": 21.857519,
+    "logSha256": "b1e3173ec76541fc78c2bdf55796f8b7b50e25399c18dc43aff5cd6a38ab2ce8",
+    "log": "workspace.txt"
+  },
+  {
+    "id": "notes-study",
+    "status": "PASS",
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "expectedTests": 4,
+    "observedTests": 4,
+    "runId": "open-issues-d5dc2e3ff76e4d5b8c371b1568b3c97f",
+    "sourceStamp": "ef546bdf96eaf12d370b1ca1c3296aba0da729c945b7f9f33a31f4575954a9c8",
+    "elapsedSeconds": 9.3581692,
+    "logSha256": "edaca9dd21e71e3eb271781bb5fe47e406edfbdc5ce1099cfc1967d1fbcbcce7",
+    "log": "notes-study.txt"
+  },
+  {
+    "id": "display",
+    "status": "PASS",
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "expectedTests": 9,
+    "observedTests": 9,
+    "runId": "open-issues-d5dc2e3ff76e4d5b8c371b1568b3c97f",
+    "sourceStamp": "ef546bdf96eaf12d370b1ca1c3296aba0da729c945b7f9f33a31f4575954a9c8",
+    "elapsedSeconds": 96.641637,
+    "logSha256": "3e48ce653ebb607d14e90dec7613d3ad9aded6e438e13870e40684e5be64158c",
+    "log": "display.txt"
+  },
+  {
+    "id": "setup-privacy",
+    "status": "PASS",
+    "scope": "NATIVE_FIXTURE_ONLY",
+    "expectedTests": 3,
+    "observedTests": 3,
+    "runId": "open-issues-d5dc2e3ff76e4d5b8c371b1568b3c97f",
+    "sourceStamp": "ef546bdf96eaf12d370b1ca1c3296aba0da729c945b7f9f33a31f4575954a9c8",
+    "elapsedSeconds": 28.6255106,
+    "logSha256": "2bcdd2a514ac032236c9c5890d6fcf7da2d7f0215e98a19775681b0b79bf80d5",
+    "log": "setup-privacy.txt"
+  }
+]

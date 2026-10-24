@@ -22,8 +22,11 @@ import kotlinx.coroutines.withTimeoutOrNull
  * when needed and routing intents to the correct active session.
  */
 class DeviceSessionManager(
-    val registry: DeviceRegistry
+    val registry: DeviceRegistry,
+    inkActivation: com.halo.sdk.runtime.ink.InkActivationPolicy = com.halo.sdk.runtime.ink.InkActivationPolicy.QUALIFICATION_PENDING,
+    inkCheckpoints: com.halo.sdk.runtime.ink.InkCheckpointStore = com.halo.sdk.runtime.ink.InkCheckpointStore.UNAVAILABLE,
 ) {
+    val ink = com.halo.sdk.runtime.ink.RemoteInkSessionOwner(registry, inkActivation, inkCheckpoints)
     private val _sessions = mutableMapOf<String, EmbodimentSession>()
     private val stateScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val stateJobs = mutableMapOf<String, Job>()

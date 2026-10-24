@@ -194,6 +194,7 @@ dependencies {
   implementation(libs.play.services.auth)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
+  implementation(project(":host-ink"))
   implementation("org.apache.commons:commons-compress:1.28.0")
   testImplementation(libs.mockwebserver)
   // implementation(libs.play.services.location)

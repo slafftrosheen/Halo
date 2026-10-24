@@ -1,0 +1,8 @@
+{
+  "status": "CANCELLED_BEFORE_FINAL_SOURCE_REPAIR",
+  "session": 70769,
+  "gradlePid": 8100,
+  "processPresent": false,
+  "reason": "Concrete local save queue closes on background and stale save-state race found; complete source before final APK gate",
+  "at": "2026-10-24T14:51:30.0024329+03:00"
+}

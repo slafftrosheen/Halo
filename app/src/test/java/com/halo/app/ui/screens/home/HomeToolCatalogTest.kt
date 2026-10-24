@@ -5,6 +5,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class HomeToolCatalogTest {
+    @Test fun canvasDiscoveryIncludesTheActualGatedInkOperations() {
+        val canvas = HomeToolCatalog.descriptors.single { it.id == "work.canvas" }
+        assertTrue(canvas.toolIds.containsAll(com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools))
+    }
     private val ready = HomeToolCatalogInput(
         runtimeTools = HomeToolCatalog.descriptors.flatMap { it.toolIds }.associateWith { HomeRuntimeToolReadiness(true) },
         privateMode = false, onlineAllowedByFamily = true, connected = true,

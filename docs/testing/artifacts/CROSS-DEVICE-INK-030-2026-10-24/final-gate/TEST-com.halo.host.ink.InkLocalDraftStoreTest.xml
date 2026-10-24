@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.host.ink.InkLocalDraftStoreTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T12:13:26.906Z" hostname="MINIFOXEY" time="0.119">
+  <properties/>
+  <testcase name="localCompletedStrokesReopenWithIdentityAndInvalidSaveKeepsPreviousRecovery" classname="com.halo.host.ink.InkLocalDraftStoreTest" time="0.073"/>
+  <testcase name="corruptAndOversizeRecoveryFailsClosedRatherThanBecomingEmptyDrawing" classname="com.halo.host.ink.InkLocalDraftStoreTest" time="0.009"/>
+  <testcase name="identicalDocumentIdsOnDifferentTrustedHostsCannotRecoverEachOthersInk" classname="com.halo.host.ink.InkLocalDraftStoreTest" time="0.018"/>
+  <testcase name="invitationIsLiteralLocalBoundedAndDoesNotTrustDnsOrPublicAddresses" classname="com.halo.host.ink.InkLocalDraftStoreTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

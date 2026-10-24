@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-24T11:18:39.435Z" hostname="MINIFOXEY" time="0.416">
+  <properties/>
+  <testcase name="inkTrustAndCapabilitiesSurviveReopenAndForget" classname="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" time="0.367"/>
+  <testcase name="saveAndReloadPreservesDevice" classname="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" time="0.005"/>
+  <testcase name="idsThatDifferOnlyByStorageUnsafeCharactersRemainIndependent" classname="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" time="0.01"/>
+  <testcase name="saveUpdatesAutoConnectWithoutCreatingDuplicate" classname="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" time="0.006"/>
+  <testcase name="corruptOrPartialInkAssociationNeverBecomesTrusted" classname="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" time="0.011"/>
+  <testcase name="removeDeletesDeviceAndItsRecord" classname="com.halo.sdk.runtime.embodiment.PersistentDeviceRegistryTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
