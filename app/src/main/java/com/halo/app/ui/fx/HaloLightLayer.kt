@@ -27,6 +27,7 @@ fun HaloSignalState.light(): HaloLight = when (this) {
     HaloSignalState.ACTING -> HaloLight.ACTING
     HaloSignalState.WAITING, HaloSignalState.WARNING -> HaloLight.NEEDS_YOU
     HaloSignalState.ERROR, HaloSignalState.OFFLINE -> HaloLight.ERROR
+    HaloSignalState.SUCCESS -> HaloLight.SUCCESS
     HaloSignalState.STOPPED -> HaloLight.OFF
     else -> HaloLight.IDLE
 }
@@ -47,7 +48,7 @@ fun Modifier.haloStateAura(light: HaloLight, accent: Color, attention: Color, er
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val visible = lifecycle.isAtLeast(Lifecycle.State.STARTED)
     val strength by animateFloatAsState(light.strength, tween(if (reduced) 0 else 333), label = "halo-aura-state")
-    val breath = if (light.period > 0 && !reduced && visible) {
+    val breath = if (guideLight && light.period > 0 && !reduced && visible) {
         val transition = rememberInfiniteTransition(label = "halo-aura")
         val value by transition.animateFloat(.92f, 1.08f,
             infiniteRepeatable(tween(light.period / 2, easing = CubicBezierEasing(.45f, 0f, .55f, 1f)), RepeatMode.Reverse),
@@ -78,7 +79,7 @@ fun Modifier.haloAssistantEdge(active: Boolean, attention: Boolean, accent: Colo
         else if (foreground && sweep.value < 1f) sweep.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
     }
     val opacity by animateFloatAsState(if (active) 1f else 0f, tween(if (reduced) 0 else 333), label = "halo-edge-stop")
-    val pulse = if (!reduced && active && foreground) {
+    val pulse = if (guideLight && !reduced && active && foreground) {
         val transition = rememberInfiniteTransition(label = "halo-edge")
         val value by transition.animateFloat(.55f, 1f, infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "halo-edge-pulse")
         value

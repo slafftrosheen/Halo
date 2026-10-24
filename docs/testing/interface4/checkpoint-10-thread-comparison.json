@@ -1,0 +1,82 @@
+{
+  "appSha256": "5c057808f35cb3584ec8d279b26952b92d8ded284db9eb46b6c5bf95e99922d8",
+  "samples": [
+    {
+      "condition": "foreground_workspace",
+      "seconds": 21.19,
+      "topThreads": [
+        {
+          "thread": "raintool.xkqzps",
+          "cpuPercentOneCore": 46.07
+        },
+        {
+          "thread": "RenderThread",
+          "cpuPercentOneCore": 34.74
+        },
+        {
+          "thread": "binder:17660_3",
+          "cpuPercentOneCore": 3.02
+        },
+        {
+          "thread": "binder:17660_2",
+          "cpuPercentOneCore": 1.27
+        },
+        {
+          "thread": "binder:17660_4",
+          "cpuPercentOneCore": 0.47
+        },
+        {
+          "thread": "Profile Saver",
+          "cpuPercentOneCore": 0.24
+        },
+        {
+          "thread": "Jit thread pool",
+          "cpuPercentOneCore": 0.19
+        },
+        {
+          "thread": "DefaultDispatch",
+          "cpuPercentOneCore": 0.05
+        }
+      ]
+    },
+    {
+      "condition": "background_after_home",
+      "seconds": 21.02,
+      "topThreads": [
+        {
+          "thread": "DefaultDispatch",
+          "cpuPercentOneCore": 0.1
+        },
+        {
+          "thread": "raintool.xkqzps",
+          "cpuPercentOneCore": 0.05
+        },
+        {
+          "thread": "Jit thread pool",
+          "cpuPercentOneCore": 0.05
+        },
+        {
+          "thread": "DefaultDispatch",
+          "cpuPercentOneCore": 0.05
+        },
+        {
+          "thread": "DefaultDispatch",
+          "cpuPercentOneCore": 0.05
+        },
+        {
+          "thread": "DefaultDispatch",
+          "cpuPercentOneCore": 0.05
+        },
+        {
+          "thread": "DefaultExecutor",
+          "cpuPercentOneCore": 0.05
+        },
+        {
+          "thread": "DefaultDispatch",
+          "cpuPercentOneCore": 0.05
+        }
+      ]
+    }
+  ],
+  "limits": "Short per-thread /proc CPU deltas; existing workload uncontrolled; not energy or causal motion qualification."
+}

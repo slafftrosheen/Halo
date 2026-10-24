@@ -1,7 +1,7 @@
 {
   "id": "halo.notebook",
-  "name": "Notebook",
-  "description": "Create, search, and manage local workspace items.",
+  "name": "Workspace",
+  "description": "Create, search, and manage local notes and workspace items.",
   "category": "WORKSPACE",
   "risk": "REVERSIBLE",
   "tools": [
@@ -49,14 +49,60 @@
     "halo_note_purge_retry",
     "halo_note_attachments",
     "halo_note_reuse_image",
-    "halo_note_unlink_attachment"
+    "halo_note_unlink_attachment",
+    "halo_canvas_current",
+    "halo_canvas_workflow_status",
+    "halo_canvas_image_palette",
+    "halo_canvas_transcribe_file",
+    "halo_canvas_save_reviewed_text",
+    "halo_canvas_edit_reviewed_text",
+    "halo_canvas_discard_reviewed_text",
+    "halo_canvas_export_note",
+    "halo_canvas_add_text",
+    "halo_canvas_connect",
+    "halo_canvas_create",
+    "halo_canvas_edit_text",
+    "halo_canvas_get",
+    "halo_canvas_move",
+    "halo_studio_ai_draft",
+    "halo_studio_create",
+    "halo_studio_current",
+    "halo_studio_edit",
+    "halo_studio_export",
+    "halo_studio_get",
+    "halo_studio_insert",
+    "halo_studio_list",
+    "halo_studio_open",
+    "halo_studio_save",
+    "halo_studio_status",
+    "halo_workspace_canvases",
+    "halo_workspace_describe",
+    "halo_workspace_handoff_status",
+    "halo_workspace_insert",
+    "halo_workspace_open_with",
+    "halo_workspace_select"
   ],
   "toolDefinitions": [
-    { "toolId": "halo_ink_status", "risk": "READ_ONLY" },
-    { "toolId": "halo_ink_document", "risk": "READ_ONLY" },
-    { "toolId": "halo_ink_selection", "risk": "READ_ONLY" },
-    { "toolId": "halo_ink_start", "risk": "SENSITIVE" },
-    { "toolId": "halo_ink_stop", "risk": "REVERSIBLE" },
+    {
+      "toolId": "halo_ink_status",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_ink_document",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_ink_selection",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_ink_start",
+      "risk": "SENSITIVE"
+    },
+    {
+      "toolId": "halo_ink_stop",
+      "risk": "REVERSIBLE"
+    },
     {
       "toolId": "halo_create_note",
       "risk": "REVERSIBLE"
@@ -216,6 +262,162 @@
     {
       "toolId": "halo_note_unlink_attachment",
       "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_canvas_current",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_workflow_status",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_image_palette",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_transcribe_file",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_save_reviewed_text",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_edit_reviewed_text",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_discard_reviewed_text",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_export_note",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_add_text",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_connect",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_create",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_edit_text",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_get",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_canvas_move",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_ai_draft",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_create",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_current",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_edit",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_export",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_get",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_insert",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_list",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_open",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_save",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_studio_status",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_workspace_canvases",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_workspace_describe",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_workspace_handoff_status",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_workspace_insert",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_workspace_open_with",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_workspace_select",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
     }
-  ]
+  ],
+  "schemaVersion": 2
 }

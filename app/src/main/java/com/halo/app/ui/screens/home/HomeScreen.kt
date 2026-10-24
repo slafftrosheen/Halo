@@ -274,17 +274,21 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
 
-    DisposableEffect(lifecycleOwner, viewModel) {
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    DisposableEffect(lifecycleOwner, viewModel, shellOwnsOrb) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshDashboard()
                 viewModel.refreshToolCatalog()
-            } else if (event == Lifecycle.Event.ON_STOP) {
+            } else if (event == Lifecycle.Event.ON_STOP && !shellOwnsOrb) {
                 viewModel.onHomeStopped()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer); viewModel.onHomeStopped() }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            if (!shellOwnsOrb) viewModel.onHomeStopped()
+        }
     }
 
     val isListening = uiState.inputStatus.capturing || uiState.speechActive || listeningRequested

@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -114,7 +118,8 @@ internal fun shouldCelebrateStudyCompletion(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onStartVoiceMode: () -> Unit = {}, onBack: () -> Unit) {
+fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onConfigureVision: () -> Unit = {}, onStartVoiceMode: () -> Unit = {},
+    activeTools: com.halo.app.study.ActiveStudyToolsOwner? = null, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val attemptStarter = uiText("I think the answer is... because...")
     val questionStarter = uiText("Can you explain this with an example?")
@@ -129,9 +134,29 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var cardQuestion by remember { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val pageActionsReady = !state.isGenerating && state.comparingCards.isEmpty()
+    BindShellPageActions(ShellPageOwner("study", state.session?.id,
+        "${state.session?.updatedAtEpochMs}:${state.session?.currentExerciseId}"), listOf(
+        ShellPageAction("page.study.details", "Sources and progress", HaloGlyph.FILE, pageActionsReady) { showDetails = true },
+        ShellPageAction("page.study.listen", "Listen, then explain", HaloGlyph.SPEAK,
+            pageActionsReady && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { viewModel.listenThenExplain() },
+        ShellPageAction("page.study.save-notes", "Save study notes to Workspace", HaloGlyph.NOTE,
+            pageActionsReady && !state.savingSummary && !state.loading) { viewModel.saveSummaryToNotebook() },
+    ))
     val nextAction = rememberLearningNextAction(state, kids = false,
         blocking = showComposer || showDetails || showMenu || confirmDelete || focusedReview)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, viewModel, activeTools) {
+        var attachment: String? = null
+        fun update() {
+            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                if (attachment == null) attachment = activeTools?.attach(viewModel)
+            } else { attachment?.let { activeTools?.detach(it) }; attachment = null }
+        }
+        val observer = LifecycleEventObserver { _, _ -> update() }
+        lifecycle.addObserver(observer); update()
+        onDispose { lifecycle.removeObserver(observer); attachment?.let { activeTools?.detach(it) } }
+    }
     DisposableEffect(lifecycle, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshSources()
@@ -317,8 +342,17 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 viewModel.stopReading("Left the Study screen")
                 onBack()
             },
-            primaryAction = com.halo.app.ui.design.HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode),
+            primaryAction = if (!com.halo.app.ui.presence.LocalShellHaloOrb.current)
+                com.halo.app.ui.design.HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode) else null,
             glyph = HaloGlyph.QUESTION,
+            trailing = {
+                StudyLessonOverflow(!state.isGenerating && state.comparingCards.isEmpty(), showMenu, { showMenu = it },
+                    canListen = state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
+                    canSave = !state.savingSummary && !state.loading, completed = state.isFinished,
+                    onDetails = { showDetails = true }, onListen = viewModel::listenThenExplain,
+                    onSaveNotes = viewModel::saveSummaryToNotebook, onFinish = viewModel::finishSession,
+                    onDelete = { confirmDelete = true })
+            },
         )
 
         if (state.sources.isNotEmpty()) {
@@ -352,36 +386,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     style = HaloActionStyle.STOP,
                 ) { Text(uiText("Stop")) }
             } else {
-                Box(Modifier.weight(1f)) {
-                    TextButton(onClick = { showMenu = true }) {
-                        StudyActionLabel(HaloGlyph.SETTINGS, "Lesson options")
-                    }
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(uiText("Sources and progress")) },
-                            onClick = { showMenu = false; showDetails = true },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(uiText("Listen, then explain")) },
-                            enabled = state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
-                            onClick = { showMenu = false; viewModel.listenThenExplain() },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(uiText("Save study notes to Workspace")) },
-                            enabled = !state.savingSummary && !state.loading,
-                            onClick = { showMenu = false; viewModel.saveSummaryToNotebook() },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(uiText(if (state.isFinished) "Already completed" else "Finish session")) },
-                            enabled = !state.isFinished,
-                            onClick = { showMenu = false; viewModel.finishSession() },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(uiText("Delete this session's data")) },
-                            onClick = { showMenu = false; confirmDelete = true },
-                        )
-                    }
-                }
+                Spacer(Modifier.weight(1f))
                 if (focusedReview || state.dueReviewItems.isNotEmpty()) {
                     TextButton(onClick = {
                         focusedReview = !focusedReview

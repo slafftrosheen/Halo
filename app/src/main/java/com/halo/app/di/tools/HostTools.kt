@@ -29,7 +29,8 @@ class HostTools(
     private val isForeground: () -> Boolean = { true },
     private val additionalExecutors: List<ToolExecutor> = emptyList(),
     private val preferSemanticRoute: (String?, String) -> Boolean = { _, _ -> false },
-) : ToolExecutor, com.halo.runtime.cognition.tools.ToolPreflightProvider {
+) : ToolExecutor, com.halo.runtime.cognition.tools.ToolPreflightProvider, com.halo.runtime.cognition.tools.ToolGrantPreviewProvider {
+    override suspend fun grantSummary(toolCall: ToolCall): String = registry.grantSummary(toolCall)
     override suspend fun preflight(toolCall: ToolCall) = registry.preflight(toolCall)
     override fun restoreTransientCall(toolCall: ToolCall) = registry.restoreTransientCall(toolCall)
     private val registry = HostToolRegistry(
@@ -59,4 +60,7 @@ class HostTools(
     override fun definitions(): List<ToolDefinition> = registry.definitions()
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult = registry.execute(toolCall)
+
+    override suspend fun execute(toolCall: ToolCall, context: com.halo.runtime.cognition.tools.ToolExecutionContext): ToolExecutionResult =
+        registry.execute(toolCall, context)
 }

@@ -20,7 +20,7 @@ enum class HaloOrbShortcut(val label: Int, val icon: HaloGlyph, val group: HomeT
 }
 
 data class HaloToolCatalogRequest(val group: HomeToolGroup, val entry: String? = null)
-enum class HaloOrbPrimary { TALK, STOP, INTERRUPT, REVIEW }
+enum class HaloOrbPrimary { TALK, FINISH, STOP, INTERRUPT, REVIEW }
 data class HaloOrbInteraction(val primary: HaloOrbPrimary, val canStop: Boolean)
 
 fun haloOrbInteraction(capturing: Boolean, starting: Boolean, processing: Boolean,
@@ -29,6 +29,7 @@ fun haloOrbInteraction(capturing: Boolean, starting: Boolean, processing: Boolea
     return HaloOrbInteraction(when {
         review -> HaloOrbPrimary.REVIEW
         speaking -> HaloOrbPrimary.INTERRUPT
+        capturing -> HaloOrbPrimary.FINISH
         active -> HaloOrbPrimary.STOP
         else -> HaloOrbPrimary.TALK
     }, active)

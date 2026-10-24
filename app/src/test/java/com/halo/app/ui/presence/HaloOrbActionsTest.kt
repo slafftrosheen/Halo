@@ -9,9 +9,9 @@ class HaloOrbActionsTest {
     @Test fun idleOffersTalkWithoutClaimingCapture() {
         assertEquals(HaloOrbInteraction(HaloOrbPrimary.TALK, false), haloOrbInteraction(false, false, false, false, false, false))
     }
-    @Test fun everyActiveInputAndWorkPhaseOffersStop() {
+    @Test fun capturedSpeechIsFinalizedWhilePendingAndWorkCanBeCancelled() {
+        assertEquals(HaloOrbInteraction(HaloOrbPrimary.FINISH, true), haloOrbInteraction(true, false, false, false, false, false))
         listOf(
-            haloOrbInteraction(true, false, false, false, false, false),
             haloOrbInteraction(false, true, false, false, false, false),
             haloOrbInteraction(false, false, true, false, false, false),
             haloOrbInteraction(false, false, false, false, true, false),

@@ -4027,4 +4027,66 @@
     <string name="ui_7ba2528e247f" formatted="false">"Notatka została usunięta. Czyszczenie załączników jeszcze się nie zakończyło."</string>
     <string name="ui_6cf537897a11" formatted="false">"Notatka została usunięta. Nie udało się usunąć niektórych załączników."</string>
     <string name="ui_6e8cdc9e0c89" formatted="false">"Nie udało się potwierdzić usunięcia. Sprawdź kosz przed ponowną próbą."</string>
+    <string name="ui_6fcb01212b1e" formatted="false">"Wyślij nagranie"</string>
+    <string name="ui_d34d17e694df" formatted="false">"Wszystkie strony i działania"</string>
+    <string name="ui_16c5077d5ac3" formatted="false">"Dotknij, aby mówić. Przytrzymaj, aby pokazać skróty. Wszystkie strony są w menu."</string>
+    <string name="ui_65f9ce203b63" formatted="false">"Narzędzia płótna"</string>
+    <string name="ui_59a0ed5dfe29" formatted="false">"Kontekst i prywatność"</string>
+    <string name="ui_7a637f64d66d" formatted="false">"Ta czynność wymaga trybu Power. Użyj przełącznika obok kuli halo."</string>
+    <string name="ui_bc79cdffbaa8" formatted="false">"Więcej opcji"</string>
+    <string name="ui_fb646fa83d0c" formatted="false">"Użyj tej strony jako kontekstu"</string>
+    <string name="ui_7446c9bed868" formatted="false">"Strona została dodana do kontekstu"</string>
+    <string name="ui_0697ecf46d3e" formatted="false">"Strona zmieniła się lub jest niedostępna. Wybierz ją ponownie."</string>
+    <string name="ui_9822097d9935" formatted="false">"Pokaż układ ekranu"</string>
+    <string name="ui_6fd16cc325db" formatted="false">"Podgląd układu ekranu"</string>
+    <string name="ui_401749bfba46" formatted="false">"Zastosuj układ ekranu"</string>
+    <string name="ui_e53c2362d68b" formatted="false">"Zmień ustawienia ekranu"</string>
+    <string name="ui_57dcc60f442a" formatted="false">"Cofnij zmianę układu ekranu"</string>
+    <string name="ui_a7395ce9339f" formatted="false">"Zapisz szablon ekranu"</string>
+    <string name="ui_e77b365757e6" formatted="false">"Usuń szablon ekranu"</string>
+    <string name="ui_a4f167479559" formatted="false">"Pokaż zapisane urządzenia"</string>
+    <string name="ui_c31bd8494cad" formatted="false">"Pokaż zapisane urządzenie"</string>
+    <string name="ui_ad692fb174c7" formatted="false">"Pokaż ustawienia urządzenia"</string>
+    <string name="ui_54a10e03e6d4" formatted="false">"Zmień jakość obrazów urządzenia"</string>
+    <string name="ui_d1078bc391d2" formatted="false">"Ponów połączenie z zapisanym urządzeniem"</string>
+    <string name="ui_5f4aab0fad42" formatted="false">"Połącz zapisane urządzenie"</string>
+    <string name="ui_c0738bc7144b" formatted="false">"Rozłącz zapisane urządzenie"</string>
+    <string name="ui_8b2a3edbf623" formatted="false">"Zmień automatyczne łączenie urządzenia"</string>
+    <string name="ui_e3c0b626636a" formatted="false">"Zapomnij zapisane urządzenie"</string>
+    <string name="ui_8e2e9b35ef84" formatted="false">"Pokaż aplikacje z ustawieniami powiadomień"</string>
+    <string name="ui_cd60fcd34abc" formatted="false">"Pokaż ustawienia powiadomień aplikacji"</string>
+    <string name="ui_ed61d49e62e5" formatted="false">"Zmień ustawienia powiadomień aplikacji"</string>
+    <string name="ui_e59b1247f823" formatted="false">"Pokaż ustawienia dostarczania podsumowań"</string>
+    <string name="ui_0233aa4f3674" formatted="false">"Zmień ustawienia dostarczania podsumowań"</string>
+    <string name="ui_41607bfe62ac" formatted="false">"Pokaż profil trybu"</string>
+    <string name="ui_10de411fb491" formatted="false">"Edytuj profil trybu"</string>
+    <string name="ui_a5e0479ffc52" formatted="false">"Pokaż prywatne szczegóły na pełnym ekranie"</string>
+    <string name="ui_b238a0d300d9" formatted="false">"Osoby w pobliżu mogą zobaczyć osobiste i prywatne karty"</string>
+    <string name="ui_00cd58f655da" formatted="false">"Napisz wiadomość"</string>
+    <string name="ui_4d219b1eed17" formatted="false">"Pokaż ustawienia głosu"</string>
+    <string name="ui_96fdf0e2d214" formatted="false">"Zmień ustawienia głosu"</string>
+    <string name="ui_ec69b4011c10" formatted="false">"Pokaż ustawienia uczenia"</string>
+    <string name="ui_34904f506749" formatted="false">"Zmień ustawienia uczenia"</string>
+    <string name="ui_69c2c7a0d7e3" formatted="false">"Pokaż zapisane procedury"</string>
+    <string name="ui_c286ece9d584" formatted="false">"Pokaż zapisaną procedurę"</string>
+    <string name="ui_c183dc79fd4a" formatted="false">"Pokaż postęp procedury"</string>
+    <string name="ui_d6f88d56f462" formatted="false">"Zmień harmonogram procedury"</string>
+    <string name="ui_d755e1824d6e" formatted="false">"Zapisz zmiany procedury"</string>
+    <string name="ui_58a848a73206" formatted="false">"Usuń zapisaną procedurę"</string>
+    <string name="ui_657b92d94253" formatted="false">"Uruchom zapisaną procedurę"</string>
+    <string name="ui_0d8d0ddeeb28" formatted="false">"Pokaż dostawców odpowiedzi"</string>
+    <string name="ui_d8f6c42274b6" formatted="false">"Pokaż gotowość dostawcy"</string>
+    <string name="ui_26e0c626a225" formatted="false">"Odśwież listę modeli dostawcy"</string>
+    <string name="ui_72f5420482b6" formatted="false">"Sprawdź połączenie z dostawcą"</string>
+    <string name="ui_73fcacd68ce2" formatted="false">"Pokaż aktywną lekcję"</string>
+    <string name="ui_b3ed44b3ea2e" formatted="false">"Zmień aktywną lekcję"</string>
+    <string name="ui_6a73125ccb7c" formatted="false">"Pokaż stan szkicu na płótnie"</string>
+    <string name="ui_f3db132bbaeb" formatted="false">"Zapisz paletę kolorów obrazu"</string>
+    <string name="ui_07a67a5645b9" formatted="false">"Przygotuj lokalną transkrypcję do sprawdzenia"</string>
+    <string name="ui_fd79aec9abe8" formatted="false">"Zapisz sprawdzony tekst na płótnie"</string>
+    <string name="ui_9eff6e96c147" formatted="false">"Edytuj szkic tekstu na płótnie"</string>
+    <string name="ui_040e8f125da8" formatted="false">"Odrzuć szkic tekstu na płótnie"</string>
+    <string name="ui_50d59586a409" formatted="false">"Eksportuj płótno do notatki"</string>
+    <string name="ui_f60ea290c23b" formatted="false">"Pokaż lokalne modele mowy"</string>
+    <string name="ui_dc6bfbbc0a46" formatted="false">"Zarządzaj lokalnym modelem mowy"</string>
 </resources>

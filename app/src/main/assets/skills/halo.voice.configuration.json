@@ -1,0 +1,25 @@
+{
+  "id": "halo.voice.configuration",
+  "name": "Voice settings",
+  "description": "Inspect and edit existing local voice settings without starting a microphone, test playback or provider request.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_get_voice_configuration",
+    "halo_set_voice_configuration"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_get_voice_configuration",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_set_voice_configuration",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

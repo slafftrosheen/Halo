@@ -54,6 +54,17 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 open class MainActivity : ComponentActivity() {
+    internal val speechHandoff = com.halo.app.ui.shell.ShellSpeechHandoff()
+
+    /** Own-app presentation transfer; a failed launch keeps Mini open and releases capture. */
+    internal fun openFullHaloFromMini(screen: String): Boolean {
+        check(this is com.halo.app.ui.mini.MiniHaloActivity)
+        require(screen != "mini_halo" && screen in com.halo.app.ui.shell.HaloScreenCatalog.screens)
+        return speechHandoff.launchAndFinish(
+            launch = { startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(this, screen)) },
+            finish = { finish() },
+            onFailure = { ManualDependencyGraph.homeViewModel.cancelVoiceInput() })
+    }
     private var compactWindow by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
     private var runtimeReady by mutableStateOf(false)
@@ -132,6 +143,8 @@ open class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.onCreate.begin", startedAt)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        if (this !is com.halo.app.ui.mini.MiniHaloActivity) com.halo.app.ui.mini.MiniHaloHandoff.adopt(
+            intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN))
 
         RuntimeStartupTrace.mark("activity.graph.init.begin", startedAt)
         ManualDependencyGraph.init(this)
@@ -286,6 +299,8 @@ open class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (this !is com.halo.app.ui.mini.MiniHaloActivity) com.halo.app.ui.mini.MiniHaloHandoff.adopt(
+            intent.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN))
         setIntent(intent)
         handleHaloScreenIntent(intent)
         handleIncomingShareIntent(intent)

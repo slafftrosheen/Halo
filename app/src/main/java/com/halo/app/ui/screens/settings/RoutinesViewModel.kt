@@ -22,7 +22,8 @@ class RoutinesViewModel(private val repository: RoomRoutineRepository, private v
     internal val suggestions = learning.pending.map { rows -> rows.mapNotNull(::routineSuggestion) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun dismissSuggestion(id: String) = act { learning.dismiss(id) }
-    private val commands = RoutineCommands(repository, scheduler, executor::execute)
+    val managementActions = RoutineManagementActions(repository, scheduler, executor::validateForSave,
+        executor::validate, executor::grantSummary, executor::execute)
     private val mutableTrial = MutableStateFlow(RoutineTrialState())
     val trial = mutableTrial.asStateFlow()
     private var trialJob: Job? = null
@@ -65,35 +66,27 @@ class RoutinesViewModel(private val repository: RoomRoutineRepository, private v
         if (saving.value || mutableTrial.value.running) return
         saving.value = true
         act { try {
-        executor.validateForSave(r)
-        (r.trigger as? RoutineTrigger.Once)?.let { require(it.at > Instant.now()) { "Choose a future time" } }
-        val approved = r.copy(updatedAt = Instant.now(), grantDigest = RoutineArguments.grant(r))
-        if (suggestionId == null) repository.upsert(approved)
-        else learning.acceptRoutineReview(suggestionId, r.id.value) { repository.upsert(approved) }
-        val schedule = scheduler.schedule(requireNotNull(repository.get(r.id)))
-        if (schedule is RoutineScheduleResult.Blocked && r.enabled) error.value = schedule.reason
+        val receipt = managementActions.save(r, commit = { persist ->
+            if (suggestionId == null) persist()
+            else learning.acceptRoutineReview(suggestionId, r.id.value, persist)
+        })
+        check(receipt != null) { "Automation changed; open it again before saving" }
+        if (receipt.scheduling == "BLOCKED" && r.enabled) error.value = receipt.schedulingReason
         withContext(Dispatchers.Main) { saved() }
         } finally { saving.value = false } }
     }
     fun enable(id: RoutineId, enabled: Boolean) = act {
-        val r = requireNotNull(repository.get(id))
-        if (enabled) {
-            executor.validateForSave(r)
-            require(r.grantDigest != null && r.grantDigest == RoutineArguments.grant(r)) { "Open and save this automation to approve its actions" }
-        }
-        repository.setEnabled(id, enabled)
-        if (enabled) {
-            val result = scheduler.schedule(requireNotNull(repository.get(id)))
-            if (result is RoutineScheduleResult.Blocked) error.value = result.reason
-        } else scheduler.cancel(id)
+        val receipt = managementActions.setEnabled(id, enabled)
+        check(receipt != null) { "Automation changed; open it again" }
+        if (receipt.scheduling == "BLOCKED") error.value = receipt.schedulingReason
     }
     fun reconcile() = act { scheduler.reconcile() }
-    fun delete(id: RoutineId) = act { commands.delete(id) }
+    fun delete(id: RoutineId) = act { check(managementActions.delete(id) != null) { "Automation no longer available" } }
     fun runNow(id: RoutineId) {
         if (id in running.value) return
         running.update { it + id }
         act {
-            try { commands.runNow(id) }
+            try { check(managementActions.runNow(id) != null) { "Automation changed; open it again" } }
             finally { running.update { it - id } }
         }
     }

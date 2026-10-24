@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.halo.app.ui.screens.settings.PaletteControls
+import com.halo.app.ui.screens.settings.AppearanceControls
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -23,11 +23,15 @@ import org.robolectric.annotation.GraphicsMode
 class PaletteVisualTest {
     private fun capture(dark: Boolean, scale: Float = 0f) {
         val preferences = PalettePreferences(RuntimeEnvironment.getApplication())
+        val assistant = AssistantPreferences(RuntimeEnvironment.getApplication())
         captureRoboImage {
-            HaloTheme(darkTheme = dark, fontScale = scale) {
+            HostlessHaloTheme(darkTheme = dark, fontScale = scale) {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
                     Column(Modifier.width(320.dp).height(1000.dp)
-                        .verticalScroll(rememberScrollState())) { PaletteControls(preferences) }
+                        .verticalScroll(rememberScrollState())) {
+                            AppearanceControls(if (dark) AppearanceMode.DARK else AppearanceMode.LIGHT,
+                                {}, preferences, assistant)
+                        }
                 }
             }
         }

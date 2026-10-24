@@ -20,7 +20,10 @@ internal class StudioInkSession(val initial: StudioProject, val layerId: String,
     private val mutableFailed = MutableStateFlow(false)
     val failed = mutableFailed.asStateFlow()
     private var latest = requireNotNull(initial.session.current.layers.find { it.id == layerId }).ink
-    private val committed = MutableStateFlow(latest)
+    private data class PersistedInk(val encoded: String, val revision: Long)
+    private val committed = MutableStateFlow(PersistedInk(latest, initial.revision))
+    /** Revision written by this input owner, never advanced by unrelated Room emissions. */
+    val persistedRevision: Long get() = committed.value.revision
     private val pending = Channel<String>(Channel.CONFLATED)
     init {
         var revision = project.revision
@@ -32,7 +35,7 @@ internal class StudioInkSession(val initial: StudioProject, val layerId: String,
                     val updated = projects.apply(project.id, revision, StudioCommand.Replace(layer.copy(ink = encoded)))
                     revision = updated.revision
                     layer = requireNotNull(updated.session.current.layers.find { it.id == layerId })
-                    committed.value = encoded
+                    committed.value = PersistedInk(encoded, updated.revision)
                     onCommitted(updated)
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
@@ -47,8 +50,8 @@ internal class StudioInkSession(val initial: StudioProject, val layerId: String,
     suspend fun awaitPersisted(): Boolean {
         val expected = latest
         return withTimeoutOrNull(10_000) {
-            combine(committed, failed) { encoded, failed -> encoded == expected || failed }.first { it }
-            !failed.value && committed.value == expected
+            combine(committed, failed) { saved, failed -> saved.encoded == expected || failed }.first { it }
+            !failed.value && committed.value.encoded == expected
         } ?: false
     }
     fun draft(): StudioDocument {

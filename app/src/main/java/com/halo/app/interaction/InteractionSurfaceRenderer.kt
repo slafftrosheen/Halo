@@ -177,7 +177,7 @@ private fun HaloApprovalHeading(subject: String) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(uiText("Needs your approval"), style = MaterialTheme.typography.labelMedium,
                 color = ink)
-            Text(subject, style = MaterialTheme.typography.titleMedium,
+            Text(approvalSubjectCopy(subject), style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold)
         }
     }
@@ -195,7 +195,7 @@ private fun HaloApprovalEvidence(
         // The exact step and affected target must originate in runtime detail
         // or typed supplements. A UI host cannot synthesize a plan.
         content.detail?.takeIf(String::isNotBlank)?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium)
+            Text(approvalDetailCopy(it, content.subject), style = MaterialTheme.typography.bodyMedium)
         }
         InteractionSupplements(surface)
         content.risk?.let { risk ->
@@ -205,7 +205,7 @@ private fun HaloApprovalEvidence(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Text(
-                    risk.summary?.takeIf(String::isNotBlank) ?: uiText(riskCopy(risk.level)),
+                    risk.summary?.takeIf(String::isNotBlank)?.let { approvalDetailCopy(it, content.subject) } ?: uiText(riskCopy(risk.level)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(12.dp),
@@ -282,7 +282,7 @@ private fun HaloConfirmationSurface(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 content.detail?.takeIf(String::isNotBlank)?.let {
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                    Text(approvalDetailCopy(it, content.subject), style = MaterialTheme.typography.bodyMedium)
                 }
                 InteractionSupplements(surface)
                 content.risk?.let { risk ->
@@ -292,7 +292,7 @@ private fun HaloConfirmationSurface(
                         shape = com.halo.app.ui.design.HaloShapes.control,
                     ) {
                         Text(
-                            risk.summary?.takeIf(String::isNotBlank) ?: uiText(riskCopy(risk.level)),
+                            risk.summary?.takeIf(String::isNotBlank)?.let { approvalDetailCopy(it, content.subject) } ?: uiText(riskCopy(risk.level)),
                             modifier = Modifier.padding(12.dp),
                             color = scheme.onSurface,
                             style = MaterialTheme.typography.bodyMedium,

@@ -19,7 +19,8 @@ import com.halo.runtime.cognition.memory.*
     val graph = ManualDependencyGraph
     val model: LearningSettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T =
-            LearningSettingsViewModel(graph.storage, graph.learningPreferences(), graph.workspaceContext.useMemories, graph.workspaceContext::setUseMemories) as T
+            LearningSettingsViewModel(graph.storage, graph.learningPreferences(), graph.workspaceContext.useMemories, graph.workspaceContext::setUseMemories,
+                graph.learningConfiguration) as T
     })
     val preferences by model.preferences.collectAsStateWithLifecycle()
     val memoryUse by model.memoryUse.collectAsStateWithLifecycle()

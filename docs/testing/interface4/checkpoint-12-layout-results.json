@@ -1,0 +1,5 @@
+[
+  {"case":"360dp_portrait_font200","rotation":0,"privacyBounds":"[36,2074][372,2250]","talkCount":1},
+  {"case":"800x360dp_landscape_font200_longpress_list","rotation":1,"menuOpened":true,"observedScrollableBounds":["[300,298][2100,1020]"]},
+  {"case":"landscape_back_dismisses_menu","menuAbsent":true,"workspaceRetained":true}
+]

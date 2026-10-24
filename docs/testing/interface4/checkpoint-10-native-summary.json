@@ -1,0 +1,100 @@
+{
+  "artifact": {
+    "app": {
+      "sha256": "5c057808f35cb3584ec8d279b26952b92d8ded284db9eb46b6c5bf95e99922d8",
+      "bytes": 289581146,
+      "installedSha256": "5c057808f35cb3584ec8d279b26952b92d8ded284db9eb46b6c5bf95e99922d8"
+    },
+    "test": {
+      "sha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "bytes": 1949934,
+      "installedSha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8"
+    }
+  },
+  "cases": [
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "twoHundredPercentListAndPrivacyTargetsStaySeparate",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeSwipeUpOpensTheListWithoutInvokingPrimary",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeLongPressOpensDestinationListWithoutCapturing",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "customAccessibilityActionOpensTheSameListWithoutSideEffects",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+      "test": "realMainActivityRendersWarmAndResumedScreenIntents",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniActivityLaunchesAndBackCloses",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest",
+      "test": "realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground",
+      "code": -4,
+      "status": "NOT_RUN"
+    }
+  ],
+  "totals": {
+    "PASS": 12,
+    "FAIL": 0,
+    "NOT_RUN": 1
+  },
+  "limits": "Orb callbacks are isolated; private owner traces use synthetic loopback TLS; Mini lifecycle observer is not live capture; quiet microphone test skipped."
+}

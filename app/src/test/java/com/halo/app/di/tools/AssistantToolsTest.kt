@@ -23,9 +23,37 @@ class AssistantToolsTest {
         context.getSharedPreferences("halo_assistant_preferences", Context.MODE_PRIVATE).edit().clear().commit()
         context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE).edit().clear().commit()
     }
-    private fun tools(foreground: Boolean = true, read: suspend (String, String) -> Unit = { _, _ -> }, stop: () -> Unit = {}) =
-        AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), read, stop, { foreground })
+    private fun tools(foreground: Boolean = true, read: suspend (String, String) -> Unit = { _, _ -> }, stop: () -> Unit = {},
+        profiles: com.halo.app.di.tools.host.ModeProfileTools? = null) =
+        AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), read, stop, { foreground }, modeProfiles = profiles)
     private fun call(name: String, args: Map<String, Any> = emptyMap()) = ToolCall("test", name, args)
+
+    @Test fun `configuration mutations require foreground grown-up admission before any owner write`() = runBlocking {
+        val denied = AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), { _, _ -> }, {},
+            isForeground = { true }, canConfigure = { false })
+        listOf("halo_set_preferences", "halo_edit_mode_profile").forEach { name ->
+            val result = denied.execute(call(name, mapOf("language" to "pl"))) as ToolExecutionResult.Rejected
+            assertEquals(ToolRejectionKind.PERMISSION_REQUIRED, result.kind)
+        }
+        assertTrue(denied.execute(call("halo_get_preferences")) is ToolExecutionResult.Success)
+        assertTrue(tools(foreground = false).execute(call("halo_set_preferences", mapOf("fontScale" to 2.0))) is ToolExecutionResult.Rejected)
+    }
+
+    @Test fun `navigation has versioned operability and dispatches every exact assistant destination`() = runBlocking {
+        val executor = tools()
+        val descriptors = DescriptorCatalog.descriptorsFor(HaloToolDescriptors.ExecutorKind.ASSISTANT, executor)
+        val registry = ToolRegistry(listOf(executor), descriptors)
+        assertEquals(emptyList<ToolOperabilityProblem>(), registry.operabilityReport(listOf(
+            ToolFeatureOperability("interface-4-navigation", setOf("halo_list_screens", "halo_open_screen")))))
+        assertEquals(ReplaySafety.NEVER_REPLAY, descriptors.single { it.name == "halo_open_screen" }.security.replaySafety)
+        com.halo.cognition.language.NativeHaloScreenDestination.entries.forEach { destination ->
+            val result = executor.execute(call("halo_open_screen", mapOf("screen" to destination.wireId))) as ToolExecutionResult.Success
+            assertEquals(ActionTruth.DISPATCHED, result.actionTruth)
+            assertTrue(result.output.contains("page render unconfirmed"))
+            val intent = Shadows.shadowOf(context as android.app.Application).nextStartedActivity
+            assertEquals(destination.wireId, intent.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN))
+        }
+    }
 
     @Test fun `settings persist and a new repository restores the same values`() = runBlocking {
         val executor = HostToolRegistry(listOf(tools()))
@@ -64,14 +92,33 @@ class AssistantToolsTest {
         assertEquals(ToolRejectionKind.PERMISSION_REQUIRED, (denied as ToolExecutionResult.Rejected).kind)
     }
     @Test fun `new tools have manifest discovery policy and exact descriptor ownership`() {
-        val executor = tools()
+        val profiles = com.halo.app.di.tools.host.ModeProfileTools(com.halo.app.ai.PrivacyModeStore(MetadataStorage())) { _, _, _ ->
+            error("Metadata review must not mutate a profile")
+        }
+        val executor = tools(profiles = profiles)
         val descriptors = DescriptorCatalog.descriptorsFor(HaloToolDescriptors.ExecutorKind.ASSISTANT, executor)
         assertEquals(executor.definitions().map { it.name }.toSet(), descriptors.map { it.name }.toSet())
         // Local allowlist must activate every new ability while keeping bootstrap bounded.
-        assertEquals("Every assistant ability must be locally activatable", emptySet<String>(), executor.definitions().map { it.name }.toSet() - LocalModelToolPolicy.PHONE_ACTIONS)
+        com.halo.sdk.provider.ToolCallProtocol.entries.forEach { protocol ->
+            val policy = LocalModelToolPolicy.forProtocol(protocol)
+            assertTrue("Every assistant ability must be reachable through the actual discovery policy", executor.definitions().all { policy.mayExpose(it.name) })
+            assertEquals(LocalModelToolPolicy.BOOTSTRAP, policy.allowedToolIds)
+        }
         assertEquals(3, LocalModelToolPolicy.BOOTSTRAP.size)
         val skill = com.halo.app.di.BuiltInSkillManifestLoader(context).load().single { it.id.value == "halo.assistant" }
         assertEquals(executor.definitions().map { it.name }.toSet(), skill.tools)
         assertEquals(ReplaySafety.NEVER_REPLAY, descriptors.single { it.name == "halo_read_aloud" }.security.replaySafety)
+    }
+
+    private class MetadataStorage : com.halo.sdk.runtime.Storage {
+        private val values = mutableMapOf<String, Any?>()
+        override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
+        override fun putString(key: String, value: String?) { values[key] = value }
+        override fun getInt(key: String, defaultValue: Int) = values[key] as? Int ?: defaultValue
+        override fun putInt(key: String, value: Int) { values[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean) = values[key] as? Boolean ?: defaultValue
+        override fun putBoolean(key: String, value: Boolean) { values[key] = value }
+        override fun remove(key: String) { values.remove(key) }
+        override fun clear() { values.clear() }
     }
 }

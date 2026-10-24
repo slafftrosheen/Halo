@@ -77,9 +77,14 @@ class VoiceSettingsViewModel(
         }
     }
     private var testJob: kotlinx.coroutines.Job? = null
+    private val synthesisPreferenceLock = Any()
     private fun reloadable() = providerGraph?.providers?.speechRecognition as? ReloadableSpeechRecognitionProvider
-    fun cloudSynthesisFallback(): Boolean = storage?.getBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, true) ?: true
-    fun setCloudSynthesisFallback(enabled: Boolean) = storage?.putBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, enabled)
+    fun cloudSynthesisFallback(): Boolean = synchronized(synthesisPreferenceLock) { storage?.getBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, true) ?: true }
+    fun setCloudSynthesisFallback(enabled: Boolean) = synchronized(synthesisPreferenceLock) { storage?.putBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, enabled) }
+    fun setCloudSynthesisFallbackExpected(enabled: Boolean, expected: Boolean) = synchronized(synthesisPreferenceLock) {
+        check(cloudSynthesisFallback() == expected) { "Synthesis fallback changed" }
+        setCloudSynthesisFallback(enabled)
+    }
     fun refreshState() { viewModelScope.launch {
         reloadable()?.refresh()?.join()
         speechInventory.refresh(languageSettings.languageMode.value)
@@ -94,13 +99,21 @@ class VoiceSettingsViewModel(
         viewModelScope.launch { reloadable()?.refresh()?.join(); refreshState() }
     }
     fun removeModel(modelId: String) {
+        removeModelGuarded(modelId, null)
+    }
+    fun removeModelExpected(modelId: String, expectedArtifactVersion: String) {
+        removeModelGuarded(modelId, expectedArtifactVersion)
+    }
+    private fun removeModelGuarded(modelId: String, expectedArtifactVersion: String?) {
         val isVad = modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID
         val spec = SherpaSpeechModelCatalog.byId(modelId)
         if (!isVad && spec == null) return
         val state = _uiState.value
         if ((!isVad && (state.selectedProviderId == spec?.providerId || reloadable()?.metadata?.id == spec?.providerId)) || state.isTesting || state.isDownloading) return
         viewModelScope.launch {
-            speechInventory.remove(modelId).exceptionOrNull()?.let { _uiState.value = _uiState.value.copy(downloadError = it.message) }
+            (if (expectedArtifactVersion == null) speechInventory.remove(modelId)
+                else speechInventory.removeExpected(modelId, expectedArtifactVersion)).exceptionOrNull()
+                ?.let { _uiState.value = _uiState.value.copy(downloadError = it.message) }
             refreshState()
         }
     }
@@ -145,10 +158,18 @@ class VoiceSettingsViewModel(
     fun selectLocale(tag: String) {
         if (_uiState.value.isTesting) return
         viewModelScope.launch {
-            languageSettings.select(tag)
-            reloadable()?.refresh()?.join()
-            speechInventory.refresh(tag)
+            selectLocaleAndAwait(tag)
         }
+    }
+    suspend fun selectLocaleAndAwait(tag: String, expected: String? = null) {
+        check(!_uiState.value.isTesting && !_uiState.value.isDownloading) { "Finish the voice test or download first" }
+        if (expected == null) languageSettings.select(tag) else languageSettings.selectExpected(tag, expected)
+        reloadable()?.refresh()?.join()
+        speechInventory.refresh(tag)
+    }
+    fun refreshConfiguredVoicePreferences() {
+        _uiState.value = _uiState.value.copy(wearablePhoneFallback = voiceExperience?.state?.value?.wearablePhoneFallback
+            ?: storage?.getBoolean("wearable_phone_fallback", false) ?: false)
     }
     val conversation = voiceExperience?.state ?: MutableStateFlow(com.halo.app.audio.VoiceExperienceSettings())
     fun updateConversation(value: com.halo.app.audio.VoiceExperienceSettings) { voiceExperience?.update(value) }

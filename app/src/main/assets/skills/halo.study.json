@@ -20,7 +20,9 @@
     "halo_study_card_accept",
     "halo_study_card_review",
     "halo_study_delete",
-    "halo_study_card_delete"
+    "halo_study_card_delete",
+    "halo_study_current",
+    "halo_study_session_action"
   ],
   "requiredPermissions": [],
   "toolDefinitions": [
@@ -83,6 +85,16 @@
     {
       "toolId": "halo_study_card_delete",
       "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_study_current",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_study_session_action",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
     }
   ]
 }

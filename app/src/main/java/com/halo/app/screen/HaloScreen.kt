@@ -1,5 +1,9 @@
 package com.halo.app.screen
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.provider.CalendarContract
@@ -149,6 +153,12 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var detailCard by remember { mutableStateOf<ScreenCard?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     var canUndo by remember { mutableStateOf(store.hasUndo()) }
+    BindShellPageActions(ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen"), listOf(
+        ShellPageAction("page.screen.customize", "Customize", HaloGlyph.SETTINGS,
+            layout != null && !customizing && canInteract) { setCustomizing(true) },
+        ShellPageAction("page.screen.settings", "Screen settings", HaloGlyph.SETTINGS, canInteract) { settings = true },
+        ShellPageAction("page.screen.add", "Add card", HaloGlyph.NOTE, customizing && canInteract) { picker = true },
+    ))
     var calendarAllowed by remember { mutableStateOf(ContextCompat.checkSelfPermission(context,
         Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) }
     var calendarEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
@@ -334,8 +344,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         if (workingLayout == null) {
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(vertical = 16.dp), verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                if (orbControl != null) orbControl(112.dp)
-                else HaloSignalFace(HaloSignalPresentation(label = "Your Screen"), size = 112.dp)
+                if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) {
+                    if (orbControl != null) orbControl(112.dp)
+                    else HaloSignalFace(HaloSignalPresentation(label = "Your Screen"), size = 112.dp)
+                }
                 Text(uiText("A little clarity, at a glance."), style = MaterialTheme.typography.headlineSmall)
                 Text(uiText("Choose a starting layout. You can change every card."), modifier = Modifier.padding(vertical = 16.dp))
                 listOf("Morning", "Focus", "Quiet").forEach { name ->

@@ -7,6 +7,9 @@ import com.halo.app.language.uiText
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
@@ -33,17 +35,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import com.halo.app.ui.theme.rememberReducedMotion
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.launch
 
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -57,8 +57,6 @@ import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ai.readRuntimeAiContextPolicy
-import com.halo.app.ui.glass.components.HaloNavigation
-import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
@@ -123,6 +121,20 @@ fun AppShell(
     val initialSetupNeeded = remember { setupStore.shouldAutoLaunch() }
     var setupSession by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initialSetupNeeded) }
     val homeViewModel = ManualDependencyGraph.homeViewModel
+    // Activity foreground owns voice; route disposal must not end a global session.
+    val shellLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val shellActivity = com.halo.app.ui.mini.miniHaloActivityOwner(LocalContext.current)
+    androidx.compose.runtime.DisposableEffect(shellLifecycle, homeViewModel, shellActivity) {
+        val binding = bindShellSpeechLifecycle(shellLifecycle, {
+            val host = shellActivity as? com.halo.app.MainActivity
+            if (host != null) host.speechHandoff.preservesSpeechOnStop(host.isChangingConfigurations, host.isFinishing)
+            else shellActivity?.isChangingConfigurations == true
+        }) {
+            homeViewModel.onHomeStopped()
+            homeViewModel.cancelVoiceInput()
+        }
+        onDispose { binding.close() }
+    }
     val kidsMode by ManualDependencyGraph.kidsPreferences.enabled.collectAsStateWithLifecycle()
     val kidsReady by ManualDependencyGraph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val kidsLoadError by ManualDependencyGraph.kidsPreferences.loadError.collectAsStateWithLifecycle()
@@ -165,12 +177,19 @@ fun AppShell(
         }
         val activity = com.halo.app.ui.mini.miniHaloActivityOwner(studyContext)
         if (activity is com.halo.app.ui.mini.MiniHaloActivity && route != "mini_halo" && route in HaloScreenCatalog.screens) {
-            activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, route)); activity.finish()
+            activity.openFullHaloFromMini(route)
             return
         }
+        if (route == "screen") {
+            screenMode = true
+            screenFull = false
+            navController.navigateToPrimary("home", restoreSavedState = false)
+            return
+        }
+        if (route == "home") { screenMode = false; screenFull = false }
         if (navController.currentDestination?.route != route) {
             if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
-            if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route)
+            if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route, restoreSavedState = false)
             else navController.navigate(route) { launchSingleTop = true }
         }
     }
@@ -202,11 +221,11 @@ fun AppShell(
         text = { Text(uiText("Ask a grown-up to set a device PIN or password in Android settings first.")) },
         confirmButton = { TextButton(onClick = { parentUnavailable = false }) { Text(uiText("OK")) } })
     val ownerLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
-    val ownerState by ownerLifecycle.currentStateFlow.collectAsState()
-    val requestedScreen by ManualDependencyGraph.requestedHaloScreen.collectAsStateWithLifecycle(minActiveState = androidx.lifecycle.Lifecycle.State.RESUMED)
-    LaunchedEffect(requestedScreen, ownerState) {
-        HaloScreenRequests.claim(ManualDependencyGraph.requestedHaloScreen,
-            ownerState == androidx.lifecycle.Lifecycle.State.RESUMED)?.let(::navigateSafely)
+    val navigateRequestedScreen by rememberUpdatedState(newValue = ::navigateSafely)
+    LaunchedEffect(ownerLifecycle) {
+        HaloScreenRequests.collectResumed(ownerLifecycle, ManualDependencyGraph.requestedHaloScreen) {
+            navigateRequestedScreen(it)
+        }
     }
     LaunchedEffect(Unit) {
         val screen = ManualDependencyGraph.assistantPreferences.get().startScreen
@@ -285,9 +304,11 @@ fun AppShell(
     }
 
     BoxWithConstraints {
-    val expandedNavigation = maxWidth >= 600.dp
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    androidx.activity.compose.BackHandler(currentRoute == "home" && screenMode && !kidsMode) {
+        if (screenFull) screenFull = false else screenMode = false
+    }
     val developerRouteBlocked = currentRoute?.let {
         com.halo.app.ui.screens.settings.isDeveloperDestination(it)
     } == true && !ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
@@ -297,48 +318,104 @@ fun AppShell(
             performNavigation("advanced_settings")
         }
     }
-    val immersiveScreen = screenFull && currentRoute == "home" && screenMode && !kidsMode
     val mini = backStackEntry?.destination?.route == "mini_halo"
     LaunchedEffect(mini) { onCompactChanged(mini) }
     val editingWorkspace = backStackEntry?.destination?.route?.let {
         it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/") || it.startsWith("notebook/study/") || it.startsWith("studio") || it.startsWith("file_tools")
     } == true
-    val homeKeyboardVisible = currentRoute == "home" &&
-        WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0
+    val shellOrbVisible = !mini && currentRoute != "guided_setup"
+    var hintDismissed by androidx.compose.runtime.saveable.rememberSaveable {
+        androidx.compose.runtime.mutableStateOf(ManualDependencyGraph.storage.getBoolean("interface4_orb_hint_seen", false))
+    }
+    fun dismissOrbHint() {
+        hintDismissed = true
+        ManualDependencyGraph.storage.putBoolean("interface4_orb_hint_seen", true)
+    }
+    val orbDestinations = remember(kidsMode) { ShellOrbCatalog.destinations(kidsMode) }
+    val contextualRoute = if (currentRoute == "home" && screenMode) "screen" else currentRoute
+    val pageContextBinding = remember { com.halo.app.context.CurrentPageContextBinding(
+        ManualDependencyGraph.interactionContext, ManualDependencyGraph.workspaceContext::versionFor) }
+    val contextObjectId = com.halo.app.context.CurrentPageContextBinding.objectArgument(currentRoute)
+        ?.let { backStackEntry?.arguments?.getString(it) }
+    var contextNotice by remember(backStackEntry) { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var contextJob by remember { androidx.compose.runtime.mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var showTypedMessage by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.runtime.DisposableEffect(backStackEntry, contextObjectId) {
+        onDispose { contextJob?.cancel(); contextJob = null }
+    }
+    val pageActions = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellPageProjection?>(null) }
+    val pageObjectId = contextObjectId ?: backStackEntry?.arguments?.getString("sessionId") ?: backStackEntry?.arguments?.getString("projectId")
+    val pageOwnerFilter: (com.halo.app.ui.presence.ShellPageOwner) -> Boolean = remember(kidsMode, contextualRoute, pageObjectId, backStackEntry?.id) { { owner ->
+        !kidsMode && owner.navigationEntryId == backStackEntry?.id && ShellOrbCatalog.pageOwnerMatches(owner, contextualRoute, pageObjectId)
+    }
+    }
+    val livePageActions = pageActions.value?.takeIf { pageOwnerFilter(it.owner) }
+    val orbContext = remember(contextualRoute, kidsMode, contextObjectId, livePageActions) {
+        val page = if (!kidsMode && contextObjectId != null)
+            listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
+        val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph, enabled = it.enabled) }
+            ?: ShellOrbCatalog.context(contextualRoute, kidsMode)
+        actions + page +
+            if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
+    }
+    val orbOverride = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellOrbOverride?>(null) }
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.halo.app.ui.presence.LocalShellHaloOrb provides shellOrbVisible,
+        com.halo.app.ui.presence.LocalShellOrbOverride provides orbOverride,
+        com.halo.app.ui.presence.LocalShellPageActions provides pageActions,
+        com.halo.app.ui.presence.LocalShellPageOwnerFilter provides pageOwnerFilter) {
+    ShellTypedMessageSheet(homeViewModel, showTypedMessage && shellOrbVisible && !kidsMode) { showTypedMessage = false }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { com.halo.app.ui.components.PrivacyModeControl(Modifier.statusBarsPadding()) },
         bottomBar = {
-            if (!immersiveScreen) Column {
-            val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
-            if (!kidsMode && !editingWorkspace && currentRoute !in setOf("home", "permissions", "guided_setup")) LiveTaskPill(liveHome,
-                onReview = { navigateSafely("activity") }, onStop = homeViewModel::cancelSession)
-            com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
-                onVoiceSettings = { navigateSafely("settings/voice/output") })
-            if (!mini && !kidsMode && !editingWorkspace && !expandedNavigation && !homeKeyboardVisible && backStackEntry?.destination?.route != "guided_setup") {
-                HaloNavigation(
-                    navController = navController,
-                    items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
-                )
-            }
+            if (shellOrbVisible) Column(
+                Modifier.fillMaxWidth().navigationBarsPadding().imePadding(),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
+                if (!kidsMode && !editingWorkspace && currentRoute !in setOf("home", "permissions")) LiveTaskPill(liveHome,
+                    onReview = { navigateSafely("activity") }, onStop = homeViewModel::cancelSession)
+                com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
+                    onVoiceSettings = { navigateSafely("settings/voice/output") })
+                contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
+                val scopedOrb = orbOverride.value.takeIf { kidsMode && currentRoute == "home" }
+                if (scopedOrb != null) com.halo.app.ui.presence.HaloOrbLauncher(
+                    scopedOrb.signal, scopedOrb.interaction, emptySet(), {}, scopedOrb.onPrimary, scopedOrb.onStop,
+                    onTools = {}, showToolCatalog = false, destinations = orbDestinations, onNavigate = ::navigateSafely,
+                    leading = { com.halo.app.ui.components.CompactPrivacyModeControl() })
+                else com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions, ::navigateSafely,
+                    size = 64.dp, destinations = orbDestinations, onNavigate = ::navigateSafely,
+                    contextActions = orbContext, onContextAction = { action ->
+                        if (!action.enabled) Unit
+                        else if (action.id.startsWith("page:")) {
+                            val projection = pageActions.value
+                            if (projection != null && pageOwnerFilter(projection.owner) &&
+                                projection.actions.any { "page:${it.id}" == action.id && it.title == action.title && it.glyph == action.glyph && it.enabled })
+                                projection.invoke(action.id.removePrefix("page:"))
+                        }
+                        else if (action.id == "type-message") showTypedMessage = true
+                        else if (action.id == "page-context") {
+                            val id = contextObjectId
+                            val route = currentRoute
+                            if (id != null && route != null && contextJob?.isActive != true) {
+                                contextJob = shellScope.launch {
+                                    try {
+                                        pageContextBinding.bind(route, id)
+                                        contextNotice = "Page added as context"
+                                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                    catch (_: Exception) { contextNotice = "Page changed or unavailable. Select it again." }
+                                }
+                            }
+                        } else if (action.id == "new-note") homeViewModel.createNote()
+                        else action.catalog?.let { homeViewModel.requestOrbCatalog(it); navigateSafely("home") }
+                    }, hint = if (hintDismissed) null else "Tap to talk. Hold for shortcuts. Menu opens every page.",
+                    onDismissHint = ::dismissOrbHint,
+                    leading = { com.halo.app.ui.components.CompactPrivacyModeControl() })
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
         Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
-            if (!immersiveScreen && !mini && !kidsMode && !editingWorkspace && expandedNavigation && backStackEntry?.destination?.route != "guided_setup") {
-                NavigationRail {
-                    bottomNavItems.forEach { item ->
-                        NavigationRailItem(
-                            selected = primaryNavigationRoute(backStackEntry?.destination?.route) == item.route,
-                            onClick = { navigateSafely(item.route) },
-                            icon = { com.halo.app.ui.icons.HaloIcon(item.glyph, contentDescription = uiText(item.title), modifier = Modifier.size(24.dp)) },
-                            label = { Text(uiText(item.title)) }
-                        )
-                    }
-                }
-            }
         Column(Modifier.weight(1f).fillMaxSize()) {
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (kidsMode && backStackEntry?.destination?.route != "home" && backStackEntry?.destination?.route != "guided_setup")
@@ -371,7 +448,7 @@ fun AppShell(
                             activity !is com.halo.app.ui.mini.MiniHaloActivity, reducedMotion),
                         onOpen = { screen ->
                         if (activity is com.halo.app.ui.mini.MiniHaloActivity) {
-                            activity.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(activity, screen)); activity.finish()
+                            activity.openFullHaloFromMini(screen)
                         } else navigateSafely(screen)
                     },
                         onClose = {
@@ -593,7 +670,7 @@ fun AppShell(
                             val kind = if (item?.type == WorkspaceObjectType.NOTE) "note" else "file"
                             navigateSafely("notebook/$kind/${android.net.Uri.encode(id)}")
                         } }, onConfigureVision = { navigateSafely("settings/intelligence/roles") },
-                            onStartVoiceMode = requestVoiceModeFromSurface) { navController.popBackStack() }
+                            onStartVoiceMode = requestVoiceModeFromSurface, activeTools = ManualDependencyGraph.activeStudyToolsOwner) { navController.popBackStack() }
                     }
                 }
 
@@ -621,6 +698,14 @@ fun AppShell(
                                 study = ManualDependencyGraph.studyUseCases,
                             ),
                         )
+                        androidx.compose.runtime.DisposableEffect(canvasViewModel) {
+                            val token = ManualDependencyGraph.currentCanvasContext.attach(canvasViewModel::currentContextProjection)
+                            val workflow = ManualDependencyGraph.canvasWorkflowBridge.attach(canvasViewModel)
+                            onDispose {
+                                ManualDependencyGraph.currentCanvasContext.detach(token)
+                                ManualDependencyGraph.canvasWorkflowBridge.detach(workflow)
+                            }
+                        }
                         LaunchedEffect(canvasViewModel) {
                             canvasViewModel.navigationEvents.collectLatest { event ->
                                 when (event) {
@@ -1234,5 +1319,6 @@ fun AppShell(
         }
     }
     }
+    } // shell presence ownership
     }
 }

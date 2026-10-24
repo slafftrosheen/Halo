@@ -65,7 +65,7 @@ class ScreenWorkspaceVisualTest {
                 placement = if (wide) ScreenPlacement(8, 1, 4, 1) else null),
             ScreenCard("weather", null, CardSize.COMPACT, false))
         compose.setContent { HostlessHaloTheme(darkTheme = dark, fontScale = scale) {
-            orbLabel = stringResource(R.string.halo_orb_actions)
+            orbLabel = uiText(if (active) "Stop" else "Talk")
             shortcutsLabel = stringResource(R.string.halo_orb_show_shortcuts)
             settingsLabel = uiText("Screen settings")
             Surface(color = screenBackgroundColor(appearance), contentColor = MaterialTheme.colorScheme.onSurface) {

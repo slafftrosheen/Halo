@@ -61,6 +61,30 @@ class StudioLocalWorkflowTest {
         val source = File(requireNotNull(db.workspaceFileDao().getFile(file.objectId.value)?.ownedCopyPath))
         org.robolectric.Shadows.shadowOf(context.contentResolver).registerInputStreamSupplier(file.uri) { source.inputStream() }
     }
+    @Test fun inkSelectionRequiresThePublishingSessionsOwnPersistedRevision() = runTest {
+        val ink = com.halo.sdk.runtime.ink.InkDocument(listOf(com.halo.sdk.runtime.ink.InkStroke(
+            com.halo.sdk.runtime.ink.InkTool.FINGER, listOf(com.halo.sdk.runtime.ink.InkPoint(100, 100)), "stroke")))
+        val layer = StudioLayer(id = "drawing", name = "Drawing", kind = StudioLayerKind.INK,
+            ink = com.halo.sdk.runtime.ink.InkCodec.encode(ink))
+        val initial = projects.create("Selection", StudioDocument(layers = listOf(layer)))
+        service.attachInkSelectionOwner(initial.id, "session-owner")
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+            .digest((initial.revision.toString() + "\n" + com.halo.sdk.runtime.ink.InkCodec.encode(ink)).toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+        val selection = com.halo.sdk.runtime.ink.InkSelectionContext(initial.id, layer.id,
+            com.halo.sdk.runtime.ink.InkSelectionBounds(0, 0, 200, 200), listOf("stroke"), digest,
+            com.halo.sdk.runtime.ink.InkSelectionOrigin.BOX, 1, 1)
+        assertTrue(service.publishSelection(initial.id, layer.id, initial.revision, "session-owner", selection, initial.revision))
+        val external = projects.apply(initial.id, initial.revision, StudioCommand.Background(Color.BLUE))
+        assertNull(service.selectedInk(initial.id))
+        assertFalse(service.publishSelection(initial.id, layer.id, initial.revision, "session-owner", selection, initial.revision))
+        assertNull(service.selectedInk(initial.id))
+        // The digest anchor stays frozen during a real input session; its persisted revision advances.
+        assertTrue(service.publishSelection(initial.id, layer.id, initial.revision, "session-owner", selection, external.revision))
+        assertEquals(external.revision, service.selectedInk(initial.id)?.projectRevision)
+        service.detachInkSelectionOwner("session-owner")
+        assertNull(service.selectedInk(initial.id))
+    }
     @Test fun localImportEditExportReopenAndCanvasInsertRetainExactSource() = runTest {
         val created = projects.create("Local project")
         val input = files.createManagedFile("original.png", "image/png", png(), created.id, "1", "{}")

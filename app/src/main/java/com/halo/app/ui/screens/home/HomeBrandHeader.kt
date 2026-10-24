@@ -52,6 +52,7 @@ internal fun HomePresenceHeader(
     action: (@Composable () -> Unit)? = null,
     orbControl: (@Composable (com.halo.app.ui.presence.HaloOrbFace) -> Unit)? = null,
 ) {
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val folded = compact || LocalDensity.current.fontScale >= 1.5f
     // H01: an on-page presence, not the full-screen onboarding hero.
     // The smaller ring leaves the feed visible at 360dp and 200% text.
@@ -84,9 +85,11 @@ internal fun HomePresenceHeader(
     }
     if (folded) Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        presence(); words(Modifier.weight(1f)); action?.invoke()
+        if (!shellOwnsOrb) presence()
+        words(Modifier.weight(1f)); action?.invoke()
     } else Column(Modifier.fillMaxWidth().padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        presence(); words(Modifier.fillMaxWidth()); action?.invoke()
+        if (!shellOwnsOrb) presence()
+        words(Modifier.fillMaxWidth()); action?.invoke()
     }
 }

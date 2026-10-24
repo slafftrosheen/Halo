@@ -81,7 +81,11 @@ class DefaultToolExposureGate(
             if ((descriptor.id.value == "halo_search_memory" || descriptor.id.value == "halo_propose_memory") && !context.policy.allowCloudMemories) {
                 return ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_MEMORY_DISABLED)
             }
-            if (descriptor.category == ToolCategory.WORKSPACE && !context.policy.allowCloudWorkspace) {
+            // Personal metadata must not bypass disclosure merely because its
+            // semantic category is DEVICE_CONTROL or SYSTEM. Use the same
+            // canonical identities that tag returned-result provenance.
+            if ((descriptor.category == ToolCategory.WORKSPACE || toolName in WorkspaceToolAccess.readTools) &&
+                !context.policy.allowCloudWorkspace) {
                 return ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_WORKSPACE_DISABLED)
             }
         }

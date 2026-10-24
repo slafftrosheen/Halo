@@ -39,6 +39,7 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     val ui by home.uiState.collectAsStateWithLifecycle()
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     val listeningRequested by home.listeningRequested.collectAsStateWithLifecycle()
+    val kids by com.halo.app.di.ManualDependencyGraph.kidsPreferences.enabled.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
     val incoming by MiniHaloEntry.pendingDraft.collectAsStateWithLifecycle()
     LaunchedEffect(incoming) { incoming?.let { draft = it; MiniHaloEntry.pendingDraft.compareAndSet(it, null) } }
@@ -46,14 +47,6 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     LaunchedEffect(submission.phase, submission.interactionId) {
         if (submission.phase == com.halo.app.ui.screens.home.TextSubmissionPhase.COMPLETED &&
             draft.trim() == submission.draft.trim()) draft = ""
-    }
-    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    DisposableEffect(owner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) home.cancelVoiceInput()
-        }
-        owner.lifecycle.addObserver(observer)
-        onDispose { owner.lifecycle.removeObserver(observer); home.cancelVoiceInput() }
     }
     val signal = com.halo.app.ui.presence.haloOrbInputPresentation(ui.sessionState.toSignalPresentation(fallback = ui.runtimeState),
         ui.inputStatus.capturing, listeningRequested || ui.speechActive,
@@ -74,7 +67,7 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
         onOpen = { screen ->
             if (screen == "home" && draft.isNotBlank()) home.captureQuestionDraft.value = draft
             onOpen(screen)
-        }, onClose = onClose, sharedTransitionScope = sharedTransitionScope,
+        }, onClose = { home.cancelVoiceInput(); onClose() }, sharedTransitionScope = sharedTransitionScope,
         animatedVisibilityScope = animatedVisibilityScope,
         allowSharedOrb = allowSharedOrb,
         orbControl = { size -> com.halo.app.ui.presence.HomeOrbControl(home, onMicrophone,
@@ -82,7 +75,9 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
                 if (route == "home" && draft.isNotBlank()) home.captureQuestionDraft.value = draft
                 onOpen(route)
             }, size = size, forceReview = reviewRequired,
-            orbModifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb)) },
+            orbModifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
+            destinations = com.halo.app.ui.shell.ShellOrbCatalog.destinations(kids),
+            leading = { com.halo.app.ui.components.CompactPrivacyModeControl() }) },
         reviewRequired = reviewRequired || ui.runtimeWaitingState in setOf(
             com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_APPROVAL,
             com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_CLARIFICATION))
@@ -104,7 +99,6 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
     BoxWithConstraints(Modifier.fillMaxSize().clip(com.halo.app.ui.design.HaloShapes.hero)
         .background(scheme.background)
         .haloEdgeGlow(active = active && signal.state == HaloSignalState.ACTING, accent = scheme.primary, corner = 26.dp)) {
-        val stackPresence = maxWidth < 320.dp || androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f
         Column(Modifier.fillMaxSize().imePadding().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
@@ -122,19 +116,6 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
             }
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            val presence: @Composable () -> Unit = {
-                if (orbControl != null) orbControl(if (stackPresence) 64.dp else 80.dp) else {
-                HaloSignalFace(if (reviewRequired) signal.copy(
-                    state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, label = "Needs your review",
-                    artwork = com.halo.app.ui.presence.PresenceArtwork.APPROVAL_REQUIRED,
-                    conditionGlyph = HaloGlyph.APPROVAL) else signal,
-                    modifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
-                    size = if (stackPresence) 64.dp else 80.dp,
-                    contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
-                    onClick = if (reviewRequired || busy) null else onTalk)
-                com.halo.app.ui.screens.home.HomeVoiceSummonFx(signal.state == HaloSignalState.CAPTURING)
-                }
-            }
             val status: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText(if (reviewRequired) "Needs your review" else signal.label),
@@ -145,12 +126,7 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
             }
             Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
                 color = scheme.surfaceContainerLow, border = BorderStroke(1.dp, scheme.outlineVariant)) {
-                if (stackPresence) Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    presence(); status()
-                } else Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    presence(); Box(Modifier.weight(1f)) { status() }
-                }
+                Column(Modifier.padding(16.dp)) { status() }
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = scheme.primary, trackColor = scheme.surfaceContainer)
             notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant) }
@@ -177,13 +153,13 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                     modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 4,
                     shape = com.halo.app.ui.design.HaloShapes.control,
                     trailingIcon = {
-                        FilledIconButton(onClick = if (draft.isBlank()) onTalk else onSend,
+                        // The presence above owns Talk. Keep the editor's direct Send action.
+                        if (draft.isNotBlank()) FilledIconButton(onClick = onSend,
                             enabled = !busy,
                             colors = IconButtonDefaults.filledIconButtonColors(containerColor = scheme.primary, contentColor = scheme.onPrimary),
                             modifier = Modifier.padding(4.dp).size(48.dp)) {
-                            Icon(androidx.compose.ui.res.painterResource(if (draft.isBlank())
-                                com.halo.app.R.drawable.halo_ic_mic else com.halo.app.R.drawable.halo_ic_send),
-                                uiText(if (draft.isBlank()) "Talk" else "Send"), Modifier.size(22.dp))
+                            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_send),
+                                uiText("Send"), Modifier.size(22.dp))
                         }
                     })
             }
@@ -194,7 +170,18 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                     Text(uiText("Open Halo"))
                 }
             }
-
+            // Full-width launcher stays outside the reply scroller and never competes with status text.
+            if (orbControl != null) orbControl(64.dp) else Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                HaloSignalFace(if (reviewRequired) signal.copy(
+                    state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, label = "Needs your review",
+                    artwork = com.halo.app.ui.presence.PresenceArtwork.APPROVAL_REQUIRED,
+                    conditionGlyph = HaloGlyph.APPROVAL) else signal,
+                    modifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
+                    size = 64.dp,
+                    contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
+                    onClick = if (reviewRequired || busy) null else onTalk)
+                com.halo.app.ui.screens.home.HomeVoiceSummonFx(signal.state == HaloSignalState.CAPTURING)
+            }
         }
     }
 }

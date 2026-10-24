@@ -18,15 +18,25 @@ data class HaloOrbFace(val size: Dp, val content: @Composable (onClick: () -> Un
 @Composable
 fun HomeOrbControl(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (String) -> Unit,
     size: Dp = 64.dp, face: HaloOrbFace? = null, forceReview: Boolean = false,
-    orbModifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier) {
+    orbModifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
+    destinations: List<HaloOrbDestination> = emptyList(),
+    onNavigate: (String) -> Unit = onOpen,
+    contextActions: List<HaloOrbContextAction> = emptyList(),
+    onContextAction: (HaloOrbContextAction) -> Unit = {},
+    hint: String? = null, onDismissHint: () -> Unit = {}, leading: (@Composable () -> Unit)? = null) {
     val ui by home.uiState.collectAsStateWithLifecycle()
-    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
-    DisposableEffect(lifecycle, home) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) home.cancelVoiceInput()
-        }
-        lifecycle.addObserver(observer)
-        onDispose { lifecycle.removeObserver(observer) }
+    val activity = com.halo.app.ui.mini.miniHaloActivityOwner(androidx.compose.ui.platform.LocalContext.current)
+    val lifecycle = com.halo.app.ui.shell.shellSpeechHostLifecycle(activity as? androidx.lifecycle.LifecycleOwner,
+        androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle)
+    val shellOwned = LocalShellHaloOrb.current
+    DisposableEffect(lifecycle, home, shellOwned, activity) {
+        val binding = com.halo.app.ui.shell.bindShellSpeechLifecycle(lifecycle,
+            {
+                val host = activity as? com.halo.app.MainActivity
+                shellOwned || if (host != null) host.speechHandoff.preservesSpeechOnStop(
+                    host.isChangingConfigurations, host.isFinishing) else activity?.isChangingConfigurations == true
+            }, home::cancelVoiceInput)
+        onDispose { binding.close() }
     }
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     val starting by home.listeningRequested.collectAsStateWithLifecycle()
@@ -46,6 +56,7 @@ fun HomeOrbControl(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     HaloOrbLauncher(signal, interaction, shortcuts, preferences::setOrbShortcuts,
         onPrimary = { primary -> when (primary) {
             HaloOrbPrimary.REVIEW -> onOpen("activity")
+            HaloOrbPrimary.FINISH -> home.stopListening()
             HaloOrbPrimary.STOP -> home.stopOrbInteraction()
             HaloOrbPrimary.INTERRUPT -> home.stopSpeakingAndListen()
             HaloOrbPrimary.TALK -> {
@@ -58,5 +69,7 @@ fun HomeOrbControl(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
             }
         } }, onStop = home::stopOrbInteraction,
         onTools = { request -> home.requestOrbCatalog(request); onOpen("home") },
-        size = face?.size ?: size, face = face?.content, orbModifier = orbModifier)
+        size = face?.size ?: size, face = face?.content, orbModifier = orbModifier,
+        destinations = destinations, onNavigate = onNavigate, contextActions = contextActions,
+        onContextAction = onContextAction, hint = hint, onDismissHint = onDismissHint, leading = leading)
 }

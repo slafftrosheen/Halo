@@ -4027,4 +4027,66 @@
     <string name="ui_7ba2528e247f" formatted="false">"Piezīme izdzēsta. Pielikumu tīrīšana vēl nav pabeigta."</string>
     <string name="ui_6cf537897a11" formatted="false">"Piezīme izdzēsta. Dažus pielikumus neizdevās noņemt."</string>
     <string name="ui_6e8cdc9e0c89" formatted="false">"Dzēšanu neizdevās apstiprināt. Pirms mēģināt vēlreiz, pārbaudiet atkritni."</string>
+    <string name="ui_6fcb01212b1e" formatted="false">"Nosūtīt balss ievadi"</string>
+    <string name="ui_d34d17e694df" formatted="false">"Visas lapas un darbības"</string>
+    <string name="ui_16c5077d5ac3" formatted="false">"Pieskarieties, lai runātu. Turiet, lai atvērtu saīsnes. Visas lapas ir izvēlnē."</string>
+    <string name="ui_65f9ce203b63" formatted="false">"Audekla rīki"</string>
+    <string name="ui_59a0ed5dfe29" formatted="false">"Konteksts un privātums"</string>
+    <string name="ui_7a637f64d66d" formatted="false">"Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei."</string>
+    <string name="ui_bc79cdffbaa8" formatted="false">"Citas iespējas"</string>
+    <string name="ui_fb646fa83d0c" formatted="false">"Izmantot šo lapu kā kontekstu"</string>
+    <string name="ui_7446c9bed868" formatted="false">"Lapa pievienota kontekstam"</string>
+    <string name="ui_0697ecf46d3e" formatted="false">"Lapa ir mainīta vai nav pieejama. Atlasiet to vēlreiz."</string>
+    <string name="ui_9822097d9935" formatted="false">"Skatīt ekrāna izkārtojumu"</string>
+    <string name="ui_6fd16cc325db" formatted="false">"Priekšskatīt ekrāna izkārtojumu"</string>
+    <string name="ui_401749bfba46" formatted="false">"Lietot ekrāna izkārtojumu"</string>
+    <string name="ui_e53c2362d68b" formatted="false">"Mainīt ekrāna iestatījumus"</string>
+    <string name="ui_57dcc60f442a" formatted="false">"Atsaukt ekrāna izkārtojuma maiņu"</string>
+    <string name="ui_a7395ce9339f" formatted="false">"Saglabāt ekrāna izkārtojuma veidni"</string>
+    <string name="ui_e77b365757e6" formatted="false">"Noņemt ekrāna izkārtojuma veidni"</string>
+    <string name="ui_a4f167479559" formatted="false">"Rādīt saglabātās ierīces"</string>
+    <string name="ui_c31bd8494cad" formatted="false">"Skatīt saglabāto ierīci"</string>
+    <string name="ui_ad692fb174c7" formatted="false">"Skatīt ierīces iestatījumus"</string>
+    <string name="ui_54a10e03e6d4" formatted="false">"Mainīt ierīces attēlu kvalitāti"</string>
+    <string name="ui_d1078bc391d2" formatted="false">"Atkārtot savienojumu ar saglabāto ierīci"</string>
+    <string name="ui_5f4aab0fad42" formatted="false">"Savienot saglabāto ierīci"</string>
+    <string name="ui_c0738bc7144b" formatted="false">"Atvienot saglabāto ierīci"</string>
+    <string name="ui_8b2a3edbf623" formatted="false">"Mainīt ierīces automātisko savienojumu"</string>
+    <string name="ui_e3c0b626636a" formatted="false">"Aizmirst saglabāto ierīci"</string>
+    <string name="ui_8e2e9b35ef84" formatted="false">"Rādīt lietotnes ar paziņojumu iestatījumiem"</string>
+    <string name="ui_cd60fcd34abc" formatted="false">"Skatīt lietotnes paziņojumu iestatījumus"</string>
+    <string name="ui_ed61d49e62e5" formatted="false">"Mainīt lietotnes paziņojumu iestatījumus"</string>
+    <string name="ui_e59b1247f823" formatted="false">"Skatīt apkopojumu piegādes iestatījumus"</string>
+    <string name="ui_0233aa4f3674" formatted="false">"Mainīt apkopojumu piegādes iestatījumus"</string>
+    <string name="ui_41607bfe62ac" formatted="false">"Skatīt režīma profilu"</string>
+    <string name="ui_10de411fb491" formatted="false">"Rediģēt režīma profilu"</string>
+    <string name="ui_a5e0479ffc52" formatted="false">"Rādīt privātu informāciju pilnekrāna režīmā"</string>
+    <string name="ui_b238a0d300d9" formatted="false">"Tuvumā esošie cilvēki var redzēt personiskās un privātās kartītes"</string>
+    <string name="ui_00cd58f655da" formatted="false">"Rakstīt ziņu"</string>
+    <string name="ui_4d219b1eed17" formatted="false">"Skatīt balss iestatījumus"</string>
+    <string name="ui_96fdf0e2d214" formatted="false">"Mainīt balss iestatījumus"</string>
+    <string name="ui_ec69b4011c10" formatted="false">"Skatīt mācīšanās iestatījumus"</string>
+    <string name="ui_34904f506749" formatted="false">"Mainīt mācīšanās iestatījumus"</string>
+    <string name="ui_69c2c7a0d7e3" formatted="false">"Rādīt saglabātās rutīnas"</string>
+    <string name="ui_c286ece9d584" formatted="false">"Skatīt saglabāto rutīnu"</string>
+    <string name="ui_c183dc79fd4a" formatted="false">"Skatīt rutīnas izpildes gaitu"</string>
+    <string name="ui_d6f88d56f462" formatted="false">"Mainīt rutīnas grafiku"</string>
+    <string name="ui_d755e1824d6e" formatted="false">"Saglabāt rutīnas izmaiņas"</string>
+    <string name="ui_58a848a73206" formatted="false">"Dzēst saglabāto rutīnu"</string>
+    <string name="ui_657b92d94253" formatted="false">"Palaist saglabāto rutīnu"</string>
+    <string name="ui_0d8d0ddeeb28" formatted="false">"Rādīt atbilžu pakalpojumu sniedzējus"</string>
+    <string name="ui_d8f6c42274b6" formatted="false">"Skatīt pakalpojumu sniedzēja gatavību"</string>
+    <string name="ui_26e0c626a225" formatted="false">"Atjaunināt pakalpojumu sniedzēja modeļu sarakstu"</string>
+    <string name="ui_72f5420482b6" formatted="false">"Pārbaudīt savienojumu ar pakalpojumu sniedzēju"</string>
+    <string name="ui_73fcacd68ce2" formatted="false">"Skatīt aktīvo mācību nodarbību"</string>
+    <string name="ui_b3ed44b3ea2e" formatted="false">"Mainīt aktīvo mācību nodarbību"</string>
+    <string name="ui_6a73125ccb7c" formatted="false">"Skatīt audekla melnraksta stāvokli"</string>
+    <string name="ui_f3db132bbaeb" formatted="false">"Saglabāt attēla krāsu paleti"</string>
+    <string name="ui_07a67a5645b9" formatted="false">"Sagatavot lokālu transkripciju pārskatīšanai"</string>
+    <string name="ui_fd79aec9abe8" formatted="false">"Saglabāt pārskatīto audekla tekstu"</string>
+    <string name="ui_9eff6e96c147" formatted="false">"Rediģēt audekla teksta melnrakstu"</string>
+    <string name="ui_040e8f125da8" formatted="false">"Atmest audekla teksta melnrakstu"</string>
+    <string name="ui_50d59586a409" formatted="false">"Eksportēt audeklu piezīmē"</string>
+    <string name="ui_f60ea290c23b" formatted="false">"Rādīt lokālos runas modeļus"</string>
+    <string name="ui_dc6bfbbc0a46" formatted="false">"Pārvaldīt lokālo runas modeli"</string>
 </resources>

@@ -14,9 +14,12 @@ import kotlinx.coroutines.withContext
 data class DigestDeliverySettings(val channel: String = "activity", val wearableId: String = "")
 
 interface DigestDeliverySettingsRepository {
+    val ready: Boolean get() = true
     val state: StateFlow<DigestDeliverySettings>
     suspend fun setChannel(value: String)
     suspend fun setWearableId(value: String)
+    /** Unsupported implementations fail closed. Production compares and writes both fields atomically. */
+    suspend fun compareAndSet(expectedVersion: String, target: DigestDeliverySettings): Boolean = false
 }
 
 class SharedPreferencesDigestDeliverySettingsRepository(
@@ -25,6 +28,8 @@ class SharedPreferencesDigestDeliverySettingsRepository(
 ) : DigestDeliverySettingsRepository {
     private val appContext = context.applicationContext
     private val mutex = Mutex()
+    @Volatile private var loaded = false
+    override val ready: Boolean get() = loaded
     private val _state = MutableStateFlow(DigestDeliverySettings())
     override val state: StateFlow<DigestDeliverySettings> = _state.asStateFlow()
 
@@ -36,6 +41,7 @@ class SharedPreferencesDigestDeliverySettingsRepository(
                     prefs.getString("channel", "activity") ?: "activity",
                     prefs.getString("device", "") ?: "",
                 )
+                loaded = true
             }
         }
     }
@@ -53,6 +59,22 @@ class SharedPreferencesDigestDeliverySettingsRepository(
             val prefs = appContext.getSharedPreferences("halo_digest_delivery", Context.MODE_PRIVATE)
             check(prefs.edit().putString("device", value).commit()) { "Unable to persist digest wearable" }
             _state.value = _state.value.copy(wearableId = value)
+        }
+    }
+
+    override suspend fun compareAndSet(expectedVersion: String, target: DigestDeliverySettings): Boolean = withContext(Dispatchers.IO) {
+        require(target.channel in setOf("activity", "android", "wearable"))
+        require(target.wearableId.length <= 200 && !target.wearableId.any(Char::isISOControl))
+        require(target.channel != "wearable" || target.wearableId.isNotBlank())
+        mutex.withLock {
+            val prefs = appContext.getSharedPreferences("halo_digest_delivery", Context.MODE_PRIVATE)
+            val current = DigestDeliverySettings(prefs.getString("channel", "activity") ?: "activity", prefs.getString("device", "") ?: "")
+            if (current.sourceVersion() != expectedVersion) return@withLock false
+            check(prefs.edit().putString("channel", target.channel).putString("device", target.wearableId).commit()) {
+                "Unable to persist digest delivery settings"
+            }
+            _state.value = target
+            true
         }
     }
 }

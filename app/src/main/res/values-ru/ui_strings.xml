@@ -4027,4 +4027,66 @@
     <string name="ui_7ba2528e247f" formatted="false">"Заметка удалена. Очистка вложений ещё не завершена."</string>
     <string name="ui_6cf537897a11" formatted="false">"Заметка удалена. Некоторые вложения удалить не удалось."</string>
     <string name="ui_6e8cdc9e0c89" formatted="false">"Не удалось подтвердить удаление. Проверьте корзину перед повторной попыткой."</string>
+    <string name="ui_6fcb01212b1e" formatted="false">"Отправить голос"</string>
+    <string name="ui_d34d17e694df" formatted="false">"Все страницы и действия"</string>
+    <string name="ui_16c5077d5ac3" formatted="false">"Нажмите, чтобы говорить. Удерживайте для ярлыков. Все страницы — в меню."</string>
+    <string name="ui_65f9ce203b63" formatted="false">"Инструменты холста"</string>
+    <string name="ui_59a0ed5dfe29" formatted="false">"Контекст и конфиденциальность"</string>
+    <string name="ui_7a637f64d66d" formatted="false">"Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo."</string>
+    <string name="ui_bc79cdffbaa8" formatted="false">"Другие действия"</string>
+    <string name="ui_fb646fa83d0c" formatted="false">"Использовать эту страницу как контекст"</string>
+    <string name="ui_7446c9bed868" formatted="false">"Страница добавлена в контекст"</string>
+    <string name="ui_0697ecf46d3e" formatted="false">"Страница изменилась или недоступна. Выберите её снова."</string>
+    <string name="ui_9822097d9935" formatted="false">"Просмотреть расположение карточек на экране"</string>
+    <string name="ui_6fd16cc325db" formatted="false">"Предпросмотр расположения карточек"</string>
+    <string name="ui_401749bfba46" formatted="false">"Применить расположение карточек"</string>
+    <string name="ui_e53c2362d68b" formatted="false">"Изменить настройки экрана"</string>
+    <string name="ui_57dcc60f442a" formatted="false">"Отменить изменение расположения карточек"</string>
+    <string name="ui_a7395ce9339f" formatted="false">"Сохранить шаблон экрана"</string>
+    <string name="ui_e77b365757e6" formatted="false">"Удалить шаблон экрана"</string>
+    <string name="ui_a4f167479559" formatted="false">"Показать сохранённые устройства"</string>
+    <string name="ui_c31bd8494cad" formatted="false">"Просмотреть сохранённое устройство"</string>
+    <string name="ui_ad692fb174c7" formatted="false">"Просмотреть настройки устройства"</string>
+    <string name="ui_54a10e03e6d4" formatted="false">"Изменить качество изображений устройства"</string>
+    <string name="ui_d1078bc391d2" formatted="false">"Повторить подключение к сохранённому устройству"</string>
+    <string name="ui_5f4aab0fad42" formatted="false">"Подключить сохранённое устройство"</string>
+    <string name="ui_c0738bc7144b" formatted="false">"Отключить сохранённое устройство"</string>
+    <string name="ui_8b2a3edbf623" formatted="false">"Изменить автоматическое подключение устройства"</string>
+    <string name="ui_e3c0b626636a" formatted="false">"Забыть сохранённое устройство"</string>
+    <string name="ui_8e2e9b35ef84" formatted="false">"Показать приложения с настройками уведомлений"</string>
+    <string name="ui_cd60fcd34abc" formatted="false">"Просмотреть настройки уведомлений приложения"</string>
+    <string name="ui_ed61d49e62e5" formatted="false">"Изменить настройки уведомлений приложения"</string>
+    <string name="ui_e59b1247f823" formatted="false">"Просмотреть настройки доставки сводок"</string>
+    <string name="ui_0233aa4f3674" formatted="false">"Изменить настройки доставки сводок"</string>
+    <string name="ui_41607bfe62ac" formatted="false">"Просмотреть профиль режима"</string>
+    <string name="ui_10de411fb491" formatted="false">"Изменить профиль режима"</string>
+    <string name="ui_a5e0479ffc52" formatted="false">"Показать личные данные в полноэкранном режиме"</string>
+    <string name="ui_b238a0d300d9" formatted="false">"Окружающие могут видеть личные и приватные карточки"</string>
+    <string name="ui_00cd58f655da" formatted="false">"Написать сообщение"</string>
+    <string name="ui_4d219b1eed17" formatted="false">"Просмотреть настройки голоса"</string>
+    <string name="ui_96fdf0e2d214" formatted="false">"Изменить настройки голоса"</string>
+    <string name="ui_ec69b4011c10" formatted="false">"Просмотреть настройки обучения"</string>
+    <string name="ui_34904f506749" formatted="false">"Изменить настройки обучения"</string>
+    <string name="ui_69c2c7a0d7e3" formatted="false">"Показать сохранённые сценарии"</string>
+    <string name="ui_c286ece9d584" formatted="false">"Просмотреть сохранённый сценарий"</string>
+    <string name="ui_c183dc79fd4a" formatted="false">"Просмотреть ход выполнения сценария"</string>
+    <string name="ui_d6f88d56f462" formatted="false">"Изменить расписание сценария"</string>
+    <string name="ui_d755e1824d6e" formatted="false">"Сохранить изменения сценария"</string>
+    <string name="ui_58a848a73206" formatted="false">"Удалить сохранённый сценарий"</string>
+    <string name="ui_657b92d94253" formatted="false">"Запустить сохранённый сценарий"</string>
+    <string name="ui_0d8d0ddeeb28" formatted="false">"Показать провайдеров ответов"</string>
+    <string name="ui_d8f6c42274b6" formatted="false">"Просмотреть готовность провайдера"</string>
+    <string name="ui_26e0c626a225" formatted="false">"Обновить список моделей провайдера"</string>
+    <string name="ui_72f5420482b6" formatted="false">"Проверить подключение к провайдеру"</string>
+    <string name="ui_73fcacd68ce2" formatted="false">"Просмотреть текущее занятие"</string>
+    <string name="ui_b3ed44b3ea2e" formatted="false">"Изменить текущее занятие"</string>
+    <string name="ui_6a73125ccb7c" formatted="false">"Просмотреть состояние черновика на холсте"</string>
+    <string name="ui_f3db132bbaeb" formatted="false">"Сохранить цветовую палитру изображения"</string>
+    <string name="ui_07a67a5645b9" formatted="false">"Подготовить локальную расшифровку для проверки"</string>
+    <string name="ui_fd79aec9abe8" formatted="false">"Сохранить проверенный текст на холсте"</string>
+    <string name="ui_9eff6e96c147" formatted="false">"Изменить черновик для проверки на холсте"</string>
+    <string name="ui_040e8f125da8" formatted="false">"Отбросить черновик для проверки на холсте"</string>
+    <string name="ui_50d59586a409" formatted="false">"Экспортировать холст в заметку"</string>
+    <string name="ui_f60ea290c23b" formatted="false">"Показать локальные речевые модели"</string>
+    <string name="ui_dc6bfbbc0a46" formatted="false">"Управление локальной речевой моделью"</string>
 </resources>

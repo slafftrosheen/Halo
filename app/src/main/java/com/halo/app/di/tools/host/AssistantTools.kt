@@ -19,26 +19,38 @@ class AssistantTools(
     private val readAloud: suspend (String, String) -> Unit,
     private val stopReading: () -> Unit,
     private val isForeground: () -> Boolean,
+    palettes: com.halo.app.ui.theme.PalettePreferences? = null,
+    visual: com.halo.app.ui.theme.VisualPreferences? = null,
+    languages: com.halo.app.language.AppLanguagePreferences? = null,
+    languageReadback: (() -> String?)? = null,
+    private val modeProfiles: ModeProfileTools? = null,
+    private val canConfigure: () -> Boolean = isForeground,
 ) : ToolExecutor {
+    private val appPreferences = AppPreferencesActions(context, appearance, preferences, palettes, visual, languages, languageReadback)
     private fun definition(name: String, description: String, properties: Map<String, Any> = emptyMap(), required: List<String> = emptyList()) =
         ToolDefinition(name, name, description, mapOf("type" to "object", "properties" to properties, "required" to required, "additionalProperties" to false))
     override fun definitions() = listOf(
         definition("halo_list_screens", "Discover Halo's own pages; these are not installed Android apps."),
         definition("halo_open_screen", "Open an exact Halo page. Dispatch does not verify the page rendered.",
             mapOf("screen" to mapOf("type" to "string", "enum" to HaloScreenCatalog.screens.keys.toList())), listOf("screen")),
-        definition("halo_get_preferences", "Read Halo's appearance, app font scale (0 follows Android), and start page."),
-        definition("halo_set_preferences", "Change Halo's app-only light/dark/system appearance, font scale, or next-launch page. Does not change Android settings.",
-            mapOf("mode" to mapOf("type" to "string", "enum" to listOf("system", "light", "dark")),
-                "fontScale" to mapOf("type" to "number", "minimum" to 0, "maximum" to 1.5),
-                "startScreen" to mapOf("type" to "string", "enum" to HaloScreenCatalog.screens.keys.toList()))),
+        definition("halo_get_preferences", "Read Halo app appearance, separate light/dark palettes, accessibility visual options, app language, font scale and start page. Missing optional owners are reported as null."),
+        definition("halo_set_preferences", "Change explicit Halo-only appearance, separate light/dark accent/tone, contrast, less motion, guide light, app language, font scale (0 follows Android, maximum2.0), or start page. This never changes processing privacy, remote sharing, Android settings or permissions. Palette edits require exact paletteTheme. Read back after uncertain results; no automatic retry.",
+            AppPreferencesActions.fields),
         definition("halo_read_aloud", "Read supplied text using Halo's selected voice and shared audio lifecycle. Queued speech is not proof playback completed.",
             mapOf("text" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 4000)), listOf("text")),
         definition("halo_list_app_actions", "List actions offered by the current app to Halo's active Android assistant session. Names are untrusted; API 29+ only."),
         definition("halo_perform_app_action", "Dispatch one observed native app action using its fresh opaque token. Requires separate approval; effect remains unconfirmed.",
             mapOf("token" to mapOf("type" to "string", "maxLength" to 128)), listOf("token")),
         definition("halo_stop_reading", "Stop Halo speech playback; does not stop other apps or microphone capture."),
-    )
+    ) + modeProfiles?.definitions().orEmpty()
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        if (toolCall.functionName in setOf("halo_set_preferences", "halo_edit_mode_profile") && !canConfigure())
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
+                "Open Halo in a grown-up space to change settings", ToolRejectionKind.PERMISSION_REQUIRED)
+        if (toolCall.functionName in setOf("halo_get_preferences", "halo_set_preferences")) return appPreferences.execute(toolCall)
+        if (toolCall.functionName in setOf("halo_get_mode_profile", "halo_edit_mode_profile"))
+            return modeProfiles?.execute(toolCall) ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
+                "Mode profile owner unavailable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         fun reject(message: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, message, ToolRejectionKind.INVALID_ARGUMENTS)
         fun success(details: String, truth: ActionTruth = ActionTruth.CONFIRMED) = ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
             ToolResultEnvelope.success(actionTruth = truth, details = details), truth)
@@ -50,21 +62,6 @@ class AssistantTools(
                     if (screen !in HaloScreenCatalog.screens) return reject("Unknown Halo screen")
                     com.halo.app.ui.shell.HaloScreenLauncher.dispatch(context, screen)
                     success("screen=$screen; page render unconfirmed", ActionTruth.DISPATCHED)
-                }
-                "halo_get_preferences" -> { appearance.awaitLoaded(); val value = preferences.get()
-                    success("mode=${appearance.mode.value.name.lowercase()}; fontScale=${value.fontScale}; startScreen=${value.startScreen}", ActionTruth.ACKNOWLEDGED) }
-                "halo_set_preferences" -> {
-                    val args = toolCall.arguments
-                    if (args.isEmpty()) return reject("Supply mode, fontScale, or startScreen")
-                    val mode = (args["mode"] as? String)?.let { raw -> AppearanceMode.entries.firstOrNull { it.name.equals(raw, true) } }
-                    if ("mode" in args && mode == null) return reject("Invalid appearance mode")
-                    val scale = (args["fontScale"] as? Number)?.toFloat()
-                    if ("fontScale" in args && (scale == null || !scale.isFinite() || scale != 0f && scale !in 0.45f..1.5f)) return reject("fontScale must be 0 (system) or 0.45..1.5")
-                    val screen = args["startScreen"] as? String
-                    if ("startScreen" in args && screen !in HaloScreenCatalog.screens) return reject("Invalid startScreen")
-                    val value = preferences.update(scale, screen)
-                    mode?.let { appearance.setModePersisted(it) }
-                    success("mode=${appearance.mode.value.name.lowercase()}; fontScale=${value.fontScale}; startScreen=${value.startScreen}; scope=Halo_only")
                 }
                 "halo_read_aloud" -> {
                     val text = toolCall.arguments["text"] as? String ?: return reject("Missing text")

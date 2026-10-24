@@ -12,6 +12,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
+
+/** Keep compositions mounted on pause, but remove decorative infinite frame clocks. */
+@Composable
+internal fun rememberHaloMotionForeground(): Boolean {
+    val state by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    return state.isAtLeast(Lifecycle.State.STARTED)
+}
 
 /** Decorative frame clocks stop under battery saver, screen-off, and thermal pressure. */
 @Composable

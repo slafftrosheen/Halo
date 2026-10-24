@@ -220,14 +220,20 @@ object ManualDependencyGraph {
         privacyModes.acknowledgeSharing()
         setPrivacyMode(com.halo.app.ai.PrivacyMode.CLOUD)
     }
-    fun saveModeProfile(mode: com.halo.app.ai.PrivacyMode, profile: com.halo.app.ai.ModeProfile) {
+    fun saveModeProfile(mode: com.halo.app.ai.PrivacyMode, profile: com.halo.app.ai.ModeProfile) =
+        saveModeProfile(mode, profile, null)
+
+    fun saveModeProfile(mode: com.halo.app.ai.PrivacyMode, profile: com.halo.app.ai.ModeProfile, expectedRevision: Long?) {
         check(kidsPreferences.loadedState.value && !kidsPreferences.enabled.value) { "A grown-up must edit mode profiles." }
         profile.providerId?.let { id ->
             check(aiProviderRouter.getAllProviders().any { it.id == id }) { "Provider unavailable" }
             check(mode != com.halo.app.ai.PrivacyMode.PRIVATE || id == "provider.litert.local") { "Choose an on-device provider" }
         }
         privacyModes.edit(mode, prepare = { reloadProcessingOwners() },
-            recoverPrivate = { reloadProcessingOwners() }) { profile }
+            recoverPrivate = { reloadProcessingOwners() }) {
+                check(expectedRevision == null || privacyModes.revision == expectedRevision) { "Profile changed. Read it again." }
+                profile
+            }
         workspaceContext.refreshPolicy()
         contextPrivacyViewModel.refresh()
     }
@@ -456,6 +462,7 @@ object ManualDependencyGraph {
     val memoryRepository by lazy { RoomMemoryRepository(appDatabase) }
     val interactionWorkingMemory by lazy { com.halo.runtime.cognition.memory.InteractionWorkingMemory() }
     val personalLearning by lazy { com.halo.app.data.memory.PersonalLearningRepository(appDatabase,memoryRepository, attention = { attentionController }) }
+    val learningConfiguration by lazy { com.halo.app.learning.LearningConfigurationOwner(storage, learningPreferences()) }
     fun learningPreferences() = com.halo.runtime.cognition.memory.LearningPreferences(
         com.halo.runtime.cognition.memory.LearningPreference.fromStored(storage.getString("learning_mode")),
         storage.getBoolean("learning_memories",true),storage.getBoolean("learning_procedures",true),storage.getBoolean("learning_automations",true),storage.getBoolean("learning_model_reflection",false))
@@ -897,7 +904,7 @@ object ManualDependencyGraph {
             notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
             continuity = com.halo.app.di.tools.WorkspaceContinuityActions(workspaceContinuity),
-            canvas = com.halo.app.di.tools.WorkspaceCanvasActions(appDatabase, notebookCanvasRepository),
+            canvas = com.halo.app.di.tools.WorkspaceCanvasActions(appDatabase, notebookCanvasRepository, currentCanvasContext),
             exactStudyStarter = { sourceId, sourceVersion -> studyUseCases.startExactMaterial(sourceId, sourceVersion, workspaceContext::versionFor) },
             studyActions = com.halo.app.di.tools.WorkspaceStudyActions(appDatabase, studyRepository, studyUseCases),
             noteActions = com.halo.app.di.tools.WorkspaceNoteActions(appDatabase, notebookDocumentRepository, notebookUseCases, workspaceContext),
@@ -978,7 +985,53 @@ object ManualDependencyGraph {
                         eventBus.publish(com.halo.sdk.runtime.TtsRequested(text = text, transactionId = id,
                             target = com.halo.sdk.runtime.SpeechOutputTarget.Phone,
                             localOnly = true))
-                    }, stopReading = { haloSpeechOutputCoordinator.stop("Read-aloud stop tool") }, isForeground = foreground),
+                    }, stopReading = { haloSpeechOutputCoordinator.stop("Read-aloud stop tool") }, isForeground = foreground,
+                    palettes = palettePreferences, visual = com.halo.app.ui.theme.VisualPreferences.get(applicationContext),
+                    languages = appLanguagePreferences,
+                    languageReadback = { storage.getString(com.halo.app.language.AppLanguagePreferences.KEY) },
+                    modeProfiles = com.halo.app.di.tools.host.ModeProfileTools(privacyModes) { mode, profile, revision ->
+                        saveModeProfile(mode, profile, revision)
+                    }, canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.ScreenToolExecutor(screenStore) {
+                    foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.SavedDeviceToolExecutor(devicesViewModel.savedDeviceActions,
+                    canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.NotificationSettingsToolExecutor(digestDeliverySettings, notificationRepository,
+                    com.halo.app.data.settings.NotificationSettingsAppSource(applicationContext), devicesViewModel.savedDeviceActions,
+                    canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.LearningConfigurationTools(learningConfiguration) {
+                    foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.ProviderConfigurationTools(providerControlRepository.configurationTools) {
+                    foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.RoutineManagementTools(routinesViewModel.managementActions,
+                    canManage = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.StudySessionTools(activeStudyToolsOwner) {
+                    foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.CanvasWorkflowTools(canvasWorkflowBridge,
+                    canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.SpeechInventoryTools(providerGraph.speechModelInventory, voiceSettingsViewModel,
+                    canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    isCaptureActive = {
+                        val state = homeViewModel.uiState.value
+                        state.inputStatus.capturing || state.speechActive || state.speechProcessing || homeViewModel.listeningRequested.value
+                    }),
+                com.halo.app.di.tools.host.VoiceConfigurationTools(storage, voiceSettingsViewModel,
+                    speechLanguageSettingsRepository, voiceExperienceSettings, foreground,
+                    grownUpAllowed = { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    extras = com.halo.app.di.tools.host.VoiceConfigurationExtras.fromOwners(storage, readAloud, scopedSpeechMediaControls,
+                        controlAction = {
+                            if (scopedSpeechMediaControls.enabled.value) accessoryControls.mappings.defaults("SCOPED_MEDIA")
+                                .firstOrNull()?.selection?.action ?: com.halo.sdk.host.AccessoryAction.SystemDefault
+                            else com.halo.sdk.host.AccessoryAction.SystemDefault
+                        }, controlRevision = { accessoryControls.mappings.changes.value.toLong() },
+                        resetCustomControls = { accessoryControls.mappings.resetAll() },
+                        kokoro = speechSynthesisRegistry.providers.filterIsInstance<com.halo.app.audio.KokoroSpeechProvider>().firstOrNull(),
+                        wearNearbyChanged = { enabled -> if (enabled) wearEndpointBridge.start() else wearEndpointBridge.stop() }),
+                    sourceRevision = { privacyModes.revision }),
                 appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
                 com.halo.app.di.tools.host.ClipboardTools(applicationContext),
@@ -1679,6 +1732,9 @@ object ManualDependencyGraph {
     }
     val sendIntentHandler by lazy { SendIntentHandler(notebookRepository, workspaceUseCases) }
     val activeCanvasForCapture = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val currentCanvasContext by lazy { com.halo.app.context.CurrentCanvasContextOwner(appDatabase) }
+    val canvasWorkflowBridge by lazy { com.halo.app.context.CanvasWorkflowBridge() }
+    val activeStudyToolsOwner by lazy { com.halo.app.study.ActiveStudyToolsOwner() }
     val storageBackupViewModel by lazy {
         com.halo.app.ui.screens.settings.StorageBackupViewModel(
             applicationContext,

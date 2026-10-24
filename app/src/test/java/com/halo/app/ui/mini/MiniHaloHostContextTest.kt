@@ -26,4 +26,15 @@ class MiniHaloHostContextTest {
     @Test fun applicationContextDoesNotPretendToOwnAWindow() {
         assertNull(miniHaloActivityOwner(ApplicationProvider.getApplicationContext<Application>()))
     }
+
+    @Test fun onlyVisibleMiniAndKnownFullScreenIntentQualifyForAdoption() {
+        for (state in androidx.lifecycle.Lifecycle.State.entries) {
+            assertEquals(state.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED),
+                canAdoptMiniSpeechHandoff(state, false, "home"))
+            assertFalse(canAdoptMiniSpeechHandoff(state, true, "home"))
+            assertFalse(canAdoptMiniSpeechHandoff(state, false, "mini_halo"))
+            assertFalse(canAdoptMiniSpeechHandoff(state, false, null))
+            assertFalse(canAdoptMiniSpeechHandoff(state, false, "unrelated_activity"))
+        }
+    }
 }

@@ -1,0 +1,129 @@
+{
+  "artifact": {
+    "app": {
+      "sha256": "5c057808f35cb3584ec8d279b26952b92d8ded284db9eb46b6c5bf95e99922d8",
+      "bytes": 289581146,
+      "installedSha256": "5c057808f35cb3584ec8d279b26952b92d8ded284db9eb46b6c5bf95e99922d8"
+    },
+    "test": {
+      "sha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "bytes": 1949934,
+      "installedSha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8"
+    }
+  },
+  "cases": [
+    {
+      "routeRequested": "home",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Автоматически",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "notebook",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Рабочее пространство",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "activity",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Действия",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "devices",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Устройства",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "settings",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Настройки",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "study",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Учёба",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "studio",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Новый проект",
+      "knownMarkerPresent": true
+    },
+    {
+      "routeRequested": "screen",
+      "rotation": "0",
+      "globalTalkCount": 1,
+      "privacyControlCount": 1,
+      "talkBounds": [
+        "[452,2094][628,2270]"
+      ],
+      "privacyDescriptions": [
+        "Режим конфиденциальности ИИ: Полная мощность"
+      ],
+      "observedKnownUiMarker": "Настроить",
+      "knownMarkerPresent": true
+    }
+  ],
+  "limits": "Read-only UI navigation and control-presence smoke; actual repeated root delivery separately covered by MainActivity instrumented test. No new permission, media/model or speech action."
+}

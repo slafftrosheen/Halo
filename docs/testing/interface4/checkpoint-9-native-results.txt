@@ -1,0 +1,224 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.presence.InterfaceFourDeviceTest:
+INSTRUMENTATION_STATUS: test=twoHundredPercentListAndPrivacyTargetsStaySeparate
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=twoHundredPercentListAndPrivacyTargetsStaySeparate
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=nativeSwipeUpOpensTheListWithoutInvokingPrimary
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativeSwipeUpOpensTheListWithoutInvokingPrimary
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=nativeLongPressOpensDestinationListWithoutCapturing
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativeLongPressOpensDestinationListWithoutCapturing
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=customAccessibilityActionOpensTheSameListWithoutSideEffects
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.InterfaceFourDeviceTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=customAccessibilityActionOpensTheSameListWithoutSideEffects
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ai.PrivateDispatchOwnerTraceTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ai.PrivateDispatchOwnerTraceTest:
+INSTRUMENTATION_STATUS: test=renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ai.PrivateDispatchOwnerTraceTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ai.PrivateDispatchOwnerTraceTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ai.PrivateDispatchOwnerTraceTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest:
+INSTRUMENTATION_STATUS: test=realMainActivityRendersWarmAndResumedScreenIntents
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Workspace search action did not render after route=notebook; pending=null
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.awaitPage(MainActivityScreenIntentPhysicalTest.kt:82)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.awaitWorkspace(MainActivityScreenIntentPhysicalTest.kt:73)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.realMainActivityRendersWarmAndResumedScreenIntents(MainActivityScreenIntentPhysicalTest.kt:52)
+
+INSTRUMENTATION_STATUS: stream=
+Error in realMainActivityRendersWarmAndResumedScreenIntents(com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest):
+java.lang.AssertionError: Workspace search action did not render after route=notebook; pending=null
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.awaitPage(MainActivityScreenIntentPhysicalTest.kt:82)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.awaitWorkspace(MainActivityScreenIntentPhysicalTest.kt:73)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.realMainActivityRendersWarmAndResumedScreenIntents(MainActivityScreenIntentPhysicalTest.kt:52)
+
+INSTRUMENTATION_STATUS: test=realMainActivityRendersWarmAndResumedScreenIntents
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloActivityPhysicalTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.mini.MiniHaloActivityPhysicalTest:
+INSTRUMENTATION_STATUS: test=canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloActivityPhysicalTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloActivityPhysicalTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=actualMiniActivityLaunchesAndBackCloses
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloActivityPhysicalTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=actualMiniActivityLaunchesAndBackCloses
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloActivityPhysicalTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.mini.MiniHaloActivityPhysicalTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest:
+INSTRUMENTATION_STATUS: test=realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=org.junit.AssumptionViolatedException: NOT_RUN: requires explicit haloQuietCapture=true; no utterance in a quiet room
+	at org.junit.Assume.assumeTrue(Assume.java:68)
+	at com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest.realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground(GlobalTalkCapturePhysicalTest.kt:48)
+
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest:
+INSTRUMENTATION_STATUS: test=realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground
+INSTRUMENTATION_STATUS_CODE: -4
+INSTRUMENTATION_RESULT: stream=
+
+Time: 114,56
+There was 1 failure:
+1) realMainActivityRendersWarmAndResumedScreenIntents(com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest)
+java.lang.AssertionError: Workspace search action did not render after route=notebook; pending=null
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.awaitPage(MainActivityScreenIntentPhysicalTest.kt:82)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.awaitWorkspace(MainActivityScreenIntentPhysicalTest.kt:73)
+	at com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest.realMainActivityRendersWarmAndResumedScreenIntents(MainActivityScreenIntentPhysicalTest.kt:52)
+
+FAILURES!!!
+Tests run: 13,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

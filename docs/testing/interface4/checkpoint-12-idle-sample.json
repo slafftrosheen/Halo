@@ -1,0 +1,68 @@
+{
+  "artifact": {
+    "app": {
+      "sha256": "ff00a95371eb747f3041d0972aa8288b8560412aa8e61323c77a02fb744aeeaf",
+      "bytes": 289581146,
+      "installedSha256": "ff00a95371eb747f3041d0972aa8288b8560412aa8e61323c77a02fb744aeeaf",
+      "reinstalledThisCheckpoint": true
+    },
+    "test": {
+      "sha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "bytes": 1949934,
+      "installedSha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "reinstalledThisCheckpoint": false
+    }
+  },
+  "condition": "Foreground Workspace with original normal Android animations and static waiting-task icon; background WorkManager activity present",
+  "animatorScale": "null",
+  "seconds": 21.03,
+  "topThreads": [
+    {
+      "thread": "androidx.work-1",
+      "cpuPercentOneCore": 72.18
+    },
+    {
+      "thread": "raintool.xkqzps",
+      "cpuPercentOneCore": 19.78
+    },
+    {
+      "thread": "RenderThread",
+      "cpuPercentOneCore": 16.5
+    },
+    {
+      "thread": "HeapTaskDaemon",
+      "cpuPercentOneCore": 3.76
+    },
+    {
+      "thread": "binder:22654_5",
+      "cpuPercentOneCore": 2.81
+    },
+    {
+      "thread": "binder:22654_3",
+      "cpuPercentOneCore": 0.43
+    },
+    {
+      "thread": "Jit thread pool",
+      "cpuPercentOneCore": 0.33
+    },
+    {
+      "thread": "binder:22654_4",
+      "cpuPercentOneCore": 0.29
+    },
+    {
+      "thread": "binder:22654_7",
+      "cpuPercentOneCore": 0.29
+    },
+    {
+      "thread": "WM.task-2",
+      "cpuPercentOneCore": 0.14
+    }
+  ],
+  "memoryKiB": {
+    "TOTAL PSS": 286026,
+    "TOTAL RSS": 312352,
+    "TOTAL SWAP PSS": 70063
+  },
+  "limits": "Short debug single-device sample; not sustained-load, battery/energy or long-duration leak qualification.",
+  "qualification": "LIMITED: this is not a quiescent idle sample; androidx.work-1 consumed72.18% of one core. Main/render observations are not a controlled before-after energy result."
+}

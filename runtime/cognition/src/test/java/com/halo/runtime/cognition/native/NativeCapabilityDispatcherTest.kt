@@ -26,7 +26,11 @@ class NativeCapabilityDispatcherTest {
         "Set brightness to forty percent" to "halo_brightness", "Open Bluetooth settings" to "halo_open_settings",
         "Share hello" to "halo_share_text", "Read clipboard" to "halo_clipboard_read",
         "Copy hello" to "halo_clipboard_write", "Show battery level" to "halo_battery_status",
-        "Show network status" to "halo_network_status", "Show device info" to "halo_device_info")
+        "Show network status" to "halo_network_status", "Show device info" to "halo_device_info").apply {
+            NativeHaloScreenDestination.entries.forEach { destination ->
+                destination.phrases.forEach { phrase -> put(phrase, "halo_open_screen") }
+            }
+        }
 
     @Test fun nativeMatrixHasSameExecutionAcrossChatSelectionsAndNoProviderJournal() = runTest {
         val storage = MemoryStorage()
@@ -36,7 +40,7 @@ class NativeCapabilityDispatcherTest {
         var blocking: CompletableDeferred<Unit>? = null
         val entered = CompletableDeferred<Unit>()
         val executor = object : ToolExecutor {
-            override fun definitions() = commands.values.map { ToolDefinition(it, it, "Native test action") }
+            override fun definitions() = commands.values.distinct().map { ToolDefinition(it, it, "Native test action") }
             override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
                 calls += toolCall
                 blocking?.let { entered.complete(Unit); it.await() }
@@ -58,6 +62,16 @@ class NativeCapabilityDispatcherTest {
         var locked = false
         val service = SkillExecutionService(skills, registry, ToolAvailabilityResolver(registry, skills), delegate, isLocked = { locked }, coordinator = coordinator)
         val dispatcher = NativeCapabilityDispatcher(service, coordinator, store)
+        NativeHaloScreenDestination.entries.forEach { destination ->
+            val intent = NativeHaloScreenIntent(destination.wireId)
+            val typed = dispatcher.requestFor(Interpretation("navigation", intent = intent, confidence = 1f, source = Source.USER))
+            val speechFinal = dispatcher.requestFor(Interpretation("navigation", intent = intent, confidence = 1f, source = Source.MICROPHONE))
+            assertEquals("halo_open_screen", typed?.operation)
+            assertEquals(mapOf("screen" to destination.wireId), typed?.arguments)
+            assertEquals(typed?.arguments, speechFinal?.arguments)
+            assertNull(dispatcher.requestFor(Interpretation("uncertain", intent = intent, confidence = 0.79f)))
+        }
+        assertNull(dispatcher.requestFor(Interpretation("untrusted route", intent = NativeHaloScreenIntent("canvas/guessed"), confidence = 1f)))
         for (provider in listOf("provider.litert.local", "gemini_503", "openai", "openrouter/concrete", "openrouter/free")) {
             storage.putString("active_ai_provider", provider)
             val before = calls.size

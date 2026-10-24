@@ -1,0 +1,67 @@
+{
+  "artifact": {
+    "app": {
+      "sha256": "bb8be8e8ffe9695788cfa972dddb421eecbafd9c6733a611706e2fa8d984eb48",
+      "bytes": 289581146,
+      "installedSha256": "bb8be8e8ffe9695788cfa972dddb421eecbafd9c6733a611706e2fa8d984eb48",
+      "reinstalledThisCheckpoint": true
+    },
+    "test": {
+      "sha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "bytes": 1949934,
+      "installedSha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "reinstalledThisCheckpoint": false
+    }
+  },
+  "condition": "foreground Workspace, normal Android animations, original unset animator scale",
+  "seconds": 21.31,
+  "animatorScale": "null",
+  "topThreads": [
+    {
+      "thread": "DefaultDispatch",
+      "cpuPercentOneCore": 94.03
+    },
+    {
+      "thread": "DefaultDispatch",
+      "cpuPercentOneCore": 93.98
+    },
+    {
+      "thread": "DefaultDispatch",
+      "cpuPercentOneCore": 61.61
+    },
+    {
+      "thread": "raintool.xkqzps",
+      "cpuPercentOneCore": 47.63
+    },
+    {
+      "thread": "HeapTaskDaemon",
+      "cpuPercentOneCore": 23.46
+    },
+    {
+      "thread": "RenderThread",
+      "cpuPercentOneCore": 22.33
+    },
+    {
+      "thread": "binder:20250_1",
+      "cpuPercentOneCore": 2.35
+    },
+    {
+      "thread": "Jit thread pool",
+      "cpuPercentOneCore": 1.17
+    },
+    {
+      "thread": "binder:20250_4",
+      "cpuPercentOneCore": 0.94
+    },
+    {
+      "thread": "binder:20250_2",
+      "cpuPercentOneCore": 0.52
+    }
+  ],
+  "memoryKiB": {
+    "TOTAL PSS": 339917,
+    "TOTAL RSS": 426620,
+    "TOTAL SWAP PSS": 275
+  },
+  "limits": "Short single-device idle comparison; not a battery, sustained-load, or long-duration leak qualification."
+}

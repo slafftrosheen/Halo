@@ -1,0 +1,55 @@
+{
+  "id": "halo.screen.layout",
+  "name": "halo Screen layout",
+  "description": "Preview and edit the native halo Screen layout, saved presets and presentation settings. Separate from cross-app screen control.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_screen_apply",
+    "halo_screen_preview",
+    "halo_screen_remove_preset",
+    "halo_screen_save_preset",
+    "halo_screen_settings",
+    "halo_screen_state",
+    "halo_screen_undo"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_screen_apply",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_preview",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_remove_preset",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_save_preset",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_settings",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_state",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_undo",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    }
+  ]
+}

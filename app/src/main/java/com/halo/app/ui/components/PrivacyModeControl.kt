@@ -12,6 +12,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ai.PrivacyMode
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.language.uiText
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+
+/** Compact shell projection; uses exactly the same durable profiles and sharing disclosure. */
+@Composable fun CompactPrivacyModeControl(modifier: Modifier = Modifier) {
+    val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
+    val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val cloudAllowed by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
+    val loaded by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
+    val changeMode = rememberModeChangeAction()
+    val label = uiText(if (mode == PrivacyMode.PRIVATE) "Private" else "Power")
+    val description = uiText("AI privacy mode") + ": " + label
+    CompactPrivacyModeButton(mode, description, loaded && (!kids || cloudAllowed || mode == PrivacyMode.CLOUD),
+        { changeMode(if (mode == PrivacyMode.PRIVATE) PrivacyMode.CLOUD else PrivacyMode.PRIVATE) }, modifier)
+}
 
 /** Shared, persistent control; every app screen observes the same durable mode. */
 @Composable fun PrivacyModeControl(modifier: Modifier = Modifier, detail: Boolean = false) {
@@ -59,7 +74,7 @@ import com.halo.app.language.uiText
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
     val changeMode = rememberModeChangeAction()
     if (mode == PrivacyMode.PRIVATE) {
-        Text(uiText(if (required) "This action needs Full Power mode. Use the switch at the top of Halo." else "Private mode"), style = MaterialTheme.typography.bodySmall)
+        Text(uiText(if (required) "This action needs Full Power mode. Use the control beside the halo Orb." else "Private mode"), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { changeMode(PrivacyMode.CLOUD) }) {
             Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.mode47_enable_power)) }
     }

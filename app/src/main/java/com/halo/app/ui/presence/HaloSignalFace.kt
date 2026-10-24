@@ -88,7 +88,7 @@ fun HaloSignalFace(
         ) else Modifier), contentAlignment = Alignment.Center) {
         val staticResource = if (size <= 32.dp) artwork.microResource()
             else artwork.staticResource(dark, kids, accentIndex)
-        // Compact surfaces use a subtle vector-only pulse (never scaled-down full ripples).
+        // Compact active states pulse; idle stays still without a permanent frame clock.
         when {
             policy.compact -> key(artwork, staticResource) {
                 CompactPresenceFrame(artwork, staticResource)
@@ -161,7 +161,7 @@ private fun Badge(glyph: HaloGlyph, size: Dp, condition: Boolean, modifier: Modi
 }
 
 /**
- * Full Lottie at >=80dp, low-cost vector-only motion at 40..79dp, static under 40dp.
+ * Full Lottie at >=80dp, vector motion for compact active states, static compact idle.
  * The actual runtime state determines the artwork: animation never fabricates activity.
  */
 internal data class PresenceMotionPolicy(val animate: Boolean, val loop: Boolean, val compact: Boolean = false)
@@ -180,7 +180,7 @@ internal fun PresenceArtwork.motionPolicy(size: Float, reduced: Boolean, foregro
 }
 
 private val compactArtwork = setOf(
-    PresenceArtwork.IDLE, PresenceArtwork.THINKING, PresenceArtwork.ACTING,
+    PresenceArtwork.THINKING, PresenceArtwork.ACTING,
     PresenceArtwork.WAITING, PresenceArtwork.APPROVAL_REQUIRED
 )
 
@@ -188,7 +188,6 @@ private val compactArtwork = setOf(
 @Composable
 private fun CompactPresenceFrame(artwork: PresenceArtwork, drawable: Int) {
     val halfDuration = when (artwork) {
-        PresenceArtwork.IDLE -> 2000
         PresenceArtwork.THINKING -> 1500
         else -> 1000
     }
@@ -207,9 +206,6 @@ private fun CompactPresenceFrame(artwork: PresenceArtwork, drawable: Int) {
         contentDescription = null,
         modifier = Modifier.fillMaxSize().graphicsLayer {
             alpha = .90f + .10f * pulse
-            val scale = if (artwork == PresenceArtwork.IDLE) 1f + .015f * pulse else 1f
-            scaleX = scale
-            scaleY = scale
         }
     )
 }

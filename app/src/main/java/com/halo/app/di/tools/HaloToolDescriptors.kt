@@ -331,6 +331,9 @@ object HaloToolDescriptors {
         "halo_canvas_clear_sketch" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, ToolSecurityPolicy.DESTRUCTIVE,
             keywords = setOf("canvas", "sketch", "drawing", "clear", "erase", "strokes"),
             presentation = ToolPresentation(title = "Clear sketch", actionVerb = "Clear"))
+        "halo_canvas_current" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
+            keywords = setOf("canvas", "current", "this", "selected", "selection", "board", "cards"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 16000))
         "halo_canvas_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
             keywords = setOf("canvas", "board", "cards", "read", "drawing"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
@@ -646,13 +649,38 @@ object HaloToolDescriptors {
         else -> null
     }
 
+    private fun navigationOperability(operation: com.halo.runtime.cognition.tools.ToolOperation) =
+        com.halo.runtime.cognition.tools.ToolOperability(
+            capabilityId = CapabilityId("host.assistant.screen"),
+            owner = "HaloScreenCatalog/HaloScreenLauncher",
+            operation = operation,
+            resultEncoding = com.halo.runtime.cognition.tools.ToolResultEncoding.TEXT,
+            resultSchema = mapOf("type" to "string", "maxLength" to 24000),
+            limitations = setOf("Parameter-free destinations only; object routes require their domain owner.",
+                "Dispatch does not verify rendering or grant permissions; never replay an uncertain launch."),
+        )
+
     fun assistant(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
-        "halo_list_screens", "halo_get_preferences" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+        "halo_list_screens" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            readOnly(definition.name), keywords = setOf("halo", "screens", "destinations"))
+            .copy(operability = navigationOperability(com.halo.runtime.cognition.tools.ToolOperation.QUERY))
+        "halo_get_preferences" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
             readOnly(definition.name), keywords = setOf("halo", "screens", "preferences", "appearance", "font", "start page"))
+            .withAppPreferences(definition)
         "halo_set_preferences" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
-            reversible(), keywords = setOf("halo", "theme", "dark", "light", "font", "start page"))
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("halo", "theme", "dark", "light", "font", "start page"))
+            .withAppPreferences(definition)
+        "halo_get_mode_profile", "halo_edit_mode_profile" -> descriptor(definition.name, definition,
+            if (definition.name == "halo_get_mode_profile") ToolCategory.INFORMATION else ToolCategory.HOST_CONTROL,
+            if (definition.name == "halo_get_mode_profile") readOnly(definition.name)
+                else ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("halo", "mode", "profile", "privacy", "routing", "speech"),
+            presentation = ToolPresentation(title = if (definition.name == "halo_get_mode_profile") "Read mode profile" else "Edit mode profile",
+                actionVerb = if (definition.name == "halo_get_mode_profile") "Read" else "Save", targetArgument = "mode"))
+            .withAppPreferences(definition)
         "halo_open_screen" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             external(ReplaySafety.NEVER_REPLAY), keywords = setOf("halo", "navigate", "page", "screen"))
+            .copy(operability = navigationOperability(com.halo.runtime.cognition.tools.ToolOperation.PRESENT))
         "halo_read_aloud" -> descriptor(definition.name, definition, ToolCategory.MEDIA,
             external(ReplaySafety.NEVER_REPLAY), keywords = setOf("speech", "read aloud", "voice"),
             presentation = ToolPresentation(title = "Read text aloud", actionVerb = "Read", sensitiveArguments = setOf("text")))
@@ -665,7 +693,102 @@ object HaloToolDescriptors {
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.assistant.native"))))
         "halo_stop_reading" -> descriptor(definition.name, definition, ToolCategory.MEDIA,
             reversible(ReplaySafety.SAFE), keywords = setOf("speech", "stop reading", "stop voice"))
-        else -> null
+        else -> interfaceConfiguration(definition)
+    }
+
+    private fun ToolDescriptor.withAppPreferences(definition: ToolDefinition): ToolDescriptor {
+        val contract = requireNotNull(com.halo.app.di.tools.host.AppPreferenceOperability.forName(definition.name))
+        return copy(operability = contract, requirements = requirements + ToolRequirement.Capability(contract.capabilityId),
+            execution = execution.copy(maxOutputChars = 24000))
+    }
+
+    private fun interfaceConfiguration(definition: ToolDefinition): ToolDescriptor? {
+        val contract = ScreenOperabilityContracts.forDefinition(definition)
+            ?: DeviceNotificationOperability.forDefinition(definition)
+            ?: com.halo.app.di.tools.host.VoiceConfigurationTools.operability(definition.name)
+            ?: LearningConfigurationTools.operability(definition.name)
+            ?: RoutineManagementOperability.forDefinition(definition)
+            ?: ProviderConfigurationOperability.forDefinition(definition)
+            ?: StudySessionOperability.forDefinition(definition)
+            ?: CanvasWorkflowOperability.forDefinition(definition)
+            ?: SpeechInventoryOperability.forDefinition(definition) ?: return null
+        val query = contract.operation == com.halo.runtime.cognition.tools.ToolOperation.QUERY
+        val screen = definition.name in ScreenOperabilityContracts.readTools + ScreenOperabilityContracts.mutationTools
+        val always = !query && (!screen || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
+        val security = when {
+            query -> readOnly(definition.name)
+            always -> ToolSecurityPolicy(
+                when (definition.name) {
+                    "halo_saved_device_forget", "halo_screen_remove_preset", "halo_routine_delete" -> ToolRiskClass.DESTRUCTIVE
+                    "halo_routine_run_now", "halo_provider_refresh_models", "halo_provider_test_connection" -> ToolRiskClass.EXTERNAL_SIDE_EFFECT
+                    else -> ToolRiskClass.SENSITIVE
+                },
+                ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
+            else -> reversible(ReplaySafety.NEVER_REPLAY)
+        }
+        val title = when (definition.name) {
+            "halo_screen_state" -> "Read Screen layout"
+            "halo_screen_preview" -> "Preview Screen layout"
+            "halo_screen_apply" -> "Apply Screen layout"
+            "halo_screen_settings" -> "Change Screen settings"
+            "halo_screen_undo" -> "Undo Screen layout change"
+            "halo_screen_save_preset" -> "Save Screen preset"
+            "halo_screen_remove_preset" -> "Remove Screen preset"
+            "halo_saved_devices" -> "List saved devices"
+            "halo_saved_device_get" -> "Read saved device"
+            "halo_device_preferences" -> "Read device preferences"
+            "halo_device_thumbnail_quality" -> "Change device image quality"
+            "halo_saved_device_retry" -> "Retry saved device"
+            "halo_saved_device_connect" -> "Connect saved device"
+            "halo_saved_device_disconnect" -> "Disconnect saved device"
+            "halo_saved_device_autoconnect" -> "Change automatic device connection"
+            "halo_saved_device_forget" -> "Forget saved device"
+            "halo_notification_settings_apps" -> "List notification settings apps"
+            "halo_notification_policy_get" -> "Read app notification policy"
+            "halo_notification_policy_set" -> "Change app notification policy"
+            "halo_digest_delivery_get" -> "Read digest delivery settings"
+            "halo_digest_delivery_set" -> "Change digest delivery settings"
+            "halo_get_voice_configuration" -> "Read voice settings"
+            "halo_set_voice_configuration" -> "Change voice settings"
+            "halo_get_learning_configuration" -> "Read learning settings"
+            "halo_set_learning_configuration" -> "Change learning settings"
+            "halo_routines_list" -> "List saved routines"
+            "halo_routine_get" -> "Read saved routine"
+            "halo_routine_run_status" -> "Read routine progress"
+            "halo_routine_set_enabled" -> "Change routine scheduling"
+            "halo_routine_save_existing" -> "Save routine changes"
+            "halo_routine_delete" -> "Delete saved routine"
+            "halo_routine_run_now" -> "Run saved routine"
+            "halo_provider_catalog" -> "List answer providers"
+            "halo_provider_state" -> "Read provider readiness"
+            "halo_provider_refresh_models" -> "Refresh provider model list"
+            "halo_provider_test_connection" -> "Check provider connection"
+            "halo_study_current" -> "Read active study lesson"
+            "halo_study_session_action" -> "Change active study lesson"
+            "halo_canvas_workflow_status" -> "Read Canvas review status"
+            "halo_canvas_image_palette" -> "Save image color palette"
+            "halo_canvas_transcribe_file" -> "Prepare local transcription for review"
+            "halo_canvas_save_reviewed_text" -> "Save reviewed Canvas text"
+            "halo_canvas_edit_reviewed_text" -> "Edit Canvas review draft"
+            "halo_canvas_discard_reviewed_text" -> "Discard Canvas review draft"
+            "halo_canvas_export_note" -> "Export Canvas to a note"
+            "halo_speech_inventory" -> "List local speech models"
+            "halo_speech_model_action" -> "Manage local speech model"
+            else -> return null
+        }
+        return descriptor(definition.name, definition, if (query) ToolCategory.INFORMATION else ToolCategory.HOST_CONTROL,
+            security, keywords = if (screen) setOf("screen", "layout", "card", "preset", "typography")
+                else setOf("saved device", "connection", "notification", "digest", "preferences", "voice", "learning", "routine", "provider", "study", "canvas", "review draft", "speech model"),
+            requirements = setOf(ToolRequirement.Capability(contract.capabilityId)),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(
+                maxOutputChars = if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
+            presentation = ToolPresentation(title = title, actionVerb = if (query) "Read" else "Apply",
+                targetArgument = when {
+                    definition.name.startsWith("halo_saved_device_") -> "deviceId"
+                    definition.name.startsWith("halo_notification_policy_") -> "packageName"
+                    else -> null
+                }, sensitiveArguments = setOf("settings", "topics", "name", "text", "sourceVersions", "trigger", "conditions", "actions", "delivery", "patch")))
+            .copy(operability = contract)
     }
 
     fun system(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {

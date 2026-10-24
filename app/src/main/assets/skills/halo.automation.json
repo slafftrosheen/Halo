@@ -10,7 +10,14 @@
     "halo_propose_procedure",
     "halo_save_procedure",
     "halo_use_procedure",
-    "halo_routine_message"
+    "halo_routine_message",
+    "halo_routines_list",
+    "halo_routine_get",
+    "halo_routine_run_status",
+    "halo_routine_set_enabled",
+    "halo_routine_save_existing",
+    "halo_routine_delete",
+    "halo_routine_run_now"
   ],
   "requiredPermissions": [],
   "toolDefinitions": [
@@ -33,6 +40,41 @@
     {
       "toolId": "halo_routine_message",
       "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_routines_list",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_routine_get",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_routine_run_status",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_routine_set_enabled",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_routine_save_existing",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_routine_delete",
+      "risk": "DESTRUCTIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_routine_run_now",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
     }
   ]
 }

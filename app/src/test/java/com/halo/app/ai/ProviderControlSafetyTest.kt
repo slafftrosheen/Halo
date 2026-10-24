@@ -102,6 +102,32 @@ class ProviderControlSafetyTest {
             block(control, provider, storage)
         } finally { store.clear(); Dispatchers.resetMain() }
     }
+    @Test fun semanticMetadataReadsAreLiveBoundedProjectionsAndChecksFailClosedWithoutPolicy() = runTest {
+        fixture { control, provider, _ ->
+            val state = requireNotNull(control.providerConfiguration(provider.id))
+            assertTrue(state.configured)
+            assertEquals(listOf("text"), state.models.map { it.id })
+            assertEquals("CACHED", state.catalogue)
+            assertEquals(0, provider.generations)
+            provider.auth = { fail("Missing remote policy must block authentication"); false }
+            val failure = runCatching { control.requestProviderCheck(provider.id, state.sourceVersion,
+                ProviderConfigurationCommand.TEST_CONNECTION) { true } }.exceptionOrNull()
+            assertTrue(failure is RemoteDispatchBlocked)
+            assertEquals(0, provider.generations)
+        }
+    }
+    @Test fun semanticCheckRejectsConfigurationChangedAfterItsObservedSnapshot() = runTest {
+        fixture { control, provider, _ ->
+            val state = requireNotNull(control.providerConfiguration(provider.id))
+            val done = CompletableDeferred<Boolean>()
+            control.save(provider.id, emptyMap(), "fixture-updated") { done.complete(it) }
+            assertTrue(withContext(Dispatchers.Default) { withTimeout(5000) { done.await() } })
+            provider.auth = { fail("Stale version must never authenticate"); false }
+            assertNull(control.requestProviderCheck(provider.id, state.sourceVersion,
+                ProviderConfigurationCommand.TEST_CONNECTION) { true })
+            assertNotEquals(state.sourceVersion, control.providerConfiguration(provider.id)!!.sourceVersion)
+        }
+    }
     @Test fun saveDoesNotAuthenticateOrLoseTheKeyWhileOffline() = runTest {
         fixture { control, provider, storage ->
             provider.auth = { error("Connection must not run during save") }

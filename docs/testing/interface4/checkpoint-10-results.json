@@ -1,0 +1,28 @@
+{
+  "suites": [
+    {"suite":"com.halo.app.di.tools.host.NavigationToolsTest","tests":4,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.components.CompactPrivacyModeButtonTest","tests":3,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.BrandPresenceVisualTest","tests":5,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.GlobalOrbLayoutTest","tests":5,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.HaloIdentitySnapshotTest","tests":3,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.HaloOrbActionsTest","tests":8,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.HaloOrbLauncherTest","tests":9,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.HaloOrbVisualTest","tests":8,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.HaloSharedOrbMotionTest","tests":1,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.OrbStateMeaningTest","tests":3,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.PresenceArtworkContractTest","tests":6,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.presence.ShellPageActionsTest","tests":6,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.BrandPermissionAbilitiesTest","tests":2,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.CapabilitySetupGuideTest","tests":8,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.ExactPrimaryNavigationTest","tests":3,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.GuidedCapabilitySetupTest","tests":7,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.HaloAssistantScreenParityTest","tests":1,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.HaloScreenCatalogTest","tests":2,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.HaloScreenRequestLifecycleTest","tests":3,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.HaloScreenRequestsTest","tests":4,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.PermissionsScreenTest","tests":1,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.ShellOrbCatalogTest","tests":4,"failures":0,"errors":0,"skipped":0,"failedCases":[]},
+    {"suite":"com.halo.app.ui.shell.ShellSpeechLifecycleTest","tests":6,"failures":0,"errors":0,"skipped":0,"failedCases":[]}
+  ],
+  "totals": {"tests": 102, "failures": 0, "errors": 0, "skipped": 0}
+}

@@ -31,7 +31,7 @@ enum class HostActionReceipt {
 
 class HostToolRegistry(
     private val executors: List<ToolExecutor>
-) : ToolExecutor, ToolPreflightProvider {
+) : ToolExecutor, ToolPreflightProvider, com.halo.runtime.cognition.tools.ToolGrantPreviewProvider {
 
     private val toolIndex: Map<String, ToolExecutor>
     private val allDefinitions: List<ToolDefinition>
@@ -50,6 +50,9 @@ class HostToolRegistry(
     }
 
     override fun definitions(): List<ToolDefinition> = allDefinitions
+
+    override suspend fun grantSummary(toolCall: ToolCall): String =
+        (toolIndex[toolCall.functionName] as? com.halo.runtime.cognition.tools.ToolGrantPreviewProvider)?.grantSummary(toolCall).orEmpty()
 
     override fun restoreTransientCall(toolCall: ToolCall): ToolCall =
         (toolIndex[toolCall.functionName] as? ToolPreflightProvider)?.restoreTransientCall(toolCall) ?: toolCall

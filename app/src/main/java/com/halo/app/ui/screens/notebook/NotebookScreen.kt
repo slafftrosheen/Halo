@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import androidx.compose.runtime.LaunchedEffect
 
 import com.halo.app.ui.components.HaloTextField
@@ -148,6 +152,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importFile by rememberSaveable { mutableStateOf(false) }
     var showLocalSearch by rememberSaveable { mutableStateOf(false) }
+    BindShellPageActions(ShellPageOwner("notebook", sourceIdentity = "${state.filter}:${state.selectedCollectionId}:$showLibrary"), listOf(
+        ShellPageAction("page.notebook.new-note", "New note", HaloGlyph.NOTE, !mutating) { viewModel.createNote() },
+        ShellPageAction("page.notebook.related", "Find related notes", HaloGlyph.SEARCH) { showLocalSearch = true },
+        ShellPageAction("page.notebook.context", "In chat", HaloGlyph.NOTE) { showWorkingSet = true },
+    ))
     LaunchedEffect(requestLocalSearch) {
         if (requestLocalSearch) { showLocalSearch = true; onLocalSearchOpened() }
     }
@@ -231,7 +240,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 navigation = if (showLibrary) ::leaveLibrary else null,
                 // The Round 2 Notebook home has a word-only header.
                 glyph = if (showLibrary) HaloGlyph.NOTE else null,
-                primaryAction = if (!showLibrary) HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode) else null,
+                primaryAction = if (!showLibrary && !com.halo.app.ui.presence.LocalShellHaloOrb.current)
+                    HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode) else null,
                 trailing = {
                     if (!showLibrary) {
                         IconButton(onClick = { libraryFocused = true },
@@ -241,18 +251,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                                 modifier = Modifier.size(24.dp))
                         }
                     }
+                    NotebookOverflowMenu(state.workingSet.size,
+                        onSavedChats = { libraryFocused = true; viewModel.setFilter(NotebookFilter.CHATS) },
+                        onWorkingSet = { showWorkingSet = true },
+                        onRelatedNotes = { showLocalSearch = true })
                 }
             )
         }
 
-        if (showLibrary) item(key = "local-search") {
-            TextButton(onClick = { showLocalSearch = true },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Icon(painterResource(R.drawable.halo_ic_search), null, Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(uiText("Find related notes"))
-            }
-        }
         if (!showLibrary) item(key = "create") {
             val actions = listOf<Triple<String, Int, () -> Unit>>(
                 Triple("Note", R.drawable.halo_ic_new_note, viewModel::createNote),
@@ -418,12 +424,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 TextButton(onClick = { if (showLibrary) leaveLibrary() else libraryFocused = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText(if (showLibrary) "Back to Notebook" else "Open Library"))
                 }
-                TextButton(onClick = { libraryFocused = true; viewModel.setFilter(NotebookFilter.CHATS) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText("Saved chats"))
-                }
-            }
-            if (showLibrary) TextButton(onClick = { showWorkingSet = true }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(uiText("In chat (%1\$d)", state.workingSet.size))
             }
         }
 
@@ -527,11 +527,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         placeholder = { Text(uiText("Search your workspace")) },
                         shape = com.halo.app.ui.design.HaloShapes.control, kind = VoiceFieldKind.SEARCH)
 
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = { showLocalSearch = true }) {
-                            Text(uiText("Find related notes"))
-                        }
-                    }
                     FilterBar(state.filter, viewModel::setFilter)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     CollectionBar(

@@ -22,7 +22,7 @@ import org.robolectric.annotation.Config
 class HaloOrbLauncherTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun openingOrbOnlyDiscoversAndShortcutDelegatesTypedGroup() {
+    @Test fun tapTalksAndExplicitMenuDiscoversWithoutStartingAnotherCapture() {
         var primary = 0
         var request: HaloToolCatalogRequest? = null
         compose.setContent { HostlessHaloTheme {
@@ -30,12 +30,54 @@ class HaloOrbLauncherTest {
                 HaloOrbShortcut.defaults, {}, { primary++ }, {}, { request = it })
         } }
         compose.onNodeWithText("All tools").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Halo actions").performClick()
-        assertEquals(0, primary); assertNull(request)
+        compose.onNodeWithContentDescription("Talk").performClick()
+        assertEquals(1, primary)
+        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
+        assertEquals(1, primary); assertNull(request)
         compose.onNodeWithText("Find").performScrollTo().performClick()
         assertEquals(HaloToolCatalogRequest(HomeToolGroup.FIND), request)
         compose.onNodeWithText("All tools").assertDoesNotExist()
+        assertEquals(1, primary)
+    }
+
+    @Test fun longPressOpensNavigationWithoutStartingTheMicrophone() {
+        var primary = 0
+        var route: String? = null
+        compose.setContent { HostlessHaloTheme {
+            HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true), HaloOrbInteraction(HaloOrbPrimary.TALK, false),
+                emptySet(), {}, { primary++ }, {}, {}, destinations = listOf(
+                    HaloOrbDestination("studio", "Studio", com.halo.app.ui.icons.HaloGlyph.TOOL)), onNavigate = { route = it })
+        } }
+        compose.onNodeWithContentDescription("Talk").performTouchInput { longClick() }
+        compose.onNodeWithText("Studio").performScrollTo().performClick()
+        assertEquals("studio", route)
         assertEquals(0, primary)
+    }
+
+    @Test fun swipeUpAndAccessibleMenuPreserveOneShotPrimarySemantics() {
+        var primary = 0
+        compose.setContent { HostlessHaloTheme {
+            HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true), HaloOrbInteraction(HaloOrbPrimary.TALK, false),
+                emptySet(), {}, { primary++ }, {}, {})
+        } }
+        compose.onNodeWithContentDescription("Talk").performTouchInput { swipeUp() }
+        compose.onNodeWithText("All tools").assertExists()
+        assertEquals(0, primary)
+    }
+
+    @Test fun capturedSpeechPrimaryFinalizesRatherThanInvokingCancellation() {
+        val calls = mutableListOf<HaloOrbPrimary>()
+        var cancelled = 0
+        compose.setContent { HostlessHaloTheme {
+            HaloOrbLauncher(HaloSignalPresentation(state = HaloSignalState.CAPTURING, reducedMotion = true),
+                HaloOrbInteraction(HaloOrbPrimary.FINISH, true), emptySet(), {}, { calls += it }, { cancelled++ }, {})
+        } }
+        compose.onNodeWithContentDescription("Send voice").performClick()
+        assertEquals(listOf(HaloOrbPrimary.FINISH), calls)
+        assertEquals(0, cancelled)
+        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
+        compose.onNodeWithText("Stop").performClick()
+        assertEquals(1, cancelled)
     }
 
     @Test fun activeOrbUsesStopThenInterruptionWithoutOpeningAnotherVoiceOwner() {
@@ -71,7 +113,7 @@ class HaloOrbLauncherTest {
             HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true), HaloOrbInteraction(HaloOrbPrimary.TALK, false),
                 shortcuts.value, { shortcuts.value = it }, { invoked++ }, {}, { request = it })
         } }
-        compose.onNodeWithContentDescription("Halo actions").performClick()
+        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
         compose.onNodeWithText("All tools").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Choose shortcuts").performScrollTo().performClick()
         compose.onNode(hasText("Find") and isToggleable()).performClick()
@@ -89,7 +131,7 @@ class HaloOrbLauncherTest {
             HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true), interaction.value, HaloOrbShortcut.defaults,
                 {}, {}, {}, { requests++ })
         } }
-        compose.onNodeWithContentDescription("Halo actions").performClick()
+        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
         compose.onNodeWithText("All tools").assertExists()
         compose.runOnIdle { interaction.value = HaloOrbInteraction(HaloOrbPrimary.STOP, true) }
         compose.onNodeWithText("All tools").assertDoesNotExist()
@@ -105,7 +147,7 @@ class HaloOrbLauncherTest {
             HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true), HaloOrbInteraction(HaloOrbPrimary.TALK, false),
                 HaloOrbShortcut.defaults, {}, { invoked++ }, {}, { invoked++ })
         } } }
-        compose.onNodeWithContentDescription("Halo actions").performClick()
+        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
         compose.runOnIdle { owner.lifecycle.currentState = Lifecycle.State.CREATED }
         compose.runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
         compose.onNodeWithText("All tools").assertDoesNotExist()

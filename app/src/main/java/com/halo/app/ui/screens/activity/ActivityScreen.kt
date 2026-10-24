@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.activity
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.language.uiText
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
@@ -133,7 +137,21 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             focusScrolled = true
         }
     }
-    var showProcessingDetails by rememberSaveable { mutableStateOf(false) }
+    var showActivityDetails by rememberSaveable { mutableStateOf(false) }
+    BindShellPageActions(ShellPageOwner("activity", sourceIdentity = "${filter.name}:$focusRunId"), listOf(
+        ShellPageAction("page.activity.details", "Details", HaloGlyph.QUESTION) { showActivityDetails = true },
+        ShellPageAction("page.activity.review", "Show requests", HaloGlyph.APPROVAL, filter != ActivityFilter.REVIEW) { selectedFilter = ActivityFilter.REVIEW },
+        ShellPageAction("page.activity.history", "Show completed", HaloGlyph.ACTIVITY, filter != ActivityFilter.HISTORY) { selectedFilter = ActivityFilter.HISTORY },
+    ))
+    if (showActivityDetails) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { showActivityDetails = false },
+        title = { Text(uiText("Activity")) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(uiText("Everything halo did, in plain words."))
+            Text(uiText("Approvals and answers wait here until you choose what happens next."))
+        } },
+        confirmButton = { TextButton(onClick = { showActivityDetails = false }) { Text(uiText("Done")) } },
+    )
 
     Column(
         modifier = Modifier
@@ -141,8 +159,9 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"),
-            uiText("Everything halo did, in plain words."))
+        HaloScreenHeader(uiText("Activity"), trailing = {
+            ActivityOverflowMenu { showActivityDetails = true }
+        })
         ActivitySegmentedPill(
             selected = filter,
             counts = mapOf(

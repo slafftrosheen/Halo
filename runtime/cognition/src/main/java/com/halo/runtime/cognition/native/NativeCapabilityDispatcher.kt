@@ -351,8 +351,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 capability = "host.app.semantic"; args = if (intent.action == "inspect_capabilities") emptyMap() else mapOf("action" to intent.action) }
 
             is NativeHaloScreenIntent -> {
-                if (intent.screen !in setOf("home", "notebook", "study", "devices", "settings",
-                        "activity", "skills", "system_check")) return null
+                if (NativeHaloScreenDestination.fromWire(intent.screen) == null) return null
                 tool = "halo_open_screen"
                 capability = "host.assistant.screen"
                 args = mapOf("screen" to intent.screen)

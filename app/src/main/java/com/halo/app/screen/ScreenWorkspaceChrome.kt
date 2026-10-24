@@ -24,6 +24,7 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
     onEdit: () -> Unit, onApply: () -> Unit, onCancel: () -> Unit, onAppearance: () -> Unit,
     onAdd: () -> Unit, onNote: () -> Unit, onTalk: () -> Unit,
     orbControl: (@Composable (Dp) -> Unit)?) {
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     Column(Modifier.fillMaxWidth()) {
         if (!fullScreen) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -31,8 +32,10 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
             IconButton(onClick = onSettings, enabled = interactionAllowed, modifier = Modifier.size(48.dp)) {
                 HaloIcon(HaloGlyph.SETTINGS, uiText("Screen settings"))
             }
-            if (orbControl != null && hasLayout) orbControl(48.dp)
-            else if (orbControl == null) IconButton(onClick = onTalk, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo")) }
+            if (!shellOwnsOrb) {
+                if (orbControl != null && hasLayout) orbControl(48.dp)
+                else if (orbControl == null) IconButton(onClick = onTalk, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.LISTEN, uiText("Talk to halo")) }
+            }
         }
         if (hasLayout) {
             if (editing) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -51,8 +54,10 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
             TextButton(onClick = { onFullScreen(false) }, modifier = Modifier.widthIn(max = 280.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.screen_exit_ambient)) }
             if (hasLayout && (chromeVisible || orbActive)) {
                 IconButton(onClick = { onFullScreen(false); onSettings() }, enabled = interactionAllowed, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.SECURITY, uiText("Screen settings")) }
-                if (orbControl != null) orbControl(48.dp)
-                else TextButton(onClick = onTalk, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Talk to halo")) }
+                if (!shellOwnsOrb) {
+                    if (orbControl != null) orbControl(48.dp)
+                    else TextButton(onClick = onTalk, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Talk to halo")) }
+                }
                 IconButton(onClick = { onFullScreen(false); onNote() }, enabled = interactionAllowed, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.NOTE, stringResource(R.string.screen_new_note)) }
             }
         }

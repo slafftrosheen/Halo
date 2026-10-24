@@ -17,14 +17,15 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp")
 class MiniHaloInteractionTest {
     @get:Rule val compose = createComposeRule()
-    @Test fun emptyComposerMicrophoneStartsTheConversationDirectly() {
+    @Test fun oneLocalOrbStartsConversationWhileEmptyComposerHasNoDuplicateMicrophone() {
         var talks = 0
         var sends = 0
         compose.setContent { HaloTheme { Surface {
             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
                 { talks++ }, { sends++ }, {}, {}, {})
         } } }
-        compose.onNodeWithContentDescription("Talk").assertIsDisplayed().performClick()
+        compose.onNodeWithContentDescription("Talk").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Talk to halo", ignoreCase = true).assertIsDisplayed().performClick()
         assertEquals(1, talks)
         assertEquals(0, sends)
         compose.onNodeWithText("Use text").assertDoesNotExist()
@@ -62,6 +63,18 @@ class MiniHaloInteractionTest {
         compose.onNodeWithContentDescription("Close").assertIsDisplayed()
     }
 
+    @Test fun fullWidthLocalOrbStaysBelowEditorOutsideLongReplyScroller() {
+        compose.setContent { HaloTheme { Surface {
+            MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "Keep my draft", {}, false,
+                "A long answer. ".repeat(400), null, {}, {}, {}, {}, {},
+                orbControl = { androidx.compose.material3.Text("Persistent Mini orb") })
+        } } }
+        val orb = compose.onNodeWithText("Persistent Mini orb").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val editor = compose.onNode(hasSetTextAction()).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue("Local Orb belongs below editor, never in the scrolling status row", orb.top >= editor.bottom)
+        compose.onNodeWithText("Keep my draft").assertIsDisplayed()
+    }
+
     @Test fun orbShortcutOpensTypedCatalogDiscoveryWithoutSubmittingCameraText() {
         var request: com.halo.app.ui.presence.HaloToolCatalogRequest? = null
         var talks = 0
@@ -74,7 +87,7 @@ class MiniHaloInteractionTest {
                         com.halo.app.ui.presence.HaloOrbShortcut.defaults, {}, {}, {}, { request = it }, size)
                 })
         } } }
-        compose.onAllNodesWithContentDescription("Halo actions").onFirst().performClick()
+        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
         assertNull(request)
         assertEquals(0, talks)
         compose.onNodeWithText("Find").performScrollTo().performClick()

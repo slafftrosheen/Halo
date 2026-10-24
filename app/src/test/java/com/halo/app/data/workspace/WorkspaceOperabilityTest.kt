@@ -26,7 +26,7 @@ class WorkspaceOperabilityTest {
                 val descriptor = requireNotNull(HaloToolDescriptors.workspace(actions.definitions().single { it.name == name }))
                 val contract = requireNotNull(descriptor.operability)
                 assertEquals(CapabilityId("workspace.write"), contract.capabilityId)
-                assertEquals(setOf("version"), contract.sourceVersionArguments)
+                assertEquals(setOf("version") + if (name in setOf("halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup")) setOf("selectionToken") else emptySet(), contract.sourceVersionArguments)
                 assertTrue((contract.resultSchema["required"] as List<*>).contains("version"))
                 assertEquals(ReplaySafety.NEVER_REPLAY, descriptor.security.replaySafety)
                 assertNull(descriptor.presentation!!.targetArgument)
@@ -69,7 +69,7 @@ class WorkspaceOperabilityTest {
             assertEquals(ConfirmationPolicy.ALWAYS, clear.security.confirmation)
             assertEquals(ReplaySafety.NEVER_REPLAY, clear.security.replaySafety)
             assertEquals(CapabilityId("workspace.write"), clear.operability!!.capabilityId)
-            assertEquals(setOf("version"), clear.operability!!.sourceVersionArguments)
+            assertEquals(setOf("version", "selectionToken"), clear.operability!!.sourceVersionArguments)
             assertEquals(setOf("canvasId", "nodeId"), clear.operability!!.resultIdFields)
             assertTrue(discovery.expand(listOf(clear.name)).single { it.name == clear.name }.description.contains("Operation contract v1"))
         }

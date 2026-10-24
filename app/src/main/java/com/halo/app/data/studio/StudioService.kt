@@ -49,10 +49,13 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         if (current?.projectId == projectId && (ownerToken == null || current.ownerToken == ownerToken)) selection.compareAndSet(current, null)
     }
     suspend fun publishSelection(projectId: String, layerId: String, baseRevision: Long, ownerToken: String,
-        context: com.halo.sdk.runtime.ink.InkSelectionContext): Boolean {
+        context: com.halo.sdk.runtime.ink.InkSelectionContext, expectedRevision: Long): Boolean {
         val owner = Binding(projectId, ownerToken)
         if (inkOwner.get() != owner) return false
         val project = projects.get(projectId) ?: return false
+        // The digest anchor is frozen at input-session start, but publication must
+        // still match the revision actually persisted by that session's writer.
+        if (project.revision != expectedRevision) return false
         val layer = project.session.current.layers.find { it.id == layerId && it.kind == StudioLayerKind.INK } ?: return false
         val ink = requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(layer.ink))
         val digest = java.security.MessageDigest.getInstance("SHA-256")

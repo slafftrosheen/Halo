@@ -30,6 +30,29 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[34],manifest=Config.NONE,application=Application::class)
 class ContextAdapterTest {
+    @Test fun explicitCanvasContextUsesCanonicalBoardIdentityAndRejectsChangedRevision() = runBlocking {
+        fixture { adapter, conversations, _, db, notes, policy, _ ->
+            val canvases = NotebookCanvasRepository(db, db.notebookCanvasDao(), db.notebookDao())
+            val board = canvases.create()
+            canvases.addTextNode(board, 0f, 0f, "Literal board text")
+            val working = WorkspaceContextStore(db, notes, Preferences())
+            val version = requireNotNull(working.versionFor(board))
+            adapter.selectWorkspace(board, version)
+            val conversation = requireNotNull(conversations.activeConversationId())
+            val refs = adapter.owner.current(conversation).map { it.reference }
+            assertEquals(listOf(ContextReference.WorkspaceObject(board, version)), refs)
+            val bound = adapter.resolve(turn(conversation, refs))
+            assertEquals(board, bound.metadata["contextWorkspaceObjectId"])
+            assertEquals(version, bound.metadata["contextWorkspaceVersion"])
+            assertTrue(bound.explicitWorkspaceText!!.contains("Literal board text"))
+            assertNull(bound.explicitImage)
+            canvases.addTextNode(board, 50f, 0f, "Changed")
+            assertTrue(runCatching { adapter.resolve(turn(conversation, refs)) }.isFailure)
+            assertTrue(runCatching { adapter.selectWorkspace(board, version) }.isFailure)
+            policy.setAccess(board, WorkspaceAiAccess.EXCLUDE_FROM_AI)
+            assertTrue(runCatching { adapter.selectWorkspace(board) }.isFailure)
+        }
+    }
     @Test fun changedInkSelectionDuringContextTransferNeverPublishesOldCropOrRetainsLeases() = runBlocking {
         for (mutation in listOf("deselect", "replace", "cancel")) {
             val entered = CompletableDeferred<Unit>()

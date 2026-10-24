@@ -236,6 +236,18 @@ class NotebookCanvasRepository(
     suspend fun snapshot(canvasId: String): Pair<List<CanvasNodeEntity>, List<CanvasEdgeEntity>> = database.withTransaction {
         canvasDao.getNodes(canvasId) to canvasDao.getEdges(canvasId)
     }
+    suspend fun currentVersion(canvasId: String): String? = database.withTransaction {
+        if (notebookDao.getWorkspaceObject(canvasId)?.lifecycle != "ACTIVE") return@withTransaction null
+        canvasDao.getDocument(canvasId)?.revision?.let { "canvas:$it" }
+    }
+    /** Shared optimistic transaction for existing editor workflows creating source-linked results. */
+    suspend fun <T> withExpectedVersion(canvasId: String, expectedVersion: String, guard: () -> Unit = {},
+        action: suspend () -> T): T = database.withTransaction {
+        requireWritable(canvasId)
+        check(currentVersion(canvasId) == expectedVersion) { "Canvas changed. Review it again." }
+        guard()
+        action().also { guard() }
+    }
     suspend fun sourceObjectVersion(objectId: String): String? {
         val objectRow = notebookDao.getWorkspaceObject(objectId)?.takeIf { it.lifecycle == "ACTIVE" } ?: return null
         val note = notebookDao.getNote(objectId)

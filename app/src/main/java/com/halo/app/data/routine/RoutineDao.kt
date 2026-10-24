@@ -7,6 +7,16 @@ data class ManualRoutineCount(val routineId: String,val count: Int)
 
 @Dao
 interface RoutineDao {
+    /** Room serializes the exact saved-row comparison and replacement/removal in one transaction. */
+    @Transaction
+    suspend fun compareAndSet(expected: RoutineEntity, replacement: RoutineEntity?): Boolean {
+        if (get(expected.id) != expected) return false
+        require(replacement == null || replacement.id == expected.id)
+        if (replacement == null) delete(expected.id) else upsert(replacement)
+        return true
+    }
+    @Transaction
+    suspend fun matches(expected: RoutineEntity): Boolean = get(expected.id) == expected
     @Query("SELECT routineId, COUNT(*) AS count FROM routine_runs WHERE source = 'MANUAL' AND state = 'COMPLETED' AND triggerAt >= :since GROUP BY routineId ORDER BY count DESC LIMIT 10")
     suspend fun recentManualPatterns(since: Long): List<ManualRoutineCount>
 

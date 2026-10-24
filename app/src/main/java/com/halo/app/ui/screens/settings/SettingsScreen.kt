@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -92,6 +96,20 @@ internal fun SettingsContent(
     var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var page by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    BindShellPageActions(ShellPageOwner(if (initialAdvanced) "advanced_settings" else "settings", sourceIdentity = "$advanced:$page"), when {
+        page != null -> listOf(ShellPageAction("page.settings.back", "Back", HaloGlyph.PREVIOUS) { page = null })
+        advanced -> listOf(
+            ShellPageAction("page.settings.report", "Technical report", HaloGlyph.DIAGNOSTICS) { onOpen(SettingsDestination.TECHNICAL_REPORT) },
+            ShellPageAction("page.settings.roles", "Model roles", HaloGlyph.MODEL) { onOpen(SettingsDestination.MODEL_ROLES) },
+        )
+        else -> listOf(
+            ShellPageAction("page.settings.search", androidx.compose.ui.res.stringResource(R.string.brand_settings_search), HaloGlyph.SEARCH) {
+                searchOpen = !searchOpen; if (!searchOpen) searchQuery = ""
+            },
+            ShellPageAction("page.settings.setup", "Guided setup", HaloGlyph.QUESTION) { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) },
+            ShellPageAction("page.settings.about", "About halo", HaloGlyph.HALO) { page = "About halo" },
+        )
+    })
     androidx.activity.compose.BackHandler(enabled = advanced && !initialAdvanced && page == null) { advanced = false }
     val everydayGroups = listOf(
         SettingsMenuGroup("companion", "halo", listOf(
@@ -118,10 +136,10 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.SKILLS, "Skills", "Actions halo can use", { onOpen(SettingsDestination.SKILLS) }),
             SettingsMenuRow(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", { onOpen(SettingsDestination.AUTOMATION) }),
         )),
-        SettingsMenuGroup("help", "Help", listOf(
-            SettingsMenuRow(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) }),
+        SettingsMenuGroup("help", "Help", listOfNotNull(
+            if (searchQuery.isNotBlank()) SettingsMenuRow(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) }) else null,
             SettingsMenuRow(HaloGlyph.SUCCESS, "Check-up", "Check what works", { onOpen(SettingsDestination.SYSTEM_CHECK) }),
-            SettingsMenuRow(HaloGlyph.HALO, "About halo", "A little about your companion", { page = "About halo" }),
+            if (searchQuery.isNotBlank()) SettingsMenuRow(HaloGlyph.HALO, "About halo", "A little about your companion", { page = "About halo" }) else null,
         )),
     )
     val advancedGroups = listOf(
@@ -249,6 +267,9 @@ internal fun SettingsContent(
                 if (!advanced) IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) searchQuery = "" }, modifier = Modifier.size(48.dp)) {
                     HaloIcon(HaloGlyph.SEARCH, androidx.compose.ui.res.stringResource(R.string.brand_settings_search), Modifier.size(24.dp))
                 }
+                if (!advanced) SettingsOverflowMenu(
+                    onSetup = { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) },
+                    onAbout = { page = "About halo" })
             })
         }
         if (searchOpen && !advanced) item(key = "search") {

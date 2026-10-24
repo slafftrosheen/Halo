@@ -46,11 +46,18 @@ class HaloReadAloudController(
     val autoReadAnswers = autoRead.asStateFlow()
     private val preferenceError = MutableStateFlow<String?>(null)
     val preferenceNotice = preferenceError.asStateFlow()
-    fun setFollowWords(value: Boolean) {
+    private val preferenceLock = Any()
+    fun setFollowWordsExpected(value: Boolean, expected: Boolean) = synchronized(preferenceLock) {
+        check(follow.value == expected) { "Follow-words preference changed" }; setFollowWords(value)
+    }
+    fun setAutoReadAnswersExpected(value: Boolean, expected: Boolean) = synchronized(preferenceLock) {
+        check(autoRead.value == expected) { "Automatic reading preference changed" }; setAutoReadAnswers(value)
+    }
+    fun setFollowWords(value: Boolean) = synchronized(preferenceLock) {
         try { storage.putBoolean("read_aloud_follow_words", value); follow.value = value; preferenceError.value = null }
         catch (_: Exception) { preferenceError.value = "Could not save your change. Try again." }
     }
-    fun setAutoReadAnswers(value: Boolean) {
+    fun setAutoReadAnswers(value: Boolean) = synchronized(preferenceLock) {
         try { storage.putBoolean("read_aloud_auto_answers", value); autoRead.value = value; preferenceError.value = null }
         catch (_: Exception) { preferenceError.value = "Could not save your change. Try again." }
     }
@@ -168,11 +175,18 @@ class HaloReadAloudController(
             playing = false, preparing = false, range = null, notice = null)
         if (play) speak()
     } }
+    /** Preference-only path; semantic configuration never starts/restarts audio playback. */
+    fun setSpeedPreferencePersisted(value: Double, expected: Double? = null) = synchronized(preferenceLock) {
+        check(expected == null || rate.value == expected) { "Reading speed preference changed" }
+        require(value in listOf(0.75, 1.0, 1.25, 1.5))
+        storage.putString("read_aloud_speed", value.toString())
+        rate.value = value
+        preferenceError.value = null
+    }
     fun speed(value: Double) { scope.launch(Dispatchers.Main.immediate) {
         if (value !in listOf(0.75, 1.0, 1.25, 1.5)) return@launch
-        try { storage.putString("read_aloud_speed", value.toString()); preferenceError.value = null }
+        try { setSpeedPreferencePersisted(value) }
         catch (_: Exception) { preferenceError.value = "Could not save your change. Try again."; return@launch }
-        rate.value = value
         val current = state.value ?: return@launch
         val play = current.playing || current.preparing
         cancelAudio()

@@ -47,11 +47,15 @@ fun HaloPackageFx(moment: HaloPackageMoment, modifier: Modifier = Modifier, enab
         LottieCompositionSpec.Asset("halo/fx/halo_fx_${moment.asset}_$theme.json")
     ).value else null
     if (composition != null) {
-        LottieAnimation(composition, modifier = modifier,
-            clipSpec = LottieClipSpec.Marker(moment.marker),
-            iterations = if (moment.loop) LottieConstants.IterateForever else 1,
-            isPlaying = enabled && lifecycle.isAtLeast(Lifecycle.State.STARTED),
-            restartOnPlay = false)
+        // A phase change within one composition (receipt, task or Kids gate)
+        // starts that marker. A lifecycle pause keeps the same playback owner.
+        key(moment.asset, moment.marker) {
+            LottieAnimation(composition, modifier = modifier,
+                clipSpec = LottieClipSpec.Marker(moment.marker),
+                iterations = if (moment.loop) LottieConstants.IterateForever else 1,
+                isPlaying = enabled && lifecycle.isAtLeast(Lifecycle.State.STARTED),
+                restartOnPlay = false)
+        }
     } else {
         val context = LocalContext.current
         val request = remember(context, moment, theme) {

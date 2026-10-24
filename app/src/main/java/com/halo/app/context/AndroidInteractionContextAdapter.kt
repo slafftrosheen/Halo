@@ -143,16 +143,29 @@ class AndroidInteractionContextAdapter(
         val version = workspace.versionFor(objectId) ?: error("Source unavailable")
         check(expectedVersion == null || version == expectedVersion) { "Source changed. Select it again." }
         // Resolve readability now, without a model call or permission change.
-        val source = sources.resolveExplicitReference(objectId, "")
+        val canvas = canvasReferenceText(objectId)
+        check(canvas == null || version.startsWith("canvas:")) { "Remove the ink-region reference before selecting the whole Canvas." }
+        val source = if (canvas == null) sources.resolveExplicitReference(objectId, "") else null
         if(source is ResolvedStudySource.Unsupported) error(source.reason)
         check(source !is ResolvedStudySource.Pdf) { "Choose a readable note, text file, or exact image. PDF pages stay in Study." }
         check(workspace.versionFor(objectId) == version) { "Source changed. Select it again." }
+        currentCoroutineContext().ensureActive()
         val reference = ContextReference.WorkspaceObject(objectId,version)
         titles[reference] = item.title.take(160)
         if(source is ResolvedStudySource.Visual) visualReferences.add(reference)
-        releaseVisual(conversation); owner.remove(conversation,ContextCategory.VISUAL)
+        releaseVisual(conversation)
+        currentCoroutineContext().ensureActive()
+        owner.remove(conversation,ContextCategory.VISUAL)
         owner.select(InteractionContextFocus(conversation,reference,ContextCategory.WORKSPACE,ContextFocusReason.USER_SELECTED_WORKSPACE,nowMs(),null))
         message.value = null
+    }
+    /** Canvas text comes from the existing Workspace owner; linked source bytes remain excluded. */
+    private suspend fun canvasReferenceText(objectId: String): String? {
+        val item = database.notebookDao().getWorkspaceObject(objectId)?.takeIf {
+            it.lifecycle == "ACTIVE" && it.contentRef.startsWith("canvas:") && it.type in setOf("CANVAS", "ARTIFACT")
+        } ?: return null
+        val text = workspace.contentFor(item.id) ?: error("Canvas unavailable")
+        return "Canvas reference objectId=${item.id}. Read halo_canvas_get for exact card IDs and board version before editing.\n$text"
     }
     suspend fun remove(category: ContextCategory) = lock.withLock {
         val conversation = conversation()
@@ -222,12 +235,20 @@ class AndroidInteractionContextAdapter(
                     visualContextText[reference]?.let(workspaceTexts::add)
                 }
                 is ContextReference.WorkspaceObject -> {
+                    check(policy.access(reference.objectId) != com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI) {
+                        "Source excluded from AI"
+                    }
                     if(workspace.versionFor(reference.objectId) != reference.version) {
                         owner.transition(conversation,reference,ContextReferenceState.SOURCE_UNAVAILABLE)
                         message.value = "Original version changed or source unavailable. Use updated source or remove the reference."
                         error(message.value!!)
                     }
-                    when(val source = sources.resolveExplicitReference(reference.objectId,turn.request.text.orEmpty())) {
+                    val canvas = canvasReferenceText(reference.objectId)
+                    if (canvas != null) {
+                        check(reference.version?.startsWith("canvas:") == true) { "Canvas selection changed. Please select the page again." }
+                        workspaceId = reference.objectId
+                        workspaceTexts += canvas
+                    } else when(val source = sources.resolveExplicitReference(reference.objectId,turn.request.text.orEmpty())) {
                         is ResolvedStudySource.Visual -> image = source.asset
                         is ResolvedStudySource.Text -> {
                             workspaceId = reference.objectId

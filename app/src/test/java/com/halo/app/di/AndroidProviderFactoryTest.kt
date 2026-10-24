@@ -51,6 +51,7 @@ class AndroidProviderFactoryTest {
 
     private fun createFactory(): AndroidProviderFactory {
         val context = ApplicationProvider.getApplicationContext<Context>()
+        ManualDependencyGraph.init(context)
         return AndroidProviderFactory(
             context = context,
             modelManager = LiteRtModelManager(context),

@@ -1,0 +1,22 @@
+{
+  "appSha256": "bb8be8e8ffe9695788cfa972dddb421eecbafd9c6733a611706e2fa8d984eb48",
+  "mode": "Private",
+  "source": "PC Microsoft Irina Desktop ru-RU WAV played through default PC audio output, not injected transcript",
+  "waveSha256": "8cfe828ea2b875aee4950b80eaa0e9bddb0e8934239d84ce0d77df4906377177",
+  "expectedPhrase": "Открой рабочее пространство",
+  "status": "NOT_ESTABLISHED",
+  "talkBounds": "[452,2094][628,2270]",
+  "afterPhraseLabels": [],
+  "finishTap": false,
+  "actualWorkspaceSearchRendered": false,
+  "heardByPerson": false,
+  "observations": [
+    "Real OS microphone indicator and Listening UI observed after global Orb tap",
+    "Automatic endpoint entered recognition",
+    "App rejected recording as insufficient voiced audio and offered edit-as-text recovery",
+    "Requested Workspace navigation not established",
+    "App backgrounded after bounded attempt; original Power mode restored using existing UI with no new acknowledgement"
+  ],
+  "qualification": "Negative capture/recognition/recovery evidence, not successful spoken recognition, cloud E2E or human-heard playback",
+  "originalPowerModeRestored": true
+}

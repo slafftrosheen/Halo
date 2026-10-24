@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.fx.haloDraftOutline
@@ -176,6 +180,11 @@ fun NoteEditorScreen(
     var titleDraft by remember(state.title) { mutableStateOf(state.title) }
     var confirmTrash by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
+    BindShellPageActions(ShellPageOwner("note", viewModel.noteId, state.revision.toString()), listOf(
+        ShellPageAction("page.note.outline", "Outline", HaloGlyph.NOTE) { showOutline = true },
+        ShellPageAction("page.note.find", "Find and replace", HaloGlyph.SEARCH) { showFindBar = !showFindBar },
+        ShellPageAction("page.note.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = true },
+    ))
 
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
         com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }

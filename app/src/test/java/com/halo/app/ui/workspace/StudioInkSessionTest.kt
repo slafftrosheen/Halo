@@ -31,7 +31,9 @@ class StudioInkSessionTest {
             assertTrue(session.awaitPersisted())
             assertEquals(latest, projects.get(initial.id)?.session?.current?.layers?.single()?.ink)
             val current = projects.get(initial.id)!!
+            assertEquals(current.revision, session.persistedRevision)
             val winner = projects.apply(current.id, current.revision, StudioCommand.Background(42))
+            assertEquals(current.revision, session.persistedRevision)
             val recoverable = ink(300)
             session.submit(recoverable)
             assertFalse(session.awaitPersisted())

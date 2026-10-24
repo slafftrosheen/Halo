@@ -24,7 +24,7 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     val topics = _topics.asStateFlow()
     private val _presets = MutableStateFlow(readPresets())
     val presets = _presets.asStateFlow()
-    fun setTopics(value: String) {
+    fun setTopics(value: String) = synchronized(lock) {
         val cleaned = value.trim().take(1000)
         preferences.edit().putString("topics", cleaned).apply()
         _topics.value = cleaned
@@ -105,9 +105,32 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
             .distinctBy { it.id }
     }.getOrDefault(emptyList())
 
-    fun setPrivacy(enabled: Boolean) { preferences.edit().putBoolean("hide_private", enabled).apply(); _hidePrivate.value = enabled }
-    fun setKeepCharging(enabled: Boolean) { preferences.edit().putBoolean("keep_charging", enabled).apply(); _keepCharging.value = enabled }
-    fun setDimAtNight(enabled: Boolean) { preferences.edit().putBoolean("dim_night", enabled).apply(); _dimAtNight.value = enabled }
+    fun setPrivacy(enabled: Boolean) = synchronized(lock) { preferences.edit().putBoolean("hide_private", enabled).apply(); _hidePrivate.value = enabled }
+    fun setKeepCharging(enabled: Boolean) = synchronized(lock) { preferences.edit().putBoolean("keep_charging", enabled).apply(); _keepCharging.value = enabled }
+    fun setDimAtNight(enabled: Boolean) = synchronized(lock) { preferences.edit().putBoolean("dim_night", enabled).apply(); _dimAtNight.value = enabled }
+
+    /** Same owner/lock as touch edits. The digest covers configuration, never source bodies.
+     * No second layout engine, preview store, or permission authority is created here.
+     */
+    internal fun <T> withToolState(expectedRevision: String? = null, action: (ScreenConfigurationSnapshot) -> T): T = synchronized(lock) {
+        val current = ScreenConfigurationSnapshot(_layout.value, _hidePrivate.value, _keepCharging.value,
+            _dimAtNight.value, _topics.value, _presets.value, undoLayout != null,
+            screenConfigurationDigest(buildString {
+                append(_layout.value?.let(ScreenLayoutCodec::encode)); append('\u0000')
+                append(undoLayout?.let(ScreenLayoutCodec::encode)); append('\u0000')
+                append(_hidePrivate.value); append(_keepCharging.value); append(_dimAtNight.value)
+                append('\u0000'); append(_topics.value); append('\u0000')
+                _presets.value.forEach { append(ScreenLayoutCodec.encode(it)); append('\u0000') }
+            }))
+        check(expectedRevision == null || expectedRevision == current.revision) { "Screen configuration changed" }
+        action(current)
+    }
+
+    /** A checked synchronous edit waits for this owner's preceding apply writes.
+     * Tools call this on IO before claiming a durable configuration receipt.
+     * A false result leaves completion unknown; do not replay the mutation.
+     */
+    internal fun confirmToolPersistence(): Boolean = synchronized(lock) { preferences.edit().commit() }
 
     private fun persistLayout(value: ScreenLayout) {
         preferences.edit().putString("layout", ScreenLayoutCodec.encode(value))

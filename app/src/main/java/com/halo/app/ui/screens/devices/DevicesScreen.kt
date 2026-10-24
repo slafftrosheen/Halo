@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.language.uiText
 import com.halo.app.R
 import androidx.compose.ui.res.stringResource
@@ -19,6 +23,7 @@ import androidx.compose.runtime.setValue
 import android.content.IntentSender
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -153,13 +158,15 @@ class DevicesViewModel(
     private val resourceLeaseManager: com.halo.sdk.runtime.resource.ResourceLeaseManager? = null,
     private val storage: Storage? = null,
 ) : ViewModel() {
+    val savedDeviceActions = com.halo.app.embodiment.SavedDeviceActions(deviceRegistry, sessionManager, storage,
+        retry = autoConnectCoordinator?.let { it::retryDevice })
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
     private val mutableReconnectState = MutableStateFlow<Map<String, DeviceReconnectState>>(emptyMap())
     internal val reconnectState: StateFlow<Map<String, DeviceReconnectState>> = mutableReconnectState.asStateFlow()
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
     private val activePhotoIntents = java.util.concurrent.ConcurrentHashMap<String, String>()
-    private val _registryRevision = MutableStateFlow(0L)
+    private val _registryRevision = savedDeviceActions.revision
     private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val navigationEvents = _navigationEvents.asSharedFlow()
     val audioPairingState: StateFlow<com.halo.app.audio.HeyCyanAudioPairingState> =
@@ -167,14 +174,11 @@ class DevicesViewModel(
     val audioConfirmationRequests = audioPairingCoordinator?.confirmationRequests
         ?: MutableSharedFlow<IntentSender>()
 
-    private val _thumbnailQuality = MutableStateFlow(storage?.getString("heycyan_ai_thumbnail_quality")?.toIntOrNull()?.coerceIn(0, 5) ?: 3)
-    val thumbnailQuality: StateFlow<Int> = _thumbnailQuality.asStateFlow()
+    val thumbnailQuality: StateFlow<Int> = savedDeviceActions.thumbnailQuality
 
     fun setThumbnailQuality(quality: Int) {
-        val valid = quality.coerceIn(0, 5)
-        _thumbnailQuality.value = valid
         viewModelScope.launch(Dispatchers.IO) {
-            storage?.putString("heycyan_ai_thumbnail_quality", valid.toString())
+            savedDeviceActions.setThumbnailQuality(quality.coerceIn(0, 5))
         }
     }
 
@@ -489,7 +493,7 @@ class DevicesViewModel(
         viewModelScope.launch {
             mutableReconnectState.update { it + (deviceId to DeviceReconnectState.TRYING) }
             val accepted = try {
-                autoConnectCoordinator?.retryDevice(deviceId) ?: false
+                savedDeviceActions.apply(deviceId, com.halo.app.embodiment.SavedDeviceCommand.RETRY)?.requested == true
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) { false }
@@ -508,32 +512,28 @@ class DevicesViewModel(
         }
     }
 
-    fun connectDevice(deviceId: String) = viewModelScope.launch { sessionManager.getSession(deviceId)?.connect() }
-    fun disconnectDevice(deviceId: String) = viewModelScope.launch { sessionManager.getSession(deviceId)?.disconnect() }
+    fun connectDevice(deviceId: String) = viewModelScope.launch {
+        savedDeviceActions.apply(deviceId, com.halo.app.embodiment.SavedDeviceCommand.CONNECT)
+    }
+    fun disconnectDevice(deviceId: String) = viewModelScope.launch {
+        savedDeviceActions.apply(deviceId, com.halo.app.embodiment.SavedDeviceCommand.DISCONNECT)
+    }
 
     fun forgetDevice(deviceId: String) {
         viewModelScope.launch {
-            sessionManager.getSession(deviceId)?.disconnect()
-            deviceRegistry.removeDevice(deviceId)
-            _registryRevision.update { it + 1 }
+            savedDeviceActions.apply(deviceId, com.halo.app.embodiment.SavedDeviceCommand.FORGET)
         }
     }
 
     fun toggleAutoConnect(deviceId: String, enabled: Boolean) {
         viewModelScope.launch {
-            deviceRegistry.getDevice(deviceId)?.let { current ->
-                deviceRegistry.saveDevice(current.copy(autoConnect = enabled))
-                _registryRevision.update { it + 1 }
-                if (enabled) {
-                    autoConnectCoordinator?.retryDevice(deviceId)
-                }
-            }
+            savedDeviceActions.apply(deviceId, com.halo.app.embodiment.SavedDeviceCommand.AUTO_CONNECT, enabled)
         }
     }
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val reconnectStates by viewModel.reconnectState.collectAsStateWithLifecycle()
@@ -541,14 +541,53 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
     var phoneDetails by rememberSaveable { mutableStateOf(false) }
-    var technicalDetails by rememberSaveable { mutableStateOf(false) }
     val phoneAbilities = groupPhoneCapabilities(uiState.hostCapabilities)
     val reportedPhoneAbilities = phoneAbilities.count { it.hasAvailableCapability }
     val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
+    BindShellPageActions(ShellPageOwner("devices"), listOf(
+        ShellPageAction("page.devices.phone", "This phone", HaloGlyph.PHONE) { phoneDetails = true },
+        ShellPageAction("page.devices.audio", "Test audio output", HaloGlyph.SPEAK, visibleAccessories.isNotEmpty()) { onTestAudio() },
+        ShellPageAction("page.devices.add", "Add device", HaloGlyph.ADD_DEVICE) { viewModel.navigateTo("discovery") },
+    ))
+    if (phoneDetails) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { phoneDetails = false }) {
+        Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(uiText("This phone"), style = MaterialTheme.typography.headlineSmall)
+                    // The runtime reports which capabilities exist, NOT effective permission
+                    // policy. This screen must never claim an action is allowed without consent.
+                    phoneAbilities.forEach { ability ->
+                        Row(Modifier.fillMaxWidth().heightIn(min = 60.dp).padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HaloIcon(ability.group.icon, contentDescription = null,
+                                modifier = Modifier.size(24.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(ability.group.title),
+                                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall)
+                                Text(stringResource(ability.group.summary),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(if (ability.hasAvailableCapability)
+                                        R.string.brand_phone_available else R.string.brand_phone_not_reported),
+                                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                                    color = if (ability.hasAvailableCapability)
+                                        androidx.compose.material3.MaterialTheme.colorScheme.primary
+                                        else androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                    Text(stringResource(R.string.brand_phone_access_note),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+
+        }
+    }
+
     LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
             HaloScreenHeader(uiText("Devices"), trailing = {
+                DevicesOverflowMenu(visibleAccessories.isNotEmpty(), { phoneDetails = true }, onTestAudio)
                 if (!noDevices) {
                     androidx.compose.material3.IconButton(
                         modifier = Modifier.size(48.dp),
@@ -596,39 +635,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text("$reportedPhoneAbilities / ${phoneAbilities.size} " + stringResource(R.string.brand_phone_abilities),
                     style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
-                androidx.compose.material3.TextButton(onClick = { phoneDetails = !phoneDetails },
-                    modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText(if (phoneDetails) "Hide details" else "Details"))
-                }
-                if (phoneDetails) {
-                    // The runtime reports which capabilities exist, NOT effective permission
-                    // policy. This screen must never claim an action is allowed without consent.
-                    phoneAbilities.forEach { ability ->
-                        Row(Modifier.fillMaxWidth().heightIn(min = 60.dp).padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            HaloIcon(ability.group.icon, contentDescription = null,
-                                modifier = Modifier.size(24.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(ability.group.title),
-                                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall)
-                                Text(stringResource(ability.group.summary),
-                                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(stringResource(if (ability.hasAvailableCapability)
-                                        R.string.brand_phone_available else R.string.brand_phone_not_reported),
-                                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
-                                    color = if (ability.hasAvailableCapability)
-                                        androidx.compose.material3.MaterialTheme.colorScheme.primary
-                                        else androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                    Text(stringResource(R.string.brand_phone_access_note),
-                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
 
-                }
             }
         }
         if (visibleAccessories.isNotEmpty()) {
@@ -639,7 +646,6 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                     Text(uiText("Connected") + " · " + listOfNotNull(
                         uiText("Output").takeIf { accessory.canOutput }, uiText("Microphone").takeIf { accessory.canInput },
                         uiText("Calls").takeIf { accessory.communicationCapable }).joinToString(" · "))
-                    HaloActionButton(onClick = onTestAudio, style = HaloActionStyle.SECONDARY) { Text(uiText("Test audio output")) }
                     Text(uiText("Your phone manages the buttons and volume."))
                     if (accessory.persistence == com.halo.runtime.cognition.continuity.EndpointPersistence.SESSION_ONLY)
                         Text(uiText("Available while connected"))
@@ -658,7 +664,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 private fun DeviceCard(
     device: GenericDeviceUiState,
     onClick: () -> Unit,

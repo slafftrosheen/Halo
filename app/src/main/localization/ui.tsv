@@ -4031,3 +4031,66 @@ Note deleted. Shared attachment files were kept.|||Заметка удалена
 Note deleted. Attachment cleanup is still pending.|||Заметка удалена. Очистка вложений ещё не завершена.|||Piezīme izdzēsta. Pielikumu tīrīšana vēl nav pabeigta.|||Notatka została usunięta. Czyszczenie załączników jeszcze się nie zakończyło.
 Note deleted. Some attachments could not be removed.|||Заметка удалена. Некоторые вложения удалить не удалось.|||Piezīme izdzēsta. Dažus pielikumus neizdevās noņemt.|||Notatka została usunięta. Nie udało się usunąć niektórych załączników.
 Deletion could not be confirmed. Check Trash before trying again.|||Не удалось подтвердить удаление. Проверьте корзину перед повторной попыткой.|||Dzēšanu neizdevās apstiprināt. Pirms mēģināt vēlreiz, pārbaudiet atkritni.|||Nie udało się potwierdzić usunięcia. Sprawdź kosz przed ponowną próbą.
+
+Send voice|||Отправить голос|||Nosūtīt balss ievadi|||Wyślij nagranie
+All destinations and actions|||Все страницы и действия|||Visas lapas un darbības|||Wszystkie strony i działania
+Tap to talk. Hold for shortcuts. Menu opens every page.|||Нажмите, чтобы говорить. Удерживайте для ярлыков. Все страницы — в меню.|||Pieskarieties, lai runātu. Turiet, lai atvērtu saīsnes. Visas lapas ir izvēlnē.|||Dotknij, aby mówić. Przytrzymaj, aby pokazać skróty. Wszystkie strony są w menu.
+Canvas tools|||Инструменты холста|||Audekla rīki|||Narzędzia płótna
+Context and privacy|||Контекст и конфиденциальность|||Konteksts un privātums|||Kontekst i prywatność
+This action needs Full Power mode. Use the control beside the halo Orb.|||Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo.|||Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei.|||Ta czynność wymaga trybu Power. Użyj przełącznika obok kuli halo.
+More options|||Другие действия|||Citas iespējas|||Więcej opcji
+Use this page as context|||Использовать эту страницу как контекст|||Izmantot šo lapu kā kontekstu|||Użyj tej strony jako kontekstu
+Page added as context|||Страница добавлена в контекст|||Lapa pievienota kontekstam|||Strona została dodana do kontekstu
+Page changed or unavailable. Select it again.|||Страница изменилась или недоступна. Выберите её снова.|||Lapa ir mainīta vai nav pieejama. Atlasiet to vēlreiz.|||Strona zmieniła się lub jest niedostępna. Wybierz ją ponownie.
+Read Screen layout|||Просмотреть расположение карточек на экране|||Skatīt ekrāna izkārtojumu|||Pokaż układ ekranu
+Preview Screen layout|||Предпросмотр расположения карточек|||Priekšskatīt ekrāna izkārtojumu|||Podgląd układu ekranu
+Apply Screen layout|||Применить расположение карточек|||Lietot ekrāna izkārtojumu|||Zastosuj układ ekranu
+Change Screen settings|||Изменить настройки экрана|||Mainīt ekrāna iestatījumus|||Zmień ustawienia ekranu
+Undo Screen layout change|||Отменить изменение расположения карточек|||Atsaukt ekrāna izkārtojuma maiņu|||Cofnij zmianę układu ekranu
+Save Screen preset|||Сохранить шаблон экрана|||Saglabāt ekrāna izkārtojuma veidni|||Zapisz szablon ekranu
+Remove Screen preset|||Удалить шаблон экрана|||Noņemt ekrāna izkārtojuma veidni|||Usuń szablon ekranu
+List saved devices|||Показать сохранённые устройства|||Rādīt saglabātās ierīces|||Pokaż zapisane urządzenia
+Read saved device|||Просмотреть сохранённое устройство|||Skatīt saglabāto ierīci|||Pokaż zapisane urządzenie
+Read device preferences|||Просмотреть настройки устройства|||Skatīt ierīces iestatījumus|||Pokaż ustawienia urządzenia
+Change device image quality|||Изменить качество изображений устройства|||Mainīt ierīces attēlu kvalitāti|||Zmień jakość obrazów urządzenia
+Retry saved device|||Повторить подключение к сохранённому устройству|||Atkārtot savienojumu ar saglabāto ierīci|||Ponów połączenie z zapisanym urządzeniem
+Connect saved device|||Подключить сохранённое устройство|||Savienot saglabāto ierīci|||Połącz zapisane urządzenie
+Disconnect saved device|||Отключить сохранённое устройство|||Atvienot saglabāto ierīci|||Rozłącz zapisane urządzenie
+Change automatic device connection|||Изменить автоматическое подключение устройства|||Mainīt ierīces automātisko savienojumu|||Zmień automatyczne łączenie urządzenia
+Forget saved device|||Забыть сохранённое устройство|||Aizmirst saglabāto ierīci|||Zapomnij zapisane urządzenie
+List notification settings apps|||Показать приложения с настройками уведомлений|||Rādīt lietotnes ar paziņojumu iestatījumiem|||Pokaż aplikacje z ustawieniami powiadomień
+Read app notification policy|||Просмотреть настройки уведомлений приложения|||Skatīt lietotnes paziņojumu iestatījumus|||Pokaż ustawienia powiadomień aplikacji
+Change app notification policy|||Изменить настройки уведомлений приложения|||Mainīt lietotnes paziņojumu iestatījumus|||Zmień ustawienia powiadomień aplikacji
+Read digest delivery settings|||Просмотреть настройки доставки сводок|||Skatīt apkopojumu piegādes iestatījumus|||Pokaż ustawienia dostarczania podsumowań
+Change digest delivery settings|||Изменить настройки доставки сводок|||Mainīt apkopojumu piegādes iestatījumus|||Zmień ustawienia dostarczania podsumowań
+Read mode profile|||Просмотреть профиль режима|||Skatīt režīma profilu|||Pokaż profil trybu
+Edit mode profile|||Изменить профиль режима|||Rediģēt režīma profilu|||Edytuj profil trybu
+Show private details in full screen|||Показать личные данные в полноэкранном режиме|||Rādīt privātu informāciju pilnekrāna režīmā|||Pokaż prywatne szczegóły na pełnym ekranie
+People nearby may see personal and private cards|||Окружающие могут видеть личные и приватные карточки|||Tuvumā esošie cilvēki var redzēt personiskās un privātās kartītes|||Osoby w pobliżu mogą zobaczyć osobiste i prywatne karty
+Type a message|||Написать сообщение|||Rakstīt ziņu|||Napisz wiadomość
+Read voice settings|||Просмотреть настройки голоса|||Skatīt balss iestatījumus|||Pokaż ustawienia głosu
+Change voice settings|||Изменить настройки голоса|||Mainīt balss iestatījumus|||Zmień ustawienia głosu
+Read learning settings|||Просмотреть настройки обучения|||Skatīt mācīšanās iestatījumus|||Pokaż ustawienia uczenia
+Change learning settings|||Изменить настройки обучения|||Mainīt mācīšanās iestatījumus|||Zmień ustawienia uczenia
+List saved routines|||Показать сохранённые сценарии|||Rādīt saglabātās rutīnas|||Pokaż zapisane procedury
+Read saved routine|||Просмотреть сохранённый сценарий|||Skatīt saglabāto rutīnu|||Pokaż zapisaną procedurę
+Read routine progress|||Просмотреть ход выполнения сценария|||Skatīt rutīnas izpildes gaitu|||Pokaż postęp procedury
+Change routine scheduling|||Изменить расписание сценария|||Mainīt rutīnas grafiku|||Zmień harmonogram procedury
+Save routine changes|||Сохранить изменения сценария|||Saglabāt rutīnas izmaiņas|||Zapisz zmiany procedury
+Delete saved routine|||Удалить сохранённый сценарий|||Dzēst saglabāto rutīnu|||Usuń zapisaną procedurę
+Run saved routine|||Запустить сохранённый сценарий|||Palaist saglabāto rutīnu|||Uruchom zapisaną procedurę
+List answer providers|||Показать провайдеров ответов|||Rādīt atbilžu pakalpojumu sniedzējus|||Pokaż dostawców odpowiedzi
+Read provider readiness|||Просмотреть готовность провайдера|||Skatīt pakalpojumu sniedzēja gatavību|||Pokaż gotowość dostawcy
+Refresh provider model list|||Обновить список моделей провайдера|||Atjaunināt pakalpojumu sniedzēja modeļu sarakstu|||Odśwież listę modeli dostawcy
+Check provider connection|||Проверить подключение к провайдеру|||Pārbaudīt savienojumu ar pakalpojumu sniedzēju|||Sprawdź połączenie z dostawcą
+Read active study lesson|||Просмотреть текущее занятие|||Skatīt aktīvo mācību nodarbību|||Pokaż aktywną lekcję
+Change active study lesson|||Изменить текущее занятие|||Mainīt aktīvo mācību nodarbību|||Zmień aktywną lekcję
+Read Canvas review status|||Просмотреть состояние черновика на холсте|||Skatīt audekla melnraksta stāvokli|||Pokaż stan szkicu na płótnie
+Save image color palette|||Сохранить цветовую палитру изображения|||Saglabāt attēla krāsu paleti|||Zapisz paletę kolorów obrazu
+Prepare local transcription for review|||Подготовить локальную расшифровку для проверки|||Sagatavot lokālu transkripciju pārskatīšanai|||Przygotuj lokalną transkrypcję do sprawdzenia
+Save reviewed Canvas text|||Сохранить проверенный текст на холсте|||Saglabāt pārskatīto audekla tekstu|||Zapisz sprawdzony tekst na płótnie
+Edit Canvas review draft|||Изменить черновик для проверки на холсте|||Rediģēt audekla teksta melnrakstu|||Edytuj szkic tekstu na płótnie
+Discard Canvas review draft|||Отбросить черновик для проверки на холсте|||Atmest audekla teksta melnrakstu|||Odrzuć szkic tekstu na płótnie
+Export Canvas to a note|||Экспортировать холст в заметку|||Eksportēt audeklu piezīmē|||Eksportuj płótno do notatki
+List local speech models|||Показать локальные речевые модели|||Rādīt lokālos runas modeļus|||Pokaż lokalne modele mowy
+Manage local speech model|||Управление локальной речевой моделью|||Pārvaldīt lokālo runas modeli|||Zarządzaj lokalnym modelem mowy

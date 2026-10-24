@@ -1,0 +1,40 @@
+{
+  "seconds": 21.01,
+  "topThreads": [
+    {
+      "thread": "raintool.xkqzps",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "Signal Catcher",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "perfetto_hprof_",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "ADB-JDWP Connec",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "Jit thread pool",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "HeapTaskDaemon",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "ReferenceQueueD",
+      "cpuPercentOneCore": 0.0
+    },
+    {
+      "thread": "FinalizerDaemon",
+      "cpuPercentOneCore": 0.0
+    }
+  ],
+  "animatorScaleDuringSample": 0,
+  "originalAnimatorScale": "null",
+  "appSha256": "5c057808f35cb3584ec8d279b26952b92d8ded284db9eb46b6c5bf95e99922d8"
+}

@@ -17,6 +17,7 @@ import com.halo.app.ui.icons.HaloIcon
 @Composable
 internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
     onSpeak: () -> Unit, onType: () -> Unit, onStop: () -> Unit, onHelp: () -> Unit) {
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     Column(Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
         .padding(start = 12.dp, end = 12.dp, bottom = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
@@ -38,7 +39,7 @@ internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
                         contentColor = MaterialTheme.colorScheme.onSurface)) {
                     HaloIcon(HaloGlyph.NOTE, uiText("Type instead"), Modifier.size(28.dp))
                 }
-                Spacer(Modifier.size(72.dp))
+                if (!shellOwnsOrb) Spacer(Modifier.size(72.dp))
                 FilledTonalIconButton(onClick = onHelp, modifier = Modifier.size(56.dp), shape = CircleShape,
                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -47,7 +48,7 @@ internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
                 }
             }
         }
-                FilledIconButton(onClick = if (busy) onStop else onSpeak, enabled = !saving,
+                if (!shellOwnsOrb) FilledIconButton(onClick = if (busy) onStop else onSpeak, enabled = !saving,
                     modifier = Modifier.align(Alignment.Center).offset(y = (-15).dp).size(72.dp), shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = if (busy) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primaryContainer,

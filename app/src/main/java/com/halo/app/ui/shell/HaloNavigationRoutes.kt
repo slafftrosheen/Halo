@@ -24,11 +24,12 @@ fun primaryNavigationRoute(route: String?): String? = when {
     else -> route
 }
 
-fun NavHostController.navigateToPrimary(route: String) {
+fun NavHostController.navigateToPrimary(route: String, restoreSavedState: Boolean = true) {
     if (currentDestination?.route == route) return
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
-        restoreState = true
+        // An explicit destination request must not restore a detail above that root.
+        restoreState = restoreSavedState
     }
 }

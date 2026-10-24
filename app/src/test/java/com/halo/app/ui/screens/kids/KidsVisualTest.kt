@@ -23,7 +23,7 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [33], application = android.app.Application::class, qualifiers = "w320dp-h800dp")
 class KidsVisualTest {
     private fun capture(dark: Boolean, scale: Float = 0f) = captureRoboImage {
-        HaloTheme(darkTheme = dark, fontScale = scale, palette = HaloPalette(HaloAccent.LILAC, HaloTone.COOL)) {
+        HostlessHaloTheme(darkTheme = dark, fontScale = scale, palette = HaloPalette(HaloAccent.LILAC, HaloTone.COOL)) {
             KidsBrandTheme {
             Column(Modifier.width(320.dp).height(800.dp).background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {

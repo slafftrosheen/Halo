@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import android.net.Uri
+import com.halo.app.context.*
 import com.halo.app.data.notebook.CanvasFileMarkupCodec
 import com.halo.app.data.notebook.InkSelectionBookmarkCodec
 import com.halo.app.data.notebook.InkSelectionStudyMaterial
@@ -106,6 +107,12 @@ data class CanvasEditorUiState(
     val inkSelection: com.halo.sdk.runtime.ink.InkSelectionContext? = null,
 )
 
+internal fun CanvasEditorUiState.toCurrentCanvasContext(canvasId: String, hasPendingEdits: Boolean): com.halo.app.context.CanvasContextProjection? {
+    if (!canEditBoard() || transcribing || aiDraft != null || textDraft != null || drawingDraft != null || hasPendingEdits) return null
+    return com.halo.app.context.CanvasContextProjection(canvasId,
+        selectedNodeIds.ifEmpty { setOfNotNull(selectedNodeId) }.toSet(), nodes.map { it.id }.toSet(), this)
+}
+
 /**
  * Single source for editing interlocks: imports, image tools, AI drafts and
  * exports must not race with card mutations from alternate entry points.
@@ -146,7 +153,8 @@ class CanvasEditorViewModel(
     private val assets: com.halo.app.data.workspace.NotebookAssetRepository? = null,
     private val memoTranscriber: com.halo.app.capture.LocalMemoTranscriber? = null,
     private val permitsAi: suspend (String, Boolean) -> Boolean = { _, _ -> false },
-) : ViewModel() {
+) : ViewModel(), CanvasWorkflowHost {
+    override val workflowCanvasId: String get() = canvasId
     private var undoSnapshot: com.halo.app.data.notebook.CanvasUndoSnapshot? = null
     private var organizationGeneration = 0L
     private var organizationJob: Job? = null
@@ -168,6 +176,11 @@ class CanvasEditorViewModel(
     private var transcriptionJob: Job? = null
     private val mutableState = MutableStateFlow(CanvasEditorUiState())
     val uiState: StateFlow<CanvasEditorUiState> = mutableState.asStateFlow()
+    /** Read-only active-view projection; persisted edits remain with NotebookCanvasRepository. */
+    suspend fun currentContextProjection(): com.halo.app.context.CanvasContextProjection? = withContext(Dispatchers.Main.immediate) {
+        val state = mutableState.value
+        state.toCurrentCanvasContext(canvasId, pendingNodeText.isNotEmpty() || pendingNodePositions.isNotEmpty() || pendingViewport != null)
+    }
     private var aiJob: Job? = null
     private var aiGeneration = 0L
     private var lastAiAction = "Review"
@@ -1130,44 +1143,91 @@ class CanvasEditorViewModel(
 
     /** Extract six dominant colors offline and save a source-linked Notebook color card. */
     fun saveImagePalette(nodeId: String, expectedVersion: String?) {
-        val store = workspace ?: return
-        val noteStore = notes ?: return
-        val assetStore = assets ?: return
-        val snapshot = mutableState.value
-        val node = snapshot.nodes.firstOrNull { it.id == nodeId } ?: return
-        val file = node.refObjectId?.let { snapshot.files[it] } ?: return
-        if (!file.mimeType.startsWith("image/") || snapshot.importing || snapshot.imageToolBusy || snapshot.loading) return
-        mutableState.value = snapshot.copy(imageToolBusy = true, notice = null)
         viewModelScope.launch {
+            if (!mutableState.value.canEditBoard()) return@launch
             try {
                 flushPendingEdits()
-                val source = requireNotNull(store.getFile(file.objectId.value))
-                check(source.version == expectedVersion && source.uri == file.uri)
-                val palette = assetStore.extractLocalPalette(source)
-                check(palette.isNotEmpty()) { "No opaque colors in source image." }
-                val latest = requireNotNull(store.getFile(file.objectId.value))
-                check(latest.version == expectedVersion && latest.uri == source.uri)
-                val body = buildString {
-                    append("# Image color palette\n\n")
-                    append("Source: ").append(file.displayName).append('\n')
-                    append("Workspace file: ").append(file.objectId.value).append("\n\n")
-                    palette.forEachIndexed { index, color ->
-                        append(index + 1).append(". ").append(color).append('\n')
-                    }
-                }
-                val note = noteStore.createNote(body, "Palette — " + file.displayName.take(70))
-                val (x, y) = insertionPoint()
-                val added = repository.addReference(canvasId, note.id, x, y)
-                repository.connect(canvasId, nodeId, added, "color palette")
-                selectNode(added)
-                mutableState.value = mutableState.value.copy(notice = "Color palette saved as a Notebook note.")
+                savePaletteCore(requireNotNull(repository.currentVersion(canvasId)), nodeId, requireNotNull(expectedVersion), false) {}
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 mutableState.value = mutableState.value.copy(notice =
                     "Couldn't extract colors. The original is unchanged; check Inbox before retrying.")
-            } finally { mutableState.value = mutableState.value.copy(imageToolBusy = false) }
+            }
         }
     }
+
+    private fun reviewedDraftHash(draft: CanvasRecognizedDraft): String = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(listOf(draft.operationId, draft.sourceNodeId, draft.sourceKind, draft.text, draft.original, draft.fileVersion.orEmpty())
+            .joinToString("\n") { "${it.length}:$it" }.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+
+    override suspend fun workflowStatus(): CanvasWorkflowStatus = withContext(Dispatchers.Main.immediate) {
+        requireCanvasWorkflow(permitsAi(canvasId, true), "Canvas is excluded from assistant processing")
+        val version = repository.currentVersion(canvasId) ?: throw CanvasWorkflowConflict("Canvas unavailable")
+        val state = mutableState.value
+        val draft = state.textDraft
+        draft?.sourceNodeId?.let { nodeId ->
+            val source = repository.snapshot(canvasId).first.firstOrNull { it.id == nodeId }
+                ?: throw CanvasWorkflowConflict("Review source unavailable")
+            requireCanvasWorkflow(permitsAi(source.refObjectId ?: canvasId, true), "Review source is excluded from assistant processing")
+        }
+        CanvasWorkflowStatus(canvasId, version, !state.canEditBoard() || state.transcribing || state.aiDraft != null || state.drawingDraft != null || pendingNodeText.isNotEmpty() ||
+            pendingNodePositions.isNotEmpty() || pendingViewport != null,
+            draft?.operationId, draft?.let(::reviewedDraftHash), draft?.text?.length ?: 0, draft?.sourceNodeId, draft?.fileVersion)
+    }
+    private suspend fun requireWorkflowVersion(version: String, allowDraft: Boolean = false) {
+        val state = mutableState.value
+        requireCanvasWorkflow(state.canEditBoard() && !state.transcribing && (allowDraft || state.textDraft == null) &&
+            state.aiDraft == null && state.drawingDraft == null && pendingNodeText.isEmpty() && pendingNodePositions.isEmpty() && pendingViewport == null,
+            "Finish or review the pending Canvas edit first")
+        requireCanvasWorkflow(repository.currentVersion(canvasId) == version, "Canvas changed. Read its current version again.")
+    }
+    private suspend fun workflowFile(nodeId: String, expected: String, mime: String? = null): com.halo.app.data.workspace.WorkspaceFile {
+        val source = repository.snapshot(canvasId).first.firstOrNull { it.id == nodeId }
+            ?: throw CanvasWorkflowConflict("Source card unavailable")
+        val sourceId = source.refObjectId ?: throw CanvasWorkflowConflict("This card has no file source")
+        val owner = workspace ?: throw CanvasWorkflowConflict("Workspace unavailable")
+        requireCanvasWorkflow(owner.getObject(sourceId)?.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE, "Source unavailable")
+        val file = owner.getFile(sourceId) ?: throw CanvasWorkflowConflict("Source file unavailable")
+        requireCanvasWorkflow(file.version == expected && (mime == null || file.mimeType.startsWith(mime)), "Source version or kind changed")
+        return file
+    }
+    override suspend fun workflowPalette(version: String, nodeId: String, fileVersion: String, guard: () -> Unit): CanvasWorkflowReceipt =
+        savePaletteCore(version, nodeId, fileVersion, true, guard)
+    private suspend fun savePaletteCore(version: String, nodeId: String, fileVersion: String, assistantRequest: Boolean, guard: () -> Unit): CanvasWorkflowReceipt =
+        withContext(Dispatchers.Main.immediate) { commandMutex.withLock {
+            requireWorkflowVersion(version); guard()
+            val noteStore = notes ?: throw CanvasWorkflowConflict("Notebook unavailable")
+            val assetStore = assets ?: throw CanvasWorkflowConflict("Image palette extraction unavailable")
+            val original = workflowFile(nodeId, fileVersion, "image/")
+            if (assistantRequest) requireCanvasWorkflow(permitsAi(original.objectId.value, true), "This source is excluded from assistant processing")
+            mutableState.value = mutableState.value.copy(imageToolBusy = true, notice = null)
+            try {
+                val palette = withContext(Dispatchers.IO) { assetStore.extractLocalPalette(original) }
+                requireCanvasWorkflow(palette.isNotEmpty(), "No opaque colors in source image")
+                val latest = workflowFile(nodeId, fileVersion, "image/")
+                requireCanvasWorkflow(latest.uri == original.uri, "Source changed during palette extraction")
+                if (assistantRequest) requireCanvasWorkflow(permitsAi(original.objectId.value, true), "Source assistant access changed")
+                guard()
+                val body = buildString {
+                    append("# Image color palette\n\nSource: ").append(original.displayName).append('\n')
+                    append("Workspace file: ").append(original.objectId.value).append("\n\n")
+                    palette.forEachIndexed { index, color -> append(index + 1).append(". ").append(color).append('\n') }
+                }
+                val receipt = repository.withExpectedVersion(canvasId, version, guard) {
+                    requireCanvasWorkflow(workflowFile(nodeId, fileVersion, "image/").uri == original.uri, "Source changed")
+                    if (assistantRequest) requireCanvasWorkflow(permitsAi(original.objectId.value, true), "Source assistant access changed")
+                    val note = noteStore.createNote(body, "Palette — " + original.displayName.take(70))
+                    val (x, y) = insertionPoint()
+                    val card = repository.addReference(canvasId, note.id, x, y)
+                    val edge = repository.connect(canvasId, nodeId, card, "color palette")
+                    check(noteStore.getNote(note.id) != null)
+                    CanvasWorkflowReceipt(canvasId, requireNotNull(repository.currentVersion(canvasId)), "SAVED", note.id, card, edge)
+                }
+                selectNode(requireNotNull(receipt.nodeId))
+                mutableState.value = mutableState.value.copy(notice = "Color palette saved as a Notebook note.")
+                receipt
+            } finally { mutableState.value = mutableState.value.copy(imageToolBusy = false) }
+        } }
 
     /**
      * User-approved local image transformation. Produces a fresh Notebook asset;
@@ -1268,37 +1328,100 @@ class CanvasEditorViewModel(
     }
     fun cancelTranscription() { transcriptionJob?.cancel() }
     /** Transcripts and OCR remain reviewable text cards, connected back to the source. */
-    fun saveRecognizedDraft() = command {
-        val draft = mutableState.value.textDraft ?: return@command
-        if (draft.text.isBlank()) return@command
-        flushPendingEdits()
-        val id = repository.saveReviewedText(canvasId, draft.sourceNodeId, draft.original,
-            draft.text, draft.sourceKind, draft.operationId, draft.fileVersion)
-        selectNode(id)
-        mutableState.value = mutableState.value.copy(textDraft = null)
+    fun saveRecognizedDraft() = viewModelScope.launch {
+        try {
+            val draft = mutableState.value.textDraft ?: return@launch
+            flushPendingEdits()
+            reviewedTextCore(requireNotNull(repository.currentVersion(canvasId)), draft.operationId, reviewedDraftHash(draft), "SAVE", null, false) {}
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableState.value = mutableState.value.copy(notice = "Source changed. Review it again.") }
     }
+
+    override suspend fun workflowReviewedText(version: String, token: String, draftHash: String, action: String, text: String?, guard: () -> Unit): CanvasWorkflowReceipt =
+        reviewedTextCore(version, token, draftHash, action, text, true, guard)
+    private suspend fun reviewedTextCore(version: String, token: String, draftHash: String, action: String, text: String?,
+        assistantRequest: Boolean, guard: () -> Unit): CanvasWorkflowReceipt =
+        withContext(Dispatchers.Main.immediate) { commandMutex.withLock {
+            requireWorkflowVersion(version, allowDraft = true); guard()
+            val draft = mutableState.value.textDraft ?: throw CanvasWorkflowConflict("Review draft unavailable")
+            fun requireDraft() {
+                guard()
+                requireCanvasWorkflow(mutableState.value.textDraft?.let { it.operationId == token && reviewedDraftHash(it) == draftHash } == true,
+                    "Review draft changed. Review the current draft first.")
+            }
+            requireDraft()
+            when (action) {
+                "EDIT" -> {
+                    requireCanvasWorkflow(text != null && text.length <= 12000, "Expected literal bounded draft text")
+                    editRecognizedDraft(requireNotNull(text))
+                }
+                "DISCARD" -> discardRecognizedDraft()
+                "SAVE" -> {
+                    requireCanvasWorkflow(draft.text.isNotBlank(), "Review text is empty")
+                    val source = repository.snapshot(canvasId).first.firstOrNull { it.id == draft.sourceNodeId }
+                        ?: throw CanvasWorkflowConflict("Source card unavailable")
+                    if (assistantRequest) requireCanvasWorkflow(permitsAi(source.refObjectId ?: canvasId, true), "Source is excluded from assistant processing")
+                    val receipt = repository.withExpectedVersion(canvasId, version, ::requireDraft) {
+                        if (assistantRequest) requireCanvasWorkflow(permitsAi(source.refObjectId ?: canvasId, true), "Source assistant access changed")
+                        val card = repository.saveReviewedText(canvasId, draft.sourceNodeId, draft.original,
+                            draft.text, draft.sourceKind, draft.operationId, draft.fileVersion)
+                        val saved = repository.snapshot(canvasId)
+                        CanvasWorkflowReceipt(canvasId, requireNotNull(repository.currentVersion(canvasId)), "SAVED",
+                            noteId = saved.first.single { it.id == card }.refObjectId, nodeId = card,
+                            edgeId = saved.second.firstOrNull { it.fromNodeId == source.id && it.toNodeId == card }?.id)
+                    }
+                    selectNode(requireNotNull(receipt.nodeId)); mutableState.value = mutableState.value.copy(textDraft = null)
+                    return@withLock receipt
+                }
+                else -> throw CanvasWorkflowConflict("Unsupported review action")
+            }
+            val status = workflowStatus()
+            CanvasWorkflowReceipt(canvasId, status.version, if (action == "DISCARD") "DISCARDED" else "REVIEW_REQUIRED",
+                reviewedDraftToken = status.reviewedDraftToken, draftHash = status.draftHash, draftCharacters = status.draftCharacters)
+        } }
 
     /** Explicit local-only attempt: no cloud fallback and no audio sent without consent. */
     fun transcribeFile(nodeId: String) {
-        val engine = memoTranscriber
-        val node = mutableState.value.nodes.firstOrNull { it.id == nodeId } ?: return
-        val file = node.refObjectId?.let { mutableState.value.files[it] } ?: return
-        if (!file.mimeType.startsWith("audio/") || mutableState.value.transcribing) return
-        mutableState.value = mutableState.value.copy(transcribing = true, notice = null)
         transcriptionJob = viewModelScope.launch {
+            if (!mutableState.value.canEditBoard() || mutableState.value.transcribing) return@launch
             try {
-                check(engine != null) { "Local speech model unavailable. Choose an installed model in Voice settings or write a transcript." }
-                val authoritative = workspace?.getFile(file.objectId.value) ?: error("Recording unavailable. Relink it in Workspace.")
-                val text = engine.transcribe(authoritative.uri, authoritative.objectId.value)
-                check(mutableState.value.nodes.firstOrNull { it.id == nodeId }?.text == node.text) { "Source changed. Review it again." }
-                recognizedDraft(nodeId, "Transcript", text, node.text, authoritative.version)
+                flushPendingEdits()
+                val sourceId = mutableState.value.nodes.firstOrNull { it.id == nodeId }?.refObjectId ?: return@launch
+                val fileVersion = workspace?.getFile(sourceId)?.version ?: throw CanvasWorkflowConflict("Recording version unavailable")
+                workflowTranscribe(requireNotNull(repository.currentVersion(canvasId)), nodeId, fileVersion) {}
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
                 mutableState.value = mutableState.value.copy(
                     notice = "Local transcription failed. Check the installed speech model or write a transcript. Original recording is safe.")
-            } finally { mutableState.value = mutableState.value.copy(transcribing = false) }
+            }
         }
     }
+    override suspend fun workflowTranscribe(version: String, nodeId: String, fileVersion: String, guard: () -> Unit): CanvasWorkflowReceipt =
+        withContext(Dispatchers.Main.immediate) { commandMutex.withLock {
+            requireWorkflowVersion(version); guard()
+            val engine = memoTranscriber ?: throw CanvasWorkflowConflict("Local speech model unavailable. Choose an installed model or write a transcript.")
+            val original = workflowFile(nodeId, fileVersion, "audio/")
+            requireCanvasWorkflow(permitsAi(original.objectId.value, true), "This recording is excluded from assistant processing")
+            val source = repository.snapshot(canvasId).first.single { it.id == nodeId }
+            val job = kotlinx.coroutines.currentCoroutineContext()[Job]
+            transcriptionJob = job
+            mutableState.value = mutableState.value.copy(transcribing = true, notice = null)
+            try {
+                val text = withContext(Dispatchers.IO) { engine.transcribe(original.uri, original.objectId.value) }
+                val current = workflowFile(nodeId, fileVersion, "audio/")
+                requireCanvasWorkflow(current.uri == original.uri && repository.currentVersion(canvasId) == version &&
+                    repository.snapshot(canvasId).first.firstOrNull { it.id == nodeId }?.text == source.text, "Recording or Canvas changed during transcription")
+                requireCanvasWorkflow(permitsAi(original.objectId.value, true), "Recording assistant access changed")
+                guard()
+                recognizedDraft(nodeId, "Transcript", text, source.text, fileVersion)
+                val draft = mutableState.value.textDraft ?: throw CanvasWorkflowConflict("No recognized review draft")
+                CanvasWorkflowReceipt(canvasId, version, "REVIEW_REQUIRED", reviewedDraftToken = draft.operationId,
+                    draftHash = reviewedDraftHash(draft), draftCharacters = draft.text.length)
+            } finally {
+                if (transcriptionJob === job) transcriptionJob = null
+                mutableState.value = mutableState.value.copy(transcribing = false)
+            }
+        } }
 
     fun focusNode(nodeId: String) {
         val node = mutableState.value.nodes.firstOrNull { it.id == nodeId } ?: return
@@ -1350,19 +1473,41 @@ class CanvasEditorViewModel(
 
     /** Export is explicit: references are copied locally, without changing cloud permissions. */
     fun exportToNote(startStudy: Boolean = false) = viewModelScope.launch {
-        val state = mutableState.value
-        if (!state.canEditBoard() || state.nodes.isEmpty()) return@launch
-        val noteStore = notes ?: return@launch
-        mutableState.value = state.copy(exporting = true, notice = null)
+        if (!mutableState.value.canEditBoard()) return@launch
         try {
             flushPendingEdits()
+            val receipt = exportNoteCore(requireNotNull(repository.currentVersion(canvasId)), startStudy, false) {}
+            val noteId = requireNotNull(receipt.noteId)
+            if (startStudy) navigation.send(CanvasEditorNavigation.StartStudyFromSource(noteId,
+                "Study the ideas from ${mutableState.value.title}".take(400)))
+            else navigation.send(CanvasEditorNavigation.OpenNote(noteId))
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableState.value = mutableState.value.copy(notice = "Could not export the canvas. Your cards are still here.") }
+    }
+    override suspend fun workflowExport(version: String, startStudy: Boolean, guard: () -> Unit): CanvasWorkflowReceipt =
+        exportNoteCore(version, startStudy, true, guard)
+    private suspend fun exportNoteCore(version: String, startStudy: Boolean, assistantRequest: Boolean, guard: () -> Unit): CanvasWorkflowReceipt =
+        withContext(Dispatchers.Main.immediate) { commandMutex.withLock {
+        requireWorkflowVersion(version); guard()
+        val noteStore = notes ?: throw CanvasWorkflowConflict("Notebook unavailable")
+        val state = repository.observe(canvasId).first() ?: throw CanvasWorkflowConflict("Canvas unavailable")
+        requireCanvasWorkflow(state.nodes.isNotEmpty(), "Canvas has no cards to export")
+        val sourceIds = state.nodes.mapNotNull { it.refObjectId }.distinct()
+        suspend fun sourceVersion(id: String): String? = if (workspace != null) workspace.sourceVersion(id) else null
+        val sourceVersions = sourceIds.associateWith { sourceVersion(it) ?: throw CanvasWorkflowConflict("Source unavailable or version unsupported") }
+        if (assistantRequest) {
+            requireCanvasWorkflow(permitsAi(canvasId, true), "Canvas is excluded from assistant processing")
+            for (sourceId in sourceIds) requireCanvasWorkflow(permitsAi(sourceId, true), "A linked source is excluded from assistant processing")
+        }
+        mutableState.value = mutableState.value.copy(exporting = true, notice = null)
+        try {
             val body = buildString {
                 append("# ").append(state.title).append("\n\n")
                 for (node in state.nodes.sortedWith(compareBy<CanvasNode> { it.y }.thenBy { it.x })) {
                     if (node.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH) append("[Sketch — open the original canvas to see the drawing]")
                     else if (node.refObjectId == null) append(node.readableText())
                     else {
-                        append("## ").append(state.references.firstOrNull { it.id.value == node.refObjectId }?.title ?: node.readableText()).append("\n")
+                        append("## ").append(workspace?.getObject(node.refObjectId)?.title ?: node.readableText()).append("\n")
                         append(workspace?.contextText(node.refObjectId)?.take(6000) ?: "Source unavailable")
                         append("\nSource: ").append(node.refObjectId)
                     }
@@ -1377,17 +1522,26 @@ class CanvasEditorViewModel(
                     }
                 }
             }
-            val note = noteStore.createNote(body, state.title)
-            if (startStudy) {
-                // Export is durable, but starting a model requires the learner's
-                // execution choice in the Study wizard. No direct start here.
-                navigation.send(CanvasEditorNavigation.StartStudyFromSource(
-                    note.id, "Study the ideas from ${state.title}".take(400)))
-            } else navigation.send(CanvasEditorNavigation.OpenNote(note.id))
-        } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { mutableState.value = mutableState.value.copy(notice = "Could not export the canvas. Your cards are still here.") }
+            for ((sourceId, expected) in sourceVersions) {
+                requireCanvasWorkflow(sourceVersion(sourceId) == expected, "Linked source changed during export")
+                if (assistantRequest) requireCanvasWorkflow(permitsAi(sourceId, true), "Source assistant access changed")
+            }
+            guard()
+            repository.withExpectedVersion(canvasId, version, guard) {
+                for ((sourceId, expected) in sourceVersions) requireCanvasWorkflow(sourceVersion(sourceId) == expected, "Linked source changed")
+                if (assistantRequest) {
+                    requireCanvasWorkflow(permitsAi(canvasId, true), "Canvas assistant access changed")
+                    for (sourceId in sourceIds) requireCanvasWorkflow(permitsAi(sourceId, true), "Source assistant access changed")
+                }
+                val note = noteStore.createNote(body, state.title)
+                check(noteStore.getNote(note.id)?.body == body)
+                CanvasWorkflowReceipt(canvasId, version, "SAVED", noteId = note.id,
+                    navigationTarget = if (startStudy) "study?captureSource=${Uri.encode(note.id)}&goal=${Uri.encode("Study the ideas from ${state.title}".take(400))}"
+                        else "notebook/note/${Uri.encode(note.id)}")
+            }
+        }
         finally { mutableState.value = mutableState.value.copy(exporting = false) }
-    }
+    } }
 
     fun clearNotice() {
         mutableState.value = mutableState.value.copy(notice = null)

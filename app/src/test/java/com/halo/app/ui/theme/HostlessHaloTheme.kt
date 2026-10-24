@@ -10,9 +10,10 @@ import androidx.compose.ui.platform.LocalInspectionMode
 fun HostlessHaloTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     fontScale: Float = 0f,
+    palette: HaloPalette = HaloPalette(),
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalInspectionMode provides true) {
-        HaloTheme(darkTheme = darkTheme, fontScale = fontScale, content = content)
+        HaloTheme(darkTheme = darkTheme, fontScale = fontScale, palette = palette, content = content)
     }
 }

@@ -1,0 +1,37 @@
+{
+  "id": "halo.provider.configuration",
+  "name": "Answer provider setup",
+  "description": "Read bounded provider readiness and request approved existing connection/catalogue checks; no credential or selection edits.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_provider_catalog",
+    "halo_provider_refresh_models",
+    "halo_provider_state",
+    "halo_provider_test_connection"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_provider_catalog",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_provider_refresh_models",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_provider_state",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_provider_test_connection",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

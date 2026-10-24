@@ -50,7 +50,8 @@ internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
                         selectionJob?.cancel()
                         if (context == null) service.clearSelection(project.id, session.ownerToken)
                         else selectionJob = scope.launch {
-                            if (!session.awaitPersisted() || !service.publishSelection(project.id, layer.id, project.revision, session.ownerToken, context))
+                            if (!session.awaitPersisted() || !service.publishSelection(project.id, layer.id, project.revision,
+                                    session.ownerToken, context, session.persistedRevision))
                                 service.clearSelection(project.id, session.ownerToken)
                         }
                     })

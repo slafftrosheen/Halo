@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** One tutor turn as presented to the learner, with its provenance. */
@@ -213,6 +214,107 @@ class StudyViewModel(
     private var explanationHandoff: String? = null
     private var handoffTurn: StudyTurn? = null
     private var sourceReadingFinished = false
+    private var semanticEpoch = 0L
+    private var semanticPending = false
+    private var semanticExportedNoteId: String? = null
+    private var semanticRestartedSessionId: String? = null
+    private var semanticDispatchSession: StudySessionRecord? = null
+    private var semanticDispatchSources: Map<String, String?>? = null
+    private var semanticExportState: StudyUiState? = null
+
+    private fun semanticVersion(lease: String, state: StudyUiState): String = "study-view:" +
+        java.security.MessageDigest.getInstance("SHA-256").digest(
+            "$lease|$semanticEpoch|$semanticPending|$semanticExportedNoteId|$semanticRestartedSessionId|$state".toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+
+    /** Snapshot the actual attached editor, then validate its canonical saved session/source identities on IO. */
+    internal suspend fun semanticStudySnapshot(lease: String): ActiveStudySnapshot {
+        val before = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+            val state = mutableUiState.value
+            check(!state.loading && state.unavailable == null && state.session != null) { "Study is loading or unavailable" }
+            state to semanticVersion(lease, state)
+        }
+        val state = before.first
+        val session = requireNotNull(state.session)
+        val (currentSources, candidates) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            check(study.getSession(sessionId) == session) { "Study session changed; wait for the lesson to refresh" }
+            val references = study.sourceReferences(session)
+            val rows = workspace?.observe(com.halo.app.data.workspace.WorkspaceQuery(types = setOf(
+                com.halo.app.data.notebook.WorkspaceObjectType.NOTE, com.halo.app.data.notebook.WorkspaceObjectType.FILE,
+                com.halo.app.data.notebook.WorkspaceObjectType.MEDIA, com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)))
+                ?.first().orEmpty().take(30)
+            val candidates = rows.mapNotNull { item ->
+                val source = study.sourceReferences(session.copy(sourceObjectIds = listOf(item.id.value),
+                    sources = listOf(com.halo.sdk.runtime.study.StudySessionSource(item.id.value)))).singleOrNull()
+                source?.takeIf { it.version != null && it.resolved !is ResolvedStudySource.Unsupported }
+                    ?.let { ActiveStudySource(it.objectId, it.version, it.title.take(200), it.stale) }
+            }
+            references.map { ActiveStudySource(it.objectId, it.version, it.title.take(200), it.stale) } to candidates
+        }
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+            check(semanticVersion(lease, mutableUiState.value) == before.second) { "Study view changed; read it again" }
+            val sourceVersion = "study-view:" + java.security.MessageDigest.getInstance("SHA-256")
+                .digest("${before.second}|$currentSources|$candidates".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+            ActiveStudySnapshot(sessionId, sourceVersion, state.stage.name,
+                semanticPending || state.isGenerating || state.isSubmitting || state.savingSummary || state.comparingCards.isNotEmpty(),
+                state.draft.isNotBlank(), state.isFinished, state.reviewIntensity.name,
+                currentSources, candidates,
+                state.attempts.takeLast(10).map { it.id }, state.turns.takeLast(10).map { it.id },
+                state.practiceItems.take(100).map { it.id }, state.turns.lastOrNull { it.failure == null }?.text?.take(2000),
+                state.notice?.take(500), semanticExportedNoteId, semanticRestartedSessionId, before.second)
+        }
+    }
+
+    /** Main-only callback projection. Existing native methods keep all tutor/privacy/commit authority. */
+    internal fun dispatchSemanticStudy(lease: String, observed: ActiveStudySnapshot, command: ActiveStudyCommand): ActiveStudyDispatch {
+        val state = mutableUiState.value
+        check(observed.sessionId == sessionId && semanticVersion(lease, state) == observed.uiVersion) { "Study changed" }
+        if (command.action != "stop") {
+            check(!observed.busy && !state.loading) { "Finish the current Study operation first" }
+            if (command.action in setOf("advance", "repeat", "back", "guidance", "solution", "submit_attempt_feedback", "ask_tutor"))
+                check(!state.isFinished) { "This lesson is already finished" }
+            check(state.draft.isBlank()) { "Keep or send the existing learner draft first" }
+            if (command.action in setOf("advance", "repeat", "back", "guidance", "solution", "submit_attempt_feedback", "ask_tutor", "create_practice_drafts"))
+                check(observed.sources.none { it.stale || it.version == null }) { "Review changed or unavailable Study material first" }
+        }
+        val priorJobs = viewModelScope.coroutineContext[Job]?.children?.toSet().orEmpty()
+        semanticEpoch++ // Consume authority before any native callback, including uncertain dispatch.
+        semanticDispatchSession = state.session
+        semanticDispatchSources = if (command.action == "select_sources") command.sourceVersions else observed.sources.associate { it.objectId to it.version }
+        semanticExportState = state
+        try { when (command.action) {
+            "review_intensity" -> setReviewIntensity(StudyReviewIntensity.valueOf(requireNotNull(command.intensity)))
+            "select_sources" -> {
+                check(command.sourceVersions.size <= 4 && command.sourceVersions.all { (id, version) ->
+                    observed.candidates.any { it.objectId == id && it.version == version }
+                }) { "Choose exact current source candidates and versions" }
+                changeSources(command.sourceVersions.keys.toList())
+            }
+            "refresh_sources" -> refreshSources()
+            "continue_sources" -> continueWithCurrentSources()
+            "restart_sources" -> restartUpdatedLesson()
+            "export_notes" -> saveSummaryToNotebook()
+            "advance" -> advance()
+            "repeat" -> repeatStage()
+            "back" -> goBack()
+            "guidance" -> requestGuidance(TutorStage.valueOf(requireNotNull(command.stage)))
+            "solution" -> askForSolution()
+            "submit_attempt_feedback" -> { setDraft(requireNotNull(command.text)); submitAttempt() }
+            "ask_tutor" -> if (command.text == null) askTutor() else { setDraft(command.text); askQuestion() }
+            "create_practice_drafts" -> createPracticeCards()
+            "stop" -> cancelTurn("Stopped by learner through Study tools")
+            else -> error("Unsupported Study action")
+        } } finally { semanticDispatchSession = null; semanticDispatchSources = null; semanticExportState = null }
+        val started = viewModelScope.coroutineContext[Job]?.children?.filter { it !in priorJobs }?.toList().orEmpty()
+        if (started.isNotEmpty()) {
+            semanticPending = true
+            viewModelScope.launch {
+                try { started.forEach { it.join() } }
+                finally { semanticPending = false; semanticEpoch++ }
+            }
+        }
+        return ActiveStudyDispatch(newId(), sessionId, command.action)
+    }
 
     fun listenThenExplain() {
         val state=mutableUiState.value
@@ -433,10 +535,13 @@ class StudyViewModel(
     }
 
     private fun moveTo(target: TutorStage?, solutionExplicitlyRequested: Boolean, guidanceExplicitlyRequested: Boolean = false) {
+        val expected = semanticDispatchSession
+        val versions = semanticDispatchSources
         launchLearningTransition {
             val session = mutableUiState.value.session ?: return@launchLearningTransition
             val resolved = target ?: session.tutorStage.next() ?: session.tutorStage
-            when (val result = study.moveTo(session.id, resolved, solutionExplicitlyRequested, guidanceExplicitlyRequested)) {
+            when (val result = study.moveTo(session.id, resolved, solutionExplicitlyRequested, guidanceExplicitlyRequested,
+                expectedSession = expected, expectedVersions = versions)) {
                 is StudyTransitionResult.Moved -> {
                     mutableUiState.value = mutableUiState.value.copy(notice = null)
                     requestTutorTurn(result.session, attempt = null)
@@ -452,12 +557,15 @@ class StudyViewModel(
         val state = mutableUiState.value
         if (!state.canSubmitAttempt) return
         val attemptText = state.draft.trim()
+        val expected = semanticDispatchSession
+        val versions = semanticDispatchSources
         val ticket = transitionVersion
         mutableUiState.value = state.copy(isSubmitting = true, notice = null)
         viewModelScope.launch {
             try {
             val submissionKey = lessons?.prepareAttempt(sessionId, attemptText, newId()) ?: newId()
-            when (val result = study.submitAttempt(sessionId, attemptText, submissionKey = submissionKey)) {
+            when (val result = study.submitAttempt(sessionId, attemptText, submissionKey = submissionKey,
+                expectedSession = expected, expectedVersions = versions)) {
                 is StudyAttemptResult.Recorded -> {
                     if (ticket != transitionVersion) {
                         mutableUiState.value = mutableUiState.value.copy(isSubmitting = false)
@@ -701,6 +809,7 @@ class StudyViewModel(
      */
     private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null, compact: Boolean = false, handoff: Boolean = false, extractExercises: Boolean = false, learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE, referenceTurn: StudyTurn? = null,
         learnerText: String? = question) {
+        val expected = semanticDispatchSession
         if(!handoff) { explanationHandoff=null; handoffTurn=null; sourceReadingFinished=false }
         val gateway = gateway
         if (gateway == null || !gateway.available) {
@@ -721,6 +830,7 @@ class StudyViewModel(
         mutableUiState.value = mutableUiState.value.copy(isGenerating = true, notice = null)
         turnJob = viewModelScope.launch {
             try {
+            check(expected == null || study.getSession(sessionId) == expected) { "Study changed after review" }
             lessons?.markPendingTurn(sessionId, requestId)
             val sources = study.sourceReferences(session, listOfNotNull(materialQuery, question, attempt?.response, session.goal).joinToString(" "), includeBeginning = materialQuery == null && question == null && attempt == null && session.tutorStage == TutorStage.ASK)
             currentCoroutineContext().ensureActive()
@@ -1339,14 +1449,29 @@ class StudyViewModel(
         viewModelScope.launch { study.updateSetup(sessionId, level, style, policy) }
     }
     fun changeSources(ids: List<String>) {
+        val expected = semanticDispatchSession
+        val versions = semanticDispatchSources?.mapValues { requireNotNull(it.value) }
         cancelTurn("Active sources changed")
-        viewModelScope.launch { study.setActiveSources(sessionId, ids); refreshSources() }
+        viewModelScope.launch {
+            try { check(study.setActiveSources(sessionId, ids, expected, versions)); refreshSources() }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Study material changed or unavailable. Read it again before a fresh choice.") }
+        }
     }
-    fun restartUpdatedLesson() = viewModelScope.launch {
+    fun restartUpdatedLesson(): Job {
+        val expected = semanticDispatchSession
+        val versions = semanticDispatchSources
+        return viewModelScope.launch { try {
         cancelTurn("Restarting updated lesson")
-        when (val result = study.restartWithCurrentSources(sessionId)) {
-            is com.halo.app.study.StudyStartResult.Started -> restarts.send(result.session.id)
+        when (val result = study.restartWithCurrentSources(sessionId, expected, versions)) {
+            is com.halo.app.study.StudyStartResult.Started -> {
+                semanticRestartedSessionId = result.session.id
+                restarts.send(result.session.id)
+            }
             is com.halo.app.study.StudyStartResult.Unavailable -> mutableUiState.value = mutableUiState.value.copy(notice = result.reason.explanation)
+        }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Study material changed. Read it again before restarting.") }
         }
     }
     fun selectVisual(id: String) {
@@ -1367,11 +1492,18 @@ class StudyViewModel(
         mutableUiState.value = mutableUiState.value.copy(sources = study.sourceReferences(session, query, includeBeginning = false), notice = "Showing matching text passages; PDFs have no text extractor")
     }
     fun continueWithCurrentSources() {
+        val expected = semanticDispatchSession
+        val versions = semanticDispatchSources
         cancelTurn("Source identity changed")
-        viewModelScope.launch { study.continueWithCurrentSources(sessionId); refreshSources() }
+        viewModelScope.launch { try {
+            check(study.continueWithCurrentSources(sessionId, expected, versions)); refreshSources()
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Study material changed. Read it again before continuing.") }
+        }
     }
     fun createPracticeCards() {
         val session = mutableUiState.value.session ?: return
+        val expected = semanticDispatchSession
         val tutor = gateway ?: return
         if (mutableUiState.value.isGenerating) return
         cancelTurn("Creating practice drafts")
@@ -1380,6 +1512,7 @@ class StudyViewModel(
         turnJob = viewModelScope.launch {
             mutableUiState.value = mutableUiState.value.copy(isGenerating = true)
             try {
+                check(expected == null || study.getSession(sessionId) == expected) { "Study changed after review" }
                 val sources = study.sourceReferences(session)
                 if (sources.any { it.stale }) { mutableUiState.value = mutableUiState.value.copy(notice = "Review changed material first"); return@launch }
                 val excerpts = sources.map { StudySourceExcerpt(it.objectId, it.revision, it.title, it.excerpt.orEmpty(), it.locator, it.coverage, it.omittedCharacters, it.version) }
@@ -1402,7 +1535,9 @@ class StudyViewModel(
                     is TutorTurnResponse.Unavailable -> mutableUiState.value = mutableUiState.value.copy(notice = result.reason)
                     is TutorTurnResponse.Failed -> mutableUiState.value = mutableUiState.value.copy(notice = result.message)
                 }
-            } finally { if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(isGenerating = false) }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Study changed or practice generation was unavailable. Review the lesson before another request.") }
+            finally { if (activeRequestId == requestId) mutableUiState.value = mutableUiState.value.copy(isGenerating = false) }
         }
     }
 
@@ -1411,8 +1546,10 @@ class StudyViewModel(
         mutableUiState.value = mutableUiState.value.copy(sources = study.sourceReferences(session))
     }
 
-    fun saveSummaryToNotebook() = viewModelScope.launch {
-        val state = mutableUiState.value
+    fun saveSummaryToNotebook(): Job {
+        val reviewed = semanticExportState
+        return viewModelScope.launch {
+        val state = reviewed ?: mutableUiState.value
         if (state.savingSummary || state.loading) return@launch
         val store = notes ?: return@launch
         mutableUiState.value = state.copy(savingSummary = true)
@@ -1433,10 +1570,12 @@ class StudyViewModel(
                 state.practiceItems.filter { it.accepted }.forEach { append(it.question).append("\n").append(it.answer).append("\n\n") }
             }
             val note = store.createNote(body, title)
+            semanticExportedNoteId = note.id
             navigation.send(note.id)
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save study notes. Your session is still available.") }
         finally { mutableUiState.value = mutableUiState.value.copy(savingSummary = false) }
+        }
     }
 
     fun clearNotice() {

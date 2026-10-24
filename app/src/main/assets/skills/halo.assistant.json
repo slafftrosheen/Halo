@@ -14,7 +14,9 @@
     "halo_read_aloud",
     "halo_stop_reading",
     "halo_list_app_actions",
-    "halo_perform_app_action"
+    "halo_perform_app_action",
+    "halo_get_mode_profile",
+    "halo_edit_mode_profile"
   ],
   "toolDefinitions": [
     {
@@ -48,6 +50,16 @@
     {
       "toolId": "halo_perform_app_action",
       "risk": "SENSITIVE"
+    },
+    {
+      "toolId": "halo_get_mode_profile",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_edit_mode_profile",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
     }
   ]
 }

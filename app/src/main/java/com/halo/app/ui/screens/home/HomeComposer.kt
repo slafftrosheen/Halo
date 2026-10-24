@@ -47,10 +47,11 @@ internal fun HaloComposer(
     toolsMenu: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val listeningLabel = uiText("Listening…")
     val messageLabel = uiText("Message")
     val sendLabel = uiText("Send")
-    val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
+    val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
     val compact = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 480
     val field: @Composable (Modifier) -> Unit = { fieldModifier ->
         BasicTextField(
@@ -73,7 +74,7 @@ internal fun HaloComposer(
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = {
-                if (homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed)
+                if (homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
                     == HomeComposerAction.SEND) onSubmit()
             }),
         )
@@ -104,7 +105,7 @@ internal fun HaloComposer(
             HomeComposerAction.SEND -> sendLabel
             else -> if (value.isNotBlank()) sendLabel else voiceContentDescription
         }
-        FilledIconButton(onClick = {
+        if (!shellOwnsOrb || value.isNotBlank() || showStop) FilledIconButton(onClick = {
             when (primary) {
                 HomeComposerAction.STOP -> onStop()
                 HomeComposerAction.SEND -> onSubmit()
@@ -142,10 +143,10 @@ internal enum class HomeComposerAction { NONE, VOICE, SEND, STOP }
 
 /** Presentation only. Runtime/submission owners continue to admit or reject operations. */
 internal fun homeComposerPrimaryAction(draft: String, canSend: Boolean, canSpeak: Boolean,
-    showStop: Boolean, focusAllowed: Boolean): HomeComposerAction = when {
+    showStop: Boolean, focusAllowed: Boolean, shellOwnsOrb: Boolean = false): HomeComposerAction = when {
     showStop -> HomeComposerAction.STOP
     !focusAllowed -> HomeComposerAction.NONE
     canSend && draft.isNotBlank() -> HomeComposerAction.SEND
-    canSpeak && draft.isBlank() -> HomeComposerAction.VOICE
+    canSpeak && draft.isBlank() && !shellOwnsOrb -> HomeComposerAction.VOICE
     else -> HomeComposerAction.NONE
 }

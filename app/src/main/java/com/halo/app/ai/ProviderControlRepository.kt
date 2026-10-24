@@ -22,7 +22,10 @@ data class ProviderControlRow(val descriptor: ProviderConfigurationDescriptor, v
     val generation: GenerationProof = GenerationProof.NOT_TESTED, val lastCheckedAt: Long? = null, val lastError: String? = null, val lastSelectedModelId: String? = null, val generationModelId: String? = null, val diagnostic: ProviderTestDiagnostic? = null, val generationEvidence: ProviderGenerationEvidence? = null)
 
 /** Single configuration owner. Saving never selects a provider or refreshes its remote catalogue. */
-class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiModelCatalogRepository, private val storage: Storage) : ViewModel() {
+class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiModelCatalogRepository, private val storage: Storage) : ViewModel(), ProviderConfigurationControl {
+    val configurationTools: ProviderConfigurationControl get() = this
+    private val toolLifetime = java.util.UUID.randomUUID().toString()
+    private val toolChecks = java.util.concurrent.ConcurrentHashMap<String, Long>()
     val providers = router.getAllProviders().filterIsInstance<AiInferenceProvider>()
     private val configurationWrites = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
     private val diagnostics = java.util.concurrent.ConcurrentHashMap<String, ProviderTestDiagnostic>()
@@ -176,25 +179,32 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         }
     }
     fun removeCredential(providerId: String) = viewModelScope.launch(Dispatchers.IO) {
+        configurationWrites.getOrPut(providerId) { Mutex() }.withLock {
         val provider = providers.firstOrNull { it.id == providerId }
         (provider as? CredentialProvider)?.clearCredential()
         (provider as? GeminiProvider)?.clearOAuthSession()
         invalidateProof(providerId); diagnostics.remove(providerId); provider?.configurationChanged(); reload()
+        }
     }
     fun acceptGeminiOAuth(token: String, project: String) = viewModelScope.launch(Dispatchers.IO) {
+        configurationWrites.getOrPut("gemini") { Mutex() }.withLock {
         require(project.isNotBlank()); storage.putString("gemini_project_id", project.trim()); storage.putString("gemini_auth_mode", "OAUTH")
         (providers.firstOrNull { it is GeminiProvider } as? GeminiProvider)?.acceptOAuthAccessToken(token, project.trim())
         invalidateProof("gemini"); diagnostics["gemini"] = ProviderTestDiagnostic(ProviderTestStage.SAVE_SECURELY, ProviderTestOutcome.SAVED_UNTESTED); reload()
+        }
     }
     fun disconnectGeminiOAuth() = viewModelScope.launch(Dispatchers.IO) {
+        configurationWrites.getOrPut("gemini") { Mutex() }.withLock {
         (providers.firstOrNull { it is GeminiProvider } as? GeminiProvider)?.clearOAuthSession(); invalidateProof("gemini"); diagnostics.remove("gemini"); reload()
+        }
     }
-    fun refreshModels(providerId: String) = viewModelScope.launch(Dispatchers.IO) {
+    fun refreshModels(providerId: String) = viewModelScope.launch(Dispatchers.IO) { refreshModelsNow(providerId) }
+    private suspend fun refreshModelsNow(providerId: String) {
         val revision = revisions[providerId] ?: 0L
         diagnostics[providerId] = ProviderTestDiagnostic(ProviderTestStage.FETCH_MY_MODELS, ProviderTestOutcome.CHECKING)
         try {
             catalogue.refresh(providerId)
-            if ((revisions[providerId] ?: 0L) != revision) return@launch
+            if ((revisions[providerId] ?: 0L) != revision) return
             val failure = catalogue.state.value.providerFailures[providerId]
             diagnostics[providerId] = if (failure != null) providerFailure(ProviderTestStage.FETCH_MY_MODELS,
                 AiProviderException(failure.type, "Discovery failed", AiFailureDetails(httpStatus = failure.httpStatus, retryAfterMs = failure.retryAfterMs, providerCode = failure.providerCode)), endpointHost(providerId))
@@ -208,9 +218,10 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             if ((revisions[providerId] ?: 0L) == revision) diagnostics[providerId] = providerFailure(ProviderTestStage.FETCH_MY_MODELS, error, endpointHost(providerId))
         } finally { reload() }
     }
-    fun testConnection(providerId: String) = viewModelScope.launch(Dispatchers.IO) {
-        val provider = providers.firstOrNull { it.id == providerId } ?: return@launch
-        if (_rows.value.firstOrNull { it.descriptor.providerId == providerId }?.configured != true || !testing.add(providerId)) return@launch
+    fun testConnection(providerId: String) = viewModelScope.launch(Dispatchers.IO) { testConnectionNow(providerId) }
+    private suspend fun testConnectionNow(providerId: String): Boolean {
+        val provider = providers.firstOrNull { it.id == providerId } ?: return false
+        if (_rows.value.firstOrNull { it.descriptor.providerId == providerId }?.configured != true || !testing.add(providerId)) return false
         val revision = revisions[providerId] ?: 0L
         checked[providerId] = ProviderConnectionState.CHECKING
         diagnostics[providerId] = ProviderTestDiagnostic(ProviderTestStage.AUTHENTICATE, ProviderTestOutcome.CHECKING)
@@ -238,6 +249,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             }
             testing.remove(providerId); reload()
         }
+        return true
     }
     /** User-triggered, empty context, no tools or history; never changes selection. */
     fun checkGeneration(providerId: String, allowBillable: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
@@ -279,5 +291,47 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         if (!row.configured) return false
         router.selectProvider(providerId) // Existing router restores the per-provider model preference.
         return true
+    }
+
+    override suspend fun providerConfigurations(): List<ProviderConfigurationSnapshot> = withContext(Dispatchers.IO) {
+        providers.take(64).mapNotNull { providerConfiguration(it.id) }
+    }
+    override suspend fun providerConfiguration(providerId: String): ProviderConfigurationSnapshot? = withContext(Dispatchers.IO) {
+        configurationWrites.getOrPut(providerId) { Mutex() }.withLock { configurationSnapshot(providerId) }
+    }
+    private fun configurationSnapshot(providerId: String): ProviderConfigurationSnapshot? {
+        reload() // Resolve real configuration now rather than startup placeholder rows.
+        val row = rows.value.firstOrNull { it.descriptor.providerId == providerId } ?: return null
+        val models = catalogue.state.value.models.filter { it.model.providerId == providerId }
+            .sortedBy { it.model.id }.map { ProviderModelMetadata(it.model.id, it.model.displayName,
+                it.source.name, it.model.inputCapabilities.map { capability -> capability.name }.sorted()) }
+        // Endpoints and credentials never enter the projection. Configuration revision
+        // invalidates checks after canonical saves; this process token also consumes a request.
+        val material = listOf(toolLifetime, revisions[providerId], toolChecks[providerId], row.configured,
+            row.selected, row.lastSelectedModelId, row.connection, row.catalogue, row.diagnostic?.checkId,
+            row.fields.toSortedMap(), models).joinToString("\u0000")
+        val version = "provider-configuration:" + java.security.MessageDigest.getInstance("SHA-256")
+            .digest(material.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        return ProviderConfigurationSnapshot(providerId, row.descriptor.displayName, row.descriptor.location.name,
+            row.configured, row.selected, row.connection.name, row.catalogue.name, version, models,
+            row.diagnostic?.stage?.name, row.diagnostic?.outcome?.name)
+    }
+    override suspend fun requestProviderCheck(providerId: String, expectedVersion: String,
+        command: ProviderConfigurationCommand, admitted: () -> Boolean): ProviderConfigurationSnapshot? = withContext(Dispatchers.IO) {
+        configurationWrites.getOrPut(providerId) { Mutex() }.withLock {
+            val provider = providers.firstOrNull { it.id == providerId } ?: return@withLock null
+            val before = configurationSnapshot(providerId) ?: return@withLock null
+            if (!admitted() || before.sourceVersion != expectedVersion || !before.configured ||
+                providerId in testing || providerId in catalogue.state.value.refreshingProviders) return@withLock null
+            providerMetadataCheck((storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy, providerId, provider.isLocal) {
+                check(admitted()) { "Provider check no longer admitted" }
+                toolChecks.merge(providerId, 1L, Long::plus)
+                when (command) {
+                    ProviderConfigurationCommand.REFRESH_MODELS -> refreshModelsNow(providerId)
+                    ProviderConfigurationCommand.TEST_CONNECTION -> if (!testConnectionNow(providerId)) return@providerMetadataCheck null
+                }
+                configurationSnapshot(providerId)
+            }
+        }
     }
 }

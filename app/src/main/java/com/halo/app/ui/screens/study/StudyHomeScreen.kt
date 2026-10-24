@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -134,6 +138,12 @@ fun StudyHomeScreen(
     // S01/S02: system Back mirrors the visible wizard Back. Leaving the
     // first step cancels only unfinished setup; a saved lesson is untouched.
     BackHandler(enabled = setupActive, onBack = returnFromSetup)
+    BindShellPageActions(ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep"), listOf(
+        ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy && !setupActive) { startNewLesson() },
+        ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, setupActive && setupStep == 1 && !busy) { picker = true },
+        ShellPageAction("page.study.options", "Age, language & learning options", HaloGlyph.SETTINGS,
+            setupActive && setupStep == 3 && !busy) { optionsExpanded = !optionsExpanded },
+    ))
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding()) {
@@ -152,9 +162,14 @@ fun StudyHomeScreen(
                     navigation = if (setupActive) {
                         returnFromSetup
                     } else { onNotebook },
-                    primaryAction = if (!setupActive) com.halo.app.ui.design.HaloHeaderAction(
+                    primaryAction = if (!setupActive && !com.halo.app.ui.presence.LocalShellHaloOrb.current) com.halo.app.ui.design.HaloHeaderAction(
                         uiText("Start Voice Mode"), onStartVoiceMode) else null,
                     glyph = null,
+                    trailing = {
+                        if (setupActive && setupStep == 3) StudySetupOverflow(optionsExpanded, !busy) {
+                            optionsExpanded = !optionsExpanded
+                        }
+                    },
                 )
             }
 
@@ -374,13 +389,6 @@ fun StudyHomeScreen(
                             Text(uiText(label))
                             if (executionChoice == choice) { Spacer(Modifier.width(8.dp)); Text("✓") }
                         }
-                    }
-                    OutlinedButton(
-                        onClick = { optionsExpanded = !optionsExpanded },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                    ) {
-                        StudyActionLabel(HaloGlyph.SETTINGS,
-                            if (optionsExpanded) "Hide learning options" else "Age, language & learning options")
                     }
                     if (optionsExpanded) {
                         StudyLearningSetup(

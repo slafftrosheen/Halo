@@ -1,5 +1,10 @@
 package com.halo.app.ui.workspace
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+import com.halo.app.ui.icons.HaloGlyph
+
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,6 +57,14 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var importing by remember(project?.id) { mutableStateOf(false) }
     var pendingInk by remember(project?.id) { mutableStateOf<String?>(null) }
     var activeInk by remember(project?.id) { mutableStateOf<StudioInkSession?>(null) }
+    BindShellPageActions(ShellPageOwner("studio", project?.id, project?.revision?.toString()),
+        if (project == null) listOf(
+            ShellPageAction("page.studio.new", stringResource(R.string.studio_new_project), HaloGlyph.NOTE, !busy && !state.loading) { naming = "new" },
+        ) else listOf(
+            ShellPageAction("page.studio.layers", stringResource(R.string.studio_layers), HaloGlyph.NOTE, !busy) { layers = true },
+            ShellPageAction("page.studio.versions", stringResource(R.string.studio_versions), HaloGlyph.ACTIVITY, !busy) { viewModel.versions() },
+            ShellPageAction("page.studio.save", stringResource(R.string.studio_save), HaloGlyph.NOTE, !busy && project.hasUnsavedChanges) { viewModel.save() },
+        ))
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(viewModel::importUri) }
     BackHandler(project != null) { if (!busy) viewModel.closeProject() }
     LaunchedEffect(project?.revision, pendingInk) {
@@ -68,6 +81,12 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
                     Icon(Icons.Default.Save, stringResource(R.string.studio_save), tint = MaterialTheme.colorScheme.primary)
                 }
+                if (project != null) StudioOverflowMenu(busy, project.hasUnsavedChanges,
+                    onBackground = { background = project }, onPresets = { naming = "new" },
+                    onSaveAs = { naming = "copy" }, onVersions = viewModel::versions,
+                    onDiscard = viewModel::discardDraft,
+                    onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
+                    onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) })
             })
     }) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
@@ -135,13 +154,6 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     }
                     item {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { background = project }, enabled = !busy) { Text(stringResource(R.string.studio_background)) }
-                            TextButton(onClick = { naming = "new" }, enabled = !busy) { Text(stringResource(R.string.studio_presets)) }
-                            TextButton(onClick = { naming = "copy" }, enabled = !busy) { Text(stringResource(R.string.studio_save_as)) }
-                            TextButton(onClick = viewModel::versions, enabled = !busy) { Text(stringResource(R.string.studio_versions)) }
-                            TextButton(onClick = viewModel::discardDraft, enabled = !busy && project.hasUnsavedChanges) { Text(stringResource(R.string.studio_discard)) }
-                            TextButton(onClick = { viewModel.export(CanvasImageFormat.PNG) }, enabled = !busy) { Text(stringResource(R.string.studio_export_png)) }
-                            TextButton(onClick = { viewModel.export(CanvasImageFormat.JPEG) }, enabled = !busy) { Text(stringResource(R.string.studio_export_jpeg)) }
                             TextButton(onClick = { onAiDraft(project) }, enabled = !busy) { Text(stringResource(R.string.studio_ai)) }
                         }
                     }

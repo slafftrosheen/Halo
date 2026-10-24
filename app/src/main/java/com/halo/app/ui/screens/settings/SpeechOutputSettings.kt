@@ -145,12 +145,11 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                             DropdownMenu(expanded = voicePicker, onDismissRequest = { voicePicker = false }) {
                                 (0 until if(kokoro?.multilingualInstalled() == true) 103 else 11).forEach { id ->
                                     DropdownMenuItem(text = { Text(uiText("Voice: %1\$s", id.toString())) }, onClick = {
-                                        voice=id.toString()
-                                        val storage=com.halo.app.di.ManualDependencyGraph.storage
                                         val version=state.modelVersion
-                                        storage.putBatch(strings=mapOf("kokoro_voice" to voice)+
-                                            (if(version!=null) mapOf("kokoro_voice.$version" to voice) else emptyMap()))
-                                        voicePicker=false
+                                        try {
+                                            requireNotNull(kokoro).selectVoice(id, requireNotNull(version))
+                                            voice=id.toString(); voicePicker=false; saveError=null
+                                        } catch (_: Exception) { saveError="Unable to save local voice selection" }
                                     })
                                 }
                             }

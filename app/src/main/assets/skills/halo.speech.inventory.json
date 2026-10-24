@@ -1,0 +1,25 @@
+{
+  "id": "halo.speech.inventory",
+  "name": "Local speech files",
+  "description": "Inspect the existing pinned local speech catalog and request approved install, resume, pause, remove or selection through its owner.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_speech_inventory",
+    "halo_speech_model_action"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_speech_inventory",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_speech_model_action",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

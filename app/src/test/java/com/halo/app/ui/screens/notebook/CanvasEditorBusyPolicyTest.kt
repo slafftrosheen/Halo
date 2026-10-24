@@ -6,6 +6,16 @@ import org.junit.Test
 
 class CanvasEditorBusyPolicyTest {
     private val ready = CanvasEditorUiState(loading = false)
+    @Test fun activeContextNeverProjectsBusyOrPendingDraftSelection() {
+        assertTrue(ready.toCurrentCanvasContext("board", false) != null)
+        assertTrue(ready.toCurrentCanvasContext("board", true) == null)
+        listOf(ready.copy(loading = true), ready.copy(missing = true), ready.copy(addingNode = true),
+            ready.copy(importing = true), ready.copy(imageToolBusy = true), ready.copy(aiBusy = true),
+            ready.copy(exporting = true), ready.copy(transcribing = true), ready.copy(aiDraft = CanvasAiDraft("Review", null, null, "Pending")),
+            ready.copy(textDraft = CanvasRecognizedDraft("card", "SKETCH", "Pending", "Original"))).forEach {
+            assertTrue(it.toCurrentCanvasContext("board", false) == null)
+        }
+    }
 
     @Test fun readyCanvasAcceptsEditing() {
         assertTrue(ready.canEditBoard())

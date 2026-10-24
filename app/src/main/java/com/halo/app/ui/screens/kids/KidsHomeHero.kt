@@ -34,8 +34,9 @@ internal fun KidsHomeHero(signal: HaloSignalPresentation, onListen: () -> Unit,
                 Icon(painterResource(R.drawable.halo_ic_privacy), uiText("Grown-up space"))
             }
         }
-        HaloSignalFace(signal, kids = true, size = if (enlarged) 64.dp else 96.dp,
-            contentDescription = uiText("Talk to halo"), onClick = onListen)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current)
+            HaloSignalFace(signal, kids = true, size = if (enlarged) 64.dp else 96.dp,
+                contentDescription = uiText("Talk to halo"), onClick = onListen)
         Text(uiText("What shall we do today?"), textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleLarge.copy(fontSize = 25.sp,
                 lineHeight = 32.sp, fontWeight = FontWeight.SemiBold))

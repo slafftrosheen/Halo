@@ -1,0 +1,77 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+package com.halo.app.ui.shell
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.language.uiText
+import com.halo.app.ui.screens.home.HomeViewModel
+import com.halo.app.ui.glass.material.HaloRuntimeState
+import com.halo.sdk.provider.CognitiveSessionState
+
+/** An Orb-opened editor; admission, conversation and cancellation stay with HomeViewModel. */
+@Composable
+internal fun ShellTypedMessageSheet(home: HomeViewModel, visible: Boolean, onDismiss: () -> Unit) {
+    val ui by home.uiState.collectAsStateWithLifecycle()
+    val submission by home.textSubmission.collectAsStateWithLifecycle()
+    val changing by home.conversationChanging.collectAsStateWithLifecycle()
+    val starting by home.listeningRequested.collectAsStateWithLifecycle()
+    var drafts by rememberSaveable { mutableStateOf(hashMapOf<String, String>()) }
+    var pendingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var clearedId by rememberSaveable { mutableStateOf<String?>(null) }
+    val key = ui.conversationId.orEmpty()
+    val text = drafts[key].orEmpty()
+    LaunchedEffect(key) {
+        if (key.isNotBlank() && drafts[key].isNullOrBlank() && !drafts[""].isNullOrBlank()) {
+            drafts = HashMap(drafts).apply { put(key, remove("").orEmpty()) }
+            if (pendingKey == "") pendingKey = key
+        }
+    }
+    LaunchedEffect(submission, pendingId, pendingKey) {
+        if (pendingId == null || submission.interactionId != pendingId) return@LaunchedEffect
+        val target = pendingKey ?: return@LaunchedEffect
+        if (submission.accepted && clearedId != pendingId) {
+            if (drafts[target]?.trim() == submission.draft) drafts = HashMap(drafts).apply { put(target, "") }
+            clearedId = pendingId
+        }
+        if (submission.needsRecovery && drafts[target].isNullOrBlank())
+            drafts = HashMap(drafts).apply { put(target, submission.draft) }
+    }
+    if (!visible) return
+    val active = ui.sessionState != CognitiveSessionState.Idle &&
+        ui.sessionState !is CognitiveSessionState.Completed && ui.sessionState !is CognitiveSessionState.Failed
+    val busy = submission.busy || active || starting || ui.inputStatus.capturing || ui.speechActive ||
+        ui.speechProcessing || ui.runtimeState == HaloRuntimeState.Recognizing || ui.runtimeState == HaloRuntimeState.Speaking
+    ModalBottomSheet(onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(uiText("Type a message"), style = MaterialTheme.typography.titleLarge)
+            OutlinedTextField(value = text, onValueChange = { next -> drafts = HashMap(drafts).apply { put(key, next) } },
+                label = { Text(uiText("Message")) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 6)
+            if (submission.interactionId == pendingId) submission.message?.let { Text(uiText(it)) }
+            ui.presentedIdentity?.takeIf { pendingId != null && it.interactionId == pendingId && it.conversationId == ui.conversationId }
+                ?.let { Text(it.text, style = MaterialTheme.typography.bodyLarge) }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (busy) OutlinedButton(onClick = home::stopOrbInteraction, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Stop")) }
+                Button(onClick = {
+                    val previousId = home.textSubmission.value.interactionId
+                    home.submitText(text.trim())
+                    val accepted = home.textSubmission.value
+                    if (accepted.interactionId != previousId && accepted.draft == text.trim() && accepted.busy) {
+                        pendingId = accepted.interactionId
+                        pendingKey = key
+                    }
+                }, enabled = text.isNotBlank() && !busy && !changing, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Send")) }
+                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Done")) }
+            }
+        }
+    }
+}

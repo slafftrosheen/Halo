@@ -42,7 +42,7 @@ import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
 /**
- * Developer Kit v1.2 / Brand Book v2.1. All effects are decorative, never state owners.
+ * Supplied DevKit artwork. All effects are decorative, never state owners.
  * Callers must gate Ripple on a real open mic, Edge on ACTING, and Cloud on a remote turn.
  * Reduced motion is observed rather than sampled once, so system changes apply immediately.
  */
@@ -61,9 +61,8 @@ enum class HaloFxMoment(val asset: String, val loops: Boolean = false) {
     DRAFT_DRAWON("draft_drawon"), CANVAS_ARRANGE("canvas_arrange"),
 }
 
-/** Always provide a visible, motion-free affordance when Lottie is disabled or loading.
- * These canonical icons are temporary fallbacks until supplied static SVG conversion
- * is included in the Android resources; they must not claim a new runtime state.
+/** Always provide a visible, motion-free affordance while the supplied SVG is loading.
+ * These canonical icons must not claim a new runtime state.
  */
 internal fun haloMomentFallback(moment: HaloFxMoment): HaloGlyph = when (moment) {
     HaloFxMoment.LEARN_OPEN -> HaloGlyph.READ_MODE
@@ -283,10 +282,11 @@ fun Modifier.haloTrace(
 /** Edge pulse while halo is actually acting on this phone: no spinning/rotating glow. */
 fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): Modifier = composed {
     val reduced = rememberHaloReducedMotion()
+    val foreground = rememberHaloMotionForeground()
     val alpha by animateFloatAsState(if (active) 1f else 0f,
-        tween(if (reduced) 0 else if (active) 250 else 150), label = "halo-edge")
+        tween(if (reduced || !foreground) 0 else if (active) 250 else 150), label = "halo-edge")
     // An invisible edge must not retain an infinite frame clock.
-    val pulse = if (reduced || !active) 0.5f else {
+    val pulse = if (reduced || !active || !foreground) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-edge-breath")
         val value by transition.animateFloat(0f, 1f,
             infiniteRepeatable(tween(1200, easing = breathEase), RepeatMode.Reverse),
@@ -308,7 +308,8 @@ fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): M
 /** Aura is for a hero/presence area; never combine with a simultaneous Guide trace. */
 fun Modifier.haloAura(accent: Color, warm: Color = Color(0xFFFF9F6B)): Modifier = composed {
     val reduced = rememberHaloReducedMotion()
-    val pulse = if (reduced) 0.5f else {
+    val foreground = rememberHaloMotionForeground()
+    val pulse = if (reduced || !foreground) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-aura")
         val value by transition.animateFloat(0f, 1f,
             infiniteRepeatable(tween(2000, easing = breathEase), RepeatMode.Reverse),
@@ -329,14 +330,16 @@ fun Modifier.haloAura(accent: Color, warm: Color = Color(0xFFFF9F6B)): Modifier 
 /** Static skeleton under reduced motion. */
 fun Modifier.haloShimmer(base: Color, highlight: Color): Modifier = composed {
     val reduced = rememberHaloReducedMotion()
-    val fraction = if (reduced) 0f else {
+    val foreground = rememberHaloMotionForeground()
+    val still = reduced || !foreground
+    val fraction = if (still) 0f else {
         val transition = rememberInfiniteTransition(label = "halo-shimmer")
         val value by transition.animateFloat(-1f, 2f,
             infiniteRepeatable(tween(1600)), label = "shimmer")
         value
     }
     drawBehind {
-        if (reduced) drawRect(base) else {
+        if (still) drawRect(base) else {
             val x = size.width * fraction
             drawRect(Brush.linearGradient(listOf(base, highlight, base),
                 start = Offset(x - size.width / 2f, 0f),
@@ -408,10 +411,11 @@ fun HaloAccentSweepRing(
 fun HaloPullRing(pullFraction: Float, refreshing: Boolean, accent: Color,
     modifier: Modifier = Modifier, ringSize: Dp = 40.dp) {
     val reduced = rememberHaloReducedMotion()
+    val foreground = rememberHaloMotionForeground()
     val fraction = pullFraction.takeIf(Float::isFinite)?.coerceIn(0f, 1f) ?: 0f
     val closed by animateFloatAsState(if (refreshing) 1f else 0f,
-        tween(if (reduced) 0 else 300), label = "halo-pull-close")
-    val breath = if (!refreshing || reduced) 1f else {
+        tween(if (reduced || !foreground) 0 else 300), label = "halo-pull-close")
+    val breath = if (!refreshing || reduced || !foreground) 1f else {
         val animation = rememberInfiniteTransition(label = "halo-pull-breath")
         val value by animation.animateFloat(.6f, 1f,
             infiniteRepeatable(tween(800, easing = breathEase), RepeatMode.Reverse),

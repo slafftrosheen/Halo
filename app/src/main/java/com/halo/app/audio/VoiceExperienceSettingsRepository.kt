@@ -20,9 +20,10 @@ data class VoiceExperienceSettings(
         semanticInterruptionEnabled, spokenInterruptionEnabled)
 }
 class VoiceExperienceSettingsRepository(private val storage: Storage) {
+    private val lock = Any()
     private inline fun <reified T : Enum<T>> enumValue(key: String, default: T): T =
         enumValues<T>().firstOrNull { it.name == storage.getString(key) } ?: default
-    private val mutable = MutableStateFlow(VoiceExperienceSettings(
+    private fun read() = VoiceExperienceSettings(
         storage.getBoolean("voice_spoken_interruption", true),
         enumValue("voice_interruption_timing", InterruptionSensitivity.NATURAL),
         storage.getBoolean("voice_semantic_interruption", false),
@@ -31,9 +32,15 @@ class VoiceExperienceSettingsRepository(private val storage: Storage) {
         storage.getBoolean("wearable_phone_fallback", false),
         storage.getBoolean("use_connected_audio_accessories", true),
         storage.getBoolean("wear_nearby_interaction", true),
-    ))
+    )
+    private val mutable = MutableStateFlow(read())
     val state = mutable.asStateFlow()
-    fun update(value: VoiceExperienceSettings) {
+    fun readPersisted(): VoiceExperienceSettings = synchronized(lock) { read().also { mutable.value = it } }
+    fun updateExpected(expected: VoiceExperienceSettings, value: VoiceExperienceSettings) = synchronized(lock) {
+        check(read() == expected) { "Voice settings changed" }
+        update(value)
+    }
+    fun update(value: VoiceExperienceSettings) = synchronized(lock) {
         storage.putBoolean("voice_spoken_interruption", value.spokenInterruptionEnabled)
         storage.putString("voice_interruption_timing", value.interruptionSensitivity.name)
         storage.putBoolean("voice_semantic_interruption", value.semanticInterruptionEnabled)

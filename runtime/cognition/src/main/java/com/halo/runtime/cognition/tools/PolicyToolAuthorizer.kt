@@ -147,7 +147,8 @@ class PolicyToolAuthorizer(
             invocationId = invocationId,
             toolId = ToolId(toolName),
             action = presentationContext?.let { "${it.action} ${it.targetLabel.orEmpty()}".trim() } ?: buildApprovalAction(toolCall),
-            detail = grantSummary?.take(2400) ?: presentationContext?.description ?: buildApprovalDetail(toolCall),
+            detail = grantSummary?.takeIf { it.isNotBlank() }?.take(2400)
+                ?: presentationContext?.description ?: buildApprovalDetail(toolCall),
             risk = risk.name,
             argumentsDigest = argumentsDigest,
         )

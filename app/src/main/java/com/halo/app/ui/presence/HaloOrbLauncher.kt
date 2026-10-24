@@ -17,6 +17,18 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -33,9 +45,16 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
     onPrimary: (HaloOrbPrimary) -> Unit, onStop: () -> Unit,
     onTools: (HaloToolCatalogRequest) -> Unit, size: Dp = 64.dp,
     face: (@Composable (onClick: () -> Unit, label: String) -> Unit)? = null,
-    orbModifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
+    orbModifier: Modifier = Modifier,
+    destinations: List<HaloOrbDestination> = emptyList(), onNavigate: (String) -> Unit = {},
+    contextActions: List<HaloOrbContextAction> = emptyList(),
+    onContextAction: (HaloOrbContextAction) -> Unit = {},
+    hint: String? = null, onDismissHint: () -> Unit = {}, leading: (@Composable () -> Unit)? = null,
+    showToolCatalog: Boolean = true) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    var satellites by rememberSaveable { mutableStateOf(false) }
     var customizing by remember { mutableStateOf(false) }
+    var disclosedHint by rememberSaveable { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val density = LocalDensity.current
     val userReducedMotion by com.halo.app.ui.theme.rememberReducedMotion()
@@ -48,7 +67,7 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
     DisposableEffect(accessibility, lifecycle) {
         val listener = AccessibilityManager.TouchExplorationStateChangeListener { touchExploration = it }
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) { expanded = false; customizing = false }
+            if (event == Lifecycle.Event.ON_STOP) { expanded = false; satellites = false; customizing = false }
         }
         accessibility?.addTouchExplorationStateChangeListener(listener)
         lifecycle.addObserver(observer)
@@ -57,27 +76,42 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
             lifecycle.removeObserver(observer)
         }
     }
-    LaunchedEffect(interaction.primary) { expanded = false; customizing = false }
+    LaunchedEffect(interaction.primary) { expanded = false; satellites = false; customizing = false }
     val configuration = LocalConfiguration.current
+    val keyboardVisible = WindowInsets.ime.getBottom(density) > 0
     val inline = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 600 &&
         density.fontScale < 1.4f && !reduced && !touchExploration
-    fun close() { expanded = false; customizing = false }
+    val fanAllowed = configuration.screenWidthDp >= 360 && configuration.screenHeightDp >= 600 &&
+        density.fontScale < 1.4f && !reduced && !touchExploration && !keyboardVisible && destinations.isNotEmpty()
+    LaunchedEffect(keyboardVisible) { if (keyboardVisible) satellites = false }
+    LaunchedEffect(fanAllowed) { if (satellites && !fanAllowed) { satellites = false; expanded = true } }
+    androidx.activity.compose.BackHandler(satellites) { satellites = false }
+    fun close() { expanded = false; satellites = false; customizing = false; disclosedHint = null }
+    androidx.activity.compose.BackHandler(expanded && inline) { close() }
+    fun menu(full: Boolean) {
+        if (!lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return
+        disclosedHint = hint
+        onDismissHint()
+        customizing = false
+        if (!full && fanAllowed) { satellites = !satellites; expanded = false }
+        else { expanded = !expanded; satellites = false }
+    }
     fun act(action: () -> Unit) {
         close()
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) action()
     }
     val primaryLabel = uiText(when (interaction.primary) {
         HaloOrbPrimary.TALK -> "Talk"
+        HaloOrbPrimary.FINISH -> "Send voice"
         HaloOrbPrimary.STOP -> "Stop"
         HaloOrbPrimary.INTERRUPT -> "Interrupt reply and talk"
         HaloOrbPrimary.REVIEW -> "Review"
     })
     val disclosureLabel = stringResource(R.string.halo_orb_actions)
-    val orbLabel = if (interaction.primary == HaloOrbPrimary.TALK) disclosureLabel else primaryLabel
+    val orbLabel = primaryLabel
     val orbClick: () -> Unit = {
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-            if (interaction.primary == HaloOrbPrimary.TALK) { expanded = !expanded; customizing = false }
-            else act { onPrimary(interaction.primary) }
+            act { onPrimary(interaction.primary) }
         }
     }
     val contents: @Composable (Boolean) -> Unit = { stopPinned ->
@@ -96,35 +130,100 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
             TextButton(onClick = { customizing = false }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Done")) }
         } else {
             Text(disclosureLabel, style = MaterialTheme.typography.titleMedium)
+            disclosedHint?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
             Text(uiText(signal.label), style = MaterialTheme.typography.bodyMedium)
+            contextActions.forEach { action ->
+                OutlinedButton(onClick = { act { onContextAction(action) } }, enabled = action.enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    HaloIcon(action.glyph, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp)); Text(uiText(action.title))
+                }
+            }
+            destinations.forEach { destination ->
+                TextButton(onClick = { act { onNavigate(destination.route) } }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    HaloIcon(destination.glyph, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp)); Text(uiText(destination.title), Modifier.weight(1f))
+                }
+            }
             if (!stopPinned || interaction.primary != HaloOrbPrimary.STOP)
             Button(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act { onPrimary(interaction.primary) } }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text(primaryLabel)
             }
             if (!stopPinned && interaction.canStop && interaction.primary != HaloOrbPrimary.STOP)
                 OutlinedButton(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act(onStop) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Stop")) }
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (showToolCatalog) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 HaloOrbShortcut.entries.filter { it in shortcuts }.forEach { shortcut ->
                     SuggestionChip(onClick = { act { onTools(HaloToolCatalogRequest(shortcut.group, shortcut.entry)) } },
                         label = { Text(stringResource(shortcut.label)) },
                         icon = { HaloIcon(shortcut.icon, null, Modifier.size(20.dp)) }, modifier = Modifier.heightIn(min = 48.dp))
                 }
             }
-            OutlinedButton(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act { onTools(HaloToolCatalogRequest(com.halo.app.ui.screens.home.HomeToolGroup.CREATE)) } },
+            if (showToolCatalog) OutlinedButton(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act { onTools(HaloToolCatalogRequest(com.halo.app.ui.screens.home.HomeToolGroup.CREATE)) } },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.halo_orb_all_tools)) }
-            TextButton(onClick = { customizing = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.halo_orb_customize)) }
+            if (showToolCatalog) TextButton(onClick = { customizing = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.halo_orb_customize)) }
         }
         TextButton(onClick = ::close, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Close")) }
     }
-    Column(Modifier.widthIn(max = 320.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (face != null) face(orbClick, orbLabel)
-            else HaloSignalFace(signal, modifier = orbModifier, size = size, contentDescription = orbLabel, onClick = orbClick, onClickLabel = orbLabel)
-            IconButton(onClick = {
-                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) { expanded = !expanded; customizing = false }
-            }, modifier = Modifier.size(48.dp)) {
-                HaloIcon(HaloGlyph.TOOL, stringResource(R.string.halo_orb_show_shortcuts))
+    val showShortcuts = stringResource(R.string.halo_orb_show_shortcuts)
+    val fullMenu = uiText("All destinations and actions")
+    val longPress: () -> Unit = { menu(false) }
+    val openMenu: () -> Unit = { menu(true) }
+    val currentOpenMenu by rememberUpdatedState(openMenu)
+    var drag by remember { mutableFloatStateOf(0f) }
+    val gestures = orbModifier.pointerInput(Unit) {
+        detectVerticalDragGestures(onDragStart = { drag = 0f }, onDragCancel = { drag = 0f },
+            onDragEnd = { if (drag < -32.dp.toPx()) currentOpenMenu(); drag = 0f }) { change, amount ->
+                drag += amount; change.consume()
             }
+    }.semantics { customActions = listOf(CustomAccessibilityAction(fullMenu) { openMenu(); true }) }
+    val wideControl = leading != null || destinations.isNotEmpty() || contextActions.isNotEmpty()
+    val controlWidth = if (wideControl) Modifier.fillMaxWidth() else Modifier.width(size + 48.dp)
+    val drawFace: @Composable () -> Unit = {
+        if (face != null) face(orbClick, orbLabel)
+        else HaloSignalFace(signal, modifier = gestures, size = size, contentDescription = orbLabel,
+            onClick = orbClick, onClickLabel = orbLabel, onLongClick = longPress)
+    }
+    val drawMenu: @Composable (Modifier) -> Unit = { modifier ->
+        IconButton(onClick = openMenu, modifier = modifier.size(48.dp)) {
+            HaloIcon(HaloGlyph.TOOL, showShortcuts)
+        }
+    }
+    Column(Modifier.widthIn(max = 360.dp).then(controlWidth).padding(horizontal = if (wideControl) 12.dp else 0.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        AnimatedVisibility(satellites, enter = fadeIn(tween(160)) + scaleIn(initialScale = .94f),
+            exit = fadeOut(tween(100)) + scaleOut(targetScale = .94f)) {
+            Box(Modifier.fillMaxWidth().height(164.dp)) {
+                // A bounded upward fan, with labels and full-size targets; never orbiting.
+                val first = destinations.filter { it.route in setOf("home", "notebook", "activity", "devices", "settings", "study") }
+                    .take(if (contextActions.isEmpty()) 5 else 3)
+                val satelliteActions = contextActions.filter { it.enabled }.take(2)
+                val total = (first.size + satelliteActions.size).coerceAtLeast(1)
+                val entries: List<Triple<String, HaloGlyph, () -> Unit>> = first.map { d -> Triple(d.title, d.glyph) { act { onNavigate(d.route) } } } +
+                    satelliteActions.map { a -> Triple(a.title, a.glyph) { act { onContextAction(a) } } }
+                entries.forEachIndexed { index, (title, glyph, action) ->
+                    val position = index - (total - 1) / 2f
+                    val height = 80f - kotlin.math.abs(position) * 32f
+                    FilledTonalButton(onClick = action, modifier = Modifier.align(Alignment.BottomCenter)
+                        .offset(x = (position * 64f).dp, y = (-height).dp)
+                        .width(62.dp).heightIn(min = 72.dp), contentPadding = PaddingValues(4.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            HaloIcon(glyph, null, Modifier.size(24.dp))
+                            Text(uiText(title), style = MaterialTheme.typography.labelSmall, maxLines = 2,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+        }
+        if (hint != null && configuration.screenHeightDp >= 600 && density.fontScale < 1.4f && !keyboardVisible)
+        TextButton(onClick = { menu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(uiText(hint), style = MaterialTheme.typography.labelSmall)
+        }
+        if (wideControl) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (leading != null) Box(Modifier.align(Alignment.CenterStart).widthIn(max = 112.dp)) { leading() }
+            drawFace()
+            drawMenu(Modifier.align(Alignment.CenterEnd))
+        } else Row(verticalAlignment = Alignment.CenterVertically) {
+            drawFace(); drawMenu(Modifier)
         }
         if (expanded && inline) Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.width(320.dp).heightIn(max = 440.dp).verticalScroll(rememberScrollState()).padding(12.dp),

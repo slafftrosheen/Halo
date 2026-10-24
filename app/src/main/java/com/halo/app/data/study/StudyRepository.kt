@@ -36,6 +36,12 @@ class StudyRepository(
 
     suspend fun getSession(sessionId: String): StudySessionRecord? = dao.getSession(sessionId)?.toRecord()
 
+    /** Explicit attached-lesson commands pin their first write to the reviewed saved session. */
+    internal suspend fun <T> withExactSession(expected: StudySessionRecord, action: suspend () -> T): T = database.withTransaction {
+        check(getSession(expected.id) == expected) { "Study changed after review; read it again" }
+        action()
+    }
+
     suspend fun sessionPage(includeFinished: Boolean, offset: Int): List<StudySessionRecord> {
         require(offset in 0..100_000)
         return dao.sessionPage(includeFinished, 21, offset).map(StudySessionEntity::toRecord)

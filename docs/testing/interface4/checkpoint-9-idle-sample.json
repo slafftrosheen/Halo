@@ -1,0 +1,19 @@
+{
+  "appSha256": "3277f64c8b33437b1bf7ed3c9b3503491b12420f4b66f158743cc6c712359b8c",
+  "sampleSeconds": 30.3,
+  "cpuPercentOfOneCore": 77.8,
+  "memoryBeforeKiB": {
+    "TOTAL PSS": 354574,
+    "TOTAL RSS": 392624,
+    "TOTAL SWAP PSS": 70174
+  },
+  "memoryAfterKiB": {
+    "TOTAL PSS": 314565,
+    "TOTAL RSS": 351784,
+    "TOTAL SWAP PSS": 70234
+  },
+  "thermalStatus": [
+    "Thermal Status: 0"
+  ],
+  "limits": "One idle foreground Workspace window with the existing Orb. Not a battery, sustained-load, microphone, model, or long-duration leak qualification."
+}

@@ -175,6 +175,7 @@ class DefaultSkillRegistry(
         private fun studySkill(): SkillDescriptor {
             val tools = listOf(
                 "halo_study_with_halo" to SkillRisk.REVERSIBLE, "halo_get_study_session" to SkillRisk.READ_ONLY,
+                "halo_study_current" to SkillRisk.READ_ONLY, "halo_study_session_action" to SkillRisk.SENSITIVE,
                 "halo_study_sessions" to SkillRisk.READ_ONLY, "halo_study_state" to SkillRisk.READ_ONLY,
                 "halo_study_card_get" to SkillRisk.READ_ONLY,
                 "halo_study_select_exercise" to SkillRisk.REVERSIBLE, "halo_study_submit_attempt" to SkillRisk.REVERSIBLE,
@@ -190,6 +191,17 @@ class DefaultSkillRegistry(
                 risk = SkillRisk.DESTRUCTIVE)
         }
         private val NATIVE_COMPATIBILITY_IDS = setOf("halo.contacts", "halo.media", "halo.sharing", "halo.alarms", "halo.settings")
+        private fun configurationSkill(id: String, name: String, description: String, tools: Set<String>, reads: Set<String>,
+            sensitive: Set<String> = emptySet(), destructive: Set<String> = emptySet()): SkillDescriptor =
+            SkillDescriptor(id = SkillId(id), name = name, description = description, category = SkillCategory.WORKSPACE,
+                tools = tools, risk = SkillRisk.SENSITIVE, toolDefinitions = tools.sorted().map { tool ->
+                    com.halo.sdk.runtime.skills.SkillToolDefinition(tool, when (tool) {
+                        in reads -> SkillRisk.READ_ONLY
+                        in destructive -> SkillRisk.DESTRUCTIVE
+                        in sensitive -> SkillRisk.SENSITIVE
+                        else -> SkillRisk.REVERSIBLE
+                    })
+                }, source = SkillSource.BUILT_IN)
         fun defaultBuiltInSkills(): List<SkillDescriptor> = listOf(
             SkillDescriptor(id = SkillId("halo.messaging"), name = "Messaging", description = "Prepare messages in a platform composer.", category = SkillCategory.INFORMATION,
                 tools = setOf("halo_compose_sms", "halo_compose_email", "halo_compose_message"), risk = SkillRisk.EXTERNAL_SIDE_EFFECT),
@@ -198,9 +210,41 @@ class DefaultSkillRegistry(
             SkillDescriptor(id = SkillId("halo.system.panels"), name = "System panels", description = "Open Android controls that require user action.", category = SkillCategory.INFORMATION,
                 tools = setOf("halo_open_settings"), risk = SkillRisk.REVERSIBLE),
             studySkill(),
+            configurationSkill("halo.screen.layout", "halo Screen layout",
+                "Preview and edit the native halo Screen layout, saved presets and presentation settings. Separate from cross-app screen control.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.screenLayout,
+                setOf("halo_screen_state", "halo_screen_preview"), sensitive = setOf("halo_screen_settings")),
+            configurationSkill("halo.saved_devices", "Saved device controls",
+                "Inspect saved local device preferences and request exact guarded device actions; pairing and physical readiness remain separate.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.savedDevices,
+                setOf("halo_saved_devices", "halo_saved_device_get", "halo_device_preferences"),
+                sensitive = setOf("halo_saved_device_connect", "halo_saved_device_disconnect", "halo_saved_device_retry"),
+                destructive = setOf("halo_saved_device_forget")),
+            configurationSkill("halo.notification_settings", "Notification preferences",
+                "Inspect per-app notification and digest delivery preferences without reading message bodies or granting Android access.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.notificationSettings,
+                setOf("halo_notification_settings_apps", "halo_notification_policy_get", "halo_digest_delivery_get"),
+                sensitive = setOf("halo_notification_policy_set", "halo_digest_delivery_set")),
+            configurationSkill("halo.voice.configuration", "Voice settings",
+                "Inspect and edit existing local voice settings without starting a microphone, test playback or provider request.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.voice,
+                setOf("halo_get_voice_configuration"), sensitive = setOf("halo_set_voice_configuration")),
+            configurationSkill("halo.speech.inventory", "Local speech files",
+                "Inspect the existing pinned local speech catalog and request approved install, resume, pause, remove or selection through its owner.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.speechInventory,
+                setOf("halo_speech_inventory"), sensitive = setOf("halo_speech_model_action")),
+            configurationSkill("halo.learning.configuration", "Learning preferences",
+                "Inspect and edit local suggestion preferences without creating or accepting memories, procedures or routines.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.learning,
+                setOf("halo_get_learning_configuration"), sensitive = setOf("halo_set_learning_configuration")),
+            configurationSkill("halo.provider.configuration", "Answer provider setup",
+                "Read bounded provider readiness and request approved existing connection/catalogue checks; no credential or selection edits.",
+                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.providers,
+                setOf("halo_provider_catalog", "halo_provider_state"),
+                sensitive = setOf("halo_provider_refresh_models", "halo_provider_test_connection")),
             SkillDescriptor(id = SkillId("halo.research"), name = "Research & delegation", description = "Run bounded reasoning tasks through the configured agentic lane.", category = SkillCategory.INFORMATION, tools = setOf("halo_research", "halo_delegate_task"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_research", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_delegate_task", SkillRisk.READ_ONLY)), risk = SkillRisk.READ_ONLY),
             SkillDescriptor(id = SkillId("halo.context"), name = "Conversation & payload reading", description = "Read bounded local conversation history and tool payloads under context policy.", category = SkillCategory.WORKSPACE, tools = setOf("halo_read_payload", "halo_search_conversations"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_read_payload", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_search_conversations", SkillRisk.READ_ONLY)), risk = SkillRisk.READ_ONLY),
-            SkillDescriptor(id = SkillId("halo.automation"), name = "Routines & procedures", description = "Propose procedures and approve saving a procedure or scheduled routine.", category = SkillCategory.AUTOMATION, tools = setOf("halo_create_routine", "halo_propose_procedure", "halo_save_procedure", "halo_use_procedure"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_create_routine", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_propose_procedure", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_save_procedure", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_use_procedure", SkillRisk.READ_ONLY)), risk = SkillRisk.SENSITIVE),
+            SkillDescriptor(id = SkillId("halo.automation"), name = "Routines & procedures", description = "Propose procedures and approve saving a procedure or scheduled routine.", category = SkillCategory.AUTOMATION, tools = setOf("halo_create_routine", "halo_propose_procedure", "halo_save_procedure", "halo_use_procedure") + com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.routines, toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_create_routine", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_propose_procedure", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_save_procedure", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_use_procedure", SkillRisk.READ_ONLY)) + com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.routines.sorted().map { name -> com.halo.sdk.runtime.skills.SkillToolDefinition(name, when (name) { "halo_routines_list", "halo_routine_get", "halo_routine_run_status" -> SkillRisk.READ_ONLY; "halo_routine_delete" -> SkillRisk.DESTRUCTIVE; "halo_routine_run_now" -> SkillRisk.EXTERNAL_SIDE_EFFECT; else -> SkillRisk.SENSITIVE }) }, risk = SkillRisk.SENSITIVE),
             SkillDescriptor(id = SkillId("halo.followups"), name = "Follow-ups", description = "Durable event watches, condition notifications, and capability recovery.", category = SkillCategory.AUTOMATION, tools = setOf("halo_create_watch", "halo_list_watches", "halo_cancel_watch"), risk = SkillRisk.READ_ONLY, source = SkillSource.BUILT_IN),
             SkillDescriptor(id = SkillId("halo.alarms"), name = "Alarms & timers", description = "Set an alarm or timer using Android.", category = SkillCategory.DEVICE, tools = setOf("halo_set_alarm", "halo_timer", "halo_clock_view", "halo_clock_modify"), risk = SkillRisk.EXTERNAL_SIDE_EFFECT),
             SkillDescriptor(id = SkillId("halo.models"), name = "Local model setup", description = "Inspect and explicitly download, pause or recover pinned local model files without selecting or qualifying them.", category = SkillCategory.DEVICE,
@@ -253,8 +297,8 @@ class DefaultSkillRegistry(
                 name = "Workspace",
                 description = "Create, search, and manage local notes and workspace items.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect", "halo_canvas_get", "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_clear_sketch", "halo_canvas_move", "halo_canvas_connect", "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status", "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select", "halo_save_screen_to_notebook", "halo_create_empty_note", "halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_add_to_working_set", "halo_remove_from_working_set", "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status") + noteTools().map { it.first } + com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools,
-                toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_clear_sketch", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_rename", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_add_group", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_tag", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_duplicate", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_arrange", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_delete", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_ungroup", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_disconnect", SkillRisk.DESTRUCTIVE)) + noteTools().map { (id, risk) -> com.halo.sdk.runtime.skills.SkillToolDefinition(id, risk) } + inkToolDefinitions(),
+                tools = setOf("halo_canvas_current", "halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect", "halo_canvas_get", "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_clear_sketch", "halo_canvas_move", "halo_canvas_connect", "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status", "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select", "halo_save_screen_to_notebook", "halo_create_empty_note", "halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_add_to_working_set", "halo_remove_from_working_set", "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status") + noteTools().map { it.first } + com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools + com.halo.runtime.cognition.tools.WorkspaceToolAccess.canvasWorkflowTools,
+                toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_clear_sketch", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_rename", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_add_group", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_tag", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_duplicate", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_arrange", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_delete", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_ungroup", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_disconnect", SkillRisk.DESTRUCTIVE)) + noteTools().map { (id, risk) -> com.halo.sdk.runtime.skills.SkillToolDefinition(id, risk) } + inkToolDefinitions() + listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_current", SkillRisk.READ_ONLY)) + com.halo.runtime.cognition.tools.WorkspaceToolAccess.canvasWorkflowTools.sorted().map { name -> com.halo.sdk.runtime.skills.SkillToolDefinition(name, if (name == "halo_canvas_workflow_status") SkillRisk.READ_ONLY else SkillRisk.SENSITIVE) },
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),
@@ -315,15 +359,17 @@ class DefaultSkillRegistry(
             ),
             SkillDescriptor(
                 id = SkillId("halo.assistant"), name = "Halo assistant controls",
-                description = "Halo pages, app-only appearance/font/start page, and read-aloud playback.",
+                description = "Halo pages, local app preferences and saved mode profiles, plus read-aloud playback.",
                 category = SkillCategory.DEVICE,
-                tools = setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
+                tools = setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_get_mode_profile", "halo_edit_mode_profile", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
                 risk = SkillRisk.SENSITIVE,
                 toolDefinitions = listOf(
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_list_screens", SkillRisk.READ_ONLY),
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_open_screen", SkillRisk.EXTERNAL_SIDE_EFFECT),
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_get_preferences", SkillRisk.READ_ONLY),
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_set_preferences", SkillRisk.REVERSIBLE),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_get_mode_profile", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_edit_mode_profile", SkillRisk.SENSITIVE),
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_read_aloud", SkillRisk.EXTERNAL_SIDE_EFFECT),
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_stop_reading", SkillRisk.REVERSIBLE),
                     com.halo.sdk.runtime.skills.SkillToolDefinition("halo_list_app_actions", SkillRisk.READ_ONLY),

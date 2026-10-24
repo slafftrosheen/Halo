@@ -59,9 +59,9 @@ class ContinuationWatchMigrationTest {
         )
         helper.writableDatabase.close()
 
-        // Migrate 22 -> 23
+        // Verify the historical 22 -> 23 change while migrating to the current database schema.
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_22_23, AppDatabase.MIGRATION_23_24, AppDatabase.MIGRATION_24_25, AppDatabase.MIGRATION_25_26, AppDatabase.MIGRATION_26_27)
+            .addMigrations(*AppDatabase.ALL_MIGRATIONS)
             .allowMainThreadQueries()
             .build()
 

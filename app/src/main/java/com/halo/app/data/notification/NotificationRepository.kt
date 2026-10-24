@@ -15,6 +15,11 @@ data class IncomingNotification(val key: String, val packageName: String, val ap
     val publicContent: Boolean, val foregroundService: Boolean = false, val groupSummary: Boolean = false)
 data class HaloNotification(val key: String, val packageName: String, val appLabel: String?,
     val content: UntrustedNotificationContent, val category: String?, val postedAt: Instant, val active: Boolean)
+data class NotificationPolicySnapshot(val packageName: String, val policy: NotificationAccessPolicy, val sourceVersion: String)
+interface NotificationPolicyControl {
+    suspend fun policySnapshot(pkg: String): NotificationPolicySnapshot
+    suspend fun compareAndSetPolicy(pkg: String, expectedVersion: String, policy: NotificationAccessPolicy): Boolean
+}
 interface NotificationRepository {
     fun observeRecent(): Flow<List<HaloNotification>>
     suspend fun ingest(notification: IncomingNotification)
@@ -25,8 +30,9 @@ interface NotificationRepository {
 
 /** No AI, tool, memory or conversation dependency is permitted at this boundary. */
 class RoomNotificationRepository(private val dao: NotificationDao,
-    private val policies: NotificationPolicyManager, private val ownPackage: String) : NotificationRepository {
+    private val policies: NotificationPolicyManager, private val ownPackage: String) : NotificationRepository, NotificationPolicyControl {
     private val mutex = Mutex()
+    private val policyLifetime = java.util.UUID.randomUUID().toString()
     override fun observeRecent() = combine(dao.observeRecent(), policies.changes) { rows, _ -> rows.filter {
         policies.policyForApp(it.packageName) == NotificationAccessPolicy.ALLOW &&
             it.postedAt >= Instant.now().minus(RETENTION).toEpochMilli()
@@ -46,6 +52,19 @@ class RoomNotificationRepository(private val dao: NotificationDao,
         dao.deleteOlderThan(Instant.now().minus(RETENTION).toEpochMilli())
     }
     suspend fun setPolicy(pkg: String, policy: NotificationAccessPolicy) = mutex.withLock {
+        setPolicyLocked(pkg, policy)
+    }
+    private fun policyVersion(pkg: String): String = com.halo.app.data.settings.notificationSettingsVersion(
+        "notification-policy", pkg, policyLifetime, policies.policyForApp(pkg).name, policies.changes.value.toString())
+    override suspend fun policySnapshot(pkg: String): NotificationPolicySnapshot = mutex.withLock {
+        NotificationPolicySnapshot(pkg, policies.policyForApp(pkg), policyVersion(pkg))
+    }
+    override suspend fun compareAndSetPolicy(pkg: String, expectedVersion: String, policy: NotificationAccessPolicy): Boolean = mutex.withLock {
+        if (policyVersion(pkg) != expectedVersion) return@withLock false
+        setPolicyLocked(pkg, policy)
+        true
+    }
+    private suspend fun setPolicyLocked(pkg: String, policy: NotificationAccessPolicy) {
         policies.setPolicyForApp(pkg, policy)
         when (policy) {
             NotificationAccessPolicy.BLOCK -> dao.deletePackage(pkg)

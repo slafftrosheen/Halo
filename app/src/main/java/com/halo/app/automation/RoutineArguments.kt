@@ -64,6 +64,15 @@ object RoutineArguments {
         val canonical = canonicalDefinition(definition)
         return MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
     }
+    /** Full stored definition canonicalization preserves bounded multi-action documents without
+     * imposing the smaller per-action argument envelope on the entire automation. */
+    fun canonicalDefinitionJson(raw: String, maxBytes: Int = 90032): String {
+        checkBounds(raw, maxBytes, 14)
+        val parser = org.json.JSONTokener(raw)
+        val document = parser.nextValue() as? JSONObject ?: error("Definition must be an object")
+        require(parser.nextClean() == '\u0000') { "Trailing definition data" }
+        return canonicalDefinition(document)
+    }
     private fun canonicalDefinition(j: JSONObject): String {
         fun encode(v: Any?): String = when(v) {
             null, JSONObject.NULL -> "null"

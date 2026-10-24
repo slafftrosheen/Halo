@@ -1,5 +1,9 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.presence.BindShellPageActions
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.presence.ShellPageOwner
+
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -210,6 +214,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
+    BindShellPageActions(ShellPageOwner("canvas", viewModel.canvasId,
+        "${state.nodes.hashCode()}:${state.edges.hashCode()}"), listOf(
+        ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true },
+        ShellPageAction("page.canvas.fit", "Fit all cards", HaloGlyph.NOTE,
+            state.nodes.isNotEmpty() && !state.loading && !state.missing) { viewModel.fitToContent() },
+        ShellPageAction("page.canvas.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = !toolsExpanded },
+    ))
     var boardSearch by rememberSaveable { mutableStateOf("") }
     var searchType by rememberSaveable { mutableStateOf("All") }
     LaunchedEffect(boardSearch, searchType, state.nodes.map { it.text }, state.edges, state.references) {

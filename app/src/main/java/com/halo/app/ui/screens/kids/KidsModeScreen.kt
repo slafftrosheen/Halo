@@ -215,6 +215,21 @@ import kotlinx.coroutines.launch
             }
         }
     }
+    val signal = when {
+        fieldActivity.isNotEmpty() -> HaloSignalPresentation(
+            state = HaloSignalState.CAPTURING, glyph = HaloGlyph.LISTEN, label = "Voice input")
+        learningState?.reader?.speaking == true -> HaloSignalPresentation(
+            state = HaloSignalState.SPEAKING, glyph = HaloGlyph.SPEAK, label = "Reading aloud")
+        learningState?.isGenerating == true || projectState.operation == "GENERATING" -> HaloSignalPresentation(
+            state = HaloSignalState.THINKING, glyph = HaloGlyph.THINK, label = "Thinking")
+        learningState?.reader?.preparing == true -> HaloSignalPresentation(
+            state = HaloSignalState.WAITING, glyph = HaloGlyph.SPEAK, label = "Preparing voice")
+        else -> HaloSignalPresentation(label = "Ready")
+    }
+    KidsShellOrbBinding(signal,
+        busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true ||
+            learningState?.isGenerating == true || projectState.busy || busy || intakeBusy,
+        onTalk = { openVoice(true) }, onStop = stopActions)
     val lightState = when {
         fieldActivity.isNotEmpty() -> HaloSignalState.LISTENING
         learningState?.isGenerating == true || projectState.operation == "GENERATING" -> HaloSignalState.THINKING
@@ -229,15 +244,6 @@ import kotlinx.coroutines.launch
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item(key = "header") {
-                val signal = when {
-                    learningState?.reader?.speaking == true -> HaloSignalPresentation(
-                        state = HaloSignalState.SPEAKING, glyph = HaloGlyph.SPEAK, label = "Reading aloud")
-                    learningState?.isGenerating == true || projectState.operation == "GENERATING" -> HaloSignalPresentation(
-                        state = HaloSignalState.THINKING, glyph = HaloGlyph.THINK, label = "Thinking")
-                    learningState?.reader?.preparing == true -> HaloSignalPresentation(
-                        state = HaloSignalState.WAITING, glyph = HaloGlyph.SPEAK, label = "Preparing voice")
-                    else -> HaloSignalPresentation(label = "Ready")
-                }
                 if (destination == KidsDestination.HOME) {
                     KidsModeHeader(signal, { openVoice(true) },
                         { colours = true },

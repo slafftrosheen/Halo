@@ -1,4 +1,5 @@
 # halo DevKit 2.0 — implementation guide (read this first)
+**Interface 4.0 update:** [INTERFACE_4_0.md](INTERFACE_4_0.md) supersedes the persistent tab/rail and Orb gesture recommendations below. Keep this guide's visual tokens, artwork, user-facing contract and screen references.
 Brand Book **3.0** (224 pages) · DevKit **2.0** · 2026-10-19 · design pinned to repo `slafftrosheen/Halo @ 3f217ccb`
 This replaces DevKit 1.4 / Brand Book 2.3 and everything older. Design status and implementation status are tracked **separately**: everything designed here is "not verified on a device" until QA attaches a real screenshot.
 

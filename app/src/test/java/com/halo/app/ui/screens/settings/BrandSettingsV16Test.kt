@@ -27,8 +27,9 @@ class BrandSettingsV16Test {
         }
         compose.onNodeWithContentDescription("Search settings").performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("privacy")
-        compose.onNodeWithText("Intelligence").assertDoesNotExist()
-        compose.onNodeWithText("What halo can use").performScrollTo().performClick()
+        compose.onNodeWithText("How halo answers").assertDoesNotExist()
+        assertTrue("Searching must not navigate or change settings", opened.isEmpty())
+        compose.onNodeWithText("Mode profiles").performScrollTo().performClick()
         assertEquals(listOf(SettingsDestination.PRIVACY), opened)
     }
 
@@ -53,7 +54,7 @@ class BrandSettingsV16Test {
         } }
         compose.onNodeWithContentDescription("Search settings").performClick()
         compose.onNode(hasSetTextAction()).performTextReplacement("  context  ")
-        compose.onNodeWithText("What halo can use").assertExists()
+        compose.onNodeWithText("Mode profiles").assertExists()
         compose.onNodeWithText("No matching settings").assertDoesNotExist()
         compose.onNode(hasSetTextAction()).performTextReplacement("  backup  ")
         compose.onNodeWithText("Storage & backup").assertExists()

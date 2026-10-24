@@ -24,6 +24,10 @@ interface SpeechModelInventoryRepository {
     suspend fun refresh(languageMode: String? = null)
     suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit>
     suspend fun remove(modelId: String): Result<Unit>
+    /** Exact local artifact metadata before destructive removal; unsupported owners fail closed. */
+    suspend fun artifactVersion(modelId: String): String? = null
+    suspend fun removeExpected(modelId: String, expectedArtifactVersion: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Exact artifact removal is unavailable"))
     suspend fun installOwned(modelId: String, owner: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> =
         Result.failure(UnsupportedOperationException("Acquisition ownership is unavailable"))
     suspend fun removeOwned(modelId: String, owner: String): Result<Unit> =
@@ -123,6 +127,25 @@ class DefaultSpeechModelInventoryRepository(
             ?: return@withContext Result.failure(IllegalArgumentException("Unknown speech model"))
         val directory = if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot() else File(speechRoot(), spec.directoryName)
         SpeechModelInstaller.withTransferMutation(directory) { removeCurrent(modelId) }
+    }
+    override suspend fun artifactVersion(modelId: String): String? = withContext(dispatchers.io) {
+        val spec = SherpaSpeechModelCatalog.byId(modelId) ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
+            ?: return@withContext null
+        val directory = if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot() else File(speechRoot(), spec.directoryName)
+        val names = spec.files.map { it.name }
+        val files = directory.listFiles().orEmpty().filter { file -> names.any { file.name == it || file.name.startsWith("$it.") } }
+        val material = spec.toString() + "\u0000" + files.sortedBy { it.name }.joinToString("\u0000") { "${it.name}|${it.length()}|${it.lastModified()}" }
+        "speech-artifact:" + java.security.MessageDigest.getInstance("SHA-256").digest(material.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+    }
+    override suspend fun removeExpected(modelId: String, expectedArtifactVersion: String): Result<Unit> = withContext(dispatchers.io) {
+        val spec = SherpaSpeechModelCatalog.byId(modelId) ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
+            ?: return@withContext Result.failure(IllegalArgumentException("Unknown speech model"))
+        val directory = if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot() else File(speechRoot(), spec.directoryName)
+        SpeechModelInstaller.withTransferMutation(directory) {
+            if (artifactVersion(modelId) != expectedArtifactVersion) Result.failure(IllegalStateException("Speech artifact changed after review"))
+            else removeCurrent(modelId)
+        }
     }
     private suspend fun removeCurrent(modelId: String): Result<Unit> = withContext(dispatchers.io) {
         try {

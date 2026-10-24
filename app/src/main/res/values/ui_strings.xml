@@ -4027,4 +4027,66 @@
     <string name="ui_7ba2528e247f" formatted="false">"Note deleted. Attachment cleanup is still pending."</string>
     <string name="ui_6cf537897a11" formatted="false">"Note deleted. Some attachments could not be removed."</string>
     <string name="ui_6e8cdc9e0c89" formatted="false">"Deletion could not be confirmed. Check Trash before trying again."</string>
+    <string name="ui_6fcb01212b1e" formatted="false">"Send voice"</string>
+    <string name="ui_d34d17e694df" formatted="false">"All destinations and actions"</string>
+    <string name="ui_16c5077d5ac3" formatted="false">"Tap to talk. Hold for shortcuts. Menu opens every page."</string>
+    <string name="ui_65f9ce203b63" formatted="false">"Canvas tools"</string>
+    <string name="ui_59a0ed5dfe29" formatted="false">"Context and privacy"</string>
+    <string name="ui_7a637f64d66d" formatted="false">"This action needs Full Power mode. Use the control beside the halo Orb."</string>
+    <string name="ui_bc79cdffbaa8" formatted="false">"More options"</string>
+    <string name="ui_fb646fa83d0c" formatted="false">"Use this page as context"</string>
+    <string name="ui_7446c9bed868" formatted="false">"Page added as context"</string>
+    <string name="ui_0697ecf46d3e" formatted="false">"Page changed or unavailable. Select it again."</string>
+    <string name="ui_9822097d9935" formatted="false">"Read Screen layout"</string>
+    <string name="ui_6fd16cc325db" formatted="false">"Preview Screen layout"</string>
+    <string name="ui_401749bfba46" formatted="false">"Apply Screen layout"</string>
+    <string name="ui_e53c2362d68b" formatted="false">"Change Screen settings"</string>
+    <string name="ui_57dcc60f442a" formatted="false">"Undo Screen layout change"</string>
+    <string name="ui_a7395ce9339f" formatted="false">"Save Screen preset"</string>
+    <string name="ui_e77b365757e6" formatted="false">"Remove Screen preset"</string>
+    <string name="ui_a4f167479559" formatted="false">"List saved devices"</string>
+    <string name="ui_c31bd8494cad" formatted="false">"Read saved device"</string>
+    <string name="ui_ad692fb174c7" formatted="false">"Read device preferences"</string>
+    <string name="ui_54a10e03e6d4" formatted="false">"Change device image quality"</string>
+    <string name="ui_d1078bc391d2" formatted="false">"Retry saved device"</string>
+    <string name="ui_5f4aab0fad42" formatted="false">"Connect saved device"</string>
+    <string name="ui_c0738bc7144b" formatted="false">"Disconnect saved device"</string>
+    <string name="ui_8b2a3edbf623" formatted="false">"Change automatic device connection"</string>
+    <string name="ui_e3c0b626636a" formatted="false">"Forget saved device"</string>
+    <string name="ui_8e2e9b35ef84" formatted="false">"List notification settings apps"</string>
+    <string name="ui_cd60fcd34abc" formatted="false">"Read app notification policy"</string>
+    <string name="ui_ed61d49e62e5" formatted="false">"Change app notification policy"</string>
+    <string name="ui_e59b1247f823" formatted="false">"Read digest delivery settings"</string>
+    <string name="ui_0233aa4f3674" formatted="false">"Change digest delivery settings"</string>
+    <string name="ui_41607bfe62ac" formatted="false">"Read mode profile"</string>
+    <string name="ui_10de411fb491" formatted="false">"Edit mode profile"</string>
+    <string name="ui_a5e0479ffc52" formatted="false">"Show private details in full screen"</string>
+    <string name="ui_b238a0d300d9" formatted="false">"People nearby may see personal and private cards"</string>
+    <string name="ui_00cd58f655da" formatted="false">"Type a message"</string>
+    <string name="ui_4d219b1eed17" formatted="false">"Read voice settings"</string>
+    <string name="ui_96fdf0e2d214" formatted="false">"Change voice settings"</string>
+    <string name="ui_ec69b4011c10" formatted="false">"Read learning settings"</string>
+    <string name="ui_34904f506749" formatted="false">"Change learning settings"</string>
+    <string name="ui_69c2c7a0d7e3" formatted="false">"List saved routines"</string>
+    <string name="ui_c286ece9d584" formatted="false">"Read saved routine"</string>
+    <string name="ui_c183dc79fd4a" formatted="false">"Read routine progress"</string>
+    <string name="ui_d6f88d56f462" formatted="false">"Change routine scheduling"</string>
+    <string name="ui_d755e1824d6e" formatted="false">"Save routine changes"</string>
+    <string name="ui_58a848a73206" formatted="false">"Delete saved routine"</string>
+    <string name="ui_657b92d94253" formatted="false">"Run saved routine"</string>
+    <string name="ui_0d8d0ddeeb28" formatted="false">"List answer providers"</string>
+    <string name="ui_d8f6c42274b6" formatted="false">"Read provider readiness"</string>
+    <string name="ui_26e0c626a225" formatted="false">"Refresh provider model list"</string>
+    <string name="ui_72f5420482b6" formatted="false">"Check provider connection"</string>
+    <string name="ui_73fcacd68ce2" formatted="false">"Read active study lesson"</string>
+    <string name="ui_b3ed44b3ea2e" formatted="false">"Change active study lesson"</string>
+    <string name="ui_6a73125ccb7c" formatted="false">"Read Canvas review status"</string>
+    <string name="ui_f3db132bbaeb" formatted="false">"Save image color palette"</string>
+    <string name="ui_07a67a5645b9" formatted="false">"Prepare local transcription for review"</string>
+    <string name="ui_fd79aec9abe8" formatted="false">"Save reviewed Canvas text"</string>
+    <string name="ui_9eff6e96c147" formatted="false">"Edit Canvas review draft"</string>
+    <string name="ui_040e8f125da8" formatted="false">"Discard Canvas review draft"</string>
+    <string name="ui_50d59586a409" formatted="false">"Export Canvas to a note"</string>
+    <string name="ui_f60ea290c23b" formatted="false">"List local speech models"</string>
+    <string name="ui_dc6bfbbc0a46" formatted="false">"Manage local speech model"</string>
 </resources>

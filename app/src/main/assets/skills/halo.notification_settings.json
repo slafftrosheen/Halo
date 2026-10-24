@@ -1,0 +1,43 @@
+{
+  "id": "halo.notification_settings",
+  "name": "Notification preferences",
+  "description": "Inspect per-app notification and digest delivery preferences without reading message bodies or granting Android access.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_digest_delivery_get",
+    "halo_digest_delivery_set",
+    "halo_notification_policy_get",
+    "halo_notification_policy_set",
+    "halo_notification_settings_apps"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_digest_delivery_get",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_digest_delivery_set",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_notification_policy_get",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_notification_policy_set",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_notification_settings_apps",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    }
+  ]
+}

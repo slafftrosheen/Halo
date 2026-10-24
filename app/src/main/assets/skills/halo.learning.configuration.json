@@ -1,0 +1,25 @@
+{
+  "id": "halo.learning.configuration",
+  "name": "Learning preferences",
+  "description": "Inspect and edit local suggestion preferences without creating or accepting memories, procedures or routines.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_get_learning_configuration",
+    "halo_set_learning_configuration"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_get_learning_configuration",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_set_learning_configuration",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

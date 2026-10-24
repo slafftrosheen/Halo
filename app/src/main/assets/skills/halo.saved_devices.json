@@ -1,0 +1,67 @@
+{
+  "id": "halo.saved_devices",
+  "name": "Saved device controls",
+  "description": "Inspect saved local device preferences and request exact guarded device actions; pairing and physical readiness remain separate.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_device_preferences",
+    "halo_device_thumbnail_quality",
+    "halo_saved_device_autoconnect",
+    "halo_saved_device_connect",
+    "halo_saved_device_disconnect",
+    "halo_saved_device_forget",
+    "halo_saved_device_get",
+    "halo_saved_device_retry",
+    "halo_saved_devices"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_device_preferences",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_device_thumbnail_quality",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_device_autoconnect",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_device_connect",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_device_disconnect",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_device_forget",
+      "risk": "DESTRUCTIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_device_get",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_device_retry",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_devices",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    }
+  ]
+}

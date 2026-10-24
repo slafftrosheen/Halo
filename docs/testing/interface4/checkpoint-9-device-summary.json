@@ -1,0 +1,67 @@
+{
+  "artifact": {
+    "app": {
+      "sha256": "3277f64c8b33437b1bf7ed3c9b3503491b12420f4b66f158743cc6c712359b8c",
+      "bytes": 289581146,
+      "installedSha256": "3277f64c8b33437b1bf7ed3c9b3503491b12420f4b66f158743cc6c712359b8c"
+    },
+    "test": {
+      "sha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8",
+      "bytes": 1949934,
+      "installedSha256": "d76642095bcb702cce684ff49a7fd2339b7c2ab4e9afa5762ef01266ab32f6d8"
+    }
+  },
+  "device": {
+    "model": "23124RA7EO",
+    "android": 15,
+    "api": 35
+  },
+  "cases": [
+    {
+      "name": "360dp_200_percent_russian_compact_mode",
+      "status": "PASS",
+      "rotation": 0,
+      "densityDpi": 480,
+      "fontScale": 2.0,
+      "privacyTarget": {
+        "bounds": "[36,2074][372,2250]",
+        "clickable": "true",
+        "enabled": "true"
+      },
+      "talkTarget": {
+        "bounds": "[444,2066][636,2258]",
+        "clickable": "true",
+        "enabled": "true"
+      },
+      "menuTarget": {
+        "bounds": "[900,2090][1044,2234]",
+        "clickable": "true",
+        "enabled": "true"
+      },
+      "privacyHeightDp": 58.67,
+      "observed": "Single-line ellipsized short label, full accessible profile name; footer targets separated."
+    },
+    {
+      "name": "411_43dp_portrait_satellite_workspace_navigation",
+      "status": "PASS",
+      "rotation": 0,
+      "densityDpi": 420,
+      "fanSelectionTextBounds": "[470,1781][611,1867]",
+      "actualWorkspaceSearchRendered": true
+    },
+    {
+      "name": "360dp_200_percent_workspace_typed_sheet_ime",
+      "status": "PASS",
+      "rotation": 0,
+      "densityDpi": 480,
+      "fontScale": 2.0,
+      "observed": "Synthetic draft entered, Send and Done visible above actual Gboard, draft cleared without submission, Done returned to same Workspace."
+    }
+  ],
+  "restoration": "density reset; system font_scale 1.0; fixed-to-user-rotation default; user-rotation free; accelerometer_rotation 1; user_rotation 0. Profile, permissions, credentials and stay_on_while_plugged_in preserved.",
+  "limits": [
+    "No acoustic STT-final or human-heard playback claim",
+    "Warm repeated-root intent still FAILED on this fingerprint; checkpoint10 verifies subsequent back-stack correction",
+    "Raw user UI trees remain ignored"
+  ]
+}

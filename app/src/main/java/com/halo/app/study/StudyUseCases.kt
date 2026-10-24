@@ -279,19 +279,37 @@ class StudyUseCases(
         val session = repository.getSession(sessionId) ?: return false
         return repository.updateSetup(sessionId, session.sources, level, style, policy)
     }
-    suspend fun setActiveSources(sessionId: String, ids: List<String>): Boolean {
+    suspend fun setActiveSources(sessionId: String, ids: List<String>, expectedSession: StudySessionRecord? = null,
+        expectedVersions: Map<String, String>? = null): Boolean {
+        if (expectedSession != null) return repository.withExactSession(expectedSession) {
+            val references = sourceReferences(expectedSession.copy(sourceObjectIds = ids,
+                sources = ids.map { StudySessionSource(it) }))
+            check(expectedVersions != null && references.associate { it.objectId to it.version } == expectedVersions &&
+                references.none { it.resolved is ResolvedStudySource.Unsupported }) { "Study source changed after review" }
+            setActiveSources(sessionId, ids)
+        }
         val session = repository.getSession(sessionId) ?: return false
         if (ids.distinct().size != ids.size || ids.size > 4 || (ids.isEmpty() && session.goal.isNullOrBlank())) return false
         val references = sourceReferences(session.copy(sourceObjectIds = ids, sources = ids.map { id -> session.sources.firstOrNull { it.objectId == id } ?: StudySessionSource(id) }))
         return repository.updateSetup(sessionId, references.map { ref -> session.sources.firstOrNull { it.objectId == ref.objectId } ?: StudySessionSource(ref.objectId, ref.version) },
             session.learnerLevel, session.supportStyle, session.knowledgePolicy)
     }
-    suspend fun restartWithCurrentSources(sessionId: String): StudyStartResult {
+    suspend fun restartWithCurrentSources(sessionId: String, expectedSession: StudySessionRecord? = null,
+        expectedVersions: Map<String, String?>? = null): StudyStartResult {
+        if (expectedSession != null) return repository.withExactSession(expectedSession) {
+            check(sourceReferences(expectedSession).associate { it.objectId to it.version } == expectedVersions) { "Study material changed after review" }
+            restartWithCurrentSources(sessionId)
+        }
         val session = repository.getSession(sessionId) ?: return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
         return startMaterial(session.sourceObjectIds, session.languages, session.goal, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
     }
 
-    suspend fun continueWithCurrentSources(sessionId: String): Boolean {
+    suspend fun continueWithCurrentSources(sessionId: String, expectedSession: StudySessionRecord? = null,
+        expectedVersions: Map<String, String?>? = null): Boolean {
+        if (expectedSession != null) return repository.withExactSession(expectedSession) {
+            check(sourceReferences(expectedSession).associate { it.objectId to it.version } == expectedVersions) { "Study material changed after review" }
+            continueWithCurrentSources(sessionId)
+        }
         val session = repository.getSession(sessionId) ?: return false
         val refs = sourceReferences(session)
         return repository.updateSetup(sessionId, refs.map { if (it.resolved is ResolvedStudySource.Unsupported) session.sources.first { old -> old.objectId == it.objectId } else StudySessionSource(it.objectId, it.version) }, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
@@ -346,7 +364,13 @@ class StudyUseCases(
         target: TutorStage,
         solutionExplicitlyRequested: Boolean = false,
         guidanceExplicitlyRequested: Boolean = false,
+        expectedSession: StudySessionRecord? = null,
+        expectedVersions: Map<String, String?>? = null,
     ): StudyTransitionResult {
+        if (expectedSession != null) return repository.withExactSession(expectedSession) {
+            check(sourceReferences(expectedSession).associate { it.objectId to it.version } == expectedVersions) { "Study material changed after review" }
+            moveTo(sessionId, target, solutionExplicitlyRequested, guidanceExplicitlyRequested)
+        }
         val session = repository.getSession(sessionId)
             ?: return StudyTransitionResult.Rejected("This study session is no longer available")
         if (session.lifecycle != StudySessionLifecycle.ACTIVE) {
@@ -445,7 +469,13 @@ class StudyUseCases(
         response: String,
         submissionKey: String? = null,
         exerciseId: String? = null,
+        expectedSession: StudySessionRecord? = null,
+        expectedVersions: Map<String, String?>? = null,
     ): StudyAttemptResult {
+        if (expectedSession != null) return repository.withExactSession(expectedSession) {
+            check(sourceReferences(expectedSession).associate { it.objectId to it.version } == expectedVersions) { "Study material changed after review" }
+            submitAttempt(sessionId, response, submissionKey, exerciseId)
+        }
         val session = repository.getSession(sessionId)
             ?: return StudyAttemptResult.Rejected("This study session is no longer available")
         if (session.lifecycle != StudySessionLifecycle.ACTIVE) {

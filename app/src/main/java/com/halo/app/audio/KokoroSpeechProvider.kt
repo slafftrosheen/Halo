@@ -84,6 +84,14 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     /** Only an installed Kokoro version can serve as the automatic English/Chinese backup. */
     fun canUseForSpeech(language: String?): Boolean = directory() != null && supportsLanguage(language)
     fun multilingualInstalled(): Boolean = directory()?.let { File(it,"lexicon-zh.txt").isFile } == true
+    private val voicePreferenceLock = Any()
+    fun selectedVoice(): Int = (storage.getString("kokoro_voice", "3") ?: "3").toIntOrNull() ?: 3
+    fun selectVoice(id: Int, expectedVersion: String, expectedVoice: Int? = null) = synchronized(voicePreferenceLock) {
+        check(directory()?.name == expectedVersion && state.value.modelVersion == expectedVersion) { "Local voice pack changed or is unavailable" }
+        check(expectedVoice == null || selectedVoice() == expectedVoice) { "Local voice selection changed" }
+        LocalKokoroVoiceSelection.select(storage, expectedVersion, if (multilingualInstalled()) 103 else 11, id)
+        check(directory()?.name == expectedVersion) { "Local voice pack changed during selection" }
+    }
     fun publisherPackInstalled(): Boolean = directory()!=null && storage.getString(PUBLISHER_HASH)==KokoroModelDownload.MULTI_HASH
     private fun engine(directory: File, threads: Int)=OfflineTts(config=OfflineTtsConfig(model=OfflineTtsModelConfig(
         kokoro=OfflineTtsKokoroModelConfig(model=File(directory,"model.onnx").absolutePath,

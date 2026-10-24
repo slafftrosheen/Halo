@@ -53,18 +53,7 @@ object NativeCommandParser {
         if (command in setOf("create calendar event", "create a calendar event",
                 "add calendar event", "add a calendar event", "open calendar event editor"))
             return NativeCalendarEditorIntent
-        val haloPage = when (command) {
-            "open halo", "open halo home", "open halo home screen" -> "home"
-            "open notebook", "open my notebook", "open halo notebook", "show my notebook" -> "notebook"
-            "open study", "open halo study", "open study page" -> "study"
-            "open halo devices", "open devices in halo" -> "devices"
-            "open halo settings", "open halo preferences" -> "settings"
-            "open halo activity", "open my halo activity" -> "activity"
-            "open halo skills", "open skills in halo" -> "skills"
-            "open halo system check" -> "system_check"
-            else -> null
-        }
-        if (haloPage != null) return NativeHaloScreenIntent(haloPage)
+        NativeHaloScreenDestination.parse(command)?.let { return NativeHaloScreenIntent(it.wireId) }
         val settingsDestination = when (command) {
             "open default apps", "open default apps settings" -> "default_apps"
             "open airplane mode settings" -> "airplane"

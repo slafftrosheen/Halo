@@ -18,17 +18,26 @@ import org.robolectric.annotation.Config
 class PresenceArtworkContractTest {
     @Test fun bundledAnimationsParseWithoutExternalAssets() {
         val context = ApplicationProvider.getApplicationContext<Application>()
-        fun jsonAssets(path: String): Set<String> = context.assets.list(path).orEmpty().flatMap { name ->
-            val asset = "$path/$name"
-            if (name.endsWith(".json")) listOf(asset) else jsonAssets(asset)
-        }.toSet()
-        val files = jsonAssets("halo")
+        // artwork/manifest.json is a resource catalogue, not a Lottie composition.
+        val files = listOf("halo", "halo/fx").flatMap { path ->
+            context.assets.list(path).orEmpty().filter { it.endsWith(".json") }.map { "$path/$it" }
+        }.toSet() // Merged asset roots can list the same logical path more than once.
+            .filter { path ->
+                // Robolectric can also expose nested names from list("halo").
+                // Only canonical animation paths belong to the playback catalogue.
+                path.startsWith("halo/halo_orb_") ||
+                    path.startsWith("halo/halo_kids_orb_") ||
+                    path.startsWith("halo/fx/halo_fx_")
+            }
         val presence = files.filter { it.startsWith("halo/halo_orb_") || it.startsWith("halo/halo_kids_orb_") }
         assertEquals(60, presence.size)
+        assertEquals(106, files.count { it.startsWith("halo/fx/") })
         files.forEach { file ->
             val result = LottieCompositionFactory.fromAssetSync(context, file)
             assertNotNull("$file: ${result.exception}", result.value)
             assertTrue(file, result.value!!.images.isEmpty())
+            assertTrue("No layers: $file", result.value!!.layers.isNotEmpty())
+            assertTrue("No duration: $file", result.value!!.duration > 0f)
         }
     }
     @Test fun everyFullMotionStateHasItsOwnLightDarkAndKidsLottie() {
@@ -81,7 +90,11 @@ class PresenceArtworkContractTest {
     @Test fun motionStopsForReducedMotionCompactAndBackgroundAndTerminalStatesHold() {
         assertFalse(PresenceArtwork.IDLE.motionPolicy(80f, true, true).animate)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(64f, false, true).animate)
-        assertTrue(PresenceArtwork.IDLE.motionPolicy(64f, false, true).compact)
+        // The persistent compact idle Orb must not keep an infinite frame clock alive.
+        for (size in listOf(40f, 64f, 79f)) {
+            assertFalse(PresenceArtwork.IDLE.motionPolicy(size, false, true).compact)
+            assertFalse(PresenceArtwork.IDLE.motionPolicy(size, false, true).animate)
+        }
         assertTrue(PresenceArtwork.THINKING.motionPolicy(40f, false, true).compact)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(39f, false, true).compact)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(80f, false, true).compact)
