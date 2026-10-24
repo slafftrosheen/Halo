@@ -1,0 +1,10 @@
+[
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/runtime/LiteRtBackendQualification.kt",
+    "sha256": "733e11b2090fc0fd21b0c0e6108c22bb91920883033a43b9899aea4533aaea07"
+  },
+  {
+    "path": "providers/litert/src/test/java/com/halo/providers/litert/runtime/LiteRtBackendQualificationTest.kt",
+    "sha256": "03080c2f61b534d8505a57f839f23c9052198db3dc96d4967882c4ae8a64f5c3"
+  }
+]

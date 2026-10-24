@@ -1,0 +1,14 @@
+[
+  {
+    "package": "com.aistudio.braintool.xkqzps",
+    "sha256": "85e9040071ec5dcce4ec4e47dd752218b81f99fec5e6c7838286172f5d267d83",
+    "bytes": 288504360,
+    "installedHashMatches": true
+  },
+  {
+    "package": "com.aistudio.braintool.xkqzps.test",
+    "sha256": "fa12e204f8ed5d0ccc6dc25caf2ab22530a5981dfc9d95594aa7576d5b746e2e",
+    "bytes": 1963640,
+    "installedHashMatches": true
+  }
+]

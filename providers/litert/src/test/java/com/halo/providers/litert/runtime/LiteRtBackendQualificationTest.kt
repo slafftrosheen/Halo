@@ -39,6 +39,31 @@ class LiteRtBackendQualificationTest {
         assertEquals(LocalComputeBackend.GPU, LiteRtBackendQualificationPolicy.resolve(LocalComputeBackend.GPU, LiteRtBackendQualification.QUARANTINED, true).effective)
     }
 
+    @Test fun stableGpuDoesNotBecomeAnAutomaticSpeedRecommendationOnEightGbPhone() {
+        val storage = MemoryStorage()
+        val sha = "a".repeat(64)
+        LiteRtBackendQualificationStore(storage, "runtime", { "device" }).markQualified(sha)
+        val stored = LiteRtBackendQualificationStore(storage, "runtime", { "device" })
+        val resolution = LiteRtBackendQualificationPolicy.resolve(LocalComputeBackend.AUTO, stored.qualificationFor(sha))
+        val mobile = LiteRtMobileBackendPolicy.apply(resolution, 7_970_328_576L, false)
+        assertEquals(LocalComputeBackend.AUTO, mobile.requested)
+        assertEquals(LocalComputeBackend.CPU, mobile.effective)
+        assertEquals(LiteRtBackendQualification.QUALIFIED, mobile.gpuQualification)
+        assertTrue(mobile.reason.contains("comparative performance unproven"))
+        assertEquals(LiteRtBackendQualification.QUALIFIED, stored.qualificationFor(sha))
+    }
+
+    @Test fun autoAndExplicitCpuRemainCpuForEveryStabilityState() {
+        for (qualification in LiteRtBackendQualification.entries) {
+            for (requested in listOf(LocalComputeBackend.AUTO, LocalComputeBackend.CPU)) {
+                assertEquals(LocalComputeBackend.CPU,
+                    LiteRtBackendQualificationPolicy.resolve(requested, qualification).effective)
+            }
+            assertEquals(LocalComputeBackend.GPU,
+                LiteRtBackendQualificationPolicy.resolve(LocalComputeBackend.GPU, qualification, true).effective)
+        }
+    }
+
     @Test fun qualificationDoesNotCrossArtifactOrRuntimeAndSurvivesRecreation() {
         val storage = MemoryStorage()
         val store = LiteRtBackendQualificationStore(storage, "runtime", { "device" })

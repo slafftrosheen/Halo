@@ -1,0 +1,7 @@
+# Auto backend stability versus speed (#33)
+
+Base ec8f5150f, fetched main 0/0 clean. The phone warm-intent fixture exposed that the existing AUTO gate promotes GPU solely from persisted stability qualification. #33 explicitly requires measured backend choice. No current paired CPU/GPU performance input exists in this provider gate; historical benchmarks and workload role proofs do not establish a matching paired winner here.
+
+Correct the existing policy: AUTO stays CPU even for QUALIFIED GPU stability; preserve the verdict and report the missing comparative proof. This is a conservative default, not evidence CPU is faster or a completed adaptive selector. Existing manual CPU/GPU semantics remain. Catalog GPU requests retain their previous stability eligibility, preserving artifact compatibility preferences, then the existing RAM gate still applies. Native artifact preflight remains authoritative for unsupported CPU/GPU combinations. Do not add a store, engine, guessed performance score, preference migration, or downloads.
+
+Regression sources first: durable QUALIFIED record recreated on an eight-GB device cannot promote AUTO; all states preserve explicit CPU/GPU and AUTO safety; existing catalog GPU qualification and mobile RAM tests. Review then one serial focused provider-test + APK gate. Install/readback changed production APK and existing test package, run the existing warm-intent diagnostic once, retain all negative results. Keep #33/#36 open for true paired performance and full acceptance.

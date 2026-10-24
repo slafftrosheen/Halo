@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.runtime.LiteRtMobileBackendPolicyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-24T00:33:42.083Z" hostname="MINIFOXEY" time="0.003">
+  <properties/>
+  <testcase name="cpuOrUnknownRamUsesSafeFallback" classname="com.halo.providers.litert.runtime.LiteRtMobileBackendPolicyTest" time="0.003"/>
+  <testcase name="qualifiedGpuEvidenceSurvivesFourSixGbAutoCpuGate" classname="com.halo.providers.litert.runtime.LiteRtMobileBackendPolicyTest" time="0.0"/>
+  <testcase name="eightGbQualifiedGpuAndExplicitGpuAreUnaffected" classname="com.halo.providers.litert.runtime.LiteRtMobileBackendPolicyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

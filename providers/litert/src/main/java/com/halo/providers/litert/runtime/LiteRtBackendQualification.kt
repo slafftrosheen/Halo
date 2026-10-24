@@ -11,8 +11,8 @@ import org.json.JSONObject
  *
  * `Engine.initialize()` succeeding is **never** qualification: on physical hardware a GPU engine
  * can initialize, create a conversation, begin generation and then kill the Android process
- * mid-token with no catchable exception. A GPU is therefore only trusted for AUTO selection
- * after repeated, complete generation sequences succeeded for this exact key
+ * mid-token with no catchable exception. A GPU stability verdict requires repeated, complete
+ * generation sequences for this exact key
  * (artifact SHA-256 + LiteRT-LM runtime version + device/build identity + backend).
  *
  * New invariant:
@@ -25,7 +25,7 @@ enum class LiteRtBackendQualification {
     /** A stability probe is in flight. AUTO resolves to CPU for normal user turns. */
     VERIFYING,
 
-    /** The configured consecutive stability-probe sequence passed. AUTO may select GPU. */
+    /** The stability sequence passed. This is not comparative CPU/GPU performance proof. */
     QUALIFIED,
 
     /** An unclean native exit was attributed to this accelerator. AUTO stays on CPU. */
@@ -113,7 +113,8 @@ data class LiteRtBackendResolution(
  * The AUTO gate. Pure and total:
  *
  * ```
- * GPU QUALIFIED     -> GPU may be selected
+ * AUTO + QUALIFIED  -> CPU (stability does not establish comparative performance)
+ * catalog GPU       -> GPU only when QUALIFIED (artifact compatibility preference)
  * GPU UNKNOWN       -> CPU
  * GPU VERIFYING     -> CPU for normal user turns
  * GPU QUARANTINED   -> CPU
@@ -128,7 +129,14 @@ object LiteRtBackendQualificationPolicy {
         explicitGpuOverride: Boolean = true,
     ): LiteRtBackendResolution {
         if (requested == LocalComputeBackend.GPU && !explicitGpuOverride) {
-            return resolve(LocalComputeBackend.AUTO, gpuQualification).copy(requested = requested)
+            // A catalog GPU request can express artifact compatibility, not a speed claim.
+            // Preserve its existing stability gate instead of forcing CPU-only AUTO defaults
+            // onto profiles that may forbid CPU fallback.
+            val decision = resolve(LocalComputeBackend.AUTO, gpuQualification)
+            return if (gpuQualification == LiteRtBackendQualification.QUALIFIED) {
+                decision.copy(requested = requested, effective = LocalComputeBackend.GPU,
+                    reason = "catalog GPU qualified; comparative performance unproven")
+            } else decision.copy(requested = requested)
         }
         return when (requested) {
             LocalComputeBackend.CPU ->
@@ -139,7 +147,12 @@ object LiteRtBackendQualificationPolicy {
 
             LocalComputeBackend.AUTO -> when (gpuQualification) {
                 LiteRtBackendQualification.QUALIFIED ->
-                    LiteRtBackendResolution(requested, LocalComputeBackend.GPU, gpuQualification, "gpu qualified")
+                    // There is currently no matching paired-performance input in this gate.
+                    // Do not promote a stability-only record (including existing saved records)
+                    // into an automatic speed recommendation. Workload selection keeps its
+                    // separate measured evidence owner; explicit developer GPU remains available.
+                    LiteRtBackendResolution(requested, LocalComputeBackend.CPU, gpuQualification,
+                        "gpu stable; comparative performance unproven; AUTO uses CPU")
 
                 LiteRtBackendQualification.VERIFYING ->
                     LiteRtBackendResolution(requested, LocalComputeBackend.CPU, gpuQualification, "gpu verification in progress; normal turns use CPU")

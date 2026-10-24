@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-24T00:33:39.384Z" hostname="MINIFOXEY" time="2.693">
+  <properties/>
+  <testcase name="journalClearsCleanAttemptsAndSurvivesProcessRecreation" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="2.221"/>
+  <testcase name="stableGpuDoesNotBecomeAnAutomaticSpeedRecommendationOnEightGbPhone" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.042"/>
+  <testcase name="catalogGpuPreferenceDoesNotBypassQualification" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.022"/>
+  <testcase name="androidExitCodesMatchPlatformRatherThanGuessedConstants" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.019"/>
+  <testcase name="autoAndExplicitCpuRemainCpuForEveryStabilityState" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.042"/>
+  <testcase name="qualificationDoesNotCrossArtifactOrRuntimeAndSurvivesRecreation" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.019"/>
+  <testcase name="zeroGenerationsCannotQualifyGpu" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.019"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

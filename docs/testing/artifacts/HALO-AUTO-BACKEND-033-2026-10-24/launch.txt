@@ -1,0 +1,7 @@
+Starting: Intent { cmp=com.aistudio.braintool.xkqzps/com.halo.app.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.aistudio.braintool.xkqzps/com.halo.app.MainActivity
+TotalTime: 5079
+WaitTime: 5093
+Complete
