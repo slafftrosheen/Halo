@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" tests="7" skipped="0" failures="1" errors="0" timestamp="2026-10-23T23:52:18.088Z" hostname="MINIFOXEY" time="0.878">
+  <properties/>
+  <testcase name="legacyReceiptCannotClearIdenticalContentFromANewEditor" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.071"/>
+  <testcase name="identicalContentFromANewEditorCannotBeClearedByAnOldReceipt" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.054"/>
+  <testcase name="recoveryCannotBorrowANewerSourceOrAnotherEditorIdentity" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.036"/>
+  <testcase name="receiptSurvivesDiskDatabaseReconstructionAndStillProtectsIdenticalReplacement" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.553">
+    <failure message="android.database.sqlite.SQLiteCantOpenDatabaseException: Cannot open database 'C:\Users\slavd\AppData\Local\Temp\robolectric-CanvasDrawingDraftRepositoryTest_receiptSurvivesDiskDatabaseReconstructionAndStillProtectsIdenticalReplacement4054818522571299739\com.aistudio.braintool.xkqzps-dataDir\databases\drawing-receipt-13cdf372-a93c-409a-b97e-6f8cf5906b9a.db' with flags 0x30000000: File C:\Users\slavd\AppData\Local\Temp\robolectric-CanvasDrawingDraftRepositoryTest_receiptSurvivesDiskDatabaseReconstructionAndStillProtectsIdenticalReplacement4054818522571299739\com.aistudio.braintool.xkqzps-dataDir\databases\drawing-receipt-13cdf372-a93c-409a-b97e-6f8cf5906b9a.db doesn't exist and CREATE_IF_NECESSARY is set, check directory permissions" type="android.database.sqlite.SQLiteCantOpenDatabaseException">android.database.sqlite.SQLiteCantOpenDatabaseException: Cannot open database 'C:\Users\slavd\AppData\Local\Temp\robolectric-CanvasDrawingDraftRepositoryTest_receiptSurvivesDiskDatabaseReconstructionAndStillProtectsIdenticalReplacement4054818522571299739\com.aistudio.braintool.xkqzps-dataDir\databases\drawing-receipt-13cdf372-a93c-409a-b97e-6f8cf5906b9a.db' with flags 0x30000000: File C:\Users\slavd\AppData\Local\Temp\robolectric-CanvasDrawingDraftRepositoryTest_receiptSurvivesDiskDatabaseReconstructionAndStillProtectsIdenticalReplacement4054818522571299739\com.aistudio.braintool.xkqzps-dataDir\databases\drawing-receipt-13cdf372-a93c-409a-b97e-6f8cf5906b9a.db doesn't exist and CREATE_IF_NECESSARY is set, check directory permissions
+	at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:262)
+	at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:205)
+	at android.database.sqlite.SQLiteConnectionPool.openConnectionLocked(SQLiteConnectionPool.java:512)
+	at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:210)
+	at android.database.sqlite.SQLiteConnectionPool.open(SQLiteConnectionPool.java:202)
+	at android.database.sqlite.SQLiteDatabase.openInner(SQLiteDatabase.java:1085)
+	at android.database.sqlite.SQLiteDatabase.open(SQLiteDatabase.java:1065)
+	at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:929)
+	at android.database.sqlite.SQLiteDatabase.openDatabase(SQLiteDatabase.java:918)
+	at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:373)
+	at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:316)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getWritableOrReadableDatabase(FrameworkSQLiteOpenHelper.android.kt:224)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.innerGetDatabase(FrameworkSQLiteOpenHelper.android.kt:180)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getSupportDatabase(FrameworkSQLiteOpenHelper.android.kt:141)
+	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper.getWritableDatabase(FrameworkSQLiteOpenHelper.android.kt:96)
+	at androidx.room.RoomDatabase.internalBeginTransaction(RoomDatabase.android.kt:696)
+	at androidx.room.RoomDatabase.beginTransaction(RoomDatabase.android.kt:691)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invokeSuspend(RoomDatabase.android.kt:2043)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invokeSuspend(RoomDatabase.android.kt:2059)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invoke(RoomDatabase.android.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatched(Undispatched.kt:66)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:497)
+	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$startTransactionCoroutine$2$1$1.invokeSuspend(RoomDatabase.android.kt:2088)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:22)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$startTransactionCoroutine$2$1.run(RoomDatabase.android.kt:2085)
+	at androidx.room.TransactionExecutor.execute$lambda$1$lambda$0(TransactionExecutor.android.kt:38)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: android.database.sqlite.SQLiteCantOpenDatabaseException: unknown error (code 14 SQLITE_CANTOPEN): Could not open database
+	at org.robolectric.nativeruntime.SQLiteConnectionNatives.nativeOpen(Native Method)
+	at org.robolectric.shadows.ShadowNativeSQLiteConnection.lambda$nativeOpen$0(ShadowNativeSQLiteConnection.java:45)
+	at org.robolectric.util.PerfStatsCollector.measure(PerfStatsCollector.java:52)
+	at org.robolectric.shadows.ShadowNativeSQLiteConnection.nativeOpen(ShadowNativeSQLiteConnection.java:42)
+	at android.database.sqlite.SQLiteConnection.nativeOpen(SQLiteConnection.java)
+	at android.database.sqlite.SQLiteConnection.open(SQLiteConnection.java:224)
+	... 40 more
+</failure>
+  </testcase>
+  <testcase name="legacyUnknownFileVersionCannotAcquireACurrentVersionOnRecovery" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.04"/>
+  <testcase name="currentReceiptRoundTripsAndCannotBeMissingMalformedOrUnknownVersion" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.059"/>
+  <testcase name="completedEditCannotClearAReplacementDraftWithTheSameSource" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.057"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

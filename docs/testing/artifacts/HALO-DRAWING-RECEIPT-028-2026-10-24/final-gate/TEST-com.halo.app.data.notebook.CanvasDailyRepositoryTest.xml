@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.CanvasDailyRepositoryTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-23T23:56:07.010Z" hostname="MINIFOXEY" time="7.429">
+  <properties/>
+  <testcase name="reviewedTranscriptIsInboxNoteLinkedToOriginalAndSearchableInThreeLanguages" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="6.019"/>
+  <testcase name="clearAndUngroupNeverDeleteLinkedWorkspaceObjects" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.125"/>
+  <testcase name="changedLinkedSourceRejectsProposalAndUndoRejectsLaterEdit" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.187"/>
+  <testcase name="approvalRollsBackEarlierWritesWhenLaterGroupFails" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.122"/>
+  <testcase name="staleCardRejectsAllOperationsBeforeMutation" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.09"/>
+  <testcase name="markupRefusesStaleOverwriteAndDrawingDraftSurvivesRepositoryRecreation" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.12"/>
+  <testcase name="capturedPhotoReusesInboxIdentityAndGetsImageCardSize" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.085"/>
+  <testcase name="groupMovementIsAtomicAndLifecycleFlushDoesNotResurrectRemovedCards" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.097"/>
+  <testcase name="untrustedOrganizationCannotReferenceUnknownCardsOrExecuteActions" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.1"/>
+  <testcase name="approvalIsAtomicIdempotentAndUndoPreservesSourceNote" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.092"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

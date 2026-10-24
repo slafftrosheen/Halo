@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.CanvasDailyRepositoryTest" tests="10" skipped="0" failures="1" errors="0" timestamp="2026-10-23T23:52:08.849Z" hostname="MINIFOXEY" time="9.231">
+  <properties/>
+  <testcase name="reviewedTranscriptIsInboxNoteLinkedToOriginalAndSearchableInThreeLanguages" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="7.777"/>
+  <testcase name="clearAndUngroupNeverDeleteLinkedWorkspaceObjects" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.113"/>
+  <testcase name="changedLinkedSourceRejectsProposalAndUndoRejectsLaterEdit" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.158"/>
+  <testcase name="approvalRollsBackEarlierWritesWhenLaterGroupFails" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.095"/>
+  <testcase name="staleCardRejectsAllOperationsBeforeMutation" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.082"/>
+  <testcase name="markupRefusesStaleOverwriteAndDrawingDraftSurvivesRepositoryRecreation" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.073">
+    <failure message="java.lang.IllegalStateException: Source unavailable" type="java.lang.IllegalStateException">java.lang.IllegalStateException: Source unavailable
+	at com.halo.app.data.notebook.NotebookCanvasRepository$saveFileMarkup$2.invokeSuspend(NotebookCanvas.kt:567)
+	at com.halo.app.data.notebook.NotebookCanvasRepository$saveFileMarkup$2.invoke(NotebookCanvas.kt)
+	at com.halo.app.data.notebook.NotebookCanvasRepository$saveFileMarkup$2.invoke(NotebookCanvas.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invokeSuspend(RoomDatabase.android.kt:2045)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invokeSuspend(RoomDatabase.android.kt:2059)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invoke(RoomDatabase.android.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatched(Undispatched.kt:66)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:497)
+	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$startTransactionCoroutine$2$1$1.invokeSuspend(RoomDatabase.android.kt:2088)
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt:42)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$startTransactionCoroutine$2$1$1.invokeSuspend(RoomDatabase.android.kt:2088)
+	at com.halo.app.data.notebook.CanvasDailyRepositoryTest$markupRefusesStaleOverwriteAndDrawingDraftSurvivesRepositoryRecreation$1.invokeSuspend(CanvasDailyRepositoryTest.kt:144)
+	at kotlinx.coroutines.test.TestBuildersKt__TestBuildersKt$runTest$2$1$1.invokeSuspend(TestBuilders.kt:317)
+Caused by: java.lang.IllegalStateException: Source unavailable
+	at com.halo.app.data.notebook.NotebookCanvasRepository$saveFileMarkup$2.invokeSuspend(NotebookCanvas.kt:567)
+	at com.halo.app.data.notebook.NotebookCanvasRepository$saveFileMarkup$2.invoke(NotebookCanvas.kt)
+	at com.halo.app.data.notebook.NotebookCanvasRepository$saveFileMarkup$2.invoke(NotebookCanvas.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invokeSuspend(RoomDatabase.android.kt:2045)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransaction$2.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invokeSuspend(RoomDatabase.android.kt:2059)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invoke(RoomDatabase.android.kt)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$withTransactionContext$transactionBlock$1.invoke(RoomDatabase.android.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatched(Undispatched.kt:66)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:497)
+	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$startTransactionCoroutine$2$1$1.invokeSuspend(RoomDatabase.android.kt:2088)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:22)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at androidx.room.RoomDatabaseKt__RoomDatabase_androidKt$startTransactionCoroutine$2$1.run(RoomDatabase.android.kt:2085)
+	at androidx.room.TransactionExecutor.execute$lambda$1$lambda$0(TransactionExecutor.android.kt:38)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+</failure>
+  </testcase>
+  <testcase name="capturedPhotoReusesInboxIdentityAndGetsImageCardSize" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.127"/>
+  <testcase name="groupMovementIsAtomicAndLifecycleFlushDoesNotResurrectRemovedCards" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.103"/>
+  <testcase name="untrustedOrganizationCannotReferenceUnknownCardsOrExecuteActions" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.086"/>
+  <testcase name="approvalIsAtomicIdempotentAndUndoPreservesSourceNote" classname="com.halo.app.data.notebook.CanvasDailyRepositoryTest" time="0.118"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T23:56:14.446Z" hostname="MINIFOXEY" time="0.455">
+  <properties/>
+  <testcase name="legacyReceiptCannotClearIdenticalContentFromANewEditor" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.066"/>
+  <testcase name="identicalContentFromANewEditorCannotBeClearedByAnOldReceipt" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.067"/>
+  <testcase name="recoveryCannotBorrowANewerSourceOrAnotherEditorIdentity" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.036"/>
+  <testcase name="receiptSurvivesDbReopen" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.124"/>
+  <testcase name="legacyUnknownFileVersionCannotAcquireACurrentVersionOnRecovery" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.038"/>
+  <testcase name="currentReceiptRoundTripsAndCannotBeMissingMalformedOrUnknownVersion" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.047"/>
+  <testcase name="completedEditCannotClearAReplacementDraftWithTheSameSource" classname="com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest" time="0.068"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

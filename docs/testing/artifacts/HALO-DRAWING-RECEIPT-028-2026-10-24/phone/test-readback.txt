@@ -1,0 +1,1 @@
+/data/app/~~8tjGUMVtFljrPT9YMDDj4Q==/com.aistudio.braintool.xkqzps.test-Z4vHcI73xvTW05ECDVmRzg==/base.apk: 1 file pulled, 0 skipped. 32.6 MB/s (1963640 bytes in 0.058s)

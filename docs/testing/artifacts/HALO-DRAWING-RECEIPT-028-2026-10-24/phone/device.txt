@@ -1,0 +1,3 @@
+List of devices attached
+f01fe673               device product:sapphiren_eea model:23124RA7EO device:sapphiren transport_id:3
+

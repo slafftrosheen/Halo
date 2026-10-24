@@ -1,0 +1,22 @@
+[
+  {
+    "path": "app/src/main/java/com/halo/app/data/notebook/CanvasDrawingDraft.kt",
+    "sha256": "af862eae3d616bcb31eaa5b5ff0c2ce152a0d689bd0eea4b6b96f7a099ee8849"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/notebook/NotebookCanvas.kt",
+    "sha256": "cdda8f5021f13e21ad0a5f30dc899955c7f927170c694f3c15e01e78881f26e3"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/notebook/CanvasDrawingDraftRepositoryTest.kt",
+    "sha256": "ba69feebaddc105188a1b6b6df0b710ba20fe8031f9e0d1cbffb2c1a82bfc093"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ui/screens/notebook/CanvasEditorPersistenceTest.kt",
+    "sha256": "682bb9850cfaaa7ed3565dd846ff0e8cdb0cafa529cf7552d604d0bc8ead2cfa"
+  },
+  {
+    "path": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasDraftReceiptDeviceTest.kt",
+    "sha256": "f97aa9cc7bb4b954be37509cb5d0f4877d6b469282950c58fd339c6cff66c5bc"
+  }
+]

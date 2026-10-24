@@ -161,6 +161,25 @@ class CanvasEditorPersistenceTest {
         assertEquals(newer, vm.uiState.value.drawingDraft)
     }
 
+    @Test fun olderSaveAndCancelCannotConsumeAnIdenticalDraftFromANewEditor() = runBlocking {
+        val board = repository.create()
+        val original = "sketch:v1|100,100;200,200"
+        val edited = "sketch:v1|300,300;400,400"
+        val card = repository.addSketchNode(board, 0f, 0f, original)
+        val older = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = edited)
+        val newer = com.halo.app.data.notebook.CanvasDrawingDraft(card, "sketch", original, sketch = edited)
+        repository.saveDrawingDraft(board, newer)
+        val vm = editor(board)
+        vm.discardDrawingDraft(older).join()
+        assertEquals(newer, repository.drawingDraft(board))
+        vm.addSketch(edited, card, original, expectedDraft = older).join()
+        assertEquals(edited, repository.observe(board).first()!!.nodes.single().text)
+        assertEquals(newer, repository.drawingDraft(board))
+        assertEquals(newer, vm.uiState.value.drawingDraft)
+        vm.discardDrawingDraft(newer).join()
+        assertNull(repository.drawingDraft(board))
+    }
+
     @Test fun observedDraftCannotBeConsumedBySavingADifferentSketchPayload() = runBlocking {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"

@@ -141,6 +141,10 @@ class CanvasDailyRepositoryTest {
         db.notebookDao().insertWorkspaceObject(WorkspaceObjectEntity(fileId, "FILE", "PDF", 1, 1, "IMPORT", "ACTIVE", true, "READY", "file:$fileId"))
         val card = repository.addReference(board, fileId, 0f, 0f)
         val ink = CanvasSketchCodec.encode(listOf(listOf(CanvasSketchPoint(10, 20), CanvasSketchPoint(30, 40))))
+        assertTrue(runCatching { repository.saveFileMarkup(board, card, mapOf(1 to ink), "PDF") }.isFailure)
+        db.workspaceFileDao().insertFile(com.halo.app.data.workspace.WorkspaceFileEntity(
+            objectId = fileId, uri = "content://fixture/$fileId", displayName = "PDF", mimeType = "application/pdf",
+            sizeBytes = 4, modifiedAt = 1, ownedCopyPath = null, permissionPersisted = true, sha256 = "file-v1"))
         assertTrue(repository.saveFileMarkup(board, card, mapOf(1 to ink), "PDF"))
         assertTrue(runCatching { repository.saveFileMarkup(board, card, mapOf(2 to ink), "PDF") }.isFailure)
         assertEquals(setOf(1), CanvasFileMarkupCodec.decode(repository.observe(board).first()!!.nodes.single().text).pages.keys)

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "com.halo.app.data.notebook.CanvasDrawingDraftRepositoryTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "timestamp": "2026-10-23T23:56:14.446Z"
+  },
+  {
+    "name": "com.halo.app.data.notebook.CanvasDailyRepositoryTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "timestamp": "2026-10-23T23:56:07.010Z"
+  },
+  {
+    "name": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "timestamp": "2026-10-23T23:52:22.398Z"
+  },
+  {
+    "name": "com.halo.app.data.notebook.InkV2Test",
+    "tests": 25,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "timestamp": "2026-10-23T23:52:19.221Z"
+  }
+]

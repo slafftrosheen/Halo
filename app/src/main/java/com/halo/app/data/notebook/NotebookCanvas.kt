@@ -227,7 +227,7 @@ class NotebookCanvasRepository(
         notebookDao.upsertDraft(NoteDraftEntity(canvasId, "", now(), structureJson = draft.encode()))
     }
     suspend fun clearDrawingDraft(canvasId: String) = notebookDao.deleteLegacyDraft(canvasId)
-    /** Clear only the exact snapshot consumed by a completed edit or explicit cancellation. */
+    /** Clear the exact editor receipt and payload; identical ink from a newer edit is not consumed. */
     suspend fun clearDrawingDraft(canvasId: String, expected: CanvasDrawingDraft): Boolean = database.withTransaction {
         if (drawingDraft(canvasId) != expected) return@withTransaction false
         notebookDao.deleteLegacyDraft(canvasId) == 1

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.InkV2Test" tests="25" skipped="0" failures="0" errors="0" timestamp="2026-10-23T23:52:19.221Z" hostname="MINIFOXEY" time="3.014">
+  <properties/>
+  <testcase name="historyCountIsBounded" classname="com.halo.app.data.notebook.InkV2Test" time="1.935"/>
+  <testcase name="firstEditBindsLegacyAspectAndUndoRestoresOriginal" classname="com.halo.app.data.notebook.InkV2Test" time="0.036"/>
+  <testcase name="fileMarkupRetainsExactV2Payload" classname="com.halo.app.data.notebook.InkV2Test" time="0.045"/>
+  <testcase name="decreasingTimesRejected" classname="com.halo.app.data.notebook.InkV2Test" time="0.037"/>
+  <testcase name="unknownSensorDoesNotBecomeZeroPressure" classname="com.halo.app.data.notebook.InkV2Test" time="0.04"/>
+  <testcase name="legacyLimitsDoNotChange" classname="com.halo.app.data.notebook.InkV2Test" time="0.041"/>
+  <testcase name="metadataRoundTrips" classname="com.halo.app.data.notebook.InkV2Test" time="0.039"/>
+  <testcase name="oversizeRejectedBeforeParsing" classname="com.halo.app.data.notebook.InkV2Test" time="0.037"/>
+  <testcase name="draftRetainsV2AndDoesNotModifyOriginal" classname="com.halo.app.data.notebook.InkV2Test" time="0.037"/>
+  <testcase name="legacyEncodingApiRemainsLegacy" classname="com.halo.app.data.notebook.InkV2Test" time="0.032"/>
+  <testcase name="cancelledStrokeDoesNotAlterHistory" classname="com.halo.app.data.notebook.InkV2Test" time="0.041"/>
+  <testcase name="legacyToolCannotSilentlyDropMetadata" classname="com.halo.app.data.notebook.InkV2Test" time="0.03"/>
+  <testcase name="emptyAndUnreadableAreDifferent" classname="com.halo.app.data.notebook.InkV2Test" time="0.03"/>
+  <testcase name="cancelledEraserRestoresAllRemovedStrokes" classname="com.halo.app.data.notebook.InkV2Test" time="0.03"/>
+  <testcase name="undoRedoAndBranching" classname="com.halo.app.data.notebook.InkV2Test" time="0.026"/>
+  <testcase name="eraserDoesNotDeleteDistantParallelSegment" classname="com.halo.app.data.notebook.InkV2Test" time="0.031"/>
+  <testcase name="tapIsACompleteStroke" classname="com.halo.app.data.notebook.InkV2Test" time="0.027"/>
+  <testcase name="eraseUsesSegmentsNotOnlyRecordedPoints" classname="com.halo.app.data.notebook.InkV2Test" time="0.028"/>
+  <testcase name="clearIsUndoableAndNoOpIsNotAnUndoEntry" classname="com.halo.app.data.notebook.InkV2Test" time="0.028"/>
+  <testcase name="legacyPointsAndToolArePreserved" classname="com.halo.app.data.notebook.InkV2Test" time="0.027"/>
+  <testcase name="invalidMetadataAndUnknownToolsAreRejected" classname="com.halo.app.data.notebook.InkV2Test" time="0.035"/>
+  <testcase name="fullLegacyDrawingKeepsCompactEncoding" classname="com.halo.app.data.notebook.InkV2Test" time="0.134"/>
+  <testcase name="oversizedV2StrokeIsUnreadable" classname="com.halo.app.data.notebook.InkV2Test" time="0.03"/>
+  <testcase name="historyDoesNotRetainCallerMutableLists" classname="com.halo.app.data.notebook.InkV2Test" time="0.026"/>
+  <testcase name="pointsAreBoundedAndLimitIsReported" classname="com.halo.app.data.notebook.InkV2Test" time="0.029"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
