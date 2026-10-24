@@ -56,8 +56,12 @@ data class LocalRoleQualificationEntity(
 @Dao
 interface LocalRoleQualificationDao {
     @Insert suspend fun insert(row: LocalRoleQualificationEntity)
-    @Query("SELECT * FROM local_role_qualifications WHERE deviceFingerprint = :device ORDER BY testedAtMs DESC, id DESC")
+    // This table is append-only. SQLite insertion order survives owner recreation;
+    // user-adjustable wall time and random UUIDs cannot determine the newest attempt.
+    @Query("SELECT * FROM local_role_qualifications WHERE deviceFingerprint = :device ORDER BY rowid DESC")
     fun observeDevice(device: String): kotlinx.coroutines.flow.Flow<List<LocalRoleQualificationEntity>>
-    @Query("SELECT * FROM local_role_qualifications WHERE deviceFingerprint = :device AND artifactId = :model ORDER BY testedAtMs DESC, id DESC")
+    @Query("SELECT * FROM local_role_qualifications WHERE deviceFingerprint = :device ORDER BY rowid DESC")
+    suspend fun deviceHistory(device: String): List<LocalRoleQualificationEntity>
+    @Query("SELECT * FROM local_role_qualifications WHERE deviceFingerprint = :device AND artifactId = :model ORDER BY rowid DESC")
     suspend fun history(device: String, model: String): List<LocalRoleQualificationEntity>
 }

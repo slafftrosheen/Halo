@@ -1,0 +1,30 @@
+[
+  {
+    "path": "app/src/main/java/com/halo/app/data/models/LocalRoleQualificationEntity.kt",
+    "sha256": "c5037dda7acf0aad5005158f8d6d1fa73e10372a70e53b76cdd6dc5f7b65cccd"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/models/LocalRoleQualificationRepository.kt",
+    "sha256": "040f67d27d1fd6131071cb924393005f59369285bd5b2b23b11f98b517cd39c7"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ai/LocalRoleEvidenceController.kt",
+    "sha256": "e21fffac4d78b014d61436438c1d03fd14a935f9763f4b482bedcf71ffe58525"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/RoleOrderTest.kt",
+    "sha256": "6864e80443c73f7500b1544a1d6facf982c9a2599cbc610874c71403aa30b7b7"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/models/LocalRoleQualificationRepositoryTest.kt",
+    "sha256": "898f340850d3857cb41930f95583ef0ce8fff541b736487cc19337cc4b66a2e0"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalRoleRecommendationApplyTest.kt",
+    "sha256": "5e729896b2c26af228f60015debfa3a3f09cca42b567092516043e84513078f5"
+  },
+  {
+    "path": "app/schemas/com.halo.app.data.AppDatabase/30.json",
+    "sha256": "1dd9b59fff88721875cb0583fd3ddc46ebf1a42a4b0115cc85239659e67c47fe"
+  }
+]

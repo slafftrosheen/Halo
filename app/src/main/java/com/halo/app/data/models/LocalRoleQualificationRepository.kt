@@ -4,20 +4,27 @@ import com.halo.providers.litert.runtime.*
 import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.sdk.provider.*
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Explicit completed-suite boundary; never called by inference or discovery. */
 class LocalRoleQualificationRepository(private val dao: LocalRoleQualificationDao,
     val device: DeviceRuntimeIdentity, val executionBuildIdentity: String? = null) {
+    private val evidenceMutex = Mutex()
     val history = dao.observeDevice(device.fingerprint)
-    suspend fun save(row: LocalModelRoleQualification): Boolean {
-        val buildIdentity = executionBuildIdentity ?: return false
+    /** Serialize a fresh durable projection and its synchronous role write with suite publication. */
+    suspend fun <T> withCurrentHistory(block: (List<LocalRoleQualificationEntity>) -> T): T =
+        evidenceMutex.withLock { block(dao.deviceHistory(device.fingerprint)) }
+
+    suspend fun save(row: LocalModelRoleQualification): Boolean = evidenceMutex.withLock {
+        val buildIdentity = executionBuildIdentity ?: return@withLock false
         if (row.failure in setOf(LocalRoleProbeFailure.CANCELLED, LocalRoleProbeFailure.ARTIFACT_CHANGED,
                 LocalRoleProbeFailure.RESOURCE_BUSY, LocalRoleProbeFailure.ARTIFACT_UNAVAILABLE) ||
             !row.artifactFingerprint.matches(Regex("[0-9a-f]{64}")) || row.backend == null ||
-            row.threads == null || row.gpuLayers == null) return false
-        val backend = row.backend ?: return false
-        val threads = row.threads ?: return false
-        val gpuLayers = row.gpuLayers ?: return false
+            row.threads == null || row.gpuLayers == null) return@withLock false
+        val backend = row.backend ?: return@withLock false
+        val threads = row.threads ?: return@withLock false
+        val gpuLayers = row.gpuLayers ?: return@withLock false
         val vision = row.vision
         val pressure = row.memoryPressure?.takeIf { it in setOf("NORMAL", "LOW", "CRITICAL") } ?: "NORMAL"
         val unstable = row.failure != null || row.fast?.verdict != LocalRoleProbeVerdict.PASS ||
@@ -38,6 +45,6 @@ class LocalRoleQualificationRepository(private val dao: LocalRoleQualificationDa
             vision?.verdict == LocalRoleProbeVerdict.PASS && vision.eligibility == "VISION_LAB_PROVEN",
             !unstable, pressure, row.failure?.name ?: row.fast?.failure?.name ?: row.chat?.failure?.name ?: row.reasoning?.failure?.name ?: row.agentic?.failure?.name,
             executionBuildIdentity = buildIdentity))
-        return true
+        true
     }
 }

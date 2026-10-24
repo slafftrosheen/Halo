@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.models.LocalRoleQualificationRepositoryTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-24T07:09:39.871Z" hostname="MINIFOXEY" time="6.814">
+  <properties/>
+  <testcase name="completedFailuresPersistButCancelledAndChangedDoNot" classname="com.halo.app.data.models.LocalRoleQualificationRepositoryTest" time="6.541"/>
+  <testcase name="buildChangeRetainsHistoryWithoutRelabellingItAndUnknownBuildCannotSave" classname="com.halo.app.data.models.LocalRoleQualificationRepositoryTest" time="0.076"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

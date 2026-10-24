@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.RoleOrderTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-24T07:09:31.845Z" hostname="MINIFOXEY" time="7.943">
+  <properties/>
+  <testcase name="future" classname="com.halo.app.ai.RoleOrderTest" time="7.007"/>
+  <testcase name="reopen" classname="com.halo.app.ai.RoleOrderTest" time="0.156"/>
+  <testcase name="rollback" classname="com.halo.app.ai.RoleOrderTest" time="0.074"/>
+  <testcase name="equalTimes" classname="com.halo.app.ai.RoleOrderTest" time="0.068"/>
+  <testcase name="publicationAndApplyAreSerialized" classname="com.halo.app.ai.RoleOrderTest" time="0.213"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

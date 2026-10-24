@@ -44,13 +44,8 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                 executionBuildIdentity = buildIdentity)
         }.toSet()
     }
-    private fun project(rows: List<LocalRoleQualificationEntity>, eligible: Map<AiModelRole, List<AiRoleCandidate>>): LocalRoleEvidenceState {
-        val exact = identities()
-        val current = rows.filter { it.identity() in exact }.distinctBy { it.identity() }
-        return LocalRoleEvidenceState(rows, current, AiModelRole.entries.associateWith { role ->
-            LocalRoleRecommendationEngine.recommend(role, rows.map { it.evidence() }, exact, eligible[role].orEmpty())
-        })
-    }
+    private fun project(rows: List<LocalRoleQualificationEntity>, eligible: Map<AiModelRole, List<AiRoleCandidate>>) =
+        projectLocalRoleEvidence(rows, identities(), eligible)
     fun applyRoleRecommendation(role: AiModelRole, ref: AiModelRef) {
         viewModelScope.launch(Dispatchers.IO) {
             applyMutex.withLock {
@@ -71,7 +66,7 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
             val eligibility = control.router.candidatesForRole(role, control.catalogue.state.value.models,
                 control.rows.value.filter { it.configured }.map { it.descriptor.providerId }.toSet())
             val ready = roleRecommendationProviderAvailable(activeProvider.statusForModel(ref.modelId).readiness)
-            val applied = synchronized(control.router) {
+            val applied = repository.withCurrentHistory { durableRows -> synchronized(control.router) {
                 // The router's selection writes use this same monitor. A manual
                 // assignment made during artifact hashing wins over this old tap.
                 val unchanged = if (role == AiModelRole.CHAT)
@@ -80,11 +75,11 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                 else expectedBinding == control.router.roleBinding(role)
                 // Re-read qualification identities after every suspending preflight.
                 // Value equality alone cannot detect an intervening A -> B -> A edit.
-                val refreshed = project(state.value.history, mapOf(role to eligibility)).recommendations[role]
+                val refreshed = project(durableRows, mapOf(role to eligibility)).recommendations[role]
                 unchanged && expectedRevision == control.router.configurationRevision && provider() === activeProvider &&
                     applyMeasuredRecommendation(role, ref, prior, refreshed, verified?.sha256,
                         verified?.valid == true && ready, control.router::selectTarget, control.router::setRoleBinding)
-            }
+            } }
             if (!applied) {
                 _message.value = "Recommendation is stale — run the role suite again"
                 invalidate()
@@ -104,6 +99,19 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
             appendLine("AGENTIC=${r.agenticVerdict} protocol=${r.toolProtocol} initial=${r.initialToolPass} continuation=${r.continuationPass} VISION=${r.visionVerdict} memoryPressure=${r.memoryPressure} stable=${r.stable} failure=${r.failureCode}")
         }
     }
+}
+
+/** Rows come from the canonical DAO in newest insertion order, including failed attempts. */
+internal fun projectLocalRoleEvidence(rows: List<LocalRoleQualificationEntity>,
+    exact: Set<LocalRoleEvidenceIdentity>, eligible: Map<AiModelRole, List<AiRoleCandidate>>,
+    nowMs: Long = System.currentTimeMillis()): LocalRoleEvidenceState {
+    // Resolve supersession before validating wall time. A bad newest timestamp
+    // yields unknown evidence rather than uncovering an older passing attempt.
+    val current = rows.filter { it.identity() in exact }.distinctBy { it.identity() }
+        .filter { it.testedAtMs in 1..nowMs }
+    return LocalRoleEvidenceState(rows, current, AiModelRole.entries.associateWith { role ->
+        LocalRoleRecommendationEngine.recommend(role, current.map { it.evidence() }, exact, eligible[role].orEmpty())
+    })
 }
 
 /** Physical verification and live eligibility are supplied by the explicit app boundary above. */
