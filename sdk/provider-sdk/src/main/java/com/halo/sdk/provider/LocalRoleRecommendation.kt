@@ -7,6 +7,8 @@ data class LocalRoleEvidenceIdentity(
     val runtime: String, val runtimeVersion: String, val compatibilityEpoch: Int,
     val backend: String, val contextTokens: Int?, val threads: Int, val gpuLayers: Int,
     val probeSuiteVersion: Int,
+    /** Host execution build that produced the measurement; null denotes historical evidence. */
+    val executionBuildIdentity: String? = null,
 )
 enum class LocalRoleRecommendationConfidence { NONE, SINGLE_MEASURED, COMPARATIVE }
 data class LocalRoleCandidateEvidence(
@@ -48,7 +50,8 @@ object LocalRoleRecommendationEngine {
             .thenBy { it.artifactBytes }.thenBy { it.identity.ref.modelId })
         // Different execution backends are displayed, but never labelled a comparative winner.
         val comparable = sorted.map { listOf(it.identity.deviceFingerprint, it.identity.runtimeVersion,
-            it.identity.compatibilityEpoch, it.identity.backend, it.identity.probeSuiteVersion) }.distinct().size <= 1
+            it.identity.compatibilityEpoch, it.identity.backend, it.identity.probeSuiteVersion,
+            it.identity.executionBuildIdentity) }.distinct().size <= 1
         return LocalRoleRecommendation(role, sorted.firstOrNull()?.identity?.ref?.takeIf { comparable }, sorted, when {
             sorted.isEmpty() || !comparable -> LocalRoleRecommendationConfidence.NONE
             sorted.size == 1 -> LocalRoleRecommendationConfidence.SINGLE_MEASURED

@@ -25,13 +25,15 @@ class LocalRoleQualificationRepositoryTest {
     @Test fun completedFailuresPersistButCancelledAndChangedDoNot() = runBlocking {
         val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java).allowMainThreadQueries().build()
         try {
-            val repo = LocalRoleQualificationRepository(db.localRoleQualificationDao(), DeviceRuntimeIdentity("device", "m", "m", 35, 256))
+            val repo = LocalRoleQualificationRepository(db.localRoleQualificationDao(), DeviceRuntimeIdentity("device", "m", "m", 35, 256), "build-a")
             assertTrue(repo.save(row()))
             assertFalse(repo.save(row().copy(failure = LocalRoleProbeFailure.CANCELLED)))
             assertFalse(repo.save(row().copy(failure = LocalRoleProbeFailure.ARTIFACT_CHANGED)))
             val stored = repo.history.first().single()
             assertEquals("FAIL", stored.chatVerdict)
             assertEquals(2, stored.chatPassed)
+            assertEquals("build-a", stored.executionBuildIdentity)
+            assertEquals("build-a", stored.identity().executionBuildIdentity)
             assertTrue(stored.stable)
             assertTrue(repo.save(row().copy(completedAtMs = 3, memoryPressure = "CRITICAL")))
             val latest = repo.history.first().first()
@@ -46,6 +48,22 @@ class LocalRoleQualificationRepositoryTest {
             assertEquals(4, repo.history.first().size)
             assertTrue(repo.save(row().copy(completedAtMs = 6, chat = row().chat!!.copy(failure = LocalRoleProbeFailure.GENERATION_FAILED))))
             assertFalse(repo.history.first().first().stable)
+        } finally { db.close() }
+    }
+
+    @Test fun buildChangeRetainsHistoryWithoutRelabellingItAndUnknownBuildCannotSave() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val device = DeviceRuntimeIdentity("device", "m", "m", 35, 256)
+            val first = LocalRoleQualificationRepository(db.localRoleQualificationDao(), device, "build-a")
+            assertTrue(first.save(row()))
+            val replaced = LocalRoleQualificationRepository(db.localRoleQualificationDao(), device, "build-b")
+            assertEquals("build-a", replaced.history.first().single().identity().executionBuildIdentity)
+            assertTrue(replaced.save(row().copy(completedAtMs = 3)))
+            assertEquals(listOf("build-b", "build-a"), replaced.history.first().map { it.executionBuildIdentity })
+            val unknown = LocalRoleQualificationRepository(db.localRoleQualificationDao(), device)
+            assertFalse(unknown.save(row().copy(completedAtMs = 4)))
+            assertEquals(2, unknown.history.first().size)
         } finally { db.close() }
     }
 }

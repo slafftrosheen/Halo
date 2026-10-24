@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.LocalIntentQualificationTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:55:02.626Z" hostname="MINIFOXEY" time="5.464">
+  <properties/>
+  <testcase name="futureOrNegativeDurationRecordsAreNotQualification" classname="com.halo.app.ai.LocalIntentQualificationTest" time="4.18"/>
+  <testcase name="proofCannotBeBorrowedAcrossDeviceRuntimeOrProtocolIdentity" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.063"/>
+  <testcase name="wrongFixtureAndUnknownPackageCannotWriteQualifiedEvidence" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.057"/>
+  <testcase name="latestFailureWinsEqualTimestampAndRejectsStalePass" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.058"/>
+  <testcase name="missingConsentAndProofAreIndependentAndNeverMutateSavedChoices" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.049"/>
+  <testcase name="futureFailureCannotResurrectAnOlderPassingRecord" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.056"/>
+  <testcase name="changedArtifactOrUnavailableInventoryCannotReuseProof" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.045"/>
+  <testcase name="malformedMeasuredCountsAndDurationsCannotWriteProof" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.044"/>
+  <testcase name="readyButUnqualifiedOptInDoesNotResolveInventoryOrEnqueueInference" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.056"/>
+  <testcase name="genericFastOrOtherBackendTimingCannotQualifyIntent" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.045"/>
+  <testcase name="slowInitialReadCannotOverwriteNewlyPublishedRevocation" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.051"/>
+  <testcase name="changedPackageOrSettingsExpireProofWithoutRewritingIt" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.043"/>
+  <testcase name="qualificationIsRecheckedBeforeInferenceAndBeforeAcceptingTheReply" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.091"/>
+  <testcase name="appendedFailureWinsEvenAfterWallClockRollback" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.046"/>
+  <testcase name="exactPassedIntentSuiteAdmitsBoundedAdvisoryAndFailureRevokesIt" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.053"/>
+  <testcase name="malformedLatestPersistedEvidenceCannotExposeAnOlderPass" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.061"/>
+  <testcase name="partialWrongColdOrLateSuitesDoNotBecomeProof" classname="com.halo.app.ai.LocalIntentQualificationTest" time="0.044"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

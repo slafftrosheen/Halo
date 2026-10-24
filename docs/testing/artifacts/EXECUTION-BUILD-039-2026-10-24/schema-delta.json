@@ -1,0 +1,14 @@
+{
+  "oldVersion": 29,
+  "newVersion": 30,
+  "changedTables": [
+    "local_role_qualifications"
+  ],
+  "addedField": {
+    "fieldPath": "executionBuildIdentity",
+    "columnName": "executionBuildIdentity",
+    "affinity": "TEXT",
+    "defaultValue": "NULL"
+  },
+  "generatedSchemaSha256": "1dd9b59fff88721875cb0583fd3ddc46ebf1a42a4b0115cc85239659e67c47fe"
+}

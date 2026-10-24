@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.sdk.provider.LocalRoleRecommendationTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:44:39.442Z" hostname="MINIFOXEY" time="0.05">
+  <properties/>
+  <testcase name="oldOrLegacyBuildHistoryCannotRecommendCurrentInstalledBuild" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.043"/>
+  <testcase name="latestInstabilityAndCriticalPressureExcludeAllRoles" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="textArtifactsNeverRecommendVision" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="differentBuildsCannotBeComparedAsOneMeasuredEnvironment" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="nativeLoopPrecedesLatency" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="fastQualityPrecedesLatency" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="reasoningRequiresAllAnswers" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="backendConfigurationsNeverProduceComparativeConfidence" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="versionOneHistoryCannotRecommendVersionTwoConfiguration" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="remoteAndIneligibleAreExcluded" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="comparativeFastUsesWarmMedian" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.0"/>
+  <testcase name="allIdentityChangesInvalidateEvidence" classname="com.halo.sdk.provider.LocalRoleRecommendationTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

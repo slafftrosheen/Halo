@@ -1765,7 +1765,8 @@ object ManualDependencyGraph {
     } }
 
     val localRoleQualificationRepository by lazy {
-        com.halo.app.data.models.LocalRoleQualificationRepository(appDatabase.localRoleQualificationDao(), deviceRuntimeIdentity)
+        com.halo.app.data.models.LocalRoleQualificationRepository(appDatabase.localRoleQualificationDao(), deviceRuntimeIdentity,
+            com.halo.providers.litert.runtime.LiteRtExecutionBuildIdentity.current(applicationContext))
     }
     val localRoleEvidenceController by lazy {
         com.halo.app.ai.LocalRoleEvidenceController(localRoleQualificationRepository, modelManager,

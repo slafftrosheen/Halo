@@ -193,6 +193,7 @@ class LiteRtBackendQualificationStore(
     private val storage: Storage,
     private val runtimeVersion: String = LiteRtLocalProvider.RUNTIME_VERSION,
     private val deviceIdentityProvider: () -> String = { LiteRtDeviceIdentity.current() },
+    private val executionBuildIdentityProvider: () -> String? = { null },
 ) {
     data class Record(
         val artifactSha256: String?,
@@ -203,6 +204,7 @@ class LiteRtBackendQualificationStore(
         val ambiguousUncleanExits: Int,
         val qualifiedAtMs: Long?,
         val updatedAtMs: Long,
+        val executionBuildIdentity: String? = null,
     )
 
     /** Outcome of reconciling a stale pending native attempt against a previous process exit. */
@@ -233,6 +235,7 @@ class LiteRtBackendQualificationStore(
                         ambiguousUncleanExits = obj.optInt("ambiguousUncleanExits", 0),
                         qualifiedAtMs = if (obj.isNull("qualifiedAtMs")) null else obj.optLong("qualifiedAtMs"),
                         updatedAtMs = obj.optLong("updatedAtMs"),
+                        executionBuildIdentity = obj.optString("executionBuildIdentity").ifBlank { null },
                     )
                 }.getOrNull()
             }
@@ -240,12 +243,22 @@ class LiteRtBackendQualificationStore(
                 it.artifactSha256 == artifactSha256 && it.runtimeVersion == runtimeVersion &&
                     it.deviceIdentity == deviceIdentityProvider()
             }
+            ?.let { record ->
+                // A known crash remains quarantined after an app update. Only
+                // positive/in-flight qualification expires with the execution build.
+                if (record.state in setOf(LiteRtBackendQualification.QUALIFIED, LiteRtBackendQualification.VERIFYING) &&
+                    (record.executionBuildIdentity == null || record.executionBuildIdentity != executionBuildIdentityProvider()))
+                    record.copy(state = LiteRtBackendQualification.UNKNOWN, qualifiedAtMs = null)
+                else record
+            }
 
     fun markVerifying(artifactSha256: String?) {
+        check(executionBuildIdentityProvider() != null) { "Installed execution build identity unavailable" }
         persist(artifactSha256, state = LiteRtBackendQualification.VERIFYING)
     }
 
     fun markQualified(artifactSha256: String?) {
+        check(executionBuildIdentityProvider() != null) { "Installed execution build identity unavailable" }
         persist(artifactSha256, state = LiteRtBackendQualification.QUALIFIED)
     }
 
@@ -371,6 +384,7 @@ class LiteRtBackendQualificationStore(
                 else -> null
             },
             updatedAtMs = System.currentTimeMillis(),
+            executionBuildIdentity = executionBuildIdentityProvider(),
         )
         storage.putString(gpuStorageKey(artifactSha256), record.toJson())
     }
@@ -384,6 +398,7 @@ class LiteRtBackendQualificationStore(
         put("ambiguousUncleanExits", ambiguousUncleanExits)
         put("qualifiedAtMs", qualifiedAtMs ?: JSONObject.NULL)
         put("updatedAtMs", updatedAtMs)
+        executionBuildIdentity?.let { put("executionBuildIdentity", it) }
     }.toString()
 
     companion object {

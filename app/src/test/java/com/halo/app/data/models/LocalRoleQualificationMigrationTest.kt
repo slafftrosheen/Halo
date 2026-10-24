@@ -42,4 +42,32 @@ class LocalRoleQualificationMigrationTest {
             close()
         }
     }
+
+    @Test fun buildIdentityMigrationPreservesLegacyPassAsUnscopedHistory() {
+        val name = "r30.db"
+        helper.createDatabase(name, 29).apply {
+            execSQL("""INSERT INTO local_role_qualifications
+                (id, artifactId, artifactFingerprint, deviceFingerprint, runtime, runtimeVersion,
+                compatibilityEpoch, backend, contextTokens, threads, gpuLayers, probeSuiteVersion,
+                testedAtMs, artifactBytes, loadMs, coldTtftMs, warmTtftSamples, fastVerdict,
+                warmSamples, warmMedianMs, chatVerdict, chatPassed, chatTotal, reasoningVerdict,
+                reasoningPassed, reasoningTotal, agenticVerdict, toolProtocol, initialToolPass,
+                continuationPass, visionVerdict, verifiedVision, stable, memoryPressure, failureCode)
+                VALUES ('legacy','model','${"a".repeat(64)}','device','LITERT','0.18.0',
+                1,'CPU',4096,4,0,2,1,100,1,1,'1,1,1','PASS',3,1,'PASS',3,3,'PASS',3,3,
+                'PASS','HALO_PROMPT',1,1,'NOT_APPLICABLE',0,1,'NORMAL',NULL)""".trimIndent())
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 30, true, AppDatabase.MIGRATION_29_30).apply {
+            query("SELECT id, artifactFingerprint, fastVerdict, executionBuildIdentity FROM local_role_qualifications").use {
+                assertTrue(it.moveToFirst())
+                assertEquals("legacy", it.getString(0))
+                assertEquals("a".repeat(64), it.getString(1))
+                assertEquals("PASS", it.getString(2))
+                assertTrue(it.isNull(3))
+                assertFalse(it.moveToNext())
+            }
+            close()
+        }
+    }
 }

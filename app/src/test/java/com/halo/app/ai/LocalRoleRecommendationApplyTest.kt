@@ -36,6 +36,8 @@ class LocalRoleRecommendationApplyTest {
         val changed = row.copy(identity = row.identity.copy(contextTokens = 2048))
         assertFalse(applyMeasuredRecommendation(AiModelRole.FAST, ref, row, recommendation(AiModelRole.FAST), "b".repeat(64), true, writes::add, writes::add))
         assertFalse(applyMeasuredRecommendation(AiModelRole.FAST, ref, row, recommendation(AiModelRole.FAST, changed), row.identity.artifactFingerprint, true, writes::add, writes::add))
+        val replaced = row.copy(identity = row.identity.copy(executionBuildIdentity = "replacement"))
+        assertFalse(applyMeasuredRecommendation(AiModelRole.FAST, ref, row, recommendation(AiModelRole.FAST, replaced), row.identity.artifactFingerprint, true, writes::add, writes::add))
         assertFalse(applyMeasuredRecommendation(AiModelRole.FAST, ref, row, recommendation(AiModelRole.FAST), row.identity.artifactFingerprint, false, writes::add, writes::add))
         assertFalse(applyMeasuredRecommendation(AiModelRole.FAST, ref, row, recommendation(AiModelRole.FAST).copy(recommended = null), row.identity.artifactFingerprint, true, writes::add, writes::add))
         assertTrue(writes.isEmpty())

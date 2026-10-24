@@ -30,6 +30,7 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, LocalRoleEvidenceState())
     fun invalidate() { revision.update { it + 1 } }
     private fun identities(): Set<LocalRoleEvidenceIdentity> {
+        val buildIdentity = repository.executionBuildIdentity ?: return emptySet()
         val local = provider() ?: return emptySet()
         val ready = inventory.inventoryState.value as? LocalModelInventoryState.Ready ?: return emptySet()
         return ready.models.filter { it.valid && it.sha256 != null }.map { descriptor ->
@@ -39,7 +40,8 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
                 repository.device.fingerprint, "LITERT", LiteRtLocalProvider.RUNTIME_VERSION,
                 LOCAL_ROLE_QUALIFICATION_COMPAT_EPOCH, backend.name,
                 config.contextSize.takeUnless { config.useModelDefaultContext }, config.cpuThreads,
-                if (backend == LocalComputeBackend.CPU) 0 else config.gpuLayers, ROLE_PROBE_SUITE_VERSION)
+                if (backend == LocalComputeBackend.CPU) 0 else config.gpuLayers, ROLE_PROBE_SUITE_VERSION,
+                executionBuildIdentity = buildIdentity)
         }.toSet()
     }
     private fun project(rows: List<LocalRoleQualificationEntity>, eligible: Map<AiModelRole, List<AiRoleCandidate>>): LocalRoleEvidenceState {
@@ -94,6 +96,7 @@ class LocalRoleEvidenceController(private val repository: LocalRoleQualification
     }
     fun report(source: String): String = buildString {
         appendLine("Halo source=$source roleProbeSuite=$ROLE_PROBE_SUITE_VERSION compatibilityEpoch=$LOCAL_ROLE_QUALIFICATION_COMPAT_EPOCH")
+        appendLine("executionBuild=${repository.executionBuildIdentity ?: "UNKNOWN"}")
         appendLine("textAndToolFixtureLanguage=en; otherLanguages=NOT_QUALIFIED_BY_THIS_REPORT")
         for (r in state.value.current) {
             appendLine("model=${r.artifactId} sha=${r.artifactFingerprint.take(12)} backend=${r.backend} context=${r.contextTokens} threads=${r.threads} gpuLayers=${r.gpuLayers} testedAt=${r.testedAtMs}")

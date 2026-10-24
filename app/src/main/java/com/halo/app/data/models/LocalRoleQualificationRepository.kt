@@ -7,9 +7,10 @@ import java.util.UUID
 
 /** Explicit completed-suite boundary; never called by inference or discovery. */
 class LocalRoleQualificationRepository(private val dao: LocalRoleQualificationDao,
-    val device: DeviceRuntimeIdentity) {
+    val device: DeviceRuntimeIdentity, val executionBuildIdentity: String? = null) {
     val history = dao.observeDevice(device.fingerprint)
     suspend fun save(row: LocalModelRoleQualification): Boolean {
+        val buildIdentity = executionBuildIdentity ?: return false
         if (row.failure in setOf(LocalRoleProbeFailure.CANCELLED, LocalRoleProbeFailure.ARTIFACT_CHANGED,
                 LocalRoleProbeFailure.RESOURCE_BUSY, LocalRoleProbeFailure.ARTIFACT_UNAVAILABLE) ||
             !row.artifactFingerprint.matches(Regex("[0-9a-f]{64}")) || row.backend == null ||
@@ -35,7 +36,8 @@ class LocalRoleQualificationRepository(private val dao: LocalRoleQualificationDa
             row.agentic?.protocol?.name ?: "NONE", row.agentic?.initialToolPass ?: false,
             row.agentic?.continuationPass ?: false, row.vision?.verdict?.name ?: "NOT_APPLICABLE",
             vision?.verdict == LocalRoleProbeVerdict.PASS && vision.eligibility == "VISION_LAB_PROVEN",
-            !unstable, pressure, row.failure?.name ?: row.fast?.failure?.name ?: row.chat?.failure?.name ?: row.reasoning?.failure?.name ?: row.agentic?.failure?.name))
+            !unstable, pressure, row.failure?.name ?: row.fast?.failure?.name ?: row.chat?.failure?.name ?: row.reasoning?.failure?.name ?: row.agentic?.failure?.name,
+            executionBuildIdentity = buildIdentity))
         return true
     }
 }

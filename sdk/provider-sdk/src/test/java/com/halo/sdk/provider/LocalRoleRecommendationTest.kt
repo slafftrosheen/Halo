@@ -72,4 +72,21 @@ class LocalRoleRecommendationTest {
         assertEquals(LocalRoleRecommendationConfidence.NONE, recommend(AiModelRole.FAST, listOf(a, b)).confidence)
         assertNull(recommend(AiModelRole.FAST, listOf(a, b)).recommended)
     }
+
+    @Test fun oldOrLegacyBuildHistoryCannotRecommendCurrentInstalledBuild() {
+        val legacy = row("a", 1000)
+        val old = legacy.copy(identity = legacy.identity.copy(executionBuildIdentity = "old"))
+        val current = old.identity.copy(executionBuildIdentity = "new")
+        AiModelRole.entries.forEach { role ->
+            assertNull(recommend(role, listOf(legacy, old), setOf(current)).recommended)
+        }
+        val measured = old.copy(identity = current)
+        assertEquals(current.ref, recommend(AiModelRole.FAST, listOf(legacy, old, measured), setOf(current)).recommended)
+    }
+
+    @Test fun differentBuildsCannotBeComparedAsOneMeasuredEnvironment() {
+        val a = row("a", 1000).let { it.copy(identity = it.identity.copy(executionBuildIdentity = "old")) }
+        val b = row("b", 2000).let { it.copy(identity = it.identity.copy(executionBuildIdentity = "new")) }
+        assertNull(recommend(AiModelRole.FAST, listOf(a, b)).recommended)
+    }
 }

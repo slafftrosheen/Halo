@@ -42,8 +42,8 @@ class LiteRtBackendQualificationTest {
     @Test fun stableGpuDoesNotBecomeAnAutomaticSpeedRecommendationOnEightGbPhone() {
         val storage = MemoryStorage()
         val sha = "a".repeat(64)
-        LiteRtBackendQualificationStore(storage, "runtime", { "device" }).markQualified(sha)
-        val stored = LiteRtBackendQualificationStore(storage, "runtime", { "device" })
+        LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "build" }).markQualified(sha)
+        val stored = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "build" })
         val resolution = LiteRtBackendQualificationPolicy.resolve(LocalComputeBackend.AUTO, stored.qualificationFor(sha))
         val mobile = LiteRtMobileBackendPolicy.apply(resolution, 7_970_328_576L, false)
         assertEquals(LocalComputeBackend.AUTO, mobile.requested)
@@ -66,14 +66,64 @@ class LiteRtBackendQualificationTest {
 
     @Test fun qualificationDoesNotCrossArtifactOrRuntimeAndSurvivesRecreation() {
         val storage = MemoryStorage()
-        val store = LiteRtBackendQualificationStore(storage, "runtime", { "device" })
+        val store = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "build" })
         val sha = "a".repeat(64)
         store.markQualified(sha)
-        assertEquals(LiteRtBackendQualification.QUALIFIED, LiteRtBackendQualificationStore(storage, "runtime", { "device" }).qualificationFor(sha))
+        assertEquals(LiteRtBackendQualification.QUALIFIED, LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "build" }).qualificationFor(sha))
         assertEquals(LiteRtBackendQualification.UNKNOWN, store.qualificationFor("a".repeat(16) + "b".repeat(48)))
         assertEquals(LiteRtBackendQualification.UNKNOWN, LiteRtBackendQualificationStore(storage, "new", { "device" }).qualificationFor(sha))
         store.recordUncleanExit(sha, LiteRtProcessExitReason.CRASH_NATIVE)
         assertEquals(LiteRtBackendQualification.QUARANTINED, store.qualificationFor(sha))
+    }
+
+    @Test fun appReplacementRevokesPositiveGpuQualificationAndCanRequalify() {
+        val storage = MemoryStorage()
+        val sha = "a".repeat(64)
+        val old = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "old" })
+        old.markQualified(sha)
+        val replaced = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "new" })
+        assertEquals(LiteRtBackendQualification.UNKNOWN, replaced.qualificationFor(sha))
+        assertEquals(LocalComputeBackend.CPU, LiteRtBackendQualificationPolicy.resolve(
+            LocalComputeBackend.GPU, replaced.qualificationFor(sha), false).effective)
+        replaced.markQualified(sha)
+        assertEquals(LiteRtBackendQualification.QUALIFIED, replaced.qualificationFor(sha))
+        assertEquals(LiteRtBackendQualification.UNKNOWN, old.qualificationFor(sha))
+    }
+
+    @Test fun appReplacementPreservesNegativeQuarantineAndAmbiguousExitHistory() {
+        val storage = MemoryStorage()
+        val sha = "a".repeat(64)
+        val old = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "old" })
+        old.quarantine(sha, "observed native crash")
+        val replaced = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "new" })
+        assertEquals(LiteRtBackendQualification.QUARANTINED, replaced.qualificationFor(sha))
+        assertEquals("observed native crash", replaced.recordFor(sha)?.quarantineReason)
+        old.clear(sha)
+        old.recordUncleanExit(sha, LiteRtProcessExitReason.UNKNOWN)
+        assertEquals(1, replaced.recordFor(sha)?.ambiguousUncleanExits)
+        assertEquals(LiteRtBackendQualificationStore.UncleanExitDecision.Outcome.QUARANTINED,
+            replaced.recordUncleanExit(sha, LiteRtProcessExitReason.UNKNOWN).outcome)
+    }
+
+    @Test fun legacyPositiveRecordDoesNotQualifyButLegacyQuarantineRemains() {
+        val storage = MemoryStorage()
+        val sha = "a".repeat(64)
+        val store = LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "build" })
+        val legacy = org.json.JSONObject().put("artifactSha256", sha).put("runtimeVersion", "runtime")
+            .put("deviceIdentity", "device").put("state", "QUALIFIED").put("qualifiedAtMs", 1)
+        storage.putString(store.gpuStorageKey(sha), legacy.toString())
+        assertEquals(LiteRtBackendQualification.UNKNOWN, store.qualificationFor(sha))
+        storage.putString(store.gpuStorageKey(sha), legacy.put("state", "QUARANTINED").toString())
+        assertEquals(LiteRtBackendQualification.QUARANTINED, store.qualificationFor(sha))
+    }
+
+    @Test fun missingBuildIdentityCannotWriteOrReadPositiveQualification() {
+        val storage = MemoryStorage()
+        val sha = "a".repeat(64)
+        LiteRtBackendQualificationStore(storage, "runtime", { "device" }, { "build" }).markQualified(sha)
+        val unknown = LiteRtBackendQualificationStore(storage, "runtime", { "device" })
+        assertEquals(LiteRtBackendQualification.UNKNOWN, unknown.qualificationFor(sha))
+        assertThrows(IllegalStateException::class.java) { unknown.markQualified(sha) }
     }
 
     @Test fun journalClearsCleanAttemptsAndSurvivesProcessRecreation() {

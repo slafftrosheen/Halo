@@ -277,8 +277,9 @@ class LiteRtLocalProvider(
      * DOGFOOD-005 per-(artifact + runtime version + device/build + GPU) qualification state.
      * AUTO only ever selects a GPU that is explicitly QUALIFIED through the stability probe.
      */
+    val executionBuildIdentity: String? by lazy { LiteRtExecutionBuildIdentity.current(context) }
     val backendQualificationStore: LiteRtBackendQualificationStore =
-        LiteRtBackendQualificationStore(storage)
+        LiteRtBackendQualificationStore(storage, executionBuildIdentityProvider = { executionBuildIdentity })
     private val nativeRecoveryMutex = Mutex()
     private var nativeRecoveryComplete = false
 
@@ -1394,7 +1395,10 @@ class LiteRtLocalProvider(
      */
     private val visionEvidence = java.util.concurrent.ConcurrentHashMap<String, VisionProbeResult>()
 
-    private fun visionEvidenceStorageKey(key: String) = "litert.local.vision.probe.v1.$key"
+    private fun visionEvidenceStorageKey(key: String) = "litert.local.vision.probe.v2.$key"
+    private fun visionEvidenceKey(fingerprint: String): String? = executionBuildIdentity?.let {
+        "${VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)}:build-$it"
+    }
 
     /**
      * The Vision Lab's random-number image supplies proof only for the precise
@@ -1421,7 +1425,7 @@ class LiteRtLocalProvider(
             "Local vision text backend was not observed"
         }
         val sha = requireNotNull(descriptor.sha256)
-        val key = VisionQualificationKey.of(sha, RUNTIME_VERSION)
+        val key = requireNotNull(visionEvidenceKey(sha)) { "Installed execution build identity unavailable" }
         val imageBackend = requireNotNull(com.halo.providers.litert.runtime.LiteRtModelPreflight.visionBackend(
             physical.path, physical.bytes, physical.modifiedAt)) { "Local vision encoder was not observed" }
         visionEvidence[key] = VisionProbeResult(key, true, effectiveBackend, 0L, true, null)
@@ -1432,12 +1436,12 @@ class LiteRtLocalProvider(
         inventoryRepository.resolveModel(modelId)?.let(::visionQualificationFor)
 
     suspend fun visionQualificationKeyForModel(modelId: String): String? =
-        inventoryRepository.resolveModel(modelId)?.sha256?.let { VisionQualificationKey.of(it, RUNTIME_VERSION) }
+        inventoryRepository.resolveModel(modelId)?.sha256?.let(::visionEvidenceKey)
 
     fun visionQualificationFor(descriptor: LocalModelDescriptor): VisionQualification? {
         if (!descriptor.supportsVision) return null
         val fingerprint = descriptor.sha256 ?: return VisionQualification.DECLARED
-        val key = VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)
+        val key = visionEvidenceKey(fingerprint) ?: return VisionQualification.PROBE_REQUIRED
         val evidence = visionEvidence[key]
         val persisted = storage.getString(visionEvidenceStorageKey(key)) in
             setOf("TEXT_CPU;IMAGE_GPU", "TEXT_GPU;IMAGE_GPU", "TEXT_CPU;IMAGE_CPU", "TEXT_GPU;IMAGE_CPU", LocalComputeBackend.GPU.name)
@@ -1454,7 +1458,7 @@ class LiteRtLocalProvider(
         val started = System.currentTimeMillis()
         val descriptor = inventoryRepository.resolveModel(modelId)
         val fingerprint = descriptor?.sha256
-        val key = fingerprint?.let { VisionQualificationKey.of(it, RUNTIME_VERSION) }
+        val key = fingerprint?.let(::visionEvidenceKey)
         if (descriptor == null || !descriptor.valid || !descriptor.supportsVision || key == null) {
             return@withContext VisionProbeResult(key, false, null, 0, false, "ARTIFACT_OR_CAPABILITY")
         }

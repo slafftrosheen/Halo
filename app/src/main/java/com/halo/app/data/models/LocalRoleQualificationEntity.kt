@@ -40,11 +40,12 @@ data class LocalRoleQualificationEntity(
     val verifiedVision: Boolean,
     val stable: Boolean,
     val memoryPressure: String,
-    val failureCode: String?
+    val failureCode: String?,
+    @ColumnInfo(defaultValue = "NULL") val executionBuildIdentity: String? = null,
 ) {
     fun identity() = LocalRoleEvidenceIdentity(AiModelRef("provider.litert.local", artifactId),
         artifactFingerprint, deviceFingerprint, runtime, runtimeVersion, compatibilityEpoch,
-        backend, contextTokens, threads, gpuLayers, probeSuiteVersion)
+        backend, contextTokens, threads, gpuLayers, probeSuiteVersion, executionBuildIdentity)
     fun evidence() = LocalRoleCandidateEvidence(identity(), testedAtMs, stable, memoryPressure,
         artifactBytes, loadMs, fastVerdict == "PASS", warmSamples, warmMedianMs,
         chatPassed, chatTotal, reasoningPassed, reasoningTotal, agenticVerdict == "PASS",

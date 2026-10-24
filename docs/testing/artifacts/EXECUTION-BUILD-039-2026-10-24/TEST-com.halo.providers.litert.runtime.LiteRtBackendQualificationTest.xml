@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:46:38.853Z" hostname="MINIFOXEY" time="2.582">
+  <properties/>
+  <testcase name="journalClearsCleanAttemptsAndSurvivesProcessRecreation" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="2.025"/>
+  <testcase name="stableGpuDoesNotBecomeAnAutomaticSpeedRecommendationOnEightGbPhone" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.065"/>
+  <testcase name="missingBuildIdentityCannotWriteOrReadPositiveQualification" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.023"/>
+  <testcase name="catalogGpuPreferenceDoesNotBypassQualification" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.019"/>
+  <testcase name="androidExitCodesMatchPlatformRatherThanGuessedConstants" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.019"/>
+  <testcase name="autoAndExplicitCpuRemainCpuForEveryStabilityState" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.024"/>
+  <testcase name="appReplacementPreservesNegativeQuarantineAndAmbiguousExitHistory" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.024"/>
+  <testcase name="qualificationDoesNotCrossArtifactOrRuntimeAndSurvivesRecreation" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.021"/>
+  <testcase name="appReplacementRevokesPositiveGpuQualificationAndCanRequalify" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.019"/>
+  <testcase name="legacyPositiveRecordDoesNotQualifyButLegacyQuarantineRemains" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.016"/>
+  <testcase name="zeroGenerationsCannotQualifyGpu" classname="com.halo.providers.litert.runtime.LiteRtBackendQualificationTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

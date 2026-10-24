@@ -1,0 +1,66 @@
+[
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/runtime/LiteRtExecutionBuildIdentity.kt",
+    "sha256": "5a453cc300416d459fcd85b99347395c15695aacbf4e5130cf90fe6065ba283c"
+  },
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/LiteRtLocalProvider.kt",
+    "sha256": "96a90561b0603a6e75cc56a7cf59f61926f4dac547b8a0a33ee4e81a3e5d1dee"
+  },
+  {
+    "path": "providers/litert/src/main/java/com/halo/providers/litert/runtime/LiteRtBackendQualification.kt",
+    "sha256": "dce85425896582352cfa002f7e19af9cd154c90b701cbfefab60f138b1bde177"
+  },
+  {
+    "path": "providers/litert/src/test/java/com/halo/providers/litert/runtime/LiteRtBackendQualificationTest.kt",
+    "sha256": "660c6a8d511ce3c41ac720dc77c0f7018589d87de7f2be7ca93ee44787b8ea19"
+  },
+  {
+    "path": "sdk/provider-sdk/src/main/java/com/halo/sdk/provider/LocalRoleRecommendation.kt",
+    "sha256": "e8d10d4cf6a284c1315250daef256754f7edb9b01481d8c218348000305a046e"
+  },
+  {
+    "path": "sdk/provider-sdk/src/test/java/com/halo/sdk/provider/LocalRoleRecommendationTest.kt",
+    "sha256": "505fe3e3f4f3125aa857f940b6630c2fd3fe4fde5adf1db458e1ea7925063770"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+    "sha256": "6d5f88fcb1b16e6118541e9daf16180c1b6c587b844216e9c276d4f29e98e80b"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/models/LocalRoleQualificationEntity.kt",
+    "sha256": "92e84fc0c9f5c105108c1476b1422a349431feb0b1aa1dcfee2258edd1d2857e"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/data/models/LocalRoleQualificationRepository.kt",
+    "sha256": "895cd581473a688a9aee7bff6bd97141c1d976b70903be996d6ce841dd4d49c9"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ai/LocalRoleEvidenceController.kt",
+    "sha256": "1413efe17111045064e89e1e92b08ee65f53a90347a4497a9ec63b33f426427c"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+    "sha256": "ecb419c19a06dd746dd9e765113d08f3a5e50a070e9f28cf7df65646036b19bf"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/models/LocalRoleQualificationRepositoryTest.kt",
+    "sha256": "898f340850d3857cb41930f95583ef0ce8fff541b736487cc19337cc4b66a2e0"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/data/models/LocalRoleQualificationMigrationTest.kt",
+    "sha256": "59ec696645a10524996d5ffe5eb502965f23ac6da8c965e24d402969e92ecc7f"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalRoleRecommendationApplyTest.kt",
+    "sha256": "5e729896b2c26af228f60015debfa3a3f09cca42b567092516043e84513078f5"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalVisionBuildQualificationTest.kt",
+    "sha256": "4ea9c4ba94cdb3465123da61ab748841b6afea6f9defeb1bd0fce55e653faa91"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/IntentQualificationFixture.kt",
+    "sha256": "c2e7f80fa79fa9cd032e1139d73bc70e5a0c74ee006582b5838abb532dc904e9"
+  }
+]

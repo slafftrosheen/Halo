@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.LocalRoleRecommendationApplyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T06:55:08.099Z" hostname="MINIFOXEY" time="0.013">
+  <properties/>
+  <testcase name="explicitChatUsesConversationAuthorityOnly" classname="com.halo.app.ai.LocalRoleRecommendationApplyTest" time="0.004"/>
+  <testcase name="stalePhysicalConfigurationAndEligibilityNeverWriteSettings" classname="com.halo.app.ai.LocalRoleRecommendationApplyTest" time="0.004"/>
+  <testcase name="verifiedColdModelIsAvailableWithoutLoading" classname="com.halo.app.ai.LocalRoleRecommendationApplyTest" time="0.001"/>
+  <testcase name="explicitNonChatUsesRoleAuthorityOnly" classname="com.halo.app.ai.LocalRoleRecommendationApplyTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
