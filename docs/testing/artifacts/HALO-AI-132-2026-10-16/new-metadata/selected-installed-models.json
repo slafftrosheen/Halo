@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "serial": "f01fe673",
+  "runId": "9ed2cd2f81b74de7ba5fafcd2c51d719",
+  "sourceStamp": "f7ed8154858bf2cc6f8f2161d39d2998dae2f470-dirty-bd60c6a678f755c0506f143b2d220630e34a53b10f2333819c9599ec8d744ddd-fa3e4e097f0b83e6ff6176790122f3c10aab6269e0655d4c17cbc34e1f1f4156",
+  "capturedAtMs": 1792138025558,
+  "models": [
+    {
+      "id": "hf-f7f2c166747af13676d789d6",
+      "filename": "hf-f7f2c166747af13676d789d6.litertlm",
+      "sha256": "c9065e28358a1f2f61a9c0d86172d6d16254d0f9097a519e82fc1346c17f9c62",
+      "bytes": 176756720,
+      "state": "VERIFIED_ARTIFACT",
+      "verified": true,
+      "runnable": true,
+      "declaredTask": "GENERATION",
+      "artifactVersion": "58f0603b4576964013c87bbd75124a358d48cd44",
+      "minimumRuntime": "0.17.1",
+      "enabledModalities": [
+        "TEXT"
+      ],
+      "detectedSupport": "NOT_INSPECTED",
+      "knownNonRunnable": false
+    }
+  ]
+}

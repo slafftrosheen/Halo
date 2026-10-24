@@ -1,0 +1,133 @@
+{
+  "baseCommit": "f7ed8154858bf2cc6f8f2161d39d2998dae2f470",
+  "branch": "codex/ai132-prerequisite-tests",
+  "modules": {
+    "sdk/runtime-sdk": {
+      "tests": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "sdk/provider-sdk": {
+      "tests": 39,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "providers/litert": {
+      "tests": 171,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "engines/ai": {
+      "tests": 81,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "providers/openrouter": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "tests": 909,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "localization": {
+    "strings": 2534,
+    "languages": [
+      "en",
+      "lv",
+      "ru"
+    ],
+    "status": "PASSED"
+  },
+  "runnerStatusCases": {
+    "tests": 11,
+    "failures": 0
+  },
+  "uiPhysical": {
+    "junitTests": 4,
+    "passed": 4,
+    "widgetRenderCases": 45,
+    "miniBusyCases": 9,
+    "reviewGate": true,
+    "kokoroNonzeroPcm": true
+  },
+  "apks": {
+    "app/build/outputs/apk/debug/app-debug.apk": {
+      "bytes": 279254729,
+      "sha256": "bd60c6a678f755c0506f143b2d220630e34a53b10f2333819c9599ec8d744ddd",
+      "installed": true
+    },
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": {
+      "bytes": 1659438,
+      "sha256": "fa3e4e097f0b83e6ff6176790122f3c10aab6269e0655d4c17cbc34e1f1f4156",
+      "installed": true
+    }
+  },
+  "snapshotCaptures": {
+    "tests": 18,
+    "passed": 18,
+    "archive": "visual-snapshots.zip",
+    "visuallyInspected": [
+      "minimumShortWidgetLargeText",
+      "russianLargeMiniHalo",
+      "russianSettingsLargeText"
+    ],
+    "finding": "Heavy wrapping and mixed-language runtime fallback text in Russian 2x Settings; full visual acceptance remains open"
+  },
+  "followupApks": {
+    "mainSha256": "bd60c6a678f755c0506f143b2d220630e34a53b10f2333819c9599ec8d744ddd",
+    "testSha256": "e4f4325a7b48bb18232bf81ade54fbe448b2be68f66e97fdcfb8783a77b0c607",
+    "mainUnchanged": true,
+    "testInstalled": true
+  },
+  "additionalPhysical": {
+    "miniActivityLaunchAndBack": "PASSED",
+    "audioPlatformChecks": 3,
+    "audioPassed": 3,
+    "phoneSpeakerOperatorObservation": "Heard both clearly",
+    "connectedAccessoryEndpoints": 0
+  },
+  "remoteMainRecheckedBeforePublication": "f7ed8154858bf2cc6f8f2161d39d2998dae2f470",
+  "fixedSemanticFixtures": {
+    "attempted": 36,
+    "normalizedExactMatches": 18,
+    "answerOrFormatMismatch": 14,
+    "noFinalText": 4,
+    "allUnloaded": true
+  },
+  "fixedLanguageFixtures": {
+    "attempted": 6,
+    "statuses": {
+      "NO_ANSWER_TEXT": 2,
+      "PASSED": 2,
+      "ANSWER_MISMATCH": 2
+    },
+    "allUnloaded": true
+  },
+  "finalDevice": {
+    "modelFilenamesUnchanged": true,
+    "batteryPercent": 98,
+    "temperatureC": 34.0
+  },
+  "currentModelGates": {
+    "cpuNonemptyModels": 7,
+    "cpuFreshCycles": 21,
+    "cpuMarkerMatches": 18,
+    "haloProviderNonemptyModels": 7,
+    "residentPassingModels": 6,
+    "residentAttemptedModels": 7,
+    "gpuPassingModels": 4,
+    "gpuAttemptedModels": 6,
+    "gpuCyclesPerArtifact": 1,
+    "syntheticVision": "FAILED_CONVERSATION_CREATE"
+  }
+}

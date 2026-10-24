@@ -1,0 +1,8 @@
+"ModelId","Backend","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile"
+"hf-f7f2c166747af13676d789d6","CPU","0","5","1024","FAILED_MODEL","0","hf-f7f2c166747af13676d789d6-CPU-ctx1024-resident5.txt"
+"qwen3-0.6b-dynamic-int4","CPU","0","5","1024","PASSED","0","qwen3-0.6b-dynamic-int4-CPU-ctx1024-resident5.txt"
+"hf-9d6251014a57541e6d480246","CPU","0","5","1024","PASSED","0","hf-9d6251014a57541e6d480246-CPU-ctx1024-resident5.txt"
+"hf-56dddfebc1a578ba0819b264","CPU","0","5","1024","PASSED","0","hf-56dddfebc1a578ba0819b264-CPU-ctx1024-resident5.txt"
+"hf-a7b72b611ef7b000b9a8863b","CPU","0","5","1024","PASSED","0","hf-a7b72b611ef7b000b9a8863b-CPU-ctx1024-resident5.txt"
+"hf-bd0aa69cc5a463dc68829a7a","CPU","0","5","1024","PASSED","0","hf-bd0aa69cc5a463dc68829a7a-CPU-ctx1024-resident5.txt"
+"hf-0715c8de6c56d9acce57bc95","CPU","0","5","1024","PASSED","0","hf-0715c8de6c56d9acce57bc95-CPU-ctx1024-resident5.txt"

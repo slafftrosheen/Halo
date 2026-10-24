@@ -18,10 +18,15 @@ import org.robolectric.annotation.Config
 class PresenceArtworkContractTest {
     @Test fun bundledAnimationsParseWithoutExternalAssets() {
         val context = ApplicationProvider.getApplicationContext<Application>()
-        val files = context.assets.list("halo")!!.filter { it.endsWith(".json") }
-        assertTrue("No bundled animations", files.isNotEmpty())
+        fun jsonAssets(path: String): Set<String> = context.assets.list(path).orEmpty().flatMap { name ->
+            val asset = "$path/$name"
+            if (name.endsWith(".json")) listOf(asset) else jsonAssets(asset)
+        }.toSet()
+        val files = jsonAssets("halo")
+        val presence = files.filter { it.startsWith("halo/halo_orb_") || it.startsWith("halo/halo_kids_orb_") }
+        assertEquals(60, presence.size)
         files.forEach { file ->
-            val result = LottieCompositionFactory.fromAssetSync(context, "halo/$file")
+            val result = LottieCompositionFactory.fromAssetSync(context, file)
             assertNotNull("$file: ${result.exception}", result.value)
             assertTrue(file, result.value!!.images.isEmpty())
         }

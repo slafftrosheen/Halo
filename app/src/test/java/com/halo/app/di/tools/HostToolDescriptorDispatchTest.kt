@@ -239,6 +239,18 @@ class HostToolDescriptorDispatchTest {
         )
     }
 
+    @Test
+    fun `native host controls retain confirmation and cannot replay after ownership expansion`() {
+        for (name in listOf("halo_native_destination", "halo_native_target", "halo_native_shortcut",
+            "halo_native_global", "halo_native_map", "halo_google_mail", "halo_open_notification")) {
+            val policy = descriptor(name).security
+            assertEquals(name, ConfirmationPolicy.ALWAYS, policy.confirmation)
+            assertEquals(name, ReplaySafety.NEVER_REPLAY, policy.replaySafety)
+        }
+        assertEquals(ToolCategory.NAVIGATION, descriptor("halo_native_map").category)
+        assertEquals(ToolRiskClass.READ_ONLY, descriptor("halo_native_result").security.risk)
+    }
+
     /**
      * The registry's own fallback is `SYSTEM` + `SENSITIVE` + `USER_POLICY` + `NEVER_REPLAY`
      * with no keywords and no presentation. No declared host descriptor has that shape, so

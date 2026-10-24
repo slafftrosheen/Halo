@@ -24,7 +24,10 @@ class WearableAccessPhysicalTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val manager = context.getSystemService(AudioManager::class.java)
         val registry = AndroidAudioAccessoryRegistry(context)
-        val provider = com.halo.providers.android.tts.AndroidTTSProvider(context)
+        // Keep this opt-in route probe offline and use only the already-installed pack.
+        val provider = com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry.providers
+            .filterIsInstance<KokoroSpeechProvider>().single()
+        check(provider.health()) { "Installed Kokoro pack required; no download or fallback" }
         val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT)
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
         val player = RoutedSpeechPlaybackProvider(context, provider, attributes)
@@ -44,7 +47,8 @@ class WearableAccessPhysicalTest {
         val inventory = JSONObject().put("model", Build.MODEL).put("api", Build.VERSION.SDK_INT)
             .put("savedHaloDevices", JSONArray(com.halo.app.di.ManualDependencyGraph.deviceSessionManager.registry.getSavedDevices().map { record -> JSONObject().put("kind", record.descriptor.kind.name).put("keyDigest", MessageDigest.getInstance("SHA-256").digest(record.identity.deviceId.toByteArray()).take(6).joinToString("") { "%02x".format(it) }) }))
             .put("accessories", JSONArray(registry.accessories.value.map { accessory -> JSONObject()
-                .put("kind", accessory.kind.name).put("key", accessory.id).put("input", accessory.canInput)
+                .put("kind", accessory.kind.name).put("keyDigest", MessageDigest.getInstance("SHA-256")
+                    .digest(accessory.id.toByteArray()).take(6).joinToString("") { "%02x".format(it) }).put("input", accessory.canInput)
                 .put("output", accessory.canOutput).put("communication", accessory.communicationCapable) }))
         suspend fun play(name: String, target: SpeechOutputTarget, sentence: String) {
             try {
