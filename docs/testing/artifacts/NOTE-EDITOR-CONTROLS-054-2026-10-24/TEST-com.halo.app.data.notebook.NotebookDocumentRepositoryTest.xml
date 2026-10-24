@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-24T04:30:26.418Z" hostname="MINIFOXEY" time="7.409">
+  <properties/>
+  <testcase name="a recovery draft newer than the commit survives its acknowledgement" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="6.479"/>
+  <testcase name="a trashed note rejects commits" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.086"/>
+  <testcase name="a stale commit is refused instead of overwriting" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.079"/>
+  <testcase name="a structural recovery draft round-trips block identity" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.079"/>
+  <testcase name="opening a legacy body parses it once without claiming an edit" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.069"/>
+  <testcase name="the stored body is exactly the committed structure" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.079"/>
+  <testcase name="an automatic title keeps following the body" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.069"/>
+  <testcase name="apply reads the stored document inside the commit" classname="com.halo.app.data.notebook.NotebookDocumentRepositoryTest" time="0.074"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

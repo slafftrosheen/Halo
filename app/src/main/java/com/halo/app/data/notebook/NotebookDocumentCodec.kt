@@ -201,6 +201,7 @@ object NotebookDocumentCodec {
             blocks = DocumentReducer.normalize(blocks),
             lossy = lossy,
             preservedRawLines = preserved,
+            sourceBlockCount = blocks.size,
         )
     }
 
@@ -259,4 +260,6 @@ data class DocumentParseResult(
     val blocks: List<NoteBlock>,
     val lossy: Boolean,
     val preservedRawLines: List<String>,
+    /** Count before the reducer's capacity bound; callers must not admit a truncated replacement. */
+    val sourceBlockCount: Int = blocks.size,
 )

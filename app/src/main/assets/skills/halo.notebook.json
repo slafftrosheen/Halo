@@ -20,7 +20,25 @@
     "halo_canvas_arrange",
     "halo_canvas_delete",
     "halo_canvas_ungroup",
-    "halo_canvas_disconnect"
+    "halo_canvas_disconnect",
+    "halo_note_get",
+    "halo_note_read_block",
+    "halo_note_rename",
+    "halo_note_insert_block",
+    "halo_note_edit_block",
+    "halo_note_move_block",
+    "halo_note_indent_block",
+    "halo_note_split_block",
+    "halo_note_merge_block",
+    "halo_note_duplicate_block",
+    "halo_note_delete_block",
+    "halo_note_insert_reference",
+    "halo_note_set_reference",
+    "halo_note_replace_content",
+    "halo_note_archive",
+    "halo_note_trash",
+    "halo_note_restore",
+    "halo_note_remove_from_inbox"
   ],
   "toolDefinitions": [
     {
@@ -86,6 +104,78 @@
     {
       "toolId": "halo_canvas_disconnect",
       "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_note_get",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_note_read_block",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_note_rename",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_insert_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_edit_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_move_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_indent_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_split_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_merge_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_duplicate_block",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_delete_block",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_note_insert_reference",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_set_reference",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_replace_content",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_note_archive",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_trash",
+      "risk": "DESTRUCTIVE"
+    },
+    {
+      "toolId": "halo_note_restore",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_remove_from_inbox",
+      "risk": "REVERSIBLE"
     }
   ]
 }

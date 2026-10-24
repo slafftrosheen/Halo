@@ -1,0 +1,22 @@
+[
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\skills\\SkillInstructionSource.kt",
+    "sha256": "eff298f36d6973c9760179f9b87f22343cea520361bddc9ab0202364a5c7d13d",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\skills\\SkillRegistry.kt",
+    "sha256": "24beda3650baf46888b90a70d79f3fa024fe91ccd72f9ea27ed1d886569c8f9b",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\main\\java\\com\\halo\\runtime\\cognition\\tools\\WorkspaceToolAccess.kt",
+    "sha256": "cc39e886fe564eb571938c2c8c704026dff9a088ed68c437ad70077ba968ae42",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-issues\\runtime\\cognition\\src\\test\\java\\com\\halo\\runtime\\cognition\\tools\\NoteToolProvenanceTest.kt",
+    "sha256": "97097feaee38607e4880b7f4228bda1393b33a7d1d0f62e7d20ab6861d0307a2",
+    "unchanged": true
+  }
+]

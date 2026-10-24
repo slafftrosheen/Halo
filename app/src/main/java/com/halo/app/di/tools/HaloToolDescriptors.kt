@@ -349,6 +349,23 @@ object HaloToolDescriptors {
             readOnly(definition.name), keywords = setOf("note", "search", "find"))
         "halo_save_screen_to_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("screen", "capture", "note"))
+        "halo_note_get", "halo_note_read_block" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("note", "notebook", "read", "block"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
+        "halo_note_replace_content" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "notebook", "replace", "source"),
+            presentation = ToolPresentation(title = "Notebook", actionVerb = "Save"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
+        "halo_note_delete_block", "halo_note_trash" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "notebook", "delete", "replace", "trash"),
+            presentation = ToolPresentation(title = "Notebook", actionVerb = "Delete"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
+        "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
+        "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_insert_reference", "halo_note_set_reference",
+        "halo_note_archive", "halo_note_restore", "halo_note_remove_from_inbox" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("note", "notebook", "edit", "block", "save", "archive", "restore"),
+            presentation = ToolPresentation(title = "Notebook", actionVerb = "Save"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_study_sessions", "halo_study_state", "halo_study_card_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("study", "session", "practice", "card", "review", "learn"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))

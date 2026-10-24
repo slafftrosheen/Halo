@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.WorkspaceNoteActionsTest" tests="22" skipped="0" failures="0" errors="0" timestamp="2026-10-24T04:30:44.175Z" hostname="MINIFOXEY" time="9.823">
+  <properties/>
+  <testcase name="malformedArgumentsAndUnsupportedFieldCombinationsNeverWrite" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="6.337"/>
+  <testcase name="insertAndPartialEditPreserveOtherBlocksAndOmittedChecklistFields" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.201"/>
+  <testcase name="databaseFailureRollsBackRevisionAndBlockMutationTogether" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.104"/>
+  <testcase name="archiveTrashRestoreAndInboxUseExistingLifecycleWithoutChangingContent" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.155"/>
+  <testcase name="blockCapacityAndSurrogateBoundaryRefuseLossyOperations" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.734"/>
+  <testcase name="markdownReplacementReportsLiteralFallbackAndRejectsNewUnversionedReferences" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.122"/>
+  <testcase name="addingOrRemovingAnAttachmentInvalidatesAnOlderTrashApprovalWithoutChangingNoteRevision" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.084"/>
+  <testcase name="referenceCannotReadUnsupportedWorkspaceKindsThroughAGuessedVersion" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.074"/>
+  <testcase name="referencesRequireExactActiveTargetAndCannotMutateTheirSource" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.122"/>
+  <testcase name="renameUsesCanonicalRevisionAndRejectsAStaleOrConcurrentEditorWrite" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.076"/>
+  <testcase name="concurrentEditsOfAnObservedVersionCommitExactlyOnce" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.082"/>
+  <testcase name="splitMergeDuplicateAndDeleteShareEditorSemanticsAndStableAnchors" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.1"/>
+  <testcase name="laterPagesRequireTheOriginalObservedVersionAndRejectInterleavedEdits" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.069"/>
+  <testcase name="readingLegacyNoteInitializesStableBlocksWithoutChangingCommittedRevisionOrText" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.067"/>
+  <testcase name="hostileControlTextAndManyBlockReceiptsRemainBoundedWithExplicitPaging" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.541"/>
+  <testcase name="registrationContractsBundledRisksAndDestructivePolicyMatchActualOwners" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.116"/>
+  <testcase name="foreignBlockAndMissingAnchorCannotEditAnotherNoteOrAppendByGuessing" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.066"/>
+  <testcase name="replacementCannotSilentlyDropTheTailBeyondTheCanonicalBlockLimit" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.089"/>
+  <testcase name="specializedDocumentsKeepTheirOwnOwnerAndCannotBeForgedThroughCodeLanguage" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.073"/>
+  <testcase name="everyWriteRefusesPendingRecoveryIncludingLegacyDraftAndDoesNotAcknowledgeIt" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.083"/>
+  <testcase name="readingAnOversizedLegacyNoteCannotInitializeATruncatedDocument" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.064"/>
+  <testcase name="moveAndIndentUseCanonicalListBoundsWithoutSilentlyClamping" classname="com.halo.app.data.workspace.WorkspaceNoteActionsTest" time="0.083"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

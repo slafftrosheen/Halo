@@ -31,6 +31,10 @@ object WorkspaceOperabilityContracts {
         group("WorkspaceFileTools", ToolOperation.EXPORT, "halo_text_export", "halo_pdf_extract_page_image", "halo_pdf_annotation_export_page_image")
         group("WorkspaceFileTools", ToolOperation.PRESENT, "halo_file_tools_open")
         group("NotebookRepository", ToolOperation.CREATE, "halo_create_note", "halo_create_empty_note", "halo_save_screen_to_notebook", encoding = ToolResultEncoding.TEXT)
+        group("NotebookDocumentRepository", ToolOperation.QUERY, "halo_note_get", "halo_note_read_block")
+        group("NotebookDocumentRepository", ToolOperation.EDIT, "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
+            "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_delete_block", "halo_note_insert_reference", "halo_note_set_reference", "halo_note_replace_content")
+        group("NotebookUseCases", ToolOperation.EDIT, "halo_note_archive", "halo_note_trash", "halo_note_restore", "halo_note_remove_from_inbox")
         group("WorkspaceRepository", ToolOperation.QUERY, "halo_search_notebook", "halo_get_workspace_object", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.CREATE, "halo_study_with_halo", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.QUERY, "halo_get_study_session", encoding = ToolResultEncoding.TEXT)
@@ -45,6 +49,7 @@ object WorkspaceOperabilityContracts {
         val operation = operations[definition.name] ?: return null
         val fields = definition.parameters["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
         val resultFields = when (operation.owner) {
+            "NotebookDocumentRepository", "NotebookUseCases" -> mapOf("noteId" to "string", "version" to "string", "revision" to "integer", "title" to "string", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "blocks" to "array", "block" to "object", "blockIds" to "array", "saved" to "boolean", "changed" to "boolean")
             "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "nodeIds" to "array", "edgeId" to "string", "title" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean")
             "StudioService" -> mapOf("projectId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "outputId" to "string", "fileVersion" to "string", "requestId" to "string", "nodeId" to "string")
             "WorkspaceFileTools" -> mapOf("noteId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string")
@@ -52,6 +57,9 @@ object WorkspaceOperabilityContracts {
             else -> mapOf("objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string", "resultId" to "string", "resultVersion" to "string")
         }
         val resultIds = when (definition.name) {
+            "halo_note_get", "halo_note_read_block", "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
+            "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_delete_block", "halo_note_insert_reference", "halo_note_set_reference", "halo_note_replace_content",
+            "halo_note_archive", "halo_note_trash", "halo_note_restore", "halo_note_remove_from_inbox" -> setOf("noteId")
             "halo_study_sessions" -> emptySet()
             "halo_study_state", "halo_study_select_exercise", "halo_study_set_preferences", "halo_study_complete", "halo_study_delete" -> setOf("sessionId")
             "halo_study_submit_attempt" -> setOf("sessionId", "attemptId")
@@ -78,8 +86,9 @@ object WorkspaceOperabilityContracts {
                         (if (definition.name == "halo_canvas_clear_sketch") setOf("changed") else emptySet()) +
                         (if (operation.owner == "StudyUseCases" && operation.encoding == ToolResultEncoding.JSON && definition.name != "halo_study_sessions") setOf("version") else emptySet()) +
                         (if (definition.name in setOf("halo_study_state", "halo_study_delete")) setOf("localDataVersion") else emptySet()) +
+                        (if (operation.owner in setOf("NotebookDocumentRepository", "NotebookUseCases")) setOf("version", "revision") else emptySet()) +
                         (if ("itemId" in resultIds) setOf("itemVersion") else emptySet())).toList(), "additionalProperties" to true),
-            sourceVersionArguments = fields.keys.filterIsInstance<String>().filter { it in setOf("version", "itemVersion", "localDataVersion", "revision", "sourceVersion", "canvasVersion", "expectedRevision") }.toSet(),
+            sourceVersionArguments = fields.keys.filterIsInstance<String>().filter { it in setOf("version", "targetVersion", "itemVersion", "localDataVersion", "revision", "sourceVersion", "canvasVersion", "expectedRevision") }.toSet(),
             resultIdFields = resultIds,
             limitations = setOf("Voice-final and typed requests share the registered semantic action; metadata is not STT/device acceptance.",
                 "Existing permission, Kids, Private/Power and confirmation owners remain mandatory; success truth comes from the result receipt.",

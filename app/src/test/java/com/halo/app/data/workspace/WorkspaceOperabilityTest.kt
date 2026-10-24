@@ -50,7 +50,8 @@ class WorkspaceOperabilityTest {
             val studyRepository = StudyRepository(f.database, f.database.studyDao())
             val executors = listOf(WorkspaceCanvasActions(f.database, f.canvases), WorkspaceContinuityActions(f.continuity(context)),
                 WorkspaceFileEditingActions(f.tools), StudioToolExecutor(f.studio()), WorkspaceToolExecutor(f.notes, f.workspace, context),
-                WorkspaceStudyActions(f.database, studyRepository, StudyUseCases(studyRepository)))
+                WorkspaceStudyActions(f.database, studyRepository, StudyUseCases(studyRepository)),
+                WorkspaceNoteActions(f.database, f.documents, com.halo.app.notebook.NotebookUseCases(f.notes), context))
             val descriptors = executors.flatMap { it.definitions() }.map { requireNotNull(HaloToolDescriptors.workspace(it) ?: HaloToolDescriptors.file(it)) }
             val registry = ToolRegistry(executors, descriptors)
             val feature = ToolFeatureOperability("workspace", descriptors.map { it.name }.toSet())
