@@ -30,7 +30,7 @@ class Round2ThemeMatrixVisualTest {
         HaloTheme(darkTheme = dark, palette = HaloPalette(accent, tone)) {
             Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
                 Box(Modifier.size(360.dp, 740.dp)) {
-                    LanguageSettingsScreen(AppLanguage.ENGLISH, {}, {})
+                    LanguagePickerPage(AppLanguage.ENGLISH, {}, {})
                 }
             }
         }

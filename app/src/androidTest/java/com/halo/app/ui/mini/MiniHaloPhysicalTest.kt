@@ -49,7 +49,7 @@ class MiniHaloPhysicalTest {
                     HaloTheme(darkTheme = false, fontScale = scale) {
                         Surface(Modifier.width(240.dp).height(480.dp)) {
                             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "Fixture draft", {}, true,
-                                null, null, {}, { sent++ }, { stopped++ }, {}, {}, {})
+                                null, null, {}, { sent++ }, { stopped++ }, {}, {})
                         }
                     }
                 }
@@ -72,14 +72,14 @@ class MiniHaloPhysicalTest {
         compose.setContent { CompositionLocalProvider(LocalContext provides localized, LocalResources provides localized.resources) { HaloTheme(darkTheme = false, fontScale = 2f) {
             Surface(Modifier.width(240.dp).height(480.dp)) {
                 MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "", {}, false, null, null,
-                    {}, {}, {}, { actions++ }, { destination = it }, {}, reviewRequired = true)
+                    { actions++ }, { actions++ }, {}, { destination = it }, {}, reviewRequired = true)
             }
         } } }
         compose.onNodeWithText("Review").performScrollTo().performClick()
         assertEquals("activity", destination)
         compose.onNode(hasSetTextAction()).assertDoesNotExist()
-        compose.onNodeWithText("My tools").performScrollTo().performClick()
-        compose.onNodeWithText("Open camera").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("My tools").assertDoesNotExist()
+        compose.onNodeWithText("Open camera").assertDoesNotExist()
         assertEquals(0, actions)
     }
 }
