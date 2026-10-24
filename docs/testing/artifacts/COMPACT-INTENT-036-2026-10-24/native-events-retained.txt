@@ -1,0 +1,2 @@
+         1792810809.712 27018 27073 I LiteRtRuntime: HALO_LITERT_GENERATION_START model=qwen3-0.6b-dynamic-int4 backend=CPU thinking=OFF thinkingBudget=default tools=0 maxTokens=12 runtimeResidency=COLD
+         1792810809.776 27018 27073 I LiteRtRuntime: HALO_LITERT_CONVERSATION_READY model=qwen3-0.6b-dynamic-int4 durationMs=11

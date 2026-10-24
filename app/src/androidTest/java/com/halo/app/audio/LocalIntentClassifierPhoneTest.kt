@@ -170,6 +170,7 @@ class LocalIntentClassifierPhoneTest {
         fun record(stage: String, fill: JSONObject.() -> Unit = {}) {
             val row = JSONObject().put("schema", 1).put("scope", "WARM_FINAL_TEXT_ADVISORY_ONLY")
                 .put("runId", runId).put("sourceStamp", stamp).put("fixtureSha256", matrix.sha256)
+                .put("protocolIdentity", LocalIntentModelRouter.qualificationProtocolIdentity)
                 .put("modelId", modelId).put("sha256", descriptor.sha256).put("bytes", descriptor.bytes)
                 .put("stage", stage).put("atMs", System.currentTimeMillis())
                 .put("device", android.os.Build.MODEL).put("api", android.os.Build.VERSION.SDK_INT)
@@ -251,6 +252,21 @@ class LocalIntentClassifierPhoneTest {
                         put("thinkingEnabled", diagnostics?.thinkingEnabled ?: JSONObject.NULL)
                         put("toolSchemaCount", diagnostics?.toolSchemaCount ?: JSONObject.NULL)
                         put("promptEchoSuspected", diagnostics?.promptEchoSuspected ?: JSONObject.NULL)
+                    }
+                    // A single miss already rules out the all-cases qualification.
+                    // In particular, do not spend minutes repeating blocked native prefill.
+                    // finally records this partial suite as a failed proof, never a pass.
+                    if (!resident || label != case.expected || elapsed > LocalIntentModelRouter.TIMEOUT_MS) {
+                        record("EARLY_STOP") {
+                            put("caseId", case.id).put("attempted", attempted).put("expectedCases", matrix.cases.size)
+                            put("reason", when {
+                                !resident -> "NOT_WARM"
+                                elapsed > LocalIntentModelRouter.TIMEOUT_MS -> "LATENCY_MISS"
+                                label == null -> "NO_ADVICE"
+                                else -> "WRONG_LABEL"
+                            })
+                        }
+                        error("INTENT_OUTCOME run=$runId sha=${descriptor.sha256} result=NOT_TESTED")
                     }
                 }
             }

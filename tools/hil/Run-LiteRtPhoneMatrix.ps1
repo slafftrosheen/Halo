@@ -19,7 +19,8 @@
   -EmbeddingSuite runs fixed synthetic text/image retrieval through the canonical CPU
   embedding provider. No capability promotion; unavailable inputs are not quality passes.
   -WarmIntentSuite explicitly initializes one CPU model on the existing owner and
-  configured context, then executes all48 prepared final-text intent cases. Existing
+  configured context, then qualifies all48 prepared final-text intent cases, stopping
+  at the first miss with partial negative evidence. Existing
   backend resolution must allow CPU; no saved role/tuning changes or second provider.
   The app:testDebugAndroidTest APK must be installed separately.
 .EXAMPLE

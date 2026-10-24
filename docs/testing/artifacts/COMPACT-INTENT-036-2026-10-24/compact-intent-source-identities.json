@@ -1,0 +1,14 @@
+[
+  {
+    "path": "app/src/main/java/com/halo/app/ai/LocalIntentModelRouter.kt",
+    "sha256": "170b7822e45f945b2cd4fc3093c9a769cff50da64022e49137f091241c76d470"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalIntentQualificationTest.kt",
+    "sha256": "79ca7e88a9fe418ed5dfd87c74a621c792923db465dbbca2ce250bf9228f1529"
+  },
+  {
+    "path": "app/src/androidTest/java/com/halo/app/audio/LocalIntentClassifierPhoneTest.kt",
+    "sha256": "4db8cf7c593e63cc0af6dc5624c88b6abd75b3a3932b47ad668af669a34fdcdb"
+  }
+]

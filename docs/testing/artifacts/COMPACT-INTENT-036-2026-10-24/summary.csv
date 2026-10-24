@@ -1,0 +1,2 @@
+"ModelId","Backend","Language","Cycles","ResidentTurns","ContextTokens","Result","ProcessExit","OutputFile","Reason"
+"qwen3-0.6b-dynamic-int4","CPU","NONE","1","0","PROFILE","INTENT_NOT_QUALIFIED","0","qwen3-0.6b-dynamic-int4-CPU-ctx0-warm-intent48-v1.txt",

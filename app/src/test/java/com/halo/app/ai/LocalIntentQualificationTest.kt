@@ -45,6 +45,18 @@ class LocalIntentQualificationTest {
         val config = f.runtime.generations.single()
         assertEquals(12, config.maxTokens); assertEquals(false, config.thinkingEnabled)
         assertTrue(config.availableTools.isEmpty())
+        assertEquals("Open camera", config.prompt)
+        assertTrue(config.initialMessages.isEmpty())
+        val instruction = requireNotNull(config.systemInstruction)
+        assertTrue("Per-turn classification prefill must remain compact", instruction.length <= 512)
+        assertEquals(0.0, config.temperature, 0.0)
+        assertEquals(1, config.topK)
+        // The exact shipped prompt, not a separately maintained description, binds proof.
+        val identity = java.security.MessageDigest.getInstance("SHA-256").digest(
+            ("intent48-v1|${LocalIntentModelRouter.FIXTURE_SHA256}|${LocalIntentModelRouter.TIMEOUT_MS}" +
+                "|labels-v1|12tokens|thinking-off|temp0|no-tools|$instruction")
+                .toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        assertEquals(identity, LocalIntentModelRouter.qualificationProtocolIdentity)
         assertTrue(f.certify(completed = false, attempted = 1, matched = 0, noAdvice = 1, elapsed = listOf(22_000)))
         assertFalse(f.proofs.isIntentQualified(f.provider, f.artifact))
         assertNull(f.router().classify("Open camera")); assertEquals(1, f.runtime.generations.size)
