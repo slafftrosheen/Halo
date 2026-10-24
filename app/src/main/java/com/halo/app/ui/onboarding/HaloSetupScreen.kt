@@ -195,11 +195,12 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         }
                         com.halo.app.ai.LocalRolePackPhase.PAUSED -> Copy(stringResource(R.string.pack39_paused))
                         com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy(stringResource(R.string.pack39_failed))
-                        com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy(stringResource(R.string.pack39_rollback_failed))
+                        com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy(if (rolePackState.recoveryRequired)
+                            uiText(rolePackState.message.orEmpty()) else stringResource(R.string.pack39_rollback_failed))
                         com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Copy(stringResource(R.string.pack39_rolling_back))
                         com.halo.app.ai.LocalRolePackPhase.IDLE -> Unit
                     }
-                    if (rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
+                    if (!rolePackState.recoveryRequired && rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
                         rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
                         OutlinedButton(
@@ -208,8 +209,10 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                         ) { Text(stringResource(if (rolePackState.canResume) R.string.pack39_resume else R.string.pack39_install)) }
                     }
-                    if (rolePackState.canRollback || rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
+                    if (rolePackState.canRollback) {
                         Secondary(stringResource(if (rolePackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) R.string.pack39_retry_rollback else R.string.pack39_rollback)) { rolePack.rollback() }
+                    }
+                    if (rolePackState.canKeepFiles) {
                         Secondary(stringResource(R.string.pack39_keep_files)) { rolePack.keepDownloadedFiles() }
                         Copy(stringResource(R.string.pack39_keep_explanation))
                     }

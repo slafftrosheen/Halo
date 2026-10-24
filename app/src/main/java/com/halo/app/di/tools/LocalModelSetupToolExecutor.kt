@@ -30,6 +30,8 @@ class LocalModelSetupToolExecutor(private val owner: LocalRolePackControl) : Too
             return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, JSONObject().put("available", owner.available)
                 .put("transactionId", value.transactionId ?: "NONE").put("phase", value.phase.name).put("stage", value.stage.name)
                 .put("busy", value.busy).put("canResume", value.canResume).put("canRollback", value.canRollback)
+                .put("hasSetupRecord", value.hasSetupRecord).put("recoveryRequired", value.recoveryRequired)
+                .put("canKeepFiles", value.canKeepFiles)
                 .put("downloadedBytes", value.downloadedBytes).put("totalBytes", value.totalBytes)
                 .put("roleSelectionChanged", false).put("qualificationGranted", false).toString())
         }

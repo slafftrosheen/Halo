@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.LocalRolePackJournalTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-24T02:36:44.253Z" hostname="MINIFOXEY" time="0.095">
+  <properties/>
+  <testcase name="malformedOrUnknownJournalIsDiscarded" classname="com.halo.app.ai.LocalRolePackJournalTest" time="0.035"/>
+  <testcase name="interruptedInstallCanResumeAndRollBackButCompletedPackCannot" classname="com.halo.app.ai.LocalRolePackJournalTest" time="0.032"/>
+  <testcase name="transactionJournalRoundTripsExactBaselineAndStage" classname="com.halo.app.ai.LocalRolePackJournalTest" time="0.007"/>
+  <testcase name="legacyReceiptNeverInventsOwnershipAndNewReceiptRetainsExactToken" classname="com.halo.app.ai.LocalRolePackJournalTest" time="0.011"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

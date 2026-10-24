@@ -38,6 +38,8 @@ class LocalRolePackJournalTest {
     fun malformedOrUnknownJournalIsDiscarded() {
         assertNull(LocalRolePackJournal.decode("INSTALLING\tFUTURE_STAGE"))
         assertNull(LocalRolePackJournal.decode("not a transaction journal"))
+        assertNull(LocalRolePackJournal.decode("\t".repeat(16001)))
+        assertNull(LocalRolePackJournal.decode(""))
     }
 
     @Test

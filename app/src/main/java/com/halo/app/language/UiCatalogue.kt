@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4036) {
+    buildMap(4038) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4080,6 +4080,8 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Remove connection" to R.string.ui_e9e9e26c6c2f,
     "halo uses this model only after it passes the request check on this phone and is already ready. Standard commands remain available." to R.string.ui_dbff9d02071f,
     "Install a small local model to try on-device request recognition. Standard commands work without it." to R.string.ui_9c39220de137,
+    "halo can't verify the previous setup record. Keep the downloaded files and clear the record before starting again." to R.string.ui_29d4b3b72533,
+    "The setup record could not be cleared. Reopen halo and try again. Your downloaded files are still kept." to R.string.ui_740783493047,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

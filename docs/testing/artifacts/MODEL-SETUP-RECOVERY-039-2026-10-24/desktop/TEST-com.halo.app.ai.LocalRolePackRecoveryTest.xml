@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.LocalRolePackRecoveryTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-10-24T02:36:44.834Z" hostname="MINIFOXEY" time="6.207">
+  <properties/>
+  <testcase name="failedRollbackTerminalWriteRetainsDurableReceiptAndKeepOnlyRecovery" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="4.82"/>
+  <testcase name="failedTerminalWriteDoesNotLeaveACompletedJobPermanentlyBusy" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.102"/>
+  <testcase name="missingRecordIsIdleWithoutInventedOwnershipOrRecoveryAction" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.068"/>
+  <testcase name="legacyAndChangedPlanRecordsOfferKeepOnlyWithoutNewOwnership" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.068"/>
+  <testcase name="keepFilesClearsOnlyTheObservedRecordAndPreservesFilesAndChoices" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.103"/>
+  <testcase name="validInterruptedRecordRetainsItsTokenAndResumableBaseline" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.062"/>
+  <testcase name="failedStorageRemovalRetainsRecoveryAndAllowsAnExplicitRetry" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.049"/>
+  <testcase name="malformedAndOversizedRecordsSurviveBothDirectAndTypedMutationAttempts" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.054"/>
+  <testcase name="failedRollbackAdmissionWriteNeverStartsRemovalOrLeavesBusyState" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.045"/>
+  <testcase name="failedNewTransactionCannotMakeAPreviousCompletedPackRollbackEligible" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.051"/>
+  <testcase name="queuedKeepCannotClearOrOverwriteANewerCanonicalReceiptWithTheSameToken" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.064"/>
+  <testcase name="failedClearOfAKnownReceiptExposesVisibleKeepOnlyRecovery" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.052"/>
+  <testcase name="malformedUnicodeCannotAliasAnotherObservedRecord" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.058"/>
+  <testcase name="queuedClearCannotRemoveAReplacedRecordEvenWithSameNoneToken" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.057"/>
+  <testcase name="failedRecoveryWritePreservesDurableRecordAndOffersKeepOnly" classname="com.halo.app.ai.LocalRolePackRecoveryTest" time="0.054"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

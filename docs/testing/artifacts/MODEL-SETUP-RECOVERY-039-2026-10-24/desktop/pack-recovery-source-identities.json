@@ -1,0 +1,62 @@
+[
+  {
+    "path": "app/src/androidTest/java/com/halo/app/ai/LocalRolePackRecoveryDeviceTest.kt",
+    "sha256": "debbc548a31a4025771eae6844b67259e68466caaa0b8b26675d923552f40d92"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ai/LocalRolePackInstaller.kt",
+    "sha256": "209f15fccd2aab5d5c3c8dc977ace6011b012524587a2d893af6f19d93417c11"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/HaloToolDescriptors.kt",
+    "sha256": "c8093f6958685cf7973b14c8ab8142976215f937b8f63db4a720561b36fa8527"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/tools/LocalModelSetupToolExecutor.kt",
+    "sha256": "aebe72f6a9faf457c470115923bf413c196846ca88c72626f86b5e5bb6756f7a"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+    "sha256": "d73f11df0f61f8f3910050a2b894d3ee1834114f429d74f4e44a1ec5ee7169b1"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ui/onboarding/HaloSetupScreen.kt",
+    "sha256": "f250856ca3601eb5009682e81f204b8715d22f377dd64c4d358182ec013eaca3"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt",
+    "sha256": "415f0ec25f3b921c50992ed15553d4774f356116b3ddc3165221b913782e7134"
+  },
+  {
+    "path": "app/src/main/localization/ui.tsv",
+    "sha256": "8e3228c467d38fd76864750ce991f921f96bc35f822e577817c5121dd2659d91"
+  },
+  {
+    "path": "app/src/main/res/values-lv/ui_strings.xml",
+    "sha256": "8edc41edb49857871375c454f6e40a52ec8b0b347af66fefb96d1a372f315ca5"
+  },
+  {
+    "path": "app/src/main/res/values-pl/ui_strings.xml",
+    "sha256": "8e887ee6be3cc9568e4eafcae332fb7715081bff13eb78f0768b67295574554c"
+  },
+  {
+    "path": "app/src/main/res/values-ru/ui_strings.xml",
+    "sha256": "1b6a09ebfad91805ce0025c4ad35db0a532ee5441bd60604f9e22b82fd3caa83"
+  },
+  {
+    "path": "app/src/main/res/values/ui_strings.xml",
+    "sha256": "e13a95e697fde4e43176daa075300a53ad045f6f97b733f0ce6886e5fc65434b"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalRolePackJournalTest.kt",
+    "sha256": "0f10d018ed03369d2065264063fbb1d61851cd552554c78e75186c48b4602c08"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ai/LocalRolePackRecoveryTest.kt",
+    "sha256": "fbfa4c14c6173018d898ea797c54fefe071c9a0ca2e4acde5a6af75b6f98a471"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/di/tools/LocalModelSetupToolExecutorTest.kt",
+    "sha256": "38cbc29a712fea8bcfd8524eacf88d80fd785cb7d8436277492124ef57e33919"
+  }
+]

@@ -287,7 +287,10 @@ object HaloToolDescriptors {
                 owner = "LocalRolePackInstaller", operation = operation, resultEncoding = com.halo.runtime.cognition.tools.ToolResultEncoding.JSON,
                 resultSchema = mapOf("type" to "object", "properties" to mapOf("transactionId" to mapOf("type" to "string"),
                     "phase" to mapOf("type" to "string"), "stage" to mapOf("type" to "string"), "state" to mapOf("type" to "string"),
-                    "available" to mapOf("type" to "boolean")), "required" to listOf("transactionId"), "additionalProperties" to true),
+                    "available" to mapOf("type" to "boolean"), "busy" to mapOf("type" to "boolean"),
+                    "canResume" to mapOf("type" to "boolean"), "canRollback" to mapOf("type" to "boolean"),
+                    "hasSetupRecord" to mapOf("type" to "boolean"), "recoveryRequired" to mapOf("type" to "boolean"),
+                    "canKeepFiles" to mapOf("type" to "boolean")), "required" to listOf("transactionId"), "additionalProperties" to true),
                 sourceVersionArguments = if (definition.name == "halo_local_setup_status") emptySet() else setOf("transactionId"),
                 resultIdFields = setOf("transactionId"), limitations = setOf("Dispatch only; poll canonical status. No role selection or qualification.",
                     "Same semantic owner for typed and voice-final requests; real speech/device/provider acceptance is separate.")))

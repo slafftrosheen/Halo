@@ -43,10 +43,13 @@ data class LocalRolePackInstallState(
     val totalBytes: Long = 0L,
     val message: String? = null,
     val transactionId: String? = null,
+    val hasSetupRecord: Boolean = false,
+    val recoveryRequired: Boolean = false,
 ) {
     val busy: Boolean get() = phase == LocalRolePackPhase.PREFLIGHT || phase == LocalRolePackPhase.INSTALLING || phase == LocalRolePackPhase.ROLLING_BACK
-    val canResume: Boolean get() = phase == LocalRolePackPhase.PAUSED || phase == LocalRolePackPhase.FAILED
-    val canRollback: Boolean get() = phase in setOf(LocalRolePackPhase.PAUSED, LocalRolePackPhase.FAILED, LocalRolePackPhase.ROLLBACK_FAILED)
+    val canResume: Boolean get() = !recoveryRequired && (phase == LocalRolePackPhase.PAUSED || phase == LocalRolePackPhase.FAILED)
+    val canRollback: Boolean get() = !recoveryRequired && phase in setOf(LocalRolePackPhase.PAUSED, LocalRolePackPhase.FAILED, LocalRolePackPhase.ROLLBACK_FAILED)
+    val canKeepFiles: Boolean get() = hasSetupRecord && !busy
 }
 
 internal data class LocalRolePackJournal(
@@ -70,8 +73,9 @@ internal data class LocalRolePackJournal(
 
     companion object {
         fun decode(value: String?): LocalRolePackJournal? = runCatching {
-            val fields = value?.split('\t') ?: return null
-            require(value.length <= 16000 && fields.size in 9..10)
+            if (value == null || value.length > 16000) return null
+            val fields = value.split('\t')
+            require(fields.size in 9..10)
             LocalRolePackJournal(
                 phase = LocalRolePackPhase.valueOf(fields[0]),
                 stage = LocalRolePackStage.valueOf(fields[1]),
@@ -99,15 +103,18 @@ class LocalRolePackInstaller(
     private val speech: SpeechModelInventoryRepository,
     private val speechRoot: File,
     private val supertonic: SupertonicSpeechProvider?,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) : LocalRolePackControl {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val transaction = Mutex()
     private val installJobLock = Any()
     private var installJob: Job? = null
     private val intentId = "qwen3-0.6b-dynamic-int4"
     private val intentCatalog get() = models.catalogModel(intentId)
+    @Volatile private var recordFingerprint: String? = null
     @Volatile private var journal = recoverJournal()
-    private val mutableState = MutableStateFlow(journal?.toState() ?: LocalRolePackInstallState())
+    private val mutableState = MutableStateFlow(journal?.toState() ?: if (recordFingerprint != null)
+        LocalRolePackInstallState(phase = LocalRolePackPhase.ROLLBACK_FAILED, message = RECOVERY_MESSAGE,
+            hasSetupRecord = true, recoveryRequired = true) else LocalRolePackInstallState())
     override val state: StateFlow<LocalRolePackInstallState> = mutableState.asStateFlow()
     override val available: Boolean get() = supertonic != null && intentCatalog != null
 
@@ -117,12 +124,12 @@ class LocalRolePackInstaller(
         if (journal?.phase == LocalRolePackPhase.PREFLIGHT || journal?.phase == LocalRolePackPhase.INSTALLING ||
             journal?.phase == LocalRolePackPhase.ROLLING_BACK) {
             val interruptedRollback = journal?.phase == LocalRolePackPhase.ROLLING_BACK
-            journal = requireNotNull(journal).copy(
+            val recovered = requireNotNull(journal).copy(
                 phase = if (interruptedRollback) LocalRolePackPhase.ROLLBACK_FAILED else LocalRolePackPhase.PAUSED,
                 message = if (interruptedRollback) "Rollback was interrupted. Retry rollback to finish removing newly downloaded models."
                 else "Setup paused. Resume or roll back the downloaded models."
             )
-            persist(requireNotNull(journal))
+            persistOrRecover(recovered)
         }
     }
 
@@ -131,20 +138,20 @@ class LocalRolePackInstaller(
         val observed = mutableState.value
         if (expectedTransactionId != (observed.transactionId ?: "NONE")) return false
         when (command) {
-            LocalRolePackCommand.START_OR_RESUME -> { if (observed.busy || observed.phase == LocalRolePackPhase.ROLLBACK_FAILED) return false; startOrResumeFor(expectedTransactionId) }
+            LocalRolePackCommand.START_OR_RESUME -> { if (observed.busy || observed.recoveryRequired || observed.phase == LocalRolePackPhase.ROLLBACK_FAILED) return false; startOrResumeFor(expectedTransactionId) }
             LocalRolePackCommand.PAUSE -> { if (!observed.busy || observed.phase == LocalRolePackPhase.ROLLING_BACK) return false; pauseFor(expectedTransactionId) }
             LocalRolePackCommand.ROLLBACK -> { if (!observed.canRollback) return false; rollbackFor(expectedTransactionId) }
-            LocalRolePackCommand.KEEP_FILES -> { if (observed.busy || observed.transactionId == null && journal == null) return false; keepDownloadedFilesFor(expectedTransactionId) }
+            LocalRolePackCommand.KEEP_FILES -> { if (!observed.canKeepFiles || !recordIsCurrent()) return false; keepDownloadedFilesFor(expectedTransactionId) }
         }
         return true // Request accepted only; poll status for actual owner progress.
     }
     fun startOrResume() = startOrResumeFor(null)
     private fun startOrResumeFor(expected: String?) {
         synchronized(installJobLock) {
-            if (installJob?.isActive == true) return
+            if (installJob?.isActive == true || mutableState.value.recoveryRequired) return
             installJob = scope.launch { transaction.withLock {
                 if (expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
-                if (mutableState.value.phase == LocalRolePackPhase.ROLLBACK_FAILED) return@withLock
+                if (mutableState.value.recoveryRequired || mutableState.value.phase == LocalRolePackPhase.ROLLBACK_FAILED) return@withLock
                 installTransaction()
             } }
         }
@@ -179,22 +186,35 @@ class LocalRolePackInstaller(
     /** Explicit receipt recovery only. Keeps every file, selection and role; never retries an acquisition. */
     fun keepDownloadedFiles() = keepDownloadedFilesFor(null)
     private fun keepDownloadedFilesFor(expected: String?) {
-        if (mutableState.value.busy) return
+        val observedFingerprint = synchronized(installJobLock) {
+            if (!mutableState.value.canKeepFiles) return
+            recordFingerprint ?: return
+        }
         scope.launch { transaction.withLock {
-            if (mutableState.value.busy || expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
-            journal = null
-            storage.remove(JOURNAL_KEY)
-            publish(LocalRolePackInstallState())
+            if (!mutableState.value.canKeepFiles || expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
+            // A resumed transaction can publish a new receipt under the same ownership token.
+            // This older request must neither clear it nor overwrite its current presentation.
+            if (recordFingerprint != observedFingerprint) return@withLock
+            try {
+                check(recordIsCurrent(observedFingerprint))
+                storage.remove(JOURNAL_KEY)
+                recordFingerprint = null
+                journal = null
+                publish(LocalRolePackInstallState())
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { publishKeepOnly(CLEAR_FAILED_MESSAGE) }
         } }
     }
 
     private suspend fun installTransaction() {
+        var operationJournal: LocalRolePackJournal? = null
         try {
             val active = if (journal == null || journal?.phase == LocalRolePackPhase.COMPLETE || journal?.phase == LocalRolePackPhase.IDLE) {
                 val initial = snapshotBaseline()
                 persist(initial.copy(phase = LocalRolePackPhase.PREFLIGHT))
                 requireNotNull(journal)
             } else requireNotNull(journal)
+            operationJournal = active
             if (active.planFingerprint != currentPlanFingerprint()) {
                 persist(active.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED,
                     message = "The pinned setup changed. Keep existing files and clear this receipt before starting again."))
@@ -275,13 +295,16 @@ class LocalRolePackInstaller(
             finish()
         } catch (cancelled: CancellationException) {
             val active = journal
-            if (active != null && active.phase !in setOf(LocalRolePackPhase.COMPLETE, LocalRolePackPhase.ROLLING_BACK)) {
-                persist(active.copy(phase = LocalRolePackPhase.PAUSED, message = "Setup paused. Resume to continue or roll back the downloaded models."))
+            if (operationJournal != null && active != null && active.transactionId == operationJournal.transactionId &&
+                active.phase !in setOf(LocalRolePackPhase.COMPLETE, LocalRolePackPhase.ROLLING_BACK)) {
+                persistOrRecover(active.copy(phase = LocalRolePackPhase.PAUSED, message = "Setup paused. Resume to continue or roll back the downloaded models."))
             }
             throw cancelled
         } catch (error: Exception) {
             val active = journal
-            if (active != null) persist(active.copy(phase = LocalRolePackPhase.FAILED, message = safeMessage(error)))
+            if (operationJournal != null && active != null && active.transactionId == operationJournal.transactionId)
+                persistOrRecover(active.copy(phase = LocalRolePackPhase.FAILED, message = safeMessage(error)))
+            else if (active != null) publishKeepOnly()
             else publish(LocalRolePackInstallState(phase = LocalRolePackPhase.FAILED, message = safeMessage(error)))
         }
     }
@@ -412,12 +435,11 @@ class LocalRolePackInstaller(
     private suspend fun rollbackTransaction() {
         val baseline = journal ?: return publish(LocalRolePackInstallState())
         if (baseline.transactionId == null || baseline.planFingerprint != currentPlanFingerprint()) {
-            persist(baseline.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED,
+            persistOrRecover(baseline.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED,
                 message = "Setup ownership cannot be verified after this update. Keep the files and clear this receipt, or manage downloads individually."))
             return
         }
-        publish(baseline.copy(phase = LocalRolePackPhase.ROLLING_BACK, message = null))
-        persist(baseline.copy(phase = LocalRolePackPhase.ROLLING_BACK, message = null))
+        if (!persistOrRecover(baseline.copy(phase = LocalRolePackPhase.ROLLING_BACK, message = null))) return
         val failures = mutableListOf<String>()
         suspend fun attempt(label: String, action: suspend () -> Unit) {
             try { action() }
@@ -449,20 +471,48 @@ class LocalRolePackInstaller(
             }
         }
         if (failures.isEmpty()) {
-            journal = null
-            storage.remove(JOURNAL_KEY)
-            publish(LocalRolePackInstallState(phase = LocalRolePackPhase.IDLE, message = "Newly downloaded models were rolled back."))
+            try {
+                storage.remove(JOURNAL_KEY)
+                recordFingerprint = null
+                journal = null
+                publish(LocalRolePackInstallState(phase = LocalRolePackPhase.IDLE, message = "Newly downloaded models were rolled back."))
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { publishKeepOnly(CLEAR_FAILED_MESSAGE) }
         } else {
-            persist(baseline.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED, message = "Some newly downloaded models are still in use. Close their current task and retry rollback."))
+            persistOrRecover(baseline.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED, message = "Some newly downloaded models are still in use. Close their current task and retry rollback."))
         }
     }
 
     private fun recoverJournal(): LocalRolePackJournal? {
-        val restored = LocalRolePackJournal.decode(storage.getString(JOURNAL_KEY)) ?: return null
-        return if (restored.planFingerprint == currentPlanFingerprint()) restored else restored.copy(
+        val encoded = storage.getString(JOURNAL_KEY)
+        recordFingerprint = encoded?.let(::recordHash)
+        val restored = LocalRolePackJournal.decode(encoded) ?: return null
+        return if (restored.transactionId != null && restored.planFingerprint == currentPlanFingerprint()) restored else restored.copy(
             phase = LocalRolePackPhase.ROLLBACK_FAILED,
-            message = "The pinned bundle changed since this setup started. Roll back its additions before starting a new bundle."
+            message = RECOVERY_MESSAGE
         )
+    }
+
+    private fun recordIsCurrent(expected: String? = recordFingerprint): Boolean = runCatching {
+        expected != null && storage.getString(JOURNAL_KEY)?.let(::recordHash) == expected
+    }.getOrDefault(false)
+
+    /** Bounded temporary encoding even for an oversized, unreadable persisted record. */
+    private fun recordHash(value: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val buffer = ByteArray(8192)
+        var offset = 0
+        while (offset < value.length) {
+            val count = minOf(4096, value.length - offset)
+            for (index in 0 until count) {
+                val code = value[offset + index].code
+                buffer[index * 2] = (code ushr 8).toByte()
+                buffer[index * 2 + 1] = code.toByte()
+            }
+            digest.update(buffer, 0, count * 2)
+            offset += count
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     private fun currentPlanFingerprint(): String {
@@ -485,15 +535,35 @@ class LocalRolePackInstaller(
     }
 
     private fun persist(value: LocalRolePackJournal) = synchronized(installJobLock) {
+        val encoded = value.encode()
+        storage.putString(JOURNAL_KEY, encoded)
+        recordFingerprint = recordHash(encoded)
         journal = value
-        storage.putString(JOURNAL_KEY, value.encode())
         publish(value)
+    }
+
+    private fun publishKeepOnly(message: String = RECOVERY_MESSAGE) {
+        val retained = journal?.toState() ?: mutableState.value
+        publish(retained.copy(phase = LocalRolePackPhase.ROLLBACK_FAILED, message = message,
+            hasSetupRecord = recordFingerprint != null, recoveryRequired = true))
+    }
+
+    /** A second failed write must not strand the previous busy state or lose its durable receipt. */
+    private fun persistOrRecover(value: LocalRolePackJournal): Boolean {
+        try { persist(value); return true }
+        catch (cancelled: CancellationException) { publishKeepOnly(); throw cancelled }
+        catch (_: Exception) { publishKeepOnly(); return false }
     }
 
     private fun publish(value: LocalRolePackJournal) { mutableState.value = value.toState() }
     private fun publish(value: LocalRolePackInstallState) { mutableState.value = value }
 
-    private fun LocalRolePackJournal.toState() = LocalRolePackInstallState(phase = phase, stage = stage, message = message, transactionId = transactionId)
+    private fun LocalRolePackJournal.toState(): LocalRolePackInstallState {
+        val recovery = transactionId == null || planFingerprint != currentPlanFingerprint()
+        return LocalRolePackInstallState(phase = if (recovery) LocalRolePackPhase.ROLLBACK_FAILED else phase,
+            stage = stage, message = if (recovery) RECOVERY_MESSAGE else message,
+            transactionId = transactionId, hasSetupRecord = true, recoveryRequired = recovery)
+    }
 
     private fun safeMessage(error: Exception): String = when {
         error.message?.contains("Not enough free space", ignoreCase = true) == true -> error.message.orEmpty()
@@ -503,6 +573,8 @@ class LocalRolePackInstaller(
 
     private companion object {
         const val JOURNAL_KEY = "local_role_pack_transaction_v1"
+        const val RECOVERY_MESSAGE = "halo can't verify the previous setup record. Keep the downloaded files and clear the record before starting again."
+        const val CLEAR_FAILED_MESSAGE = "The setup record could not be cleared. Reopen halo and try again. Your downloaded files are still kept."
         val WhisperSmall = SherpaSpeechModelCatalog.whisperSmall
     }
 }

@@ -1,0 +1,8 @@
+{
+  "status": "ISOLATED_RECOVERY_PASSED",
+  "runId": "89cfa5aeb4014f3eaa94c2f2dc81a102",
+  "durableRecordCleared": true,
+  "retainedFilesAndChoices": true,
+  "acquisitionCalls": 0,
+  "modelQualification": "NOT_TESTED"
+}

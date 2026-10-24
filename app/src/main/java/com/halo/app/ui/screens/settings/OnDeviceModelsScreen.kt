@@ -344,7 +344,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         style = MaterialTheme.typography.bodySmall)
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
+                    if (!starterPackState.recoveryRequired && starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
                         OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy,
@@ -355,11 +355,17 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     if (starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.INSTALLING) {
                         TextButton(onClick = starterPack::pause, modifier = Modifier.fillMaxWidth()) { Text(uiText("Pause setup")) }
                     }
-                    if (starterPackState.canRollback || starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
+                    if (starterPackState.canRollback) {
                         TextButton(onClick = starterPack::rollback, enabled = !starterPackState.busy,
                             modifier = Modifier.fillMaxWidth()) {
                             Text(uiText(if (starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) "Retry rollback" else "Roll back starter bundle"))
                         }
+                    }
+                    if (starterPackState.canKeepFiles) {
+                        TextButton(onClick = starterPack::keepDownloadedFiles, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.pack39_keep_files))
+                        }
+                        Text(stringResource(R.string.pack39_keep_explanation), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
