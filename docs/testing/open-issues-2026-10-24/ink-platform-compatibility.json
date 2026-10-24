@@ -18,10 +18,15 @@
       "platform": "Windows",
       "adapter": "WM_POINTER / GetPointerPenInfo JNI source",
       "hardware": "Exact model and Windows build required",
-      "build": "SOURCE_ONLY",
+      "build": "WINDOWS_X86_64_DIRECT_COMPILE_AND_JVM_LOAD_PASS",
       "physicalPen": "NOT_TESTED",
       "secondHost": "NOT_TESTED",
-      "evidence": []
+      "evidence": [
+        "../artifacts/WINDOWS-INK-BUILD-030-2026-10-24/build-result.json",
+        "../artifacts/WINDOWS-INK-BUILD-030-2026-10-24/jvm-load.txt"
+      ],
+      "nativeLoop": "NOT_TESTED",
+      "cmake": "NOT_TESTED"
     },
     {
       "platform": "Linux",

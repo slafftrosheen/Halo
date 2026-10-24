@@ -55,6 +55,12 @@ pwsh -File scripts/verification/run_open_issue_tests.ps1 -Phase Install -Serial 
 pwsh -File scripts/verification/run_open_issue_tests.ps1 -Phase Core -Serial f01fe673
 ```
 
+For the separate Windows native adapter build/export/JVM-load check, use
+`scripts/verification/build_desktop_ink_windows.ps1` with explicit toolchain and
+full-JDK paths. Its [executed report](../HALO-WINDOWS-INK-BUILD-030-2026-10-24.md)
+records a passing x86_64 build/load and reproducible command. It does not open a
+pen window or replace the physical native-loop/second-host protocols below.
+
 Choose the actual current serial if it changes. The runner preserves app data,
 refuses a different signed/installed binary, checks source hashes, counts actual
 JUnit cases, rejects skips/crashes/timeouts, and records separate per-suite
@@ -128,9 +134,11 @@ For #30, activation remains closed in the production app. The fixture-only
 TLS; it does not enable production pairing or claim a second device. Full physical
 qualification must exercise an explicitly qualified host configuration before a
 release activation decision. Windows/Linux native source and a JNI bridge are in
-`host-ink/native`; their actual toolchain/hardware and each Huion/OpenTabletDriver/
-Pi combination need their own compatibility record. This pack never promises
-their compatibility from source or Android compilation.
+`host-ink/native`. Windows x86_64 direct compilation, JNI exports and JVM load
+have now passed; actual pen/native-loop behavior remains NOT_TESTED. Linux is
+SOURCE_ONLY. Each hardware/toolchain/architecture and Huion/OpenTabletDriver/Pi
+combination needs its own compatibility record. This pack never promises physical
+compatibility from source, DLL load or Android compilation.
 
 For #42, sideloading this debug APK proves no Play purchase entitlement. The human
 release owner must review the paid listing and use the actual purchasing account.
