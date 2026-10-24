@@ -5,6 +5,32 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SetupProgressStoreTest {
+    @Test fun capabilityGuideProgressSurvivesRestartAndDoesNotPretendToBeGranted() {
+        val storage = MemoryStorage()
+        val first = SetupProgressStore(storage)
+        first.startCapabilityGuide("microphone")
+        first.advanceCapabilityGuide("microphone", "contacts", attempted = true)
+
+        val resumed = SetupProgressStore(storage).capabilityGuide
+        assertTrue(resumed.active)
+        assertEquals("contacts", resumed.currentId)
+        assertEquals(setOf("microphone"), resumed.attemptedIds)
+        assertTrue(resumed.skippedIds.isEmpty())
+    }
+
+    @Test fun skippingCapabilityPersistsSkipWithoutRecordingPermissionAttempt() {
+        val storage = MemoryStorage()
+        val first = SetupProgressStore(storage)
+        first.startCapabilityGuide("camera")
+        first.advanceCapabilityGuide("camera", "calendar_read", attempted = false)
+
+        val resumed = SetupProgressStore(storage).capabilityGuide
+        assertEquals("calendar_read", resumed.currentId)
+        assertEquals(setOf("camera"), resumed.skippedIds)
+        assertTrue(resumed.attemptedIds.isEmpty())
+    }
+
+
     @Test fun guideSurvivesRestartWithoutPretendingPermissionWasGranted() {
         val storage = MemoryStorage()
         val first = SetupProgressStore(storage)
