@@ -25,16 +25,17 @@ internal object CanvasInkSelectionCropRenderer {
         require(strokes.isNotEmpty()) { "Selected sketch marks are unavailable." }
 
         val bounds = selection.bounds
-        val regionAspect = if (document.aspectMilli == 0) 1.4f else
-            (document.aspectMilli / 1000f) * (bounds.right - bounds.left) / (bounds.bottom - bounds.top)
-        val aspect = regionAspect.coerceIn(0.125f, 8f)
+        // Bound bitmap allocation, not the geometry drawn inside it.
+        val aspect = inkSelectionAspect(document.aspectMilli, bounds).coerceIn(0.125f, 8f)
         val width = if (aspect >= 1f) MAX_DIMENSION else (MAX_DIMENSION * aspect).toInt().coerceAtLeast(96)
         val height = if (aspect <= 1f) MAX_DIMENSION else (MAX_DIMENSION / aspect).toInt().coerceAtLeast(96)
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         try {
             val canvas = Canvas(bitmap)
             canvas.drawColor(android.graphics.Color.WHITE)
-            drawSelection(canvas, width, height, document, selection)
+            val frame = inkSelectionFrame(width.toFloat(), height.toFloat(), document.aspectMilli, bounds)
+            drawSelection(canvas, width, height, document, selection,
+                RectF(frame.left, frame.top, frame.right, frame.bottom))
             return encode(bitmap)
         } finally {
             bitmap.recycle()
@@ -68,22 +69,23 @@ internal object CanvasInkSelectionCropRenderer {
     }
 
     private fun drawSelection(canvas: Canvas, width: Int, height: Int,
-        document: com.halo.sdk.runtime.ink.InkDocument, selection: InkSelectionContext) {
+        document: com.halo.sdk.runtime.ink.InkDocument, selection: InkSelectionContext,
+        region: RectF = RectF(0f, 0f, width.toFloat(), height.toFloat())) {
         val bounds = selection.bounds
         val selectedIds = selection.selectedStrokeIds.toSet()
         val strokes = document.strokes.filter { it.strokeId in selectedIds }
         require(strokes.isNotEmpty()) { "Selected marks are unavailable." }
         canvas.save()
-        canvas.clipRect(RectF(0f, 0f, width.toFloat(), height.toFloat()))
+        canvas.clipRect(region)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.rgb(25, 32, 38)
             style = Paint.Style.STROKE
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
-        val baseWidth = minOf(width, height) * 0.008f
-        fun pxX(x: Int) = (x - bounds.left) * width.toFloat() / (bounds.right - bounds.left)
-        fun pxY(y: Int) = (y - bounds.top) * height.toFloat() / (bounds.bottom - bounds.top)
+        val baseWidth = minOf(region.width(), region.height()) * 0.008f
+        fun pxX(x: Int) = region.left + (x - bounds.left) * region.width() / (bounds.right - bounds.left)
+        fun pxY(y: Int) = region.top + (y - bounds.top) * region.height() / (bounds.bottom - bounds.top)
         for (stroke in strokes) {
             val points = stroke.points
             if (points.size == 1) {

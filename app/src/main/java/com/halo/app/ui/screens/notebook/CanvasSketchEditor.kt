@@ -22,28 +22,19 @@ internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier,
     val document = remember(encoded, selection) {
         val source = InkCodec.decode(encoded) ?: return@remember null
         if (selection == null) source else {
-            val bounds = selection.bounds
-            val width = bounds.right - bounds.left
-            val height = bounds.bottom - bounds.top
             val selectedIds = selection.selectedStrokeIds.toSet()
-            val selected = source.strokes.filter { it.strokeId in selectedIds }
-                .map { stroke -> stroke.copy(points = stroke.points.map { point ->
-                    point.copy(
-                        x = 40 + (point.x - bounds.left) * 920 / width,
-                        y = 40 + (point.y - bounds.top) * 920 / height,
-                    )
-                }) }
-            val cropAspect = if (source.aspectMilli == 0) 0 else
-                (source.aspectMilli.toFloat() * width / height).toInt().coerceIn(125, 8000)
-            source.copy(strokes = selected, aspectMilli = cropAspect)
+            source.copy(strokes = source.strokes.filter { it.strokeId in selectedIds })
         }
     }
     val ink = if (selection == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
     Canvas(modifier) {
         document?.let {
-            val rect = inkBounds(size.width, size.height, it.aspectMilli)
-            if (selection == null) drawInk(it, ink, rect)
-            else clipRect(rect.left, rect.top, rect.right, rect.bottom) { drawInk(it, ink, rect) }
+            if (selection == null) drawInk(it, ink, inkBounds(size.width, size.height, it.aspectMilli))
+            else {
+                val frame = inkSelectionFrame(size.width, size.height, it.aspectMilli, selection.bounds)
+                val source = inkSelectionSourceRect(frame, selection.bounds)
+                clipRect(frame.left, frame.top, frame.right, frame.bottom) { drawInk(it, ink, source) }
+            }
         }
     }
 }

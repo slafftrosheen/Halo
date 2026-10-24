@@ -1,0 +1,22 @@
+[
+  {
+    "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasInkSelectionCrop.kt",
+    "sha256": "144823582d0ef157077fb99bc82bb0994020b879e979772df5ccce91f2d24123"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasInkSelectionGeometry.kt",
+    "sha256": "4c2878fe4b1a85a04e1a1f550cf203f871fb4f650637abfc6b5f4ef6101fc07f"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasSketchEditor.kt",
+    "sha256": "dc7be63d28543d05f7beb3bb0763cdaa84d009df61ab953e9beda62822af61e0"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ui/screens/notebook/CanvasInkSelectionCropTest.kt",
+    "sha256": "0a169d291af78916aefce7c87a53f48148cc1164f557bc0e9d473773781f3e46"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/ui/screens/notebook/CanvasInkSelectionGeometryTest.kt",
+    "sha256": "c15cf9f71c238b3ed3abba24b69c5f269b75a0a8e506aacb5b028db3f4c12447"
+  }
+]

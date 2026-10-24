@@ -30,6 +30,52 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class CanvasInkSelectionCropTest {
+    @Test fun tallRegionKeepsItsShapeAndCrossingInkCannotEnterSideMargins() {
+        val document = InkDocument(strokes = listOf(
+            InkStroke(InkTool.STYLUS, listOf(InkPoint(0, 500), InkPoint(1000, 500)), "selected"),
+        ), aspectMilli = 500)
+        val selected = selection().copy(bounds = InkSelectionBounds(450, 0, 550, 1000))
+        val encoded = InkCodec.encode(document)
+        val bytes = CanvasInkSelectionCropRenderer.renderSketch(encoded, selected)
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        try {
+            assertEquals(96, bitmap.width); assertEquals(768, bitmap.height)
+            assertTrue("antialiased selected stroke remains visible", Color.red(bitmap.getPixel(48, 384)) < 200)
+            assertTrue("crossing stroke must stop at crop, not fill margins", Color.red(bitmap.getPixel(4, 384)) > 240)
+            assertTrue(Color.red(bitmap.getPixel(91, 384)) > 240)
+            assertEquals(document, InkCodec.decode(encoded))
+        } finally { bitmap.recycle() }
+    }
+
+    @Test fun wideRegionKeepsItsShapeAndCrossingInkCannotEnterTopMargins() {
+        val document = InkDocument(strokes = listOf(
+            InkStroke(InkTool.STYLUS, listOf(InkPoint(500, 0), InkPoint(500, 1000)), "selected"),
+        ), aspectMilli = 4000)
+        val selected = selection().copy(bounds = InkSelectionBounds(0, 400, 1000, 600))
+        val bytes = CanvasInkSelectionCropRenderer.renderSketch(InkCodec.encode(document), selected)
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        try {
+            assertEquals(768, bitmap.width); assertEquals(96, bitmap.height)
+            assertTrue("antialiased selected stroke remains visible", Color.red(bitmap.getPixel(384, 48)) < 200)
+            assertTrue("crossing stroke must stop at crop, not fill margins", Color.red(bitmap.getPixel(384, 4)) > 240)
+            assertTrue(Color.red(bitmap.getPixel(384, 91)) > 240)
+        } finally { bitmap.recycle() }
+    }
+
+    @Test fun legacyCropUsesBoundsRatioWithoutMigratingTheSource() {
+        val encoded = "sketch:v1|0,500;1000,500"
+        val original = requireNotNull(InkCodec.decode(encoded))
+        val selected = selection().copy(bounds = InkSelectionBounds(250, 0, 750, 1000),
+            selectedStrokeIds = listOf(original.strokes.single().strokeId))
+        val bytes = CanvasInkSelectionCropRenderer.renderSketch(encoded, selected)
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        try {
+            assertEquals(537, bitmap.width); assertEquals(768, bitmap.height)
+            assertTrue(Color.red(bitmap.getPixel(bitmap.width / 2, 384)) < 80)
+            assertEquals(original, InkCodec.decode(encoded))
+        } finally { bitmap.recycle() }
+    }
+
     @Test fun sketchCropContainsOnlySelectedStrokesAndClipsToSavedBounds() {
         val doc = InkDocument(strokes = listOf(
             InkStroke(InkTool.STYLUS, listOf(InkPoint(0, 500), InkPoint(1000, 500)), "selected"),
