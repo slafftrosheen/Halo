@@ -22,15 +22,14 @@
     "discovery INVALID_ARGUMENTS",
     "discovery ACKNOWLEDGED",
     "halo_canvas_export_note VALIDATED",
-    "IllegalArgumentException before authorization/execution"
+    "IllegalArgumentException while entering approval wait, before authorized execution"
   ],
-  "exportAuthorizationObserved": false,
   "exportExecutionObserved": false,
   "confirmedExportReceipts": 0,
   "noteIdsReturned": 0,
   "goalDraftRestored": true,
   "replayed": false,
-  "sourceFinding": "Fresh cognitive run remains CREATED; ALWAYS approval path requests CREATED\u2192WAITING_FOR_APPROVAL, illegal under existing state machine. Actual-caller regression follows; do not relax ALWAYS confirmation.",
+  "sourceFinding": "Fresh cognitive run remains CREATED; ALWAYS approval path requests CREATED→WAITING_FOR_APPROVAL, illegal under existing state machine. Actual-caller regression follows; do not relax ALWAYS confirmation.",
   "limits": [
     "Source analysis identifies deterministic lifecycle path; no original prepared arguments emitted",
     "Not an external/provider error and not a completed edit-export journey"
@@ -39,5 +38,7 @@
     "canvas-export19-app-logcat.txt",
     "canvas19-export-outcome.xml"
   ],
-  "issueDisposition": "KEEP_OPEN"
+  "issueDisposition": "KEEP_OPEN",
+  "exportAuthorizedExecutionTraceObserved": false,
+  "approvalDecisionSourceFinding": "PolicyToolAuthorizer returned NeedsUserInput. The tool loop records InputRequested, then its CREATED-to-WAITING_FOR_APPROVAL transition throws before the waiting-input result/approved execution. This is source interpretation, not a reread of the original durable request."
 }

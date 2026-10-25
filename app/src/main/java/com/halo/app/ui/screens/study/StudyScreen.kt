@@ -109,6 +109,8 @@ import com.halo.app.ui.fx.HaloFxAnimation
 import com.halo.app.ui.fx.HaloFxMoment
 import kotlinx.coroutines.delay
 
+private val practiceDraftCountNotice = Regex("""([1-5]) drafts created\. Review and Keep each card before scheduling\.""")
+
 /** Bloom requires a genuinely observed change to a durably completed lesson. */
 internal fun shouldCelebrateStudyCompletion(
     previous: StudySessionLifecycle?,
@@ -405,6 +407,12 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         }
 
         state.notice?.let { notice ->
+            // Only this exact host-authored receipt has a dynamic catalogue argument.
+            // Other notices, including literal provider/source text, retain their lookup.
+            val draftCount = practiceDraftCountNotice.matchEntire(notice)?.groupValues?.get(1)?.toIntOrNull()
+            val noticeText = if (draftCount != null) {
+                uiText("%1\$d drafts created. Review and Keep each card before scheduling.", draftCount)
+            } else uiText(notice)
             Surface(
                 Modifier.fillMaxWidth().padding(vertical = 6.dp),
                 shape = com.halo.app.ui.design.HaloShapes.control,
@@ -412,7 +420,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             ) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        uiText(notice),
+                        noticeText,
                         Modifier.weight(1f),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1209,8 +1217,8 @@ private fun PracticeItemRow(
                         else MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f), maxLines = if (expanded) Int.MAX_VALUE else 2,
                     overflow = TextOverflow.Ellipsis)
-                mastery?.let { snapshot -> MasteryBadge(snapshot, now) }
             }
+            mastery?.let { snapshot -> MasteryBadge(snapshot, now) }
             if (!expanded) {
                 TextButton(onClick = { expanded = true }) {
                     StudyActionLabel(HaloGlyph.NEXT, if (item.accepted) "Practise this card" else "Review draft card")
@@ -1273,7 +1281,7 @@ private fun PracticeItemRow(
                 }
             }
 
-            result?.let { outcome ->
+            result?.takeIf { item.accepted }?.let { outcome ->
                 CardMeaningFeedback(outcome)
                 Spacer(Modifier.height(6.dp))
                 if (outcome.diff != null) {
@@ -1304,7 +1312,9 @@ private fun PracticeItemRow(
                 }
             }
 
-            if (revealed && result == null) {
+            // Draft review shows what Keep will retain without granting recall/reveal
+            // authority. Accepted cards still require their explicit Reveal action.
+            if (!item.accepted || (revealed && result == null)) {
                 Spacer(Modifier.height(6.dp))
                 Surface(shape = com.halo.app.ui.design.HaloShapes.card,
                     color = MaterialTheme.colorScheme.surfaceContainer) {
@@ -1316,7 +1326,7 @@ private fun PracticeItemRow(
                         Text(item.answer, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                StudyRecallActions(
+                if (item.accepted) StudyRecallActions(
                     enabled = interactionReady,
                     onNotYet = { viewModel.selfAssessCard(item.id, known = false) },
                         onAlmost = { viewModel.selfAssessCard(item.id, com.halo.app.study.StudyRecallRating.ALMOST) },

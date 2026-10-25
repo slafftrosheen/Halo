@@ -1,0 +1,96 @@
+{
+  "checkpoints": [
+    20,
+    21
+  ],
+  "sourceBase": "c370bfe325679c951a16dd79828655f52e4d92f4",
+  "productionDiffFromSourceBaseSha256": "65fa506d67b9815333716bfc211d5d5e96e288fdfb618a634281f79b2e89fdff",
+  "completedUtc": "2026-10-25T04:57:13.019204+00:00",
+  "build": "SUCCESSFUL",
+  "finalDuration": "4m29s",
+  "app": {
+    "tests": 712,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "runtime": {
+    "tests": 367,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "runtimeExecution": "367 cases executed in initial grouped invocation; unchanged runtime task UP-TO-DATE in final gate",
+  "appExecution": "All712 cases executed in final expanded integration gate",
+  "focused": [
+    {
+      "name": "com.halo.app.language.StudyDraftCountNoticeTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.language.StudyPracticeLocalizationTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "tests": "13",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.runtime.cognition.turn.FreshCognitiveApprovalLifecycleTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "apks": {
+    "main": {
+      "file": "app-debug.apk",
+      "sha256": "52e714c681d71c651603898032f87097701567c35677cbeef85042b8289993e9",
+      "bytes": 289597978,
+      "fixedCampaignReaderAbsentFromDex": true
+    },
+    "test": {
+      "file": "app-debug-androidTest.apk",
+      "sha256": "0a51b95af2c04cb2402d3e2de2ea262e428bef99bf9fe26d93a08f73b83f483e",
+      "bytes": 1949934,
+      "fixedCampaignReaderAbsentFromDex": true
+    }
+  },
+  "device": {
+    "checkedUtc": "2026-10-25T04:57:13.019204+00:00",
+    "status": "BLOCKED_DEVICE_UNAVAILABLE",
+    "adbTargets": 0,
+    "mainReplacementInstalls": 0,
+    "testReplacementInstalls": 0,
+    "nativeTestsOnTheseArtifacts": "NOT_RUN",
+    "physicalExportAndStudyReviewOnTheseArtifacts": "NOT_RUN"
+  },
+  "independentReview": "Production and recovery-fixture reviews clean; assertions/5s waits preserved. In-memory/synthetic provider and serial-input cancellation tests do not establish concurrent process restart or phone/cloud effects.",
+  "recoveryEvidence": "gate-recovery-20-21.json",
+  "localLog": "automated-gate-20-21-final.log",
+  "issueDisposition": "KEEP_OPEN",
+  "command": ".\\gradlew.bat :runtime:cognition:test :app:testDebugUnitTest --tests com.halo.app.ui.screens.notebook.* --tests com.halo.app.ui.screens.home.* --tests com.halo.app.ui.screens.study.* --tests com.halo.app.ui.shell.* --tests com.halo.app.ui.workspace.* --tests com.halo.app.di.* --tests com.halo.app.tools.* --tests com.halo.app.language.* --tests com.halo.app.study.* --tests com.halo.app.data.workspace.CanvasReadPrerequisiteExposureTest --tests com.halo.app.data.workspace.WorkspaceCanvasActionsTest :app:assembleDebug :app:assembleDebugAndroidTest --max-workers=2 --console=plain",
+  "attempts": {
+    "groupedBuildApkInvocations": 2,
+    "recoveryFocusedTestOnlyInvocations": 2,
+    "replacementInstalls": 0,
+    "redInvocations": "See separate RED20/21 evidence; fixture compile/setup failures are distinguished from behavioral RED"
+  }
+}

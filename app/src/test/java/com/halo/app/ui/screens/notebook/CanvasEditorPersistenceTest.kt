@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.notebook
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
@@ -16,6 +17,7 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.util.concurrent.Executors
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -24,19 +26,35 @@ class CanvasEditorPersistenceTest {
     private lateinit var db: AppDatabase
     private lateinit var repository: NotebookCanvasRepository
     private val store = ViewModelStore()
+    private lateinit var editorMain: ExecutorCoroutineDispatcher
+    private val viewModelJobs = mutableListOf<Job>()
     @Before fun setup() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        // Room resumes on worker threads. A serial Main preserves the UI owner's
+        // atomic non-suspending state copies, unlike Dispatchers.Unconfined.
+        editorMain = Executors.newSingleThreadExecutor { task ->
+            Thread(task, "canvas-persistence-main").apply { isDaemon = true }
+        }.asCoroutineDispatcher()
+        Dispatchers.setMain(editorMain)
         db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).allowMainThreadQueries().build()
         repository = NotebookCanvasRepository(db, db.notebookCanvasDao(), db.notebookDao())
     }
-    @After fun close() { store.clear(); db.close(); Dispatchers.resetMain() }
+    @After fun close() {
+        try {
+            runBlocking(editorMain) { store.clear(); viewModelJobs.joinAll() }
+        } finally {
+            try { if (::db.isInitialized) db.close() }
+            finally { Dispatchers.resetMain(); editorMain.close() }
+        }
+    }
+    private fun <T> onEditorMain(block: suspend CoroutineScope.() -> T): T = runBlocking(editorMain, block)
     private suspend fun editor(board: String): CanvasEditorViewModel {
         val vm = CanvasEditorViewModel(board, repository)
+        viewModelJobs += requireNotNull(vm.viewModelScope.coroutineContext[Job])
         store.put("canvas", vm)
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
-    @Test fun editorAndAssistantGroupMovesPersistTheSameMemberPositions() = runBlocking {
+    @Test fun editorAndAssistantGroupMovesPersistTheSameMemberPositions() = onEditorMain {
         for (explicit in listOf(false, true)) {
             val results = mutableListOf<List<Triple<String, Float, Float>>>()
             for (assistant in listOf(false, true)) {
@@ -61,7 +79,7 @@ class CanvasEditorPersistenceTest {
             assertEquals(results[0], results[1])
         }
     }
-    @Test fun assistantClearCannotBeReversedByAnAlreadyOpenEditorOrItsRecoveryDraft() = runBlocking {
+    @Test fun assistantClearCannotBeReversedByAnAlreadyOpenEditorOrItsRecoveryDraft() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val edited = "sketch:v1|300,300;400,400"
@@ -80,7 +98,7 @@ class CanvasEditorPersistenceTest {
         val reopened = editor(board)
         assertEquals(cleared, reopened.uiState.value.nodes.single().text)
     }
-    @Test fun savingOrCancellingAnotherSketchRetainsTheUnrelatedRecoveryDraft() = runBlocking {
+    @Test fun savingOrCancellingAnotherSketchRetainsTheUnrelatedRecoveryDraft() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val edited = "sketch:v1|300,300;400,400"
@@ -101,7 +119,7 @@ class CanvasEditorPersistenceTest {
         assertNull(repository.drawingDraft(board))
     }
 
-    @Test fun reopeningChangedSketchCannotConsumeItsOlderRecoveryDraft() = runBlocking {
+    @Test fun reopeningChangedSketchCannotConsumeItsOlderRecoveryDraft() = onEditorMain {
         val board = repository.create()
         val old = "sketch:v1|100,100;200,200"
         val current = "sketch:v1|300,300;400,400"
@@ -118,7 +136,7 @@ class CanvasEditorPersistenceTest {
         assertEquals(draft, vm.uiState.value.drawingDraft)
     }
 
-    @Test fun annotationSaveClearsOnlyARecoveryDraftForTheExactFileVersion() = runBlocking {
+    @Test fun annotationSaveClearsOnlyARecoveryDraftForTheExactFileVersion() = onEditorMain {
         val ink = "sketch:v1|100,100;200,200"
         val changedInk = "sketch:v1|300,300;400,400"
         for ((index, fixture) in listOf("file-v1" to ink, "file-v2" to ink, "file-v2" to changedInk).withIndex()) {
@@ -143,7 +161,7 @@ class CanvasEditorPersistenceTest {
         }
     }
 
-    @Test fun olderSaveAndCancelCannotConsumeANewerDraftForTheSameSource() = runBlocking {
+    @Test fun olderSaveAndCancelCannotConsumeANewerDraftForTheSameSource() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val olderInk = "sketch:v1|300,300;400,400"
@@ -161,7 +179,7 @@ class CanvasEditorPersistenceTest {
         assertEquals(newer, vm.uiState.value.drawingDraft)
     }
 
-    @Test fun olderSaveAndCancelCannotConsumeAnIdenticalDraftFromANewEditor() = runBlocking {
+    @Test fun olderSaveAndCancelCannotConsumeAnIdenticalDraftFromANewEditor() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val edited = "sketch:v1|300,300;400,400"
@@ -180,7 +198,7 @@ class CanvasEditorPersistenceTest {
         assertNull(repository.drawingDraft(board))
     }
 
-    @Test fun observedDraftCannotBeConsumedBySavingADifferentSketchPayload() = runBlocking {
+    @Test fun observedDraftCannotBeConsumedBySavingADifferentSketchPayload() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val savedInk = "sketch:v1|300,300;400,400"
@@ -193,7 +211,7 @@ class CanvasEditorPersistenceTest {
         assertEquals(savedInk, repository.observe(board).first()!!.nodes.single().text)
         assertEquals(observed, repository.drawingDraft(board))
     }
-    @Test fun erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft() = runBlocking {
+    @Test fun erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val card = repository.addSketchNode(board, 0f, 0f, original)
@@ -215,7 +233,7 @@ class CanvasEditorPersistenceTest {
         assertNull(vm.uiState.value.drawingDraft)
     }
 
-    @Test fun erasedEditRejectsChangedSourceAndRetainsRecoveryDraft() = runBlocking {
+    @Test fun erasedEditRejectsChangedSourceAndRetainsRecoveryDraft() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val changed = "sketch:v1|300,300;400,400"
@@ -231,7 +249,7 @@ class CanvasEditorPersistenceTest {
         assertNotNull(vm.uiState.value.notice)
     }
 
-    @Test fun corruptSketchAndEmptyNewSketchCannotPublishOrDiscardDraft() = runBlocking {
+    @Test fun corruptSketchAndEmptyNewSketchCannotPublishOrDiscardDraft() = onEditorMain {
         val board = repository.create()
         val original = "sketch:v1|100,100;200,200"
         val card = repository.addSketchNode(board, 0f, 0f, original)
@@ -245,7 +263,7 @@ class CanvasEditorPersistenceTest {
         assertEquals(original, repository.observe(board).first()!!.nodes.single().text)
         assertEquals(draft, repository.drawingDraft(board))
     }
-    @Test fun leavingImmediatelyFlushesLatestTextPositionAndViewport() = runBlocking {
+    @Test fun leavingImmediatelyFlushesLatestTextPositionAndViewport() = onEditorMain {
         val board = repository.create()
         val card = repository.addTextNode(board, 0f, 0f, "original")
         val vm = editor(board)
@@ -262,7 +280,7 @@ class CanvasEditorPersistenceTest {
         assertEquals(16f, persisted.nodes.single().y)
         assertEquals(1.5f, persisted.viewportScale)
     }
-    @Test fun selectingGroupAndMemberMovesEachOnlyOnce() = runBlocking {
+    @Test fun selectingGroupAndMemberMovesEachOnlyOnce() = onEditorMain {
         val board = repository.create()
         val group = repository.addGroupNode(board, 0f, 0f, "Group")
         val member = repository.addTextNode(board, 30f, 70f, "member")
@@ -278,7 +296,7 @@ class CanvasEditorPersistenceTest {
         assertEquals(40f, nodes.getValue(member).x)
         assertEquals(90f, nodes.getValue(member).y)
     }
-    @Test fun manualOrganizationWorksWithoutProviderAndCancelDoesNotMutate() = runBlocking {
+    @Test fun manualOrganizationWorksWithoutProviderAndCancelDoesNotMutate() = onEditorMain {
         val board = repository.create()
         val card = repository.addTextNode(board, 0f, 0f, "idea")
         val vm = editor(board)

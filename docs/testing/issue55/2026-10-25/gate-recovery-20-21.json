@@ -1,0 +1,98 @@
+{
+  "checkpoints": [
+    20,
+    21
+  ],
+  "sourceBase": "c370bfe325679c951a16dd79828655f52e4d92f4",
+  "initialIntegrationGate": {
+    "result": "FAILED",
+    "duration": "11m37s",
+    "runtime": {
+      "tests": 367,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "tests": 712,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failures": [
+      {
+        "case": "CanvasEditorPersistenceTest.erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft",
+        "observed": "Canonical erased sketch and recovery-draft deletion passed; immediate VM drawingDraft projection remained nonnull at215"
+      },
+      {
+        "case": "StudyDraftReviewLayoutTest.draftAnswerAndSourceAreReviewableBeforeKeepWithoutRecallSideEffects",
+        "observed": "Answer/source and pre-Keep guards passed; timeout after Keep while waiting for accepted VM projection at82"
+      }
+    ]
+  },
+  "unchangedFocusedBaseline": {
+    "duration": "1m34s",
+    "CanvasEditorPersistenceTest": {
+      "tests": 14,
+      "failures": 0
+    },
+    "StudyDraftReviewLayoutTest": {
+      "tests": 13,
+      "failures": 1,
+      "observed": "Same post-Keep acceptance timeout"
+    }
+  },
+  "correctionScope": "Test scheduling/confinement only; no production change, no assertion deletion, no timeout increase. A focused Canvas pass does not erase the original race result.",
+  "finalGate": {
+    "result": "SUCCESSFUL",
+    "duration": "4m29s",
+    "app": {
+      "tests": 712,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime": {
+      "tests": 367,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "evidence": "automated-gate-20-21.json"
+  },
+  "localLogs": [
+    "automated-gate-20-21.log",
+    "focused-recovery-20-21a.log",
+    "focused-recovery-20-21b.log"
+  ],
+  "correctedGroupedFocus": {
+    "duration": "2m50s",
+    "tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "name": "com.halo.app.language.StudyDraftCountNoticeTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+        "tests": "14",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      },
+      {
+        "name": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+        "tests": "13",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0"
+      }
+    ]
+  }
+}

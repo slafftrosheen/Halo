@@ -1,0 +1,42 @@
+{
+  "checkpoint": 21,
+  "sourceBase": "c370bfe325679c951a16dd79828655f52e4d92f4",
+  "scope": "Actual CognitiveTurnExecutor creates the run; real DefaultAgentRunCoordinator, PolicyToolAuthorizer and DefaultToolTurnExecutor with in-memory store and synthetic provider",
+  "red21b": {
+    "tests": 5,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "freshCognitiveRunCanWaitForAlwaysApprovalWithoutExecutingOrRelaxingAlwaysAllow",
+        "status": "FAIL",
+        "failure": "java.lang.IllegalArgumentException: Invalid transition CREATED -> WAITING_FOR_APPROVAL"
+      },
+      {
+        "name": "coordinatorStillRejectsShortcutFromUnadmittedCreatedRunToApproval",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "actualApprovalAllowsOneExecutionAndDuplicateResolutionOrDispatchDoesNotRepeatIt",
+        "status": "FAIL",
+        "failure": "java.lang.IllegalArgumentException: Invalid transition CREATED -> WAITING_FOR_APPROVAL"
+      },
+      {
+        "name": "denialCancellationAndExpiryNeverExecuteThePreparedAction",
+        "status": "FAIL",
+        "failure": "java.lang.IllegalArgumentException: Invalid transition CREATED -> WAITING_FOR_APPROVAL"
+      },
+      {
+        "name": "approvalForOriginalRevisionDoesNotAuthorizeChangedArguments",
+        "status": "FAIL",
+        "failure": "java.lang.IllegalArgumentException: Invalid transition CREATED -> WAITING_FOR_APPROVAL"
+      }
+    ]
+  },
+  "duration": "33s",
+  "priorCompileAttempt": "Fixture-only missing supportsStreaming parameter corrected before valid RED; not a behavioral result",
+  "decision": "Admit freshly created cognitive runs through existing EXECUTING state; preserve CREATED-to-WAITING guard and ALWAYS approval/replay rules",
+  "limits": "Input cancellation, sequential duplicates and synthetic storage/provider; no concurrent process restart or phone/cloud export qualification"
+}

@@ -1,0 +1,103 @@
+{
+  "checkpoint": 20,
+  "sourceBase": "c370bfe325679c951a16dd79828655f52e4d92f4",
+  "scope": "Desktop Compose/canonical Study repository with synthetic TutorGateway; no cloud/phone qualification",
+  "layoutRed20b": {
+    "tests": 13,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "russianPhone393ExactGoalAt200PercentIsBoundedAndAccessible",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "russianPhone393QuestionAndMasteryHaveSeparateReadableBands",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: At the observed RU phone width, mastery must not consume the same question text band"
+      },
+      {
+        "name": "russianPhone393At200PercentQuestionAndMasteryHaveSeparateReadableBands",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: At the observed RU phone width, mastery must not consume the same question text band"
+      },
+      {
+        "name": "longGoal360At200PercentIsBoundedAndAccessible",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "question360At100PercentKeepsWidthAndMastery",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: Question has only 178.0dp; mastery must not squeeze it into a word column"
+      },
+      {
+        "name": "question360At200PercentKeepsWidthAndMastery",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: Question has only 178.0dp; mastery must not squeeze it into a word column"
+      },
+      {
+        "name": "longGoal412At100PercentIsBoundedAndAccessible",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "russianPhone393ExactGoalIsBoundedAndAccessible",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "question412At100PercentKeepsWidthAndMastery",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "question412At200PercentKeepsWidthAndMastery",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "draftAnswerAndSourceAreReviewableBeforeKeepWithoutRecallSideEffects",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: Action performScrollTo() failed.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains '48 seedlings' (ignoreCase: false))\n"
+      },
+      {
+        "name": "longGoal360At100PercentIsBoundedAndAccessible",
+        "status": "PASS",
+        "failure": null
+      },
+      {
+        "name": "longGoal412At200PercentIsBoundedAndAccessible",
+        "status": "PASS",
+        "failure": null
+      }
+    ]
+  },
+  "countRed20c": {
+    "tests": 3,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "polishThreeDraftNoticeUsesCatalogueFormatAndPreservesCount",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: Count notice needs the existing formatted catalogue contract"
+      },
+      {
+        "name": "latvianThreeDraftNoticeUsesCatalogueFormatAndPreservesCount",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: Count notice needs the existing formatted catalogue contract"
+      },
+      {
+        "name": "russianThreeDraftNoticeUsesCatalogueFormatAndPreservesCount",
+        "status": "FAIL",
+        "failure": "java.lang.AssertionError: Count notice needs the existing formatted catalogue contract"
+      }
+    ]
+  },
+  "countFixtureGuards": "All three cases reached actual gateway request, exact3 persisted unaccepted cards, no due review, canonical English receipt; missing exact formatted catalogue key then failed. Earlier scheduler fixture timeouts are not feature RED evidence.",
+  "decision": "Fix question/mastery bands, pre-Keep stored-answer review and formatted notice. Six passing goal-header checks do not justify header changes."
+}

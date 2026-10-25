@@ -129,3 +129,7 @@ The exact phone phrase now routes to AGENTIC tools, but its edit was rejected ag
 ### Checkpoint19 selected-card effect
 
 A narrow Canvas descriptor read-prerequisite repair passed696 app cases and3 nearby native checks, with exact installed artifacts in the [continued ledger](ISSUE-55-ANDROID-ACCEPTANCE-2026-10-25.md). The original phrase now called the actual current-board owner, confirmed the edit, and retained the exact one-card text after cold restart. Export then exposed a separate fresh-run approval lifecycle failure before any export effect. No complete cross-tool or live-voice acceptance is inferred from the successful edit.
+
+### Checkpoints20–21 source recovery; device pending
+
+The canonical fresh cognitive caller now admits runs before the existing ALWAYS approval pause; Study exposes draft answers before Keep, preserves explicit accepted-card Reveal, separates mastery from question width and localizes the bounded count receipt. Final expanded app712/0 and runtime367/0 are recorded with both built APKs and retained failed/recovery attempts in the [continued ledger](ISSUE-55-ANDROID-ACCEPTANCE-2026-10-25.md) and [gate](issue55/2026-10-25/automated-gate-20-21.json). ADB was empty; these APKs were not installed, native/phone export and actual Study review remain NOT_RUN. The earlier checkpoint19 edit/cold result does not qualify these new artifacts. KEEP_OPEN.

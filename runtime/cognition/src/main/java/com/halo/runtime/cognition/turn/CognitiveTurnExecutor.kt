@@ -9,6 +9,7 @@ import com.halo.runtime.cognition.agent.AgentRunCoordinator
 import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
 import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.runtime.cognition.agent.AgentRunKind
+import com.halo.runtime.cognition.agent.AgentRunState
 import com.halo.runtime.cognition.agent.AgentRunStore
 import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.agent.AgentStepId
@@ -190,6 +191,9 @@ class CognitiveTurnExecutor(
                     )
                 )
                 activeRunId = created
+                // This caller has admitted the fresh turn. Approval may pause its first tool;
+                // a CREATED run must not bypass the coordinator's admission guard.
+                agentRunCoordinator.transition(created, AgentRunState.EXECUTING)
                 continuity?.attach(created)
             }
             activeRunId
