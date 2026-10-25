@@ -499,16 +499,8 @@ class DefaultContextAssembler(
         if (exposureSet != null && (exposureSet.discovered.isNotEmpty() || exposureSet.pinned.isNotEmpty()))
             return bounded
 
-        val discovery = discoveryProvider?.invoke()
-        return if (discovery != null && discovery.discoveryRecommended()) {
-            listOf(
-                com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition(
-                    discovery.catalogueSummary()
-                )
-            )
-        } else {
-            bounded
-        }
+        val bootstrap = discoveryProvider?.invoke()?.bootstrapDefinitionOrNull()
+        return if (bootstrap != null) listOf(bootstrap) else bounded
     }
 
     private fun legacyImage(

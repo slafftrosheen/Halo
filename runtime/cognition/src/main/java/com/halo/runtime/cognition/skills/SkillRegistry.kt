@@ -23,6 +23,9 @@ interface SkillRegistry {
     fun replaceCustomSkills(skills: List<SkillDescriptor>) {}
     fun approvalPolicy(id: SkillId): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
     fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
+    /** Metadata-only operation snapshot; scalar authorization must still read current policy. */
+    fun approvalPoliciesForTools(toolNames: Set<String>, registeredNames: Set<String>): Map<String, ToolApprovalPolicy> =
+        toolNames.associateWith(::approvalPolicyForTool)
     fun authorizationGroupForTool(toolName: String): String = toolName
     suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {}
     suspend fun setApprovalPolicyForAll(policy: ToolApprovalPolicy, enabledOnly: Boolean = false) {
@@ -106,8 +109,23 @@ class DefaultSkillRegistry(
 
     override fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy {
         refreshAvailability()
-        val skill = ownerForTool(toolName)
-            ?: return ToolApprovalPolicy.DENY
+        return policyForTool(toolName, ownerForTool(toolName))
+    }
+
+    override fun approvalPoliciesForTools(toolNames: Set<String>, registeredNames: Set<String>): Map<String, ToolApprovalPolicy> {
+        val current = _skills.value
+        val refreshed = availabilityResolver.resolveAll(current, registeredNames)
+        // Publishing changed availability must not overwrite a concurrent skill/configuration edit.
+        if (refreshed != current) _skills.compareAndSet(current, refreshed)
+        val savedPolicies = refreshed.associate { skill ->
+            skill.id to savedApproval(skill.id)?.let { runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull() }
+        }
+        return toolNames.associateWith { name -> policyForTool(name, ownerForTool(name, refreshed), savedPolicies) }
+    }
+
+    private fun policyForTool(toolName: String, skill: SkillDescriptor?,
+        savedPolicies: Map<SkillId, ToolApprovalPolicy?>? = null): ToolApprovalPolicy {
+        if (skill == null) return ToolApprovalPolicy.DENY
         if (!skill.enabled) return ToolApprovalPolicy.DENY
         when (val availability = skill.availability) {
             SkillAvailability.Available -> Unit
@@ -115,9 +133,10 @@ class DefaultSkillRegistry(
             else -> return ToolApprovalPolicy.DENY
         }
 
-        return savedApproval(skill.id)?.let {
+        val saved = if (savedPolicies != null) savedPolicies[skill.id] else savedApproval(skill.id)?.let {
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
-        } ?: defaultApprovalPolicy(
+        }
+        return saved ?: defaultApprovalPolicy(
             skill.toolDefinitions.firstOrNull { it.toolId == toolName }?.risk ?: skill.risk
         )
     }
@@ -125,7 +144,7 @@ class DefaultSkillRegistry(
     override fun authorizationGroupForTool(toolName: String): String =
         ownerForTool(toolName)?.id?.value ?: toolName
 
-    private fun ownerForTool(toolName: String) = _skills.value.filter { toolName in it.tools }
+    private fun ownerForTool(toolName: String, skills: List<SkillDescriptor> = _skills.value) = skills.filter { toolName in it.tools }
         .minWithOrNull(compareBy<SkillDescriptor> { if (it.source == SkillSource.BUILT_IN) 0 else 1 }.thenBy {
             val preferred = when (toolName) {
                 "halo_find_contact", "halo_dial_contact" -> "halo.contacts"

@@ -1,0 +1,41 @@
+{
+  "app": {
+    "tests": 594,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "runtime": {
+    "tests": 362,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "language": {
+    "tests": 51,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "interpretation": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "mainApkSha256": "73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c",
+  "testApkSha256": "539b1c7702c8e2da45240f2cca213c8e1e8b8dd1230363c57042ae40a07b023d",
+  "checkpoint": 16,
+  "build": "SUCCESSFUL",
+  "duration": "8m6s",
+  "sourceBase": "048d8cef7fd739719fd222ad20d44dee63c6fa44",
+  "coreRuntimeGate": "362 cases already ran; app gate reused unchanged passing result",
+  "testApkShaBeforeHarnessRepair": "18766d30607772faa4511a7d3ec853e7387a94b0bfe854d0c896a156f2e0fa63",
+  "testOnlyRepair": "16b; EditableText assertion excludes placeholder; build34s, production unchanged",
+  "testApkShaBeforeTimingRepair": "5f0c4d0ffbb71200c2816b08cc21de0645679326b34f81bf2806cd9b27a022ab",
+  "timingOnlyRepair": "16c fixed2s real-time/frame drain after shell command; build32s, production unchanged",
+  "testApkShaBeforeRealClockControls": "a59950621dddf014db9a7fa67f737376e515b07608c02ba124ab80dd7a3852da",
+  "realClockTestBuild": "16d; test-only new4controls; build32s",
+  "diagnosticTestApkSha256": "9275b7fe126a29f3a9344f41613bbd8f63dbae1b78e1b8522d2fdfbb874d2e63",
+  "finalTestBuild": "16e; experimental diagnostics archived outside compiled suite; build34s; production unchanged"
+}

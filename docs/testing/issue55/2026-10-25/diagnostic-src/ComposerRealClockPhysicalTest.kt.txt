@@ -1,0 +1,214 @@
+package com.halo.app.ui.screens.home
+
+import android.content.Context
+import android.os.Bundle
+import android.os.ParcelFileDescriptor
+import android.os.SystemClock
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
+import android.widget.FrameLayout
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.test.core.app.ActivityScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
+import com.halo.app.language.AppLanguagePreferences
+import com.halo.app.language.AppLanguageProvider
+import com.halo.app.ui.theme.HaloTheme
+import com.halo.sdk.runtime.Storage
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.*
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * Real Android/Choreographer controls: deliberately no ComposeTestRule, test clock or frame pump.
+ * The generic ComponentActivity is supplied by the existing debug compose-test manifest.
+ * All drafts/settings are in-memory fixture data. No MainActivity, Graph, provider or Send call.
+ */
+@RunWith(AndroidJUnit4::class)
+class ComposerRealClockPhysicalTest {
+    private enum class Control { NATIVE, BARE_COMPOSE, HALO_LOCAL, HALO_SHARED }
+    @Test fun nativeEditTextRapidShellRealClock() = exercise(Control.NATIVE)
+    @Test fun bareBasicTextFieldRapidShellRealClock() = exercise(Control.BARE_COMPOSE)
+    @Test fun haloComposerLocalRapidShellRealClock() = exercise(Control.HALO_LOCAL)
+    @Test fun haloComposerSharedRapidShellRealClock() = exercise(Control.HALO_SHARED)
+
+    private fun exercise(control: Control) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val device = UiDevice.getInstance(instrumentation)
+        val appPackage = instrumentation.targetContext.packageName
+        val selector = By.pkg(appPackage).clazz("android.widget.EditText")
+        val prompt = InstrumentationRegistry.getArguments().getString("syntheticComposerPrompt") ?: PROMPT
+        require(prompt.length in 200..2000 && prompt.matches(Regex("[A-Za-z0-9 .,_:/-]+")))
+        val storage = MemoryStorage()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val owner = ComposerDraftStore(storage, scope)
+        val jobs = ConcurrentLinkedQueue<Job>()
+        val callbacks = AtomicInteger()
+        val sends = AtomicInteger()
+        val voices = AtomicInteger()
+        val language = AppLanguagePreferences(MemoryStorage(), "en")
+        fun changed(text: String) { callbacks.incrementAndGet(); jobs += owner.save(CHAT, text) }
+        val scenario = ActivityScenario.launch(ComponentActivity::class.java)
+        var shellOutput = "not-run"
+        try {
+            scenario.onActivity { activity ->
+                activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                if (control == Control.NATIVE) {
+                    val field = EditText(activity).apply {
+                        setSingleLine(false); minLines = 1; maxLines = 4
+                        inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                        imeOptions = EditorInfo.IME_ACTION_SEND
+                        setOnEditorActionListener { _, action, _ -> if (action == EditorInfo.IME_ACTION_SEND) sends.incrementAndGet(); true }
+                        addTextChangedListener(object : TextWatcher {
+                            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { changed(s?.toString().orEmpty()) }
+                            override fun afterTextChanged(s: Editable?) {}
+                        })
+                    }
+                    activity.setContentView(FrameLayout(activity).apply {
+                        val pad = (16 * resources.displayMetrics.density).toInt()
+                        setPadding(pad, pad, pad, pad)
+                        addView(field, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM))
+                    })
+                } else activity.setContent {
+                    CompositionLocalProvider(LocalInspectionMode provides true) {
+                        AppLanguageProvider(language) {
+                            HaloTheme(darkTheme = false, fontScale = 1f) {
+                                var immediate by remember { mutableStateOf("") }
+                                val observed by owner.states.collectAsStateWithLifecycle()
+                                val value = if (control == Control.HALO_SHARED) observed[CHAT]?.text.orEmpty() else immediate
+                                val update: (String) -> Unit = { next ->
+                                    if (control != Control.HALO_SHARED) immediate = next
+                                    changed(next)
+                                }
+                                Column(Modifier.fillMaxSize().imePadding().padding(16.dp), verticalArrangement = Arrangement.Bottom) {
+                                    if (control == Control.BARE_COMPOSE) BasicTextField(value, update,
+                                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), minLines = 1, maxLines = 4,
+                                        keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
+                                        keyboardActions = KeyboardActions(onSend = { sends.incrementAndGet() }))
+                                    else HaloComposer(value, update, { sends.incrementAndGet() }, { voices.incrementAndGet() }, {},
+                                        enabled = true, voiceEnabled = true, voiceActive = false,
+                                        voiceContentDescription = "Fixture voice", showStop = false)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            val editor = device.wait(Until.findObject(selector), 10_000)
+            assertNotNull("Generic test host did not expose an editor", editor)
+            editor!!.click()
+            val focusDeadline = SystemClock.elapsedRealtime() + 10_000
+            var ready = false
+            while (!ready && SystemClock.elapsedRealtime() < focusDeadline) {
+                var ime = false
+                scenario.onActivity { activity ->
+                    ime = activity.window.decorView.hasWindowFocus() &&
+                        ViewCompat.getRootWindowInsets(activity.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+                }
+                ready = ime && device.findObject(selector)?.isFocused == true
+                if (!ready) SystemClock.sleep(50)
+            }
+            assertTrue("Fixture IME/focus did not settle", ready)
+            instrumentation.waitForIdleSync()
+            SystemClock.sleep(250)
+            assertEquals("Fixture starts empty", "", device.findObject(selector)?.text.orEmpty())
+            report(control, "before-input", device.findObject(selector)?.text.orEmpty(), owner, callbacks.get(), sends.get(), voices.get(), shellOutput)
+
+            // One complete batch, natural caret, no MOVE_END/Enter/partial retries. Android's
+            // normal Looper and Choreographer run while only this instrumentation thread waits.
+            shellOutput = shell("input text " + prompt.replace(" ", "%s"))
+            report(control, "shell-return", device.findObject(selector)?.text.orEmpty(), owner, callbacks.get(), sends.get(), voices.get(), shellOutput)
+            assertTrue("Shell harness emitted output: ${shellOutput.take(300)}", shellOutput.isBlank())
+            SystemClock.sleep(2_000)
+            instrumentation.waitForIdleSync()
+            val actual = device.findObject(selector)?.text.orEmpty()
+            report(control, "after-real-drain", actual, owner, callbacks.get(), sends.get(), voices.get(), shellOutput)
+            assertTrue("Editor lost focus", device.findObject(selector)?.isFocused == true)
+            assertEquals("Real-clock editor must contain full injected text", prompt, actual)
+            assertEquals("Exact callbacks must reach owner", prompt, owner.current(CHAT)?.text)
+            assertEquals(0, sends.get()); assertEquals(0, voices.get())
+            runBlocking { withTimeout(20_000) { jobs.toList().forEach { it.join() } } }
+            assertTrue("Persistence acknowledgement missing", owner.current(CHAT)?.saved == true)
+            val restarted = runBlocking { withTimeout(10_000) { ComposerDraftStore(storage, scope).load(CHAT) } }
+            assertEquals("Fresh owner must restore the exact draft", prompt, restarted)
+            assertEquals(prompt, device.findObject(selector)?.text.orEmpty())
+            assertEquals(0, sends.get()); assertEquals(0, voices.get())
+            report(control, "durable-readback", restarted, owner, callbacks.get(), sends.get(), voices.get(), shellOutput)
+        } finally {
+            scenario.close()
+            scope.cancel()
+        }
+    }
+
+    private fun shell(command: String): String {
+        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+        val reader = Executors.newSingleThreadExecutor { task -> Thread(task, "composer-shell-fixture").apply { isDaemon = true } }
+        try {
+            return reader.submit<String> {
+                ParcelFileDescriptor.AutoCloseInputStream(descriptor).bufferedReader().use { it.readText().take(4096) }
+            }.get(20, TimeUnit.SECONDS)
+        } finally { descriptor.close(); reader.shutdownNow() }
+    }
+    private fun report(control: Control, phase: String, text: String, owner: ComposerDraftStore,
+        callbacks: Int, sends: Int, voices: Int, output: String) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        fun selection(node: AccessibilityNodeInfo?): String? {
+            if (node == null) return null
+            if (node.packageName?.toString() == instrumentation.targetContext.packageName && node.className?.toString() == "android.widget.EditText")
+                return "${node.textSelectionStart}:${node.textSelectionEnd}"
+            for (i in 0 until node.childCount) selection(node.getChild(i))?.let { return it }
+            return null
+        }
+        instrumentation.sendStatus(0, Bundle().apply {
+            putString("real_clock_control", "$control/$phase")
+            putInt("field_length", text.length); putInt("owner_length", owner.current(CHAT)?.text?.length ?: 0)
+            putInt("callback_count", callbacks); putInt("send_count", sends); putInt("voice_count", voices)
+            putString("selection", selection(instrumentation.uiAutomation.rootInActiveWindow) ?: "unavailable")
+            putString("shell_output", output.replace(Regex("[\\r\\n\\t]+"), " ").take(300))
+        })
+    }
+    private class MemoryStorage : Storage {
+        private val values = ConcurrentHashMap<String, Any>()
+        override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
+        override fun putString(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
+        override fun getInt(key: String, defaultValue: Int) = values[key] as? Int ?: defaultValue
+        override fun putInt(key: String, value: Int) { values[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean) = values[key] as? Boolean ?: defaultValue
+        override fun putBoolean(key: String, value: Boolean) { values[key] = value }
+        override fun remove(key: String) { values.remove(key) }
+        override fun clear() { values.clear() }
+    }
+    companion object {
+        private const val CHAT = "isolated-real-clock-composer"
+        private const val PROMPT = "Create a Canvas titled HALO-AI-20261025-BOARD-D with one text card containing exactly the complete body of existing note da21e339-c234-4870-b05f-43792826a92b. Read the note first. Keep the original note unchanged. Return the actual saved Canvas id and card id."
+    }
+}

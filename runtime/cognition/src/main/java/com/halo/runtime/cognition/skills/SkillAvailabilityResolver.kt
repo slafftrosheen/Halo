@@ -11,7 +11,32 @@ class SkillAvailabilityResolver(
     /** Null means the host cannot currently evaluate this requirement. */
     private val requirementSatisfied: ((SkillRequirement) -> Boolean?)? = null,
 ) {
-    fun resolve(skill: SkillDescriptor): SkillAvailability {
+    fun resolve(skill: SkillDescriptor): SkillAvailability =
+        resolve(skill, permissionGranted, registeredToolNames, requirementSatisfied)
+
+    /** One catalogue operation observes one permission/requirement answer and registry view. */
+    fun resolveAll(skills: List<SkillDescriptor>, registeredNames: Set<String>): List<SkillDescriptor> {
+        val permissions = mutableMapOf<HostPermission, Boolean>()
+        val requirements = mutableMapOf<SkillRequirement, Boolean?>()
+        val scopedPermissions: (HostPermission) -> Boolean = { permission ->
+            permissions.getOrPut(permission) { permissionGranted(permission) }
+        }
+        // A missing host callback means registration requirements were not host-evaluated.
+        // Preserve that contract; the supplied names replace an existing callback only.
+        val scopedNames: (() -> Set<String>)? = registeredToolNames?.let { { registeredNames } }
+        val scopedRequirements: ((SkillRequirement) -> Boolean?)? = requirementSatisfied?.let { check ->
+            { requirement ->
+                if (!requirements.containsKey(requirement)) requirements[requirement] = check(requirement)
+                requirements[requirement]
+            }
+        }
+        return skills.map { skill ->
+            skill.copy(availability = resolve(skill, scopedPermissions, scopedNames, scopedRequirements))
+        }
+    }
+
+    private fun resolve(skill: SkillDescriptor, permissionGranted: (HostPermission) -> Boolean,
+        registeredToolNames: (() -> Set<String>)?, requirementSatisfied: ((SkillRequirement) -> Boolean?)?): SkillAvailability {
         if (!skill.enabled) return SkillAvailability.Disabled
         val perToolPermissions = skill.toolDefinitions.flatMap { it.requiredPermissions }.toSet()
         val missingPermissionTools = skill.toolDefinitions.filter { tool -> tool.requiredPermissions.any { !permissionGranted(it) } }.map { it.toolId }.toSet()

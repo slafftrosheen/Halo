@@ -1,0 +1,16 @@
+[
+  {
+    "source": "app/src/androidTest/java/com/halo/app/ui/screens/home/ComposerImeFeedbackPhysicalTest.kt",
+    "archivedSource": "ComposerImeFeedbackPhysicalTest.kt.txt",
+    "sha256": "90b634845448c86a9d4444934a6a9e6530173c17b52f3c7b6dbe60a4b3900771",
+    "originalByteSha256": "90b634845448c86a9d4444934a6a9e6530173c17b52f3c7b6dbe60a4b3900771",
+    "normalization": "Public source text uses LF; private original bytes retained."
+  },
+  {
+    "source": "app/src/androidTest/java/com/halo/app/ui/screens/home/ComposerRealClockPhysicalTest.kt",
+    "archivedSource": "ComposerRealClockPhysicalTest.kt.txt",
+    "sha256": "350ad236d82a4d0dd26e8c52f365651b07693280fc08bd3ddfb546975bf11316",
+    "originalByteSha256": "350ad236d82a4d0dd26e8c52f365651b07693280fc08bd3ddfb546975bf11316",
+    "normalization": "Public source text uses LF; private original bytes retained."
+  }
+]

@@ -1,0 +1,94 @@
+{
+  "checkpoint": 16,
+  "status": "PASS_SCOPED_CATALOGUE_FIX_WITH_DEVICE_TIMING_SAMPLE",
+  "sourceBase": "048d8cef7fd739719fd222ad20d44dee63c6fa44",
+  "mainApkSha256": "73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c",
+  "testApkSha256": "539b1c7702c8e2da45240f2cca213c8e1e8b8dd1230363c57042ae40a07b023d",
+  "mechanism": "One fresh operation-local registry/availability snapshot; bootstrap recommendation and summary share a scan. ToolRegistry and live scalar authorization checks unchanged.",
+  "regressions": {
+    "redCases": 9,
+    "redFailures": 4,
+    "redErrors": 0,
+    "greenRuntimeCases": 362,
+    "greenRuntimeFailures": 0,
+    "appCases": 594,
+    "appFailures": 0,
+    "searchRegistryEnumerations": {
+      "before": 25,
+      "after": 1
+    },
+    "bootstrapRegistryEnumerations": {
+      "before": 51,
+      "after": 2
+    }
+  },
+  "before": {
+    "checkpoint": 15,
+    "interactionId": "92555531-4d22-4828-96f8-7978917ab103",
+    "roleToFirstProviderTurnMs": 41322,
+    "discoveryExecutionMs": 20784,
+    "nativeCreateMs": 318,
+    "boundary": "Same physical phone, Power/default inherited AGENTIC free route; separate synthetic note fixture, uncontrolled sample."
+  },
+  "after": {
+    "interactionId": "8e5bc584-c917-4ae7-8d8b-da13c5ad5705",
+    "runId": "06afdda0-1bb9-4df9-967f-d21e4dbc20e4",
+    "roleResolvedUtc": "2026-10-25T01:45:19.339885Z",
+    "firstProviderTurnDeviceLocal": "2026-10-25 03:45:21.670 +02:00",
+    "roleToFirstProviderTurnMs": 2330,
+    "discoveryExecutionMs": 325,
+    "nativeCreateMs": 470,
+    "roleToResponseCommittedMs": 26498,
+    "provider": "openrouter",
+    "model": "nvidia/nemotron-3.5-lightning:free",
+    "fallbackUsed": false,
+    "candidateCount": 1,
+    "protocol": "NATIVE",
+    "toolMode": "REQUIRED",
+    "providerRequests": [
+      {
+        "requestId": "78242936-0bf4-496b-ab9d-6c3642285c4d",
+        "durationMs": "3490",
+        "finishReason": "tool_calls"
+      },
+      {
+        "requestId": "10517a16-b6ad-4065-81bf-395552c5aa57",
+        "durationMs": "2726",
+        "finishReason": "tool_calls"
+      },
+      {
+        "requestId": "507d4422-2b9c-4f6f-bd88-57c68de747b4",
+        "durationMs": "2101",
+        "finishReason": "tool_calls"
+      },
+      {
+        "requestId": "73eed0f2-c185-44b4-bb8d-23b55fc66361",
+        "durationMs": "2712",
+        "finishReason": "tool_calls"
+      },
+      {
+        "requestId": "2a785441-08d1-4fe9-b1c4-20997811b607",
+        "durationMs": "1632",
+        "finishReason": "stop"
+      }
+    ],
+    "rejectedDiscoveryCalls": 2,
+    "writeTruth": "CONFIRMED",
+    "expectedTitle": "HALO-PERF-20261025-NOTE-E",
+    "actualEditorTitle": "HALO-PERF-20261025-NOTE-E",
+    "expectedBody": "Silver kites rest at noon.",
+    "actualEditorBody": "Silver kites rest at noon.",
+    "actualUiReadback": true,
+    "freeMetadataCheckedUtc": "2026-10-25T01:44:39.163961+00:00",
+    "freeMetadataSource": "https://openrouter.ai/api/v1/models/nvidia/nemotron-3.5-lightning:free/endpoints",
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    }
+  },
+  "limitations": [
+    "Observed individual timing samples, not P50/P95, battery, leak or controlled throughput qualification. Provider round counts and response times vary.",
+    "Experimental rapid-shell input diagnostics had failures in both control/state modes; causality was not established. No speculative production editor change was made. Sources and all result categories are preserved separately.",
+    "Current positive spoken/audible/barge-in acceptance and three full cross-tool workflows remain incomplete; no alpha or issue-closure claim."
+  ]
+}

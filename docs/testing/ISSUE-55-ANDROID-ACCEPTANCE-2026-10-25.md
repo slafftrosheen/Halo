@@ -74,3 +74,29 @@ Installed main SHA-256 `052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb559
 [Draft device results](issue55/2026-10-25/draft-device-15.json), [free note receipts](issue55/2026-10-25/free-note-device-15.json), [automated gate](issue55/2026-10-25/automated-gate-15.json), [RED proof](issue55/2026-10-25/review-regressions-red.json), [native boundaries](issue55/2026-10-25/native-15.json). Exception/corruption/bounds and blocked cleanup cases are isolated tests, not live-data corruption trials. A malformed discovery call was rejected before effects, then the model recovered; this is included in the cloud receipt.
 
 #55 and #62 remain open. Three full cross-tool journeys, current spoken/audible/barge-in acceptance, and remaining Android-owned recovery/Study/Kids/accessibility work are incomplete. Existing paid/provider/permission settings are unchanged. The next focused issue is repeated app-side catalogue work: two note samples show about 41s before first provider dispatch and about 20s inside discovery, while provider calls themselves take roughly 2–6s. Source review found nested complete registry/skill rebuilds; a scoped snapshot fix still needs measured regression proof. No overall performance or alpha qualification is claimed.
+
+## Catalogue recovery — checkpoint 16
+
+The next canonical fix removes nested registry/skill reconstruction from metadata discovery. Every public catalogue/search operation captures fresh descriptors, registered definition IDs/names, capabilities and bulk skill/permission availability once; bootstrap recommendation and summary share a scan. There is no TTL/global cache and no ToolRegistry replacement. Live scalar authorization, privacy, permissions and ALWAYS approval still recheck at execution. Independent review found no concrete boundary regression.
+
+TDD: nine regressions initially had 4 assertion failures (search 25 vs 1 registry enumerations, bootstrap 51 vs 2, summary and inconsistent permission answers), zero errors. The fix passes all 362 runtime cases and 594 affected app cases, zero failures/errors/skips. Language 51/interpretation 26 unchanged passing results remain UP_TO_DATE. Full app/APK build 8m6s; subsequent instrumentation-only harness/archive rebuilds 34/32/32/34s did not change production bytes. Final native suite 13 PASS /1 explicit quiet-capture NOT_RUN. Overlapping counts are not unique cumulative coverage.
+
+Installed/read-back main SHA-256 `73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c`; final test `539b1c7702c8e2da45240f2cca213c8e1e8b8dd1230363c57042ae40a07b023d`. Main source was the validated working patch after 048d8cef7fd739719fd222ad20d44dee63c6fa44; compiled Git metadata names that base. Checkpoint16 had one main replacement and five test replacements including experimental diagnostics and final removal; intermediate fingerprints are retained in the automated record.
+
+| Same-phone free-model note path | Before checkpoint15 | After checkpoint 16 |
+|---|---|---|
+| Role resolution → first provider turn | 41,322ms | 2,330ms |
+| Discovery execution | 20,784ms | 325ms |
+| Actual saved note | Exact B title/body | Exact `HALO-PERF-20261025-NOTE-E` / `Silver kites rest at noon.` |
+
+These are individual uncontrolled samples, not percentiles, battery/leak or throughput qualification. Model rounds differ (including safely rejected malformed discovery calls), so no provider-speed claim follows. The current run used the same inherited default free NVIDIA/OpenRouter model, NATIVE/REQUIRED, no fallback, with zero-price/tools endpoint metadata checked before dispatch; actual editor readback confirmed the saved title/body.
+
+[Source counters/device sample](issue55/2026-10-25/catalogue-device-16.json), [automated gate](issue55/2026-10-25/automated-gate-16.json), [RED proof](issue55/2026-10-25/catalogue-red.json), [final native boundaries](issue55/2026-10-25/native-16.json).
+
+### Additional attempted workflows and input diagnostics
+
+The genuine checkpoint15 note→Canvas compound attempt read the correct note but stopped at the six-step safety limit after three rejected discovery calls. Only read/discovery receipts were confirmed; local title search found no matching board. No uncertain creation was replayed. It remains **INCOMPLETE**, not a cross-tool PASS ([record](issue55/2026-10-25/canvas-attempt-15.json)). No budget/model/provider policy was changed to force success.
+
+Long rapid shell-key injection also produced incomplete prefixes. Experimental isolated tests were kept separate: initial 8 setup failures involved placeholder semantics; repaired run 6 PASS/2 failures; extra frame drain 5 PASS/3 failures; real-clock controls 1 PASS/3 failures (two focus setup failures); individual real-clock repeats failed both local and shared controls. Ordinary whole-string IME commits and paced actual Home/Orb entry have passing observations. A shared-store-specific cause was not established; no speculative production editor projection/change was implemented. **Rapid shell stress remains unqualified and overall keyboard acceptance is not promoted to PASS.** Latest sources and all result categories are preserved in the [diagnostic archive](issue55/2026-10-25/diagnostic-src/); they were removed from the compiled qualifying suite rather than relabelled passing. Raw logs and exact experimental APK stay ignored locally.
+
+#55/#62 remain KEEP_OPEN for their full acceptance. Current positive spoken/audible/barge-in checks, three complete cross-tool journeys and remaining owned presentation/recovery/Study/Kids/accessibility work are still incomplete. No paid dispatch, new sharing acknowledgement, permission grant, credential read by the agent, model download or source-data reset occurred in this checkpoint.

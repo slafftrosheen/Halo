@@ -1,0 +1,44 @@
+{
+  "tests": 9,
+  "failures": 4,
+  "errors": 0,
+  "skipped": 0,
+  "cases": [
+    {
+      "name": "discoveredWorkspaceToolsStillPassTheFreshRemoteDisclosureGate",
+      "failed": false
+    },
+    {
+      "name": "initialDiscoverFirstContextDoesNotScanAvailabilityTwice",
+      "failed": true
+    },
+    {
+      "name": "dynamicRegistrationRemovalAndReadditionAreVisibleOnTheNextOperation",
+      "failed": false
+    },
+    {
+      "name": "eightCandidatesAcrossThreeSkillsEnumerateTheRegistryOncePerSearch",
+      "failed": true
+    },
+    {
+      "name": "skillApprovalPermissionAndCapabilityChangesAreFreshBetweenOperations",
+      "failed": false
+    },
+    {
+      "name": "discoveredMetadataDoesNotCacheAuthorityOrOverrideAlwaysConfirmation",
+      "failed": false
+    },
+    {
+      "name": "summaryAndRecommendationEachUseOneFreshAvailabilityScan",
+      "failed": true
+    },
+    {
+      "name": "oneOperationUsesACoherentPermissionAnswerAndTheNextSeesRevocation",
+      "failed": true
+    },
+    {
+      "name": "registeredNamesKeepDefinitionIdAndNameButExcludeDescriptorMetadataId",
+      "failed": false
+    }
+  ]
+}

@@ -15,6 +15,19 @@ class ToolAvailabilityResolver(
     private val catalogueSource: CapabilityCatalogueSource? = null,
 ) {
 
+    /** Fresh metadata snapshot for one discovery scan, never a reusable execution grant. */
+    fun availableDescriptors(candidates: List<ToolDescriptor>, registeredNames: Set<String>): List<ToolDescriptor> {
+        if (candidates.isEmpty()) return emptyList()
+        val policies = skillRegistry?.approvalPoliciesForTools(candidates.map { it.name }.toSet(), registeredNames)
+        val availableCaps = catalogueSource?.snapshot?.value?.capabilities
+            ?.filter { it.availability == CapabilityAvailability.AVAILABLE }?.map { it.id }?.toSet()
+        return candidates.filter { descriptor ->
+            (policies == null || (policies[descriptor.name] ?: ToolApprovalPolicy.DENY) != ToolApprovalPolicy.DENY) &&
+                (availableCaps == null || descriptor.requirements.filterIsInstance<ToolRequirement.Capability>()
+                    .all { it.id in availableCaps })
+        }
+    }
+
     fun isAvailable(descriptor: ToolDescriptor): Boolean {
         return checkAvailability(descriptor) is ToolAvailability.Available
     }

@@ -1,0 +1,85 @@
+{
+  "checkpoint": 16,
+  "mainApkSha256": "73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c",
+  "testApkSha256": "539b1c7702c8e2da45240f2cca213c8e1e8b8dd1230363c57042ae40a07b023d",
+  "pass": 13,
+  "notRun": 1,
+  "fail": 0,
+  "cases": [
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "twoHundredPercentListAndPrivacyTargetsStaySeparate",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeSwipeUpOpensTheListWithoutInvokingPrimary",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeLongPressOpensDestinationListWithoutCapturing",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "customAccessibilityActionOpensTheSameListWithoutSideEffects",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniActivityLaunchesAndBackCloses",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+      "test": "realMainActivityRendersWarmAndResumedScreenIntents",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.language.PolishLanguageDeviceTest",
+      "test": "polishSwitchAtLargeTextPreservesDraftAndPickerContext",
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest",
+      "test": "realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground",
+      "status": "NOT_RUN"
+    }
+  ],
+  "boundaries": [
+    "Canonical regression suite only; experimental input classes archived separately with all failures disclosed.",
+    "Privacy owner tests target synthetic loopback TLS; Mini tests observe Activity/ownership boundaries, not live speech.",
+    "Quiet-capture opt-in absent; no current positive microphone or human-heard audio claim."
+  ]
+}

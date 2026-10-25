@@ -1,0 +1,235 @@
+package com.halo.app.ui.screens.home
+
+import android.os.Bundle
+import android.os.ParcelFileDescriptor
+import android.os.SystemClock
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.halo.app.language.AppLanguagePreferences
+import com.halo.app.language.AppLanguageProvider
+import com.halo.app.ui.theme.HaloTheme
+import com.halo.sdk.runtime.Storage
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * Isolated physical input comparison, never MainActivity/HomeVM/Graph or user persistence.
+ * Shell input is a single rapid batch with natural caret; no MOVE_END, Enter or Send.
+ * The control differs only in immediate Compose state vs the real owner's lifecycle-collected flow.
+ */
+@RunWith(AndroidJUnit4::class)
+class ComposerImeFeedbackPhysicalTest {
+    @get:Rule val compose = createComposeRule()
+    private enum class Feedback { LOCAL, SHARED }
+    private enum class Input { SHELL_BATCH, SHELL_NATURAL_BOUNDARY, IME_COMMIT }
+    private enum class Writes { NORMAL, BLOCK_FIRST, REVERSE_DISPATCH }
+
+    @Test fun rapidShellBatchWithLocalComposeState() = exercise(Feedback.LOCAL, Input.SHELL_BATCH)
+    @Test fun rapidShellBatchWithSharedLifecycleState() = exercise(Feedback.SHARED, Input.SHELL_BATCH)
+    @Test fun wholeStringImeCommitWithLocalComposeState() = exercise(Feedback.LOCAL, Input.IME_COMMIT)
+    @Test fun wholeStringImeCommitWithSharedLifecycleState() = exercise(Feedback.SHARED, Input.IME_COMMIT)
+    @Test fun naturalTrailingSpaceBoundaryWithLocalComposeState() = exercise(Feedback.LOCAL, Input.SHELL_NATURAL_BOUNDARY)
+    @Test fun naturalTrailingSpaceBoundaryWithSharedLifecycleState() = exercise(Feedback.SHARED, Input.SHELL_NATURAL_BOUNDARY)
+    @Test fun rapidShellBatchWithSharedStateAndBlockedFirstSave() = exercise(Feedback.SHARED, Input.SHELL_BATCH, Writes.BLOCK_FIRST)
+    @Test fun rapidShellBatchWithSharedStateAndReversedSaveDispatch() = exercise(Feedback.SHARED, Input.SHELL_BATCH, Writes.REVERSE_DISPATCH)
+
+    private fun exercise(feedback: Feedback, input: Input, writes: Writes = Writes.NORMAL) {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val prompt = InstrumentationRegistry.getArguments().getString("syntheticComposerPrompt") ?: PROMPT
+        // This is one argument to `input text`, not an arbitrary shell/program supplied by a test.
+        require(prompt.length in 200..2000 && prompt.matches(Regex("[A-Za-z0-9 .,_:/-]+"))) {
+            "Synthetic ASCII composer fixture required"
+        }
+        val gate = WriteGate(writes == Writes.BLOCK_FIRST)
+        val storage = MemoryStorage(gate)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val reversed = ReverseDispatcher()
+        val owner = ComposerDraftStore(storage, scope,
+            if (writes == Writes.REVERSE_DISPATCH) reversed else Dispatchers.IO)
+        val language = AppLanguagePreferences(MemoryStorage(), "en")
+        val jobs = ConcurrentLinkedQueue<Job>()
+        val callbacks = AtomicInteger()
+        val sends = AtomicInteger()
+        val voices = AtomicInteger()
+        lateinit var host: View
+        var shellOutput = "not-run"
+        fun shellBatch(text: String): String {
+            val injecting = scope.async(Dispatchers.IO) {
+                ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("input text " + text.replace(" ", "%s")))
+                    .bufferedReader().use { it.readText().take(4096) }
+            }
+            // Compose tests otherwise pause their synthetic frame clock while external shell
+            // input runs. Pump frames concurrently; never wait for idle between injected keys.
+            val deadline = SystemClock.elapsedRealtime() + 15_000
+            while (!injecting.isCompleted && SystemClock.elapsedRealtime() < deadline) {
+                compose.mainClock.advanceTimeByFrame()
+                SystemClock.sleep(16)
+            }
+            assertTrue("Shell injection harness timed out", injecting.isCompleted)
+            return runBlocking { injecting.await() }.also { output ->
+                assertTrue("Input harness emitted output: ${output.take(300)}", output.isBlank())
+                report(feedback, input, writes, "shell-return-${text.length}", callbacks.get(), owner, sends.get(), voices.get(), output)
+                // CLI completion/Compose idle do not establish that Gboard's asynchronous
+                // commits have reached the app. Continue real frames for a fixed bounded drain;
+                // do not inject again, retry missing text, or stop early when equality happens.
+                val settleDeadline = SystemClock.elapsedRealtime() + 2_000
+                while (SystemClock.elapsedRealtime() < settleDeadline) {
+                    compose.mainClock.advanceTimeByFrame()
+                    SystemClock.sleep(16)
+                }
+                compose.waitForIdle()
+                report(feedback, input, writes, "shell-after-settle-${text.length}", callbacks.get(), owner, sends.get(), voices.get(), output)
+            }
+        }
+        try {
+            compose.setContent {
+                host = LocalView.current
+                CompositionLocalProvider(LocalInspectionMode provides true) {
+                    AppLanguageProvider(language) {
+                        HaloTheme(darkTheme = false, fontScale = 1f) {
+                            var immediate by remember { mutableStateOf("") }
+                            val observed by owner.states.collectAsStateWithLifecycle()
+                            val value = if (feedback == Feedback.LOCAL) immediate else observed[CHAT]?.text.orEmpty()
+                            Column(Modifier.fillMaxSize().imePadding().padding(16.dp), verticalArrangement = Arrangement.Bottom) {
+                                HaloComposer(value, { next ->
+                                    callbacks.incrementAndGet()
+                                    if (feedback == Feedback.LOCAL) immediate = next
+                                    jobs += owner.save(CHAT, next)
+                                }, { sends.incrementAndGet() }, { voices.incrementAndGet() }, {},
+                                    enabled = true, voiceEnabled = true, voiceActive = false,
+                                    voiceContentDescription = "Fixture voice", showStop = false)
+                            }
+                        }
+                    }
+                }
+            }
+            compose.onNode(hasSetTextAction()).performClick()
+            compose.waitUntil(10_000) {
+                compose.runOnIdle {
+                    host.hasWindowFocus() && ViewCompat.getRootWindowInsets(host)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+                }
+            }
+            instrumentation.waitForIdleSync()
+            SystemClock.sleep(250) // One keyboard-animation settle, never a delay between keys.
+            compose.onNode(hasSetTextAction()).assertIsFocused()
+            assertEditorText("")
+
+            when (input) {
+                Input.SHELL_BATCH -> {
+                    shellOutput = shellBatch(prompt)
+                }
+                Input.SHELL_NATURAL_BOUNDARY -> {
+                    // Characterize the observed248/trailing-space boundary without MOVE_END.
+                    val boundary = if (prompt == PROMPT) 248 else prompt.length / 2
+                    shellOutput = shellBatch(prompt.take(boundary))
+                    compose.waitForIdle()
+                    report(feedback, input, writes, "natural-prefix", callbacks.get(), owner, sends.get(), voices.get(), shellOutput)
+                    assertEditorText(prompt.take(boundary))
+                    shellOutput += shellBatch(prompt.drop(boundary))
+                }
+                Input.IME_COMMIT -> compose.runOnIdle {
+                    val connection = host.onCreateInputConnection(EditorInfo())
+                    assertNotNull("Physical Compose host must expose its focused InputConnection", connection)
+                    assertTrue("InputConnection rejected whole-string commit", connection!!.commitText(prompt, 1))
+                    shellOutput = "not-used:InputConnection.commitText"
+                }
+            }
+            compose.waitForIdle()
+            if (writes == Writes.BLOCK_FIRST) assertTrue("Save-block harness did not receive any write", gate.entered.await(5, TimeUnit.SECONDS))
+            report(feedback, input, writes, "input-settled", callbacks.get(), owner, sends.get(), voices.get(), shellOutput)
+            compose.onNode(hasSetTextAction()).assertIsFocused()
+            assertEditorText(prompt)
+            assertEquals("Owner must receive the exact field callback text", prompt, owner.current(CHAT)?.text)
+            assertEquals(0, sends.get()); assertEquals(0, voices.get())
+
+            gate.release.countDown()
+            if (writes == Writes.REVERSE_DISPATCH) reversed.drainReverse()
+            runBlocking { withTimeout(20_000) { jobs.toList().forEach { it.join() } } }
+            compose.waitForIdle()
+            assertTrue("Saved may be published only after completed persistence", owner.current(CHAT)?.saved == true)
+            assertEquals(prompt, owner.current(CHAT)?.text)
+            assertEditorText(prompt)
+            val restarted = runBlocking { withTimeout(10_000) { ComposerDraftStore(storage, scope).load(CHAT) } }
+            assertEquals("Fresh owner must restore the same full draft", prompt, restarted)
+            assertEquals(0, sends.get()); assertEquals(0, voices.get())
+            report(feedback, input, writes, "durable-readback", callbacks.get(), owner, sends.get(), voices.get(), shellOutput)
+        } finally {
+            gate.release.countDown()
+            scope.cancel()
+        }
+    }
+
+    private fun assertEditorText(expected: String) {
+        val node = compose.onNode(hasSetTextAction()).fetchSemanticsNode()
+        assertTrue("Focused editor must expose EditableText", node.config.contains(SemanticsProperties.EditableText))
+        assertEquals("EditableText must match exactly (decoration/placeholder excluded)", expected,
+            node.config[SemanticsProperties.EditableText].text)
+    }
+
+    private fun report(feedback: Feedback, input: Input, writes: Writes, phase: String, callbacks: Int,
+        owner: ComposerDraftStore, sends: Int, voices: Int, output: String) {
+        val node = compose.onNode(hasSetTextAction()).fetchSemanticsNode()
+        val selection = if (node.config.contains(SemanticsProperties.TextSelectionRange)) node.config[SemanticsProperties.TextSelectionRange].toString() else "absent"
+        val text = if (node.config.contains(SemanticsProperties.EditableText)) node.config[SemanticsProperties.EditableText].text else ""
+        InstrumentationRegistry.getInstrumentation().sendStatus(0, Bundle().apply {
+            putString("composer_case", "$feedback/$input/$writes/$phase")
+            putInt("callback_count", callbacks); putInt("field_length", text.length)
+            putInt("owner_length", owner.current(CHAT)?.text?.length ?: 0)
+            putString("selection", selection); putInt("send_count", sends); putInt("voice_count", voices)
+            putString("shell_output", output.replace(Regex("[\\r\\n\\t]+"), " ").take(300))
+            // UiAutomation exposes a pipe, not a process exit status. Empty output is not proof
+            // every injected event was delivered; the local/shared control comparison is required.
+        })
+    }
+
+    private class ReverseDispatcher : CoroutineDispatcher() {
+        private val pending = mutableListOf<Runnable>()
+        override fun dispatch(context: CoroutineContext, block: Runnable) { synchronized(pending) { pending += block } }
+        fun drainReverse() { while (true) { val next = synchronized(pending) { if (pending.isEmpty()) null else pending.removeAt(pending.lastIndex) } ?: return; next.run() } }
+    }
+    private class WriteGate(enabled: Boolean) {
+        private val first = AtomicBoolean(enabled)
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(if (enabled) 1 else 0)
+        fun beforeWrite() { if (first.compareAndSet(true, false)) { entered.countDown(); check(release.await(20, TimeUnit.SECONDS)) { "Fixture write gate timed out" } } }
+    }
+    private class MemoryStorage(private val gate: WriteGate = WriteGate(false)) : Storage {
+        private val values = ConcurrentHashMap<String, Any>()
+        override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
+        override fun putString(key: String, value: String?) { gate.beforeWrite(); if (value == null) values.remove(key) else values[key] = value }
+        override fun getInt(key: String, defaultValue: Int) = values[key] as? Int ?: defaultValue
+        override fun putInt(key: String, value: Int) { values[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean) = values[key] as? Boolean ?: defaultValue
+        override fun putBoolean(key: String, value: Boolean) { values[key] = value }
+        override fun remove(key: String) { values.remove(key) }
+        override fun clear() { values.clear() }
+    }
+    companion object {
+        private const val CHAT = "isolated-composer-fixture"
+        private const val PROMPT = "Create a Canvas titled HALO-AI-20261025-BOARD-D with one text card containing exactly the complete body of existing note da21e339-c234-4870-b05f-43792826a92b. Read the note first. Keep the original note unchanged. Return the actual saved Canvas id and card id."
+    }
+}

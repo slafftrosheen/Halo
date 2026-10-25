@@ -59,12 +59,10 @@ class ToolDiscoveryService(
     }
 
     /** Compact discovery summary. One bounded line per available discoverable tool. */
-    fun catalogueSummary(): String {
-        val entries = registry.descriptors()
-            .filter { it.visibility == ToolVisibility.DISCOVERABLE }
-            .filter { availabilityResolver?.isAvailable(it) != false }
-            .sortedBy { it.name }
-            .take(MAX_CATALOGUE_ENTRIES)
+    fun catalogueSummary(): String = catalogueSummary(availableCatalogue())
+
+    private fun catalogueSummary(catalogue: List<ToolDescriptor>): String {
+        val entries = catalogue.sortedBy { it.name }.take(MAX_CATALOGUE_ENTRIES)
         if (entries.isEmpty()) return ""
         return buildString {
             append("Available discoverable actions:")
@@ -85,9 +83,7 @@ class ToolDiscoveryService(
         val terms = query.lowercase().split(Regex("[^a-z0-9_]+")).filter { it.length >= 2 }
         if (terms.isEmpty()) return emptyList()
 
-        val candidates = registry.descriptors()
-            .filter { it.visibility == ToolVisibility.DISCOVERABLE }
-            .filter { availabilityResolver?.isAvailable(it) != false }
+        val candidates = availableCatalogue()
 
         return candidates.mapNotNull { descriptor ->
             val name = descriptor.name.lowercase()
@@ -119,15 +115,14 @@ class ToolDiscoveryService(
      * Expose schemas for an explicit id list plus the discovery meta-tool itself.
      */
     fun expand(toolIds: List<String>): List<ToolDefinition> {
+        val catalogue = availableCatalogue()
         val expanded = linkedSetOf<ToolDefinition>()
-        expanded.add(discoveryToolDefinition(catalogueSummary()))
+        expanded.add(discoveryToolDefinition(catalogueSummary(catalogue)))
         for (rawId in toolIds) {
             if (expanded.size >= maxExposedSchemasUpperBound) break
             val id = rawId.trim()
             if (id.isEmpty() || id == DISCOVER_TOOL) continue
-            val descriptor = registry.descriptor(id) ?: continue
-            if (descriptor.visibility != ToolVisibility.DISCOVERABLE) continue
-            if (availabilityResolver?.isAvailable(descriptor) == false) continue
+            val descriptor = catalogue.firstOrNull { it.name == id || it.definition.id == id } ?: continue
             val contract = descriptor.operability
             val definition = if (contract == null) descriptor.definition else descriptor.definition.copy(description =
                 descriptor.definition.description + "\nOperation contract v${contract.version}: ${contract.operation.name}; result ${contract.resultEncoding.name}. " +
@@ -140,15 +135,24 @@ class ToolDiscoveryService(
     }
 
     /** Descriptor lookup for discovery callers that only have a plain id. */
-    fun registryDescriptorOrNull(toolId: String): ToolDescriptor? {
-        val descriptor = registry.descriptor(toolId) ?: return null
-        if (descriptor.visibility != ToolVisibility.DISCOVERABLE) return null
-        if (availabilityResolver?.isAvailable(descriptor) == false) return null
-        return descriptor
+    fun registryDescriptorOrNull(toolId: String): ToolDescriptor? =
+        availableCatalogue().firstOrNull { it.name == toolId || it.definition.id == toolId }
+
+    /** Initial context makes its discover-first decision and summary from the same scan. */
+    fun bootstrapDefinitionOrNull(): ToolDefinition? {
+        val catalogue = availableCatalogue()
+        return if (catalogue.size > maxExposedSchemasUpperBound)
+            discoveryToolDefinition(catalogueSummary(catalogue)) else null
     }
 
-    fun discoveryRecommended(): Boolean =
-        registry.descriptors().count {
-            it.visibility == ToolVisibility.DISCOVERABLE && availabilityResolver?.isAvailable(it) != false
-        } > maxExposedSchemasUpperBound
+    fun discoveryRecommended(): Boolean = availableCatalogue().size > maxExposedSchemasUpperBound
+
+    private fun availableCatalogue(): List<ToolDescriptor> {
+        // ToolRegistry captures its current dynamic sources once for this enumeration.
+        // Keep all registered aliases before filtering visibility, matching the host callback.
+        val descriptors = registry.descriptors()
+        val candidates = descriptors.filter { it.visibility == ToolVisibility.DISCOVERABLE }
+        val registeredNames = descriptors.flatMap { listOf(it.definition.id, it.definition.name) }.toSet()
+        return availabilityResolver?.availableDescriptors(candidates, registeredNames) ?: candidates
+    }
 }
