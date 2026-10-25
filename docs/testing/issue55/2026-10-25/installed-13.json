@@ -1,0 +1,14 @@
+{
+  "app": {
+    "sha256": "6a627749e9cda5b1bb15f15b9ab87b7b9e11cb396bc209c71107565bf9e644ab",
+    "bytes": 289585678,
+    "installedSha256": "6a627749e9cda5b1bb15f15b9ab87b7b9e11cb396bc209c71107565bf9e644ab",
+    "reinstalled": true
+  },
+  "test": {
+    "sha256": "c1654921e7ac3210d6cf4ce48a1f891d7086a9b15d75fe381d788740746a2d42",
+    "bytes": 1949934,
+    "installedSha256": "c1654921e7ac3210d6cf4ce48a1f891d7086a9b15d75fe381d788740746a2d42",
+    "reinstalled": true
+  }
+}

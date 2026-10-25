@@ -559,7 +559,7 @@ Not measured on this device|||Не проверено на этом устрой
 Text|||Текст|||Teksts|||Tekst
 Vision|||Зрение|||Redze|||Obraz
 Tools|||Инструменты|||Rīki|||Narzędzia
-Import|||Импортировать|||Importēt|||Importuj
+Import|||Импорт|||Importēt|||Importuj
 Resume|||Продолжить|||Turpināt|||Wznów
 Discard partial|||Удалить неполную загрузку|||Dzēst nepilnīgo lejupielādi|||Usuń niepełny plik
 Re-download|||Скачать заново|||Lejupielādēt vēlreiz|||Pobierz ponownie
@@ -4094,3 +4094,9 @@ Discard Canvas review draft|||Отбросить черновик для про�
 Export Canvas to a note|||Экспортировать холст в заметку|||Eksportēt audeklu piezīmē|||Eksportuj płótno do notatki
 List local speech models|||Показать локальные речевые модели|||Rādīt lokālos runas modeļus|||Pokaż lokalne modele mowy
 Manage local speech model|||Управление локальной речевой моделью|||Pārvaldīt lokālo runas modeli|||Zarządzaj lokalnym modelem mowy
+repetitive recognition|||Результат распознавания повторяется. Повторите фразу или введите её текстом.|||Atpazīšanā teksts atkārtojas. Mēģiniet vēlreiz vai rakstiet ziņu.|||Rozpoznany tekst zawiera powtórzenia. Spróbuj ponownie lub wpisz wiadomość.
+audio was too quiet or short|||Запись была слишком тихой или короткой. Говорите ближе к микрофону и попробуйте снова.|||Ieraksts bija pārāk kluss vai īss. Runājiet tuvāk mikrofonam un mēģiniet vēlreiz.|||Nagranie było zbyt ciche lub krótkie. Mów bliżej mikrofonu i spróbuj ponownie.
+no speech detected|||Речь не обнаружена. Повторите фразу или введите её текстом.|||Runa netika uztverta. Mēģiniet vēlreiz vai rakstiet ziņu.|||Nie wykryto mowy. Spróbuj ponownie lub wpisz wiadomość.
+low recognition confidence|||Не удалось уверенно распознать речь. Повторите фразу или введите её текстом.|||Runu neizdevās droši atpazīt. Mēģiniet vēlreiz vai rakstiet ziņu.|||Nie udało się pewnie rozpoznać mowy. Spróbuj ponownie lub wpisz wiadomość.
+punctuation only|||Распознаны только знаки препинания. Попробуйте ещё раз.|||Tika atpazītas tikai pieturzīmes. Mēģiniet vēlreiz.|||Rozpoznano tylko znaki interpunkcyjne. Spróbuj ponownie.
+language mismatch|||Распознанный язык отличается от выбранного. Проверьте язык распознавания.|||Atpazītā valoda neatbilst izvēlētajai. Pārbaudiet runas valodu.|||Rozpoznany język różni się od wybranego. Sprawdź język rozpoznawania mowy.

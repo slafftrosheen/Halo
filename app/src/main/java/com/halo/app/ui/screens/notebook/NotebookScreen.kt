@@ -259,6 +259,38 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             )
         }
 
+        if (showLibrary) item(key = "library-controls") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = com.halo.app.ui.design.HaloShapes.card,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Column(
+                    Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    HaloTextField(
+                        value = queryText,
+                        onValueChange = viewModel::setQuery,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), contentDescription = null) },
+                        placeholder = { Text(uiText("Search your workspace")) },
+                        shape = com.halo.app.ui.design.HaloShapes.control, kind = VoiceFieldKind.SEARCH)
+
+                    FilterBar(state.filter, viewModel::setFilter)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    CollectionBar(
+                        state = state,
+                        onSelect = viewModel::selectCollection,
+                        onCreate = { showNewCollection = true },
+                        onDelete = { showDeleteCollection = true },
+                    )
+                }
+            }
+        }
+
         if (!showLibrary) item(key = "create") {
             val actions = listOf<Triple<String, Int, () -> Unit>>(
                 Triple("Note", R.drawable.halo_ic_new_note, viewModel::createNote),
@@ -507,37 +539,6 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             } }
         }
 
-        if (showLibrary) item(key = "library-controls") {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = com.halo.app.ui.design.HaloShapes.card,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            ) {
-                Column(
-                    Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    HaloTextField(
-                        value = queryText,
-                        onValueChange = viewModel::setQuery,
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), contentDescription = null) },
-                        placeholder = { Text(uiText("Search your workspace")) },
-                        shape = com.halo.app.ui.design.HaloShapes.control, kind = VoiceFieldKind.SEARCH)
-
-                    FilterBar(state.filter, viewModel::setFilter)
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    CollectionBar(
-                        state = state,
-                        onSelect = viewModel::selectCollection,
-                        onCreate = { showNewCollection = true },
-                        onDelete = { showDeleteCollection = true },
-                    )
-                }
-            }
-        }
         if(showLibrary && state.filter in listOf(NotebookFilter.MEMORY,NotebookFilter.INBOX)) item(key="personal-memory") {
             PersonalMemorySection(viewModel,inboxOnly=state.filter == NotebookFilter.INBOX)
         }

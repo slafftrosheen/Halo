@@ -1,0 +1,11 @@
+{
+  "commit": "8a66b5e756587650da2671fd489075c2f2ef6d3d",
+  "appSha256": "ff00a95371eb747f3041d0972aa8288b8560412aa8e61323c77a02fb744aeeaf",
+  "fixtureTitle": "HALO-ACCEPT-20261025-NOTE-A",
+  "fixtureBody": "HALO acceptance fixture 2026-10-25. Note persistence and Canvas source check.",
+  "rotation1ExactReadback": true,
+  "forceStopRestartExactReadback": true,
+  "workspaceSearchUniqueResult": true,
+  "status": "PASS_UI_PERSISTENCE",
+  "limits": "Human UI via ADB, not cloud/assistant typed/spoken workflow."
+}

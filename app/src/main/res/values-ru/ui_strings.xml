@@ -561,7 +561,7 @@
     <string name="ui_71988c4d8e08" formatted="false">"Текст"</string>
     <string name="ui_c587c2601ccf" formatted="false">"Зрение"</string>
     <string name="ui_ea93d6a262ec" formatted="false">"Инструменты"</string>
-    <string name="ui_2cff9baabf56" formatted="false">"Импортировать"</string>
+    <string name="ui_2cff9baabf56" formatted="false">"Импорт"</string>
     <string name="ui_d640c7421da0" formatted="false">"Продолжить"</string>
     <string name="ui_70313db71cd3" formatted="false">"Удалить неполную загрузку"</string>
     <string name="ui_420eaafbda7b" formatted="false">"Скачать заново"</string>
@@ -4089,4 +4089,10 @@
     <string name="ui_50d59586a409" formatted="false">"Экспортировать холст в заметку"</string>
     <string name="ui_f60ea290c23b" formatted="false">"Показать локальные речевые модели"</string>
     <string name="ui_dc6bfbbc0a46" formatted="false">"Управление локальной речевой моделью"</string>
+    <string name="ui_99c935d55bfe" formatted="false">"Результат распознавания повторяется. Повторите фразу или введите её текстом."</string>
+    <string name="ui_c48ad83d8bf0" formatted="false">"Запись была слишком тихой или короткой. Говорите ближе к микрофону и попробуйте снова."</string>
+    <string name="ui_c8264bf1c82d" formatted="false">"Речь не обнаружена. Повторите фразу или введите её текстом."</string>
+    <string name="ui_1c22f72c9a3f" formatted="false">"Не удалось уверенно распознать речь. Повторите фразу или введите её текстом."</string>
+    <string name="ui_e14ce000605d" formatted="false">"Распознаны только знаки препинания. Попробуйте ещё раз."</string>
+    <string name="ui_7d3e40035aff" formatted="false">"Распознанный язык отличается от выбранного. Проверьте язык распознавания."</string>
 </resources>

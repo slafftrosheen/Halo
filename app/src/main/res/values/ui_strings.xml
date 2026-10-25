@@ -4089,4 +4089,10 @@
     <string name="ui_50d59586a409" formatted="false">"Export Canvas to a note"</string>
     <string name="ui_f60ea290c23b" formatted="false">"List local speech models"</string>
     <string name="ui_dc6bfbbc0a46" formatted="false">"Manage local speech model"</string>
+    <string name="ui_99c935d55bfe" formatted="false">"repetitive recognition"</string>
+    <string name="ui_c48ad83d8bf0" formatted="false">"audio was too quiet or short"</string>
+    <string name="ui_c8264bf1c82d" formatted="false">"no speech detected"</string>
+    <string name="ui_1c22f72c9a3f" formatted="false">"low recognition confidence"</string>
+    <string name="ui_e14ce000605d" formatted="false">"punctuation only"</string>
+    <string name="ui_7d3e40035aff" formatted="false">"language mismatch"</string>
 </resources>

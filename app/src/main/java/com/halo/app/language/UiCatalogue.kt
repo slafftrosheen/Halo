@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4106) {
+    buildMap(4112) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4150,6 +4150,12 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Export Canvas to a note" to R.string.ui_50d59586a409,
     "List local speech models" to R.string.ui_f60ea290c23b,
     "Manage local speech model" to R.string.ui_dc6bfbbc0a46,
+    "repetitive recognition" to R.string.ui_99c935d55bfe,
+    "audio was too quiet or short" to R.string.ui_c48ad83d8bf0,
+    "no speech detected" to R.string.ui_c8264bf1c82d,
+    "low recognition confidence" to R.string.ui_1c22f72c9a3f,
+    "punctuation only" to R.string.ui_e14ce000605d,
+    "language mismatch" to R.string.ui_7d3e40035aff,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

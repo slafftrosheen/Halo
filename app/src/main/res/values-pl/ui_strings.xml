@@ -4089,4 +4089,10 @@
     <string name="ui_50d59586a409" formatted="false">"Eksportuj płótno do notatki"</string>
     <string name="ui_f60ea290c23b" formatted="false">"Pokaż lokalne modele mowy"</string>
     <string name="ui_dc6bfbbc0a46" formatted="false">"Zarządzaj lokalnym modelem mowy"</string>
+    <string name="ui_99c935d55bfe" formatted="false">"Rozpoznany tekst zawiera powtórzenia. Spróbuj ponownie lub wpisz wiadomość."</string>
+    <string name="ui_c48ad83d8bf0" formatted="false">"Nagranie było zbyt ciche lub krótkie. Mów bliżej mikrofonu i spróbuj ponownie."</string>
+    <string name="ui_c8264bf1c82d" formatted="false">"Nie wykryto mowy. Spróbuj ponownie lub wpisz wiadomość."</string>
+    <string name="ui_1c22f72c9a3f" formatted="false">"Nie udało się pewnie rozpoznać mowy. Spróbuj ponownie lub wpisz wiadomość."</string>
+    <string name="ui_e14ce000605d" formatted="false">"Rozpoznano tylko znaki interpunkcyjne. Spróbuj ponownie."</string>
+    <string name="ui_7d3e40035aff" formatted="false">"Rozpoznany język różni się od wybranego. Sprawdź język rozpoznawania mowy."</string>
 </resources>

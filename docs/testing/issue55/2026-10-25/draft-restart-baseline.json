@@ -1,0 +1,8 @@
+{
+  "appSha256": "6a627749e9cda5b1bb15f15b9ab87b7b9e11cb396bc209c71107565bf9e644ab",
+  "fixture": "HALO-UNSENT-DRAFT-20261025",
+  "submitted": false,
+  "afterColdRestart": "",
+  "status": "FAIL_ANDROID_DRAFT_LOSS",
+  "source": "Actual UI edit, background, force-stop, relaunch; no model or provider call"
+}

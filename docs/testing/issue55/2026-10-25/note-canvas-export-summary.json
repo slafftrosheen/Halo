@@ -1,0 +1,17 @@
+{
+  "commit": "8a66b5e756587650da2671fd489075c2f2ef6d3d",
+  "appSha256": "ff00a95371eb747f3041d0972aa8288b8560412aa8e61323c77a02fb744aeeaf",
+  "sourceNoteTitle": "HALO-ACCEPT-20261025-NOTE-A",
+  "boardTitle": "HALO-ACCEPT-20261025-BOARD-A",
+  "oneReferenceCardObserved": true,
+  "exportedBodyFields": [
+    "HALO-ACCEPT-20261025-BOARD-A",
+    "HALO-ACCEPT-20261025-NOTE-A"
+  ],
+  "sourceBodyPresent": true,
+  "status": "PASS_UI_SOURCE_EXPORT",
+  "limits": "Actual UI path, not cloud/assistant typed/spoken workflow.",
+  "sourceLines": [
+    "Source: 0343d899-48f7-4656-827a-c587e8e9e8a1"
+  ]
+}

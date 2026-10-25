@@ -4089,4 +4089,10 @@
     <string name="ui_50d59586a409" formatted="false">"Eksportēt audeklu piezīmē"</string>
     <string name="ui_f60ea290c23b" formatted="false">"Rādīt lokālos runas modeļus"</string>
     <string name="ui_dc6bfbbc0a46" formatted="false">"Pārvaldīt lokālo runas modeli"</string>
+    <string name="ui_99c935d55bfe" formatted="false">"Atpazīšanā teksts atkārtojas. Mēģiniet vēlreiz vai rakstiet ziņu."</string>
+    <string name="ui_c48ad83d8bf0" formatted="false">"Ieraksts bija pārāk kluss vai īss. Runājiet tuvāk mikrofonam un mēģiniet vēlreiz."</string>
+    <string name="ui_c8264bf1c82d" formatted="false">"Runa netika uztverta. Mēģiniet vēlreiz vai rakstiet ziņu."</string>
+    <string name="ui_1c22f72c9a3f" formatted="false">"Runu neizdevās droši atpazīt. Mēģiniet vēlreiz vai rakstiet ziņu."</string>
+    <string name="ui_e14ce000605d" formatted="false">"Tika atpazītas tikai pieturzīmes. Mēģiniet vēlreiz."</string>
+    <string name="ui_7d3e40035aff" formatted="false">"Atpazītā valoda neatbilst izvēlētajai. Pārbaudiet runas valodu."</string>
 </resources>
