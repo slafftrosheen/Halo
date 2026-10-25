@@ -164,7 +164,13 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                         .put("excerpt", value.excerpt).put("revision", value.revision) }))
                 "DelegationResultRecorded"
             }
-            is AgentStep.ContextUsed -> { payload.put("objectIds", org.json.JSONArray(step.objectIds)).put("memoryIds", org.json.JSONArray(step.memoryIds)); "ContextUsed" }
+            is AgentStep.ContextUsed -> {
+                payload.put("objectIds", org.json.JSONArray(step.objectIds)).put("memoryIds", org.json.JSONArray(step.memoryIds))
+                    .put("workspaceReferences", org.json.JSONArray(step.workspaceReferences.map { reference ->
+                        JSONObject().put("objectId", reference.objectId).put("version", reference.version ?: JSONObject.NULL)
+                    }))
+                "ContextUsed"
+            }
             is AgentStep.PlanCreated -> { payload.put("planId", step.planId).put("summary", step.summary); "PlanCreated" }
             is AgentStep.ClarificationRequested -> { payload.put("question", step.question).put("field", step.field); "ClarificationRequested" }
             is AgentStep.ApprovalRequested -> { payload.put("action", step.action).put("risk", step.risk); "ApprovalRequested" }
@@ -176,7 +182,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             is AgentStep.ResponseProduced -> { payload.put("responseId", step.responseId).put("text", step.text).put("payloadRefId", step.payloadRefId); "ResponseProduced" }
 
             is AgentStep.RunPrepared -> { payload.put("kind", step.kind.name).put("recoveryPolicy", step.recoveryPolicy.name)
-                .put("conversationId", step.conversationId).put("responseDelivery", step.responseDelivery?.name); "RunPrepared" }
+                .put("conversationId", step.conversationId).put("responseDelivery", step.responseDelivery?.name)
+                .put("inputModality", step.inputModality?.name).put("inputRoute", step.inputRoute?.let(::encodeInputRoute)); "RunPrepared" }
             is AgentStep.ContinuityBound -> { payload.put("conversationId", step.conversationId); "ContinuityBound" }
             is AgentStep.InteractionHandoffRecorded -> { payload.put("from", encodeEndpoint(step.from)).put("to", encodeEndpoint(step.to))
                 .put("reason", step.reason.name).put("channel", step.channel.name); "InteractionHandoffRecorded" }
@@ -372,7 +379,15 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     require(array.length() <= limit)
                     return (0 until array.length()).map { array.getString(it).also { value -> require(value.length in 1..240) } }
                 }
-                AgentStep.ContextUsed(step, run, at, ids("objectIds",20), ids("memoryIds",12))
+                val references = p.optJSONArray("workspaceReferences") ?: org.json.JSONArray()
+                require(references.length() <= 20)
+                AgentStep.ContextUsed(step, run, at, ids("objectIds",20), ids("memoryIds",12),
+                    (0 until references.length()).map { index ->
+                        val reference = references.getJSONObject(index)
+                        val objectId = reference.getString("objectId").also { require(it.length in 1..240) }
+                        val version = if (reference.isNull("version")) null else reference.getString("version")
+                        com.halo.runtime.cognition.context.ContextReference.WorkspaceObject(objectId, version)
+                    })
             }
             "PlanCreated" -> AgentStep.PlanCreated(step, run, at, p.getString("planId"), p.getString("summary"))
             "ClarificationRequested" -> AgentStep.ClarificationRequested(step, run, at, p.getString("question"), p.getString("field"))
@@ -386,7 +401,9 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             "RunPrepared" -> AgentStep.RunPrepared(step, run, at,
                 runCatching { AgentRunKind.valueOf(p.getString("kind")) }.getOrDefault(AgentRunKind.INTERACTIVE),
                 runCatching { RunRecoveryPolicy.valueOf(p.getString("recoveryPolicy")) }.getOrDefault(RunRecoveryPolicy.USER_RESUME), p.optString("conversationId").takeIf { it.isNotBlank() && it != "null" },
-                runCatching { com.halo.sdk.runtime.ResponseDelivery.valueOf(p.getString("responseDelivery")) }.getOrNull())
+                runCatching { com.halo.sdk.runtime.ResponseDelivery.valueOf(p.getString("responseDelivery")) }.getOrNull(),
+                runCatching { com.halo.runtime.cognition.turn.InteractionInputModality.valueOf(p.getString("inputModality")) }.getOrNull(),
+                p.optJSONObject("inputRoute")?.let(::decodeInputRoute))
             "ContinuityBound" -> AgentStep.ContinuityBound(step, run, at, p.getString("conversationId"))
             "InteractionHandoffRecorded" -> AgentStep.InteractionHandoffRecorded(step, run, at, decodeEndpoint(p.getJSONObject("from")),
                 decodeEndpoint(p.getJSONObject("to")), com.halo.runtime.cognition.continuity.InteractionHandoffReason.valueOf(p.getString("reason")),
@@ -518,6 +535,25 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             else -> AgentStep.ToolFailed(step, run, at, id, "legacy", "Unsupported historical step: $type")
         }
     }
+
+    private fun encodeInputRoute(route: com.halo.sdk.runtime.SpeechInputRoute): JSONObject = when (route) {
+        com.halo.sdk.runtime.SpeechInputRoute.Phone -> JSONObject().put("type", "PHONE")
+        is com.halo.sdk.runtime.SpeechInputRoute.Device -> JSONObject().put("type", "DEVICE")
+            .put("deviceId", route.deviceId).put("platformEndpointId", route.platformEndpointId)
+            .put("displayName", route.displayName).put("kind", route.kind.name)
+    }
+
+    private fun decodeInputRoute(value: JSONObject): com.halo.sdk.runtime.SpeechInputRoute? = runCatching {
+        when (value.getString("type")) {
+            "PHONE" -> com.halo.sdk.runtime.SpeechInputRoute.Phone
+            "DEVICE" -> com.halo.sdk.runtime.SpeechInputRoute.Device(
+                value.optString("deviceId").takeIf { it.isNotBlank() && it != "null" },
+                if (value.has("platformEndpointId") && !value.isNull("platformEndpointId")) value.getInt("platformEndpointId") else null,
+                value.optString("displayName").takeIf { it.isNotBlank() && it != "null" },
+                AudioDeviceKind.valueOf(value.getString("kind")))
+            else -> null
+        }
+    }.getOrNull()
 
     private fun encodeExpected(expected: ExpectedInput): JSONObject {
         val obj = JSONObject()

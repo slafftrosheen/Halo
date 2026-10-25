@@ -4117,3 +4117,40 @@ A draft from startup is available.|||Доступен черновик, введ
 Recover startup draft|||Восстановить черновик|||Atjaunot palaišanas melnrakstu|||Przywróć wersję roboczą z uruchamiania
 A deleted conversation draft could not be removed. Try again.|||Не удалось удалить черновик удалённого разговора. Попробуйте ещё раз.|||Izdzēstās sarunas melnrakstu neizdevās noņemt. Mēģiniet vēlreiz.|||Nie udało się usunąć wersji roboczej usuniętej rozmowy. Spróbuj ponownie.
 Try clearing deleted drafts|||Повторить очистку черновиков|||Mēģināt notīrīt izdzēstos melnrakstus|||Spróbuj ponownie wyczyścić usunięte wersje robocze
+Mastery —|||Освоено: —|||Apgūts: —|||Opanowanie: —
+New card|||Новая карточка|||Jauna kartīte|||Nowa fiszka
+Due now|||Пора повторить|||Jāatkārto tagad|||Czas na powtórkę
+Due in %1$dd|||Повторение через %1$d дн.|||Atkārtojums pēc %1$d d.|||Powtórka za %1$d d.
+Memory: %1$s|||Память: %1$s|||Atmiņa: %1$s|||Pamięć: %1$s
+Not measured yet|||Ещё не измерено|||Vēl nav izmērīts|||Jeszcze nie zmierzono
+less than a day|||меньше суток|||mazāk par dienu|||mniej niż dzień
+about 1 day|||около суток|||apmēram 1 diena|||około 1 dnia
+about %1$d days|||около %1$d дн.|||apmēram %1$d d.|||około %1$d dni
+about %1$d months|||около %1$d мес.|||apmēram %1$d mēn.|||około %1$d mies.
+Download: about %1$s|||Загрузка: около %1$s|||Lejupielāde: apmēram %1$s|||Pobieranie: około %1$s
+Additional free space needed: about %1$s|||Нужно свободного места: около %1$s|||Nepieciešamā brīvā vieta: apmēram %1$s|||Potrzebne wolne miejsce: około %1$s
+Not enough free space for this bundle.|||Недостаточно свободного места для этого набора.|||Šai pakotnei nepietiek brīvas vietas.|||Za mało wolnego miejsca na ten pakiet.
+You can choose an answer or skip this question.|||Можно выбрать ответ или пропустить этот вопрос.|||Vari izvēlēties atbildi vai izlaist šo jautājumu.|||Możesz wybrać odpowiedź albo pominąć to pytanie.
+Choose Next step when you want to continue.|||Чтобы продолжить, выбери «Следующий шаг».|||Lai turpinātu, izvēlies “Nākamais solis”.|||Aby kontynuować, wybierz „Następny krok”.
+Sources for this request|||Источники этого запроса|||Šī pieprasījuma avoti|||Źródła dla tego żądania
+Source history is unavailable right now.|||Сведения об источниках сейчас недоступны.|||Avotu vēsture pašlaik nav pieejama.|||Historia źródeł jest teraz niedostępna.
+Checking saved source references…|||Проверяем сохранённые ссылки на источники…|||Pārbaudām saglabātās atsauces uz avotiem…|||Sprawdzanie zapisanych odnośników do źródeł…
+No source receipt was recorded for this request.|||Для этого запроса не сохранены сведения об источниках.|||Šim pieprasījumam nav saglabāts ieraksts par izmantotajiem avotiem.|||Dla tego żądania nie zapisano informacji o użytych źródłach.
+No source links were stored in this receipt.|||В этой записи не сохранены ссылки на источники.|||Šajā ierakstā nav saglabātas saites uz avotiem.|||W tym wpisie nie zapisano odnośników do źródeł.
+Source %1$d|||Источник %1$d|||Avots %1$d|||Źródło %1$d
+Matches the recorded source version.|||Совпадает с записанной версией источника.|||Atbilst ierakstītajai avota versijai.|||Zgodne z zapisaną wersją źródła.
+Source changed after this was recorded.|||Источник изменился после сохранения записи.|||Avots ir mainījies kopš šī ieraksta saglabāšanas.|||Źródło zmieniło się po zapisaniu tego wpisu.
+This receipt has no saved source version.|||В этой записи не сохранена версия источника.|||Šajā ierakstā nav saglabāta avota versija.|||W tym wpisie nie zapisano wersji źródła.
+Source is currently unavailable.|||Источник сейчас недоступен.|||Avots pašlaik nav pieejams.|||Źródło jest teraz niedostępne.
+Memories recorded for this request: %1$d|||Записей памяти для этого запроса: %1$d|||Šim pieprasījumam reģistrētās atmiņas: %1$d|||Wspomnienia zapisane dla tego żądania: %1$d
+Only part of the saved source history is shown.|||Показана только часть сохранённой истории источников.|||Tiek rādīta tikai daļa saglabātās avotu vēstures.|||Pokazano tylko część zapisanej historii źródeł.
+Opening a source shows its current contents.|||При открытии источника отображается его текущее содержимое.|||Atverot avotu, tiek rādīts tā pašreizējais saturs.|||Otwarcie źródła pokazuje jego aktualną treść.
+How much detail?|||Насколько подробно?|||Cik detalizēti?|||Jak szczegółowo?
+Simpler explanation|||Проще|||Vienkāršāk|||Prościej
+Usual detail|||Как обычно|||Kā parasti|||Jak zwykle
+Deeper explanation|||Подробнее|||Plašāk|||Dokładniej
+This choice changes future explanations, not your level or results.|||Выбор меняет следующие объяснения, но не твой уровень или результаты.|||Šī izvēle maina turpmākos skaidrojumus, nevis tavu līmeni vai rezultātus.|||Ten wybór zmienia kolejne wyjaśnienia, a nie Twój poziom ani wyniki.
+Finish the current learning step first.|||Сначала заверши текущий учебный шаг.|||Vispirms pabeidz pašreizējo mācību soli.|||Najpierw zakończ bieżący krok nauki.
+During a lesson: hint, repeat, next step, simpler, more detail, or stop. The same actions are available below.|||Во время урока: «подсказка», «повтори», «следующий шаг», «проще», «подробнее» или «стоп». Эти же действия есть ниже.|||Nodarbības laikā: “padoms”, “atkārto”, “nākamais solis”, “vienkāršāk”, “plašāk” vai “apturi”. Šīs darbības ir pieejamas arī zemāk.|||Podczas lekcji: „wskazówka”, „powtórz”, „następny krok”, „prościej”, „dokładniej” lub „zatrzymaj”. Te same działania są dostępne poniżej.
+Try: hint, repeat, next step, simpler, more detail, or stop.|||Попробуй: «подсказка», «повтори», «следующий шаг», «проще», «подробнее» или «стоп».|||Mēģini: “padoms”, “atkārto”, “nākamais solis”, “vienkāršāk”, “plašāk” vai “apturi”.|||Spróbuj: „wskazówka”, „powtórz”, „następny krok”, „prościej”, „dokładniej” lub „zatrzymaj”.
+The starter bundle is unavailable.|||Стартовый набор недоступен.|||Sākuma pakotne nav pieejama.|||Pakiet startowy jest niedostępny.

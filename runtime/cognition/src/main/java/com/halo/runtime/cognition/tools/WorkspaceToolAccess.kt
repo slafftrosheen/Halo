@@ -34,7 +34,7 @@ object WorkspaceToolAccess {
         "halo_study_card_get", "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review", "halo_study_card_delete",
         "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas",
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status",
-        "halo_canvas_current") + remoteInkTools + PersonalConfigurationToolAccess.all + canvasWorkflowTools
+        "halo_canvas_current", "halo_context_used_sources") + remoteInkTools + PersonalConfigurationToolAccess.all + canvasWorkflowTools
 }
 
 /** Content-free provenance from canonical tool identities; never inspect or parse result text. */
@@ -47,7 +47,7 @@ internal fun remoteToolResultCategories(toolName: String): Set<com.halo.sdk.prov
         add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
     }
     if (toolName in WorkspaceToolAccess.readTools) add(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE)
-    if (toolName in setOf("halo_search_memory", "halo_propose_memory")) add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
+    if (toolName in setOf("halo_search_memory", "halo_propose_memory", "halo_context_used_sources")) add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
     if (toolName in DefaultToolExposureGate.CLOUD_SCREEN_GATED_TOOLS || toolName.startsWith("halo_appfn_"))
         add(com.halo.sdk.provider.RemoteDataCategory.SCREEN)
 }

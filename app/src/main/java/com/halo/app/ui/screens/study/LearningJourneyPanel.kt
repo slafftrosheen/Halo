@@ -50,6 +50,7 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
         }), style = MaterialTheme.typography.titleMedium)
         }
         if (!state.isFinished) HomeworkReviewPanel(state, model, kids)
+        StudyExplanationOptions(state, model, kids)
         journey.currentBranch?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         if (journey.stage == LearningStage.DISCOVER && !state.isFinished) {
             Text(uiText("Tell halo what you know, or choose where to begin."))
@@ -67,6 +68,8 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             }
             if (state.draft.isNotBlank()) com.halo.app.ui.components.HaloActionButton(onClick = { model.discoverPriorKnowledge(state.draft) },
                 enabled = ready, modifier = Modifier.heightIn(min = target)) { Text(uiText("Use my thinking")) }
+            TextButton(onClick = model::skipKnowledgeProbe, enabled = ready,
+                modifier = Modifier.heightIn(min = target)) { Text(uiText("Skip for now")) }
         } else if (!state.isFinished && journey.stage != LearningStage.REFLECT) {
             TextButton(onClick = { exploring = !exploring }, enabled = ready,
                 modifier = Modifier.heightIn(min = target)) { Text(uiText("Explore deeper")) }

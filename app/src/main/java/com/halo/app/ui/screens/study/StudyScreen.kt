@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import kotlin.math.roundToInt
+
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
@@ -97,6 +99,7 @@ import com.halo.app.data.study.StudyVerdict
 import com.halo.app.study.MasteryCardCurve
 import com.halo.app.study.SourceCoverage
 import com.halo.app.study.StudyMasterySnapshot
+import com.halo.app.study.StudyMasteryModel
 import com.halo.app.study.StudyReviewIntensity
 import com.halo.app.study.StudySourceReference
 import com.halo.app.ui.design.HaloScreenHeader
@@ -1483,7 +1486,7 @@ private fun MemoryCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.weight(1f))
                 Text(
-                    snapshot?.statusLabel(now) ?: "Not measured yet",
+                    snapshot?.let { localizedMasteryStatus(it, now) } ?: uiText("Not measured yet"),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (snapshot != null && now >= snapshot.dueAtEpochMs) {
                         MaterialTheme.colorScheme.error
@@ -1517,22 +1520,38 @@ private fun AnswerComparison(prefix: String, learner: String, expected: String, 
 }
 
 @Composable
-private fun MasteryBadge(snapshot: StudyMasterySnapshot, now: Long) {
-    val percent = if (snapshot.isMeasured) "${snapshot.masteryPercent}%" else "—"
+internal fun MasteryBadge(snapshot: StudyMasterySnapshot, now: Long) {
     Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.surfaceVariant) {
         Column(Modifier.padding(horizontal = 8.dp, vertical = 3.dp)) {
             Text(
-                "Mastery $percent",
+                if (snapshot.isMeasured) uiText("Mastery %1\$d%%", snapshot.masteryPercent) else uiText("Mastery —"),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                "${snapshot.statusLabel(now)} · memory ${snapshot.stabilityLabel()}",
+                "${localizedMasteryStatus(snapshot, now)} · ${uiText("Memory: %1\$s", localizedMasteryStability(snapshot))}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
+}
+
+/** App-owned metadata only; never translate stored questions, answers or source locators. */
+@Composable
+private fun localizedMasteryStatus(snapshot: StudyMasterySnapshot, now: Long): String = when {
+    !snapshot.isMeasured -> uiText("New card")
+    now >= snapshot.dueAtEpochMs -> uiText("Due now")
+    else -> uiText("Due in %1\$dd", ((snapshot.dueAtEpochMs - now) / StudyMasteryModel.DAY_MS).coerceAtLeast(0))
+}
+
+@Composable
+private fun localizedMasteryStability(snapshot: StudyMasterySnapshot): String = when {
+    !snapshot.isMeasured -> uiText("Not measured yet")
+    snapshot.stabilityDays < 1.0 -> uiText("less than a day")
+    snapshot.stabilityDays < 2.0 -> uiText("about 1 day")
+    snapshot.stabilityDays < 31.0 -> uiText("about %1\$d days", snapshot.stabilityDays.roundToInt())
+    else -> uiText("about %1\$d months", (snapshot.stabilityDays / 30.4).roundToInt())
 }
 
 /** Learner-owned recall choices; no result is selected automatically. */

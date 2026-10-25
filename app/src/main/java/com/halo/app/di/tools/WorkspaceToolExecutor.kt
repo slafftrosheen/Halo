@@ -27,6 +27,7 @@ class WorkspaceToolExecutor(
     private val notePurgeActions: WorkspaceNotePurgeActions? = null,
     private val noteAttachmentActions: WorkspaceNoteAttachmentActions? = null,
     private val remoteInk: RemoteInkActions? = null,
+    private val sourceReceipts: ContextReceiptTools? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -128,7 +129,7 @@ class WorkspaceToolExecutor(
                 "additionalProperties" to false
             )
         )
-    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty() + studyActions?.definitions().orEmpty() + noteActions?.definitions().orEmpty() + notePurgeActions?.definitions().orEmpty() + noteAttachmentActions?.definitions().orEmpty() + remoteInk?.definitions().orEmpty()
+    ) + continuity?.definitions().orEmpty() + canvas?.definitions().orEmpty() + studyActions?.definitions().orEmpty() + noteActions?.definitions().orEmpty() + notePurgeActions?.definitions().orEmpty() + noteAttachmentActions?.definitions().orEmpty() + remoteInk?.definitions().orEmpty() + sourceReceipts?.definitions().orEmpty()
 
     override suspend fun execute(toolCall: ToolCall, context: com.halo.runtime.cognition.tools.ToolExecutionContext): ToolExecutionResult {
         remoteInk?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }
@@ -137,6 +138,8 @@ class WorkspaceToolExecutor(
     }
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        if (toolCall.functionName == ContextReceiptTools.NAME) return sourceReceipts?.execute(toolCall)
+            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Source receipts are unavailable", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         remoteInk?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         continuity?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }
         canvas?.takeIf { adapter -> adapter.definitions().any { it.name == toolCall.functionName } }?.let { return it.execute(toolCall) }

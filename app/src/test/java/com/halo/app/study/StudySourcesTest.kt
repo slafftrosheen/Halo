@@ -28,6 +28,23 @@ import java.io.File
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class StudySourcesTest {
+    @Test fun explicitDepthPreservesHintRestrictionsLevelWordLimitAndSourceBoundaries() {
+        val gateway = AiRouterTutorGateway(router(Provider()), { false })
+        val original = turn(session().copy(learnerLevel = StudyLearnerLevel.EARLY_PRIMARY))
+        for (depth in listOf(StudyExplanationDepth.SIMPLER, StudyExplanationDepth.DEEPER)) {
+            val prompt = gateway.buildPrompt(original.copy(explanationDepth = depth))
+            assertTrue(prompt.contains("explicitly chose"))
+            assertTrue(prompt.contains("Give one hint only. Do not reveal the answer or the full method."))
+            assertTrue(prompt.contains("At most 80 words."))
+            assertTrue(prompt.contains("Use only supplied material"))
+            assertTrue(prompt.contains("[S1]"))
+            assertEquals(StudyLearnerLevel.EARLY_PRIMARY, original.session.learnerLevel)
+        }
+        assertFalse(gateway.buildPrompt(original).contains("explicitly chose"))
+        assertFalse(gateway.buildPrompt(original.copy(explanationDepth = StudyExplanationDepth.DEEPER,
+            createCards = true)).contains("explicitly chose"))
+    }
+
     private fun session(ids: List<String> = listOf("a", "b")) = StudySessionRecord("lesson", "fractions",
         StudyLanguagePreferences("lv", "ru", "pl"), ids, 7, null, null, null, TutorStage.HINT,
         StudySessionLifecycle.ACTIVE, null, false, null, 1, 1)

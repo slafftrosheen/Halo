@@ -6,6 +6,8 @@ import com.halo.runtime.cognition.tools.*
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 import org.json.JSONObject
+import org.json.JSONArray
+import kotlinx.coroutines.CancellationException
 
 /** Requests the existing installer; never selects/qualifies models or owns downloads itself. */
 class LocalModelSetupToolExecutor(private val owner: LocalRolePackControl) : ToolExecutor {
@@ -13,7 +15,7 @@ class LocalModelSetupToolExecutor(private val owner: LocalRolePackControl) : Too
         "halo_local_setup_pause" to LocalRolePackCommand.PAUSE, "halo_local_setup_rollback" to LocalRolePackCommand.ROLLBACK,
         "halo_local_setup_keep_files" to LocalRolePackCommand.KEEP_FILES)
     override fun definitions() = listOf(
-        ToolDefinition("halo_local_setup_status", "halo_local_setup_status", "Read pinned local starter-bundle availability and current acquisition transaction. Files installed does not mean selected, tested, recommended or audible. No user documents or provider call.",
+        ToolDefinition("halo_local_setup_status", "halo_local_setup_status", "Read pinned local starter-bundle availability, acquisition transaction and remaining download/storage estimate when idle. Download bytes exclude temporary installation space; per-volume storage checks include it. Estimates can change and execution checks again. This bundle has no CHAT model. Files installed does not mean selected, tested, recommended or audible. No user documents, downloads or provider call.",
             mapOf("type" to "object", "properties" to emptyMap<String, Any>(), "additionalProperties" to false)),
     ) + commandNames.map { (name, command) -> ToolDefinition(name, name, when (command) {
         LocalRolePackCommand.START_OR_RESUME -> "Explicitly request/resume downloads of the pinned intent candidate, recognition, VAD and speech-output files. Can require substantial network/storage. Reuses existing installer; does not select candidates or claim language/device quality. Status first; supply its exact transactionId (NONE for fresh setup). Never replay an uncertain request."
@@ -27,12 +29,25 @@ class LocalModelSetupToolExecutor(private val owner: LocalRolePackControl) : Too
         if (toolCall.functionName == "halo_local_setup_status") {
             if (toolCall.arguments.isNotEmpty()) return rejected(toolCall)
             val value = owner.state.value
+            val preview = try { owner.downloadPreview() }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
             return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, JSONObject().put("available", owner.available)
                 .put("transactionId", value.transactionId ?: "NONE").put("phase", value.phase.name).put("stage", value.stage.name)
                 .put("busy", value.busy).put("canResume", value.canResume).put("canRollback", value.canRollback)
                 .put("hasSetupRecord", value.hasSetupRecord).put("recoveryRequired", value.recoveryRequired)
                 .put("canKeepFiles", value.canKeepFiles)
                 .put("downloadedBytes", value.downloadedBytes).put("totalBytes", value.totalBytes)
+                .put("downloadPreview", preview?.let { plan -> JSONObject()
+                    .put("estimatedRemainingDownloadBytes", plan.downloadBytes)
+                    .put("estimatedRequiredStorageBytes", plan.requiredStorageBytes)
+                    .put("enoughStorageAtObservation", plan.hasEnoughStorage)
+                    .put("chatModelIncluded", false)
+                    .put("downloads", JSONArray(plan.downloads.map { item -> JSONObject()
+                        .put("stage", item.stage.name).put("remainingBytes", item.remainingBytes) }))
+                    .put("storageVolumes", JSONArray(plan.storage.map { item -> JSONObject()
+                        .put("requiredBytes", item.requiredBytes).put("availableBytes", item.availableBytes) }))
+                } ?: JSONObject.NULL)
                 .put("roleSelectionChanged", false).put("qualificationGranted", false).toString())
         }
         val command = commandNames[toolCall.functionName] ?: return rejected(toolCall, ToolRejectionKind.TOOL_UNKNOWN)

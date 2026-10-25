@@ -24,17 +24,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 enum class LocalRolePackPhase { IDLE, PREFLIGHT, INSTALLING, PAUSED, FAILED, ROLLING_BACK, ROLLBACK_FAILED, COMPLETE }
 interface LocalRolePackControl {
     val state: StateFlow<LocalRolePackInstallState>
     val available: Boolean
+    /** Inventory estimate only. Never downloads, selects roles or grants qualification. */
+    suspend fun downloadPreview(): LocalRolePackDownloadPreview? = null
     fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean
 }
 
 enum class LocalRolePackCommand { START_OR_RESUME, PAUSE, ROLLBACK, KEEP_FILES }
 
 enum class LocalRolePackStage { INTENT, SPEECH_RECOGNITION, SPEECH_ACTIVITY, SPEECH_OUTPUT, DONE }
+
+data class LocalRolePackDownloadEstimate(val stage: LocalRolePackStage, val remainingBytes: Long)
+data class LocalRolePackStorageEstimate(val requiredBytes: Long, val availableBytes: Long)
+data class LocalRolePackDownloadPreview(
+    val downloads: List<LocalRolePackDownloadEstimate>,
+    val storage: List<LocalRolePackStorageEstimate>,
+) {
+    val downloadBytes: Long get() = downloads.fold(0L) { total, item -> Math.addExact(total, item.remainingBytes) }
+    val requiredStorageBytes: Long get() = storage.fold(0L) { total, item -> Math.addExact(total, item.requiredBytes) }
+    val hasEnoughStorage: Boolean get() = storage.all { it.availableBytes >= it.requiredBytes }
+}
 
 data class LocalRolePackInstallState(
     val phase: LocalRolePackPhase = LocalRolePackPhase.IDLE,
@@ -109,7 +123,11 @@ class LocalRolePackInstaller(
     private val installJobLock = Any()
     private var installJob: Job? = null
     private val intentId = "qwen3-0.6b-dynamic-int4"
-    private val intentCatalog get() = models.catalogModel(intentId)
+    // Acquisition uses the same exact source pins as discovery; a matching ID
+    // alone cannot substitute a different imported catalogue row into this bundle.
+    private val intentCatalog get() = models.catalogModel(intentId)?.takeIf {
+        CuratedLocalCatalog.entry(it)?.role == CuratedLocalRole.INTENT_CANDIDATE
+    }
     @Volatile private var recordFingerprint: String? = null
     @Volatile private var journal = recoverJournal()
     private val mutableState = MutableStateFlow(journal?.toState() ?: if (recordFingerprint != null)
@@ -117,6 +135,13 @@ class LocalRolePackInstaller(
             hasSetupRecord = true, recoveryRequired = true) else LocalRolePackInstallState())
     override val state: StateFlow<LocalRolePackInstallState> = mutableState.asStateFlow()
     override val available: Boolean get() = supertonic != null && intentCatalog != null
+
+    override suspend fun downloadPreview(): LocalRolePackDownloadPreview? = withContext(Dispatchers.IO) {
+        if (!available || mutableState.value.busy) return@withContext null
+        transaction.withLock {
+            if (!available || mutableState.value.busy) null else downloadPlan(prepareStorage = false)
+        }
+    }
 
     init {
         // WorkManager may continue a LiteRT transfer across process death. Resume reconciles
@@ -350,43 +375,60 @@ class LocalRolePackInstaller(
     }
 
     private suspend fun preflight(baseline: LocalRolePackJournal) {
+        check(baseline.planFingerprint == currentPlanFingerprint()) { "The pinned setup changed before acquisition." }
+        val preview = downloadPlan(prepareStorage = true)
+        check(preview.hasEnoughStorage) { "Not enough free space for starter pack files. Review available storage before downloading." }
+    }
+
+    /** Same estimate for user review and execution. Only execution may create storage directories. */
+    private suspend fun downloadPlan(prepareStorage: Boolean): LocalRolePackDownloadPreview {
         val intentNow = models.verifyPhysicalArtifact(intentId)?.let { it.verified && it.sha256.equals(intentCatalog?.sha256, true) } == true
         speech.refresh()
+        val speechInventory = speech.state.value
         val intentModel = requireNotNull(intentCatalog)
-        val intentPartial = (models.partialDownloadBytes(intentId) ?: 0L).takeIf { it <= intentModel.expectedBytes } ?: 0L
+        val intentPartial = (models.partialDownloadBytes(intentId) ?: 0L).takeIf { it in 0L..intentModel.expectedBytes } ?: 0L
         val intentRemaining = (intentModel.expectedBytes - intentPartial).coerceAtLeast(0L)
         val intentBytes = if (intentNow) 0L else intentRemaining
         val whisperRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(WhisperSmall, File(speechRoot, WhisperSmall.directoryName))
-        val speechBytes = if (speech.state.value.models[WhisperSmall.id] == true) 0L else whisperRemaining
+        val speechBytes = if (speechInventory.models[WhisperSmall.id] == true) 0L else whisperRemaining
         val vadRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(SherpaSpeechModelCatalog.sileroVad, speechRoot)
-        val vadBytes = if (speech.state.value.sileroInstalled) 0L else vadRemaining
+        val vadBytes = if (speechInventory.sileroInstalled) 0L else vadRemaining
         val ttsNowInstalled = supertonic?.installedPacks()?.isNotEmpty() == true
+        val ttsDownloadBytes = if (ttsNowInstalled) 0L else
+            supertonic?.packs?.remainingOfficialDownloadBytes() ?: SupertonicPackStore.OFFICIAL_BYTES
         val ttsBytes = if (ttsNowInstalled) 0L else
-            (supertonic?.packs?.remainingOfficialDownloadBytes() ?: SupertonicPackStore.OFFICIAL_BYTES) + SupertonicPackStore.INSTALL_RESERVE_BYTES + 1L
-        val liteRtHeadroom = if (intentBytes > 0L) {
-            com.halo.providers.litert.models.LiteRtStoragePreflight.DEFAULT_RESERVE_BYTES +
-                (intentBytes * com.halo.providers.litert.models.LiteRtStoragePreflight.DEFAULT_FINALIZE_OVERHEAD_FRACTION).toLong()
-        } else 0L
-        val speechReserve = if (speechBytes + vadBytes > 0L) {
+            Math.addExact(ttsDownloadBytes, SupertonicPackStore.INSTALL_RESERVE_BYTES + 1L)
+        // Match the model owner's resume preflight, including reserve when a full
+        // staging file still needs verification/finalization but no network bytes.
+        val intentStorageBytes = if (intentNow) 0L else
+            com.halo.providers.litert.models.LiteRtStoragePreflight.evaluate(
+                intentBytes.coerceAtLeast(1L), Long.MAX_VALUE).requiredBytes
+        val speechReserve = if (speechInventory.models[WhisperSmall.id] != true || !speechInventory.sileroInstalled) {
             com.halo.providers.sherpa.stt.SpeechModelInstaller.STORAGE_RESERVE_BYTES
         } else 0L
         val storageNeeds = listOfNotNull(
-            models.modelDir.takeIf { intentBytes + liteRtHeadroom > 0L }?.let { it to (intentBytes + liteRtHeadroom) },
+            models.modelDir.takeIf { intentStorageBytes > 0L }?.let { it to intentStorageBytes },
             speechRoot.takeIf { speechBytes + vadBytes + speechReserve > 0L }?.let { it to (speechBytes + vadBytes + speechReserve) },
             supertonic?.packs?.storageRoot?.takeIf { ttsBytes > 0L }?.let { it to ttsBytes },
         ).map { (root, required) ->
-            check(root.isDirectory || root.mkdirs() || root.isDirectory) { "Unable to prepare model storage." }
-            val store = java.nio.file.Files.getFileStore(root.toPath())
-            Triple(root, required, Triple(store.name(), store.type(), store.totalSpace))
+            val location = if (prepareStorage) {
+                check(root.isDirectory || root.mkdirs() || root.isDirectory) { "Unable to prepare model storage." }
+                root
+            } else generateSequence(root) { it.parentFile }.firstOrNull { it.isDirectory }
+                ?: error("Model storage is unavailable.")
+            val store = java.nio.file.Files.getFileStore(location.toPath())
+            Triple(location, required, Triple(store.name(), store.type(), store.totalSpace))
         }.groupBy { (_, _, storeIdentity) -> storeIdentity }
-        storageNeeds.values.forEach { entries ->
-            val root = entries.first().first
+        val storage = storageNeeds.values.map { entries ->
             val required = entries.fold(0L) { total, entry -> Math.addExact(total, entry.second) }
-            val available = root.usableSpace
-            check(available >= required) {
-                "Not enough free space for starter pack files on ${root.name.ifBlank { "model storage" }}. Need about ${required / 1_000_000} MB; available ${available / 1_000_000} MB."
-            }
+            LocalRolePackStorageEstimate(required, entries.minOf { it.first.usableSpace })
         }
+        return LocalRolePackDownloadPreview(listOf(
+            LocalRolePackDownloadEstimate(LocalRolePackStage.INTENT, intentBytes),
+            LocalRolePackDownloadEstimate(LocalRolePackStage.SPEECH_RECOGNITION, speechBytes),
+            LocalRolePackDownloadEstimate(LocalRolePackStage.SPEECH_ACTIVITY, vadBytes),
+            LocalRolePackDownloadEstimate(LocalRolePackStage.SPEECH_OUTPUT, ttsDownloadBytes),
+        ), storage)
     }
 
     private suspend fun installIntentCandidate(model: com.halo.providers.litert.models.LiteRtCatalogModel) {

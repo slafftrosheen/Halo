@@ -621,18 +621,16 @@ class CognitiveSession(
             if (bound != previous && !agentRecoveryExecutor.bindConversation(runId, bound, continueInCurrentConversation)) return@launch
             val run = agentRecoveryExecutor.loadRun(runId) ?: return@launch
             val route = RunContinuityResolver.delivery(run)
+            val inputModality = RunContinuityResolver.inputModality(run)
             val inputSurface = when (run.origin?.source) {
                 ObservationSource.HeyCyanGlasses -> "WEARABLE"
                 ObservationSource.AndroidAssist -> "ANDROID_ASSISTANT"
                 else -> "PHONE"
             }
             val originalOrigin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
-                source = if (run.origin?.source == ObservationSource.AndroidPhoneMic || run.origin?.source == ObservationSource.HeyCyanGlasses) com.halo.sdk.runtime.Source.MICROPHONE else com.halo.sdk.runtime.Source.USER,
+                source = if (inputModality == com.halo.runtime.cognition.turn.InteractionInputModality.VOICE) com.halo.sdk.runtime.Source.MICROPHONE else com.halo.sdk.runtime.Source.USER,
                 sourceDeviceId = run.origin?.hostId, captureId = run.sourceCaptureId, observationOrigin = run.origin,
-                speechRoute = when (val target = run.speechOutputTarget) {
-                    is SpeechOutputTarget.Device -> SpeechInputRoute.Device(target.deviceId, platformEndpointId = target.platformEndpointId, displayName = target.displayName, kind = target.kind)
-                    else -> SpeechInputRoute.Phone
-                })
+                speechRoute = RunContinuityResolver.inputRoute(run))
             val interactionId = run.interactionId
             val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
@@ -688,7 +686,7 @@ class CognitiveSession(
                         val turnRequest = result.request.copy(
                             responseDelivery = route.delivery, conversationId = bound, origin = originalOrigin,
                             sourceCaptureId = run.sourceCaptureId, outputTarget = route.target, outputFallback = route.fallback,
-                            metadata = result.request.metadata + ("inputSurface" to inputSurface)
+                            metadata = result.request.metadata + mapOf("inputSurface" to inputSurface, "inputModality" to inputModality.name)
                         )
                         eventBus.publish(CognitiveRequestStarted(requestId = turnRequest.requestId, interactionId = turnRequest.interactionId.value))
                         val commit = turnExecutor.execute(turnRequest) { _state.value = it }.copy(userText = run.request)
@@ -711,7 +709,7 @@ class CognitiveSession(
                             origin = originalOrigin,
                             conversationId = bound, sourceCaptureId = run.sourceCaptureId,
                             outputTarget = route.target, outputFallback = route.fallback,
-                            metadata = mapOf("resumedRunId" to runId.value, "inputSurface" to inputSurface),
+                            metadata = mapOf("resumedRunId" to runId.value, "inputSurface" to inputSurface, "inputModality" to inputModality.name),
                             runId = runId,
                             mode = CognitiveTurnMode.CONTINUE_AFTER_TOOL
                         )
@@ -735,7 +733,7 @@ class CognitiveSession(
                             origin = originalOrigin,
                             conversationId = bound, sourceCaptureId = run.sourceCaptureId,
                             outputTarget = route.target, outputFallback = route.fallback,
-                            metadata = mapOf("resumedRunId" to runId.value, "inputSurface" to inputSurface),
+                            metadata = mapOf("resumedRunId" to runId.value, "inputSurface" to inputSurface, "inputModality" to inputModality.name),
                             runId = runId,
                             mode = CognitiveTurnMode.CONTINUE_AFTER_TOOL
                         )

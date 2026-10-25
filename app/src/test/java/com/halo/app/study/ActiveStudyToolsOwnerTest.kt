@@ -24,6 +24,43 @@ import org.robolectric.annotation.*
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActiveStudyToolsOwnerTest {
+    @Test fun explicitSkipUsesSameOwnerPreservesDraftAndConsumesItsExactToken() = runBlocking {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java)
+            .allowMainThreadQueries().build()
+        val store = ViewModelStore()
+        try {
+            val repository = StudyRepository(db, db.studyDao())
+            val session = repository.createSession(emptyList(), null, StudyLanguagePreferences(), "Fractions")
+            val vm = StudyViewModel(session.id, StudyUseCases(repository))
+            store.put("lesson", vm)
+            withTimeout(5000) { vm.uiState.first { !it.loading } }
+            vm.setDraft("My unfinished thinking")
+            val owner = ActiveStudyToolsOwner(); owner.attach(vm)
+            val before = ready(owner)
+            assertTrue(runCatching { owner.dispatch(before.sessionId, before.sourceVersion, ActiveStudyCommand("skip_probe")) { false } }.isFailure)
+            assertFalse(vm.uiState.value.journey.probeSkipped)
+            owner.dispatch(before.sessionId, before.sourceVersion, ActiveStudyCommand("skip_probe")) { true }
+            withTimeout(5000) { vm.uiState.first { it.journey.probeSkipped && !it.isGenerating } }
+            val after = withTimeout(5000) {
+                var snapshot = ready(owner)
+                while (snapshot.busy) { delay(10); snapshot = ready(owner) }
+                snapshot
+            }
+            assertTrue(after.knowledgeProbeSkipped)
+            assertTrue(after.hasDraft)
+            assertEquals("My unfinished thinking", vm.uiState.value.draft)
+            assertEquals("", vm.uiState.value.journey.priorKnowledge)
+            assertTrue(repository.getAttempts(session.id).isEmpty())
+            assertTrue(runCatching { owner.dispatch(before.sessionId, before.sourceVersion, ActiveStudyCommand("skip_probe")) { true } }.isFailure)
+            owner.dispatch(after.sessionId, after.sourceVersion, ActiveStudyCommand("explanation_depth", depth = StudyExplanationDepth.SIMPLER.name)) { true }
+            withTimeout(5000) { vm.uiState.first { it.journey.explanationDepth == StudyExplanationDepth.SIMPLER && !it.isGenerating } }
+            assertEquals(StudyExplanationDepth.SIMPLER.name, ready(owner).explanationDepth)
+            assertEquals("My unfinished thinking", vm.uiState.value.draft)
+            assertTrue(repository.getAttempts(session.id).isEmpty())
+        } finally { store.clear(); db.close(); Dispatchers.resetMain() }
+    }
+
     private suspend fun ready(owner: ActiveStudyToolsOwner): ActiveStudySnapshot = withTimeout(5000) {
         var snapshot: ActiveStudySnapshot? = null
         while (snapshot == null) {

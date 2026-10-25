@@ -128,13 +128,17 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                         val item = items.getJSONObject(index)
                         ExplainBackObservation(item.getString("quote"), item.getString("suggestion"))
                     }, (0 until questions.length().coerceAtMost(3)).map { questions.getString(it) })
-                })
+                }, probeSkipped = json.optBoolean("probeSkipped", false),
+                explanationDepth = runCatching { com.halo.app.study.StudyExplanationDepth.valueOf(json.optString("explanationDepth")) }
+                    .getOrDefault(com.halo.app.study.StudyExplanationDepth.BALANCED))
         }.getOrNull()
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
         requireWritable(id)
         storage.putString("study_journey_v1_$id", JSONObject()
             .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
+            .put("probeSkipped", journey.probeSkipped)
+            .put("explanationDepth", journey.explanationDepth.name)
             .put("branches", JSONArray(journey.branches.takeLast(40)))
             .put("branch", journey.currentBranch.orEmpty().take(300))
             .put("reflection", journey.reflection.take(4000))

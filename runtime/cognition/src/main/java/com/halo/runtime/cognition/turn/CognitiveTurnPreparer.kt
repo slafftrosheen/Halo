@@ -219,17 +219,21 @@ class DefaultCognitiveTurnPreparer(
             }
         )
 
+        val workspaceReferences = turn.contextReferences.filterIsInstance<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject>()
+        val selectedWorkspaceId = turn.metadata["workspaceObjectId"]?.takeIf(String::isNotBlank)
+            ?: workspaceReferences.firstOrNull()?.objectId
+        val selectedWorkspaceVersion = workspaceReferences.firstOrNull { it.objectId == selectedWorkspaceId }?.version
+            ?: turn.metadata["contextWorkspaceVersion"]
         suspend fun acquireContext() = contextAcquisitionCoordinator?.acquire(
             plan = targetContextPlan,
             query = ContextQuery(
                 interactionId = turn.interactionId,
                 text = turn.request.text.orEmpty(),
                 requestedCapabilities = workload.inference.requiredCapabilities,
-                activeWorkspaceObjectId = turn.metadata["workspaceObjectId"],
+                activeWorkspaceObjectId = selectedWorkspaceId,
                 origin = obsOrigin,
                 explicitImage = turn.explicitImage,
-                workspaceVersion = turn.contextReferences.filterIsInstance<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject>()
-                    .firstOrNull()?.version ?: turn.metadata["contextWorkspaceVersion"],
+                workspaceVersion = selectedWorkspaceVersion,
                 explicitWorkspaceText = turn.explicitWorkspaceText,
             ),
         ) ?: ContextAcquisitionResult(
@@ -348,6 +352,7 @@ class DefaultCognitiveTurnPreparer(
                 conversationId = turn.conversationId,
                 toolUseMode = workload.inference.toolUseMode,
                 interactionId = turn.interactionId.value,
+                allowGenericFallback = selectedWorkspaceId == null && turn.explicitWorkspaceText == null,
                 userText = turn.request.text.orEmpty(),
                 queryText = turn.request.text.orEmpty(),
                 acquisition = acquisitionResult,
@@ -522,6 +527,8 @@ class DefaultCognitiveTurnPreparer(
             localToolPolicy = localToolPolicy,
             toolProtocol = toolProtocol,
             toolExposureMode = operatingMode(),
+            usedWorkspaceReferences = assemblyResult.usedWorkspaceReferences,
+            usedMemoryIds = assemblyResult.usedMemoryIds,
         )
     }
 

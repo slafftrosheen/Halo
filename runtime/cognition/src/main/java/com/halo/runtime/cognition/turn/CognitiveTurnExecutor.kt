@@ -189,6 +189,8 @@ class CognitiveTurnExecutor(
                         conversationId = turn.conversationId,
                         responseDelivery = turn.responseDelivery,
                         kind = AgentRunKind.INTERACTIVE,
+                        inputModality = turn.inputModality(),
+                        inputRoute = turn.origin?.speechRoute.takeIf { turn.inputModality() == InteractionInputModality.VOICE },
                     )
                 )
                 activeRunId = created
@@ -201,6 +203,16 @@ class CognitiveTurnExecutor(
         }
 
         createDurableRunIfNeeded()
+        // Assembly precedes creation of a fresh root run. Record only after that
+        // canonical owner exists; never guess a root from another active interaction.
+        activeRunId?.let { runId ->
+            if (prepared.usedWorkspaceReferences.isNotEmpty() || prepared.usedMemoryIds.isNotEmpty()) {
+                val references = prepared.usedWorkspaceReferences.take(20)
+                agentRunCoordinator?.recordStep(AgentStep.ContextUsed(
+                    AgentStepId("context:${UUID.randomUUID()}"), runId, Instant.now(),
+                    references.map { it.objectId }.distinct(), prepared.usedMemoryIds.take(12), references))
+            }
+        }
         onStateChanged(CognitiveSessionState.Reasoning(prepared.target.providerId, prepared.target.modelId))
         val turnId = ProviderTurnId(UUID.randomUUID().toString())
 

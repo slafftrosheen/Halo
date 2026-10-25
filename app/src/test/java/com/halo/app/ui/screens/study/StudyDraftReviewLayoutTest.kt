@@ -60,6 +60,7 @@ class StudyDraftReviewLayoutTest {
     private var pixelsPerDp = 1f
     private var savedCardsLabel = ""
     private var keepCardLabel = ""
+    private var masteryLabel = ""
     @Before fun prepareCoroutineMain() {
         // Match the count-notice fixture: VM Room/Flow continuations have an explicit
         // scheduler, independent of Compose's paused frame dispatcher.
@@ -134,7 +135,7 @@ class StudyDraftReviewLayoutTest {
         openDrafts()
         val question = compose.onNodeWithText(QUESTION, useUnmergedTree = true).performScrollTo()
         val layout = layout(question)
-        val mastery = compose.onNodeWithText("Mastery", substring = true, useUnmergedTree = true)
+        val mastery = compose.onNodeWithText(masteryLabel, useUnmergedTree = true)
         if (separateBands) {
             val questionBand = question.getUnclippedBoundsInRoot()
             val masteryBand = mastery.getUnclippedBoundsInRoot()
@@ -183,6 +184,7 @@ class StudyDraftReviewLayoutTest {
             AppLanguageProvider(language) {
                 savedCardsLabel = uiText("Saved cards (%1\$d)", 1)
                 keepCardLabel = uiText("Keep card")
+                masteryLabel = uiText("Mastery —")
                 CompositionLocalProvider(LocalShellHaloOrb provides true) {
                     HostlessHaloTheme(fontScale = scale) {
                         pixelsPerDp = LocalDensity.current.density

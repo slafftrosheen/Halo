@@ -9,7 +9,7 @@ fun CognitiveTurnRequest.inputModality(): InteractionInputModality {
     metadata["inputModality"]?.let { value ->
         InteractionInputModality.entries.firstOrNull { it.name == value }?.let { return it }
     }
-    if (origin?.source == Source.MICROPHONE || origin?.speechRoute != null) return InteractionInputModality.VOICE
     if (metadata["input"] == "keyboard") return InteractionInputModality.TEXT
+    if (origin?.source == Source.MICROPHONE || origin?.speechRoute != null) return InteractionInputModality.VOICE
     return InteractionInputModality.UNKNOWN
 }

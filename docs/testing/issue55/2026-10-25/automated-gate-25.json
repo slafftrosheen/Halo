@@ -1,0 +1,486 @@
+{
+  "checkpoint": 25,
+  "completedUtc": "2026-10-25T18:09:58.822495+00:00",
+  "baseCommit": "04aacc4d46d3a1c61a67f566d6e06d28d915dae1",
+  "apkSourceStamp": "9f1c110c04221784f4ec5e8be260719b7470bea19a48a60c18667d233a7dc0cf",
+  "productionSourceStamp": "2081dfcc153e3e636b6783a90fc69242d9a406ffd7c79f1c0c945a5630b5a05a",
+  "jvmTestOnlyChangesAfterApkBuild": [
+    {
+      "path": "app/src/test/java/com/halo/app/study/StudyReaderRecoveryTest.kt",
+      "sha256": "362178382f1dc78ec80181c4506b8e6eda2a71f8cf7bd6ccceeb98849b4a5819"
+    }
+  ],
+  "fullApp": {
+    "status": "PASS",
+    "tests": 2074,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "raw": "app-full-green.log",
+    "xmlArchive": "app-full-green-xml",
+    "command": "gradlew.bat :app:testDebugUnitTest --max-workers=1 --no-parallel --no-daemon -Dorg.gradle.jvmargs=\"-Xmx1g -Dfile.encoding=UTF-8\" --console=plain"
+  },
+  "fullCognition": {
+    "status": "PASS",
+    "tests": 388,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "raw": "authority-recovery-build.log",
+    "xmlArchive": "runtime-final-xml"
+  },
+  "focusedApp": {
+    "tests": 128,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "authorityRecovery": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "studyDrainRecovery": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "countBoundary": "Focused and recovery app cases overlap the full app total. Retries are not added to unique coverage.",
+  "localization": {
+    "catalogueEntriesPerLocale": 4149,
+    "locales": [
+      "en",
+      "ru",
+      "lv",
+      "pl"
+    ],
+    "tests": 15,
+    "failures": 0
+  },
+  "apks": {
+    "main": {
+      "sha256": "d50b39ae055a3978162bbac88dc46db0bc06a722cb3be5c4d2c444333b8666aa",
+      "bytes": 289621302
+    },
+    "test": {
+      "sha256": "4dc74b49e8f2d963e212ea2c36d76e2a8b6024b0db86dee3c5f6762fe0cc227d",
+      "bytes": 1949934
+    }
+  },
+  "installedBaseReadbackMatches": {
+    "main": true,
+    "test": true
+  },
+  "apkBoundary": "One successful APK-pair build and one replacement install per APK. Built from the recorded dirty source witness at baseCommit; publication does not relabel embedded build metadata. Later changes only affect a JVM test fixture.",
+  "native": {
+    "device": "Redmi 23124RA7EO / Android 15",
+    "counts": {
+      "PASS": 45,
+      "NOT_RUN": 1
+    },
+    "suiteScope": "Native Android fixtures plus real MainActivity and Mini Halo component tests; synthesized pointer events do not qualify a physical stylus. No new cloud completion or spoken-input/audibility qualification.",
+    "suites": [
+      {
+        "suite": "ink",
+        "status": "PASS",
+        "expected": 12,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "cancellationNeverCommitsPalmInk",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "barrelButtonAtContactStartSelectsEraser",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "hoverDoesNotBecomeAStroke",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "physicalEraserRemovesWholeStrokeAndUndoRestoresIt",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "mouseSecondaryButtonCannotDraw",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "pressureUsesAdvertisedRangeAndRejectsInvalidValues",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "penPreemptsFingerAndTracksIdAcrossReorderedIndexes",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "fingerTapHasNoTouchSlopRequirement",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "flaggedPointerUpRollsBackContact",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.AndroidInkInputTest",
+            "test": "batchedMoveSamplesRemainInOrder",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ink.RemoteInkPhoneTest",
+            "test": "productionGateStaysClosedAndProtectedIdentitiesAuthenticateOnLoopback",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest",
+            "test": "identicalReplacementKeepsItsIdentityAcrossDatabaseReopen",
+            "code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "workspace",
+        "status": "PASS",
+        "expected": 7,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest",
+            "test": "nativeCanvasAndExactAttachedStudyUseTheRegisteredSemanticOwners",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest",
+            "test": "russianContinueDialogKeepsContextAndCloseReachableAt200Percent",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest",
+            "test": "nativePhotoStudioCanvasStudyAndChatReopenTheSameSavedResult",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest",
+            "test": "russianTableKeepsCloseReachableAt200Percent",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest",
+            "test": "nativePdfAnnotationsExportPageImagesAndPreserveOriginalBytes",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.workspace.StudioDeviceTest",
+            "test": "layerReviewKeepsApplyAndCloseReachableInRussianAt200Percent",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.workspace.StudioDeviceTest",
+            "test": "localDocumentExportsAndReopensRealPngWithoutChangingItsOriginal",
+            "code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "notes-study",
+        "status": "PASS",
+        "expected": 4,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.notebook.NoteEditorControlsDeviceTest",
+            "test": "editsReferencesAndRecoveryGuardsSurviveDatabaseRecreation",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.notebook.NotePurgeDeviceTest",
+            "test": "committedDeletionResumesAfterRoomRecreationAndPreservesActualFileProviderReaders",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.notebook.NoteAttachmentControlsDeviceTest",
+            "test": "reuseAndUnlinkKeepDurableOwnershipUntilBothNotesArePurged",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.study.StudyLearnerControlsDeviceTest",
+            "test": "learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation",
+            "code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "display",
+        "status": "PASS",
+        "expected": 9,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.language.PolishLanguageDeviceTest",
+            "test": "polishSwitchAtLargeTextPreservesDraftAndPickerContext",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.screens.notebook.CanvasPreviewDeviceTest",
+            "test": "largePhotoIsSampledAndRepeatedThumbnailsRemainBounded",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.screens.notebook.CanvasPreviewDeviceTest",
+            "test": "actualPdfRendererKeepsPagesSourceAndPixelBudget",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.screens.notebook.CanvasPdfInspectionDeviceTest",
+            "test": "realPdfInspectionKeepsPagesFitAndCloseReachableAt200",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.perf.MainThreadIoGuardTest",
+            "test": "homeToSettingsAndIntelligence",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.perf.MainThreadIoGuardTest",
+            "test": "coldLaunchToHome",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.perf.MainThreadIoGuardTest",
+            "test": "homeToNotebookAndOpenNote",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.perf.MainThreadIoGuardTest",
+            "test": "homeToActivity",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.perf.MainThreadIoGuardTest",
+            "test": "homeToDevicesAndHeyCyan",
+            "code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "setup-privacy",
+        "status": "PASS",
+        "expected": 3,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.ai.LocalRolePackRecoveryDeviceTest",
+            "test": "damagedRecordCanBeRecoveredWithoutAcquisitionOrFileRemoval",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+            "test": "renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+            "test": "everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent",
+            "code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "interface",
+        "status": "PASS",
+        "expected": 6,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+            "test": "twoHundredPercentListAndPrivacyTargetsStaySeparate",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+            "test": "stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+            "test": "nativeSwipeUpOpensTheListWithoutInvokingPrimary",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+            "test": "nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+            "test": "nativeLongPressOpensDestinationListWithoutCapturing",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+            "test": "customAccessibilityActionOpensTheSameListWithoutSideEffects",
+            "code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "shell-mini",
+        "status": "PARTIAL",
+        "expected": 5,
+        "exitCode": 0,
+        "completed": true,
+        "cases": [
+          {
+            "class": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+            "test": "realMainActivityRendersWarmAndResumedScreenIntents",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+            "test": "canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+            "test": "actualMiniActivityLaunchesAndBackCloses",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+            "test": "actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary",
+            "code": 0,
+            "status": "PASS"
+          },
+          {
+            "class": "com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest",
+            "test": "realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground",
+            "code": -4,
+            "status": "NOT_RUN"
+          }
+        ]
+      }
+    ],
+    "actualAppAdditionalReadOnlyCheck": {
+      "screen": "Activity",
+      "control": "Sources for this request",
+      "oldRequestWithoutReceipt": "No source receipt was recorded for this request.",
+      "refresh": "PASS",
+      "close": "Done tapped",
+      "fontScale2": {
+        "status": "PASS",
+        "fullMessageAndButtons": "Visually inspected screen; full text, Refresh and Done fit dialog",
+        "refresh": "PASS",
+        "fontRestored": "1.0",
+        "scope": "Missing-receipt state only; does not qualify source-present metadata or all screens/locales"
+      }
+    },
+    "displaySettingsRestored": {
+      "font_scale": "1.0",
+      "accelerometer_rotation": "1",
+      "user_rotation": "0",
+      "stay_on_while_plugged_in": "15"
+    },
+    "keyguardDuringGate": "unlocked; screen ON; checked before each suite"
+  },
+  "failedAttempts": [
+    {
+      "raw": "integrated-final.log",
+      "tests": 2074,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "reason": "HostFirstSkillAuditTest found orphan halo_context_used_sources. Repaired READ_ONLY declarations in bundled and default Workspace skills without changing grants or bypassing authority."
+    },
+    {
+      "raw": "app-full-final.log",
+      "tests": 2074,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "reason": "StudyReaderRecoveryTest replaced Main while owned IO work was returning. Fixture now drains cancelled ViewModel jobs before closing Room/resetting Main; assertions unchanged."
+    }
+  ],
+  "provider": {
+    "status": "NOT_RUN",
+    "metadataOnly": true,
+    "advertisedZeroCostToolRoute": "nvidia/nemotron-3.5-lightning:free",
+    "note": "Public model metadata refreshed without credentials or completion. No new provider journey, consent or paid route."
+  },
+  "voice": {
+    "status": "NOT_RUN",
+    "reason": "User requested automated tests only; quiet-room flag not asserted. No audibility or spoken-recognition qualification."
+  },
+  "issueDisposition": {
+    "55": "KEEP_OPEN",
+    "56": "KEEP_OPEN",
+    "57": "KEEP_OPEN",
+    "58": "KEEP_OPEN",
+    "59": "KEEP_OPEN",
+    "60": "KEEP_OPEN",
+    "61": "KEEP_OPEN",
+    "62": "KEEP_OPEN"
+  },
+  "remaining": "Fresh real delayed-approval export and complete cross-tool journeys remain unqualified on this binary. Broader Interface acceptance and roadmap stage implementation remain incomplete; native fixtures and source tests do not close them."
+}

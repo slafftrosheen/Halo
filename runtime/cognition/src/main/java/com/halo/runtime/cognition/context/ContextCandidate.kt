@@ -88,6 +88,7 @@ data class ContextCandidate(
     val estimatedTokens: Int,
     val freshness: ContextFreshness,
     val objectId: String? = null,
+    val sourceVersion: String? = null,
 )
 
 data class OmittedContextCandidate(

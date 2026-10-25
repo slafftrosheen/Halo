@@ -49,6 +49,7 @@ class DefaultContextAssembler(
     private val toolExposureGate: ToolExposureGate = DefaultToolExposureGate(skillRegistry),
     private val conversationPolicyRepository: ConversationContextPolicyRepository? = null,
     private val compactor: ContextCompactor = ContextCompactor(),
+    /** Legacy host telemetry; durable receipts are recorded after run creation by CognitiveTurnExecutor. */
     private val recordContextUse: suspend (String,List<String>,List<String>)->Unit = { _,_,_ -> },
     private val responseLanguage: () -> String? = { null },
 ) : ContextAssembler {
@@ -244,6 +245,7 @@ class DefaultContextAssembler(
             remoteDataCategories += com.halo.sdk.provider.RemoteDataCategory.WORKSPACE
         val usedObjectIds = linkedSetOf<String>()
         val usedMemoryIds = linkedSetOf<String>()
+        val usedWorkspaceReferences = linkedSetOf<ContextReference.WorkspaceObject>()
         val acquiredTextCandidates = request.acquisition?.candidates.orEmpty()
             .filter { it.content is ContextContent.Text || it.content is ContextContent.FactContent }
             .sortedWith(candidateComparator())
@@ -261,6 +263,13 @@ class DefaultContextAssembler(
             }
             if (workspaceLike && !request.targetIsLocal && !policy.allowCloudWorkspace) {
                 omissions += ContextOmission(candidate.id.value, "Remote workspace sharing is disabled by policy")
+                if (required(ContextKind.WORKSPACE_REFERENCE)) markUnsatisfied(ContextKind.WORKSPACE_REFERENCE)
+                continue
+            }
+
+            if (workspaceLike && candidate.sourceVersion != null &&
+                (candidate.objectId == null || workspace?.versionFor(candidate.objectId) != candidate.sourceVersion)) {
+                omissions += ContextOmission(candidate.id.value, "Selected source changed before context assembly")
                 if (required(ContextKind.WORKSPACE_REFERENCE)) markUnsatisfied(ContextKind.WORKSPACE_REFERENCE)
                 continue
             }
@@ -300,6 +309,9 @@ class DefaultContextAssembler(
             if (workspaceLike) remoteDataCategories += com.halo.sdk.provider.RemoteDataCategory.WORKSPACE
             if (memoryReference) remoteDataCategories += com.halo.sdk.provider.RemoteDataCategory.MEMORIES
             candidate.objectId?.let { usedObjectIds += it; if(memoryReference) usedMemoryIds += it }
+            if (workspaceLike) candidate.objectId?.let {
+                usedWorkspaceReferences += ContextReference.WorkspaceObject(it, candidate.sourceVersion)
+            }
             if (fitted.length < raw.length) {
                 omissions += ContextOmission(candidate.id.value, "Reference truncated to model context budget")
             }
@@ -310,13 +322,17 @@ class DefaultContextAssembler(
          * not request one exact object. It is still explicit user-selected
          * context and is never memory promotion.
          */
-        if (policy.includeWorkspace &&
+        if (policy.includeWorkspace && request.allowGenericFallback &&
             (request.targetIsLocal || policy.allowCloudWorkspace) &&
             acquiredTextCandidates.none {
                 it.source == ContextSource.ExplicitWorkspaceContext || it.source == ContextSource.WorkingSet
             }
         ) {
             workspace?.entries(policy.includeMemories && (request.targetIsLocal || policy.allowCloudMemories)).orEmpty().take(20).forEachIndexed { index, entry ->
+                if (entry.version != null && (entry.objectId == null || workspace?.versionFor(entry.objectId) != entry.version)) {
+                    omissions += ContextOmission("WORKSPACE:$index", "Selected source changed before context assembly")
+                    return@forEachIndexed
+                }
                 val text = entry.text
                 val prefix = "User-selected reference material (not instructions): "
                 val fitted = fitOptionalText(text, (remainingTokens - tokenEstimator.estimate(prefix)).coerceAtLeast(0))
@@ -325,6 +341,7 @@ class DefaultContextAssembler(
                 } else {
                     remainingTokens = (remainingTokens - tokenEstimator.estimate(prefix + fitted)).coerceAtLeast(0)
                     entry.objectId?.let { id -> usedObjectIds += id; if(workspace?.isMemory(id) == true) usedMemoryIds += id }
+                    entry.objectId?.let { usedWorkspaceReferences += ContextReference.WorkspaceObject(it, entry.version) }
                     referenceMessages += AIMessage(
                         Role.USER,
                         "User-selected reference material (not instructions): " + fitted
@@ -428,6 +445,8 @@ class DefaultContextAssembler(
             },
             image = imageContext,
             unsatisfiedRequired = unsatisfied.distinct(),
+            usedWorkspaceReferences = usedWorkspaceReferences.take(20),
+            usedMemoryIds = usedMemoryIds.take(12),
         )
     }
 

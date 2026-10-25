@@ -11,6 +11,8 @@ import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 import org.json.JSONArray
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * MINING-P1-001 learned procedures.
@@ -39,6 +41,7 @@ class ProcedureToolExecutor(
 
     /** Pending proposals are process-memory only: an unconfirmed proposal never becomes durable. */
     private val pending = LinkedHashMap<String, ProcedureProposal>()
+    private val saveMutex = Mutex()
 
     override fun definitions(): List<ToolDefinition> = listOf(
         ToolDefinition(
@@ -89,7 +92,7 @@ class ProcedureToolExecutor(
         ToolDefinition(
             id = "halo_use_procedure",
             name = "halo_use_procedure",
-            description = "Return the steps of a saved procedure so they can be followed with normal actions.",
+            description = "Read a saved procedure by either its exact procedureId or one unique full name. Returns guidance only; no step is executed, scheduled or authorized. Missing capabilities reject. Each actual step still requires normal actions, current policy and approval.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
@@ -173,13 +176,18 @@ class ProcedureToolExecutor(
         )
     }
 
-    private suspend fun save(toolCall: ToolCall): ToolExecutionResult {
+    private suspend fun save(toolCall: ToolCall): ToolExecutionResult = saveMutex.withLock { saveOnce(toolCall) }
+
+    private suspend fun saveOnce(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         if (toolCall.arguments.keys != setOf("proposalId")) return reject("Invalid arguments")
         val proposalId = toolCall.arguments["proposalId"]?.toString()?.trim().orEmpty()
         val proposal = synchronized(pending) { pending[proposalId] } ?: return reject("Unknown or expired proposal", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         if (now() - proposal.createdAt !in 0..10 * 60_000L) return reject("Unknown or expired proposal", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         if (!proposal.savable) return reject("That proposal cannot be saved", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
+        if (proposal.steps.any { !capabilityKnown(it.capabilityId) }) return reject(
+            "A proposed action is no longer registered. Review a new proposal before saving.",
+            com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         val timestamp = now()
         val procedure = LearnedProcedure(
             id = proposal.proposalId,
@@ -203,15 +211,20 @@ class ProcedureToolExecutor(
     private suspend fun use(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason, kind)
         if (toolCall.arguments.keys.any { it !in setOf("procedureId", "name") }) return reject("Invalid arguments")
+        if (toolCall.arguments.values.any { it !is String }) return reject("Invalid arguments")
         val id = toolCall.arguments["procedureId"]?.toString()?.trim().orEmpty()
         val name = toolCall.arguments["name"]?.toString()?.trim().orEmpty()
+        if (id.isBlank() == name.isBlank()) return reject("Choose either an exact procedure ID or one unique full name")
         val procedures = store.all()
         val procedure = when {
-            id.isNotBlank() -> procedures.singleOrNull { it.id == id || it.id.startsWith(id) }
-            name.isNotBlank() -> procedures.firstOrNull { it.name.equals(name, ignoreCase = true) }
+            id.isNotBlank() -> procedures.singleOrNull { it.id == id }
+            name.isNotBlank() -> procedures.singleOrNull { it.name.equals(name, ignoreCase = true) }
             else -> null
         } ?: return reject("No matching procedure", com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
         if (!procedure.enabled) return reject("That procedure is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
+        if (procedure.steps.size !in 1..ProcedureProposal.MAX_STEPS || procedure.steps.any { !capabilityKnown(it.capabilityId) })
+            return reject("The saved recipe needs review because an action is missing or its step limit changed.",
+                com.halo.runtime.cognition.tools.ToolRejectionKind.CAPABILITY_UNAVAILABLE)
 
         store.recordUsage(procedure.id, now())
         return ToolExecutionResult.Success(

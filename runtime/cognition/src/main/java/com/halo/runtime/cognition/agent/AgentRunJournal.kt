@@ -102,8 +102,12 @@ sealed interface AgentStep {
 
     /** Opaque IDs admitted to provider context, without reference bodies or private reasoning. */
     data class ContextUsed(override val id: AgentStepId, override val runId: AgentRunId,
-        override val createdAt: Instant, val objectIds: List<String>, val memoryIds: List<String>) : AgentStep {
-        init { require(objectIds.size <= 20 && memoryIds.size <= 12) }
+        override val createdAt: Instant, val objectIds: List<String>, val memoryIds: List<String>,
+        val workspaceReferences: List<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject> = emptyList()) : AgentStep {
+        init {
+            require(objectIds.size <= 20 && memoryIds.size <= 12 && workspaceReferences.size <= 20)
+            require(workspaceReferences.all { it.objectId in objectIds && (it.version == null || it.version.length in 1..2000) })
+        }
     }
 
     // ---- historical variants (unchanged shape) -----------------------------
@@ -190,6 +194,8 @@ sealed interface AgentStep {
         val recoveryPolicy: RunRecoveryPolicy,
         val conversationId: String? = null,
         val responseDelivery: com.halo.sdk.runtime.ResponseDelivery? = null,
+        val inputModality: com.halo.runtime.cognition.turn.InteractionInputModality? = null,
+        val inputRoute: com.halo.sdk.runtime.SpeechInputRoute? = null,
     ) : AgentStep
 
     data class ContinuityBound(

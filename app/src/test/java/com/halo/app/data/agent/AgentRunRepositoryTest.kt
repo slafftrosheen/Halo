@@ -162,6 +162,50 @@ class AgentRunRepositoryTest {
         } finally { db.close() }
     }
 
+    @Test fun `input and exact source provenance survive reopen independently of output route`() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "input-provenance.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name).allowMainThreadQueries().build()
+        var db = open()
+        val now = Instant.now()
+        val inputs = listOf(
+            com.halo.runtime.cognition.turn.InteractionInputModality.TEXT to null,
+            com.halo.runtime.cognition.turn.InteractionInputModality.VOICE to com.halo.sdk.runtime.SpeechInputRoute.Phone,
+            com.halo.runtime.cognition.turn.InteractionInputModality.VOICE to com.halo.sdk.runtime.SpeechInputRoute.Device(
+                "input-device", 42, "Input headset", com.halo.sdk.runtime.AudioDeviceKind.WEARABLE),
+        )
+        val references = listOf(
+            com.halo.runtime.cognition.context.ContextReference.WorkspaceObject("note-id", "7"),
+            com.halo.runtime.cognition.context.ContextReference.WorkspaceObject("legacy-file", null))
+        try {
+            var store = RoomAgentRunRepository(db)
+            inputs.forEachIndexed { index, (modality, route) ->
+                val id = AgentRunId("input-$index")
+                store.create(AgentRun(id, InteractionId("capture-$index"), "q", AgentRunState.EXECUTING,
+                    origin = com.halo.sdk.runtime.ObservationOrigin(com.halo.sdk.host.ObservationSource.AndroidPhoneMic),
+                    createdAt = now, updatedAt = now,
+                    speechOutputTarget = com.halo.sdk.runtime.SpeechOutputTarget.Device(
+                        "different-output", null, "Output headset", com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)))
+                store.appendStep(AgentStep.RunPrepared(AgentStepId("prepared-$index"), id, now,
+                    AgentRunKind.INTERACTIVE, RunRecoveryPolicy.USER_RESUME, inputModality = modality, inputRoute = route))
+                store.appendStep(AgentStep.ContextUsed(AgentStepId("context-$index"), id, now,
+                    references.map { it.objectId }, emptyList(), references))
+            }
+            db.close(); db = open(); store = RoomAgentRunRepository(db)
+            inputs.forEachIndexed { index, (modality, route) ->
+                val restored = requireNotNull(store.get(AgentRunId("input-$index")))
+                val prepared = restored.steps.filterIsInstance<AgentStep.RunPrepared>().single()
+                assertEquals(modality, prepared.inputModality)
+                assertEquals(route, prepared.inputRoute)
+                assertEquals(references, restored.steps.filterIsInstance<AgentStep.ContextUsed>().single().workspaceReferences)
+                assertEquals(modality, com.halo.runtime.cognition.continuity.RunContinuityResolver.inputModality(restored))
+                assertEquals(route, com.halo.runtime.cognition.continuity.RunContinuityResolver.inputRoute(restored))
+                assertEquals("different-output", (restored.speechOutputTarget as com.halo.sdk.runtime.SpeechOutputTarget.Device).deviceId)
+            }
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
     @Test fun `continuity journal and original route survive reopen without schema migration`() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>(); val name = "continuity-journal.db"
         context.deleteDatabase(name)

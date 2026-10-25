@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4129) {
+    buildMap(4166) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4173,6 +4173,43 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Recover startup draft" to R.string.ui_d72a190f8942,
     "A deleted conversation draft could not be removed. Try again." to R.string.ui_57489fabd9f9,
     "Try clearing deleted drafts" to R.string.ui_63e3a46ac3af,
+    "Mastery —" to R.string.ui_0abd51b8ee26,
+    "New card" to R.string.ui_8d3efc397417,
+    "Due now" to R.string.ui_4d6f13b6fbb6,
+    "Due in %1\$dd" to R.string.ui_2bb68cc241e2,
+    "Memory: %1\$s" to R.string.ui_fec2490e2a53,
+    "Not measured yet" to R.string.ui_baf7f6c7bd2d,
+    "less than a day" to R.string.ui_bc2648c2488d,
+    "about 1 day" to R.string.ui_56cf9dd82f99,
+    "about %1\$d days" to R.string.ui_4f6be27bf745,
+    "about %1\$d months" to R.string.ui_3c319261507e,
+    "Download: about %1\$s" to R.string.ui_eb32caa7d28a,
+    "Additional free space needed: about %1\$s" to R.string.ui_7a0d7ac451df,
+    "Not enough free space for this bundle." to R.string.ui_2d0d85549237,
+    "You can choose an answer or skip this question." to R.string.ui_bb3c1a3af5e1,
+    "Choose Next step when you want to continue." to R.string.ui_13ebf91670b6,
+    "Sources for this request" to R.string.ui_feb2b1404350,
+    "Source history is unavailable right now." to R.string.ui_a1d1b89fe053,
+    "Checking saved source references…" to R.string.ui_1108791e895a,
+    "No source receipt was recorded for this request." to R.string.ui_c94ddd60cc9b,
+    "No source links were stored in this receipt." to R.string.ui_d884ca541833,
+    "Source %1\$d" to R.string.ui_8f5826e096d8,
+    "Matches the recorded source version." to R.string.ui_3de0ff57f0ab,
+    "Source changed after this was recorded." to R.string.ui_921dd30df39a,
+    "This receipt has no saved source version." to R.string.ui_ef5db00cc420,
+    "Source is currently unavailable." to R.string.ui_b33f236b0bb7,
+    "Memories recorded for this request: %1\$d" to R.string.ui_d3694d39c168,
+    "Only part of the saved source history is shown." to R.string.ui_f2dcd88ead93,
+    "Opening a source shows its current contents." to R.string.ui_ec1213e22d81,
+    "How much detail?" to R.string.ui_4c9b212e1f48,
+    "Simpler explanation" to R.string.ui_2d239d8b5a7d,
+    "Usual detail" to R.string.ui_5360e92b2391,
+    "Deeper explanation" to R.string.ui_46ed111fb3f7,
+    "This choice changes future explanations, not your level or results." to R.string.ui_f517a4bdd160,
+    "Finish the current learning step first." to R.string.ui_d92d69ad42f9,
+    "During a lesson: hint, repeat, next step, simpler, more detail, or stop. The same actions are available below." to R.string.ui_66cd74a43e4c,
+    "Try: hint, repeat, next step, simpler, more detail, or stop." to R.string.ui_d61a54f7137c,
+    "The starter bundle is unavailable." to R.string.ui_7d72ddf69768,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

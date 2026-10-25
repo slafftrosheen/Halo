@@ -94,6 +94,16 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val intentSettings = remember { com.halo.app.di.ManualDependencyGraph.storage }
     val starterPack = remember { com.halo.app.di.ManualDependencyGraph.localRolePackInstaller }
     val starterPackState by starterPack.state.collectAsStateWithLifecycle()
+    var starterPreview by remember { mutableStateOf<com.halo.app.ai.LocalRolePackDownloadPreview?>(null) }
+    LaunchedEffect(starterPack, starterPackState.phase, starterPackState.transactionId) {
+        starterPreview = null
+        if (!starterPackState.busy && !starterPackState.recoveryRequired &&
+            starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE) {
+            starterPreview = try { starterPack.downloadPreview() }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+        }
+    }
     var localIntentEnabled by rememberSaveable {
         mutableStateOf(com.halo.app.ai.LocalIntentModelRouter.isEnabled(intentSettings))
     }
@@ -317,6 +327,16 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 Text(uiText("Private voice and intent starter bundle"), style = MaterialTheme.typography.titleSmall)
                 Text(uiText("Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality."),
                     style = MaterialTheme.typography.bodySmall)
+                if (!starterPack.available) Text(uiText("The starter bundle is unavailable."),
+                    style = MaterialTheme.typography.bodySmall)
+                starterPreview?.let { preview ->
+                    Text(uiText("Download: about %1\$s", android.text.format.Formatter.formatFileSize(deviceContext, preview.downloadBytes)),
+                        style = MaterialTheme.typography.bodySmall)
+                    Text(uiText("Additional free space needed: about %1\$s", android.text.format.Formatter.formatFileSize(deviceContext, preview.requiredStorageBytes)),
+                        style = MaterialTheme.typography.bodySmall)
+                    if (!preview.hasEnoughStorage) Text(uiText("Not enough free space for this bundle."),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
                 when (starterPackState.phase) {
                     com.halo.app.ai.LocalRolePackPhase.IDLE -> Text(uiText("No starter bundle setup is active."), style = MaterialTheme.typography.bodySmall)
                     com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> Text(uiText("Checking available storage…"), style = MaterialTheme.typography.bodySmall)
@@ -347,7 +367,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     if (!starterPackState.recoveryRequired && starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
-                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy,
+                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy && starterPack.available,
                             modifier = Modifier.fillMaxWidth()) {
                             Text(uiText(if (starterPackState.canResume) "Resume private starter bundle" else "Install private starter bundle"))
                         }

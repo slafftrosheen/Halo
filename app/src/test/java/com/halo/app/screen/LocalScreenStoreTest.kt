@@ -98,4 +98,36 @@ class LocalScreenStoreTest {
         assertEquals("Updated result", restored.items.value.single().summary)
         assertEquals(first.id, restored.layout.value!!.cards.single().itemId)
     }
+
+    /** Added during the code-only pass; execution deferred by user directive. */
+    @Test fun stalePublicationCannotOverwriteNewerCardOrLayout() = runBlocking {
+        val store = LocalScreenStore(context)
+        val at = Instant.parse("2026-10-25T12:00:00Z")
+        val current = ScreenItem("owned-result", ScreenSourceType.AUTOMATION, "owned-routine", "Fixture", "Current",
+            ScreenContentType.SUMMARY, at, at, null, ScreenItemState.READY, ScreenSensitivity.PRIVATE,
+            null, emptyList())
+        val layout = ScreenWidgets.starter("Quiet")
+        assertTrue(store.publishAndSaveLayout(current, layout))
+        val observed = store.layout.value!!
+        assertFalse(store.publishAndSaveLayout(current.copy(summary = "Older", updatedAt = at.minusSeconds(1)),
+            observed.copy(name = "Stale proposal"), expectedLayoutVersion = observed.version))
+        assertEquals(observed, store.layout.value)
+        assertEquals("Current", store.items.value.single().summary)
+        store.publish(current.copy(summary = "Undated", updatedAt = null))
+        assertEquals("Current", store.items.value.single().summary)
+    }
+
+    @Test fun latePinRejectsWhenAnotherLayoutEditHasCommitted() = runBlocking {
+        val store = LocalScreenStore(context)
+        store.saveLayout(ScreenWidgets.starter("Quiet"))
+        val old = store.layout.value!!
+        store.saveLayout(old.copy(name = "New layout"))
+        val latest = store.layout.value!!
+        val item = ScreenItem("owned-result", ScreenSourceType.RESEARCH, "owned-search", "Fixture", "Result",
+            ScreenContentType.SUMMARY, Instant.now(), null, null, ScreenItemState.READY, ScreenSensitivity.PRIVATE,
+            null, emptyList())
+        assertFalse(store.publishAndSaveLayout(item, old, expectedLayoutVersion = old.version))
+        assertEquals(latest, store.layout.value)
+        assertTrue(store.items.value.isEmpty())
+    }
 }

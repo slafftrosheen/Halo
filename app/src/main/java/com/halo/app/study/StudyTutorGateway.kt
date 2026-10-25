@@ -39,6 +39,7 @@ data class TutorTurnRequest(
     val compactExplanation: Boolean = false,
     val extractExercises: Boolean = false,
     val learningTask: LearningTutorTask = LearningTutorTask.NARRATIVE,
+    val explanationDepth: StudyExplanationDepth = StudyExplanationDepth.BALANCED,
 )
 
 data class StudySourceExcerpt(
@@ -245,6 +246,11 @@ class AiRouterTutorGateway(
             else appendLine(instruction)
             if(request.compactExplanation && !request.createCards) appendLine("Use four short sections: Simple explanation, Important terms, Key points, Three practice questions. Do not answer the practice questions. Preserve source markers and clearly label general knowledge.")
             appendLine("Learner level: ${request.session.learnerLevel.name}; use suitable vocabulary and small steps without rewriting the assignment.")
+            if (request.learningTask == LearningTutorTask.NARRATIVE && !request.createCards && !request.extractExercises) when (request.explanationDepth) {
+                StudyExplanationDepth.SIMPLER -> appendLine("The learner explicitly chose a simpler explanation: use familiar words and one small concrete example. Preserve the existing word limit, source boundaries and allowed help stage; do not infer lower ability or mastery.")
+                StudyExplanationDepth.DEEPER -> appendLine("The learner explicitly chose greater conceptual depth: add one useful causal connection or contrast within the existing word limit. Preserve source boundaries and the allowed help stage; do not reveal more of the assignment solution or infer mastery.")
+                StudyExplanationDepth.BALANCED -> Unit
+            }
             if (!request.createCards) appendLine(when (request.session.supportStyle) {
                 StudySupportStyle.GUIDED -> "Hint first, then invite an attempt."
                 StudySupportStyle.PRACTICE -> "Ask the learner to try, check their attempt, then hint."

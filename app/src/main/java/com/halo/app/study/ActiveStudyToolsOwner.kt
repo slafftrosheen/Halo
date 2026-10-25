@@ -11,9 +11,10 @@ data class ActiveStudySnapshot(val sessionId: String, val sourceVersion: String,
     val sources: List<ActiveStudySource>, val candidates: List<ActiveStudySource>,
     val attemptIds: List<String>, val turnIds: List<String>, val practiceIds: List<String>,
     val latestTurn: String?, val notice: String?, val exportedNoteId: String?, val restartedSessionId: String?,
-    internal val uiVersion: String = sourceVersion)
+    internal val uiVersion: String = sourceVersion, val knowledgeProbeSkipped: Boolean = false,
+    val explanationDepth: String = StudyExplanationDepth.BALANCED.name)
 data class ActiveStudyCommand(val action: String, val text: String? = null, val stage: String? = null,
-    val intensity: String? = null, val sourceVersions: Map<String, String> = emptyMap())
+    val intensity: String? = null, val sourceVersions: Map<String, String> = emptyMap(), val depth: String? = null)
 data class ActiveStudyDispatch(val requestId: String, val sessionId: String, val action: String)
 interface ActiveStudyControl {
     suspend fun current(): ActiveStudySnapshot

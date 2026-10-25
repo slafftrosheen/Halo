@@ -35,23 +35,32 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     override suspend fun publish(item: ScreenItem) = synchronized(lock) {
         validateItem(item)
         val old = _items.value.firstOrNull { it.id == item.id }
-        if (old?.updatedAt != null && item.updatedAt != null && old.updatedAt > item.updatedAt) return@synchronized
+        if (isOlderPublication(old, item)) return@synchronized
         persistItems((_items.value.filterNot { it.id == item.id } + item).takeLast(100))
     }
 
     /** Atomically writes a locally sourced item and the layout card that displays it. */
-    suspend fun publishAndSaveLayout(item: ScreenItem, value: ScreenLayout, recordUndo: Boolean = false) = synchronized(lock) {
+    suspend fun publishAndSaveLayout(item: ScreenItem, value: ScreenLayout, recordUndo: Boolean = false,
+        expectedLayoutVersion: Int? = null): Boolean = synchronized(lock) {
         validateItem(item)
         val checkedLayout = checkedLayout(value)
         val old = _items.value.firstOrNull { it.id == item.id }
-        val updated = if (old?.updatedAt != null && item.updatedAt != null && old.updatedAt > item.updatedAt) _items.value
-            else (_items.value.filterNot { it.id == item.id } + item).takeLast(100)
+        if (expectedLayoutVersion != null && expectedLayoutVersion != (_layout.value?.version ?: 0) ||
+            isOlderPublication(old, item)) return@synchronized false
+        val updated = (_items.value.filterNot { it.id == item.id } + item).takeLast(100)
         val nextLayout = checkedLayout.copy(version = (_layout.value?.version ?: 0) + 1)
         if (recordUndo) undoLayout = _layout.value
         preferences.edit().putString("items", itemsJson(updated)).putString("layout", ScreenLayoutCodec.encode(nextLayout))
             .putString("undo_layout", undoLayout?.let(ScreenLayoutCodec::encode)).apply()
         _items.value = updated
         _layout.value = nextLayout
+        true
+    }
+
+    /** Missing timestamps cannot replace newer evidence with an undated result. */
+    private fun isOlderPublication(old: ScreenItem?, incoming: ScreenItem): Boolean {
+        val previous = old?.updatedAt ?: return false
+        return incoming.updatedAt == null || incoming.updatedAt < previous
     }
 
     override suspend fun markFailed(id: String, at: Instant) {

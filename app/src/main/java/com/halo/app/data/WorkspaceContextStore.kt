@@ -48,6 +48,12 @@ interface WorkspaceContextDao {
 
 /** Explicit promotion and selection. Notes enter context only through these actions. */
 class WorkspaceContextStore(private val database: AppDatabase, private val notes: NotebookRepository, private val storage: com.halo.sdk.runtime.Storage) : WorkspaceContextSource {
+    override val resolvedTextRequiresVersion = true
+    override suspend fun referenceMetadata(objectId: String): com.halo.runtime.cognition.context.WorkspaceReferenceMetadata? = database.withTransaction {
+        val version = versionFor(objectId) ?: return@withTransaction null
+        val item = database.notebookDao().getWorkspaceObject(objectId) ?: return@withTransaction null
+        com.halo.runtime.cognition.context.WorkspaceReferenceMetadata(objectId, version, item.title.take(200))
+    }
     val useMemories = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().includeMemories)
     val cloudSharing = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().allowCloudWorkspace)
     fun setUseMemories(enabled: Boolean) { if (storage.savedPrivacyMode() == null) storage.putBoolean("policy_memories", enabled); refreshPolicy() }
@@ -106,16 +112,31 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     suspend fun forget(id: Int) { com.halo.app.data.memory.RoomMemoryRepository(database).forgetMemory("mem_$id") }
     override suspend fun content(includeMemories: Boolean): List<String> = entries(includeMemories).map { it.text }
     override suspend fun entries(includeMemories: Boolean): List<com.halo.runtime.cognition.context.WorkspaceContextEntry> =
-        database.workspaceContextDao().selectedEntries().take(20).mapNotNull { entry ->
-            resolveWorkingSetEntry(entry)?.let { (type,text) ->
-                if(type == "MEMORY" && !includeMemories) null else
-                    com.halo.runtime.cognition.context.WorkspaceContextEntry(entry.objectId,"Working set ${type.lowercase()}: ${text.take(8_000)}")
+        database.withTransaction {
+            database.workspaceContextDao().selectedEntries().take(20).mapNotNull { entry ->
+                resolveWorkingSetEntry(entry)?.let { (type, text) ->
+                    if (type == "MEMORY" && !includeMemories) null else {
+                        val version = versionFor(entry.objectId) ?: return@mapNotNull null
+                        com.halo.runtime.cognition.context.WorkspaceContextEntry(entry.objectId,
+                            "Working set ${type.lowercase()}: ${text.take(8_000)}", version)
+                    }
+                }
             }
         }
 
     override suspend fun contentFor(objectId: String): String? =
         resolveContent(objectId)?.let { (type, text) ->
             "Explicit ${type.lowercase()} reference: ${text.take(8_000)}"
+        }
+
+    /** The revision and content share the existing Workspace/Room read boundary. */
+    override suspend fun snapshot(objectId: String, expectedVersion: String?): com.halo.runtime.cognition.context.WorkspaceContextEntry? =
+        database.withTransaction {
+            val version = versionFor(objectId) ?: return@withTransaction null
+            if (expectedVersion != null && expectedVersion != version) return@withTransaction null
+            val text = contentFor(objectId) ?: return@withTransaction null
+            if (versionFor(objectId) != version) return@withTransaction null
+            com.halo.runtime.cognition.context.WorkspaceContextEntry(objectId, text, version)
         }
 
     override suspend fun versionFor(objectId: String): String? {

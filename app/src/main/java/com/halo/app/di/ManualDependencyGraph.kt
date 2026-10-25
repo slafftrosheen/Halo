@@ -590,6 +590,7 @@ object ManualDependencyGraph {
             })
     }
     val agentRunStore by lazy { RoomAgentRunRepository(appDatabase) }
+    val contextSourceReceipts by lazy { com.halo.app.context.ContextSourceReceipts(agentRunStore, workspaceContext) }
     val agentRunRepository get() = agentRunStore
     val contentPayloadStore by lazy {
         com.halo.app.data.payload.FileContentPayloadStore(appDatabase, java.io.File(applicationContext.filesDir, "payloads"))
@@ -934,6 +935,9 @@ object ManualDependencyGraph {
             notePurgeActions = com.halo.app.di.tools.WorkspaceNotePurgeActions(notebookUseCases),
             noteAttachmentActions = com.halo.app.di.tools.WorkspaceNoteAttachmentActions(notebookAssetRepository),
             remoteInk = com.halo.app.di.tools.RemoteInkActions(crossDeviceInk),
+            sourceReceipts = com.halo.app.di.tools.ContextReceiptTools(contextSourceReceipts,
+                enabled = { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                cloudAllowed = { workspaceContext.remoteAllowed("MEMORY") }),
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
             { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.readRuntimeAiContextPolicy().allowCloudMemories },interactionWorkingMemory)
@@ -1276,13 +1280,6 @@ object ManualDependencyGraph {
             responseLanguage = { appLanguagePreferences.language.value.tag },
             discoveryProvider = { toolDiscovery },
             memoryContextSource = memoryContextSource,
-            recordContextUse = { interaction, objects, memories ->
-                appDatabase.agentRunDao().activeRootForInteraction(interaction)?.let { root ->
-                    agentRunCoordinator.recordStep(com.halo.runtime.cognition.agent.AgentStep.ContextUsed(
-                        com.halo.runtime.cognition.agent.AgentStepId("context:${java.util.UUID.randomUUID()}"),
-                        com.halo.runtime.cognition.agent.AgentRunId(root), java.time.Instant.now(), objects, memories))
-                }
-            },
             toolExposureGate = toolExposureGate,
             conversationPolicyRepository = conversationContextPolicies,
             compactor = com.halo.runtime.cognition.context.ContextCompactor(

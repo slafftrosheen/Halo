@@ -22,6 +22,24 @@ import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContextAssemblerTest {
+    @Test fun `exact unavailable selection cannot fall back to unrelated Working Set`() = runTest {
+        var reads = 0
+        val source = object : WorkspaceContextSource {
+            override suspend fun content(includeMemories: Boolean) = entries(includeMemories).map { it.text }
+            override suspend fun entries(includeMemories: Boolean): List<WorkspaceContextEntry> {
+                reads++
+                return listOf(WorkspaceContextEntry("unrelated", "UNRELATED PRIVATE MATERIAL", "1"))
+            }
+            override suspend fun contentFor(objectId: String): String? = null
+        }
+        val assembler = DefaultContextAssembler(InMemoryConversationStore(), DefaultBlackboard(), workspace = source)
+        val result = assembler.assemble(AiContextPolicy(includeWorkspace = true), setOf(AiCapability.TEXT),
+            ContextAssemblyRequest(allowGenericFallback = false))
+        assertEquals(0, reads)
+        assertTrue(result.usedWorkspaceReferences.isEmpty())
+        assertFalse(result.context.conversation.any { it.content.contains("UNRELATED PRIVATE MATERIAL") })
+    }
+
     @Test fun `language preference remains available without private conversation context`() = runTest {
         val store = InMemoryConversationStore()
         store.append("Private original text", "Private reply")

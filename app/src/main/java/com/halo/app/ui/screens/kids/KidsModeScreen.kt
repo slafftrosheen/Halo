@@ -63,8 +63,8 @@ import kotlinx.coroutines.launch
     var voiceTargetSession by rememberSaveable { mutableStateOf<String?>(null) }
     var voiceRequest by remember { mutableLongStateOf(0) }
     var voiceNotice by remember { mutableStateOf<String?>(null) }
-    val unknownKnowledge = uiText("Not yet")
-    val discoveryHint = uiText("You can choose Not yet. We can start together.")
+    val discoveryHint = uiText("You can choose an answer or skip this question.")
+    val nextStepNotice = uiText("Choose Next step when you want to continue.")
     var commandHeard by remember { mutableStateOf("") }
     var intakeBusy by remember { mutableStateOf(false) }
     var sourcesExpanded by rememberSaveable { mutableStateOf(false) }
@@ -161,11 +161,28 @@ import kotlinx.coroutines.launch
             else -> topic = value.take(300)
         }
     }
+    fun chooseExplanationDepth(depth: com.halo.app.study.StudyExplanationDepth) {
+        val model = lesson ?: return
+        val state = model.uiState.value
+        if (state.isFinished) { voiceNotice = "Lesson completed"; return }
+        if (state.loading || state.isGenerating || state.isSubmitting || state.savingSummary || state.comparingCards.isNotEmpty()) {
+            voiceNotice = "Finish the current learning step first."
+            return
+        }
+        model.setExplanationDepth(depth)
+        voiceNotice = nextStepNotice
+        helpSheet = false
+    }
     fun command(value: String) {
         commandHeard = value
         val normalized = value.trim().lowercase(java.util.Locale.ROOT).trim('.', '!', '?')
         if (lesson == null && normalized !in setOf("stop", "стоп", "apturi", "zatrzymaj")) {
             voiceNotice = "Start a lesson to use this command."
+            return
+        }
+        if (normalized !in setOf("stop", "стоп", "apturi", "zatrzymaj") &&
+            lesson?.uiState?.value?.session?.id != activeLesson) {
+            voiceNotice = "The learning step changed. Open voice input again."
             return
         }
         when (normalized) {
@@ -176,15 +193,23 @@ import kotlinx.coroutines.launch
                 } else { lesson.requestGuidance(TutorStage.HINT); helpSheet = false }
             }
             "repeat", "повтори", "atkārto", "powtórz" -> lesson?.uiState?.value?.turns?.lastOrNull()?.let { lesson.readTurnAloud(it); helpSheet = false }
+            "simpler", "simpler explanation", "explain more simply", "проще", "объясни проще", "vienkāršāk", "izskaidro vienkāršāk", "prościej", "wyjaśnij prościej" ->
+                chooseExplanationDepth(com.halo.app.study.StudyExplanationDepth.SIMPLER)
+            "more detail", "deeper explanation", "подробнее", "объясни подробнее", "sīkāk", "plašāk", "vairāk detaļu", "dokładniej", "więcej szczegółów" ->
+                chooseExplanationDepth(com.halo.app.study.StudyExplanationDepth.DEEPER)
+            "usual detail", "normal detail", "как обычно", "обычная подробность", "kā parasti", "parastais detalizējums", "jak zwykle", "zwykły poziom szczegółowości" ->
+                chooseExplanationDepth(com.halo.app.study.StudyExplanationDepth.BALANCED)
             "next step", "следующий шаг", "nākamais solis", "następny krok" -> if (lesson != null) {
-                if (lesson.uiState.value.journey.stage == com.halo.app.ui.screens.study.LearningStage.DISCOVER)
-                    lesson.discoverPriorKnowledge(unknownKnowledge)
+                if (lesson.uiState.value.journey.stage == com.halo.app.ui.screens.study.LearningStage.DISCOVER) {
+                    lesson.skipKnowledgeProbe()
+                    voiceNotice = nextStepNotice
+                }
                 else if (lesson.uiState.value.journey.exercises.any { it.id == lesson.uiState.value.session?.currentExerciseId && it.finished })
                     lesson.nextHomeworkExercise()
                 else lesson.advance()
                 helpSheet = false
             }
-            else -> voiceNotice = "Try: hint, repeat, next step, or stop."
+            else -> voiceNotice = "Try: hint, repeat, next step, simpler, more detail, or stop."
         }
     }
     if (voiceSheet) ModalBottomSheet(onDismissRequest = { voiceSheet = false; voiceRequest = 0 }) {
@@ -205,14 +230,19 @@ import kotlinx.coroutines.launch
         Column(Modifier.fillMaxWidth().heightIn(max = 600.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(uiText("What can I say?"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("During a lesson: hint, repeat, next step, or stop. The same actions are available below."))
-            HaloVoiceTextActions(text = "", onText = {}, onCommand = ::command)
+            Text(uiText("During a lesson: hint, repeat, next step, simpler, more detail, or stop. The same actions are available below."))
+            key(activeLesson, learningState?.session, learningState?.journey, learningState?.draft,
+                learningState?.turns?.lastOrNull()?.id, learningState?.sources?.map { it.objectId to it.version }) {
+                HaloVoiceTextActions(text = "", onText = {}, onCommand = ::command)
+            }
             if (commandHeard.isNotBlank()) Text(commandHeard)
             voiceNotice?.let { Text(uiText(it)) }
             listOf("Hint", "Repeat", "Next step", "Stop").forEachIndexed { index, label ->
                 TextButton(onClick = { command(listOf("hint", "repeat", "next step", "stop")[index]) },
                     enabled = index == 3 || lesson != null, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText(label)) }
             }
+            if (lesson != null && learningState != null)
+                com.halo.app.ui.screens.study.StudyExplanationOptions(learningState, lesson, kids = true)
         }
     }
     val signal = when {
@@ -435,6 +465,7 @@ internal fun kidsLessonCanFinish(
         com.halo.app.ui.screens.study.LearningJourneyPanel(state, model, kids = true, nextAction = nextAction)
         return
     }
+    com.halo.app.ui.screens.study.StudyExplanationOptions(state, model, kids = true)
     if (state.isFinished) {
         Text(uiText("Lesson completed"), style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary)

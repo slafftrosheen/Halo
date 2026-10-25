@@ -299,6 +299,10 @@ object HaloToolDescriptors {
     // ---- workspace / notebook / memory ------------------------------------
 
     fun workspace(definition: ToolDefinition) = when (definition.name) {
+        ContextReceiptTools.NAME -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("sources", "context", "used", "history", "receipt"),
+            presentation = ToolPresentation(title = "Inspect saved sources", actionVerb = "Read"))
+            .copy(operability = ContextReceiptTools.operability())
         "halo_ink_status", "halo_ink_document", "halo_ink_selection" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("pen", "drawing", "tablet", "ink", "canvas"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 48000))

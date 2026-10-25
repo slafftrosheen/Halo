@@ -4112,4 +4112,41 @@
     <string name="ui_d72a190f8942" formatted="false">"Recover startup draft"</string>
     <string name="ui_57489fabd9f9" formatted="false">"A deleted conversation draft could not be removed. Try again."</string>
     <string name="ui_63e3a46ac3af" formatted="false">"Try clearing deleted drafts"</string>
+    <string name="ui_0abd51b8ee26" formatted="false">"Mastery —"</string>
+    <string name="ui_8d3efc397417" formatted="false">"New card"</string>
+    <string name="ui_4d6f13b6fbb6" formatted="false">"Due now"</string>
+    <string name="ui_2bb68cc241e2" formatted="false">"Due in %1$dd"</string>
+    <string name="ui_fec2490e2a53" formatted="false">"Memory: %1$s"</string>
+    <string name="ui_baf7f6c7bd2d" formatted="false">"Not measured yet"</string>
+    <string name="ui_bc2648c2488d" formatted="false">"less than a day"</string>
+    <string name="ui_56cf9dd82f99" formatted="false">"about 1 day"</string>
+    <string name="ui_4f6be27bf745" formatted="false">"about %1$d days"</string>
+    <string name="ui_3c319261507e" formatted="false">"about %1$d months"</string>
+    <string name="ui_eb32caa7d28a" formatted="false">"Download: about %1$s"</string>
+    <string name="ui_7a0d7ac451df" formatted="false">"Additional free space needed: about %1$s"</string>
+    <string name="ui_2d0d85549237" formatted="false">"Not enough free space for this bundle."</string>
+    <string name="ui_bb3c1a3af5e1" formatted="false">"You can choose an answer or skip this question."</string>
+    <string name="ui_13ebf91670b6" formatted="false">"Choose Next step when you want to continue."</string>
+    <string name="ui_feb2b1404350" formatted="false">"Sources for this request"</string>
+    <string name="ui_a1d1b89fe053" formatted="false">"Source history is unavailable right now."</string>
+    <string name="ui_1108791e895a" formatted="false">"Checking saved source references…"</string>
+    <string name="ui_c94ddd60cc9b" formatted="false">"No source receipt was recorded for this request."</string>
+    <string name="ui_d884ca541833" formatted="false">"No source links were stored in this receipt."</string>
+    <string name="ui_8f5826e096d8" formatted="false">"Source %1$d"</string>
+    <string name="ui_3de0ff57f0ab" formatted="false">"Matches the recorded source version."</string>
+    <string name="ui_921dd30df39a" formatted="false">"Source changed after this was recorded."</string>
+    <string name="ui_ef5db00cc420" formatted="false">"This receipt has no saved source version."</string>
+    <string name="ui_b33f236b0bb7" formatted="false">"Source is currently unavailable."</string>
+    <string name="ui_d3694d39c168" formatted="false">"Memories recorded for this request: %1$d"</string>
+    <string name="ui_f2dcd88ead93" formatted="false">"Only part of the saved source history is shown."</string>
+    <string name="ui_ec1213e22d81" formatted="false">"Opening a source shows its current contents."</string>
+    <string name="ui_4c9b212e1f48" formatted="false">"How much detail?"</string>
+    <string name="ui_2d239d8b5a7d" formatted="false">"Simpler explanation"</string>
+    <string name="ui_5360e92b2391" formatted="false">"Usual detail"</string>
+    <string name="ui_46ed111fb3f7" formatted="false">"Deeper explanation"</string>
+    <string name="ui_f517a4bdd160" formatted="false">"This choice changes future explanations, not your level or results."</string>
+    <string name="ui_d92d69ad42f9" formatted="false">"Finish the current learning step first."</string>
+    <string name="ui_66cd74a43e4c" formatted="false">"During a lesson: hint, repeat, next step, simpler, more detail, or stop. The same actions are available below."</string>
+    <string name="ui_d61a54f7137c" formatted="false">"Try: hint, repeat, next step, simpler, more detail, or stop."</string>
+    <string name="ui_7d72ddf69768" formatted="false">"The starter bundle is unavailable."</string>
 </resources>

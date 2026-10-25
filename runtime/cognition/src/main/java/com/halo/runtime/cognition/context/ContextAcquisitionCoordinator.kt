@@ -169,8 +169,29 @@ class DefaultContextAcquisitionCoordinator(
 
     private suspend fun acquireWorkspace(query: ContextQuery): ContextCandidate? {
         val objectId = query.activeWorkspaceObjectId ?: return null
-        if (query.workspaceVersion != null && workspaceContext?.versionFor(objectId) != query.workspaceVersion) return null
-        val text = (query.explicitWorkspaceText ?: workspaceContext?.contentFor(objectId))?.takeIf(String::isNotBlank) ?: return null
+        val owner = workspaceContext
+        val snapshot = if (query.explicitWorkspaceText != null) {
+            // The host already resolved this selection. Recheck its owner token; never
+            // replace a stale explicit selection with another object's current content.
+            val text = query.explicitWorkspaceText.takeIf(String::isNotBlank) ?: return null
+            if (owner?.resolvedTextRequiresVersion == true) {
+                val expected = query.workspaceVersion ?: return null
+                val current = owner.snapshot(objectId, expected) ?: return null
+                if (current.objectId != objectId || current.version != expected) return null
+                WorkspaceContextEntry(objectId, text, expected)
+            } else {
+            val before = owner?.versionFor(objectId)
+            if (query.workspaceVersion != null && before != query.workspaceVersion) return null
+            // An unversioned old excerpt cannot acquire today's owner revision merely
+            // because the owner was stable while this already-copied text was checked.
+            if (query.workspaceVersion == null && before != null) return null
+            val after = owner?.versionFor(objectId)
+            if (before != after || query.workspaceVersion != null && after != query.workspaceVersion) return null
+            WorkspaceContextEntry(objectId, text, query.workspaceVersion)
+            }
+        } else owner?.snapshot(objectId, query.workspaceVersion) ?: return null
+        if (snapshot.objectId != objectId || query.workspaceVersion != null && snapshot.version != query.workspaceVersion) return null
+        val text = snapshot.text
         return ContextCandidate(
             id = ContextCandidateId("workspace:$objectId"),
             source = ContextSource.ExplicitWorkspaceContext,
@@ -181,6 +202,7 @@ class DefaultContextAcquisitionCoordinator(
             estimatedTokens = tokenEstimator.estimate(text),
             freshness = ContextFreshness.RECENT,
             objectId = objectId,
+            sourceVersion = snapshot.version,
         )
     }
 

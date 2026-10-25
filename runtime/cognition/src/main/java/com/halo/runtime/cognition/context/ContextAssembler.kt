@@ -16,6 +16,9 @@ data class ContextAssemblyResult(
     val omissions: List<ContextOmission> = emptyList(),
     val image: ImageContext? = null,
     val unsatisfiedRequired: List<ContextNeed> = emptyList(),
+    /** Only references actually fitted into this turn; null versions remain explicitly unknown. */
+    val usedWorkspaceReferences: List<ContextReference.WorkspaceObject> = emptyList(),
+    val usedMemoryIds: List<String> = emptyList(),
 )
 
 data class ImageContext(
@@ -104,6 +107,7 @@ data class ContextAssemblyRequest(
     val toolUseMode: com.halo.sdk.provider.ToolUseMode = com.halo.sdk.provider.ToolUseMode.OPTIONAL,
     val conversationId: String? = null,
     val interactionId: String? = null,
+    /** False for an exact source selection: do not substitute unrelated image or Working Set content. */
     val allowGenericFallback: Boolean = true,
     val acquisition: ContextAcquisitionResult? = null,
     val contextWindowTokens: Long? = null,

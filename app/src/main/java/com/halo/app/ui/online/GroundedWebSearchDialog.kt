@@ -97,7 +97,8 @@ import java.util.Date
                                     sourceLinks = answer.sources.asSequence().filter { it.url.startsWith("https://") }
                                         .take(8).map { com.halo.app.screen.ScreenSourceLink(it.title.take(200), it.url.take(2048)) }.toList(),
                                 )
-                                val current = store.layout.value ?: com.halo.app.screen.ScreenWidgets.starter("Morning")
+                                val observedLayout = store.layout.value
+                                val current = observedLayout ?: com.halo.app.screen.ScreenWidgets.starter("Morning")
                                 val existing = current.cards.indexOfFirst { it.widgetType == "research" && it.itemId == itemId }
                                 val unbound = current.cards.indexOfFirst { it.widgetType == "research" && it.itemId == null }
                                 if (existing < 0 && unbound < 0 && current.cards.size >= 24) {
@@ -112,7 +113,8 @@ import java.util.Date
                                     else -> current.cards + com.halo.app.screen.ScreenCard("research", itemId,
                                         com.halo.app.screen.CardSize.STANDARD, false)
                                 }
-                                store.publishAndSaveLayout(item, current.copy(cards = cards))
+                                check(store.publishAndSaveLayout(item, current.copy(cards = cards),
+                                    expectedLayoutVersion = observedLayout?.version ?: 0)) { "Screen changed before publication" }
                                 savedToScreen = true
                                 saveError = false
                             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }

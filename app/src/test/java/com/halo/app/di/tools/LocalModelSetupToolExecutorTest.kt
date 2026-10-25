@@ -32,12 +32,44 @@ class LocalModelSetupToolExecutorTest {
         override val state = MutableStateFlow(LocalRolePackInstallState())
         override var available = true
         var accepted = true
+        var preview: LocalRolePackDownloadPreview? = null
+        override suspend fun downloadPreview() = preview
         val requests = mutableListOf<Pair<LocalRolePackCommand, String>>()
         override fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean {
             requests += command to expectedTransactionId
             return accepted
         }
     }
+    @Test fun `download review separates network from per volume storage without starting setup`() = runBlocking {
+        val owner = Owner().apply { preview = LocalRolePackDownloadPreview(
+            listOf(LocalRolePackDownloadEstimate(LocalRolePackStage.INTENT, 100L),
+                LocalRolePackDownloadEstimate(LocalRolePackStage.SPEECH_OUTPUT, 200L)),
+            listOf(LocalRolePackStorageEstimate(400L, 399L), LocalRolePackStorageEstimate(50L, 1000L))) }
+        val result = LocalModelSetupToolExecutor(owner).execute(
+            ToolCall("review", "halo_local_setup_status", emptyMap())) as ToolExecutionResult.Success
+        val json = org.json.JSONObject(result.output)
+        val estimate = json.getJSONObject("downloadPreview")
+        assertEquals(300L, estimate.getLong("estimatedRemainingDownloadBytes"))
+        assertEquals(450L, estimate.getLong("estimatedRequiredStorageBytes"))
+        // Spare space on a second volume cannot make the first volume safe.
+        assertFalse(estimate.getBoolean("enoughStorageAtObservation"))
+        assertFalse(estimate.getBoolean("chatModelIncluded"))
+        assertFalse(json.getBoolean("qualificationGranted"))
+        assertFalse(json.getBoolean("roleSelectionChanged"))
+        assertTrue(owner.requests.isEmpty())
+        assertEquals(LocalRolePackPhase.IDLE, owner.state.value.phase)
+    }
+
+    @Test fun `unknown download estimate stays unknown instead of zero bytes or ready`() = runBlocking {
+        val owner = Owner()
+        val result = LocalModelSetupToolExecutor(owner).execute(
+            ToolCall("review", "halo_local_setup_status", emptyMap())) as ToolExecutionResult.Success
+        val json = org.json.JSONObject(result.output)
+        assertTrue(json.isNull("downloadPreview"))
+        assertFalse(json.getBoolean("qualificationGranted"))
+        assertTrue(owner.requests.isEmpty())
+    }
+
     @Test fun `invalid arguments never reach installer`() = runBlocking {
         val owner = Owner()
         val tools = LocalModelSetupToolExecutor(owner)

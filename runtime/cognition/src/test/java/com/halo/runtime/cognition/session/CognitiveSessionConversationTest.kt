@@ -19,6 +19,31 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CognitiveSessionConversationTest {
+    @Test fun `fresh source receipt belongs to newly created root instead of another active run`() = runTest {
+        val runs = Runs()
+        val unrelated = recordedRun(runs, null)
+        val conversations = InMemoryConversationStore()
+        val provider = RecordingProvider()
+        val source = object : com.halo.runtime.cognition.context.WorkspaceContextSource {
+            override suspend fun content(includeMemories: Boolean) = listOf("Synthetic selected text")
+            override suspend fun entries(includeMemories: Boolean) = listOf(
+                com.halo.runtime.cognition.context.WorkspaceContextEntry("exact-note", "Synthetic selected text", "7"))
+            override suspend fun versionFor(objectId: String) = if (objectId == "exact-note") "7" else null
+        }
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(conversations, DefaultBlackboard(), workspace = source)
+        val session = CognitiveSession(FakeEventBus(), FakeRouter(provider, AiExecutionLocation.ON_DEVICE), conversations,
+            assembler, scope = this, agentRunStore = runs,
+            agentRunCoordinator = DefaultAgentRunCoordinator(runs, backgroundScope))
+        session.submit(AiRequest(text = "Read my selected source"), policy = AiContextPolicy(includeWorkspace = true))
+        advanceUntilIdle()
+        val fresh = runs.rows.value.single { it.id != unrelated }
+        val receipt = fresh.steps.filterIsInstance<AgentStep.ContextUsed>().single()
+        assertEquals(listOf("exact-note"), receipt.objectIds)
+        assertEquals(listOf(com.halo.runtime.cognition.context.ContextReference.WorkspaceObject("exact-note", "7")), receipt.workspaceReferences)
+        assertTrue(runs.get(unrelated)!!.steps.none { it is AgentStep.ContextUsed })
+        assertTrue(provider.capturedContexts.single().conversation.any { it.content.contains("Synthetic selected text") })
+        assertTrue(fresh.steps.indexOf(receipt) < fresh.steps.indexOfFirst { it is AgentStep.ProviderTurnStarted })
+    }
 
     @Test
     fun `request fails before provider execution when no model is selected`() = runTest {
@@ -231,7 +256,8 @@ class CognitiveSessionConversationTest {
             inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096, supportsStreaming = true, supportsTools = true))
     }
 
-    private class FakeRouter(private val provider: AiInferenceProvider) : AiProviderRouter {
+    private class FakeRouter(private val provider: AiInferenceProvider,
+        private val executionLocation: AiExecutionLocation = AiExecutionLocation.REMOTE) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
         override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}
@@ -248,7 +274,8 @@ class CognitiveSessionConversationTest {
                 inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
                 contextLength = 4096,
                 supportsStreaming = true,
-                supportsTools = true
+                supportsTools = true,
+                executionLocation = executionLocation
             )
             return AiExecutionTarget(
                 provider = provider,

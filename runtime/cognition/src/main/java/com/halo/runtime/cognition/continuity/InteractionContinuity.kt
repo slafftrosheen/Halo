@@ -47,6 +47,26 @@ data class ContinuityDelivery(val target: SpeechOutputTarget, val fallback: Spee
 
 /** Pure journal projection. Connections and UI navigation have no authority here. */
 object RunContinuityResolver {
+    /** Input provenance is independent of current output handoff/delivery. */
+    fun inputModality(run: AgentRun): com.halo.runtime.cognition.turn.InteractionInputModality =
+        run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.inputModality
+            ?: when (run.origin?.source) {
+                ObservationSource.AndroidPhoneMic, ObservationSource.HeyCyanGlasses -> com.halo.runtime.cognition.turn.InteractionInputModality.VOICE
+                else -> com.halo.runtime.cognition.turn.InteractionInputModality.UNKNOWN
+            }
+
+    fun inputRoute(run: AgentRun): SpeechInputRoute? {
+        if (inputModality(run) != com.halo.runtime.cognition.turn.InteractionInputModality.VOICE) return null
+        run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.inputRoute?.let { return it }
+        return when (run.origin?.source) {
+            ObservationSource.AndroidPhoneMic -> SpeechInputRoute.Phone
+            ObservationSource.HeyCyanGlasses -> run.origin?.hostId?.let {
+                SpeechInputRoute.Device(it, null, null, AudioDeviceKind.WEARABLE)
+            }
+            else -> null
+        }
+    }
+
     fun conversationId(run: AgentRun): String? =
         run.steps.filterIsInstance<AgentStep.ContinuityBound>().lastOrNull()?.conversationId
             ?: run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()?.conversationId

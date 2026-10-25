@@ -305,6 +305,21 @@ class WorkspaceStudyActionsTest {
         assertTrue(repository.getAttempts(saved.id).isEmpty()); assertNotNull(workspace.notes.getNote(source.id))
     }
 
+    @Test fun skippedKnowledgeProbePersistsWithoutInventingKnowledgeOrGrading() = fixture {
+        val id = session().id
+        lessons.saveDraft(id, "Keep my unsent thinking")
+        val attempts = repository.getAttempts(id)
+        lessons.saveJourney(id, LearningJourney(
+            stage = com.halo.app.ui.screens.study.LearningStage.EXPLAIN, probeSkipped = true))
+        val reopened = StudyLessonStore(storage)
+        val journey = requireNotNull(reopened.loadJourney(id))
+        assertTrue(journey.probeSkipped)
+        assertEquals("", journey.priorKnowledge)
+        assertEquals("Keep my unsent thinking", reopened.loadRecovery(id).draft)
+        assertTrue(reopened.load(id).isEmpty())
+        assertEquals(attempts, repository.getAttempts(id))
+    }
+
     @Test fun deletionGuardsAllLocalLessonWritersAndClearsHistoryJourneyAndRecovery() = fixture {
         val id = session().id
         val changes: List<suspend () -> Unit> = listOf(

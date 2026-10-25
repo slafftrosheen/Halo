@@ -358,6 +358,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     }
                 }
                 story.children.forEach { child -> ActivityListItem(child, onOpenObject, onReviewRun, onHome) }
+                story.sourceRunId?.let { runId -> ContextSourcesView(runId, ManualDependencyGraph.contextSourceReceipts, onOpenObject) }
                 story.objectId?.let { id -> HaloActionButton(onClick = { onOpenObject(id) },
                     style = HaloActionStyle.SECONDARY) { Text(uiText("Open in Workspace")) } }
             }
@@ -577,6 +578,7 @@ data class ActivityStory(
     val phoneGuidance: NativeWorkflowRecoveryGuide.Guidance? = null,
     /** Durable AgentRunState.SUSPENDED, not a guessed paused timestamp. */
     val suspended: Boolean = false,
+    val sourceRunId: String? = null,
 )
 
 data class ActivityUiState(
@@ -884,6 +886,7 @@ private fun AgentRun.toStory(): ActivityStory {
         status = status,
         suspended = state == AgentRunState.SUSPENDED,
         steps = activitySteps,
+        sourceRunId = id.value,
         planPresentation = planPresentation,
         planProgress = planProgress,
         reviewRunId = id.value.takeIf { pendingInput != null && state in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION) },

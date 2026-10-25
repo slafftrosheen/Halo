@@ -61,4 +61,6 @@ data class PreparedCognitiveTurn(
     val toolExposureMode: com.halo.runtime.cognition.context.CognitiveOperatingMode =
         com.halo.runtime.cognition.context.CognitiveOperatingMode.AUTO,
     val remoteDispatchRevision: Long? = null,
+    val usedWorkspaceReferences: List<com.halo.runtime.cognition.context.ContextReference.WorkspaceObject> = emptyList(),
+    val usedMemoryIds: List<String> = emptyList(),
 )
