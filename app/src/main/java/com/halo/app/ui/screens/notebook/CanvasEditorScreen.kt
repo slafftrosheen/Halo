@@ -604,7 +604,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         EditorWorkspaceHeader(state.title, menu,
             onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
-            onHalo = { showAi = true }, haloEnabled = boardEditingEnabled)
+            onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
+            haloEnabled = boardEditingEnabled)
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -966,7 +967,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         ) {
                             Text(uiText(if (node.type == CanvasNodeType.GROUP) "Group title" else "Tag card"),
                                 style = MaterialTheme.typography.labelSmall)
-                            BasicTextField(node.text, { viewModel.updateNodeText(node.id, it.take(if (node.type == CanvasNodeType.GROUP) 80 else 50)) },
+                            if (state.selectionMode) Text(node.text, style = MaterialTheme.typography.titleMedium)
+                            else BasicTextField(node.text, { viewModel.updateNodeText(node.id, it.take(if (node.type == CanvasNodeType.GROUP) 80 else 50)) },
                                 textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary))
                             if (node.type == CanvasNodeType.GROUP) Text(
@@ -1032,6 +1034,11 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 Text(uiText("Edit sketch"))
                             }
                         }
+                        else if (node.refObjectId == null && state.selectionMode) {
+                            CanvasTextCardDecoration(node.text, Modifier.fillMaxSize().padding(14.dp)) {
+                                Text(node.text, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                         else if (node.refObjectId == null) BasicTextField(
                             value = node.text,
                             onValueChange = { viewModel.updateNodeText(node.id, it) },
@@ -1039,24 +1046,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 .onFocusChanged { if (it.isFocused && !state.selectionMode) viewModel.selectNode(node.id) },
                             textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            decorationBox = { inner ->
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Icon(painterResource(com.halo.app.R.drawable.halo_ic_card),
-                                            contentDescription = null, modifier = Modifier.size(16.dp),
-                                            tint = MaterialTheme.colorScheme.primary)
-                                        Text(uiText("Text"), style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                    Box {
-                                        if (node.text.isBlank()) Text(uiText("Write an idea..."),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            style = MaterialTheme.typography.bodyMedium)
-                                        inner()
-                                    }
-                                }
-                            },
+                            decorationBox = { inner -> CanvasTextCardDecoration(node.text, content = inner) },
                         )
                         else if (state.images[node.refObjectId] != null || state.files[node.refObjectId]?.isCanvasVisualSource() == true) {
                             val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
@@ -1129,6 +1119,24 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
 }
 
+/** Selection uses ordinary Text so the card Surface receives body taps without opening an editor. */
+@Composable
+private fun CanvasTextCardDecoration(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(painterResource(com.halo.app.R.drawable.halo_ic_card), contentDescription = null,
+                modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+            Text(uiText("Text"), style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Box {
+            if (text.isBlank()) Text(uiText("Write an idea..."), color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium)
+            content()
+        }
+    }
+}
+
 /** A card glides only when an approved organization really changed its position.
  * Never interpolate drag, zoom, pan, imported content or reduced-motion screens.
  */
@@ -1171,7 +1179,7 @@ internal fun CanvasEmptyStarter(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        com.halo.app.ui.presence.HaloSignalFace(
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) com.halo.app.ui.presence.HaloSignalFace(
             presentation = com.halo.app.ui.presence.HaloSignalPresentation(
                 label = "Ready", reducedMotion = true),
             size = 80.dp, contentDescription = uiText("Think with halo"),
@@ -1190,7 +1198,7 @@ internal fun CanvasEmptyStarter(
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text(stringResource(com.halo.app.R.string.brand_canvas_import_choice))
         }
-        OutlinedButton(onClick = onHalo, enabled = enabled,
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) OutlinedButton(onClick = onHalo, enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text(uiText("Think with halo"))
         }
@@ -1248,7 +1256,7 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
                     }
                 }
             }
-            com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(
                     state = if (haloThinking) com.halo.app.ui.presence.HaloSignalState.THINKING else com.halo.app.ui.presence.HaloSignalState.IDLE,
                     label = if (haloThinking) "Thinking" else "Ready"),
                 size = 58.dp, contentDescription = uiText("Think with halo"), onClick = if (enabled) onHalo else null)

@@ -1,0 +1,5 @@
+HALO synthetic source fixture, 2026-10-25.
+The test greenhouse has 6 trays.
+Each tray holds 8 seedlings.
+Exactly 5 seedlings are moved outside.
+The remaining seedlings stay inside the greenhouse.

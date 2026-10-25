@@ -1,0 +1,30 @@
+{
+  "checkpoint": 17,
+  "productionChangedDuringRed": false,
+  "initialRun": {
+    "cases": 8,
+    "failures": 8,
+    "fixtureTimeouts": 5,
+    "duplicateLauncherAssertionFailures": 3,
+    "duration": "6m13s"
+  },
+  "secondRun": {
+    "cases": 8,
+    "failures": 8,
+    "errors": 0,
+    "selectionAssertionFailures": 2,
+    "duplicateLauncherAssertionFailures": 4,
+    "fixtureTimeouts": 2,
+    "fixtureTimeoutSites": [
+      "render loading",
+      "persist job completion"
+    ],
+    "duration": "2m14s"
+  },
+  "interpretation": "Six second-run assertions reproduce selection/launcher defects; two scheduling failures are not production proof. Actual phone text-body tap also opened keyboard instead of selection. Main-dispatcher fixture repaired for GREEN; all eight cases retained.",
+  "localXmlDirectories": [
+    "canvas-red-initial",
+    "canvas-red-valid"
+  ],
+  "status": "RED_WITH_HARNESS_FAILURES_DISCLOSED"
+}

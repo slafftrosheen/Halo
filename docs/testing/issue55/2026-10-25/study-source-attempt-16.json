@@ -1,0 +1,61 @@
+{
+  "checkpoint": 16,
+  "status": "PARTIAL_IMPORT_AND_STUDY_BINDING_PASS_GENERATION_INCOMPLETE",
+  "mainApkSha256": "73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c",
+  "fixture": {
+    "file": "fixtures/HALO-SOURCE-20261025-TRAYS.txt",
+    "bytes": 196,
+    "sha256": "2e99c50feceb0a1a381164800b9476f0b02e90f0a6e95d2e0ad731e6b535908d",
+    "androidDownloadHashMatches": true,
+    "factsNotIncludedInStudyGoal": true,
+    "expectedArithmeticAnswer": 43
+  },
+  "localChecks": {
+    "singleFileSafImportToInbox": "PASS",
+    "workspaceFileDetailsReady": "PASS",
+    "continueInStudyPreselectedFile": "PASS_BELOW_FOLD_AFTER_SCROLL",
+    "studySourceCount": 1,
+    "studyReadySourceCount": 1,
+    "studySourcesNeedingAttention": 0,
+    "expandedStudyTextExactMatch": "PASS"
+  },
+  "cloud": {
+    "provider": "openrouter",
+    "requestedAndTargetedModel": "nvidia/nemotron-3.5-lightning:free",
+    "zeroPricedEndpointCheckedBeforeEachAction": true,
+    "fallbackUsed": false,
+    "narrative": {
+      "startedUtc": "2026-10-25T02:38:41.008Z",
+      "result": "EMPTY_RESPONSE_NO_USABLE_VISIBLE_TEXT_OR_TOOLS",
+      "uiRecoverableErrorAndMaterialRetained": true,
+      "finishReason": "NOT_AVAILABLE_IN_RETAINED_DIAGNOSTICS",
+      "tokenCounts": "NOT_AVAILABLE_IN_RETAINED_DIAGNOSTICS",
+      "classification": "CAUSE_UNQUALIFIED_NOT_PROVEN_EXTERNAL_ONLY"
+    },
+    "practiceCards": {
+      "action": "Create practice cards from the selected expanded source",
+      "separateActionNotNarrativeRetry": true,
+      "result": "INVALID_PRACTICE_DRAFT_NO_CARDS_SAVED",
+      "groundingPass": false,
+      "classification": "CAUSE_UNQUALIFIED"
+    }
+  },
+  "observedPresentationGaps": [
+    "English Languages tab in Russian UI",
+    "English Ready source status in Russian UI",
+    "English invalid practice draft error in Russian UI"
+  ],
+  "permissions": "Standard single-document SAF URI grant for owned synthetic file; no new OS runtime grant or global cloud-sharing acknowledgement; cloud explicitly chosen for this lesson",
+  "localEvidence": [
+    "source-import-app-result.xml",
+    "source-file-detail.xml",
+    "source-study-material-selected.xml",
+    "source-study-file-expanded.xml",
+    "source-study-generated-check.xml",
+    "source-study-cards-main-final.xml",
+    "study-trays-app-logcat.txt",
+    "study-trays-cards-app-logcat.txt"
+  ],
+  "crossToolJourneyCounted": false,
+  "issueDisposition": "KEEP_OPEN"
+}

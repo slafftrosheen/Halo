@@ -1,0 +1,46 @@
+{
+  "checkpoint": 17,
+  "completedUtc": "2026-10-25T02:49:05.462664+00:00",
+  "build": "SUCCESSFUL",
+  "duration": "8m35s",
+  "app": {
+    "tests": 569,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "newCanvasSuites": [
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasShellAssistantEntryTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "apks": {
+    "main": {
+      "file": "app-debug.apk",
+      "sha256": "2de471bcd38e5f2fb7e31251a97ad10075d3192bee6fda87ffa007be7ee30d8c"
+    },
+    "test": {
+      "file": "app-debug-androidTest.apk",
+      "sha256": "e5b3c1ca2bc2db5de2ac2575beaef31ac93768591f4e18b2818f51f9213ee545"
+    }
+  },
+  "sourceBase": "d75a05e99b67b76204050c5a281e8a875c6c54b1",
+  "review": "Independent focused source/test review clean",
+  "unchangedRuntime": "Checkpoint16 runtime362/language51/interpretation26 remain prior unchanged evidence, not rerun in this gate",
+  "installedReadbackMatches": true,
+  "replacementInstallCounts": {
+    "main": 1,
+    "test": 1
+  }
+}

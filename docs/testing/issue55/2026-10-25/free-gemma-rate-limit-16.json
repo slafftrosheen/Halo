@@ -1,0 +1,60 @@
+{
+  "status": "BLOCKED_EXTERNAL_NONBLOCKING",
+  "scenario": "Exact free Gemma model selection and single Canvas request",
+  "mainApkSha256": "73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c",
+  "provider": "openrouter",
+  "requestedModel": "google/gemma-4-31b-it:free",
+  "resolvedModel": "google/gemma-4-31b-it:free",
+  "metadataSource": "https://openrouter.ai/api/v1/models/google/gemma-4-31b-it:free/endpoints",
+  "metadataCheckedUtc": "2026-10-25T02:10:40.967128+00:00",
+  "metadataPricing": {
+    "prompt": "0",
+    "completion": "0"
+  },
+  "metadataToolsSupported": true,
+  "interactionId": "9de54bb6-2d67-4495-b141-eeb44c049f1f",
+  "requestId": "e4fe814a-dffb-4124-b883-213e6584d7d1",
+  "role": "AGENTIC",
+  "bindingMode": "INHERIT_DEFAULT",
+  "fallbackUsed": false,
+  "candidateCount": 1,
+  "errorType": "RATE_LIMITED",
+  "httpStatus": 429,
+  "providerCode": "429",
+  "attempt": 1,
+  "retryAfterMs": null,
+  "partialOutput": false,
+  "toolWriteConfirmed": false,
+  "androidObservations": {
+    "exactFreeEntrySelectedInUi": true,
+    "onlySelectedRoutingPreserved": true,
+    "uiEndedWithRecoverableGenericError": true,
+    "submittedLiteralRestoredToDraft": true,
+    "draftSurvivedSettingsNavigationAndDefaultRestoration": true,
+    "automaticRetryPerformed": false,
+    "paidFallbackPerformed": false
+  },
+  "originalModelRestore": {
+    "originalDefault": {
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3.5-lightning:free",
+      "label": "NVIDIA: Nemotron 3.5 Lightning (free)"
+    },
+    "temporaryDefault": {
+      "provider": "openrouter",
+      "model": "google/gemma-4-31b-it:free",
+      "label": "Google: Gemma 4 31B (free)"
+    },
+    "selectionObservedUtc": "2026-10-25T02:10:04.196337+00:00",
+    "selectionEffect": "Exact free model row click immediately set default; UI now labels Gemma as default",
+    "agenticBindingOriginal": "INHERIT_DEFAULT",
+    "routingOriginal": "Only selected model",
+    "privacyOriginal": "POWER",
+    "budgetChanged": false,
+    "restoreRequired": false,
+    "restored": true,
+    "restoredUtc": "2026-10-25T02:12:44.135474+00:00",
+    "readback": "NVIDIA default and Only selected model selected in actual Roles UI"
+  },
+  "boundary": "Actual provider quota rejection; genuine Gemma inference/tool effect not verified. Android safe error/draft handling does not qualify all rate-limit/network/credential recovery. No new provider key, permission, sharing acknowledgement or token-budget change."
+}

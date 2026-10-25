@@ -1,0 +1,21 @@
+{
+  "observedUtc": "2026-10-25T02:55:01.443730+00:00",
+  "body": "Silver kites rest at noon.",
+  "bodyIsEditableInSelectionMode": false,
+  "keyboardShownAfterBodyTap": false,
+  "globalOrbCount": 1,
+  "localAssistantLauncherCount": 0,
+  "checkpoint": 17,
+  "mainApkSha256": "2de471bcd38e5f2fb7e31251a97ad10075d3192bee6fda87ffa007be7ee30d8c",
+  "testApkSha256": "e5b3c1ca2bc2db5de2ac2575beaef31ac93768591f4e18b2818f51f9213ee545",
+  "status": "PASS_SCOPED_SELECTION_AND_SINGLE_ORB",
+  "cardSelectedVisualOutline": "PASS_REVIEWED_SCREENSHOT",
+  "ordinaryEditingFieldPresentBeforeSelection": true,
+  "actualAiSelectedEdit": "NOT_COUNTED_BY_THIS_RECORD",
+  "device": "Redmi23124RA7EO Android15/API35",
+  "limits": [
+    "Text-card native pointer check; GROUP/TAG variants are real-VM Room-backed desktop regressions",
+    "Normal typing/persistence regression passed in desktop suite; native check here verified normal editable field and selection-mode noneditable field",
+    "No full spoken/audio acceptance or full issue closure"
+  ]
+}

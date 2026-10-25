@@ -1,0 +1,49 @@
+{
+  "checkpoint": 16,
+  "status": "PASS_ONE_COMPLETE_MULTI_TURN_CROSS_TOOL_JOURNEY",
+  "completedJourneysOfRequiredThree": 1,
+  "sourceCommit": "d75a05e99b67b76204050c5a281e8a875c6c54b1",
+  "compiledGitMetadataBase": "048d8cef7fd739719fd222ad20d44dee63c6fa44",
+  "mainApkSha256": "73f008a026a5db6439d4cff7b13dd0f87b8d3b72aab8bf7bc2bf8d1885d5555c",
+  "testApkSha256": "539b1c7702c8e2da45240f2cca213c8e1e8b8dd1230363c57042ae40a07b023d",
+  "route": {"provider": "openrouter", "model": "nvidia/nemotron-3.5-lightning:free", "fallbackUsed": false, "onlySelectedRouting": true},
+  "sourceNote": {
+    "id": "97389b90-ec0e-46f8-8a1f-a920c1e3a914",
+    "title": "HALO-PERF-20261025-NOTE-E",
+    "body": "Silver kites rest at noon.",
+    "createInteractionId": "8e5bc584-c917-4ae7-8d8b-da13c5ad5705",
+    "createRunId": "06afdda0-1bb9-4df9-967f-d21e4dbc20e4",
+    "roleResolvedUtc": "2026-10-25T01:45:19.339885Z",
+    "nativeEditorReadback": "PASS",
+    "unchangedAfterCanvasWrite": "PASS_EXACT_TITLE_AND_BODY"
+  },
+  "canvasCreation": {
+    "startedUtc": "2026-10-25T02:13:53.187365Z",
+    "interactionId": "cb939cff-ddb0-473c-8aad-cbc72a469e52",
+    "runId": "179de6cd-77df-46c5-8797-441b8fe4206c",
+    "providerRequestId": "a2a70208-435f-441e-b58f-9859e15bb0ba",
+    "id": "50c93fa3-685f-4dfd-ac5f-872e491b93ee",
+    "title": "HALO-AI-20261025-BOARD-D",
+    "receipt": "CONFIRMED",
+    "nativeCreateMs": 335
+  },
+  "noteToCanvas": {
+    "startedUtc": "2026-10-25T02:18:28.766175Z",
+    "surface": "Global Orb typed sheet on the actual Canvas editor",
+    "interactionId": "d6a847ed-a6c6-47ba-b098-04d230643284",
+    "runId": "55335431-baf0-4163-a12d-5fa856ccddf4",
+    "firstProviderRequestId": "db02e4e1-bf93-414a-bf58-1b894e11c970",
+    "rejectedDiscoveryCalls": 1,
+    "confirmedNativeSequence": ["discovery", "halo_note_get", "discovery", "halo_canvas_add_text"],
+    "noteReadMs": 323,
+    "canvasAddTextMs": 315,
+    "cardId": "479d0346-397f-4abc-a252-af1857bbced2",
+    "expectedCardCount": 1,
+    "expectedCardText": "Silver kites rest at noon.",
+    "actualEditorReadback": "PASS_EXACT_COUNT_AND_TEXT",
+    "forceStopColdReopenReadback": "PASS_EXACT_COUNT_AND_TEXT"
+  },
+  "localEvidence": ["perf-e16-app-logcat.txt", "nvidia-canvas-single-app-logcat.txt", "canvas-card-add-app-logcat.txt", "canvas-d16-card-readback.xml", "canvas-d16-cold-card-readback.xml", "flow1-source-unchanged-final.xml"],
+  "limits": ["Explicit multi-turn decomposition; the earlier compound six-step-limit attempt remains incomplete", "Text route only; no voice, image, selected-card editing, export or Study acceptance follows", "Raw UI/log evidence stays ignored locally; public data is synthetic only", "No paid fallback, increased tool budget, credential read by the agent or modification of pre-existing user objects"],
+  "issueDisposition": "KEEP_OPEN"
+}
