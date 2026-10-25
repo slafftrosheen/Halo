@@ -1,0 +1,106 @@
+{
+  "checkpoint": 18,
+  "mainApkSha256": "904fc72c5fccdd5c6358e209610d77f4d9274576dc855a9690653b6dfd1ff71e",
+  "testApkSha256": "1f7a5bbcb17b07282f10f88119fa66f666f7f770032909596d811bab758cd997",
+  "startedUtc": "2026-10-25T03:34:44.379451+00:00",
+  "completedUtc": "2026-10-25T03:35:57.696053+00:00",
+  "durationSeconds": 73.316602,
+  "pass": 13,
+  "notRun": 1,
+  "fail": 0,
+  "cases": [
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "twoHundredPercentListAndPrivacyTargetsStaySeparate",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeSwipeUpOpensTheListWithoutInvokingPrimary",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeLongPressOpensDestinationListWithoutCapturing",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "customAccessibilityActionOpensTheSameListWithoutSideEffects",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniActivityLaunchesAndBackCloses",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+      "test": "realMainActivityRendersWarmAndResumedScreenIntents",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.language.PolishLanguageDeviceTest",
+      "test": "polishSwitchAtLargeTextPreservesDraftAndPickerContext",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.GlobalTalkCapturePhysicalTest",
+      "test": "realGlobalTalkKeepsCaptureAcrossWorkspaceAndCancelsOnBackground",
+      "code": -4,
+      "status": "NOT_RUN"
+    }
+  ],
+  "scopeLimits": [
+    "InterfaceFour6: isolated callbacks/accessibility/native gestures, not a live speech journey",
+    "PrivateDispatch2: real HTTP/WebView owners with synthetic loopback TLS; not a real provider transaction",
+    "MiniHalo3: actual Activities and a boundary observer; no live microphone performance claim",
+    "MainActivity1: actual warm/resumed screen intents",
+    "Polish1: memory preferences and large-text context fixture; user locale unchanged",
+    "GlobalTalk1: opt-in absent, NOT_RUN"
+  ],
+  "voiceLimit": "Opt-in actual global capture case skipped; no positive live spoken/audio acceptance from this run"
+}

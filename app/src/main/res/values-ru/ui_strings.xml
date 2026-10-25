@@ -104,6 +104,8 @@
     <string name="ui_74a883a037bc" formatted="false">"Настройки"</string>
     <string name="ui_76900f1bfd16" formatted="false">"Назад"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Язык"</string>
+    <string name="ui_318655cea4bd" formatted="false">"Языки"</string>
+    <string name="ui_2b2805564b00" formatted="false">"Не удалось подготовить карточки. Ничего не сохранено."</string>
     <string name="ui_9bde11d23cde" formatted="false">"Этот язык используется в интерфейсе и ответах halo по умолчанию. Вы всегда можете попросить ответ на другом языке."</string>
     <string name="ui_d61757bbdd95" formatted="false">"Настройте halo под себя."</string>
     <string name="ui_993a034f3057" formatted="false">"Ваш помощник"</string>

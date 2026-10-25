@@ -887,7 +887,7 @@ private fun SourceCard(
                 val page = state.pdfPages[source.objectId] ?: (source.resolved as? ResolvedStudySource.Pdf)?.selectedPage ?: 1
                 TextButton(onClick={com.halo.app.di.ManualDependencyGraph.extractionReview.workspace(source.objectId,page,page)}) { Text(uiText("Read the words in this image/page")) }
             }
-            source.status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
+            source.status?.let { Text(if (it == "Ready") uiText("Ready") else it, style = MaterialTheme.typography.labelSmall) }
             source.excerpt?.let { excerpt ->
                 Spacer(Modifier.height(4.dp))
                 Text(excerpt, style = MaterialTheme.typography.bodySmall, maxLines = 4)

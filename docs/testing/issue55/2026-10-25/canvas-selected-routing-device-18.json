@@ -1,0 +1,64 @@
+{
+  "checkpoint": 18,
+  "status": "PASS_SCOPED_INTENT_ROUTING_GUARDED_WRITE_REJECTED_JOURNEY_INCOMPLETE",
+  "mainApkSha256": "904fc72c5fccdd5c6358e209610d77f4d9274576dc855a9690653b6dfd1ff71e",
+  "startedUtc": "2026-10-25T03:40:14.574177+00:00",
+  "sameOriginalPrompt": "Change only the selected text card on this Canvas to exactly: Silver kites rest at noon. They fly west at dusk.",
+  "sameFailedDraftRestoredAfterUpgradeAndColdRestart": true,
+  "expectedCanvasId": "50c93fa3-685f-4dfd-ac5f-872e491b93ee",
+  "expectedCardId": "479d0346-397f-4abc-a252-af1857bbced2",
+  "interactionId": "633bb792-5e2e-4954-a1cb-e06100295049",
+  "runId": "1f269193-bf60-472f-9b0e-457edeea1a87",
+  "actualRouting": {
+    "intent": "ToolActionIntent",
+    "confidence": 0.95,
+    "route": "AGENTIC",
+    "role": "AGENTIC",
+    "binding": "INHERIT_DEFAULT",
+    "toolMode": "REQUIRED",
+    "toolsIncluded": true,
+    "expandedSchemas": 11
+  },
+  "provider": {
+    "name": "openrouter",
+    "model": "nvidia/nemotron-3.5-lightning:free",
+    "fallbackUsed": false,
+    "requests": [
+      {
+        "id": "82b50ca0-b3bf-4ce4-8495-079d73b97f5f",
+        "finish": "tool_calls"
+      },
+      {
+        "id": "5e81407e-941e-48bb-b56d-f36a8dd6c6a3",
+        "finish": "tool_calls"
+      },
+      {
+        "id": "4041bca1-e9eb-4af1-be52-74e21db347de",
+        "finish": "stop"
+      }
+    ]
+  },
+  "nativeOutcomes": [
+    "discovery ACKNOWLEDGED",
+    "discovery ACKNOWLEDGED",
+    "halo_canvas_edit_text REJECTED RESOURCE_UNAVAILABLE"
+  ],
+  "currentOrGetCalled": false,
+  "confirmedMutations": 0,
+  "actualCardReadback": "Silver kites rest at noon.",
+  "finalTruth": "INTERRUPTED; completion not confirmed",
+  "scopedReader": "canvas-attempt-reader18b.json",
+  "observedFollowup": "Correct board/card IDs, revision mismatch against persisted2, no selection token. Edit discovery omitted available current/get prerequisites; metadata repair follows in checkpoint19.",
+  "crossToolJourneyCounted": false,
+  "limits": [
+    "Routing repair is physically verified; selected-card mutation is not PASS",
+    "Guard rejection prevented unconfirmed write; no automatic replay",
+    "Scoped reader is diagnostic only, not a feature acceptance test"
+  ],
+  "localEvidence": [
+    "canvas18-restored-exact-goal.xml",
+    "canvas-selected-edit18-app-logcat.txt",
+    "canvas18-repro-card-readback.xml"
+  ],
+  "issueDisposition": "KEEP_OPEN"
+}

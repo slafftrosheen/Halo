@@ -1,0 +1,32 @@
+{
+  "checkpoint": 18,
+  "initialExpandedAppGate": {
+    "tests": 686,
+    "failures": 2,
+    "errors": 0,
+    "preferenceReadbackFailures": 1,
+    "separateLocalStudyMinimumFailure": 1
+  },
+  "focusedOwnerGate": {
+    "tests": 4,
+    "failures": 2,
+    "errors": 0,
+    "duration": "5m43s",
+    "preferenceCases": 3,
+    "preferenceFailures": 2,
+    "localStudyCases": 1,
+    "localStudyFailures": 0
+  },
+  "observedOwnerDivergence": {
+    "injectedOwnerHigherContrast": true,
+    "differentContextHigherContrast": false,
+    "toolReadbackHigherContrast": false,
+    "writeTruth": "CONFIRMED",
+    "readTruth": "ACKNOWLEDGED"
+  },
+  "mechanism": "Adapter reopened its context namespace rather than reading the injected visual owner; deterministic real SharedPreferences namespace fixture reproduces this without reflection or singleton resets",
+  "limits": [
+    "Desktop owner/storage regression, not physical phone preference-loss proof",
+    "No user settings or processing/sharing policy changed by these fixtures"
+  ]
+}

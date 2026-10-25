@@ -1,0 +1,48 @@
+{
+  "boardTitle": "HALO-INK-20261025-BOARD-F",
+  "drawingBounds": [
+    110,
+    562,
+    970,
+    1570
+  ],
+  "strokeInput": "ADB touchscreen swipe, two lines",
+  "darkPixelsTwoStrokes": 3812,
+  "afterUndo": 1894,
+  "afterRedo": 3812,
+  "undoRedo": "PASS",
+  "savePressed": true,
+  "coldProcessReopen": "PASS",
+  "coldReopenDarkPixels": 3812,
+  "strokeEraser": "PASS_FINGER_INPUT",
+  "afterStrokeEraser": 1894,
+  "afterUndoEraser": 3812,
+  "finalSavedDrawingUnchanged": true,
+  "checkpoint": 17,
+  "sourceCommit": "2a3d868fee879df02feb4bb9fb3f677b91559bda",
+  "mainApkSha256": "2de471bcd38e5f2fb7e31251a97ad10075d3192bee6fda87ffa007be7ee30d8c",
+  "device": "Redmi23124RA7EO Android15/API35",
+  "status": "PASS_SCOPED_TOUCH_DRAW_ERASE_UNDO_REDO_SAVE_COLD_REOPEN",
+  "completedUtc": "2026-10-25T03:18:08.393258+00:00",
+  "coldReopenChangedPixelsInsideDrawingBounds": 0,
+  "savedCanvasCardCount": 1,
+  "cloudRequestsForThisCase": 0,
+  "sourceObjects": "Only newly created synthetic BoardF and its one sketch card",
+  "limits": [
+    "Touchscreen-injected finger paths, not a physical stylus",
+    "No pressure, stylus-button eraser, palm rejection, tablet or cross-device qualification",
+    "Scoped screenshot pixel equality supports exact displayed geometry; no vector format/performance/battery claim"
+  ],
+  "localEvidence": [
+    "ink17-empty-single-orb.xml",
+    "ink17-two-strokes.png",
+    "ink17-after-undo.png",
+    "ink17-after-redo.png",
+    "ink17-cold-saved-board.xml",
+    "ink17-cold-drawing-reopened.png",
+    "ink17-stroke-erased.png",
+    "ink17-erase-undone.png",
+    "ink17-final-board.xml"
+  ],
+  "issueDisposition": "KEEP_OPEN"
+}

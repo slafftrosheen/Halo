@@ -1,0 +1,12 @@
+# Study practice contract and host localization — #55
+
+Authority: root-approved next bounded batch after Canvas17 publication. Until that publication, change tests and this plan only. Do not edit production, locale data or generated resources; do not run builds or device actions from this subtask.
+
+Evidence: the TRAYS material handoff was selected and readable. Its first narrative returned EMPTY_RESPONSE; a separate practice request returned nonblank text which the strict practice parser rejected, saving no cards. The raw response, finish reason and token usage are unavailable, so neither the actual rejection reason nor an external-only root cause is established.
+
+1. Establish RED using the existing Study gateway fixture. Practice creation must request one to five source-bound question/answer objects without narrative HINT/no-answer or dialogue-turn instructions. Ordinary narrative HINT and compact explanation retain their reveal restrictions. Preserve strict parser rejection of zero cards, malformed objects, unknown/unreadable sources and ungrounded batches.
+2. After authorization, factor only the practice output instructions in AiRouterTutorGateway. Keep the existing source-policy checks, exact source versions, remote authorization, token limits, tool-free transport and parser/persistence owners. Do not loosen parsing, invent cards, retry a paid request or call source contracts proof of a real provider result.
+3. Fix the three observed host-language gaps through the existing language catalogue/rendering owner: missing Languages key, missing exact invalid-draft notice key, and Ready status bypassing uiText in the source card. Preserve literal source/model content and identifiers. Root owns ui.tsv and generated resources; unknown provider/source text must remain literal rather than being guessed into a status.
+4. Verify gateway/parser fixtures and RU/LV/PL catalogue/render regressions, then the normal integrated gate. Only root builds, installs, publishes and repeats an explicitly permitted real Study workflow. Keep previous EMPTY_RESPONSE, invalid practice output, source attachment success and any provider constraints separate in the acceptance ledger.
+
+This batch does not qualify cloud completion, card quality, spoken commands or hardware. The prompt inconsistencies are Android-owned contract defects; which one caused the observed provider response remains unverified.

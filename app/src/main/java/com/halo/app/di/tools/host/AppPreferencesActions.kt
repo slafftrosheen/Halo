@@ -33,10 +33,7 @@ internal class AppPreferencesActions(
         val value = preferences.get()
         palettes?.awaitReady()
         val palette = palettes?.state?.value
-        val options = visual?.let {
-            val disk = context.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE)
-            HaloVisualOptions(disk.getBoolean("contrast", false), disk.getBoolean("motion", false), disk.getBoolean("guide", true))
-        }
+        val options = visual?.persistedSnapshot()
         return "mode=${appearance.mode.value.name.lowercase()}; fontScale=${value.fontScale}; startScreen=${value.startScreen}; " +
             "lightAccent=${palette?.light?.accent}; lightTone=${palette?.light?.tone}; darkAccent=${palette?.dark?.accent}; darkTone=${palette?.dark?.tone}; " +
             "higherContrast=${options?.higherContrast}; lessMotion=${options?.lessMotion}; guideLight=${options?.guideLight}; language=${languages?.language?.value?.tag}; scope=Halo_only"

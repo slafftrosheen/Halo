@@ -53,6 +53,54 @@ class StudySourcesTest {
         assertTrue(prompt.contains("Use only supplied material"))
     }
 
+    @Test fun practiceCardPromptRequiresBoundAnswersWithoutNarrativeHintRestriction() {
+        val gateway = AiRouterTutorGateway(router(Provider()), { false })
+        val prompt = gateway.buildPrompt(turn().copy(createCards = true))
+        assertFalse("Card answers cannot also be forbidden by the narrative stage", prompt.contains("Give one hint only"))
+        assertFalse("Practice creation is not a dialogue turn", prompt.contains("Do not reveal the answer"))
+        assertFalse("A structured card request must not ask for a learner attempt", prompt.contains("Hint first, then invite an attempt."))
+        assertTrue(prompt.contains("\"question\"")); assertTrue(prompt.contains("\"answer\""))
+        assertTrue(prompt.contains("\"source\":\"S1\""))
+        assertTrue(prompt.contains("Use only supplied material"))
+        assertTrue(prompt.contains("First passage")); assertTrue(prompt.contains("Second passage"))
+    }
+    @Test fun practicePromptMinimumMatchesStrictParserNonemptyBatchContract() {
+        val prompt = AiRouterTutorGateway(router(Provider()), { false }).buildPrompt(turn().copy(createCards = true))
+        assertTrue("Prompt must explicitly require at least one card", Regex("(?i)(?:1\\s*(?:to|[-–])\\s*5|one to five|at least one)\\s*(?:source[- ]bound\\s*)?cards?").containsMatchIn(prompt))
+        assertNull(StudyCardDraftParser.parse("""{"cards":[]}""", sources))
+    }
+    /** Captures the shared request contract only; this fixture qualifies no local model/artifact. */
+    @Test fun localPracticeRequestKeepsNonemptyCardCountAndSourceBoundAnswerContract() = runBlocking {
+        val provider = Provider(isLocal = true)
+        val gateway = AiRouterTutorGateway(router(provider), { false })
+        assertTrue(gateway.respond(turn().copy(createCards = true)) is TutorTurnResponse.Ready)
+        val request = provider.requests.single()
+        val prompt = requireNotNull(request.text)
+        assertTrue("The actual local-format request must require at least one card",
+            Regex("(?i)(?:1\\s*(?:to|[-–])\\s*5|one to five|at least one)\\s*(?:source[- ]bound\\s*)?cards?").containsMatchIn(prompt))
+        assertTrue(prompt.contains("S1 | Q:")); assertTrue(prompt.contains("| A:"))
+        assertTrue(prompt.contains("First passage")); assertTrue(prompt.contains("Second passage"))
+        assertFalse(prompt.contains("Give one hint only")); assertFalse(prompt.contains("Do not reveal the answer"))
+        assertEquals(1800, request.maxOutputTokens)
+        assertEquals(ToolUseMode.NONE, request.toolUseMode)
+    }
+    @Test fun ordinaryHintPromptStillForbidsAnswerRevealAndDoesNotRequestCards() {
+        val prompt = AiRouterTutorGateway(router(Provider()), { false }).buildPrompt(turn())
+        assertTrue(prompt.contains("Give one hint only. Do not reveal the answer or the full method."))
+        assertFalse(prompt.contains("\"cards\""))
+        assertTrue(prompt.contains("[S1]")); assertTrue(prompt.contains("Use only supplied material"))
+    }
+    @Test fun practiceParserStillRejectsEmptyInvalidAndUnboundResponsesAsWholeBatch() {
+        listOf("""{"cards":[]}""",
+            """{"cards":[{"question":"Question","answer":"Answer","source":"S4"}]}""",
+            """{"cards":[{"question":"","answer":"Answer","source":"S1"}]}""",
+            """{"cards":[{"question":"Question","answer":"Answer","source":"[S1]"}]}""",
+            """{"cards":[{"question":"Good","answer":"Answer","source":"S1"},{"question":"Unbound","answer":"Answer","source":"S3"}]}"""
+        ).forEach { assertNull(StudyCardDraftParser.parse(it, sources)) }
+        assertNull(StudyCardDraftParser.parse("""{"cards":[{"question":"Question","answer":"Answer","source":"S1"}]}""",
+            sources.map { it.copy(coverage = SourceCoverage.MISSING) }))
+    }
+
     @Test fun laterPassageWinsLexicalSelection() {
         val passages = (1..20).map { StudyPassage(if (it == 18) "chlorophyll exercise" else "unrelated paragraph", StudySourceLocator.NoteBlocks(it, it)) }
         val selected = StudyPassageSelector.select(passages, "chlorophyll")

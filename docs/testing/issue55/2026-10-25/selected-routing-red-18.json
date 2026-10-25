@@ -1,0 +1,19 @@
+{
+  "checkpoint": 18,
+  "tests": 8,
+  "failures": 4,
+  "errors": 0,
+  "passingNegativeGuards": 4,
+  "duration": "13s",
+  "suites": [
+    "SelectedCanvasWriteRoutingTest",
+    "SelectedCanvasWriteSpeechRuleTest"
+  ],
+  "fullGreenLanguage": 55,
+  "fullGreenInterpretation": 30,
+  "fullGreenFailures": 0,
+  "limits": [
+    "Typed and final-speech fixture channels; no real microphone acceptance",
+    "No selected IDs, native argument slots or execution authority are inferred by grammar"
+  ]
+}

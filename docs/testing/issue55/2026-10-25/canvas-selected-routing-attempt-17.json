@@ -1,0 +1,50 @@
+{
+  "checkpoint": 17,
+  "status": "FAIL_ANDROID_INTENT_ROUTING_WITH_SAFE_NO_EFFECT",
+  "mainApkSha256": "2de471bcd38e5f2fb7e31251a97ad10075d3192bee6fda87ffa007be7ee30d8c",
+  "sourceCommit": "2a3d868fee879df02feb4bb9fb3f677b91559bda",
+  "startedUtc": "2026-10-25T02:56:52.736889+00:00",
+  "prompt": "Change only the selected text card on this Canvas to exactly: Silver kites rest at noon. They fly west at dusk.",
+  "expectedCanvasId": "50c93fa3-685f-4dfd-ac5f-872e491b93ee",
+  "expectedCardId": "479d0346-397f-4abc-a252-af1857bbced2",
+  "interactionId": "707a8e20-83b6-45a7-9699-e185ce26f3e5",
+  "runId": "1d270a9c-edc1-4378-8868-f6f62eaf96c6",
+  "providerRequestId": "32076067-c036-430a-b38b-9e51976c347f",
+  "actualRouting": {
+    "intent": "ConversationIntent",
+    "confidence": 0.5,
+    "route": "DIRECT_RESPONSE",
+    "role": "CHAT",
+    "toolMode": "NONE",
+    "exposedToolCount": 0,
+    "toolsIncluded": false
+  },
+  "providerOutcome": {
+    "provider": "openrouter",
+    "model": "nvidia/nemotron-3.5-lightning:free",
+    "attempt": 1,
+    "error": "EMPTY_RESPONSE",
+    "finishReason": "length",
+    "budget": 256,
+    "partialOutput": false
+  },
+  "effects": {
+    "toolCallsLogged": 0,
+    "nativeMutationReceiptsLogged": 0,
+    "actualCardReadback": "Silver kites rest at noon.",
+    "desiredEditObserved": false,
+    "submittedDraftRestored": true,
+    "uncertainWriteReplayed": false
+  },
+  "deterministicSourceMiss": "Anchored workspace-write grammar omits change and only; four combined modifiers exceed current bound. Separate RED coverage prepared.",
+  "limits": [
+    "Native selection and single-Orb checks remain PASS; actual selected-card AI journey is INCOMPLETE",
+    "Provider empty/length is distinct from the Android routing failure; no provider-quality PASS claimed"
+  ],
+  "localEvidence": [
+    "canvas-selected-edit17-app-logcat.txt",
+    "canvas17-selected-edit-result.xml",
+    "canvas17-after-error-card-readback.xml"
+  ],
+  "issueDisposition": "KEEP_OPEN"
+}

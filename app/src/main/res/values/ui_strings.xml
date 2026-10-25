@@ -104,6 +104,8 @@
     <string name="ui_74a883a037bc" formatted="false">"Settings"</string>
     <string name="ui_76900f1bfd16" formatted="false">"Back"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Language"</string>
+    <string name="ui_318655cea4bd" formatted="false">"Languages"</string>
+    <string name="ui_2b2805564b00" formatted="false">"Invalid practice draft; no cards were saved"</string>
     <string name="ui_9bde11d23cde" formatted="false">"Use this language for halo's interface and default replies. You can request another language at any time."</string>
     <string name="ui_d61757bbdd95" formatted="false">"Make halo feel like yours."</string>
     <string name="ui_993a034f3057" formatted="false">"Your companion"</string>

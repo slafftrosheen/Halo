@@ -1,0 +1,22 @@
+{
+  "checkpoint": 18,
+  "status": "PASS_SCOPED_RUSSIAN_STUDY_SOURCE_PRESENTATION",
+  "mainApkSha256": "904fc72c5fccdd5c6358e209610d77f4d9274576dc855a9690653b6dfd1ff71e",
+  "sessionGoal": "Use the attached greenhouse file to calculate the seedlings left inside.",
+  "file": "HALO-SOURCE-20261025-TRAYS.txt",
+  "exactExtractedTextPreserved": true,
+  "exactSourceFilenamePreserved": true,
+  "languagesTab": "Языки",
+  "readyStatus": "Готов",
+  "englishUiFallbackLabelsAbsent": true,
+  "tutorGenerationRequestedByThisCheck": false,
+  "limits": [
+    "RU actual phone labels; LV/PL Study label cases are desktop render fixtures",
+    "Invalid-draft notice translation is desktop catalogue/render proof here",
+    "No Study explanation/practice generation or full journey PASS follows"
+  ],
+  "localEvidence": [
+    "study18-localized-source-expanded.xml",
+    "study18-localized-source-expanded.png"
+  ]
+}

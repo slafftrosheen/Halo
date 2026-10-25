@@ -1,0 +1,33 @@
+{
+  "checkpoint": "18b_SCOPED_READER_NOT_FEATURE_ACCEPTANCE",
+  "startedUtc": "2026-10-25T03:49:55.409643+00:00",
+  "completedUtc": "2026-10-25T03:50:01.940204+00:00",
+  "mainApkSha256": "904fc72c5fccdd5c6358e209610d77f4d9274576dc855a9690653b6dfd1ff71e",
+  "testApkSha256": "9836acecfb7f80299e29084f30c17d3646f2173e10f83ddc2e65ed04d8589c0b",
+  "diagnostic": {
+    "diagnosticReaderPass": true,
+    "featureAcceptance": false,
+    "canvasIdMatchesExpected": true,
+    "nodeIdMatchesExpected": true,
+    "versionMatchesActual": false,
+    "selectionTokenPresent": false,
+    "actualRevision": 2,
+    "typeLocalText": true,
+    "liveSelectionAvailable": false,
+    "isLiveSelected": null,
+    "rejectionKind": "RESOURCE_UNAVAILABLE"
+  },
+  "readerSourceArchive": "docs/testing/issue55/2026-10-25/diagnostic-src/CanvasAttemptEvidencePhysicalTest.kt.txt",
+  "originalSourceSha256": "8991e237d2ff8778b20ec54e58e33ff3cdc42843aa9bcd0578978b6ce089de8e",
+  "archiveSourceSha256": "8991e237d2ff8778b20ec54e58e33ff3cdc42843aa9bcd0578978b6ce089de8e",
+  "limits": [
+    "Diagnostic reader only, not Canvas feature acceptance",
+    "Fixed synthetic run/card IDs, no search over other runs or user data",
+    "No original args, body or provider history emitted",
+    "Current live selection unavailable because reader runs without editor; not evidence about selection at original attempt",
+    "Comparison is against current persisted revision2; card/readback remained unchanged",
+    "Source archived outside compiled suite; original qualifying instrumentation restored separately"
+  ],
+  "qualifyingTestRestoredSha256": "1f7a5bbcb17b07282f10f88119fa66f666f7f770032909596d811bab758cd997",
+  "restoredUtc": "2026-10-25T03:51:36.782927+00:00"
+}

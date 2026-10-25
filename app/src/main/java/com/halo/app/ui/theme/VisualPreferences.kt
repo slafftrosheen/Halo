@@ -24,6 +24,13 @@ class VisualPreferences private constructor(context: Context) {
     private val loaded = scope.async {
         mutable.value = HaloVisualOptions(disk.getBoolean("contrast", false), disk.getBoolean("motion", false), disk.getBoolean("guide", true))
     }
+    /** Read the same persisted namespace as update, after restore and any owned write. */
+    suspend fun persistedSnapshot(): HaloVisualOptions = withContext(Dispatchers.IO) {
+        loaded.await()
+        mutex.withLock {
+            HaloVisualOptions(disk.getBoolean("contrast", false), disk.getBoolean("motion", false), disk.getBoolean("guide", true))
+        }
+    }
     suspend fun update(transform: (HaloVisualOptions) -> HaloVisualOptions) = withContext(Dispatchers.IO) {
         loaded.await()
         mutex.withLock {

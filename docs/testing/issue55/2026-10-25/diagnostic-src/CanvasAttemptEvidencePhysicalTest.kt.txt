@@ -1,0 +1,66 @@
+package com.halo.app.ui.workspace
+
+import android.os.Bundle
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.runtime.cognition.agent.AgentRunId
+import com.halo.runtime.cognition.agent.AgentStep
+import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+
+/** Exact-attempt diagnostic reader only. Test success is never feature acceptance or replay. */
+@RunWith(AndroidJUnit4::class)
+class CanvasAttemptEvidencePhysicalTest {
+    @Test fun inspectOnlyRecordedSelectedCardAttemptWithoutReplayingIt() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        Graph.init(context)
+        val run = Graph.agentRunStore.get(AgentRunId(RUN))
+        assertNotNull("The exact recorded run must exist; no fallback run search is allowed", run)
+        requireNotNull(run)
+        assertTrue("The exact run must belong to the expected interaction", run.interactionId.value == INTERACTION)
+        val prepared = run.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            .singleOrNull { it.toolCallId == CALL && it.toolId == "halo_canvas_edit_text" }
+        assertNotNull("The exact prepared edit event must exist", prepared)
+        val args = runCatching { JSONObject(requireNotNull(prepared).argumentsJson) }.getOrNull()
+        assertNotNull("The recorded arguments must be a valid object", args)
+        requireNotNull(args)
+        val rejection = run.steps.filterIsInstance<AgentStep.ToolRejected>()
+            .singleOrNull { it.toolCallId == CALL && it.toolId == "halo_canvas_edit_text" }
+        assertNotNull("The exact recorded rejection must exist", rejection)
+        val dao = Graph.appDatabase.notebookCanvasDao()
+        val document = dao.getDocument(CANVAS)
+        val node = dao.getNode(CANVAS, CARD)
+        assertNotNull("The expected campaign Canvas must exist", document)
+        assertNotNull("The expected campaign card must exist", node)
+        val current = runCatching { Graph.currentCanvasContext.current() }.getOrNull()
+        val report = JSONObject()
+            .put("diagnosticReaderPass", true)
+            .put("featureAcceptance", false)
+            .put("canvasIdMatchesExpected", args.opt("canvasId") == CANVAS)
+            .put("nodeIdMatchesExpected", args.opt("nodeId") == CARD)
+            .put("versionMatchesActual", args.opt("version") == "canvas:${requireNotNull(document).revision}")
+            .put("selectionTokenPresent", args.has("selectionToken") && !args.isNull("selectionToken"))
+            .put("actualRevision", document.revision)
+            .put("typeLocalText", requireNotNull(node).type == "TEXT" && node.refObjectId == null)
+            .put("liveSelectionAvailable", current != null)
+            .put("isLiveSelected", current?.let { it.canvasId == CANVAS && CARD in it.selectedNodeIds } ?: JSONObject.NULL)
+            .put("rejectionKind", requireNotNull(rejection).reasonCode.name)
+        // No arguments, card text, provider history, credentials or private IDs leave this reader.
+        File(context.filesDir, "canvas-attempt-evidence18.json").writeText(report.toString(2))
+        instrumentation.sendStatus(0, Bundle().apply { putString("canvasAttemptEvidence", report.toString()) })
+    }
+
+    private companion object {
+        const val RUN = "1f269193-bf60-472f-9b0e-457edeea1a87"
+        const val INTERACTION = "633bb792-5e2e-4954-a1cb-e06100295049"
+        const val CALL = "call-e76a0a5a-fa99-43a8-8abe-979b9eceb43c"
+        const val CANVAS = "50c93fa3-685f-4dfd-ac5f-872e491b93ee"
+        const val CARD = "479d0346-397f-4abc-a252-af1857bbced2"
+    }
+}

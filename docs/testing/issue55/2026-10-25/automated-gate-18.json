@@ -1,0 +1,79 @@
+{
+  "checkpoint": 18,
+  "build": "SUCCESSFUL",
+  "duration": "9m21s",
+  "completedUtc": "2026-10-25T03:33:39.869066+00:00",
+  "sourceBase": "2a3d868fee879df02feb4bb9fb3f677b91559bda",
+  "suites": {
+    "app": {
+      "tests": 687,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "language": {
+      "tests": 55,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "interpretation": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "apks": {
+    "main": {
+      "file": "app-debug.apk",
+      "sha256": "904fc72c5fccdd5c6358e209610d77f4d9274576dc855a9690653b6dfd1ff71e"
+    },
+    "test": {
+      "file": "app-debug-androidTest.apk",
+      "sha256": "1f7a5bbcb17b07282f10f88119fa66f666f7f770032909596d811bab758cd997"
+    }
+  },
+  "scope": "Study request/locale contracts; selected Canvas action-intent fallback; canonical visual preference readback. Runtime transport, permission, privacy and confirmation owners unchanged.",
+  "moduleExecution": {
+    "app": "EXECUTED_FINAL_687",
+    "language": "UNCHANGED_55_PASS_FROM_FIRST_18_GATE; final task UP-TO-DATE",
+    "interpretation": "UNCHANGED_30_PASS_FROM_FIRST_18_GATE; final task UP-TO-DATE"
+  },
+  "initialExpandedGate": {
+    "appTests": 686,
+    "appFailures": 2,
+    "duration": "9m1s",
+    "outcome": "NOT_INSTALLED"
+  },
+  "focusedFollowup": {
+    "tests": 4,
+    "failures": 2,
+    "duration": "5m43s",
+    "localStudyMinimum": "PASS",
+    "preferenceOwner": "RED_PROVEN",
+    "outcome": "NOT_INSTALLED"
+  },
+  "installedReadbackMatches": true,
+  "replacementInstallCounts": {
+    "main": 1,
+    "test": 3
+  },
+  "productionDiffFromSourceBaseSha256": "bc06eec6a05dac85a571d127e618a4de2856a7dd19634127f564c696b3ad3e27",
+  "productionPaths": [
+    "app/src/main/java/com/halo/app/di/tools/host/AppPreferencesActions.kt",
+    "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+    "app/src/main/java/com/halo/app/study/StudyTutorGateway.kt",
+    "app/src/main/java/com/halo/app/ui/screens/study/StudyScreen.kt",
+    "app/src/main/java/com/halo/app/ui/theme/VisualPreferences.kt",
+    "app/src/main/localization/ui.tsv",
+    "app/src/main/res/values-lv/ui_strings.xml",
+    "app/src/main/res/values-pl/ui_strings.xml",
+    "app/src/main/res/values-ru/ui_strings.xml",
+    "app/src/main/res/values/ui_strings.xml",
+    "libraries/halo-cognition-language/src/main/java/com/halo/cognition/language/ConversationSemantics.kt"
+  ],
+  "buildSource": "Validated working patch on sourceBase; compiled Git metadata names sourceBase. Later commits preserve these exact production changes.",
+  "testDiagnosticLifecycle": "Original1f7 qualifying test installed; temporary9836 scoped reader; exact1f7 qualifying test restored/hash matched. Reader source archived outside compiled suite.",
+  "diagnosticRecord": "canvas-attempt-reader18b.json"
+}

@@ -104,6 +104,8 @@
     <string name="ui_74a883a037bc" formatted="false">"Iestatījumi"</string>
     <string name="ui_76900f1bfd16" formatted="false">"Atpakaļ"</string>
     <string name="ui_a4fe65264ef7" formatted="false">"Valoda"</string>
+    <string name="ui_318655cea4bd" formatted="false">"Valodas"</string>
+    <string name="ui_2b2805564b00" formatted="false">"Neizdevās sagatavot kartītes. Nekas netika saglabāts."</string>
     <string name="ui_9bde11d23cde" formatted="false">"Šī valoda tiek izmantota halo saskarnei un noklusējuma atbildēm. Jebkurā laikā vari lūgt atbildi citā valodā."</string>
     <string name="ui_d61757bbdd95" formatted="false">"Pielāgo halo sev."</string>
     <string name="ui_993a034f3057" formatted="false">"Tavs palīgs"</string>

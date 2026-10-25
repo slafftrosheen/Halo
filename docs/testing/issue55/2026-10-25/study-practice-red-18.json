@@ -1,0 +1,32 @@
+{
+  "checkpoint": 18,
+  "firstFocusedRun": {
+    "tests": 10,
+    "failures": 8,
+    "errors": 0,
+    "skipped": 0,
+    "duration": "2m36s",
+    "failureKinds": {
+      "conflictingNarrativeCardInstructions": 1,
+      "missingNonemptyMinimum": 1,
+      "catalogueOrActualReadyRenderingRU_LV_PL": 6
+    },
+    "passingGuards": 2
+  },
+  "sharedLocalRewriteReviewFollowup": {
+    "firstExpandedAppGateTests": 686,
+    "appFailures": 2,
+    "localCapturedRequestMinimumFailure": 1,
+    "independentPreferenceReadbackFailure": 1,
+    "duration": "9m1s"
+  },
+  "localRewriteAfterRepair": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "actualCapturedRequestChecked": true
+  },
+  "limits": [
+    "Source-request contract and actual rendered locale checks; no provider-response cause or local-model artifact qualification claimed"
+  ]
+}

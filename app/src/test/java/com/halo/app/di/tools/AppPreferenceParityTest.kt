@@ -1,6 +1,7 @@
 package com.halo.app.di.tools
 
 import android.content.Context
+import android.content.ContextWrapper
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.di.tools.host.AssistantTools
 import com.halo.app.language.*
@@ -24,8 +25,9 @@ class AppPreferenceParityTest {
         val languageStorage = MemoryStorage()
         val palettes = PalettePreferences(context)
         val languages = AppLanguagePreferences(languageStorage)
+        val visual = VisualPreferences.get(context)
         val tools = AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), { _, _ -> }, {}, { true },
-            palettes = palettes, visual = VisualPreferences.get(context), languages = languages,
+            palettes = palettes, visual = visual, languages = languages,
             languageReadback = { languageStorage.getString(AppLanguagePreferences.KEY) })
         val changed = tools.execute(ToolCall("appearance", "halo_set_preferences", mapOf(
             "fontScale" to 2.0, "paletteTheme" to "dark", "accent" to "LILAC", "tone" to "COOL",
@@ -38,8 +40,33 @@ class AppPreferenceParityTest {
         val restored = PalettePreferences(context); restored.awaitReady()
         assertEquals(palettes.state.value.dark, restored.state.value.dark)
         val read = tools.execute(ToolCall("read", "halo_get_preferences", emptyMap())) as ToolExecutionResult.Success
-        assertTrue(read.output.contains("higherContrast=true"))
+        assertTrue("Readback=${read.output}; injectedOwner=${visual.state.value}; currentContextContrast=" +
+            context.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE).getBoolean("contrast", false),
+            read.output.contains("higherContrast=true"))
         assertTrue(read.output.contains("language=lv"))
+    }
+
+    @Test fun injectedVisualOwnerReadbackUsesTheSameNamespaceAsItsConfirmedWrite() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val visual = VisualPreferences.get(context)
+        // A real, independent preference namespace reproduces a recreated host context's
+        // storage view without depending on test order or resetting the singleton owner.
+        val otherContext = object : ContextWrapper(context) {
+            override fun getSharedPreferences(name: String, mode: Int) =
+                context.getSharedPreferences(if (name == "halo_visual_options") "$name.readback-fixture" else name, mode)
+        }
+        val otherDisk = otherContext.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE)
+        check(otherDisk.edit().clear().commit())
+        val tools = AssistantTools(otherContext, AppearancePreferences(context), AssistantPreferences(context),
+            { _, _ -> }, {}, { true }, visual = visual)
+        val changed = tools.execute(ToolCall("owner-write", "halo_set_preferences", mapOf("higherContrast" to true)))
+        assertEquals(ActionTruth.CONFIRMED, (changed as ToolExecutionResult.Success).actionTruth)
+        assertTrue("The injected canonical owner completed the write", visual.state.value.higherContrast)
+        assertFalse("The independent context must remain a distinct namespace", otherDisk.getBoolean("contrast", false))
+        val read = tools.execute(ToolCall("owner-read", "halo_get_preferences", emptyMap())) as ToolExecutionResult.Success
+        assertTrue("Confirmed write and subsequent read must use the injected owner; readback=${read.output}; " +
+            "injectedOwner=${visual.state.value}; otherContextContrast=${otherDisk.getBoolean("contrast", false)}",
+            read.output.contains("higherContrast=true"))
     }
 
     @Test fun malformedOrUnavailableOptionsNeverPartiallyApply() = runBlocking {

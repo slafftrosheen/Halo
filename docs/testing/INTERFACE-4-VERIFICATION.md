@@ -117,3 +117,11 @@ Public logs retain comprehensive checkpoint9 and final recovery12. Older raw log
 These results do not establish current positive spoken capture, live navigation capture continuity, audible output, all tool workflows or full #62 acceptance. #62 remains KEEP_OPEN. The earlier checkpoint tables remain historical evidence for their recorded binaries.
 
 Checkpoint 16 additionally removes repeated catalogue reconstruction with fresh per-operation snapshots while preserving live execution checks. The dated Android ledger records 362 runtime/594 affected app passes, 13 native passes/1 quiet-capture NOT_RUN, actual phone timing samples, and unqualified experimental input diagnostics. This does not complete #62 acceptance.
+
+## Checkpoints17–18 continuation
+
+Checkpoint17 fixed actual Canvas body-selection focus and removed its local assistant launchers under the shell Orb. Eight new regressions and569 affected cases passed; phone body selection/single-Orb and13 native boundaries passed, with one opt-in capture case NOT_RUN. Its published implementation is2a3d868fee879df02feb4bb9fb3f677b91559bda.
+
+Checkpoint18 repaired bounded selected-card action phrasing, contradictory Study practice requests/localized labels, and canonical visual preference readback. Final app687PASS, language55PASS and interpretation30PASS (the latter two unchanged/UP-TO-DATE in final gate); native13PASS/1opt-inNOT_RUN. Installed/readback main904fc72c5fccdd5c6358e209610d77f4d9274576dc855a9690653b6dfd1ff71e; qualifying test1f7a5bbcb17b07282f10f88119fa66f666f7f770032909596d811bab758cd997 restored after a scoped diagnostic.
+
+The exact phone phrase now routes to AGENTIC tools, but its edit was rejected against an unrefreshed revision. No write occurred; discovery prerequisite exposure remains a follow-up. RU Study presentation passed separately; live voice, complete cross-tool journeys and full interface acceptance are not promoted. See the [continued matrix](ISSUE-55-ANDROID-ACCEPTANCE-2026-10-25.md) and its exact APK/RED/native/device boundaries.
