@@ -225,11 +225,11 @@ fun HomeScreen(
             else -> if (viewModel.consumeVoiceModeStartRequest()) viewModel.startVoiceMode()
         }
     }
-    var drafts by rememberSaveable { mutableStateOf(hashMapOf<String, String>()) }
+    val drafts by viewModel.composerDrafts.collectAsStateWithLifecycle()
     val draftKey = uiState.conversationId.orEmpty()
-    val textInput = drafts[draftKey].orEmpty()
+    val textInput = drafts[draftKey]?.text.orEmpty()
     var pendingHistoryDraft by remember(draftKey) { mutableStateOf<String?>(null) }
-    fun updateDraft(value: String) { drafts = HashMap(drafts).apply { put(draftKey, value) } }
+    fun updateDraft(value: String) { viewModel.updateComposerDraft(draftKey, value) }
     fun prepareEarlierQuestion(value: String) {
         if (textInput.isBlank() || textInput == value) updateDraft(value) else pendingHistoryDraft = value
     }
@@ -250,20 +250,9 @@ fun HomeScreen(
         confirmButton={TextButton({updateDraft(previousQuestion);pendingHistoryDraft=null}) {Text(uiText("Use earlier question"))}},
         dismissButton={TextButton({pendingHistoryDraft=null}) {Text(uiText("Keep my draft"))}}) }
     LaunchedEffect(draftKey) {
-        if (draftKey.isNotBlank() && drafts[draftKey].isNullOrBlank() && !drafts[""].isNullOrBlank()) {
-            drafts = HashMap(drafts).apply { put(draftKey, remove("").orEmpty()) }
-        }
+        viewModel.loadComposerDraft(draftKey)
     }
     val submission by viewModel.textSubmission.collectAsStateWithLifecycle()
-    var clearedSubmission by rememberSaveable { mutableStateOf<String?>(null) }
-    LaunchedEffect(submission) {
-        val key = submission.conversationId ?: return@LaunchedEffect
-        if (submission.accepted && clearedSubmission != submission.interactionId) {
-            if (drafts[key]?.trim() == submission.draft) drafts = HashMap(drafts).apply { put(key, "") }
-            clearedSubmission = submission.interactionId
-        }
-        if (submission.needsRecovery && drafts[key].isNullOrBlank()) drafts = HashMap(drafts).apply { put(key, submission.draft) }
-    }
     LaunchedEffect(captureDraft) { captureDraft?.let {
         if (textInput.isNotBlank() && textInput != it) pendingHistoryDraft = it else updateDraft(it)
         viewModel.captureQuestionDraft.value = null
@@ -321,7 +310,7 @@ fun HomeScreen(
     fun submitText() {
         val text = textInput.trim()
         if (text.isBlank() || submission.busy || isActiveSession || isListening || isSpeechProcessing || isSpeaking) return
-        viewModel.submitText(text)
+        viewModel.submitComposerText(draftKey, drafts[draftKey]?.revision, textInput)
     }
 
     val currentMode by viewModel.selectedMode.collectAsStateWithLifecycle()
@@ -751,6 +740,7 @@ fun HomeScreen(
                     )
                 }
             }
+            ComposerDraftNotice(viewModel, draftKey)
             HaloComposer(
                 focusAllowed = true,
                 focusRequester = composerFocusRequester,

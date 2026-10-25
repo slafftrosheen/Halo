@@ -4095,4 +4095,18 @@
     <string name="ui_1c22f72c9a3f" formatted="false">"Nie udało się pewnie rozpoznać mowy. Spróbuj ponownie lub wpisz wiadomość."</string>
     <string name="ui_e14ce000605d" formatted="false">"Rozpoznano tylko znaki interpunkcyjne. Spróbuj ponownie."</string>
     <string name="ui_7d3e40035aff" formatted="false">"Rozpoznany język różni się od wybranego. Sprawdź język rozpoznawania mowy."</string>
+    <string name="ui_381e89e18dde" formatted="false">"Nie udało się zapisać wersji roboczej. Zachowaj ten tekst i spróbuj ponownie."</string>
+    <string name="ui_be4b2632aa2a" formatted="false">"Ta wersja robocza jest zbyt duża, aby ją zapisać. Skróć ją lub skopiuj w bezpieczne miejsce."</string>
+    <string name="ui_f2b4c9937d0e" formatted="false">"Pamięć wersji roboczych jest pełna. Usuń starszą wersję roboczą i spróbuj ponownie."</string>
+    <string name="ui_cd0c4dcbbe34" formatted="false">"Nie udało się odczytać zapisanych wersji roboczych. Nowy tekst ich nie zastąpił."</string>
+    <string name="ui_b04cf46c3abb" formatted="false">"Spróbuj zapisać ponownie"</string>
+    <string name="ui_5350a63171a0" formatted="false">"Spróbuj wczytać ponownie"</string>
+    <string name="ui_c7eb6b51d187" formatted="false">"Zastąp nieczytelne wersje robocze"</string>
+    <string name="ui_1a68034b9f79" formatted="false">"Zastąpić nieczytelne zapisane wersje robocze?"</string>
+    <string name="ui_f7a348219523" formatted="false">"Nieczytelne zapisane wersje robocze zostaną zastąpione tą wersją. Tekst innych zapisanych wersji roboczych może zostać utracony."</string>
+    <string name="ui_0245548d9a2e" formatted="false">"Zastąp wersje robocze"</string>
+    <string name="ui_f4d497437a73" formatted="false">"Dostępna jest wersja robocza wpisana podczas uruchamiania."</string>
+    <string name="ui_d72a190f8942" formatted="false">"Przywróć wersję roboczą z uruchamiania"</string>
+    <string name="ui_57489fabd9f9" formatted="false">"Nie udało się usunąć wersji roboczej usuniętej rozmowy. Spróbuj ponownie."</string>
+    <string name="ui_63e3a46ac3af" formatted="false">"Spróbuj ponownie wyczyścić usunięte wersje robocze"</string>
 </resources>

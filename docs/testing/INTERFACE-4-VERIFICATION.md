@@ -109,3 +109,9 @@ adb -s f01fe673 shell am instrument -w -r -e class "com.halo.app.ui.presence.Int
 [Final native cases and APK readback](interface4/checkpoint-12-native-summary.json): 12 PASS, zero failures, one opt-in NOT_RUN. The opt-in quiet capture skip is not silently converted by the separate negative acoustic attempt into live capture continuity or successful speech PASS. Source/typed contracts passed; real positive typed/spoken cross-tool acceptance still belongs to the explicitly unverified matrix. #62 remains open for those acceptance gaps while validated implementation is published and independent #55 work continues.
 
 Public logs retain comprehensive checkpoint9 and final recovery12. Older raw logs remain under ignored local evidence; compact per-suite JSON summaries retain their outcomes. Public log copies normalize trailing whitespace; original local logs remain unchanged.
+
+## Android continuation — 2026-10-25, checkpoint 15
+
+[The dated Android acceptance ledger](ISSUE-55-ANDROID-ACCEPTANCE-2026-10-25.md) records subsequent shared encrypted Home/Orb draft recovery, bounded singular-one action routing and canonical independent note-title support. The previously preserved draft stub/test were deliberately completed in that follow-up, original three tests retained; checkpoint 15 uses no unfinished-test exclusion. Its 594 affected app tests pass, with 13 native passes and 1 explicit quiet-capture NOT_RUN, plus real unsent-draft cold-restart/isolation/shared-editor readback and a genuine free-cloud named-note write/readback. Exact APK hashes, source provenance, overlap and fixture boundaries are in that ledger.
+
+These results do not establish current positive spoken capture, live navigation capture continuity, audible output, all tool workflows or full #62 acceptance. #62 remains KEEP_OPEN. The earlier checkpoint tables remain historical evidence for their recorded binaries.

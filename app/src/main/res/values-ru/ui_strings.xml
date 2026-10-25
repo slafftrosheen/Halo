@@ -4095,4 +4095,18 @@
     <string name="ui_1c22f72c9a3f" formatted="false">"Не удалось уверенно распознать речь. Повторите фразу или введите её текстом."</string>
     <string name="ui_e14ce000605d" formatted="false">"Распознаны только знаки препинания. Попробуйте ещё раз."</string>
     <string name="ui_7d3e40035aff" formatted="false">"Распознанный язык отличается от выбранного. Проверьте язык распознавания."</string>
+    <string name="ui_381e89e18dde" formatted="false">"Не удалось сохранить черновик. Сохраните этот текст и попробуйте ещё раз."</string>
+    <string name="ui_be4b2632aa2a" formatted="false">"Черновик слишком большой для сохранения. Сократите его или скопируйте в надёжное место."</string>
+    <string name="ui_f2b4c9937d0e" formatted="false">"Хранилище черновиков заполнено. Очистите старый черновик и попробуйте ещё раз."</string>
+    <string name="ui_cd0c4dcbbe34" formatted="false">"Не удалось прочитать сохранённые черновики. Новый текст их не заменил."</string>
+    <string name="ui_b04cf46c3abb" formatted="false">"Повторить сохранение"</string>
+    <string name="ui_5350a63171a0" formatted="false">"Повторить загрузку"</string>
+    <string name="ui_c7eb6b51d187" formatted="false">"Заменить нечитаемые черновики"</string>
+    <string name="ui_1a68034b9f79" formatted="false">"Заменить нечитаемые сохранённые черновики?"</string>
+    <string name="ui_f7a348219523" formatted="false">"Нечитаемые сохранённые черновики будут заменены этим черновиком. Текст других сохранённых черновиков может быть потерян."</string>
+    <string name="ui_0245548d9a2e" formatted="false">"Заменить черновики"</string>
+    <string name="ui_f4d497437a73" formatted="false">"Доступен черновик, введённый при запуске."</string>
+    <string name="ui_d72a190f8942" formatted="false">"Восстановить черновик"</string>
+    <string name="ui_57489fabd9f9" formatted="false">"Не удалось удалить черновик удалённого разговора. Попробуйте ещё раз."</string>
+    <string name="ui_63e3a46ac3af" formatted="false">"Повторить очистку черновиков"</string>
 </resources>

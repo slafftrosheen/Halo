@@ -42,7 +42,8 @@ class WorkspaceToolExecutor(
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
-                    "body" to mapOf("type" to "string", "maxLength" to 2000)
+                    "body" to mapOf("type" to "string", "maxLength" to 2000),
+                    "title" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 120)
                 ),
                 "required" to listOf("body"),
                 "additionalProperties" to false
@@ -164,7 +165,11 @@ class WorkspaceToolExecutor(
             "query" -> 500
             else -> 100
         }
-        val expectedKeys = if (toolCall.functionName == "halo_study_with_halo") setOf(key, "sourceVersion") else setOf(key)
+        val expectedKeys = when (toolCall.functionName) {
+            "halo_study_with_halo" -> setOf(key, "sourceVersion")
+            "halo_create_note" -> if ("title" in toolCall.arguments) setOf(key, "title") else setOf(key)
+            else -> setOf(key)
+        }
         if (toolCall.arguments.keys != expectedKeys || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
         if (key == "objectId" || key == "noteId") {
             val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
@@ -180,7 +185,12 @@ class WorkspaceToolExecutor(
             "halo_create_note" -> {
                 val body = toolCall.arguments["body"]?.toString()?.trim().orEmpty()
                 if (body.isBlank()) return reject("Body parameter is required")
-                val note = notebookRepository.createNote(body)
+                val title = if ("title" in toolCall.arguments) {
+                    val literalTitle = toolCall.arguments["title"] as? String ?: return reject("Expected title text")
+                    if (literalTitle.length > 120 || literalTitle.isBlank()) return reject("Invalid title")
+                    literalTitle.trim()
+                } else null
+                val note = notebookRepository.createNote(body, title = title)
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Created note: ${note.id} - '${note.title}'")
             }
             "halo_search_notebook" -> {

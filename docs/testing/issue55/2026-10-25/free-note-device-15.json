@@ -1,0 +1,68 @@
+{
+  "checkpoint": 15,
+  "mainApkSha256": "052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb55918264662",
+  "status": "PASS_NAMED_NOTE_CREATE_AND_REAL_UI_READBACK",
+  "provider": "openrouter",
+  "requestedModel": "nvidia/nemotron-3.5-lightning:free",
+  "resolvedModel": "nvidia/nemotron-3.5-lightning:free",
+  "pricing": {
+    "source": "https://openrouter.ai/api/v1/models/nvidia/nemotron-3.5-lightning:free/endpoints",
+    "checkedUtc": "2026-10-25T01:03:40.150617+00:00",
+    "prompt": "0",
+    "completion": "0",
+    "toolsSupported": true
+  },
+  "role": "AGENTIC",
+  "bindingMode": "INHERIT_DEFAULT",
+  "fallbackUsed": false,
+  "candidateCount": 1,
+  "toolMode": "REQUIRED",
+  "protocol": "NATIVE",
+  "interactionId": "92555531-4d22-4828-96f8-7978917ab103",
+  "runId": "80483b1f-4bbb-4b46-95cf-7ed090ce1423",
+  "requestIds": [
+    "502ad6d9-7710-496b-be76-a115f4ceffbb",
+    "9d6282dc-5c33-43bf-ae5d-37de5dae6baa",
+    "5fb898c1-eac6-4160-a42b-48861b1ea9c8",
+    "5fa89227-cb06-4c96-be3d-7e4c0ae2d328"
+  ],
+  "providerDurationMs": [
+    2441,
+    2083,
+    2062,
+    2131
+  ],
+  "guardedRecovery": {
+    "tool": "halo_discover_tools",
+    "rejection": "INVALID_ARGUMENTS",
+    "recovered": true,
+    "writeFromRejectedCall": false
+  },
+  "write": {
+    "tool": "halo_create_note",
+    "actionTruth": "CONFIRMED",
+    "durationMs": 318,
+    "returnedNoteId": "da21e339-c234-4870-b05f-43792826a92b",
+    "expectedTitle": "HALO-AI-20261025-NOTE-B",
+    "actualEditorTitle": "HALO-AI-20261025-NOTE-B",
+    "expectedBody": "Violet lanterns glow at dawn.",
+    "actualEditorBody": "Violet lanterns glow at dawn."
+  },
+  "draftAfterAdmission": "empty",
+  "subsequentDraft": "HALO_DRAFT_20261025_B",
+  "subsequentDraftSurvivedFinalReply": true,
+  "startedUtc": "2026-10-25T01:04:06.351597+00:00",
+  "roleResolvedUtc": "2026-10-25T01:04:07.170920Z",
+  "responseCommittedDeviceLocal": "2026-10-25 03:05:25.050 +02:00",
+  "editorReadbackCapturedUtc": "2026-10-25T01:06:41.793261+00:00",
+  "latencyObservation": {
+    "roleToFirstProviderTurnMs": 41322,
+    "discoveryExecutionMs": 20784,
+    "boundary": "Repeated sample, not a percentile or controlled performance qualification. Source review found nested catalogue/skill rebuilding; targeted follow-up pending."
+  },
+  "limitations": [
+    "One named-note workflow is not the required three multi-step cross-tool workflows.",
+    "No image/audio capability, human-heard speech, paid dispatch or issue-closure claim.",
+    "Raw screenshots, UI hierarchies and app logs remain ignored locally."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "app": {
+    "tests": 230,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 45
+  },
+  "language": {
+    "tests": 51,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 7
+  },
+  "interpretation": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 4
+  },
+  "mainApkSha256": "c6adc1cc479451b452bff9d490634eb499f348c22783b3b2b3c8f67b86e4f72b",
+  "testApkSha256": "34596c9b91597749c5c84e7e965c306f84a214958067f3dfc4db860c426c3e8e",
+  "checkpoint": 14,
+  "build": "SUCCESSFUL",
+  "duration": "6m32s",
+  "installed": false,
+  "reason": "Independent review found a further prune/restore race before installation",
+  "draftCases": 15
+}

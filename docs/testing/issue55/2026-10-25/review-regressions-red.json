@@ -1,0 +1,48 @@
+[
+  {
+    "suite": "com.halo.app.data.workspace.WorkspaceCreateNoteToolTest",
+    "tests": 5,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "explicitTitleAndLiteralBodyAreSavedIndependentlyWithActualIdReceipt",
+        "failed": true
+      },
+      {
+        "name": "omittedTitleRetainsBodyDerivedTitleAndLegacyBodyTrimming",
+        "failed": false
+      },
+      {
+        "name": "schemaExposesOptionalBoundedTitleWhileKeepingBodyRequired",
+        "failed": true
+      },
+      {
+        "name": "titleAtExistingRenameLimitIsAcceptedWithoutTruncation",
+        "failed": true
+      },
+      {
+        "name": "invalidTitlesAndUnknownArgumentsCannotCreateAnyNote",
+        "failed": false
+      }
+    ]
+  },
+  {
+    "suite": "com.halo.app.ui.screens.home.ComposerDraftStoreTest",
+    "tests": 2,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      {
+        "name": "blockedCleanupCommitCannotEraseRestoredTypingAheadOfQueuedLoadAndSave",
+        "failed": true
+      },
+      {
+        "name": "blockedCleanupFailureRevokesOldIdentityAndPreservesRestoredTyping",
+        "failed": true
+      }
+    ]
+  }
+]

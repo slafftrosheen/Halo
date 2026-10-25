@@ -1,0 +1,49 @@
+{
+  "draftCases": [
+    "temporaryMigrationDoesNotReplaceExistingTargetAndDeletionUsesExactPredicate",
+    "oversizedDraftRemainsWholeInMemoryWithoutOverwritingSavedText",
+    "delayedDiskLoadCannotOverwriteTypingAndSavedWaitsForCommit",
+    "temporaryMoveRejectsANewerEmptyTargetRevisionAndKeepsOversizedTextEditable",
+    "acceptedClearRequiresLiteralAndRevisionAndRecoveryPreservesLaterEdits",
+    "newOwnerRestoresEachConversationWithoutChangingProviderSettings",
+    "unreadableSnapshotIsPreservedUntilExplicitReplacement",
+    "canonicalRestoreCreatesNewIdentityWithoutRevivingDeletedDraftOrOldClear",
+    "deletionCleanupFailureIsObservableAndRetryRemovesOnlyDeletedDraft",
+    "clearingDraftCannotResurrectItAfterRestart",
+    "writeFailureKeepsTextAndPreviousDurableCopyUntilExplicitRetrySucceeds",
+    "startupSubmissionNeedsAnchorAndAcceptedClearFollowsOnlyExactMoveReceipt",
+    "renderedConversationCannotSubmitIntoDifferentCanonicalChatEvenWithIdenticalText",
+    "delayedOlderWriteCannotReplaceTheNewestDraft",
+    "blockedCleanupCommitCannotEraseRestoredTypingAheadOfQueuedLoadAndSave",
+    "blockedCleanupFailureRevokesOldIdentityAndPreservesRestoredTyping",
+    "postRestoreTypingRacingExistenceCheckKeepsItsTextAndRevision"
+  ],
+  "app": {
+    "tests": 594,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 109
+  },
+  "language": {
+    "tests": 51,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 7
+  },
+  "interpretation": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 4
+  },
+  "mainApkSha256": "052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb55918264662",
+  "testApkSha256": "34596c9b91597749c5c84e7e965c306f84a214958067f3dfc4db860c426c3e8e",
+  "checkpoint": 15,
+  "build": "SUCCESSFUL",
+  "duration": "7m17s",
+  "unfinishedTestExclusion": false,
+  "languageAndInterpretation": "UP_TO_DATE; unchanged validated source from checkpoint14"
+}

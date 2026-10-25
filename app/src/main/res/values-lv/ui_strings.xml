@@ -4095,4 +4095,18 @@
     <string name="ui_1c22f72c9a3f" formatted="false">"Runu neizdevās droši atpazīt. Mēģiniet vēlreiz vai rakstiet ziņu."</string>
     <string name="ui_e14ce000605d" formatted="false">"Tika atpazītas tikai pieturzīmes. Mēģiniet vēlreiz."</string>
     <string name="ui_7d3e40035aff" formatted="false">"Atpazītā valoda neatbilst izvēlētajai. Pārbaudiet runas valodu."</string>
+    <string name="ui_381e89e18dde" formatted="false">"Melnrakstu neizdevās saglabāt. Paturiet šo tekstu un mēģiniet vēlreiz."</string>
+    <string name="ui_be4b2632aa2a" formatted="false">"Melnraksts ir pārāk liels saglabāšanai. Saīsiniet to vai nokopējiet drošā vietā."</string>
+    <string name="ui_f2b4c9937d0e" formatted="false">"Melnrakstu krātuve ir pilna. Izdzēsiet vecāku melnrakstu un mēģiniet vēlreiz."</string>
+    <string name="ui_cd0c4dcbbe34" formatted="false">"Saglabātos melnrakstus neizdevās nolasīt. Jaunais teksts tos nav aizstājis."</string>
+    <string name="ui_b04cf46c3abb" formatted="false">"Mēģināt saglabāt vēlreiz"</string>
+    <string name="ui_5350a63171a0" formatted="false">"Mēģināt ielādēt vēlreiz"</string>
+    <string name="ui_c7eb6b51d187" formatted="false">"Aizstāt nenolasāmos melnrakstus"</string>
+    <string name="ui_1a68034b9f79" formatted="false">"Aizstāt nenolasāmos saglabātos melnrakstus?"</string>
+    <string name="ui_f7a348219523" formatted="false">"Nenolasāmie saglabātie melnraksti tiks aizstāti ar šo melnrakstu. Citu saglabāto melnrakstu teksts var tikt zaudēts."</string>
+    <string name="ui_0245548d9a2e" formatted="false">"Aizstāt melnrakstus"</string>
+    <string name="ui_f4d497437a73" formatted="false">"Ir pieejams palaišanas laikā ievadīts melnraksts."</string>
+    <string name="ui_d72a190f8942" formatted="false">"Atjaunot palaišanas melnrakstu"</string>
+    <string name="ui_57489fabd9f9" formatted="false">"Izdzēstās sarunas melnrakstu neizdevās noņemt. Mēģiniet vēlreiz."</string>
+    <string name="ui_63e3a46ac3af" formatted="false">"Mēģināt notīrīt izdzēstos melnrakstus"</string>
 </resources>

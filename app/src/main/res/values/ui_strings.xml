@@ -4095,4 +4095,18 @@
     <string name="ui_1c22f72c9a3f" formatted="false">"low recognition confidence"</string>
     <string name="ui_e14ce000605d" formatted="false">"punctuation only"</string>
     <string name="ui_7d3e40035aff" formatted="false">"language mismatch"</string>
+    <string name="ui_381e89e18dde" formatted="false">"Your draft could not be saved. Keep this text and try again."</string>
+    <string name="ui_be4b2632aa2a" formatted="false">"This draft is too large to save. Shorten it or copy it somewhere safe."</string>
+    <string name="ui_f2b4c9937d0e" formatted="false">"Draft storage is full. Clear an older draft, then try again."</string>
+    <string name="ui_cd0c4dcbbe34" formatted="false">"Saved drafts could not be read. Your new text has not replaced them."</string>
+    <string name="ui_b04cf46c3abb" formatted="false">"Try saving again"</string>
+    <string name="ui_5350a63171a0" formatted="false">"Try loading again"</string>
+    <string name="ui_c7eb6b51d187" formatted="false">"Replace unreadable drafts"</string>
+    <string name="ui_1a68034b9f79" formatted="false">"Replace unreadable saved drafts?"</string>
+    <string name="ui_f7a348219523" formatted="false">"The unreadable saved drafts will be replaced with this draft. Other saved draft text may be lost."</string>
+    <string name="ui_0245548d9a2e" formatted="false">"Replace drafts"</string>
+    <string name="ui_f4d497437a73" formatted="false">"A draft from startup is available."</string>
+    <string name="ui_d72a190f8942" formatted="false">"Recover startup draft"</string>
+    <string name="ui_57489fabd9f9" formatted="false">"A deleted conversation draft could not be removed. Try again."</string>
+    <string name="ui_63e3a46ac3af" formatted="false">"Try clearing deleted drafts"</string>
 </resources>

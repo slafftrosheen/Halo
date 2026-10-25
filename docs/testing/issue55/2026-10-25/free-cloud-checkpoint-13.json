@@ -1,0 +1,100 @@
+{
+  "checkpoint": 13,
+  "installedMainSha256": "6a627749e9cda5b1bb15f15b9ab87b7b9e11cb396bc209c71107565bf9e644ab",
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3.5-lightning:free",
+  "pricingMetadata": {
+    "source": "https://openrouter.ai/api/v1/models/nvidia/nemotron-3.5-lightning:free/endpoints",
+    "date": "2026-10-25",
+    "checkedBeforeControlPrompt": true,
+    "prompt": "0",
+    "completion": "0",
+    "supportedInput": [
+      "text"
+    ],
+    "supportedOutput": [
+      "text"
+    ],
+    "toolsSupported": true
+  },
+  "configuration": {
+    "privacy": "POWER",
+    "agenticBinding": "INHERIT_DEFAULT",
+    "routing": "Only selected model",
+    "fallbackUsed": false,
+    "candidateCount": 1,
+    "changesMade": false
+  },
+  "scenarios": [
+    {
+      "name": "free text ping",
+      "interactionId": "7f64ed00-4a6a-42e9-a478-623d3504fde2",
+      "requestId": "8a487c38-a19f-47ac-a282-4a8ad7ef033c",
+      "status": "PASS_VISIBLE_CLOUD_TEXT_ROUNDTRIP",
+      "renderedReply": "HALOFREEROUTE_OK",
+      "exactRawEchoChecked": false,
+      "finishReason": "stop",
+      "providerDurationMs": 5480,
+      "roleResolutionUtc": "2026-10-25T00:16:41.548110Z",
+      "receiptCaptureUtc": "2026-10-25T00:23:15.025978+00:00"
+    },
+    {
+      "name": "create one note",
+      "interactionId": "bc8d2a88-e1ea-40cf-93ab-2074bece3f08",
+      "requestId": "49765361-d149-42fb-abf2-aeb4e4cf40f4",
+      "status": "FAIL_ACTION_ROUTING",
+      "mode": "DIRECT_RESPONSE",
+      "toolMode": "NONE",
+      "toolsIncluded": false,
+      "error": "EMPTY_RESPONSE",
+      "finishReason": "length",
+      "outputBudgetTokens": 256,
+      "durableEffectConfirmed": false,
+      "boundary": "Shared action cue missed singular one; no tool call or note creation was acknowledged.",
+      "roleResolutionUtc": "2026-10-25T00:19:43.528906Z",
+      "receiptCaptureUtc": "2026-10-25T00:23:15.025978+00:00"
+    },
+    {
+      "name": "create a note control",
+      "interactionId": "ad8322b5-4139-461d-a9ba-9eff94be4deb",
+      "runId": "d27140dc-5190-4d71-85da-f0a6be1d9912",
+      "requestIds": [
+        "d361b5a4-bd18-4e35-91d8-ebf9f628ebde",
+        "8feb37e6-3051-45f0-99bd-8e847a990cb7",
+        "0769fae4-bfb5-4266-a550-b41c656259dd"
+      ],
+      "status": "PARTIAL_NOTE_BODY_SAVED_TITLE_UNFULFILLED",
+      "mode": "AGENTIC",
+      "toolMode": "REQUIRED",
+      "protocol": "NATIVE",
+      "tool": "halo_create_note",
+      "actionTruth": "CONFIRMED",
+      "actualReturnedNoteId": "a76643a7-2b64-4f03-94db-df16ac3bf64a",
+      "expectedTitle": "HALO-AI-20261025-NOTE-C",
+      "actualTitle": "Violet lanterns glow at dawn.",
+      "expectedBody": "Violet lanterns glow at dawn.",
+      "actualBody": "Violet lanterns glow at dawn.",
+      "uiReadback": true,
+      "finalReplyObserved": true,
+      "providerFinishReasons": [
+        "tool_calls",
+        "tool_calls",
+        "stop"
+      ],
+      "providerDurationMs": [
+        6453,
+        2587,
+        3879
+      ],
+      "boundary": "Existing create-note schema exposes body only; canonical repository already accepts an independent title. Fix and fresh-binary retest pending.",
+      "roleResolutionUtc": "2026-10-25T00:32:41.114626Z",
+      "responseCommittedDeviceLocal": "2026-10-25 03:34:01.205",
+      "uiReadbackCapturedUtc": "2026-10-25T00:38:47.492212+00:00"
+    }
+  ],
+  "limitations": [
+    "Raw credentials and personal content were not read.",
+    "Public record is a sanitized summary; raw phone UI/log captures stay ignored.",
+    "This does not qualify image/audio, human-heard speech, all cloud workflows, billing/store transactions, or issue closure."
+  ]
+}

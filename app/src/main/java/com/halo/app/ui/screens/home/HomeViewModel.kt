@@ -217,7 +217,57 @@ class HomeViewModel(
     private val endpointSource: StateFlow<List<com.halo.runtime.cognition.continuity.InteractionEndpointState>> = MutableStateFlow(emptyList()),
     private val captureProjection: com.halo.app.continuity.RecentCaptureProjection? = null,
     private val homeSources: HomeSourceDependencies? = null,
+    private val composerDraftStore: ComposerDraftStore? = null,
 ) : ViewModel() {
+    private val transientComposerDrafts = MutableStateFlow<Map<String, ComposerDraftState>>(emptyMap())
+    val composerDrafts: StateFlow<Map<String, ComposerDraftState>> = composerDraftStore?.states ?: transientComposerDrafts
+    val composerCleanupFailed: StateFlow<Boolean> = composerDraftStore?.cleanupFailure ?: MutableStateFlow(false)
+    private var composerNavigationGeneration = 0L
+    private var temporaryDraftTarget: String? = null
+    private data class SubmittedDraft(val conversation: String, val revision: Long, val literal: String,
+        val destination: String, var clearedRevision: Long? = null, var clearedConversation: String? = null)
+    private val submittedDrafts = linkedMapOf<String, SubmittedDraft>()
+    fun loadComposerDraft(id: String) { composerDraftStore?.let { owner -> viewModelScope.launch {
+        owner.load(id)
+        if (id.isNotBlank() && temporaryDraftTarget == id && !owner.hasRestoredTemporary()) {
+            owner.migrateTemporary(id, expectedTargetRevision = 0L).join()
+        }
+    } } }
+    fun updateComposerDraft(id: String, text: String) {
+        val owner = composerDraftStore
+        if (owner == null) {
+            val old = transientComposerDrafts.value[id]
+            transientComposerDrafts.value = transientComposerDrafts.value + (id to ComposerDraftState(text, (old?.revision ?: 0) + 1))
+            return
+        }
+        val anchored = temporaryDraftTarget?.takeIf { id.isBlank() && it == conversations?.activeConversationId() }
+        if (anchored != null && owner.current("")?.text.isNullOrEmpty()) { owner.save(anchored, text); return }
+        owner.save(id, text)
+        if (id.isBlank()) {
+            val sourceRevision = owner.current("")?.revision
+            val navigation = composerNavigationGeneration
+            viewModelScope.launch {
+                conversations?.awaitReady()
+                val target = conversations?.activeConversationId()
+                if (navigation == composerNavigationGeneration && !target.isNullOrBlank()) {
+                    temporaryDraftTarget = target
+                    owner.load(target)
+                    if (!owner.hasRestoredTemporary()) owner.migrateTemporary(target, sourceRevision, 0L).join()
+                }
+            }
+        }
+    }
+    fun retryComposerDraft(id: String) { composerDraftStore?.retry(id) }
+    fun reloadComposerDraft(id: String) { composerDraftStore?.reload(id) }
+    fun replaceUnreadableComposerDraft(id: String, expectedRevision: Long? = null) { composerDraftStore?.replaceUnreadable(id, expectedRevision) }
+    fun recoverStartupDraft(id: String) { if (id.isNotBlank()) composerDraftStore?.migrateTemporary(id) }
+    fun retryDeletedDraftCleanup() { val db = database ?: return; composerDraftStore?.let { owner -> viewModelScope.launch {
+        conversations?.awaitReady()
+        owner.pruneDeleted { id ->
+            val row = db.notebookDao().getWorkspaceObject(id)
+            row == null || row.type != "CONVERSATION" || row.lifecycle == "TRASHED"
+        }
+    } } }
     private val _dashboard = MutableStateFlow(HomeDashboardState())
     val dashboard: StateFlow<HomeDashboardState> = _dashboard.asStateFlow()
     private val _visualAttachment = MutableStateFlow<com.halo.app.capture.VisualAttachment?>(null)
@@ -474,6 +524,25 @@ class HomeViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
     init {
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            composerDraftStore?.load("")
+        }
+        composerDraftStore?.let { owner -> viewModelScope.launch {
+            textSubmission.collect { receipt ->
+                val original = submittedDrafts[receipt.interactionId] ?: return@collect
+                if (receipt.accepted && original.clearedRevision == null && receipt.conversationId == original.destination) {
+                    owner.resolveIdentity(original.conversation, original.revision, original.literal)?.takeIf {
+                        it.conversationId == original.destination || it.conversationId.isEmpty() && original.conversation.isEmpty()
+                    }?.let { exact ->
+                        original.clearedRevision = owner.replaceIfCurrent(exact.conversationId, exact.revision, exact.literal, "")
+                        if (original.clearedRevision != null) original.clearedConversation = exact.conversationId
+                    }
+                }
+                if (receipt.needsRecovery) original.clearedRevision?.let { revision ->
+                    original.clearedConversation?.let { key -> owner.replaceIfCurrent(key, revision, "", original.literal) }
+                }
+            }
+        } }
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             eventBus.events().collect { event ->
                 when (event) {
@@ -792,12 +861,28 @@ class HomeViewModel(
             ManualDependencyGraph.interactionContext.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.OpenSource(id))
         } catch(error: Exception) { captureMessage.value = error.message ?: "Could not save this result" } }
     }
-    fun submitText(text: String) {
+    fun submitComposerText(renderedConversation: String, renderedRevision: Long?, literal: String) {
+        if (_conversationChanging.value) return
+        val owner = composerDraftStore ?: run { submitText(literal); return }
+        val active = conversations?.activeConversationId()
+        val exact = renderedRevision?.let { owner.resolveSubmission(renderedConversation, it, literal, active, temporaryDraftTarget) }
+        if (exact == null) { captureMessage.value = "Conversation unavailable"; return }
+        submitTextInternal(literal, exact, active)
+    }
+    fun submitText(text: String) = submitTextInternal(text)
+    private fun submitTextInternal(text: String, exactDraft: ComposerDraftIdentity? = null, exactConversation: String? = null) {
         if (_conversationChanging.value) return
         val normalized = text.trim()
         val interactionId = UUID.randomUUID().toString()
         val conversationAtTap = conversations?.activeConversationId()
-        if (!textSubmissions.begin(interactionId, conversationAtTap, normalized)) return
+        if (exactConversation != null && exactConversation != conversationAtTap) return
+        val identity = exactDraft ?: composerDraftStore?.current(conversationAtTap.orEmpty())?.takeIf { it.text.trim() == normalized }
+            ?.let { ComposerDraftIdentity(conversationAtTap.orEmpty(), it.revision, it.text) }
+        identity?.let {
+            submittedDrafts[interactionId] = SubmittedDraft(it.conversationId, it.revision, it.literal, conversationAtTap.orEmpty())
+            while (submittedDrafts.size > 32) submittedDrafts.remove(submittedDrafts.keys.first())
+        }
+        if (!textSubmissions.begin(interactionId, conversationAtTap, normalized)) { submittedDrafts.remove(interactionId); return }
 
         // Text enters the same interpretation/reasoning pipeline as recognized
         // speech, but it remains a TEXT/USER observation. Response delivery is
@@ -986,6 +1071,7 @@ class HomeViewModel(
     }
     fun newConversation() {
         if (!_conversationChanging.compareAndSet(false, true)) return
+        composerNavigationGeneration++; temporaryDraftTarget = null
         voiceStartGeneration++
         viewModelScope.launch {
             try {
@@ -1014,6 +1100,7 @@ class HomeViewModel(
     fun openConversation(id: String) {
         val store = conversations ?: return
         if (!_conversationChanging.compareAndSet(false, true)) return
+        composerNavigationGeneration++; temporaryDraftTarget = null
         voiceStartGeneration++
         viewModelScope.launch {
             try {

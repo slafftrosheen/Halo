@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4112) {
+    buildMap(4126) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4156,6 +4156,20 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "low recognition confidence" to R.string.ui_1c22f72c9a3f,
     "punctuation only" to R.string.ui_e14ce000605d,
     "language mismatch" to R.string.ui_7d3e40035aff,
+    "Your draft could not be saved. Keep this text and try again." to R.string.ui_381e89e18dde,
+    "This draft is too large to save. Shorten it or copy it somewhere safe." to R.string.ui_be4b2632aa2a,
+    "Draft storage is full. Clear an older draft, then try again." to R.string.ui_f2b4c9937d0e,
+    "Saved drafts could not be read. Your new text has not replaced them." to R.string.ui_cd0c4dcbbe34,
+    "Try saving again" to R.string.ui_b04cf46c3abb,
+    "Try loading again" to R.string.ui_5350a63171a0,
+    "Replace unreadable drafts" to R.string.ui_c7eb6b51d187,
+    "Replace unreadable saved drafts?" to R.string.ui_1a68034b9f79,
+    "The unreadable saved drafts will be replaced with this draft. Other saved draft text may be lost." to R.string.ui_f7a348219523,
+    "Replace drafts" to R.string.ui_0245548d9a2e,
+    "A draft from startup is available." to R.string.ui_f4d497437a73,
+    "Recover startup draft" to R.string.ui_d72a190f8942,
+    "A deleted conversation draft could not be removed. Try again." to R.string.ui_57489fabd9f9,
+    "Try clearing deleted drafts" to R.string.ui_63e3a46ac3af,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

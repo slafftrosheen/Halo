@@ -414,6 +414,29 @@ object ManualDependencyGraph {
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
     val conversationStore by lazy { com.halo.app.data.RoomConversationStore(appDatabase, infra.scope) }
+    val composerDraftStore by lazy {
+        com.halo.app.ui.screens.home.ComposerDraftStore(
+            com.halo.app.security.ComposerDraftSecretStorage(secretStore), infra.scope,
+            canPersistConversation = { id ->
+                conversationStore.awaitReady()
+                val row = appDatabase.notebookDao().getWorkspaceObject(id)
+                row != null && row.type == "CONVERSATION" && row.lifecycle != "TRASHED"
+            }).also { owner ->
+            val observer = object : androidx.room.InvalidationTracker.Observer("workspace_objects", "conversations") {
+                override fun onInvalidated(tables: Set<String>) {
+                    infra.scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        conversationStore.awaitReady()
+                        owner.pruneDeleted { id ->
+                            val row = appDatabase.notebookDao().getWorkspaceObject(id)
+                            row == null || row.type != "CONVERSATION" || row.lifecycle == "TRASHED"
+                        }
+                    }
+                }
+            }
+            appDatabase.invalidationTracker.addObserver(observer)
+            observer.onInvalidated(emptySet())
+        }
+    }
     val followUpRepository by lazy {
         RoomContinuationWatchRepository(appDatabase.continuationWatchDao())
     }
@@ -1673,6 +1696,7 @@ object ManualDependencyGraph {
         RuntimeStartupTrace.measure("viewmodel.home") {
             HomeViewModel(
                 snapshotManager = runtimeSnapshotManager,
+                composerDraftStore = composerDraftStore,
                 commandBus = commandBus,
                 eventBus = eventBus,
                 cognitiveSession = cognitiveSession,

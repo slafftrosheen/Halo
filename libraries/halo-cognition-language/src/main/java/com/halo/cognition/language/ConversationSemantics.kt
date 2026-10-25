@@ -11,8 +11,11 @@ object ConversationSemantics {
     // the optional local intent classifier is absent. These cues supply no slots.
     private val workspaceWrite = Regex(
         "^(?:create|add|edit|update|rename|delete|remove|export|save|attach|duplicate|move|connect|start)\\s+" +
+            // A singular count is action evidence only, never executable quantity/slots.
+            "(?:(?:one|1)\\s+(?:(?:new|local|empty|selected|existing|text|canvas|study)\\s+){0,2}" +
+            "(?:note|document|file|card|board|canvas|study\\s+session)\\b|" +
             "(?:(?:a|an|the|my|this|that|new|local|empty|selected|existing|text|canvas|study)\\s+){0,3}" +
-            "(?:notes?|documents?|files?|cards?|boards?|canvas|study\\s+session)\\b|" +
+            "(?:notes?|documents?|files?|cards?|boards?|canvas|study\\s+session)\\b)|" +
             "^(?:создай|добавь|измени|обнови|переименуй|удали|экспортируй|сохрани|прикрепи|перемести)\\s+" +
             "(?:(?:новую|новый|новое|выбранную|выбранный|выбранные|эту|этот|мою|мой|пустую|пустой)\\s+){0,2}" +
             "(?:заметк[ауи]|документ(?:ы|а)?|файл(?:ы|а)?|карточк[ауи]|холст|доск[ау])\\b|" +

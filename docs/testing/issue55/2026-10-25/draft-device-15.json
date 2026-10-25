@@ -1,0 +1,63 @@
+{
+  "checkpoint": 15,
+  "sourceBase": "7d609afb21dbe60e8770b335ddae7d9c28604ff3",
+  "buildProvenance": "Validated working tree after sourceBase; compiled Git metadata still names the pre-commit base. Final publication commit identifies the tested patch.",
+  "installed": {
+    "main": "052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb55918264662",
+    "test": "34596c9b91597749c5c84e7e965c306f84a214958067f3dfc4db860c426c3e8e"
+  },
+  "coldRestart": {
+    "scenario": "unsent draft background -> force-stop -> cold relaunch",
+    "status": "PASS",
+    "marker": "HALO_DRAFT_20261025_A",
+    "startedUtc": "2026-10-25T00:58:16.006312+00:00",
+    "completedUtc": "2026-10-25T00:58:30.901183+00:00",
+    "mainApkSha256": "052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb55918264662",
+    "submitPerformed": false,
+    "atRest": {
+      "path": "no_backup/secrets/composer.drafts.v1.bin",
+      "formatVersion": 1,
+      "ivLength": 12,
+      "encryptedPayloadLength": 112,
+      "frameLength": 136,
+      "cipherSha256": "21b78a6100e18ecef67f9be44d8b958e89c97546af4060f2c558fdc31211969c",
+      "literalMarkerPresent": false,
+      "boundary": "Existing AES-GCM/AndroidKeystore AtomicFile path; valid opaque frame plus UI decrypt/readback. No credential files read."
+    },
+    "boundary": "Two seconds were allowed for async save before stopping; this does not eliminate a precommit loss window."
+  },
+  "sharedEditorsAndRotation": {
+    "mainApkSha256": "052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb55918264662",
+    "homeToWorkspaceOrb": "PASS",
+    "orbEditToHome": "PASS",
+    "measuredLandscapeRotation1": "PASS",
+    "measuredPortraitRotation0": "PASS",
+    "marker": "HALO_DRAFT_20261025_A_ORB",
+    "submitPerformed": false,
+    "rotationSettingsRestored": {
+      "accelerometer_rotation": "1",
+      "user_rotation": "0"
+    },
+    "actualRotationAfterSensorRestore": "0",
+    "completedUtc": "2026-10-25T01:02:55.253479+00:00",
+    "boundary": "Returning to free sensor policy need not itself rotate a stationary flat device; portrait was explicitly measured before restoring original policy."
+  },
+  "conversationIsolationAndSubmission": {
+    "status": "PASS",
+    "mainApkSha256": "052e24546607ad2f06cc7f9e30768b1633955af06ca0346cbe4eb55918264662",
+    "aToB": "PASS",
+    "bToA": "PASS",
+    "bColdRestart": "PASS",
+    "aReadbackAfterRestart": "PASS",
+    "acceptedSubmissionCleared": "PASS",
+    "newerDraftSurvivedCloudCompletion": "PASS",
+    "aMarker": "HALO_DRAFT_20261025_A_ORB",
+    "bMarker": "HALO_DRAFT_20261025_B",
+    "completedUtc": "2026-10-25T01:08:10.013288+00:00"
+  },
+  "limitations": [
+    "Atomic acknowledgements follow disk commit; uncommitted edits can be lost if the process is stopped before async completion.",
+    "Blocked-write restore/delete races, corrupt-byte preservation, size bounds and write-failure recovery are unit-tested; no deliberate corruption of live user storage was performed.",
+    "Native and human voice boundaries remain separate."
+  ]
+}
