@@ -1,0 +1,56 @@
+{
+  "checkpoint": 19,
+  "status": "PASS_SCOPED_SELECTED_CARD_EDIT_AND_COLD_READBACK",
+  "mainApkSha256": "dd5aa55ba23a639fe4d68e8d70549f3e99d571ab2ad9066982c6c04d77816127",
+  "startedUtc": "2026-10-25T04:12:26.655297+00:00",
+  "prompt": "Change only the selected text card on this Canvas to exactly: Silver kites rest at noon. They fly west at dusk.",
+  "interactionId": "12770bec-975a-48aa-b196-b166df1916d0",
+  "runId": "450c3ca0-2a9e-43d5-9caf-e7efbbd01699",
+  "route": "AGENTIC/REQUIRED",
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3.5-lightning:free",
+  "fallbackUsed": false,
+  "providerRequests": [
+    "01d7635a-a09f-419e-85f3-889ef2a8d447",
+    "0b28cfae-247f-4cdc-8874-b569b3a50075",
+    "dbeeb3d3-459d-429c-b4aa-bd92690d422c",
+    "c234d421-ae9a-49e7-b09a-745691e1f898",
+    "dfa3e3a8-46e2-4bc0-8a1d-811e21d6c5f1"
+  ],
+  "providerRequestsSucceeded": 5,
+  "schemaCounts": [
+    1,
+    3,
+    13
+  ],
+  "currentAndGetSchemasExposed": true,
+  "nativeSequence": [
+    "discovery INVALID_ARGUMENTS",
+    "discovery ACKNOWLEDGED",
+    "halo_canvas_current CONFIRMED",
+    "halo_canvas_edit_text CONFIRMED"
+  ],
+  "currentCallId": "call-1d90181d-af5f-48bc-b911-7cf92620d8ec",
+  "editCallId": "call-190c549b-58b9-466f-9761-d2c191bd7a41",
+  "editConfirmedMs": 318,
+  "canvasId": "50c93fa3-685f-4dfd-ac5f-872e491b93ee",
+  "nodeId": "479d0346-397f-4abc-a252-af1857bbced2",
+  "expectedText": "Silver kites rest at noon. They fly west at dusk.",
+  "actualEditorTextExact": true,
+  "actualCardCount": 1,
+  "coldProcessReadbackExact": true,
+  "reportedNewVersion": "canvas:3",
+  "episodeOutcome": "INTERRUPTED after earlier recoverable discovery rejection despite confirmed edit",
+  "selectionTokenPresence": "NOT_LOGGED",
+  "limits": [
+    "Actual native effect and UI persistence PASS; not a clean all-steps episode",
+    "Export/readback is a separate step and not included in this PASS",
+    "No actual speech/voice acceptance follows"
+  ],
+  "localEvidence": [
+    "canvas-selected-edit19-app-logcat.txt",
+    "canvas19-exact-edit-readback.xml",
+    "canvas19-cold-exact-edit-readback.xml"
+  ],
+  "fullEditExportJourneyCounted": false
+}

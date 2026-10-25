@@ -1,0 +1,48 @@
+{
+  "checkpoint": 19,
+  "sourceBase": "60ef319eaa34a7059f3a7bf5c672cc115ca5ea13",
+  "completedUtc": "2026-10-25T04:04:34.144426+00:00",
+  "build": "SUCCESSFUL",
+  "duration": "8m58s",
+  "app": {
+    "tests": 696,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "focused": [
+    {
+      "name": "com.halo.app.data.workspace.CanvasReadPrerequisiteExposureTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "apks": {
+    "main": {
+      "file": "app-debug.apk",
+      "sha256": "dd5aa55ba23a639fe4d68e8d70549f3e99d571ab2ad9066982c6c04d77816127"
+    },
+    "test": {
+      "file": "app-debug-androidTest.apk",
+      "sha256": "7c71ddebca744a406668faedb176c6bd05eaa315d0018606e447e31366cb25d6"
+    }
+  },
+  "fixedCampaignReaderAbsentFromDex": true,
+  "scope": "Only edit_text descriptor gains available current/get reader dependencies; no executor/schema/gate/approval/replay change",
+  "installedReadbackMatches": true,
+  "replacementInstallCounts": {
+    "main": 1,
+    "test": 1
+  },
+  "productionDiffFromSourceBaseSha256": "0619071805ac6e50ad4c044d49bae810b1f88cb8da4b4d581e5d59249e756df8",
+  "review": "Independent descriptor/planner/gate review clean"
+}

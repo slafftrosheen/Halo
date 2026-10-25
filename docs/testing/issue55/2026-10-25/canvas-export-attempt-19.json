@@ -1,0 +1,43 @@
+{
+  "checkpoint": 19,
+  "status": "FAIL_ANDROID_PRE_DISPATCH_APPROVAL_LIFECYCLE",
+  "mainApkSha256": "dd5aa55ba23a639fe4d68e8d70549f3e99d571ab2ad9066982c6c04d77816127",
+  "startedUtc": "2026-10-25T04:18:18.215529+00:00",
+  "prompt": "Export this Canvas to a new note, preserving all current card text.",
+  "interactionId": "435c021b-01af-495f-93ef-c2724098bff3",
+  "runId": "7d0b7c2c-d95f-449f-97e3-f0458adb92c8",
+  "route": "AGENTIC/REQUIRED",
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3.5-lightning:free",
+  "fallbackUsed": false,
+  "providerRequestsSucceeded": 4,
+  "providerFinishReasons": [
+    "tool_calls",
+    "tool_calls",
+    "tool_calls",
+    "tool_calls"
+  ],
+  "nativeSequence": [
+    "discovery INVALID_ARGUMENTS",
+    "discovery INVALID_ARGUMENTS",
+    "discovery ACKNOWLEDGED",
+    "halo_canvas_export_note VALIDATED",
+    "IllegalArgumentException before authorization/execution"
+  ],
+  "exportAuthorizationObserved": false,
+  "exportExecutionObserved": false,
+  "confirmedExportReceipts": 0,
+  "noteIdsReturned": 0,
+  "goalDraftRestored": true,
+  "replayed": false,
+  "sourceFinding": "Fresh cognitive run remains CREATED; ALWAYS approval path requests CREATED\u2192WAITING_FOR_APPROVAL, illegal under existing state machine. Actual-caller regression follows; do not relax ALWAYS confirmation.",
+  "limits": [
+    "Source analysis identifies deterministic lifecycle path; no original prepared arguments emitted",
+    "Not an external/provider error and not a completed edit-export journey"
+  ],
+  "localEvidence": [
+    "canvas-export19-app-logcat.txt",
+    "canvas19-export-outcome.xml"
+  ],
+  "issueDisposition": "KEEP_OPEN"
+}

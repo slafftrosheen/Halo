@@ -1,0 +1,36 @@
+{
+  "checkpoint": 19,
+  "mainApkSha256": "dd5aa55ba23a639fe4d68e8d70549f3e99d571ab2ad9066982c6c04d77816127",
+  "testApkSha256": "7c71ddebca744a406668faedb176c6bd05eaa315d0018606e447e31366cb25d6",
+  "startedUtc": "2026-10-25T04:05:54.484109+00:00",
+  "completedUtc": "2026-10-25T04:06:37.374033+00:00",
+  "durationSeconds": 42.889924,
+  "pass": 3,
+  "fail": 0,
+  "cases": [
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+      "test": "realMainActivityRendersWarmAndResumedScreenIntents",
+      "code": 0,
+      "status": "PASS"
+    }
+  ],
+  "scopeLimits": [
+    "Selected nearby checks for descriptor-only change; checkpoint18 full14-case set remains earlier evidence, not rerun here",
+    "Private traces use real network/WebView owners with synthetic loopback TLS, not actual provider acceptance",
+    "MainActivity is actual warm/resumed intent navigation",
+    "Live global capture/spoken/audio acceptance NOT_RUN"
+  ]
+}

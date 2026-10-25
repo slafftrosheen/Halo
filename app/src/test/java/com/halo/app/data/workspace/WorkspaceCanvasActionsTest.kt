@@ -15,6 +15,28 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = android.app.Application::class)
 class WorkspaceCanvasActionsTest {
+    @Test fun staleBoardVersionRefusesTextReplacementWithoutChangingAnyRowsOrRevision() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val board = f.canvases.create("Exact revision")
+            val node = f.canvases.addTextNode(board, 0f, 0f, "Original body")
+            val other = f.canvases.addTextNode(board, 100f, 0f, "Other body")
+            f.canvases.connect(board, node, other, "Retain")
+            val dao = f.database.notebookCanvasDao()
+            val document = dao.getDocument(board)
+            val nodes = dao.getNodes(board)
+            val edges = dao.getEdges(board)
+            val header = f.database.notebookDao().getWorkspaceObject(board)
+            val result = WorkspaceCanvasActions(f.database, f.canvases).execute(ToolCall("stale", "halo_canvas_edit_text",
+                mapOf("canvasId" to board, "version" to "canvas:1", "nodeId" to node, "text" to "Must not save")))
+            assertTrue(result is ToolExecutionResult.Rejected)
+            assertEquals(ToolRejectionKind.RESOURCE_UNAVAILABLE, (result as ToolExecutionResult.Rejected).kind)
+            assertEquals(document, dao.getDocument(board))
+            assertEquals(nodes, dao.getNodes(board))
+            assertEquals(edges, dao.getEdges(board))
+            assertEquals(header, f.database.notebookDao().getWorkspaceObject(board))
+        }
+    }
+
     @Test fun clearSketchPersistsThroughCanonicalOwnerPreservingCardAspectLinksAndOtherContent() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val canvas = f.canvases.create("Drawing")

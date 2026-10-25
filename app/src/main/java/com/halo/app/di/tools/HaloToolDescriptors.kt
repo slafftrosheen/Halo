@@ -339,6 +339,8 @@ object HaloToolDescriptors {
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_connect" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
+            dependencies = if (definition.name == "halo_canvas_edit_text")
+                setOf(ToolId("halo_canvas_current"), ToolId("halo_canvas_get")) else emptySet(),
             keywords = setOf("canvas", "board", "card", "text", "move", "connect", "drawing"),
             presentation = ToolPresentation(title = "Edit Canvas", actionVerb = "Edit"))
         "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,

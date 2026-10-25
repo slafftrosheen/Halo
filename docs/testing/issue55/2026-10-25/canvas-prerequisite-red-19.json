@@ -1,0 +1,20 @@
+{
+  "checkpoint": 19,
+  "sourceBase": "60ef319eaa34a7059f3a7bf5c672cc115ca5ea13",
+  "red": {
+    "tests": 9,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "duration": "2m9s",
+    "readPrerequisiteExposureCases": 4,
+    "missingDependencyAssertionFailures": 2,
+    "canonicalCanvasExecutionCases": 5,
+    "canonicalCanvasExecutionFailures": 0
+  },
+  "confirmedGap": "Actual edit descriptor had empty dependencies; discovery expansion omitted current/get readers. Prepared own attempt had correct IDs but revision mismatch and no selection token; no mutation.",
+  "newGuardProof": "Stale board version refuses replacement with unchanged header/document revision/nodes/edges",
+  "scope": "Metadata only; preserve read capability/per-tool/privacy filters, no autoexecution, no-host explicit-ID edits and independent create",
+  "localXml": "canvas-prerequisite-red19-xml",
+  "featureAcceptance": "NOT_FROM_RED"
+}
