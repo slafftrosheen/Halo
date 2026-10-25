@@ -379,6 +379,7 @@ class DefaultToolTurnExecutor(
              * whole turn budget.
              */
             if (guard != null && runId != null) {
+                durableRun?.let(guard::synchronizeApprovalWait)
                 val decision = guard.beforeRound()
                 if (decision is RunGuardDecision.Stop) {
                     return stopForGuard(runId, interactionId, requestId, guard, decision)

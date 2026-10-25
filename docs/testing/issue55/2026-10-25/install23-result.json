@@ -1,0 +1,15 @@
+{
+  "completedUtc": "2026-10-25T14:05:40.200411+00:00",
+  "artifacts": [
+    {
+      "artifact": "main",
+      "replacementInstalls": 1,
+      "installedReadbackSha256": "8a342e98d0f5c4869844b4fc40ca828039dcd16280e656cc20e26da24a01e871"
+    },
+    {
+      "artifact": "test",
+      "replacementInstalls": 1,
+      "installedReadbackSha256": "f3289271c17da268b6829eb95436a78082c66e3a999328e2a0f61acd4a399e8f"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "startedUtc": "2026-10-25T14:06:09.176383+00:00",
+  "completedUtc": "2026-10-25T14:09:06.714498+00:00",
+  "cases": [
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "twoHundredPercentListAndPrivacyTargetsStaySeparate",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "stoppedSurfaceDismissesMenuAndResumeDoesNotReplayAnyCallback",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeSwipeUpOpensTheListWithoutInvokingPrimary",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "nativeLongPressOpensDestinationListWithoutCapturing",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "test": "customAccessibilityActionOpensTheSameListWithoutSideEffects",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "renderedWebReadingBlocksBeforeWebViewAndCancelsOnPrivate",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "test": "everyHttpOwnerBlocksPrivateAndDispatchesOnlyCurrentPowerIntent",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "canonicalLauncherFromApplicationContextAdoptsVisibleMiniBeforeItsStop",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniActivityLaunchesAndBackCloses",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "test": "actualMiniExpansionStopsOldHostWithoutReleasingSharedSpeechBoundary",
+      "code": 0,
+      "status": "PASS"
+    },
+    {
+      "class": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+      "test": "realMainActivityRendersWarmAndResumedScreenIntents",
+      "code": -2,
+      "status": "FAIL"
+    },
+    {
+      "class": "com.halo.app.language.PolishLanguageDeviceTest",
+      "test": "polishSwitchAtLargeTextPreservesDraftAndPickerContext",
+      "code": -2,
+      "status": "FAIL"
+    }
+  ],
+  "pass": 3,
+  "fail": 10,
+  "voice": "DEFERRED_USER_REQUEST",
+  "qualification": "BLOCKED_SECURE_KEYGUARD",
+  "environment": {
+    "wakefulness": "Dozing",
+    "screenState": "OFF",
+    "keyguardShowing": true,
+    "keyguardSecure": true,
+    "note": "UI precondition failed. Raw runner failures retained; not classified as new production regressions. No lock bypass attempted."
+  }
+}

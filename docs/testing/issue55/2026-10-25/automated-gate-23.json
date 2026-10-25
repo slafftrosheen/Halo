@@ -1,0 +1,96 @@
+{
+  "checkpoint": 23,
+  "baseCommit": "12bdf94c01edcad0f5f450e88e30e74714bf0021",
+  "productionDiffSha256": "f7363992b713695a19cfd715bad9a90cc458f32f85d8cbf89cff578247d28122",
+  "completedUtc": "2026-10-25T14:18:05.439990+00:00",
+  "fullApp": {
+    "tests": 2052,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "command": "gradlew.bat :app:testDebugUnitTest --max-workers=1 --no-parallel --no-daemon -Dorg.gradle.jvmargs='-Xmx1g -Dfile.encoding=UTF-8' --console=plain",
+    "raw": "all-app-final-23.log",
+    "duration": "12m"
+  },
+  "fullCognition": {
+    "tests": 375,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "raw": "integrated-gate-23-resumed.log",
+    "xmlArchive": "runtime-green23-xml",
+    "note": "Executed successfully before the host memory failure in the separate app task. Cognition production sources unchanged since this pass."
+  },
+  "focusedApp": {
+    "tests": 29,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "raw": "final-recovery-23.log",
+    "note": "Overlaps full app suite; not added as unique tests."
+  },
+  "apkBuild": {
+    "main": "PASS",
+    "instrumentation": "PASS",
+    "raw": "final-recovery-23.log",
+    "duration": "4m58s",
+    "heap": "3g",
+    "workers": 1,
+    "daemon": false
+  },
+  "apks": {
+    "mainSha256": "8a342e98d0f5c4869844b4fc40ca828039dcd16280e656cc20e26da24a01e871",
+    "testSha256": "f3289271c17da268b6829eb95436a78082c66e3a999328e2a0f61acd4a399e8f",
+    "replacementInstalls": 1,
+    "installedReadback": "MATCH_BOTH"
+  },
+  "native": {
+    "rawPass": 3,
+    "rawFail": 10,
+    "cases": 13,
+    "qualification": "BLOCKED_SECURE_KEYGUARD",
+    "note": "Observed Dozing, screen OFF, secure keyguard showing; no lock bypass. Rotation restored. Runner failures retained separately from app qualification.",
+    "details": "native23-result.json"
+  },
+  "cloudApprovalAndStudyRerun": "NOT_RUN_DEVICE_SECURELY_LOCKED",
+  "voice": "DEFERRED_USER_REQUEST_AUTOMATED_ONLY",
+  "attempts": [
+    {
+      "raw": "study-workspace-green-22.log",
+      "status": "29_CASES_28_PASS_1_INITIAL_RESTORE_RED"
+    },
+    {
+      "raw": "approval-recovery-red-23.log",
+      "status": "13_CASES_12_PASS_1_EXPOSURE_RED"
+    },
+    {
+      "raw": "integrated-gate-23.log",
+      "status": "FAIL_COMPILATION_FIELD_NAME_CORRECTED"
+    },
+    {
+      "raw": "integrated-gate-23-retry.log",
+      "status": "INTERRUPTED_NO_RESULT"
+    },
+    {
+      "raw": "integrated-gate-23-resumed.log",
+      "status": "APP_SOURCE_ASSERTION_THEN_HOST_PAGING_EXHAUSTION",
+      "note": "Runtime375 passed; pre-final APKs built but not installed; app run incomplete."
+    },
+    {
+      "raw": "resource-bounded-recovery-23.log",
+      "status": "INTERRUPTED_NO_RESULT"
+    },
+    {
+      "raw": "final-recovery-23.log",
+      "status": "PASS_FOCUSED29_AND_BOTH_APKS"
+    },
+    {
+      "raw": "all-app-final-23.log",
+      "status": "PASS_ALL2052"
+    }
+  ],
+  "policy": "No CI, paid route, permission grant, new sharing acknowledgement, user-data reset, or secure-lock bypass."
+}

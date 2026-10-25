@@ -443,8 +443,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
 
         // Keep Study and Memory accessible from Notebook, without placing two
         // utility rows above Continue (BrandBook Round 2, p.39).
-        // They stay reachable even in Library/search mode.
-        item(key = "notebook-tools") {
+        // Library/search puts these secondary tools after its matching content.
+        if (!showLibrary) item(key = "notebook-tools") {
             NotebookLearningTools(
                 onStudy = onOpenStudy,
                 onMemory = viewModel::openMemoryHub,
@@ -591,6 +591,12 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 )
                 }
             }
+        }
+        if (showLibrary) item(key = "notebook-tools") {
+            NotebookLearningTools(
+                onStudy = onOpenStudy,
+                onMemory = viewModel::openMemoryHub,
+            )
         }
         item(key = "bottom-space") { Spacer(Modifier.height(12.dp)) }
     }

@@ -1,0 +1,23 @@
+# Study source refresh state recovery
+
+Observed phone symptom: reopening the saved greenhouse lesson shows its correct goal and Material count, but “Opening your lesson” persists for more than three minutes. Source review establishes a deterministic candidate independent of an I/O hang; the phone's exact interleaving is not yet instrumented.
+
+StudyViewModel's initial observers and writes use default Main-confined viewModelScope launches. Room, lesson storage and WorkspaceStudySourceResolver suspend for I/O, then resume their caller. The defect is suspension inside a copy argument: refreshSources evaluates the receiver of `mutableUiState.value.copy(sources = study.sourceReferences(session))` before the resolver suspends. A later completion writes that old entire state over a newer completed restore, including loading=true, practice/mastery, session identity or learner input. Main confinement does not prevent this ordering. findInMaterial uses the same suspended-copy pattern.
+
+1. RED only: StudySourceRefreshStateTest uses actual StudyViewModel, real StudyUseCases and in-memory Room, with StandardTestDispatcher-owned Main. CompletableDeferred source results force initial restore and resume refresh to overlap: complete initial loading, project practice/mastery/new input, then complete refresh. Assert loading remains false and newer state remains intact. Separately replace canonical active material while an old refresh is pending, finish a current refresh, and verify the old result cannot revert source/session state. Cover findInMaterial retaining input written during its suspended resolution. Every wait stays bounded at five seconds; no sleep-dependent race or fabricated UI state.
+2. After verified RED, bounded same-owner fix: finish source resolution into a local value before reading/copying the latest UI state. Before applying, ensure the session/source snapshot still matches the request; discard superseded refresh/search results rather than restoring stale source identity. Keep explicit search notice behavior and all existing source/version, permission, model and acceptance guards. No alternate loader, selection authority or repository/runtime changes.
+3. Run the new regression plus existing StudySourcesTest, StudyDraftReviewLayoutTest and StudyDraftCountNoticeTest. Existing acceptance, source/review-event, font/layout and five-second assertions remain. Standard dispatcher fixture passes alone do not close the production race unless the adverse completion order is forced.
+4. Root owns phone validation and publication. Reopen the same owned lesson; confirm loading terminates, correct Material/source identity, practice/mastery, unaccepted draft preview and explicit Keep/Reveal behavior. A separate blocked source/provider I/O issue remains possible if the spinner persists after the state-ordering repair; inspect scoped exceptions and content-free stacks, not private lesson bodies.
+
+Root RED command:
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest --tests com.halo.app.ui.screens.study.StudySourceRefreshStateTest
+```
+
+This batch changes tests and this plan only. No production changes, builds, device actions or commits before root's RED/GREEN decision.
+
+
+Follow-up verification: the original three regressions passed after moving resolution before the latest-state copy and guarding session/request supersession. A fourth adverse-order regression proved the initial restore itself could overwrite a newly selected canonical source after its pending old read completed. The grouped run recorded29 cases,28 passing and that single intended failure. Initial restore now retains the current session/journey and current source projection whenever the captured session or source-read generation was superseded. This repair awaits the final integrated gate; no assertion or timeout was relaxed.
+
+The first integrated attempt found one interaction: a same-session refresh started during restore, but had not yet completed, must not suppress the initial material. Initial restore now seeds its same-session sources when no newer projection exists; an already completed newer projection or a different canonical session remains protected. All four adverse-order cases and25 nearby controls pass in the final29-case recovery gate. The integrated attempt also encountered Windows paging-file exhaustion and retained its raw failure; no timeouts/assertions were weakened. Final APKs were built and replacement-installed with matching base readbacks. UI verification of the new binary is BLOCKED_SECURE_KEYGUARD; do not infer a physical loading PASS from the source gate.

@@ -102,7 +102,40 @@ class AgentRunGuard(
     private var repeatedCalls = 0
     private var lastStop: RunGuardDecision.Stop? = null
 
-    val elapsedMs: Long get() = clock.nowMs() - startedAtMs
+    private var approvedWaitMs = 0L
+
+    /** Only exact durable approval intervals can suspend the active-work clock.
+     * Missing, duplicated or reversed journal boundaries never replenish a budget.
+     */
+    fun synchronizeApprovalWait(run: AgentRun) {
+        if (run.id.value != runId) return
+        val now = clock.nowMs()
+        val intervals = run.steps.filterIsInstance<AgentStep.InputRequested>().mapNotNull { requested ->
+            val approval = requested.input as? AgentInputRequest.Approval ?: return@mapNotNull null
+            if (requested.runId != run.id || approval.runId != run.id || approval.id != requested.requestId) return@mapNotNull null
+            if (run.steps.filterIsInstance<AgentStep.InputRequested>().count { it.requestId == requested.requestId } != 1) return@mapNotNull null
+            val prepared = run.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>().singleOrNull {
+                it.invocationId == approval.invocationId && it.toolId == approval.toolId.value && it.argumentsDigest == approval.argumentsDigest
+            } ?: return@mapNotNull null
+            if (prepared.runId != run.id) return@mapNotNull null
+            val resolved = run.steps.filterIsInstance<AgentStep.InputResolved>().singleOrNull {
+                it.requestId == requested.requestId && it.runId == run.id
+            } ?: return@mapNotNull null
+            val start = maxOf(requested.createdAt.toEpochMilli(), approval.createdAt.toEpochMilli())
+            val end = minOf(resolved.createdAt.toEpochMilli(), approval.expiresAt?.toEpochMilli() ?: Long.MAX_VALUE)
+            if (start < startedAtMs || end < start || end > now) return@mapNotNull null
+            start to end
+        }.sortedBy { it.first }
+        var total = 0L
+        var end = startedAtMs
+        for ((from, to) in intervals) {
+            total += (to - maxOf(from, end)).coerceAtLeast(0L)
+            end = maxOf(end, to)
+        }
+        approvedWaitMs = total
+    }
+
+    val elapsedMs: Long get() = (clock.nowMs() - startedAtMs - approvedWaitMs).coerceAtLeast(0L)
     val remainingMs: Long get() = (limits.maxWallClockMs - elapsedMs).coerceAtLeast(0)
     val currentToolRounds: Int get() = toolRounds
     val uiRepeatLimit: Int get() = limits.maxRepeatedSameUiAction

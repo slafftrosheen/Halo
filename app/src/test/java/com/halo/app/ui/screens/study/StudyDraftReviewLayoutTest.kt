@@ -33,7 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -63,7 +63,7 @@ class StudyDraftReviewLayoutTest {
     @Before fun prepareCoroutineMain() {
         // Match the count-notice fixture: VM Room/Flow continuations have an explicit
         // scheduler, independent of Compose's paused frame dispatcher.
-        Dispatchers.setMain(UnconfinedTestDispatcher(vmScheduler))
+        Dispatchers.setMain(StandardTestDispatcher(vmScheduler))
     }
     @After fun close() {
         try {

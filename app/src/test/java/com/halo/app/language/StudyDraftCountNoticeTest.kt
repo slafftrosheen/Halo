@@ -27,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -53,7 +53,7 @@ class StudyDraftCountNoticeTest {
         // Room writes suspend the VM independently of Compose's frame clock. Match the
         // existing Canvas UI fixture's explicit VM scheduler instead of relying on frames
         // to resume a transaction continuation on Compose's paused main dispatcher.
-        Dispatchers.setMain(UnconfinedTestDispatcher(vmScheduler))
+        Dispatchers.setMain(StandardTestDispatcher(vmScheduler))
     }
     @After fun close() {
         try {

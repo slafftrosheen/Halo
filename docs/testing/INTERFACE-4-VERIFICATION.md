@@ -133,3 +133,10 @@ A narrow Canvas descriptor read-prerequisite repair passed696 app cases and3 nea
 ### Checkpoints20–21 source recovery; device pending
 
 The canonical fresh cognitive caller now admits runs before the existing ALWAYS approval pause; Study exposes draft answers before Keep, preserves explicit accepted-card Reveal, separates mastery from question width and localizes the bounded count receipt. Final expanded app712/0 and runtime367/0 are recorded with both built APKs and retained failed/recovery attempts in the [continued ledger](ISSUE-55-ANDROID-ACCEPTANCE-2026-10-25.md) and [gate](issue55/2026-10-25/automated-gate-20-21.json). ADB was empty; these APKs were not installed, native/phone export and actual Study review remain NOT_RUN. The earlier checkpoint19 edit/cold result does not qualify these new artifacts. KEEP_OPEN.
+
+
+### Checkpoints22–23: phone continuation and verified state recovery
+
+The [continued Android ledger](ISSUE-55-ANDROID-ACCEPTANCE-2026-10-25.md) records the reconnected20–21 APK installation, actual draft preview/Keep/Reveal/cold persistence, and a new real export approval which spent its deadline while waiting. Canonical run guard/exposure recovery, Study suspended-state ordering and Workspace result priority are now repaired. Full app2052/0 and whole cognition375/0 passed, both final APKs built and were installed with matching base readbacks. The29-case focused gate overlaps the app count. Exact source/APK hashes and retained failed/interrupted attempts are in [gate23](issue55/2026-10-25/automated-gate-23.json).
+
+Native23 reported3 raw passes/10 failures while the phone was securely locked with display OFF; UI qualification is BLOCKED_SECURE_KEYGUARD, not PASS. Rotation was restored; no lock bypass or new cloud scenario was attempted. New-binary actual Study/search/export and remaining interface acceptance stay unqualified. Voice is explicitly deferred by the user; publication proceeds without waiting for user verification. #62 remains KEEP_OPEN.

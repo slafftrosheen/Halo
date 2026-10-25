@@ -196,6 +196,7 @@ class StudyViewModel(
         com.halo.app.data.notebook.WorkspaceObjectType.MEDIA, com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)))
         ?: kotlinx.coroutines.flow.flowOf(emptyList())).stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptyList())
     private var materialQuery: String? = null
+    private var sourceReadGeneration = 0L
     private val mutableUiState = MutableStateFlow(StudyUiState())
     val uiState: StateFlow<StudyUiState> = mutableUiState.asStateFlow()
 
@@ -349,6 +350,7 @@ class StudyViewModel(
                 return@launch
             }
             mutableUiState.value = mutableUiState.value.copy(session = session)
+            val restoreGeneration = sourceReadGeneration
             val history = lessons?.load(sessionId).orEmpty()
             val recovery = lessons?.loadRecovery(sessionId)
             val journey = lessons?.loadJourney(sessionId) ?: LearningJourney(
@@ -358,12 +360,16 @@ class StudyViewModel(
             val restoredSources = try { study.sourceReferences(session) }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) { materialUnavailable = true; emptyList() }
-            mutableUiState.value = mutableUiState.value.copy(
+            val current = mutableUiState.value
+            val sameSession = current.session == session
+            mutableUiState.value = current.copy(
                 loading = false,
-                session = session,
-                journey = journey,
-                turns = (history + mutableUiState.value.turns).distinctBy { it.id },
-                sources = restoredSources,
+                journey = if (sameSession) journey else current.journey,
+                turns = (history + current.turns).distinctBy { it.id },
+                // A newer read may still be pending. Seed the same-session material until
+                // it arrives, but never overwrite an already completed newer projection.
+                sources = if (sameSession && (restoreGeneration == sourceReadGeneration || current.sources.isEmpty()))
+                    restoredSources else current.sources,
                 narrationAvailable = study.narrationAvailable,
                 draft = mutableUiState.value.draft.ifBlank { recovery?.draft.orEmpty() },
                 notice = if (recovery?.pendingRequestId != null && history.none { it.id == recovery.pendingRequestId })
@@ -1489,7 +1495,11 @@ class StudyViewModel(
         if (query.isBlank()) return@launch
         materialQuery = query
         cancelTurn("Material focus changed")
-        mutableUiState.value = mutableUiState.value.copy(sources = study.sourceReferences(session, query, includeBeginning = false), notice = "Showing matching text passages; PDFs have no text extractor")
+        val generation = ++sourceReadGeneration
+        val sources = study.sourceReferences(session, query, includeBeginning = false)
+        val current = mutableUiState.value
+        if (generation != sourceReadGeneration || current.session != session) return@launch
+        mutableUiState.value = current.copy(sources = sources, notice = "Showing matching text passages; PDFs have no text extractor")
     }
     fun continueWithCurrentSources() {
         val expected = semanticDispatchSession
@@ -1543,7 +1553,11 @@ class StudyViewModel(
 
     fun refreshSources() = viewModelScope.launch {
         val session = mutableUiState.value.session ?: return@launch
-        mutableUiState.value = mutableUiState.value.copy(sources = study.sourceReferences(session))
+        val generation = ++sourceReadGeneration
+        val sources = study.sourceReferences(session)
+        val current = mutableUiState.value
+        if (generation != sourceReadGeneration || current.session != session) return@launch
+        mutableUiState.value = current.copy(sources = sources)
     }
 
     fun saveSummaryToNotebook(): Job {

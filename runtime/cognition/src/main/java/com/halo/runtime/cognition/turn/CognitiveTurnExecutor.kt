@@ -96,6 +96,7 @@ class CognitiveTurnExecutor(
                 providerId = target.providerId, modelId = target.modelId), target)
         }
         if (guard != null) {
+            durable?.let(guard::synchronizeApprovalWait)
             if (durable?.parentRunId != null && durable.steps.count { it is AgentStep.ProviderTurnStarted } >
                 com.halo.runtime.cognition.agent.AgentRunLimits.DELEGATED.maxToolRounds + 1) {
                 return stopped(RunGuardDecision.Stop(com.halo.runtime.cognition.agent.RunGuardReason.TOO_MANY_TOOL_ROUNDS,
@@ -382,6 +383,33 @@ class CognitiveTurnExecutor(
              */
             var exposure: ToolExposureSet = prepared.toolExposure ?: ToolExposureSet()
             var activatedSkills: Set<com.halo.sdk.runtime.skills.SkillId> = emptySet()
+            if (pendingResponse != null && toolExposurePlanner != null && turn.delegatedInput == null) {
+                // Resume prepares bootstrap schemas afresh. Recover only unresolved declarations
+                // actually offered for the original provider turn, through today's normal gates.
+                val journal = recoveryRun?.steps.orEmpty()
+                val originalOffer = journal.filterIsInstance<AgentStep.ProviderTurnStarted>()
+                    .singleOrNull { it.turnId == pendingResponse.turnId }?.exposedToolIds.orEmpty()
+                val pendingIds = pendingResponse.toolCalls.filter { call ->
+                    call.toolName in originalOffer && journal.none { step -> when (step) {
+                        is AgentStep.ToolOutcomeRecorded -> step.toolCallId == call.toolCallId
+                        is AgentStep.ToolRejected -> step.toolCallId == call.toolCallId
+                        is AgentStep.ToolCompleted -> step.toolCallId == call.toolCallId
+                        is AgentStep.ToolFailed -> step.toolCallId == call.toolCallId
+                        else -> false
+                    } }
+                }.map { it.toolName }
+                val exposureContext = ToolExposureContext(
+                    enabledSkillIds = toolExposurePlanner.enabledSkillIds(),
+                    policy = turn.policy,
+                    mode = prepared.toolExposureMode,
+                    isLocalTarget = currentTarget.model.executionLocation == AiExecutionLocation.ON_DEVICE,
+                )
+                exposure = toolExposurePlanner.expand(exposure, pendingIds, toolExposureGate,
+                    exposureContext, prepared.localToolPolicy)
+                currentContext = currentContext.copy(availableTools = toolExposurePlanner.effectiveDefinitions(
+                    exposure, localPolicy = prepared.localToolPolicy, gate = toolExposureGate,
+                    exposureContext = exposureContext))
+            }
             trace(
                 "TOOL_EXPOSURE_INITIAL",
                 listOf(
@@ -402,6 +430,7 @@ class CognitiveTurnExecutor(
                  */
                 if (durableRunId != null && runGuards != null) {
                     val guard = runGuards.guardFor(durableRunId, turn.interactionId)
+                    agentRunStore?.get(durableRunId)?.let(guard::synchronizeApprovalWait)
                     val decision = guard.beforeRound()
                     if (decision is RunGuardDecision.Stop) {
                         agentRunCoordinator?.recordStep(guard.toJournalStep(decision))

@@ -1,0 +1,60 @@
+{
+  "checkpoint": 22,
+  "baseCommit": "12bdf94c01edcad0f5f450e88e30e74714bf0021",
+  "device": "Redmi 23124RA7EO / Android 15 API35",
+  "installedMainSha256": "52e714c681d71c651603898032f87097701567c35677cbeef85042b8289993e9",
+  "installedTestSha256": "0a51b95af2c04cb2402d3e2de2ea262e428bef99bf9fe26d93a08f73b83f483e",
+  "voice": "DEFERRED_USER_REQUEST",
+  "baselineAllApp": {
+    "tests": 2045,
+    "passed": 2044,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "failure": "StudyDraftReviewLayoutTest.russianPhone393QuestionAndMasteryHaveSeparateReadableBands: loading/practice/mastery initialization wait",
+    "raw": "all-app-baseline-22.log"
+  },
+  "nativeInitial": {
+    "passed": 11,
+    "failed": 2,
+    "interference": "Restored synthetic Canvas export approval covered Workspace; own old request declined without execution",
+    "unchangedAffectedRepeatPassed": 2,
+    "fullThirteenRepeat": "NOT_RUN"
+  },
+  "export": {
+    "status": "FAIL_ANDROID_OWNED",
+    "interactionId": "e5959fa4-60e9-49e1-a9d6-cbef5b603ab4",
+    "runId": "a79b6788-2861-47f5-821b-d74a806e06d7",
+    "provider": "openrouter",
+    "model": "nvidia/nemotron-3.5-lightning:free",
+    "endpointZeroPricingChecked": true,
+    "providerResponses": 3,
+    "approvalWaitSecondsApprox": 81,
+    "elapsedReportedMs": 95936,
+    "failure": "DEADLINE_EXCEEDED: durable approval wait consumed interactive budget",
+    "confirmedExportEffect": false,
+    "followUp": "Bootstrap-only resume also loses pending export exposure; fresh policy must still apply."
+  },
+  "study": {
+    "source": "Synthetic 196-byte greenhouse TXT fixture",
+    "drafts": 3,
+    "draftOnePreview": "PASS: grounded 6 x 8 = 48 answer visible before Keep",
+    "keepReveal": "PASS: own first card kept; answer hidden until explicit Reveal; then answer and grading choices visible; no grade submitted",
+    "coldRestart": "PASS: same first card offers practice rather than draft Keep, lesson remains three cards and one material",
+    "loading": "FAIL_INTERMITTENT: initial opening stuck >3 minutes; reentry later loaded; deterministic suspended-copy regression reproduces state loss",
+    "localization": "OPEN: mastery metadata remains English in RU; source locator also English"
+  },
+  "sourceRegressionRed": {
+    "tests": 28,
+    "passed": 24,
+    "failed": 4,
+    "errors": 0,
+    "failures": [
+      "Study source refresh: loading restored",
+      "Study source refresh: old session/source restored",
+      "Study source search: newer learner draft lost",
+      "Workspace: tools before matching results"
+    ],
+    "raw": "study-workspace-red-22.log"
+  }
+}
