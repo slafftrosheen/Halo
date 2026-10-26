@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_library_batch_changed">Atlasītie avoti nav pieejami vai ir mainījušies. Pirms atkārtošanas atjauniniet bibliotēku.</string>
+    <string name="interface4_appearance_rollback_unknown">Neizdevās apstiprināt iepriekšējā izskata atjaunošanu. Saglabātās izvēles var būt mainījušās. Vēlreiz nospiediet “Lietot”.</string>
+    <string name="interface4_library_batch_updated">Atjaunināts: %1$d.</string>
+    <string name="interface4_library_batch_restored">Atjaunots: %1$d.</string>
+    <string name="interface4_library_batch_context">Pievienots sarunas kontekstam: %1$d. Halo izmanto līdz 20 nesenākajiem vienumiem konteksta limita ietvaros.</string>
+    <string name="interface4_library_batch_partial">Pabeigts: %1$d. Bez izmaiņām: %2$d. Nav apstiprināts: %3$d. Pirms atkārtošanas pārskatiet pašreizējo stāvokli.</string>
+</resources>

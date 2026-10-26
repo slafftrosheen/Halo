@@ -1,18 +1,30 @@
 {
   "id": "halo.library",
   "name": "Current Workspace Library",
-  "description": "Use the attached Library view and approved favorites/collection operations through its native owners. Local inference only.",
+  "description": "Use the attached Library view, organization and approved exact-selection lifecycle/context/Undo operations through native owners. Local inference only.",
   "schemaVersion": 2,
   "category": "WORKSPACE",
-  "risk": "SENSITIVE",
+  "risk": "DESTRUCTIVE",
   "requiredPermissions": [],
   "tools": [
+    "halo_library_apply_batch",
+    "halo_library_batch",
     "halo_library_organization",
     "halo_library_organize",
     "halo_library_set_view",
     "halo_library_view"
   ],
   "toolDefinitions": [
+    {
+      "toolId": "halo_library_apply_batch",
+      "risk": "DESTRUCTIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_batch",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
     {
       "toolId": "halo_library_organization",
       "risk": "READ_ONLY",

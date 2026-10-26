@@ -108,6 +108,7 @@ class NotebookViewModel(
     private val study: StudyUseCases? = null,
     private val personalLearning: PersonalLearningRepository? = null,
     private val conversationStore: com.halo.app.data.RoomConversationStore? = null,
+    private val batchOwner: NotebookLibraryBatchOwner? = null,
 ) : ViewModel() {
     private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
         study?.observeActiveSessions() ?: flowOf(emptyList())
@@ -129,6 +130,8 @@ class NotebookViewModel(
     val selectedIds: StateFlow<Set<String>> = selection
     private val mutableNotice = MutableStateFlow<String?>(null)
     val notice: StateFlow<String?> = mutableNotice
+    private val mutableBatchNotice = MutableStateFlow<NotebookBatchReceipt?>(null)
+    val batchNotice: StateFlow<NotebookBatchReceipt?> = mutableBatchNotice.asStateFlow()
     // Only the last successful Trash batch is undoable here. The existing
     // Workspace lifecycle repository remains the single source of truth.
     private val mutableTrashUndoIds = MutableStateFlow<Set<String>>(emptySet())
@@ -312,99 +315,113 @@ class NotebookViewModel(
         return true
     }
 
-    fun clearNotice() { mutableNotice.value = null }
-    fun dismissTrashUndo() { if (!mutating.value) mutableTrashUndoIds.value = emptySet() }
+    private fun postNotice(value: String?) { mutableBatchNotice.value = null; mutableNotice.value = value }
+    fun clearNotice() { postNotice(null) }
+    fun dismissTrashUndo() { if (!mutating.value) { libraryRevision++; lastTrashSources = emptyList(); mutableTrashUndoIds.value = emptySet() } }
     fun toggleSelection(id: String) { libraryRevision++;
         if (mutating.value) return
         if (id in selection.value) selection.value = selection.value - id
         else if (selection.value.size < 100) selection.value = selection.value + id
-        else mutableNotice.value = "Select up to 100 items at a time."
+        else postNotice("Select up to 100 items at a time.")
     }
     fun selectVisible() { libraryRevision++;
         selection.value = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.take(100).toSet()
     }
-    fun applyToSelection(action: NotebookBatchAction, collectionId: String? = null) = viewModelScope.launch {
-        if (mutating.value) return@launch
-        val ids = selection.value.toList()
-        if (ids.isEmpty() || (action == NotebookBatchAction.COLLECTION && collectionId == null)) return@launch
-        mutating.value = true
-        // An intervening batch invalidates the previous one-click Undo target.
-        mutableTrashUndoIds.value = emptySet()
-        var completed = 0
-        val failed = mutableSetOf<String>()
-        val movedToTrash = mutableSetOf<String>()
+    private var lastTrashSources = emptyList<NotebookBatchSource>()
+
+    internal suspend fun prepareLibraryBatch(action: NotebookBatchAction, collectionId: String? = null,
+        undo: Boolean = false): NotebookBatchAdmission? {
+        val owner = batchOwner ?: return null
+        val before = libraryView()
+        if (!before.settled || before.mutating) return null
+        val ids = if (undo) lastTrashSources.map { it.objectId } else before.selection.toList()
+        if (ids.isEmpty() || ids.size > 100 || (undo && action != NotebookBatchAction.RESTORE)) return null
+        if (!undo && !before.rendered.items.map { it.objectRef.id.value }.containsAll(ids)) return null
+        if ((action == NotebookBatchAction.COLLECTION) != (collectionId != null)) return null
         try {
-            for (id in ids) {
-                try {
-                    val item = workspace.getObject(id) ?: error("Item unavailable")
-                    when (action) {
-                        NotebookBatchAction.CONTEXT -> {
-                            require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE)
-                            workspace.select(id)
-                        }
-                        NotebookBatchAction.COLLECTION -> check(organization.setMembership(collectionId!!, id, true))
-                        NotebookBatchAction.ARCHIVE -> workspace.archive(id)
-                        NotebookBatchAction.TRASH -> {
-                            check(item.lifecycle != WorkspaceObjectLifecycle.TRASHED) {
-                                "Already in Trash"
-                            }
-                            if (item.type == WorkspaceObjectType.CONVERSATION && conversationStore != null) {
-                                check(conversationStore.trashSavedConversation(id))
-                            } else workspace.trash(id)
-                            movedToTrash += id
-                        }
-                        NotebookBatchAction.RESTORE -> {
-                            if (item.type == WorkspaceObjectType.CONVERSATION &&
-                                conversationStore != null && item.lifecycle == WorkspaceObjectLifecycle.TRASHED)
-                                check(conversationStore.restoreSavedConversation(id))
-                            else workspace.restore(id)
-                        }
-                    }
-                    completed++
-                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                catch (_: Exception) { failed += id }
+            val collectionVersion = collectionId?.let { owner.collectionVersion(it) ?: return null }
+            val memberships = if (collectionId == null) emptyMap() else ids.associateWith { owner.membership(collectionId, it) }
+            val unavailable = linkedSetOf<String>()
+            val sources = if (undo) lastTrashSources.toList() else ids.mapNotNull { id ->
+                val source = try { owner.capture(id) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+                if (source == null) unavailable += id
+                source
             }
-            selection.value = failed
-            if (action == NotebookBatchAction.TRASH) mutableTrashUndoIds.value = movedToTrash
-            mutableNotice.value = if (failed.isEmpty()) { if (action == NotebookBatchAction.CONTEXT) "$completed items added to context; Halo uses up to 20 recent items within its context budget." else "$completed items updated" } else "$completed items updated; ${failed.size} could not be changed and remain selected."
-        } finally { mutating.value = false }
+            if (libraryView() != before || (undo && sources != lastTrashSources)) return null
+            return NotebookBatchAdmission(action, sources, collectionId, collectionVersion, undo, memberships, unavailable)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            postNotice(NOTEBOOK_BATCH_SOURCES_CHANGED)
+            return null
+        }
     }
-    /** Undo only items actually moved in the last completed Trash batch.
-     * Already-removed or otherwise changed objects are never silently recreated.
-     * Failed restores remain individually retryable until another batch begins.
-     */
-    fun undoLastTrash() = viewModelScope.launch {
-        if (mutating.value) return@launch
-        val ids = mutableTrashUndoIds.value
-        if (ids.isEmpty()) return@launch
+
+    /** Shared by touch and typed tools. No launched work or optimistic all-or-nothing receipt. */
+    internal suspend fun applyLibraryBatch(admission: NotebookBatchAdmission,
+        isStillAdmitted: suspend () -> Boolean = { true }): NotebookBatchReceipt? {
+        val owner = batchOwner ?: return null
+        if (mutating.value || !isStillAdmitted()) return null
+        if (admission.undo) {
+            if (lastTrashSources != admission.sources) return null
+        } else if (selection.value != admission.sources.map { it.objectId }.toSet() + admission.unavailableIds) return null
+        postNotice(null)
         mutating.value = true
-        val failed = mutableSetOf<String>()
-        var restored = 0
+        val successful = linkedSetOf<String>()
+        val failed = linkedSetOf<String>().apply { addAll(admission.unavailableIds) }
+        val unknown = linkedSetOf<String>()
+        val trashed = mutableListOf<NotebookBatchSource>()
+        val priorUndo = lastTrashSources
+        val selectionAtAdmission = selection.value.toSet()
+        if (!admission.undo) { lastTrashSources = emptyList(); mutableTrashUndoIds.value = emptySet() }
         try {
-            for (id in ids) {
+            for (source in admission.sources) {
                 try {
-                    val item = workspace.getObject(id)
-                    check(item?.lifecycle == WorkspaceObjectLifecycle.TRASHED) {
-                        "Item can no longer be restored from Trash"
-                    }
-                    if (item.type == WorkspaceObjectType.CONVERSATION && conversationStore != null)
-                        check(conversationStore.restoreSavedConversation(id))
-                    else workspace.restore(id)
-                    restored++
+                    val after = owner.apply(source, admission, isStillAdmitted)
+                    successful += source.objectId
+                    if (admission.action == NotebookBatchAction.TRASH) trashed += after
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                catch (_: Exception) { failed += id }
+                catch (_: NotebookBatchRefused) { failed += source.objectId }
+                catch (_: com.halo.app.data.SavedChatAdmissionException) { failed += source.objectId }
+                catch (_: Exception) { unknown += source.objectId }
             }
-            mutableTrashUndoIds.value = failed
-            mutableNotice.value = if (failed.isEmpty()) {
-                "$restored items restored"
-            } else {
-                "$restored items restored; ${failed.size} could not be restored."
-            }
+            mutableNotice.value = if (failed.isEmpty() && unknown.isEmpty()) {
+                if (admission.action == NotebookBatchAction.CONTEXT)
+                    "${successful.size} items added to context; Halo uses up to 20 recent items within its context budget."
+                else "${successful.size} items updated"
+            } else "${successful.size} items updated; ${failed.size} unchanged; ${unknown.size} outcomes unconfirmed. Review current state before retrying."
+            val receipt = NotebookBatchReceipt(admission.action, successful.toSet(), failed.toSet(), unknown.toSet(),
+                if (admission.undo) priorUndo.any { it.objectId !in successful } else trashed.isNotEmpty())
+            mutableBatchNotice.value = receipt
+            return receipt
         } finally {
+            // Also retain the exact committed prefix when cancellation interrupts a later item.
+            lastTrashSources = if (admission.undo) priorUndo.filterNot { it.objectId in successful } else trashed
+            mutableTrashUndoIds.value = lastTrashSources.map { it.objectId }.toSet()
+            // Unattempted objects stay selected after cancellation; confirmed successes never do.
+            // A newer explicit user selection remains authoritative if the lease was changed.
+            if (!admission.undo && selection.value == selectionAtAdmission)
+                selection.value = admission.sources.map { it.objectId }.toSet() + admission.unavailableIds - successful
             mutating.value = false
         }
     }
 
+    fun applyToSelection(action: NotebookBatchAction, collectionId: String? = null) = viewModelScope.launch {
+        val before = libraryView()
+        val admission = prepareLibraryBatch(action, collectionId) ?: return@launch
+        applyLibraryBatch(admission) {
+            val current = libraryView()
+            current.ownerRevision == before.ownerRevision && current.selection == before.selection
+        }
+    }
+
+    /** Exact post-Trash identities, not the current selection or every object currently in Trash. */
+    fun undoLastTrash() = viewModelScope.launch {
+        val before = libraryView()
+        val admission = prepareLibraryBatch(NotebookBatchAction.RESTORE, undo = true) ?: return@launch
+        applyLibraryBatch(admission) { libraryView().ownerRevision == before.ownerRevision }
+    }
     fun startStudy(objectId: String) {
         // NB01/S02: opening Study is not permission to start inference.
         // The source is selected in the four-step lesson wizard; local/cloud
@@ -517,14 +534,14 @@ class NotebookViewModel(
     fun deletePermanently(id: String) = viewModelScope.launch {
         try {
             val result = notes.purgeNote(id, includeRecovery = true)
-            mutableNotice.value = when {
+            postNotice(when {
                 result !is com.halo.app.data.notebook.NotebookPurgeResult.Saved || result.receipt.sourcePresent -> "The note could not be deleted. Try again."
                 result.receipt.record.state == "COMPLETE" && result.receipt.record.sharedRetained == 0 -> "Note deleted."
                 result.receipt.record.state == "COMPLETE" -> "Note deleted. Shared attachment files were kept."
                 result.receipt.record.state == "PENDING" -> "Note deleted. Attachment cleanup is still pending."
                 else -> "Note deleted. Some attachments could not be removed."
-            }
+            })
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-        catch (_: Exception) { mutableNotice.value = "Deletion could not be confirmed. Check Trash before trying again." }
+        catch (_: Exception) { postNotice("Deletion could not be confirmed. Check Trash before trying again.") }
     }
 }

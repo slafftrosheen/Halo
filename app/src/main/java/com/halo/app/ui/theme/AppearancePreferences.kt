@@ -7,6 +7,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -38,10 +41,14 @@ class AppearancePreferences(
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
     private val writes = Mutex()
+    private val modeMutations = Any()
     private val mutationGeneration = AtomicLong(0L)
 
     private val mutableMode = MutableStateFlow(AppearanceMode.SYSTEM)
     val mode: StateFlow<AppearanceMode> = mutableMode.asStateFlow()
+    private val mutableApplyUncertain = MutableStateFlow(false)
+    /** Process-owned recovery truth survives a cancelled/disposed Appearance screen. */
+    val applyUncertain: StateFlow<Boolean> = mutableApplyUncertain.asStateFlow()
     private val shortcutGeneration = AtomicLong(0L)
     private val mutableOrbShortcuts = MutableStateFlow(com.halo.app.ui.presence.HaloOrbShortcut.defaults)
     val orbShortcuts: StateFlow<Set<com.halo.app.ui.presence.HaloOrbShortcut>> = mutableOrbShortcuts.asStateFlow()
@@ -78,8 +85,11 @@ class AppearancePreferences(
         // The initial SYSTEM value is only a placeholder until disk has loaded.
         if (initialLoad.isCompleted && mutableMode.value == mode) return
 
-        val generation = mutationGeneration.incrementAndGet()
-        mutableMode.value = mode
+        val generation = synchronized(modeMutations) {
+            val next = mutationGeneration.incrementAndGet()
+            mutableMode.value = mode
+            next
+        }
 
         persistenceJob = scope.launch {
             writes.withLock {
@@ -100,18 +110,76 @@ class AppearancePreferences(
         initialLoad.await()
         writes.withLock {
             check(preferences().edit().putString(KEY_MODE, mode.name).commit()) { "Could not persist Halo appearance mode" }
-            mutationGeneration.incrementAndGet()
-            mutableMode.value = mode
+            synchronized(modeMutations) {
+                mutationGeneration.incrementAndGet()
+                mutableMode.value = mode
+            }
             com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(appContext)
         }
     }
 
+    /** Compensating transaction across the existing mode/palette stores, not cross-store atomicity.
+     * Both owner write locks cover disk snapshots, writes and rollback. Mode/palette state
+     * stays at its previous snapshot on failure; newer optimistic selections keep their
+     * generation and queued write, and are never overwritten by compensation.
+     */
+    suspend fun applyAppearancePersisted(
+        expectedMode: AppearanceMode,
+        requestedMode: AppearanceMode,
+        palettes: PalettePreferences,
+        expectedPalettes: HaloPalettes,
+        requestedPalettes: HaloPalettes,
+    ) = withContext(ioDispatcher) {
+        initialLoad.await()
+        writes.withLock {
+            val originalDisk = preferences().getString(KEY_MODE, null)
+            val before = synchronized(modeMutations) {
+                check(mutableMode.value == expectedMode) { "Appearance changed; review the current choices" }
+                mutationGeneration.get()
+            }
+            var attempted = false
+            try {
+                palettes.applyWithModePersisted(expectedPalettes, requestedPalettes,
+                    writeMode = {
+                        currentCoroutineContext().ensureActive()
+                        synchronized(modeMutations) {
+                            check(mutationGeneration.get() == before) { "Appearance changed during Apply" }
+                        }
+                        attempted = true
+                        check(preferences().edit().putString(KEY_MODE, requestedMode.name).commit()) {
+                            "Could not persist Halo appearance mode"
+                        }
+                        currentCoroutineContext().ensureActive()
+                    },
+                    publishMode = {
+                        synchronized(modeMutations) {
+                            check(mutationGeneration.get() == before) { "Appearance changed during Apply" }
+                            mutationGeneration.incrementAndGet()
+                            mutableMode.value = requestedMode
+                        }
+                    })
+            } catch (failure: Exception) {
+                val modeRestored = !attempted || withContext(NonCancellable) {
+                    runCatching { preferences().edit().putString(KEY_MODE, originalDisk).commit() }.getOrDefault(false)
+                }
+                val uncertain = !modeRestored || (failure as? AppearanceApplyException)?.rollbackUncertain == true
+                if (uncertain) {
+                    mutableApplyUncertain.value = true
+                    throw AppearanceApplyException(rollbackUncertain = true, cause = failure)
+                }
+                throw failure
+            }
+            mutableApplyUncertain.value = false
+        }
+        com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(appContext)
+    }
+
     suspend fun reloadFromDisk() {
-        val generation = mutationGeneration.incrementAndGet()
+        val generation = synchronized(modeMutations) { mutationGeneration.incrementAndGet() }
         val shortcutReload = shortcutGeneration.incrementAndGet()
-        val restored = withContext(ioDispatcher) { readModeFromDisk() }
-        if (mutationGeneration.get() == generation) {
-            mutableMode.value = restored
+        val restored = withContext(ioDispatcher) { writes.withLock { readModeFromDisk() } }
+        synchronized(modeMutations) {
+            if (mutationGeneration.get() == generation) mutableMode.value = restored
         }
         val restoredShortcuts = withContext(ioDispatcher) {
             com.halo.app.ui.presence.HaloOrbShortcut.decode(preferences().getStringSet(KEY_ORB_SHORTCUTS, null))

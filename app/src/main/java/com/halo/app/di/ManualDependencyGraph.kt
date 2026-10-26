@@ -1060,6 +1060,7 @@ object ManualDependencyGraph {
                 },
                 com.halo.app.di.tools.host.NotebookLibraryTools(notebookLibrarySession),
                 com.halo.app.di.tools.host.NotebookOrganizationTools(notebookLibrarySession),
+                com.halo.app.di.tools.host.NotebookBatchTools(notebookLibrarySession),
                 com.halo.app.di.tools.host.SavedChatTools(conversationStore,
                     canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
                     openDetail = { id, version ->
@@ -1853,6 +1854,8 @@ object ManualDependencyGraph {
             study = studyUseCases,
             personalLearning = personalLearning,
             conversationStore = conversationStore,
+            batchOwner = com.halo.app.ui.screens.notebook.NotebookLibraryBatchOwner(
+                appDatabase, workspaceUseCases, notebookOrganizationRepository, conversationStore),
         )
     }
     val devicesViewModel by lazy {

@@ -219,7 +219,10 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
         TextButton(onClick = { menu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(uiText(hint), style = MaterialTheme.typography.labelSmall)
         }
-        if (zoneOwned) BoxWithConstraints(Modifier.fillMaxWidth()) {
+        if (zoneOwned && LocalShellOrbitalLayout.current) Box(Modifier.fillMaxWidth().height(184.dp)) {
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 68.dp)) { drawFace() }
+            drawMenu(Modifier.align(Alignment.BottomEnd))
+        } else if (zoneOwned) BoxWithConstraints(Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
                 if (this@BoxWithConstraints.maxWidth >= size + 96.dp) Spacer(Modifier.width(48.dp))

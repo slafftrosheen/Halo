@@ -38,6 +38,18 @@ class PalettePreferencesTest {
         assertEquals(HaloPalette(HaloAccent.CORAL, HaloTone.COOL), preferences.state.value.dark)
         assertEquals(HaloPalette(HaloAccent.BLUE, HaloTone.WARM), preferences.state.value.light)
     }
+    @Test fun `apply acknowledges and restores both independent drafts`() = runBlocking {
+        val preferences = PalettePreferences(context)
+        val selected = HaloPalettes(
+            light = HaloPalette(HaloAccent.SAGE, HaloTone.PAPER, HaloBackgroundStyle.MIST),
+            dark = HaloPalette(HaloAccent.ROSE, HaloTone.SLATE, HaloBackgroundStyle.STILL))
+        preferences.selectPalettesPersisted(selected)
+        assertEquals(selected, preferences.state.value)
+        val restored = PalettePreferences(context)
+        restored.awaitReady()
+        assertEquals(selected, restored.state.value)
+    }
+
     @Test fun `unknown stored choices fall back to readable defaults`() = runBlocking {
         context.getSharedPreferences("halo_palettes", Context.MODE_PRIVATE).edit().putString("dark.accent", "broken").putString("light.tone", "broken").commit()
         val preferences = PalettePreferences(context)

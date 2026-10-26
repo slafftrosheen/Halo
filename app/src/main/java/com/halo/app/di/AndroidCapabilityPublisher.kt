@@ -146,6 +146,8 @@ class AndroidCapabilityPublisher(
                 "Read or change an attached Library view. Support does not mean a current view or selection is available.", ToolCategory.WORKSPACE, true),
             capability("host.assistant.library_organization", "Organize Library objects",
                 "Request approved, versioned favorites and collection changes through the existing Room owner. No content or lifecycle rewrite.", ToolCategory.WORKSPACE, true),
+            capability("host.assistant.library_batch", "Change selected Library items",
+                "Prepare exact selected-source versions and request approved context, membership, lifecycle or last-Trash Undo through native owners. Local foreground grown-up only.", ToolCategory.WORKSPACE, true),
             capability("host.saved_chats", "Review saved chats",
                 "Approved local saved-history access and guarded lifecycle changes; no remote history disclosure or automatic continuation.", ToolCategory.WORKSPACE, true),
             capability("host.assistant.mcp_settings", "Manage existing tool server settings",

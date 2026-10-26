@@ -671,6 +671,8 @@ object HaloToolDescriptors {
             com.halo.app.di.tools.host.NotebookLibraryTools.descriptor(definition)
         in com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES ->
             com.halo.app.di.tools.host.NotebookOrganizationTools.descriptor(definition)
+        in com.halo.app.di.tools.host.NotebookBatchTools.NAMES ->
+            com.halo.app.di.tools.host.NotebookBatchTools.descriptor(definition)
         in com.halo.app.di.tools.host.SavedChatTools.names -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             ToolSecurityPolicy(
                 if (definition.name in setOf("halo_saved_chat_trash", "halo_saved_chat_restore")) ToolRiskClass.DESTRUCTIVE else ToolRiskClass.SENSITIVE,

@@ -17,8 +17,9 @@ class PersonalConfigurationPolicyTest {
     @Test fun personalMetadataRequiresItsDeclaredDisclosureRegardlessOfCategory() {
         val gate = DefaultToolExposureGate()
         val names = PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current"
-        assertEquals(70, names.size)
+        assertEquals(72, names.size)
         val localOnly = PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats
+        assertTrue(localOnly.containsAll(setOf("halo_library_batch", "halo_library_apply_batch")))
         names.forEach { name ->
             val denied = gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
                 policy = AiContextPolicy(allowCloudWorkspace = false, allowCloudScreenContext = true)))

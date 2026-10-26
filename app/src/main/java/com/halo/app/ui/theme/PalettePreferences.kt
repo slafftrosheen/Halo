@@ -22,6 +22,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     private val context = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val writes = Mutex()
+    private val mutations = Any()
     private val generations = arrayOf(AtomicLong(), AtomicLong())
     private val mutable = MutableStateFlow(HaloPalettes())
     val state = mutable.asStateFlow()
@@ -41,8 +42,11 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     private var lastWrite: Job? = null
     fun select(dark: Boolean, palette: HaloPalette) {
         val index = if (dark) 1 else 0
-        val generation = generations[index].incrementAndGet()
-        mutable.update { if (dark) it.copy(dark = palette) else it.copy(light = palette) }
+        val generation = synchronized(mutations) {
+            val next = generations[index].incrementAndGet()
+            mutable.update { if (dark) it.copy(dark = palette) else it.copy(light = palette) }
+            next
+        }
         lastWrite = scope.launch {
             loaded.await()
             writes.withLock {
@@ -62,10 +66,97 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
             check(disk().edit().putString("$prefix.accent", palette.accent.name)
                 .putString("$prefix.tone", palette.tone.name)
                 .putString("$prefix.background", palette.background.name).commit()) { "Could not save appearance" }
-            generations[if (dark) 1 else 0].incrementAndGet()
-            mutable.update { if (dark) it.copy(dark = palette) else it.copy(light = palette) }
+            synchronized(mutations) {
+                generations[if (dark) 1 else 0].incrementAndGet()
+                mutable.update { if (dark) it.copy(dark = palette) else it.copy(light = palette) }
+            }
             com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(context)
         }
     }
+    /** Apply both local light/dark drafts in a single palette-owner disk transaction. */
+    suspend fun selectPalettesPersisted(palettes: HaloPalettes) = withContext(scope.coroutineContext.minusKey(Job)) {
+        loaded.await()
+        writes.withLock {
+            val editor = disk().edit()
+            listOf("light" to palettes.light, "dark" to palettes.dark).forEach { (prefix, palette) ->
+                editor.putString("$prefix.accent", palette.accent.name)
+                    .putString("$prefix.tone", palette.tone.name)
+                    .putString("$prefix.background", palette.background.name)
+            }
+            check(editor.commit()) { "Could not save appearance" }
+            synchronized(mutations) {
+                generations.forEach { it.incrementAndGet() }
+                mutable.value = palettes
+            }
+            com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(context)
+        }
+    }
+
+    /** Called by the mode owner on IO, with its write lock held (mode -> palettes lock order).
+     * No preview state is published until both disk writes and concurrency checks succeed.
+     * Optimistic select() calls can still arrive: their generations abort this Apply and
+     * their queued durable writes run after compensation releases this lock.
+     */
+    internal suspend fun applyWithModePersisted(
+        expected: HaloPalettes,
+        requested: HaloPalettes,
+        writeMode: suspend () -> Unit,
+        publishMode: () -> Unit,
+    ) {
+        loaded.await()
+        writes.withLock {
+            val originalDisk = diskSnapshot()
+            val before = synchronized(mutations) {
+                check(mutable.value == expected) { "Appearance changed; review the current choices" }
+                generations.map { it.get() }
+            }
+            var attempted = false
+            try {
+                currentCoroutineContext().ensureActive()
+                attempted = true // commit(false) or an exception can still leave storage uncertain.
+                check(writePair(requested)) { "Could not save appearance" }
+                writeMode()
+                currentCoroutineContext().ensureActive()
+                synchronized(mutations) {
+                    check(generations.map { it.get() } == before) { "Appearance changed during Apply" }
+                    publishMode() // Checks its own generation before changing either published snapshot.
+                    generations.forEach { it.incrementAndGet() }
+                    mutable.value = requested
+                }
+            } catch (failure: Exception) {
+                if (attempted) {
+                    val restored = withContext(NonCancellable) { runCatching { restoreSnapshot(originalDisk) }.getOrDefault(false) }
+                    if (!restored) throw AppearanceApplyException(rollbackUncertain = true, cause = failure)
+                }
+                throw failure
+            }
+        }
+    }
+
+    private fun diskSnapshot(): Map<String, String?> = buildMap {
+        listOf("light", "dark").forEach { prefix ->
+            listOf("accent", "tone", "background").forEach { field ->
+                val key = "$prefix.$field"
+                put(key, disk().getString(key, null))
+            }
+        }
+    }
+
+    private fun restoreSnapshot(snapshot: Map<String, String?>): Boolean {
+        val editor = disk().edit()
+        snapshot.forEach { (key, value) -> editor.putString(key, value) }
+        return editor.commit()
+    }
+
+    private fun writePair(palettes: HaloPalettes): Boolean {
+        val editor = disk().edit()
+        listOf("light" to palettes.light, "dark" to palettes.dark).forEach { (prefix, palette) ->
+            editor.putString("$prefix.accent", palette.accent.name)
+                .putString("$prefix.tone", palette.tone.name)
+                .putString("$prefix.background", palette.background.name)
+        }
+        return editor.commit()
+    }
+
     internal suspend fun awaitReady() { loaded.await(); scope.coroutineContext[Job]?.children?.toList()?.forEach { it.join() } }
 }

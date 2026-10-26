@@ -76,6 +76,14 @@ class SettingsViewModel(
         SettingsUiState(appearanceMode = appearancePreferences.mode.value)
     )
 
+    suspend fun applyAppearancePersisted(
+        expectedMode: AppearanceMode,
+        requestedMode: AppearanceMode,
+        palettes: com.halo.app.ui.theme.PalettePreferences,
+        expectedPalettes: com.halo.app.ui.theme.HaloPalettes,
+        requestedPalettes: com.halo.app.ui.theme.HaloPalettes,
+    ) = appearancePreferences.applyAppearancePersisted(expectedMode, requestedMode, palettes, expectedPalettes, requestedPalettes)
+
     fun setAppearanceMode(mode: AppearanceMode) {
         appearancePreferences.setMode(mode)
     }

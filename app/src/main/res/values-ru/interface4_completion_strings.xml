@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_library_batch_changed">Выбранные источники недоступны или изменились. Обновите библиотеку перед повторной попыткой.</string>
+    <string name="interface4_appearance_rollback_unknown">Не удалось подтвердить восстановление прежнего оформления. Сохранённые настройки могли измениться. Нажмите «Применить» ещё раз.</string>
+    <string name="interface4_library_batch_updated">Обновлено: %1$d.</string>
+    <string name="interface4_library_batch_restored">Восстановлено: %1$d.</string>
+    <string name="interface4_library_batch_context">Добавлено в контекст чата: %1$d. Halo использует до 20 последних элементов в пределах лимита контекста.</string>
+    <string name="interface4_library_batch_partial">Выполнено: %1$d. Без изменений: %2$d. Не подтверждено: %3$d. Перед повторной попыткой проверьте текущее состояние.</string>
+</resources>

@@ -167,6 +167,8 @@ fun AppShell(
 
     var parentRoute by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
     var parentUnavailable by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var settingsRootRequest by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(0L) }
+    var workspaceRootRequest by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(0L) }
     fun performNavigation(requested: String) {
         val route = if (ManualDependencyGraph.kidsPreferences.enabled.value && requested == "mini_halo") "home" else requested
         if (com.halo.app.ui.screens.settings.isDeveloperDestination(route) &&
@@ -197,6 +199,10 @@ fun AppShell(
             }
             return
         }
+        // Explicit root requests reset presentation even when the route itself has not changed.
+        // Back/deep-link restoration does not issue this signal or clear domain state.
+        if (route == "settings") settingsRootRequest++
+        if (route == "notebook") workspaceRootRequest++
         if (navController.currentDestination?.route != route) {
             if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
             if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route, restoreSavedState = false)
@@ -629,7 +635,7 @@ fun AppShell(
                             }
                         }
                     }
-                    NotebookScreen(notebookViewModel,
+                    NotebookScreen(notebookViewModel, rootRequest = workspaceRootRequest,
                         librarySession = ManualDependencyGraph.notebookLibrarySession,
                         requestLocalSearch = requestLocalSearch,
                         onLocalSearchOpened = { notebookEntry.savedStateHandle["openLocalSearch"] = false },
@@ -1145,7 +1151,7 @@ fun AppShell(
                 composable(Screen.Settings.route) {
                     val viewModel = ManualDependencyGraph.settingsViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
-                    SettingsScreen(viewModel, onSetup = { stage -> setupStore.open(stage); setupSession = true; navigateSafely("guided_setup") })
+                    SettingsScreen(viewModel, rootRequest = settingsRootRequest, onSetup = { stage -> setupStore.open(stage); setupSession = true; navigateSafely("guided_setup") })
                 }
 
                 composable("automation?routineId={routineId}", arguments = listOf(navArgument("routineId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->

@@ -1,10 +1,6 @@
 package com.halo.app.ui.shell
 
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,15 +29,32 @@ internal fun HaloZone(
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = .96f),
         tonalElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
         BoxWithConstraints {
+        // 16dp padding + two 64dp fixed columns leave 216dp for four
+        // independent orbit targets at the smallest normal 360dp viewport.
+        val fallback = compact || largeText || maxWidth < 360.dp
         backdrop()
         Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
             CompositionLocalProvider(com.halo.app.ui.presence.LocalShellCarouselBackVisible provides
-                (!compact && !largeText && actions.any {
+                (!fallback && actions.any {
                     it.id.startsWith("page:") && it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS && it.enabled
                 }), com.halo.app.ui.presence.LocalShellCarouselActionIds provides
-                (if (compact || largeText) emptySet() else actions.filter { it.enabled && it.id.startsWith("page:") }
+                (if (fallback) emptySet() else actions.filter { it.enabled && it.id.startsWith("page:") }
                     .map { it.id.removePrefix("page:") }.toSet())) { utility() }
-            if (compact || largeText) {
+            if (fallback) {
+                if (this@BoxWithConstraints.maxWidth < 320.dp) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            ZoneDestination("home", "Home", HaloGlyph.HOME, route, onNavigate)
+                            ZoneDestination("notebook", "Workspace", HaloGlyph.NOTE, route, onNavigate)
+                        }
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { orb(56.dp) }
+                        Column {
+                            ZoneDestination("devices", "Devices", HaloGlyph.DEVICE, route, onNavigate)
+                            ZoneDestination("settings", "Settings", HaloGlyph.SETTINGS, route, onNavigate)
+                        }
+                    }
+                } else {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     ZoneDestination("home", "Home", HaloGlyph.HOME, route, onNavigate)
@@ -49,6 +62,7 @@ internal fun HaloZone(
                     Box(Modifier.width((this@BoxWithConstraints.maxWidth - 208.dp).coerceIn(104.dp, 152.dp)), contentAlignment = Alignment.Center) { orb(56.dp) }
                     ZoneDestination("devices", "Devices", HaloGlyph.DEVICE, route, onNavigate)
                     ZoneDestination("settings", "Settings", HaloGlyph.SETTINGS, route, onNavigate)
+                }
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
@@ -59,7 +73,7 @@ internal fun HaloZone(
                         modifier = Modifier.weight(1f).padding(horizontal = 8.dp).semantics {
                             contentDescription = fullActionHint
                         })
-                    Box(Modifier.width(112.dp), contentAlignment = Alignment.Center) { profile() }
+                    Box(Modifier.width(if (this@BoxWithConstraints.maxWidth < 320.dp) 64.dp else 112.dp), contentAlignment = Alignment.Center) { profile() }
                 }
             } else {
                 Row(Modifier.fillMaxWidth().heightIn(min = (availableHeight * .25f - 56.dp).coerceIn(144.dp, 184.dp)),
@@ -70,8 +84,7 @@ internal fun HaloZone(
                         Box(Modifier.heightIn(min = 72.dp), contentAlignment = Alignment.Center) { ZoneBell(attentionCount, onNavigate) }
                     }
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        ContextToolCarousel(actions, onAction)
-                        orb(96.dp)
+                        ContextToolOrbit(actions, onAction, orb)
                     }
                     Column(Modifier.width(64.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         ZoneDestination("devices", "Devices", HaloGlyph.DEVICE, route, onNavigate)
@@ -108,41 +121,6 @@ private fun ZoneBell(count: Int, onNavigate: (String) -> Unit) {
     IconButton(onClick = { onNavigate("activity") }, modifier = Modifier.size(48.dp)) {
         BadgedBox(badge = { if (count > 0) Badge { Text(count.coerceAtMost(99).toString()) } }) {
             HaloIcon(HaloGlyph.NOTIFICATIONS, uiText("Activities and notifications"), Modifier.size(24.dp))
-        }
-    }
-}
-
-/** User-driven bounded dial. Lazy scrolling arbitrates drags vs clicks; release snaps to an item. */
-@Composable
-private fun ContextToolCarousel(actions: List<HaloOrbContextAction>, onAction: (HaloOrbContextAction) -> Unit) {
-    key(actions.map { it.id }) {
-        val state = rememberLazyListState()
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        val centered by remember { derivedStateOf {
-            val midpoint = state.layoutInfo.viewportEndOffset / 2
-            state.layoutInfo.visibleItemsInfo.minByOrNull { kotlin.math.abs(it.offset + it.size / 2 - midpoint) }?.key
-        } }
-        LazyRow(state = state, flingBehavior = rememberSnapFlingBehavior(state),
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(horizontal = 4.dp)) {
-            items(actions, key = { it.id }) { action ->
-                val layout by remember { derivedStateOf { state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == action.id } } }
-                val lift = layout?.let { item ->
-                    val middle = state.layoutInfo.viewportEndOffset / 2f
-                    val distance = kotlin.math.abs(item.offset + item.size / 2f - middle) / middle.coerceAtLeast(1f)
-                    (distance.coerceIn(0f, 1f) * 6f).dp
-                } ?: 0.dp
-                IconButton(onClick = { onAction(action) }, enabled = action.enabled,
-                    modifier = Modifier.padding(top = lift).size(48.dp),
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                    HaloIcon(action.glyph, uiText(action.title), Modifier.size(22.dp))
-                }
-            }
-        }
-        Text(uiText(actions.firstOrNull { it.id == centered }?.title ?: actions.firstOrNull()?.title.orEmpty()),
-            style = MaterialTheme.typography.labelSmall, maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

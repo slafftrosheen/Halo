@@ -263,3 +263,87 @@ acceptance is claimed here.
   and parent gate; no extra destination is inferred from a visible menu.
 - No device evidence, actual STT recognition, remote-provider outcome or issue
   closure is inferred from this source consolidation.
+
+
+### 2026-10-26 completion: explicit roots, Appearance drafts and hosted Home
+
+Source implementation now sends a saved request counter from `AppShell.performNavigation`
+to the Settings/Workspace root screens before its same-route navigation guard. Each screen
+consumes the counter once. Settings clears its local detail/advanced/group/search presentation;
+Workspace clears only its Office/Studio suite. VM/domain drafts, Library query, filter,
+collection and selected object IDs are untouched. Navigation Back/deep-link restoration without
+a new explicit root request retains local presentation instead of replaying a reset.
+
+Appearance's radio controls stage mode together with independent light and dark palette drafts.
+A mode/System-theme change does not recreate or erase the other draft. Live owner emissions
+refresh untouched channels; Cancel reconstructs the preview from the current canonical owners.
+Apply is coordinated by `AppearancePreferences.applyAppearancePersisted` through the
+Settings VM (and the same owner in Kids), with the mode lock acquired before the palette
+lock. Both owners validate expected state and generation before publishing either choice.
+The transaction captures the exact original owned disk fields, commits the palette pair and
+mode, and publishes only after both writes succeed. Failed/cancelled writes compensate under
+`NonCancellable` before releasing their locks. Newer optimistic selections abort Apply and
+retain their state/generation and queued durable write; compensation does not overwrite them.
+
+The stores remain separate: this is acknowledged compensation, not cross-store or crash
+atomicity. An unacknowledged rollback produces `AppearanceApplyException(rollbackUncertain = true)`
+and a process-owned `applyUncertain` flow plus an explicit UI message that saved choices may
+have changed. Screen disposal/cancellation, Cancel and unrelated setting saves do not dismiss
+that uncertainty. A successful coordinated Apply clears it; the user can re-Apply even after
+Cancel. Drafts remain available for another Apply. Higher contrast, reduced motion,
+guide light, text size and safety meanings retain their owners.
+
+Hosted Home now relies on the shell status Orb and projects the original Review, Retry,
+Open Activity, Set up answers, microphone permission and voice setup callbacks through the
+current Home page-action lease. The former Home presence header and setup strip remain in
+standalone hosts only. Speech rejection text/recovery, capture errors and recovery, permission
+help, cloud resolution, contextual capture and continuity controls remain in the workspace.
+No real error detail or recovery callback was replaced by decorative status.
+
+Regression sources added: `SettingsRootReselectionTest`, `NotebookRootReselectionTest`,
+`AppearanceDraftTest`, `AppearanceTransactionTest`, the paired-palette restoration case in
+`PalettePreferencesTest`, `AppearanceApplyRollbackTest`, `HomeRecoveryActionsTest` and `HomeHostedPresentationSourceTest`.
+These sources are **NOT_RUN** during the implementation-only phase. Structural assertions do
+not establish rendered visual, TalkBack or physical-device acceptance.
+
+### 2026-10-26 Library selected-batch implementation
+
+`NotebookViewModel.applyLibraryBatch` is the shared suspend/result owner for the existing
+selection toolbar and typed `halo_library_batch` / `halo_library_apply_batch` adapters.
+Preparation binds the settled resumed Library entry, exact selection revision, operation,
+collection identity/membership and each canonical saved source version. The session consumes
+one admission, including stale/denied attempts. Each object commits separately inside Room;
+the context, collection and workspace repositories retain their existing operations. Saved
+chat work enters `RoomConversationStore`'s writer mutex before Room, checks its bounded
+content-derived version, and refuses lifecycle changes to the active writer without switching it.
+
+Receipts distinguish successfully changed, unchanged and unconfirmed IDs. Unconfirmed effects
+return an unknown-completion failure with the authorized partial receipt; revoked disclosure
+returns a content-free unknown outcome. They never become a rejection claiming no effect.
+One-click Undo retains only successful post-Trash versions, including a committed prefix if a
+later object is cancelled; changed/deleted sources cannot be silently recreated or overwritten.
+Another batch or explicit dismissal invalidates prior Undo. Existing context selection remains
+subject to its 20-item/context budget and explicit source-sharing policy; the adapters grant no
+remote access. Collection addition preserves unrelated members and refuses changed selected
+membership. Permanent note purge/status/retry continue through `WorkspaceNotePurgeActions`;
+there is no second purge implementation.
+
+Both tools have closed schemas, versioned operability, registered capability/DI/descriptors,
+Workspace disclosure classification and matching bundled/runtime Library skill risks. Batch
+preparation is READ_ONLY; apply is DESTRUCTIVE with direct current authority, interaction
+approval, ALWAYS confirmation and NEVER_REPLAY. The existing resumed Library binding and
+unlocked foreground grown-up policy apply to each admission/commit/readback.
+
+Regression sources: `NotebookLibraryBatchTest`, expanded `NotebookLibraryToolsPolicyTest`
+and `HostFirstSkillAuditTest`. Cases cover mixed-source partial Trash/Undo, canonical-note
+change with an equal header timestamp, stale selection/entry and consumed tickets, exact
+membership, context selection, content-free receipts, rollback on lease revocation, uncertain
+outcomes, saved-chat lifecycle/writer guards, and bundled/runtime risk registration. All are
+**NOT_RUN** in this source-only phase; no compile, device or spoken acceptance is claimed.
+
+The VM also exposes `batchNotice: StateFlow<NotebookBatchReceipt?>` for native localized
+count/action formatting. Dismissal, batch start and every ordinary notice clear that typed
+receipt, so a prior batch cannot mask a later purge/refusal notice. Additional source cases
+cover cancellation selection/Undo reconciliation, stale saved-chat admission as known refusal,
+note recovery-draft lifecycle protection, post-commit disclosure revocation, touch/typed owner
+parity, and typed-notice replacement. These regression sources remain **NOT_RUN**.

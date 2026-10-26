@@ -57,16 +57,20 @@ private data class SettingsMenuRow(
 private data class SettingsMenuGroup(val key: String, val title: String, val rows: List<SettingsMenuRow>)
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}, initialAdvanced: Boolean = false, onBack: (() -> Unit)? = null) {
+fun SettingsScreen(viewModel: SettingsViewModel, onSetup: (com.halo.app.ui.onboarding.SetupStage) -> Unit = {}, initialAdvanced: Boolean = false, onBack: (() -> Unit)? = null, rootRequest: Long = 0L) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val languages = com.halo.app.di.ManualDependencyGraph.appLanguagePreferences
     val language by languages.language.collectAsStateWithLifecycle()
     val privacyMode by com.halo.app.di.ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
+    val appearanceUncertain by com.halo.app.di.ManualDependencyGraph.appearancePreferences.applyUncertain.collectAsStateWithLifecycle()
     SettingsContent(state.copy(privacyMode = privacyMode), language, { languages.select(it); com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(com.halo.app.di.ManualDependencyGraph.applicationContext) }, viewModel::setAppearanceMode,
         viewModel::openDestination, onSetup,
         com.halo.app.di.ManualDependencyGraph.palettePreferences, com.halo.app.di.ManualDependencyGraph.kidsPreferences,
         nearby = { com.halo.app.ui.mini.HaloNearbyControls() }, initialAdvanced = initialAdvanced,
-        developerStorage = com.halo.app.di.ManualDependencyGraph.storage, onBack = onBack,
+        developerStorage = com.halo.app.di.ManualDependencyGraph.storage, onBack = onBack, rootRequest = rootRequest,
+        appearanceUncertain = appearanceUncertain,
+        onApplyAppearance = { draft -> viewModel.applyAppearancePersisted(draft.savedMode, draft.mode,
+            com.halo.app.di.ManualDependencyGraph.palettePreferences, draft.savedPalettes, draft.palettes) },
         modalPrivacyHeader = { com.halo.app.ui.components.PrivacyModeControl(Modifier.statusBarsPadding()) })
 }
 
@@ -86,6 +90,9 @@ internal fun SettingsContent(
     onBack: (() -> Unit)? = null,
     assistantPreferences: com.halo.app.ui.theme.AssistantPreferences? = null,
     modalPrivacyHeader: (@Composable () -> Unit)? = null,
+    rootRequest: Long = 0L,
+    onApplyAppearance: (suspend (AppearanceDraft) -> Unit)? = null,
+    appearanceUncertain: Boolean = false,
 ) {
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(initialAdvanced) }
     // Labs are opt-in: everyday/advanced setup stays user-oriented until explicitly enabled.
@@ -97,6 +104,14 @@ internal fun SettingsContent(
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var page by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     var expandedGroup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    var consumedRootRequest by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(0L) }
+    LaunchedEffect(rootRequest) {
+        if (rootRequest != consumedRootRequest) {
+            page = null; advanced = false; expandedGroup = null
+            searchOpen = false; searchQuery = ""; confirmDeveloperTools = false
+            consumedRootRequest = rootRequest
+        }
+    }
     val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val savedPalettes = palettePreferences?.state?.collectAsStateWithLifecycle()?.value
     val settingsOwner = ShellPageOwner(if (initialAdvanced) "advanced_settings" else "settings",
@@ -228,8 +243,12 @@ internal fun SettingsContent(
                         Text(state.version, style = MaterialTheme.typography.bodyMedium)
                     }
                     "Appearance" -> {
-                        if (palettePreferences != null) AppearanceControls(state.appearanceMode, onAppearance, palettePreferences,
-                            assistantPreferences ?: com.halo.app.di.ManualDependencyGraph.assistantPreferences)
+                        if (palettePreferences != null) AppearanceControls(state.appearanceMode, onApplyAppearance ?: { draft ->
+                            com.halo.app.di.ManualDependencyGraph.appearancePreferences.applyAppearancePersisted(
+                                draft.savedMode, draft.mode, palettePreferences, draft.savedPalettes, draft.palettes)
+                        }, palettePreferences,
+                            assistantPreferences ?: com.halo.app.di.ManualDependencyGraph.assistantPreferences,
+                            ownerUncertain = appearanceUncertain)
                     }
                     "halo nearby" -> nearby?.invoke()
                     "Kids mode" -> if (kidsPreferences != null) {

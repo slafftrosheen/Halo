@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_library_batch_changed">Selected sources are unavailable or changed. Refresh the Library before trying again.</string>
+    <string name="interface4_appearance_rollback_unknown">Could not confirm that your previous appearance was restored. Saved choices may have changed. Try Apply again.</string>
+    <string name="interface4_library_batch_updated">Updated: %1$d.</string>
+    <string name="interface4_library_batch_restored">Restored: %1$d.</string>
+    <string name="interface4_library_batch_context">Added to chat context: %1$d. Halo uses up to 20 recent items within its context budget.</string>
+    <string name="interface4_library_batch_partial">Completed: %1$d. Unchanged: %2$d. Unconfirmed: %3$d. Review the current state before retrying.</string>
+</resources>

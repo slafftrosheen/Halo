@@ -549,6 +549,21 @@ fun HomeScreen(
             add(com.halo.app.ui.presence.ShellPageAction("clear-chat", "Clear conversation", HaloGlyph.TRASH,
                 enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { confirmClear = true })
             if (daily.items.isNotEmpty()) add(com.halo.app.ui.presence.ShellPageAction("today", todayLabel, HaloGlyph.HOME) { showToday = true })
+            // Hosted Home has one status owner (the shell Orb); retain every recovery
+            // callback in its current-page action lease instead of another header/strip.
+            addAll(homeRecoveryActions(HomeRecoveryOptions(
+                needsReview = presentation.needsReview,
+                retryable = submission.retryable,
+                needsRecovery = submission.needsRecovery,
+                sameConversation = submission.conversationId == draftKey,
+                canRetry = canSend && textInput.isNotBlank(),
+                answersNeedSetup = providerNeedsAttention || connectionNeedsAttention,
+                microphoneGranted = uiState.microphonePermissionGranted,
+                speechReady = uiState.speechReady),
+                onActivity = onOpenActivity, onRetry = { submitText() },
+                onAnswers = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
+                onMicrophone = onRequestMicrophonePermission, onVoice = viewModel::navigateToVoice))
+
         })
         if (modeMenuExpanded) androidx.compose.material3.AlertDialog(
             onDismissRequest = { modeMenuExpanded = false },
@@ -622,7 +637,7 @@ fun HomeScreen(
                 }
             }
             pendingQuestion?.let { HomeTranscriptMessage("${submission.interactionId}:pending", it, user = true) }
-            HomePresenceHeader(
+            if (!shellOwnsOrb) HomePresenceHeader(
                 signal = com.halo.app.ui.presence.haloOrbInputPresentation(uiState.sessionState.toSignalPresentation(
                     fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
                     reducedMotion = reducedMotion), uiState.inputStatus.capturing, listeningRequested || uiState.speechActive,
@@ -690,7 +705,7 @@ fun HomeScreen(
                 providerRows.associate { it.descriptor.providerId to it.descriptor.location }
             )
             HomeCloudHandoffFx(cloudProvider)
-            when {
+            if (!shellOwnsOrb) when {
                 providerNeedsAttention || connectionNeedsAttention -> HaloFocusAction(
                     text = uiText("Set up answers"), glyph = HaloGlyph.MODEL, enabled = true,
                     active = canSend && !presentation.needsReview,

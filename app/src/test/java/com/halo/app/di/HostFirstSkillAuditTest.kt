@@ -34,11 +34,12 @@ class HostFirstSkillAuditTest {
             "automation?routineId={routineId}", "advanced/servers/{serverId}", "notebook/conversation/{conversationId}")
         val discovered = routes.flatMap { com.halo.app.ui.presence.shellChildCanonicalTools(it) }.toSet() +
             com.halo.app.di.tools.host.NotebookLibraryTools.NAMES +
-            com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES + "halo_current_screen"
+            com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES +
+            com.halo.app.di.tools.host.NotebookBatchTools.NAMES + "halo_current_screen"
         discovered.forEach { name -> assertTrue("Unregistered current-page tool: $name", registry.descriptor(name) != null) }
         val problems = registry.operabilityReport(listOf(com.halo.runtime.cognition.tools.ToolFeatureOperability("interface62", discovered)))
         assertTrue(problems.toString(), problems.isEmpty())
-        val protected = com.halo.app.di.tools.host.SavedChatTools.names + setOf("halo_library_organize",
+        val protected = com.halo.app.di.tools.host.SavedChatTools.names + setOf("halo_library_organize", "halo_library_apply_batch",
             "halo_mcp_server_set_enabled", "halo_mcp_tool_set_enabled", "halo_mcp_refresh_tools", "halo_local_role_select")
         protected.forEach { name ->
             val descriptor = requireNotNull(registry.descriptor(name))

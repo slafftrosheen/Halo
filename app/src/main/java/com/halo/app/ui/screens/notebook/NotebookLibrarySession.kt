@@ -15,6 +15,7 @@ class NotebookLibrarySession(private val allowed: () -> Boolean) {
     private var previous: NotebookLibraryView? = null
     private var revision = UUID.randomUUID().toString()
     private var organizationTicket: NotebookLibraryOrganization? = null
+    private var batchTicket: NotebookLibraryBatch? = null
 
     class ReadbackLease internal constructor(internal val entry: Lease, internal val revision: Long)
     fun readbackLease(): ReadbackLease? = lease?.takeIf { allowed() }?.let { entry ->
@@ -31,7 +32,7 @@ class NotebookLibrarySession(private val allowed: () -> Boolean) {
         if (lease !== expected) return
         lease = null; model = null; invalidate()
     }
-    private fun invalidate() { previous = null; revision = UUID.randomUUID().toString(); organizationTicket = null }
+    private fun invalidate() { previous = null; revision = UUID.randomUUID().toString(); organizationTicket = null; batchTicket = null }
     fun read(expectedSnapshot: String? = null): NotebookLibraryFrame? {
         if (!allowed() || lease == null) return null
         val view = model?.libraryView() ?: return null
@@ -77,7 +78,41 @@ class NotebookLibrarySession(private val allowed: () -> Boolean) {
             }
         }
     }
+
+    suspend fun prepareBatch(expectedSnapshot: String, action: NotebookBatchAction, collectionId: String? = null,
+        undo: Boolean = false): NotebookLibraryBatch? {
+        val frame = read(expectedSnapshot) ?: return null
+        if (!frame.view.settled || frame.view.mutating) return null
+        val owner = model ?: return null
+        val expectedLease = lease
+        val admission = owner.prepareLibraryBatch(action, collectionId, undo) ?: return null
+        if (lease !== expectedLease || model !== owner || read(expectedSnapshot)?.view != frame.view) return null
+        return NotebookLibraryBatch(UUID.randomUUID().toString(), expectedSnapshot, admission).also { batchTicket = it }
+    }
+
+    suspend fun applyBatch(expectedSnapshot: String, expectedBatch: String, action: NotebookBatchAction,
+        undo: Boolean = false): NotebookBatchReceipt? {
+        // Admission is consumed even if the source/view subsequently fails validation.
+        val ticket = batchTicket ?: return null
+        batchTicket = null
+        if (ticket.token != expectedBatch || ticket.viewSnapshot != expectedSnapshot ||
+            ticket.admission.action != action || ticket.admission.undo != undo) return null
+        val frame = read(expectedSnapshot) ?: return null
+        if (!frame.view.settled || frame.view.mutating) return null
+        val owner = model ?: return null
+        val expectedLease = lease
+        return owner.applyLibraryBatch(ticket.admission) {
+            withContext(Dispatchers.Main.immediate) {
+                // Own committed rows can disappear from the rendered list during a mixed batch.
+                // Entry, authority and the exact user's view/selection revision must stay fixed.
+                lease === expectedLease && model === owner && allowed() &&
+                    owner.libraryView().ownerRevision == frame.view.ownerRevision
+            }
+        }
+    }
 }
+
+data class NotebookLibraryBatch(val token: String, val viewSnapshot: String, val admission: NotebookBatchAdmission)
 
 data class NotebookLibraryOrganization(val token: String, val viewSnapshot: String, val data: NotebookOrganizationSnapshot)
 

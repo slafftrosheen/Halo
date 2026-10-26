@@ -113,7 +113,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @OptIn(ExperimentalLayoutApi::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
-    onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null) {
+    onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -124,6 +124,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val cloudAllowed by viewModel.cloudSharing.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
+    val batchNotice by viewModel.batchNotice.collectAsStateWithLifecycle()
     val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
     val trashUndoIds by viewModel.trashUndoIds.collectAsStateWithLifecycle()
     var selecting by rememberSaveable { mutableStateOf(false) }
@@ -131,6 +132,13 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     // Library is the Workspace landing, including when no filter is selected.
     val showLibrary = true
     var suite by rememberSaveable { mutableStateOf<String?>(null) }
+    var consumedRootRequest by rememberSaveable { mutableStateOf(0L) }
+    LaunchedEffect(rootRequest) {
+        if (rootRequest != consumedRootRequest) {
+            suite = null
+            consumedRootRequest = rootRequest
+        }
+    }
     LaunchedEffect(selectedIds) { if (selectedIds.isNotEmpty()) selecting = true }
     var sortMenu by remember { mutableStateOf(false) }
     var batchMenu by remember { mutableStateOf(false) }
@@ -182,7 +190,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     }
     BindShellPageActions(ShellPageOwner("notebook", sourceIdentity = "${state.filter}:${state.selectedCollectionId}:$suite:${selectedIds.sorted()}",
         selectionIds = selectedIds.sorted(), activeToolId = suite ?: "library",
-        canonicalToolIds = listOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize")), libraryActions)
+        canonicalToolIds = listOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize",
+            "halo_library_batch", "halo_library_apply_batch", "halo_note_get", "halo_note_purge_status",
+            "halo_note_purge", "halo_note_purge_retry")), libraryActions)
     BackHandler(enabled = suite != null) { suite = null }
     LaunchedEffect(requestLocalSearch) {
         if (requestLocalSearch) { showLocalSearch = true; onLocalSearchOpened() }
@@ -359,10 +369,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     }
                 }
             }
-            notice?.let { message -> Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(uiText(message), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+            if (batchNotice != null || notice != null) Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(batchNotice?.let { notebookBatchNotice(it) } ?: notebookNoticeText(notice.orEmpty()),
+                    Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = viewModel::clearNotice) { Text(uiText("Dismiss")) }
-            } }
+            }
         }
 
         if(showLibrary && state.filter in listOf(NotebookFilter.MEMORY,NotebookFilter.INBOX)) item(key="personal-memory") {

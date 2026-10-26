@@ -1,0 +1,21 @@
+{
+  "sourceStamp": "0bffd1a9522b81066e8e0761c843e5713bcaeb29c839365f00df0385d3ca1aee",
+  "scope": "Host Compose fixtures with synthetic actions and work content; not real app/phone screenshots",
+  "images": [
+    {
+      "file": "com.halo.app.ui.shell.HaloZoneLayoutTest.compactOrbAndMenuHaveSeparateHitTargets.png",
+      "sha256": "cb1de373b1bee8bce264420257c3480b879e70492c0c586bd8b0ed3bf022d25c",
+      "mtimeUtc": "2026-10-26T12:01:51.283808+00:00"
+    },
+    {
+      "file": "com.halo.app.ui.shell.HaloZoneLayoutTest.rotationDoesNotMoveRootsOrLaunchAnAction.png",
+      "sha256": "04d5e1e003430d94b125c2df808b72db3d9cc7a9233ad6aa0f6ef56066c57297",
+      "mtimeUtc": "2026-10-26T12:01:51.285957+00:00"
+    },
+    {
+      "file": "com.halo.app.ui.shell.HaloZoneLayoutTest.russianCompactPowerDoesNotSqueezeHintOrMoveRootsAboveFooter.png",
+      "sha256": "ddd4bc5666e2c19e253a3453ccf04b7c503b323ec3f2d76e6cd3e51a0ae57a3a",
+      "mtimeUtc": "2026-10-26T12:01:51.286999+00:00"
+    }
+  ]
+}

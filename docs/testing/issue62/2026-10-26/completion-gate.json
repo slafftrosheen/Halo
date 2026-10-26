@@ -1,0 +1,143 @@
+{
+  "status": "IMPLEMENTED_HOST_VERIFIED_DEVICE_PENDING",
+  "completedUtc": "2026-10-26T12:41:57.095223+00:00",
+  "baseCommit": "de9bce659fec67b7e00fdfb52bc43eeb87b47ccc",
+  "sourceStamp": "de3a2e045dce073bf8486a15a42adbf27209e93e991bf267f5e6858148a97f5e",
+  "productionSourceStamp": "d69102e98bd504c505457b93adad87db4b1264f226a26e41761ac87cfab4abf0",
+  "apkBuildSourceStamp": "0bffd1a9522b81066e8e0761c843e5713bcaeb29c839365f00df0385d3ca1aee",
+  "jvmTestOnlyDeltaAfterApkBuild": [
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookLibraryBatchTest.kt",
+      "sha256": "df58bde06f4ca074dc1e251886959a537906d087da07dd9e25ab4da60ca1e80f"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookLibrarySearchOrderTest.kt",
+      "sha256": "3a968e05a704fa411f4e9220ca4dd06273faf5e68a9ffe9d894f5e9353a1f655"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookRootReselectionTest.kt",
+      "sha256": "0594e55f3fe5adf2f6aeee8c3c2bfaf5dcbe6a6fc8c3ff770b73eabfc399829c"
+    }
+  ],
+  "implementation": "Approved Interface4 redesign retained; remaining orbital, root reselection, hosted Home, Appearance transaction and Library batch/Undo source gaps completed before the first test/build execution.",
+  "fullApp": {
+    "status": "PASS",
+    "tests": 2194,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "fullCognition": {
+    "status": "PASS",
+    "tests": 391,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "note": "Fresh391 pass in recovery01; cognition sources/tests unchanged afterward. Final Gradle may reuse that unchanged result; retries are not added."
+  },
+  "localization": {
+    "status": "PASS",
+    "catalogueEntriesPerLocale": 4168,
+    "polishAndroidStrings": 5021,
+    "unitTests": 15,
+    "locales": [
+      "en",
+      "ru",
+      "lv",
+      "pl"
+    ]
+  },
+  "apks": {
+    "main": {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 289649747,
+      "sha256": "2cb421046f730c549d233fdaf3ef44ff4df09ac9f01a48c659990d446bc52fe7"
+    },
+    "test": {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1949934,
+      "sha256": "c54e8266546d092a2529636f161b878cd3d7bef2958cf4af591d75cdb51d030f"
+    }
+  },
+  "installed": false,
+  "command": "gradlew.bat :app:testDebugUnitTest --max-workers=1 --no-parallel --no-daemon -Dorg.gradle.jvmargs=\"-Xmx1g -Dfile.encoding=UTF-8\" --console=plain",
+  "focusedRenderAndBuildCommand": "gradlew.bat :app:testDebugUnitTest --tests com.halo.app.ui.screens.settings.SettingsEverydayFlowTest --tests com.halo.app.ui.screens.settings.AppearanceTransactionTest --tests com.halo.app.ui.shell.HaloZoneLayoutTest --tests com.halo.app.ui.shell.ContextToolOrbitGeometryTest :app:assembleDebug :app:assembleDebugAndroidTest -Proborazzi.test.record=true --max-workers=1 --no-parallel --no-daemon -Dorg.gradle.jvmargs=\"-Xmx3g -Dfile.encoding=UTF-8\" --console=plain",
+  "focusedRecovery": {
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "notebookDrainRecovery": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "duration": "15m 30s",
+  "attempts": [
+    {
+      "log": "integrated-gate.log",
+      "status": "FAIL",
+      "runtimeTests": 391,
+      "failures": 1,
+      "reason": "PersonalConfigurationPolicyTest expected70 governed tools; adding the two Library tools makes72. Count updated and explicit local-only membership assertion added; disclosure checks retained. App compile/test/APKs were not reached."
+    },
+    {
+      "log": "integrated-recovery01.log",
+      "status": "FAIL",
+      "appTests": 2194,
+      "failures": 1,
+      "apks": "Both built; exact hashes retained locally in recovery01-apks.json",
+      "reason": "SettingsEverydayFlowTest still expected immediate Dark persistence. Updated to assert local preview, no-effect Cancel and explicit durable Apply, retaining original final Dark assertion. EOF-only formatting cleanup grouped before final rebuild."
+    },
+    {
+      "log": "integrated-recovery02.log",
+      "status": "INTERRUPTED_AFTER_FAILURE",
+      "reason": "Old fixture still observed the obsolete mode callback, so waiting for it timed out. Stopped this owned run after diagnosis; no complete suite count or final APK build claimed. Fixture now injects the real coordinated mode/palette owner and verifies persisted readback."
+    },
+    {
+      "log": "focused-render-recovery03.log",
+      "status": "PASS",
+      "scope": "Affected fixture, transaction/orbit tests, fresh host renders and both APKs."
+    },
+    {
+      "log": "full-app-final04.log",
+      "status": "FAIL",
+      "appTests": 2194,
+      "failures": 1,
+      "reason": "NotebookMemoryReviewTest caught a leaked earlier ViewModel Default-IO exception after fixture Room closure. Its own pure memory assertion never started. Three Notebook VM fixtures now join cancelled descendants and fixture collectors before closing Room, preserving all assertions."
+    },
+    {
+      "log": "notebook-drain-recovery05.log",
+      "status": "PASS",
+      "scope": "26 affected Notebook batch, search, root reset and memory cases."
+    },
+    {
+      "log": "full-app-final06.log",
+      "status": "PASS",
+      "scope": "Complete app suite after lifecycle repair; no later source changes."
+    }
+  ],
+  "countBoundary": "Repeated full runs are not added together. Unique full app coverage is2194; cognition391 and localization15 are separate.",
+  "renders": {
+    "recorded": true,
+    "directory": "app/build/outputs/roborazzi",
+    "scope": "Host fixtures only; fresh file timestamps/hashes required before publication, not physical phone screenshots."
+  },
+  "buildBoundary": "Seven verification invocations: initial runtime inventory failure; recovery01 full2194 with obsolete UI assertion and both APKs; recovery02 interrupted after stale fixture callback timeout; focused recovery03 validated corrected real-owner fixture, fresh renders and both APK assembly tasks (UP-TO-DATE output reuse where applicable); full04 found fixture collector leakage; focused05 validated cleanup; full06 completed the final app suite. Two successful APK-pair assembly validations, zero replacement installs. This does not imply two recompilations/package writes. After APK assembly only three JVM test teardown fixtures changed; production and instrumentation sources are identical.",
+  "device": {
+    "status": "NOT_RUN",
+    "adbInventory": "No attached devices at start of verification; no repeated polling or emulator substitution.",
+    "note": "Neither final APK installed. New physical root/orbit/IME/accessibility/theme and cross-tool journeys remain unqualified."
+  },
+  "humanSpeech": {
+    "status": "NOT_RUN",
+    "note": "Deferred by owner; no human verification waiting gate or claimed STT/audibility success."
+  },
+  "provider": {
+    "status": "NOT_RUN",
+    "note": "No new inference, paid route, credentials or disclosure grants."
+  },
+  "issue62": "KEEP_OPEN for applicable physical/effect/voice acceptance, not an unfinished implementation checklist. Source integration and host tests do not establish physical UX qualification."
+}

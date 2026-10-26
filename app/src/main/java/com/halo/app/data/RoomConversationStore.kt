@@ -251,6 +251,27 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
         }
     }
 
+    /** Library batches share this owner's writer mutex and canonical content identity.
+     * The caller's Room work stays inside the same transaction. A batch never switches writers.
+     */
+    internal suspend fun <T> withLibrarySavedChat(id: String, lifecycle: String, expectedVersion: String? = null,
+        changesLifecycle: Boolean = false, block: suspend (String) -> T): T {
+        require(lifecycle in setOf("ACTIVE", "ARCHIVED", "TRASHED"))
+        awaitReady()
+        return mutex.withLock { db.withTransaction {
+            if (changesLifecycle && id == conversationId) throw SavedChatAdmissionException()
+            val snapshot = try { savedChatSnapshotLocked(id, lifecycle, expectedVersion, 0, 0) }
+            catch (_: IllegalArgumentException) { throw SavedChatAdmissionException() }
+            block(snapshot.version)
+        } }
+    }
+
+    /** Only callable from withLibrarySavedChat, under both writer mutex and Room transaction. */
+    internal suspend fun librarySavedChatVersionLocked(id: String): String {
+        val lifecycle = requireNotNull(db.notebookDao().getWorkspaceObject(id)).lifecycle
+        return savedChatSnapshotLocked(id, lifecycle, null, 0, 0).version
+    }
+
     /** Bounded explicit saved-history reads. No active-chat change and no turn metadata exposure. */
     suspend fun listSavedChats(lifecycle: String, query: String, offset: Int, limit: Int, admit: () -> Unit = {}): SavedChatPage {
         require(lifecycle in setOf("ACTIVE", "TRASHED") && query.length <= 120 && offset in 0..10000 && limit in 1..20)

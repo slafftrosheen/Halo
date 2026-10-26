@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_library_batch_changed">Wybrane źródła są niedostępne lub uległy zmianie. Przed ponowieniem odśwież bibliotekę.</string>
+    <string name="interface4_appearance_rollback_unknown">Nie udało się potwierdzić przywrócenia poprzedniego wyglądu. Zapisane ustawienia mogły się zmienić. Naciśnij „Zastosuj” ponownie.</string>
+    <string name="interface4_library_batch_updated">Zaktualizowano: %1$d.</string>
+    <string name="interface4_library_batch_restored">Przywrócono: %1$d.</string>
+    <string name="interface4_library_batch_context">Dodano do kontekstu czatu: %1$d. Halo korzysta z maksymalnie 20 ostatnich elementów w ramach limitu kontekstu.</string>
+    <string name="interface4_library_batch_partial">Ukończono: %1$d. Bez zmian: %2$d. Niepotwierdzone: %3$d. Przed ponowieniem sprawdź aktualny stan.</string>
+</resources>

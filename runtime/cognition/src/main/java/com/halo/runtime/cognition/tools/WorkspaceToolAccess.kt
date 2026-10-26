@@ -3,7 +3,8 @@ package com.halo.runtime.cognition.tools
 /** Personal configuration metadata uses the existing Workspace disclosure category. */
 object PersonalConfigurationToolAccess {
     val currentScreen = setOf("halo_current_screen")
-    val library = setOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize")
+    val library = setOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize",
+        "halo_library_batch", "halo_library_apply_batch")
     val savedChats = setOf("halo_saved_chats_list", "halo_saved_chats_search", "halo_saved_chat_get",
         "halo_saved_chat_trash", "halo_saved_chat_restore", "halo_saved_chat_open")
     val mcpSettings = setOf("halo_mcp_servers", "halo_mcp_server_state", "halo_mcp_server_set_enabled",

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewModelScope
 import com.halo.app.data.RoomConversationStore
 import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.memory.RoomMemoryRepository
@@ -33,6 +34,9 @@ import com.halo.sdk.runtime.Storage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -89,9 +93,16 @@ class NotebookLibrarySearchOrderTest {
     }
 
     @After fun close() {
+        val work = if (::model.isInitialized) model.viewModelScope.coroutineContext[Job] else null
         try {
             compose.runOnIdle { owners.clear() }
             scheduler.runCurrent()
+            runBlocking {
+                withTimeout(10_000) {
+                    work?.join()
+                    if (::fixture.isInitialized) fixture.scope.coroutineContext[Job]?.cancelAndJoin()
+                }
+            }
         } finally {
             try { if (::fixture.isInitialized) fixture.close() } finally { Dispatchers.resetMain() }
         }
