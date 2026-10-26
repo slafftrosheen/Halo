@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.*
@@ -26,7 +29,9 @@ internal fun routineSuggestion(row: PersonalSuggestionEntity): RoutineSuggestion
 @Composable
 internal fun RoutineSuggestionReview(suggestion: RoutineSuggestion?, routine: Routine?, readiness: AutomationReadiness,
     onBack: () -> Unit, onTurnOn: () -> Unit, onEdit: () -> Unit, onDismiss: () -> Unit) {
-    AutomationPage("Suggested routine", onBack) {
+    AutomationPage("Suggested routine", onBack, objectId = routine?.id?.value, sourceIdentity = "${suggestion?.id}:${routine?.id?.value}",
+        actions = listOf(ShellPageAction("routine.suggestion.edit", "Edit", HaloGlyph.NOTE,
+            suggestion != null && routine != null, onEdit))) {
         if (suggestion == null) {
             Text(uiText("Suggestion no longer available"))
         } else {

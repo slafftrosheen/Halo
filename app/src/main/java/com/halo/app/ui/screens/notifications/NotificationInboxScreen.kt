@@ -42,9 +42,11 @@ internal fun notificationAge(at: Instant): String {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Unit, onOpen: (String) -> Unit) {
+fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Unit, onOpen: (String) -> Unit,
+    onReviewActivity: (String) -> Unit = {}) {
     RefreshNotifications(model.source)
     val state by model.state.collectAsStateWithLifecycle()
+    val activity by com.halo.app.di.ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
     val visible by model.visible.collectAsStateWithLifecycle()
     val query by model.query.collectAsStateWithLifecycle()
     val app by model.app.collectAsStateWithLifecycle()
@@ -56,6 +58,13 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     var requestedRefresh by remember { mutableLongStateOf(appliedRefresh) }
     val pullState = rememberPullToRefreshState()
     val refreshing = notificationRefreshPending(requestedRefresh, appliedRefresh)
+    val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    com.halo.app.ui.presence.BindShellPageActions(com.halo.app.ui.presence.ShellPageOwner("notifications"), listOf(
+        com.halo.app.ui.presence.ShellPageAction("refresh", "Refresh", HaloGlyph.ACTIVITY) { requestedRefresh = model.source.refresh() },
+        com.halo.app.ui.presence.ShellPageAction("filter", "Filter by app", HaloGlyph.TOOL) { filters = true },
+        com.halo.app.ui.presence.ShellPageAction("digest", "Digest", HaloGlyph.NOTE) { digestMenu = true },
+    ))
+
     PullToRefreshBox(
         isRefreshing = refreshing,
         onRefresh = { requestedRefresh = model.source.refresh() },
@@ -73,7 +82,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            HaloScreenHeader(uiText("Notifications"), uiText("Private · last 24 hours"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
+            if (!shellHosted) HaloScreenHeader(uiText("Notifications"), uiText("Private · last 24 hours"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
             HaloStatusPresentation(if (state.connected) HaloStatus.READY else HaloStatus.UNAVAILABLE,
                 label = uiText(if (state.connected) "Connected" else "Not connected"))
             Text(uiText("%1\$d notifications · %2\$d available replies", state.items.size, state.items.count { it.reply is ReplyCapability.Available }),
@@ -96,6 +105,13 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                 }
             }
             HaloTextField(query, { model.query.value = it }, label = { Text(uiText("Search notifications")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
+        }
+        items(activity.events.filter { it.reviewRunId != null && it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.distinctBy { it.reviewRunId }, key = { "approval:${it.id}" }) { story ->
+            OutlinedButton(onClick = { story.reviewRunId?.let(onReviewActivity) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                HaloIcon(HaloGlyph.APPROVAL, null, Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(story.title + " · " + uiText("Review"), Modifier.weight(1f))
+            }
         }
         message?.let { item { Text(uiText(it)) } }
         if (visible.isEmpty()) item {

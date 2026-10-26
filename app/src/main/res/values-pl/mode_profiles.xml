@@ -2,19 +2,19 @@
 <resources>
     <string name="mode47_routing_automatic">"Automatycznie w ramach wybranego dostawcy"</string>
     <string name="mode47_feature_disabled">"Ta funkcja internetowa jest wyłączona w aktywnym profilu trybu. Sprawdź Profile trybów."</string>
-    <string name="mode47_profile_summary">"Niezależne ustawienia trybu prywatnego i Full Power"</string>
+    <string name="mode47_profile_summary">Niezależne ustawienia trybów lokalnego i Power</string>
     <string name="mode47_activity_scope">"Lokalne zapisy bez treści żądań, pochodzące od komponentów obsługujących żądania halo. Odpowiedź dostawcy nie potwierdza użyteczności wyniku ani naliczonego kosztu. Zapisy są gromadzone od tej wersji."</string>
     <string name="mode47_outcome_replied">"Dostawca odpowiedział"</string>
     <string name="mode47_edit_profile">"Edytuj profil"</string>
     <string name="mode47_stt">"Dostawca rozpoznawania mowy"</string>
     <string name="mode47_tts">"Dostawca syntezy mowy"</string>
     <string name="mode47_automatic">"Automatyczny wybór na urządzeniu"</string>
-    <string name="mode47_full_power">"Full Power"</string>
+    <string name="mode47_full_power">Power</string>
     <string name="mode47_profiles">"Profile trybów"</string>
-    <string name="mode47_private_profile">"Profil prywatny"</string>
-    <string name="mode47_power_profile">"Profil Full Power"</string>
-    <string name="mode47_enable_power">"Włącz Full Power"</string>
-    <string name="mode47_sharing_explanation">"Full Power może wysyłać żądania i wymienione poniżej kategorie kontekstu do skonfigurowanych dostawców internetowych. Dostosuj ten profil w Profilach trybów i w dowolnej chwili wróć do trybu prywatnego."</string>
+    <string name="mode47_private_profile">Profil lokalny</string>
+    <string name="mode47_power_profile">Profil Power</string>
+    <string name="mode47_enable_power">Włącz Power</string>
+    <string name="mode47_sharing_explanation">Power może wysyłać żądania i wymienione poniżej kategorie kontekstu do skonfigurowanych dostawców internetowych. Dostosuj ten profil w Profilach trybów i w dowolnej chwili wróć do trybu lokalnego.</string>
     <string name="mode47_configured_providers">"Skonfigurowani dostawcy"</string>
     <string name="mode47_no_provider">"Wymagana konfiguracja dostawcy"</string>
     <string name="mode47_other_routes">"Odczyt stron korzysta z żądanej publicznej witryny. Połączone usługi używają konta lub serwera skonfigurowanego dla danego działania. Zdalna obsługa mowy korzysta z wybranego dostawcy. Nieskonfigurowane sposoby połączenia pozostają niedostępne."</string>

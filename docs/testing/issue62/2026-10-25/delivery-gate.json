@@ -1,0 +1,90 @@
+{
+  "status": "CODE_DELIVERY_KEEP_OPEN",
+  "baseCommit": "d5fe5943c8c3e689c49b8f7513823f6e50054556",
+  "deliverySourceStamp": "0d5a1c2464d1aed424562b446ace35b5c0543515fc30fa11ff8e296f13a29d4b",
+  "changedSourceFiles": 179,
+  "fullAppRegression": {
+    "checkpoint": 12,
+    "sourceStamp": "4c129aa67f871cc57707cf4f040d3025d326a6f355e38cbf6a1f2de09db4e363",
+    "status": "PASS",
+    "tests": 2150,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "deltaAfterFullRegression": {
+    "checkpoint": 13,
+    "path": "app/src/main/java/com/halo/app/ui/onboarding/HaloSetupScreen.kt",
+    "change": "Key only the saveable scroll state by setup stage; preserve form composition/drafts/owners.",
+    "build": "PASS",
+    "tests": "NOT_RUN: owner requested code now, phone tests later"
+  },
+  "artifacts": {
+    "app/build/outputs/apk/debug/app-debug.apk": {
+      "sha256": "2c6e0fa27e4ddc3b7dac8f977e466ed9500a9def4c66f314d1675a23a3f1647d",
+      "bytes": 291844079
+    },
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": {
+      "sha256": "9e88cd1df3382cb4505f03fe522db9f2ddb99afb925f372ba64e5394b5e53667",
+      "bytes": 1949934
+    }
+  },
+  "supportingScopedEvidence": {
+    "cognition": {
+      "checkpoint": 5,
+      "status": "PASS",
+      "tests": 391,
+      "note": "Unchanged cognition sources after05; not a fresh13 run."
+    },
+    "interpretation": {
+      "checkpoint": 3,
+      "status": "PASS",
+      "tests": 30
+    },
+    "language": {
+      "tests": 55,
+      "note": "Previously accepted unchanged scoped result; no fresh13 rerun."
+    }
+  },
+  "localization": {
+    "catalogueEntriesPerLocale": 4168,
+    "locales": [
+      "en",
+      "ru",
+      "lv",
+      "pl"
+    ],
+    "polishAndroidStrings": 5015,
+    "generatorCheck": "PASS"
+  },
+  "physicalPhone": {
+    "latestInstalledCheckpoint": 5,
+    "latestInstalledApkSha256": "c3dc50c3cc3db13aa6cbdf9a63fd4ddfbbe9ad5dc5ea81f4c40fde9155a0d011",
+    "deliveryInstalled": false,
+    "deliveryNativeTests": "NOT_RUN",
+    "availability": "Owner: unavailable for now; tests deferred",
+    "restorationPending": [
+      "automatic rotation / user rotation0",
+      "Light / Mint / Cool / Halo forms"
+    ],
+    "alreadyRestored": [
+      "font1.0",
+      "density with no override",
+      "English",
+      "Power"
+    ]
+  },
+  "emulator": {
+    "sdk": 37,
+    "android": "17",
+    "avd": "Pixel_10a",
+    "readOnly": true,
+    "headless": true,
+    "audioEnabled": false,
+    "installedCheckpoint": 12,
+    "installedBasesVerified": true,
+    "scope": "Actual optional setup flow1-9 only; no keys, new runtime grants, model downloads or audio actions. Main redesigned roots and13 scroll repair not verified.",
+    "session": "STOPPED after owner requested code now; no further test work."
+  },
+  "closure": "KEEP_OPEN: final physical UI, cross-tool/protected workflows, accessibility, motion/resource and human speech acceptance remain separate and unqualified."
+}

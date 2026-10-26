@@ -45,17 +45,35 @@ internal fun HaloComposer(
     onAttach: (() -> Unit)? = null,
     onTools: (() -> Unit)? = null,
     toolsMenu: (@Composable () -> Unit)? = null,
+    surfaceSwitcher: (@Composable () -> Unit)? = null,
+    draftIdentity: String? = null,
+    draftRevision: Long? = null,
+    readAcknowledgedDraft: (() -> ComposerDraftState?)? = null,
 ) {
+    val editor = remember(draftIdentity) { HomeComposerEditBuffer(value, draftRevision) }
+    editor.reconcile(value, draftRevision)
+    val visibleText = editor.value.text
     val scheme = MaterialTheme.colorScheme
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val listeningLabel = uiText("Listening…")
     val messageLabel = uiText("Message")
     val sendLabel = uiText("Send")
-    val primary = homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
-    val compact = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 480
+    val primary = homeComposerPrimaryAction(visibleText, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
+    // At large text the four touch targets need their own row, leaving the field full width.
+    // Keep the established compact landscape presentation for standalone hosts.
+    val compact = if (shellOwnsOrb) androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.4f
+        else androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 480
     val field: @Composable (Modifier) -> Unit = { fieldModifier ->
         BasicTextField(
-            value = value, onValueChange = onValueChange,
+            value = editor.value, onValueChange = { next ->
+                // Echo the entire IME value synchronously before the collected page/shell round trip.
+                val textChanged = next.text != editor.value.text
+                editor.edit(next)
+                if (textChanged) {
+                    onValueChange(next.text)
+                    editor.acknowledge(readAcknowledgedDraft?.invoke())
+                }
+            },
             enabled = focusAllowed,
             modifier = fieldModifier.semantics { contentDescription = messageLabel }.then(
                 if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
@@ -67,19 +85,31 @@ internal fun HaloComposer(
             decorationBox = { editor ->
                 Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = if (compact) 0.dp else 8.dp),
                     contentAlignment = Alignment.CenterStart) {
-                    if (value.isEmpty()) Text(uiText("Ask Halo…"),
+                    if (visibleText.isEmpty()) Text(uiText("Ask Halo…"),
                         style = MaterialTheme.typography.bodyLarge, color = scheme.onSurfaceVariant)
                     Box(Modifier.fillMaxWidth().testTag("home_composer_editor")) { editor() }
                 }
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = {
-                if (homeComposerPrimaryAction(value, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
+                if (homeComposerPrimaryAction(visibleText, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
                     == HomeComposerAction.SEND) onSubmit()
             }),
         )
     }
+    var showSurfaceSwitcher by remember { mutableStateOf(false) }
     val actions: @Composable RowScope.() -> Unit = {
+        surfaceSwitcher?.let { switcher ->
+            Box {
+                IconButton(onClick = { showSurfaceSwitcher = true }, modifier = Modifier.size(48.dp)) {
+                    HaloIcon(HaloGlyph.HOME, stringResource(R.string.home_chat_screen_switch))
+                }
+                DropdownMenu(expanded = showSurfaceSwitcher, onDismissRequest = { showSurfaceSwitcher = false }) {
+                    Box(Modifier.padding(8.dp)) { switcher() }
+                }
+            }
+        }
+
         onAttach?.let { action ->
             IconButton(onClick = action, modifier = Modifier.size(48.dp)) {
                 Icon(painterResource(R.drawable.halo_ic_add), uiText("Attach"), Modifier.size(24.dp))
@@ -103,9 +133,9 @@ internal fun HaloComposer(
         val label = when (primary) {
             HomeComposerAction.STOP -> uiText("Stop")
             HomeComposerAction.SEND -> sendLabel
-            else -> if (value.isNotBlank()) sendLabel else voiceContentDescription
+            else -> if (visibleText.isNotBlank()) sendLabel else voiceContentDescription
         }
-        if (!shellOwnsOrb || value.isNotBlank() || showStop) FilledIconButton(onClick = {
+        if (!shellOwnsOrb || visibleText.isNotBlank() || showStop) FilledIconButton(onClick = {
             when (primary) {
                 HomeComposerAction.STOP -> onStop()
                 HomeComposerAction.SEND -> onSubmit()
@@ -123,7 +153,7 @@ internal fun HaloComposer(
             Icon(painterResource(when (primary) {
                 HomeComposerAction.STOP -> R.drawable.halo_ic_stop
                 HomeComposerAction.SEND -> R.drawable.halo_ic_send
-                else -> if (value.isNotBlank()) R.drawable.halo_ic_send else R.drawable.halo_ic_mic
+                else -> if (visibleText.isNotBlank()) R.drawable.halo_ic_send else R.drawable.halo_ic_mic
             }), null, Modifier.size(24.dp))
         }
     }

@@ -79,9 +79,10 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
     LaunchedEffect(interaction.primary) { expanded = false; satellites = false; customizing = false }
     val configuration = LocalConfiguration.current
     val keyboardVisible = WindowInsets.ime.getBottom(density) > 0
-    val inline = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 600 &&
+    val zoneOwned = LocalShellUtilityBand.current != null
+    val inline = !zoneOwned && configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 600 &&
         density.fontScale < 1.4f && !reduced && !touchExploration
-    val fanAllowed = configuration.screenWidthDp >= 360 && configuration.screenHeightDp >= 600 &&
+    val fanAllowed = !zoneOwned && configuration.screenWidthDp >= 360 && configuration.screenHeightDp >= 600 &&
         density.fontScale < 1.4f && !reduced && !touchExploration && !keyboardVisible && destinations.isNotEmpty()
     LaunchedEffect(keyboardVisible) { if (keyboardVisible) satellites = false }
     LaunchedEffect(fanAllowed) { if (satellites && !fanAllowed) { satellites = false; expanded = true } }
@@ -175,7 +176,7 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
                 drag += amount; change.consume()
             }
     }.semantics { customActions = listOf(CustomAccessibilityAction(fullMenu) { openMenu(); true }) }
-    val wideControl = leading != null || destinations.isNotEmpty() || contextActions.isNotEmpty()
+    val wideControl = zoneOwned || leading != null || destinations.isNotEmpty() || contextActions.isNotEmpty()
     val controlWidth = if (wideControl) Modifier.fillMaxWidth() else Modifier.width(size + 48.dp)
     val drawFace: @Composable () -> Unit = {
         if (face != null) face(orbClick, orbLabel)
@@ -187,10 +188,10 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
             HaloIcon(HaloGlyph.TOOL, showShortcuts)
         }
     }
-    Column(Modifier.widthIn(max = 360.dp).then(controlWidth).padding(horizontal = if (wideControl) 12.dp else 0.dp),
+    Column(Modifier.widthIn(max = 360.dp).then(controlWidth).padding(horizontal = if (wideControl && !zoneOwned) 12.dp else 0.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        AnimatedVisibility(satellites, enter = fadeIn(tween(160)) + scaleIn(initialScale = .94f),
-            exit = fadeOut(tween(100)) + scaleOut(targetScale = .94f)) {
+        AnimatedVisibility(satellites, enter = fadeIn(tween(com.halo.app.ui.design.HaloMotion.disclosureEnterMs)) + scaleIn(initialScale = .94f),
+            exit = fadeOut(tween(com.halo.app.ui.design.HaloMotion.disclosureExitMs)) + scaleOut(targetScale = .94f)) {
             Box(Modifier.fillMaxWidth().height(164.dp)) {
                 // A bounded upward fan, with labels and full-size targets; never orbiting.
                 val first = destinations.filter { it.route in setOf("home", "notebook", "activity", "devices", "settings", "study") }
@@ -218,7 +219,14 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
         TextButton(onClick = { menu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(uiText(hint), style = MaterialTheme.typography.labelSmall)
         }
-        if (wideControl) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if (zoneOwned) BoxWithConstraints(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically) {
+                if (this@BoxWithConstraints.maxWidth >= size + 96.dp) Spacer(Modifier.width(48.dp))
+                drawFace()
+                drawMenu(Modifier)
+            }
+        } else if (wideControl) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (leading != null) Box(Modifier.align(Alignment.CenterStart).widthIn(max = 112.dp)) { leading() }
             drawFace()
             drawMenu(Modifier.align(Alignment.CenterEnd))
@@ -230,7 +238,7 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
                 verticalArrangement = Arrangement.spacedBy(8.dp)) { contents(false) }
         }
     }
-    if (expanded && !inline) ModalBottomSheet(onDismissRequest = ::close,
+    if (expanded && !inline) LocalizedMaterialBottomSheet(onDismissRequest = ::close,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         CompositionLocalProvider(LocalDensity provides density) {
             Column(Modifier.fillMaxWidth().heightIn(max = 680.dp).padding(20.dp),

@@ -69,6 +69,7 @@ data class NotebookUiState(
     val sort: NotebookSort = NotebookSort.UPDATED,
     val items: List<NotebookWorkspaceItem> = emptyList(),
     val query: String = "",
+    val resolvedQuery: String = "",
     val filter: NotebookFilter = NotebookFilter.ALL,
     val workingSet: Set<String> = emptySet(),
     val workingSetItems: List<WorkspaceObject> = emptyList(),
@@ -248,6 +249,7 @@ class NotebookViewModel(
                         NotebookWorkspaceItem(row, matches[row.id.value]?.snippet.takeUnless { row.contentRef == "file-tools:${row.id.value}" }, matches[row.id.value]?.nodeId)
                     },
                     query = rawText,
+                    resolvedQuery = text,
                     filter = selectedFilter,
                     workingSet = selected.toSet(),
                     workingSetItems = allObjects.filter { it.id.value in selected },
@@ -275,20 +277,50 @@ class NotebookViewModel(
         .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
 
-    fun setQuery(value: String) { query.value = value; selection.value = emptySet() }
-    fun setFilter(value: NotebookFilter) { if (value == NotebookFilter.MEMORY) { openMemoryHub(); return }; filter.value = value; selection.value = emptySet() }
-    fun selectCollection(id: String?) { selectedCollection.value = id; selection.value = emptySet() }
-    fun setSort(value: NotebookSort) { sort.value = value }
-    fun clearSelection() { selection.value = emptySet() }
+    private var libraryRevision = 0L
+    fun setQuery(value: String) { libraryRevision++; query.value = value; selection.value = emptySet() }
+    fun setFilter(value: NotebookFilter) { libraryRevision++; if (value == NotebookFilter.MEMORY) { openMemoryHub(); return }; filter.value = value; selection.value = emptySet() }
+    fun selectCollection(id: String?) { libraryRevision++; selectedCollection.value = id; selection.value = emptySet() }
+    fun setSort(value: NotebookSort) { libraryRevision++; sort.value = value }
+    fun clearSelection() { libraryRevision++; selection.value = emptySet() }
+    internal suspend fun libraryOrganizationSnapshot(objectId: String?, collectionId: String?) =
+        organization.captureGuarded(objectId, collectionId)
+    internal suspend fun applyLibraryOrganization(expected: com.halo.app.data.notebook.NotebookOrganizationSnapshot,
+        change: com.halo.app.data.notebook.NotebookOrganizationChange, isStillAdmitted: suspend () -> Boolean) =
+        organization.applyGuarded(expected, change, isStillAdmitted)
+
+    internal fun libraryView() = NotebookLibraryView(uiState.value, query.value, filter.value, sort.value,
+        selectedCollection.value, selection.value.toSet(), mutating.value, libraryRevision)
+
+    /** A synchronous view-only change; persistence and destructive confirmations remain with their owners. */
+    internal fun applyLibraryChange(change: NotebookLibraryChange): Boolean {
+        if (mutating.value) return false
+        when (change) {
+            is NotebookLibraryChange.Query -> { if (change.text.length > 500) return false; setQuery(change.text) }
+            is NotebookLibraryChange.Filter -> { if (change.value == NotebookFilter.MEMORY) return false; setFilter(change.value) }
+            is NotebookLibraryChange.Sort -> setSort(change.value)
+            is NotebookLibraryChange.Collection -> {
+                if (change.id != null && uiState.value.collections.none { it.id == change.id }) return false
+                selectCollection(change.id)
+            }
+            is NotebookLibraryChange.Selection -> {
+                val visible = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.toSet()
+                if (change.ids.size > 100 || !visible.containsAll(change.ids)) return false
+                libraryRevision++; selection.value = change.ids.toSet()
+            }
+        }
+        return true
+    }
+
     fun clearNotice() { mutableNotice.value = null }
     fun dismissTrashUndo() { if (!mutating.value) mutableTrashUndoIds.value = emptySet() }
-    fun toggleSelection(id: String) {
+    fun toggleSelection(id: String) { libraryRevision++;
         if (mutating.value) return
         if (id in selection.value) selection.value = selection.value - id
         else if (selection.value.size < 100) selection.value = selection.value + id
         else mutableNotice.value = "Select up to 100 items at a time."
     }
-    fun selectVisible() {
+    fun selectVisible() { libraryRevision++;
         selection.value = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.take(100).toSet()
     }
     fun applyToSelection(action: NotebookBatchAction, collectionId: String? = null) = viewModelScope.launch {

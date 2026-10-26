@@ -38,4 +38,31 @@ class ShellOrbCatalogTest {
         assertEquals("canvas", ShellOrbCatalog.context("notebook/canvas/{canvasId}", false).first().id)
         assertEquals("study", ShellOrbCatalog.context("notebook/study/{sessionId}", false).first().id)
     }
+    @Test fun kidsKeepsOnlyAlreadyAllowedChildPageProjections() {
+        listOf("note", "canvas", "study").forEach { family ->
+            assertTrue(ShellOrbCatalog.allowsPageProjection(com.halo.app.ui.presence.ShellPageOwner(family, "child-object"), true))
+        }
+        listOf("home", "screen", "notebook", "settings", "advanced_settings", "devices", "activity", "notifications", "memory", "studio", "file_tools").forEach { family ->
+            val owner = com.halo.app.ui.presence.ShellPageOwner(family)
+            assertFalse(family, ShellOrbCatalog.allowsPageProjection(owner, true))
+            assertTrue(family, ShellOrbCatalog.allowsPageProjection(owner, false))
+        }
+        val note = com.halo.app.ui.presence.ShellPageOwner("note", "child-object")
+        assertTrue(ShellOrbCatalog.allowsPageProjection(note, true) && ShellOrbCatalog.pageOwnerMatches(note, "notebook/note/{noteId}", "child-object"))
+        assertFalse(ShellOrbCatalog.allowsPageProjection(note, true) && ShellOrbCatalog.pageOwnerMatches(note, "notebook/note/{noteId}", "different-object"))
+        assertFalse(ShellOrbCatalog.pageOwnerMatches(note, "settings", "child-object"))
+    }
+
+    @Test fun kidsStudyFallbackUsesExactDirectRouteWithoutAdultHomeCatalogue() {
+        val study = ShellOrbCatalog.context("home", true).single()
+        assertNull(study.catalog)
+        assertEquals("study", ShellOrbCatalog.directContextRoute(study, true))
+        assertNull(ShellOrbCatalog.directContextRoute(study, false))
+        assertNull(ShellOrbCatalog.directContextRoute(study.copy(enabled = false), true))
+        assertNull(ShellOrbCatalog.directContextRoute(study.copy(id = "settings"), true))
+        val adultStudy = ShellOrbCatalog.context("study", false).first()
+        assertNotNull(adultStudy.catalog)
+        assertNull(ShellOrbCatalog.directContextRoute(adultStudy, true))
+    }
+
 }

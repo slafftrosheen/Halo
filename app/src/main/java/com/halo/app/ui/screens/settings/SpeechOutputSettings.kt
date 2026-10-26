@@ -34,6 +34,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> Unit, onBack: () -> Unit = {}, technical: Boolean = false) {
+    SettingsChildZone("Voice & reading", onBack, listOf(settingsChildLink("onElevenLabs", "ElevenLabs", onElevenLabs)))
     val registry = viewModel.synthesisRegistry ?: return
     val accessorySettings = com.halo.app.di.ManualDependencyGraph.voiceExperienceSettings
     val accessoryPolicy by accessorySettings.state.collectAsStateWithLifecycle()
@@ -70,7 +71,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     val controlRevision by com.halo.app.di.ManualDependencyGraph.accessoryControls.mappings.changes.collectAsStateWithLifecycle()
     var controlsPicker by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(HaloSpacing.xl)) {
-        HaloScreenHeader(uiText("halo's voice"), uiText("Choose a voice and where to hear it"), navigation = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("halo's voice"), uiText("Choose a voice and where to hear it"), navigation = onBack)
         HaloSettingsSection(uiText("halo's voice")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 (listOf("AUTOMATIC" to "Automatic voice") + registry.providers.map { it.metadata.id to voiceChoiceLabel(it.metadata.id) }).forEach { (id, label) ->
@@ -219,6 +220,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
 
 @Composable
 fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit, onTestVoice: () -> Unit, onUseProvider: () -> Unit = {}) {
+    SettingsChildZone("ElevenLabs", onBack)
     val state by provider.state.collectAsStateWithLifecycle()
     var draft by remember(provider) { mutableStateOf("") }
     var search by rememberSaveable { mutableStateOf("") }
@@ -233,7 +235,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
     val model = state.modelId
 
     LazyColumn(Modifier.fillMaxSize().padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { HaloScreenHeader(uiText("ElevenLabs speech"), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("ElevenLabs speech"), navigation = onBack) }
         item { Text(uiText("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.")) }
         item {
             Text(

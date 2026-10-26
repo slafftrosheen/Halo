@@ -14,17 +14,26 @@ class PersonalConfigurationPolicyTest {
         // Deliberately outside WORKSPACE: category alone must not bypass consent.
         category = ToolCategory.SYSTEM, security = ToolSecurityPolicy(risk = risk))
 
-    @Test fun personalMetadataIsDeniedRemotelyUntilWorkspaceDisclosureRegardlessOfCategory() {
+    @Test fun personalMetadataRequiresItsDeclaredDisclosureRegardlessOfCategory() {
         val gate = DefaultToolExposureGate()
         val names = PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current"
-        assertEquals(52, names.size)
+        assertEquals(70, names.size)
+        val localOnly = PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats
         names.forEach { name ->
             val denied = gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
                 policy = AiContextPolicy(allowCloudWorkspace = false, allowCloudScreenContext = true)))
-            assertEquals(name, ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_WORKSPACE_DISABLED), denied)
+            assertEquals(name, ToolExposureDecision.Deny(if (name in localOnly) ToolExposureDenyReason.POLICY_DENIED else ToolExposureDenyReason.REMOTE_WORKSPACE_DISABLED), denied)
             val allowed = gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
                 policy = AiContextPolicy(allowCloudWorkspace = true, allowCloudScreenContext = false)))
-            assertEquals(name, ToolExposureDecision.Allow, allowed)
+            val expected = when (name) {
+                in localOnly -> ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED)
+                in PersonalConfigurationToolAccess.currentScreen -> ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED)
+                else -> ToolExposureDecision.Allow
+            }
+            assertEquals(name, expected, allowed)
+            assertEquals(name, if (name in localOnly) ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED) else ToolExposureDecision.Allow,
+                gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
+                    policy = AiContextPolicy(allowCloudWorkspace = true, allowCloudScreenContext = true))))
             assertEquals(name, ToolExposureDecision.Allow, gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = true)))
         }
         // Personal-layout consent cannot silently grant cross-app observation.
@@ -36,7 +45,12 @@ class PersonalConfigurationPolicyTest {
     @Test fun resultProvenanceIncludesMetadataMutationReceiptsWithoutInspectingTheirText() {
         (PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current").forEach { name ->
             assertTrue(name, name in WorkspaceToolAccess.readTools)
-            assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE), remoteToolResultCategories(name))
+            val extra = when (name) {
+                in PersonalConfigurationToolAccess.currentScreen -> setOf(RemoteDataCategory.SCREEN)
+                in PersonalConfigurationToolAccess.savedChats -> setOf(RemoteDataCategory.CONVERSATION)
+                else -> emptySet()
+            }
+            assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE) + extra, remoteToolResultCategories(name))
         }
         // Routing follows actual registered identities, not a broad prefix guess.
         assertEquals(setOf(RemoteDataCategory.TOOLS), remoteToolResultCategories("halo_screen_unregistered_example"))

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import androidx.compose.material.icons.Icons
@@ -309,6 +311,13 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
     }
     var showOtherDevices by rememberSaveable { mutableStateOf(false) }
     var showTechnicalNames by rememberSaveable { mutableStateOf(false) }
+    val shellHosted = BindShellChildPage("Add glasses", viewModel::navigateBack,
+        objectId = state.selectedAddress?.takeIf { it.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")) }, sourceIdentity = "${state.selectedAddress}:${state.bluetoothPrerequisite}:${pairingNextAction(state)}",
+        actions = listOf(
+            ShellPageAction("pairing.others", "Nearby devices", HaloGlyph.DEVICE,
+                state.devices.any { it.advertisement.name.isNullOrBlank() }) { showOtherDevices = !showOtherDevices },
+            ShellPageAction("pairing.stop", "Stop search", HaloGlyph.STOP, state.isScanning, viewModel::stopScan),
+        ))
     val ordered = state.devices.sortedByDescending { it.advertisement.rssi }
     val named = ordered.filter { !it.advertisement.name.isNullOrBlank() }
     val unnamed = ordered.filter { it.advertisement.name.isNullOrBlank() }
@@ -317,7 +326,7 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item(key = "header") {
-            HaloScreenHeader(uiText("Add glasses"),
+            if (!shellHosted) HaloScreenHeader(uiText("Add glasses"),
                 navigation = viewModel::navigateBack, glyph = HaloGlyph.GLASSES)
         }
         if (pairingNextAction(state) != PairingNextAction.SCAN) {

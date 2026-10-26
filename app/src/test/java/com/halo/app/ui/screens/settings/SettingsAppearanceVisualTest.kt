@@ -10,6 +10,12 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.halo.app.language.AppLanguage
 import com.halo.app.ui.theme.*
 import com.halo.app.ui.theme.HostlessHaloTheme as HaloTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,9 +38,21 @@ class SettingsAppearanceVisualTest {
         } } }
         compose.onNodeWithText(if (language == AppLanguage.RUSSIAN) "Оформление" else "Appearance")
             .performScrollTo().performClick()
-        if (scale >= 2f) compose.onNode(hasText("Оформление") and hasAnyAncestor(isDialog()))
+        if (scale >= 2f) compose.onNodeWithText("Оформление")
             .assertHeightIsAtLeast(40.dp)
-        compose.onNode(isDialog()).captureRoboImage()
+        if (scale >= 2f && language == AppLanguage.RUSSIAN) {
+            val modeOption = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton)
+            listOf("Светлая", "Тёмная", "Как на телефоне").forEach { label ->
+                val layouts = mutableListOf<TextLayoutResult>()
+                val node = compose.onNode(hasText(label) and hasAnyAncestor(modeOption), useUnmergedTree = true).assertIsDisplayed()
+                node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+                assertFalse("Mode label must not overflow: $label", layouts.single().hasVisualOverflow)
+                assertEquals("A full-width mode must avoid midword wrapping: $label", 1, layouts.single().lineCount)
+                compose.onNode(modeOption and hasText(label)).assertHasClickAction().assertHeightIsAtLeast(48.dp)
+            }
+        }
+        compose.onNode(isDialog()).assertDoesNotExist()
+        compose.onNode(isRoot()).captureRoboImage()
     }
     @Test fun lightAppearance() = capture(false)
     @Test fun darkAppearance() = capture(true)

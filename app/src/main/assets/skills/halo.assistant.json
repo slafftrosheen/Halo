@@ -7,6 +7,7 @@
   "risk": "SENSITIVE",
   "requiredPermissions": [],
   "tools": [
+    "halo_current_screen",
     "halo_list_screens",
     "halo_open_screen",
     "halo_get_preferences",
@@ -19,6 +20,11 @@
     "halo_edit_mode_profile"
   ],
   "toolDefinitions": [
+    {
+      "toolId": "halo_current_screen",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
     {
       "toolId": "halo_list_screens",
       "risk": "READ_ONLY"

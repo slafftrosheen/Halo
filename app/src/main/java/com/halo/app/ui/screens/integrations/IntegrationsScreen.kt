@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.integrations
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -32,15 +34,20 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
     val saved by model.saved.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
     var help by rememberSaveable { mutableStateOf(false) }
+    val shellHosted = BindShellChildPage("Custom servers (MCP)", onBack, sourceIdentity = "$operation:$adding:$help",
+        actions = listOf(
+            ShellPageAction("servers.add", "Add MCP server", HaloGlyph.ADD_DEVICE, operation == null) { model.error.value = null; adding = true },
+            ShellPageAction("servers.help", "What is MCP?", HaloGlyph.QUESTION) { help = !help },
+        ))
     LaunchedEffect(saved) { saved?.let { adding = false; model.saved.value = null; onServer(it) } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            HaloScreenHeader(uiText("Integrations"), uiText("Connect services you choose"), navigation = onBack)
-            TextButton(onClick = { help = !help }) { Text(uiText("What is MCP?")) }
+            if (!shellHosted) HaloScreenHeader(uiText("Integrations"), uiText("Connect services you choose"), navigation = onBack)
+            if (!shellHosted) TextButton(onClick = { help = !help }) { Text(uiText("What is MCP?")) }
             if (help) Text(uiText("MCP servers expose external tools to Halo. Halo namespaces those tools and applies its own permissions, confirmations and run limits before they can execute."))
             Text(uiText("MCP"), style = MaterialTheme.typography.titleMedium)
             Text(uiText("%1\$d servers · %2\$d enabled tools", servers.size, servers.sumOf { server -> server.tools.count { it.enabled } }), style = MaterialTheme.typography.labelMedium)
-            HaloFocusAction(uiText("Add MCP server"), HaloGlyph.TOOL, operation == null,
+            if (!shellHosted) HaloFocusAction(uiText("Add MCP server"), HaloGlyph.TOOL, operation == null,
                 { model.error.value = null; adding = true }, active = servers.isEmpty())
             HaloTextField(query, { model.query.value = it }, label = { Text(uiText("Search servers and tools")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
         }

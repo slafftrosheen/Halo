@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_background">Background</string>
+    <string name="interface4_background_still">Still</string>
+    <string name="interface4_background_halo">Halo forms</string>
+    <string name="interface4_background_mist">Mist</string>
+    <string name="interface4_accent_sage">Sage</string>
+    <string name="interface4_accent_rose">Rose</string>
+    <string name="interface4_tone_paper">Paper</string>
+    <string name="interface4_tone_slate">Slate</string>
+    <string name="interface4_appearance_preview">Preview only. Apply saves this theme; Cancel keeps your current appearance.</string>
+    <string name="interface4_appearance_defaults">Restore defaults</string>
+    <string name="interface4_dashboard_style">Dashboard style</string>
+    <string name="interface4_dashboard_clear">Clear</string>
+    <string name="interface4_dashboard_glass">Glass</string>
+    <string name="interface4_dashboard_focus">Focus</string>
+</resources>

@@ -96,9 +96,29 @@ internal fun SettingsContent(
     var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var searchQuery by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var page by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
-    BindShellPageActions(ShellPageOwner(if (initialAdvanced) "advanced_settings" else "settings", sourceIdentity = "$advanced:$page"), when {
+    var expandedGroup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val savedPalettes = palettePreferences?.state?.collectAsStateWithLifecycle()?.value
+    val settingsOwner = ShellPageOwner(if (initialAdvanced) "advanced_settings" else "settings",
+        sourceIdentity = "$advanced:$page:$expandedGroup:${state.appearanceMode}:$savedPalettes",
+        activeToolId = page?.let { "settings." + it.lowercase().replace(Regex("[^a-z0-9]+"), "_") },
+        canonicalToolIds = if (page == "Appearance" || page == "Language") listOf("halo_get_preferences", "halo_set_preferences") else emptyList())
+    val searchContent: @Composable () -> Unit = {
+        if (page != null) com.halo.app.ui.screens.notebook.ToolZoneHeader(uiText(page!!), onBack = { page = null })
+        if (searchOpen && !advanced && page == null) HaloTextField(kind = VoiceFieldKind.SEARCH,
+            value = searchQuery, onValueChange = { searchQuery = it.take(100) },
+            modifier = Modifier.fillMaxWidth(), singleLine = true,
+            placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.brand_settings_search)) },
+            leadingIcon = { HaloIcon(HaloGlyph.SEARCH, null, Modifier.size(22.dp)) })
+    }
+    val searchInZone = com.halo.app.ui.presence.BindShellUtilityBand(settingsOwner, searchContent)
+    androidx.activity.compose.BackHandler(page != null || expandedGroup != null || searchOpen) {
+        when { page != null -> page = null; searchOpen -> { searchOpen = false; searchQuery = "" }; else -> expandedGroup = null }
+    }
+    BindShellPageActions(settingsOwner, when {
         page != null -> listOf(ShellPageAction("page.settings.back", "Back", HaloGlyph.PREVIOUS) { page = null })
         advanced -> listOf(
+            ShellPageAction("page.settings.back", "Back", HaloGlyph.PREVIOUS) { onBack?.invoke() ?: run { advanced = false } },
             ShellPageAction("page.settings.report", "Technical report", HaloGlyph.DIAGNOSTICS) { onOpen(SettingsDestination.TECHNICAL_REPORT) },
             ShellPageAction("page.settings.roles", "Model roles", HaloGlyph.MODEL) { onOpen(SettingsDestination.MODEL_ROLES) },
         )
@@ -106,6 +126,9 @@ internal fun SettingsContent(
             ShellPageAction("page.settings.search", androidx.compose.ui.res.stringResource(R.string.brand_settings_search), HaloGlyph.SEARCH) {
                 searchOpen = !searchOpen; if (!searchOpen) searchQuery = ""
             },
+            ShellPageAction("page.settings.brain", "Brain", HaloGlyph.MODEL) { onOpen(SettingsDestination.INTELLIGENCE) },
+            ShellPageAction("page.settings.voice", "Voice & reading", HaloGlyph.LISTEN) { onOpen(SettingsDestination.VOICE) },
+            ShellPageAction("page.settings.vision", "Vision", HaloGlyph.SEE) { page = "Vision" },
             ShellPageAction("page.settings.setup", "Guided setup", HaloGlyph.QUESTION) { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) },
             ShellPageAction("page.settings.about", "About halo", HaloGlyph.HALO) { page = "About halo" },
         )
@@ -113,13 +136,16 @@ internal fun SettingsContent(
     androidx.activity.compose.BackHandler(enabled = advanced && !initialAdvanced && page == null) { advanced = false }
     val everydayGroups = listOf(
         SettingsMenuGroup("companion", "halo", listOf(
-            SettingsMenuRow(HaloGlyph.MODEL, "How halo answers", "Choose how halo answers", { onOpen(SettingsDestination.INTELLIGENCE) }),
-            SettingsMenuRow(HaloGlyph.LISTEN, "Voice & reading", "Listening and speaking", { onOpen(SettingsDestination.VOICE) }),
-            SettingsMenuRow(HaloGlyph.APPEARANCE, "Appearance", state.appearanceMode.name.lowercase().replaceFirstChar { it.uppercase() }, { page = "Appearance" }, listOf("theme", "color", "colour", "dark", "light", "mint")),
+            SettingsMenuRow(HaloGlyph.MODEL, "Brain", state.provider, { onOpen(SettingsDestination.INTELLIGENCE) }, listOf("How halo answers", "models", "thinking", "intelligence")),
+            SettingsMenuRow(HaloGlyph.LISTEN, "Voice & reading", state.voiceStatus, { onOpen(SettingsDestination.VOICE) }),
+            SettingsMenuRow(HaloGlyph.SEE, "Vision", "Images and camera", { page = "Vision" }, listOf("photo", "camera", "image", "OCR", "seeing")),
+        )),
+        SettingsMenuGroup("personal", "Personalization", listOf(
+            SettingsMenuRow(HaloGlyph.APPEARANCE, "Appearance", state.appearanceMode.name.lowercase().replaceFirstChar { it.uppercase() }, { page = "Appearance" }, listOf("theme", "color", "colour", "dark", "light", "mint", "background", "sage", "rose", "paper", "slate")),
             SettingsMenuRow(HaloGlyph.LANGUAGE, "Language", language.nativeName, { page = "Language" }, listOf("interface", "default replies")),
         )),
         SettingsMenuGroup("privacy", "Privacy", listOf(
-            SettingsMenuRow(HaloGlyph.SECURITY, "Mode profiles", "Independent Private and Full Power settings", { onOpen(SettingsDestination.PRIVACY) }, listOf("context", "sharing")),
+            SettingsMenuRow(HaloGlyph.SECURITY, "Mode profiles", "Local and Power preferences", { onOpen(SettingsDestination.PRIVACY) }, listOf("context", "sharing")),
             SettingsMenuRow(HaloGlyph.CLOUD, "What left this phone", "Review what was shared", { onOpen(SettingsDestination.SHARED_REQUESTS) }),
             SettingsMenuRow(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) }),
             SettingsMenuRow(HaloGlyph.MEMORY, "Memory", "Review what halo remembers", { onOpen(SettingsDestination.MEMORY) }),
@@ -184,39 +210,19 @@ internal fun SettingsContent(
         group.copy(rows = rows).takeIf { rows.isNotEmpty() }
     }
     val visibleGroups = if (advanced) safeAdvancedGroups else filtered(everydayGroups)
-    val pageDensity = androidx.compose.ui.platform.LocalDensity.current
-    if (page != null) androidx.compose.ui.window.Dialog(
-        onDismissRequest = { page = null },
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-    ) {
-        // A native Dialog creates a fresh density. Preserve halo's accessible
-        // app text scale, including explicit enlargement above the system scale.
-        CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides pageDensity) {
-        val dialogView = androidx.compose.ui.platform.LocalView.current
-        val dialogWindow = (dialogView.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window
-        val lightBars = MaterialTheme.colorScheme.background.luminance() > .5f
-        SideEffect {
-            dialogWindow?.let { window ->
-                androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
-                window.statusBarColor = android.graphics.Color.TRANSPARENT
-                window.navigationBarColor = android.graphics.Color.TRANSPARENT
-                if (android.os.Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
-                androidx.core.view.WindowCompat.getInsetsController(window, dialogView).apply {
-                    isAppearanceLightStatusBars = lightBars
-                    isAppearanceLightNavigationBars = lightBars
-                }
-            }
-        }
-        Column(Modifier.fillMaxSize()) {
-        modalPrivacyHeader?.invoke()
-        Box(Modifier.weight(1f).then(if (modalPrivacyHeader != null) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
+    if (page != null) {
         if (page == "Language") LanguagePickerPage(language, onLanguage, { page = null }, { page = null; onOpen(SettingsDestination.VOICE) })
-        else Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()
-                .verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                HaloScreenHeader(uiText(page!!), navigation = { page = null })
+        else Column(Modifier.fillMaxSize().imePadding().verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            if (!shellHosted) HaloScreenHeader(uiText(page!!), navigation = { page = null })
                 when (page) {
+                    "Vision" -> {
+                        SettingsGroup("Vision", compactRows = true) {
+                            SettingsLink(HaloGlyph.SEE, "Image understanding", "Choose an image-capable model", { onOpen(SettingsDestination.MODEL_ROLES) })
+                            SettingsLink(HaloGlyph.SECURITY, "Permissions", "Camera and photo access", { onOpen(SettingsDestination.PERMISSIONS) }, divider = true)
+                            SettingsLink(HaloGlyph.SECURITY, "Privacy", "Image sharing preferences", { onOpen(SettingsDestination.PRIVACY) })
+                        }
+                    }
                     "About halo" -> {
                         Text("halo", style = MaterialTheme.typography.headlineLarge)
                         Text(state.version, style = MaterialTheme.typography.bodyMedium)
@@ -250,18 +256,15 @@ internal fun SettingsContent(
                         }
                     }
                 }
-            }
         }
-    }
-    }
-    }
+        return
     }
     LazyColumn(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(key = "header") {
+        if (!shellHosted) item(key = "header") {
             HaloScreenHeader(uiText(if (advanced) "Advanced" else "Settings"),
                 navigation = if (advanced) onBack ?: ({ advanced = false; searchQuery = "" }) else null, trailing = {
                 if (!advanced) IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) searchQuery = "" }, modifier = Modifier.size(48.dp)) {
@@ -272,13 +275,7 @@ internal fun SettingsContent(
                     onAbout = { page = "About halo" })
             })
         }
-        if (searchOpen && !advanced) item(key = "search") {
-            HaloTextField(kind = VoiceFieldKind.SEARCH, value = searchQuery, onValueChange = { searchQuery = it.take(100) },
-                modifier = Modifier.fillMaxWidth(), singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                label = { Text(androidx.compose.ui.res.stringResource(R.string.brand_settings_search)) },
-                leadingIcon = { HaloIcon(HaloGlyph.SEARCH, null, Modifier.size(22.dp)) })
-        }
+        if (!searchInZone && searchOpen && !advanced) item(key = "search") { searchContent() }
         if (advanced) item(key = "advanced_intro") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Technical options, kept in one place."),
@@ -286,13 +283,20 @@ internal fun SettingsContent(
 
             }
         }
-        if (!advanced && searchQuery.isBlank()) item(key = "identity") { SettingsIdentity(state, onOpen) }
         visibleGroups.forEach { group ->
             item(key = group.key) {
-                SettingsGroup(group.title, compactRows = true) {
-                    group.rows.forEachIndexed { index, row -> SettingsLink(row.glyph, row.title, row.subtitle, row.onClick, divider = index < group.rows.lastIndex, laboratory = advanced && group.key in setOf("runtime", "labs")) }
+                val expanded = advanced || searchQuery.isNotBlank() || group.key in setOf("companion", "personal") || expandedGroup == group.key
+                if (expanded) SettingsGroup(group.title, compactRows = true) {
+                    group.rows.forEachIndexed { index, row -> SettingsLink(row.glyph, row.title, row.subtitle, row.onClick,
+                        divider = index < group.rows.lastIndex, laboratory = advanced && group.key in setOf("runtime", "labs")) }
+                    if (!advanced && group.key !in setOf("companion", "personal") && searchQuery.isBlank())
+                        TextButton(onClick = { expandedGroup = null }) { Text(uiText("Done")) }
+                } else Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                    SettingsLink(group.rows.first().glyph, group.title,
+                        group.rows.take(2).joinToString(" / ") { localizedLabels[it.title] ?: it.title }, { expandedGroup = group.key })
                 }
             }
+
             if (advanced && group.key == "advanced_essentials") item(key = "developer_tools") {
                 val labInk = androidx.compose.ui.graphics.Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFFC9B8FF else 0xFF6446D6)
                 Surface(shape = com.halo.app.ui.design.HaloShapes.card,
@@ -478,7 +482,7 @@ internal fun settingsMatches(query: String, vararg labels: String): Boolean {
 }
 
 private val settingsSearchIndex = listOf(
-    "halo", "Privacy", "Everyday", "Connections", "Help", "How halo answers",
+    "halo", "Brain", "Vision", "camera", "photo", "images", "Privacy", "Everyday", "Connections", "Help", "How halo answers",
     "Voice & reading", "Listening and speaking", "Appearance", "Language", "theme",
     "color", "colour", "dark", "light", "mint", "interface", "default replies",
     "Kids mode", "halo nearby", "Floating", "Mini halo", "Widget", "Android assistant",
@@ -526,13 +530,13 @@ internal fun LanguagePickerPage(
     val options = com.halo.app.language.AppLanguage.entries.filter {
         languagePickerMatches(it, query, uiText(languagePickerEnglishName(it)))
     }
-    Surface(Modifier.fillMaxSize(), color = scheme.background) {
+    Surface(Modifier.fillMaxSize(), color = com.halo.app.ui.theme.haloWorkspaceBackground()) {
         Column(
-            Modifier.fillMaxSize().safeDrawingPadding().imePadding()
+            Modifier.fillMaxSize().then(if (com.halo.app.ui.presence.LocalShellHaloOrb.current) Modifier else Modifier.safeDrawingPadding()).imePadding()
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            HaloScreenHeader(
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(
                 title = uiText("Language"),
                 subtitle = uiText("halo's words and replies"),
                 navigation = onBack,
@@ -612,19 +616,6 @@ internal fun LanguagePickerPage(
                                 }
                             }
                         }
-                    }
-                }
-                if (query.isBlank() || "polski polish".contains(query.trim(), ignoreCase = true)) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                      Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(uiText("Polski"), style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant)
-                            Text(uiText("Polish"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-                        }
-                            Text(uiText("Partly translated"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
-                      }
-                      Text(uiText("Polish interface is partly translated. Some screens may still appear in English."),
-                          style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                     }
                 }
                 TextButton(onClick = onVoice, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Voice & reading")) }

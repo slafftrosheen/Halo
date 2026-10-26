@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onOpenInbox: () -> Unit = {}) {
+    SettingsChildZone("Notifications", onBack)
     val context = LocalContext.current
 
 
@@ -77,7 +78,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit,
     }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = com.halo.app.ui.design.HaloSpacing.screen), contentPadding = PaddingValues(bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
-            com.halo.app.ui.design.HaloScreenHeader(uiText("Notifications & Digests"), navigation = onBack)
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) com.halo.app.ui.design.HaloScreenHeader(uiText("Notifications & Digests"), navigation = onBack)
             Text(uiText("Reading notifications and showing Halo notifications are separate permissions. You can decline either."))
             AttentionSettingsSection()
             Text(uiText("Notification access: ") + when (state) {

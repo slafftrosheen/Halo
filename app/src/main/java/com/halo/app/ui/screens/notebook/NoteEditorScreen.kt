@@ -10,6 +10,7 @@ import com.halo.app.ui.fx.haloDraftOutline
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.R
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
@@ -180,11 +181,31 @@ fun NoteEditorScreen(
     var titleDraft by remember(state.title) { mutableStateOf(state.title) }
     var confirmTrash by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
-    BindShellPageActions(ShellPageOwner("note", viewModel.noteId, state.revision.toString()), listOf(
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = ShellPageOwner("note", viewModel.noteId, "${state.revision}:${state.mode}:${state.selection}",
+        selectionIds = listOfNotNull(state.selection?.blockId),
+        canonicalToolIds = listOf("halo_note_get", "halo_note_read_block"))
+    BindShellPageActions(pageOwner, listOf(
+        ShellPageAction("page.note.rename", "Rename", HaloGlyph.NOTE, state.isEditable) { titleDraft = state.title; showRename = true },
+        ShellPageAction("page.note.assist", "Think with halo", HaloGlyph.TOOL, state.isEditable) { showHaloSheet = true },
         ShellPageAction("page.note.outline", "Outline", HaloGlyph.NOTE) { showOutline = true },
         ShellPageAction("page.note.find", "Find and replace", HaloGlyph.SEARCH) { showFindBar = !showFindBar },
         ShellPageAction("page.note.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = true },
     ))
+
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        ToolZoneHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")),
+            onBack = { viewModel.flush(); onBack() },
+            onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null) {
+            if (state.displayBody.isNotBlank()) com.halo.app.ui.components.HaloReadAloud(state.displayBody, compact = true)
+            // The carousel opens the same panel. Keep the header's distinct close toggle when open.
+            ToolZoneHeaderAction(if (toolsExpanded) "note.close-tools" else "page.note.tools") {
+                IconButton(onClick = { toolsExpanded = !toolsExpanded }, modifier = Modifier.size(48.dp)) {
+                    com.halo.app.ui.icons.HaloIcon(HaloGlyph.TOOL, uiText("More tools"))
+                }
+            }
+        }
+    }
 
     if (showImageStudio) viewModel.imageStudio?.let { studio ->
         com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }
@@ -390,12 +411,12 @@ fun NoteEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(com.halo.app.ui.theme.haloWorkspaceBackground())
             .padding(horizontal = 20.dp, vertical = 10.dp)
             // Keep the selection toolbar directly above the keyboard instead of under it.
-            .imePadding()
+            .then(if (shellOwnsOrb) Modifier else Modifier.imePadding())
     ) {
-        EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")), toolsExpanded,
+        if (!shellOwnsOrb) EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")), toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
             subtitle = when (literalFileFormat) {
@@ -693,7 +714,7 @@ private fun ColumnScope.EditModeView(
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxWidth().weight(1f),
+        modifier = Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (showTools || state.isGenerating || state.attachments.isNotEmpty()) item(key = "editor-controls") {
@@ -1140,7 +1161,7 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
 
 @Composable
 private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: NoteEditorViewModel) {
-    Column(Modifier.fillMaxWidth().weight(1f)) {
+    Column(Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.background)) {
         Text(
             uiText("Markdown source. Applying converts it back into blocks."),
             style = MaterialTheme.typography.labelSmall,
@@ -1186,7 +1207,7 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
 
 @Composable
 private fun ReadModeView(state: NoteEditorUiState, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 20.dp)) {
+    Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(bottom = 20.dp)) {
         /*
          * MINING-P2-001 Part O: when this object was saved from a structured assistant answer, show
          * how it looked at capture time. It is a read-only view of the original presentation; the note
@@ -1685,7 +1706,7 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
             )
         }
         Text(
-            uiText("%1\$d words", state.wordCount),
+            pluralStringResource(R.plurals.note_word_count, state.wordCount, state.wordCount),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

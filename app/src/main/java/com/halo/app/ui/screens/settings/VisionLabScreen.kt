@@ -16,6 +16,7 @@ import com.halo.app.ui.design.HaloScreenHeader
 
 @Composable
 fun VisionLabScreen(model: VisionLabViewModel, onBack: () -> Unit, onPrivacy: () -> Unit, onCamera: () -> Unit) {
+    SettingsChildZone("Vision Lab", onBack, listOf(settingsChildLink("onPrivacy", "Privacy", onPrivacy), settingsChildLink("onCamera", "Camera", onCamera)))
     val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture(), model::cameraResult)
@@ -28,7 +29,7 @@ fun VisionLabScreen(model: VisionLabViewModel, onBack: () -> Unit, onPrivacy: ()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let(model::attach) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { HaloScreenHeader(uiText("Vision Lab"), uiText("Compare one prepared image across concrete models"), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Vision Lab"), uiText("Compare one prepared image across concrete models"), navigation = onBack) }
         item {
             Column {
                 Text(uiText("Media sharing follows the Private / Full Power switch at the top of Halo."))

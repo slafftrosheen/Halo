@@ -1,19 +1,19 @@
 <resources>
     <string name="mode47_routing_automatic">Автоматически в рамках выбранного сервиса</string>
     <string name="mode47_feature_disabled">Эта онлайн-возможность выключена в активном профиле. Проверьте профили режимов.</string>
-    <string name="mode47_profile_summary">Раздельные настройки приватного режима и полной мощности</string>
+    <string name="mode47_profile_summary">Раздельные настройки локального режима и Power</string>
     <string name="mode47_activity_scope">Локальные записи запросов Halo без содержимого. Ответ сервиса не подтверждает пригодность результата или его стоимость. Записи создаются начиная с этой версии.</string>
     <string name="mode47_outcome_replied">Сервис ответил</string>
     <string name="mode47_edit_profile">Изменить профиль</string>
     <string name="mode47_stt">Сервис распознавания речи</string>
     <string name="mode47_tts">Сервис озвучивания</string>
     <string name="mode47_automatic">Автоматический выбор на устройстве</string>
-    <string name="mode47_full_power">Полная мощность</string>
+    <string name="mode47_full_power">Power</string>
     <string name="mode47_profiles">Профили режимов</string>
-    <string name="mode47_private_profile">Приватный профиль</string>
-    <string name="mode47_power_profile">Профиль полной мощности</string>
-    <string name="mode47_enable_power">Включить полную мощность</string>
-    <string name="mode47_sharing_explanation">В режиме полной мощности запросы и перечисленные ниже категории контекста могут передаваться настроенным онлайн-сервисам. Настройте профиль в профилях режимов и в любой момент вернитесь в приватный режим.</string>
+    <string name="mode47_private_profile">Локальный профиль</string>
+    <string name="mode47_power_profile">Профиль Power</string>
+    <string name="mode47_enable_power">Включить Power</string>
+    <string name="mode47_sharing_explanation">В режиме Power запросы и перечисленные ниже категории контекста могут передаваться настроенным онлайн-сервисам. Настройте профиль в профилях режимов и в любой момент вернитесь в локальный режим.</string>
     <string name="mode47_configured_providers">Настроенные сервисы</string>
     <string name="mode47_no_provider">Требуется настройка сервиса</string>
     <string name="mode47_other_routes">Для чтения веб-страниц используется запрошенный публичный сайт. Подключённые сервисы используют настроенный для действия аккаунт или сервер. Онлайн-озвучивание использует выбранный речевой сервис. Ненастроенные маршруты недоступны.</string>

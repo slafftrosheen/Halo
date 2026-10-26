@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_mode_local_short">Lokāli</string>
+    <string name="interface4_mode_power_short">Jauda</string>
+    <string name="interface4_hold_halo_short">Turiet halo</string>
+</resources>

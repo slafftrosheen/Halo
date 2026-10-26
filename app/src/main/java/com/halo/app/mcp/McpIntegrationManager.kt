@@ -44,12 +44,15 @@ class McpIntegrationManager(
     private val definitions = ConcurrentHashMap<String, List<McpToolEntity>>()
     private val registeredIds = ConcurrentHashMap<String, Set<String>>()
     private val configurationMutex = Mutex()
+    private val settingsEpoch = UUID.randomUUID().toString()
+    private val settingsRevision = java.util.concurrent.atomic.AtomicLong()
     private val _states = MutableStateFlow<Map<String, McpConnectionState>>(emptyMap())
     val states: StateFlow<Map<String, McpConnectionState>> = _states.asStateFlow()
 
     fun stateOf(serverId: String): McpConnectionState = _states.value[serverId] ?: McpConnectionState.UNKNOWN
 
     private fun setState(serverId: String, state: McpConnectionState) {
+        settingsRevision.incrementAndGet()
         _states.update { it + (serverId to state) }
     }
 
@@ -131,6 +134,7 @@ class McpIntegrationManager(
 
     private suspend fun setEnabledLocked(serverId: String, enabled: Boolean): Boolean {
         val current = dao.getServer(serverId) ?: return false
+        settingsRevision.incrementAndGet()
         dao.upsertServer(current.copy(enabled = enabled, updatedAt = now()))
         if (!enabled) {
             sessions.remove(serverId)
@@ -155,7 +159,46 @@ class McpIntegrationManager(
     }
 
     suspend fun setToolEnabled(toolId: String, enabled: Boolean) = configurationMutex.withLock {
+        settingsRevision.incrementAndGet()
         dao.setToolEnabled(toolId, enabled)
+    }
+
+    /** Snapshot and admission share the live-session mutex with every configuration mutation. */
+    suspend fun settingsSnapshot(serverId: String): McpSettingsSnapshot? = configurationMutex.withLock {
+        settingsSnapshotLocked(serverId)
+    }
+    private suspend fun settingsSnapshotLocked(serverId: String): McpSettingsSnapshot? {
+        val server = dao.getServer(serverId) ?: return null
+        val tools = dao.toolsForServer(serverId).sortedBy { it.id }
+        // Hash inputs stay local: never return endpoint, credential reference, descriptions or schemas.
+        val material = listOf(settingsEpoch, settingsRevision.get().toString(), server.toString(),
+            stateOf(serverId).name, tools.joinToString("\n")).joinToString("\u0000")
+        val version = "mcp-settings:" + java.security.MessageDigest.getInstance("SHA-256")
+            .digest(material.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        return McpSettingsSnapshot(server.id, version, server.enabled, stateOf(serverId).name,
+            tools.map { McpSettingsToolState(it.id, it.enabled) })
+    }
+    suspend fun updateSettings(serverId: String, sourceVersion: String, command: McpSettingsCommand,
+        toolId: String?, enabled: Boolean?, canConfigure: () -> Boolean): McpSettingsEffect? = configurationMutex.withLock {
+        val before = settingsSnapshotLocked(serverId) ?: return@withLock null
+        if (before.sourceVersion != sourceVersion || !canConfigure()) return@withLock null
+        if (command == McpSettingsCommand.REFRESH &&
+            (!before.enabled || stateOf(serverId) != McpConnectionState.CONNECTED || sessions[serverId] == null)) return@withLock null
+        if (command == McpSettingsCommand.TOOL_ENABLED && before.tools.none { it.id == toolId }) return@withLock null
+        // Consume before dispatch so an uncertain/failed request cannot be replayed with this token.
+        settingsRevision.incrementAndGet()
+        val applied = when (command) {
+            McpSettingsCommand.SERVER_ENABLED -> setEnabledLocked(serverId, requireNotNull(enabled))
+            McpSettingsCommand.TOOL_ENABLED -> { dao.setToolEnabled(requireNotNull(toolId), requireNotNull(enabled)); true }
+            McpSettingsCommand.REFRESH -> refreshToolsLocked(serverId) >= 0
+        }
+        val after = settingsSnapshotLocked(serverId) ?: return@withLock null
+        val verified = applied && when (command) {
+            McpSettingsCommand.SERVER_ENABLED -> after.enabled == enabled
+            McpSettingsCommand.TOOL_ENABLED -> after.tools.any { it.id == toolId && it.enabled == enabled }
+            McpSettingsCommand.REFRESH -> after.state == McpConnectionState.CONNECTED.name
+        }
+        McpSettingsEffect(after, verified, command == McpSettingsCommand.REFRESH)
     }
 
     suspend fun servers(): List<McpServerEntity> = dao.allServers()
@@ -248,6 +291,7 @@ class McpIntegrationManager(
                 throw McpProtocolException(McpStage.TOOLS_LIST, null, "Tool namespace collision")
             }
             // Replace wholesale: a tool the server no longer offers must disappear, not linger.
+            settingsRevision.incrementAndGet()
             dao.replaceTools(serverId, entities)
             definitions[serverId] = entities
             dao.upsertServer((dao.getServer(serverId) ?: server).copy(lastError = null, updatedAt = now()))

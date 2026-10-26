@@ -140,8 +140,14 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
     val pageActionsReady = !state.isGenerating && state.comparingCards.isEmpty()
-    BindShellPageActions(ShellPageOwner("study", state.session?.id,
-        "${state.session?.updatedAtEpochMs}:${state.session?.currentExerciseId}"), listOf(
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = ShellPageOwner("study", state.session?.id,
+        "${state.session?.updatedAtEpochMs}:${state.session?.currentExerciseId}:${state.sources.hashCode()}",
+        selectionIds = listOfNotNull(state.session?.currentExerciseId),
+        canonicalToolIds = listOf("halo_study_current", "halo_study_state"))
+    BindShellPageActions(pageOwner, listOf(
+        ShellPageAction("page.study.finish", "Finish lesson", HaloGlyph.SUCCESS, pageActionsReady && !state.isFinished) { viewModel.finishSession() },
+        ShellPageAction("page.study.delete", "Delete this session's data", HaloGlyph.TRASH, pageActionsReady) { confirmDelete = true },
         ShellPageAction("page.study.details", "Sources and progress", HaloGlyph.FILE, pageActionsReady) { showDetails = true },
         ShellPageAction("page.study.listen", "Listen, then explain", HaloGlyph.SPEAK,
             pageActionsReady && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { viewModel.listenThenExplain() },
@@ -334,13 +340,24 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         }
     }
 
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(state.session?.goal?.takeIf { it.isNotBlank() } ?: uiText("Study"),
+            onBack = { viewModel.stopReading("Left the Study screen"); onBack() }) {
+            StudyLessonOverflow(pageActionsReady, showMenu, { showMenu = it },
+                canListen = state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
+                canSave = !state.savingSummary && !state.loading, completed = state.isFinished,
+                onDetails = { showDetails = true }, onListen = viewModel::listenThenExplain,
+                onSaveNotes = viewModel::saveSummaryToNotebook, onFinish = viewModel::finishSession,
+                onDelete = { confirmDelete = true })
+        }
+    }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     Column(
         Modifier.widthIn(max = 720.dp).fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(com.halo.app.ui.theme.haloWorkspaceBackground())
             .padding(horizontal = 20.dp)
     ) {
-        HaloScreenHeader(
+        if (!shellOwnsOrb) HaloScreenHeader(
             title = state.session?.goal?.takeIf { it.isNotBlank() } ?: uiText("Study"),
             subtitle = uiText(if (focusedReview) "Focused review" else "One step at a time."),
             navigation = {
@@ -374,7 +391,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             if (state.isGenerating || state.comparingCards.isNotEmpty()) {
                 // Presence motion is driven by the real turn state. The supplied
                 // THINKING animation pauses with lifecycle and honors reduced motion.
-                com.halo.app.ui.presence.HaloSignalFace(
+                if (!shellOwnsOrb) com.halo.app.ui.presence.HaloSignalFace(
                     presentation = com.halo.app.ui.presence.HaloSignalPresentation(
                         state = com.halo.app.ui.presence.HaloSignalState.THINKING,
                         label = "Thinking",

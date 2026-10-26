@@ -7,6 +7,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -49,6 +51,7 @@ fun HaloTextField(
     language: String? = null,
     maxChars: Int = 12000,
     readText: String? = value,
+    inputContentDescription: String? = null,
 ) {
     val secret = kind == VoiceFieldKind.SECRET || visualTransformation is PasswordVisualTransformation ||
         keyboardOptions.keyboardType in setOf(androidx.compose.ui.text.input.KeyboardType.Password,
@@ -56,7 +59,9 @@ fun HaloTextField(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         val input: @Composable (@Composable () -> Unit) -> Unit = { actions ->
             OutlinedTextField(value = value, onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth(), enabled = enabled, readOnly = readOnly,
+                modifier = Modifier.fillMaxWidth().semantics {
+                    inputContentDescription?.let { contentDescription = it }
+                }, enabled = enabled, readOnly = readOnly,
                 label = label, placeholder = placeholder, leadingIcon = leadingIcon,
                 trailingIcon = {
                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {

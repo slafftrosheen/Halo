@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
@@ -24,8 +27,9 @@ import com.halo.runtime.cognition.memory.*
     })
     val preferences by model.preferences.collectAsStateWithLifecycle()
     val memoryUse by model.memoryUse.collectAsStateWithLifecycle()
+    val shellHosted = BindShellChildPage("Memory & learning", onBack, sourceIdentity = "${preferences.mode}:$memoryUse")
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HaloWorkspaceHeader(uiText("Memory & learning"), onBack = onBack)
+        if (!shellHosted) HaloWorkspaceHeader(uiText("Memory & learning"), onBack = onBack)
         Text(uiText("Learning"), style = MaterialTheme.typography.titleLarge)
         LearningPreference.entries.forEach { mode ->
             HaloWorkspaceCard {

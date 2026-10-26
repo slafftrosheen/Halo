@@ -1,0 +1,25 @@
+{
+  "id": "halo.local_roles",
+  "name": "Local model role settings",
+  "description": "Read native role bindings and request approved eligible local selections without generation or remote provider changes.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_local_role_select",
+    "halo_local_role_state"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_local_role_select",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_local_role_state",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    }
+  ]
+}

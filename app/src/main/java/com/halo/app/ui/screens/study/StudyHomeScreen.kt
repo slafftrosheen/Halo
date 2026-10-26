@@ -138,21 +138,34 @@ fun StudyHomeScreen(
     // S01/S02: system Back mirrors the visible wizard Back. Leaving the
     // first step cancels only unfinished setup; a saved lesson is untouched.
     BackHandler(enabled = setupActive, onBack = returnFromSetup)
-    BindShellPageActions(ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep"), listOf(
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}",
+        canonicalToolIds = listOf("halo_study_sessions"))
+    BindShellPageActions(pageOwner, listOf(
         ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy && !setupActive) { startNewLesson() },
         ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, setupActive && setupStep == 1 && !busy) { picker = true },
         ShellPageAction("page.study.options", "Age, language & learning options", HaloGlyph.SETTINGS,
             setupActive && setupStep == 3 && !busy) { optionsExpanded = !optionsExpanded },
     ))
 
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(
+            uiText(if (setupActive) "New lesson" else "Study"),
+            onBack = if (setupActive) returnFromSetup else onNotebook) {
+            if (setupActive) Text(uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
+                uiText(setupLabels[setupStep.coerceIn(0, 3)])),
+                modifier = Modifier.widthIn(max = 180.dp), style = MaterialTheme.typography.labelSmall,
+                maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        }
+    }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = 720.dp).fillMaxSize().imePadding()) {
+        Column(Modifier.widthIn(max = 720.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            item(key = "header") {
+            if (!shellOwnsOrb) item(key = "header") {
                 HaloScreenHeader(
                     title = uiText(if (setupActive) "New lesson" else "Study"),
                     subtitle = if (setupActive)

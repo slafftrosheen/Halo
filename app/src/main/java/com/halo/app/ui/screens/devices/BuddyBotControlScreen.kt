@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -130,11 +133,16 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
     androidx.compose.runtime.LaunchedEffect(fault, connected) {
         if (fault || !connected) stopAndDisarm.value()
     }
+    val shellHosted = BindShellChildPage(device?.name ?: "BuddyBot", onBack, objectId = deviceId.takeIf { it == buddyBotHost?.deviceId && it.length <= 240 && it.matches(Regex("[A-Za-z0-9_.:/+-]+")) }, titleIsSource = true,
+        sourceIdentity = "$deviceId:$connected:$driving:$fault", actions = listOf(
+            ShellPageAction("buddy.connection", "Connection settings", HaloGlyph.DEVICE) { connection = true },
+            ShellPageAction("buddy.stop", "Stop", HaloGlyph.STOP, onInvoke = ::stop),
+        ))
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
             .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            HaloWorkspaceHeader(device?.name ?: "BuddyBot", uiText("Robot · manual control"), onBack)
+            if (!shellHosted) HaloWorkspaceHeader(device?.name ?: "BuddyBot", uiText("Robot · manual control"), onBack)
             HaloWorkspaceCard {
                 androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -187,7 +195,7 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
                 }, onRelease = ::stop)
                 HaloWorkspaceButton(uiText("Turn off driving"), { stopAndDisarm.value() }, Modifier.fillMaxWidth(), primary = false)
             }
-            HaloWorkspaceButton(uiText(if (connected) "Connection settings" else "Find on Wi-Fi"),
+            if (!shellHosted) HaloWorkspaceButton(uiText(if (connected) "Connection settings" else "Find on Wi-Fi"),
                 { connection = true }, Modifier.fillMaxWidth(), primary = !connected)
             if (connection) HaloWorkspaceCard {
                 HaloTextField(address, { address = it; connectionError = false }, label = { Text(uiText("Wi-Fi address")) },

@@ -3,6 +3,13 @@ package com.halo.app.ui.screens.notebook
 import android.app.Application
 import android.content.Context
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Modifier
+import com.halo.app.ui.presence.LocalShellUtilityBand
+import com.halo.app.ui.presence.ShellUtilityProjection
+import com.halo.app.ui.presence.RenderShellUtilityBand
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -81,8 +88,12 @@ class CanvasEditorSelectionInteractionTest {
         lateinit var vm: CanvasEditorViewModel
         compose.runOnIdle { vm = CanvasEditorViewModel(board, repository); store.put(board, vm) }
         compose.setContent { HostlessHaloTheme {
-            CompositionLocalProvider(LocalShellHaloOrb provides true) {
-                CanvasEditorScreen(vm, onBack = {})
+            val utility = remember { mutableStateOf<ShellUtilityProjection?>(null) }
+            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellUtilityBand provides utility) {
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1f).fillMaxWidth()) { CanvasEditorScreen(vm, onBack = {}) }
+                    utility.value?.let { RenderShellUtilityBand(it) }
+                }
             }
         } }
         compose.waitUntil(10_000) { vmScheduler.runCurrent(); !vm.uiState.value.loading }

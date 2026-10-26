@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -76,6 +79,8 @@ fun ConversationsListScreen(
     val undoneLabel = uiText("Chat restored")
     val failedLabel = uiText("This chat could not be changed. Try again.")
     val undoLabel = uiText("Undo")
+    val shellHosted = BindShellChildPage("Saved chats", onBack, sourceIdentity = "$loaded:$deleting:$query",
+        actions = listOf(ShellPageAction("chats.clear-search", "Clear search", HaloGlyph.SEARCH, query.isNotBlank()) { query = "" }))
     val conversations = remember(history, summaries, query) {
         // The Room conversations projection is filtered by the Workspace
         // ACTIVE lifecycle; turns for trashed chats remain recoverable.
@@ -103,7 +108,7 @@ fun ConversationsListScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        HaloWorkspaceHeader(
+        if (!shellHosted) HaloWorkspaceHeader(
             title = uiText("Saved chats"),
             subtitle = uiText("Browse and continue earlier conversations"),
             onBack = onBack
@@ -302,6 +307,10 @@ fun ConversationDetailScreen(
     val title = savedTitle?.takeUnless { it.isBlank() || it == "New conversation" }
         ?: orderedTurns.firstOrNull()?.userText?.trim()?.take(60)?.ifBlank { null }
         ?: "Saved chat"
+    val shellHosted = BindShellChildPage(title, onBack, objectId = conversationId, titleIsSource = true,
+        sourceIdentity = "$conversationId:${orderedTurns.lastOrNull()?.id}:${orderedTurns.size}",
+        actions = listOf(ShellPageAction("chat.continue", "Continue", HaloGlyph.CONVERSATION,
+            orderedTurns.isNotEmpty(), onContinue)))
 
     Column(
         modifier = Modifier
@@ -309,7 +318,7 @@ fun ConversationDetailScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        HaloWorkspaceHeader(
+        if (!shellHosted) HaloWorkspaceHeader(
             title = title,
             subtitle = uiText("Messages: %1\$d", orderedTurns.size),
             onBack = onBack,

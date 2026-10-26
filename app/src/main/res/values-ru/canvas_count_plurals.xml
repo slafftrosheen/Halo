@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_count_zoom_summary">%1$s · %2$s · %3$d%%</string>
+    <plurals name="canvas_card_count">
+        <item quantity="one">%1$d карточка</item>
+        <item quantity="few">%1$d карточки</item>
+        <item quantity="many">%1$d карточек</item>
+        <item quantity="other">%1$d карточки</item>
+    </plurals>
+    <plurals name="canvas_connection_count">
+        <item quantity="one">%1$d связь</item>
+        <item quantity="few">%1$d связи</item>
+        <item quantity="many">%1$d связей</item>
+        <item quantity="other">%1$d связи</item>
+    </plurals>
+</resources>

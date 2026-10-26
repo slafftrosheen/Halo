@@ -101,7 +101,7 @@ sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) 
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
 
-val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
+val bottomNavItems = listOf(Screen.Home, Screen.Notebook, Screen.Devices, Screen.Settings)
 
 @Composable
 fun AppShell(
@@ -187,6 +187,16 @@ fun AppShell(
             return
         }
         if (route == "home") { screenMode = false; screenFull = false }
+        val currentBell = navController.currentDestination?.route
+        if (route in setOf("activity", "notifications") &&
+            (currentBell?.startsWith("activity") == true || currentBell == "notifications")) {
+            if (currentBell.substringBefore("?") != route) navController.navigate(route) {
+                popUpTo(navController.currentDestination!!.id) { inclusive = true; saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+            return
+        }
         if (navController.currentDestination?.route != route) {
             if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
             if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route, restoreSavedState = false)
@@ -306,6 +316,13 @@ fun AppShell(
     BoxWithConstraints {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    var lastWorkingRoot by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf("home") }
+    val bellOpen = currentRoute?.startsWith("activity") == true || currentRoute?.startsWith("notifications") == true
+    LaunchedEffect(currentRoute) {
+        if (!bellOpen) primaryNavigationRoute(currentRoute)?.takeIf { candidate -> bottomNavItems.any { it.route == candidate } }
+            ?.let { lastWorkingRoot = it }
+    }
+
     androidx.activity.compose.BackHandler(currentRoute == "home" && screenMode && !kidsMode) {
         if (screenFull) screenFull = false else screenMode = false
     }
@@ -331,7 +348,6 @@ fun AppShell(
         hintDismissed = true
         ManualDependencyGraph.storage.putBoolean("interface4_orb_hint_seen", true)
     }
-    val orbDestinations = remember(kidsMode) { ShellOrbCatalog.destinations(kidsMode) }
     val contextualRoute = if (currentRoute == "home" && screenMode) "screen" else currentRoute
     val pageContextBinding = remember { com.halo.app.context.CurrentPageContextBinding(
         ManualDependencyGraph.interactionContext, ManualDependencyGraph.workspaceContext::versionFor) }
@@ -346,12 +362,21 @@ fun AppShell(
     val pageActions = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellPageProjection?>(null) }
     val pageObjectId = contextObjectId ?: backStackEntry?.arguments?.getString("sessionId") ?: backStackEntry?.arguments?.getString("projectId")
     val pageOwnerFilter: (com.halo.app.ui.presence.ShellPageOwner) -> Boolean = remember(kidsMode, contextualRoute, pageObjectId, backStackEntry?.id) { { owner ->
-        !kidsMode && owner.navigationEntryId == backStackEntry?.id && ShellOrbCatalog.pageOwnerMatches(owner, contextualRoute, pageObjectId)
+        ShellOrbCatalog.allowsPageProjection(owner, kidsMode) && owner.navigationEntryId == backStackEntry?.id &&
+            ShellOrbCatalog.pageOwnerMatches(owner, contextualRoute, pageObjectId)
     }
     }
+    val utilityBand = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellUtilityProjection?>(null) }
     val livePageActions = pageActions.value?.takeIf { pageOwnerFilter(it.owner) }
-    val orbContext = remember(contextualRoute, kidsMode, contextObjectId, livePageActions) {
-        val page = if (!kidsMode && contextObjectId != null)
+    BindCurrentScreenContext(ManualDependencyGraph.currentScreenContext, backStackEntry?.id, contextualRoute,
+        livePageActions, ownerLifecycle, shellOrbVisible && !kidsMode)
+    val currentContextObjectId = if (contextualRoute?.substringBefore("?") == "file_tools") livePageActions?.owner?.objectId else contextObjectId
+    androidx.compose.runtime.DisposableEffect(livePageActions?.owner) {
+        onDispose { contextJob?.cancel(); contextJob = null }
+    }
+
+    val orbContext = remember(contextualRoute, kidsMode, currentContextObjectId, livePageActions) {
+        val page = if (!kidsMode && currentContextObjectId != null)
             listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
         val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph, enabled = it.enabled) }
             ?: ShellOrbCatalog.context(contextualRoute, kidsMode)
@@ -363,29 +388,20 @@ fun AppShell(
         com.halo.app.ui.presence.LocalShellHaloOrb provides shellOrbVisible,
         com.halo.app.ui.presence.LocalShellOrbOverride provides orbOverride,
         com.halo.app.ui.presence.LocalShellPageActions provides pageActions,
+        com.halo.app.ui.presence.LocalShellUtilityBand provides utilityBand,
         com.halo.app.ui.presence.LocalShellPageOwnerFilter provides pageOwnerFilter) {
     ShellTypedMessageSheet(homeViewModel, showTypedMessage && shellOrbVisible && !kidsMode) { showTypedMessage = false }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (shellOrbVisible) Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().imePadding(),
-                horizontalAlignment = Alignment.CenterHorizontally) {
+            if (shellOrbVisible) ShellFooterViewport(
+                Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
                 val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
-                if (!kidsMode && !editingWorkspace && currentRoute !in setOf("home", "permissions")) LiveTaskPill(liveHome,
-                    onReview = { navigateSafely("activity") }, onStop = homeViewModel::cancelSession)
                 com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
                     onVoiceSettings = { navigateSafely("settings/voice/output") })
                 contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
-                val scopedOrb = orbOverride.value.takeIf { kidsMode && currentRoute == "home" }
-                if (scopedOrb != null) com.halo.app.ui.presence.HaloOrbLauncher(
-                    scopedOrb.signal, scopedOrb.interaction, emptySet(), {}, scopedOrb.onPrimary, scopedOrb.onStop,
-                    onTools = {}, showToolCatalog = false, destinations = orbDestinations, onNavigate = ::navigateSafely,
-                    leading = { com.halo.app.ui.components.CompactPrivacyModeControl() })
-                else com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions, ::navigateSafely,
-                    size = 64.dp, destinations = orbDestinations, onNavigate = ::navigateSafely,
-                    contextActions = orbContext, onContextAction = { action ->
+                val dispatchContext: (com.halo.app.ui.presence.HaloOrbContextAction) -> Unit = { action ->
                         if (!action.enabled) Unit
                         else if (action.id.startsWith("page:")) {
                             val projection = pageActions.value
@@ -393,14 +409,16 @@ fun AppShell(
                                 projection.actions.any { "page:${it.id}" == action.id && it.title == action.title && it.glyph == action.glyph && it.enabled })
                                 projection.invoke(action.id.removePrefix("page:"))
                         }
+                        else if (kidsMode && action.id == "study") ShellOrbCatalog.directContextRoute(action, kidsMode)?.let(::navigateSafely)
                         else if (action.id == "type-message") showTypedMessage = true
                         else if (action.id == "page-context") {
-                            val id = contextObjectId
+                            val id = currentContextObjectId
                             val route = currentRoute
                             if (id != null && route != null && contextJob?.isActive != true) {
                                 contextJob = shellScope.launch {
                                     try {
-                                        pageContextBinding.bind(route, id)
+                                        val expected = if (contextualRoute?.substringBefore("?") == "file_tools") livePageActions?.owner?.canonicalSourceVersion else null
+                                        pageContextBinding.bind(route, id, expected)
                                         contextNotice = "Page added as context"
                                     } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                                     catch (_: Exception) { contextNotice = "Page changed or unavailable. Select it again." }
@@ -408,9 +426,30 @@ fun AppShell(
                             }
                         } else if (action.id == "new-note") homeViewModel.createNote()
                         else action.catalog?.let { homeViewModel.requestOrbCatalog(it); navigateSafely("home") }
-                    }, hint = if (hintDismissed) null else "Tap to talk. Hold for shortcuts. Menu opens every page.",
-                    onDismissHint = ::dismissOrbHint,
-                    leading = { com.halo.app.ui.components.CompactPrivacyModeControl() })
+                    }
+                val inbox by ManualDependencyGraph.notificationInboxSource.state.collectAsStateWithLifecycle()
+                val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
+                HaloZone(if (bellOpen) lastWorkingRoot else contextualRoute, this@BoxWithConstraints.maxHeight,
+                    compact = this@BoxWithConstraints.maxHeight < 520.dp || WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0,
+                    actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateSafely,
+                    attentionCount = if (kidsMode) 0 else inbox.items.count { it.active } + activity.events.filter { it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.mapNotNull { it.reviewRunId }.distinct().size,
+                    utility = {
+                        if (currentRoute?.startsWith("activity") == true || currentRoute == "notifications") Row {
+                            TextButton(onClick = { navigateSafely("activity") }) { Text(uiText("Activities")) }
+                            TextButton(onClick = { navigateSafely("notifications") }) { Text(uiText("Notifications")) }
+                            TextButton(onClick = { navController.popBackStack() }) { Text(uiText("Close")) }
+                        }
+                        utilityBand.value?.takeIf { pageOwnerFilter(it.owner) }?.let { com.halo.app.ui.presence.RenderShellUtilityBand(it) }
+                    }, orb = { zoneOrbSize ->
+                val scopedOrb = orbOverride.value.takeIf { kidsMode && currentRoute == "home" }
+                if (scopedOrb != null) com.halo.app.ui.presence.HaloOrbLauncher(
+                    scopedOrb.signal, scopedOrb.interaction, emptySet(), {}, scopedOrb.onPrimary, scopedOrb.onStop,
+                    onTools = {}, showToolCatalog = false, destinations = emptyList(), onNavigate = ::navigateSafely,
+                    contextActions = orbContext, onContextAction = dispatchContext, size = zoneOrbSize)
+                else com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions, ::navigateSafely,
+                    size = zoneOrbSize, destinations = emptyList(), onNavigate = ::navigateSafely,
+                    contextActions = orbContext, onContextAction = dispatchContext, hint = null, onDismissHint = ::dismissOrbHint)
+                })
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing
@@ -422,6 +461,7 @@ fun AppShell(
             TextButton(onClick = { navigateSafely("home") }) { Text(uiText("Back to my learning space")) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            if (contextualRoute != "screen") com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize())
             SharedTransitionLayout {
             com.halo.app.ui.design.HaloLabBoundary(
                 enabled = currentRoute?.let { com.halo.app.ui.screens.settings.isDeveloperDestination(it) } == true,
@@ -430,10 +470,10 @@ fun AppShell(
                 navController = navController,
                 startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
                 modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
-                enterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(140)) },
-                exitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(90)) },
-                popEnterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(140)) },
-                popExitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(90)) },
+                enterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(com.halo.app.ui.design.HaloMotion.pageEnterMs)) },
+                exitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(com.halo.app.ui.design.HaloMotion.pageExitMs)) },
+                popEnterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(com.halo.app.ui.design.HaloMotion.pageEnterMs)) },
+                popExitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(com.halo.app.ui.design.HaloMotion.pageExitMs)) },
             ) {
                 composable("mini_halo") {
                     val activity = com.halo.app.ui.mini.miniHaloActivityOwner(androidx.compose.ui.platform.LocalContext.current)
@@ -590,6 +630,7 @@ fun AppShell(
                         }
                     }
                     NotebookScreen(notebookViewModel,
+                        librarySession = ManualDependencyGraph.notebookLibrarySession,
                         requestLocalSearch = requestLocalSearch,
                         onLocalSearchOpened = { notebookEntry.savedStateHandle["openLocalSearch"] = false },
                         onOpenStudy = { navigateSafely(Screen.Study.route) },
@@ -1091,12 +1132,8 @@ fun AppShell(
                                     savedTitle = conversations.firstOrNull { it.id == conversationId }?.title,
                                     turns = turns,
                                     onContinue = {
-                                        scope.launch {
-                                            if (ManualDependencyGraph.conversationStore
-                                                    .activateExistingConversation(conversationId)) {
-                                                navController.navigateToPrimary("home")
-                                            }
-                                        }
+                                        homeViewModel.openConversation(conversationId)
+                                        navController.navigateToPrimary("home")
                                     },
                                     onBack = { navController.popBackStack() }
                                 )
@@ -1130,7 +1167,8 @@ fun AppShell(
                     val model: com.halo.app.ui.screens.notifications.NotificationInboxViewModel = viewModel(
                         factory = com.halo.app.ui.screens.notifications.NotificationInboxViewModel.Factory(ManualDependencyGraph.notificationInboxSource))
                     com.halo.app.ui.screens.notifications.NotificationInboxScreen(model,
-                        onBack = { navController.popBackStack() }, onOpen = { navigateSafely("notifications/${android.net.Uri.encode(it)}") })
+                        onBack = { navController.popBackStack() }, onOpen = { navigateSafely("notifications/${android.net.Uri.encode(it)}") },
+                        onReviewActivity = { navigateSafely("activity?runId=${android.net.Uri.encode(it)}") })
                 }
                 composable("notifications/{notificationKey}", arguments = listOf(navArgument("notificationKey") { type = NavType.StringType })) { entry ->
                     val key = entry.arguments?.getString("notificationKey").orEmpty()

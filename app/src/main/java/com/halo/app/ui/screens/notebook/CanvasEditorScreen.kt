@@ -8,6 +8,7 @@ import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import android.Manifest
@@ -214,13 +215,27 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
-    BindShellPageActions(ShellPageOwner("canvas", viewModel.canvasId,
-        "${state.nodes.hashCode()}:${state.edges.hashCode()}"), listOf(
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = ShellPageOwner("canvas", viewModel.canvasId,
+        "${state.nodes.hashCode()}:${state.edges.hashCode()}:${state.selectedNodeIds.sorted()}:${state.selectedNodeId}",
+        selectionIds = state.selectedNodeIds.ifEmpty { setOfNotNull(state.selectedNodeId) }.sorted(),
+        canonicalToolIds = listOf("halo_canvas_current", "halo_canvas_get"))
+    BindShellPageActions(pageOwner, listOf(
+        ShellPageAction("page.canvas.options", "Tools", HaloGlyph.ACTION, !state.loading && !state.missing) { menu = true },
         ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true },
         ShellPageAction("page.canvas.fit", "Fit all cards", HaloGlyph.NOTE,
             state.nodes.isNotEmpty() && !state.loading && !state.missing) { viewModel.fitToContent() },
         ShellPageAction("page.canvas.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = !toolsExpanded },
     ))
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        ToolZoneHeader(state.title, onBack = { viewModel.leave(onBack) }) {
+            ToolZoneHeaderAction("page.canvas.options") {
+                IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {
+                    com.halo.app.ui.icons.HaloIcon(HaloGlyph.TOOL, uiText("Tools"))
+                }
+            }
+        }
+    }
     var boardSearch by rememberSaveable { mutableStateOf("") }
     var searchType by rememberSaveable { mutableStateOf("All") }
     LaunchedEffect(boardSearch, searchType, state.nodes.map { it.text }, state.edges, state.references) {
@@ -601,16 +616,18 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
-        EditorWorkspaceHeader(state.title, menu,
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        if (!shellOwnsOrb) EditorWorkspaceHeader(state.title, menu,
             onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
             onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
             haloEnabled = boardEditingEnabled)
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(uiText("%1\$d cards · %2\$d connections · %3\$d%%",
-                    state.nodes.size, state.edges.size, (state.viewportScale * 100).roundToInt()),
+            Text(stringResource(com.halo.app.R.string.canvas_count_zoom_summary,
+                    pluralStringResource(com.halo.app.R.plurals.canvas_card_count, state.nodes.size, state.nodes.size),
+                    pluralStringResource(com.halo.app.R.plurals.canvas_connection_count, state.edges.size, state.edges.size),
+                    (state.viewportScale * 100).roundToInt()),
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)

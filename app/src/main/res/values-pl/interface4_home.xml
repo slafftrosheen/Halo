@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_return_to_current">Wróć do bieżącej czynności</string>
+    <string name="home_chat_screen_switch">Czat lub ekran</string>
+</resources>

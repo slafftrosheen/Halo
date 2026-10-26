@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.devices
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.icons.HaloGlyph
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,10 +46,16 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
     var reviewing by remember(deviceId) { mutableStateOf(false) }
     var reviewFailed by remember(deviceId) { mutableStateOf(false) }
     val device = state.devices.find { it.id == deviceId }
+    val captureReady = device?.sessionState == SessionState.READY && device.hasLiveGlasses
+    val scopedMedia = media.takeIf { it.deviceId == deviceId } ?: WearableCaptureStatus()
+    val shellHosted = BindShellChildPage(device?.name ?: uiText("My glasses"), onBack, objectId = deviceId.takeIf { it.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")) }, titleIsSource = true,
+        sourceIdentity = "$deviceId:${device?.sessionState}:$reviewing:${scopedMedia.busy}",
+        actions = listOf(ShellPageAction("glasses.refresh", "Check for photos", HaloGlyph.CAMERA,
+            captureReady && !scopedMedia.busy && !reviewing) { viewModel.refreshMedia(deviceId) }))
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
         .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        HaloWorkspaceHeader(device?.name ?: uiText("My glasses"), onBack = onBack)
+        if (!shellHosted) HaloWorkspaceHeader(device?.name ?: uiText("My glasses"), onBack = onBack)
         GlassesControlsContent(device, pairing,
             media.takeIf { it.deviceId == deviceId } ?: WearableCaptureStatus(),
             onConnect = {

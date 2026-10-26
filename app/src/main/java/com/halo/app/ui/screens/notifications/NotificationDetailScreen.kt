@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notifications
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -28,12 +30,21 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
     val message by model.message.collectAsStateWithLifecycle()
     val busy by model.busy.collectAsStateWithLifecycle()
     var dismissConfirmation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val shellHosted = BindShellChildPage("Notification", onBack,
+        sourceIdentity = "${item?.key}:${item?.postedAt}:${item?.active}:${item?.dismissible}:$busy:$composing",
+        actions = listOf(
+            ShellPageAction("notification.privacy", "Manage app notification privacy", HaloGlyph.SECURITY, onInvoke = onPrivacy),
+            ShellPageAction("notification.reply", "Reply", HaloGlyph.CONVERSATION,
+                item?.reply is ReplyCapability.Available && !busy) { model.composing.value = true },
+            ShellPageAction("notification.dismiss", "Dismiss", HaloGlyph.TRASH,
+                item?.dismissible == true && !busy) { dismissConfirmation = true },
+        ))
     val context = androidx.compose.ui.platform.LocalContext.current
     DisposableEffect(model, context) {
         onDispose { if (context.notificationActivity()?.isChangingConfigurations != true) model.leave() }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HaloScreenHeader(uiText("Notification"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
+        if (!shellHosted) HaloScreenHeader(uiText("Notification"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
         val row = item
         if (row == null) {
             Text(uiText("Notification unavailable"), style = MaterialTheme.typography.headlineSmall)
@@ -65,7 +76,7 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
         }
         message?.let { Text(uiText(it.template, *it.arguments.toTypedArray())) }
         if (busy) HaloProgressPresentation(uiText("Requesting action…"))
-        TextButton(onClick = onPrivacy) { Text(uiText("Manage app notification privacy")) }
+        if (!shellHosted) TextButton(onClick = onPrivacy) { Text(uiText("Manage app notification privacy")) }
     }
     confirmation?.let { confirmed ->
         // N02: the remote app may replace or revoke its reply action while the

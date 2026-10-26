@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_mode_local_short">Lokalnie</string>
+    <string name="interface4_mode_power_short">Moc</string>
+    <string name="interface4_hold_halo_short">Przytrzymaj halo</string>
+</resources>

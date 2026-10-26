@@ -2,6 +2,13 @@ package com.halo.runtime.cognition.tools
 
 /** Personal configuration metadata uses the existing Workspace disclosure category. */
 object PersonalConfigurationToolAccess {
+    val currentScreen = setOf("halo_current_screen")
+    val library = setOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize")
+    val savedChats = setOf("halo_saved_chats_list", "halo_saved_chats_search", "halo_saved_chat_get",
+        "halo_saved_chat_trash", "halo_saved_chat_restore", "halo_saved_chat_open")
+    val mcpSettings = setOf("halo_mcp_servers", "halo_mcp_server_state", "halo_mcp_server_set_enabled",
+        "halo_mcp_tool_set_enabled", "halo_mcp_refresh_tools")
+    val localRoles = setOf("halo_local_role_state", "halo_local_role_select")
     val preferences = setOf("halo_get_preferences", "halo_set_preferences", "halo_get_mode_profile", "halo_edit_mode_profile")
     val screenLayout = setOf("halo_screen_state", "halo_screen_preview", "halo_screen_apply", "halo_screen_settings",
         "halo_screen_undo", "halo_screen_save_preset", "halo_screen_remove_preset")
@@ -16,7 +23,7 @@ object PersonalConfigurationToolAccess {
         "halo_routine_save_existing", "halo_routine_delete", "halo_routine_run_now")
     val activeStudy = setOf("halo_study_current", "halo_study_session_action")
     val speechInventory = setOf("halo_speech_inventory", "halo_speech_model_action")
-    val all = preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + activeStudy + speechInventory
+    val all = currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + activeStudy + speechInventory
 }
 
 /** Tools whose results contain private workspace content or personal configuration metadata. */
@@ -47,6 +54,7 @@ internal fun remoteToolResultCategories(toolName: String): Set<com.halo.sdk.prov
         add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
     }
     if (toolName in WorkspaceToolAccess.readTools) add(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE)
+    if (toolName in PersonalConfigurationToolAccess.savedChats) add(com.halo.sdk.provider.RemoteDataCategory.CONVERSATION)
     if (toolName in setOf("halo_search_memory", "halo_propose_memory", "halo_context_used_sources")) add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
     if (toolName in DefaultToolExposureGate.CLOUD_SCREEN_GATED_TOOLS || toolName.startsWith("halo_appfn_"))
         add(com.halo.sdk.provider.RemoteDataCategory.SCREEN)

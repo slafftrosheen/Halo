@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -121,6 +124,13 @@ fun WorkspaceObjectDetailScreen(
         }
     }
 
+    val currentDetail = detailState as? WorkspaceDetailState.Ready
+    val shellHosted = BindShellChildPage(currentDetail?.item?.title ?: currentDetail?.file?.displayName
+        ?: if (type == "memory") "Memory" else "File", onBack, objectId = id, titleIsSource = true,
+        sourceIdentity = "$id:$type:$revision:${currentDetail?.file?.version}:$actionBusy",
+        actions = listOf(ShellPageAction("object.refresh", "Refresh", HaloGlyph.NOTE,
+            !actionBusy && detailState !is WorkspaceDetailState.Loading) { revision++ }))
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -131,7 +141,7 @@ fun WorkspaceObjectDetailScreen(
     ) {
         item {
             val ready = detailState as? WorkspaceDetailState.Ready
-            HaloWorkspaceHeader(
+            if (!shellHosted) HaloWorkspaceHeader(
                 title = ready?.item?.title
                     ?: ready?.file?.displayName
                     ?: if (type == "memory") "Memory" else "File",

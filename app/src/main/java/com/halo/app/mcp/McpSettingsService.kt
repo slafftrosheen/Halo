@@ -41,7 +41,7 @@ data class McpServerConfiguration(val name: String, val endpoint: String, val au
 
 /** Settings owns configuration and discovery only. No tools/call API is exposed here. */
 class McpSettingsService(private val dao: McpDao, private val manager: McpIntegrationManager,
-    private val secrets: SecretStore, private val syncRegistry: suspend () -> Unit) {
+    private val secrets: SecretStore, private val syncRegistry: suspend () -> Unit) : McpSettingsControl {
     private val configuration = Mutex()
     val servers: Flow<List<McpServerUiModel>> = combine(dao.observeServers(), dao.observeAllTools(), manager.states) { servers, tools, _ ->
         servers.map { server ->
@@ -55,6 +55,15 @@ class McpSettingsService(private val dao: McpDao, private val manager: McpIntegr
                     it.remoteName, it.enabled, it.risk, it.lastRefreshedAt) })
         }
     }.flowOn(Dispatchers.IO)
+    override suspend fun settingsCatalog(): List<McpSettingsSnapshot> = configuration.withLock {
+        manager.servers().sortedBy { it.id }.mapNotNull { manager.settingsSnapshot(it.id) }
+    }
+    override suspend fun settingsSnapshot(id: String): McpSettingsSnapshot? = configuration.withLock { manager.settingsSnapshot(id) }
+    override suspend fun updateSettings(id: String, sourceVersion: String, command: McpSettingsCommand,
+        toolId: String?, enabled: Boolean?, canConfigure: () -> Boolean): McpSettingsEffect? = configuration.withLock {
+        try { manager.updateSettings(id, sourceVersion, command, toolId, enabled, canConfigure) }
+        finally { withContext(NonCancellable) { syncRegistry() } }
+    }
     suspend fun configuration(id: String): McpServerConfiguration? = dao.getServer(id)?.let {
         McpServerConfiguration(it.displayName, it.endpoint, McpAuthKind.valueOf(it.authKind), McpTrustLevel.valueOf(it.trust))
     }

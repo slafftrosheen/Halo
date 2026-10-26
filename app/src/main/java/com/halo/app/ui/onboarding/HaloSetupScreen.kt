@@ -116,7 +116,10 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
             }
         }
     }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+        // New steps start at their heading; the current step keeps saveable scroll on rotation.
+        // Scope only the scroll state, preserving the form body's composition and drafts.
+        val stepScroll = key(progress.stage) { rememberScrollState() }
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(stepScroll)
             .padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Text(uiText("Setup") + " · ${progress.stage.ordinal + 1} / ${SetupStage.entries.size}",
                 style = MaterialTheme.typography.labelLarge,

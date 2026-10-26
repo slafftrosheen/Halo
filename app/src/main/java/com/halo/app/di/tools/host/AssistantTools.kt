@@ -25,6 +25,7 @@ class AssistantTools(
     languageReadback: (() -> String?)? = null,
     private val modeProfiles: ModeProfileTools? = null,
     private val canConfigure: () -> Boolean = isForeground,
+    private val currentScreen: CurrentScreenTools? = null,
 ) : ToolExecutor {
     private val appPreferences = AppPreferencesActions(context, appearance, preferences, palettes, visual, languages, languageReadback)
     private fun definition(name: String, description: String, properties: Map<String, Any> = emptyMap(), required: List<String> = emptyList()) =
@@ -34,7 +35,7 @@ class AssistantTools(
         definition("halo_open_screen", "Open an exact Halo page. Dispatch does not verify the page rendered.",
             mapOf("screen" to mapOf("type" to "string", "enum" to HaloScreenCatalog.screens.keys.toList())), listOf("screen")),
         definition("halo_get_preferences", "Read Halo app appearance, separate light/dark palettes, accessibility visual options, app language, font scale and start page. Missing optional owners are reported as null."),
-        definition("halo_set_preferences", "Change explicit Halo-only appearance, separate light/dark accent/tone, contrast, less motion, guide light, app language, font scale (0 follows Android, maximum2.0), or start page. This never changes processing privacy, remote sharing, Android settings or permissions. Palette edits require exact paletteTheme. Read back after uncertain results; no automatic retry.",
+        definition("halo_set_preferences", "Change explicit Halo-only appearance, separate light/dark accent/tone/background (STILL, HALO or MIST), contrast, less motion, guide light, app language, font scale (0 follows Android, maximum2.0), or start page. This never changes processing privacy, remote sharing, Android settings or permissions. Palette edits require exact paletteTheme. Read back after uncertain results; no automatic retry.",
             AppPreferencesActions.fields),
         definition("halo_read_aloud", "Read supplied text using Halo's selected voice and shared audio lifecycle. Queued speech is not proof playback completed.",
             mapOf("text" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 4000)), listOf("text")),
@@ -42,8 +43,12 @@ class AssistantTools(
         definition("halo_perform_app_action", "Dispatch one observed native app action using its fresh opaque token. Requires separate approval; effect remains unconfirmed.",
             mapOf("token" to mapOf("type" to "string", "maxLength" to 128)), listOf("token")),
         definition("halo_stop_reading", "Stop Halo speech playback; does not stop other apps or microphone capture."),
-    ) + modeProfiles?.definitions().orEmpty()
+    ) + modeProfiles?.definitions().orEmpty() + currentScreen?.definitions().orEmpty()
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        if (toolCall.functionName == CurrentScreenTools.NAME) return currentScreen?.execute(toolCall)
+            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
+                "Current page metadata owner unavailable", ToolRejectionKind.CAPABILITY_UNAVAILABLE)
+
         if (toolCall.functionName in setOf("halo_set_preferences", "halo_edit_mode_profile") && !canConfigure())
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
                 "Open Halo in a grown-up space to change settings", ToolRejectionKind.PERMISSION_REQUIRED)

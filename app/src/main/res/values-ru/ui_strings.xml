@@ -4149,4 +4149,23 @@
     <string name="ui_66cd74a43e4c" formatted="false">"Во время урока: «подсказка», «повтори», «следующий шаг», «проще», «подробнее» или «стоп». Эти же действия есть ниже."</string>
     <string name="ui_d61a54f7137c" formatted="false">"Попробуй: «подсказка», «повтори», «следующий шаг», «проще», «подробнее» или «стоп»."</string>
     <string name="ui_7d72ddf69768" formatted="false">"Стартовый набор недоступен."</string>
+    <string name="ui_0a9d8afb0161" formatted="false">"Офисные инструменты"</string>
+    <string name="ui_2d43037f47e4" formatted="false">"halo Studio"</string>
+    <string name="ui_dce612cabb53" formatted="false">"Графический редактор"</string>
+    <string name="ui_7e4d5c460c04" formatted="false">"Мышление"</string>
+    <string name="ui_f4e08fefef74" formatted="false">"Персонализация"</string>
+    <string name="ui_dc923b947db3" formatted="false">"Изображения и камера"</string>
+    <string name="ui_ae58aa24a0b0" formatted="false">"Выберите модель для изображений"</string>
+    <string name="ui_ddca0456c75e" formatted="false">"Доступ к камере и фото"</string>
+    <string name="ui_74c4ba5901f7" formatted="false">"Настройки передачи изображений"</string>
+    <string name="ui_caa52519e922" formatted="false">"Настройки Local и Power"</string>
+    <string name="ui_8c31e6e72230" formatted="false">"Локально"</string>
+    <string name="ui_4d0076e6b4c7" formatted="false">"Действия"</string>
+    <string name="ui_b5634a8ba110" formatted="false">"Действия и уведомления"</string>
+    <string name="ui_5774d46c5e6b" formatted="false">"Удерживайте halo, чтобы открыть действия"</string>
+    <string name="ui_e8d505c1b1f7" formatted="false">"Локальный режим"</string>
+    <string name="ui_b080f31e6a5f" formatted="false">"Локально / Power"</string>
+    <string name="ui_3b3da664eb98" formatted="false">"Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo."</string>
+    <string name="ui_3cd9fa292989" formatted="false">"Голосовой ввод занят"</string>
+    <string name="ui_03ba09fea0f0" formatted="false">"Другая задача использует ресурсы для голосового ввода на устройстве. Напишите сообщение или попробуйте голосовой ввод после завершения задачи."</string>
 </resources>

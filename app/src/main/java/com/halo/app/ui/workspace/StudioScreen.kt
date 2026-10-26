@@ -57,10 +57,16 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var importing by remember(project?.id) { mutableStateOf(false) }
     var pendingInk by remember(project?.id) { mutableStateOf<String?>(null) }
     var activeInk by remember(project?.id) { mutableStateOf<StudioInkSession?>(null) }
-    BindShellPageActions(ShellPageOwner("studio", project?.id, project?.revision?.toString()),
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = ShellPageOwner("studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}",
+        canonicalSourceVersion = project?.revision?.toString(),
+        selectionIds = listOfNotNull(project?.session?.current?.selectedLayerId),
+        canonicalToolIds = listOf("halo_studio_current", "halo_studio_get", "halo_studio_list"))
+    BindShellPageActions(pageOwner,
         if (project == null) listOf(
             ShellPageAction("page.studio.new", stringResource(R.string.studio_new_project), HaloGlyph.NOTE, !busy && !state.loading) { naming = "new" },
         ) else listOf(
+            ShellPageAction("page.studio.export", stringResource(R.string.studio_export_png), HaloGlyph.FILE, !busy) { viewModel.export(CanvasImageFormat.PNG) },
             ShellPageAction("page.studio.layers", stringResource(R.string.studio_layers), HaloGlyph.NOTE, !busy) { layers = true },
             ShellPageAction("page.studio.versions", stringResource(R.string.studio_versions), HaloGlyph.ACTIVITY, !busy) { viewModel.versions() },
             ShellPageAction("page.studio.save", stringResource(R.string.studio_save), HaloGlyph.NOTE, !busy && project.hasUnsavedChanges) { viewModel.save() },
@@ -73,8 +79,22 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             activeInk = viewModel.startInk(project.revision, id); pendingInk = null
         }
     }
-    Scaffold(topBar = {
-        TopAppBar(title = { Text(project?.title ?: stringResource(R.string.studio_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(project?.title ?: stringResource(R.string.studio_title),
+            onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy) {
+                if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
+                    Icon(Icons.Default.Save, stringResource(R.string.studio_save), tint = MaterialTheme.colorScheme.primary)
+                }
+                if (project != null) StudioOverflowMenu(busy, project.hasUnsavedChanges,
+                    onBackground = { background = project }, onPresets = { naming = "new" },
+                    onSaveAs = { naming = "copy" }, onVersions = viewModel::versions,
+                    onDiscard = viewModel::discardDraft,
+                    onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
+                    onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) })
+        }
+    }
+    Scaffold(containerColor = com.halo.app.ui.theme.haloWorkspaceBackground(), topBar = {
+        if (!shellOwnsOrb) TopAppBar(title = { Text(project?.title ?: stringResource(R.string.studio_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             navigationIcon = { IconButton(onClick = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy) {
                 Icon(Icons.Default.ArrowBack, stringResource(R.string.studio_close))
             } }, actions = {

@@ -61,7 +61,7 @@ class BrandSettingsV16Test {
         compose.onNodeWithText("No matching settings").assertDoesNotExist()
     }
 
-    @Test fun settingsIdentityUsesActualExecutionLocationNotProviderName() {
+    @Test fun brainSummaryUsesActualProviderWithoutAnExtraIdentityCard() {
         compose.setContent {
             HaloTheme(darkTheme = false) {
                 SettingsContent(
@@ -73,7 +73,8 @@ class BrandSettingsV16Test {
                 )
             }
         }
-        compose.onNodeWithText("On your network").assertExists()
+        compose.onNodeWithText("Custom provider").assertExists()
+        compose.onNodeWithText("Your halo").assertDoesNotExist()
         compose.onNodeWithText("In the cloud").assertDoesNotExist()
     }
 

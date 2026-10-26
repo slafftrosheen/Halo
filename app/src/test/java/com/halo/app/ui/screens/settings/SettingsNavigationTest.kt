@@ -21,12 +21,12 @@ class SettingsNavigationTest {
         compose.setContent { HaloTheme(darkTheme = false) {
             SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { destinations += it })
         } }
-        compose.onNodeWithText("How halo answers").performScrollTo().performClick()
+        compose.onNodeWithText("Brain").performScrollTo().performClick()
         compose.onNodeWithText("Voice & reading").performScrollTo().performClick()
         assertEquals(listOf(SettingsDestination.INTELLIGENCE, SettingsDestination.VOICE), destinations)
         // Devices lives in primary navigation rather than a second Settings doorway.
         compose.onNodeWithText("Devices").assertDoesNotExist()
-        compose.onAllNodesWithText("How halo answers").assertCountEquals(1)
+        compose.onAllNodesWithText("Brain").assertCountEquals(1)
         compose.onAllNodesWithText("Voice & reading").assertCountEquals(1)
     }
     @Test fun systemCheckIsARealDestinationAndNotAnImplicitProbe() {
@@ -35,6 +35,9 @@ class SettingsNavigationTest {
             SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, { destinations += it })
         } }
         compose.onNodeWithText("System check").assertDoesNotExist()
+        assertEquals(emptyList<SettingsDestination>(), destinations)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Help"))
+        compose.onNodeWithText("Help").performClick()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Check-up"))
         compose.onNodeWithText("Check-up").performClick()
         assertEquals(listOf(SettingsDestination.SYSTEM_CHECK), destinations)

@@ -17,11 +17,12 @@ import com.halo.runtime.observer.InferenceLedger
 
 @Composable
 fun IntelligenceUsageScreen(ledger: InferenceLedger, onBack: () -> Unit, onDiagnostics: () -> Unit) {
+    SettingsChildZone("Online costs", onBack, listOf(settingsChildLink("onDiagnostics", "Check-up", onDiagnostics)))
     val inference by ledger.aggregate.collectAsStateWithLifecycle()
     val tools by ledger.toolAggregate.collectAsStateWithLifecycle()
     var details by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HaloScreenHeader(stringResource(R.string.online_costs), navigation = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(stringResource(R.string.online_costs), navigation = onBack)
         OnlineCostControls()
         TextButton(onClick = { details = !details }) { Text(uiText("Usage and diagnostics")) }
         if (details) {

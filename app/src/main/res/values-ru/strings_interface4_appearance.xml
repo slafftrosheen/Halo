@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_background">Фон</string>
+    <string name="interface4_background_still">Без движения</string>
+    <string name="interface4_background_halo">Формы halo</string>
+    <string name="interface4_background_mist">Дымка</string>
+    <string name="interface4_accent_sage">Шалфей</string>
+    <string name="interface4_accent_rose">Роза</string>
+    <string name="interface4_tone_paper">Бумага</string>
+    <string name="interface4_tone_slate">Сланец</string>
+    <string name="interface4_appearance_preview">Это предпросмотр. «Применить» сохраняет тему, «Отмена» оставляет текущий вид.</string>
+    <string name="interface4_appearance_defaults">Восстановить настройки</string>
+    <string name="interface4_dashboard_style">Стиль экрана</string>
+    <string name="interface4_dashboard_clear">Чистый</string>
+    <string name="interface4_dashboard_glass">Стекло</string>
+    <string name="interface4_dashboard_focus">Фокус</string>
+</resources>

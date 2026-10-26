@@ -4149,4 +4149,23 @@
     <string name="ui_66cd74a43e4c" formatted="false">"Podczas lekcji: „wskazówka”, „powtórz”, „następny krok”, „prościej”, „dokładniej” lub „zatrzymaj”. Te same działania są dostępne poniżej."</string>
     <string name="ui_d61a54f7137c" formatted="false">"Spróbuj: „wskazówka”, „powtórz”, „następny krok”, „prościej”, „dokładniej” lub „zatrzymaj”."</string>
     <string name="ui_7d72ddf69768" formatted="false">"Pakiet startowy jest niedostępny."</string>
+    <string name="ui_0a9d8afb0161" formatted="false">"Narzędzia biurowe"</string>
+    <string name="ui_2d43037f47e4" formatted="false">"halo Studio"</string>
+    <string name="ui_dce612cabb53" formatted="false">"Edytor grafiki"</string>
+    <string name="ui_7e4d5c460c04" formatted="false">"Myślenie"</string>
+    <string name="ui_f4e08fefef74" formatted="false">"Personalizacja"</string>
+    <string name="ui_dc923b947db3" formatted="false">"Obrazy i aparat"</string>
+    <string name="ui_ae58aa24a0b0" formatted="false">"Wybierz model obsługujący obrazy"</string>
+    <string name="ui_ddca0456c75e" formatted="false">"Dostęp do aparatu i zdjęć"</string>
+    <string name="ui_74c4ba5901f7" formatted="false">"Ustawienia udostępniania obrazów"</string>
+    <string name="ui_caa52519e922" formatted="false">"Ustawienia Local i Power"</string>
+    <string name="ui_8c31e6e72230" formatted="false">"Lokalnie"</string>
+    <string name="ui_4d0076e6b4c7" formatted="false">"Działania"</string>
+    <string name="ui_b5634a8ba110" formatted="false">"Działania i powiadomienia"</string>
+    <string name="ui_5774d46c5e6b" formatted="false">"Przytrzymaj halo, aby otworzyć działania"</string>
+    <string name="ui_e8d505c1b1f7" formatted="false">"Tryb lokalny"</string>
+    <string name="ui_b080f31e6a5f" formatted="false">"Lokalnie / Power"</string>
+    <string name="ui_3b3da664eb98" formatted="false">"Ta czynność wymaga trybu Power. Użyj przełącznika obok kuli halo."</string>
+    <string name="ui_3cd9fa292989" formatted="false">"Wprowadzanie głosowe jest zajęte"</string>
+    <string name="ui_03ba09fea0f0" formatted="false">"Inne zadanie korzysta z zasobów głosowych urządzenia. Napisz wiadomość lub spróbuj ponownie po zakończeniu tego zadania."</string>
 </resources>

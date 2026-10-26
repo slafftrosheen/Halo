@@ -72,6 +72,7 @@ fun SpeechRecognitionSettingsScreen(
     onBack: () -> Unit,
     onSpeechLab: () -> Unit = {},
 ) {
+    SettingsChildZone("Listening", onBack)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -96,7 +97,7 @@ fun SpeechRecognitionSettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = com.halo.app.ui.design.HaloSpacing.screen, vertical = 14.dp)
     ) {
-        HaloWorkspaceHeader(
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloWorkspaceHeader(
             title = uiText("Listening"),
             subtitle = uiText("Choose how halo listens."),
             onBack = onBack
@@ -226,6 +227,7 @@ internal fun voiceMicAction(state: VoiceSettingsUiState): VoiceMicAction = when 
 @Composable
 fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     onSpeechOutput: () -> Unit = {}, onSpeechRecognition: () -> Unit = {}) {
+    SettingsChildZone("Voice & reading", onBack, listOf(settingsChildLink("onSpeechOutput", "Speaking", onSpeechOutput), settingsChildLink("onSpeechRecognition", "Listening", onSpeechRecognition)))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val affinity by com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity.collectAsStateWithLifecycle()
@@ -256,7 +258,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     }
     var detailedConversation by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        HaloWorkspaceHeader(title = uiText("Voice & reading"), subtitle = uiText("Listening, dictation and reading aloud"), onBack = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloWorkspaceHeader(title = uiText("Voice & reading"), subtitle = uiText("Listening, dictation and reading aloud"), onBack = onBack)
         Surface(
             shape = com.halo.app.ui.design.HaloShapes.card,
             color = MaterialTheme.colorScheme.surfaceContainerLow,

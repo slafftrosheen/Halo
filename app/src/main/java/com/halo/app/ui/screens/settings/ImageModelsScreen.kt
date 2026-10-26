@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack: () -> Unit, onSetup: () -> Unit) {
+    SettingsChildZone("Image models", onBack, listOf(settingsChildLink("onSetup", "Set up", onSetup)))
     val scope = rememberCoroutineScope()
     var choices by remember(providerId) { mutableStateOf(listOf<WorkspaceImageChoice>()) }
     var busy by remember(providerId) { mutableStateOf(false) }
@@ -41,7 +42,7 @@ fun ImageModelsScreen(service: WorkspaceImageService, providerId: String, onBack
     }
     LaunchedEffect(providerId) { refresh() }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { HaloScreenHeader(uiText("Image models"), uiText("Choose separately from your chat model."), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Image models"), uiText("Choose separately from your chat model."), navigation = onBack) }
         item {
             HaloTextField(query, { query = it }, label = { Text(uiText("Search image models")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
             HaloFocusAction(uiText("Refresh image models"), HaloGlyph.MODEL, !busy, { refresh() }, active = choices.isEmpty())

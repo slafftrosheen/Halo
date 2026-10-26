@@ -96,6 +96,7 @@ fun SkillsScreen(
     packageIssues: kotlinx.coroutines.flow.StateFlow<List<com.halo.app.skills.SkillPackageIssue>>? = null,
     technical: Boolean = false,
 ) {
+    SettingsChildZone("Skills", onBack, listOf(settingsChildLink("onIntegrations", "Apps & services", onIntegrations), settingsChildLink("onLocalModels", "On-device models", onLocalModels), settingsChildLink("onModelRoles", "Model roles", onModelRoles)))
     val issues by (packageIssues ?: flowOf(emptyList())).collectAsStateWithLifecycle(initialValue = emptyList())
     LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
     val appSnapshot by (appCapabilities?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.runtime.cognition.apps.AppCapabilitySnapshot())).collectAsStateWithLifecycle()
@@ -417,7 +418,7 @@ fun SkillsScreen(
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
-        HaloScreenHeader(uiText(if (technical) "Skill packages" else "Skills"), uiText("Actions halo can use"), navigation = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText(if (technical) "Skill packages" else "Skills"), uiText("Actions halo can use"), navigation = onBack)
         HaloTextField(query, { query = it },
             label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
 

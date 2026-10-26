@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4166) {
+    buildMap(4185) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4210,6 +4210,25 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "During a lesson: hint, repeat, next step, simpler, more detail, or stop. The same actions are available below." to R.string.ui_66cd74a43e4c,
     "Try: hint, repeat, next step, simpler, more detail, or stop." to R.string.ui_d61a54f7137c,
     "The starter bundle is unavailable." to R.string.ui_7d72ddf69768,
+    "Office Tools" to R.string.ui_0a9d8afb0161,
+    "Halo Studio" to R.string.ui_2d43037f47e4,
+    "Graphics editor" to R.string.ui_dce612cabb53,
+    "Brain" to R.string.ui_7e4d5c460c04,
+    "Personalization" to R.string.ui_f4e08fefef74,
+    "Images and camera" to R.string.ui_dc923b947db3,
+    "Choose an image-capable model" to R.string.ui_ae58aa24a0b0,
+    "Camera and photo access" to R.string.ui_ddca0456c75e,
+    "Image sharing preferences" to R.string.ui_74c4ba5901f7,
+    "Local and Power preferences" to R.string.ui_caa52519e922,
+    "Local" to R.string.ui_8c31e6e72230,
+    "Activities" to R.string.ui_4d0076e6b4c7,
+    "Activities and notifications" to R.string.ui_b5634a8ba110,
+    "Hold halo for actions" to R.string.ui_5774d46c5e6b,
+    "Local mode" to R.string.ui_e8d505c1b1f7,
+    "Local / Power" to R.string.ui_b080f31e6a5f,
+    "This action needs Power mode. Use the control beside the halo Orb." to R.string.ui_3b3da664eb98,
+    "Voice input is busy" to R.string.ui_3cd9fa292989,
+    "Another task is using local voice resources. Type your message now, or try voice again after that task finishes." to R.string.ui_03ba09fea0f0,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

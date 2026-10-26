@@ -25,6 +25,7 @@ import com.halo.app.ui.icons.HaloGlyph
 @Composable
 fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onProvider: (String) -> Unit,
     initialProvider: String? = null, initialRole: AiModelRole? = null) {
+    SettingsChildZone("Models", onBack)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val providers by viewModel.control.rows.collectAsStateWithLifecycle()
@@ -34,7 +35,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
     val providersById = remember(providers) { providers.associateBy { it.descriptor.providerId } }
     LaunchedEffect(initialProvider, initialRole) { viewModel.enter(initialProvider, initialRole) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "header") { HaloScreenHeader(uiText("Models"), initialRole?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
+        item(key = "header") { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Models"), initialRole?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
         item {
             HaloTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
             TextButton(onClick = { showFilters = !showFilters }) {
@@ -100,6 +101,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
 @Composable
 fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack: () -> Unit, onPick: (AiModelRole) -> Unit,
     evidence: com.halo.app.ai.LocalRoleEvidenceController? = null, onExplore: (AiModelRole) -> Unit = {}) {
+    SettingsChildZone("Model roles", onBack)
     val measured by (evidence?.state ?: remember { kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.LocalRoleEvidenceState()) }).collectAsStateWithLifecycle()
     val message by (evidence?.message ?: remember { kotlinx.coroutines.flow.MutableStateFlow<String?>(null) }).collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { evidence?.invalidate() }
@@ -111,7 +113,7 @@ fun ModelRolesScreen(control: com.halo.app.ai.ProviderControlRepository, onBack:
     val routing by control.router.routingPolicy.collectAsStateWithLifecycle()
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            HaloScreenHeader(uiText("Model roles"), navigation = onBack)
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Model roles"), navigation = onBack)
             WorkloadPolicyControls()
             message?.let { Text(it) }
             Text(uiText("Routing: %1\$s", uiText(routingPolicyLabel(routing))))

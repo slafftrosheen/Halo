@@ -1,19 +1,19 @@
 <resources>
     <string name="mode47_routing_automatic">Automatic within the selected provider</string>
     <string name="mode47_feature_disabled">This online feature is off in the active mode profile. Review Mode profiles.</string>
-    <string name="mode47_profile_summary">Independent Private and Full Power settings</string>
+    <string name="mode47_profile_summary">Independent Local and Power settings</string>
     <string name="mode47_activity_scope">Local, content-free records from Halo request owners. A provider reply does not confirm a usable answer or its billed cost. Records start with this version.</string>
     <string name="mode47_outcome_replied">Provider replied</string>
     <string name="mode47_edit_profile">Edit profile</string>
     <string name="mode47_stt">Speech recognition provider</string>
     <string name="mode47_tts">Speech output provider</string>
     <string name="mode47_automatic">Automatic on-device selection</string>
-    <string name="mode47_full_power">Full Power</string>
+    <string name="mode47_full_power">Power</string>
     <string name="mode47_profiles">Mode profiles</string>
-    <string name="mode47_private_profile">Private profile</string>
-    <string name="mode47_power_profile">Full Power profile</string>
-    <string name="mode47_enable_power">Enable Full Power</string>
-    <string name="mode47_sharing_explanation">Full Power may send requests and the context categories listed below to configured online providers. Tune this profile in Mode profiles and return to Private at any time.</string>
+    <string name="mode47_private_profile">Local profile</string>
+    <string name="mode47_power_profile">Power profile</string>
+    <string name="mode47_enable_power">Enable Power</string>
+    <string name="mode47_sharing_explanation">Power may send requests and the context categories listed below to configured online providers. Tune this profile in Mode profiles and return to Local at any time.</string>
     <string name="mode47_configured_providers">Configured providers</string>
     <string name="mode47_no_provider">Provider setup needed</string>
     <string name="mode47_other_routes">Web reading uses the requested public website. Connected services use the account or server configured for that action. Hosted speech uses the selected speech provider. Unconfigured routes stay unavailable.</string>

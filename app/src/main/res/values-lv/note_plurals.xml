@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="note_word_count">
+        <item quantity="zero">%1$d vārdu</item>
+        <item quantity="one">%1$d vārds</item>
+        <item quantity="other">%1$d vārdi</item>
+    </plurals>
+</resources>

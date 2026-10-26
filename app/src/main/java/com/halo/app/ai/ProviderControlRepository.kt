@@ -24,6 +24,7 @@ data class ProviderControlRow(val descriptor: ProviderConfigurationDescriptor, v
 /** Single configuration owner. Saving never selects a provider or refreshes its remote catalogue. */
 class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiModelCatalogRepository, private val storage: Storage) : ViewModel(), ProviderConfigurationControl {
     val configurationTools: ProviderConfigurationControl get() = this
+    val localRoleTools: LocalRoleControl by lazy { ProviderLocalRoleActions(this) }
     private val toolLifetime = java.util.UUID.randomUUID().toString()
     private val toolChecks = java.util.concurrent.ConcurrentHashMap<String, Long>()
     val providers = router.getAllProviders().filterIsInstance<AiInferenceProvider>()

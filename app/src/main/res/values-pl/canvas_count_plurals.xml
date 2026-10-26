@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_count_zoom_summary">%1$s · %2$s · %3$d%%</string>
+    <plurals name="canvas_card_count">
+        <item quantity="one">%1$d karta</item>
+        <item quantity="few">%1$d karty</item>
+        <item quantity="many">%1$d kart</item>
+        <item quantity="other">%1$d karty</item>
+    </plurals>
+    <plurals name="canvas_connection_count">
+        <item quantity="one">%1$d połączenie</item>
+        <item quantity="few">%1$d połączenia</item>
+        <item quantity="many">%1$d połączeń</item>
+        <item quantity="other">%1$d połączenia</item>
+    </plurals>
+</resources>

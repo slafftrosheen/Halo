@@ -10,6 +10,8 @@ import android.provider.CalendarContract
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
@@ -158,6 +160,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             layout != null && !customizing && canInteract) { setCustomizing(true) },
         ShellPageAction("page.screen.settings", "Screen settings", HaloGlyph.SETTINGS, canInteract) { settings = true },
         ShellPageAction("page.screen.add", "Add card", HaloGlyph.NOTE, customizing && canInteract) { picker = true },
+        ShellPageAction("page.screen.appearance", "Appearance", HaloGlyph.APPEARANCE, customizing && canInteract) { appearanceOpen = true },
+        ShellPageAction("page.screen.ambient", "Screen", HaloGlyph.HOME, canInteract) { onFullScreen(!fullScreen) },
+        ShellPageAction("page.screen.note", "New note", HaloGlyph.NOTE, canInteract) { onQuickNote() },
     ))
     var calendarAllowed by remember { mutableStateOf(ContextCompat.checkSelfPermission(context,
         Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) }
@@ -320,16 +325,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 item.sensitivity != ScreenSensitivity.PUBLIC, item.lastSuccessAt ?: item.updatedAt, sourceTitle = true, sourceSummary = true)
         }
     }
-    Column(Modifier.fillMaxSize().pointerInput(fullScreen) {
-        if (fullScreen) awaitEachGesture {
-            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            chromeTouch += 1L
-        }
-    }.background(screenBackgroundColor(workingLayout?.appearance ?: ScreenAppearance()))
-        .haloStateAura(HaloLight.IDLE, MaterialTheme.colorScheme.primaryContainer, Color(0xFFFF9F6B), MaterialTheme.colorScheme.error).offset(x = shift.dp, y = shift.dp)
-        .padding(horizontal = if (fullScreen) 24.dp else 16.dp)) {
-        val conflictText = stringResource(R.string.screen_edit_conflict)
-        val noteRequestedText = stringResource(R.string.screen_note_requested)
+    val conflictText = stringResource(R.string.screen_edit_conflict)
+    val noteRequestedText = stringResource(R.string.screen_note_requested)
+    val shellZone = com.halo.app.ui.presence.LocalShellUtilityBand.current != null
+    val screenUtility: @Composable () -> Unit = {
         ScreenWorkspaceChrome(workingLayout != null, customizing, fullScreen, chromeVisible, orbActive,
             canInteract, onChat, { settings = true }, onFullScreen,
             onEdit = { setCustomizing(true) }, onApply = {
@@ -340,7 +339,22 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 } else notice = conflictText
             }, onCancel = { setCustomizing(false); notice = null }, onAppearance = { appearanceOpen = true },
             onAdd = { picker = true }, onNote = { onQuickNote(); notice = noteRequestedText },
-            onTalk = onTalk, orbControl = orbControl)
+            onTalk = onTalk, orbControl = orbControl, shellZone = shellZone)
+    }
+    val utilityProjected = com.halo.app.ui.presence.BindShellUtilityBand(
+        ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen"), screenUtility)
+    Box(Modifier.fillMaxSize()) {
+    com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize(),
+        animate = canInteract && !fullScreen,
+        baseColor = screenBackgroundColor(workingLayout?.appearance ?: ScreenAppearance()))
+    Column(Modifier.fillMaxSize().pointerInput(fullScreen) {
+        if (fullScreen) awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            chromeTouch += 1L
+        }
+    }.offset(x = shift.dp, y = shift.dp)
+        .padding(horizontal = if (fullScreen) 24.dp else 16.dp)) {
+        if (!utilityProjected) screenUtility()
         if (workingLayout == null) {
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(vertical = 16.dp), verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
@@ -394,6 +408,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 }
             }
         }
+    }
     }
     if (appearanceOpen && customizing && workingLayout != null) ScreenNativeSheet(onDismissRequest = { appearanceOpen = false }) {
         ScreenSheetBody(stringResource(R.string.screen_appearance), { appearanceOpen = false }) {
@@ -764,10 +779,19 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
         if (previous != null && previous != data.updatedAt) { update = true; delay(1200); update = false }
         previous = data.updatedAt
     }
+    val reduced by com.halo.app.ui.theme.rememberReducedMotion()
+    val highContrast = com.halo.app.ui.theme.rememberVisualPreferences().higherContrast
+    val colors = MaterialTheme.colorScheme
+    val cardColor by animateColorAsState(
+        if (update && !masked) androidx.compose.ui.graphics.lerp(colors.surfaceContainerLow, colors.primaryContainer, .12f)
+        else colors.surfaceContainerLow,
+        animationSpec = tween(if (reduced) 0 else com.halo.app.ui.design.HaloMotion.standardMs), label = "screen-card-freshness")
     Surface(onClick = onOpen, enabled = enabled, modifier = Modifier.fillMaxWidth(), shape = HaloShapes.card,
-        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = if (appearance.translucent && !masked) .94f else 1f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = if (editing) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null) {
+        color = cardColor.copy(alpha = if (appearance.translucent && !masked && !highContrast) .88f else 1f),
+        contentColor = colors.onSurface,
+        border = BorderStroke(if (editing) 2.dp else 1.dp,
+            if (editing) colors.primary else if (highContrast) colors.outline else colors.outlineVariant),
+        tonalElevation = if (appearance.translucent && !highContrast) 1.dp else 0.dp) {
         Column(Modifier.fillMaxWidth().padding(if (fullScreen) 24.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (masked) {
                 HaloIcon(HaloGlyph.SECURITY, null)
@@ -776,7 +800,7 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
             } else {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(if (data.sourceTitle) data.title else uiText(data.title), Modifier.weight(1f), style =
-                        screenTextStyle(if (card.widgetType == "clock") MaterialTheme.typography.displayLarge else MaterialTheme.typography.titleMedium,
+                        screenTextStyle(if (card.widgetType == "clock") { if (fullScreen) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge } else MaterialTheme.typography.titleMedium,
                             appearance, if (card.widgetType == "clock") card.typography.clockPercent else card.typography.titlePercent))
                     if (update) HaloPackageFx(HaloPackageMoment.CARD_UPDATE, Modifier.size(40.dp))
                     else if (card.pinned) HaloIcon(HaloGlyph.NOTE, uiText("Pinned"), Modifier.size(16.dp))

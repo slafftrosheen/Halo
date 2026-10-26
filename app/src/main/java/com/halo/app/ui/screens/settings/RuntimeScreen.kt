@@ -27,6 +27,7 @@ fun RuntimeScreen(
     onBack: () -> Unit,
     onOpenSystemCheck: (() -> Unit)? = null,
 ) {
+    SettingsChildZone("Runtime status", onBack)
     val taskSummary by projection.taskSummary.collectAsStateWithLifecycle()
     val resourceSummary by projection.resourceSummary.collectAsStateWithLifecycle()
     val capabilitySummary by projection.capabilitySummary.collectAsStateWithLifecycle()
@@ -38,7 +39,7 @@ fun RuntimeScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(com.halo.app.ui.design.HaloSpacing.screen)
     ) {
-        HaloScreenHeader(
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(
             title = uiText("Runtime Status"),
             subtitle = uiText("Tasks, capabilities & resources"),
             navigation = onBack

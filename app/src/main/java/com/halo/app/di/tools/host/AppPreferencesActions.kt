@@ -23,6 +23,7 @@ internal class AppPreferencesActions(
             "paletteTheme" to mapOf("type" to "string", "enum" to listOf("light", "dark")),
             "accent" to mapOf("type" to "string", "enum" to HaloAccent.entries.map { it.name }),
             "tone" to mapOf("type" to "string", "enum" to HaloTone.entries.map { it.name }),
+            "background" to mapOf("type" to "string", "enum" to HaloBackgroundStyle.entries.map { it.name }),
             "higherContrast" to mapOf("type" to "boolean"), "lessMotion" to mapOf("type" to "boolean"),
             "guideLight" to mapOf("type" to "boolean"),
             "language" to mapOf("type" to "string", "enum" to AppLanguage.entries.map { it.tag }),
@@ -35,7 +36,7 @@ internal class AppPreferencesActions(
         val palette = palettes?.state?.value
         val options = visual?.persistedSnapshot()
         return "mode=${appearance.mode.value.name.lowercase()}; fontScale=${value.fontScale}; startScreen=${value.startScreen}; " +
-            "lightAccent=${palette?.light?.accent}; lightTone=${palette?.light?.tone}; darkAccent=${palette?.dark?.accent}; darkTone=${palette?.dark?.tone}; " +
+            "lightAccent=${palette?.light?.accent}; lightTone=${palette?.light?.tone}; darkAccent=${palette?.dark?.accent}; darkTone=${palette?.dark?.tone}; lightBackground=${palette?.light?.background}; darkBackground=${palette?.dark?.background}; " +
             "higherContrast=${options?.higherContrast}; lessMotion=${options?.lessMotion}; guideLight=${options?.guideLight}; language=${languages?.language?.value?.tag}; scope=Halo_only"
     }
     suspend fun execute(call: ToolCall): ToolExecutionResult {
@@ -55,13 +56,15 @@ internal class AppPreferencesActions(
         if ("fontScale" in args && (scale == null || !scale.isFinite() || scale != 0f && scale !in 0.45f..2f)) return reject("fontScale must be 0 (system) or 0.45..2.0")
         val screen = args["startScreen"] as? String
         if ("startScreen" in args && screen !in HaloScreenCatalog.screens) return reject("Invalid startScreen")
-        val paletteChange = "accent" in args || "tone" in args
+        val paletteChange = "accent" in args || "tone" in args || "background" in args
         val theme = args["paletteTheme"] as? String
         if ((paletteChange && theme !in setOf("light", "dark")) || ("paletteTheme" in args && (!paletteChange || theme !in setOf("light", "dark"))))
-            return reject("Choose the exact light or dark palette and at least one accent/tone")
+            return reject("Choose the exact light or dark palette and at least one accent/tone/background")
         val accent = (args["accent"] as? String)?.let { raw -> HaloAccent.entries.firstOrNull { it.name == raw } }
         val tone = (args["tone"] as? String)?.let { raw -> HaloTone.entries.firstOrNull { it.name == raw } }
         if ("accent" in args && accent == null || "tone" in args && tone == null) return reject("Invalid accent or tone")
+        val background = (args["background"] as? String)?.let { raw -> HaloBackgroundStyle.entries.firstOrNull { it.name == raw } }
+        if ("background" in args && background == null) return reject("Invalid background")
         val visualChange = setOf("higherContrast", "lessMotion", "guideLight").any { it in args }
         if (setOf("higherContrast", "lessMotion", "guideLight").any { it in args && args[it] !is Boolean }) return reject("Visual options must be booleans")
         val language = (args["language"] as? String)?.let { raw -> AppLanguage.entries.firstOrNull { it.tag == raw } }
@@ -75,12 +78,12 @@ internal class AppPreferencesActions(
                 val owner = requireNotNull(palettes); owner.awaitReady()
                 val dark = theme == "dark"
                 val old = if (dark) owner.state.value.dark else owner.state.value.light
-                val next = old.copy(accent = accent ?: old.accent, tone = tone ?: old.tone)
-                owner.select(dark, next); owner.awaitReady()
-                // Palette UI publishes optimistically; confirm against its actual persisted namespace.
+                val next = old.copy(accent = accent ?: old.accent, tone = tone ?: old.tone, background = background ?: old.background)
+                owner.selectPersisted(dark, next)
+                // Confirm the durable owner namespace before acknowledging the requested appearance.
                 val disk = context.getSharedPreferences("halo_palettes", Context.MODE_PRIVATE)
                 val prefix = if (dark) "dark" else "light"
-                check(disk.getString("$prefix.accent", null) == next.accent.name && disk.getString("$prefix.tone", null) == next.tone.name) { "Palette persistence is unconfirmed" }
+                check(disk.getString("$prefix.accent", null) == next.accent.name && disk.getString("$prefix.tone", null) == next.tone.name && disk.getString("$prefix.background", null) == next.background.name) { "Palette persistence is unconfirmed" }
             }
             if (visualChange) requireNotNull(visual).update { old -> old.copy(
                 higherContrast = args["higherContrast"] as? Boolean ?: old.higherContrast,

@@ -358,6 +358,15 @@ object ManualDependencyGraph {
     val kidsPreferences by lazy { com.halo.app.ui.screens.kids.KidsPreferences(applicationContext) }
     val assistantPreferences by lazy { com.halo.app.ui.theme.AssistantPreferences(applicationContext) }
     var explicitHaloScreenRequested = false
+    val currentScreenContext = com.halo.app.context.CurrentScreenContext()
+    val notebookLibrarySession by lazy {
+        com.halo.app.ui.screens.notebook.NotebookLibrarySession {
+            (attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
+                com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible) &&
+                applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true &&
+                kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+        }
+    }
     val requestedHaloScreen = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
     /** One runtime instance per Android process; Activities are only views over it. */
@@ -917,6 +926,9 @@ object ManualDependencyGraph {
             attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
                 com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible
         }
+        val foregroundUnlocked = {
+            foreground() && applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true
+        }
         val currentTimeExecutor = CurrentTimeToolExecutor()
         val notificationExecutor = notificationDigestTool
         val storageExecutor = StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository)
@@ -1018,7 +1030,14 @@ object ManualDependencyGraph {
                     languageReadback = { storage.getString(com.halo.app.language.AppLanguagePreferences.KEY) },
                     modeProfiles = com.halo.app.di.tools.host.ModeProfileTools(privacyModes) { mode, profile, revision ->
                         saveModeProfile(mode, profile, revision)
-                    }, canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                    }, canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    currentScreen = com.halo.app.di.tools.host.CurrentScreenTools(currentScreenContext, remoteReadAllowed = {
+                        val policy = storage.readRuntimeAiContextPolicy()
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                            policy.allowCloudScreenContext && policy.allowCloudWorkspace
+                    }) {
+                        foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                    }),
                 com.halo.app.di.tools.ScreenToolExecutor(screenStore) {
                     foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },
@@ -1033,6 +1052,20 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.ProviderConfigurationTools(providerControlRepository.configurationTools) {
                     foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },
+                com.halo.app.di.tools.McpSettingsTools(mcpSettingsService) {
+                    foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.LocalModelRoleTools(providerControlRepository.localRoleTools) {
+                    foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.host.NotebookLibraryTools(notebookLibrarySession),
+                com.halo.app.di.tools.host.NotebookOrganizationTools(notebookLibrarySession),
+                com.halo.app.di.tools.host.SavedChatTools(conversationStore,
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    openDetail = { id, version ->
+                        if (foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value)
+                            homeViewModel.presentSavedConversation(id, version) else false
+                    }),
                 com.halo.app.di.tools.RoutineManagementTools(routinesViewModel.managementActions,
                     canManage = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
                 com.halo.app.di.tools.StudySessionTools(activeStudyToolsOwner) {

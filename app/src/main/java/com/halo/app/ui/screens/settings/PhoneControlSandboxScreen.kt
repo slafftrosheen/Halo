@@ -24,6 +24,7 @@ import com.halo.app.ui.design.HaloScreenHeader
 /** Owned, inert validation surface. Navigation never captures it or exposes it to a model. */
 @Composable
 fun PhoneControlSandboxScreen(onBack: () -> Unit) {
+    SettingsChildZone("Phone-control sandbox", onBack)
     var counter by rememberSaveable { mutableStateOf(0) }
     var checked by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
@@ -33,7 +34,7 @@ fun PhoneControlSandboxScreen(onBack: () -> Unit) {
     val textLabel = uiText("Test text")
     val rowsLabel = uiText("Test rows")
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        HaloScreenHeader(uiText("Phone-control sandbox"), uiText("Local controls for later device acceptance"), navigation = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Phone-control sandbox"), uiText("Local controls for later device acceptance"), navigation = onBack)
         Text("Expected state · Counter $counter · Toggle ${if (checked) "On" else "Off"} · Input length ${text.length} · Page ${if (destination) "Details" else "Controls"}")
         if (destination) {
             Text(uiText("Sandbox details"), style = MaterialTheme.typography.titleLarge)

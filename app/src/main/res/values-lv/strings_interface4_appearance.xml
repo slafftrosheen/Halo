@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_background">Fons</string>
+    <string name="interface4_background_still">Nekustīgs</string>
+    <string name="interface4_background_halo">halo formas</string>
+    <string name="interface4_background_mist">Migla</string>
+    <string name="interface4_accent_sage">Salvija</string>
+    <string name="interface4_accent_rose">Roze</string>
+    <string name="interface4_tone_paper">Papīrs</string>
+    <string name="interface4_tone_slate">Slāneklis</string>
+    <string name="interface4_appearance_preview">Tikai priekšskatījums. Lietojiet, lai saglabātu tēmu; atceliet, lai paturētu pašreizējo izskatu.</string>
+    <string name="interface4_appearance_defaults">Atjaunot noklusējumu</string>
+    <string name="interface4_dashboard_style">Ekrāna stils</string>
+    <string name="interface4_dashboard_clear">Skaidrs</string>
+    <string name="interface4_dashboard_glass">Stikls</string>
+    <string name="interface4_dashboard_focus">Fokuss</string>
+</resources>

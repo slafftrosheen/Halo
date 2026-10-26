@@ -24,6 +24,7 @@ import com.halo.app.speech.diagnostics.SpeechDiagnosticReferences
 
 @Composable
 fun SpeechLabScreen(viewModel: SpeechLabViewModel, onBack: () -> Unit) {
+    SettingsChildZone("Speech Lab", onBack)
     val state by viewModel.state.collectAsStateWithLifecycle()
     var reference by rememberSaveable { mutableStateOf("") }
     var chosen by rememberSaveable(stateSaver = listSaver<Set<String>, String>(save = { it.toList() }, restore = { it.toSet() })) { mutableStateOf(setOf<String>()) }
@@ -36,7 +37,7 @@ fun SpeechLabScreen(viewModel: SpeechLabViewModel, onBack: () -> Unit) {
     }
     DisposableEffect(viewModel) { onDispose { viewModel.dispose() } }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        HaloScreenHeader(uiText("Speech Lab"), navigation = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Speech Lab"), navigation = onBack)
         Text(uiText("Capture once, compare installed models on the same PCM. Audio and results stay in memory until you leave."))
         Text(when (viewModel.runner.language()) { "lv" -> "Saki: Halo runas tests"; "ru" -> "Скажите: тест речи Halo"; else -> "Say: Halo speech test" })
         HaloTextField(reference, { reference = it }, label = { Text(uiText("Optional reference for WER / CER")) }, enabled = !state.busy, kind = VoiceFieldKind.TEXT)

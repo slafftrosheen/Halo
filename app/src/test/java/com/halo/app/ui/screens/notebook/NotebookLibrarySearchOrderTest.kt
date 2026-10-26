@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import com.halo.app.ui.presence.LocalShellPageActions
+import com.halo.app.ui.presence.ShellPageProjection
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -59,6 +62,7 @@ class NotebookLibrarySearchOrderTest {
     private val resultIds = linkedMapOf<String, String>()
     private val navigation = CopyOnWriteArrayList<NotebookNavigation>()
     private var studyOpens = 0
+    private val actions = mutableStateOf<ShellPageProjection?>(null)
 
     @Before fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher(scheduler))
@@ -97,13 +101,15 @@ class NotebookLibrarySearchOrderTest {
         // A tall inspection viewport makes all three real result rows and Tools measurable
         // together. This proves rendered order, not a phone first-screen/scroll-count claim.
         render(height = 1800)
+        compose.onNode(hasContentDescription("Search your workspace") and hasSetTextAction())
+            .performTextInput(QUERY)
         enterSearch()
+        compose.onNode(hasContentDescription("Search your workspace") and hasSetTextAction())
+            .assertTextContains(QUERY)
         compose.runOnIdle { model.toggleSelection(resultIds.getValue(NOTE_TITLE)) }
-        val tools = compose.onNodeWithText("Tools").getUnclippedBoundsInRoot()
+        compose.onNodeWithText("Tools").assertDoesNotExist()
         resultIds.keys.forEach { title ->
-            val result = compose.onNodeWithText(title).assertIsDisplayed().getUnclippedBoundsInRoot()
-            assertTrue("Matching result must precede secondary Tools: $title, result=$result tools=$tools",
-                result.bottom <= tools.top)
+            compose.onNodeWithText(title).assertIsDisplayed()
         }
         compose.onNodeWithText(UNRELATED_TITLE).assertDoesNotExist()
         assertEquals(resultIds.values.toSet(), model.uiState.value.items.map { it.objectRef.id.value }.toSet())
@@ -119,11 +125,9 @@ class NotebookLibrarySearchOrderTest {
         render(height = 280)
         enterSearch()
         val list = compose.onNode(hasScrollToIndexAction())
-        list.performScrollToNode(hasText("Open Study"))
-        compose.onNodeWithText("Open Study").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.study")) }
         assertEquals(1, studyOpens)
-        list.performScrollToNode(hasText("Memory"))
-        compose.onNodeWithText("Memory").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.memory")) }
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.size == 1 }
         assertEquals(NotebookNavigation.OpenMemoryHub(), navigation.single())
         list.performScrollToNode(hasText(NOTE_TITLE))
@@ -137,15 +141,29 @@ class NotebookLibrarySearchOrderTest {
         assertEquals(1, studyOpens)
     }
 
-    @Test fun notebookHubKeepsContinueThenToolsThenOpenLibrary() {
+    @Test fun libraryLandingAndSuiteNavigationPreserveSearchAndRejectStaleActions() {
         render(height = 1800)
-        val continuation = compose.onNodeWithText("Continue").getUnclippedBoundsInRoot()
-        val tools = compose.onNodeWithText("Tools").getUnclippedBoundsInRoot()
-        val library = compose.onNodeWithText("Open Library").getUnclippedBoundsInRoot()
-        assertTrue(continuation.bottom <= tools.top)
-        assertTrue(tools.bottom <= library.top)
-        compose.onNodeWithText("Open Study").assertIsDisplayed()
-        assertEquals("", model.uiState.value.query)
+        enterSearch()
+        compose.onNodeWithText("Open Library").assertDoesNotExist()
+        compose.onNodeWithText("Continue").assertDoesNotExist()
+        lateinit var root: ShellPageProjection
+        compose.runOnIdle { root = actions.value!!; assertTrue(root.invoke("page.notebook.office")) }
+        compose.runOnIdle {
+            assertFalse(root.invoke("page.notebook.new-note"))
+            assertTrue(actions.value!!.actions.any { it.id == "page.notebook.import" })
+            assertTrue("halo_library_set_view" in actions.value!!.owner.canonicalToolIds)
+            assertEquals("Library", actions.value!!.actions.single { it.id == "page.notebook.suites" }.title)
+            assertTrue(actions.value!!.invoke("page.notebook.suites"))
+        }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.studio")) }
+        compose.runOnIdle {
+            assertTrue(actions.value!!.actions.any { it.id == "page.notebook.new-canvas" })
+            assertTrue("halo_library_organize" in actions.value!!.owner.canonicalToolIds)
+            assertEquals("Library", actions.value!!.actions.single { it.id == "page.notebook.suites" }.title)
+            assertTrue(actions.value!!.invoke("page.notebook.suites"))
+        }
+        assertEquals(QUERY, model.uiState.value.query)
+        assertEquals(NotebookSort.TITLE, model.uiState.value.sort)
         assertTrue(navigation.isEmpty())
         assertEquals(0, studyOpens)
     }
@@ -154,7 +172,7 @@ class NotebookLibrarySearchOrderTest {
         val preferences = AppLanguagePreferences(MemoryStorage(), "en")
         compose.setContent {
             AppLanguageProvider(preferences) {
-                CompositionLocalProvider(LocalShellHaloOrb provides true) {
+                CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                     HostlessHaloTheme {
                         Box(Modifier.width(900.dp).height(height.dp)) {
                             NotebookScreen(model, onOpenStudy = { studyOpens++ })
@@ -165,6 +183,111 @@ class NotebookLibrarySearchOrderTest {
         }
         compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.isLoaded }
         compose.waitForIdle()
+    }
+
+    @Test fun semanticViewUsesRealOwnerAndRejectsStaleEntrySelectionAndReplay() {
+        render(height = 1800)
+        val session = NotebookLibrarySession { true }
+        var first: NotebookLibrarySession.Lease? = null
+        compose.runOnIdle {
+            first = session.attach("library-A", model)
+            val before = requireNotNull(session.read())
+            val selected = setOf(resultIds.getValue(NOTE_TITLE))
+            val result = requireNotNull(session.set(before.snapshot, NotebookLibraryChange.Selection(selected)))
+            assertEquals(selected, model.selectedIds.value)
+            assertEquals(selected, result.view.selection)
+            assertNull(session.set(before.snapshot, NotebookLibraryChange.Selection(emptySet())))
+            model.clearSelection()
+            assertNull(session.set(result.snapshot, NotebookLibraryChange.Query("wrong stale request")))
+            val fresh = requireNotNull(session.read())
+            assertNull(session.set(fresh.snapshot, NotebookLibraryChange.Selection(setOf("missing-object"))))
+            val replacement = session.attach("library-B", model)
+            session.detach(requireNotNull(first))
+            assertNotNull(session.read())
+            assertNull(session.read(fresh.snapshot))
+            session.detach(replacement)
+            assertNull(session.read())
+        }
+    }
+
+    @Test fun typedLibraryToolChangesActualQueryAndReportsPendingInsteadOfOldHitsAsFresh() {
+        render(height = 1800)
+        val session = NotebookLibrarySession { true }
+        val tool = com.halo.app.di.tools.host.NotebookLibraryTools(session)
+        compose.runOnIdle {
+            session.attach("library", model)
+            val token = requireNotNull(session.read()).snapshot
+            runBlocking(com.halo.runtime.cognition.tools.RunToolScope(com.halo.runtime.cognition.agent.AgentRunId("library-test"), targetIsLocal = true)) {
+                val result = tool.execute(com.halo.sdk.provider.ToolCall("set", com.halo.app.di.tools.host.NotebookLibraryTools.SET,
+                    mapOf("expectedSnapshot" to token, "query" to QUERY))) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+                val json = org.json.JSONObject(result.output)
+                assertFalse(json.getBoolean("settled"))
+                assertEquals(QUERY, json.getJSONObject("requested").getString("query"))
+                assertEquals(QUERY, model.queryText.value)
+                assertFalse(json.toString().contains(NOTE_TITLE))
+            }
+        }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.resolvedQuery == QUERY }
+        compose.runOnIdle {
+            assertTrue(requireNotNull(session.read()).view.settled)
+            assertEquals(resultIds.values.toSet(), model.uiState.value.items.map { it.objectRef.id.value }.toSet())
+        }
+    }
+
+    @Test fun organizationSessionUsesExistingRoomOwnerAndRejectsReplayAndRevocation() {
+        render(height = 1800)
+        var allowed = true
+        val session = NotebookLibrarySession { allowed }
+        val id = resultIds.getValue(NOTE_TITLE)
+        compose.runOnIdle {
+            session.attach("library", model)
+            runBlocking {
+                val frame = requireNotNull(session.read())
+                val ticket = requireNotNull(session.organization(frame.snapshot, id, null))
+                val receipt = session.organize(frame.snapshot, ticket.token, com.halo.app.data.notebook.NotebookOrganizationChange.Favorite(true), objectId = id)
+                assertEquals(true, requireNotNull(receipt).value)
+                assertTrue(fixture.database.notebookOrganizationDao().isFavorite(id))
+                assertNull(session.organize(frame.snapshot, ticket.token, com.halo.app.data.notebook.NotebookOrganizationChange.Favorite(false), objectId = id))
+            }
+        }
+        // Wait for the actual Room-backed VM projection before acquiring another view lease.
+        // The preceding write may emit favorites while captureGuarded suspends; rejecting that
+        // old snapshot is correct production behavior, not a reason to relax admission.
+        compose.waitUntil(5_000) { scheduler.runCurrent(); id in model.uiState.value.favorites }
+        compose.runOnIdle {
+            runBlocking {
+                val fresh = requireNotNull(session.read())
+                val next = requireNotNull(session.organization(fresh.snapshot, id, null))
+                allowed = false
+                assertNull(session.organize(fresh.snapshot, next.token, com.halo.app.data.notebook.NotebookOrganizationChange.Favorite(false), objectId = id))
+                assertTrue(fixture.database.notebookOrganizationDao().isFavorite(id))
+            }
+        }
+    }
+
+    @Test fun actualOrganizationEffectWithRevokedReadbackReturnsContentFreeUnknown() {
+        render(height = 1800)
+        var enforceRevocation = false
+        var checks = 0
+        val session = NotebookLibrarySession { !enforceRevocation || ++checks <= 3 }
+        val tool = com.halo.app.di.tools.host.NotebookOrganizationTools(session)
+        val id = resultIds.getValue(NOTE_TITLE)
+        compose.runOnIdle {
+            session.attach("library", model)
+            runBlocking(com.halo.runtime.cognition.tools.RunToolScope(com.halo.runtime.cognition.agent.AgentRunId("library-revocation"), targetIsLocal = true)) {
+                val frame = requireNotNull(session.read())
+                val ticket = requireNotNull(session.organization(frame.snapshot, id, null))
+                enforceRevocation = true
+                val call = com.halo.sdk.provider.ToolCall("write", com.halo.app.di.tools.host.NotebookOrganizationTools.WRITE,
+                    mapOf("expectedSnapshot" to frame.snapshot, "expectedOrganization" to ticket.token,
+                        "operation" to "set_favorite", "objectId" to id, "value" to true))
+                val result = tool.execute(call, com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId = "approved-library-interaction"))
+                assertTrue(result is com.halo.runtime.cognition.tools.ToolExecutionResult.Failed)
+                assertTrue((result as com.halo.runtime.cognition.tools.ToolExecutionResult.Failed).completionUnknown)
+                assertFalse(result.toString().contains(id))
+                assertTrue(fixture.database.notebookOrganizationDao().isFavorite(id))
+            }
+        }
     }
 
     private fun enterSearch() {

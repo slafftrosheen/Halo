@@ -6,6 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import com.halo.app.ui.presence.LocalShellUtilityBand
+import com.halo.app.ui.presence.ShellUtilityProjection
+import com.halo.app.ui.presence.RenderShellUtilityBand
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
@@ -188,7 +195,13 @@ class StudyDraftReviewLayoutTest {
                 CompositionLocalProvider(LocalShellHaloOrb provides true) {
                     HostlessHaloTheme(fontScale = scale) {
                         pixelsPerDp = LocalDensity.current.density
-                        Box(Modifier.width(width.dp).height(900.dp)) { StudyScreen(model, onBack = {}) }
+                        val utility = remember { mutableStateOf<ShellUtilityProjection?>(null) }
+                        CompositionLocalProvider(LocalShellUtilityBand provides utility) {
+                            Column(Modifier.width(width.dp).height(900.dp)) {
+                                Box(Modifier.weight(1f).fillMaxWidth()) { StudyScreen(model, onBack = {}) }
+                                utility.value?.let { RenderShellUtilityBand(it) }
+                            }
+                        }
                     }
                 }
             }

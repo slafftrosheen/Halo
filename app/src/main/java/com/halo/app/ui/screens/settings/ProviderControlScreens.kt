@@ -37,6 +37,7 @@ import com.halo.sdk.provider.*
 
 @Composable
 fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit, onProvider: (String) -> Unit) {
+    SettingsChildZone("Providers", onBack)
     val rows by control.rows.collectAsStateWithLifecycle()
     val groups = remember(rows) {
         listOf(AiExecutionLocation.ON_DEVICE to "On device", AiExecutionLocation.LOCAL_NETWORK to "Local network", AiExecutionLocation.REMOTE to "Cloud")
@@ -44,7 +45,7 @@ fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit,
                 .sortedWith(compareByDescending<com.halo.app.ai.ProviderControlRow> { it.configured }.thenBy { it.descriptor.displayName }) }
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "header") { HaloScreenHeader(uiText("Providers"), uiText("Connect Halo to the intelligence you choose."), navigation = onBack) }
+        item(key = "header") { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Providers"), uiText("Connect Halo to the intelligence you choose."), navigation = onBack) }
         groups.forEach { (title, group) ->
             if (group.isNotEmpty()) item { Text(uiText(title), style = MaterialTheme.typography.titleSmall) }
             items(group, key = { it.descriptor.providerId }) { row ->
@@ -69,6 +70,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
     val rows by control.rows.collectAsStateWithLifecycle()
     val checkGeneration = rememberProviderGenerationCheck(control)
     val row = rows.firstOrNull { it.descriptor.providerId == providerId }
+    SettingsChildZone(row?.descriptor?.displayName ?: "Provider unavailable", onBack, listOf(settingsChildLink("onAssignRole", "Model roles", onAssignRole), settingsChildLink("onDevice", "On-device models", onDevice), settingsChildLink("onImages", "Image models", onImages), settingsChildLink("onDiagnostics", "Check-up", onDiagnostics)))
     var secret by remember(providerId) { mutableStateOf("") }
     var values by rememberSaveable(providerId, stateSaver = mapSaver(
         save = { drafts -> drafts.filterKeys { key -> row?.descriptor?.fields?.firstOrNull { it.id == key }?.kind != ProviderFieldKind.ENDPOINT }.toMap() },
@@ -96,7 +98,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
         }.addOnFailureListener { message = "Google authorization failed" }
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item(key = "header") { HaloScreenHeader(row?.descriptor?.displayName ?: uiText("Provider unavailable"), navigation = onBack) }
+        item(key = "header") { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(row?.descriptor?.displayName ?: uiText("Provider unavailable"), navigation = onBack) }
         if (row == null) item { HaloEmptyState(uiText("Provider unavailable"), uiText("Return to Providers and choose an available setup."), HaloGlyph.MODEL, action = HaloHeaderAction(uiText("Back"), onBack)) }
         if (row != null) {
             item {

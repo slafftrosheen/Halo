@@ -1,0 +1,37 @@
+{
+  "id": "halo.library",
+  "name": "Current Workspace Library",
+  "description": "Use the attached Library view and approved favorites/collection operations through its native owners. Local inference only.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_library_organization",
+    "halo_library_organize",
+    "halo_library_set_view",
+    "halo_library_view"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_library_organization",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_organize",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_set_view",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_view",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    }
+  ]
+}

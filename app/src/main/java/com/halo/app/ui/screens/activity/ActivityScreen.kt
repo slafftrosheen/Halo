@@ -153,24 +153,23 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         confirmButton = { TextButton(onClick = { showActivityDetails = false }) { Text(uiText("Done")) } },
     )
 
+    val activityUtility: @Composable () -> Unit = {
+        ActivitySegmentedPill(selected = filter,
+            counts = mapOf(ActivityFilter.REVIEW to reviewCount, ActivityFilter.RUNNING to runningCount, ActivityFilter.HISTORY to doneCount),
+            onSelect = { selectedFilter = it })
+    }
+    val hostedUtility = com.halo.app.ui.presence.BindShellUtilityBand(ShellPageOwner("activity"), activityUtility)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(com.halo.app.ui.theme.haloWorkspaceBackground())
             .padding(horizontal = 20.dp)
     ) {
-        HaloScreenHeader(uiText("Activity"), trailing = {
-            ActivityOverflowMenu { showActivityDetails = true }
-        })
-        ActivitySegmentedPill(
-            selected = filter,
-            counts = mapOf(
-                ActivityFilter.REVIEW to reviewCount,
-                ActivityFilter.RUNNING to runningCount,
-                ActivityFilter.HISTORY to doneCount,
-            ),
-            onSelect = { selectedFilter = it },
-        )
+        if (!hostedUtility) {
+            HaloScreenHeader(uiText("Activity"), trailing = { ActivityOverflowMenu { showActivityDetails = true } })
+            activityUtility()
+        }
 
         if (filtered.isEmpty() && !hasSupplementaryReview) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -770,7 +769,19 @@ internal fun activityHasUnconfirmedReceipts(steps: List<AgentStep>): Boolean {
     return receipts.values.any { it == ActionTruth.DISPATCHED || it == ActionTruth.UNKNOWN }
 }
 
-private fun AgentRun.toStory(): ActivityStory {
+/** A stop belongs to the latest execution attempt, not every later recovery of the same run.
+ * A response/result recorded after the stop is not by itself proof that execution resumed. */
+internal fun activityCurrentGuardStop(steps: List<AgentStep>): AgentStep.RunGuardTriggered? {
+    val index = steps.indexOfLast { it is AgentStep.RunGuardTriggered }
+    if (index < 0) return null
+    val resumed = steps.drop(index + 1).any { it is AgentStep.RecoveryClaimed ||
+        it is AgentStep.ProviderTurnStarted || it is AgentStep.ToolExecutionClaimed ||
+        it is AgentStep.ToolDispatched || it is AgentStep.PlanCreated }
+    return if (resumed) null else steps[index] as AgentStep.RunGuardTriggered
+}
+
+internal fun AgentRun.toStory(): ActivityStory {
+    val guardStop = activityCurrentGuardStop(steps)
     val unconfirmed = hasUnknownAction || activityHasUnconfirmedReceipts(steps)
     val status = when {
         unconfirmed || steps.filterIsInstance<AgentStep.UiTransactionRecorded>().any {
@@ -779,12 +790,13 @@ private fun AgentRun.toStory(): ActivityStory {
         state == AgentRunState.INTERRUPTED -> ActivityStatus.INTERRUPTED
         state == AgentRunState.FAILED -> ActivityStatus.FAILED
         state == AgentRunState.CANCELLED -> ActivityStatus.CANCELLED
+        state == AgentRunState.COMPLETED && guardStop != null -> ActivityStatus.CANCELLED
         state == AgentRunState.COMPLETED -> ActivityStatus.SUCCESS
         else -> ActivityStatus.PENDING
     }
     val pendingInput = steps.filterIsInstance<AgentStep.InputRequested>()
         .lastOrNull { requested -> steps.none { it is AgentStep.InputResolved && it.requestId == requested.requestId } }?.input
-    val waitingLabel = when (pendingInput) {
+    val waitingLabel = if (state.isTerminal) null else when (pendingInput) {
         is com.halo.runtime.cognition.agent.AgentInputRequest.Approval -> "Waiting for your approval"
         is com.halo.runtime.cognition.agent.AgentInputRequest.Clarification -> "Waiting for your answer: " + pendingInput.question
         null -> null
@@ -794,7 +806,6 @@ private fun AgentRun.toStory(): ActivityStory {
      * MINING-P1-001: a deliberately stopped run reads as "Task stopped · <reason>", not as a runtime
      * failure. The summary is content-free by construction (counts, digests, tool ids only).
      */
-    val guardStop = steps.filterIsInstance<AgentStep.RunGuardTriggered>().lastOrNull()
     val summaryText = listOfNotNull(
         "Stopped safely".takeIf { guardStop != null } ?: (waitingLabel ?: formattedState),
         "Delivery not confirmed".takeIf { unconfirmed },
@@ -873,7 +884,10 @@ private fun AgentRun.toStory(): ActivityStory {
         )
     } else null
     val planProgress = if (evidencedPhases >= 2) {
-        com.halo.runtime.cognition.interaction.PlanPresentationProjector.progressLine(steps)
+        com.halo.runtime.cognition.interaction.PlanPresentationProjector.progressLine(steps)?.let { progress ->
+            // Historical pending input is not an actionable approval after a canonical terminal state.
+            if (state.isTerminal) progress.substringBefore(" · Waiting for approval") else progress
+        }
     } else null
 
     return ActivityStory(

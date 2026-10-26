@@ -83,6 +83,7 @@ import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
 fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}, onLocalSearch: () -> Unit = {}, technical: Boolean = false) {
+    SettingsChildZone(if (technical) "Local model lab" else "On-device models", onBack, listOf(settingsChildLink("onConfigureRoles", "Model roles", onConfigureRoles), settingsChildLink("onLocalSearch", "Find related notes", onLocalSearch)))
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
     val deviceContext = androidx.compose.ui.platform.LocalContext.current
@@ -200,7 +201,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
-        HaloScreenHeader(uiText(if (developerToolsEnabled) "Local model lab" else "On-device models"),
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText(if (developerToolsEnabled) "Local model lab" else "On-device models"),
             uiText(if (developerToolsEnabled) "Inspect model files and measured results" else "Download models for answers on this phone."), navigation = onBack)
 
 

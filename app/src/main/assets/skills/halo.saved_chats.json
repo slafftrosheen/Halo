@@ -1,0 +1,49 @@
+{
+  "id": "halo.saved_chats",
+  "name": "Saved chat review",
+  "description": "Explicitly review saved local chats and request guarded lifecycle or detail navigation; never silently continue a session.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_saved_chat_get",
+    "halo_saved_chat_open",
+    "halo_saved_chat_restore",
+    "halo_saved_chat_trash",
+    "halo_saved_chats_list",
+    "halo_saved_chats_search"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_saved_chat_get",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_chat_open",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_chat_restore",
+      "risk": "DESTRUCTIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_chat_trash",
+      "risk": "DESTRUCTIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_chats_list",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_saved_chats_search",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

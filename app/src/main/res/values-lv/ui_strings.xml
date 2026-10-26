@@ -4149,4 +4149,23 @@
     <string name="ui_66cd74a43e4c" formatted="false">"Nodarbības laikā: “padoms”, “atkārto”, “nākamais solis”, “vienkāršāk”, “plašāk” vai “apturi”. Šīs darbības ir pieejamas arī zemāk."</string>
     <string name="ui_d61a54f7137c" formatted="false">"Mēģini: “padoms”, “atkārto”, “nākamais solis”, “vienkāršāk”, “plašāk” vai “apturi”."</string>
     <string name="ui_7d72ddf69768" formatted="false">"Sākuma pakotne nav pieejama."</string>
+    <string name="ui_0a9d8afb0161" formatted="false">"Biroja rīki"</string>
+    <string name="ui_2d43037f47e4" formatted="false">"halo Studio"</string>
+    <string name="ui_dce612cabb53" formatted="false">"Grafikas redaktors"</string>
+    <string name="ui_7e4d5c460c04" formatted="false">"Domāšana"</string>
+    <string name="ui_f4e08fefef74" formatted="false">"Personalizēšana"</string>
+    <string name="ui_dc923b947db3" formatted="false">"Attēli un kamera"</string>
+    <string name="ui_ae58aa24a0b0" formatted="false">"Izvēlieties modeli attēliem"</string>
+    <string name="ui_ddca0456c75e" formatted="false">"Piekļuve kamerai un fotoattēliem"</string>
+    <string name="ui_74c4ba5901f7" formatted="false">"Attēlu kopīgošanas iestatījumi"</string>
+    <string name="ui_caa52519e922" formatted="false">"Local un Power iestatījumi"</string>
+    <string name="ui_8c31e6e72230" formatted="false">"Lokāli"</string>
+    <string name="ui_4d0076e6b4c7" formatted="false">"Darbības"</string>
+    <string name="ui_b5634a8ba110" formatted="false">"Darbības un paziņojumi"</string>
+    <string name="ui_5774d46c5e6b" formatted="false">"Turiet halo, lai atvērtu darbības"</string>
+    <string name="ui_e8d505c1b1f7" formatted="false">"Lokālais režīms"</string>
+    <string name="ui_b080f31e6a5f" formatted="false">"Lokāli / Power"</string>
+    <string name="ui_3b3da664eb98" formatted="false">"Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei."</string>
+    <string name="ui_3cd9fa292989" formatted="false">"Balss ievade ir aizņemta"</string>
+    <string name="ui_03ba09fea0f0" formatted="false">"Cits uzdevums izmanto ierīces balss ievades resursus. Ierakstiet ziņu vai mēģiniet vēlreiz, kad uzdevums būs pabeigts."</string>
 </resources>

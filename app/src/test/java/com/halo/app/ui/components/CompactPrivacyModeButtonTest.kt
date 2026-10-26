@@ -33,9 +33,10 @@ class CompactPrivacyModeButtonTest {
     private fun check(mode: PrivacyMode) {
         var clicked = 0
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val label = context.getString(if (mode == PrivacyMode.PRIVATE) R.string.interface4_private_short else R.string.interface4_power_short)
+        var label = ""
         val description = "Full authoritative mode: ${mode.name}"
         compose.setContent { HostlessHaloTheme(fontScale = 2f) {
+            label = androidx.compose.ui.res.stringResource(if (mode == PrivacyMode.PRIVATE) R.string.interface4_mode_local_short else R.string.interface4_mode_power_short)
             Surface(Modifier.fillMaxSize()) {
                 Box(Modifier.width(112.dp).height(180.dp)) {
                     CompactPrivacyModeButton(mode, description, true, { clicked++ }, Modifier.width(112.dp))
@@ -45,7 +46,7 @@ class CompactPrivacyModeButtonTest {
         val results = mutableListOf<TextLayoutResult>()
         compose.onNodeWithText(label, useUnmergedTree = true).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
         assertEquals(1, results.single().lineCount)
-        val button = compose.onNodeWithContentDescription(description).assertIsDisplayed().assertHasClickAction()
+        val button = compose.onNodeWithContentDescription(description).assertIsDisplayed().assertHasClickAction().assertIsToggleable()
         assertTrue("The privacy slot must not consume a tall text column", button.fetchSemanticsNode().boundsInRoot.height <= 88f * context.resources.displayMetrics.density)
         button.performClick()
         assertEquals(1, clicked)

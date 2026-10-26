@@ -19,7 +19,7 @@ internal fun HaloLabBoundary(enabled: Boolean, content: @Composable () -> Unit) 
         primaryContainer = Color(0xFFC9B8FF), onPrimaryContainer = Color(0xFF160E3A),
     )
     MaterialTheme(colorScheme = colors) {
-        Surface(Modifier.fillMaxSize(), color = colors.background) {
+        Surface(Modifier.fillMaxSize(), color = if (enabled) colors.background else com.halo.app.ui.theme.haloWorkspaceBackground()) {
             Column(Modifier.fillMaxSize()) {
                 if (enabled) Text(uiText("Lab · Advanced"), Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                     color = colors.primary, style = MaterialTheme.typography.labelLarge)

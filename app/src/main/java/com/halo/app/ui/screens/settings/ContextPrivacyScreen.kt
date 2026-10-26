@@ -122,11 +122,11 @@ internal fun ContextPrivacyContent(policy: AiContextPolicy,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        item { HaloSettingsSection(uiText("Private / Full Power")) {
-            Text(uiText(if (policy.allowCloudImages) "Full Power mode" else "Private mode"), style = MaterialTheme.typography.titleMedium)
+        item { HaloSettingsSection(uiText("Local / Power")) {
+            Text(uiText(if (policy.allowCloudImages) "Power mode" else "Local mode"), style = MaterialTheme.typography.titleMedium)
             Text(uiText(if (policy.allowCloudImages)
-                "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."
-                else "Everything stays on this phone. Full Power features are off."))
+                "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."
+                else "Everything stays on this phone. Power features are off."))
             Text(uiText("This switch controls sharing for supported online Halo features."))
             Text(uiText("Android permissions, Kids restrictions, spending limits, and action confirmations still apply."), style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = onCosts) { Text(stringResource(R.string.online_costs)) }

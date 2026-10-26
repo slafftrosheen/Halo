@@ -32,6 +32,99 @@ class McpSettingsTest {
         assertTrue(f.registry.definitions().isEmpty())
         assertEquals(3,f.dao.toolsForServer(id).size)
     }
+    @Test fun typedEnableRequiresCurrentVersionAndDoesNotConnect() = runBlocking {
+        val f = Fixture(); val id = f.added(); val before = f.service.settingsSnapshot(id)!!
+        val effect = f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.SERVER_ENABLED, null, true) { true }!!
+        assertTrue(effect.applied); assertTrue(effect.snapshot.enabled); assertFalse(effect.networkRequested)
+        assertTrue(f.transport.methods.isEmpty())
+        assertNull(f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.SERVER_ENABLED, null, false) { true })
+        assertTrue(f.service.settingsSnapshot(id)!!.enabled)
+    }
+    @Test fun typedRefreshNeverConnectsAndConsumesConnectedVersion() = runBlocking {
+        val f = Fixture(); val id = f.added(); f.service.setEnabled(id, true)
+        val disconnected = f.service.settingsSnapshot(id)!!
+        assertNull(f.service.updateSettings(id, disconnected.sourceVersion, McpSettingsCommand.REFRESH, null, null) { true })
+        assertTrue(f.transport.methods.isEmpty())
+        f.service.connect(id); f.transport.methods.clear()
+        val connected = f.service.settingsSnapshot(id)!!
+        val effect = f.service.updateSettings(id, connected.sourceVersion, McpSettingsCommand.REFRESH, null, null) { true }!!
+        assertTrue(effect.applied); assertTrue(effect.networkRequested)
+        assertEquals(listOf("tools/list"), f.transport.methods)
+        assertEquals(3, f.registry.definitions().size)
+        assertNull(f.service.updateSettings(id, connected.sourceVersion, McpSettingsCommand.REFRESH, null, null) { true })
+    }
+    @Test fun typedToolToggleChecksServerMembershipAndSynchronizesExistingRegistry() = runBlocking {
+        val f = Fixture(); val id = f.live(); val tool = McpToolAdapter.namespaceId(id, "one")
+        val before = f.service.settingsSnapshot(id)!!; f.transport.methods.clear()
+        assertNull(f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.TOOL_ENABLED, "unknown", false) { true })
+        val effect = f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.TOOL_ENABLED, tool, false) { true }!!
+        assertTrue(effect.applied); assertFalse(f.dao.tool(tool)!!.enabled); assertFalse(f.registry.contains(tool))
+        assertTrue(f.transport.methods.isEmpty())
+    }
+    @Test fun typedRefreshFailureIsNotSuccessAndInvalidatesVersion() = runBlocking {
+        val f = Fixture(); val id = f.live(); val before = f.service.settingsSnapshot(id)!!
+        f.transport.badListing = true
+        val effect = f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.REFRESH, null, null) { true }!!
+        assertFalse(effect.applied); assertEquals("ERROR", effect.snapshot.state)
+        assertNotEquals(before.sourceVersion, effect.snapshot.sourceVersion); assertTrue(f.registry.definitions().isEmpty())
+    }
+    @Test fun typedAdapterRequiresInteractionGateAndOmitsSecretsAndSourceText() = runBlocking {
+        val f = Fixture(); val id = f.added()
+        val tool = com.halo.app.di.tools.McpSettingsTools(f.service) { true }
+        val read = tool.execute(com.halo.sdk.provider.ToolCall("r", "halo_mcp_server_state", mapOf("serverId" to id))) as ToolExecutionResult.Success
+        assertFalse(read.output.contains("example.test")); assertFalse(read.output.contains("Home")); assertFalse(read.output.contains("credential"))
+        val args = mapOf("serverId" to id, "sourceVersion" to JSONObject(read.output).getString("sourceVersion"), "enabled" to true)
+        val call = com.halo.sdk.provider.ToolCall("w", "halo_mcp_server_set_enabled", args)
+        assertTrue(tool.execute(call) is ToolExecutionResult.Rejected)
+        val denied = com.halo.app.di.tools.McpSettingsTools(f.service)
+        assertTrue(denied.execute(call, ToolExecutionContext("explicit", false)) is ToolExecutionResult.Rejected)
+        assertTrue(tool.execute(call, ToolExecutionContext("explicit", false)) is ToolExecutionResult.Success)
+        assertTrue(tool.execute(call, ToolExecutionContext("explicit", false)) is ToolExecutionResult.Rejected)
+        assertTrue(f.transport.methods.isEmpty())
+    }
+    @Test fun manualEditOrRevokedAdmissionInvalidatesTypedWrite() = runBlocking {
+        val f = Fixture(); val id = f.added(); val before = f.service.settingsSnapshot(id)!!
+        assertNull(f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.SERVER_ENABLED, null, true) { false })
+        f.service.save(id, f.value.copy(name = "Renamed"))
+        assertNull(f.service.updateSettings(id, before.sourceVersion, McpSettingsCommand.SERVER_ENABLED, null, true) { true })
+        assertFalse(f.service.settingsSnapshot(id)!!.enabled)
+    }
+
+    @Test fun typedMutationWithholdsMetadataAfterAccessRevocation() = runBlocking {
+        val f = Fixture(); val id = f.added(); var allowed = true
+        val owner = object : McpSettingsControl by f.service {
+            override suspend fun updateSettings(id: String, sourceVersion: String, command: McpSettingsCommand,
+                toolId: String?, enabled: Boolean?, canConfigure: () -> Boolean): McpSettingsEffect? {
+                val effect = f.service.updateSettings(id, sourceVersion, command, toolId, enabled, canConfigure)
+                allowed = false
+                return effect
+            }
+        }
+        val tool = com.halo.app.di.tools.McpSettingsTools(owner) { allowed }
+        val call = com.halo.sdk.provider.ToolCall("write", "halo_mcp_server_set_enabled", mapOf("serverId" to id,
+            "sourceVersion" to f.service.settingsSnapshot(id)!!.sourceVersion, "enabled" to true))
+        val result = tool.execute(call, ToolExecutionContext("explicit", false)) as ToolExecutionResult.Failed
+        assertTrue(result.completionUnknown); assertTrue(f.service.settingsSnapshot(id)!!.enabled)
+        assertFalse(result.toString().contains("server-uuid"))
+    }
+    @Test fun typedMutationExceptionAfterActualEffectIsUnknownNotRejected() = runBlocking {
+        val f = Fixture(); val id = f.added()
+        val owner = object : McpSettingsControl by f.service {
+            override suspend fun updateSettings(id: String, sourceVersion: String, command: McpSettingsCommand,
+                toolId: String?, enabled: Boolean?, canConfigure: () -> Boolean): McpSettingsEffect? {
+                f.service.updateSettings(id, sourceVersion, command, toolId, enabled, canConfigure)
+                throw IllegalArgumentException("fixture after effect")
+            }
+        }
+        val tool = com.halo.app.di.tools.McpSettingsTools(owner) { true }
+        val source = f.service.settingsSnapshot(id)!!.sourceVersion
+        val call = com.halo.sdk.provider.ToolCall("write", "halo_mcp_server_set_enabled", mapOf("serverId" to id,
+            "sourceVersion" to source, "enabled" to true))
+        val result = tool.execute(call, ToolExecutionContext("explicit", false)) as ToolExecutionResult.Failed
+        assertTrue(result.completionUnknown); assertTrue(f.service.settingsSnapshot(id)!!.enabled)
+        assertNull(f.service.updateSettings(id, source, McpSettingsCommand.SERVER_ENABLED, null, false) { true })
+    }
+
     private class Fixture {
         val dao = FakeDao(); val secrets = FakeSecrets(); val transport = FakeTransport()
         val client = McpClient(transport, credentialResolver = { it?.let { ref -> secrets.get(ref) } })

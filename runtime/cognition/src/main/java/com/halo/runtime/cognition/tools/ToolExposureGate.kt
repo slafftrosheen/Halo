@@ -43,7 +43,7 @@ class DefaultToolExposureGate(
 ) : ToolExposureGate {
     companion object {
         internal val CLOUD_SCREEN_GATED_TOOLS = setOf(
-            "halo_read_screen", "halo_find_on_screen", "halo_ui_click",
+            "halo_current_screen", "halo_read_screen", "halo_find_on_screen", "halo_ui_click",
             "halo_ui_scroll", "halo_ui_set_text", "halo_ui_set_checked",
             "halo_ui_wait", "halo_ui_search", "halo_ui_global_action",
             "halo_current_app_capabilities", "halo_current_app_action"
@@ -71,6 +71,10 @@ class DefaultToolExposureGate(
 
         // 3. Cloud privacy checks
         if (!context.isLocalTarget) {
+            // These new owner adapters deliberately have no remote-disclosure path.
+            // Do not advertise them to a remote model and rely on execution rejection.
+            if (toolName in PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats)
+                return ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED)
             // Screen tool output contains third-party UI text and accessible controls.
             // Never expose it to remote inference unless the user explicitly enabled
             // cloud screen-context sharing, even when a phone skill is activated.

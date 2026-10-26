@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_background">Tło</string>
+    <string name="interface4_background_still">Nieruchome</string>
+    <string name="interface4_background_halo">Formy halo</string>
+    <string name="interface4_background_mist">Mgła</string>
+    <string name="interface4_accent_sage">Szałwia</string>
+    <string name="interface4_accent_rose">Róża</string>
+    <string name="interface4_tone_paper">Papier</string>
+    <string name="interface4_tone_slate">Łupek</string>
+    <string name="interface4_appearance_preview">To tylko podgląd. Zastosuj zapisuje motyw, a Anuluj zachowuje obecny wygląd.</string>
+    <string name="interface4_appearance_defaults">Przywróć domyślne</string>
+    <string name="interface4_dashboard_style">Styl pulpitu</string>
+    <string name="interface4_dashboard_clear">Przejrzysty</string>
+    <string name="interface4_dashboard_glass">Szkło</string>
+    <string name="interface4_dashboard_focus">Skupienie</string>
+</resources>

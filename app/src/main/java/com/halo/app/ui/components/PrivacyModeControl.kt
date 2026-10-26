@@ -22,7 +22,7 @@ import com.halo.app.ui.icons.HaloIcon
     val cloudAllowed by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
     val loaded by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val changeMode = rememberModeChangeAction()
-    val label = uiText(if (mode == PrivacyMode.PRIVATE) "Private" else "Power")
+    val label = uiText(if (mode == PrivacyMode.PRIVATE) "Local" else "Power")
     val description = uiText("AI privacy mode") + ": " + label
     CompactPrivacyModeButton(mode, description, loaded && (!kids || cloudAllowed || mode == PrivacyMode.CLOUD),
         { changeMode(if (mode == PrivacyMode.PRIVATE) PrivacyMode.CLOUD else PrivacyMode.PRIVATE) }, modifier)
@@ -40,20 +40,20 @@ import com.halo.app.ui.icons.HaloIcon
         Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
             Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center) {
-                Text(uiText("Private"), modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                Text(uiText("Local"), modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End,
                     style = MaterialTheme.typography.labelLarge,
                     color = if (mode == PrivacyMode.PRIVATE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                 Switch(mode == PrivacyMode.CLOUD, onCheckedChange = { cloud ->
                     changeMode(if (cloud) PrivacyMode.CLOUD else PrivacyMode.PRIVATE)
                 }, enabled = kidsLoaded && (!kids || kidsCloud || mode == PrivacyMode.CLOUD),
                     modifier = Modifier.padding(horizontal = 12.dp).semantics { contentDescription = modeDescription })
-                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.mode47_full_power), modifier = Modifier.weight(1f),
+                Text(uiText("Power"), modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.labelLarge,
                     color = if (mode == PrivacyMode.CLOUD) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (detail) Text(uiText(if (mode == PrivacyMode.PRIVATE)
-                "AI processing stays on this phone. Full Power features are off."
-                else "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."),
+                "AI processing stays on this phone. Power features are off."
+                else "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."),
                 style = MaterialTheme.typography.bodySmall)
             val revision by Graph.privacyModes.profileChanges.collectAsStateWithLifecycle()
             val profile = remember(mode, revision) { Graph.privacyModes.profile(mode) }
@@ -74,7 +74,7 @@ import com.halo.app.ui.icons.HaloIcon
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
     val changeMode = rememberModeChangeAction()
     if (mode == PrivacyMode.PRIVATE) {
-        Text(uiText(if (required) "This action needs Full Power mode. Use the control beside the halo Orb." else "Private mode"), style = MaterialTheme.typography.bodySmall)
+        Text(uiText(if (required) "This action needs Power mode. Use the control beside the halo Orb." else "Local mode"), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { changeMode(PrivacyMode.CLOUD) }) {
             Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.mode47_enable_power)) }
     }

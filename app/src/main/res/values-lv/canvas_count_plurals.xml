@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_count_zoom_summary">%1$s · %2$s · %3$d%%</string>
+    <plurals name="canvas_card_count">
+        <item quantity="zero">%1$d kartīšu</item>
+        <item quantity="one">%1$d kartīte</item>
+        <item quantity="other">%1$d kartītes</item>
+    </plurals>
+    <plurals name="canvas_connection_count">
+        <item quantity="zero">%1$d savienojumu</item>
+        <item quantity="one">%1$d savienojums</item>
+        <item quantity="other">%1$d savienojumi</item>
+    </plurals>
+</resources>

@@ -24,8 +24,9 @@ class AssistantToolsTest {
         context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE).edit().clear().commit()
     }
     private fun tools(foreground: Boolean = true, read: suspend (String, String) -> Unit = { _, _ -> }, stop: () -> Unit = {},
-        profiles: com.halo.app.di.tools.host.ModeProfileTools? = null) =
-        AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), read, stop, { foreground }, modeProfiles = profiles)
+        profiles: com.halo.app.di.tools.host.ModeProfileTools? = null,
+        currentScreen: com.halo.app.di.tools.host.CurrentScreenTools? = null) =
+        AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), read, stop, { foreground }, modeProfiles = profiles, currentScreen = currentScreen)
     private fun call(name: String, args: Map<String, Any> = emptyMap()) = ToolCall("test", name, args)
 
     @Test fun `configuration mutations require foreground grown-up admission before any owner write`() = runBlocking {
@@ -95,7 +96,12 @@ class AssistantToolsTest {
         val profiles = com.halo.app.di.tools.host.ModeProfileTools(com.halo.app.ai.PrivacyModeStore(MetadataStorage())) { _, _, _ ->
             error("Metadata review must not mutate a profile")
         }
-        val executor = tools(profiles = profiles)
+        // Match the installed assistant owner set used by ManualDependencyGraph.
+        // Discovery must not execute or read a current page.
+        val screen = com.halo.app.di.tools.host.CurrentScreenTools(com.halo.app.context.CurrentScreenContext()) {
+            error("Metadata review must not read a page")
+        }
+        val executor = tools(profiles = profiles, currentScreen = screen)
         val descriptors = DescriptorCatalog.descriptorsFor(HaloToolDescriptors.ExecutorKind.ASSISTANT, executor)
         assertEquals(executor.definitions().map { it.name }.toSet(), descriptors.map { it.name }.toSet())
         // Local allowlist must activate every new ability while keeping bootstrap bounded.

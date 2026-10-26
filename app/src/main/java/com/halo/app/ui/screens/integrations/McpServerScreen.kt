@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.integrations
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
@@ -40,12 +42,18 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
     var details by rememberSaveable(model.id) { mutableStateOf(false) }
     var tool by remember { mutableStateOf<McpToolUiModel?>(null) }
     var query by rememberSaveable(model.id) { mutableStateOf("") }
+    val shellHosted = BindShellChildPage(server?.displayName ?: uiText("Integration"), onBack,
+        objectId = model.id.takeIf { it.matches(Regex("[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")) }, titleIsSource = true, sourceIdentity = "${model.id}:$operation:${server?.state}:$details",
+        actions = listOf(
+            ShellPageAction("server.details", "Connection details", HaloGlyph.DEVICE, server != null) { details = !details },
+            ShellPageAction("server.edit", "Edit MCP server", HaloGlyph.SETTINGS, server != null && operation == null, model::edit),
+        ))
     val visibleTools = remember(server?.tools, query) { server?.tools.orEmpty().filter { it.displayName.contains(query, true) || it.description.contains(query, true) } }
     LaunchedEffect(removed) { if (removed) onBack() }
     DisposableEffect(model) { onDispose { model.cancelDiscovery() } }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            HaloScreenHeader(server?.displayName ?: uiText("Integration"), navigation = onBack)
+            if (!shellHosted) HaloScreenHeader(server?.displayName ?: uiText("Integration"), navigation = onBack)
             val row = server
             if (row == null) Text(uiText("Loading integration…")) else {
                 Text(uiText(mcpStateLabel(row.state)) + " · " + uiText(if (row.enabled) "Enabled" else "Disabled"))
@@ -56,13 +64,13 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
                 if (row.endpointDisplay.startsWith("http:", true)) Text(uiText("This connection is not encrypted. Use HTTP only for a server you control on a trusted local network."))
                 Text(uiText("Authentication"), style = MaterialTheme.typography.titleSmall)
                 Text(uiText(if (row.auth == McpAuthKind.NONE) "None" else if (row.credentialSaved) "Bearer · Credential saved" else "Bearer · Credential required"))
-                Row {
+                if (!shellHosted) Row {
                     TextButton(onClick = model::edit, enabled = operation == null) { Text("Edit configuration${if (row.auth == McpAuthKind.BEARER) " / Replace credential" else ""}") }
                 }
                 if (row.credentialSaved) TextButton(onClick = { credentialRemoval = true }, enabled = operation == null) { Text(uiText("Remove credential")) }
                 Text(uiText("Trust: %1\$s", uiText(mcpTrustLabel(row.trust))))
                 Text(uiText("Trust does not allow tools to bypass Halo confirmations or permissions."))
-                TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide connection details" else "Connection details")) }
+                if (!shellHosted) TextButton(onClick = { details = !details }) { Text(uiText(if (details) "Hide connection details" else "Connection details")) }
                 if (details) {
                 Text(uiText("Protocol: %1\$s", row.protocolVersion ?: uiText("Not negotiated")))
                 if (row.protocolVersion != null && row.state != McpConnectionState.CONNECTED) Text(uiText("Previous connection details; current connection is not confirmed."))

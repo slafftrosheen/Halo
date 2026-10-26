@@ -431,10 +431,10 @@ class HomeViewModel(
         val speechReady = args[8] as Boolean
         val microphonePermissionGranted = args[9] as Boolean
         val input = args[10] as SpeechInputStatus
-        val taskSummary = args[11] as com.halo.app.ui.state.RuntimeTaskSummary
         @Suppress("UNCHECKED_CAST") val runs = args[12] as List<com.halo.runtime.cognition.agent.AgentRun>
         val rejectionNotice = args[13] as SpeechRejectionNotice?
         val activeConversationId = conversations?.activeConversationId().orEmpty()
+        val taskSummary = homeConversationTaskSummary(runs, activeConversationId)
         val root = runs.filter { it.parentRunId == null && activeConversationId.isNotBlank() &&
             com.halo.runtime.cognition.continuity.RunContinuityResolver.conversationId(it) == activeConversationId
         }.maxByOrNull { it.updatedAt }
@@ -1569,6 +1569,15 @@ class HomeViewModel(
 
     private val _navigationEvents = MutableSharedFlow<String>()
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
+
+    /** Present saved detail only. Continuing a chat remains the canonical explicit UI action. */
+    suspend fun presentSavedConversation(id: String, version: String): Boolean {
+        val store = conversations ?: return false
+        store.savedChat(id, "ACTIVE", version, limit = 1)
+        if (_navigationEvents.subscriptionCount.value == 0) return false
+        _navigationEvents.emit("notebook/conversation/${android.net.Uri.encode(id)}")
+        return true
+    }
 
     fun navigateToIntelligence() { viewModelScope.launch { _navigationEvents.emit("ai_settings") } }
     fun navigateToVoice() { viewModelScope.launch { _navigationEvents.emit("voice_settings") } }

@@ -50,6 +50,30 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     val batchTitle = stringResource(R.string.file52_batch_receipt)
     val annotationTitle = stringResource(R.string.file52_annotation_name)
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(model::importFile) }
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = com.halo.app.ui.presence.ShellPageOwner("file_tools", selected?.id,
+        "${selected?.version}:${state.file?.version}:${state.text?.revision}:${state.annotations?.revision}",
+        canonicalSourceVersion = selected?.takeIf { it.kind == WorkspaceFileToolsKind.FILE }?.version,
+        canonicalToolIds = listOf("halo_file_tool_capabilities", "halo_get_file_metadata", "halo_text_get", "halo_pdf_annotation_get"))
+    com.halo.app.ui.presence.BindShellPageActions(pageOwner, buildList {
+        add(com.halo.app.ui.presence.ShellPageAction("page.office.new", stringResource(R.string.file52_new_document), com.halo.app.ui.icons.HaloGlyph.NOTE, !busy) { creating = true })
+        add(com.halo.app.ui.presence.ShellPageAction("page.office.open", stringResource(R.string.file52_open_file), com.halo.app.ui.icons.HaloGlyph.FILE, !busy) {
+            picker.launch(arrayOf("text/*", "image/*", "application/pdf", "application/octet-stream"))
+        })
+        add(com.halo.app.ui.presence.ShellPageAction("page.office.graphics", stringResource(R.string.file52_create_image), com.halo.app.ui.icons.HaloGlyph.APPEARANCE, !busy) { onOpenStudio(null) })
+        if (selected != null) {
+            if (selected.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) add(com.halo.app.ui.presence.ShellPageAction(
+                "page.office.study", stringResource(R.string.file52_attach_study), com.halo.app.ui.icons.HaloGlyph.QUESTION,
+                !busy && (selected.kind != WorkspaceFileToolsKind.PDF_ANNOTATIONS || state.annotations != null)) {
+                onStudy(if (selected.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS) requireNotNull(state.annotations).source.objectId else selected.id)
+            })
+            add(com.halo.app.ui.presence.ShellPageAction("page.office.attach", stringResource(R.string.file52_attach_canvas), com.halo.app.ui.icons.HaloGlyph.FILE, !busy) { onAttach(selected) })
+        }
+    })
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: stringResource(R.string.file52_title),
+            onBack = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy)
+    }
     BackHandler(enabled = busy) { }
     // A source change dismisses its old preview; it never grants a fresh version to an in-progress edit.
     LaunchedEffect(state.file?.objectId, state.file?.version, state.annotations?.source, state.error) {
@@ -68,7 +92,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         if (collage?.let(::stale) == true) collage = null
     }
     Scaffold(topBar = {
-        TopAppBar(title = { Text(stringResource(R.string.file52_title)) }, navigationIcon = {
+        if (!shellOwnsOrb) TopAppBar(title = { Text(stringResource(R.string.file52_title)) }, navigationIcon = {
             IconButton(onClick = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.file52_back))
             }
@@ -77,7 +101,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("file-tools-content"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodyMedium)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!shellOwnsOrb) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { creating = true }, enabled = !busy) { Text(stringResource(R.string.file52_new_document)) }
                     OutlinedButton(onClick = { picker.launch(arrayOf("text/*", "image/*", "application/pdf", "application/octet-stream")) }, enabled = !busy) { Text(stringResource(R.string.file52_open_file)) }
                     TextButton(onClick = { onOpenStudio(null) }, enabled = !busy) { Text(stringResource(R.string.file52_create_image)) }

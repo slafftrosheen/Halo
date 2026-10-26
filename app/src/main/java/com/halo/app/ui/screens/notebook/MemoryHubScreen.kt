@@ -66,9 +66,22 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     )) { mutableStateOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) }
     var search by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf("") }
     LaunchedEffect(search, viewModel) { viewModel.search(search) }
+    val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val pageOwner = com.halo.app.ui.presence.ShellPageOwner("memory", sourceIdentity = "$savedRevision:$section:${state.group}:${state.scope}",
+        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory"))
+    com.halo.app.ui.presence.BindShellPageActions(pageOwner, listOf(
+        com.halo.app.ui.presence.ShellPageAction("page.memory.add", "Remember something", HaloGlyph.MEMORY, !busy) { editor = true },
+        com.halo.app.ui.presence.ShellPageAction("page.memory.saved", "Memories", HaloGlyph.MEMORY) { section = "Memories" },
+        com.halo.app.ui.presence.ShellPageAction("page.memory.suggestions", "Suggestions", HaloGlyph.QUESTION) { section = "Suggestions" },
+        com.halo.app.ui.presence.ShellPageAction("page.memory.history", "Learning history", HaloGlyph.ACTIVITY) { section = "Learning history" },
+        com.halo.app.ui.presence.ShellPageAction("page.memory.settings", "Learning settings", HaloGlyph.SETTINGS, !busy, onSettings),
+    ))
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+        ToolZoneHeader(uiText("Memory") + " · " + uiText(section), onBack)
+    }
     Box(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
+        if (!shellOwnsOrb) item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
         item {
             Text(uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
@@ -76,7 +89,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                 "Saved memories stay here, but Halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
             Text(uiText("Remote AI receives memory only when your existing cloud-memory permission allows it."), style = MaterialTheme.typography.bodySmall)
         }
-        item {
+        if (!shellOwnsOrb) item {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Memories", "Suggestions", "Learning history").forEach { tab -> FilterChip(section == tab, { section = tab }, label = { Text(uiText(tab)) }) }
             }
@@ -102,7 +115,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     if (search.isBlank()) Row(Modifier.horizontalScroll(rememberScrollState())) {
                         MemorySort.entries.forEach { sort -> TextButton({ viewModel.sort(sort) }) { Text((if (state.sort == sort) "✓ " else "") + uiText(sort.label)) } }
                     }
-                    HaloFocusAction(uiText("Remember something"), HaloGlyph.MEMORY, !busy, { editor = true }, active = state.items.isEmpty())
+                    if (!shellOwnsOrb) HaloFocusAction(uiText("Remember something"), HaloGlyph.MEMORY, !busy, { editor = true }, active = state.items.isEmpty())
                 }
                 if (state.loading) item { CircularProgressIndicator() }
                 else if (state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "Nothing remembered here yet. Add something to remember, or review Suggestions." else "No memories match. Try another word or change the filters.")) }
@@ -150,7 +163,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         item {
             HorizontalDivider()
             Text(uiText("Memory: saved information you approved, plus clearly marked imports. Learning controls suggestions. Notebook holds your documents and files."), style = MaterialTheme.typography.bodySmall)
-            TextButton(onSettings) { Text(uiText("Learning settings")) }
+            if (!shellOwnsOrb) TextButton(onSettings) { Text(uiText("Learning settings")) }
         }
     }
     if (showRemember) {

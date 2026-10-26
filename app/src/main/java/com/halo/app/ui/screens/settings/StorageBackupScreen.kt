@@ -29,6 +29,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
+    SettingsChildZone("Storage & backup", onBack)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var includeFiles by rememberSaveable { mutableStateOf(false) }
     var protect by rememberSaveable { mutableStateOf(true) }
@@ -92,7 +93,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
         )
     }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen)) {
-        HaloWorkspaceHeader(uiText("Storage & Backup"), uiText("Your notes, conversations and memory stay on this phone. Choose where to keep your backups."), onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloWorkspaceHeader(uiText("Storage & Backup"), uiText("Your notes, conversations and memory stay on this phone. Choose where to keep your backups."), onBack)
         if (state.busy) HaloProgressPresentation(state.progressFeedback?.let { uiText(it.template, *it.arguments.toTypedArray()) } ?: uiText("Working with your data…"))
         if (pickerPending) TextButton(onClick = { pendingPicker = null; relinkingId = null; password = "" }) { Text(uiText("Cancel file selection")) }
         state.feedback?.let { feedback -> HaloFeedbackSurface(uiText(if (feedback.failed) "Data operation needs attention" else "Data operation result"),

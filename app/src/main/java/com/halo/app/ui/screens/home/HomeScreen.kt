@@ -307,10 +307,13 @@ fun HomeScreen(
         }
     }
 
+    var liveFocusRequest by remember(draftKey) { mutableIntStateOf(0) }
     fun submitText() {
-        val text = textInput.trim()
+        val currentDraft = viewModel.composerDrafts.value[draftKey] ?: return
+        val text = currentDraft.text.trim()
         if (text.isBlank() || submission.busy || isActiveSession || isListening || isSpeechProcessing || isSpeaking) return
-        viewModel.submitComposerText(draftKey, drafts[draftKey]?.revision, textInput)
+        liveFocusRequest += 1
+        viewModel.submitComposerText(draftKey, currentDraft.revision, currentDraft.text)
     }
 
     val currentMode by viewModel.selectedMode.collectAsStateWithLifecycle()
@@ -430,8 +433,8 @@ fun HomeScreen(
     val actingOnPhone = (uiState.sessionState as? CognitiveSessionState.ExecutingTool)
         ?.toolId?.let(::homeIsPhoneAction) == true
     val feedScroll = rememberScrollState()
-    var followLatest by rememberHomeFeedFollowing(feedScroll, draftKey,
-        submission.interactionId?.takeIf { submission.needsRecovery && submission.conversationId == draftKey })
+    var followLatest by rememberHomeFeedFollowing(feedScroll, draftKey)
+    LaunchedEffect(liveFocusRequest) { if (liveFocusRequest > 0) followLatest = true }
     var observedResponse by remember(draftKey) { mutableStateOf(responseText) }
     var unseenReply by remember(draftKey) { mutableStateOf(false) }
     // H01: announce a new reply only when the response actually changes while
@@ -463,16 +466,116 @@ fun HomeScreen(
         providerNeedsAttention || connectionNeedsAttention -> HaloLight.ERROR
         else -> HaloLight.IDLE
     }
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+    val homeOwner = com.halo.app.ui.presence.ShellPageOwner("home", objectId = uiState.conversationId)
+    val homeComposer: @Composable () -> Unit = {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (shellOwnsOrb) 0.dp else 6.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(if (shellOwnsOrb) 2.dp else 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (importingSource) {
+                androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing), style = MaterialTheme.typography.bodySmall)
+            }
+            // H03: selected sources remain visible without opening the attachment sheet.
+            // A single horizontally scrollable row avoids clipping the pinned composer
+            // at 200% font scale, and a tap opens source actions/privacy.
+            if (contextChips.isNotEmpty()) Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                contextChips.forEach { chip ->
+                    androidx.compose.material3.InputChip(
+                        selected = true,
+                        onClick = { showContext = true },
+                        modifier = Modifier.widthIn(max = 260.dp).heightIn(min = 48.dp),
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.removeContext(chip.focus.category) }, modifier = Modifier.size(48.dp)) {
+                                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
+                                    androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_remove_attachment, chip.title), Modifier.size(18.dp))
+                            }
+                        },
+                        label = {
+                            Text(chip.title, maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                    )
+                }
+            }
+            ComposerDraftNotice(viewModel, draftKey)
+            HaloComposer(
+                draftIdentity = draftKey, draftRevision = drafts[draftKey]?.revision ?: 0L,
+                readAcknowledgedDraft = { viewModel.composerDrafts.value[draftKey] },
+                surfaceSwitcher = if (shellOwnsOrb) surfaceSwitcher else null,
+                focusAllowed = true,
+                focusRequester = composerFocusRequester,
+                value = textInput, onValueChange = { updateDraft(it) }, onSubmit = { submitText() },
+                onVoice = { togglePresence() },
+                onStop = {
+                    com.halo.app.ui.fx.HaloMotionEvents.stop()
+                    when {
+                        isListening || isSpeechProcessing -> viewModel.cancelVoiceInput()
+                        isSpeaking -> viewModel.stopSpeakingAndListen()
+                        else -> viewModel.cancelSession()
+                    }
+                },
+                enabled = canSend && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
+                voiceEnabled = !changingConversation && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention &&
+                    !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
+                voiceActive = isListening,
+                voiceContentDescription = uiText(when {
+                    !uiState.microphonePermissionGranted -> "Enable voice"
+                    !uiState.speechReady -> "Set up voice"
+                    isListening -> "Listening…"
+                    isSpeaking -> "Interrupt reply and talk"
+                    else -> "Talk"
+                }),
+                showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
+                onAttach = { focusManager.clearFocus(); showContext = true },
+                onTools = { focusManager.clearFocus(); toolGroup = HomeToolGroup.CREATE.name; toolEntry = null
+                    viewModel.refreshToolCatalog(); showActions = true },
+            )
+            // The field must be attached before a navigation event requests focus.
+            LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
+        }
+    }
+    if (shellOwnsOrb) {
+        com.halo.app.ui.presence.BindShellUtilityBand(homeOwner, homeComposer)
+        val todayLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day)
+        com.halo.app.ui.presence.BindShellPageActions(homeOwner, buildList {
+            add(com.halo.app.ui.presence.ShellPageAction("new-chat", "New conversation", HaloGlyph.NOTE,
+                enabled = !changingConversation, onInvoke = viewModel::newConversation))
+            add(com.halo.app.ui.presence.ShellPageAction("history", "Conversation history", HaloGlyph.ACTIVITY) { showHistory = true })
+            add(com.halo.app.ui.presence.ShellPageAction("mode", homeModeLabel(currentMode), HaloGlyph.MODEL,
+                enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { modeMenuExpanded = true })
+            add(com.halo.app.ui.presence.ShellPageAction("clear-chat", "Clear conversation", HaloGlyph.TRASH,
+                enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { confirmClear = true })
+            if (daily.items.isNotEmpty()) add(com.halo.app.ui.presence.ShellPageAction("today", todayLabel, HaloGlyph.HOME) { showToday = true })
+        })
+        if (modeMenuExpanded) androidx.compose.material3.AlertDialog(
+            onDismissRequest = { modeMenuExpanded = false },
+            title = { Text(uiText("How halo answers")) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                CognitiveOperatingMode.entries.forEach { mode ->
+                    TextButton(enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing,
+                        onClick = { viewModel.selectedMode.value = mode; modeMenuExpanded = false }) {
+                        Column(Modifier.weight(1f)) {
+                            Text(uiText(homeModeLabel(mode)), style = MaterialTheme.typography.titleSmall)
+                            Text(uiText(homeModeSummary(mode)), style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (mode == currentMode) HaloIcon(HaloGlyph.SUCCESS, uiText("Selected"))
+                    }
+                }
+            } },
+            confirmButton = { TextButton(onClick = { modeMenuExpanded = false }) { Text(uiText("Close")) } })
+    }
+    Box(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground())
         .haloStateAura(light, MaterialTheme.colorScheme.primaryContainer,
             androidx.compose.ui.graphics.Color(0xFFFF9F6B), MaterialTheme.colorScheme.error)
         .haloAssistantEdge(active = actingOnPhone && !lightStopped, attention = presentation.needsReview,
             accent = MaterialTheme.colorScheme.primaryContainer, apricot = androidx.compose.ui.graphics.Color(0xFFFF9F6B)),
         contentAlignment = Alignment.TopCenter) {
-    Column(Modifier.widthIn(max = 760.dp).fillMaxSize().imePadding()) {
-        // H01: keep the wordmark and Updates above the scrollable conversation.
-        // Only the feed moves; actions and the composer stay anchored below.
-        if (!shortScreen || !keyboardVisible) Box(Modifier.fillMaxWidth()
+    Column(Modifier.widthIn(max = 760.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        // Standalone hosts retain local controls; the app shell projects them into Halo Zone.
+        if (!shellOwnsOrb && (!shortScreen || !keyboardVisible)) Box(Modifier.fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = if (shortScreen) 4.dp else 12.dp)) {
             HomeChatHeader(mode = uiText(homeModeLabel(currentMode)),
                 modeEnabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing,
@@ -499,6 +602,26 @@ fun HomeScreen(
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
             .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            // Page earlier content without hiding turns based on equal answer text.
+            if (currentTurns.size > visibleTurnCount) TextButton(onClick = {
+                followLatest = false
+                visibleTurnCount = (visibleTurnCount + 20).coerceAtMost(currentTurns.size)
+            }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_load_earlier)) }
+            val canEditMessage = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking
+            currentTurns.takeLast(visibleTurnCount).forEach { turn ->
+                androidx.compose.runtime.key(turn.id) {
+                    if (turn.userText.isNotBlank()) HomeTranscriptMessage("${turn.id}:user", turn.userText, user = true,
+                        onEdit = if (canEditMessage) ({ prepareEarlierQuestion(turn.userText) }) else null)
+                    if (homeShowsHistoricalReply(turn, liveReplyIdentity)) HomeTranscriptMessage(
+                        "${turn.id}:assistant", turn.assistantText, user = false,
+                        onSave = if (canEditMessage) ({ viewModel.saveResponse(PresentedAssistantResponse(
+                            turn.conversationId, turn.id, turn.metadata["interactionId"], turn.metadata["requestId"],
+                            turn.assistantText, ResponsePresentationSource.COMMITTED_CONVERSATION)) }) else null,
+                        onEdit = if (canEditMessage && turn.userText.isNotBlank()) ({ prepareEarlierQuestion(turn.userText) }) else null,
+                        canRead = canEditMessage)
+                }
+            }
+            pendingQuestion?.let { HomeTranscriptMessage("${submission.interactionId}:pending", it, user = true) }
             HomePresenceHeader(
                 signal = com.halo.app.ui.presence.haloOrbInputPresentation(uiState.sessionState.toSignalPresentation(
                     fallback = uiState.runtimeState, activityLevel = uiState.orb.inputLevel,
@@ -576,26 +699,6 @@ fun HomeScreen(
                 !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text(uiText("Enable voice")) }
                 !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text(uiText("Set up voice")) }
             }
-            // Page earlier content without hiding turns based on equal answer text.
-            if (currentTurns.size > visibleTurnCount) TextButton(onClick = {
-                followLatest = false
-                visibleTurnCount = (visibleTurnCount + 20).coerceAtMost(currentTurns.size)
-            }) { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_load_earlier)) }
-            val canEditMessage = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking
-            currentTurns.takeLast(visibleTurnCount).forEach { turn ->
-                androidx.compose.runtime.key(turn.id) {
-                    if (turn.userText.isNotBlank()) HomeTranscriptMessage("${turn.id}:user", turn.userText, user = true,
-                        onEdit = if (canEditMessage) ({ prepareEarlierQuestion(turn.userText) }) else null)
-                    if (homeShowsHistoricalReply(turn, liveReplyIdentity)) HomeTranscriptMessage(
-                        "${turn.id}:assistant", turn.assistantText, user = false,
-                        onSave = if (canEditMessage) ({ viewModel.saveResponse(PresentedAssistantResponse(
-                            turn.conversationId, turn.id, turn.metadata["interactionId"], turn.metadata["requestId"],
-                            turn.assistantText, ResponsePresentationSource.COMMITTED_CONVERSATION)) }) else null,
-                        onEdit = if (canEditMessage && turn.userText.isNotBlank()) ({ prepareEarlierQuestion(turn.userText) }) else null,
-                        canRead = canEditMessage)
-                }
-            }
-            pendingQuestion?.let { HomeTranscriptMessage("${submission.interactionId}:pending", it, user = true) }
             if (homeShouldShowThinkingSkeleton(uiState.sessionState, if (priorSavedReply) "" else responseText,
                     presentation.needsReview)) HomeThinkingSkeleton()
             HomeAutoReadAnswers(uiState, responseText, isActiveSession)
@@ -613,6 +716,7 @@ fun HomeScreen(
                 HomeWelcome(compact = true, onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
             }
             uiState.rejectionNotice?.let { notice ->
+                val speechFailure = homeSpeechFailurePresentation(notice)
                 val stoppedByUser = notice.reasonText == "Input interrupted. You can try again or type your question."
                 Surface(
                     shape = com.halo.app.ui.design.HaloShapes.control,
@@ -622,7 +726,7 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                         Text(
-                              uiText(when {
+                              uiText(speechFailure?.title ?: when {
                                   stoppedByUser -> "Listening stopped"
                                   notice.outputFailure -> "Couldn’t play the reply"
                                   else -> "Couldn’t use that voice input"
@@ -631,7 +735,7 @@ fun HomeScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                              uiText(notice.reasonText),
+                              uiText(speechFailure?.body ?: notice.reasonText),
                             style = MaterialTheme.typography.bodyMedium
                           )
                           notice.transcript?.let { transcript ->
@@ -640,7 +744,8 @@ fun HomeScreen(
                                   onClick = { updateDraft(transcript); viewModel.dismissSpeechNotice() }) { Text(uiText("Edit as text")) }
                           }
                           androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                              if (!notice.outputFailure) TextButton(onClick = { togglePresence() }) { Text(uiText("Try again")) }
+                              if (speechFailure?.offerTyping == true) TextButton(onClick = { composerFocusRequester.requestFocus() }) { Text(uiText("Type instead")) }
+                              else if (!notice.outputFailure) TextButton(onClick = { togglePresence() }) { Text(uiText("Try again")) }
                               TextButton(onClick = { viewModel.navigateToVoice() }) { Text(uiText("Speech settings")) }
                               TextButton(onClick = { viewModel.dismissSpeechNotice() }) { Text(uiText("Dismiss")) }
                           }
@@ -696,83 +801,19 @@ fun HomeScreen(
 
 
         }
-        if (unseenReply) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        if (!followLatest) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.End) {
             TextButton(onClick = {
                 scope.launch {
-                    feedScroll.animateScrollTo(feedScroll.maxValue)
                     followLatest = true
+                    if (reducedMotion) feedScroll.scrollTo(feedScroll.maxValue) else feedScroll.animateScrollTo(feedScroll.maxValue)
                     unseenReply = false
                 }
             }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(uiText("New reply ↓"))
+                Text(if (unseenReply) uiText("New reply ↓") else androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_return_to_current))
             }
         }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (importingSource) {
-                androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
-                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing), style = MaterialTheme.typography.bodySmall)
-            }
-            // H03: selected sources remain visible without opening the attachment sheet.
-            // A single horizontally scrollable row avoids clipping the pinned composer
-            // at 200% font scale, and a tap opens source actions/privacy.
-            if (contextChips.isNotEmpty()) Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                contextChips.forEach { chip ->
-                    androidx.compose.material3.InputChip(
-                        selected = true,
-                        onClick = { showContext = true },
-                        modifier = Modifier.widthIn(max = 260.dp).heightIn(min = 48.dp),
-                        trailingIcon = {
-                            IconButton(onClick = { viewModel.removeContext(chip.focus.category) }, modifier = Modifier.size(48.dp)) {
-                                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
-                                    androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_remove_attachment, chip.title), Modifier.size(18.dp))
-                            }
-                        },
-                        label = {
-                            Text(chip.title, maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                        }
-                    )
-                }
-            }
-            ComposerDraftNotice(viewModel, draftKey)
-            HaloComposer(
-                focusAllowed = true,
-                focusRequester = composerFocusRequester,
-                value = textInput, onValueChange = { updateDraft(it) }, onSubmit = { submitText() },
-                onVoice = { togglePresence() },
-                onStop = {
-                    com.halo.app.ui.fx.HaloMotionEvents.stop()
-                    when {
-                        isListening || isSpeechProcessing -> viewModel.cancelVoiceInput()
-                        isSpeaking -> viewModel.stopSpeakingAndListen()
-                        else -> viewModel.cancelSession()
-                    }
-                },
-                enabled = canSend && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
-                voiceEnabled = !changingConversation && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention &&
-                    !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
-                voiceActive = isListening,
-                voiceContentDescription = uiText(when {
-                    !uiState.microphonePermissionGranted -> "Enable voice"
-                    !uiState.speechReady -> "Set up voice"
-                    isListening -> "Listening…"
-                    isSpeaking -> "Interrupt reply and talk"
-                    else -> "Talk"
-                }),
-                showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
-                onAttach = { focusManager.clearFocus(); showContext = true },
-                onTools = { focusManager.clearFocus(); toolGroup = HomeToolGroup.CREATE.name; toolEntry = null
-                    viewModel.refreshToolCatalog(); showActions = true },
-            )
-            // The field must be attached before a navigation event requests focus.
-            LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
-        }
+        if (!shellOwnsOrb) homeComposer()
         // H04: forms are screen-level overlays, independent of chat scrolling.
         quickAction?.let { action ->
             val command = if (action == "Timer") {

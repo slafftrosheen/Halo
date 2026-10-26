@@ -22,6 +22,7 @@ import java.util.Date
 @Composable internal fun ModeProfilesScreen(onBack: () -> Unit, onAdvanced: () -> Unit,
     onPermissions: () -> Unit, onCosts: () -> Unit, activityOnly: Boolean = false,
     clearLegacyHistory: suspend () -> Unit = {}) {
+    SettingsChildZone(if (activityOnly) "What left this phone" else "Mode profiles", onBack, if (activityOnly) emptyList() else listOf(settingsChildLink("onPermissions", "Permissions", onPermissions), settingsChildLink("onCosts", "Online costs", onCosts), settingsChildLink("onAdvanced", "Advanced intelligence", onAdvanced)))
     val revision by Graph.privacyModes.profileChanges.collectAsStateWithLifecycle()
     val receipts by Graph.privacyModes.activity.receipts.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -29,7 +30,7 @@ import java.util.Date
     val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
     var clearFailed by remember { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { HaloScreenHeader(stringResource(if (activityOnly) R.string.mode47_activity else R.string.mode47_profiles),
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(stringResource(if (activityOnly) R.string.mode47_activity else R.string.mode47_profiles),
             if (activityOnly) stringResource(R.string.mode47_activity_scope) else stringResource(R.string.mode47_boundaries), navigation = onBack) }
         if (!activityOnly) {
         item { com.halo.app.ui.components.PrivacyModeControl(detail = true) }

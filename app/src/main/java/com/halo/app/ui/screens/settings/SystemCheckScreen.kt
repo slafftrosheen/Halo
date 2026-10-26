@@ -54,6 +54,7 @@ fun SystemCheckScreen(
     onOpenIntelligence: (() -> Unit)? = null,
     onOpenVoiceSettings: (() -> Unit)? = null,
 ) {
+    SettingsChildZone("System check", onBack)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
     val voiceTraces by remember { com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.voiceLatencyTraces }
@@ -88,7 +89,7 @@ fun SystemCheckScreen(
     ) {
         item { Column {
         Spacer(Modifier.height(16.dp))
-        HaloScreenHeader(
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(
             title = uiText("System Check"),
             subtitle = uiText("Run checks explicitly. Hardware and inference checks may need access or configuration."),
             navigation = onBack

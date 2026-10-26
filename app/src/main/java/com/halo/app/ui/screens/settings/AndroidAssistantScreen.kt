@@ -68,6 +68,7 @@ fun AndroidAssistantScreen(
     audioAffinity: StateFlow<InteractionAudioAffinity?> = MutableStateFlow(null),
     showDiagnostics: Boolean = false,
 ) {
+    SettingsChildZone("Android assistant", onBack)
     val state by roleController.integrationState.collectAsStateWithLifecycle()
     val enrollmentDiagnostics by roleController.enrollmentDiagnostics.collectAsStateWithLifecycle()
     val runtimeState by AssistantRuntimeStateStore.state.collectAsStateWithLifecycle()
@@ -98,7 +99,7 @@ fun AndroidAssistantScreen(
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        HaloScreenHeader(uiText("Android assistant"), uiText("Talk to halo from any app"), navigation = onBack)
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Android assistant"), uiText("Talk to halo from any app"), navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
         if (showDiagnostics) PhoneOperatorPanel(technical = true)

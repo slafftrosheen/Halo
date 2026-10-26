@@ -15,11 +15,12 @@ import com.halo.app.ui.workspace.*
 
 @Composable
 fun LocalAudioLabScreen(model: LocalAudioLabViewModel, onBack: () -> Unit, onModels: () -> Unit) {
+    SettingsChildZone("Local audio test", onBack, listOf(settingsChildLink("onModels", "Models", onModels)))
     val state by model.state.collectAsStateWithLifecycle()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let(model::attach) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { HaloScreenHeader(uiText("Local audio test"), uiText("Try an audio file with an installed model"), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Local audio test"), uiText("Try an audio file with an installed model"), navigation = onBack) }
         item {
             Text(uiText("Audio stays on this phone. This test uses no tools and saves no conversation. Audio input models return text; Voice settings control spoken replies."))
             TextButton(onClick = onModels, enabled = !state.busy) { Text(uiText("On-device models")) }

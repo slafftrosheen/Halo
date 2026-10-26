@@ -44,4 +44,13 @@ class PalettePreferencesTest {
         preferences.awaitReady()
         assertEquals(HaloPalettes(), preferences.state.value)
     }
+    @Test fun `extended backgrounds persist independently without replacing old profile fields`() = runBlocking {
+        val preferences = PalettePreferences(context)
+        preferences.selectPersisted(false, HaloPalette(HaloAccent.SAGE, HaloTone.PAPER, HaloBackgroundStyle.MIST))
+        preferences.selectPersisted(true, HaloPalette(HaloAccent.ROSE, HaloTone.SLATE, HaloBackgroundStyle.STILL))
+        val restored = PalettePreferences(context)
+        restored.awaitReady()
+        assertEquals(HaloPalette(HaloAccent.SAGE, HaloTone.PAPER, HaloBackgroundStyle.MIST), restored.state.value.light)
+        assertEquals(HaloPalette(HaloAccent.ROSE, HaloTone.SLATE, HaloBackgroundStyle.STILL), restored.state.value.dark)
+    }
 }

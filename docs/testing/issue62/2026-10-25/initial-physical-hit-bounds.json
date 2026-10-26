@@ -1,0 +1,129 @@
+{
+  "scope": "Installed05 static UIAutomator clickable/selected ancestor geometry. Not an executed fan-touch or final-binary hit-test claim. Partially visible carousel edge items retain scroll affordance.",
+  "captures": {
+    "phone-after-settings-normal.xml": {
+      "xmlSha256": "0af8f3ce1c746d160e6191faec35acdc2ea3a38f146472af7bf2a8f1f70530da",
+      "rootInteractiveOrSelectedBounds": {
+        "Home": [
+          44,
+          1797,
+          176,
+          1929
+        ],
+        "Workspace": [
+          44,
+          1929,
+          176,
+          2061
+        ],
+        "Devices": [
+          904,
+          1797,
+          1036,
+          1929
+        ],
+        "Settings": [
+          904,
+          1929,
+          1036,
+          2061
+        ]
+      },
+      "carouselClickableBounds": {
+        "Search settings": [
+          209,
+          1811,
+          341,
+          1943
+        ],
+        "Brain": [
+          352,
+          1804,
+          484,
+          1936
+        ],
+        "Voice & reading": [
+          495,
+          1799,
+          627,
+          1931
+        ],
+        "Vision": [
+          638,
+          1806,
+          770,
+          1938
+        ],
+        "Guided setup": [
+          781,
+          1813,
+          904,
+          1945
+        ]
+      },
+      "positiveAreaOverlaps": []
+    },
+    "phone-note-reopened.xml": {
+      "xmlSha256": "93203ecd24b69123ccdcb4791d7f1787a4dac697b602ba4ebd5be441e3dd998f",
+      "rootInteractiveOrSelectedBounds": {
+        "Home": [
+          44,
+          1797,
+          176,
+          1929
+        ],
+        "Workspace": [
+          44,
+          1929,
+          176,
+          2061
+        ],
+        "Devices": [
+          904,
+          1797,
+          1036,
+          1929
+        ],
+        "Settings": [
+          904,
+          1929,
+          1036,
+          2061
+        ]
+      },
+      "carouselClickableBounds": {
+        "Rename": [
+          209,
+          1811,
+          341,
+          1943
+        ],
+        "Think with halo": [
+          352,
+          1804,
+          484,
+          1936
+        ],
+        "Outline": [
+          495,
+          1799,
+          627,
+          1931
+        ],
+        "Find and replace": [
+          638,
+          1806,
+          770,
+          1938
+        ],
+        "More tools": [
+          781,
+          1813,
+          904,
+          1945
+        ]
+      },
+      "positiveAreaOverlaps": []
+    }
+  }
+}

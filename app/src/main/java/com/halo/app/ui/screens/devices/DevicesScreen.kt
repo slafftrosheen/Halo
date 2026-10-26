@@ -583,9 +583,10 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         }
     }
 
-    LazyColumn(Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background),
+    val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    LazyColumn(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        item {
+        if (!shellHosted) item {
             HaloScreenHeader(uiText("Devices"), trailing = {
                 DevicesOverflowMenu(visibleAccessories.isNotEmpty(), { phoneDetails = true }, onTestAudio)
                 if (!noDevices) {

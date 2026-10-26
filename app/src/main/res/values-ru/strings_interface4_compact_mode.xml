@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="interface4_mode_local_short">Локально</string>
+    <string name="interface4_mode_power_short">Мощный</string>
+    <string name="interface4_hold_halo_short">Удерживайте halo</string>
+</resources>

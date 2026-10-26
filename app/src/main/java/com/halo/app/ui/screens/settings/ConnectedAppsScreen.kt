@@ -28,6 +28,7 @@ import com.halo.app.data.settings.AppActionAccessStore
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConnectedAppsScreen(onBack: () -> Unit, onActions: () -> Unit) {
+    SettingsChildZone("Apps & services", onBack, listOf(settingsChildLink("onActions", "Skills", onActions)))
     val snapshot by ManualDependencyGraph.appFunctionCapabilityIndex.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val access = ManualDependencyGraph.appActionAccess
@@ -59,7 +60,7 @@ fun ConnectedAppsScreen(onBack: () -> Unit, onActions: () -> Unit) {
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { HaloScreenHeader(uiText("Apps & services"), uiText("Actions your apps make available to halo."), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Apps & services"), uiText("Actions your apps make available to halo."), navigation = onBack) }
         item { Text(uiText("Available actions still need permission. Connecting an app does not approve its actions."),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         if (accessError) item { Text(uiText("Could not save that change. Try again."), color = MaterialTheme.colorScheme.error) }

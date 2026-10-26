@@ -78,6 +78,10 @@ fun PermissionsScreen(
     storageAccessRepository: StorageAccessRepository? = null,
     onOpenStorageBackup: (() -> Unit)? = null,
 ) {
+    if (onBack != null) com.halo.app.ui.screens.settings.SettingsChildZone("Permissions", onBack,
+        listOfNotNull(onOpenStorageBackup?.let { open ->
+            com.halo.app.ui.screens.settings.settingsChildLink("storage", "Storage & backup", open)
+        }))
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var refreshKey by remember { mutableStateOf(0) }
@@ -135,7 +139,7 @@ fun PermissionsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        HaloWorkspaceHeader(
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloWorkspaceHeader(
             title = uiText("Permissions"),
             subtitle = uiText("Only request access when a capability needs it."),
             onBack = onBack

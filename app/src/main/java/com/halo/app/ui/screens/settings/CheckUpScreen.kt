@@ -22,6 +22,7 @@ fun CheckUpScreen(
     onIntelligence: () -> Unit,
     onVoice: () -> Unit,
 ) {
+    SettingsChildZone("Check-up", onBack, listOf(settingsChildLink("onIntelligence", "Brain", onIntelligence), settingsChildLink("onVoice", "Voice & reading", onVoice)))
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val observations = systemCheckEssentialItems(state.sections).associateBy { it.id }
     val labels = listOf(
@@ -45,7 +46,7 @@ fun CheckUpScreen(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item { HaloScreenHeader(uiText("Check-up"), uiText("See what is available, then choose what to set up."), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Check-up"), uiText("See what is available, then choose what to set up."), navigation = onBack) }
         item {
             Surface(shape = HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
@@ -120,6 +121,7 @@ fun CheckUpScreen(
 /** A bounded report: fixed labels and status values only; no source detail or payloads. */
 @Composable
 fun TechnicalReportScreen(viewModel: SystemCheckViewModel, onBack: () -> Unit) {
+    SettingsChildZone("Technical report", onBack)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
@@ -134,7 +136,7 @@ fun TechnicalReportScreen(viewModel: SystemCheckViewModel, onBack: () -> Unit) {
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item { HaloScreenHeader(uiText("Technical report"), uiText("Safe to share: no keys, no messages"), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Technical report"), uiText("Safe to share: no keys, no messages"), navigation = onBack) }
         item {
             Surface(shape = HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Text(report, Modifier.fillMaxWidth().padding(20.dp), style = MaterialTheme.typography.bodyMedium)

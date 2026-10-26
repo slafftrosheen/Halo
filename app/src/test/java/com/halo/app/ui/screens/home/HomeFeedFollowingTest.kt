@@ -30,11 +30,12 @@ class HomeFeedFollowingTest {
     private var rows by mutableIntStateOf(12)
     private var recoveryRequest by mutableStateOf<String?>(null)
     private var retries = 0
+    private var conversation by mutableStateOf("chat")
 
     private fun show() {
         compose.setContent {
             scroll = rememberScrollState()
-            following = rememberHomeFeedFollowing(scroll, "chat", recoveryRequest)
+            following = rememberHomeFeedFollowing(scroll, conversation, recoveryRequest)
             Column(Modifier.width(320.dp).height(120.dp).testTag("feed").verticalScroll(scroll)) {
                 Column(Modifier.height(60.dp)) {
                     Text("Orb header")
@@ -47,17 +48,20 @@ class HomeFeedFollowingTest {
         compose.runOnIdle { assertEquals(scroll.maxValue, scroll.value) }
     }
 
-    @Test fun failureRevealsRecoveryAndRetryRearmsFollowing() {
+    @Test fun failureNeverSeizesManualHistoryAndExplicitReturnFollowsAgain() {
         show()
-        compose.runOnIdle { recoveryRequest = "failed-request" }
+        compose.onNodeWithTag("feed").performTouchInput { swipeDown(durationMillis = 600) }
         compose.waitForIdle()
-        compose.onNodeWithText("Retry").assertIsDisplayed().performClick()
-        compose.runOnIdle { assertEquals(1, retries); assertFalse(following.value); rows += 2 }
+        val readingPosition = scroll.value
+        compose.runOnIdle { recoveryRequest = "failed-request"; rows += 2 }
         compose.waitForIdle()
-        compose.onNodeWithText("Retry").assertIsDisplayed()
-        compose.runOnIdle { recoveryRequest = null }
+        compose.runOnIdle {
+            assertFalse(following.value)
+            assertEquals(readingPosition, scroll.value)
+            following.value = true
+        }
         compose.waitForIdle()
-        compose.runOnIdle { assertTrue(following.value); assertEquals(scroll.maxValue, scroll.value) }
+        compose.runOnIdle { assertEquals(scroll.maxValue, scroll.value) }
     }
 
     @Test fun successiveSmallGesturesKeepTheirProgressTowardTheOrb() {
@@ -96,10 +100,23 @@ class HomeFeedFollowingTest {
         show()
         compose.onNodeWithTag("feed").performTouchInput { swipeDown(durationMillis = 600) }
         compose.runOnIdle { assertFalse(following.value) }
-        compose.runOnIdle { runBlocking { scroll.scrollTo(scroll.maxValue) } }
+        compose.runOnIdle { following.value = true }
         compose.waitForIdle()
         compose.runOnIdle { assertTrue(following.value); rows += 2 }
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(scroll.maxValue, scroll.value) }
     }
+    @Test fun switchingConversationsRestoresManualReadingPosition() {
+        show()
+        compose.onNodeWithTag("feed").performTouchInput { swipeDown(durationMillis = 600) }
+        compose.waitForIdle()
+        val readingPosition = scroll.value
+        compose.runOnIdle { conversation = "other" }
+        compose.waitForIdle()
+        compose.runOnIdle { assertTrue(following.value); assertEquals(scroll.maxValue, scroll.value) }
+        compose.runOnIdle { conversation = "chat" }
+        compose.waitForIdle()
+        compose.runOnIdle { assertFalse(following.value); assertEquals(readingPosition, scroll.value) }
+    }
+
 }

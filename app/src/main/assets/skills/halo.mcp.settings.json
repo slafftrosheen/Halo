@@ -1,0 +1,43 @@
+{
+  "id": "halo.mcp.settings",
+  "name": "Existing tool server settings",
+  "description": "Read non-secret server state and request approved bounded settings or connected refresh; no credentials or new connection.",
+  "schemaVersion": 2,
+  "category": "WORKSPACE",
+  "risk": "SENSITIVE",
+  "requiredPermissions": [],
+  "tools": [
+    "halo_mcp_refresh_tools",
+    "halo_mcp_server_set_enabled",
+    "halo_mcp_server_state",
+    "halo_mcp_servers",
+    "halo_mcp_tool_set_enabled"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_mcp_refresh_tools",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_mcp_server_set_enabled",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_mcp_server_state",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_mcp_servers",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_mcp_tool_set_enabled",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

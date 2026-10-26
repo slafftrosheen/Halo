@@ -4149,4 +4149,23 @@
     <string name="ui_66cd74a43e4c" formatted="false">"During a lesson: hint, repeat, next step, simpler, more detail, or stop. The same actions are available below."</string>
     <string name="ui_d61a54f7137c" formatted="false">"Try: hint, repeat, next step, simpler, more detail, or stop."</string>
     <string name="ui_7d72ddf69768" formatted="false">"The starter bundle is unavailable."</string>
+    <string name="ui_0a9d8afb0161" formatted="false">"Office Tools"</string>
+    <string name="ui_2d43037f47e4" formatted="false">"halo Studio"</string>
+    <string name="ui_dce612cabb53" formatted="false">"Graphics editor"</string>
+    <string name="ui_7e4d5c460c04" formatted="false">"Brain"</string>
+    <string name="ui_f4e08fefef74" formatted="false">"Personalization"</string>
+    <string name="ui_dc923b947db3" formatted="false">"Images and camera"</string>
+    <string name="ui_ae58aa24a0b0" formatted="false">"Choose an image-capable model"</string>
+    <string name="ui_ddca0456c75e" formatted="false">"Camera and photo access"</string>
+    <string name="ui_74c4ba5901f7" formatted="false">"Image sharing preferences"</string>
+    <string name="ui_caa52519e922" formatted="false">"Local and Power preferences"</string>
+    <string name="ui_8c31e6e72230" formatted="false">"Local"</string>
+    <string name="ui_4d0076e6b4c7" formatted="false">"Activities"</string>
+    <string name="ui_b5634a8ba110" formatted="false">"Activities and notifications"</string>
+    <string name="ui_5774d46c5e6b" formatted="false">"Hold halo for actions"</string>
+    <string name="ui_e8d505c1b1f7" formatted="false">"Local mode"</string>
+    <string name="ui_b080f31e6a5f" formatted="false">"Local / Power"</string>
+    <string name="ui_3b3da664eb98" formatted="false">"This action needs Power mode. Use the control beside the halo Orb."</string>
+    <string name="ui_3cd9fa292989" formatted="false">"Voice input is busy"</string>
+    <string name="ui_03ba09fea0f0" formatted="false">"Another task is using local voice resources. Type your message now, or try voice again after that task finishes."</string>
 </resources>

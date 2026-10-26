@@ -12,6 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +32,8 @@ import kotlinx.coroutines.launch
     preferences: PalettePreferences, assistant: AssistantPreferences = ManualDependencyGraph.assistantPreferences) {
     val palettes by preferences.state.collectAsStateWithLifecycle()
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    val palette = if (dark) palettes.dark else palettes.light
+    val savedPalette = if (dark) palettes.dark else palettes.light
+    var palette by remember(dark, savedPalette) { mutableStateOf(savedPalette) }
     val assistantState by assistant.state.collectAsStateWithLifecycle()
     val options = rememberVisualPreferences()
     val context = LocalContext.current
@@ -46,19 +50,42 @@ import kotlinx.coroutines.launch
     }
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         AppearanceLabel("Mode")
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = com.halo.app.ui.design.HaloShapes.pill) {
-            Row(Modifier.fillMaxWidth().padding(3.dp).selectableGroup()) {
-                listOf(AppearanceMode.LIGHT to "Light", AppearanceMode.DARK to "Dark", AppearanceMode.SYSTEM to "Same as phone").forEach { (value, title) ->
-                    val selected = value == mode
-                    Surface(modifier = Modifier.weight(1f).heightIn(min = 48.dp).selectable(selected,
-                        role = Role.RadioButton, onClick = { onMode(value) }),
-                        color = if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent,
-                        shape = com.halo.app.ui.design.HaloShapes.pill) {
-                        Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
-                            Text(uiText(title), style = MaterialTheme.typography.labelLarge,
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val fontScale = LocalDensity.current.fontScale
+            if (fontScale >= 1.3f || maxWidth < 260.dp) {
+                // Wide independent options avoid clipping translated labels inside a shared capsule.
+                Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(AppearanceMode.LIGHT to "Light", AppearanceMode.DARK to "Dark", AppearanceMode.SYSTEM to "Same as phone").forEach { (value, title) ->
+                        val selected = value == mode
+                        Surface(modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected,
+                            role = Role.RadioButton, onClick = { onMode(value) }),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                            border = if (selected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                            color = if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerHigh) {
+                            Text(uiText(title), Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                style = MaterialTheme.typography.labelLarge,
                                 color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+                        }
+                    }
+                }
+            } else {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = com.halo.app.ui.design.HaloShapes.pill) {
+                    Row(Modifier.fillMaxWidth().padding(3.dp).selectableGroup()) {
+                        listOf(AppearanceMode.LIGHT to "Light", AppearanceMode.DARK to "Dark", AppearanceMode.SYSTEM to "Same as phone").forEach { (value, title) ->
+                            val selected = value == mode
+                            Surface(modifier = Modifier.weight(1f).heightIn(min = 48.dp).selectable(selected,
+                                role = Role.RadioButton, onClick = { onMode(value) }),
+                                color = if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent,
+                                shape = com.halo.app.ui.design.HaloShapes.pill) {
+                                Box(Modifier.padding(8.dp), contentAlignment = Alignment.Center) {
+                                    Text(uiText(title), style = MaterialTheme.typography.labelLarge,
+                                        color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+                                }
+                            }
                         }
                     }
                 }
@@ -70,14 +97,14 @@ import kotlinx.coroutines.launch
                 val selected = accent == palette.accent
                 val fill = brandAccent(dark, accent)
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.widthIn(min = 48.dp)
-                    .selectable(selected, role = Role.RadioButton, onClick = { preferences.select(dark, palette.copy(accent = accent)) })) {
+                    .selectable(selected, role = Role.RadioButton, onClick = { palette = palette.copy(accent = accent) })) {
                     Surface(Modifier.size(52.dp), shape = CircleShape, color = Color.Transparent,
                         border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface) else null) {
                         Box(Modifier.padding(4.dp).background(fill.fill, CircleShape), contentAlignment = Alignment.Center) {
                             if (selected) HaloIcon(HaloGlyph.SUCCESS, null, Modifier.size(24.dp), tint = fill.onFill)
                         }
                     }
-                    Text(uiText(accent.name.lowercase().replaceFirstChar { it.uppercase() }),
+                    Text(appearanceAccentLabel(accent),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -85,13 +112,34 @@ import kotlinx.coroutines.launch
         AppearanceLabel("Tone")
         FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloTone.entries.forEach { tone ->
-                FilterChip(palette.tone == tone, { preferences.select(dark, palette.copy(tone = tone)) },
-                    label = { Text(uiText(tone.name.lowercase().replaceFirstChar { it.uppercase() })) },
+                FilterChip(palette.tone == tone, { palette = palette.copy(tone = tone) },
+                    label = { Text(appearanceToneLabel(tone)) },
                     modifier = Modifier.heightIn(min = 48.dp), shape = com.halo.app.ui.design.HaloShapes.pill)
+            }
+        }
+        Text(stringResource(R.string.interface4_background), style = MaterialTheme.typography.labelMedium)
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HaloBackgroundStyle.entries.forEach { background ->
+                FilterChip(palette.background == background, { palette = palette.copy(background = background) },
+                    label = { Text(stringResource(when (background) {
+                        HaloBackgroundStyle.STILL -> R.string.interface4_background_still
+                        HaloBackgroundStyle.HALO -> R.string.interface4_background_halo
+                        HaloBackgroundStyle.MIST -> R.string.interface4_background_mist
+                    })) }, modifier = Modifier.heightIn(min = 48.dp))
             }
         }
         AppearanceLabel("Preview")
         AppearancePreview(dark, palette)
+        Text(stringResource(R.string.interface4_appearance_preview), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { val requested = palette; scope.launch { save { preferences.selectPersisted(dark, requested) } } },
+                enabled = !saving && palette != savedPalette, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
+            TextButton(onClick = { palette = savedPalette }, enabled = !saving && palette != savedPalette,
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
+            TextButton(onClick = { palette = HaloPalette() }, enabled = !saving,
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.interface4_appearance_defaults)) }
+        }
         Text(uiText("The halo ring stays Mint in every theme. Apricot means halo needs you. Red means a problem."),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         AppearanceLabel("Text size")
@@ -131,6 +179,8 @@ import kotlinx.coroutines.launch
         val scheme = MaterialTheme.colorScheme
         Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = scheme.background,
             border = BorderStroke(1.dp, scheme.outlineVariant), modifier = Modifier.fillMaxWidth()) {
+            Box {
+            HaloAmbientBackdrop(Modifier.matchParentSize(), palette, animate = false)
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(
@@ -154,6 +204,7 @@ import kotlinx.coroutines.launch
                     }
                 }
             }
+            }
         }
     }
 }
@@ -168,4 +219,16 @@ import kotlinx.coroutines.launch
 @Composable internal fun PaletteControls(preferences: PalettePreferences = ManualDependencyGraph.palettePreferences) {
     val mode by ManualDependencyGraph.appearancePreferences.mode.collectAsStateWithLifecycle()
     AppearanceControls(mode, ManualDependencyGraph.appearancePreferences::setMode, preferences)
+}
+
+@Composable private fun appearanceAccentLabel(accent: HaloAccent): String = when (accent) {
+    HaloAccent.SAGE -> stringResource(R.string.interface4_accent_sage)
+    HaloAccent.ROSE -> stringResource(R.string.interface4_accent_rose)
+    else -> uiText(accent.name.lowercase().replaceFirstChar { it.uppercase() })
+}
+
+@Composable private fun appearanceToneLabel(tone: HaloTone): String = when (tone) {
+    HaloTone.PAPER -> stringResource(R.string.interface4_tone_paper)
+    HaloTone.SLATE -> stringResource(R.string.interface4_tone_slate)
+    else -> uiText(tone.name.lowercase().replaceFirstChar { it.uppercase() })
 }

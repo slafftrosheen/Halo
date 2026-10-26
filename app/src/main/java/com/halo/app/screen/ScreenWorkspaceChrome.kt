@@ -23,7 +23,20 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
     onChat: () -> Unit, onSettings: () -> Unit, onFullScreen: (Boolean) -> Unit,
     onEdit: () -> Unit, onApply: () -> Unit, onCancel: () -> Unit, onAppearance: () -> Unit,
     onAdd: () -> Unit, onNote: () -> Unit, onTalk: () -> Unit,
-    orbControl: (@Composable (Dp) -> Unit)?) {
+    orbControl: (@Composable (Dp) -> Unit)?, shellZone: Boolean = false) {
+    if (shellZone) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HomeSurfaceSwitch(true, { if (!it) onChat() }, compact = true)
+            if (editing) {
+                TextButton(onClick = onApply, enabled = interactionAllowed, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
+                TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
+            }
+            if (fullScreen) TextButton(onClick = { onFullScreen(false) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.screen_exit_ambient))
+            }
+        }
+        return
+    }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     Column(Modifier.fillMaxWidth()) {
         if (!fullScreen) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,

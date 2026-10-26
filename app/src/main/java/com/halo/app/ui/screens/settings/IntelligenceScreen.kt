@@ -75,6 +75,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     onDevice: () -> Unit, onContext: () -> Unit, onDiagnostics: () -> Unit,
     onVisionLab: () -> Unit = {}, onAudioLab: () -> Unit = {}, onAdvanced: () -> Unit = {},
     onNotebookSearch: () -> Unit = onContext, onUsage: () -> Unit = onContext) {
+    SettingsChildZone("Brain", onBack, listOf(settingsChildLink("onBrowseModels", "Models", onBrowseModels), settingsChildLink("onProviderSetup", "Providers", onProviderSetup), settingsChildLink("onDevice", "On-device models", onDevice), settingsChildLink("onContext", "Privacy", onContext), settingsChildLink("onDiagnostics", "Check-up", onDiagnostics), settingsChildLink("onAdvanced", "Advanced", onAdvanced), settingsChildLink("onNotebookSearch", "Find related notes", onNotebookSearch), settingsChildLink("onUsage", "What left this phone", onUsage)))
     val providerId by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val modelId by control.router.selectedModelId.collectAsStateWithLifecycle()
     val rows by control.rows.collectAsStateWithLifecycle()
@@ -89,7 +90,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     LazyColumn(Modifier.fillMaxSize().background(scheme.background),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item { HaloScreenHeader(uiText("How halo answers"), navigation = onBack) }
+        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("How halo answers"), navigation = onBack) }
         item {
             Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = scheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, scheme.outlineVariant)) {

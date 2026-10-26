@@ -667,6 +667,26 @@ object HaloToolDescriptors {
         )
 
     fun assistant(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.NotebookLibraryTools.NAMES ->
+            com.halo.app.di.tools.host.NotebookLibraryTools.descriptor(definition)
+        in com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES ->
+            com.halo.app.di.tools.host.NotebookOrganizationTools.descriptor(definition)
+        in com.halo.app.di.tools.host.SavedChatTools.names -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy(
+                if (definition.name in setOf("halo_saved_chat_trash", "halo_saved_chat_restore")) ToolRiskClass.DESTRUCTIVE else ToolRiskClass.SENSITIVE,
+                ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("saved", "chat", "conversation", "history", "trash", "restore"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.saved_chats"))),
+            presentation = ToolPresentation("Saved chats", actionVerb = "Review", targetArgument = "conversationId",
+                sensitiveArguments = setOf("query")))
+            .copy(operability = com.halo.app.di.tools.host.SavedChatTools.operability(definition.name),
+                execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
+        com.halo.app.di.tools.host.CurrentScreenTools.NAME -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            readOnly(definition.name), keywords = setOf("current", "screen", "selection", "page", "context"),
+                requirements = setOf(ToolRequirement.Capability(CapabilityId("host.assistant.current_screen"))))
+            .copy(operability = com.halo.app.di.tools.host.CurrentScreenTools.operability(),
+                execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 48000))
+
         "halo_list_screens" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
             readOnly(definition.name), keywords = setOf("halo", "screens", "destinations"))
             .copy(operability = navigationOperability(com.halo.runtime.cognition.tools.ToolOperation.QUERY))
@@ -715,6 +735,8 @@ object HaloToolDescriptors {
             ?: LearningConfigurationTools.operability(definition.name)
             ?: RoutineManagementOperability.forDefinition(definition)
             ?: ProviderConfigurationOperability.forDefinition(definition)
+            ?: McpSettingsOperability.forDefinition(definition)
+            ?: LocalModelRoleOperability.forDefinition(definition)
             ?: StudySessionOperability.forDefinition(definition)
             ?: CanvasWorkflowOperability.forDefinition(definition)
             ?: SpeechInventoryOperability.forDefinition(definition) ?: return null
@@ -726,13 +748,20 @@ object HaloToolDescriptors {
             always -> ToolSecurityPolicy(
                 when (definition.name) {
                     "halo_saved_device_forget", "halo_screen_remove_preset", "halo_routine_delete" -> ToolRiskClass.DESTRUCTIVE
-                    "halo_routine_run_now", "halo_provider_refresh_models", "halo_provider_test_connection" -> ToolRiskClass.EXTERNAL_SIDE_EFFECT
+                    "halo_routine_run_now", "halo_provider_refresh_models", "halo_provider_test_connection", "halo_mcp_refresh_tools" -> ToolRiskClass.EXTERNAL_SIDE_EFFECT
                     else -> ToolRiskClass.SENSITIVE
                 },
                 ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
             else -> reversible(ReplaySafety.NEVER_REPLAY)
         }
         val title = when (definition.name) {
+            "halo_mcp_servers" -> "List configured tool servers"
+            "halo_mcp_server_state" -> "Read tool server settings"
+            "halo_mcp_server_set_enabled" -> "Change tool server availability"
+            "halo_mcp_tool_set_enabled" -> "Change server tool availability"
+            "halo_mcp_refresh_tools" -> "Refresh connected server tools"
+            "halo_local_role_state" -> "Read local model roles"
+            "halo_local_role_select" -> "Change a local model role"
             "halo_screen_state" -> "Read Screen layout"
             "halo_screen_preview" -> "Preview Screen layout"
             "halo_screen_apply" -> "Apply Screen layout"

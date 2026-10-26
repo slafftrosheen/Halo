@@ -1,19 +1,19 @@
 <resources>
     <string name="mode47_routing_automatic">Automātiski izvēlētā pakalpojuma ietvaros</string>
     <string name="mode47_feature_disabled">Šī tiešsaistes iespēja ir izslēgta aktīvā režīma profilā. Pārskatiet režīmu profilus.</string>
-    <string name="mode47_profile_summary">Atsevišķi privātā režīma un pilnas jaudas iestatījumi</string>
+    <string name="mode47_profile_summary">Atsevišķi lokālā režīma un Power iestatījumi</string>
     <string name="mode47_activity_scope">Lokāli Halo pieprasījumu ieraksti bez satura. Pakalpojuma atbilde neapstiprina derīgu rezultātu vai tā izmaksas. Ieraksti tiek veidoti, sākot ar šo versiju.</string>
     <string name="mode47_outcome_replied">Pakalpojums atbildēja</string>
     <string name="mode47_edit_profile">Rediģēt profilu</string>
     <string name="mode47_stt">Runas atpazīšanas pakalpojums</string>
     <string name="mode47_tts">Runas izvades pakalpojums</string>
     <string name="mode47_automatic">Automātiska izvēle ierīcē</string>
-    <string name="mode47_full_power">Pilna jauda</string>
+    <string name="mode47_full_power">Power</string>
     <string name="mode47_profiles">Režīmu profili</string>
-    <string name="mode47_private_profile">Privātā režīma profils</string>
-    <string name="mode47_power_profile">Pilnas jaudas profils</string>
-    <string name="mode47_enable_power">Ieslēgt pilnu jaudu</string>
-    <string name="mode47_sharing_explanation">Pilnas jaudas režīmā pieprasījumi un tālāk norādītās konteksta kategorijas var tikt nosūtītas konfigurētajiem tiešsaistes pakalpojumiem. Mainiet profilu režīmu profilos un jebkurā brīdī atgriezieties privātajā režīmā.</string>
+    <string name="mode47_private_profile">Lokālais profils</string>
+    <string name="mode47_power_profile">Power profils</string>
+    <string name="mode47_enable_power">Ieslēgt Power</string>
+    <string name="mode47_sharing_explanation">Power režīmā pieprasījumi un tālāk norādītās konteksta kategorijas var tikt nosūtītas konfigurētajiem tiešsaistes pakalpojumiem. Mainiet profilu režīmu profilos un jebkurā brīdī atgriezieties lokālajā režīmā.</string>
     <string name="mode47_configured_providers">Konfigurētie pakalpojumi</string>
     <string name="mode47_no_provider">Jākonfigurē pakalpojums</string>
     <string name="mode47_other_routes">Tīmekļa lasīšanai tiek izmantota pieprasītā publiskā vietne. Savienotie pakalpojumi izmanto darbībai konfigurēto kontu vai serveri. Tiešsaistes runai tiek izmantots izvēlētais runas pakalpojums. Nekonfigurētie savienojumi nav pieejami.</string>

@@ -63,8 +63,74 @@ data class NotebookFavoriteEntity(
 
 data class NotebookCollection(val id: String, val name: String, val sortOrder: Int)
 
+/** Exact private compare state; never serialized to assistant/provider output. */
+data class NotebookOrganizationSnapshot(
+    val objectId: String?, val collectionId: String?, val objectRow: WorkspaceObjectEntity?,
+    val favorite: NotebookFavoriteEntity?, val collections: List<NotebookCollectionEntity>,
+    val members: List<NotebookCollectionMemberEntity>,
+)
+sealed interface NotebookOrganizationChange {
+    data class Favorite(val favorite: Boolean) : NotebookOrganizationChange
+    data class Membership(val included: Boolean) : NotebookOrganizationChange
+    data class CreateCollection(val name: String) : NotebookOrganizationChange
+    data object DeleteCollection : NotebookOrganizationChange
+}
+data class NotebookOrganizationReceipt(val operation: String, val objectId: String?, val collectionId: String?, val value: Boolean?)
+
 @Dao
 interface NotebookOrganizationDao {
+    @Query("SELECT * FROM workspace_objects WHERE id = :id")
+    suspend fun guardedObject(id: String): WorkspaceObjectEntity?
+    @Query("SELECT * FROM notebook_favorites WHERE objectId = :id")
+    suspend fun guardedFavorite(id: String): NotebookFavoriteEntity?
+    @Query("SELECT * FROM notebook_collections ORDER BY id")
+    suspend fun guardedCollections(): List<NotebookCollectionEntity>
+    @Query("SELECT * FROM notebook_collection_members WHERE collectionId = :id ORDER BY objectId")
+    suspend fun guardedMembers(id: String): List<NotebookCollectionMemberEntity>
+
+    @androidx.room.Transaction
+    suspend fun captureGuarded(objectId: String?, collectionId: String?) = NotebookOrganizationSnapshot(
+        objectId, collectionId, objectId?.let { guardedObject(it) }, objectId?.let { guardedFavorite(it) },
+        guardedCollections(), collectionId?.let { guardedMembers(it) }.orEmpty())
+
+    /** Existing tables/owners only. Exact data comparison and write share one Room transaction. */
+    @androidx.room.Transaction
+    suspend fun applyGuarded(expected: NotebookOrganizationSnapshot, change: NotebookOrganizationChange,
+        timestamp: Long, newId: String, isStillAdmitted: suspend () -> Boolean): NotebookOrganizationReceipt? {
+        if (captureGuarded(expected.objectId, expected.collectionId) != expected) return null
+        if (!isStillAdmitted()) return null
+        return when (change) {
+            is NotebookOrganizationChange.Favorite -> {
+                val row = expected.objectRow?.takeIf { it.lifecycle != "TRASHED" } ?: return null
+                if (change.favorite) addFavorite(NotebookFavoriteEntity(row.id, timestamp)) else removeFavorite(row.id)
+                check(isFavorite(row.id) == change.favorite)
+                NotebookOrganizationReceipt("favorite", row.id, null, change.favorite)
+            }
+            is NotebookOrganizationChange.Membership -> {
+                val row = expected.objectRow?.takeIf { it.lifecycle != "TRASHED" } ?: return null
+                val collection = expected.collections.find { it.id == expected.collectionId } ?: return null
+                if (change.included) addMember(NotebookCollectionMemberEntity(collection.id, row.id, timestamp))
+                else removeMember(collection.id, row.id)
+                check(guardedMembers(collection.id).any { it.objectId == row.id } == change.included)
+                NotebookOrganizationReceipt("membership", row.id, collection.id, change.included)
+            }
+            is NotebookOrganizationChange.CreateCollection -> {
+                val name = change.name.trim()
+                if (name.isEmpty() || name.length > 60 || expected.collections.any { it.name == name }) return null
+                insertCollection(NotebookCollectionEntity(newId, name, nextCollectionPosition(), timestamp, timestamp))
+                check(guardedCollections().any { it.id == newId })
+                NotebookOrganizationReceipt("create_collection", null, newId, null)
+            }
+            NotebookOrganizationChange.DeleteCollection -> {
+                val id = expected.collectionId ?: return null
+                if (expected.collections.none { it.id == id }) return null
+                check(deleteCollection(id) == 1)
+                check(guardedCollections().none { it.id == id })
+                NotebookOrganizationReceipt("delete_collection", null, id, null)
+            }
+        }
+    }
+
     @Query("SELECT * FROM notebook_collections ORDER BY sortOrder ASC, name COLLATE NOCASE ASC")
     fun observeCollections(): Flow<List<NotebookCollectionEntity>>
 
@@ -105,6 +171,12 @@ class NotebookOrganizationRepository(
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
     private val favoriteMutationMutex = Mutex()
+
+    suspend fun captureGuarded(objectId: String?, collectionId: String?) = dao.captureGuarded(objectId, collectionId)
+    suspend fun applyGuarded(expected: NotebookOrganizationSnapshot, change: NotebookOrganizationChange,
+        isStillAdmitted: suspend () -> Boolean): NotebookOrganizationReceipt? = favoriteMutationMutex.withLock {
+        dao.applyGuarded(expected, change, now(), newId(), isStillAdmitted)
+    }
 
     fun observeCollections(): Flow<List<NotebookCollection>> =
         dao.observeCollections().map { rows ->

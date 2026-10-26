@@ -2,7 +2,7 @@ package com.halo.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Exact appearance values supplied in BrandAssets/theme/halo_themes.json.
+// Original pairs retain BrandAssets/theme/halo_themes.json values; Interface 4 adds curated pairs.
 internal data class BrandSurfaces(val background: Color, val surface: Color, val raised: Color, val text: Color, val muted: Color)
 internal data class BrandAccent(val fill: Color, val ink: Color, val onFill: Color)
 
@@ -13,6 +13,10 @@ internal fun brandSurfaces(dark: Boolean, tone: HaloTone): BrandSurfaces = when 
     false == dark && tone == HaloTone.NATURAL -> BrandSurfaces(Color(0xFFFAFAF4), Color(0xFFFFFFFF), Color(0xFFEFF0E8), Color(0xFF060330), Color(0xFF4A4F63))
     false == dark && tone == HaloTone.WARM -> BrandSurfaces(Color(0xFFFFF5EC), Color(0xFFFFFFFF), Color(0xFFF7E9DD), Color(0xFF1A0F14), Color(0xFF5E4F55))
     false == dark && tone == HaloTone.COOL -> BrandSurfaces(Color(0xFFF3F6FA), Color(0xFFFFFFFF), Color(0xFFE5ECF4), Color(0xFF06142A), Color(0xFF46566B))
+    dark && tone == HaloTone.PAPER -> BrandSurfaces(Color(0xFF191813), Color(0xFF23221C), Color(0xFF302F27), Color(0xFFF8F5E9), Color(0xFFC4C0AE))
+    !dark && tone == HaloTone.PAPER -> BrandSurfaces(Color(0xFFF7F4E9), Color(0xFFFFFDF5), Color(0xFFECE8D9), Color(0xFF26271F), Color(0xFF585C4D))
+    dark && tone == HaloTone.SLATE -> BrandSurfaces(Color(0xFF11191C), Color(0xFF1A2529), Color(0xFF29363B), Color(0xFFF0F6F5), Color(0xFFB7C9CB))
+    !dark && tone == HaloTone.SLATE -> BrandSurfaces(Color(0xFFEDF2F1), Color(0xFFF9FCFB), Color(0xFFDCE6E5), Color(0xFF172B31), Color(0xFF4C6268))
     else -> error("Unknown brand tone")
 }
 
@@ -25,5 +29,9 @@ internal fun brandAccent(dark: Boolean, accent: HaloAccent): BrandAccent = when 
     false == dark && accent == HaloAccent.LILAC -> BrandAccent(Color(0xFFC9B8FF), Color(0xFF6446D6), Color(0xFF160E3A))
     true == dark && accent == HaloAccent.CORAL -> BrandAccent(Color(0xFFFF9EB3), Color(0xFFFF9EB3), Color(0xFF2A0A14))
     false == dark && accent == HaloAccent.CORAL -> BrandAccent(Color(0xFFFF9EB3), Color(0xFFB8325A), Color(0xFF2A0A14))
+    dark && accent == HaloAccent.SAGE -> BrandAccent(Color(0xFFBED5B1), Color(0xFFBED5B1), Color(0xFF182C20))
+    !dark && accent == HaloAccent.SAGE -> BrandAccent(Color(0xFFBED5B1), Color(0xFF42643E), Color(0xFF182C20))
+    dark && accent == HaloAccent.ROSE -> BrandAccent(Color(0xFFE5BDC9), Color(0xFFE5BDC9), Color(0xFF38202A))
+    !dark && accent == HaloAccent.ROSE -> BrandAccent(Color(0xFFE5BDC9), Color(0xFF885066), Color(0xFF38202A))
     else -> error("Unknown brand accent")
 }

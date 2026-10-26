@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.ui.presence.BindShellChildPage
+import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.language.uiText
 
 import android.content.Intent
@@ -218,13 +220,20 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
             dismissButton = { TextButton(onClick = { cancel = false }) { Text(uiText("Keep waiting")) } })
         return
     }
-    AutomationPage("Routines", onBack, "Run useful things when something changes") {
+    AutomationPage("Routines", onBack, "Run useful things when something changes", sourceIdentity = tab.name,
+        actions = listOf(
+            ShellPageAction("routine.new", "New automation", HaloGlyph.AUTOMATION, !state.loading && !state.saving) { creating = true },
+            ShellPageAction("routine.routines", "Routines", HaloGlyph.AUTOMATION) { tab = AutomationTab.ROUTINES },
+            ShellPageAction("routine.followups", "Follow-ups", HaloGlyph.ACTIVITY) { tab = AutomationTab.FOLLOW_UPS },
+            ShellPageAction("routine.history", "History", HaloGlyph.ACTIVITY) { tab = AutomationTab.HISTORY },
+            ShellPageAction("routine.notifications", "Notification settings", HaloGlyph.NOTIFICATIONS, onInvoke = onNotifications),
+        )) {
         val statuses = state.routines.map { routineUiStatus(it, readiness.issue(it) != null, it.id.value in state.blockedRoutines) }
         Text(uiText("%1\$d on · %2\$d off", state.routines.count { it.enabled }, state.routines.count { !it.enabled }))
         val attentionCount = statuses.count { it in setOf(RoutineUiStatus.NEEDS_REVIEW, RoutineUiStatus.NEEDS_SETUP, RoutineUiStatus.BLOCKED) } + state.blockedRoutines.keys.count { id -> state.routines.none { it.id.value == id } }
         Text(uiText(when { state.routines.isEmpty() -> "No automation has been tested yet."; attentionCount == 0 -> "No setup issues reported for saved automations."; else -> "Some automations need review or setup." }), style = MaterialTheme.typography.bodySmall)
-        HaloFocusAction(uiText("New automation"), HaloGlyph.AUTOMATION, !state.loading && !state.saving, { creating = true }, active = state.routines.isEmpty())
-        ScrollableTabRow(selectedTabIndex = tab.ordinal, edgePadding = 0.dp,
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloFocusAction(uiText("New automation"), HaloGlyph.AUTOMATION, !state.loading && !state.saving, { creating = true }, active = state.routines.isEmpty())
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) ScrollableTabRow(selectedTabIndex = tab.ordinal, edgePadding = 0.dp,
             containerColor = androidx.compose.ui.graphics.Color.Transparent) {
             AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(uiText(item.title), maxLines = 1, softWrap = false) }) }
         }
@@ -305,7 +314,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
                 } }
             }
         }
-        TextButton(onClick = onNotifications) { Text(uiText("Notification settings")) }
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) TextButton(onClick = onNotifications) { Text(uiText("Notification settings")) }
     }
     if (creating) AutomationPicker("New automation", { creating = false }) {
         RoutineTemplate.entries.forEach { template ->
@@ -318,10 +327,11 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
 }
 
 @Composable
-internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, titleIsSource: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
+internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, titleIsSource: Boolean = false, sourceIdentity: String? = null, objectId: String? = null, actions: List<ShellPageAction> = emptyList(), content: @Composable ColumnScope.() -> Unit) {
+    val shellHosted = BindShellChildPage(title, onBack, objectId = objectId, sourceIdentity = sourceIdentity ?: title, titleIsSource = titleIsSource, actions = actions)
     BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        HaloWorkspaceHeader(if (titleIsSource) title else uiText(title), subtitle?.let { uiText(it) }, onBack = onBack)
+        if (!shellHosted) HaloWorkspaceHeader(if (titleIsSource) title else uiText(title), subtitle?.let { uiText(it) }, onBack = onBack)
         content()
         Spacer(Modifier.height(24.dp))
     }
@@ -368,14 +378,19 @@ internal fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runn
     var confirmRun by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val status = routineUiStatus(routine, readiness.issue(routine) != null, blocked)
-    AutomationPage(routine.name, onBack, titleIsSource = true) {
+    AutomationPage(routine.name, onBack, titleIsSource = true, objectId = routine.id.value,
+        sourceIdentity = "${routine.id.value}:$status:$running", actions = listOf(
+            ShellPageAction("routine.edit", if (status == RoutineUiStatus.NEEDS_REVIEW) "Review" else "Edit", HaloGlyph.NOTE, onInvoke = onEdit),
+            ShellPageAction("routine.duplicate", "Duplicate", HaloGlyph.NOTE, onInvoke = onDuplicate),
+            ShellPageAction("routine.activity", "Activities", HaloGlyph.ACTIVITY, onInvoke = onActivity),
+        )) {
         RoutineReviewFields(routine, readiness.labels)
         DetailField("Status", uiText(status.label))
         DetailField("Next", routine.uiNextRunLabel())
         AutomationSetup(routine, readiness, onNotifications, onInbox)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             com.halo.app.ui.components.HaloActionButton(onClick = { confirmRun = true }, enabled = routineCanRun(status, running)) { Text(uiText(if (running) "Running…" else "Run now")) }
-            OutlinedButton(onClick = onEdit) { Text(uiText(if (status == RoutineUiStatus.NEEDS_REVIEW) "Review" else "Edit")) }
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) OutlinedButton(onClick = onEdit) { Text(uiText(if (status == RoutineUiStatus.NEEDS_REVIEW) "Review" else "Edit")) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Switch(routine.enabled, onCheckedChange = onEnable, enabled = routineCanToggle(routine.enabled, status, running), modifier = Modifier.semantics { contentDescription = routine.name })
@@ -384,7 +399,7 @@ internal fun RoutineDetail(routine: Routine, latestRun: RoutineRunSummary?, runn
         latestRun?.let { HaloWorkspaceCard { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { RunEvidence(it, onActivity) } } }
         previousSuccess?.takeIf { it.id != latestRun?.id }?.let { PreviousSuccess(it) }
         error?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
-        TextButton(onClick = onDuplicate) { Text(uiText("Duplicate")) }
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) TextButton(onClick = onDuplicate) { Text(uiText("Duplicate")) }
         TextButton(onClick = { confirmDelete = true }) { Text(uiText("Delete")) }
     }
     if (confirmRun) AlertDialog(onDismissRequest = { confirmRun = false }, title = { Text(uiText("Run “%1\$s” now?", routine.name)) },

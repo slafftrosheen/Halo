@@ -33,6 +33,7 @@ fun AdvancedSettingsScreen(
     onSystemCheck: () -> Unit,
     onStorage: () -> Unit
 ) {
+    SettingsChildZone("Advanced", onBack, listOf(settingsChildLink("onRuntime", "Runtime status", onRuntime), settingsChildLink("onSystemCheck", "System check", onSystemCheck), settingsChildLink("onStorage", "Storage & backup", onStorage)))
     val tasks by projection.taskSummary.collectAsStateWithLifecycle()
     val capabilities by projection.capabilitySummary.collectAsStateWithLifecycle()
     val state = when {
@@ -44,7 +45,7 @@ fun AdvancedSettingsScreen(
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(
         horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item(key = "header") {
-            HaloScreenHeader(stringResource(R.string.brand_advanced_title),
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(stringResource(R.string.brand_advanced_title),
                 stringResource(R.string.brand_advanced_subtitle),
                 navigation = onBack, glyph = HaloGlyph.DIAGNOSTICS)
         }

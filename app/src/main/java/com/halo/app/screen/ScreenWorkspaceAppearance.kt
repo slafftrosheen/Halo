@@ -63,6 +63,18 @@ internal fun ScreenSheetBody(title: String, onDone: () -> Unit, content: @Compos
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ScreenAppearanceControls(value: ScreenAppearance, onChange: (ScreenAppearance) -> Unit) {
+    Text(stringResource(R.string.interface4_dashboard_style), style = MaterialTheme.typography.titleMedium)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            R.string.interface4_dashboard_clear to ScreenAppearance(ScreenFont.APP, ScreenBackground.PLAIN, false),
+            R.string.interface4_tone_paper to ScreenAppearance(ScreenFont.ATKINSON, ScreenBackground.WARM, false),
+            R.string.interface4_dashboard_glass to ScreenAppearance(ScreenFont.APP, ScreenBackground.MINT, true),
+            R.string.interface4_dashboard_focus to ScreenAppearance(ScreenFont.SORA, ScreenBackground.COOL, true),
+        ).forEach { (label, appearance) ->
+            FilterChip(value == appearance, { onChange(appearance) }, label = { Text(stringResource(label)) },
+                modifier = Modifier.heightIn(min = 48.dp))
+        }
+    }
     Text(stringResource(R.string.screen_font), style = MaterialTheme.typography.titleMedium)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         ScreenFont.entries.forEach { font ->

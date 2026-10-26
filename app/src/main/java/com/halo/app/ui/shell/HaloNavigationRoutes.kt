@@ -17,10 +17,11 @@ fun primaryNavigationRoute(route: String?): String? = when {
     route.substringBefore("?") == "automation" -> "settings"
     route == "notifications" || route.startsWith("notifications/") -> "home"
     route.substringBefore("?") == "study" -> "notebook"
-    route.startsWith("notebook/") -> "notebook"
+    route == "workspace_handoff" || route.startsWith("notebook/") || route.startsWith("studio") || route.startsWith("file_tools") -> "notebook"
+    route == "screen" -> "home"
     route == "discovery" || route.startsWith("device/") -> "devices"
     route == "integrations" || route.startsWith("integrations/") -> "settings"
-    route.startsWith("settings/") || route.startsWith("automation_review/") || route in settingsRoutes -> "settings"
+    route.startsWith("advanced/") || route.startsWith("settings/") || route.startsWith("automation_review/") || route in settingsRoutes -> "settings"
     else -> route
 }
 

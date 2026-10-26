@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_return_to_current">К текущему действию</string>
+    <string name="home_chat_screen_switch">Чат или экран</string>
+</resources>

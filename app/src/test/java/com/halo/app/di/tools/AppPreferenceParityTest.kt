@@ -30,11 +30,11 @@ class AppPreferenceParityTest {
             palettes = palettes, visual = visual, languages = languages,
             languageReadback = { languageStorage.getString(AppLanguagePreferences.KEY) })
         val changed = tools.execute(ToolCall("appearance", "halo_set_preferences", mapOf(
-            "fontScale" to 2.0, "paletteTheme" to "dark", "accent" to "LILAC", "tone" to "COOL",
+            "fontScale" to 2.0, "paletteTheme" to "dark", "accent" to "LILAC", "tone" to "COOL", "background" to "STILL",
             "higherContrast" to true, "lessMotion" to true, "guideLight" to false, "language" to "lv")))
         assertEquals(ActionTruth.CONFIRMED, (changed as ToolExecutionResult.Success).actionTruth)
         assertEquals(2f, AssistantPreferences(context).get().fontScale)
-        assertEquals(HaloPalette(HaloAccent.LILAC, HaloTone.COOL), palettes.state.value.dark)
+        assertEquals(HaloPalette(HaloAccent.LILAC, HaloTone.COOL, HaloBackgroundStyle.STILL), palettes.state.value.dark)
         assertEquals(AppLanguage.LATVIAN, languages.language.value)
         assertEquals("lv", languageStorage.getString(AppLanguagePreferences.KEY))
         val restored = PalettePreferences(context); restored.awaitReady()
@@ -44,6 +44,7 @@ class AppPreferenceParityTest {
             context.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE).getBoolean("contrast", false),
             read.output.contains("higherContrast=true"))
         assertTrue(read.output.contains("language=lv"))
+        assertTrue(read.output.contains("darkBackground=STILL"))
     }
 
     @Test fun injectedVisualOwnerReadbackUsesTheSameNamespaceAsItsConfirmedWrite() = runBlocking {
@@ -74,7 +75,8 @@ class AppPreferenceParityTest {
         val tools = AssistantTools(context, AppearancePreferences(context), AssistantPreferences(context), { _, _ -> }, {}, { true })
         listOf(mapOf("fontScale" to 2.1), mapOf("mode" to "dark", "accent" to "RED"),
             mapOf("fontScale" to 1.25, "language" to "zz"), mapOf("lessMotion" to "true"),
-            mapOf("mode" to "dark", "unknown" to true)).forEach {
+            mapOf("mode" to "dark", "unknown" to true), mapOf("background" to "STILL"),
+            mapOf("paletteTheme" to "light", "background" to "UNKNOWN")).forEach {
             assertTrue(tools.execute(ToolCall("invalid", "halo_set_preferences", it)) is ToolExecutionResult.Rejected)
         }
     }

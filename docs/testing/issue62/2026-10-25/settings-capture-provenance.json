@@ -1,0 +1,16 @@
+{
+  "device": "23124RA7EO / Android15 /1080x2400 /density440 /font1.0",
+  "beforeApk": "d50b39ae055a3978162bbac88dc46db0bc06a722cb3be5c4d2c444333b8666aa",
+  "afterApk": "c3dc50c3cc3db13aa6cbdf9a63fd4ddfbbe9ad5dc5ea81f4c40fde9155a0d011",
+  "afterScope": "Initial installed05 redesign; later UI repairs and final binary remain physically unqualified. Captures copied byte-for-byte, no retouching.",
+  "files": {
+    "settings-before-checkpoint25.png": {
+      "raw": "phone-before-settings-portrait.png",
+      "sha256": "b88f607b8b4820f8b9ebab47ada6e8a24e6c765fed42f5128c34cead3c91d153"
+    },
+    "settings-after-checkpoint05.png": {
+      "raw": "phone-after-settings-normal.png",
+      "sha256": "7cf2feac80bc88e660d570a99305eb1a20cc2aff93fd1b0ba59d997173fc1190"
+    }
+  }
+}
