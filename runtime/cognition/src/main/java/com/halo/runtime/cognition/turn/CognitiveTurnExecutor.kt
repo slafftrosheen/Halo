@@ -10,6 +10,7 @@ import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
 import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.runtime.cognition.agent.AgentRunKind
 import com.halo.runtime.cognition.agent.AgentRunState
+import com.halo.runtime.cognition.agent.isTerminal
 import com.halo.runtime.cognition.agent.AgentRunStore
 import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.agent.AgentStepId
@@ -115,6 +116,20 @@ class CognitiveTurnExecutor(
                 kotlinx.coroutines.withContext(com.halo.sdk.provider.RemoteDispatchContext.provenance.asContextElement(
                     com.halo.sdk.provider.RemoteDispatchProvenance(context.remoteDispatchCategories(request), remoteDispatchRevision ?: -1L)
                 )) { providerExecutor.execute(target,request,boundedContext,requestId,interactionId,workload) }
+            }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (failure: Exception) {
+                // The provider request has ended, so its durable owner must not remain
+                // EXECUTING after the session publishes an error. Keep cancellation and
+                // deadline recovery on their existing paths; never retry an effect here.
+                runId?.let { id ->
+                    val run = agentRunStore?.get(id)
+                    if (run != null && !run.state.isTerminal) {
+                        agentRunCoordinator?.fail(id,
+                            (failure as? AiProviderException)?.type?.name ?: "Provider request failed")
+                    }
+                }
+                throw failure
             }
             finally { stage.observedExecution(target.providerId,target.modelId,
                 (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId)) }

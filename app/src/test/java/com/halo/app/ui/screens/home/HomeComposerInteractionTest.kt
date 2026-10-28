@@ -318,6 +318,33 @@ class HomeComposerInteractionTest {
         assertEquals("QA62-display-draft", drafts.value.text)
         compose.onNodeWithContentDescription("Send").performClick()
         assertEquals("QA62-display-draft", submitted)
+        // A canonical submission receipt clears the owner asynchronously after Send.
+        // The relocated editor must observe that update without a navigation/restart.
+        compose.runOnIdle { drafts.value = ComposerDraftState("", drafts.value.revision + 1) }
+        editor.assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText,
+            androidx.compose.ui.text.AnnotatedString("")))
+        compose.onNodeWithContentDescription("Send").assertDoesNotExist()
+        compose.runOnIdle { drafts.value = ComposerDraftState("Recovered failed draft", drafts.value.revision + 1) }
+        editor.assertTextEquals("Recovered failed draft")
+    }
+
+    @Test fun canonicalClearCannotBePoisonedByALaggingPageTextSnapshot() {
+        val canonical = mutableStateOf(ComposerDraftState("Already sent literal", 1))
+        val pageText = mutableStateOf("Already sent literal")
+        compose.setContent {
+            HaloTheme {
+                HaloComposer(pageText.value, {}, {}, {}, {}, true, true, false, "Talk", false,
+                    draftIdentity = "lagging-page", draftRevision = canonical.value.revision,
+                    readAcknowledgedDraft = { canonical.value })
+            }
+        }
+        val editor = compose.onNode(hasSetTextAction())
+        // The projected child can see a newer revision before its parent's captured text.
+        compose.runOnIdle { canonical.value = ComposerDraftState("", 2) }
+        compose.waitForIdle()
+        compose.runOnIdle { pageText.value = "" }
+        editor.assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText,
+            androidx.compose.ui.text.AnnotatedString("")))
     }
 
 }

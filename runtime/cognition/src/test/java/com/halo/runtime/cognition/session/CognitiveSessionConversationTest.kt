@@ -19,6 +19,54 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CognitiveSessionConversationTest {
+    @Test fun `provider failure terminates its durable run without changing another interaction`() = runTest {
+        val events = FakeEventBus()
+        val runs = Runs()
+        val unrelated = recordedRun(runs, null)
+        val conversations = InMemoryConversationStore()
+        val provider = RecordingProvider(shouldFail = true)
+        val session = CognitiveSession(events, FakeRouter(provider), conversations,
+            com.halo.runtime.cognition.context.DefaultContextAssembler(conversations, DefaultBlackboard()),
+            scope = this, agentRunStore = runs,
+            agentRunCoordinator = DefaultAgentRunCoordinator(runs, backgroundScope))
+
+        session.submit(AiRequest(text = "Synthetic provider failure"))
+        advanceUntilIdle()
+
+        assertTrue(session.state.value is CognitiveSessionState.Failed)
+        val failed = runs.rows.value.single { it.id != unrelated }
+        assertEquals(AgentRunState.FAILED, failed.state)
+        assertFalse(failed.failureReason.isNullOrBlank())
+        assertTrue(failed.steps.any { it is AgentStep.ProviderTurnStarted })
+        assertTrue(failed.steps.none { it is AgentStep.ResponseCommitted })
+        assertTrue(conversations.turns.value.isEmpty())
+        assertEquals(AgentRunState.SUSPENDED, runs.get(unrelated)!!.state)
+    }
+
+    @Test fun `provider failure preserves unknown write outcome for review without replay`() = runTest {
+        val runs = Runs()
+        val conversations = InMemoryConversationStore()
+        val provider = RecordingProvider(shouldFail = true, beforeResponse = {
+            val run = runs.rows.value.single()
+            runs.appendStep(AgentStep.ToolDispatched(AgentStepId("uncertain-write"), run.id,
+                Instant.now(), "claimed-call", "fixture.write", null))
+        })
+        val session = CognitiveSession(FakeEventBus(), FakeRouter(provider), conversations,
+            com.halo.runtime.cognition.context.DefaultContextAssembler(conversations, DefaultBlackboard()),
+            scope = this, agentRunStore = runs,
+            agentRunCoordinator = DefaultAgentRunCoordinator(runs, backgroundScope))
+
+        session.submit(AiRequest(text = "Synthetic uncertain write"))
+        advanceUntilIdle()
+
+        val run = runs.rows.value.single()
+        assertEquals(AgentRunState.INTERRUPTED, run.state)
+        assertTrue(run.hasUnknownAction)
+        assertEquals(1, run.steps.filterIsInstance<AgentStep.ToolDispatched>().size)
+        assertTrue(run.steps.none { it is AgentStep.ResponseCommitted })
+        assertTrue(conversations.turns.value.isEmpty())
+    }
+
     @Test fun `fresh source receipt belongs to newly created root instead of another active run`() = runTest {
         val runs = Runs()
         val unrelated = recordedRun(runs, null)

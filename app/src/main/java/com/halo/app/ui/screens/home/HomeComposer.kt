@@ -50,8 +50,14 @@ internal fun HaloComposer(
     draftRevision: Long? = null,
     readAcknowledgedDraft: (() -> ComposerDraftState?)? = null,
 ) {
-    val editor = remember(draftIdentity) { HomeComposerEditBuffer(value, draftRevision) }
-    editor.reconcile(value, draftRevision)
+    // The relocated child may recompose before its page's captured text updates.
+    // Read text and revision together from the same canonical snapshot; accepting
+    // an old literal under a newer revision would block the later clear/recovery.
+    val canonicalDraft = readAcknowledgedDraft?.invoke()
+    val renderedText = canonicalDraft?.text ?: value
+    val renderedRevision = canonicalDraft?.revision ?: draftRevision
+    val editor = remember(draftIdentity) { HomeComposerEditBuffer(renderedText, renderedRevision) }
+    editor.reconcile(renderedText, renderedRevision)
     val visibleText = editor.value.text
     val scheme = MaterialTheme.colorScheme
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current

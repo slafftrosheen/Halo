@@ -1,0 +1,48 @@
+{
+  "baselineCommit": "37635608d494bc02ff67476d2648e87522db097b",
+  "sourceDirtyAtBuild": true,
+  "capturedUtc": "2026-10-28T22:34:54.994012+00:00",
+  "appSha256": "46e9b75a7c420cbf4097c0bc859adc9f1363a585ba0bb2dbd0552e64ca3d59b6",
+  "testSha256": "8f92083281aa0bc27cb35345d8bc284d8845dde6f5dc3fde11e9c258fc186fe1",
+  "sourceHashes": {
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeComposer.kt": "88f2c29ecd60acabdb9972e152271d3804b6695766cd28dc8a7c3576890fc2a9",
+    "app/src/test/java/com/halo/app/ui/screens/home/HomeComposerInteractionTest.kt": "38decdd85587c13ae4a4be04b4755e2ef07eb3850ed41b3099ad1af9f899879c",
+    "app/src/androidTest/java/com/halo/app/ui/shell/MainActivityComposerPhysicalTest.kt": "845ea513f7e4c3b75f8e99595e9037eb1e296dfe5573aa8f06a038d8c3f4c014",
+    "runtime/cognition/src/main/java/com/halo/runtime/cognition/turn/CognitiveTurnExecutor.kt": "448dffdf33689e7def12c3bddd03911070b816ac67748d49001ebd3de2529741",
+    "runtime/cognition/src/test/java/com/halo/runtime/cognition/session/CognitiveSessionConversationTest.kt": "0d46bc21ece80238fba4fc89fe1c3a7a1d7f67bc31e07e760924d66695a3ec26"
+  },
+  "appInstalled": false,
+  "lastInstalledAppSha256": "0ecef26967ee49884e417c42f1bab4f7800e948d358bab0c88f3d90dd19dfe96",
+  "cognitionGate": {
+    "tests": 396,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "composerGate": {
+    "tests": 47,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "physicalComposerRetest": "NOT_RUN_DEVICE_DISCONNECTED",
+  "spokenExportRetest": "NOT_RUN_DEVICE_DISCONNECTED",
+  "closure": "KEEP_OPEN",
+  "issues": [
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62
+  ],
+  "sourceGitBlobIds": {
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeComposer.kt": "61ce90e6954d298c87a415609b9c4bb712c8fb37",
+    "app/src/test/java/com/halo/app/ui/screens/home/HomeComposerInteractionTest.kt": "261b923a01066a4b7aa19634c70b826953799ae6",
+    "app/src/androidTest/java/com/halo/app/ui/shell/MainActivityComposerPhysicalTest.kt": "648c1d574a5dccfa51e0487d33db407900e32516",
+    "runtime/cognition/src/main/java/com/halo/runtime/cognition/turn/CognitiveTurnExecutor.kt": "72b0a3a747752e745e1cc02a2875b54e07d9be2b",
+    "runtime/cognition/src/test/java/com/halo/runtime/cognition/session/CognitiveSessionConversationTest.kt": "2976e7aa73c735922f6bc8f03e67c8b7c1075fdf"
+  }
+}
