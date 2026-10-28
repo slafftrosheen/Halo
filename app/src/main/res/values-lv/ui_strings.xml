@@ -4163,6 +4163,7 @@
     <string name="ui_4d0076e6b4c7" formatted="false">"Darbības"</string>
     <string name="ui_b5634a8ba110" formatted="false">"Darbības un paziņojumi"</string>
     <string name="ui_5774d46c5e6b" formatted="false">"Turiet halo, lai atvērtu darbības"</string>
+    <string name="ui_5de949c889c4" formatted="false">"Atlasītais fragments"</string>
     <string name="ui_e8d505c1b1f7" formatted="false">"Lokālais režīms"</string>
     <string name="ui_b080f31e6a5f" formatted="false">"Lokāli / Power"</string>
     <string name="ui_3b3da664eb98" formatted="false">"Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei."</string>

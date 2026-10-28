@@ -45,11 +45,18 @@ class AndroidInteractionContextAdapter(
     private val events = kotlinx.coroutines.channels.Channel<ContextualNextActionTarget>(kotlinx.coroutines.channels.Channel.BUFFERED)
     val navigation = events.receiveAsFlow()
     suspend fun navigate(target: ContextualNextActionTarget) { events.send(target) }
-    suspend fun selectStudy(sessionId: String) {
+    private suspend fun studyReferenceVersion(sessionId: String): String? {
+        val study = com.halo.app.di.ManualDependencyGraph.studyUseCases
+        val session = study.getSession(sessionId) ?: return null
+        if (session.sourceObjectIds.any { !policy.permitsObject(it, true) }) return null
+        return study.contextReferenceVersion(sessionId)
+    }
+    suspend fun selectStudy(sessionId: String) = lock.withLock {
         val graph = com.halo.app.di.ManualDependencyGraph
         val session = graph.studyUseCases.getSession(sessionId)?.takeIf { it.lifecycle == com.halo.sdk.runtime.study.StudySessionLifecycle.ACTIVE } ?: error("Study session unavailable")
         val conversation = conversation()
-        val reference = ContextReference.StudySession(sessionId)
+        val version = studyReferenceVersion(sessionId) ?: error("Study material changed or became unavailable. Reopen the lesson.")
+        val reference = ContextReference.StudySession(sessionId, version)
         titles[reference] = session.goal ?: "Selected Study lesson"
         owner.select(InteractionContextFocus(conversation,reference,ContextCategory.STUDY,ContextFocusReason.STUDY_SESSION,nowMs(),null))
         navigate(ContextualNextActionTarget.ContinueStudy(sessionId))
@@ -206,8 +213,8 @@ class AndroidInteractionContextAdapter(
 
     suspend fun resolve(turn: CognitiveTurnRequest): CognitiveTurnRequest = try { lock.withLock {
         val conversation = turn.conversationId ?: return@withLock turn
-        val selected = owner.current(conversation).filter { it.reference in turn.contextReferences && it.category in setOf(ContextCategory.VISUAL,ContextCategory.WORKSPACE) }
-        check(turn.contextReferences.filterNot { it is ContextReference.StudySession }.all { ref -> selected.any { it.reference == ref } }) { "Selected source changed. Please reselect it before asking." }
+        val selected = owner.current(conversation).filter { it.reference in turn.contextReferences && it.category in setOf(ContextCategory.VISUAL,ContextCategory.WORKSPACE,ContextCategory.STUDY) }
+        check(turn.contextReferences.all { ref -> selected.any { it.reference == ref } }) { "Selected source changed. Please reselect it before asking." }
         if(selected.isEmpty()) return@withLock turn
         val refs = mutableListOf<ContextReference>()
         var image: MediaAssetRef? = null
@@ -218,6 +225,13 @@ class AndroidInteractionContextAdapter(
                 "That source is no longer available. Please attach it again or remove the reference."
             }
             when(val reference = focus.reference) {
+                is ContextReference.StudySession -> {
+                    val current = studyReferenceVersion(reference.sessionId)
+                    if (reference.version == null || current != reference.version) {
+                        owner.transition(conversation, reference, ContextReferenceState.SOURCE_UNAVAILABLE)
+                        error("The selected lesson changed or its material became unavailable. Reopen the lesson before continuing.")
+                    }
+                }
                 is ContextReference.MediaAsset -> {
                     image = leases[conversation]?.takeIf { it.id == reference.assetId && it.interactionId == reference.ownerInteractionId }
                     if(image == null || media.metadata(image) == null) {
@@ -263,6 +277,17 @@ class AndroidInteractionContextAdapter(
             refs += focus.reference
         }
         val bound = image?.let { binder.bindImage(it,turn.interactionId,VisualFreshness.REFERENCE).ref }
+        // Media preparation can suspend; revalidate every bound source once more before publication.
+        refs.filterIsInstance<ContextReference.WorkspaceObject>().forEach { reference ->
+            check(policy.permitsObject(reference.objectId, true) && workspace.versionFor(reference.objectId) == reference.version) {
+                "Selected source changed or was excluded. Please select it again."
+            }
+        }
+        refs.filterIsInstance<ContextReference.StudySession>().forEach { reference ->
+            check(reference.version != null && studyReferenceVersion(reference.sessionId) == reference.version) {
+                "Selected lesson changed. Reopen it before continuing."
+            }
+        }
         refs.forEach { owner.transition(conversation,it,ContextReferenceState.BOUND_TO_TURN,turn.interactionId.value) }
         val explicitWorkspaceText = workspaceTexts.distinct().joinToString("\n\n").take(8000).takeIf { it.isNotBlank() }
         val visualBinding = refs.filterIsInstance<ContextReference.MediaAsset>()
@@ -271,6 +296,9 @@ class AndroidInteractionContextAdapter(
             assetId=it.id,interactionId=turn.interactionId.value,freshness=VisualFreshness.REFERENCE) },
             request=if(bound != null) turn.request.copy(toolUseMode=com.halo.sdk.provider.ToolUseMode.NONE) else turn.request,
             metadata=turn.metadata + (if(bound != null) mapOf("hasAssistantImage" to "true","explicitImageReference" to "true") else emptyMap()) +
+                refs.filterIsInstance<ContextReference.StudySession>().singleOrNull()?.let {
+                    mapOf("selectedStudySessionId" to it.sessionId, "selectedStudyVersion" to requireNotNull(it.version))
+                }.orEmpty() +
                 listOfNotNull((workspaceId ?: visualBinding?.objectId)?.let { "workspaceObjectId" to it },
                     refs.filterIsInstance<ContextReference.WorkspaceObject>().firstOrNull()?.version?.let { "contextWorkspaceVersion" to it },
                     visualBinding?.let { "contextWorkspaceVersion" to it.version },

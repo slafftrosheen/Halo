@@ -17,8 +17,11 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class StudyMaterialFocus(val objectId: String, val version: String, val page: Int? = null)
+
 data class StudyRecoveryState(val draft: String = "", val submissionKey: String? = null,
-    val submittedDraft: String? = null, val pendingRequestId: String? = null)
+    val submittedDraft: String? = null, val pendingRequestId: String? = null,
+    val materialFocus: StudyMaterialFocus? = null)
 
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
 class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
@@ -32,7 +35,10 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             StudyRecoveryState(it.optString("draft").take(4000),
                 it.optString("submission").takeIf(String::isNotBlank),
                 it.optString("submitted").takeIf(String::isNotBlank),
-                it.optString("pending").takeIf(String::isNotBlank))
+                it.optString("pending").takeIf(String::isNotBlank),
+                it.optJSONObject("focus")?.let { focus -> StudyMaterialFocus(
+                    focus.getString("object"), focus.getString("version"),
+                    if (focus.isNull("page")) null else focus.getInt("page")) })
         }
     } catch (_: Exception) { StudyRecoveryState() }
     suspend fun loadRecovery(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) { readRecovery(id) } }
@@ -45,7 +51,9 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             if (next == previous) return@withContext next
             storage.putString(recoveryKey(id), JSONObject().put("draft", next.draft.take(4000))
                 .put("submission", next.submissionKey.orEmpty()).put("submitted", next.submittedDraft.orEmpty().take(4000))
-                .put("pending", next.pendingRequestId.orEmpty()).toString())
+                .put("pending", next.pendingRequestId.orEmpty())
+                .put("focus", next.materialFocus?.let { focus -> JSONObject().put("object", focus.objectId)
+                    .put("version", focus.version).put("page", focus.page ?: JSONObject.NULL) } ?: JSONObject.NULL).toString())
             next
         } }
     suspend fun saveDraft(id: String, draft: String) { updateRecovery(id) { state ->
@@ -57,6 +65,9 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
         else it.copy(draft = text.take(4000), submissionKey = candidateKey, submittedDraft = text.take(4000))
     }.submissionKey)
     suspend fun markPendingTurn(id: String, requestId: String) { updateRecovery(id) { it.copy(pendingRequestId = requestId) } }
+    suspend fun saveMaterialFocus(id: String, focus: StudyMaterialFocus?) {
+        updateRecovery(id) { it.copy(materialFocus = focus) }
+    }
     suspend fun clearPendingTurn(id: String, requestId: String) { updateRecovery(id, allowDeletedCleanup = true) {
         if (it.pendingRequestId == requestId) it.copy(pendingRequestId = null) else it
     } }
@@ -70,7 +81,9 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             (0 until array.length().coerceAtMost(30)).map { index ->
                 val item = array.getJSONObject(index)
                 val citations = item.optJSONArray("citations") ?: JSONArray()
-                StudyTurn(exerciseId = item.optString("exercise").takeIf(String::isNotBlank), sourceObjectIds = item.optJSONArray("origins")?.let { array -> (0 until array.length()).map { array.getString(it) } }, id = item.getString("id"), question = item.optString("question").takeIf { it.isNotBlank() }, stage = TutorStage.valueOf(item.getString("stage")), text = item.getString("text"),
+                StudyTurn(materialFocus = item.optString("materialFocus").takeIf(String::isNotBlank), sourceVersions = item.optJSONObject("sourceVersions")?.let { versions ->
+                    versions.keys().asSequence().take(4).associateWith { versions.getString(it) }
+                }, exerciseId = item.optString("exercise").takeIf(String::isNotBlank), sourceObjectIds = item.optJSONArray("origins")?.let { array -> (0 until array.length()).map { array.getString(it) } }, id = item.getString("id"), question = item.optString("question").takeIf { it.isNotBlank() }, stage = TutorStage.valueOf(item.getString("stage")), text = item.getString("text"),
                     nextStep = item.optString("next").takeIf { it.isNotBlank() },
                     uncertainty = item.optString("uncertainty").takeIf { it.isNotBlank() },
                     verdict = StudyVerdict.entries.firstOrNull { it.name == item.optString("verdict") },
@@ -92,6 +105,8 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                 .put("revision", cite.sourceRevision ?: JSONObject.NULL).put("locator", cite.locator ?: "")
                 .put("excerpt", cite.excerpt.take(400)).put("version", cite.sourceVersion.orEmpty()).put("title", cite.sourceTitle.orEmpty())) }
             array.put(JSONObject().put("exercise", turn.exerciseId.orEmpty()).put("origins", turn.sourceObjectIds?.let { JSONArray(it) } ?: JSONObject.NULL).put("id", turn.id).put("stage", turn.stage.name).put("text", turn.text.take(12000))
+                .put("sourceVersions", turn.sourceVersions?.let { JSONObject(it) } ?: JSONObject.NULL)
+                .put("materialFocus", turn.materialFocus.orEmpty())
                 .put("next", turn.nextStep.orEmpty().take(1000)).put("uncertainty", turn.uncertainty.orEmpty().take(1000))
                 .put("question", turn.question.orEmpty().take(2000)).put("verdict", turn.verdict?.name.orEmpty()).put("citations", citations))
         }
@@ -130,7 +145,10 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                     }, (0 until questions.length().coerceAtMost(3)).map { questions.getString(it) })
                 }, probeSkipped = json.optBoolean("probeSkipped", false),
                 explanationDepth = runCatching { com.halo.app.study.StudyExplanationDepth.valueOf(json.optString("explanationDepth")) }
-                    .getOrDefault(com.halo.app.study.StudyExplanationDepth.BALANCED))
+                    .getOrDefault(com.halo.app.study.StudyExplanationDepth.BALANCED),
+                summaryNoteId = json.optString("summaryNoteId").takeIf(String::isNotBlank),
+                summaryNoteRevision = if (json.has("summaryNoteRevision") && !json.isNull("summaryNoteRevision"))
+                    json.getLong("summaryNoteRevision") else null)
         }.getOrNull()
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
@@ -139,6 +157,8 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
             .put("probeSkipped", journey.probeSkipped)
             .put("explanationDepth", journey.explanationDepth.name)
+            .put("summaryNoteId", journey.summaryNoteId.orEmpty())
+            .put("summaryNoteRevision", journey.summaryNoteRevision ?: JSONObject.NULL)
             .put("branches", JSONArray(journey.branches.takeLast(40)))
             .put("branch", journey.currentBranch.orEmpty().take(300))
             .put("reflection", journey.reflection.take(4000))

@@ -62,7 +62,12 @@ data class StudyLanguagePreferences(
 enum class StudyLearnerLevel(val wordLimit: Int) { EARLY_PRIMARY(80), PRIMARY(120), LOWER_SECONDARY(160), UPPER_SECONDARY(220), ADULT(240) }
 enum class StudySupportStyle { GUIDED, PRACTICE, EXPLAIN }
 enum class StudyKnowledgePolicy { SOURCE_ONLY, SOURCE_PLUS_GENERAL }
-data class StudySessionSource(val objectId: String, val revision: String? = null)
+/** UTF-16 offsets within one canonical saved note block; end is exclusive. */
+data class StudyTextAnchor(val blockId: String, val start: Int, val end: Int) {
+    init { require(blockId.isNotBlank() && blockId.length <= 200 && start >= 0 && end > start && end - start <= 8000) }
+}
+
+data class StudySessionSource(val objectId: String, val revision: String? = null, val textAnchor: StudyTextAnchor? = null)
 
 data class StudySession(
     val id: String,

@@ -14,6 +14,9 @@ data class LearningJourney(
     /** Explicit learner choice; never inferred from an empty answer or model response. */
     val probeSkipped: Boolean = false,
     val explanationDepth: com.halo.app.study.StudyExplanationDepth = com.halo.app.study.StudyExplanationDepth.BALANCED,
+    /** One reusable artifact per journey; revision prevents overwriting later Notebook edits. */
+    val summaryNoteId: String? = null,
+    val summaryNoteRevision: Long? = null,
 )
 
 /** Extracted text is a draft until the learner confirms it; confidence is never fabricated. */

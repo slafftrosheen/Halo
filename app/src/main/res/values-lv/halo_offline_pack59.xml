@@ -1,0 +1,29 @@
+<resources>
+    <string name="offline59_chat_download">Lejupielādēt / atsākt sarunu paplašinājumu</string>
+    <string name="offline59_chat_rollback">Noņemt tikai šī paplašinājuma lejupielādes</string>
+    <string name="offline59_chat_intact">Sarunu faili ir veseli. Izvēlieties un pārbaudiet kandidātu atsevišķi; runas un valodu kvalitāte nav apstiprināta.</string>
+    <string name="offline59_chat_recovery">Paplašinājuma iestatīšanai vajadzīga uzmanība. Atjauniniet failu statusu. Saglabājiet failus, lai notīrītu mainītu ierakstu, labojiet neatkarīgos bojātos modeļus sarakstā vai atkārtojiet lejupielādi. Darbojošies un nesaistītie modeļi tiek saglabāti.</string>
+    <string name="offline59_refresh">Atjaunināt lejupielādes un vietas aprēķinu</string>
+    <string name="offline59_download_space">Aptuvenā lejupielāde: %1$s. Papildus vajadzīgā brīvā vieta: %2$s. Izvēlieties instalēšanu, lai atļautu lejupielādi.</string>
+    <string name="offline59_low_storage">Nepietiek brīvas vietas. Atbrīvojiet vietu un atveriet šo iestatīšanu vēlreiz, lai atjauninātu aprēķinu.</string>
+    <string name="offline59_repair">Esošie runas faili ir nepilnīgi vai bojāti. Pabeidziet lejupielādi vai noņemiet un instalējiet tos atkārtoti balss iestatījumos. Esošie faili ir saglabāti. Pēc labošanas atkārtojiet instalēšanu.</string>
+    <string name="offline59_chat_candidate">Izvēles sarunu paplašinājums: SmolLM2 360M, pārbaudīts artefakta kandidāts ar Apache-2.0 licenci. Lejupielādējiet to atsevišķi modeļu sarakstā. Nav automātiskas izvēles, izmērīta valodu atbalsta vai ierīces ieteikuma.</string>
+    <string name="offline59_check">Pārbaudīt instalētos komplekta failus</string>
+    <string name="offline59_snapshot">Pēdējā failu pārbaude: %1$d no %2$d lomām ir veseli faili. Tā nav sarunas vai valodas piemērotības pārbaude.</string>
+    <string name="offline59_pending">Failu pārbaude notiek vai nav pieejama. Atkārtojiet, kad instalēšana nenotiek.</string>
+    <string name="offline59_incomplete">Šajā sākuma komplektā nav sarunu modeļa. Instalēti faili nenozīmē, ka bezsaistes balss asistents ir gatavs. Vietējās piezīmes un manuālie rīki joprojām ir pieejami.</string>
+    <string name="offline59_intent">Eksperimentāls darbību modelis: iepriekšējais CPU rezultāts pārsniedza 2 sekunžu robežu. Lejupielāde neapstiprina piemērotību un neieslēdz klasifikatoru.</string>
+    <string name="offline59_memory">Paredzēts novērtēšanai tālruņos ar 8 GB RAM. Ierīces uzrādītā atmiņa: %1$s. Darba atmiņa, uzsilšana un modeļu kopdarbība vēl jāizmēra.</string>
+    <string name="offline59_unknown">Nav noskaidrots</string>
+    <string name="offline59_review">Skatīt komplekta avotus un failu pārbaudes</string>
+    <string name="offline59_hide">Paslēpt komplekta informāciju</string>
+    <string name="offline59_license">Izdevēju licenču un izplatīšanas tiesību pārbaude nav pabeigta. Norādītā licence ir avota informācija, nevis Halo apstiprinājums. Pirms lejupielādes pārskatiet avotus.</string>
+    <string name="offline59_languages">EN, RU, LV un PL runas kvalitātei vajadzīgi atsevišķi ierīces mērījumi. Tulkotas vadīklas un izdevēja valodu saraksti nepierāda runas piemērotību.</string>
+    <string name="offline59_chat">Saruna</string>
+    <string name="offline59_actions">Darbību modeļa kandidāts</string>
+    <string name="offline59_listening">Runas atpazīšana</string>
+    <string name="offline59_vad">Runas aktivitātes noteikšana</string>
+    <string name="offline59_output">Runas izvade</string>
+    <string name="offline59_acknowledge">Esmu iepazinies ar avotiem un norādītajām licencēm, arī ar trūkstošo licences informāciju. Tas neapliecina licencēšanu vai ierīces gatavību.</string>
+    <string name="offline59_review_required">Pirms lejupielādes pārskatiet pakotnes avotus un apstipriniet iepazīšanos.</string>
+</resources>

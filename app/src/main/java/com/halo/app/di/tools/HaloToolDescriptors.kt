@@ -45,11 +45,11 @@ object HaloToolDescriptors {
         keywords = keywords,
         visibility = visibility,
         dependencies = dependencies,
-        requirements = requirements + WorkspaceOperabilityContracts.forDefinition(definition)?.let { setOf(ToolRequirement.Capability(it.capabilityId)) }.orEmpty(),
+        requirements = requirements + (ProcedureOperability.forDefinition(definition) ?: WorkspaceOperabilityContracts.forDefinition(definition))?.let { setOf(ToolRequirement.Capability(it.capabilityId)) }.orEmpty(),
         security = security,
         execution = execution,
         presentation = presentation,
-        operability = WorkspaceOperabilityContracts.forDefinition(definition),
+        operability = ProcedureOperability.forDefinition(definition) ?: WorkspaceOperabilityContracts.forDefinition(definition),
     )
 
     private fun readOnly(id: String) = ToolSecurityPolicy.READ_ONLY.copy(
@@ -184,7 +184,7 @@ object HaloToolDescriptors {
                 replaySafety = ReplaySafety.NEVER_REPLAY,
             ),
             keywords = setOf("procedure", "save", "remember"),
-            presentation = ToolPresentation(title = "Save procedure", actionVerb = "Save"),
+            presentation = ToolPresentation(title = "Save procedure", actionVerb = "Save", reviewArgument = "reviewSummary"),
         )
         "halo_use_procedure" -> descriptor(
             id = "halo_use_procedure",
@@ -193,6 +193,15 @@ object HaloToolDescriptors {
             security = readOnly("halo_use_procedure"),
             keywords = setOf("procedure", "recipe", "steps", "run"),
         )
+        "halo_procedures_list" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            ToolSecurityPolicy.READ_ONLY, keywords = setOf("workflow", "procedure", "saved", "list"),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 4_000))
+        "halo_procedure_set_enabled" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("workflow", "procedure", "enable", "disable"), presentation = ToolPresentation("Change saved workflow", "Change", "procedureId"))
+        "halo_procedure_delete" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION,
+            ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("workflow", "procedure", "delete"),
+            presentation = ToolPresentation("Delete saved workflow", "Delete", "procedureId"))
         else -> null
     }
 
@@ -276,13 +285,18 @@ object HaloToolDescriptors {
             "halo_local_setup_status" -> ToolSecurityPolicy.READ_ONLY
             "halo_local_setup_rollback" -> ToolSecurityPolicy.DESTRUCTIVE
             "halo_local_setup_pause" -> ToolSecurityPolicy(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.NONE, ReplaySafety.NEVER_REPLAY)
-            "halo_local_setup_start" -> sensitive(ReplaySafety.NEVER_REPLAY)
+            "halo_local_setup_start" -> ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
             else -> reversible(ReplaySafety.NEVER_REPLAY)
         }
         return descriptor(definition.name, definition, ToolCategory.SYSTEM, policy,
             keywords = setOf("model", "models", "setup", "starter", "download", "listening", "voice", "local", "pause", "rollback"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.models.manage"))),
-            presentation = ToolPresentation(title = "Local model setup", actionVerb = if (definition.name == "halo_local_setup_rollback") "Remove setup downloads" else "Manage setup"))
+            presentation = ToolPresentation(title = "Local model setup", actionVerb = when (definition.name) {
+                "halo_local_setup_rollback" -> "Remove setup downloads"
+                "halo_local_setup_start" -> "Download"
+                else -> "Manage setup"
+            }, targetArgument = if (definition.name == "halo_local_setup_start") "scope" else null,
+                reviewArgument = if (definition.name == "halo_local_setup_start") "sourceReviewSummary" else null))
             .copy(operability = com.halo.runtime.cognition.tools.ToolOperability(capabilityId = CapabilityId("host.models.manage"),
                 owner = "LocalRolePackInstaller", operation = operation, resultEncoding = com.halo.runtime.cognition.tools.ToolResultEncoding.JSON,
                 resultSchema = mapOf("type" to "object", "properties" to mapOf("transactionId" to mapOf("type" to "string"),

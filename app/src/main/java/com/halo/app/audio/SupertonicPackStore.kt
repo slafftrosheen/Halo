@@ -19,7 +19,8 @@ data class SupertonicPackState(val fingerprint: String? = null, val language: St
     /** Cached at explicit pack/voice transitions; Compose must not inspect native model files. */
     val selectedPackAvailable: Boolean = false,
     val audibleConfirmed: Boolean = false)
-data class SupertonicInstalledPack(val fingerprint: String, val selected: Boolean)
+data class SupertonicInstalledPack(val fingerprint: String, val selected: Boolean,
+    val officialArchiveSha256: String? = null)
 
 /** Local, user-imported model bytes. Audible authorization is recorded separately per voice/language. */
 class SupertonicPackStore(private val context: Context, private val storage: Storage) {
@@ -124,9 +125,31 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         storage.getString("supertonic.qualified."+hash)?.split(',')?.contains(lang+":"+voice)==true
     suspend fun installed(): List<SupertonicInstalledPack> = withContext(Dispatchers.IO) {
         mutex.withLock { root.listFiles().orEmpty().mapNotNull { file ->
-            resolve(file.name)?.let { SupertonicInstalledPack(file.name,file.name==selection().fingerprint) }
+            resolve(file.name)?.let { SupertonicInstalledPack(file.name,file.name==selection().fingerprint, officialArchiveProof(file.name)) }
         } }
     }
+    private fun officialArchiveProof(hash: String): String? = runCatching {
+        val manifest = File(requireNotNull(dir(hash)), "pack.properties")
+        Properties().apply { manifest.inputStream().use { load(it) } }
+            .getProperty("source.archive.sha256")?.takeIf { it == OFFICIAL_SHA256 }
+    }.getOrNull()
+    /** Explicit inventory verification, never native inference or voice selection.
+     * Manifest presence alone cannot prove that installed model bytes are intact.
+     * Keep damaged packs in the management inventory so users can remove/reimport them.
+     */
+    suspend fun verifiedInstalled(): List<SupertonicInstalledPack> = withContext(Dispatchers.IO) {
+        mutex.withLock { root.listFiles().orEmpty().mapNotNull { file ->
+            val pack = resolve(file.name) ?: return@mapNotNull null
+            val intact = try {
+                required.all { name -> sha(File(pack.directory, name)) == pack.fileSha256[name] } &&
+                    fingerprint(pack.directory) == pack.fingerprint
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { false }
+            if (intact) SupertonicInstalledPack(file.name, file.name == selection().fingerprint, officialArchiveProof(file.name)) else null
+        } }
+    }
+    suspend fun verifiedOfficialInstalled(): List<SupertonicInstalledPack> =
+        verifiedInstalled().filter { it.officialArchiveSha256 == OFFICIAL_SHA256 }
     /** The official publisher archive is pinned to its published bytes and SHA-256.
      * A successful download installs, but never selects or qualifies a voice.
      */
@@ -148,7 +171,7 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
             }
             KokoroModelDownload.acquire(part,progress={ downloadMutable.value=it },
                 url=OFFICIAL_URL,expectedBytes=OFFICIAL_BYTES,hash=OFFICIAL_SHA256)
-            val selected=importArchive(Uri.fromFile(part), publicationOwner)
+            val selected=importArchiveVerified(Uri.fromFile(part), publicationOwner, officialArchiveVerified = true)
             withContext(Dispatchers.IO) { part.delete(); ownership.delete() }
             selected
         } finally {
@@ -157,7 +180,10 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
         }
     }
 
-    suspend fun importArchive(uri: Uri, acquisitionOwner: String? = null): String = withContext(Dispatchers.IO) { mutex.withLock {
+    suspend fun importArchive(uri: Uri, acquisitionOwner: String? = null): String =
+        importArchiveVerified(uri, acquisitionOwner, officialArchiveVerified = false)
+
+    private suspend fun importArchiveVerified(uri: Uri, acquisitionOwner: String?, officialArchiveVerified: Boolean): String = withContext(Dispatchers.IO) { mutex.withLock {
         root.mkdirs()
         acquisitionOwner?.let(::requireOwner)
         require(root.usableSpace>INSTALL_RESERVE_BYTES) { "Supertonic requires at least 1 GiB free space for import" }
@@ -222,12 +248,25 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
                 setProperty("fingerprint",hash)
                 setProperty("runtime",RUNTIME)
                 setProperty("format","supertonic-3-int8")
+                if (officialArchiveVerified) setProperty("source.archive.sha256", OFFICIAL_SHA256)
                 acquisitionOwner?.let { setProperty("acquisition.owner", it) }
                 required.forEach { setProperty("sha."+it,sha(File(temp,it))) }
             }
             File(temp,"pack.properties").outputStream().use { p.store(it,null) }
             val destination=File(root,hash)
             if(!destination.exists()) require(temp.renameTo(destination)) { "Failed to install Supertonic pack" }
+            else if (officialArchiveVerified) {
+                // Only a freshly SHA-verified publisher archive can supply this proof.
+                // Never promote a same-named damaged pre-existing installation.
+                require(fingerprint(destination) == hash) { "Existing Supertonic files need explicit repair" }
+                val manifest = File(destination, "pack.properties")
+                val retained = Properties().apply { manifest.inputStream().use { load(it) } }
+                retained.setProperty("source.archive.sha256", OFFICIAL_SHA256)
+                if (acquisitionOwner == null) retained.remove("acquisition.owner")
+                val staged = File(destination, "pack.properties.provenance")
+                staged.outputStream().use { retained.store(it, null) }
+                java.nio.file.Files.move(staged.toPath(), manifest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            }
             else if (acquisitionOwner == null) {
                 // An explicit independent import retains this pack; a previous setup may no longer remove it.
                 val manifest = File(destination, "pack.properties")

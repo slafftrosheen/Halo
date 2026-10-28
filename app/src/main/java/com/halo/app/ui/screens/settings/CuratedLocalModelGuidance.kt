@@ -52,6 +52,7 @@ internal fun CuratedLocalModelGuidance(model: LiteRtCatalogModel, fit: LocalMode
             Text(stringResource(when (it.role) {
                 CuratedLocalRole.INTENT_CANDIDATE -> R.string.curated_models_intent
                 CuratedLocalRole.LOCAL_SEARCH_CANDIDATE -> R.string.curated_models_search
+                CuratedLocalRole.CONVERSATION_CANDIDATE -> R.string.offline59_chat_candidate
             }), style = MaterialTheme.typography.bodySmall)
         }
         if (CuratedLocalCatalog.isEnglishFirst(model)) {

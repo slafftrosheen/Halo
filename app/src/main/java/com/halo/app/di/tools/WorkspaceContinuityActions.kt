@@ -24,7 +24,10 @@ class WorkspaceContinuityActions(private val owner: WorkspaceContinuity) : ToolE
         definition("halo_workspace_canvases", "Find active Canvas destination IDs and exact revisions for explicit insertion. No content extraction.", mapOf("query" to mapOf("type" to "string", "maxLength" to 200)), emptyList()),
         definition("halo_workspace_insert", "Insert one exact note/file reference on one exact active Canvas. Keeps source identity/provenance; original is unchanged. Export a Studio project first. No automatic retry after either revision changes.",
             mapOf("objectId" to id, "version" to version, "canvasId" to id, "canvasVersion" to version)),
-        definition("halo_workspace_select", "Explicitly add the exact object to the existing Working Set. Does not add Memory facts, send data, start a provider or overwrite content.", mapOf("objectId" to id, "version" to version))
+        definition("halo_workspace_select", "Explicitly add the exact object to the existing Working Set. For an exact saved note passage, supply blockId plus start/end UTF-16 offsets returned/read through note tools; all three are required together. The canonical source version is rechecked and edits invalidate the selection; no copied text is stored as a live link. Omit the range only for an explicitly requested whole object. Does not add Memory facts, send data, start a provider or overwrite content.",
+            mapOf("objectId" to id, "version" to version, "blockId" to id,
+                "start" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 10000000),
+                "end" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 10000000)), listOf("objectId", "version"))
     )
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         val args = toolCall.arguments
@@ -64,8 +67,15 @@ class WorkspaceContinuityActions(private val owner: WorkspaceContinuity) : ToolE
                     success(JSONObject().put("nodeId", node).put("objectId", id("objectId")).put("version", string("version")).put("canvasId", id("canvasId")))
                 }
                 "halo_workspace_select" -> {
-                    exact(setOf("objectId", "version")); owner.selectWorkingSet(id("objectId"), string("version"))
-                    success(JSONObject().put("objectId", id("objectId")).put("version", string("version")).put("state", "SELECTED"))
+                    exact(setOf("objectId", "version"), setOf("blockId", "start", "end"))
+                    val hasRange = args.keys.any { it in setOf("blockId", "start", "end") }
+                    fun offset(key: String): Int = (args[key] as? Number ?: error("Expected offset")).toDouble().let {
+                        require(it.isFinite() && it % 1.0 == 0.0 && it in 0.0..10000000.0); it.toInt()
+                    }
+                    val anchor = if (hasRange) com.halo.sdk.runtime.study.StudyTextAnchor(id("blockId"), offset("start"), offset("end")) else null
+                    owner.selectWorkingSet(id("objectId"), string("version"), anchor)
+                    success(JSONObject().put("objectId", id("objectId")).put("version", string("version")).put("state", "SELECTED")
+                        .put("blockId", anchor?.blockId ?: JSONObject.NULL).put("start", anchor?.start ?: JSONObject.NULL).put("end", anchor?.end ?: JSONObject.NULL))
                 }
                 else -> error("Unsupported handoff")
             }

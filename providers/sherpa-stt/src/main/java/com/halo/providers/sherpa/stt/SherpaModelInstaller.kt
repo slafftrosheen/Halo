@@ -27,6 +27,32 @@ object SherpaModelInstaller {
         require(!file.name.contains('/') && !file.name.contains('\\') && file.sha256?.matches(Regex("[a-f0-9]{64}")) == true && file.expectedBytes > 0)
         return "$owner:${file.sha256}:${file.expectedBytes}"
     }
+    /** Fresh physical verification for pack admission; legacy presence/mtime proofs
+     * remain presentation hints and cannot satisfy this stronger explicit check.
+     */
+    fun verifyPinnedFiles(directory: File, spec: SherpaSpeechModelCatalog.ModelSpec,
+        checkCancellation: () -> Unit = {}): Boolean = withFileMutation(directory) {
+        if (!directory.isDirectory || spec.files.isEmpty()) return@withFileMutation false
+        spec.files.all { file ->
+            checkCancellation()
+            if (file.expectedBytes <= 0 || file.sha256?.matches(Regex("[a-f0-9]{64}")) != true)
+                return@all false
+            val target = File(directory, file.name)
+            if (!target.isFile || target.canonicalFile.parentFile != directory.canonicalFile ||
+                target.length() != file.expectedBytes) return@all false
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            target.inputStream().use { input ->
+                val bytes = ByteArray(65536)
+                while (true) {
+                    checkCancellation()
+                    val count = input.read(bytes)
+                    if (count < 0) break
+                    digest.update(bytes, 0, count)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) } == file.sha256
+        }
+    }
     internal fun retainFile(directory: File, file: SherpaSpeechModelCatalog.FileSpec) = withFileMutation(directory) {
         val proof = receipt(directory, file)
         check(!proof.exists() || proof.delete()) { "Unable to retain independent model" }
@@ -60,8 +86,9 @@ object SherpaModelInstaller {
     }
 
     fun installFile(input: InputStream, destinationDirectory: File, fileSpec: SherpaSpeechModelCatalog.FileSpec,
-        acquisitionOwner: String? = null, requestedOwner: String? = acquisitionOwner): Result = withFileMutation(destinationDirectory) {
-        installFileLocked(input, destinationDirectory, fileSpec, acquisitionOwner, requestedOwner)
+        acquisitionOwner: String? = null, requestedOwner: String? = acquisitionOwner,
+        checkCancellation: () -> Unit = {}): Result = withFileMutation(destinationDirectory) {
+        installFileLocked(input, destinationDirectory, fileSpec, acquisitionOwner, requestedOwner, checkCancellation)
     }
 
     private fun installFileLocked(
@@ -70,6 +97,7 @@ object SherpaModelInstaller {
         fileSpec: SherpaSpeechModelCatalog.FileSpec,
         acquisitionOwner: String?,
         requestedOwner: String?,
+        checkCancellation: () -> Unit,
     ): Result {
         if (fileSpec.name.contains('/') || fileSpec.name.contains('\\')) {
             return Result.Rejected("Invalid model filename")
@@ -91,7 +119,16 @@ object SherpaModelInstaller {
             temporary.delete()
             input.use { source ->
                 temporary.outputStream().use { output ->
-                    source.copyTo(output)
+                    val buffer = ByteArray(64 * 1024)
+                    var copied = 0L
+                    while (true) {
+                        checkCancellation()
+                        val count = source.read(buffer)
+                        if (count < 0) break
+                        copied = Math.addExact(copied, count.toLong())
+                        check(fileSpec.expectedBytes <= 0 || copied <= fileSpec.expectedBytes) { "Model exceeds expected size" }
+                        output.write(buffer, 0, count)
+                    }
                     output.fd.sync()
                 }
             }
@@ -100,7 +137,7 @@ object SherpaModelInstaller {
                 java.security.MessageDigest.getInstance("SHA-256").apply {
                     temporary.inputStream().use { stream ->
                         val bytes = ByteArray(64 * 1024)
-                        while (true) { val count = stream.read(bytes); if (count < 0) break; update(bytes, 0, count) }
+                        while (true) { checkCancellation(); val count = stream.read(bytes); if (count < 0) break; update(bytes, 0, count) }
                     }
                 }.digest().joinToString("") { "%02x".format(it) }
             }
@@ -112,6 +149,7 @@ object SherpaModelInstaller {
                     "Model file is incomplete: ${fileSpec.name} (${temporary.length()} bytes)"
                 )
             } else {
+                checkCancellation()
                 val ownership = receipt(destinationDirectory, fileSpec)
                 if (acquisitionOwner == null) check(!ownership.exists() || ownership.delete()) { "Unable to retain imported model" }
                 else {

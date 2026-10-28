@@ -223,7 +223,8 @@ class WorkspaceStudyActions(
         .put("assignmentLanguage", record.languages.assignmentLanguage ?: JSONObject.NULL)
         .put("explanationLanguage", record.languages.explanationLanguage ?: JSONObject.NULL)
         .put("strongestLanguage", record.languages.strongestLanguage ?: JSONObject.NULL)
-        .put("sources", JSONArray(record.sources.map { JSONObject().put("objectId", it.objectId).put("sourceVersion", it.revision ?: JSONObject.NULL) }))
+        .put("sources", JSONArray(record.sources.map { source -> JSONObject().put("objectId", source.objectId).put("sourceVersion", source.revision ?: JSONObject.NULL)
+            .put("textAnchor", source.textAnchor?.let { anchor -> JSONObject().put("blockId", anchor.blockId).put("start", anchor.start).put("end", anchor.end) } ?: JSONObject.NULL) }))
     private fun cardReceipt(session: StudySessionRecord, item: StudyPracticeItem) = header(session)
         .put("itemId", item.id).put("itemVersion", cardVersion(item)).put("question", item.question.take(600)).put("answer", item.answer.take(2000))
         .put("contentTruncated", item.question.length > 600 || item.answer.length > 2000).put("accepted", item.accepted)
@@ -237,7 +238,7 @@ class WorkspaceStudyActions(
             JSONArray(listOf(record.languages.assignmentLanguage, record.languages.explanationLanguage, record.languages.strongestLanguage)),
             JSONArray(record.sourceObjectIds), record.sourceRevision, record.conversationId, record.runId, record.interactionId,
             record.tutorStage.name, record.lifecycle.name, record.currentExerciseId, record.solutionRevealed, record.completedAtEpochMs,
-            record.createdAtEpochMs, record.updatedAtEpochMs, JSONArray(record.sources.map { JSONArray(listOf(it.objectId, it.revision)) }),
+            record.createdAtEpochMs, record.updatedAtEpochMs, JSONArray(record.sources.map { JSONArray(listOf(it.objectId, it.revision, it.textAnchor?.blockId, it.textAnchor?.start, it.textAnchor?.end)) }),
             record.learnerLevel.name, record.supportStyle.name, record.knowledgePolicy.name)
         internal fun cardVersion(item: StudyPracticeItem): String = fingerprint("study-card", item.id, item.sessionId, item.question, item.answer,
             item.sourceObjectId, item.sourceRevision, item.accepted, item.intervalIndex, item.dueAtEpochMs, item.reviewCount, item.knownStreak,

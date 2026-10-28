@@ -630,10 +630,15 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             eventBus.observe(SpeechRejected::class.java).collect { rejected ->
-                if ((rejected.input?.captureId ?: rejected.captureId) == intentionallyCancelledVoiceCapture &&
-                    intentionallyCancelledVoiceCapture != null) return@collect
-                _listeningRequested.value = false
                 val capture = rejected.input?.captureId ?: rejected.captureId
+                if (capture == intentionallyCancelledVoiceCapture && intentionallyCancelledVoiceCapture != null) return@collect
+                // Recognition may finish after Stop, a new capture, or a conversation switch.
+                // A terminal event for the old capture must not clear the new listening intent.
+                val currentCapture = speechInput.value.turn?.captureId
+                    ?: synchronized(voiceModeLock) { voiceModeCaptureId }
+                if (capture != null && currentCapture != null && capture != currentCapture) return@collect
+                if (rejected.input?.conversationId?.let { it != conversations?.activeConversationId() } == true) return@collect
+                _listeningRequested.value = false
                 val mayRecapture = com.halo.engines.speech.SpeechRejectionReason.entries
                     .firstOrNull { it.name == rejected.reason }?.allowsAutomaticRecapture == true
                 val continueVoiceMode = capture != null && mayRecapture && synchronized(voiceModeLock) {
@@ -645,7 +650,7 @@ class HomeViewModel(
                     resumeVoiceModeAfterReply(requireNotNull(capture))
                     return@collect
                 }
-                rejected.input?.captureId?.let(::endVoiceModeForCapture)
+                capture?.let(::endVoiceModeForCapture)
                 val friendlyReason = when (rejected.reason) {
                     "REPETITIVE_HALLUCINATION" -> "repetitive recognition"
                     "INSUFFICIENT_VOICED_AUDIO" -> "audio was too quiet or short"

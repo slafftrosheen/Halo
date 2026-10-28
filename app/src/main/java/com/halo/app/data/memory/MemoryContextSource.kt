@@ -32,22 +32,47 @@ class BoundedMemoryContextSource(
      * Memory UI and halo_search_memory, so relevance never means two different things.
      */
     private val retriever: com.halo.runtime.cognition.memory.MemoryRetriever? = null,
+    private val permitsRecord: suspend (MemoryRecord, Boolean) -> Boolean = { _, _ -> true },
 ) : MemoryContextSource, com.halo.runtime.cognition.context.MemoryContextSource {
 
     override suspend fun recall(query: MemoryRecallQuery): List<MemoryContextItem> {
         val appQuery = MemoryQuery(query = query.text, kinds = query.kinds.mapNotNull { runCatching { MemoryKind.valueOf(it) }.getOrNull() }.toSet(),
             scopes = query.scopes.mapNotNull { runCatching { MemoryScope.valueOf(it) }.getOrNull() }.toSet())
         val candidates = retrieve(appQuery, query.limit)
-        return candidates.map { c ->
+        return candidates.mapNotNull { c ->
+            val current = memoryRepository.getMemory(c.id) ?: return@mapNotNull null
+            if (!eligible(current, query.targetIsLocal)) return@mapNotNull null
+            if (current.kind != c.kind || current.scope != c.scope ||
+                com.halo.runtime.cognition.memory.LexicalMemoryScorer.snippet(current.content) !=
+                com.halo.runtime.cognition.memory.LexicalMemoryScorer.snippet(c.content)) return@mapNotNull null
             MemoryContextItem(
                 id = c.id,
-                content = c.content,
-                kind = c.kind.name,
-                scope = c.scope.name,
+                content = com.halo.runtime.cognition.memory.LexicalMemoryScorer.snippet(current.content),
+                kind = current.kind.name,
+                scope = current.scope.name,
                 relevance = c.relevance,
-                provenance = c.provenanceSummary
+                provenance = c.provenanceSummary,
+                version = version(current),
             )
         }
+    }
+
+    private suspend fun eligible(record: MemoryRecord, local: Boolean): Boolean =
+        record.status == MemoryStatus.ACTIVE && record.scope != MemoryScope.CONVERSATION &&
+            (record.validUntil == null || record.validUntil > System.currentTimeMillis()) &&
+            com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(record.content) !=
+                com.halo.runtime.cognition.memory.MemorySensitivity.SECRET && permitsRecord(record, local)
+
+    private fun version(record: MemoryRecord): String = java.security.MessageDigest.getInstance("SHA-256")
+        .digest("${record.id}|${record.updatedAt}|${record.content}|${record.scope}|${record.scopeId}|${record.status}|${record.validUntil}".toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
+
+    override suspend fun dereference(item: MemoryContextItem, query: MemoryRecallQuery): MemoryContextItem? {
+        val current = memoryRepository.getMemory(item.id) ?: return null
+        if (!eligible(current, query.targetIsLocal) || version(current) != item.version || current.kind.name != item.kind || current.scope.name != item.scope ||
+            com.halo.runtime.cognition.memory.LexicalMemoryScorer.snippet(current.content) != item.content) return null
+        // A changed hit requires fresh ranking; do not silently substitute a different personal fact.
+        return item
     }
 
     override suspend fun retrieve(query: MemoryQuery, limit: Int): List<MemoryContextCandidate> {

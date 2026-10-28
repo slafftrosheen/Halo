@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen60_follow_up">Напоминание</string>
+    <string name="screen60_follow_up_saved">Сохранённое напоминание. Откройте источник, чтобы проверить условие.</string>
+    <string name="screen60_follow_up_empty">Здесь появятся сохранённые напоминания.</string>
+    <string name="screen60_watch_waiting">Ожидание условия</string>
+    <string name="screen60_watch_processing">Условие выполнено · обработка</string>
+    <string name="screen60_watch_matched">Условие выполнено · проверьте источник</string>
+    <string name="screen60_watch_expired">Срок истёк</string>
+    <string name="screen60_watch_cancelled">Отменено</string>
+    <string name="screen60_watch_failed">Требует внимания</string>
+    <string name="screen60_source_changed">Источник изменился или больше недоступен. Перед открытием просмотрите его актуальную карточку.</string>
+</resources>

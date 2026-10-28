@@ -65,6 +65,7 @@ internal data class ScreenDisplay(
     val sourceTitle: Boolean = false, val sourceSummary: Boolean = false, val detailSummary: String? = null,
     val showFullTimestamp: Boolean = false,
     val stateArguments: List<Any> = emptyList(),
+    val continuation: ScreenContinuation? = null,
 )
 
 /** The same local layout is used on phones, tablets and in full screen. */
@@ -88,11 +89,23 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         .collectAsStateWithLifecycle(emptyList())
     val activeStudySessions by remember { ManualDependencyGraph.studyUseCases.observeActiveSessions() }
         .collectAsStateWithLifecycle(emptyList())
+    val followUps by remember { ManualDependencyGraph.followUpRepository.observeRecentWatches() }
+        .collectAsStateWithLifecycle(emptyList())
+    val visibleFollowUps = followUps.filter { watch -> when (val behavior = watch.behavior) {
+        is com.halo.runtime.cognition.watch.WatchBehavior.Notify -> true
+        is com.halo.runtime.cognition.watch.WatchBehavior.MakeRunResumable ->
+            behavior.wakePolicy == com.halo.runtime.cognition.watch.ContinuationWakePolicy.SURFACE_TO_USER
+        is com.halo.runtime.cognition.watch.WatchBehavior.ReconcileRun -> false
+    } }
     val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
+    // Same Home/CognitiveSession projection; observing it cannot start a turn or recording.
+    val assistant by ManualDependencyGraph.homeViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val environment = rememberScreenEnvironment()
     val maskSensitive = screenMasksSensitive(fullScreen, hidePrivate, environment)
     val canInteract = environment.resumed && environment.interactive && !environment.locked && !orbActive
+    val latestCanInteract = rememberUpdatedState(canInteract)
+    val latestMaskSensitive = rememberUpdatedState(maskSensitive)
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var now by remember { mutableStateOf(Instant.now()) }
@@ -158,7 +171,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     BindShellPageActions(ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen"), listOf(
         ShellPageAction("page.screen.customize", "Customize", HaloGlyph.SETTINGS,
             layout != null && !customizing && canInteract) { setCustomizing(true) },
-        ShellPageAction("page.screen.settings", "Screen settings", HaloGlyph.SETTINGS, canInteract) { settings = true },
+        ShellPageAction("page.screen.settings", "Screen settings", HaloGlyph.SETTINGS, canInteract) { onFullScreen(false); settings = true },
         ShellPageAction("page.screen.add", "Add card", HaloGlyph.NOTE, customizing && canInteract) { picker = true },
         ShellPageAction("page.screen.appearance", "Appearance", HaloGlyph.APPEARANCE, customizing && canInteract) { appearanceOpen = true },
         ShellPageAction("page.screen.ambient", "Screen", HaloGlyph.HOME, canInteract) { onFullScreen(!fullScreen) },
@@ -168,6 +181,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) }
     var calendarEvent by remember { mutableStateOf<Pair<String, Long>?>(null) }
     var calendarFailed by remember { mutableStateOf(false) }
+    var calendarReadAt by remember { mutableStateOf<Instant?>(null) }
+    var calendarLoading by remember { mutableStateOf(true) }
     var calendarDenied by rememberSaveable { mutableStateOf(false) }
     val fallbackCalendarTitle = uiText("Calendar event")
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -204,7 +219,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         if (current != null) {
             val unbound = current.cards.indexOfFirst { it.widgetType == "automation_result" && it.itemId == null }
             val result = routineItems.sortedByDescending { it.updatedAt }.firstOrNull { item ->
-                current.cards.none { it.itemId == item.id }
+                item.sourceType == ScreenSourceType.AUTOMATION && current.cards.none { it.itemId == item.id }
             }
             if (unbound >= 0 && result != null) store.saveLayout(current.copy(cards = current.cards.mapIndexed { index, card ->
                 if (index == unbound) card.copy(itemId = result.id) else card
@@ -227,33 +242,55 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
         }
     }
-    LaunchedEffect(now, calendarAllowed, environment.resumed, environment.locked, layout?.cards?.any { it.widgetType == "calendar" }) {
-        if (calendarAllowed && environment.resumed && !environment.locked && layout?.cards?.any { it.widgetType == "calendar" } == true) {
-            calendarEvent = withContext(Dispatchers.IO) {
-                try {
-                    val uri = android.provider.CalendarContract.Instances.CONTENT_URI.buildUpon().also {
-                        android.content.ContentUris.appendId(it, now.toEpochMilli())
-                        android.content.ContentUris.appendId(it, now.plusSeconds(86400).toEpochMilli())
-                    }.build()
-                    context.contentResolver.query(uri,
-                        arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN),
-                        null, null, "${CalendarContract.Instances.BEGIN} ASC")?.use { cursor ->
-                        if (cursor.moveToFirst()) (cursor.getString(0) ?: fallbackCalendarTitle) to cursor.getLong(1) else null
-                    }.also { calendarFailed = false }
-                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                catch (_: Exception) { calendarFailed = true; null }
-            }
+    LaunchedEffect(now, calendarAllowed, maskSensitive, layout?.cards?.any { it.widgetType == "calendar" }) {
+        if (!calendarAllowed || maskSensitive || layout?.cards?.any { it.widgetType == "calendar" } != true) {
+            calendarEvent = null
+            calendarReadAt = null
+            calendarFailed = false
+            calendarLoading = false
+            return@LaunchedEffect
         }
+        calendarLoading = true
+        val result = withContext(Dispatchers.IO) {
+            try {
+                // Permission can be revoked while this screen is already visible.
+                check(ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED)
+                val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also {
+                    android.content.ContentUris.appendId(it, now.toEpochMilli())
+                    android.content.ContentUris.appendId(it, now.plusSeconds(86400).toEpochMilli())
+                }.build()
+                val event = checkNotNull(context.contentResolver.query(uri,
+                    arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN),
+                    null, null, "${CalendarContract.Instances.BEGIN} ASC")) {
+                    "Calendar provider unavailable"
+                }.use { cursor ->
+                    if (cursor.moveToFirst()) (cursor.getString(0) ?: fallbackCalendarTitle) to cursor.getLong(1) else null
+                }
+                Result.success(event)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (failure: Exception) { Result.failure<Pair<String, Long>?>(failure) }
+        }
+        // Publish only after returning to the current effect. Cancelled mask/route reads cannot publish.
+        calendarAllowed = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+        calendarEvent = if (calendarAllowed) result.getOrNull() else null
+        calendarFailed = result.isFailure
+        calendarReadAt = if (calendarAllowed && result.isSuccess) Instant.now() else null
+        calendarLoading = false
     }
     BackHandler(fullScreen || customizing) { if (fullScreen) onFullScreen(false) else setCustomizing(false) }
     ScreenWindowPolicy(fullScreen, keepCharging, dimAtNight, now, environment)
     val shift = if (fullScreen && environment.resumed && environment.interactive) ((now.epochSecond / 300L) % 5L).toInt() - 2 else 0
-    LaunchedEffect(environment.resumed, environment.locked, orbActive) {
+    LaunchedEffect(environment.resumed, environment.locked, orbActive, maskSensitive) {
         if (!environment.resumed || environment.locked || orbActive) {
             settings = false; picker = false; appearanceOpen = false; cardOptionsIndex = null
             presetNameOpen = false; topicsOpen = false; askLayout = false; previewType = null; detailCard = null
         }
         if (!environment.resumed || environment.locked) researchRefreshQuery = null
+        if (maskSensitive) {
+            // A stand/lock transition must also redact sheets and provider-triggering pending UI.
+            topicsOpen = false; askLayout = false; detailCard = null; researchRefreshQuery = null
+            proposedLayout = null; proposedPlan = null; proposedResearchQuery = null
+        }
     }
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     @Composable fun display(card: ScreenCard): ScreenDisplay = when (card.widgetType) {
@@ -262,11 +299,13 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             .withLocale(locale).format(now.atZone(ZoneId.systemDefault())), "On this phone", null, sourceTitle = true, sourceSummary = true)
         "calendar" -> ScreenDisplay("Next on your calendar", when {
             !calendarAllowed -> "Choose whether halo can read your calendar."
+            calendarLoading || calendarReadAt == null && !calendarFailed -> stringResource(R.string.screen_source_loading)
             calendarFailed -> "Your calendar could not be opened."
             calendarEvent == null -> "Nothing scheduled in the next 24 hours."
             else -> calendarEvent!!.first + " · " + DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
                 .format(Instant.ofEpochMilli(calendarEvent!!.second).atZone(ZoneId.systemDefault()))
-        }, if (!calendarAllowed) "Permission needed" else if (calendarFailed) "Needs attention" else "On this phone", null, true, sourceSummary = calendarAllowed && !calendarFailed && calendarEvent != null)
+        }, if (!calendarAllowed) "Permission needed" else if (calendarLoading) stringResource(R.string.screen_source_loading) else if (calendarFailed) "Needs attention" else "On this phone", null, true,
+            updatedAt = calendarReadAt, sourceSummary = calendarAllowed && (calendarLoading || !calendarFailed && calendarEvent != null))
         "weather" -> ScreenDisplay("Weather", "A weather source has not been connected.", "Needs setup", null)
         "device" -> ScreenDisplay(stringResource(R.string.screen_this_phone), environment.batteryPercent?.let {
             stringResource(R.string.screen_battery_percent, it)
@@ -276,18 +315,19 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         "interests" -> ScreenDisplay("For you", topics.ifBlank { "Choose a reading source. Your notes and chats are never used to guess your interests." }, "Needs setup", null, topics.isNotBlank(), sourceSummary = topics.isNotBlank())
         "research" -> routineItems.firstOrNull { it.id == card.itemId && it.sourceType == ScreenSourceType.RESEARCH }?.let { item ->
             val summary = item.summary.orEmpty()
-            ScreenDisplay(item.title, summary.take(280) + if (summary.length > 280) "…" else "", if (item.expiresAt?.isBefore(now) == true) uiText("Saved result may be out of date")
+            ScreenDisplay(item.title, summary.take(280) + if (summary.length > 280) "…" else "",
+                if (item.state != ScreenItemState.READY || item.expiresAt?.isBefore(now) == true) screenItemStateLabel(item, now)
                 else "${uiText("Sourced research")} · ${item.sourceLinks.size} ${uiText("links")}",
                 null, true, item.updatedAt, sourceTitle = true, sourceSummary = true, detailSummary = summary,
                 showFullTimestamp = true)
         } ?: ScreenDisplay("Research", "Save a sourced web search to keep it here.", "No saved research yet", null, true)
         "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "No tasks to catch up on",
-            if (daily.items.isEmpty()) "No pending items" else "%1\$d updates", daily.primary?.action?.let {
+            if (daily.items.isEmpty()) "No pending items" else "Updates: %1\$d", daily.primary?.action?.let {
                 com.halo.app.ui.shell.dailyOwnerRoute(it)
             } ?: "activity", true,
             sourceSummary = daily.primary != null,
             stateArguments = if (daily.items.isEmpty()) emptyList() else listOf(daily.items.size))
-        "notebook" -> workspace.firstOrNull()?.let { note ->
+        "notebook" -> workspace.firstOrNull { card.itemId == null || it.id.value == card.itemId }?.let { note ->
             val kind = when (note.type) {
                 com.halo.app.data.notebook.WorkspaceObjectType.CANVAS -> "canvas"
                 com.halo.app.data.notebook.WorkspaceObjectType.CONVERSATION -> "conversation"
@@ -295,34 +335,60 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 com.halo.app.data.notebook.WorkspaceObjectType.NOTE -> "note"
                 else -> "file"
             }
-            ScreenDisplay("Continue", note.title, "Saved on this phone", "notebook/$kind/${android.net.Uri.encode(note.id.value)}", true, sourceSummary = true)
-        } ?: ScreenDisplay("Workspace", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
-        "study" -> activeStudySessions.firstOrNull()?.let { session ->
+            ScreenDisplay("Continue", note.title, "Saved on this phone", "notebook/$kind/${android.net.Uri.encode(note.id.value)}", true,
+                updatedAt = Instant.ofEpochMilli(note.updatedAt), sourceSummary = true,
+                continuation = ScreenContinuation.Workspace(note))
+        } ?: if (card.itemId != null) ScreenDisplay("Workspace", stringResource(R.string.screen60_source_changed),
+            "Needs attention", null, true, sourceSummary = true)
+        else ScreenDisplay("Workspace", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
+        "study" -> activeStudySessions.firstOrNull { card.itemId == null || it.id == card.itemId }?.let { session ->
             ScreenDisplay(session.goal?.take(160) ?: uiText("Continue studying"), uiText("Resume your saved Study session."),
                 uiText("Saved on this phone"), "notebook/study/${android.net.Uri.encode(session.id)}", true,
-                sourceTitle = true, sourceSummary = true)
-        } ?: ScreenDisplay("Continue studying", uiText("Start a Study session to see it here."), uiText("No active session"), "study", true,
+                updatedAt = Instant.ofEpochMilli(session.updatedAtEpochMs), sourceTitle = true, sourceSummary = true,
+                continuation = ScreenContinuation.Study(session))
+        } ?: if (card.itemId != null) ScreenDisplay("Continue studying", stringResource(R.string.screen60_source_changed),
+            "Needs attention", null, true, sourceSummary = true)
+        else ScreenDisplay("Continue studying", uiText("Start a Study session to see it here."), uiText("No active session"), "study", true,
             sourceSummary = true)
-        "halo_activity" -> ScreenDisplay("What halo did", activity.events.firstOrNull()?.title ?: "No activity yet",
-            "Activity", "activity", true, sourceSummary = activity.events.isNotEmpty())
+        "halo_activity" -> {
+            val progress = assistant.runtimeTaskStatus ?: assistant.longTaskStatus ?: assistant.orb.label.takeIf {
+                assistant.runtimeState != com.halo.app.ui.glass.material.HaloRuntimeState.Idle
+            }
+            ScreenDisplay("What halo did", progress ?: activity.events.firstOrNull()?.title ?: "No activity yet",
+                "Activity", "activity", true, sourceSummary = progress != null || activity.events.isNotEmpty())
+        }
+        "follow_up" -> visibleFollowUps.firstOrNull { card.itemId == null || it.id.value == card.itemId }?.let { watch ->
+            val label = when (watch.status) {
+                com.halo.runtime.cognition.watch.WatchStatus.ACTIVE -> R.string.screen60_watch_waiting
+                com.halo.runtime.cognition.watch.WatchStatus.MATCH_CLAIMED -> R.string.screen60_watch_processing
+                com.halo.runtime.cognition.watch.WatchStatus.SATISFIED -> R.string.screen60_watch_matched
+                com.halo.runtime.cognition.watch.WatchStatus.EXPIRED -> R.string.screen60_watch_expired
+                com.halo.runtime.cognition.watch.WatchStatus.CANCELLED -> R.string.screen60_watch_cancelled
+                com.halo.runtime.cognition.watch.WatchStatus.FAILED -> R.string.screen60_watch_failed
+            }
+            // A condition match is readiness, never proof that a waiting action ran.
+            val message = watch.presentationText ?: (watch.behavior as? com.halo.runtime.cognition.watch.WatchBehavior.Notify)?.message
+            ScreenDisplay(stringResource(R.string.screen60_follow_up), message ?: stringResource(R.string.screen60_follow_up_saved),
+                stringResource(label), "automation?watchId=${android.net.Uri.encode(watch.id.value)}", true,
+                watch.matchedAt ?: watch.createdAt, sourceTitle = true, sourceSummary = true,
+                continuation = ScreenContinuation.FollowUp(watch))
+        } ?: ScreenDisplay(stringResource(R.string.screen60_follow_up),
+            if (card.itemId == null) stringResource(R.string.screen60_follow_up_empty) else stringResource(R.string.screen60_source_changed),
+            "Nothing to show yet", null, true, sourceTitle = true, sourceSummary = true)
         else -> {
-            val item = if (card.itemId != null) routineItems.firstOrNull { it.id == card.itemId }
+            val item = if (card.itemId != null) routineItems.firstOrNull {
+                it.id == card.itemId && it.sourceType == ScreenSourceType.AUTOMATION
+            }
                 else null
             if (item == null) ScreenDisplay("Routine results", "A finished routine will update this card.", "Waiting for a result", "automation", true)
             else ScreenDisplay(item.title, item.summary.orEmpty(),
-                if (item.expiresAt?.isBefore(now) == true) "Saved result may be out of date" else when (item.state) {
-                    ScreenItemState.READY -> "Updated"
-                    ScreenItemState.LOADING -> "Loading…"
-                    ScreenItemState.REFRESHING -> "Updating…"
-                    ScreenItemState.EMPTY -> "Nothing to show yet"
-                    ScreenItemState.NEEDS_SETUP -> "Needs setup"
-                    ScreenItemState.PERMISSION_DENIED -> "Permission needed"
-                    ScreenItemState.OFFLINE -> "Offline · showing saved content"
-                    ScreenItemState.STALE -> "Last update failed"
-                    ScreenItemState.ERROR -> "Needs attention"
-                },
-                item.sourceId?.let { "automation?routineId=${android.net.Uri.encode(it)}" } ?: "automation",
-                item.sensitivity != ScreenSensitivity.PUBLIC, item.lastSuccessAt ?: item.updatedAt, sourceTitle = true, sourceSummary = true)
+                screenItemStateLabel(item, now),
+                item.sourceId?.takeIf { item.sourceRevision != null }?.let {
+                    "automation?routineId=${android.net.Uri.encode(it)}"
+                } ?: "automation",
+                item.sensitivity != ScreenSensitivity.PUBLIC, item.lastSuccessAt ?: item.updatedAt, sourceTitle = true, sourceSummary = true,
+                continuation = if (item.sourceId != null && item.sourceRevision != null)
+                    ScreenContinuation.Routine(item.sourceId, item.sourceRevision) else null)
         }
     }
     val conflictText = stringResource(R.string.screen_edit_conflict)
@@ -330,7 +396,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     val shellZone = com.halo.app.ui.presence.LocalShellUtilityBand.current != null
     val screenUtility: @Composable () -> Unit = {
         ScreenWorkspaceChrome(workingLayout != null, customizing, fullScreen, chromeVisible, orbActive,
-            canInteract, onChat, { settings = true }, onFullScreen,
+            canInteract, onChat, { onFullScreen(false); settings = true }, onFullScreen,
             onEdit = { setCustomizing(true) }, onApply = {
                 if (editBase != null && editDraft != null && store.applyDraft(editBase, editDraft)) {
                     val research = editResearchQuery
@@ -471,14 +537,22 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         Text(uiText("Add a card"), Modifier.padding(20.dp), style = MaterialTheme.typography.headlineSmall)
         Column(Modifier.heightIn(max = 500.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
             ScreenWidgets.types.forEach { type ->
-                if (type == "automation_result" && routineItems.isNotEmpty()) routineItems.forEach { result ->
+                if (type == "automation_result" && routineItems.any { it.sourceType == ScreenSourceType.AUTOMATION })
+                    routineItems.filter { it.sourceType == ScreenSourceType.AUTOMATION }.forEach { result ->
                     TextButton(onClick = { previewType = type; previewItem = result.id; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                        Text(uiText("Routine results") + " · " + result.title)
+                        Text(uiText("Routine results") + " · " +
+                            if (maskSensitive && result.sensitivity != ScreenSensitivity.PUBLIC) uiText("Private card") else result.title)
+                    }
+                } else if (type == "follow_up" && visibleFollowUps.isNotEmpty()) visibleFollowUps.distinctBy { it.id }.forEach { watch ->
+                    TextButton(onClick = { previewType = type; previewItem = watch.id.value; picker = false },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                        Text(stringResource(R.string.screen60_follow_up) + " · " +
+                            if (maskSensitive) uiText("Private card") else watch.presentationText.orEmpty().take(160))
                     }
                 } else if (type == "research" && routineItems.any { it.sourceType == ScreenSourceType.RESEARCH }) routineItems
                     .filter { it.sourceType == ScreenSourceType.RESEARCH }.forEach { result ->
                         TextButton(onClick = { previewType = type; previewItem = result.id; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(uiText("Research") + " · " + result.title)
+                        Text(uiText("Research") + " · " + if (maskSensitive) uiText("Private card") else result.title)
                         }
                 } else TextButton(onClick = { previewType = type; previewItem = null; picker = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(screenWidgetTitle(type))
@@ -538,7 +612,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }, enabled = presetName.isNotBlank()) { Text(uiText("Save")) }
         }
     }
-    if (topicsOpen) ScreenNativeSheet(onDismissRequest = { topicsOpen = false }) {
+    if (topicsOpen && !maskSensitive) ScreenNativeSheet(onDismissRequest = { topicsOpen = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(uiText("Choose topics"), style = MaterialTheme.typography.headlineSmall)
@@ -564,7 +638,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
         }
     }
-    if (askLayout) ScreenNativeSheet(onDismissRequest = {
+    if (askLayout && !maskSensitive) ScreenNativeSheet(onDismissRequest = {
         askLayout = false; proposedLayout = null; proposedPlan = null; proposedResearchQuery = null
     }) {
         Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
@@ -705,7 +779,28 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                                 android.net.Uri.parse("package:${context.packageName}")))
                             else calendarPermission.launch(Manifest.permission.READ_CALENDAR)
                         }) { Text(uiText(if (calendarDenied) "Open Android settings" else "Allow calendar access")) }
-                    data.route?.let { route -> com.halo.app.ui.components.HaloActionButton(onClick = { detailCard = null; onFullScreen(false); onOpen(route) }) { Text(uiText("Open source")) } }
+                    data.route?.let { route ->
+                        val unavailable = stringResource(R.string.screen60_source_changed)
+                        com.halo.app.ui.components.HaloActionButton(onClick = {
+                            coroutineScope.launch {
+                                val current = try {
+                                    withContext(Dispatchers.IO) {
+                                        data.continuation?.isCurrent(ManualDependencyGraph.workspaceRepository,
+                                            ManualDependencyGraph.studyUseCases, ManualDependencyGraph.routineRepository,
+                                            ManualDependencyGraph.followUpRepository) ?: true
+                                    }
+                                } catch (cancelled: CancellationException) { throw cancelled }
+                                catch (_: Exception) { false }
+                                val unlocked = runCatching {
+                                    context.getSystemService(android.app.KeyguardManager::class.java)?.isKeyguardLocked == false
+                                }.getOrDefault(false)
+                                if (!current) { detailCard = null; notice = unavailable }
+                                else if (latestCanInteract.value && unlocked && !(data.sensitive && latestMaskSensitive.value)) {
+                                    detailCard = null; onFullScreen(false); onOpen(route)
+                                }
+                            }
+                        }) { Text(uiText("Open source")) }
+                    }
                 }
                 Text(uiText(data.state, *data.stateArguments.toTypedArray()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = {
@@ -714,9 +809,22 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
         }
     } }
-    researchRefreshQuery?.let { query ->
+    researchRefreshQuery?.takeUnless { maskSensitive }?.let { query ->
         com.halo.app.ui.online.GroundedWebSearchDialog(query) { researchRefreshQuery = null }
     }
+}
+
+/** A failed/offline publication keeps its real state even after its saved payload expires. */
+private fun screenItemStateLabel(item: ScreenItem, now: Instant): String = when (item.state) {
+    ScreenItemState.READY -> if (item.expiresAt?.isBefore(now) == true) "Saved result may be out of date" else "Updated"
+    ScreenItemState.LOADING -> "Loading…"
+    ScreenItemState.REFRESHING -> "Updating…"
+    ScreenItemState.EMPTY -> "Nothing to show yet"
+    ScreenItemState.NEEDS_SETUP -> "Needs setup"
+    ScreenItemState.PERMISSION_DENIED -> "Permission needed"
+    ScreenItemState.OFFLINE -> "Offline · showing saved content"
+    ScreenItemState.STALE -> "Last update failed"
+    ScreenItemState.ERROR -> "Needs attention"
 }
 
 private fun researchNoteBody(item: ScreenItem): String = buildString {
@@ -749,7 +857,11 @@ internal fun widgetTitle(type: String): String = when (type) {
 }
 
 @Composable
-internal fun screenWidgetTitle(type: String): String = if (type == "device") stringResource(R.string.screen_this_phone) else uiText(widgetTitle(type))
+internal fun screenWidgetTitle(type: String): String = when (type) {
+    "device" -> stringResource(R.string.screen_this_phone)
+    "follow_up" -> stringResource(R.string.screen60_follow_up)
+    else -> uiText(widgetTitle(type))
+}
 
 internal fun formatScreenTimestamp(instant: Instant, includeDate: Boolean, locale: Locale,
     zone: ZoneId = ZoneId.systemDefault()): String {
@@ -783,7 +895,7 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
     val highContrast = com.halo.app.ui.theme.rememberVisualPreferences().higherContrast
     val colors = MaterialTheme.colorScheme
     val cardColor by animateColorAsState(
-        if (update && !masked) androidx.compose.ui.graphics.lerp(colors.surfaceContainerLow, colors.primaryContainer, .12f)
+        if (update && !masked && !fullScreen && !reduced) androidx.compose.ui.graphics.lerp(colors.surfaceContainerLow, colors.primaryContainer, .12f)
         else colors.surfaceContainerLow,
         animationSpec = tween(if (reduced) 0 else com.halo.app.ui.design.HaloMotion.standardMs), label = "screen-card-freshness")
     Surface(onClick = onOpen, enabled = enabled, modifier = Modifier.fillMaxWidth(), shape = HaloShapes.card,
@@ -802,7 +914,7 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
                     Text(if (data.sourceTitle) data.title else uiText(data.title), Modifier.weight(1f), style =
                         screenTextStyle(if (card.widgetType == "clock") { if (fullScreen) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge } else MaterialTheme.typography.titleMedium,
                             appearance, if (card.widgetType == "clock") card.typography.clockPercent else card.typography.titlePercent))
-                    if (update) HaloPackageFx(HaloPackageMoment.CARD_UPDATE, Modifier.size(40.dp))
+                    if (update && !fullScreen && !reduced) HaloPackageFx(HaloPackageMoment.CARD_UPDATE, Modifier.size(40.dp))
                     else if (card.pinned) HaloIcon(HaloGlyph.NOTE, uiText("Pinned"), Modifier.size(16.dp))
                 }
                 Text(if (data.sourceSummary) data.summary else uiText(data.summary),

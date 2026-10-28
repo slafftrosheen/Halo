@@ -159,7 +159,7 @@ fun AppShell(
         )
     val interactionState by interactionViewModel.state.collectAsStateWithLifecycle()
     interactionState.primary?.let { surface ->
-        com.halo.app.interaction.InteractionSurfaceRenderer(
+        ShellInteractionSurface(
             surface = surface,
             onRespond = interactionViewModel::respond,
         )
@@ -968,6 +968,8 @@ fun AppShell(
                 listOf("skills", "advanced/skills").forEach { skillRoute ->
                 composable(skillRoute) {
                     SkillsScreen(
+                        procedureStore = ManualDependencyGraph.learnedProcedureStore,
+                        onUseWorkflow = { request -> navigateSafely("home"); homeViewModel.submitText(request) },
                         onIntegrations = { navigateSafely("integrations") },
                         appCapabilities = ManualDependencyGraph.appFunctionCapabilityIndex,
                         refreshAppCapabilities = { ManualDependencyGraph.appFunctionConsumer.refresh() },
@@ -1154,8 +1156,11 @@ fun AppShell(
                     SettingsScreen(viewModel, rootRequest = settingsRootRequest, onSetup = { stage -> setupStore.open(stage); setupSession = true; navigateSafely("guided_setup") })
                 }
 
-                composable("automation?routineId={routineId}", arguments = listOf(navArgument("routineId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                composable("automation?routineId={routineId}&watchId={watchId}", arguments = listOf(
+                    navArgument("routineId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("watchId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
+                        focusWatchId = entry.arguments?.getString("watchId"),
                         focusRoutineId = entry.arguments?.getString("routineId"), onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") },
                         onActivity = { navigateSafely(Screen.Activity.route) }, onInbox = { navigateSafely("notifications") })
                 }

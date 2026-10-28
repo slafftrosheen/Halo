@@ -95,8 +95,15 @@ fun SkillsScreen(
     onModelRoles: () -> Unit = {},
     packageIssues: kotlinx.coroutines.flow.StateFlow<List<com.halo.app.skills.SkillPackageIssue>>? = null,
     technical: Boolean = false,
+    procedureStore: com.halo.runtime.cognition.procedures.LearnedProcedureStore? = null,
+    onUseWorkflow: ((String) -> Unit)? = null,
 ) {
-    SettingsChildZone("Skills", onBack, listOf(settingsChildLink("onIntegrations", "Apps & services", onIntegrations), settingsChildLink("onLocalModels", "On-device models", onLocalModels), settingsChildLink("onModelRoles", "Model roles", onModelRoles)))
+    var selectedWorkflow by remember { mutableStateOf<com.halo.runtime.cognition.procedures.LearnedProcedure?>(null) }
+    SettingsChildZone("Skills", onBack, listOf(settingsChildLink("onIntegrations", "Apps & services", onIntegrations), settingsChildLink("onLocalModels", "On-device models", onLocalModels), settingsChildLink("onModelRoles", "Model roles", onModelRoles)),
+        selectedObjectId = selectedWorkflow?.id,
+        selectedSourceVersion = selectedWorkflow?.let(com.halo.app.data.procedure.ProcedureContracts::version),
+        selectedToolIds = if (selectedWorkflow != null) com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.procedures.sorted() else null,
+        selectedTool = if (selectedWorkflow != null) "workflow" else null)
     val issues by (packageIssues ?: flowOf(emptyList())).collectAsStateWithLifecycle(initialValue = emptyList())
     LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
     val appSnapshot by (appCapabilities?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.runtime.cognition.apps.AppCapabilitySnapshot())).collectAsStateWithLifecycle()
@@ -423,6 +430,9 @@ fun SkillsScreen(
             label = { Text(uiText("Search skills")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
 
         LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            if (procedureStore != null && query.isBlank()) item(key = "my-workflows") {
+                MyWorkflowsPanel(procedureStore, toolRegistry, onUseWorkflow) { selectedWorkflow = it }
+            }
             if (accessChangeFailed) item(key = "access-change-error") {
                 Text(uiText("Could not save that change. Try again."), color = MaterialTheme.colorScheme.error)
             }

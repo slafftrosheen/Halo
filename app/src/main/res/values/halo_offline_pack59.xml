@@ -1,0 +1,29 @@
+<resources>
+    <string name="offline59_chat_download">Download / resume conversation extension</string>
+    <string name="offline59_chat_rollback">Remove only extension-owned downloads</string>
+    <string name="offline59_chat_intact">Conversation files are intact. Select and qualify this candidate separately; speech and language quality remain unverified.</string>
+    <string name="offline59_chat_recovery">Extension setup needs attention. Refresh file status. Keep files to clear a changed receipt, repair independent damaged models in the model list, or retry a failed download. Working and unrelated models are retained.</string>
+    <string name="offline59_refresh">Refresh download and storage estimate</string>
+    <string name="offline59_download_space">Estimated download: %1$s. Additional free storage needed: %2$s. Choose Install to authorize this download.</string>
+    <string name="offline59_low_storage">Not enough free storage. Free some space, then reopen this setup to refresh the estimate.</string>
+    <string name="offline59_repair">Existing speech files are incomplete or damaged. Finish the interrupted download, or remove and reinstall them in Voice settings. Existing files were kept. Retry this setup after repair.</string>
+    <string name="offline59_chat_candidate">Optional conversation extension: SmolLM2 360M, an inspected Apache-2.0 candidate. Download it separately in the model list. No automatic selection, measured language coverage or device recommendation.</string>
+    <string name="offline59_check">Check installed pack files</string>
+    <string name="offline59_snapshot">Last file check: %1$d of %2$d roles have intact files. This is not a conversation or language qualification.</string>
+    <string name="offline59_pending">File inspection is running or unavailable. Retry when setup is idle.</string>
+    <string name="offline59_incomplete">The starter download has no conversation model. An optional unqualified conversation candidate is available separately below. Installed files do not mean an offline voice assistant is ready. Local notes and manual tools remain available.</string>
+    <string name="offline59_intent">Experimental actions candidate: the historical CPU result missed the 2-second limit. Downloading does not qualify or enable this classifier.</string>
+    <string name="offline59_memory">Designed for evaluation on 8 GB phones. Reported device memory: %1$s. Working memory, thermal behavior and coexistence still need measurement.</string>
+    <string name="offline59_unknown">Not established</string>
+    <string name="offline59_review">Review pack sources and file checks</string>
+    <string name="offline59_hide">Hide pack details</string>
+    <string name="offline59_license">Publisher license and redistribution review is incomplete. A listed license is a source declaration, not Halo approval. Review the sources before choosing an explicit download.</string>
+    <string name="offline59_languages">EN, RU, LV and PL voice quality needs separate device evidence. Translated controls and upstream language lists do not prove usable speech.</string>
+    <string name="offline59_chat">Conversation</string>
+    <string name="offline59_actions">Actions candidate</string>
+    <string name="offline59_listening">Listening</string>
+    <string name="offline59_vad">Speech activity detection</string>
+    <string name="offline59_output">Speech output</string>
+    <string name="offline59_acknowledge">I have reviewed the sources and declared licenses, including missing license information. This does not certify licensing or device readiness.</string>
+    <string name="offline59_review_required">Review and acknowledge the pack sources before downloading.</string>
+</resources>

@@ -115,7 +115,15 @@ class ToolRegistry(
      */
     fun validate(
         toolCall: ToolCall
-    ): ToolExecutionResult.Rejected? {
+    ): ToolExecutionResult.Rejected? = validateCall(toolCall, emptyMap())
+
+    /** Validate saved literals and whole-argument input types without executing or inventing values.
+     * Actual input constraints are checked again by [validate] after binding, before dispatch.
+     */
+    fun validateTemplate(toolCall: ToolCall, inputTypes: Map<String, String>): ToolExecutionResult.Rejected? =
+        validateCall(toolCall, inputTypes)
+
+    private fun validateCall(toolCall: ToolCall, inputTypes: Map<String, String>): ToolExecutionResult.Rejected? {
 
         val argumentViolation = validateArgumentValue(toolCall.arguments, depth = 0)
         if (argumentViolation != null) {
@@ -159,7 +167,24 @@ class ToolRegistry(
                     kind = ToolRejectionKind.CAPABILITY_UNAVAILABLE
                 )
             }
-        val schemaError = validateSchema(toolCall.arguments, definition.parameters, "arguments")
+        val schema = definition.parameters
+        if (inputTypes.isNotEmpty()) {
+            fun rejectTemplate() = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName,
+                "Workflow inputs do not match the registered argument schema")
+            if (inputTypes.size > 32 || inputTypes.keys.any { it in toolCall.arguments }) return rejectTemplate()
+            val properties = schema["properties"] as? Map<*, *> ?: return rejectTemplate()
+            val required = schema["required"] as? List<*> ?: emptyList<Any>()
+            if (required.any { it !in toolCall.arguments && it !in inputTypes }) return rejectTemplate()
+            for ((argument, type) in inputTypes) {
+                val property = properties[argument] as? Map<*, *> ?: return rejectTemplate()
+                if (type !in setOf("string", "integer", "boolean")) return rejectTemplate()
+                val expected = property["type"]
+                if (expected != type && !(expected == "number" && type == "integer")) return rejectTemplate()
+            }
+        }
+        val literalSchema = if (inputTypes.isEmpty()) schema else schema +
+            ("required" to (schema["required"] as? List<*>).orEmpty().filterNot { it in inputTypes })
+        val schemaError = validateSchema(toolCall.arguments, literalSchema, "arguments")
         return schemaError?.let { ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, it) }
     }
 

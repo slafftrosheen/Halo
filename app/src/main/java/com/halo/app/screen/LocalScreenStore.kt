@@ -64,8 +64,12 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     }
 
     override suspend fun markFailed(id: String, at: Instant) {
-        val old = _items.value.firstOrNull { it.id == id } ?: return
-        publish(old.copy(state = ScreenItemState.STALE, updatedAt = at))
+        synchronized(lock) {
+            val old = _items.value.firstOrNull { it.id == id } ?: return
+            if (old.updatedAt?.isAfter(at) == true) return
+            // Preserve the latest successful payload while holding the same upsert lock.
+            persistItems(_items.value.map { if (it.id == id) old.copy(state = ScreenItemState.STALE, updatedAt = at) else it })
+        }
     }
 
     override fun observe(ids: Set<String>): Flow<List<ScreenItem>> = items.map { values -> values.filter { it.id in ids } }
@@ -78,7 +82,8 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 
     fun undo() = synchronized(lock) { undoLayout?.let { previous ->
         undoLayout = _layout.value
-        persistLayout(previous)
+        // Undo restores content, never an old revision: a pre-undo preview must stay stale.
+        persistLayout(previous.copy(version = (_layout.value?.version ?: 0) + 1))
     } }
 
     /** A preview never overwrites a layout changed by another source while it was open. */
@@ -154,6 +159,9 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 
     private fun validateItem(item: ScreenItem) {
         require(item.id.length in 1..240 && item.title.length <= 240)
+        require(item.sourceId == null || item.sourceId.length in 1..240)
+        require(item.sourceRevision == null || item.sourceRevision.length in 1..240)
+        require((item.summary?.length ?: 0) <= 16_000 && (item.attribution?.length ?: 0) <= 240)
         require(item.sourceLinks.size <= 8 && item.sourceLinks.all {
             it.title.length in 1..200 && it.url.length in 1..2048 && it.url.startsWith("https://")
         })
@@ -169,8 +177,10 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     private fun readLayout(): ScreenLayout? = ScreenLayoutCodec.decode(preferences.getString("layout", null))
 
     private fun readItems(): List<ScreenItem> = runCatching {
-        val array = JSONArray(preferences.getString("items", "[]"))
-        (0 until array.length()).mapNotNull { index ->
+        val raw = preferences.getString("items", "[]").orEmpty()
+        if (raw.length > 2_000_000) return@runCatching emptyList()
+        val array = JSONArray(raw)
+        (maxOf(0, array.length() - 100) until array.length()).mapNotNull { index ->
             runCatching {
                 val j = array.getJSONObject(index)
                 fun instant(key: String) = j.optString(key).takeIf { it.isNotBlank() && it != "null" }?.let(Instant::parse)
@@ -191,7 +201,7 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
                                 if (title.isNotBlank() && url.startsWith("https://")) ScreenSourceLink(title, url) else null
                             }
                         }.take(8)
-                    }.orEmpty())
+                    }.orEmpty(), j.optString("sourceRevision").takeUnless { it.isBlank() || it == "null" }).also(::validateItem)
             }.getOrNull()
         }.asReversed().distinctBy { it.id }.asReversed()
     }.getOrDefault(emptyList())
@@ -214,13 +224,13 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         .put("expiresAt", expiresAt?.toString()).put("state", state.name).put("sensitivity", sensitivity.name)
         .put("attribution", attribution).put("availableActions", JSONArray().apply {
             availableActions.distinctBy { it.id }.forEach { put(it.id) }
-        }).put("sourceLinks", JSONArray().apply {
+        }).put("sourceRevision", sourceRevision).put("sourceLinks", JSONArray().apply {
             sourceLinks.take(8).forEach { link -> put(JSONObject().put("title", link.title.take(200)).put("url", link.url.take(2048))) }
         })
 }
 
 object ScreenWidgets {
-    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "halo_activity", "interests", "research", "device")
+    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "follow_up", "halo_activity", "interests", "research", "device")
     fun starter(name: String): ScreenLayout {
         val types = when (name) {
             "Focus" -> listOf("clock", "tasks", "notebook")

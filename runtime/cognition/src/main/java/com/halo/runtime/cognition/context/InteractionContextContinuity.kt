@@ -5,9 +5,10 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Identity is not authority. Resolvers must validate source and policy on every turn. */
 sealed interface ContextReference {
-    data class WorkspaceObject(val objectId: String, val version: String?) : ContextReference
+    data class WorkspaceObject(val objectId: String, val version: String?,
+        val textAnchor: com.halo.sdk.runtime.study.StudyTextAnchor? = null) : ContextReference
     data class MediaAsset(val assetId: String, val ownerInteractionId: String?) : ContextReference
-    data class StudySession(val sessionId: String) : ContextReference
+    data class StudySession(val sessionId: String, val version: String? = null) : ContextReference
     data class ConversationTurn(val conversationId: String, val turnId: String) : ContextReference
 }
 enum class ContextCategory { VISUAL, WORKSPACE, STUDY, RESULT }

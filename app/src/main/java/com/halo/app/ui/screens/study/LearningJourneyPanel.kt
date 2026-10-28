@@ -33,6 +33,9 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
     var exploring by rememberSaveable(state.session?.id) { mutableStateOf(false) }
     var branch by rememberSaveable(state.session?.id) { mutableStateOf("") }
     var reflection by rememberSaveable(state.session?.id) { mutableStateOf(journey.reflection) }
+    LaunchedEffect(state.session?.id, state.loading) {
+        if (!state.loading && reflection.isBlank()) reflection = journey.reflection
+    }
     val target = if (kids) 56.dp else 48.dp
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,

@@ -48,6 +48,12 @@ interface WorkspaceContextDao {
 
 /** Explicit promotion and selection. Notes enter context only through these actions. */
 class WorkspaceContextStore(private val database: AppDatabase, private val notes: NotebookRepository, private val storage: com.halo.sdk.runtime.Storage) : WorkspaceContextSource {
+    private val accessPolicy = com.halo.app.data.workspace.WorkspaceMediaAiPolicy(database, storage)
+    override suspend fun permits(objectId: String, targetIsLocal: Boolean): Boolean {
+        if (!accessPolicy.permitsObject(objectId, targetIsLocal)) return false
+        val memory = database.memoryRecordDao().getRecord(objectId)
+        return memory?.sourceObjectId?.let { accessPolicy.permitsObject(it, targetIsLocal) } ?: true
+    }
     override val resolvedTextRequiresVersion = true
     override suspend fun referenceMetadata(objectId: String): com.halo.runtime.cognition.context.WorkspaceReferenceMetadata? = database.withTransaction {
         val version = versionFor(objectId) ?: return@withTransaction null
@@ -74,6 +80,19 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         database.workspaceFileDao().getFile(id)?.let { require(it.isReadable()) { "Source needs relinking" } }
         database.workspaceContextDao().add(WorkingSetEntry(id, System.currentTimeMillis()))
         Unit
+    }
+    /** Persist only a canonical saved block/range reference in the existing Working Set row. */
+    suspend fun selectNoteText(id: String, expectedVersion: String, anchor: com.halo.sdk.runtime.study.StudyTextAnchor): Unit = database.withTransaction {
+        require(versionFor(id) == expectedVersion) { "Source changed; select the passage again" }
+        val row = database.notebookDao().getWorkspaceObject(id)
+        require(row != null && row.type == "NOTE" && row.lifecycle == "ACTIVE") { "Selected note unavailable" }
+        val block = database.notebookDocumentDao().getBlocks(id).firstOrNull { it.id == anchor.blockId }
+        require(block != null && anchor.end <= block.text.length &&
+            (anchor.start == 0 || !block.text[anchor.start].isLowSurrogate()) &&
+            (anchor.end == block.text.length || !block.text[anchor.end].isLowSurrogate())) { "Selected passage unavailable" }
+        val encoded = org.json.JSONObject().put("version", expectedVersion).put("blockId", anchor.blockId)
+            .put("start", anchor.start).put("end", anchor.end).toString()
+        database.workspaceContextDao().add(WorkingSetEntry(id, System.currentTimeMillis(), "$NOTE_SELECTION_SOURCE_PREFIX$encoded"))
     }
     suspend fun selectInkSelection(canvasId: String, selectionNodeId: String,
         expected: com.halo.sdk.runtime.ink.InkSelectionContext? = null): Unit = database.withTransaction {
@@ -114,20 +133,24 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     override suspend fun entries(includeMemories: Boolean): List<com.halo.runtime.cognition.context.WorkspaceContextEntry> =
         database.withTransaction {
             database.workspaceContextDao().selectedEntries().take(20).mapNotNull { entry ->
+                if (!permits(entry.objectId, true)) return@mapNotNull null
                 resolveWorkingSetEntry(entry)?.let { (type, text) ->
                     if (type == "MEMORY" && !includeMemories) null else {
                         val version = versionFor(entry.objectId) ?: return@mapNotNull null
                         com.halo.runtime.cognition.context.WorkspaceContextEntry(entry.objectId,
-                            "Working set ${type.lowercase()}: ${text.take(8_000)}", version)
+                            "Working set ${type.lowercase()}: ${text.take(8_000)}", version, noteAnchor(entry))
                     }
                 }
             }
         }
 
-    override suspend fun contentFor(objectId: String): String? =
-        resolveContent(objectId)?.let { (type, text) ->
-            "Explicit ${type.lowercase()} reference: ${text.take(8_000)}"
-        }
+    override suspend fun contentFor(objectId: String): String? = database.withTransaction {
+        if (!permits(objectId, true)) return@withTransaction null
+        val selected = database.workspaceContextDao().selectedEntry(objectId)
+        val content = if (selected?.source?.startsWith(NOTE_SELECTION_SOURCE_PREFIX) == true)
+            resolveWorkingSetEntry(selected) else resolveContent(objectId)
+        content?.let { (type, text) -> "Explicit ${type.lowercase()} reference: ${text.take(8_000)}" }
+    }
 
     /** The revision and content share the existing Workspace/Room read boundary. */
     override suspend fun snapshot(objectId: String, expectedVersion: String?): com.halo.runtime.cognition.context.WorkspaceContextEntry? =
@@ -136,7 +159,8 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
             if (expectedVersion != null && expectedVersion != version) return@withTransaction null
             val text = contentFor(objectId) ?: return@withTransaction null
             if (versionFor(objectId) != version) return@withTransaction null
-            com.halo.runtime.cognition.context.WorkspaceContextEntry(objectId, text, version)
+            com.halo.runtime.cognition.context.WorkspaceContextEntry(objectId, text, version,
+                database.workspaceContextDao().selectedEntry(objectId)?.let { noteAnchor(it) })
         }
 
     override suspend fun versionFor(objectId: String): String? {
@@ -169,14 +193,33 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
                         .joinToString("") { byte -> "%02x".format(byte) }
                 }
             }
-            "MEMORY" -> if (resolveContent(objectId) != null) item.updatedAt.toString() else null
+            "MEMORY" -> database.memoryRecordDao().getRecord(objectId)?.takeIf { it.status == "ACTIVE" &&
+                (it.validUntil == null || it.validUntil > System.currentTimeMillis()) }?.let { item.updatedAt.toString() }
             else -> item.updatedAt.toString()
         }
     }
 
     override suspend fun isMemory(objectId: String): Boolean = database.notebookDao().getWorkspaceObject(objectId)?.type == "MEMORY"
 
+    private fun noteAnchor(entry: WorkingSetEntry): com.halo.sdk.runtime.study.StudyTextAnchor? {
+        if (!entry.source.startsWith(NOTE_SELECTION_SOURCE_PREFIX)) return null
+        return runCatching { org.json.JSONObject(entry.source.removePrefix(NOTE_SELECTION_SOURCE_PREFIX)).let {
+            com.halo.sdk.runtime.study.StudyTextAnchor(it.getString("blockId"), it.getInt("start"), it.getInt("end"))
+        } }.getOrNull()
+    }
+
     private suspend fun resolveWorkingSetEntry(entry: WorkingSetEntry): Pair<String, String>? {
+        if (entry.source.startsWith(NOTE_SELECTION_SOURCE_PREFIX)) {
+            val selection = runCatching { org.json.JSONObject(entry.source.removePrefix(NOTE_SELECTION_SOURCE_PREFIX)) }.getOrNull() ?: return null
+            if (versionFor(entry.objectId) != selection.optString("version")) return null
+            val item = database.notebookDao().getWorkspaceObject(entry.objectId)?.takeIf { it.type == "NOTE" && it.lifecycle == "ACTIVE" } ?: return null
+            val anchor = runCatching { com.halo.sdk.runtime.study.StudyTextAnchor(selection.getString("blockId"),
+                selection.getInt("start"), selection.getInt("end")) }.getOrNull() ?: return null
+            val block = database.notebookDocumentDao().getBlocks(item.id).firstOrNull { it.id == anchor.blockId } ?: return null
+            if (anchor.end > block.text.length) return null
+            return "NOTE" to "Selected passage from '${item.title}', block ${anchor.blockId}, UTF-16 ${anchor.start}–${anchor.end}, version ${selection.optString("version")} (quoted source data):\n" +
+                block.text.substring(anchor.start, anchor.end)
+        }
         if (entry.source.startsWith(INK_SELECTION_SOURCE_PREFIX)) {
             val selectionId = entry.source.removePrefix(INK_SELECTION_SOURCE_PREFIX).takeIf { it.isNotBlank() } ?: return null
             val item = database.notebookDao().getWorkspaceObject(entry.objectId)
@@ -209,6 +252,7 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     }
 
     private suspend fun resolveContent(id: String): Pair<String, String>? {
+        if (!permits(id, true)) return null
         val item = database.notebookDao().getWorkspaceObject(id) ?: return null
         if (item.lifecycle != "ACTIVE") return null
         val text = when (item.type) {
@@ -247,5 +291,6 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
 
     private companion object {
         const val INK_SELECTION_SOURCE_PREFIX = "INK_SELECTION:"
+        const val NOTE_SELECTION_SOURCE_PREFIX = "NOTE_SELECTION:"
     }
 }

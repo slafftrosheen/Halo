@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workflows_title">Moje przepływy</string>
+    <string name="workflows_empty">Tutaj pojawią się przepływy sprawdzone i zapisane z Halo.</string>
+    <string name="workflows_limits">Każdy krok nadal wymaga aktualnego źródła, uprawnień i zgody. Nie przyznaje to automatycznego cofania ani działania bez nadzoru.</string>
+    <string name="workflows_enabled">Włączony</string>
+    <string name="workflows_use_chat">Użyj w czacie</string>
+    <string name="workflows_delete">Usuń przepływ</string>
+    <string name="workflows_delete_confirm">Usunąć zapisany przepływ? Pliki i wcześniejsze wyniki pozostaną.</string>
+    <string name="workflows_refresh">Odśwież</string>
+    <string name="workflows_back">Wstecz</string>
+    <string name="workflows_changed">Przepływ zmienił się lub jest niedostępny. Odśwież i sprawdź ponownie.</string>
+    <string name="workflows_yes">Tak</string>
+    <string name="workflows_no">Nie</string>
+</resources>

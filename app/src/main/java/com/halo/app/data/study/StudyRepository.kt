@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.delay
 
+data class StudySummaryArtifact(val noteId: String, val revision: Long)
+
 /**
  * Persistence for guided Study. The repository owns durable state only; teaching policy lives in the
  * use cases and execution truth stays in the runtime journal.
@@ -35,6 +37,27 @@ class StudyRepository(
         dao.observeSession(sessionId).map { it?.toRecord() }
 
     suspend fun getSession(sessionId: String): StudySessionRecord? = dao.getSession(sessionId)?.toRecord()
+
+    suspend fun summaryArtifact(sessionId: String): StudySummaryArtifact? = database.withTransaction {
+        val id = database.workspaceContextDao().captureObject("study-summary:$sessionId", "v1") ?: return@withTransaction null
+        val metadata = org.json.JSONObject(requireNotNull(database.workspaceContextDao().provenanceMetadata(id)))
+        StudySummaryArtifact(id, metadata.getLong("noteRevision"))
+    }
+
+    /** Note write and stable artifact receipt share Room; process death cannot orphan a retry identity. */
+    suspend fun saveSummaryArtifact(sessionId: String,
+        save: suspend (StudySummaryArtifact?) -> StudySummaryArtifact?): StudySummaryArtifact? = database.withTransaction {
+        check(getSession(sessionId)?.lifecycle in setOf(StudySessionLifecycle.ACTIVE, StudySessionLifecycle.COMPLETED)) {
+            "Study session unavailable or archived"
+        }
+        val sourceId = "study-summary:$sessionId"
+        val recorded = summaryArtifact(sessionId)
+        val result = save(recorded) ?: return@withTransaction null
+        database.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(result.noteId, sourceId, "v1",
+            org.json.JSONObject().put("operation", "study-summary").put("sessionId", sessionId)
+                .put("noteRevision", result.revision).toString()))
+        result
+    }
 
     /** Explicit attached-lesson commands pin their first write to the reviewed saved session. */
     internal suspend fun <T> withExactSession(expected: StudySessionRecord, action: suspend () -> T): T = database.withTransaction {

@@ -22,7 +22,11 @@ internal fun HaloZone(
     onNavigate: (String) -> Unit, attentionCount: Int,
     utility: @Composable () -> Unit, orb: @Composable (Dp) -> Unit,
     profile: @Composable () -> Unit = { com.halo.app.ui.components.CompactPrivacyModeControl() },
-    backdrop: @Composable BoxScope.() -> Unit = { com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize()) },
+    // Screen owns its own working-area motion and ambient policy. Keep the shared
+    // footer still there, including when ambient masks the working-area cards.
+    backdrop: @Composable BoxScope.() -> Unit = {
+        com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize(), animate = route != "screen")
+    },
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     val fullActionHint = uiText("Hold halo for actions")

@@ -4,7 +4,7 @@ import com.halo.providers.litert.models.LiteRtCatalogModel
 import com.halo.providers.litert.models.LiteRtModelCatalog
 import java.util.Locale
 
-enum class CuratedLocalRole { INTENT_CANDIDATE, LOCAL_SEARCH_CANDIDATE }
+enum class CuratedLocalRole { INTENT_CANDIDATE, LOCAL_SEARCH_CANDIDATE, CONVERSATION_CANDIDATE }
 
 data class CuratedLocalEntry(val artifact: LiteRtCatalogModel, val role: CuratedLocalRole)
 
@@ -20,6 +20,9 @@ object CuratedLocalCatalog {
     val entries: List<CuratedLocalEntry> = listOf(
         CuratedLocalEntry(LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4, CuratedLocalRole.INTENT_CANDIDATE),
         CuratedLocalEntry(LiteRtModelCatalog.EMBEDDINGGEMMA2_740M, CuratedLocalRole.LOCAL_SEARCH_CANDIDATE),
+        // Existing inspected Apache-2.0 artifact (LOCAL-MODEL-ROLE-002), not a
+        // language/device recommendation. An optional explicit download only.
+        CuratedLocalEntry(LiteRtModelCatalog.SMOLLM2_360M_INSTRUCT, CuratedLocalRole.CONVERSATION_CANDIDATE),
     )
 
     // Data-class equality includes source pins, size, task, access, runtime profile,

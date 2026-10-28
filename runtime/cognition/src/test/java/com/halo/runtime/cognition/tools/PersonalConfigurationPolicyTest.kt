@@ -17,7 +17,8 @@ class PersonalConfigurationPolicyTest {
     @Test fun personalMetadataRequiresItsDeclaredDisclosureRegardlessOfCategory() {
         val gate = DefaultToolExposureGate()
         val names = PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current"
-        assertEquals(72, names.size)
+        // Includes the six saved-workflow actions, whose templates can contain personal content.
+        assertEquals(78, names.size)
         val localOnly = PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats
         assertTrue(localOnly.containsAll(setOf("halo_library_batch", "halo_library_apply_batch")))
         names.forEach { name ->

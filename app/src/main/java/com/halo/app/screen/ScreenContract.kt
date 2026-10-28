@@ -37,6 +37,7 @@ data class ScreenItem(
     val attribution: String?,          // publisher / provider shown on the card
     val availableActions: List<ScreenAction>,
     val sourceLinks: List<ScreenSourceLink> = emptyList(),
+    val sourceRevision: String? = null, // exact producing owner revision; absent on legacy publications
 )
 
 data class ScreenSourceLink(val title: String, val url: String)

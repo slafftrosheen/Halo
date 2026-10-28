@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen60_follow_up">Przypomnienie</string>
+    <string name="screen60_follow_up_saved">Zapisane przypomnienie. Otwórz źródło, aby sprawdzić warunek.</string>
+    <string name="screen60_follow_up_empty">Tutaj pojawią się zapisane przypomnienia.</string>
+    <string name="screen60_watch_waiting">Oczekiwanie na warunek</string>
+    <string name="screen60_watch_processing">Warunek spełniony · przetwarzanie</string>
+    <string name="screen60_watch_matched">Warunek spełniony · sprawdź źródło</string>
+    <string name="screen60_watch_expired">Wygasło</string>
+    <string name="screen60_watch_cancelled">Anulowano</string>
+    <string name="screen60_watch_failed">Wymaga uwagi</string>
+    <string name="screen60_source_changed">Źródło zmieniło się lub jest już niedostępne. Przed otwarciem przejrzyj jego aktualną kartę.</string>
+</resources>

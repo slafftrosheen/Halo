@@ -1,5 +1,7 @@
 # Open issues: code-only checkpoint
 
+> Current continuation: [2026-10-26 implementation checkpoint](OPEN-ISSUES-CODING-2026-10-26.md). The owner has authorized source work across all remaining open issues while deferring testing again. The results below remain historical evidence for their exact earlier source/APKs.
+
 The user's latest instruction is to code while the phone is unavailable and wait for their directive before testing. No Gradle build, test run, ADB operation, model download, inference or hardware qualification was performed in this source pass. The UI catalogue generator was used to write the reviewed translations; that is not validation evidence.
 
 The latest published checkpoint remains `04aacc4d46d3a1c61a67f566d6e06d28d915dae1`. The source changes below are local, uncommitted and **NOT_RUN**. The earlier 2052 app / 375 cognition passes belong to checkpoint23 and do not qualify this diff. Publication still follows the user's instruction to commit and push after checks pass.

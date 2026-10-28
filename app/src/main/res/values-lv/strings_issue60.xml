@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen60_follow_up">Atgādinājums</string>
+    <string name="screen60_follow_up_saved">Jūsu saglabātais atgādinājums. Atveriet avotu, lai pārskatītu nosacījumu.</string>
+    <string name="screen60_follow_up_empty">Šeit parādīsies jūsu saglabātie atgādinājumi.</string>
+    <string name="screen60_watch_waiting">Gaida nosacījuma izpildi</string>
+    <string name="screen60_watch_processing">Nosacījums izpildīts · apstrādā</string>
+    <string name="screen60_watch_matched">Nosacījums izpildīts · pārskatiet avotu</string>
+    <string name="screen60_watch_expired">Termiņš beidzies</string>
+    <string name="screen60_watch_cancelled">Atcelts</string>
+    <string name="screen60_watch_failed">Nepieciešama uzmanība</string>
+    <string name="screen60_source_changed">Šis avots ir mainījies vai vairs nav pieejams. Pirms atvēršanas pārskatiet tā jaunāko kartīti.</string>
+</resources>

@@ -106,12 +106,26 @@ class PresenceArtworkContractTest {
         assertFalse(PresenceArtwork.SUCCESS.motionPolicy(64f, false, true).compact)
         assertFalse(PresenceArtwork.WARNING.motionPolicy(64f, false, true).compact)
         assertFalse(PresenceArtwork.IDLE.motionPolicy(88f, false, false).animate)
-        assertTrue(PresenceArtwork.IDLE.motionPolicy(88f, false, true).loop)
+        assertFalse(PresenceArtwork.IDLE.motionPolicy(88f, false, true).loop)
         assertFalse(PresenceArtwork.SUCCESS.motionPolicy(88f, false, true).loop)
         assertTrue(PresenceArtwork.WARNING.motionPolicy(88f, false, true).animate)
         assertFalse(PresenceArtwork.WARNING.motionPolicy(88f, false, true).loop)
         listOf(PresenceArtwork.ERROR, PresenceArtwork.OFFLINE, PresenceArtwork.STOPPED).forEach {
             assertFalse(it.motionPolicy(160f, false, true).animate)
+        }
+    }
+
+    @Test fun fullSizeIdleSettlesAfterOnePassWhileActiveFeedbackKeepsPlaying() {
+        // A desk/ambient session must not render the idle ring forever. Preserve
+        // the supplied arrival motion and genuine ongoing listening/speech cues.
+        for (size in listOf(80f, 96f, 160f)) {
+            val idle = PresenceArtwork.IDLE.motionPolicy(size, false, true)
+            assertTrue(idle.animate)
+            assertFalse("Idle must settle at $size dp", idle.loop)
+            for (active in listOf(PresenceArtwork.LISTENING, PresenceArtwork.CAPTURING_VOICE,
+                PresenceArtwork.THINKING, PresenceArtwork.SPEAKING)) {
+                assertTrue(active.motionPolicy(size, false, true).loop)
+            }
         }
     }
 }

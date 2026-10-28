@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen60_follow_up">Follow-up</string>
+    <string name="screen60_follow_up_saved">Your saved follow-up. Open its source to review the condition.</string>
+    <string name="screen60_follow_up_empty">Your saved follow-ups will appear here.</string>
+    <string name="screen60_watch_waiting">Waiting for the condition</string>
+    <string name="screen60_watch_processing">Condition matched · processing</string>
+    <string name="screen60_watch_matched">Condition matched · review the source</string>
+    <string name="screen60_watch_expired">Expired</string>
+    <string name="screen60_watch_cancelled">Cancelled</string>
+    <string name="screen60_watch_failed">Needs attention</string>
+    <string name="screen60_source_changed">This source changed or is no longer available. Review its latest card before opening it.</string>
+</resources>

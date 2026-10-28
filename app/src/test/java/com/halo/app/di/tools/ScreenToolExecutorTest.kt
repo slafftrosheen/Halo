@@ -145,11 +145,12 @@ class ScreenToolExecutorTest {
         val focus = store.layout.value!!
         apply(listOf(mapOf("operation" to "preset", "presetId" to preset.id)))
         assertEquals(preset.cards, store.layout.value!!.cards)
+        val restoredFocus = focus.copy(version = store.layout.value!!.version + 1)
         json(call("halo_screen_undo", mapOf("revision" to revision())))
-        assertEquals(focus, store.layout.value)
+        assertEquals(restoredFocus, store.layout.value)
         json(call("halo_screen_remove_preset", mapOf("revision" to revision(), "presetId" to preset.id)))
         assertTrue(store.presets.value.isEmpty()); assertTrue(store.items.value.isEmpty())
-        assertEquals(focus, store.layout.value)
+        assertEquals(restoredFocus, store.layout.value)
     }
 
     @Test fun nativeWhitelistRejectsExecutableMarkupExtraFieldsAndFractionalIndices() = runBlocking {

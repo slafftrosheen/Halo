@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workflows_title">Мои сценарии</string>
+    <string name="workflows_empty">Здесь появятся сценарии, которые вы проверили и сохранили с Halo.</string>
+    <string name="workflows_limits">Каждому шагу нужны актуальный источник, разрешения и подтверждение. Автоматический откат и работа без участия не разрешаются.</string>
+    <string name="workflows_enabled">Включён</string>
+    <string name="workflows_use_chat">Использовать в чате</string>
+    <string name="workflows_delete">Удалить сценарий</string>
+    <string name="workflows_delete_confirm">Удалить сохранённый сценарий? Ваши файлы и прежние результаты останутся.</string>
+    <string name="workflows_refresh">Обновить</string>
+    <string name="workflows_back">Назад</string>
+    <string name="workflows_changed">Сценарий изменён или недоступен. Обновите и проверьте его снова.</string>
+    <string name="workflows_yes">Да</string>
+    <string name="workflows_no">Нет</string>
+</resources>

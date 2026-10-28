@@ -19,6 +19,22 @@ class WorkspaceStudySourceResolver(
     val pdf: StudyPdfPages,
     private val assets: NotebookAssetRepository? = null,
 ) : StudySourceResolver {
+    override suspend fun resolveTextAnchor(objectId: String, revision: String,
+        anchor: com.halo.sdk.runtime.study.StudyTextAnchor): ResolvedStudySource = withContext(Dispatchers.IO) {
+        val item = workspace.get(WorkspaceObjectId(objectId))
+        if (item == null || item.lifecycle != WorkspaceObjectLifecycle.ACTIVE || item.type != WorkspaceObjectType.NOTE)
+            return@withContext ResolvedStudySource.Unsupported(objectId, "Selected passage", "Source is unavailable")
+        val doc = documents.loadLegacyDocument(objectId)
+            ?: return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Note unavailable")
+        val block = doc.blocks.firstOrNull { it.id == anchor.blockId }
+        if (doc.revision.toString() != revision || block == null || anchor.end > block.text.length ||
+            (anchor.start > 0 && block.text[anchor.start].isLowSurrogate()) ||
+            (anchor.end < block.text.length && block.text[anchor.end].isLowSurrogate()))
+            return@withContext ResolvedStudySource.Unsupported(objectId, item.title, "Selected passage changed. Select it again.", doc.revision.toString())
+        val text = block.text.substring(anchor.start, anchor.end)
+        ResolvedStudySource.Text(objectId, revision, item.title,
+            listOf(StudyPassage(text, StudySourceLocator.NoteSelection(anchor.blockId, anchor.start, anchor.end))), text.length, SourceCoverage.FULL)
+    }
     override suspend fun resolve(objectId: String, query: String): ResolvedStudySource = resolveForTurn(objectId, query, StudySourceLimits.TOTAL_CHARS, false)
     override suspend fun resolveExplicitReference(objectId: String, query: String): ResolvedStudySource =
         resolveSource(objectId,query,StudySourceLimits.TOTAL_CHARS,false,true)

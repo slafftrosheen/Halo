@@ -351,6 +351,7 @@ object ManualDependencyGraph {
             narration = studyNarration,
             reviewIntensity = studyReviewIntensity,
             localSessionData = studyLessonStore,
+            permitsSource = { id -> workspaceMediaAiPolicy.permitsObject(id, true) },
         )
     }
     val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
@@ -524,7 +525,10 @@ object ManualDependencyGraph {
      * semantic search reports NOT_INSTALLED instead of faking vectors from hashes.
      */
     val memoryRetriever by lazy {
-        com.halo.app.data.memory.RoomMemoryRetriever(appDatabase.memoryRecordDao(), activeScopeIds = { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() })
+        com.halo.app.data.memory.RoomMemoryRetriever(appDatabase.memoryRecordDao(),
+            activeScopeIds = { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },
+            permitsRecord = { row -> workspaceMediaAiPolicy.permitsObject(row.id, true) &&
+                (row.sourceObjectId?.let { workspaceMediaAiPolicy.permitsObject(it, true) } ?: true) })
     }
     fun memoryHubViewModel() = com.halo.app.ui.screens.notebook.MemoryHubViewModel(
         memoryRepository, memoryRetriever, personalLearning, workspaceContext.useMemories,
@@ -549,7 +553,9 @@ object ManualDependencyGraph {
             }
         })
     val memoryContextSource by lazy {
-        BoundedMemoryContextSource(memoryRepository, memoryRetriever)
+        BoundedMemoryContextSource(memoryRepository, memoryRetriever,
+            permitsRecord = { record, local -> workspaceMediaAiPolicy.permitsObject(record.id, local) &&
+                (record.sourceObjectId?.let { workspaceMediaAiPolicy.permitsObject(it.value, local) } ?: true) })
     }
     val customSkillPackages by lazy { com.halo.app.skills.CustomSkillPackageRepository(applicationContext) }
     val skillPermissionChecker by lazy { AndroidSkillPermissionChecker(applicationContext) }
@@ -764,13 +770,15 @@ object ManualDependencyGraph {
                     routine.id.value, routine.name, "$completed of ${routine.actions.size} actions finished",
                     com.halo.app.screen.ScreenContentType.SUMMARY, timestamp, timestamp, null,
                     com.halo.app.screen.ScreenItemState.READY, com.halo.app.screen.ScreenSensitivity.PRIVATE,
-                    null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen)))
+                    null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen),
+                    sourceRevision = routine.updatedAt.toString()))
             } else if (screenStore.items.value.any { it.id == key }) screenStore.markFailed(key, timestamp)
             else screenStore.publish(com.halo.app.screen.ScreenItem(key, com.halo.app.screen.ScreenSourceType.AUTOMATION,
                 routine.id.value, routine.name, "This routine needs attention. Open it to review what happened.",
                 com.halo.app.screen.ScreenContentType.SUMMARY, timestamp, null, null,
                 com.halo.app.screen.ScreenItemState.ERROR, com.halo.app.screen.ScreenSensitivity.PRIVATE,
-                null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen)))
+                null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen),
+                sourceRevision = routine.updatedAt.toString()))
         }) }
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
     val automationRuntime by lazy {
@@ -935,7 +943,8 @@ object ManualDependencyGraph {
         val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository,
             com.halo.app.di.tools.WorkspaceFileEditingActions(workspaceFileTools))
         val studioExecutor = com.halo.app.di.tools.StudioToolExecutor(studioService)
-        val modelSetupExecutor = com.halo.app.di.tools.LocalModelSetupToolExecutor(localRolePackInstaller)
+        val modelSetupExecutor = com.halo.app.di.tools.LocalModelSetupToolExecutor(localRolePackInstaller,
+            reviewLanguage = { appLanguagePreferences.language.value.tag })
         val workspaceExecutor = WorkspaceToolExecutor(
             notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
@@ -973,6 +982,15 @@ object ManualDependencyGraph {
         val procedureExecutor = com.halo.app.di.tools.ProcedureToolExecutor(
             store = learnedProcedureStore,
             capabilityKnown = { capabilityId -> toolRegistry.contains(capabilityId) },
+            descriptorFor = { toolRegistry.descriptor(it) },
+            validateCall = { toolRegistry.validate(it) },
+            validateTemplate = { call, types -> toolRegistry.validateTemplate(call, types) },
+            reviewLanguage = { appLanguagePreferences.language.value.tag },
+            reviewText = { text ->
+                val localized = applicationContext.createConfigurationContext(android.content.res.Configuration(applicationContext.resources.configuration)
+                    .apply { setLocale(java.util.Locale.forLanguageTag(appLanguagePreferences.language.value.tag)) })
+                com.halo.app.language.resolveUiText(localized.resources, text)
+            },
         )
         // MINING-P2-001: choice surfaces can only resolve durable input requests.
         val presentationChoiceAuthority = com.halo.app.di.tools.PresentationChoiceAuthority(agentRunStore)

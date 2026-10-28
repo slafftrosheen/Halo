@@ -11,6 +11,7 @@ internal object ScreenLayoutRequests {
         "notebook" to listOf("notebook", "notes", "saved work", "piezīmes", "klade", "блокнот", "заметки", "notatki"),
         "study" to listOf("study", "learning", "mācības", "учёба", "учеба", "nauka"),
         "automation_result" to listOf("routine results", "automation results", "routine", "automātika", "процедуры", "rutyny"),
+        "follow_up" to listOf("follow-ups", "follow ups", "follow up", "atgādinājumi", "напоминания", "przypomnienia"),
         "halo_activity" to listOf("halo activity", "what halo did", "activity"),
         "interests" to listOf("reading", "interests", "intereses", "интересы", "zainteresowania"),
         "device" to listOf("phone status", "this phone", "battery", "tālruņa stāvoklis", "akumulators", "состояние телефона", "батарея"),

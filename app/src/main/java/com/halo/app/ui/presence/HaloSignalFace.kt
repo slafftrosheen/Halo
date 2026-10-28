@@ -174,7 +174,9 @@ internal fun PresenceArtwork.motionPolicy(size: Float, reduced: Boolean, foregro
     val enabled = !reduced && foreground && this in animatedArtwork
     return PresenceMotionPolicy(
         animate = enabled && size >= 80f,
-        loop = this != PresenceArtwork.SUCCESS && this != PresenceArtwork.WARNING,
+        // The persistent full-size ring settles after its idle arrival motion.
+        // Active runtime feedback can loop; idle must not hold a frame clock forever.
+        loop = this != PresenceArtwork.IDLE && this != PresenceArtwork.SUCCESS && this != PresenceArtwork.WARNING,
         compact = enabled && size >= 40f && size < 80f && this in compactArtwork
     )
 }

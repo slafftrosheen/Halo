@@ -118,9 +118,9 @@ class OpenRouterProvider(
             .build()
         val revision = configurationRevision.get()
         try {
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
-                JSONObject(response.body?.string().orEmpty()).getJSONObject("data")
+            client.newCall(request).consumeCancellable { response ->
+                if (!response.isSuccessful) throw httpError(response.code, response.body?.boundedText(OpenRouterTransportBounds.ERROR_BYTES, truncate = true), response.header("Retry-After"))
+                JSONObject(response.body?.boundedText().orEmpty()).getJSONObject("data")
                 if (configurationRevision.get() == revision) {
                     cooldown = null; rejectedApiKey = null; _status.value = ProviderStatus.READY
                 }
@@ -202,12 +202,12 @@ class OpenRouterProvider(
             .toRequestBody("application/json".toMediaType())
         val httpRequest = buildChatRequest(key, body)
         try {
-            client.newCall(httpRequest).execute().use { response ->
+            client.newCall(httpRequest).consumeCancellable { response ->
                 if (!response.isSuccessful) {
-                    throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
+                    throw httpError(response.code, response.body?.boundedText(OpenRouterTransportBounds.ERROR_BYTES, truncate = true), response.header("Retry-After"))
                 }
                 val responseJson = JSONObject(
-                    response.body?.string()
+                    response.body?.boundedText()
                         ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned an empty response body")
                 )
                 responseJson.optJSONObject("error")?.let { error ->
@@ -218,9 +218,11 @@ class OpenRouterProvider(
                 if (choices.length() == 0) throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no choices")
                 val first = choices.getJSONObject(0)
                 val message = first.getJSONObject("message")
+                val text = message.optionalString("content").orEmpty()
+                if (text.length > OpenRouterTransportBounds.TEXT_CHARS) OpenRouterTransportBounds.exceeded()
                 val resolvedModel = responseJson.optionalString("model") ?: actualModel
                 val result = AiResponse(
-                    text = message.optionalString("content").orEmpty(),
+                    text = text,
                     toolCalls = parseToolCalls(message.optJSONArray("tool_calls")),
                     finishReason = first.optionalString("finish_reason"),
                     providerId = id,
@@ -267,17 +269,21 @@ class OpenRouterProvider(
             .toRequestBody("application/json".toMediaType())
         val httpRequest = buildChatRequest(key, body)
         try {
-            client.newCall(httpRequest).execute().use { response ->
-                if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
+            client.newCall(httpRequest).consumeCancellable { response ->
+                if (!response.isSuccessful) throw httpError(response.code, response.body?.boundedText(OpenRouterTransportBounds.ERROR_BYTES, truncate = true), response.header("Retry-After"))
                 val source = response.body?.source() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no response body")
                 val text = StringBuilder()
                 val tools = linkedMapOf<Int, StreamToolCall>()
                 var finish: String? = null
                 var resolvedModel: String? = null
+                var streamBytes = 0L
+                var argumentChars = 0L
 
                 var streamFinishedCleanly = false
                 while (!source.exhausted()) {
-                    val line = source.readUtf8Line() ?: break
+                    val line = source.boundedSseLine() ?: break
+                    streamBytes += line.toByteArray(Charsets.UTF_8).size + 2L
+                    if (streamBytes > OpenRouterTransportBounds.STREAM_BYTES) OpenRouterTransportBounds.exceeded()
                     if (!line.startsWith("data:")) continue
                     val data = line.removePrefix("data:").trimStart()
                     if (data.isBlank()) continue
@@ -307,6 +313,7 @@ class OpenRouterProvider(
                     val delta = choice.optJSONObject("delta") ?: continue
                     val token = delta.optionalString("content").orEmpty()
                     if (token.isNotEmpty()) {
+                        if (text.length.toLong() + token.length > OpenRouterTransportBounds.TEXT_CHARS) OpenRouterTransportBounds.exceeded()
                         text.append(token)
                         emit(AiStreamEvent.Token(token))
                     }
@@ -315,10 +322,23 @@ class OpenRouterProvider(
                             val tc = calls.getJSONObject(i)
                             val fn = tc.optJSONObject("function")
                             val index = tc.optInt("index", i)
+                            if (index !in 0 until OpenRouterTransportBounds.TOOL_CALLS ||
+                                index !in tools && tools.size >= OpenRouterTransportBounds.TOOL_CALLS) OpenRouterTransportBounds.exceeded()
                             val assembled = tools.getOrPut(index) { StreamToolCall() }
-                            tc.optionalString("id")?.takeIf { it.isNotBlank() }?.let { assembled.id = it }
-                            fn?.optionalString("name")?.takeIf { it.isNotBlank() }?.let { assembled.name = it }
-                            fn?.optionalString("arguments")?.let { assembled.arguments.append(it) }
+                            tc.optionalString("id")?.takeIf { it.isNotBlank() }?.let {
+                                if (it.length > 512) OpenRouterTransportBounds.exceeded()
+                                assembled.id = it
+                            }
+                            fn?.optionalString("name")?.takeIf { it.isNotBlank() }?.let {
+                                if (it.length > 240) OpenRouterTransportBounds.exceeded()
+                                assembled.name = it
+                            }
+                            fn?.optionalString("arguments")?.let {
+                                argumentChars += it.length
+                                if (assembled.arguments.length.toLong() + it.length > OpenRouterTransportBounds.TOOL_ARGUMENT_CHARS ||
+                                    argumentChars > OpenRouterTransportBounds.TOOL_ARGUMENT_TOTAL_CHARS) OpenRouterTransportBounds.exceeded()
+                                assembled.arguments.append(it)
+                            }
                             emit(AiStreamEvent.ToolCallDelta(
                                 index = index,
                                 name = fn?.optionalString("name"),
@@ -407,9 +427,9 @@ class OpenRouterProvider(
             .get()
             .build()
         try {
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
-                val body = response.body?.string()
+            client.newCall(request).consumeCancellable { response ->
+                if (!response.isSuccessful) throw httpError(response.code, response.body?.boundedText(OpenRouterTransportBounds.ERROR_BYTES, truncate = true), response.header("Retry-After"))
+                val body = response.body?.boundedText(OpenRouterTransportBounds.CATALOG_BYTES)
                     ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response body from OpenRouter")
                 if (configurationRevision.get() != revision) throw AiProviderException(AiErrorType.INVALID_REQUEST, "Provider configuration changed; refresh again")
                 val data = JSONObject(body).getJSONArray("data")
@@ -511,6 +531,7 @@ class OpenRouterProvider(
 
     private fun readCachedModels(): List<AiModel> = runCatching {
         val body = storage.getString(MODEL_CATALOG_CACHE_KEY) ?: return@runCatching emptyList()
+        if (body.length > OpenRouterTransportBounds.CATALOG_BYTES) return@runCatching emptyList()
         parseModelCatalog(JSONObject(body).getJSONArray("data"))
     }.getOrDefault(emptyList())
 
@@ -636,15 +657,23 @@ class OpenRouterProvider(
 
     private fun parseToolCalls(jsonToolCalls: JSONArray?): List<ToolCall> {
         if (jsonToolCalls == null) return emptyList()
+        if (jsonToolCalls.length() > OpenRouterTransportBounds.TOOL_CALLS) OpenRouterTransportBounds.exceeded()
+        var argumentChars = 0L
         return buildList {
             for (i in 0 until jsonToolCalls.length()) {
                 val tc = jsonToolCalls.getJSONObject(i)
                 val function = tc.getJSONObject("function")
+                val callId = tc.getString("id")
+                val name = function.getString("name")
+                val arguments = function.getString("arguments")
+                argumentChars += arguments.length
+                if (callId.length > 512 || name.length > 240 ||
+                    argumentChars > OpenRouterTransportBounds.TOOL_ARGUMENT_TOTAL_CHARS) OpenRouterTransportBounds.exceeded()
                 add(
                     ToolCall(
-                        tc.getString("id"),
-                        function.getString("name"),
-                        parseArguments(function.getString("arguments"))
+                        callId,
+                        name,
+                        parseArguments(arguments)
                     )
                 )
             }
@@ -657,6 +686,7 @@ class OpenRouterProvider(
         if (!has(key) || isNull(key)) null else optString(key)
 
     private fun parseArguments(json: String): Map<String, Any> = try {
+        if (json.length > OpenRouterTransportBounds.TOOL_ARGUMENT_CHARS) OpenRouterTransportBounds.exceeded()
         val obj = JSONObject(json)
         buildMap {
             val keys = obj.keys()
@@ -868,6 +898,9 @@ class OpenRouterProvider(
                 .readTimeout(45, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .callTimeout(60, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(false)
+                .followRedirects(false)
+                .followSslRedirects(false)
                 .build()
     }
 

@@ -1016,10 +1016,20 @@ class NoteEditorViewModel(
      */
     suspend fun startStudy(goal: String? = null): StudyHandoff {
         val studyUseCases = study ?: return StudyHandoff.Unavailable("Study is not available in this build")
+        val selected = mutableUiState.value.selection
+        val selectedBlock = selected?.let { range -> mutableUiState.value.blocks.firstOrNull { it.id == range.blockId } }
         if (!flushBeforeStudy()) return StudyHandoff.Unavailable(
             "Your note could not be saved. Try again before starting Study.")
+        if (selected != mutableUiState.value.selection || selectedBlock != selected?.let { range ->
+                mutableUiState.value.blocks.firstOrNull { it.id == range.blockId } })
+            return StudyHandoff.Unavailable("Your selected passage changed. Select it again before starting Study.")
+        val range = selected?.let { selection -> selectedBlock?.let { selection.normalized(it.text.length) } }
+        if (range != null && range.end - range.start > 8000)
+            return StudyHandoff.Unavailable("Select a shorter passage before starting Study.")
         return when (
-            val result = studyUseCases.start(
+            val result = if (range != null && range.end > range.start) studyUseCases.startNoteSelection(noteId, revision,
+                com.halo.sdk.runtime.study.StudyTextAnchor(range.blockId, range.start, range.end), goal)
+            else studyUseCases.start(
                 StartStudyRequest(
                     sourceObjectId = noteId,
                     goal = goal,

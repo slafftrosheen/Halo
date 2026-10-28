@@ -156,6 +156,7 @@ class StudyReaderRecoveryTest {
             jobs += vm.viewModelScope.coroutineContext.job
             withTimeout(5000) { vm.uiState.filter { !it.loading && it.sources.isNotEmpty() }.first() }
             vm.readSourceAloud()
+            withTimeout(5000) { vm.uiState.first { it.reader?.speaking == true } }
             val first=narrator.last
             assertTrue(vm.uiState.value.reader!!.speaking)
             vm.toggleReaderPlayback()

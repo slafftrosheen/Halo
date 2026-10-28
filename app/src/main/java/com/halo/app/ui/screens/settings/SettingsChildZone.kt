@@ -19,15 +19,19 @@ import com.halo.app.ui.presence.ShellPageOwner
 /** Root-level binding, never attached to a lazy header that can be disposed by scrolling.
  * The real Navigation entry scopes every callback. This is presentation, not setting-write authority. */
 @Composable
-internal fun SettingsChildZone(title: String, onBack: () -> Unit, actions: List<ShellPageAction> = emptyList()) {
+internal fun SettingsChildZone(title: String, onBack: () -> Unit, actions: List<ShellPageAction> = emptyList(),
+    selectedObjectId: String? = null, selectedSourceVersion: String? = null,
+    selectedToolIds: List<String>? = null, selectedTool: String? = null) {
     if (!LocalShellHaloOrb.current) return
     val entry = androidx.lifecycle.compose.LocalLifecycleOwner.current as? androidx.navigation.NavBackStackEntry ?: return
     val route = entry.destination.route ?: return
     val providerId = if (route == "settings/intelligence/providers/{providerId}" ||
         route == "settings/intelligence/images/{providerId}") entry.arguments?.getString("providerId")
             ?.takeIf { it.length in 1..240 && it.matches(Regex("[A-Za-z0-9_.:/+-]+")) } else null
-    val owner = ShellPageOwner(route, objectId = providerId, sourceIdentity = title, navigationEntryId = entry.id,
-        canonicalToolIds = com.halo.app.ui.presence.shellChildCanonicalTools(route))
+    val owner = ShellPageOwner(route, objectId = selectedObjectId ?: providerId,
+        sourceIdentity = "$title:${selectedObjectId.orEmpty()}:${selectedSourceVersion.orEmpty()}", navigationEntryId = entry.id,
+        canonicalSourceVersion = selectedSourceVersion, activeToolId = selectedTool,
+        canonicalToolIds = selectedToolIds ?: com.halo.app.ui.presence.shellChildCanonicalTools(route))
     BindShellPageActions(owner, listOf(ShellPageAction("settings.child.back", "Back", HaloGlyph.PREVIOUS, onInvoke = onBack)) + actions)
     BindShellUtilityBand(owner) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {

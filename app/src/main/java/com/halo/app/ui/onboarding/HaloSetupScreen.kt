@@ -178,10 +178,31 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Copy("Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report.")
                     val rolePack = remember { Graph.localRolePackInstaller }
                     val rolePackState by rolePack.state.collectAsStateWithLifecycle()
+                    val packCapacity by com.halo.app.ui.screens.settings.rememberLocalModelCapacity(
+                        LocalContext.current, rolePackState.phase)
+                    var packPreviewRevision by rememberSaveable { mutableIntStateOf(0) }
+                    val packPreview by androidx.compose.runtime.produceState<com.halo.app.ai.LocalRolePackDownloadPreview?>(
+                        null, rolePackState.phase, rolePackState.transactionId, packPreviewRevision) {
+                        value = null
+                        if (!rolePackState.busy && !rolePackState.recoveryRequired) value = try { rolePack.downloadPreview() }
+                            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { null }
+                    }
                     Copy(stringResource(R.string.pack39_intro))
+                    com.halo.app.ui.screens.settings.PrivateOfflinePackDetails(packCapacity.totalMem, rolePack)
+                    packPreview?.let { estimate ->
+                        Copy(stringResource(R.string.offline59_download_space,
+                            android.text.format.Formatter.formatFileSize(LocalContext.current, estimate.downloadBytes),
+                            android.text.format.Formatter.formatFileSize(LocalContext.current, estimate.requiredStorageBytes)))
+                        if (!estimate.hasEnoughStorage) Copy(stringResource(R.string.offline59_low_storage))
+                    }
+                    if (!rolePackState.busy) Secondary(stringResource(R.string.offline59_refresh)) { packPreviewRevision++ }
                     when (rolePackState.phase) {
                         com.halo.app.ai.LocalRolePackPhase.COMPLETE -> Copy(stringResource(R.string.pack39_complete))
-                        com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> Copy(stringResource(R.string.pack39_preflight))
+                        com.halo.app.ai.LocalRolePackPhase.PREFLIGHT -> {
+                            Copy(stringResource(R.string.pack39_preflight))
+                            Secondary(stringResource(R.string.pack39_pause)) { rolePack.pause() }
+                        }
                         com.halo.app.ai.LocalRolePackPhase.INSTALLING -> {
                             Copy(when (rolePackState.stage) {
                                 com.halo.app.ai.LocalRolePackStage.INTENT -> stringResource(R.string.pack39_intent)
@@ -197,7 +218,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                             Secondary(stringResource(R.string.pack39_pause)) { rolePack.pause() }
                         }
                         com.halo.app.ai.LocalRolePackPhase.PAUSED -> Copy(stringResource(R.string.pack39_paused))
-                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy(stringResource(R.string.pack39_failed))
+                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy(stringResource(if (rolePackState.message == com.halo.app.ai.LOCAL_ROLE_PACK_REPAIR_REQUIRED)
+                            R.string.offline59_repair else R.string.pack39_failed))
                         com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy(if (rolePackState.recoveryRequired)
                             uiText(rolePackState.message.orEmpty()) else stringResource(R.string.pack39_rollback_failed))
                         com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Copy(stringResource(R.string.pack39_rolling_back))
@@ -207,7 +229,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
                         OutlinedButton(
-                            enabled = !rolePackState.busy,
+                            enabled = !rolePackState.busy && rolePack.available && packPreview?.hasEnoughStorage == true,
                             onClick = rolePack::startOrResume,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                         ) { Text(stringResource(if (rolePackState.canResume) R.string.pack39_resume else R.string.pack39_install)) }

@@ -4163,6 +4163,7 @@
     <string name="ui_4d0076e6b4c7" formatted="false">"Действия"</string>
     <string name="ui_b5634a8ba110" formatted="false">"Действия и уведомления"</string>
     <string name="ui_5774d46c5e6b" formatted="false">"Удерживайте halo, чтобы открыть действия"</string>
+    <string name="ui_5de949c889c4" formatted="false">"Выбранный фрагмент"</string>
     <string name="ui_e8d505c1b1f7" formatted="false">"Локальный режим"</string>
     <string name="ui_b080f31e6a5f" formatted="false">"Локально / Power"</string>
     <string name="ui_3b3da664eb98" formatted="false">"Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo."</string>

@@ -22,6 +22,7 @@ class RoomMemoryRetriever(
     private val semanticIndex: MemorySemanticIndex? = null,
     private val now: () -> Long = System::currentTimeMillis,
     private val activeScopeIds: suspend () -> Set<String> = { emptySet() },
+    private val permitsRecord: suspend (MemoryRecordEntity) -> Boolean = { true },
 ) : MemoryRetriever {
 
     override suspend fun search(
@@ -60,7 +61,19 @@ class RoomMemoryRetriever(
         val semantic = semanticScores(trimmed)
 
         val nowMs = now()
-        return pool
+        val currentPool = pool.mapNotNull { candidate ->
+            // Semantic scoring may suspend while a fact is corrected, forgotten or revoked.
+            val current = dao.getRecord(candidate.id) ?: return@mapNotNull null
+            if (current.content != candidate.content || current.updatedAt != candidate.updatedAt || current.kind != candidate.kind ||
+                current.scope != candidate.scope || current.scopeId != candidate.scopeId ||
+                current.sourceObjectId != candidate.sourceObjectId || current.sourceRevision != candidate.sourceRevision ||
+                current.status != candidate.status || current.validUntil != candidate.validUntil)
+                return@mapNotNull null // Re-rank a fresh query; old semantic evidence cannot authorize a corrected fact.
+            if (current.status != "ACTIVE" || current.scope !in scopes ||
+                current.scope != "GLOBAL" && current.scopeId !in scopeIds ||
+                current.validUntil?.let { it <= nowMs } == true || !permitsRecord(current)) null else current
+        }
+        return currentPool
             .filter { com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(it.content) != com.halo.runtime.cognition.memory.MemorySensitivity.SECRET }
             .map { entity ->
                 val lexical = if (trimmed.isBlank()) 0.5f else LexicalMemoryScorer.score(trimmed, entity.content)

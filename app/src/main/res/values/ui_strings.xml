@@ -4163,6 +4163,7 @@
     <string name="ui_4d0076e6b4c7" formatted="false">"Activities"</string>
     <string name="ui_b5634a8ba110" formatted="false">"Activities and notifications"</string>
     <string name="ui_5774d46c5e6b" formatted="false">"Hold halo for actions"</string>
+    <string name="ui_5de949c889c4" formatted="false">"Selected passage"</string>
     <string name="ui_e8d505c1b1f7" formatted="false">"Local mode"</string>
     <string name="ui_b080f31e6a5f" formatted="false">"Local / Power"</string>
     <string name="ui_3b3da664eb98" formatted="false">"This action needs Power mode. Use the control beside the halo Orb."</string>

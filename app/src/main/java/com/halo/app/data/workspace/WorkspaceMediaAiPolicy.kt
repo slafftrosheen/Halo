@@ -31,6 +31,12 @@ class WorkspaceMediaAiPolicy(private val database: AppDatabase, private val stor
     suspend fun permitsObject(id: String, isLocal: Boolean): Boolean {
         val item = database.notebookDao().getWorkspaceObject(id) ?: return false
         if (item.lifecycle != "ACTIVE") return false
+        // Privacy profiles may narrow transport; they never revoke a per-object exclusion.
+        if (access(id) == WorkspaceAiAccess.EXCLUDE_FROM_AI) return false
+        if (!isLocal && storage.savedPrivacyMode() == PrivacyMode.PRIVATE) return false
+        // Explicit local-only choices include kept Kids projects; switching profiles is not
+        // consent to upload them. Unset defaults may still follow the configured mode profile.
+        if (hasExplicitAccess(id)) return access(id) == WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD || isLocal
         storage.savedPrivacyMode()?.let { return isLocal || it == PrivacyMode.CLOUD }
         return when (access(id)) {
             WorkspaceAiAccess.EXCLUDE_FROM_AI -> false

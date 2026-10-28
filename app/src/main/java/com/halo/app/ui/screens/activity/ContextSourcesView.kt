@@ -61,6 +61,7 @@ internal fun ContextSourcesView(runId: String, receipts: ContextSourceReceipts, 
                                         SourceReceiptStatus.UNKNOWN -> "This receipt has no saved source version."
                                         SourceReceiptStatus.UNAVAILABLE -> "Source is currently unavailable."
                                     }), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (source.textAnchor != null) Text(uiText("Selected passage"), style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }

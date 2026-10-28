@@ -18,6 +18,7 @@ fun interface WorkspaceContextSource {
     suspend fun referenceMetadata(objectId: String): WorkspaceReferenceMetadata? =
         versionFor(objectId)?.let { WorkspaceReferenceMetadata(objectId, it, null) }
     suspend fun isMemory(objectId: String): Boolean = false
+    suspend fun permits(objectId: String, targetIsLocal: Boolean): Boolean = true
 
     /** Host implementations should override with their canonical read transaction. */
     suspend fun snapshot(objectId: String, expectedVersion: String? = null): WorkspaceContextEntry? {
@@ -31,6 +32,7 @@ fun interface WorkspaceContextSource {
 }
 
 /** Null version means historical/unknown provenance, never a verified current revision. */
-data class WorkspaceContextEntry(val objectId: String?, val text: String, val version: String? = null)
+data class WorkspaceContextEntry(val objectId: String?, val text: String, val version: String? = null,
+    val textAnchor: com.halo.sdk.runtime.study.StudyTextAnchor? = null)
 
 data class WorkspaceReferenceMetadata(val objectId: String, val version: String, val title: String?)

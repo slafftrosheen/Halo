@@ -1,0 +1,29 @@
+<resources>
+    <string name="offline59_chat_download">Pobierz / wznów model rozmowy</string>
+    <string name="offline59_chat_rollback">Usuń tylko pliki pobrane przez to rozszerzenie</string>
+    <string name="offline59_chat_intact">Pliki rozmowy są kompletne. Wybierz i zakwalifikuj model oddzielnie; jakość mowy i języków pozostaje niezweryfikowana.</string>
+    <string name="offline59_chat_recovery">Konfiguracja rozszerzenia wymaga uwagi. Odśwież stan plików. Zachowaj pliki, aby wyczyścić zmieniony zapis, napraw niezależne uszkodzone modele na liście albo ponów pobieranie. Działające i niezwiązane modele pozostają zachowane.</string>
+    <string name="offline59_refresh">Odśwież rozmiar pobierania i wolne miejsce</string>
+    <string name="offline59_download_space">Szacowane pobieranie: %1$s. Dodatkowe wolne miejsce: %2$s. Wybierz instalację, aby zezwolić na pobranie.</string>
+    <string name="offline59_low_storage">Za mało wolnego miejsca. Zwolnij miejsce i otwórz konfigurację ponownie, aby odświeżyć szacunek.</string>
+    <string name="offline59_repair">Pliki mowy są niekompletne lub uszkodzone. Dokończ pobieranie albo usuń i zainstaluj je ponownie w ustawieniach głosu. Istniejące pliki zachowano. Po naprawie ponów instalację.</string>
+    <string name="offline59_chat_candidate">Opcjonalny model rozmowy: SmolLM2 360M, sprawdzony artefakt z licencją Apache-2.0. Pobierz go oddzielnie z listy modeli. Bez automatycznego wyboru, zmierzonej obsługi języków ani rekomendacji dla urządzenia.</string>
+    <string name="offline59_check">Sprawdź zainstalowane pliki pakietu</string>
+    <string name="offline59_snapshot">Ostatnia kontrola plików: %1$d z %2$d ról ma kompletne pliki. To nie jest kwalifikacja rozmowy ani języka.</string>
+    <string name="offline59_pending">Kontrola plików trwa lub jest niedostępna. Spróbuj ponownie po zatrzymaniu instalacji.</string>
+    <string name="offline59_incomplete">Ten pakiet startowy nie zawiera modelu rozmowy. Zainstalowane pliki nie oznaczają gotowości asystenta głosowego offline. Lokalne notatki i narzędzia ręczne pozostają dostępne.</string>
+    <string name="offline59_intent">Eksperymentalny model działań: wcześniejszy wynik CPU przekroczył limit 2 sekund. Pobranie nie potwierdza przydatności ani nie włącza klasyfikatora.</string>
+    <string name="offline59_memory">Do oceny na telefonach z 8 GB RAM. Pamięć zgłaszana przez urządzenie: %1$s. Pamięć robocza, temperatura i współdziałanie modeli wymagają pomiarów.</string>
+    <string name="offline59_unknown">Nie ustalono</string>
+    <string name="offline59_review">Źródła pakietu i weryfikacja plików</string>
+    <string name="offline59_hide">Ukryj szczegóły pakietu</string>
+    <string name="offline59_license">Przegląd licencji wydawców i praw do dystrybucji jest niepełny. Podana licencja pochodzi ze źródła i nie oznacza zatwierdzenia przez Halo. Przejrzyj źródła przed pobraniem.</string>
+    <string name="offline59_languages">Jakość mowy EN, RU, LV i PL wymaga oddzielnych pomiarów na urządzeniu. Tłumaczenia i listy języków wydawcy nie dowodzą przydatności mowy.</string>
+    <string name="offline59_chat">Rozmowa</string>
+    <string name="offline59_actions">Kandydat do obsługi działań</string>
+    <string name="offline59_listening">Rozpoznawanie mowy</string>
+    <string name="offline59_vad">Wykrywanie aktywności mowy</string>
+    <string name="offline59_output">Synteza mowy</string>
+    <string name="offline59_acknowledge">Zapoznałem się ze źródłami i deklarowanymi licencjami, również z brakującymi informacjami o licencji. Nie potwierdza to licencji ani gotowości urządzenia.</string>
+    <string name="offline59_review_required">Przed pobraniem zapoznaj się ze źródłami pakietu i potwierdź to.</string>
+</resources>

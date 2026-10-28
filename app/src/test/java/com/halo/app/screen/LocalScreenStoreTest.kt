@@ -52,8 +52,9 @@ class LocalScreenStoreTest {
         val initial = store.layout.value!!
         store.saveLayout(ScreenWidgets.starter("Focus"))
         store.saveLayout(store.layout.value!!.copy(name = "Background update"), recordUndo = false)
+        val restoredInitial = initial.copy(version = store.layout.value!!.version + 1)
         store.undo()
-        assertEquals(initial, store.layout.value)
+        assertEquals(restoredInitial, store.layout.value)
     }
 
     @Test fun sourcedResearchAndCitationLinksSurviveRestart() = runBlocking {

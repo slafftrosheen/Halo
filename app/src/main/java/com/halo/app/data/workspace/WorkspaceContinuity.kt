@@ -57,9 +57,10 @@ class WorkspaceContinuity(private val database: AppDatabase, private val context
         return requests.offer(id, expectedVersion, destination)
     }
     /** Canonical selection, never Memory promotion or an off-device transfer. */
-    suspend fun selectWorkingSet(id: String, expectedVersion: String): Unit = database.withTransaction {
+    suspend fun selectWorkingSet(id: String, expectedVersion: String,
+        anchor: com.halo.sdk.runtime.study.StudyTextAnchor? = null): Unit = database.withTransaction {
         current(id, expectedVersion)
-        context.select(id)
+        if (anchor == null) context.select(id) else context.selectNoteText(id, expectedVersion, anchor)
     }
     suspend fun insert(canvasId: String, canvasVersion: String, id: String, expectedVersion: String): String = database.withTransaction {
         current(id, expectedVersion)

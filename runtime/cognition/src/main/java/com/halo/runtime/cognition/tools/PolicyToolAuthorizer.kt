@@ -168,6 +168,12 @@ class PolicyToolAuthorizer(
     private fun buildApprovalDetail(toolCall: ToolCall): String? {
         val descriptor = descriptorProvider(toolCall.functionName) ?: return null
         val presentation = descriptor.presentation ?: return null
+        presentation.reviewArgument?.takeIf { it !in presentation.sensitiveArguments }?.let { key ->
+            val review = toolCall.arguments[key] as? String
+            // Owners reject oversize/missing review arguments before effect. Never display an
+            // incomplete review as if the whole consequential template had been shown.
+            if (review != null && review.length in 1..2000) return review
+        }
         val parts = mutableListOf<String>()
         presentation.actionVerb?.let { parts.add(it) }
         presentation.targetArgument?.let { key ->

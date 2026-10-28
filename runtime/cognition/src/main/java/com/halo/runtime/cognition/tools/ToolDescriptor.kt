@@ -198,6 +198,8 @@ data class ToolPresentation(
     val targetArgument: String? = null,
     /** Argument keys that must never appear in previews or logs. */
     val sensitiveArguments: Set<String> = emptySet(),
+    /** Optional bounded human-authored review data shown in full by the ordinary approval surface. */
+    val reviewArgument: String? = null,
 )
 
 data class ResourceRequirement(

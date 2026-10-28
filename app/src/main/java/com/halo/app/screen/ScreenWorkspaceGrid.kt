@@ -88,6 +88,10 @@ internal fun ScreenWorkspaceGrid(cards: List<ScreenCard>, columns: Int, modifier
 @OptIn(ExperimentalLayoutApi::class)
 internal fun ScreenGridHandles(cell: ScreenGridCell, geometry: ScreenGridGeometry, columns: Int, cardCount: Int, cardLabel: String,
     onMove: (Int, Int) -> Unit, onResize: (Int, Int) -> Unit, onOptions: () -> Unit) {
+    val currentMove by rememberUpdatedState(onMove)
+    val currentResize by rememberUpdatedState(onResize)
+    val currentCell by rememberUpdatedState(cell)
+    val currentGeometry by rememberUpdatedState(geometry)
     val move = stringResource(R.string.screen_move_card) + ": " + cardLabel
     val resize = stringResource(R.string.screen_resize_card) + ": " + cardLabel
     val options = stringResource(R.string.screen_card_options) + ": " + cardLabel
@@ -107,8 +111,8 @@ internal fun ScreenGridHandles(cell: ScreenGridCell, geometry: ScreenGridGeometr
                 else -> null
             }
             if (delta == null) false else {
-                if (resizing || event.isShiftPressed) onResize(delta.first, delta.second)
-                else onMove(delta.first, delta.second)
+                if (resizing || event.isShiftPressed) currentResize(delta.first, delta.second)
+                else currentMove(delta.first, delta.second)
                 true
             }
         }
@@ -119,15 +123,15 @@ internal fun ScreenGridHandles(cell: ScreenGridCell, geometry: ScreenGridGeometr
         Box(Modifier.size(48.dp).keyboard(false).semantics(mergeDescendants = true) {
             contentDescription = move
             customActions = buildList {
-                if (cell.column > 0) add(CustomAccessibilityAction(left) { onMove(-1, 0); true })
-                if (cell.column + cell.width < columns) add(CustomAccessibilityAction(right) { onMove(1, 0); true })
-                if (cell.row > 0) add(CustomAccessibilityAction(up) { onMove(0, -1); true })
-                if (if (columns == 1) cell.index < cardCount - 1 else cell.row < 143) add(CustomAccessibilityAction(down) { onMove(0, 1); true })
+                if (cell.column > 0) add(CustomAccessibilityAction(left) { currentMove(-1, 0); true })
+                if (cell.column + cell.width < columns) add(CustomAccessibilityAction(right) { currentMove(1, 0); true })
+                if (cell.row > 0) add(CustomAccessibilityAction(up) { currentMove(0, -1); true })
+                if (if (columns == 1) cell.index < cardCount - 1 else cell.row < 143) add(CustomAccessibilityAction(down) { currentMove(0, 1); true })
             }
-        }.pointerInput(cell) {
+        }.pointerInput(cell, columns) {
             detectDragGesturesAfterLongPress(onDragStart = { moveDelta = Offset.Zero },
                 onDragCancel = { moveDelta = Offset.Zero }, onDragEnd = {
-                    onMove(geometry.columns(moveDelta.x), geometry.rowDelta(cell.row, moveDelta.y))
+                    currentMove(currentGeometry.columns(moveDelta.x), currentGeometry.rowDelta(currentCell.row, moveDelta.y))
                     moveDelta = Offset.Zero
                 }) { change, drag -> change.consume(); moveDelta += drag }
         }, contentAlignment = Alignment.Center) { HaloIcon(HaloGlyph.ACTION, null) }
@@ -136,15 +140,15 @@ internal fun ScreenGridHandles(cell: ScreenGridCell, geometry: ScreenGridGeometr
         Box(Modifier.fillMaxWidth().height(48.dp).keyboard(true).semantics(mergeDescendants = true) {
             contentDescription = resize
             customActions = buildList {
-                if (cell.width < columns) add(CustomAccessibilityAction(wider) { onResize(1, 0); true })
-                if (cell.width > 1) add(CustomAccessibilityAction(narrower) { onResize(-1, 0); true })
-                if (cell.height < 6) add(CustomAccessibilityAction(taller) { onResize(0, 1); true })
-                if (cell.height > 1) add(CustomAccessibilityAction(shorter) { onResize(0, -1); true })
+                if (cell.width < columns) add(CustomAccessibilityAction(wider) { currentResize(1, 0); true })
+                if (cell.width > 1) add(CustomAccessibilityAction(narrower) { currentResize(-1, 0); true })
+                if (cell.height < 6) add(CustomAccessibilityAction(taller) { currentResize(0, 1); true })
+                if (cell.height > 1) add(CustomAccessibilityAction(shorter) { currentResize(0, -1); true })
             }
-        }.pointerInput(cell) {
+        }.pointerInput(cell, columns) {
             detectDragGestures(onDragStart = { resizeDelta = Offset.Zero }, onDragCancel = { resizeDelta = Offset.Zero },
                 onDragEnd = {
-                    onResize(geometry.columns(resizeDelta.x), geometry.rowDelta(cell.row + cell.height, resizeDelta.y))
+                    currentResize(currentGeometry.columns(resizeDelta.x), currentGeometry.rowDelta(currentCell.row + currentCell.height, resizeDelta.y))
                     resizeDelta = Offset.Zero
                 }) { change, drag -> change.consume(); resizeDelta += drag }
         }, contentAlignment = Alignment.CenterEnd) { Text("↘", Modifier.padding(end = 12.dp)) }

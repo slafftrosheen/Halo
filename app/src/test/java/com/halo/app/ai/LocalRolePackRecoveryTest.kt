@@ -252,6 +252,23 @@ class LocalRolePackRecoveryTest {
         assertFalse(owner.request(LocalRolePackCommand.ROLLBACK, TOKEN))
     }
 
+    @Test fun sourceReviewIsExactPersistentAndRequiredBeforeAnyNewAcquisition() = runTest {
+        val f = Fixture(backgroundScope, reviewed = false)
+        val owner = f.owner()
+        assertFalse(owner.sourceReviewAcknowledged)
+        assertFalse(owner.request(LocalRolePackCommand.START_OR_RESUME, "NONE"))
+        owner.startOrResume(); runCurrent()
+        assertEquals(LOCAL_ROLE_PACK_REVIEW_REQUIRED, owner.state.value.message)
+        assertNull(f.storage.getString(KEY)); assertEquals(0, f.downloads)
+        assertFalse(owner.acknowledgeSourceReview("f".repeat(64), true))
+        assertFalse(owner.sourceReviewAcknowledged)
+        assertTrue(owner.acknowledgeSourceReview(PrivateOfflinePack.fingerprint, true))
+        assertTrue(f.owner().sourceReviewAcknowledged)
+        assertTrue(owner.acknowledgeSourceReview(PrivateOfflinePack.fingerprint, false))
+        assertFalse(f.owner().sourceReviewAcknowledged)
+        assertEquals(0, f.downloads)
+    }
+
     private fun assertRecovery(owner: LocalRolePackInstaller) {
         val value = owner.state.value
         assertEquals(LocalRolePackPhase.ROLLBACK_FAILED, value.phase)
@@ -259,7 +276,7 @@ class LocalRolePackRecoveryTest {
         assertFalse(value.canResume); assertFalse(value.canRollback); assertFalse(value.busy)
     }
 
-    private inner class Fixture(private val scope: CoroutineScope) {
+    private inner class Fixture(private val scope: CoroutineScope, reviewed: Boolean = true) {
         val root = temporary.newFolder()
         val storage = RecordStorage()
         val speech = Speech()
@@ -271,6 +288,9 @@ class LocalRolePackRecoveryTest {
                     downloads++; error("Unexpected acquisition")
                 }
             })
+        init {
+            if (reviewed) check(owner().acknowledgeSourceReview(PrivateOfflinePack.fingerprint, true))
+        }
         fun owner() = LocalRolePackInstaller(storage, manager, speech, File(root, "speech"), null, scope)
         fun plan(): String = LocalRolePackInstaller::class.java.getDeclaredMethod("currentPlanFingerprint")
             .apply { isAccessible = true }.invoke(owner()) as String

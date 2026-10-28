@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workflows_title">Manas darbplūsmas</string>
+    <string name="workflows_empty">Šeit būs darbplūsmas, kuras pārskatījāt un saglabājāt ar Halo.</string>
+    <string name="workflows_limits">Katram solim joprojām vajadzīgs aktuāls avots, atļaujas un apstiprinājums. Automātiska atsaukšana vai darbība bez uzraudzības netiek atļauta.</string>
+    <string name="workflows_enabled">Ieslēgta</string>
+    <string name="workflows_use_chat">Lietot sarunā</string>
+    <string name="workflows_delete">Dzēst darbplūsmu</string>
+    <string name="workflows_delete_confirm">Dzēst saglabāto darbplūsmu? Faili un iepriekšējie rezultāti paliks.</string>
+    <string name="workflows_refresh">Atjaunināt</string>
+    <string name="workflows_back">Atpakaļ</string>
+    <string name="workflows_changed">Darbplūsma mainīta vai nav pieejama. Atjauniniet un pārskatiet vēlreiz.</string>
+    <string name="workflows_yes">Jā</string>
+    <string name="workflows_no">Nē</string>
+</resources>

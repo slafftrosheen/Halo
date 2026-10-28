@@ -29,9 +29,11 @@ object SpeechModelInstaller {
     const val STORAGE_RESERVE_BYTES = 64L * 1024 * 1024
 
     /** Bytes still required by this exact pinned spec; completed files and resumable partials count. */
-    fun remainingBytes(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File): Long =
+    fun remainingBytes(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
+        verifyInstalledBytes: Boolean = false, checkCancellation: () -> Unit = {}): Long =
         spec.files.sumOf { file ->
-            if (SherpaSpeechModelCatalog.validFile(destination, spec, file)) 0L
+            if (if (verifyInstalledBytes) physicalFileMatches(spec, destination, file, checkCancellation)
+                else SherpaSpeechModelCatalog.validFile(destination, spec, file)) 0L
             else {
                 val partial = File(destination, "${file.name}.${file.sha256 ?: spec.revision}.download")
                 val partialBytes = partial.length().takeIf { it <= file.expectedBytes } ?: 0L
@@ -39,20 +41,41 @@ object SpeechModelInstaller {
             }
         }
 
+    /** Atomic publication copies the downloaded archive file before replacing the target.
+     * A complete .download still needs a full temporary copy; existing good files need none.
+     * Sequential publication means only the largest pending file needs staging at once.
+     */
+    fun publicationStagingBytes(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
+        checkCancellation: () -> Unit = {}): Long = spec.files.maxOfOrNull { file ->
+        checkCancellation()
+        if (physicalFileMatches(spec, destination, file, checkCancellation)) 0L
+        else file.expectedBytes.coerceAtLeast(file.minimumBytes)
+    } ?: 0L
+
+    private fun physicalFileMatches(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
+        file: SherpaSpeechModelCatalog.FileSpec, checkCancellation: () -> Unit): Boolean =
+        if (file.expectedBytes > 0 && file.sha256 != null) {
+            try { SherpaModelInstaller.verifyPinnedFiles(destination, spec.copy(files = listOf(file)), checkCancellation) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { false }
+        } else SherpaSpeechModelCatalog.validFile(destination, spec, file)
+
     suspend fun install(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
         acquisitionOwner: String? = null, onProgress: (SpeechModelDownloadProgress) -> Unit = {}): Result<Unit> = withContext(Dispatchers.IO) { withTransferMutation(destination) {
         try {
             acquisitionOwner?.let { require(java.util.UUID.fromString(it).toString() == it) }
             check(destination.isDirectory || destination.mkdirs()) { "Unable to create model directory" }
-            val remainingBytes = remainingBytes(spec, destination)
-            check(destination.usableSpace >= remainingBytes + STORAGE_RESERVE_BYTES) {
-                "Not enough storage. Need ${remainingBytes / 1_000_000} MB to finish plus ${STORAGE_RESERVE_BYTES / 1_000_000} MB safety reserve; available ${destination.usableSpace / 1_000_000} MB."
-            }
             val downloadContext = coroutineContext
+            val remainingBytes = remainingBytes(spec, destination, verifyInstalledBytes = true) { downloadContext.ensureActive() }
+            val stagingBytes = publicationStagingBytes(spec, destination) { downloadContext.ensureActive() }
+            val requiredBytes = Math.addExact(Math.addExact(remainingBytes, stagingBytes), STORAGE_RESERVE_BYTES)
+            check(destination.usableSpace >= requiredBytes) {
+                "Not enough storage. Need ${requiredBytes / 1_000_000} MB including publication space and safety reserve; available ${destination.usableSpace / 1_000_000} MB."
+            }
             var downloaded = 0L
             for (file in spec.files) {
                 coroutineContext.ensureActive()
-                if(SherpaSpeechModelCatalog.validFile(destination,spec,file)) {
+                if(physicalFileMatches(spec, destination, file) { downloadContext.ensureActive() }) {
                     if (acquisitionOwner == null) SherpaModelInstaller.retainFile(destination, file)
                     downloaded += File(destination,file.name).length()
                     onProgress(SpeechModelDownloadProgress(downloaded,spec.expectedBytes,file.name))
@@ -98,7 +121,8 @@ object SpeechModelInstaller {
                     if(file.expectedBytes>0 && partial.length()<file.expectedBytes)
                         throw IOException("Model download interrupted; retry to resume ${file.name}")
                     onProgress(SpeechModelDownloadProgress(downloaded+partial.length(),spec.expectedBytes,file.name,verifying=true))
-                    when(val result=SherpaModelInstaller.installFile(partial.inputStream(),destination,file, publicationOwner, requestedOwner = acquisitionOwner)) {
+                    when(val result=SherpaModelInstaller.installFile(partial.inputStream(),destination,file, publicationOwner, requestedOwner = acquisitionOwner,
+                        checkCancellation = { downloadContext.ensureActive() })) {
                         is SherpaModelInstaller.Result.Rejected -> { if (acquisitionOwner == null || publicationOwner != null) { partial.delete(); partialReceipt.delete() }; throw IOException(result.reason) }
                         is SherpaModelInstaller.Result.Installed -> { downloaded+=result.file.length(); partial.delete(); partialReceipt.delete() }
                     }

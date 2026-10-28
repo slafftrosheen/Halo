@@ -527,13 +527,18 @@ internal object StudyJson {
     }
 
     fun encodeSources(sources: List<StudySessionSource>): String = JSONArray().apply {
-        sources.forEach { put(JSONObject().put("objectId", it.objectId).put("revision", it.revision ?: JSONObject.NULL)) }
+        sources.forEach { source -> put(JSONObject().put("objectId", source.objectId).put("revision", source.revision ?: JSONObject.NULL)
+            .put("textAnchor", source.textAnchor?.let { anchor -> JSONObject().put("blockId", anchor.blockId)
+                .put("start", anchor.start).put("end", anchor.end) } ?: JSONObject.NULL)) }
     }.toString()
     fun decodeSources(raw: String, ids: List<String>, legacy: Long?): List<StudySessionSource> {
         val array = runCatching { JSONArray(raw) }.getOrNull()
         if (array == null || array.length() == 0) return ids.mapIndexed { i, id -> StudySessionSource(id, if (i == 0) legacy?.toString() else null) }
         return (0 until array.length()).mapNotNull { i -> array.optJSONObject(i)?.let {
-            StudySessionSource(it.optString("objectId"), it.optString("revision").takeUnless { _ -> it.isNull("revision") })
+            val anchor = it.optJSONObject("textAnchor")?.let { value ->
+                StudyTextAnchor(value.getString("blockId"), value.getInt("start"), value.getInt("end"))
+            }
+            StudySessionSource(it.optString("objectId"), it.optString("revision").takeUnless { _ -> it.isNull("revision") }, anchor)
         } }.filter { it.objectId.isNotBlank() }.take(4)
     }
 

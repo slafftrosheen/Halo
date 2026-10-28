@@ -96,7 +96,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
     val starterPack = remember { com.halo.app.di.ManualDependencyGraph.localRolePackInstaller }
     val starterPackState by starterPack.state.collectAsStateWithLifecycle()
     var starterPreview by remember { mutableStateOf<com.halo.app.ai.LocalRolePackDownloadPreview?>(null) }
-    LaunchedEffect(starterPack, starterPackState.phase, starterPackState.transactionId) {
+    LaunchedEffect(starterPack, starterPackState.phase, starterPackState.transactionId, capacityRevision) {
         starterPreview = null
         if (!starterPackState.busy && !starterPackState.recoveryRequired &&
             starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE) {
@@ -328,6 +328,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 Text(uiText("Private voice and intent starter bundle"), style = MaterialTheme.typography.titleSmall)
                 Text(uiText("Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality."),
                     style = MaterialTheme.typography.bodySmall)
+                PrivateOfflinePackDetails(memory.totalMem, starterPack)
                 if (!starterPack.available) Text(uiText("The starter bundle is unavailable."),
                     style = MaterialTheme.typography.bodySmall)
                 starterPreview?.let { preview ->
@@ -355,7 +356,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                         )
                     }
                     com.halo.app.ai.LocalRolePackPhase.PAUSED -> Text(uiText("Model setup is paused. Resume it or roll back only the files added by this setup."), style = MaterialTheme.typography.bodySmall)
-                    com.halo.app.ai.LocalRolePackPhase.FAILED -> Text(uiText("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup."),
+                    com.halo.app.ai.LocalRolePackPhase.FAILED -> Text(if (starterPackState.message == com.halo.app.ai.LOCAL_ROLE_PACK_REPAIR_REQUIRED)
+                        stringResource(R.string.offline59_repair) else uiText("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup."),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Text(uiText("Removing models added by this setup…"), style = MaterialTheme.typography.bodySmall)
                     com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Text(uiText(starterPackState.message
@@ -368,12 +370,13 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     if (!starterPackState.recoveryRequired && starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
-                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy && starterPack.available,
+                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy && starterPack.available && starterPreview?.hasEnoughStorage == true,
                             modifier = Modifier.fillMaxWidth()) {
                             Text(uiText(if (starterPackState.canResume) "Resume private starter bundle" else "Install private starter bundle"))
                         }
                     }
-                    if (starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.INSTALLING) {
+                    if (starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.INSTALLING ||
+                        starterPackState.phase == com.halo.app.ai.LocalRolePackPhase.PREFLIGHT) {
                         TextButton(onClick = starterPack::pause, modifier = Modifier.fillMaxWidth()) { Text(uiText("Pause setup")) }
                     }
                     if (starterPackState.canRollback) {

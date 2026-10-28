@@ -168,6 +168,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 payload.put("objectIds", org.json.JSONArray(step.objectIds)).put("memoryIds", org.json.JSONArray(step.memoryIds))
                     .put("workspaceReferences", org.json.JSONArray(step.workspaceReferences.map { reference ->
                         JSONObject().put("objectId", reference.objectId).put("version", reference.version ?: JSONObject.NULL)
+                            .put("textAnchor", reference.textAnchor?.let { anchor -> JSONObject().put("blockId", anchor.blockId)
+                                .put("start", anchor.start).put("end", anchor.end) } ?: JSONObject.NULL)
                     }))
                 "ContextUsed"
             }
@@ -386,7 +388,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                         val reference = references.getJSONObject(index)
                         val objectId = reference.getString("objectId").also { require(it.length in 1..240) }
                         val version = if (reference.isNull("version")) null else reference.getString("version")
-                        com.halo.runtime.cognition.context.ContextReference.WorkspaceObject(objectId, version)
+                        val anchor = reference.optJSONObject("textAnchor")?.let {
+                            com.halo.sdk.runtime.study.StudyTextAnchor(it.getString("blockId"), it.getInt("start"), it.getInt("end"))
+                        }
+                        com.halo.runtime.cognition.context.ContextReference.WorkspaceObject(objectId, version, anchor)
                     })
             }
             "PlanCreated" -> AgentStep.PlanCreated(step, run, at, p.getString("planId"), p.getString("summary"))

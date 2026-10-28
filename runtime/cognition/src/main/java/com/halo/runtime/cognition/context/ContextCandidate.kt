@@ -89,6 +89,7 @@ data class ContextCandidate(
     val freshness: ContextFreshness,
     val objectId: String? = null,
     val sourceVersion: String? = null,
+    val textAnchor: com.halo.sdk.runtime.study.StudyTextAnchor? = null,
 )
 
 data class OmittedContextCandidate(

@@ -178,7 +178,10 @@ class DefaultContextAcquisitionCoordinator(
                 val expected = query.workspaceVersion ?: return null
                 val current = owner.snapshot(objectId, expected) ?: return null
                 if (current.objectId != objectId || current.version != expected) return null
-                WorkspaceContextEntry(objectId, text, expected)
+                // A range selected at the same document revision cannot authorize arbitrary
+                // older whole-source inline text or another range's already-copied excerpt.
+                if (current.textAnchor != null && current.text != text) return null
+                current.copy(text = text)
             } else {
             val before = owner?.versionFor(objectId)
             if (query.workspaceVersion != null && before != query.workspaceVersion) return null
@@ -203,6 +206,7 @@ class DefaultContextAcquisitionCoordinator(
             freshness = ContextFreshness.RECENT,
             objectId = objectId,
             sourceVersion = snapshot.version,
+            textAnchor = snapshot.textAnchor,
         )
     }
 

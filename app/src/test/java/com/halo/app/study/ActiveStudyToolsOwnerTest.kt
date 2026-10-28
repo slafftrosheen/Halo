@@ -126,7 +126,7 @@ class ActiveStudyToolsOwnerTest {
                 override val available = true
                 override suspend fun respond(request: TutorTurnRequest): TutorTurnResponse {
                     entered.complete(request); release.await()
-                    return TutorTurnResponse.Ready("A half is one of two equal parts.", "actual-turn", emptyList(),
+                    return TutorTurnResponse.Ready("A half is one of two equal parts.", request.requestId, emptyList(),
                         StudyVerdict.UNVERIFIED, "", null, "fixture")
                 }
             }
@@ -137,13 +137,14 @@ class ActiveStudyToolsOwnerTest {
             val first = ready(owner)
             val queued = owner.dispatch(first.sessionId, first.sourceVersion, ActiveStudyCommand("ask_tutor", text = "Explain a half")) { true }
             assertEquals("ask_tutor", queued.action)
-            assertEquals("Explain a half", withTimeout(5000) { entered.await() }.learnerQuestion)
+            val request = withTimeout(5000) { entered.await() }
+            assertEquals("Explain a half", request.learnerQuestion)
             assertTrue(ready(owner).busy)
             assertTrue(ready(owner).turnIds.isEmpty())
             assertTrue(runCatching { owner.dispatch(first.sessionId, first.sourceVersion, ActiveStudyCommand("ask_tutor")) { true } }.isFailure)
             release.complete(Unit)
             withTimeout(5000) { vm.uiState.first { it.turns.isNotEmpty() && !it.isGenerating } }
-            assertEquals(listOf("actual-turn"), ready(owner).turnIds)
+            assertEquals(listOf(request.requestId), ready(owner).turnIds)
             assertEquals("A half is one of two equal parts.", ready(owner).latestTurn)
         } finally { release.complete(Unit); store.clear(); db.close(); Dispatchers.resetMain() }
     }

@@ -23,7 +23,15 @@ data class ProcedureStep(
     val capabilityId: String,
     /** Human-readable intent for this step. Instructions, never a smuggled command. */
     val intent: String,
+    /** Optional reviewed typed template. JSON is data; only the host registry validates it. */
+    val argumentsJson: String? = null,
+    /** Whole argument values bound to named inputs, never textual interpolation or executable code. */
+    val inputBindings: Map<String, String> = emptyMap(),
+    /** Exact schema/owner/policy snapshot. A changed contract requires a new reviewed proposal. */
+    val contractFingerprint: String? = null,
 )
+
+data class ProcedureInput(val name: String, val description: String, val valueType: String = "string")
 
 data class LearnedProcedure(
     val id: String,
@@ -37,6 +45,8 @@ data class LearnedProcedure(
     val lastUsedAt: Long? = null,
     val usageCount: Long = 0,
     val enabled: Boolean = true,
+    val inputs: List<ProcedureInput> = emptyList(),
+    val schemaVersion: Int = 1,
 ) {
     /** Bounded staleness copy for the Skills UI. Never deletes anything. */
     fun usageLabel(nowMs: Long): String = when {
@@ -66,6 +76,9 @@ data class ProcedureProposal(
     /** Every step capability must exist at proposal time; unknown ids are rejected outright. */
     val unknownCapabilities: List<String>,
     val createdAt: Long,
+    val inputs: List<ProcedureInput> = emptyList(),
+    /** Exact native approval target for typed templates; not execution authority. */
+    val reviewSummary: String = "",
 ) {
     val savable: Boolean get() = unknownCapabilities.isEmpty() && steps.isNotEmpty() && steps.size <= MAX_STEPS
 
@@ -85,6 +98,8 @@ interface LearnedProcedureStore {
     suspend fun upsert(procedure: LearnedProcedure)
     suspend fun delete(id: String)
     suspend fun recordUsage(id: String, usedAtMs: Long)
+    /** Atomic compare/edit/delete. Hosts without transactional support refuse the write. */
+    suspend fun compareAndSet(expected: LearnedProcedure, replacement: LearnedProcedure?): Boolean = false
 }
 
 /** In-memory store used by tests, previews and hosts that have no durable storage. */
@@ -107,6 +122,13 @@ class InMemoryLearnedProcedureStore(
 
     override suspend fun delete(id: String) {
         procedures.remove(id)
+    }
+
+    override suspend fun compareAndSet(expected: LearnedProcedure, replacement: LearnedProcedure?): Boolean {
+        if (procedures[expected.id] != expected) return false
+        require(replacement == null || replacement.id == expected.id)
+        if (replacement == null) procedures.remove(expected.id) else procedures[expected.id] = replacement
+        return true
     }
 
     override suspend fun recordUsage(id: String, usedAtMs: Long) {

@@ -6,6 +6,7 @@ import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 
 data class SpeechModelInventoryState(
     val loading: Boolean = true,
@@ -22,6 +23,8 @@ data class SpeechModelInventoryState(
 interface SpeechModelInventoryRepository {
     val state: StateFlow<SpeechModelInventoryState>
     suspend fun refresh(languageMode: String? = null)
+    /** No native load; fail closed when an owner cannot prove exact installed pins. */
+    suspend fun verifyInstalled(modelId: String): Boolean = false
     suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit>
     suspend fun remove(modelId: String): Result<Unit>
     /** Exact local artifact metadata before destructive removal; unsupported owners fail closed. */
@@ -46,6 +49,21 @@ class DefaultSpeechModelInventoryRepository(
 ) : SpeechModelInventoryRepository {
     private val _state = MutableStateFlow(SpeechModelInventoryState())
     override val state: StateFlow<SpeechModelInventoryState> = _state
+
+    override suspend fun verifyInstalled(modelId: String): Boolean = withContext(dispatchers.io) {
+        val spec = SherpaSpeechModelCatalog.byId(modelId)
+            ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
+            ?: return@withContext false
+        val directory = if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot()
+            else File(speechRoot(), spec.directoryName)
+        val job = kotlin.coroutines.coroutineContext[kotlinx.coroutines.Job]
+        try {
+            SpeechModelInstaller.withTransferMutation(directory) {
+                SherpaModelInstaller.verifyPinnedFiles(directory, spec) { job?.ensureActive() }
+            }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { false }
+    }
 
     override suspend fun refresh(languageMode: String?) {
         _state.value = _state.value.copy(loading = true, error = null)

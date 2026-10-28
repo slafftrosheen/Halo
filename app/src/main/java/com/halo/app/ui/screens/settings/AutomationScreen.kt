@@ -137,6 +137,7 @@ private fun rememberAutomationReadiness(routines: List<Routine>, watches: List<C
 @Composable
 fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotifications: () -> Unit,
     focusRoutineId: String? = null, reviewRoutineId: String? = null, reviewSuggestionId: String? = null,
+    focusWatchId: String? = null,
     onActivity: () -> Unit = {}, onInbox: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val running by viewModel.running.collectAsStateWithLifecycle()
@@ -150,6 +151,13 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
     LaunchedEffect(focusRoutineId) { detailId = focusRoutineId?.let(::RoutineId) }
     var selectedRun by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedWatch by remember { mutableStateOf<ContinuationWatchId?>(null) }
+    LaunchedEffect(focusWatchId) {
+        if (!focusWatchId.isNullOrBlank() && focusWatchId.length <= 240) {
+            selectedWatch = ContinuationWatchId(focusWatchId)
+            detailId = null
+            tab = AutomationTab.FOLLOW_UPS
+        }
+    }
     var creating by rememberSaveable { mutableStateOf(false) }
     var selectedSuggestion by rememberSaveable(reviewSuggestionId) { mutableStateOf(reviewSuggestionId) }
     var draftSuggestionId by rememberSaveable { mutableStateOf<String?>(null) }

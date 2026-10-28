@@ -102,7 +102,10 @@ class CuratedLocalCatalogTest {
     }
 
     @Test fun speechPacksAndUnknownModelsAreNotInventedAsLiteRtEntries() {
-        assertEquals(2, CuratedLocalCatalog.entries.size)
+        assertEquals(listOf(qwen, embedding, LiteRtModelCatalog.SMOLLM2_360M_INSTRUCT),
+            CuratedLocalCatalog.entries.map { it.artifact })
+        assertEquals(CuratedLocalRole.CONVERSATION_CANDIDATE,
+            CuratedLocalCatalog.entry(LiteRtModelCatalog.SMOLLM2_360M_INSTRUCT)?.role)
         assertNull(CuratedLocalCatalog.entry(other.copy(id = "supertonic-3-candidate")))
         assertNull(CuratedLocalCatalog.entry(other.copy(id = "lfm2.5")))
     }

@@ -19,6 +19,9 @@ sealed interface StudySourceLocator {
     data class TextRange(val start: Int, val end: Int) : StudySourceLocator {
         override fun label() = "Characters $start–$end"
     }
+    data class NoteSelection(val blockId: String, val start: Int, val end: Int) : StudySourceLocator {
+        override fun label() = "Selected passage · characters $start–$end"
+    }
     data class PdfPage(val page: Int) : StudySourceLocator { override fun label() = "Page $page" }
     data class Image(val label: String = "Image") : StudySourceLocator { override fun label() = label }
 }
@@ -41,6 +44,8 @@ fun interface StudySourceResolver {
     /** Explicit conversation reference requires an independently verifiable source revision. */
     suspend fun resolveExplicitReference(objectId: String, query: String): ResolvedStudySource = resolve(objectId,query)
     suspend fun resolveForTurn(objectId: String, query: String, budget: Int, includeBeginning: Boolean): ResolvedStudySource = resolve(objectId, query)
+    suspend fun resolveTextAnchor(objectId: String, revision: String, anchor: com.halo.sdk.runtime.study.StudyTextAnchor): ResolvedStudySource =
+        ResolvedStudySource.Unsupported(objectId, "Selected passage", "Exact text selections are unavailable for this source")
 }
 
 internal object StudyTextRevisionVerifier {

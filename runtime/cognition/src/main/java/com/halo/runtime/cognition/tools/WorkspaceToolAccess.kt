@@ -22,9 +22,11 @@ object PersonalConfigurationToolAccess {
     val providers = setOf("halo_provider_catalog", "halo_provider_state", "halo_provider_refresh_models", "halo_provider_test_connection")
     val routines = setOf("halo_routines_list", "halo_routine_get", "halo_routine_run_status", "halo_routine_set_enabled",
         "halo_routine_save_existing", "halo_routine_delete", "halo_routine_run_now")
+    val procedures = setOf("halo_propose_procedure", "halo_save_procedure", "halo_use_procedure", "halo_procedures_list",
+        "halo_procedure_set_enabled", "halo_procedure_delete")
     val activeStudy = setOf("halo_study_current", "halo_study_session_action")
     val speechInventory = setOf("halo_speech_inventory", "halo_speech_model_action")
-    val all = currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + activeStudy + speechInventory
+    val all = currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + procedures + activeStudy + speechInventory
 }
 
 /** Tools whose results contain private workspace content or personal configuration metadata. */

@@ -60,7 +60,7 @@ class StudyDeviceRegressionTest {
             override val available = true
             override suspend fun respond(value: TutorTurnRequest): TutorTurnResponse {
                 request = value
-                return TutorTurnResponse.Ready("**One idea:** Earth's tilt.", "discovery", emptyList(),
+                return TutorTurnResponse.Ready("**One idea:** Earth's tilt.", value.requestId, emptyList(),
                     StudyVerdict.UNVERIFIED, "", null, "test-model")
             }
         }

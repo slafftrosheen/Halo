@@ -25,13 +25,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 
 enum class LocalRolePackPhase { IDLE, PREFLIGHT, INSTALLING, PAUSED, FAILED, ROLLING_BACK, ROLLBACK_FAILED, COMPLETE }
+const val LOCAL_ROLE_PACK_REPAIR_REQUIRED = "PACK_ARTIFACT_REPAIR_REQUIRED"
+const val LOCAL_ROLE_PACK_REVIEW_REQUIRED = "PACK_SOURCE_REVIEW_REQUIRED"
+private class LocalRolePackRepairRequired : IllegalStateException()
 interface LocalRolePackControl {
     val state: StateFlow<LocalRolePackInstallState>
     val available: Boolean
+    /** Exact source/license disclosure acknowledgement only; never grants qualification. */
+    val sourceReviewAcknowledged: Boolean get() = false
+    fun acknowledgeSourceReview(manifestFingerprint: String, acknowledged: Boolean): Boolean = false
     /** Inventory estimate only. Never downloads, selects roles or grants qualification. */
     suspend fun downloadPreview(): LocalRolePackDownloadPreview? = null
+    /** Explicit read through current physical owner checks; null while installing/unavailable. */
+    suspend fun offlineInventory(): OfflinePackInventory? = null
+    suspend fun conversationExtensionState(): OfflineConversationExtensionState? = null
+    fun requestConversationExtension(command: LocalRolePackCommand, expectedTransactionId: String): Boolean = false
     fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean
 }
 
@@ -122,6 +133,9 @@ class LocalRolePackInstaller(
     private val transaction = Mutex()
     private val installJobLock = Any()
     private var installJob: Job? = null
+    private var conversationJob: Job? = null
+    private val conversationMutation = Mutex()
+    @Volatile private var conversationMessage: String? = null
     private val intentId = "qwen3-0.6b-dynamic-int4"
     // Acquisition uses the same exact source pins as discovery; a matching ID
     // alone cannot substitute a different imported catalogue row into this bundle.
@@ -135,6 +149,163 @@ class LocalRolePackInstaller(
             hasSetupRecord = true, recoveryRequired = true) else LocalRolePackInstallState())
     override val state: StateFlow<LocalRolePackInstallState> = mutableState.asStateFlow()
     override val available: Boolean get() = supertonic != null && intentCatalog != null
+
+    override val sourceReviewAcknowledged: Boolean
+        get() = runCatching { storage.getString(SOURCE_REVIEW_KEY) == PrivateOfflinePack.fingerprint }.getOrDefault(false)
+
+    override fun acknowledgeSourceReview(manifestFingerprint: String, acknowledged: Boolean): Boolean =
+        synchronized(installJobLock) {
+            if (manifestFingerprint != PrivateOfflinePack.fingerprint) return@synchronized false
+            runCatching {
+                if (acknowledged) storage.putString(SOURCE_REVIEW_KEY, manifestFingerprint)
+                else storage.remove(SOURCE_REVIEW_KEY)
+                val saved = sourceReviewAcknowledged == acknowledged
+                if (saved && acknowledged && mutableState.value.message == LOCAL_ROLE_PACK_REVIEW_REQUIRED)
+                    publish(mutableState.value.copy(message = null))
+                saved
+            }.getOrDefault(false)
+        }
+
+    private fun conversationReceipt(): Pair<String?, Boolean> {
+        val raw = storage.getString(CONVERSATION_KEY) ?: return null to false
+        val fields = raw.takeIf { it.length < 256 }?.split(':')
+        val id = fields?.getOrNull(1)?.takeIf { value ->
+            runCatching { java.util.UUID.fromString(value).toString() == value }.getOrDefault(false)
+        }
+        return id to (fields == null || fields.size != 2 || fields[0] != PrivateOfflinePack.fingerprint || id == null)
+    }
+
+    override suspend fun conversationExtensionState(): OfflineConversationExtensionState = withContext(Dispatchers.IO) {
+        val model = PrivateOfflinePack.conversationCandidate
+        val (receipt, recovery) = conversationReceipt()
+        val busy = synchronized(installJobLock) { conversationJob?.isActive == true } || models.isDownloading(model.id)
+        val physical = if (!busy) models.verifyPhysicalArtifact(model.id) else null
+        val intact = models.catalogModel(model.id) == model && CuratedLocalCatalog.matchesInstalledArtifact(model, physical?.sha256,
+            physical?.bytes ?: 0L, physical?.verified == true)
+        val partial = (models.partialDownloadBytes(model.id) ?: 0L).coerceIn(0L, model.expectedBytes)
+        val remaining = if (intact) 0L else model.expectedBytes - partial
+        val storageEstimate = com.halo.providers.litert.models.LiteRtStoragePreflight.evaluate(
+            remaining.coerceAtLeast(1L), models.modelDir.usableSpace)
+        OfflineConversationExtensionState(receipt ?: "NONE", models.catalogModel(model.id) == model && model.directDownloadAllowed,
+            busy, recovery, when {
+                recovery -> "RECOVERY_REQUIRED"
+                busy -> "ACQUIRING"
+                intact -> "FILES_INSTALLED_UNQUALIFIED"
+                conversationMessage != null -> "FAILED"
+                partial > 0L -> "PAUSED"
+                else -> "IDLE"
+            }, intact, remaining, if (intact) 0L else storageEstimate.requiredBytes,
+            storageEstimate.freeBytes, intact || storageEstimate.sufficient, conversationMessage)
+    }
+
+    /** Optional CHAT acquisition uses this same owner and existing LiteRT transfers.
+     * Its durable receipt cannot select a role or authorize inference. Rollback removes
+     * only manager-proven ownership; pre-existing/independently resumed files are retained.
+     */
+    override fun requestConversationExtension(command: LocalRolePackCommand, expectedTransactionId: String): Boolean = runCatching { synchronized(installJobLock) {
+        val model = PrivateOfflinePack.conversationCandidate
+        val (observed, recovery) = conversationReceipt()
+        if (expectedTransactionId != (observed ?: "NONE")) return@synchronized false
+        if (command == LocalRolePackCommand.START_OR_RESUME && !sourceReviewAcknowledged) return@synchronized false
+        if (command == LocalRolePackCommand.PAUSE) {
+            if (recovery || conversationJob?.isActive != true && (observed == null || !models.isDownloading(model.id))) return@synchronized false
+            observed?.let { models.cancelOwnedDownload(model.id, it) }
+            conversationJob?.cancel()
+            return@synchronized true
+        }
+        if (conversationJob?.isActive == true || models.isDownloading(model.id)) return@synchronized false
+        if (command != LocalRolePackCommand.KEEP_FILES && recovery) return@synchronized false
+        if (command == LocalRolePackCommand.START_OR_RESUME &&
+            (models.catalogModel(model.id) != model || !model.directDownloadAllowed)) return@synchronized false
+        if (command in setOf(LocalRolePackCommand.ROLLBACK, LocalRolePackCommand.KEEP_FILES) &&
+            storage.getString(CONVERSATION_KEY) == null) return@synchronized false
+        conversationJob = scope.launch { conversationMutation.withLock {
+            var operationOwner: String? = null
+            try {
+                val (current, currentRecovery) = conversationReceipt()
+                if (expectedTransactionId != (current ?: "NONE")) return@withLock
+                check(command == LocalRolePackCommand.KEEP_FILES || !currentRecovery)
+                conversationMessage = null
+                when (command) {
+                    LocalRolePackCommand.START_OR_RESUME -> {
+                        check(sourceReviewAcknowledged) { LOCAL_ROLE_PACK_REVIEW_REQUIRED }
+                        check(models.catalogModel(model.id) == model && model.directDownloadAllowed)
+                        val physical = models.verifyPhysicalArtifact(model.id)
+                        if (CuratedLocalCatalog.matchesInstalledArtifact(model, physical?.sha256,
+                                physical?.bytes ?: 0L, physical?.verified == true)) return@withLock
+                        // Retain an independently installed damaged artifact for explicit repair.
+                        check(!File(models.modelDir, "${model.id}.litertlm").exists() ||
+                            current != null && models.acquisitionOwner(model.id) == current)
+                        val owner = current ?: java.util.UUID.randomUUID().toString()
+                        operationOwner = owner
+                        if (current == null) storage.putString(CONVERSATION_KEY, "${PrivateOfflinePack.fingerprint}:$owner")
+                        val remaining = (model.expectedBytes - (models.partialDownloadBytes(model.id) ?: 0L)
+                            .coerceIn(0L, model.expectedBytes)).coerceAtLeast(1L)
+                        check(com.halo.providers.litert.models.LiteRtStoragePreflight.evaluate(
+                            remaining, models.modelDir.usableSpace).sufficient)
+                        kotlin.coroutines.coroutineContext.ensureActive()
+                        models.downloadCatalogModel(model, acquisitionOwner = owner)
+                        while (true) {
+                            when (models.downloadStates.value[model.id]) {
+                                DownloadState.Installed -> {
+                                    val installed = models.verifyPhysicalArtifact(model.id)
+                                    check(CuratedLocalCatalog.matchesInstalledArtifact(model, installed?.sha256,
+                                        installed?.bytes ?: 0L, installed?.verified == true))
+                                    break
+                                }
+                                is DownloadState.Failed -> error("Conversation acquisition failed")
+                                is DownloadState.Paused, DownloadState.NotInstalled -> break
+                                else -> delay(300)
+                            }
+                        }
+                    }
+                    LocalRolePackCommand.ROLLBACK -> {
+                        val owner = requireNotNull(current)
+                        models.cancelOwnedDownload(model.id, owner)
+                        if (models.acquisitionOwner(model.id) == owner) check(models.deleteModel(model.id, owner))
+                        models.discardOwnedPartial(model.id, owner)
+                        storage.remove(CONVERSATION_KEY)
+                    }
+                    LocalRolePackCommand.KEEP_FILES -> storage.remove(CONVERSATION_KEY)
+                    LocalRolePackCommand.PAUSE -> Unit // Handled synchronously above.
+                }
+            } catch (cancelled: CancellationException) {
+                // Pause can precede receipt persistence/manager registration. Cancel again
+                // after START reaches its next suspension, using only this operation's owner.
+                operationOwner?.let { runCatching { models.cancelOwnedDownload(model.id, it) } }
+                throw cancelled
+            }
+            catch (_: Exception) {
+                conversationMessage = "Conversation setup did not finish. Read file status; repair independent damaged files or retry the exact acquisition. Existing files were retained."
+            }
+        } }
+        true
+    } }.getOrDefault(false)
+
+    override suspend fun offlineInventory(): OfflinePackInventory? = withContext(Dispatchers.IO) {
+        if (!available || mutableState.value.busy) return@withContext null
+        transaction.withLock {
+            if (!available || mutableState.value.busy) return@withLock null
+            speech.refresh()
+            val intent = requireNotNull(intentCatalog)
+            val physical = models.verifyPhysicalArtifact(intentId)
+            val chat = PrivateOfflinePack.conversationCandidate
+            val chatPhysical = models.verifyPhysicalArtifact(chat.id)
+            val voices = supertonic?.packs?.verifiedInstalled().orEmpty()
+            val selection = supertonic?.packs?.selection()
+            val selectedIntact = voices.any { it.fingerprint == selection?.fingerprint }
+            OfflinePackInventory(PrivateOfflinePack.fingerprint, buildSet {
+                if (models.catalogModel(chat.id) == chat && CuratedLocalCatalog.matchesInstalledArtifact(chat,
+                        chatPhysical?.sha256, chatPhysical?.bytes ?: 0L, chatPhysical?.verified == true))
+                    add(OfflinePackRole.CONVERSATION)
+                if (CuratedLocalCatalog.matchesInstalledArtifact(intent, physical?.sha256,
+                        physical?.bytes ?: 0L, physical?.verified == true)) add(OfflinePackRole.ACTION_INTENT)
+                if (speech.verifyInstalled(WhisperSmall.id)) add(OfflinePackRole.RECOGNITION)
+                if (speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID)) add(OfflinePackRole.VOICE_ACTIVITY)
+                if (voices.any { it.officialArchiveSha256 == SupertonicPackStore.OFFICIAL_SHA256 }) add(OfflinePackRole.SPEECH_OUTPUT)
+            }, voices.mapTo(mutableSetOf()) { it.fingerprint }, selectedIntact, selectedIntact && selection?.audibleConfirmed == true)
+        }
+    }
 
     override suspend fun downloadPreview(): LocalRolePackDownloadPreview? = withContext(Dispatchers.IO) {
         if (!available || mutableState.value.busy) return@withContext null
@@ -162,6 +333,7 @@ class LocalRolePackInstaller(
     override fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean {
         val observed = mutableState.value
         if (expectedTransactionId != (observed.transactionId ?: "NONE")) return false
+        if (command == LocalRolePackCommand.START_OR_RESUME && !sourceReviewAcknowledged) return false
         when (command) {
             LocalRolePackCommand.START_OR_RESUME -> { if (observed.busy || observed.recoveryRequired || observed.phase == LocalRolePackPhase.ROLLBACK_FAILED) return false; startOrResumeFor(expectedTransactionId) }
             LocalRolePackCommand.PAUSE -> { if (!observed.busy || observed.phase == LocalRolePackPhase.ROLLING_BACK) return false; pauseFor(expectedTransactionId) }
@@ -174,9 +346,17 @@ class LocalRolePackInstaller(
     private fun startOrResumeFor(expected: String?) {
         synchronized(installJobLock) {
             if (installJob?.isActive == true || mutableState.value.recoveryRequired) return
+            if (!sourceReviewAcknowledged) {
+                publish(mutableState.value.copy(message = LOCAL_ROLE_PACK_REVIEW_REQUIRED))
+                return
+            }
             installJob = scope.launch { transaction.withLock {
                 if (expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
                 if (mutableState.value.recoveryRequired || mutableState.value.phase == LocalRolePackPhase.ROLLBACK_FAILED) return@withLock
+                if (!sourceReviewAcknowledged) {
+                    publish(mutableState.value.copy(message = LOCAL_ROLE_PACK_REVIEW_REQUIRED))
+                    return@withLock
+                }
                 installTransaction()
             } }
         }
@@ -233,8 +413,12 @@ class LocalRolePackInstaller(
 
     private suspend fun installTransaction() {
         var operationJournal: LocalRolePackJournal? = null
+        val beforeInspection = mutableState.value
         try {
             val active = if (journal == null || journal?.phase == LocalRolePackPhase.COMPLETE || journal?.phase == LocalRolePackPhase.IDLE) {
+                // Exact disk verification can take time. Publish busy before inspecting so
+                // repeated taps are suppressed and Pause can cancel the read-only preflight.
+                publish(beforeInspection.copy(phase = LocalRolePackPhase.PREFLIGHT, message = null))
                 val initial = snapshotBaseline()
                 persist(initial.copy(phase = LocalRolePackPhase.PREFLIGHT))
                 requireNotNull(journal)
@@ -261,7 +445,7 @@ class LocalRolePackInstaller(
             current = current.copy(stage = LocalRolePackStage.SPEECH_RECOGNITION)
             persist(current)
             speech.refresh()
-            if (speech.state.value.models[WhisperSmall.id] != true) {
+            if (!speech.verifyInstalled(WhisperSmall.id)) {
                 val result = speech.installOwned(WhisperSmall.id, requireNotNull(current.transactionId)) { progress ->
                     mutableState.value = mutableState.value.copy(
                         phase = LocalRolePackPhase.INSTALLING,
@@ -274,12 +458,12 @@ class LocalRolePackInstaller(
                 result.getOrElse { throw it }
             }
             speech.refresh()
-            check(speech.state.value.models[WhisperSmall.id] == true) { "Whisper Small did not pass its pinned file checks." }
+            check(speech.verifyInstalled(WhisperSmall.id)) { "Whisper Small did not pass its pinned file checks." }
 
             current = current.copy(stage = LocalRolePackStage.SPEECH_ACTIVITY)
             persist(current)
             speech.refresh()
-            if (!speech.state.value.sileroInstalled) {
+            if (!speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID)) {
                 val result = speech.installOwned(SherpaSpeechModelCatalog.SILERO_VAD_ID, requireNotNull(current.transactionId)) { progress ->
                     mutableState.value = mutableState.value.copy(
                         phase = LocalRolePackPhase.INSTALLING,
@@ -292,12 +476,12 @@ class LocalRolePackInstaller(
                 result.getOrElse { throw it }
             }
             speech.refresh()
-            check(speech.state.value.sileroInstalled) { "Silero VAD did not pass its pinned file checks." }
+            check(speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID)) { "Silero VAD did not pass its pinned file checks." }
 
             current = current.copy(stage = LocalRolePackStage.SPEECH_OUTPUT)
             persist(current)
             val tts = supertonic ?: error("The Supertonic speech provider is unavailable on this installation.")
-            val installedTts = tts.installedPacks().mapTo(mutableSetOf()) { it.fingerprint }
+            val installedTts = tts.packs.verifiedOfficialInstalled().mapTo(mutableSetOf()) { it.fingerprint }
             val newlyInstalled = installedTts - current.ttsFingerprints
             val retainedBaselinePack = current.ttsFingerprints.any(installedTts::contains)
             if (!retainedBaselinePack && newlyInstalled.isEmpty()) {
@@ -314,11 +498,12 @@ class LocalRolePackInstaller(
                 }
                 check(tts.packs.resolve(fingerprint) != null) { "The Supertonic pack did not pass its manifest checks." }
             }
-            check(retainedBaselinePack || newlyInstalled.isNotEmpty() || tts.installedPacks().isNotEmpty()) {
+            check(retainedBaselinePack || newlyInstalled.isNotEmpty() || tts.packs.verifiedOfficialInstalled().isNotEmpty()) {
                 "No verified local speech output pack is installed."
             }
             finish()
         } catch (cancelled: CancellationException) {
+            if (operationJournal == null) publish(beforeInspection)
             val active = journal
             if (operationJournal != null && active != null && active.transactionId == operationJournal.transactionId &&
                 active.phase !in setOf(LocalRolePackPhase.COMPLETE, LocalRolePackPhase.ROLLING_BACK)) {
@@ -340,19 +525,21 @@ class LocalRolePackInstaller(
         val physicalFileExists = File(models.modelDir, "$intentId.litertlm").exists()
         if (physicalFileExists && existing == null) error("An existing intent artifact could not be verified; it was left untouched.")
         if (models.isDownloading(intentId)) error("An intent model download is already running. Let it finish before starting this bundle.")
-        val ttsFingerprints = supertonic?.installedPacks()?.mapTo(mutableSetOf()) { it.fingerprint }.orEmpty()
+        val ttsFingerprints = supertonic?.packs?.verifiedInstalled()?.mapTo(mutableSetOf()) { it.fingerprint }.orEmpty()
+        if (supertonic?.installedPacks().orEmpty().any { it.fingerprint !in ttsFingerprints })
+            throw LocalRolePackRepairRequired()
         if (existing == null && models.partialDownloadBytes(intentId) != null) {
             error("An interrupted intent download already exists. Resume or discard it in model settings before starting this bundle.")
         }
         val whisperDirectory = File(speechRoot, WhisperSmall.directoryName)
-        if (speech.state.value.models[WhisperSmall.id] != true && whisperDirectory.listFiles().orEmpty().isNotEmpty()) {
-            error("Existing Whisper Small files were found. Finish or remove that download in voice settings before starting this bundle.")
+        if (!speech.verifyInstalled(WhisperSmall.id) && whisperDirectory.listFiles().orEmpty().isNotEmpty()) {
+            throw LocalRolePackRepairRequired()
         }
         val vadFile = File(speechRoot, SherpaSpeechModelCatalog.SILERO_VAD_FILE)
-        if (!speech.state.value.sileroInstalled && (vadFile.exists() ||
+        if (!speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID) && (vadFile.exists() ||
                 File(speechRoot, "${SherpaSpeechModelCatalog.SILERO_VAD_FILE}.verified").exists() ||
                 File(speechRoot, "${SherpaSpeechModelCatalog.SILERO_VAD_FILE}.partial").exists())) {
-            error("An existing VAD file could not be verified; it was left untouched.")
+            throw LocalRolePackRepairRequired()
         }
         if (ttsFingerprints.isEmpty() && (supertonic?.packs?.hasOfficialPartial() == true || supertonic?.packs?.downloadProgress?.value != null)) {
             error("An interrupted Supertonic download already exists. Resume or discard it in voice settings before starting this bundle.")
@@ -364,8 +551,8 @@ class LocalRolePackInstaller(
             intentVerified = existing?.verified == true && existing.sha256.equals(intentCatalog?.sha256, ignoreCase = true),
             planFingerprint = currentPlanFingerprint(),
             transactionId = java.util.UUID.randomUUID().toString(),
-            whisperSmallInstalled = speech.state.value.models[WhisperSmall.id] == true,
-            vadInstalled = speech.state.value.sileroInstalled,
+            whisperSmallInstalled = speech.verifyInstalled(WhisperSmall.id),
+            vadInstalled = speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID),
             ttsFingerprints = ttsFingerprints,
         ).also { initial ->
             if (initial.intentExisted && !initial.intentVerified) {
@@ -384,16 +571,18 @@ class LocalRolePackInstaller(
     private suspend fun downloadPlan(prepareStorage: Boolean): LocalRolePackDownloadPreview {
         val intentNow = models.verifyPhysicalArtifact(intentId)?.let { it.verified && it.sha256.equals(intentCatalog?.sha256, true) } == true
         speech.refresh()
-        val speechInventory = speech.state.value
+        val whisperInstalled = speech.verifyInstalled(WhisperSmall.id)
+        val vadInstalled = speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID)
         val intentModel = requireNotNull(intentCatalog)
         val intentPartial = (models.partialDownloadBytes(intentId) ?: 0L).takeIf { it in 0L..intentModel.expectedBytes } ?: 0L
         val intentRemaining = (intentModel.expectedBytes - intentPartial).coerceAtLeast(0L)
         val intentBytes = if (intentNow) 0L else intentRemaining
-        val whisperRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(WhisperSmall, File(speechRoot, WhisperSmall.directoryName))
-        val speechBytes = if (speechInventory.models[WhisperSmall.id] == true) 0L else whisperRemaining
-        val vadRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(SherpaSpeechModelCatalog.sileroVad, speechRoot)
-        val vadBytes = if (speechInventory.sileroInstalled) 0L else vadRemaining
-        val ttsNowInstalled = supertonic?.installedPacks()?.isNotEmpty() == true
+        val planContext = kotlin.coroutines.coroutineContext
+        val whisperRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(WhisperSmall, File(speechRoot, WhisperSmall.directoryName), verifyInstalledBytes = true) { planContext.ensureActive() }
+        val speechBytes = if (whisperInstalled) 0L else whisperRemaining
+        val vadRemaining = com.halo.providers.sherpa.stt.SpeechModelInstaller.remainingBytes(SherpaSpeechModelCatalog.sileroVad, speechRoot, verifyInstalledBytes = true) { planContext.ensureActive() }
+        val vadBytes = if (vadInstalled) 0L else vadRemaining
+        val ttsNowInstalled = supertonic?.packs?.verifiedOfficialInstalled()?.isNotEmpty() == true
         val ttsDownloadBytes = if (ttsNowInstalled) 0L else
             supertonic?.packs?.remainingOfficialDownloadBytes() ?: SupertonicPackStore.OFFICIAL_BYTES
         val ttsBytes = if (ttsNowInstalled) 0L else
@@ -403,12 +592,19 @@ class LocalRolePackInstaller(
         val intentStorageBytes = if (intentNow) 0L else
             com.halo.providers.litert.models.LiteRtStoragePreflight.evaluate(
                 intentBytes.coerceAtLeast(1L), Long.MAX_VALUE).requiredBytes
-        val speechReserve = if (speechInventory.models[WhisperSmall.id] != true || !speechInventory.sileroInstalled) {
+        val speechReserve = if (!whisperInstalled || !vadInstalled) {
             com.halo.providers.sherpa.stt.SpeechModelInstaller.STORAGE_RESERVE_BYTES
         } else 0L
+        val speechStaging = maxOf(
+            com.halo.providers.sherpa.stt.SpeechModelInstaller.publicationStagingBytes(
+                WhisperSmall, File(speechRoot, WhisperSmall.directoryName)) { planContext.ensureActive() },
+            com.halo.providers.sherpa.stt.SpeechModelInstaller.publicationStagingBytes(
+                SherpaSpeechModelCatalog.sileroVad, speechRoot) { planContext.ensureActive() })
+        val speechStorageBytes = Math.addExact(Math.addExact(speechBytes, vadBytes),
+            Math.addExact(speechStaging, speechReserve))
         val storageNeeds = listOfNotNull(
             models.modelDir.takeIf { intentStorageBytes > 0L }?.let { it to intentStorageBytes },
-            speechRoot.takeIf { speechBytes + vadBytes + speechReserve > 0L }?.let { it to (speechBytes + vadBytes + speechReserve) },
+            speechRoot.takeIf { speechStorageBytes > 0L }?.let { it to speechStorageBytes },
             supertonic?.packs?.storageRoot?.takeIf { ttsBytes > 0L }?.let { it to ttsBytes },
         ).map { (root, required) ->
             val location = if (prepareStorage) {
@@ -467,9 +663,9 @@ class LocalRolePackInstaller(
             "The intent candidate failed final checksum verification."
         }
         speech.refresh()
-        check(speech.state.value.models[WhisperSmall.id] == true) { "Whisper Small did not pass final file checks." }
-        check(speech.state.value.sileroInstalled) { "Silero VAD did not pass final file checks." }
-        check(supertonic?.installedPacks()?.isNotEmpty() == true) { "No verified local speech output pack is installed." }
+        check(speech.verifyInstalled(WhisperSmall.id)) { "Whisper Small did not pass final file checks." }
+        check(speech.verifyInstalled(SherpaSpeechModelCatalog.SILERO_VAD_ID)) { "Silero VAD did not pass final file checks." }
+        check(supertonic?.packs?.verifiedOfficialInstalled()?.isNotEmpty() == true) { "No verified publisher speech output pack is installed." }
         val complete = requireNotNull(journal).copy(phase = LocalRolePackPhase.COMPLETE, stage = LocalRolePackStage.DONE, message = null)
         persist(complete)
     }
@@ -608,12 +804,15 @@ class LocalRolePackInstaller(
     }
 
     private fun safeMessage(error: Exception): String = when {
+        error is LocalRolePackRepairRequired -> LOCAL_ROLE_PACK_REPAIR_REQUIRED
         error.message?.contains("Not enough free space", ignoreCase = true) == true -> error.message.orEmpty()
         error.message?.contains("pinned", ignoreCase = true) == true -> "A required model is not available in the pinned catalog. Update Halo and try again."
         else -> "The model setup did not finish. Check storage and connection, then resume or roll back."
     }
 
     private companion object {
+        const val SOURCE_REVIEW_KEY = "local_role_pack_source_review_v1"
+        const val CONVERSATION_KEY = "local_role_pack_conversation_v1"
         const val JOURNAL_KEY = "local_role_pack_transaction_v1"
         const val RECOVERY_MESSAGE = "halo can't verify the previous setup record. Keep the downloaded files and clear the record before starting again."
         const val CLEAR_FAILED_MESSAGE = "The setup record could not be cleared. Reopen halo and try again. Your downloaded files are still kept."

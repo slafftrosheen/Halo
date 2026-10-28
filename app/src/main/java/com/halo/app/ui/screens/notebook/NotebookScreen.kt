@@ -289,7 +289,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         leadingIcon = { Icon(painterResource(R.drawable.halo_ic_search), contentDescription = null) },
-                        placeholder = { Text(uiText("Search your workspace")) },
+                        placeholder = { Text(uiText("Search your workspace"), maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
                         inputContentDescription = uiText("Search your workspace"),
                         shape = com.halo.app.ui.design.HaloShapes.control, kind = VoiceFieldKind.SEARCH)
 

@@ -181,6 +181,7 @@ class StudyUseCases(
     private val sourceResolver: StudySourceResolver? = null,
     private val reviewIntensity: StudyReviewIntensityController? = null,
     private val localSessionData: StudySessionLocalData? = null,
+    private val permitsSource: suspend (String) -> Boolean = { true },
 ) {
     val narrationAvailable: Boolean get() = narration?.available == true
 
@@ -301,6 +302,20 @@ class StudyUseCases(
             restartWithCurrentSources(sessionId)
         }
         val session = repository.getSession(sessionId) ?: return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
+        if (session.sources.any { it.textAnchor != null }) {
+            // A restart resets learning progress, never the selected passage. A changed anchor
+            // must be selected again; an unchanged anchor can be reused without broadening it.
+            val references = sourceReferences(session)
+            if (!sourcesStillCurrent(session, references)) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
+            return try {
+                StudyStartResult.Started(repository.createMaterialSession(session.sources, session.languages,
+                    session.goal, session.learnerLevel, session.supportStyle, session.knowledgePolicy,
+                    conversationId = null, runId = null, interactionId = null,
+                    validateSources = { if (!sourcesStillCurrent(session, references)) throw StudySourceChanged() }))
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: StudySourceChanged) { StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED) }
+            catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
+        }
         return startMaterial(session.sourceObjectIds, session.languages, session.goal, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
     }
 
@@ -312,7 +327,11 @@ class StudyUseCases(
         }
         val session = repository.getSession(sessionId) ?: return false
         val refs = sourceReferences(session)
-        return repository.updateSetup(sessionId, refs.map { if (it.resolved is ResolvedStudySource.Unsupported) session.sources.first { old -> old.objectId == it.objectId } else StudySessionSource(it.objectId, it.version) }, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
+        if (refs.any { it.version == null || it.resolved is ResolvedStudySource.Unsupported || !permitsSource(it.objectId) }) return false
+        return repository.updateSetup(sessionId, refs.map { ref ->
+            val previous = session.sources.first { old -> old.objectId == ref.objectId }
+            if (ref.resolved is ResolvedStudySource.Unsupported) previous else previous.copy(revision = ref.version)
+        }, session.learnerLevel, session.supportStyle, session.knowledgePolicy)
     }
 
     suspend fun start(request: StartStudyRequest): StudyStartResult {
@@ -340,6 +359,24 @@ class StudyUseCases(
                 interactionId = request.interactionId,
             ))
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
+    }
+
+    /** A topic is sufficient; notebook sources are optional. */
+    suspend fun startNoteSelection(objectId: String, expectedRevision: Long, anchor: StudyTextAnchor,
+        goal: String? = null): StudyStartResult {
+        val resolver = sourceResolver ?: return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_STORE_UNAVAILABLE)
+        val version = expectedRevision.toString()
+        if (resolver.resolveTextAnchor(objectId, version, anchor) !is ResolvedStudySource.Text)
+            return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
+        return try {
+            StudyStartResult.Started(repository.createMaterialSession(listOf(StudySessionSource(objectId, version, anchor)),
+                StudyLanguagePreferences(), goal, StudyLearnerLevel.ADULT, StudySupportStyle.GUIDED,
+                StudyKnowledgePolicy.SOURCE_ONLY, null, null, null, validateSources = {
+                    if (resolver.resolveTextAnchor(objectId, version, anchor) !is ResolvedStudySource.Text) throw StudySourceChanged()
+                }))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: StudySourceChanged) { StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED) }
         catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
     }
 
@@ -724,7 +761,13 @@ class StudyUseCases(
     suspend fun sourceReferences(session: StudySessionRecord, query: String = session.goal.orEmpty(), includeBeginning: Boolean = session.tutorStage == TutorStage.ASK): List<StudySourceReference> {
         var remaining = StudySourceLimits.TOTAL_CHARS
         return session.sources.take(StudySourceLimits.MAX_SOURCES).map { source ->
-            val resolved = sourceResolver?.resolveForTurn(source.objectId, query, StudySourceLimits.TOTAL_CHARS / session.sources.size.coerceAtLeast(1), includeBeginning) ?: run {
+            val anchor = source.textAnchor
+            val resolved = if (!permitsSource(source.objectId)) {
+                ResolvedStudySource.Unsupported(source.objectId, "Material", "Source unavailable")
+            } else if (anchor != null) {
+                source.revision?.let { sourceResolver?.resolveTextAnchor(source.objectId, it, anchor) }
+                    ?: ResolvedStudySource.Unsupported(source.objectId, "Selected passage", "Selected passage unavailable; select it again")
+            } else sourceResolver?.resolveForTurn(source.objectId, query, StudySourceLimits.TOTAL_CHARS / session.sources.size.coerceAtLeast(1), includeBeginning) ?: run {
                 val doc = documents?.load(source.objectId)
                 if (doc == null || !doc.isWritable) ResolvedStudySource.Unsupported(source.objectId, doc?.title ?: "Material", "Source unavailable")
                 else {
@@ -761,6 +804,62 @@ class StudyUseCases(
                 })
         }
     }
+
+    /**
+     * Recheck the exact material supplied to an in-flight turn before accepting its output.
+     * Session source IDs alone cannot detect a deleted, edited or newly excluded Workspace item.
+     * Excerpt selection may change with the query; identity and permission must not.
+     */
+    suspend fun sourcesStillCurrent(session: StudySessionRecord, supplied: List<StudySourceReference>): Boolean {
+        if (supplied.map { it.objectId } != session.sources.map { it.objectId } ||
+            supplied.any { it.stale || it.version == null || it.resolved is ResolvedStudySource.Unsupported || !permitsSource(it.objectId) }) return false
+        val current = sourceReferences(session)
+        return current.none { it.stale || it.version == null || it.resolved is ResolvedStudySource.Unsupported || !permitsSource(it.objectId) } &&
+            current.associate { it.objectId to it.version } == supplied.associate { it.objectId to it.version }
+    }
+
+    /** A selected lesson is a revisioned referent, never evidence of an unrelated prior session. */
+    suspend fun contextReferenceVersion(sessionId: String): String? {
+        val session = repository.getSession(sessionId)?.takeIf { it.lifecycle == StudySessionLifecycle.ACTIVE } ?: return null
+        val sources = sourceReferences(session)
+        if (!sourcesStillCurrent(session, sources) || repository.getSession(sessionId) != session) return null
+        val identity = "$session|${sources.map { it.objectId to it.version }}"
+        return "study-context:" + java.security.MessageDigest.getInstance("SHA-256").digest(identity.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+    }
+
+    /** Reuse the existing Notebook command owner; never flatten a user's unsaved editor draft. */
+    suspend fun updateSummaryNote(noteId: String, expectedRevision: Long, body: String): Long? {
+        val owner = documents ?: return null
+        if (owner.loadRecovery(noteId) != null) return null
+        val current = owner.load(noteId) ?: return null
+        if (current.lifecycle != com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE || current.revision != expectedRevision) return null
+        val blocks = com.halo.app.data.notebook.NotebookDocumentCodec.parse(body, newId).blocks
+        return when (val result = owner.commit(noteId, expectedRevision, blocks)) {
+            is com.halo.app.data.notebook.CommitOutcome.Committed -> result.revision
+            else -> null
+        }
+    }
+
+    suspend fun summaryArtifact(sessionId: String) = repository.summaryArtifact(sessionId)
+
+    suspend fun saveSummaryArtifact(sessionId: String, body: String, title: String,
+        notes: com.halo.app.notebook.NotebookUseCases, legacyId: String?, legacyRevision: Long?): com.halo.app.data.study.StudySummaryArtifact? =
+        repository.saveSummaryArtifact(sessionId) save@ { recorded ->
+            val existing = recorded ?: if (legacyId != null && legacyRevision != null)
+                com.halo.app.data.study.StudySummaryArtifact(legacyId, legacyRevision) else null
+            if (existing == null) {
+                val note = notes.createNote(body, title)
+                com.halo.app.data.study.StudySummaryArtifact(note.id, note.revision.toLong())
+            } else {
+                val note = notes.getNote(existing.noteId) ?: return@save null
+                if (note.revision.toLong() != existing.revision || note.lifecycle != com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE ||
+                    notes.getDraft(note.id) != null) return@save null
+                val revision = if (note.body == body) existing.revision else updateSummaryNote(note.id, existing.revision, body)
+                    ?: return@save null
+                com.halo.app.data.study.StudySummaryArtifact(note.id, revision)
+            }
+        }
 
     /**
      * Portable, Android-free view of a session. The runtime sees this contract, never the app's

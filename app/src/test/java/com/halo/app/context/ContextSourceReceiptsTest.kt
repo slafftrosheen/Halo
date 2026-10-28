@@ -27,6 +27,16 @@ import java.time.Instant
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = Application::class)
 class ContextSourceReceiptsTest {
+    @Test fun recordedSelectedRangeSurvivesJournalReadbackWithoutReplacingItsSource() = runBlocking { fixture {
+        val anchor = com.halo.sdk.runtime.study.StudyTextAnchor("block-1", 3, 15)
+        val id = run("anchored", listOf(ContextReference.WorkspaceObject("source", "7", anchor)))
+        source.current["source"] = WorkspaceReferenceMetadata("source", "8", "Original source")
+        val receipt = reader.read(id.value)!!.sources.single()
+        assertEquals(anchor, receipt.textAnchor)
+        assertEquals("7", receipt.recordedVersion)
+        assertEquals(SourceReceiptStatus.CHANGED, receipt.status)
+    } }
+
     private class MetadataSource : WorkspaceContextSource {
         val current = mutableMapOf<String, WorkspaceReferenceMetadata>()
         var metadataReads = 0

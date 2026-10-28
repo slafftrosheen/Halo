@@ -285,7 +285,7 @@ fun NoteEditorScreen(
         AlertDialog(
             onDismissRequest = { studyError = null },
             title = { Text(uiText("Study unavailable")) },
-            text = { Text(message) },
+            text = { Text(uiText(message)) },
             confirmButton = { TextButton(onClick = { studyError = null }) { Text(uiText("OK")) } },
         )
     }

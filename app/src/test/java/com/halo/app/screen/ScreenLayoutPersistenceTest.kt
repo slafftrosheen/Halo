@@ -127,10 +127,11 @@ class ScreenLayoutPersistenceTest {
         assertTrue(store.applyDraft(base, draft))
         val restored = LocalScreenStore(context)
         assertTrue(restored.hasUndo())
+        val restoredBase = base.copy(version = restored.layout.value!!.version + 1)
         restored.undo()
-        assertEquals(base, restored.layout.value)
+        assertEquals(restoredBase, restored.layout.value)
         assertEquals(listOf(item()), restored.items.value)
-        assertEquals(base, LocalScreenStore(context).layout.value)
+        assertEquals(restoredBase, LocalScreenStore(context).layout.value)
     }
 
     @Test fun applyingAnUnchangedPreviewDoesNotCreateAnUndoOrVersionChange() {

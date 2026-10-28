@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4185) {
+    buildMap(4186) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4224,6 +4224,7 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Activities" to R.string.ui_4d0076e6b4c7,
     "Activities and notifications" to R.string.ui_b5634a8ba110,
     "Hold halo for actions" to R.string.ui_5774d46c5e6b,
+    "Selected passage" to R.string.ui_5de949c889c4,
     "Local mode" to R.string.ui_e8d505c1b1f7,
     "Local / Power" to R.string.ui_b080f31e6a5f,
     "This action needs Power mode. Use the control beside the halo Orb." to R.string.ui_3b3da664eb98,

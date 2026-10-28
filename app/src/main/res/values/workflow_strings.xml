@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workflows_title">My Workflows</string>
+    <string name="workflows_empty">Saved workflows appear here after you review and save a proposal with Halo.</string>
+    <string name="workflows_limits">Each step still needs its current source, permissions and approval. No automatic rollback or unattended permission is granted.</string>
+    <string name="workflows_enabled">Enabled</string>
+    <string name="workflows_use_chat">Use in chat</string>
+    <string name="workflows_delete">Delete workflow</string>
+    <string name="workflows_delete_confirm">Delete this saved workflow? Your files and earlier results remain.</string>
+    <string name="workflows_refresh">Refresh</string>
+    <string name="workflows_back">Back</string>
+    <string name="workflows_changed">Workflow changed or unavailable. Refresh and review it again.</string>
+    <string name="workflows_yes">Yes</string>
+    <string name="workflows_no">No</string>
+</resources>
