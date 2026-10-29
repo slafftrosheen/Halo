@@ -44,8 +44,11 @@ class StudySourcesTest {
                 .map { turn().copy(learningTask = it) to 1800 }
         for (local in listOf(false, true)) for ((turn, cap) in variants) {
             val provider = Provider(isLocal = local)
-            assertTrue(AiRouterTutorGateway(router(provider), { !local }).respond(turn) is TutorTurnResponse.Ready)
+            val response = AiRouterTutorGateway(router(provider), { !local }).respond(turn)
+            assertTrue(response is TutorTurnResponse.Ready)
             val request = provider.requests.single()
+            assertEquals(turn.requestId, request.interactionId)
+            assertEquals(request.interactionId, (response as TutorTurnResponse.Ready).generationId)
             assertEquals(cap, request.maxOutputTokens)
             assertEquals(AiReasoningMode.DISABLED, request.reasoningMode)
             assertEquals(ToolUseMode.NONE, request.toolUseMode)

@@ -86,6 +86,16 @@ class RoleBrowserCapabilityTest {
             assertEquals(AiRoleSelection.EXPLICIT, router.roleBinding(AiModelRole.AGENTIC).selection)
             assertEquals("default", router.selectedModelId.value)
             assertEquals(0, generations)
+            // Mutation follows the live role filter even when this browser entered as Actions.
+            // A conversation pick must not overwrite the role assignment just made above.
+            val assignedActions = router.roleBinding(AiModelRole.AGENTIC)
+            browser.filter.value = browser.filter.value.copy(role = AiModelRole.CHAT)
+            val genericPicked = CompletableDeferred<Unit>()
+            browser.pick(state.entries.single()) { genericPicked.complete(Unit) }
+            withContext(Dispatchers.Default) { withTimeout(10_000) { genericPicked.await() } }
+            assertEquals("prompt", router.selectedModelId.value)
+            assertEquals(assignedActions, router.roleBinding(AiModelRole.AGENTIC))
+            assertEquals(0, generations)
             withContext(Dispatchers.Default) { control.checkGeneration(provider.id).join() }
             val proved = control.rows.value.single { it.descriptor.providerId == provider.id }
             assertEquals(GenerationProof.PROVEN, proved.generation)

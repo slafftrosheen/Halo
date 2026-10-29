@@ -157,7 +157,8 @@ class AiRouterTutorGateway(
             val aiRequest = AiRequest(text = effectivePrompt, image = image?.content?.bytes,
                 mimeTypes = image?.let { listOf(it.content.mimeType) }.orEmpty(),
                 maxOutputTokens = if (request.createCards || request.extractExercises || request.learningTask != LearningTutorTask.NARRATIVE) 1800 else 600,
-                reasoningMode = AiReasoningMode.DISABLED, toolUseMode = ToolUseMode.NONE)
+                reasoningMode = AiReasoningMode.DISABLED, toolUseMode = ToolUseMode.NONE,
+                interactionId = request.requestId)
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
             val remoteStillPermitted = sessionAllowsRemote(request.session) && (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&

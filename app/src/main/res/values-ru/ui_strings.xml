@@ -4179,4 +4179,5 @@
     <string name="ui_87bfdaffe210" formatted="false">"Изображение страницы PDF · Нужна проверенная модель с поддержкой изображений · Распознавание текста не установлено"</string>
     <string name="ui_2af3c5c4794f" formatted="false">"Используется только часть источника (пропущено %1$d из %2$d символов)."</string>
     <string name="ui_8df7512b27d9" formatted="false">"Действие передано на выполнение; завершение не подтверждено."</string>
+    <string name="ui_ed59ec34d99d" formatted="false">"Используется модель разговоров по умолчанию"</string>
 </resources>

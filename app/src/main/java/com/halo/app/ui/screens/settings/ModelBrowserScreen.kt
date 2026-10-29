@@ -25,19 +25,25 @@ import com.halo.app.ui.icons.HaloGlyph
 @Composable
 fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onProvider: (String) -> Unit,
     initialProvider: String? = null, initialRole: AiModelRole? = null) {
-    SettingsChildZone("Models", onBack)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val providers by viewModel.control.rows.collectAsStateWithLifecycle()
     val selectedProvider by viewModel.control.router.selectedProviderId.collectAsStateWithLifecycle()
     val selectedModel by viewModel.control.router.selectedModelId.collectAsStateWithLifecycle()
+    val bindings by viewModel.control.router.roleBindings.collectAsStateWithLifecycle()
+    val role = filter.role
+    val binding = role?.let { bindings[it] ?: viewModel.control.router.roleBinding(it) }
+    val selection = modelBrowserSelectionPresentation(role, binding,
+        AiModelRef(selectedProvider.orEmpty(), selectedModel.orEmpty()))
+    SettingsChildZone("Models", onBack, contextLabel = role?.let(::modelRoleLabel))
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val providersById = remember(providers) { providers.associateBy { it.descriptor.providerId } }
     LaunchedEffect(initialProvider, initialRole) { viewModel.enter(initialProvider, initialRole) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "header") { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Models"), initialRole?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
+        item(key = "header") { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Models"), role?.let { uiText(modelRoleLabel(it)) }, navigation = onBack) }
         item {
             HaloTextField(filter.query, { viewModel.filter.value = filter.copy(query = it) }, singleLine = true, label = { Text(uiText("Search models")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SEARCH)
+            selection.mode?.let { Text(uiText(roleModeLabel(it)), style = MaterialTheme.typography.bodyMedium) }
             TextButton(onClick = { showFilters = !showFilters }) {
                 Text(uiText(if (showFilters) "Hide filters" else "Filters"))
             }
@@ -74,7 +80,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
             Card(shape = com.halo.app.ui.design.HaloShapes.settingsCard, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), enabled = needsSetup || state.candidates[entry.runtime.ref]?.eligible == true,
                 onClick = { if (!needsSetup) viewModel.pick(entry) { if (initialRole != null) onBack() } else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
+                    val selected = entry.runtime.ref == selection.target
                     if (providersById[entry.model.providerId]?.configured != true) Text(uiText("Provider setup required"))
                     Text(entry.model.displayName, style = MaterialTheme.typography.titleMedium)
                     Text(providersById[entry.model.providerId]?.descriptor?.displayName ?: entry.model.providerId)
@@ -91,7 +97,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                         if (AiCapability.TOOLS in candidate.effectiveCapabilities) Text(uiText(toolProtocolLabel(candidate.toolProtocol)))
                         if (!candidate.eligible) Text(uiText("This model cannot be selected for this task with the current setup."))
                     }
-                    if (selected) Text(uiText("Conversation default"))
+                    if (selected) selection.marker?.let { Text(uiText(it)) }
                 }
             }
         }

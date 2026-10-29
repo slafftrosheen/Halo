@@ -4179,4 +4179,5 @@
     <string name="ui_87bfdaffe210" formatted="false">"Obraz strony PDF · Wymagany zweryfikowany model rozumienia obrazów · Rozpoznawanie tekstu nie jest zainstalowane"</string>
     <string name="ui_2af3c5c4794f" formatted="false">"Uwzględniono tylko część źródła (pominięto %1$d z %2$d znaków)."</string>
     <string name="ui_8df7512b27d9" formatted="false">"Działanie przekazano do wykonania; zakończenie nie jest potwierdzone."</string>
+    <string name="ui_ed59ec34d99d" formatted="false">"Używa domyślnego modelu rozmowy"</string>
 </resources>

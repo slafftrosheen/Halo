@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4196) {
+    buildMap(4197) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4240,6 +4240,7 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "PDF page image · Requires verified vision · OCR not installed" to R.string.ui_87bfdaffe210,
     "Only part of this source is included (%1\$d of %2\$d characters omitted)." to R.string.ui_2af3c5c4794f,
     "Action dispatched; completion is unconfirmed." to R.string.ui_8df7512b27d9,
+    "Uses conversation default" to R.string.ui_ed59ec34d99d,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

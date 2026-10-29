@@ -50,18 +50,50 @@ class HaloAmbientMotionTest {
             runCurrent(); advanceTimeBy(500); runCurrent()
             assertEquals(0f, phase.floatValue, .00001f)
             owner.registry.currentState = Lifecycle.State.RESUMED
-            runCurrent(); advanceTimeBy(301); runCurrent()
-            assertEquals(.009f, phase.floatValue, .00001f)
+            runCurrent(); advanceTimeBy(499); runCurrent()
+            assertEquals("No decorative update before half a second", 0f, phase.floatValue, .00001f)
+            advanceTimeBy(1); runCurrent()
+            assertEquals(.015f, phase.floatValue, .00001f)
+            advanceTimeBy(500); runCurrent()
+            assertEquals("Preserve the nominal .03 radians per second", .03f, phase.floatValue, .00001f)
+            // A partial interval before pausing must not cause an early catch-up tick.
+            advanceTimeBy(250); runCurrent()
             owner.registry.currentState = Lifecycle.State.STARTED
             runCurrent(); advanceTimeBy(1_000); runCurrent()
-            assertEquals(.009f, phase.floatValue, .00001f)
+            assertEquals(.03f, phase.floatValue, .00001f)
             owner.registry.currentState = Lifecycle.State.RESUMED
-            runCurrent(); advanceTimeBy(101); runCurrent()
-            assertEquals(.012f, phase.floatValue, .00001f)
+            runCurrent(); advanceTimeBy(499); runCurrent()
+            assertEquals("Resume preserves position without catching up hidden time", .03f, phase.floatValue, .00001f)
+            advanceTimeBy(1); runCurrent()
+            assertEquals(.045f, phase.floatValue, .00001f)
             owner.registry.currentState = Lifecycle.State.DESTROYED
             runCurrent(); advanceTimeBy(1_000); runCurrent()
-            assertEquals(.012f, phase.floatValue, .00001f)
+            assertEquals(.045f, phase.floatValue, .00001f)
             assertTrue(job.isCompleted)
+        } finally {
+            job.cancelAndJoin()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test fun oneSecondOfMotionPreservesBothMotifsDisplacementFromAnExistingPosition() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val owner = object : LifecycleOwner {
+            val registry = LifecycleRegistry.createUnsafe(this)
+            override val lifecycle: Lifecycle get() = registry
+        }
+        val phase = mutableFloatStateOf(.7f)
+        val job = launch { advanceHaloAmbientPhase(owner.lifecycle, true, phase) }
+        try {
+            owner.registry.currentState = Lifecycle.State.RESUMED
+            runCurrent(); advanceTimeBy(1_000); runCurrent()
+            // Expected position comes from the unchanged .03rad/sec motion contract.
+            for (motif in 0..1) {
+                val expected = haloAmbientDrift(.73f, 1080f, 2400f, motif)
+                val actual = haloAmbientDrift(phase.floatValue, 1080f, 2400f, motif)
+                assertEquals(expected.x, actual.x, .0001f)
+                assertEquals(expected.y, actual.y, .0001f)
+            }
         } finally {
             job.cancelAndJoin()
             Dispatchers.resetMain()
