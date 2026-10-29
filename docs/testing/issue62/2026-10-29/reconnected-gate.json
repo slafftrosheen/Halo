@@ -19,5 +19,24 @@
   },
   "voice": "DEFERRED_BY_OWNER",
   "closure": "KEEP_OPEN",
-  "testSourceSha256": "5f1022ab6c35e5330f6dea68164c36ac095b011efa8ac6af3e2068c9fdb6d1ed"
+  "testSourceSha256": "5f1022ab6c35e5330f6dea68164c36ac095b011efa8ac6af3e2068c9fdb6d1ed",
+  "sourceLinkedStudySetup": {
+    "status": "PASS_SCOPED",
+    "sessionId": "35af7be0-c1eb-4430-8e7f-c6c3d358a0a4",
+    "sourceId": "976cc0b3-febc-4bde-a315-b2699fbdeb9c",
+    "sourceRevision": "1",
+    "learnerLevel": "ADULT",
+    "supportStyle": "GUIDED",
+    "knowledgePolicy": "SOURCE_ONLY",
+    "executionChoice": "phone",
+    "lifecycle": "ACTIVE",
+    "tutorStage": "ASK",
+    "restartUi": "SAME_STAGE_ONE_SOURCE_AVAILABLE",
+    "generatedTutorAndPractice": "NOT_VERIFIED"
+  },
+  "deviceConnectedAtCheckpoint": false,
+  "rotationRestoredAndReadBack": {
+    "accelerometer_rotation": "1",
+    "user_rotation": "0"
+  }
 }
