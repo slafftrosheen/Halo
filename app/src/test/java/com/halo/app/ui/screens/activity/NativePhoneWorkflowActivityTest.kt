@@ -69,7 +69,7 @@ class NativePhoneWorkflowActivityTest {
     }
 
     @Test fun transactionPlanRetainsOneOwnedHeadingWithoutPhoneFallbackOrItemChanges() {
-        val run = step("phone-plan", "flow", 1, 1, "TAP", AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val run = step("phone-plan", "flow", 1, 2, "TAP", AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
         val canonical = com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(run.steps, title = "Plan")
         val projected = activityJournalPresentation(run.steps)
         val sourceCard = canonical.root as com.halo.runtime.cognition.interaction.PresentationNode.Card

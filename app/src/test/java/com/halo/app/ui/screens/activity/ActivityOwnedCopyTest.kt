@@ -50,12 +50,12 @@ class ActivityOwnedCopyTest {
                 setLocale(Locale.forLanguageTag(tag))
             }).resources
             compose.onNodeWithTag("owned-plan").assertTextEquals(resolveUiText(resources, "Plan"))
-            compose.onAllNodesWithText("Plan").assertCountEquals(if (tag == "en") 2 else 1)
+            compose.onAllNodesWithText("Plan").assertCountEquals(if (resolveUiText(resources, "Plan") == "Plan") 2 else 1)
             val counts = resolveUiText(resources, "%1\$d / %2\$d steps complete", 2, 3)
             compose.onNodeWithTag("progress").assertTextEquals("$counts · ${resolveUiText(resources, "Waiting for approval")}")
-            compose.onAllNodesWithText("Updated your task").assertCountEquals(if (tag == "en") 2 else 1)
-            compose.onAllNodesWithText("Your answer is ready").assertCountEquals(if (tag == "en") 2 else 1)
-            compose.onAllNodesWithText(resolveUiText(resources, "Updated your task")).assertCountEquals(if (tag == "en") 2 else 1)
+            compose.onAllNodesWithText("Updated your task").assertCountEquals(if (resolveUiText(resources, "Updated your task") == "Updated your task") 2 else 1)
+            compose.onAllNodesWithText("Your answer is ready").assertCountEquals(if (resolveUiText(resources, "Your answer is ready") == "Your answer is ready") 2 else 1)
+            compose.onAllNodesWithText(resolveUiText(resources, "Updated your task")).assertCountEquals(if (resolveUiText(resources, "Updated your task") == "Updated your task") 2 else 1)
         }
     }
 

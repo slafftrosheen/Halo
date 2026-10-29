@@ -413,30 +413,29 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
     })
     val detail by model.state.collectAsStateWithLifecycle()
     val item = detail.item ?: MemoryPresentation.item(memory)
+    val copy = memoryDetailCopy(item)
     var editing by rememberSaveable(memory.id) { mutableStateOf(false) }
     var history by rememberSaveable(memory.id) { mutableStateOf(false) }
     var correction by rememberSaveable(memory.id, memory.content) { mutableStateOf(memory.content) }
     HaloWorkspaceCard {
-        Text(item.kindLabel, style = MaterialTheme.typography.labelMedium)
+        Text(copy.kind, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
         com.halo.app.ui.components.HaloReadAloud(item.record.content)
         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
         Text(uiText("Why Halo remembers this"), style = MaterialTheme.typography.titleMedium)
-        Text(item.originLabel)
-        Text(item.confirmationLabel)
-        item.record.lastConfirmedAt?.let {
-            Text(uiText("Last confirmed %1\$s", MemoryPresentation.date(it)))
-        }
-        Text(item.confidenceLabel, style = MaterialTheme.typography.bodySmall)
+        Text(copy.origin)
+        Text(copy.confirmation)
+        copy.lastConfirmed?.let { Text(it) }
+        Text(copy.confidence, style = MaterialTheme.typography.bodySmall)
         Text(uiText("Where it applies"), style = MaterialTheme.typography.titleMedium)
-        Text(item.scopeLabel)
+        Text(copy.scope)
         Text(uiText("Usage"), style = MaterialTheme.typography.titleMedium)
-        Text(item.usageSummary)
+        Text(copy.usage)
         Text(uiText("Used means this memory was available as context. It does not prove that it changed an answer or caused an action."), style = MaterialTheme.typography.bodySmall)
         Text(uiText("Sources"), style = MaterialTheme.typography.titleMedium)
         if (detail.sources.isEmpty()) Text(uiText("No source detail available"))
         detail.sources.forEach { source ->
-            Text(source.label)
+            Text(uiText(source.label))
             if (source.available == false) Text(uiText("Original source is no longer available"), style = MaterialTheme.typography.bodySmall)
             source.objectRef?.let { objectRef -> TextButton({ onOpenSource(objectRef) }) { Text(uiText("Open source: %1\$s", objectRef.title)) } }
         }

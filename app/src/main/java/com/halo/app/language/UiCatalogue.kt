@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4232) {
+    buildMap(4233) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4254,6 +4254,7 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Waiting for approval" to R.string.ui_10c5739b95bd,
     "Yesterday" to R.string.ui_566181254b29,
     "%1\$d days ago" to R.string.ui_6ed40edc78ca,
+    "User stated" to R.string.ui_41882ce1a45d,
     "Looked at your sources" to R.string.ui_818d1b332c05,
     "Made a plan" to R.string.ui_9e11f505d427,
     "Prepared an action" to R.string.ui_9e43e23deae9,
@@ -4261,10 +4262,10 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Action result" to R.string.ui_23703c2aad12,
     "Could not complete an action" to R.string.ui_48be5b1bbbd2,
     "Asked you first" to R.string.ui_dcc807950ba8,
-    "Received your choice" to R.string.ui_590495f7d2dd,
 )
 
 private fun uiCataloguePart14(): Map<String, Int> = mapOf(
+    "Received your choice" to R.string.ui_590495f7d2dd,
     "Thought about your request" to R.string.ui_c996086ea87d,
     "Prepared an answer" to R.string.ui_31d3724c36ca,
     "Saved your answer" to R.string.ui_0d207e7c0c38,

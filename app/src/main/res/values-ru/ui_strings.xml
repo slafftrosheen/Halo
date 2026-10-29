@@ -4192,6 +4192,7 @@
     <string name="ui_10c5739b95bd" formatted="false">"Ожидание одобрения"</string>
     <string name="ui_566181254b29" formatted="false">"Вчера"</string>
     <string name="ui_6ed40edc78ca" formatted="false">"%1$d дн. назад"</string>
+    <string name="ui_41882ce1a45d" formatted="false">"Со слов пользователя"</string>
     <string name="ui_818d1b332c05" formatted="false">"Просмотрены ваши источники"</string>
     <string name="ui_9e11f505d427" formatted="false">"Составлен план"</string>
     <string name="ui_9e43e23deae9" formatted="false">"Подготовлено действие"</string>
