@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "sourceCommit": "3c8e6aad53c910d99f2a04c431a8f06c88b9651f",
+  "appSha256": "b65d43afb41ab208dca821d189c95496e401677a5c3e52c33d0f9157ff663b0a",
+  "scope": "Actual committed generic native receipt displayed in RU after app update; original literal user prompt remains English",
+  "localizedNativeReceiptVisible": true,
+  "oldEnglishStatusAbsent": true,
+  "originalUserPromptUnchanged": true,
+  "limitations": "Home generic native receipt only. Other native branches, Mini/copy/save/speech not qualified by this observation."
+}

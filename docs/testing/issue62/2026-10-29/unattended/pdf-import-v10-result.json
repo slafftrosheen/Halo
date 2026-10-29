@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "scope": "Actual native full-action-list Import -> Android file picker -> Inbox managed PDF copy; exact bytes and digest; no cloud submission",
+  "objectId": "c5579ea6-4fd8-4bda-a509-65296ffe1c46",
+  "mimeType": "application/pdf",
+  "sizeBytes": 19588,
+  "sha256": "577d4812b338889c2669017aa09bae88a8d799baeacd7c2e3b97131068c50d62",
+  "ownership": "HALO_OWNED",
+  "availability": "OWNED_LOCAL",
+  "sourcePages": 2,
+  "actualPdfOpen": "NOT_RUN_EXTERNAL_VIEWER",
+  "studyPageSelection": "PASS: actual UI 1of2 ->2of2; final Next disabled",
+  "studySessionId": "27e1aa0d-7654-4c52-a0bc-ebfbcc9b5ba0",
+  "studySourceObjectIds": [
+    "c5579ea6-4fd8-4bda-a509-65296ffe1c46"
+  ],
+  "actualFileDetails": "PASS",
+  "studyExecution": "phone",
+  "studyPdfReadiness": "NEEDS_SETUP: no qualified vision model and OCR not installed; no inference attempted",
+  "restartPage2": "PASS: v10->v11 app update/process replacement followed by actual own-session reopen -> Material shows page2of2",
+  "recordedUtc": "2026-10-29T19:32:40.180682+00:00",
+  "lastPageNextDisabledVerified": true
+}

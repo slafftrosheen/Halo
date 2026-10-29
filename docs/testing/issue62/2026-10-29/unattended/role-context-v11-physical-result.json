@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "scope": "Actual Actions picker title at360dp/system200% font; no model mutation or inference",
+  "title": "Модели · Действия и инструменты",
+  "bounds": [
+    60,
+    1639,
+    1020,
+    1872
+  ],
+  "font": "2.0",
+  "density": "Physical density: 440\r\nOverride density: 480",
+  "visualReview": "Full title wraps two lines without clipping/overlap; four roots,bell,profile and oneOrb retained; original font/density restored",
+  "appSha256": "e97db714710d208f73fb06da2c4e04eab17f1b249459052732354023d1d4bf47"
+}

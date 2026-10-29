@@ -1,0 +1,64 @@
+{
+  "status": "FAIL",
+  "scope": "Actual typed create-Canvas-and-link-existing-note workflow; run COMPLETED is not requested semantic completion",
+  "run": {
+    "id": "9539524c-7281-4484-9359-a45a52173178",
+    "interactionId": "63aaf823-cee1-4604-96b1-81abd837d1bf",
+    "state": "COMPLETED",
+    "failureReason": null,
+    "pinnedModelId": "nvidia/nemotron-3.5-lightning:free"
+  },
+  "boardId": "374ca3d3-069a-42a6-b2f1-f37c16c2eb2d",
+  "boardRevision": 2,
+  "nodes": [
+    {
+      "id": "6998e131-b74c-4cd5-821b-dd51323ad2c9",
+      "type": "TEXT",
+      "refObjectId": null,
+      "text": "Copper leaves rest beside a quiet lake. The lake is deep."
+    }
+  ],
+  "requestedSourceId": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+  "properReferencePresent": false,
+  "duplicateNoteCount": 0,
+  "steps": [
+    {
+      "type": "ToolRejected",
+      "state": "FAILED",
+      "toolId": "halo_discover_tools",
+      "reasonCode": "INVALID_ARGUMENTS",
+      "reason": "arguments.toolIds must be a list"
+    },
+    {
+      "type": "ToolRejected",
+      "state": "FAILED",
+      "toolId": "halo_discover_tools",
+      "reasonCode": "INVALID_ARGUMENTS",
+      "reason": "arguments.toolIds must be a list"
+    },
+    {
+      "type": "ToolOutcomeRecorded",
+      "state": "ACKNOWLEDGED",
+      "toolId": "halo_discover_tools",
+      "success": true,
+      "actionTruth": "ACKNOWLEDGED"
+    },
+    {
+      "type": "ToolOutcomeRecorded",
+      "state": "CONFIRMED",
+      "toolId": "halo_canvas_create",
+      "success": true,
+      "actionTruth": "CONFIRMED"
+    },
+    {
+      "type": "ToolOutcomeRecorded",
+      "state": "CONFIRMED",
+      "toolId": "halo_canvas_add_text",
+      "success": true,
+      "actionTruth": "CONFIRMED"
+    }
+  ],
+  "profileRestoration": "PASS",
+  "diagnosis": "Canonical halo_file_attach_canvas exists; generic metadata/prerequisite-first summary omitted it from top8 discovery for canvas create board. Model substituted independent text, final prose mixed linked claim with caveat. No replay or fake-link acceptance.",
+  "recordedUtc": "2026-10-29T19:29:32.353354+00:00"
+}

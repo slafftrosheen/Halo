@@ -1,0 +1,128 @@
+{
+  "status": "FAIL",
+  "finalExit": 1,
+  "sourceCommit": "f2f307bb444cde06224189b4a3a6bdcba68a0ce6",
+  "frozenSourcesVerified": true,
+  "sourceDrift": [],
+  "counts": {
+    "tests": 104,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.ai.RoleBrowserCapabilityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.tools.AppPreferenceParityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenAppearanceSheetTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudySourcesTest",
+      "tests": 50,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.fx.HaloMotionLifecycleTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.AppearanceDraftTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.AppearanceTransactionTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.ModelBrowserRoleContextTest",
+      "tests": 2,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.ModelBrowserSelectionPresentationTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "completedUtc": "2026-10-29T19:31:19.582487+00:00",
+  "duration": [
+    "19m"
+  ],
+  "app.apkSha256": "e97db714710d208f73fb06da2c4e04eab17f1b249459052732354023d1d4bf47",
+  "test.apkSha256": "c7d824a05f64e0b6a7dac02e9e7390130871f6e05a5f25d3dee3a698ed8f7fd8",
+  "artifactStatus": "ASSEMBLED_DIAGNOSTIC_ONLY_HOST_GATE_FAILED",
+  "scope": "104 affected host tests:103PASS/1role-context visual-overflow FAIL; app lint and both APK assemblies completed; frozen source hashes unchanged. Physical ambient measurement may use this exact diagnostic pair, not final acceptance."
+}

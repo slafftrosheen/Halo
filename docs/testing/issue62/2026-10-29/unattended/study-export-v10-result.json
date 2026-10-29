@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "scope": "Actual Study save notes to Workspace and opened Note editor with saved status; own QA content only",
+  "note": {
+    "id": "c4e7a8f6-542e-4bdd-ae24-f2ac937632c3",
+    "title": "Explain the exact river passage. HALO-QA-20261029-CLOUD",
+    "revision": 1
+  },
+  "bodySha256": "430149706c82ac6d500dd51f4075d47fff646ccda8cce511146720021ce2c892",
+  "bodyLength": 3254,
+  "sourceUnchanged": true,
+  "provenance": [
+    {
+      "objectId": "c4e7a8f6-542e-4bdd-ae24-f2ac937632c3",
+      "sourceId": "study-summary:20fbda3b-60c9-40a1-bf69-8e2e12951554",
+      "revision": "v1",
+      "metadata": "{\"operation\":\"study-summary\",\"sessionId\":\"20fbda3b-60c9-40a1-bf69-8e2e12951554\",\"noteRevision\":1}"
+    }
+  ],
+  "restartReopen": "PASS: actual Workspace search -> exact summary note -> saved status and original source title after v10->v11 process replacement",
+  "recordedUtc": "2026-10-29T19:18:49.458907+00:00",
+  "restartExactBody": "PASS"
+}

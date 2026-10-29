@@ -1,0 +1,102 @@
+{
+  "status": "PASS",
+  "scope": "One actual typed free-provider note-create run, confirmed canonical tool effect and exact Room note readback; temporary AGENTIC inherit-default; no speech or all-workflow claim",
+  "appSha256": "293a34cafbab96707e9cdd37364e40467897720890667777793f121ae420e326",
+  "run": {
+    "id": "5c02456b-d24f-4188-a2ee-e13f6f6365cb",
+    "interactionId": "543cef83-b195-4cd5-9017-4c01bfb75fd5",
+    "state": "COMPLETED",
+    "failureReason": null,
+    "pinnedProviderId": "openrouter",
+    "pinnedModelId": "nvidia/nemotron-3.5-lightning:free"
+  },
+  "steps": [
+    {
+      "type": "RunMetadata",
+      "state": "RECORDED"
+    },
+    {
+      "type": "RunPrepared",
+      "state": "PROPOSED",
+      "inputModality": "TEXT",
+      "responseDelivery": "VISUAL_ONLY",
+      "conversationId": "be3756b0-e324-4a67-8e5c-098f5dea3309"
+    },
+    {
+      "type": "ProviderTurnStarted",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ProviderTurnCompleted",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ToolInvocationPrepared",
+      "state": "PROPOSED",
+      "toolId": "halo_discover_tools"
+    },
+    {
+      "type": "ToolExecutionClaimed",
+      "state": "AUTHORIZED",
+      "toolId": "halo_discover_tools"
+    },
+    {
+      "type": "ToolOutcomeRecorded",
+      "state": "ACKNOWLEDGED",
+      "toolId": "halo_discover_tools",
+      "success": true,
+      "actionTruth": "ACKNOWLEDGED"
+    },
+    {
+      "type": "ProviderTurnStarted",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ProviderTurnCompleted",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ToolInvocationPrepared",
+      "state": "PROPOSED",
+      "toolId": "halo_create_note"
+    },
+    {
+      "type": "ToolExecutionClaimed",
+      "state": "AUTHORIZED",
+      "toolId": "halo_create_note"
+    },
+    {
+      "type": "ToolOutcomeRecorded",
+      "state": "CONFIRMED",
+      "toolId": "halo_create_note",
+      "success": true,
+      "actionTruth": "CONFIRMED"
+    },
+    {
+      "type": "ProviderTurnStarted",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ProviderTurnCompleted",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ResponseProduced",
+      "state": "PROPOSED"
+    },
+    {
+      "type": "ResponseCommitted",
+      "state": "PROPOSED"
+    }
+  ],
+  "note": {
+    "id": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+    "title": "HALO-QA-20261029-TYPED",
+    "body": "Copper leaves rest beside a quiet lake. The lake is deep.",
+    "revision": 1
+  },
+  "profileRestoration": "PASS",
+  "reopen": "PENDING",
+  "recordedUtc": "2026-10-29T19:22:18.445831+00:00",
+  "restartPersistedObject": "PASS: exact note body/revision after v11 appupdate"
+}

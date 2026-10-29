@@ -1,0 +1,15 @@
+{
+  "status": "OBSERVED_IMPROVEMENT_NOT_FINAL_QUALIFICATION",
+  "appSha256": "e97db714710d208f73fb06da2c4e04eab17f1b249459052732354023d1d4bf47",
+  "cadenceMs": 500,
+  "samples": 13,
+  "measuredSeconds": 194.35900000000038,
+  "startupInclusiveCpuOneCorePercent": 53.16964997761864,
+  "settledWindowSeconds": 112.92200000000048,
+  "settledCpuOneCorePercent": 7.474185721117199,
+  "thermalStatuses": [
+    0
+  ],
+  "scope": "Debug portrait HALO foregroundidle observation; startupJIT substantial; no battery/leak/activeOrb or MIST claim",
+  "next": "1000ms cadence compiled inv12; physical stillpending"
+}

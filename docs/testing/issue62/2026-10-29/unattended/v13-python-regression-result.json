@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "tests": 31,
+  "failures": 0,
+  "scope": "Fresh isolated fixture regressions: UI language generator, Polish resource gate, DevKit icon audit, acceptance-review script",
+  "sourceCommit": "bfb07d60c",
+  "durationSeconds": 40.288,
+  "completedUtc": "2026-10-29T20:07:43.521145+00:00"
+}

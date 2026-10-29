@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "appSha256": "293a34cafbab96707e9cdd37364e40467897720890667777793f121ae420e326",
+  "sessionId": "20fbda3b-60c9-40a1-bf69-8e2e12951554",
+  "savedTurns": 4,
+  "learnerFollowups": 3,
+  "allTurnRecordsUnchangedAcrossProcessReplacement": true,
+  "sourceVersions": {
+    "1e543729-b284-4d79-8226-1f20f4ccc618": "1"
+  },
+  "verdicts": [
+    "UNVERIFIED"
+  ],
+  "citationCounts": [
+    0,
+    0,
+    0,
+    1
+  ],
+  "scope": "Actual lesson reopened after app update/process replacement; exact origin/version/history preservation. Not a trusted correctness grade, reviewed practice or all semantic grounding acceptance."
+}

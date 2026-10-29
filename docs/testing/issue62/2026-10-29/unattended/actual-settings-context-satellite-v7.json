@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "appSha256": "c0701068e442953e5029b456dea70f04a30761ea73a81c3bde744a2f8ca6474d",
+  "scope": "Actual context satellite tap in Settings Halo Zone opens Brain; hit is below the upper work area, not the duplicate body row",
+  "contentDescription": "Brain (RU)",
+  "boundsPx": [
+    425,
+    1790,
+    486,
+    1851
+  ],
+  "tapPointPx": [
+    455,
+    1820
+  ],
+  "upperWorkAreaBottomPx": 1742,
+  "beforeXmlSha256": "b0a96ae9b775b438072c87ee3bd62d50f338b7c8c08fc83d372aebfb1a6bf07c",
+  "afterXmlSha256": "bdb639942a2547afac735e897bef418ed978a68f2f623e8a30e5a65204ef2ca3",
+  "canonicalAction": "page.settings.brain -> existing SettingsDestination.INTELLIGENCE",
+  "limitation": "One actual contextual destination. Does not establish long-press fan, full-list/swipe, every route, modal or IME behavior."
+}

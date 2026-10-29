@@ -1,0 +1,8 @@
+{
+  "status": "NOT_RUN_DISABLED_SEND",
+  "scope": "Actual sharedcontrol Power->Local and exactQAtyped draft. Pre-tap,ready,result snapshots all show Send disabled; coordinate tap invoked no submission. No admission timeout or cloud-denial/no-outbound acceptance is established.",
+  "modeRestore": "PASS",
+  "bothProfilesUnchanged": true,
+  "requestRecordedIn": "private-mode-v11-request.json",
+  "followup": "Provider/setup attention disables Send; its explanatory status/actions are not initially visible in hostedHome. Canonical recovery actions remain accessible through carousel/full list. Read-only diagnosis recorded; no eligibility gates relaxed."
+}

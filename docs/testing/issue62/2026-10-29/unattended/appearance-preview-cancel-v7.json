@@ -1,0 +1,12 @@
+{
+  "scope": "Actual RU native Appearance touch preview of Sage, then Cancel; no persisted palette write",
+  "status": "PASS",
+  "persistedLightAndDarkUnchanged": true,
+  "applyControlAfterCancel": {
+    "class": "android.view.View",
+    "enabled": "false",
+    "clickable": "true",
+    "bounds": "[55,1140][399,1272]"
+  },
+  "appSha256": "c0701068e442953e5029b456dea70f04a30761ea73a81c3bde744a2f8ca6474d"
+}

@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "Actual Home composer Chat/Screen choice -> Screen Continue PDF detail -> Open source -> exact local PDF details -> Back -> Chat; QA draft exact unchanged; original Chat restored",
+  "appSha256": "e97db714710d208f73fb06da2c4e04eab17f1b249459052732354023d1d4bf47",
+  "sourceObjectId": "c5579ea6-4fd8-4bda-a509-65296ffe1c46",
+  "sourceSha256": "577d4812b338889c2669017aa09bae88a8d799baeacd7c2e3b97131068c50d62",
+  "draftUnchanged": true,
+  "originalSurfaceRestored": true,
+  "limits": "Existing4plusdefault card types observed; no saved routine/card editing/whole Screen acceptance claim"
+}

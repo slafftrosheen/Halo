@@ -1,0 +1,40 @@
+{
+  "appSha256": "c0701068e442953e5029b456dea70f04a30761ea73a81c3bde744a2f8ca6474d",
+  "runs": [
+    {
+      "interactionId": "60960adb-e5fb-4323-8183-6da53a07d984",
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "httpStatus": 404,
+      "run": {
+        "id": "fcd34f12-abf5-43eb-8d67-65968b36d181",
+        "state": "FAILED",
+        "failureReason": "NETWORK_ERROR"
+      },
+      "stepTypes": [
+        "RunMetadata",
+        "RunPrepared",
+        "ProviderTurnStarted"
+      ],
+      "anyToolStep": false
+    },
+    {
+      "interactionId": "d7991277-0809-4bf7-91b2-97fc7f14ed1f",
+      "model": "google/gemma-4-26b-a4b-it:free",
+      "httpStatus": 429,
+      "run": {
+        "id": "02e5d607-9248-470b-aa45-7f5233d14eb1",
+        "state": "FAILED",
+        "failureReason": "RATE_LIMITED"
+      },
+      "stepTypes": [
+        "RunMetadata",
+        "RunPrepared",
+        "ProviderTurnStarted"
+      ],
+      "anyToolStep": false
+    }
+  ],
+  "exactQaNoteCount": 0,
+  "scope": "Actual typed requests; both failed before tool admission; original model selections restored",
+  "recordedUtc": "2026-10-29T18:01:24.922982+00:00"
+}
