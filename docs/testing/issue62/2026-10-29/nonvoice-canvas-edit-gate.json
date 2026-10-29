@@ -1,0 +1,87 @@
+{
+  "recordedUtc": "2026-10-29T10:40:13.747238+00:00",
+  "codeCommit": "2b1652182ca0f1d28cd5713c9f61aa2e386bbf5b",
+  "appSha256": "1858152f4f27184e21d3afc7fd4c51e98c386e71c8901ff8b47984fc179e320c",
+  "device": "Redmi 23124RA7EO / Android 15",
+  "uiLanguage": "ru",
+  "status": "PASS",
+  "scope": "Touch/focused-card keyboard edit -> native Canvas export -> process restart -> note and Canvas reopen",
+  "canvas": {
+    "objectId": "e145715f-9ba8-45db-9045-8abd3c877baa",
+    "viewportX": 88.0,
+    "viewportY": 412.70831298828125,
+    "viewportScale": 0.4280303120613098,
+    "revision": 33
+  },
+  "newTextNode": {
+    "id": "249f1828-a9e7-48ea-89d7-b87dbc1fd277",
+    "canvasId": "e145715f-9ba8-45db-9045-8abd3c877baa",
+    "type": "TEXT",
+    "refObjectId": null,
+    "text": "HALO-QA-20261029-CARD saved: River north. Amber leaves.",
+    "x": 264.0,
+    "y": 65.00001525878906,
+    "width": 240.0,
+    "height": 150.0,
+    "zIndex": 3,
+    "createdAtEpochMs": 1793270069385,
+    "updatedAtEpochMs": 1793270111458
+  },
+  "exportedNote": {
+    "objectId": "5b10207a-9e0e-47db-8f04-396941ded2cf",
+    "body": "# HALO-QA-20261028-BOARD\n\nReference to note: 1e543729-b284-4d79-8226-1f20f4ccc618\n\n## HALO-QA-20261028-SOURCE\n\nExplicit note reference: Amber leaves gather beside a quiet river. The river flows north.\nSource: 1e543729-b284-4d79-8226-1f20f4ccc618\n\n## HALO-QA-20261029-STUDIO.png\n\nExplicit file reference: HALO-QA-20261029-STUDIO.png (image/png)\nSource: dade3c21-af3a-4f9c-95f6-951647d3cb14\n\nHALO-QA-20261029-CARD saved: River north. Amber leaves.",
+    "revision": 1,
+    "schemaVersion": 2
+  },
+  "originalNote": {
+    "objectId": "1e543729-b284-4d79-8226-1f20f4ccc618",
+    "body": "Amber leaves gather beside a quiet river. The river flows north.",
+    "revision": 1,
+    "schemaVersion": 2
+  },
+  "objects": [
+    {
+      "id": "5b10207a-9e0e-47db-8f04-396941ded2cf",
+      "type": "NOTE",
+      "title": "HALO-QA-20261028-BOARD",
+      "createdAt": 1793270206364,
+      "updatedAt": 1793270206364,
+      "source": "QUICK_NOTE",
+      "lifecycle": "ACTIVE",
+      "inInbox": 1,
+      "indexingState": "READY",
+      "contentRef": "note:5b10207a-9e0e-47db-8f04-396941ded2cf"
+    },
+    {
+      "id": "e145715f-9ba8-45db-9045-8abd3c877baa",
+      "type": "CANVAS",
+      "title": "HALO-QA-20261028-BOARD",
+      "createdAt": 1793208431901,
+      "updatedAt": 1793270111460,
+      "source": "USER_CREATED",
+      "lifecycle": "ACTIVE",
+      "inInbox": 1,
+      "indexingState": "READY",
+      "contentRef": "canvas:e145715f-9ba8-45db-9045-8abd3c877baa"
+    }
+  ],
+  "exportObjectProvenanceRows": 0,
+  "boundary": "Native UI export, no assistant approval lifecycle or provider run. Source object IDs are in the exported body; no durable versioned-provenance claim from its empty object_provenance rows. Canvas revision and note revision independently read after export.",
+  "cases": {
+    "focusedCardEdit": "PASS",
+    "persistedEditedText": "PASS",
+    "nativeExportExactText": "PASS",
+    "noteAfterProcessRestart": "PASS",
+    "canvasAfterProcessRestart": "PASS",
+    "originalSourceUnchanged": "PASS",
+    "typedAssistantRecipe": "NOT_RUN",
+    "voice": "DEFERRED_BY_USER",
+    "delayedHumanApproval": "NOT_RUN",
+    "staleCancelUncertainWrite": "NOT_RUN"
+  },
+  "capture": {
+    "path": "canvas-edited-note-reopened.png",
+    "sha256": "2d9a7d77f6bd9b12f7690d6033a6723ed424112c5e0da9aadc177953f1025430"
+  },
+  "issueDisposition": "KEEP_OPEN"
+}
