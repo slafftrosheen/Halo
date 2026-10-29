@@ -1,0 +1,26 @@
+{
+  "status": "PASS_SCOPED_WITH_LOCALIZATION_DEFECT",
+  "sourceCommit": "bfb07d60c84396af4354d108222028395a93a331",
+  "routineId": "82c665d8-93de-496f-93df-28e2922df5a1",
+  "sourceRevision": "2026-10-29T21:15:35.934Z",
+  "runId": "routine:82c665d8-93de-496f-93df-28e2922df5a1:manual:2ce6f7c6-cfc4-4aeb-9f73-96c40a5e2db1",
+  "runState": "COMPLETED",
+  "actionsCompleted": 1,
+  "actionsTotal": 1,
+  "deliveryOutcome": "SURFACED_SILENTLY",
+  "enabled": false,
+  "nextRunAt": null,
+  "trialCompleted": true,
+  "manualRunCompleted": true,
+  "screenItemPersistedAfterForceStop": true,
+  "exactSourceOpened": true,
+  "previewAddApply": true,
+  "originalLayoutRestoredThroughPersistedUndo": true,
+  "layoutVersions": {
+    "original": 6,
+    "applied": 7,
+    "undone": 8
+  },
+  "localizationDefect": "Application-owned action-count summary remains English in RU preview/card/detail",
+  "scope": "Own QA message; manual trial/run and Screen/source/restart/Undo. No scheduled trigger, notification, wearable, speech or all-card qualification"
+}

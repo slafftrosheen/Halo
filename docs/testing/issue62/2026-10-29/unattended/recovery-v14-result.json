@@ -1,0 +1,85 @@
+{
+  "status": "PASS",
+  "finalExit": 0,
+  "sourceCommit": "6892b2210b9bd705554a0cca1df473192081be95",
+  "frozenSourcesVerified": true,
+  "sourceDrift": [],
+  "counts": {
+    "tests": 69,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.data.workspace.CanvasReadPrerequisiteExposureTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.CanvasReferenceDiscoveryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceAssistantWorkflowsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceFileEditingActionsTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.runtime.cognition.tools.ToolDiscoverySnapshotRegressionTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.runtime.cognition.tools.ToolExposurePolicyTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "completedUtc": "2026-10-29T21:33:15.262402+00:00",
+  "duration": [
+    "16m 31s"
+  ],
+  "app.apkSha256": "d22251fedaaa4828c0e22b27fbf92f5fc852cb727a96d5557e81aa3784c70b1b",
+  "test.apkSha256": "568a232ca7010582cb455b9e5c5d9eab3536097e5417f7e8bdf444e06dac7806",
+  "artifactStatus": "VERIFIED_GATE_PAIR"
+}

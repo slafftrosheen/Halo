@@ -1,0 +1,23 @@
+{
+  "status": "PASS_SCOPED_PHYSICAL_GESTURES",
+  "sourceCommit": "6892b2210b9bd705554a0cca1df473192081be95",
+  "appSha256": "d22251fedaaa4828c0e22b27fbf92f5fc852cb727a96d5557e81aa3784c70b1b",
+  "device": "23124RA7EO Android15",
+  "language": "ru",
+  "fontScale": 1.0,
+  "density": 440,
+  "gestures": [
+    "forward 600ms",
+    "reverse 600ms",
+    "fast 140ms"
+  ],
+  "allSevenFixedControlsUnchanged": true,
+  "settingsStayedOpenDuringDrags": true,
+  "actualAboutSatelliteOpened": true,
+  "backReturnedToSettings": true,
+  "explicitFullListOpenedVoiceSettings": true,
+  "voiceCaptureStarted": false,
+  "reverseRestoredOriginalContextToolSet": true,
+  "scope": "Real ADB touch gestures and native selections. Not TalkBack, hardware keyboard, IME/landscape or all-screen gesture qualification.",
+  "recordedUtc": "2026-10-29T22:37:52.376469+00:00"
+}

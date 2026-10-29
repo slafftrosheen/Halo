@@ -1,0 +1,14 @@
+{
+  "status": "PASS_SCOPED",
+  "cardId": "da7981e4-7279-4793-8201-d8a9bccf20f2",
+  "sessionId": "20fbda3b-60c9-40a1-bf69-8e2e12951554",
+  "reviewCount": 2,
+  "knownStreak": 2,
+  "mastered": false,
+  "intervalIndex": 3,
+  "savedDueMinusLastReviewedMs": 604799986,
+  "intervalDays": 7,
+  "clockReadDifferenceMs": 14,
+  "visibleFeedback": "Верно. Следующее повторение через 7 дн.",
+  "scope": "Exact saved-answer local check and localized feedback; no AI semantic or spoken acceptance"
+}

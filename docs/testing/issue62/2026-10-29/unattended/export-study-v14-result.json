@@ -1,0 +1,28 @@
+{
+  "status": "PASS_SOURCE_HANDOFF_AND_RESTART_ONLY",
+  "sourceCommit": "6892b2210b9bd705554a0cca1df473192081be95",
+  "canvasId": "e145715f-9ba8-45db-9045-8abd3c877baa",
+  "exportNoteId": "5b10207a-9e0e-47db-8f04-396941ded2cf",
+  "exportNoteRevision": 1,
+  "exportBodySha256": "815c30219a3c5f1c054d58ff548ac1180b0f45c7a2a954a308610a16cffd1a15",
+  "exportUnchanged": true,
+  "studySessionId": "ea09dbc3-86ab-4e3f-8548-c57a8040c409",
+  "studySources": [
+    {
+      "objectId": "5b10207a-9e0e-47db-8f04-396941ded2cf",
+      "revision": "1",
+      "textAnchor": null
+    }
+  ],
+  "learnerLevel": "ADULT",
+  "supportStyle": "GUIDED",
+  "knowledgePolicy": "SOURCE_ONLY",
+  "execution": "phone",
+  "tutorStage": "ASK",
+  "sessionUnchangedAfterForceStop": true,
+  "exactDraftRestored": true,
+  "originalExportOpenedFromStudy": true,
+  "uniqueSavedCardMarkerVisible": true,
+  "libraryQueryRestored": true,
+  "scope": "Reuses earlier ownQA Canvas export; verifies actual exported-note->Study source/revision/draft/process restart/open-original. No inference, exercise/grading, spoken, delayed approval or structured original-source provenance acceptance. IDs within exported prose remain text, not a claimed provenance row."
+}

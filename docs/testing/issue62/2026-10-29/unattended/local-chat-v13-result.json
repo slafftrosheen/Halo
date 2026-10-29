@@ -1,0 +1,19 @@
+{
+  "status": "FAIL_LOCAL_ANSWER_DEADLINE",
+  "source": "bfb07d60c84396af4354d108222028395a93a331",
+  "appSha256": "8152a65afd9d3867c091f5e3e6e11a8fa4efe915b721cd0052cb3b173875e750",
+  "runId": "974c9406-09ea-40c6-a33e-8648054a1170",
+  "interactionId": "f022dc6d-8e30-42e7-9f9f-ef2c5f3ad49b",
+  "provider": "provider.litert.local",
+  "model": "hf-b5d595ade9a8394621560fe6",
+  "durationMs": 99120,
+  "journalState": "COMPLETED",
+  "guard": "DEADLINE_EXCEEDED",
+  "semanticAnswer": false,
+  "cancellation": "NOT_RUN: deadline ended before Stop became available to the attempted action",
+  "setupNotice": "NOT_REPRODUCED_LOCAL_READY: Send enabled on this build/configuration",
+  "readingPanel": "Explained by existing read_aloud_auto_answers=true; no manual Read action or audible confirmation",
+  "powerRestored": true,
+  "profilesUnchanged": true,
+  "scope": "Own QA arithmetic request only; no local model qualification, zero-outbound or speech PASS"
+}

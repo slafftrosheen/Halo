@@ -1,0 +1,22 @@
+{
+  "status": "FAIL_EXACT_LINK_WITH_SCOPED_DISCOVERY_PASS",
+  "sourceCommit": "bfb07d60c84396af4354d108222028395a93a331",
+  "run": {
+    "id": "342f60be-b1d4-4330-a7ed-10eca2869603",
+    "state": "FAILED",
+    "failureReason": "EMPTY_RESPONSE",
+    "startedAt": 1793308229134,
+    "completedAt": 1793308313740
+  },
+  "discovery": "Corrected action-first prompt used REQUIRED/TOOL_ASSISTED; discovered exact halo_file_attach_canvas at rank2",
+  "guard": "Rejected attachment-list source version without mutation",
+  "approval": "Model proposed unrequested Canvas export; normal Decline selected; InputResolved=Denied; no approval grant",
+  "boardRevision": 2,
+  "nodeCount": 1,
+  "liveReferences": 0,
+  "originalTextCardPreserved": true,
+  "profilesRestored": true,
+  "followupSourceCommit": "6892b2210",
+  "followup": "Expose existing exact-version read dependencies and parameter descriptions; guard/executor unchanged; gate pending",
+  "initialPrefixAttempt": "QA-prefixed prompt entered DirectResponse/NONE then EMPTY_RESPONSE; model TOOLS capability in journal is not tool execution requirement"
+}

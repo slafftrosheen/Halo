@@ -1,0 +1,17 @@
+{
+  "status": "FAIL_INTERRUPTED_HOST_STORAGE_EXHAUSTED",
+  "sourceCommit": "27a63d3c687e7720d089b5657ab11733fd371004",
+  "frozenSourcesVerified": true,
+  "finalExit": 4294967295,
+  "artifactStatus": "NOT_ASSEMBLED",
+  "completedUtc": "2026-10-29T22:11:07.049695+00:00",
+  "wholeRegressionPassed": false,
+  "installed": false,
+  "invalidFixturesCorrected": [
+    "Polish Plan may equal the English literal",
+    "NativeWorkflowJournal requires at least two workflow steps"
+  ],
+  "environmentFailure": "C: reached zero free bytes; native test workers reported insufficient disk space. Exact owned Gradle wrapper client stopped; no APK installed.",
+  "staleAppXmlExcluded": true,
+  "scope": "Incomplete fresh other-module results do not establish current app or whole-regression acceptance. Prior qualified v14 APK remains installed. Fresh bounded-worker v16 rerun required."
+}

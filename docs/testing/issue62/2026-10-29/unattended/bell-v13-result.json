@@ -1,0 +1,25 @@
+{
+  "status": "FAIL_LARGE_FONT_LAYOUT_WITH_SCOPED_NORMAL_PASS",
+  "sourceCommit": "bfb07d60c84396af4354d108222028395a93a331",
+  "normal": {
+    "bellActivities": true,
+    "completedOwnTrialAndManualRuns": true,
+    "notificationsEmptyState": true,
+    "completedFilterPreservedAcrossSubviewReturn": true,
+    "closeReturnedToScreen": true
+  },
+  "largeFont": {
+    "widthDp": 360,
+    "fontScale": 2.0,
+    "defect": "Width-starved third Close text button becomes a 790px tall unnamed clickable target; oversized Bell utility; selected History initially offscreen",
+    "closeBounds": "[984,926][1080,1716]",
+    "selectedFilter": "HISTORY",
+    "selectedFilterInitiallyVisible": false
+  },
+  "displaySettingsRestored": true,
+  "copyDefects": [
+    "App-owned step count remains English in RU",
+    "App-owned Plan and event labels need typed presentation localization"
+  ],
+  "scope": "Actual UI paths on own QA routine runs; no notification delivery, approval grant or universal Activity acceptance"
+}

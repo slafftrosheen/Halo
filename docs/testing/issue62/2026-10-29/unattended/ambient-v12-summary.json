@@ -1,0 +1,123 @@
+{
+  "status": "SCOPED_OBSERVATIONS_COMPLETED",
+  "scope": "Debug connected-phone portrait charging idle only; HALO15minute, MIST3minute, reduced2minute, Home-key background/resume. Startup/navigation CPU is material and retained. Not release energy, battery life, memory-leak, thermal stress, active speech or universal smoothness acceptance.",
+  "styles": [
+    {
+      "name": "halo-background-v12",
+      "status": "OBSERVATION_COMPLETED",
+      "style": "HALO",
+      "reducedMotion": false,
+      "appSha256": "7d4728af06303c77a8acce9e8bc49913d9ff76eda0939a035cce9bb44220c384",
+      "samples": 57,
+      "seconds": 910.719000000001,
+      "startupInclusiveCpuOneCorePercent": 20.70122617404488,
+      "lastWindowSeconds": 64.625,
+      "lastWindowCpuOneCorePercent": 4.611218568665377,
+      "thermalStatuses": [
+        0
+      ],
+      "pssFirstKiB": 307351,
+      "pssLastKiB": 284590,
+      "totalFrames": 1001,
+      "longSettledWindowSeconds": 813.8909999999996,
+      "longSettledCpuOneCorePercent": 4.988382965286508,
+      "frameMedianMs": 30,
+      "frameP90Ms": 32,
+      "jankyFrames": 948
+    },
+    {
+      "name": "mist-background-v12",
+      "status": "OBSERVATION_COMPLETED",
+      "style": "MIST",
+      "reducedMotion": false,
+      "appSha256": "7d4728af06303c77a8acce9e8bc49913d9ff76eda0939a035cce9bb44220c384",
+      "samples": 13,
+      "seconds": 193.17200000000048,
+      "startupInclusiveCpuOneCorePercent": 17.35758805623999,
+      "lastWindowSeconds": 64.59399999999914,
+      "lastWindowCpuOneCorePercent": 4.427655819426011,
+      "thermalStatuses": [
+        0
+      ],
+      "pssFirstKiB": 336347,
+      "pssLastKiB": 289295,
+      "totalFrames": 197,
+      "frameMedianMs": 31,
+      "frameP90Ms": 38,
+      "jankyFrames": 195
+    },
+    {
+      "name": "mist-reduced-motion-v12",
+      "status": "OBSERVATION_COMPLETED",
+      "style": "MIST",
+      "reducedMotion": true,
+      "appSha256": "7d4728af06303c77a8acce9e8bc49913d9ff76eda0939a035cce9bb44220c384",
+      "samples": 9,
+      "seconds": 128.85900000000038,
+      "startupInclusiveCpuOneCorePercent": 29.303347069277187,
+      "lastWindowSeconds": 64.70300000000134,
+      "lastWindowCpuOneCorePercent": 2.704665935118872,
+      "thermalStatuses": [
+        0
+      ],
+      "pssFirstKiB": 334355,
+      "pssLastKiB": 296184,
+      "totalFrames": 0
+    }
+  ],
+  "pixels": [
+    {
+      "status": "CHANGED",
+      "scope": "Five-second native MIST idle pixel observation, app work+utility region, OSbars excluded; unfocused composer/no input. Not a universal source attribution or aesthetic approval.",
+      "changedPixels": 14080,
+      "region": [
+        0,
+        110,
+        1080,
+        1740
+      ],
+      "firstSha256": "8e01c0f01c06b2cb70beaaf96d2e2a6a16f140802f59a8ace2459a842f2abc49",
+      "secondSha256": "00a7ef5fb4b2c8078e01aefcc25f6bab8aef71e80489ce73d074f051af6f4d4a"
+    },
+    {
+      "status": "PASS_STATIC",
+      "scope": "Five-second native reduced-motion MIST idle app work+utility pixels; OSbars excluded; unfocused composer and no input",
+      "changedPixels": 0,
+      "region": [
+        0,
+        110,
+        1080,
+        1740
+      ],
+      "firstSha256": "3312bf12d3e7816c8ad4c4c1e7bd1fbcd5b484da69c04aa574eb123e69af9260",
+      "secondSha256": "3312bf12d3e7816c8ad4c4c1e7bd1fbcd5b484da69c04aa574eb123e69af9260"
+    }
+  ],
+  "pauseResume": {
+    "background": {
+      "seconds": 31.235000000000582,
+      "cpuOneCorePercent": 0.38418440851608054,
+      "frames": 0
+    },
+    "resumed": {
+      "seconds": 62.0619999999999,
+      "cpuOneCorePercent": 52.12529406077802,
+      "frames": 62
+    }
+  },
+  "resumeLimit": "ExplicitHome-route and normalLauncher resume both observed; startup/return CPU spikes remain included, not energy/leak acceptance.",
+  "restoration": "PENDING_FINAL_PHONE_CHECKS",
+  "recordedUtc": "2026-10-29T20:42:09.566920+00:00",
+  "launcherPauseResume": {
+    "background": {
+      "seconds": 31.187000000001717,
+      "cpuOneCorePercent": 0.3527110655080448,
+      "frames": 0
+    },
+    "resumed": {
+      "seconds": 93.39099999999962,
+      "cpuOneCorePercent": 37.01641485796291,
+      "frames": 99
+    }
+  }
+}

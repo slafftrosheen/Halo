@@ -1,0 +1,28 @@
+{
+  "status": "PASS_VERSION_ASSISTED_TYPED_LINK",
+  "sourceCommit": "6892b2210b9bd705554a0cca1df473192081be95",
+  "appSha256": "d22251fedaaa4828c0e22b27fbf92f5fc852cb727a96d5557e81aa3784c70b1b",
+  "runId": "8a84aa30-aabf-47ce-9906-2f2a03d9fe29",
+  "interactionId": "9d245ec0-3b4b-4a5c-8fcb-52b5d7327d9a",
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3.5-lightning:free",
+  "sourceNoteId": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+  "sourceRevision": 1,
+  "sourceBodyUnchanged": true,
+  "boardId": "374ca3d3-069a-42a6-b2f1-f37c16c2eb2d",
+  "boardEffectRevision": 3,
+  "postFitViewportRevision": 4,
+  "nodeCount": 2,
+  "referenceNodeId": "e4f992bc-dc3e-4035-9be5-8e97fd514a82",
+  "originalTextPreserved": true,
+  "confirmedAttachmentEffects": 1,
+  "actualUi": {
+    "openBoard": true,
+    "fitAll": true,
+    "openLinkedOriginal": true,
+    "exactSourceText": true
+  },
+  "originalModeProfilesRestored": true,
+  "ordinaryRequest": "FAIL_STEP_LIMIT: exact readers exposed and used; model required more than6steps, final corrected call not dispatched. No mutation.",
+  "scope": "Explicit freshly observed versions in typed request; not general model action reliability, delayed approval export or speech"
+}

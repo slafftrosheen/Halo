@@ -1,0 +1,23 @@
+{
+  "status": "PASS_NATIVE_SOURCE_LINK_EDIT_EXPORT_RESTART",
+  "sourceCommit": "6892b2210b9bd705554a0cca1df473192081be95",
+  "appSha256": "d22251fedaaa4828c0e22b27fbf92f5fc852cb727a96d5557e81aa3784c70b1b",
+  "boardId": "374ca3d3-069a-42a6-b2f1-f37c16c2eb2d",
+  "boardRevisionBefore": 4,
+  "boardRevisionAfter": 26,
+  "imageSourceId": "dade3c21-af3a-4f9c-95f6-951647d3cb14",
+  "imageSha256": "a2028c4a2bd7e95ca87d85bc20f4a4f762d1f3aacec528feeac2a80d470f2d91",
+  "newFileNodeId": "1e46e0d7-97b0-4bdf-aef0-815ba0bb1c3c",
+  "originalImageBytesAndFileRecordUnchanged": true,
+  "originalNoteAndExistingNoteReferenceUnchanged": true,
+  "editedTextNodeId": "6998e131-b74c-4cd5-821b-dd51323ad2c9",
+  "editedTextSha256": "e3061c819743968a4258ed1609dfd625e6138b11bca7369e1f498891bc13c11f",
+  "exportedNoteId": "7300e5b4-9b97-418b-a1fe-6129796aaf8d",
+  "exportedNoteRevision": 1,
+  "exportedBodySha256": "fa5bcef30e5ae5d3dffbc1c4f2ff18b48a910da069644e47277b983620680969",
+  "sourceOpenedFromActualCanvasIcon": true,
+  "exportAndBoardReopenedThroughNativeWorkspace": true,
+  "allThreeNodesAndExportSurvivedForceStop": true,
+  "scope": "Own QA Studio-exported image linked via native Workspace picker to Canvas, exact file source opened. Native text card edit/export/restart qualification. Exported source IDs remain prose, not claimed structured provenance; no model, speech, delayed approval, stale/conflict or Save As/Undo qualification.",
+  "recordedUtc": "2026-10-29T22:39:01.811149+00:00"
+}

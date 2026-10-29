@@ -1,0 +1,22 @@
+{
+  "status": "PASS_SCOPED",
+  "sourceCommit": "bfb07d60c84396af4354d108222028395a93a331",
+  "entry": "Actual long-press Orb full action list > Screen",
+  "observations": [
+    {
+      "snapshot": "v13-screen-ambient-entered",
+      "rotation": 0,
+      "privateCardMasks": 2,
+      "exitVisible": true
+    },
+    {
+      "snapshot": "v13-screen-ambient-landscape",
+      "rotation": 1,
+      "privateCardMasks": 1,
+      "exitVisible": true
+    }
+  ],
+  "exit": "Actual Exit control returned to normal Screen; private content available again",
+  "rotationRestoredToTemporaryPortrait": true,
+  "scope": "Unlocked ambient privacy masking/enter/exit in portrait+landscape only; no OS keyguard, always-on, burn-in, microphone, battery or all-cards qualification"
+}

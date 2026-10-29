@@ -1,0 +1,12 @@
+{
+  "runId": "unattended-matrix-6a8d567a9d32",
+  "appSha256": "8152a65afd9d3867c091f5e3e6e11a8fa4efe915b721cd0052cb3b173875e750",
+  "testSha256": "ace0050dec476923a1cdbca1c7148cf88eb71ec608554215f3c167bfb606d692",
+  "startedUtc": "2026-10-29T21:01:16.910883+00:00",
+  "systemSettings": {
+    "font_scale": "1.0",
+    "accelerometer_rotation": "0",
+    "user_rotation": "0"
+  },
+  "density": "Physical density: 440"
+}
