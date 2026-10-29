@@ -4174,4 +4174,14 @@ Local mode|||Локальный режим|||Lokālais režīms|||Tryb lokalny
 Local / Power|||Локально / Power|||Lokāli / Power|||Lokalnie / Power
 This action needs Power mode. Use the control beside the halo Orb.|||Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo.|||Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei.|||Ta czynność wymaga trybu Power. Użyj przełącznika obok kuli halo.
 Voice input is busy|||Голосовой ввод занят|||Balss ievade ir aizņemta|||Wprowadzanie głosowe jest zajęte
+Add favorite|||Добавить в избранное|||Pievienot izlasei|||Dodaj do ulubionych
+Remove favorite|||Удалить из избранного|||Noņemt no izlases|||Usuń z ulubionych
 Another task is using local voice resources. Type your message now, or try voice again after that task finishes.|||Другая задача использует ресурсы для голосового ввода на устройстве. Напишите сообщение или попробуйте голосовой ввод после завершения задачи.|||Cits uzdevums izmanto ierīces balss ievades resursus. Ierakstiet ziņu vai mēģiniet vēlreiz, kad uzdevums būs pabeigts.|||Inne zadanie korzysta z zasobów głosowych urządzenia. Napisz wiadomość lub spróbuj ponownie po zakończeniu tego zadania.
+Open file|||Открыть файл|||Atvērt failu|||Otwórz plik
+Progress|||Прогресс|||Progress|||Postęp
+Partial|||Частично|||Daļēji|||Częściowo
+No readable text|||Нет доступного текста|||Nav nolasāma teksta|||Brak tekstu do odczytu
+Image · Requires verified vision|||Изображение · Нужна проверенная модель с поддержкой изображений|||Attēls · Nepieciešams pārbaudīts attēlu izpratnes modelis|||Obraz · Wymagany zweryfikowany model rozumienia obrazów
+PDF page image · Requires verified vision · OCR not installed|||Изображение страницы PDF · Нужна проверенная модель с поддержкой изображений · Распознавание текста не установлено|||PDF lapas attēls · Nepieciešams pārbaudīts attēlu izpratnes modelis · Teksta atpazīšana nav instalēta|||Obraz strony PDF · Wymagany zweryfikowany model rozumienia obrazów · Rozpoznawanie tekstu nie jest zainstalowane
+Only part of this source is included (%1$d of %2$d characters omitted).|||Используется только часть источника (пропущено %1$d из %2$d символов).|||Tiek izmantota tikai daļa avota (izlaistas %1$d no %2$d rakstzīmēm).|||Uwzględniono tylko część źródła (pominięto %1$d z %2$d znaków).
+Action dispatched; completion is unconfirmed.|||Действие передано на выполнение; завершение не подтверждено.|||Darbība nosūtīta izpildei; pabeigšana nav apstiprināta.|||Działanie przekazano do wykonania; zakończenie nie jest potwierdzone.

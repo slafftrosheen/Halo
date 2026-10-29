@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((String) -> Unit)?) {
     val state by project.state.collectAsStateWithLifecycle()
+    val cloudAllowed by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val library by project.library.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -48,7 +49,7 @@ internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((Strin
             if (project.isKept()) "My project" else state.kind ?: "Draft"
         } else "What shall we make?"),
             style = MaterialTheme.typography.titleLarge)
-        Text(uiText(if (state.busy && Graph.kidsPreferences.cloudAllowed.value) "Cloud may be used"
+        Text(uiText(if (state.busy && cloudAllowed) "Cloud may be used"
             else state.executionLabel ?: "On this phone"), style = MaterialTheme.typography.labelMedium)
         if (!state.editing || shaping) {
             if (state.kind == null) {

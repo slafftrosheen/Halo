@@ -114,6 +114,7 @@ fun HomeScreen(
     val daily by viewModel.dailyAssistant.collectAsStateWithLifecycle()
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
+    val toolsOpenFailed = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_tools_open_failed)
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     var showCameraDenied by rememberSaveable { mutableStateOf(false) }
@@ -394,8 +395,8 @@ fun HomeScreen(
             showActions = false
             if (recovery == HomeToolRecovery.ANDROID_APPS) {
                 try { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_SETTINGS)) }
-                catch (_: android.content.ActivityNotFoundException) { viewModel.captureMessage.value = context.getString(com.halo.app.R.string.home_tools_open_failed) }
-                catch (_: SecurityException) { viewModel.captureMessage.value = context.getString(com.halo.app.R.string.home_tools_open_failed) }
+                catch (_: android.content.ActivityNotFoundException) { viewModel.captureMessage.value = toolsOpenFailed }
+                catch (_: SecurityException) { viewModel.captureMessage.value = toolsOpenFailed }
             } else viewModel.openToolRecovery(recovery)
         }, onDismiss = { showActions = false },
         initialGroup = HomeToolGroup.entries.firstOrNull { it.name == toolGroup } ?: HomeToolGroup.CREATE, initialEntry = toolEntry)

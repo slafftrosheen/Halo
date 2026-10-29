@@ -15,7 +15,7 @@ import com.halo.app.ui.presence.*
 @Composable
 fun WorkspaceObjectPicker(
     candidates: List<WorkspaceObject>,
-    title: String = "Choose Workspace material",
+    title: String = "Choose saved material",
     onPick: (WorkspaceObject) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -26,7 +26,7 @@ fun WorkspaceObjectPicker(
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = { Text(uiText(title)) },
         text = {
             Column {
                 HaloTextField(
@@ -45,9 +45,10 @@ fun WorkspaceObjectPicker(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(Modifier.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                HaloSignalGlyph(kind = HaloSignalKind.FILE, size = 20.dp)
+                                com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.FILE,
+                                    contentDescription = null, modifier = Modifier.size(20.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text(item.title.ifBlank { "Untitled" }, style = MaterialTheme.typography.bodyMedium)
+                                Text(item.title.ifBlank { uiText("Untitled") }, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }

@@ -83,10 +83,23 @@ class NotebookLibraryBatchTest {
     }
 
     private suspend fun visible(ids: Set<String> = emptySet(), filter: NotebookFilter = model.libraryView().filter) {
-        withTimeout(10_000) { model.uiState.first { state ->
-            state.isLoaded && state.filter == filter && state.resolvedQuery == model.queryText.value.trim() &&
-                state.items.map { it.objectRef.id.value }.containsAll(ids)
-        } }
+        withTimeout(10_000) {
+            // Read after the fixture writes commit. ID presence alone can accept
+            // the active chat's pre-append title/timestamp, then its Room emission
+            // correctly invalidates the view while prepareBatch captures sources.
+            val expected = ids.associateWith { id -> requireNotNull(f.workspace.get(WorkspaceObjectId(id))) }
+            // A completed CONTEXT batch commits working_set before its Room-backed
+            // UI projection catches up. Wait for that exact committed set too.
+            val expectedWorkingSet = f.database.workspaceContextDao().selectedIds().toSet()
+            model.uiState.first { state ->
+                state.isLoaded && state.filter == filter && state.query == model.queryText.value &&
+                    state.resolvedQuery == model.queryText.value.trim() &&
+                    state.workingSet == expectedWorkingSet &&
+                    expected.all { (id, committed) ->
+                        state.items.firstOrNull { it.objectRef.id.value == id }?.objectRef == committed
+                    }
+            }
+        }
     }
     private fun select(ids: Set<String>) { assertTrue(model.applyLibraryChange(NotebookLibraryChange.Selection(ids))) }
     private fun snapshot() = requireNotNull(session.read()).snapshot
@@ -100,8 +113,17 @@ class NotebookLibraryBatchTest {
         val active = requireNotNull(conversations.activeConversationId())
         val targets = setOf(note, canvas, image, active)
         visible(targets); select(targets)
-        val view = snapshot()
-        val ticket = requireNotNull(session.prepareBatch(view, NotebookBatchAction.TRASH))
+        val before = requireNotNull(session.read())
+        val view = before.snapshot
+        val ticket = requireNotNull(session.prepareBatch(view, NotebookBatchAction.TRASH)) {
+            val after = session.read()
+            "Mixed batch admission changed: present=${after != null}" +
+                " snapshotUnchanged=${after?.snapshot == view}" +
+                " renderedUnchanged=${after?.view?.rendered == before.view.rendered}" +
+                " ownerRevisionUnchanged=${after?.view?.ownerRevision == before.view.ownerRevision}" +
+                " selectionUnchanged=${after?.view?.selection == before.view.selection}" +
+                " settled=${after?.view?.settled} mutating=${after?.view?.mutating}"
+        }
         val receipt = requireNotNull(session.applyBatch(view, ticket.token, NotebookBatchAction.TRASH))
         assertEquals(setOf(note, canvas, image), receipt.succeeded)
         assertEquals(setOf(active), receipt.failed)

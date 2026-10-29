@@ -11,7 +11,7 @@
             </FrameLayout>
         </LinearLayout>
         <FrameLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/halo_widget_capture_container">
-            <TextView android:id="@+id/halo_widget_capture" android:background="@drawable/halo_widget_action" android:includeFontPadding="false" android:minHeight="48dp" android:minWidth="48dp" android:maxWidth="100dp" android:gravity="center_vertical" android:textSize="16sp" android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="44dp" android:paddingEnd="12dp" />
+            <TextView android:id="@+id/halo_widget_capture" android:background="@drawable/halo_widget_action" android:includeFontPadding="false" android:minHeight="48dp" android:minWidth="48dp" android:gravity="center_vertical" android:textSize="16sp" android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="44dp" android:paddingEnd="12dp" />
             <ImageView android:id="@+id/halo_widget_capture_icon" android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="12dp" android:importantForAccessibility="no" />
         </FrameLayout>
         <TextView android:id="@+id/halo_widget_open" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />

@@ -42,6 +42,7 @@ class OpenRouterProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
     private val nowEpochMs: () -> Long = System::currentTimeMillis,
+    private val logger: com.halo.sdk.runtime.RuntimeLogger? = null,
 ) : AiImageProvider, com.halo.sdk.provider.CredentialProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
 
     override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
@@ -231,6 +232,12 @@ class OpenRouterProvider(
                     resolvedModelId = resolvedModel,
                     executionBackend = "OPENROUTER",
                 )
+                if (result.text.isBlank() && result.toolCalls.isEmpty()) {
+                    val usage = responseJson.optJSONObject("usage")
+                    logEmptyCompletion(request, actualModel, resolvedModel, result.finishReason,
+                        tokenCount(usage, "completion_tokens"),
+                        tokenCount(usage?.optJSONObject("completion_tokens_details"), "reasoning_tokens"))
+                }
                 _status.value = ProviderStatus.READY
                 cooldown = null
                 rejectedApiKey = null
@@ -239,22 +246,27 @@ class OpenRouterProvider(
         } catch (e: CancellationException) {
             throw e
         } catch (e: AiProviderException) {
+            logRequestFailure(request, actualModel, e)
             _status.value = providerStatus(e)
             throw e
         } catch (e: SocketTimeoutException) {
             val failure = AiProviderException(AiErrorType.TIMEOUT, "OpenRouter request timed out (model=$actualModel)", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             throw failure
         } catch (e: UnknownHostException) {
             val failure = AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter host unavailable", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             throw failure
         } catch (e: org.json.JSONException) {
             val failure = AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid JSON", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             throw failure
         } catch (e: Exception) {
             val failure = AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter request failed: ${e.message ?: e::class.simpleName}", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             throw failure
         }
@@ -276,6 +288,8 @@ class OpenRouterProvider(
                 val tools = linkedMapOf<Int, StreamToolCall>()
                 var finish: String? = null
                 var resolvedModel: String? = null
+                var outputTokens: Int? = null
+                var reasoningTokens: Int? = null
                 var streamBytes = 0L
                 var argumentChars = 0L
 
@@ -304,6 +318,10 @@ class OpenRouterProvider(
                         throw streamError(error)
                     }
                     event.optionalString("model")?.takeIf { it.isNotBlank() }?.let { resolvedModel = it }
+                    event.optJSONObject("usage")?.let { usage ->
+                        outputTokens = tokenCount(usage, "completion_tokens") ?: outputTokens
+                        reasoningTokens = tokenCount(usage.optJSONObject("completion_tokens_details"), "reasoning_tokens") ?: reasoningTokens
+                    }
                     val choices = event.optJSONArray("choices") ?: continue
                     if (choices.length() == 0) continue
                     val choice = choices.getJSONObject(0)
@@ -356,6 +374,10 @@ class OpenRouterProvider(
                     )
                 }
 
+                if (text.isBlank() && tools.isEmpty()) {
+                    logEmptyCompletion(request, actualModel, resolvedModel ?: actualModel, finish,
+                        outputTokens, reasoningTokens)
+                }
                 _status.value = ProviderStatus.READY
                 cooldown = null
                 rejectedApiKey = null
@@ -383,22 +405,27 @@ class OpenRouterProvider(
         } catch (e: CancellationException) {
             throw e
         } catch (e: AiProviderException) {
+            logRequestFailure(request, actualModel, e)
             _status.value = providerStatus(e)
             emit(AiStreamEvent.Failed(e))
         } catch (e: SocketTimeoutException) {
             val failure = AiProviderException(AiErrorType.TIMEOUT, "OpenRouter stream timed out (model=$actualModel)", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             emit(AiStreamEvent.Failed(failure))
         } catch (e: UnknownHostException) {
             val failure = AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter host unavailable", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             emit(AiStreamEvent.Failed(failure))
         } catch (e: org.json.JSONException) {
             val failure = AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid stream JSON", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             emit(AiStreamEvent.Failed(failure))
         } catch (e: Exception) {
             val failure = AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter stream failed: ${e.message ?: e::class.simpleName}", e)
+            logRequestFailure(request, actualModel, failure)
             _status.value = providerStatus(failure)
             emit(AiStreamEvent.Failed(failure))
         }
@@ -543,6 +570,49 @@ class OpenRouterProvider(
         return if (modelId == "free") "openrouter/free" else modelId
     }
 
+    private fun tokenCount(json: JSONObject?, key: String): Int? =
+        (json?.opt(key) as? Number)?.toString()?.toLongOrNull()
+            ?.takeIf { it in 0..Int.MAX_VALUE.toLong() }?.toInt()
+
+    private fun diagnosticIdentifier(value: String?): String {
+        val normalized = value?.trim() ?: return "missing"
+        return if (normalized.length in 1..160 && normalized.matches(Regex("[A-Za-z0-9][A-Za-z0-9._:/-]*")))
+            normalized else "invalid"
+    }
+
+    private fun logRequestFailure(request: AiRequest, selectedModel: String, failure: AiProviderException) {
+        val sink = logger ?: return
+        fun exceptionClass(error: Throwable?): String {
+            val name = error?.javaClass?.name ?: return "missing"
+            return if (name.length in 1..160 && name.matches(Regex("[A-Za-z_][A-Za-z0-9_.$]*"))) name else "invalid"
+        }
+        runCatching {
+            sink.warn("OpenRouter", "request_failure type=${failure.type.name} " +
+                "httpStatus=${failure.details.httpStatus?.takeIf { it in 100..599 } ?: "missing"} " +
+                "exceptionClass=${exceptionClass(failure)} causeClass=${exceptionClass(failure.cause)} " +
+                "selectedModel=${diagnosticIdentifier(selectedModel)} interactionId=${diagnosticIdentifier(request.interactionId)}")
+        }
+    }
+
+    /** Emit evidence before router validation rejects blank completions; never include content. */
+    private fun logEmptyCompletion(request: AiRequest, requestedModel: String, resolvedModel: String,
+        finishReason: String?, outputTokens: Int?, reasoningTokens: Int?) {
+        val sink = logger ?: return
+        val normalizedFinish = finishReason?.trim()?.lowercase(Locale.ROOT)?.let {
+            if (it in setOf("stop", "length", "tool_calls", "function_call", "content_filter", "error",
+                    "cancelled", "end_turn", "max_tokens", "stop_sequence")) it else "unknown"
+        } ?: "missing"
+        // A diagnostic sink failure must not alter the provider/router outcome.
+        runCatching {
+            sink.warn("OpenRouter", "empty_completion finishReason=$normalizedFinish " +
+                "interactionId=${diagnosticIdentifier(request.interactionId)} " +
+                "selectedProvider=openrouter selectedModel=${diagnosticIdentifier(requestedModel)} " +
+                "resolvedProvider=openrouter resolvedModel=${diagnosticIdentifier(resolvedModel)} " +
+                "requestedOutputTokens=${request.maxOutputTokens?.takeIf { it > 0 } ?: "missing"} " +
+                "outputTokens=${outputTokens ?: "missing"} reasoningTokens=${reasoningTokens ?: "missing"}")
+        }
+    }
+
     private fun buildRequestBody(request: AiRequest, context: AiContext, model: String, stream: Boolean): JSONObject {
         val messages = JSONArray()
         messages.put(JSONObject().apply {
@@ -596,6 +666,11 @@ class OpenRouterProvider(
             put("messages", messages)
             put("stream", stream)
             request.maxOutputTokens?.takeIf { it > 0 }?.let { put("max_tokens", it) }
+            when (request.reasoningMode) {
+                AiReasoningMode.DISABLED -> put("reasoning", JSONObject().put("enabled", false))
+                AiReasoningMode.ENABLED -> put("reasoning", JSONObject().put("enabled", true))
+                AiReasoningMode.DEFAULT -> Unit // Preserve the selected model's default.
+            }
             if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
                 put("tool_choice", if (request.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED &&
                     request.turnKind == com.halo.sdk.provider.ProviderTurnKind.INITIAL) "required" else "auto")
@@ -714,6 +789,7 @@ class OpenRouterProvider(
             400 -> if (ContextOverflow.matches(providerCode, detail)) AiErrorType.CONTEXT_TOO_LARGE else AiErrorType.INVALID_REQUEST
             401, 403 -> AiErrorType.AUTHENTICATION_FAILED
             402 -> AiErrorType.PROVIDER_UNAVAILABLE
+            404 -> AiErrorType.MODEL_UNAVAILABLE
             408 -> AiErrorType.TIMEOUT
             409 -> AiErrorType.PROVIDER_UNAVAILABLE
             429 -> AiErrorType.RATE_LIMITED
@@ -747,6 +823,7 @@ class OpenRouterProvider(
         val type = when {
             ContextOverflow.matches(providerCode, message) -> AiErrorType.CONTEXT_TOO_LARGE
             numericCode == 401 || numericCode == 403 -> AiErrorType.AUTHENTICATION_FAILED
+            numericCode == 404 -> AiErrorType.MODEL_UNAVAILABLE
             numericCode == 408 -> AiErrorType.TIMEOUT
             numericCode == 429 -> AiErrorType.RATE_LIMITED
             numericCode in setOf(402, 409, 500, 502, 503, 504) -> AiErrorType.PROVIDER_UNAVAILABLE
@@ -762,7 +839,7 @@ class OpenRouterProvider(
                 recoverability = when (type) {
                     AiErrorType.AUTHENTICATION_FAILED -> Recoverability.USER_ACTION_REQUIRED
                     AiErrorType.RATE_LIMITED -> Recoverability.UNKNOWN
-                    AiErrorType.INVALID_REQUEST, AiErrorType.CONTEXT_TOO_LARGE -> Recoverability.PERMANENT
+                    AiErrorType.INVALID_REQUEST, AiErrorType.CONTEXT_TOO_LARGE, AiErrorType.MODEL_UNAVAILABLE -> Recoverability.PERMANENT
                     else -> Recoverability.RETRY_IMMEDIATELY
                 },
             ),

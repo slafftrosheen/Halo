@@ -29,6 +29,15 @@ class HaloZoneLayoutTest {
     private val invoked = mutableListOf<String>()
     private val actions = (1..9).map { HaloOrbContextAction("tool-$it", "Action $it", HaloGlyph.TOOL) }
 
+    @Test fun selectedWorkspaceRemainsAnActionableRootButton() {
+        show(childHeader = true)
+        compose.onNodeWithContentDescription("Workspace").assertIsSelected()
+            .assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role,
+                androidx.compose.ui.semantics.Role.Button))
+            .assertHasClickAction().performTouchInput { click() }
+        assertEquals(listOf("notebook"), invoked)
+    }
+
     private fun show(compact: Boolean = false, scale: Float = 1f, childHeader: Boolean = false,
         mode: com.halo.app.ai.PrivacyMode = com.halo.app.ai.PrivacyMode.PRIVATE, headerTool: Boolean = false,
         actionCount: Int = actions.size) {

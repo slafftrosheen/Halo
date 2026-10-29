@@ -239,7 +239,7 @@ internal fun SettingsContent(
                         }
                     }
                     "About halo" -> {
-                        Text("halo", style = MaterialTheme.typography.headlineLarge)
+                        Text(uiText("halo"), style = MaterialTheme.typography.headlineLarge)
                         Text(state.version, style = MaterialTheme.typography.bodyMedium)
                     }
                     "Appearance" -> {
@@ -386,9 +386,10 @@ private fun SettingsGroup(
     compactRows: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: java.util.Locale.ENGLISH
     if (compactRows) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(uiText(title).uppercase(java.util.Locale.getDefault()), Modifier.padding(start = 2.dp, top = 4.dp),
+            Text(uiText(title).uppercase(locale), Modifier.padding(start = 2.dp, top = 4.dp),
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 1.54.sp),
                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -461,7 +462,7 @@ private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestinatio
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             HaloSignalFace(presentation = HaloSignalPresentation(label = "halo", reducedMotion = true), size = 36.dp,
-                contentDescription = "halo")
+                contentDescription = uiText("halo"))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

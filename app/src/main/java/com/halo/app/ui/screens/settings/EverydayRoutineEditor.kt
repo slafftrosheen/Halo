@@ -334,6 +334,7 @@ private fun DateChoice(date: LocalDate, onChange: (LocalDate) -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DayChoices(days: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit) {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: java.util.Locale.ENGLISH
     val everyDay = days.isEmpty() || days.size == 7
     var custom by rememberSaveable { mutableStateOf(!everyDay) }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -346,7 +347,7 @@ private fun DayChoices(days: Set<DayOfWeek>, onChange: (Set<DayOfWeek>) -> Unit)
         DayOfWeek.entries.forEach { day -> FilterChip(day in days, {
             val changed = if (day in days) days - day else days + day
             if (changed.isNotEmpty()) onChange(changed)
-        }, label = { Text(day.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault())) }) }
+        }, label = { Text(day.getDisplayName(java.time.format.TextStyle.NARROW, locale)) }) }
     }
 }
 

@@ -1,0 +1,47 @@
+{
+  "status": "FAIL",
+  "finalExit": 1,
+  "duration": "10m38s",
+  "suites": [
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.fx.HaloMotionLifecycleTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "tests": 7,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "providers/openrouter",
+      "name": "com.halo.providers.openrouter.OpenRouterFailureMatrixTest",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "providers/openrouter",
+      "name": "com.halo.providers.openrouter.OpenRouterProviderTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "counts": {
+    "tests": 42,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "sourceWitness": "recovery-v6/source-witness.json",
+  "recordedUtc": "2026-10-29T13:26:37.653754+00:00"
+}

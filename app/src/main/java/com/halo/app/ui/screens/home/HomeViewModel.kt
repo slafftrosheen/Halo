@@ -70,6 +70,7 @@ data class HomeUiState(
     val microphonePermissionGranted: Boolean = true,
     val presentedResponse: String? = null,
     val presentedIdentity: PresentedAssistantResponse? = null,
+    val nativeReceiptCopy: HomeNativeReceiptCopy? = null,
     val conversationId: String? = null,
     /**
      * MINING-P2-001: committed structured presentation for the current answer, when the turn carried
@@ -506,6 +507,7 @@ class HomeViewModel(
                 ),
                 presentedResponse = presented?.text,
                 presentedIdentity = presented,
+                nativeReceiptCopy = projectHomeNativeReceipt(presented, turns, runs),
                 conversationId = activeConversationId,
                 structuredPresentation = presented?.structured,
                 speechReady = speechReady,

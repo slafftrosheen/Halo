@@ -24,7 +24,7 @@ object AndroidGlobalActions {
     )
     fun supported(service: AccessibilityService?, sdk: Int = Build.VERSION.SDK_INT): Map<String, UiOperation> {
         if (service == null) return emptyMap()
-        val advertised = if (sdk >= 30) service.systemActions.map { it.id }.toSet() else null
+        val advertised = if (Build.VERSION.SDK_INT >= 30 && sdk >= 30) service.systemActions.map { it.id }.toSet() else null
         return forDevice(sdk, advertised)
     }
     fun forDevice(sdk: Int, advertised: Set<Int>?): Map<String, UiOperation> {

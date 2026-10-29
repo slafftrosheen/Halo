@@ -112,7 +112,9 @@ private fun ZoneDestination(destination: String, title: String, glyph: HaloGlyph
         animationSpec = androidx.compose.animation.core.tween(if (reduced) 0 else com.halo.app.ui.design.HaloMotion.selectionMs),
         label = "Fixed destination selection")
     IconButton(onClick = { onNavigate(destination) }, modifier = Modifier.size(48.dp).semantics {
-        this.selected = selected; role = Role.Tab
+        // A selected Tab loses ACTION_CLICK in Android's accessibility bridge.
+        // Roots must still open their landing page from a selected nested page.
+        this.selected = selected; role = Role.Button
     }, colors = IconButtonDefaults.iconButtonColors(
         containerColor = fill,
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)) {

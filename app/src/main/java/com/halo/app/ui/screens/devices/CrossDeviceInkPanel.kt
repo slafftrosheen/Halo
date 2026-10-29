@@ -119,13 +119,14 @@ internal fun CrossDeviceInkPanel(owner: CrossDeviceInkController) {
                 devices.forEach { device ->
                     Text(device.identity.displayName, style = MaterialTheme.typography.titleSmall)
                     val caps = requireNotNull(device.inkAssociation).endpoint
+                    val basicAbilityLabel = stringResource(R.string.remote_ink_basic)
                     val abilities = buildList {
                         if (caps.pressure) add(stringResource(R.string.remote_ink_pressure))
                         if (caps.tilt) add(stringResource(R.string.remote_ink_tilt))
                         if (caps.eraser) add(stringResource(R.string.remote_ink_eraser))
                         if (caps.hover) add(stringResource(R.string.remote_ink_hover))
                     }
-                    Text(abilities.joinToString(" · ").ifEmpty { context.getString(R.string.remote_ink_basic) }, style = MaterialTheme.typography.bodySmall)
+                    Text(abilities.joinToString(" · ").ifEmpty { basicAbilityLabel }, style = MaterialTheme.typography.bodySmall)
                     Text(stringResource(R.string.remote_ink_geometry, caps.width, caps.height, caps.rotationDegrees), style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = { scope.launch { owner.forget(device.identity.deviceId); refreshed++ } }) {
                         Text(stringResource(R.string.remote_ink_forget))

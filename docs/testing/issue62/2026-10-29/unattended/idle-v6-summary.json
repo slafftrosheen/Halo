@@ -1,0 +1,17 @@
+{
+  "status": "INTERRUPTED_FOREGROUND_CHANGED",
+  "reason": "External call took foreground; no UI intervention",
+  "appSha256": "a57d695b3cfad5fc67aa7650fcf9482ab9b84c268326628722fdd897cc1d16bd",
+  "samples": 29,
+  "measuredSeconds": 870.3429999999998,
+  "overallCpuOneCorePercent": 5.902270713959899,
+  "settledCpuOneCorePercent": 1.3927852486090713,
+  "settledScope": "Intervals after the first two samples; all intervals including startup reported separately",
+  "thermalStatuses": [
+    0
+  ],
+  "pssFirstKiB": 309711,
+  "pssLastKiB": 274231,
+  "scope": "Debug foreground Home, current dark STILL background, guide light on, landscape, charging; not a completed 15-minute run, animated background, battery-energy or leak qualification",
+  "sourceWitness": "recovery-v6/source-witness.json"
+}

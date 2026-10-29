@@ -99,12 +99,21 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
     BoxWithConstraints(Modifier.fillMaxSize().clip(com.halo.app.ui.design.HaloShapes.hero)
         .background(scheme.background)
         .haloEdgeGlow(active = active && signal.state == HaloSignalState.ACTING, accent = scheme.primary, corner = 26.dp)) {
-        Column(Modifier.fillMaxSize().imePadding().padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val compact = maxHeight < 560.dp || density.fontScale >= 1.4f || WindowInsets.ime.getBottom(density) > 0
+        val openFull: @Composable () -> Unit = {
+            TextButton(onClick = { onOpen("home") }, modifier = Modifier.heightIn(min = 48.dp)) {
+                HaloIcon(HaloGlyph.OPEN_APP, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
+                Text(uiText("Open Halo"))
+            }
+        }
+        Column(Modifier.fillMaxSize().imePadding().padding(if (compact) 12.dp else 20.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Mini Halo"), style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f), color = scheme.onBackground)
+                    modifier = Modifier.weight(1f), color = scheme.onBackground,
+                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 if (active) OutlinedButton(onClick = onStop, modifier = Modifier.heightIn(min = 48.dp)) {
                     HaloIcon(HaloGlyph.STOP, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp)); Text(uiText("Stop"))
@@ -133,7 +142,7 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
             if (!response.isNullOrBlank()) Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
                 color = scheme.surfaceContainerLow) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("halo", style = MaterialTheme.typography.labelLarge, color = scheme.primary)
+                    Text(uiText("halo"), style = MaterialTheme.typography.labelLarge, color = scheme.primary)
                     androidx.compose.foundation.text.selection.SelectionContainer {
                         com.halo.app.ui.glass.components.HaloMarkdownText(response, textColor = scheme.onSurface)
                     }
@@ -141,16 +150,22 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                         allowDictation = false, readText = response, enabled = !busy)
                 }
             }
+            // Secondary navigation can scroll in a short dialog. Keep Stop,
+            // the composer/review action and the assistant entry pinned.
+            if (compact) {
+                openFull()
+                if (reviewRequired) TextButton(onClick = onClose) { Text(uiText("Not now")) }
+            }
             }
             if (reviewRequired) {
                 Button(onClick = { onOpen("activity") }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     HaloIcon(HaloGlyph.APPROVAL, null, Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp)); Text(uiText("Review"))
                 }
-                TextButton(onClick = onClose) { Text(uiText("Not now")) }
+                if (!compact) TextButton(onClick = onClose) { Text(uiText("Not now")) }
             } else {
                 OutlinedTextField(draft, onDraft, placeholder = { Text(uiText("Ask Halo")) },
-                    modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = 4,
+                    modifier = Modifier.fillMaxWidth(), minLines = 1, maxLines = if (compact) 1 else 4,
                     shape = com.halo.app.ui.design.HaloShapes.control,
                     trailingIcon = {
                         // The presence above owns Talk. Keep the editor's direct Send action.
@@ -163,21 +178,18 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                         }
                     })
             }
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+            if (!compact) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = { onOpen("home") }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    HaloIcon(HaloGlyph.OPEN_APP, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
-                    Text(uiText("Open Halo"))
-                }
+                openFull()
             }
             // Full-width launcher stays outside the reply scroller and never competes with status text.
-            if (orbControl != null) orbControl(64.dp) else Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (orbControl != null) orbControl(if (compact) 48.dp else 64.dp) else Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 HaloSignalFace(if (reviewRequired) signal.copy(
                     state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, label = "Needs your review",
                     artwork = com.halo.app.ui.presence.PresenceArtwork.APPROVAL_REQUIRED,
                     conditionGlyph = HaloGlyph.APPROVAL) else signal,
                     modifier = haloSharedOrbModifier(sharedTransitionScope, animatedVisibilityScope, allowSharedOrb),
-                    size = 64.dp,
+                    size = if (compact) 48.dp else 64.dp,
                     contentDescription = uiText(if (reviewRequired) "Needs your review" else "Talk to Halo"),
                     onClick = if (reviewRequired || busy) null else onTalk)
                 com.halo.app.ui.screens.home.HomeVoiceSummonFx(signal.state == HaloSignalState.CAPTURING)

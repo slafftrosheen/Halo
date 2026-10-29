@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_lab_consent_title">Доступ к HaloModelLab</string>
+    <string name="halo_lab_consent_body">При включении halo передаёт HaloModelLab сведения об установленных моделях и может выполнять только явно запущенные локальные тесты. Файлы моделей и управление загрузками остаются в halo. Запросы лаборатории не могут менять выбранного поставщика или роли. Тесты не используют облачные сервисы.</string>
+    <string name="halo_lab_consent_enable">Разрешить HaloModelLab</string>
+    <string name="halo_lab_consent_disable">Отключить доступ к HaloModelLab</string>
+    <string name="halo_lab_consent_close">Закрыть</string>
+    <string name="halo_lab_consent_manage">Управление доступом к HaloModelLab</string>
+</resources>

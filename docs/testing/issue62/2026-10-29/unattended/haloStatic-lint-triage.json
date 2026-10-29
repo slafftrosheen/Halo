@@ -1,0 +1,800 @@
+{
+  "scope": "Read-only source triage; no edits, builds, lint reruns, device actions or acceptance claims. Reports are snapshots; parent is concurrently editing Orb/Home navigation/widget areas.",
+  "revision": "602fbeb5331aecad8800c56156499ffb19378348",
+  "reports": {
+    "host-android": {
+      "path": "C:\\Users\\slavd\\HaloEco\\Halo-main\\host-android\\build\\reports\\lint-results-debug.xml",
+      "sha256": "019de5da818b4a8173e940722afb272613c9dbae65b4568cbac062dd27c261f6"
+    },
+    "app": {
+      "path": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\build\\reports\\lint-results-debug.xml",
+      "sha256": "5dd69e80427aa99b45edb45ccc56aa9df5501a6a19d687420776b3ad43ef5ef7"
+    }
+  },
+  "total": 40,
+  "counts": {
+    "duplicate/dependency": 2,
+    "justified false positive": 22,
+    "real issue": 16
+  },
+  "findings": [
+    {
+      "report": "host-android",
+      "index": 1,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Missing permissions required by CompanionDeviceManager.startObservingDevicePresence: android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\host-android\\src\\main\\java\\com\\halo\\host\\android\\device\\AndroidCompanionAssociationAdapter.kt",
+          "line": "23",
+          "column": "13"
+        }
+      ],
+      "classification": "duplicate/dependency",
+      "root_cause_group": "host_presence",
+      "evidence": "The app manifest already declares REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE at app/src/main/AndroidManifest.xml:22; host-android library manifest declares only ACCESS_NETWORK_STATE. Both calls are SDK-gated and this is a library manifest contract mismatch, not a missing app permission.",
+      "minimal_correct_fix": "Declare the normal companion presence permission in the owning host-android manifest, or annotate observe with @RequiresPermission and keep the consuming app declaration. Prefer the manifest declaration because the host owns this capability. Preserve exact-association checks.",
+      "verification": "Lint host-android independently and inspect merged app permission; test permission-denied reporting without enabling observation."
+    },
+    {
+      "report": "host-android",
+      "index": 2,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Missing permissions required by CompanionDeviceManager.startObservingDevicePresence: android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\host-android\\src\\main\\java\\com\\halo\\host\\android\\device\\AndroidCompanionAssociationAdapter.kt",
+          "line": "26",
+          "column": "13"
+        }
+      ],
+      "classification": "duplicate/dependency",
+      "root_cause_group": "host_presence",
+      "evidence": "The app manifest already declares REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE at app/src/main/AndroidManifest.xml:22; host-android library manifest declares only ACCESS_NETWORK_STATE. Both calls are SDK-gated and this is a library manifest contract mismatch, not a missing app permission.",
+      "minimal_correct_fix": "Declare the normal companion presence permission in the owning host-android manifest, or annotate observe with @RequiresPermission and keep the consuming app declaration. Prefer the manifest declaration because the host owns this capability. Preserve exact-association checks.",
+      "verification": "Lint host-android independently and inspect merged app permission; test permission-denied reporting without enabling observation."
+    },
+    {
+      "report": "host-android",
+      "index": 3,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 30 (current min is 26): `android.accessibilityservice.AccessibilityService#getSystemActions`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\host-android\\src\\main\\java\\com\\halo\\host\\android\\accessibility\\AndroidGlobalActions.kt",
+          "line": "27",
+          "column": "49"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "host_sdk",
+      "evidence": "supported accepts an sdk argument defaulting to Build.VERSION.SDK_INT; all production callers use the default. Lint does not infer that parameter equals the real SDK. forDevice already provides a pure test seam.",
+      "minimal_correct_fix": "Guard the platform read directly with Build.VERSION.SDK_INT >= 30, and use sdk only for the pure filtering seam (or remove the sdk argument from supported and keep forDevice). This also prevents injected future SDKs touching unsupported APIs.",
+      "verification": "Host lint plus API26/29/30 supported-action tests; preserve advertised empty-set behavior."
+    },
+    {
+      "report": "app",
+      "index": 1,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\audio\\HeyCyanAudioPairingCoordinator.kt",
+          "line": "200",
+          "column": "76"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "bluetooth",
+      "evidence": "All six sites are guarded by hasConnectPermission() (including canInspectDevice alias and the early return at 332-335). That helper checks SDK<31 or checkSelfPermission(BLUETOOTH_CONNECT) at 495-496; lint cannot infer its result. No enclosing SecurityException handler protects the reads.",
+      "minimal_correct_fix": "Annotate the helper with @ChecksPermission(BLUETOOTH_CONNECT) so the contract is visible to lint, and wrap device name/bond snapshot reads in a narrow SecurityException fallback to preserve denied/revoked-permission state. Do not add blanket MissingPermission suppression.",
+      "verification": "Pairing permission-denied and permission-revoked snapshot tests; no property reads after failed permission gate; rerun app lint."
+    },
+    {
+      "report": "app",
+      "index": 2,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\audio\\HeyCyanAudioPairingCoordinator.kt",
+          "line": "205",
+          "column": "80"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "bluetooth",
+      "evidence": "All six sites are guarded by hasConnectPermission() (including canInspectDevice alias and the early return at 332-335). That helper checks SDK<31 or checkSelfPermission(BLUETOOTH_CONNECT) at 495-496; lint cannot infer its result. No enclosing SecurityException handler protects the reads.",
+      "minimal_correct_fix": "Annotate the helper with @ChecksPermission(BLUETOOTH_CONNECT) so the contract is visible to lint, and wrap device name/bond snapshot reads in a narrow SecurityException fallback to preserve denied/revoked-permission state. Do not add blanket MissingPermission suppression.",
+      "verification": "Pairing permission-denied and permission-revoked snapshot tests; no property reads after failed permission gate; rerun app lint."
+    },
+    {
+      "report": "app",
+      "index": 3,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\audio\\HeyCyanAudioPairingCoordinator.kt",
+          "line": "323",
+          "column": "48"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "bluetooth",
+      "evidence": "All six sites are guarded by hasConnectPermission() (including canInspectDevice alias and the early return at 332-335). That helper checks SDK<31 or checkSelfPermission(BLUETOOTH_CONNECT) at 495-496; lint cannot infer its result. No enclosing SecurityException handler protects the reads.",
+      "minimal_correct_fix": "Annotate the helper with @ChecksPermission(BLUETOOTH_CONNECT) so the contract is visible to lint, and wrap device name/bond snapshot reads in a narrow SecurityException fallback to preserve denied/revoked-permission state. Do not add blanket MissingPermission suppression.",
+      "verification": "Pairing permission-denied and permission-revoked snapshot tests; no property reads after failed permission gate; rerun app lint."
+    },
+    {
+      "report": "app",
+      "index": 4,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\audio\\HeyCyanAudioPairingCoordinator.kt",
+          "line": "324",
+          "column": "42"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "bluetooth",
+      "evidence": "All six sites are guarded by hasConnectPermission() (including canInspectDevice alias and the early return at 332-335). That helper checks SDK<31 or checkSelfPermission(BLUETOOTH_CONNECT) at 495-496; lint cannot infer its result. No enclosing SecurityException handler protects the reads.",
+      "minimal_correct_fix": "Annotate the helper with @ChecksPermission(BLUETOOTH_CONNECT) so the contract is visible to lint, and wrap device name/bond snapshot reads in a narrow SecurityException fallback to preserve denied/revoked-permission state. Do not add blanket MissingPermission suppression.",
+      "verification": "Pairing permission-denied and permission-revoked snapshot tests; no property reads after failed permission gate; rerun app lint."
+    },
+    {
+      "report": "app",
+      "index": 5,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\audio\\HeyCyanAudioPairingCoordinator.kt",
+          "line": "341",
+          "column": "26"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "bluetooth",
+      "evidence": "All six sites are guarded by hasConnectPermission() (including canInspectDevice alias and the early return at 332-335). That helper checks SDK<31 or checkSelfPermission(BLUETOOTH_CONNECT) at 495-496; lint cannot infer its result. No enclosing SecurityException handler protects the reads.",
+      "minimal_correct_fix": "Annotate the helper with @ChecksPermission(BLUETOOTH_CONNECT) so the contract is visible to lint, and wrap device name/bond snapshot reads in a narrow SecurityException fallback to preserve denied/revoked-permission state. Do not add blanket MissingPermission suppression.",
+      "verification": "Pairing permission-denied and permission-revoked snapshot tests; no property reads after failed permission gate; rerun app lint."
+    },
+    {
+      "report": "app",
+      "index": 6,
+      "id": "MissingPermission",
+      "severity": "Error",
+      "message": "Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\audio\\HeyCyanAudioPairingCoordinator.kt",
+          "line": "342",
+          "column": "22"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "bluetooth",
+      "evidence": "All six sites are guarded by hasConnectPermission() (including canInspectDevice alias and the early return at 332-335). That helper checks SDK<31 or checkSelfPermission(BLUETOOTH_CONNECT) at 495-496; lint cannot infer its result. No enclosing SecurityException handler protects the reads.",
+      "minimal_correct_fix": "Annotate the helper with @ChecksPermission(BLUETOOTH_CONNECT) so the contract is visible to lint, and wrap device name/bond snapshot reads in a narrow SecurityException fallback to preserve denied/revoked-permission state. Do not add blanket MissingPermission suppression.",
+      "verification": "Pairing permission-denied and permission-revoked snapshot tests; no property reads after failed permission gate; rerun app lint."
+    },
+    {
+      "report": "app",
+      "index": 7,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 28 (current min is 26): `android.media.MediaPlayer#setPreferredDevice`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\notebook\\CanvasLocalMediaPreview.kt",
+          "line": "106",
+          "column": "51"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "media_api",
+      "evidence": "Both Canvas media owners call setPreferredDevice (API28) with minSdk26 and no SDK guard; catch(Exception) does not catch NoSuchMethodError. The explicit built-in phone route is a safety requirement.",
+      "minimal_correct_fix": "Guard Build.VERSION.SDK_INT >= 28 before calling setPreferredDevice, failing closed with the existing unavailable UI on API26-27. Release resources on failure. Do not simply skip routing and let Android choose Bluetooth output/input.",
+      "verification": "API26/27 unavailable-result and resource-release tests; API28+ routing success/failure tests; app lint."
+    },
+    {
+      "report": "app",
+      "index": 8,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 28 (current min is 26): `android.media.MediaRecorder#setPreferredDevice`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\notebook\\CanvasVoiceMemoRecorder.kt",
+          "line": "58",
+          "column": "47"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "media_api",
+      "evidence": "Both Canvas media owners call setPreferredDevice (API28) with minSdk26 and no SDK guard; catch(Exception) does not catch NoSuchMethodError. The explicit built-in phone route is a safety requirement.",
+      "minimal_correct_fix": "Guard Build.VERSION.SDK_INT >= 28 before calling setPreferredDevice, failing closed with the existing unavailable UI on API26-27. Release resources on failure. Do not simply skip routing and let Android choose Bluetooth output/input.",
+      "verification": "API26/27 unavailable-result and resource-release tests; API28+ routing success/failure tests; app lint."
+    },
+    {
+      "report": "app",
+      "index": 9,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 29 (current min is 26): `android.app.AutomaticZenRule#getConfigurationActivity`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\nativeactions\\NativeDndController.kt",
+          "line": "21",
+          "column": "14"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "dnd_api",
+      "evidence": "request checks Build.VERSION.SDK_INT>=29 at line24 before any of these calls. owns is called by request after that guard; its other current callers are SDK36 tests. Lint does not propagate Kotlin check() or caller guards through method references.",
+      "minimal_correct_fix": "Use an explicit SDK<29 return/throw before request API calls and a direct SDK>=29 short-circuit before owns reads configurationActivity; alternatively isolate API29 implementation in a @RequiresApi(29) helper called behind a direct guard. Preserve own-rule-only semantics.",
+      "verification": "App lint; API26/28 rejection with no rule writes; API29+ owned/unowned-rule regression tests."
+    },
+    {
+      "report": "app",
+      "index": 10,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 29 (current min is 26): `android.app.AutomaticZenRule()`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\nativeactions\\NativeDndController.kt",
+          "line": "36",
+          "column": "46"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "dnd_api",
+      "evidence": "request checks Build.VERSION.SDK_INT>=29 at line24 before any of these calls. owns is called by request after that guard; its other current callers are SDK36 tests. Lint does not propagate Kotlin check() or caller guards through method references.",
+      "minimal_correct_fix": "Use an explicit SDK<29 return/throw before request API calls and a direct SDK>=29 short-circuit before owns reads configurationActivity; alternatively isolate API29 implementation in a @RequiresApi(29) helper called behind a direct guard. Preserve own-rule-only semantics.",
+      "verification": "App lint; API26/28 rejection with no rule writes; API29+ owned/unowned-rule regression tests."
+    },
+    {
+      "report": "app",
+      "index": 11,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 29 (current min is 26): `android.service.notification.ZenPolicy.Builder#build`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\nativeactions\\NativeDndController.kt",
+          "line": "37",
+          "column": "50"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "dnd_api",
+      "evidence": "request checks Build.VERSION.SDK_INT>=29 at line24 before any of these calls. owns is called by request after that guard; its other current callers are SDK36 tests. Lint does not propagate Kotlin check() or caller guards through method references.",
+      "minimal_correct_fix": "Use an explicit SDK<29 return/throw before request API calls and a direct SDK>=29 short-circuit before owns reads configurationActivity; alternatively isolate API29 implementation in a @RequiresApi(29) helper called behind a direct guard. Preserve own-rule-only semantics.",
+      "verification": "App lint; API26/28 rejection with no rule writes; API29+ owned/unowned-rule regression tests."
+    },
+    {
+      "report": "app",
+      "index": 12,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 29 (current min is 26): `android.service.notification.ZenPolicy.Builder()`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\nativeactions\\NativeDndController.kt",
+          "line": "37",
+          "column": "40"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "dnd_api",
+      "evidence": "request checks Build.VERSION.SDK_INT>=29 at line24 before any of these calls. owns is called by request after that guard; its other current callers are SDK36 tests. Lint does not propagate Kotlin check() or caller guards through method references.",
+      "minimal_correct_fix": "Use an explicit SDK<29 return/throw before request API calls and a direct SDK>=29 short-circuit before owns reads configurationActivity; alternatively isolate API29 implementation in a @RequiresApi(29) helper called behind a direct guard. Preserve own-rule-only semantics.",
+      "verification": "App lint; API26/28 rejection with no rule writes; API29+ owned/unowned-rule regression tests."
+    },
+    {
+      "report": "app",
+      "index": 13,
+      "id": "NewApi",
+      "severity": "Error",
+      "message": "Call requires API level 29 (current min is 26): `android.app.NotificationManager#setAutomaticZenRuleState`",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\nativeactions\\NativeDndController.kt",
+          "line": "48",
+          "column": "17"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "dnd_api",
+      "evidence": "request checks Build.VERSION.SDK_INT>=29 at line24 before any of these calls. owns is called by request after that guard; its other current callers are SDK36 tests. Lint does not propagate Kotlin check() or caller guards through method references.",
+      "minimal_correct_fix": "Use an explicit SDK<29 return/throw before request API calls and a direct SDK>=29 short-circuit before owns reads configurationActivity; alternatively isolate API29 implementation in a @RequiresApi(29) helper called behind a direct guard. Preserve own-rule-only semantics.",
+      "verification": "App lint; API26/28 rejection with no rule writes; API29+ owned/unowned-rule regression tests."
+    },
+    {
+      "report": "app",
+      "index": 14,
+      "id": "StartActivityAndCollapseDeprecated",
+      "severity": "Error",
+      "message": "TileService#startActivityAndCollapse(Intent) is deprecated. Use TileService#startActivityAndCollapse(PendingIntent) instead.",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\nativeactions\\HaloTalkTileService.kt",
+          "line": "25",
+          "column": "42"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "qs_legacy",
+      "evidence": "The deprecated Intent overload is confined to the SDK<34 branch; SDK34+ already uses immutable PendingIntent. Removing the older overload breaks supported older Android versions.",
+      "minimal_correct_fix": "Keep the compatibility branch and document a narrowly scoped @SuppressLint(\"StartActivityAndCollapseDeprecated\") on an API<34 compatibility helper (not on the file or lint config). The modern branch remains unchanged.",
+      "verification": "Lint and SDK33/34 tile-launch tests; pending intent immutable; no direct microphone start."
+    },
+    {
+      "report": "app",
+      "index": 15,
+      "id": "SuspiciousIndentation",
+      "severity": "Error",
+      "message": "Suspicious indentation: This is conditionally executed; expected it to be indented",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\presence\\HaloOrbLauncher.kt",
+          "line": "149",
+          "column": "13"
+        },
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\presence\\HaloOrbLauncher.kt",
+          "line": "148",
+          "column": "13",
+          "message": "Previous statement here"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "indent",
+      "evidence": "The Kotlin syntax is unambiguous: Orb Button/TextButton are the immediate single-statement if bodies; HomeResponseCard Surface is unconditional. Indentation is misleading but there is no demonstrated changed runtime branch.",
+      "minimal_correct_fix": "Add braces to the two Orb conditionals and reindent the unconditional HomeResponseCard Surface. No behavioral rewrite and no suppression.",
+      "verification": "Kotlin compilation plus existing Orb visibility tests; parent owns Orb edits."
+    },
+    {
+      "report": "app",
+      "index": 16,
+      "id": "SuspiciousIndentation",
+      "severity": "Error",
+      "message": "Suspicious indentation: This is conditionally executed; expected it to be indented",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\presence\\HaloOrbLauncher.kt",
+          "line": "219",
+          "column": "9"
+        },
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\presence\\HaloOrbLauncher.kt",
+          "line": "218",
+          "column": "9",
+          "message": "Previous statement here"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "indent",
+      "evidence": "The Kotlin syntax is unambiguous: Orb Button/TextButton are the immediate single-statement if bodies; HomeResponseCard Surface is unconditional. Indentation is misleading but there is no demonstrated changed runtime branch.",
+      "minimal_correct_fix": "Add braces to the two Orb conditionals and reindent the unconditional HomeResponseCard Surface. No behavioral rewrite and no suppression.",
+      "verification": "Kotlin compilation plus existing Orb visibility tests; parent owns Orb edits."
+    },
+    {
+      "report": "app",
+      "index": 17,
+      "id": "SuspiciousIndentation",
+      "severity": "Error",
+      "message": "Suspicious indentation: This is indented but is not continuing the previous expression (`val canAct = !isActi`...)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\home\\HomeResponseCard.kt",
+          "line": "31",
+          "column": "13"
+        },
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\home\\HomeResponseCard.kt",
+          "line": "30",
+          "column": "5",
+          "message": "Previous statement here"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "indent",
+      "evidence": "The Kotlin syntax is unambiguous: Orb Button/TextButton are the immediate single-statement if bodies; HomeResponseCard Surface is unconditional. Indentation is misleading but there is no demonstrated changed runtime branch.",
+      "minimal_correct_fix": "Add braces to the two Orb conditionals and reindent the unconditional HomeResponseCard Surface. No behavioral rewrite and no suppression.",
+      "verification": "Kotlin compilation plus existing Orb visibility tests; parent owns Orb edits."
+    },
+    {
+      "report": "app",
+      "index": 18,
+      "id": "NonObservableLocale",
+      "severity": "Error",
+      "message": "Reading locale in a non-observable way in a composable function",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\settings\\EverydayRoutineEditor.kt",
+          "line": "349",
+          "column": "81"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "locale_real",
+      "evidence": "A composable directly reads Locale.getDefault for weekday names or capitalization. The global default is not an observable app-locale dependency and can differ from the configured app locale.",
+      "minimal_correct_fix": "Read the current configured locale from LocalConfiguration/LocalResources (or androidx.compose.ui.text.intl.Locale.current.platformLocale), then use it for display names/casing.",
+      "verification": "Switch app language without process restart; weekday labels and settings headers reflect current locale; lint."
+    },
+    {
+      "report": "app",
+      "index": 19,
+      "id": "NonObservableLocale",
+      "severity": "Error",
+      "message": "Reading locale in a non-observable way in a composable function",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\screen\\HaloScreen.kt",
+          "line": "295",
+          "column": "88"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "locale_fallback",
+      "evidence": "Both composables already read LocalConfiguration.current.locales[0]; only the null fallback reads Locale.getDefault. Configuration changes already invalidate the primary locale.",
+      "minimal_correct_fix": "Use a stable explicit fallback such as Locale.ENGLISH for an empty configuration locale list, or a shared observable locale helper. Do not remove the LocalConfiguration read.",
+      "verification": "App locale switch tests including empty-locale fallback; lint."
+    },
+    {
+      "report": "app",
+      "index": 20,
+      "id": "NonObservableLocale",
+      "severity": "Error",
+      "message": "Reading locale in a non-observable way in a composable function",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\screen\\HaloScreen.kt",
+          "line": "888",
+          "column": "88"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "locale_fallback",
+      "evidence": "Both composables already read LocalConfiguration.current.locales[0]; only the null fallback reads Locale.getDefault. Configuration changes already invalidate the primary locale.",
+      "minimal_correct_fix": "Use a stable explicit fallback such as Locale.ENGLISH for an empty configuration locale list, or a shared observable locale helper. Do not remove the LocalConfiguration read.",
+      "verification": "App locale switch tests including empty-locale fallback; lint."
+    },
+    {
+      "report": "app",
+      "index": 21,
+      "id": "NonObservableLocale",
+      "severity": "Error",
+      "message": "Reading locale in a non-observable way in a composable function",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\settings\\SettingsScreen.kt",
+          "line": "391",
+          "column": "42"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "locale_real",
+      "evidence": "A composable directly reads Locale.getDefault for weekday names or capitalization. The global default is not an observable app-locale dependency and can differ from the configured app locale.",
+      "minimal_correct_fix": "Read the current configured locale from LocalConfiguration/LocalResources (or androidx.compose.ui.text.intl.Locale.current.platformLocale), then use it for display names/casing.",
+      "verification": "Switch app language without process restart; weekday labels and settings headers reflect current locale; lint."
+    },
+    {
+      "report": "app",
+      "index": 22,
+      "id": "LocalContextConfigurationRead",
+      "severity": "Error",
+      "message": "Reading Configuration using LocalContext.current.resources.configuration is not configuration-aware and may return stale values if the Configuration changes",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\test\\java\\com\\halo\\app\\ui\\presence\\LocalizedMaterialBottomSheetTest.kt",
+          "line": "44",
+          "column": "67"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "fixture_config",
+      "evidence": "Test-only deterministic fixture clones the HostlessHaloTheme fontScale=2 configuration into a locale-specific resource context inside remember(original,tag). No production UI stale-read is established.",
+      "minimal_correct_fix": "Capture LocalConfiguration.current and key remember on it, then copy that observable configuration; alternatively build the controlled fixture outside composition with explicit locale/fontScale.",
+      "verification": "Rerun LocalizedMaterialBottomSheetTest to preserve inherited fontScale and localized Material strings; lint."
+    },
+    {
+      "report": "app",
+      "index": 23,
+      "id": "LocalContextGetResourceValueCall",
+      "severity": "Error",
+      "message": "Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\devices\\CrossDeviceInkPanel.kt",
+          "line": "128",
+          "column": "66"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "compose_resources",
+      "evidence": "The basic-device fallback label is rendered directly during composition using context.getString, unlike adjacent stringResource capability labels. It lacks a resource configuration observation.",
+      "minimal_correct_fix": "Resolve the fallback with stringResource(R.string.remote_ink_basic) in composition and use the resolved value in ifEmpty.",
+      "verification": "Language-switch test for a device with no optional capabilities; lint."
+    },
+    {
+      "report": "app",
+      "index": 24,
+      "id": "LocalContextGetResourceValueCall",
+      "severity": "Error",
+      "message": "Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\home\\HomeScreen.kt",
+          "line": "397",
+          "column": "105"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "event_resources",
+      "evidence": "The two getString calls execute only in the onRecovery event callback after startActivity throws, not while rendering composition. There is no unobserved rendered resource read at these sites.",
+      "minimal_correct_fix": "Resolve one failure string using stringResource in the surrounding composition and capture it in both callback catches. This makes locale ownership explicit without suppressing lint.",
+      "verification": "Recovery callback ActivityNotFoundException/SecurityException tests and current-language message test; lint."
+    },
+    {
+      "report": "app",
+      "index": 25,
+      "id": "LocalContextGetResourceValueCall",
+      "severity": "Error",
+      "message": "Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\home\\HomeScreen.kt",
+          "line": "398",
+          "column": "81"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "event_resources",
+      "evidence": "The two getString calls execute only in the onRecovery event callback after startActivity throws, not while rendering composition. There is no unobserved rendered resource read at these sites.",
+      "minimal_correct_fix": "Resolve one failure string using stringResource in the surrounding composition and capture it in both callback catches. This makes locale ownership explicit without suppressing lint.",
+      "verification": "Recovery callback ActivityNotFoundException/SecurityException tests and current-language message test; lint."
+    },
+    {
+      "report": "app",
+      "index": 26,
+      "id": "StateFlowValueCalledInComposition",
+      "severity": "Error",
+      "message": "StateFlow.value should not be called within composition",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\onboarding\\HaloSetupScreen.kt",
+          "line": "481",
+          "column": "87"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "flow",
+      "evidence": "StateFlow.value reads occur while composing selected model Choice, Kids cloud notice or provider model display name; updates are not observed through these expressions. Onboarding already observes catalogue but not router selection.",
+      "minimal_correct_fix": "collectAsStateWithLifecycle the two router selection flows, Kids cloudAllowed flow and provider catalogue.state at the relevant composable scope; use those observed values in rendered text/selection.",
+      "verification": "Change each flow independently while screen remains composed and assert selection/text updates; lint."
+    },
+    {
+      "report": "app",
+      "index": 27,
+      "id": "StateFlowValueCalledInComposition",
+      "severity": "Error",
+      "message": "StateFlow.value should not be called within composition",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\onboarding\\HaloSetupScreen.kt",
+          "line": "481",
+          "column": "153"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "flow",
+      "evidence": "StateFlow.value reads occur while composing selected model Choice, Kids cloud notice or provider model display name; updates are not observed through these expressions. Onboarding already observes catalogue but not router selection.",
+      "minimal_correct_fix": "collectAsStateWithLifecycle the two router selection flows, Kids cloudAllowed flow and provider catalogue.state at the relevant composable scope; use those observed values in rendered text/selection.",
+      "verification": "Change each flow independently while screen remains composed and assert selection/text updates; lint."
+    },
+    {
+      "report": "app",
+      "index": 28,
+      "id": "StateFlowValueCalledInComposition",
+      "severity": "Error",
+      "message": "StateFlow.value should not be called within composition",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\kids\\KidsCreateFlow.kt",
+          "line": "51",
+          "column": "74"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "flow",
+      "evidence": "StateFlow.value reads occur while composing selected model Choice, Kids cloud notice or provider model display name; updates are not observed through these expressions. Onboarding already observes catalogue but not router selection.",
+      "minimal_correct_fix": "collectAsStateWithLifecycle the two router selection flows, Kids cloudAllowed flow and provider catalogue.state at the relevant composable scope; use those observed values in rendered text/selection.",
+      "verification": "Change each flow independently while screen remains composed and assert selection/text updates; lint."
+    },
+    {
+      "report": "app",
+      "index": 29,
+      "id": "StateFlowValueCalledInComposition",
+      "severity": "Error",
+      "message": "StateFlow.value should not be called within composition",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\java\\com\\halo\\app\\ui\\screens\\settings\\ProviderControlScreens.kt",
+          "line": "118",
+          "column": "56"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "flow",
+      "evidence": "StateFlow.value reads occur while composing selected model Choice, Kids cloud notice or provider model display name; updates are not observed through these expressions. Onboarding already observes catalogue but not router selection.",
+      "minimal_correct_fix": "collectAsStateWithLifecycle the two router selection flows, Kids cloudAllowed flow and provider catalogue.state at the relevant composable scope; use those observed values in rendered text/selection.",
+      "verification": "Change each flow independently while screen remains composed and assert selection/text updates; lint."
+    },
+    {
+      "report": "app",
+      "index": 30,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"app_name\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "2",
+          "column": "13"
+        }
+      ],
+      "classification": "justified false positive",
+      "root_cause_group": "app_name",
+      "evidence": "The brand/product name should remain the same across languages; supplying translated names is not the right acceptance requirement. Existing pl resource repeats Halo.",
+      "minimal_correct_fix": "Mark the canonical app_name resource translatable=\"false\" (and align redundant locale overrides if appropriate). Preserve the approved halo spelling convention; do not mark consent copy nontranslatable.",
+      "verification": "App lint and launcher/app-label check in EN/LV/RU/PL."
+    },
+    {
+      "report": "app",
+      "index": 31,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"halo_lab_consent_title\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "3",
+          "column": "13"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "consent_translation",
+      "evidence": "Six user-visible HaloModelLab consent strings are absent in values-ru and values-lv; values-pl contains translations. English fallback affects informed consent controls and explanation.",
+      "minimal_correct_fix": "Add accurate LV/RU translations for all six consent keys, preserving installed-model sharing, explicit local-test consent, provider/role immutability and no-cloud semantics. Respect the existing resource generation source if it owns these keys.",
+      "verification": "Localization consistency plus resource lint; render consent screen in LV/RU and verify full text/buttons."
+    },
+    {
+      "report": "app",
+      "index": 32,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"halo_lab_consent_body\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "4",
+          "column": "13"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "consent_translation",
+      "evidence": "Six user-visible HaloModelLab consent strings are absent in values-ru and values-lv; values-pl contains translations. English fallback affects informed consent controls and explanation.",
+      "minimal_correct_fix": "Add accurate LV/RU translations for all six consent keys, preserving installed-model sharing, explicit local-test consent, provider/role immutability and no-cloud semantics. Respect the existing resource generation source if it owns these keys.",
+      "verification": "Localization consistency plus resource lint; render consent screen in LV/RU and verify full text/buttons."
+    },
+    {
+      "report": "app",
+      "index": 33,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"halo_lab_consent_enable\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "5",
+          "column": "13"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "consent_translation",
+      "evidence": "Six user-visible HaloModelLab consent strings are absent in values-ru and values-lv; values-pl contains translations. English fallback affects informed consent controls and explanation.",
+      "minimal_correct_fix": "Add accurate LV/RU translations for all six consent keys, preserving installed-model sharing, explicit local-test consent, provider/role immutability and no-cloud semantics. Respect the existing resource generation source if it owns these keys.",
+      "verification": "Localization consistency plus resource lint; render consent screen in LV/RU and verify full text/buttons."
+    },
+    {
+      "report": "app",
+      "index": 34,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"halo_lab_consent_disable\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "6",
+          "column": "13"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "consent_translation",
+      "evidence": "Six user-visible HaloModelLab consent strings are absent in values-ru and values-lv; values-pl contains translations. English fallback affects informed consent controls and explanation.",
+      "minimal_correct_fix": "Add accurate LV/RU translations for all six consent keys, preserving installed-model sharing, explicit local-test consent, provider/role immutability and no-cloud semantics. Respect the existing resource generation source if it owns these keys.",
+      "verification": "Localization consistency plus resource lint; render consent screen in LV/RU and verify full text/buttons."
+    },
+    {
+      "report": "app",
+      "index": 35,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"halo_lab_consent_close\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "7",
+          "column": "13"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "consent_translation",
+      "evidence": "Six user-visible HaloModelLab consent strings are absent in values-ru and values-lv; values-pl contains translations. English fallback affects informed consent controls and explanation.",
+      "minimal_correct_fix": "Add accurate LV/RU translations for all six consent keys, preserving installed-model sharing, explicit local-test consent, provider/role immutability and no-cloud semantics. Respect the existing resource generation source if it owns these keys.",
+      "verification": "Localization consistency plus resource lint; render consent screen in LV/RU and verify full text/buttons."
+    },
+    {
+      "report": "app",
+      "index": 36,
+      "id": "MissingTranslation",
+      "severity": "Error",
+      "message": "\"halo_lab_consent_manage\" is not translated in \"ru\" (Russian) or \"lv\" (Latvian)",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\res\\values\\strings.xml",
+          "line": "8",
+          "column": "13"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "consent_translation",
+      "evidence": "Six user-visible HaloModelLab consent strings are absent in values-ru and values-lv; values-pl contains translations. English fallback affects informed consent controls and explanation.",
+      "minimal_correct_fix": "Add accurate LV/RU translations for all six consent keys, preserving installed-model sharing, explicit local-test consent, provider/role immutability and no-cloud semantics. Respect the existing resource generation source if it owns these keys.",
+      "verification": "Localization consistency plus resource lint; render consent screen in LV/RU and verify full text/buttons."
+    },
+    {
+      "report": "app",
+      "index": 37,
+      "id": "PermissionImpliesUnsupportedChromeOsHardware",
+      "severity": "Error",
+      "message": "Permission exists without corresponding hardware `<uses-feature android:name=\"android.hardware.telephony\" android:required=\"false\" />` tag",
+      "locations": [
+        {
+          "file": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\src\\main\\AndroidManifest.xml",
+          "line": "8",
+          "column": "6"
+        }
+      ],
+      "classification": "real issue",
+      "root_cause_group": "optional_telephony",
+      "evidence": "CALL_PHONE implies required telephony to Google Play unless the app declares telephony optional; current manifest declares camera and companion setup optional but no telephony declaration. Halo supports non-phone devices.",
+      "minimal_correct_fix": "Add <uses-feature android:name=\"android.hardware.telephony\" android:required=\"false\"/> to app manifest; retain capability/permission checks for call tools.",
+      "verification": "Merged manifest inspection and app lint; non-telephony install/feature availability checks when available."
+    }
+  ]
+}

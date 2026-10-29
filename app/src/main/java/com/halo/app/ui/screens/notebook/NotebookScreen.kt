@@ -751,7 +751,7 @@ private fun MetadataLabel(text: String, emphasized: Boolean = false) {
     }
 }
 
-private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
+internal fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
     WorkspaceObjectType.NOTE -> "Note"
     WorkspaceObjectType.CANVAS -> "Canvas"
     WorkspaceObjectType.FILE -> "File"

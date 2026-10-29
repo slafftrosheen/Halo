@@ -1,0 +1,6 @@
+{
+  "status": "INCOMPLETE",
+  "cases": 0,
+  "settingsRestored": true,
+  "reason": "No clickable accessibility owner after configuration recreation; TestRunner reports IllegalStateException. Host runner session ended without final JUnit output."
+}

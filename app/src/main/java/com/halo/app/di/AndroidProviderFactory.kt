@@ -161,7 +161,7 @@ class AndroidProviderFactory(
             aiProviders = listOfNotNull(
                 localProvider,
                 runCatching { OllamaProvider(storage, ManualDependencyGraph.remoteDispatchPolicy) }.getOrNull(),
-                runCatching { OpenRouterProvider(storage, OpenRouterProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openrouter")) }.getOrNull(),
+                runCatching { OpenRouterProvider(storage, OpenRouterProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openrouter"), logger = ManualDependencyGraph.logger) }.getOrNull(),
                 runCatching { OpenAiProvider(storage, OpenAiProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openai")) }.getOrNull(),
                 runCatching { AnthropicProvider(storage, AnthropicProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "anthropic")) }.getOrNull(),
                 runCatching { GeminiProvider(storage, GeminiProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "gemini")) }.getOrNull(),

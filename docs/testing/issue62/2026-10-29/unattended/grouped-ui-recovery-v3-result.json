@@ -1,0 +1,61 @@
+{
+  "sourceWitness": "recovery-v3/source-witness.json",
+  "status": "FAIL",
+  "counts": {
+    "tests": 30,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.nativeactions.HaloWidgetVisualTest",
+      "tests": "13",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.mini.MiniHaloHostContextTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.mini.MiniHaloHostVisibilityTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.mini.MiniHaloInteractionTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.mini.MiniHaloServiceTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.mini.MiniHaloVisualTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "static": {
+    "status": "FAIL",
+    "hostErrors": 3,
+    "appErrors": 37
+  },
+  "buildStatus": "APP_AND_TEST_APKS_ASSEMBLED",
+  "finalGradleExit": 1
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_lab_consent_title">Piekļuve HaloModelLab</string>
+    <string name="halo_lab_consent_body">Kad šī iespēja ir ieslēgta, halo kopīgo ar HaloModelLab informāciju par instalētajiem modeļiem un var veikt tikai skaidri sāktus lokālus testus. Modeļu faili un lejupielāžu vadība paliek halo. Laboratorijas pieprasījumi nevar mainīt izvēlēto pakalpojuma sniedzēju vai lomas. Testi neizmanto mākoņpakalpojumus.</string>
+    <string name="halo_lab_consent_enable">Atļaut HaloModelLab</string>
+    <string name="halo_lab_consent_disable">Atspējot piekļuvi HaloModelLab</string>
+    <string name="halo_lab_consent_close">Aizvērt</string>
+    <string name="halo_lab_consent_manage">Pārvaldīt piekļuvi HaloModelLab</string>
+</resources>

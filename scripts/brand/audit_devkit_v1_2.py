@@ -10,6 +10,9 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import xml.etree.ElementTree as ET
+
+from devkit_icons import convert_svg_to_vector, vector_signature
 
 ROOT = Path(__file__).resolve().parents[2]
 KIT = ROOT / "docs/15-brand/reference-v2"
@@ -32,9 +35,26 @@ def verify(source: Path, target: Path) -> None:
         errors.append(f"stale {target.relative_to(ROOT)}")
 
 
-icons = list((KIT / "icons/android").glob("halo_ic_*.xml"))
-for icon in icons:
-    verify(icon, APP / "res/drawable" / icon.name)
+# The current importer generates tintable Android vectors from the v4 SVGs.
+# Older kits supplied Android XML directly; keep their exact-content fallback.
+ICON_KIT = ROOT / "docs/15-brand/v4/icons/svg"
+if ICON_KIT.is_dir():
+    icons = list(ICON_KIT.glob("halo_ic_*.svg"))
+    for icon in icons:
+        target = APP / "res/drawable" / (icon.stem + ".xml")
+        if not target.is_file():
+            errors.append(f"missing {target.relative_to(ROOT)}")
+            continue
+        try:
+            expected = convert_svg_to_vector(icon.read_text(encoding="utf-8"))
+            if vector_signature(expected) != vector_signature(target.read_text(encoding="utf-8")):
+                errors.append(f"stale {target.relative_to(ROOT)}")
+        except (ET.ParseError, ValueError, OSError) as exc:
+            errors.append(f"unreadable icon {target.relative_to(ROOT)}: {exc}")
+else:
+    icons = list((KIT / "icons/android").glob("halo_ic_*.xml"))
+    for icon in icons:
+        verify(icon, APP / "res/drawable" / icon.name)
 
 for folder, destination in (
     ("orb/lottie", APP / "assets/halo"),

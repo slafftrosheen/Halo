@@ -151,9 +151,13 @@ class AiRouterTutorGateway(
             val local = selectedTarget.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE
             val effectivePrompt=if(request.createCards && local) prompt.substringBefore("Return only strict JSON:") +
                 "Return 1 to 5 cards, one per line: S1 | Q: question | A: answer. Use only supplied S1–S4 sources. Question <=500 characters; answer <=1000. No extra prose." else prompt
+            // Study needs visible output inside its existing cap, not a hidden
+            // reasoning budget. Mandatory-reasoning models may reject this;
+            // preserve that failure instead of retrying or expanding the budget.
             val aiRequest = AiRequest(text = effectivePrompt, image = image?.content?.bytes,
                 mimeTypes = image?.let { listOf(it.content.mimeType) }.orEmpty(),
-                maxOutputTokens = if (request.createCards || request.extractExercises || request.learningTask != LearningTutorTask.NARRATIVE) 1800 else 600, toolUseMode = ToolUseMode.NONE)
+                maxOutputTokens = if (request.createCards || request.extractExercises || request.learningTask != LearningTutorTask.NARRATIVE) 1800 else 600,
+                reasoningMode = AiReasoningMode.DISABLED, toolUseMode = ToolUseMode.NONE)
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
             val remoteStillPermitted = sessionAllowsRemote(request.session) && (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&

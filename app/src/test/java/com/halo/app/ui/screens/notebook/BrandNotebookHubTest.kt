@@ -1,6 +1,8 @@
 package com.halo.app.ui.screens.notebook
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.halo.app.data.notebook.*
@@ -17,6 +19,31 @@ import org.robolectric.annotation.Config
 class BrandNotebookHubTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun russianFavoriteActionsToggleWhileSourceTitleStaysLiteral() {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val language = com.halo.app.language.AppLanguagePreferences(
+            com.halo.host.android.AndroidStorage(context, "favorite-row-fixture"), "ru")
+        val item = NotebookWorkspaceItem(WorkspaceObject(WorkspaceObjectId("favorite-fixture"),
+            WorkspaceObjectType.NOTE, "Note", 1L, 1L, WorkspaceObjectSource.USER_CREATED,
+            WorkspaceObjectLifecycle.ACTIVE, true, "note:favorite-fixture"))
+        compose.setContent {
+            var favorite by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+            com.halo.app.language.AppLanguageProvider(language) {
+                HaloTheme(darkTheme = false) {
+                    WorkspaceObjectRow(item, false, favorite, emptyList(), false,
+                        onOpen = {}, onStudy = {}, onToggleFavorite = { favorite = !favorite },
+                        onAddToCollection = {}, onRemoveFromSelectedCollection = {}, onToggleContext = {})
+                }
+            }
+        }
+        compose.onNodeWithText("Note").assertExists()
+        compose.onNodeWithText("Заметка", substring = true).assertExists()
+        compose.onNodeWithContentDescription("Добавить в избранное").performClick()
+        compose.onNodeWithContentDescription("Удалить из избранного").assertExists().performClick()
+        compose.onNodeWithContentDescription("Добавить в избранное").assertExists()
+        compose.onNodeWithText("Note").assertExists()
+        compose.onNodeWithContentDescription("Add favorite").assertDoesNotExist()
+    }
 
     @Test fun round2CreationCardsPreserveAllFourDestinations() {
         val calls = mutableListOf<String>()

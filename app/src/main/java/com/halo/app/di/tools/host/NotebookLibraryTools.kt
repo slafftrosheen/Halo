@@ -40,9 +40,16 @@ class NotebookLibraryTools(private val session: NotebookLibrarySession) : ToolEx
         return withContext(Dispatchers.Main.immediate) {
             val frame = if (change == null) session.read(expected) else session.set(expected!!, change)
             if (frame == null) return@withContext reject(toolCall)
-            val output = encode(frame, offset)
-            if (session.read(frame.snapshot) == null) return@withContext reject(toolCall)
-            ToolExecutionResult.Success(toolCall.id, toolCall.functionName, output.toString(), ActionTruth.ACKNOWLEDGED)
+            // SET has already consumed strict snapshot admission and changed the
+            // requested view. Its own Room/debounce rendering may advance while
+            // encoding; that is not a competing edit or a new content authority.
+            val readback = if (change != null) session.readbackLease(frame.view.ownerRevision)
+                ?: return@withContext reject(toolCall) else null
+            val output = encode(frame, offset).toString()
+            val permitted = if (change == null) session.read(frame.snapshot) != null
+                else session.canReadback(readback)
+            if (!permitted) return@withContext reject(toolCall)
+            ToolExecutionResult.Success(toolCall.id, toolCall.functionName, output, ActionTruth.ACKNOWLEDGED)
         }
     }
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Halo</string>
+    <string name="app_name" translatable="false">Halo</string>
     <string name="halo_lab_consent_title">HaloModelLab access</string>
     <string name="halo_lab_consent_body">When enabled, Halo shares installed model details with HaloModelLab and may run explicitly started local tests. Halo keeps model files and download control. Lab requests cannot change your selected provider or roles, and tests do not use cloud services.</string>
     <string name="halo_lab_consent_enable">Allow HaloModelLab</string>

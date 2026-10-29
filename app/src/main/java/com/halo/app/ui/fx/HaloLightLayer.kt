@@ -17,7 +17,9 @@ import com.halo.app.ui.presence.HaloSignalState
 
 /** A single state projection for Home, Screen, and the native assistant. */
 enum class HaloLight(val period: Int, val strength: Float) {
-    OFF(0, 0f), IDLE(4800, .32f), LISTENING(1800, .8f), THINKING(2600, .65f),
+    // Ambient backdrop owns idle drift. Keep the full-screen guide aura still
+    // instead of repainting a second radial gradient on every display frame.
+    OFF(0, 0f), IDLE(0, .32f), LISTENING(1800, .8f), THINKING(2600, .65f),
     ACTING(2400, .7f), NEEDS_YOU(2400, .7f), SUCCESS(0, .75f), ERROR(0, .5f),
 }
 

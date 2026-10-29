@@ -1,0 +1,307 @@
+{
+  "sourceCommit": "602fbeb5331aecad8800c56156499ffb19378348",
+  "scope": "Fresh hardware-free JVM/Android unit tests; no physical/speech/cloud E2E inference",
+  "command": "haloVerify :host-ink:test :providers:elevenlabs-tts:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --init-script fresh-test-tasks.gradle --continue --max-workers=2 --console=plain",
+  "status": "PASS",
+  "duration": "22m6s",
+  "modulesWithTests": 25,
+  "classes": 747,
+  "totals": {
+    "tests": 3602,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "modules": [
+    {
+      "task": ":providers:sherpa-stt:testDebugUnitTest",
+      "classes": 10,
+      "totals": {
+        "tests": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":host-android:testDebugUnitTest",
+      "classes": 6,
+      "totals": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":drivers:simulator:test",
+      "classes": 2,
+      "totals": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:agents:test",
+      "classes": 1,
+      "totals": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:ai:test",
+      "classes": 11,
+      "totals": {
+        "tests": 108,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:execution:test",
+      "classes": 6,
+      "totals": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:interpretation:test",
+      "classes": 5,
+      "totals": {
+        "tests": 30,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:planning:test",
+      "classes": 1,
+      "totals": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:reasoning:test",
+      "classes": 2,
+      "totals": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":engines:speech:test",
+      "classes": 8,
+      "totals": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":libraries:halo-cognition-language:test",
+      "classes": 8,
+      "totals": {
+        "tests": 55,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":runtime:cognition:test",
+      "classes": 96,
+      "totals": {
+        "tests": 396,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":runtime:observer:test",
+      "classes": 5,
+      "totals": {
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":runtime:plugins:test",
+      "classes": 1,
+      "totals": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":runtime:speech:test",
+      "classes": 2,
+      "totals": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":runtime:testing:test",
+      "classes": 1,
+      "totals": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":sdk:host-sdk:test",
+      "classes": 2,
+      "totals": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":sdk:provider-sdk:test",
+      "classes": 9,
+      "totals": {
+        "tests": 57,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":sdk:runtime-sdk:test",
+      "classes": 16,
+      "totals": {
+        "tests": 91,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":drivers:heycyan:testDebugUnitTest",
+      "classes": 48,
+      "totals": {
+        "tests": 207,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":providers:litert:testDebugUnitTest",
+      "classes": 33,
+      "totals": {
+        "tests": 238,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":providers:openrouter:testDebugUnitTest",
+      "classes": 2,
+      "totals": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":host-ink:test",
+      "classes": 5,
+      "totals": {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":providers:elevenlabs-tts:testDebugUnitTest",
+      "classes": 2,
+      "totals": {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "task": ":app:testDebugUnitTest",
+      "classes": 465,
+      "totals": {
+        "tests": 2211,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "noSourceTasks": [
+    ":providers:android-assistant:testDebugUnitTest",
+    ":providers:android-tts:testDebugUnitTest",
+    ":providers:ollama:testDebugUnitTest",
+    ":engines:automation:test",
+    ":engines:context:test",
+    ":engines:device:test",
+    ":engines:diagnostics:test",
+    ":engines:memory:test",
+    ":engines:notification:test",
+    ":engines:perception:test",
+    ":engines:privacy:test",
+    ":engines:provider:test",
+    ":engines:workflow:test",
+    ":lab:analysis:test",
+    ":lab:capture:test",
+    ":lab:diagnostics:test",
+    ":lab:protocol:test",
+    ":lab:replay:test",
+    ":libraries:common:test",
+    ":libraries:logging:test",
+    ":libraries:testing:test",
+    ":runtime:commands:test",
+    ":runtime:debug:test",
+    ":runtime:events:test",
+    ":runtime:intents:test",
+    ":runtime:kernel:test",
+    ":runtime:lifecycle:test",
+    ":runtime:provider-core:test",
+    ":runtime:queries:test",
+    ":runtime:registry:test",
+    ":runtime:scheduler:test",
+    ":runtime:services:test",
+    ":sdk:driver-sdk:test",
+    ":sdk:plugin-sdk:test"
+  ],
+  "logSha256": "9518a1b0e5f08c62b4860dde718a4f7909456ab5a463de1df7531f478d7ad350",
+  "builtAppSha256": "0fa2c918534e982d129d36bb7466bb713b68219e370c3ea83e11eccf17e981ab",
+  "builtTestSha256": "4372925434286f1a653c1990e1e1b451850a263cc92c3a4d1ebc205aacd94131",
+  "recordedUtc": "2026-10-29T11:09:52.328523+00:00"
+}

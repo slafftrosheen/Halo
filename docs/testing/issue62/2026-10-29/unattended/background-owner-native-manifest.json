@@ -1,0 +1,23 @@
+{
+  "startedUtc": "2026-10-29T11:02:01.257430+00:00",
+  "appSha256": "1858152f4f27184e21d3afc7fd4c51e98c386e71c8901ff8b47984fc179e320c",
+  "testSha256": "6931becf6947b4e7709692ac3f37c6e9d57c24937162d99f7616454216d4bdc4",
+  "productionCodeCommit": "2b1652182ca0f1d28cd5713c9f61aa2e386bbf5b",
+  "repositoryCommit": "602fbeb5331aecad8800c56156499ffb19378348",
+  "scope": "Native isolated owner/render fixtures plus explicitly named production Activity tests. No microphone, real provider, download, credentials or production journal deletion.",
+  "witnesses": [
+    {
+      "className": "com.halo.app.ai.LocalRolePackRecoveryDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ai/LocalRolePackRecoveryDeviceTest.kt",
+      "sha256": "d4e72d099a881c08c925284dd966292b302f5b4290c2200a712214bffa2243ec",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ai/PrivateDispatchOwnerTraceTest.kt",
+      "sha256": "4e7ed33d418d4200d04e31a5bfc5befde26e61162c341c1ab9c290684635f7ae",
+      "tests": 2
+    }
+  ],
+  "expectedTests": 3
+}

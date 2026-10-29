@@ -1,0 +1,76 @@
+{
+  "status": "DIAGNOSTIC_SOURCE_CHANGED_DURING_EXECUTION",
+  "finalExit": 1,
+  "duration": "12m 5s",
+  "counts": {
+    "tests": 39,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.data.notebook.NotebookOrganizationGuardTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookBatchNoticeLocalizationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "tests": 15,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "sourceWitness": "recovery-v8-source-witness.json",
+  "appLintTaskLines": [
+    "> Task :app:lintReportDebug",
+    "> Task :app:lintDebug"
+  ],
+  "limitation": "Host projection review edits overlapped execution; not a coherent final source gate. Native v7 saved pair unaffected.",
+  "recordedUtc": "2026-10-29T17:42:50.316347+00:00",
+  "postRunTreeDrift": [
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeResponseCard.kt",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeViewModel.kt",
+    "app/src/main/localization/ui.tsv",
+    "app/src/main/res/values/ui_strings.xml",
+    "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookLibraryBatchTest.kt"
+  ],
+  "confirmedOverlappingEdits": [
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeResponseCard.kt",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeViewModel.kt",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeNativeReceiptProjection.kt",
+    "app/src/test/java/com/halo/app/ui/screens/home/HomeNativeReceiptProjectionTest.kt"
+  ],
+  "postRunTreeDriftNote": "Includes edits released after final exit; these are not all claimed to overlap execution."
+}

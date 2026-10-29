@@ -139,6 +139,9 @@ class HaloNativeWidget : AppWidgetProvider() {
                         if (textPaint.measureText(label(key)) > (width - 72) * density) {
                             setViewVisibility(icon, android.view.View.GONE)
                             setViewPadding(id, (4*density).toInt(), 0, (4*density).toInt(), 0)
+                        } else {
+                            setViewVisibility(icon, android.view.View.VISIBLE)
+                            setViewPadding(id, (44*density).toInt(), 0, (12*density).toInt(), 0)
                         }
                     }
                     val remaining = ((height - 64)*density).toInt()
@@ -161,9 +164,23 @@ class HaloNativeWidget : AppWidgetProvider() {
                     setViewVisibility(R.id.halo_widget_study_container, if (fitsRow && remaining-rowHeight-8*density >= needed("Continue learning", width-80)) android.view.View.VISIBLE else android.view.View.GONE)
                 } else {
                     val available = ((height-24)*density).toInt()
-                    val captureWidth = minOf(100, (width-72)/2)
-                    val talkWidth = (width-80-captureWidth).coerceAtLeast(48)
-                    val talkHeight = needed("Talk", talkWidth)
+                    // Short widgets prioritize whole translated labels. Capture
+                    // takes its measured content width; Talk receives the rest.
+                    // Restore both states explicitly for launcher reapply/resize.
+                    val showIcons = width >= 360
+                    val textPadding = if (showIcons) 56 else 8
+                    listOf(R.id.halo_widget_talk to R.id.halo_widget_talk_icon,
+                        R.id.halo_widget_capture to R.id.halo_widget_capture_icon).forEach { (id, icon) ->
+                        setViewVisibility(icon, if (showIcons) android.view.View.VISIBLE else android.view.View.GONE)
+                        setViewPadding(id, ((if (showIcons) 44 else 4)*density).toInt(), 0,
+                            ((if (showIcons) 12 else 4)*density).toInt(), 0)
+                    }
+                    val captureWidth = maxOf(48, kotlin.math.ceil(textPaint.measureText(label("Capture"))/density).toInt()+textPadding)
+                    val captureTextWidth = captureWidth-textPadding
+                    val captureFits = captureWidth <= width-120 && available >= needed("Capture", captureTextWidth)
+                    val talkWidth = width-80-if (captureFits) captureWidth else 0
+                    val talkTextWidth = talkWidth-textPadding
+                    val talkHeight = needed("Talk", talkTextWidth)
                     val titleHeight = android.text.StaticLayout.Builder.obtain(label("halo"),0,label("halo").length,
                         android.text.TextPaint(textPaint).apply {
                             textSize = 18*context.resources.displayMetrics.scaledDensity
@@ -172,7 +189,7 @@ class HaloNativeWidget : AppWidgetProvider() {
                         (talkWidth*density).toInt()).build().height
                     setViewVisibility(R.id.halo_widget_title, if (available >= talkHeight+titleHeight) android.view.View.VISIBLE else android.view.View.GONE)
                     setViewVisibility(R.id.halo_widget_talk_container, if (available >= talkHeight) android.view.View.VISIBLE else android.view.View.GONE)
-                    setViewVisibility(R.id.halo_widget_capture_container, if (available >= needed("Capture", captureWidth)) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.halo_widget_capture_container, if (captureFits) android.view.View.VISIBLE else android.view.View.GONE)
                 }
             }
         }

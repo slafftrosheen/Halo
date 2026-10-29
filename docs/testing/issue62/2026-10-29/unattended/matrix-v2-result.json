@@ -1,0 +1,3811 @@
+{
+  "exitCode": 0,
+  "cases": 256,
+  "passed": 32,
+  "failed": [
+    {
+      "id": "w360-f10-en-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "status": "FAIL",
+      "error": "Requested route notebook did not become current; actual=home"
+    },
+    {
+      "id": "w360-f10-en-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-en-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-ru-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-lv-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f10-pl-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        396,
+        1898,
+        684,
+        2186
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-en-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-ru-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1884,
+        624,
+        2052
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-lv-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1888,
+        624,
+        2056
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-light-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-home",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-notebook",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-devices",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-settings",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-study",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-activity",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w360-f20-pl-dark-studio",
+      "requestedWidthDp": 360,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 360,
+      "orb": [
+        456,
+        1882,
+        624,
+        2050
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-en-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-ru-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-lv-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f10-pl-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "1.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        415,
+        1962,
+        666,
+        2213
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-en-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "en",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-ru-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "ru",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1955,
+        551,
+        2102
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-lv-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "lv",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-light-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "LIGHT",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-home",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "home",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-notebook",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "notebook",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-devices",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "devices",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-settings",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "settings",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-study",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "study",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-activity",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "activity",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    },
+    {
+      "id": "w412-f20-pl-dark-studio",
+      "requestedWidthDp": 412,
+      "fontScale": "2.0",
+      "language": "pl",
+      "theme": "DARK",
+      "route": "studio",
+      "actualWidthDp": 412,
+      "orb": [
+        404,
+        1953,
+        551,
+        2100
+      ],
+      "status": "FAIL",
+      "error": "No clickable owner for a shell target"
+    }
+  ],
+  "settingsRestored": true,
+  "completedUtc": "2026-10-29T11:43:09.330110+00:00",
+  "status": "FAIL_OR_INCOMPLETE"
+}

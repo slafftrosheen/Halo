@@ -40,8 +40,9 @@ class LocalizedMaterialBottomSheetTest {
         compose.setContent { HostlessHaloTheme(fontScale = 2f) {
             val original = LocalContext.current
             val registry = LocalActivityResultRegistryOwner.current
-            val resources = remember(original, tag) {
-                original.createConfigurationContext(Configuration(original.resources.configuration).apply {
+            val configuration = LocalConfiguration.current
+            val resources = remember(original, tag, configuration) {
+                original.createConfigurationContext(Configuration(configuration).apply {
                     setLocale(Locale.forLanguageTag(tag))
                 }).resources
             }

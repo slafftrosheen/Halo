@@ -20,6 +20,8 @@ internal class CanvasVoiceMemoRecorder(private val context: Context, private val
     val isRecording: Boolean get() = active != null
 
     fun start(onLimit: () -> Unit = {}) {
+        // API26-27 cannot guarantee the explicitly selected phone microphone.
+        if (Build.VERSION.SDK_INT < 28) throw IllegalStateException("Phone microphone routing requires Android 9 or newer")
         check(!isRecording)
         limitReached = false
         val id = "workspace-memo:${UUID.randomUUID()}"

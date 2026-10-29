@@ -4168,5 +4168,15 @@
     <string name="ui_b080f31e6a5f" formatted="false">"Lokāli / Power"</string>
     <string name="ui_3b3da664eb98" formatted="false">"Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei."</string>
     <string name="ui_3cd9fa292989" formatted="false">"Balss ievade ir aizņemta"</string>
+    <string name="ui_65b52e8c6521" formatted="false">"Pievienot izlasei"</string>
+    <string name="ui_5bc0aa08d678" formatted="false">"Noņemt no izlases"</string>
     <string name="ui_03ba09fea0f0" formatted="false">"Cits uzdevums izmanto ierīces balss ievades resursus. Ierakstiet ziņu vai mēģiniet vēlreiz, kad uzdevums būs pabeigts."</string>
+    <string name="ui_4190c0c7ec72" formatted="false">"Atvērt failu"</string>
+    <string name="ui_4664827f8e89" formatted="false">"Progress"</string>
+    <string name="ui_a4d50fb85403" formatted="false">"Daļēji"</string>
+    <string name="ui_51c5d5c5ef5f" formatted="false">"Nav nolasāma teksta"</string>
+    <string name="ui_e267d285884b" formatted="false">"Attēls · Nepieciešams pārbaudīts attēlu izpratnes modelis"</string>
+    <string name="ui_87bfdaffe210" formatted="false">"PDF lapas attēls · Nepieciešams pārbaudīts attēlu izpratnes modelis · Teksta atpazīšana nav instalēta"</string>
+    <string name="ui_2af3c5c4794f" formatted="false">"Tiek izmantota tikai daļa avota (izlaistas %1$d no %2$d rakstzīmēm)."</string>
+    <string name="ui_8df7512b27d9" formatted="false">"Darbība nosūtīta izpildei; pabeigšana nav apstiprināta."</string>
 </resources>

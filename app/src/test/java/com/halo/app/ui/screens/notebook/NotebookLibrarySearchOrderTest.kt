@@ -34,6 +34,7 @@ import com.halo.sdk.runtime.Storage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.withTimeout
@@ -67,6 +68,7 @@ class NotebookLibrarySearchOrderTest {
     private val navigation = CopyOnWriteArrayList<NotebookNavigation>()
     private var studyOpens = 0
     private val actions = mutableStateOf<ShellPageProjection?>(null)
+    private val search = ControlledSearchHits()
 
     @Before fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher(scheduler))
@@ -81,7 +83,7 @@ class NotebookLibrarySearchOrderTest {
             resultIds[SECOND_NOTE_TITLE] = fixture.notes.createNote("Second owned fixture.", title = SECOND_NOTE_TITLE).id
             fixture.notes.createNote("Not a match.", title = UNRELATED_TITLE)
         }
-        val workspace = WorkspaceUseCases(fixture.workspace, NoDerivedSearchHits,
+        val workspace = WorkspaceUseCases(fixture.workspace, search,
             WorkspaceContextStore(fixture.database, fixture.notes, preferences), conversations,
             fixture.files, RoomMemoryRepository(fixture.database), notes)
         compose.runOnUiThread {
@@ -223,25 +225,107 @@ class NotebookLibrarySearchOrderTest {
 
     @Test fun typedLibraryToolChangesActualQueryAndReportsPendingInsteadOfOldHitsAsFresh() {
         render(height = 1800)
+        val pendingSearch = search.hold(QUERY)
         val session = NotebookLibrarySession { true }
         val tool = com.halo.app.di.tools.host.NotebookLibraryTools(session)
+        compose.runOnIdle { session.attach("library", model) }
+        // isLoaded alone is not the SET admission contract: the requested and
+        // rendered view must agree, and the initial Room projection must exist.
+        compose.waitUntil(5_000) {
+            scheduler.runCurrent()
+            var ready = false
+            compose.runOnIdle {
+                val frame = session.read()
+                ready = frame != null && frame.view.settled && !frame.view.mutating &&
+                    frame.view.rendered.items.map { it.objectRef.id.value }.toSet()
+                        .containsAll(resultIds.values)
+            }
+            ready
+        }
         compose.runOnIdle {
-            session.attach("library", model)
-            val token = requireNotNull(session.read()).snapshot
+            val before = requireNotNull(session.read())
+            assertTrue("Initial Library lease must be settled", before.view.settled)
+            assertFalse("Initial Library lease must not be mutating", before.view.mutating)
+            val token = before.snapshot
             runBlocking(com.halo.runtime.cognition.tools.RunToolScope(com.halo.runtime.cognition.agent.AgentRunId("library-test"), targetIsLocal = true)) {
                 val result = tool.execute(com.halo.sdk.provider.ToolCall("set", com.halo.app.di.tools.host.NotebookLibraryTools.SET,
-                    mapOf("expectedSnapshot" to token, "query" to QUERY))) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
-                val json = org.json.JSONObject(result.output)
+                    mapOf("expectedSnapshot" to token, "query" to QUERY)))
+                val after = session.read()
+                // No tokens, object IDs, titles, snippets or query text in failure diagnostics.
+                val diagnostic = "result=${result::class.simpleName}" +
+                    ((result as? com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)?.let {
+                        " kind=${it.kind} reason=${it.reason}"
+                    } ?: "") +
+                    " beforeSettled=${before.view.settled} beforeMutating=${before.view.mutating}" +
+                    " afterPresent=${after != null} afterSettled=${after?.view?.settled}" +
+                    " afterMutating=${after?.view?.mutating} snapshotUnchanged=${after?.snapshot == token}" +
+                    " ownerRevisionUnchanged=${after?.view?.ownerRevision == before.view.ownerRevision}" +
+                    " requestedQueryApplied=${model.queryText.value == QUERY}" +
+                    " requestedQueryRendered=${model.uiState.value.resolvedQuery == QUERY}"
+                assertTrue(diagnostic, result is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+                val json = org.json.JSONObject((result as com.halo.runtime.cognition.tools.ToolExecutionResult.Success).output)
                 assertFalse(json.getBoolean("settled"))
                 assertEquals(QUERY, json.getJSONObject("requested").getString("query"))
                 assertEquals(QUERY, model.queryText.value)
                 assertFalse(json.toString().contains(NOTE_TITLE))
             }
         }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); pendingSearch.started.isCompleted }
+        compose.runOnIdle { assertFalse(requireNotNull(session.read()).view.settled) }
+        pendingSearch.release.complete(Unit)
         compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.resolvedQuery == QUERY }
         compose.runOnIdle {
             assertTrue(requireNotNull(session.read()).view.settled)
             assertEquals(resultIds.values.toSet(), model.uiState.value.items.map { it.objectRef.id.value }.toSet())
+        }
+    }
+
+    @Test fun ownedSetReadbackSurvivesRenderingButRejectsACompetingUserEdit() {
+        render(height = 1800)
+        val pendingSearch = search.hold(QUERY)
+        val session = NotebookLibrarySession { true }
+        lateinit var pending: NotebookLibraryFrame
+        lateinit var readback: NotebookLibrarySession.ReadbackLease
+        compose.runOnIdle {
+            session.attach("owned-readback", model)
+            val initial = requireNotNull(session.read())
+            assertTrue(initial.view.settled)
+            pending = requireNotNull(session.set(initial.snapshot, NotebookLibraryChange.Query(QUERY)))
+            assertFalse(pending.view.settled)
+            readback = requireNotNull(session.readbackLease(pending.view.ownerRevision))
+            assertNull(session.set(initial.snapshot, NotebookLibraryChange.Query("replayed request")))
+        }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); pendingSearch.started.isCompleted }
+        compose.runOnIdle { assertTrue(session.canReadback(readback)) }
+        pendingSearch.release.complete(Unit)
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.resolvedQuery == QUERY }
+        compose.runOnIdle {
+            assertTrue(requireNotNull(session.read()).view.settled)
+            assertNull("An old READ snapshot must remain strict", session.read(pending.snapshot))
+            assertTrue("Own asynchronous rendering must not revoke SET acknowledgment", session.canReadback(readback))
+            model.setQuery("competing user edit")
+            assertFalse(session.canReadback(readback))
+            assertNull("Cannot acquire a later edit's lease for an earlier receipt",
+                session.readbackLease(pending.view.ownerRevision))
+        }
+    }
+
+    @Test fun ownedReadbackRejectsRevocationDetachAndReplacementOfTheSameEntryId() {
+        render(height = 1800)
+        var allowed = true
+        val session = NotebookLibrarySession { allowed }
+        compose.runOnIdle {
+            val entry = session.attach("entry", model)
+            val readback = requireNotNull(session.readbackLease())
+            allowed = false
+            assertFalse(session.canReadback(readback))
+            assertNull(session.readbackLease())
+            allowed = true
+            session.detach(entry)
+            assertFalse(session.canReadback(readback))
+            session.attach("entry", model)
+            assertFalse(session.canReadback(readback))
+            assertTrue(session.canReadback(session.readbackLease()))
         }
     }
 
@@ -314,8 +398,20 @@ class NotebookLibrarySearchOrderTest {
     }
 
     /** No platform index/provider IO; Notebook's actual canonical title-match path is exercised. */
-    private object NoDerivedSearchHits : WorkspaceSearchEngine {
-        override suspend fun search(query: WorkspaceSearchQuery) = WorkspaceSearchResult(query.query, emptyList())
+    private class ControlledSearchHits : WorkspaceSearchEngine {
+        class Gate(val query: String) {
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+        }
+        @Volatile private var held: Gate? = null
+        fun hold(query: String) = Gate(query).also { held = it }
+        override suspend fun search(query: WorkspaceSearchQuery): WorkspaceSearchResult {
+            held?.takeIf { it.query == query.query }?.let {
+                it.started.complete(Unit)
+                it.release.await()
+            }
+            return WorkspaceSearchResult(query.query, emptyList())
+        }
         override suspend fun indexObject(objectId: WorkspaceObjectId, type: WorkspaceObjectType,
             title: String, content: String, updatedAt: Long) = Unit
         override suspend fun removeObject(objectId: WorkspaceObjectId) = Unit

@@ -545,7 +545,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 LazyColumn(Modifier.heightIn(max = 280.dp)) {
                     items(state.nodes.filter { it.id != selected.id }, key = { it.id }) { node ->
                         TextButton(onClick = { viewModel.connectSelected(node.id, connectionLabel); connect = false; connectionLabel = "" }) {
-                            Text(node.readableText().ifBlank { "Untitled card" }.take(100))
+                            Text(node.readableText().ifBlank { uiText("Untitled card") }.take(100))
                         }
                     }
                 }
@@ -1082,7 +1082,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 state.images[node.refObjectId] != null || localFile?.mimeType?.startsWith("image/") == true -> "Image"
                                 localFile?.mimeType?.startsWith("audio/") == true -> "Audio file"
                                 localFile?.mimeType == "application/pdf" -> "PDF document"
-                                else -> reference?.type?.name?.lowercase() ?: "Source unavailable"
+                                else -> reference?.let(::workspaceTypeLabel) ?: "Source unavailable"
                             }), style = MaterialTheme.typography.labelSmall)
                             Text(reference?.title ?: CanvasFileMarkupCodec.displayTitle(node.text), style = MaterialTheme.typography.titleSmall, maxLines = 1)
                             if (localFile?.mimeType?.startsWith("audio/") == true) {

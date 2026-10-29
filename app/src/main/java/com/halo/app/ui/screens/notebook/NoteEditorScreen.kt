@@ -327,7 +327,7 @@ fun NoteEditorScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Neutral Open Ring identifies Halo; it does not imply that inference started.
                 HaloSignalFace(HaloSignalPresentation(reducedMotion = true), size = 48.dp,
-                    contentDescription = "halo")
+                    contentDescription = uiText("halo"))
                 Text(uiText("Think with halo"), style = MaterialTheme.typography.titleLarge)
             }
             NoteHaloAction("Ask halo", HaloGlyph.THINK,

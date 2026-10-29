@@ -197,12 +197,12 @@ class HeyCyanAudioPairingCoordinator(
                 val address = matchingSystemAssoc.second ?: saved?.bluetoothAddress
                 val assocId = matchingSystemAssoc.first
                 val device = address?.let(::remoteDeviceOrNull)
-                val isBonded = device != null && hasConnectPermission() && device.bondState == BluetoothDevice.BOND_BONDED
+                val isBonded = isDeviceBonded(device)
                 val recovered = WearableAudioAssociation(
                     wearableDeviceId = wearableDeviceId,
                     associationId = assocId,
                     bluetoothAddress = address,
-                    deviceName = if (device != null && hasConnectPermission()) device.name else "HeyCyan",
+                    deviceName = deviceNameOrNull(device) ?: "HeyCyan",
                     bonded = isBonded,
                     lastSeenAudioType = null
                 )
@@ -315,13 +315,12 @@ class HeyCyanAudioPairingCoordinator(
         val wearableId = activeWearableId ?: return
         val address = info.deviceMacAddress?.toString()
         val device = address?.let(::remoteDeviceOrNull)
-        val canInspectDevice = device != null && hasConnectPermission()
         val newAssoc = WearableAudioAssociation(
             wearableDeviceId = wearableId,
             associationId = info.id,
             bluetoothAddress = address,
-            deviceName = if (canInspectDevice) device?.name else info.displayName?.toString(),
-            bonded = canInspectDevice && device?.bondState == BluetoothDevice.BOND_BONDED,
+            deviceName = deviceNameOrNull(device) ?: info.displayName?.toString(),
+            bonded = isDeviceBonded(device),
             lastSeenAudioType = null
         )
         adoptAssociationInternal(newAssoc, source = source)
@@ -338,8 +337,8 @@ class HeyCyanAudioPairingCoordinator(
             wearableDeviceId = wearableId,
             associationId = null,
             bluetoothAddress = device.address,
-            deviceName = device.name,
-            bonded = device.bondState == BluetoothDevice.BOND_BONDED,
+            deviceName = deviceNameOrNull(device),
+            bonded = isDeviceBonded(device),
             lastSeenAudioType = null
         )
         adoptAssociationInternal(newAssoc, source = source)
@@ -495,9 +494,16 @@ class HeyCyanAudioPairingCoordinator(
     private fun hasConnectPermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
         appContext.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
 
-    @SuppressLint("MissingPermission")
-    private fun isDeviceBonded(device: BluetoothDevice?): Boolean =
-        device != null && hasConnectPermission() && device.bondState == BluetoothDevice.BOND_BONDED
+    private fun deviceNameOrNull(device: BluetoothDevice?): String? {
+        if (device == null || !hasConnectPermission()) return null
+        return try { device.name } catch (_: SecurityException) { null }
+    }
+
+    private fun isDeviceBonded(device: BluetoothDevice?): Boolean {
+        if (device == null || !hasConnectPermission()) return false
+        return try { device.bondState == BluetoothDevice.BOND_BONDED }
+        catch (_: SecurityException) { false }
+    }
 
     private fun sameAddress(left: String?, right: String?): Boolean =
         left != null && right != null && left.equals(right, ignoreCase = true)

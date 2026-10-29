@@ -1,0 +1,11 @@
+{
+  "exitCode": 0,
+  "expected": 23,
+  "passed": 22,
+  "failed": 1,
+  "errored": 0,
+  "ignored": 0,
+  "assumptions": 0,
+  "completedUtc": "2026-10-29T11:04:43.157493+00:00",
+  "status": "FAIL_OR_INCOMPLETE"
+}

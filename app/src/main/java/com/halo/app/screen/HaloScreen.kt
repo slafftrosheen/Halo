@@ -292,7 +292,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             proposedLayout = null; proposedPlan = null; proposedResearchQuery = null
         }
     }
-    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.ENGLISH
     @Composable fun display(card: ScreenCard): ScreenDisplay = when (card.widgetType) {
         "clock" -> ScreenDisplay(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
             .format(now.atZone(ZoneId.systemDefault())), DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
@@ -885,7 +885,7 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
     appearance: ScreenAppearance = ScreenAppearance(), enabled: Boolean = true,
     editControls: (@Composable () -> Unit)? = null) {
     var previous by remember { mutableStateOf(data.updatedAt) }
-    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.ENGLISH
     var update by remember { mutableStateOf(false) }
     LaunchedEffect(data.updatedAt) {
         if (previous != null && previous != data.updatedAt) { update = true; delay(1200); update = false }

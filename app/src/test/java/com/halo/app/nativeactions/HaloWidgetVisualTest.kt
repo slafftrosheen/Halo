@@ -62,6 +62,9 @@ class HaloWidgetVisualTest {
     @Test fun wideDark() = capture(320,240,true)
     @Test fun existingShortWidget() = capture(320,164,false)
     @Test fun minimumNarrowWidget() = capture(120,96,false)
+    @Test fun shortHorizontalWidget() = capture(240,96,false)
+    @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp-mdpi") fun shortHorizontalRussian() = capture(240,96,false)
+    @Test @Config(qualifiers = "pl-rPL-w360dp-h800dp-mdpi") fun shortHorizontalPolish() = capture(240,96,false)
     @Test fun launcherSuppliedSizesKeepTheSmallestLayoutUsable() = capture(120,96,false,
         sizes = listOf(android.util.SizeF(120f,96f), android.util.SizeF(320f,240f)))
     @Test fun minimumShortWidgetLargeText() = capture(320,96,true,2f)

@@ -83,6 +83,14 @@ class InterfaceFourDeviceTest {
                 }
             }
         }
+        // Native Activity/window attachment can finish after setContent returns.
+        // Wait for this fixture's actual root before injecting a gesture; a
+        // missing hierarchy must still fail within the bounded readiness gate.
+        compose.waitUntil(10_000) {
+            compose.onAllNodesWithContentDescription("Talk")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Talk").assertIsDisplayed()
     }
 
     @Test fun nativeTapInvokesExactlyOnePrimaryWithoutOpeningMenu() {

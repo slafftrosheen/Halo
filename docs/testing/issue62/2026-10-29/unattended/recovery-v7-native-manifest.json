@@ -1,0 +1,162 @@
+{
+  "startedUtc": "2026-10-29T17:34:32.206548+00:00",
+  "appSha256": "c0701068e442953e5029b456dea70f04a30761ea73a81c3bde744a2f8ca6474d",
+  "testSha256": "193a07cd99781ffdb324b5a5f8014b3179fa56d9a9a489c761a66ecfd46a34e2",
+  "baseCommit": "602fbeb5331aecad8800c56156499ffb19378348",
+  "dirty": true,
+  "sourceWitness": "recovery-v7/source-witness.json",
+  "scope": "Native isolated owner/render fixtures plus explicitly named production Activity tests. No microphone, real provider, download, credentials or production journal deletion.",
+  "witnesses": [
+    {
+      "className": "com.halo.app.ai.LocalRolePackRecoveryDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ai/LocalRolePackRecoveryDeviceTest.kt",
+      "sha256": "d4e72d099a881c08c925284dd966292b302f5b4290c2200a712214bffa2243ec",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ai.PrivateDispatchOwnerTraceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ai/PrivateDispatchOwnerTraceTest.kt",
+      "sha256": "4e7ed33d418d4200d04e31a5bfc5befde26e61162c341c1ab9c290684635f7ae",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.ink.AndroidInkInputTest",
+      "source": "app/src/androidTest/java/com/halo/app/ink/AndroidInkInputTest.kt",
+      "sha256": "4c646f30fe88be27d93f6f36343470b81e871e3ac34760ef36ed32ecf4e73f69",
+      "tests": 10
+    },
+    {
+      "className": "com.halo.app.ink.RemoteInkPhoneTest",
+      "source": "app/src/androidTest/java/com/halo/app/ink/RemoteInkPhoneTest.kt",
+      "sha256": "34fabb1bdc0822c478d64c222e8885ad1adbb16604a329c8c75d09c0c70ef9a5",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ui.screens.notebook.CanvasDraftReceiptDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasDraftReceiptDeviceTest.kt",
+      "sha256": "0f025bab49f1adb0f77288a63f85c629d76f5c7f1781a7337c05ec7fe7dcfa3b",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceOperabilityDeviceTest.kt",
+      "sha256": "24e638011c214d1adc809c738ea91683488c8b80432c23579ba4b589d0e95a1d",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.notebook.NoteEditorControlsDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/notebook/NoteEditorControlsDeviceTest.kt",
+      "sha256": "9abca0c02493fa3cf04d6df91d4c070f0dbc590e2b560df48ffe29f04970bf02",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.notebook.NotePurgeDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/notebook/NotePurgeDeviceTest.kt",
+      "sha256": "5618a7a7d5c056f30ace97985e2fbdbe2b9046135d49a25e6b388e128ebfb845",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.notebook.NoteAttachmentControlsDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/notebook/NoteAttachmentControlsDeviceTest.kt",
+      "sha256": "354be809134caa6e4a396154445cf880919ac01c84912cd1710de398cea020f2",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.study.StudyLearnerControlsDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/study/StudyLearnerControlsDeviceTest.kt",
+      "sha256": "4d8de0e5b3077c57281fdd17c069f6b6c966d860047479c8c1e5ddbaeef96b1f",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ui.screens.notebook.CanvasPreviewDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasPreviewDeviceTest.kt",
+      "sha256": "6df89b27ae99530107a223304bd64c61096bafe1323d68ff392fd75bebd55a6b",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.nativeactions.WidgetPhysicalLayoutTest",
+      "source": "app/src/androidTest/java/com/halo/app/nativeactions/WidgetPhysicalLayoutTest.kt",
+      "sha256": "660f3c4df183c97799fb2d6f28bbd75bce51f5fbdc603eca0fd9508febb5ffa8",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.audio.LocalModelManagerPhoneSmokeTest",
+      "source": "app/src/androidTest/java/com/halo/app/audio/LocalModelManagerPhoneSmokeTest.kt",
+      "sha256": "76b4524cc56da7cc6fcbc3c553f604c35a481df439af82d3c61f52b9a749d541",
+      "tests": 3
+    },
+    {
+      "className": "com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceContinuityDeviceTest.kt",
+      "sha256": "6ad7718cc692ede2bf3cb1defcd37df6e1885fa0f16d3a070745fce31886a266",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/workspace/WorkspaceFileToolsDeviceTest.kt",
+      "sha256": "6ac3501be184276d3c3731d258b8c047f684350a40c63b8e0fcfaf6cdf48d9ab",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.ui.workspace.StudioDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/workspace/StudioDeviceTest.kt",
+      "sha256": "9d5eafd43fb85e637c3148bf67d69b5ff235dc4ec1b44b392589951d6c6337c5",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.language.PolishLanguageDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/language/PolishLanguageDeviceTest.kt",
+      "sha256": "4739a4ff964e4515718270a29fb055b02f35cbedf8cbb8b78513d52ef0068ab0",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ui.screens.notebook.CanvasPdfInspectionDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/screens/notebook/CanvasPdfInspectionDeviceTest.kt",
+      "sha256": "09733235f4675a26921c5917a4b94859a17ee6069cbda08f2e6d5cc8d855b7d0",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.perf.MainThreadIoGuardTest",
+      "source": "app/src/androidTest/java/com/halo/app/perf/MainThreadIoGuardTest.kt",
+      "sha256": "6000dce1c97a75ad5f1d5d23058c4e1865c6f8e23bdb12f30d50fa89856c73e6",
+      "tests": 5
+    },
+    {
+      "className": "com.halo.app.ui.presence.InterfaceFourDeviceTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/presence/InterfaceFourDeviceTest.kt",
+      "sha256": "560f31e14f2839b165d5f14e71b2c8fba03fc1fc77c18a7d439d1c27f4e1d41a",
+      "tests": 6
+    },
+    {
+      "className": "com.halo.app.ui.mini.MiniHaloPhysicalTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/mini/MiniHaloPhysicalTest.kt",
+      "sha256": "fff68bb25e6cc5a4c4876567e0e5a8ca7d87fa7ff8b0109145439f15c8245be1",
+      "tests": 2
+    },
+    {
+      "className": "com.halo.app.ui.mini.MiniHaloActivityPhysicalTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/mini/MiniHaloActivityPhysicalTest.kt",
+      "sha256": "ddbaa3f04ac161babc96fe3fce6718f5727e1f1f29e89470de7e7ecc8dd3da6d",
+      "tests": 3
+    },
+    {
+      "className": "com.halo.app.ui.shell.MainActivityScreenIntentPhysicalTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/shell/MainActivityScreenIntentPhysicalTest.kt",
+      "sha256": "8fb2d8d70a312355f582de990461c6ddc71870cf95a51a03fc55c538843d097d",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/shell/MainActivityStudioPreviewPhysicalTest.kt",
+      "sha256": "3953bfcd5b4c96b3d09b74bcd1616859f4ebdc71b3a1c423dd0d2ecbaa282f0c",
+      "tests": 1
+    },
+    {
+      "className": "com.halo.app.ui.shell.MainActivityComposerPhysicalTest",
+      "source": "app/src/androidTest/java/com/halo/app/ui/shell/MainActivityComposerPhysicalTest.kt",
+      "sha256": "5f1022ab6c35e5330f6dea68164c36ac095b011efa8ac6af3e2068c9fdb6d1ed",
+      "tests": 2
+    }
+  ],
+  "expectedTests": 55
+}

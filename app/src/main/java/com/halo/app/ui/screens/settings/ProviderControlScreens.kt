@@ -68,6 +68,7 @@ fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit,
 fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String, onBack: () -> Unit,
     onModels: (String) -> Unit, onAssignRole: () -> Unit, onDevice: () -> Unit, onDiagnostics: () -> Unit, onImages: () -> Unit = {}) {
     val rows by control.rows.collectAsStateWithLifecycle()
+    val catalogue by control.catalogue.state.collectAsStateWithLifecycle()
     val checkGeneration = rememberProviderGenerationCheck(control)
     val row = rows.firstOrNull { it.descriptor.providerId == providerId }
     SettingsChildZone(row?.descriptor?.displayName ?: "Provider unavailable", onBack, listOf(settingsChildLink("onAssignRole", "Model roles", onAssignRole), settingsChildLink("onDevice", "On-device models", onDevice), settingsChildLink("onImages", "Image models", onImages), settingsChildLink("onDiagnostics", "Check-up", onDiagnostics)))
@@ -115,7 +116,7 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 }) { Text(uiText("Get API key")) } }
                 Text(uiText("%1\$d cached models", row.modelCount))
                 row.lastSelectedModelId?.let { selected ->
-                    val name = control.catalogue.state.value.models.firstOrNull {
+                    val name = catalogue.models.firstOrNull {
                         it.model.providerId == providerId && it.model.id == selected
                     }?.model?.displayName
                     Text(if (name.isNullOrBlank()) uiText("An answer model is selected") else uiText("Current model: %1\$s", name))

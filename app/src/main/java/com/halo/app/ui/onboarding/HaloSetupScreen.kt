@@ -440,6 +440,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     var onlineProvider by rememberSaveable { mutableStateOf("openrouter") }
     val row=rows.firstOrNull { it.descriptor.providerId == onlineProvider }
     val catalogue by control.catalogue.state.collectAsStateWithLifecycle()
+    val selectedProviderId by Graph.aiProviderRouter.selectedProviderId.collectAsStateWithLifecycle()
+    val selectedModelId by Graph.aiProviderRouter.selectedModelId.collectAsStateWithLifecycle()
     val context=LocalContext.current
     var key by remember(onlineProvider) { mutableStateOf("") } // Never Saveable: secrets cannot enter the saved-state bundle.
     var failed by remember(onlineProvider) { mutableStateOf(false) }
@@ -478,7 +480,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     if(row?.connection == ProviderConnectionState.READY) {
         Copy("Connected. Choose an answer model to use with Halo.")
         catalogue.models.filter { it.model.providerId == onlineProvider && AiCapability.TEXT in it.model.inputCapabilities }.take(8).forEach { entry ->
-            Choice(entry.model.displayName, Graph.aiProviderRouter.selectedProviderId.value == onlineProvider && Graph.aiProviderRouter.selectedModelId.value == entry.model.id) {
+            Choice(entry.model.displayName, selectedProviderId == onlineProvider && selectedModelId == entry.model.id) {
                 Graph.aiProviderRouter.selectTarget(AiModelRef(onlineProvider,entry.model.id))
             }
         }

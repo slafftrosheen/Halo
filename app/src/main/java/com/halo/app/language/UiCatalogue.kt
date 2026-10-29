@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4186) {
+    buildMap(4196) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4229,7 +4229,17 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Local / Power" to R.string.ui_b080f31e6a5f,
     "This action needs Power mode. Use the control beside the halo Orb." to R.string.ui_3b3da664eb98,
     "Voice input is busy" to R.string.ui_3cd9fa292989,
+    "Add favorite" to R.string.ui_65b52e8c6521,
+    "Remove favorite" to R.string.ui_5bc0aa08d678,
     "Another task is using local voice resources. Type your message now, or try voice again after that task finishes." to R.string.ui_03ba09fea0f0,
+    "Open file" to R.string.ui_4190c0c7ec72,
+    "Progress" to R.string.ui_4664827f8e89,
+    "Partial" to R.string.ui_a4d50fb85403,
+    "No readable text" to R.string.ui_51c5d5c5ef5f,
+    "Image · Requires verified vision" to R.string.ui_e267d285884b,
+    "PDF page image · Requires verified vision · OCR not installed" to R.string.ui_87bfdaffe210,
+    "Only part of this source is included (%1\$d of %2\$d characters omitted)." to R.string.ui_2af3c5c4794f,
+    "Action dispatched; completion is unconfirmed." to R.string.ui_8df7512b27d9,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

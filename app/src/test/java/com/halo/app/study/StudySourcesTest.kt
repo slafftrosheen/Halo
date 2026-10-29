@@ -28,6 +28,49 @@ import java.io.File
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class StudySourcesTest {
+    @Test fun canonicalRouterStillRejectsEmptyTutorCompletionWithoutRetry() = runBlocking {
+        val provider = Provider(reply = AiResponse("", providerId = "local", modelId = "model", finishReason = "length"))
+        val result = AiRouterTutorGateway(router(provider), { false }).respond(turn())
+        assertEquals(TutorTurnResponse.Failed("The AI returned an empty response. Your work is kept; you can retry."), result)
+        assertEquals(1, provider.requests.size)
+        assertEquals(600, provider.requests.single().maxOutputTokens)
+        assertEquals(AiReasoningMode.DISABLED, provider.requests.single().reasoningMode)
+    }
+
+    @Test fun localAndRemoteTutorRequestsDisableReasoningWithinExistingTaskCaps() = runBlocking {
+        val variants = listOf(turn() to 600, turn().copy(createCards = true) to 1800,
+            turn().copy(extractExercises = true) to 1800) +
+            LearningTutorTask.entries.filter { it != LearningTutorTask.NARRATIVE }
+                .map { turn().copy(learningTask = it) to 1800 }
+        for (local in listOf(false, true)) for ((turn, cap) in variants) {
+            val provider = Provider(isLocal = local)
+            assertTrue(AiRouterTutorGateway(router(provider), { !local }).respond(turn) is TutorTurnResponse.Ready)
+            val request = provider.requests.single()
+            assertEquals(cap, request.maxOutputTokens)
+            assertEquals(AiReasoningMode.DISABLED, request.reasoningMode)
+            assertEquals(ToolUseMode.NONE, request.toolUseMode)
+            assertEquals("model", request.modelId)
+            assertTrue(request.text!!.contains("First passage"))
+            assertTrue(request.text!!.contains("Second passage"))
+            assertTrue(request.text!!.contains("Use only supplied material"))
+        }
+    }
+
+    @Test fun mandatoryReasoningRejectionDoesNotRetryOrSelectAnotherProvider() = runBlocking {
+        val selected = Provider(isLocal = false,
+            failure = AiProviderException(AiErrorType.INVALID_REQUEST, "Reasoning cannot be disabled for this model"))
+        val fallback = Provider(isLocal = true)
+        val router = DefaultAiProviderRouter(listOf(selected, fallback), MemoryStorage(),
+            defaultInferenceProviderId = selected.id, defaultInferenceModelId = "model")
+        val result = AiRouterTutorGateway(router, { true }).respond(turn())
+        assertTrue(result is TutorTurnResponse.Failed)
+        assertEquals(1, selected.requests.size)
+        assertTrue(fallback.requests.isEmpty())
+        assertEquals(600, selected.requests.single().maxOutputTokens)
+        assertEquals(AiReasoningMode.DISABLED, selected.requests.single().reasoningMode)
+        assertEquals(selected.id, router.selectedProviderId.value)
+    }
+
     @Test fun explicitDepthPreservesHintRestrictionsLevelWordLimitAndSourceBoundaries() {
         val gateway = AiRouterTutorGateway(router(Provider()), { false })
         val original = turn(session().copy(learnerLevel = StudyLearnerLevel.EARLY_PRIMARY))
@@ -99,6 +142,7 @@ class StudySourcesTest {
         assertTrue(prompt.contains("First passage")); assertTrue(prompt.contains("Second passage"))
         assertFalse(prompt.contains("Give one hint only")); assertFalse(prompt.contains("Do not reveal the answer"))
         assertEquals(1800, request.maxOutputTokens)
+        assertEquals(AiReasoningMode.DISABLED, request.reasoningMode)
         assertEquals(ToolUseMode.NONE, request.toolUseMode)
     }
     @Test fun ordinaryHintPromptStillForbidsAnswerRevealAndDoesNotRequestCards() {
@@ -192,7 +236,8 @@ class StudySourcesTest {
         override fun clear() { values.clear() }
     }
     private class Provider(override val isLocal: Boolean = true, val vision: Boolean = false,
-        val beforeGenerate: suspend () -> Unit = {}) : AiInferenceProvider {
+        val beforeGenerate: suspend () -> Unit = {}, val reply: AiResponse? = null,
+        val failure: AiProviderException? = null) : AiInferenceProvider {
         override val id = if (isLocal) "local" else "remote"
         override val displayName = id
         override val status = MutableStateFlow(ProviderStatus.READY)
@@ -204,7 +249,8 @@ class StudySourcesTest {
         override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
             beforeGenerate()
             requests += request
-            return AiResponse("A hint [S2]", providerId = id, modelId = "model")
+            failure?.let { throw it }
+            return reply ?: AiResponse("A hint [S2]", providerId = id, modelId = "model")
         }
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
     }
@@ -437,6 +483,8 @@ class StudySourcesTest {
         val gateway = AiRouterTutorGateway(router(provider), { false }, permitsText = { _, _ -> permitted })
         assertTrue(gateway.respond(turn()) is TutorTurnResponse.Unavailable)
         assertEquals(1, provider.requests.size)
+        assertEquals(600, provider.requests.single().maxOutputTokens)
+        assertEquals(AiReasoningMode.DISABLED, provider.requests.single().reasoningMode)
     }
     @Test fun staleReviewSnapshotCannotDuplicateMasteryOrScheduleUpdates() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()

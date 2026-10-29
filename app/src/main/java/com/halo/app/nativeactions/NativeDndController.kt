@@ -17,11 +17,11 @@ internal class NativeDndController(private val context: Context) {
     private val conditionId = Uri.Builder().scheme("condition").authority(context.packageName).appendPath("halo-dnd").build()
     private val configuration = ComponentName(context, NativeDndSettingsActivity::class.java)
 
-    internal fun owns(rule: AutomaticZenRule): Boolean = rule.owner == null &&
+    internal fun owns(rule: AutomaticZenRule): Boolean = Build.VERSION.SDK_INT >= 29 && rule.owner == null &&
         rule.configurationActivity == configuration && rule.conditionId == conditionId
 
     fun request(enabled: Boolean): Result = synchronized(ruleLock) {
-        check(Build.VERSION.SDK_INT >= 29) { "App-owned Do Not Disturb requires Android 10 or newer" }
+        if (Build.VERSION.SDK_INT < 29) throw IllegalStateException("App-owned Do Not Disturb requires Android 10 or newer")
         if (!manager.isNotificationPolicyAccessGranted) throw SecurityException("Do Not Disturb access required")
         val remembered = preferences.getString("ruleId", null)
         var id = remembered?.takeIf { manager.getAutomaticZenRule(it)?.let(::owns) == true }

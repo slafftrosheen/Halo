@@ -18,8 +18,9 @@ class NotebookLibrarySession(private val allowed: () -> Boolean) {
     private var batchTicket: NotebookLibraryBatch? = null
 
     class ReadbackLease internal constructor(internal val entry: Lease, internal val revision: Long)
-    fun readbackLease(): ReadbackLease? = lease?.takeIf { allowed() }?.let { entry ->
-        model?.libraryView()?.let { ReadbackLease(entry, it.ownerRevision) }
+    fun readbackLease(expectedOwnerRevision: Long? = null): ReadbackLease? = lease?.takeIf { allowed() }?.let { entry ->
+        model?.libraryView()?.takeIf { expectedOwnerRevision == null || it.ownerRevision == expectedOwnerRevision }
+            ?.let { ReadbackLease(entry, it.ownerRevision) }
     }
     fun canReadback(expected: ReadbackLease?): Boolean = expected != null && lease === expected.entry &&
         allowed() && model?.libraryView()?.ownerRevision == expected.revision

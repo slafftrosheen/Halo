@@ -31,6 +31,7 @@ class MiniHaloPhysicalTest {
     @Test fun narrowTranslatedBusyScreenKeepsStopAndDisablesDuplicateSend() {
         var language by mutableStateOf("en")
         var scale by mutableFloatStateOf(1f)
+        var height by mutableIntStateOf(480)
         var stopped = 0
         var sent = 0
         val base = InstrumentationRegistry.getInstrumentation().targetContext
@@ -47,20 +48,29 @@ class MiniHaloPhysicalTest {
                 CompositionLocalProvider(LocalContext provides localized, LocalConfiguration provides configuration,
                     LocalResources provides localized.resources) {
                     HaloTheme(darkTheme = false, fontScale = scale) {
-                        Surface(Modifier.width(240.dp).height(480.dp)) {
+                        Surface(Modifier.width(240.dp).height(height.dp)) {
                             MiniHaloContent(HaloSignalPresentation(reducedMotion = true), "Fixture draft", {}, true,
-                                null, null, {}, { sent++ }, { stopped++ }, {}, {})
+                                null, null, {}, { sent++ }, { stopped++ }, {}, {}, orbControl = { size ->
+                                    com.halo.app.ui.presence.HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true),
+                                        com.halo.app.ui.presence.HaloOrbInteraction(com.halo.app.ui.presence.HaloOrbPrimary.STOP, true),
+                                        com.halo.app.ui.presence.HaloOrbShortcut.defaults, {}, {}, {}, {}, size,
+                                        destinations = com.halo.app.ui.shell.ShellOrbCatalog.destinations(false))
+                                })
                         }
                     }
                 }
             }
         }
-        for (locale in listOf("en", "lv", "ru")) for (font in listOf(1f, 1.5f, 2f)) {
-            compose.runOnIdle { language = locale; scale = font }
-            compose.onNodeWithText(text("Stop")).assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
-            compose.onNodeWithContentDescription(text("Send")).performScrollTo().assertIsNotEnabled()
+        for (locale in listOf("en", "lv", "ru", "pl")) for (font in listOf(1f, 1.5f, 2f)) for (windowHeight in listOf(480, 320)) {
+            compose.runOnIdle { language = locale; scale = font; height = windowHeight }
+            compose.onNodeWithText(text("Stop")).assertIsDisplayed().assertHeightIsAtLeast(48.dp)
+                .performTouchInput { click() }
+            // Composer controls are pinned outside the reply scroller.
+            compose.onNodeWithContentDescription(text("Send")).assertIsDisplayed().assertIsNotEnabled()
+                .performTouchInput { click() }
+            compose.runOnIdle { assertEquals(0, sent) }
         }
-        assertEquals(9, stopped)
+        assertEquals(24, stopped)
         assertEquals(0, sent)
     }
 
@@ -75,7 +85,9 @@ class MiniHaloPhysicalTest {
                     { actions++ }, { actions++ }, {}, { destination = it }, {}, reviewRequired = true)
             }
         } } }
-        compose.onNodeWithText("Review").performScrollTo().performClick()
+        // Review is pinned below the reply scroller and must be directly reachable.
+        compose.onNodeWithText("Review").assertIsDisplayed().assertHeightIsAtLeast(48.dp)
+            .performTouchInput { click() }
         assertEquals("activity", destination)
         compose.onNode(hasSetTextAction()).assertDoesNotExist()
         compose.onNodeWithText("My tools").assertDoesNotExist()

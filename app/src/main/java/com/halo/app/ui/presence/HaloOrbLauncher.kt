@@ -145,9 +145,10 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
                     Spacer(Modifier.width(8.dp)); Text(uiText(destination.title), Modifier.weight(1f))
                 }
             }
-            if (!stopPinned || interaction.primary != HaloOrbPrimary.STOP)
-            Button(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act { onPrimary(interaction.primary) } }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(primaryLabel)
+            if (!stopPinned || interaction.primary != HaloOrbPrimary.STOP) {
+                Button(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act { onPrimary(interaction.primary) } }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text(primaryLabel)
+                }
             }
             if (!stopPinned && interaction.canStop && interaction.primary != HaloOrbPrimary.STOP)
                 OutlinedButton(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = { act(onStop) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Stop")) }
@@ -215,9 +216,10 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
                 }
             }
         }
-        if (hint != null && configuration.screenHeightDp >= 600 && density.fontScale < 1.4f && !keyboardVisible)
-        TextButton(onClick = { menu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(uiText(hint), style = MaterialTheme.typography.labelSmall)
+        if (hint != null && configuration.screenHeightDp >= 600 && density.fontScale < 1.4f && !keyboardVisible) {
+            TextButton(onClick = { menu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText(hint), style = MaterialTheme.typography.labelSmall)
+            }
         }
         if (zoneOwned && LocalShellOrbitalLayout.current) Box(Modifier.fillMaxWidth().height(184.dp)) {
             Box(Modifier.align(Alignment.TopCenter).offset(y = 68.dp)) { drawFace() }

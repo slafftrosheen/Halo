@@ -4168,5 +4168,15 @@
     <string name="ui_b080f31e6a5f" formatted="false">"Локально / Power"</string>
     <string name="ui_3b3da664eb98" formatted="false">"Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo."</string>
     <string name="ui_3cd9fa292989" formatted="false">"Голосовой ввод занят"</string>
+    <string name="ui_65b52e8c6521" formatted="false">"Добавить в избранное"</string>
+    <string name="ui_5bc0aa08d678" formatted="false">"Удалить из избранного"</string>
     <string name="ui_03ba09fea0f0" formatted="false">"Другая задача использует ресурсы для голосового ввода на устройстве. Напишите сообщение или попробуйте голосовой ввод после завершения задачи."</string>
+    <string name="ui_4190c0c7ec72" formatted="false">"Открыть файл"</string>
+    <string name="ui_4664827f8e89" formatted="false">"Прогресс"</string>
+    <string name="ui_a4d50fb85403" formatted="false">"Частично"</string>
+    <string name="ui_51c5d5c5ef5f" formatted="false">"Нет доступного текста"</string>
+    <string name="ui_e267d285884b" formatted="false">"Изображение · Нужна проверенная модель с поддержкой изображений"</string>
+    <string name="ui_87bfdaffe210" formatted="false">"Изображение страницы PDF · Нужна проверенная модель с поддержкой изображений · Распознавание текста не установлено"</string>
+    <string name="ui_2af3c5c4794f" formatted="false">"Используется только часть источника (пропущено %1$d из %2$d символов)."</string>
+    <string name="ui_8df7512b27d9" formatted="false">"Действие передано на выполнение; завершение не подтверждено."</string>
 </resources>

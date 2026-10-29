@@ -4168,5 +4168,15 @@
     <string name="ui_b080f31e6a5f" formatted="false">"Local / Power"</string>
     <string name="ui_3b3da664eb98" formatted="false">"This action needs Power mode. Use the control beside the halo Orb."</string>
     <string name="ui_3cd9fa292989" formatted="false">"Voice input is busy"</string>
+    <string name="ui_65b52e8c6521" formatted="false">"Add favorite"</string>
+    <string name="ui_5bc0aa08d678" formatted="false">"Remove favorite"</string>
     <string name="ui_03ba09fea0f0" formatted="false">"Another task is using local voice resources. Type your message now, or try voice again after that task finishes."</string>
+    <string name="ui_4190c0c7ec72" formatted="false">"Open file"</string>
+    <string name="ui_4664827f8e89" formatted="false">"Progress"</string>
+    <string name="ui_a4d50fb85403" formatted="false">"Partial"</string>
+    <string name="ui_51c5d5c5ef5f" formatted="false">"No readable text"</string>
+    <string name="ui_e267d285884b" formatted="false">"Image · Requires verified vision"</string>
+    <string name="ui_87bfdaffe210" formatted="false">"PDF page image · Requires verified vision · OCR not installed"</string>
+    <string name="ui_2af3c5c4794f" formatted="false">"Only part of this source is included (%1$d of %2$d characters omitted)."</string>
+    <string name="ui_8df7512b27d9" formatted="false">"Action dispatched; completion is unconfirmed."</string>
 </resources>

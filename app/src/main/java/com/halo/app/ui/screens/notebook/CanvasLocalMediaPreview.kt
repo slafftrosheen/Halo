@@ -78,7 +78,7 @@ internal fun CanvasLocalAudioPlayer(file: WorkspaceFile) {
     if (error) Text(uiText("Audio playback unavailable"), style = MaterialTheme.typography.bodySmall)
 }
 
-private class LocalMemoPlayer(private val context: android.content.Context, private val resources: com.halo.sdk.runtime.resource.ResourceLeaseManager) {
+internal class LocalMemoPlayer(private val context: android.content.Context, private val resources: com.halo.sdk.runtime.resource.ResourceLeaseManager) {
     private var player: MediaPlayer? = null
     private var lease: com.halo.sdk.runtime.resource.ResourceLease? = null
 
@@ -87,6 +87,8 @@ private class LocalMemoPlayer(private val context: android.content.Context, priv
             release()
             return false
         }
+        // Never fall back to an unqualified output route on older Android.
+        if (android.os.Build.VERSION.SDK_INT < 28) throw IllegalStateException("Phone speaker routing requires Android 9 or newer")
         val id = "memo-playback:${java.util.UUID.randomUUID()}"
         val granted = resources.tryAcquire(com.halo.sdk.runtime.resource.ResourceLeaseRequest(id,
             com.halo.sdk.runtime.resource.ResourceHolder(id), setOf(
