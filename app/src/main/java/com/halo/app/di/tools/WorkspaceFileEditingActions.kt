@@ -63,8 +63,11 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
             mapOf("noteId" to id, "revision" to revision, "page" to integer(1, 9999), "ink" to text(262144))),
         definition("halo_pdf_annotation_export_page_image", "Export an exact annotation-note page as a new PNG, retaining original PDF and vector annotation note. Raster output, not native PDF editing.",
             mapOf("noteId" to id, "revision" to revision, "page" to integer(1, 9999))),
-        definition("halo_file_attach_canvas", "Create a linked reference card on a Canvas board from an existing Workspace note or file. Source remains authoritative; this does not copy its text or share it externally. Requires exact current canvasVersion from halo_workspace_canvases as well as source version.",
-            mapOf("canvasId" to id, "canvasVersion" to version, "objectId" to id, "version" to version))
+        definition("halo_file_attach_canvas", "Create a linked reference card on a Canvas board from an existing Workspace note or file. Source remains authoritative; this does not copy its text or share it externally. Read the exact source revision and Canvas version before attaching; never guess or substitute attachment-list or editor identity tokens.",
+            mapOf("canvasId" to (id + ("description" to "Exact target Canvas objectId from halo_workspace_canvases.")),
+                "canvasVersion" to (version + ("description" to "Exact observed version for this canvasId from halo_workspace_canvases (or halo_canvas_get). Never infer a Canvas revision.")),
+                "objectId" to (id + ("description" to "Exact existing source NOTE or FILE Workspace object ID.")),
+                "version" to (version + ("description" to "For an ordinary NOTE, read halo_note_get and pass its numeric revision as a decimal string, not its version or sourceVersion and not halo_note_attachments.version. For a FILE, pass the exact Version value from halo_get_file_metadata. Specialized note documents require their own reader's numeric revision as a decimal string."))))
     )
     private val names by lazy { definitions().map { it.name }.toSet() }
     fun owns(name: String) = name in names

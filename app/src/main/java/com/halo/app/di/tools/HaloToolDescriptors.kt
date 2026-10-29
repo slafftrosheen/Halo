@@ -440,6 +440,7 @@ object HaloToolDescriptors {
             readOnly(definition.name), keywords = setOf("file", "document", "csv", "pdf", "image"))
         "halo_file_attach_canvas" -> descriptor(definition.name, definition, ToolCategory.FILES,
             reversible(ReplaySafety.NEVER_REPLAY),
+            dependencies = setOf(ToolId("halo_note_get"), ToolId("halo_get_file_metadata"), ToolId("halo_workspace_canvases")),
             keywords = setOf("canvas", "board", "note", "file", "card", "attach", "link", "linked", "reference"),
             presentation = ToolPresentation(title = "Add to Canvas", actionVerb = "Apply"))
         "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image" -> descriptor(definition.name, definition, ToolCategory.FILES,

@@ -4,6 +4,9 @@ import com.halo.app.di.tools.HaloToolDescriptors
 import com.halo.app.di.tools.WorkspaceCanvasActions
 import com.halo.app.di.tools.WorkspaceContinuityActions
 import com.halo.app.di.tools.WorkspaceFileEditingActions
+import com.halo.app.di.tools.FileToolExecutor
+import com.halo.app.di.tools.WorkspaceNoteActions
+import com.halo.app.notebook.NotebookUseCases
 import com.halo.runtime.cognition.tools.*
 import com.halo.sdk.provider.ToolCall
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +35,8 @@ class CanvasReferenceDiscoveryTest {
     private class Catalogue(f: WorkspaceFileToolsFixture) {
         val executors = listOf(
             DefinitionOnly(WorkspaceCanvasActions(f.database, f.canvases)),
-            DefinitionOnly(WorkspaceFileEditingActions(f.tools)),
+            DefinitionOnly(FileToolExecutor(f.context, f.files, f.workspace, WorkspaceFileEditingActions(f.tools))),
+            DefinitionOnly(WorkspaceNoteActions(f.database, f.documents, NotebookUseCases(f.notes), f.contextOwner())),
             DefinitionOnly(WorkspaceContinuityActions(f.continuity())),
         )
         val descriptors = executors.flatMap { it.definitions() }.map {
@@ -89,11 +93,54 @@ class CanvasReferenceDiscoveryTest {
             assertEquals(ConfirmationPolicy.USER_POLICY, descriptor.security.confirmation)
             assertEquals(ReplaySafety.NEVER_REPLAY, descriptor.security.replaySafety)
             assertEquals(setOf("version", "canvasVersion"), requireNotNull(descriptor.operability).sourceVersionArguments)
+            val properties = expanded.parameters["properties"] as Map<*, *>
+            val sourceVersion = properties["version"] as Map<*, *>
+            assertEquals("string", sourceVersion["type"])
+            assertEquals(1, sourceVersion["minLength"])
+            assertEquals(200, sourceVersion["maxLength"])
+            val sourceHelp = sourceVersion["description"] as String
+            assertTrue(sourceHelp.contains("numeric revision as a decimal string"))
+            assertTrue(sourceHelp.contains("not its version or sourceVersion"))
+            assertTrue(sourceHelp.contains("not halo_note_attachments.version"))
+            assertTrue(sourceHelp.contains("Version value from halo_get_file_metadata"))
+            val canvasHelp = (properties["canvasVersion"] as Map<*, *>)["description"] as String
+            assertTrue(canvasHelp.contains("Exact observed version for this canvasId"))
+            assertTrue(canvasHelp.contains("halo_workspace_canvases"))
             val summary = catalogue.discovery.describe(listOf(descriptor))
             assertTrue(summary.contains("linked reference card"))
             val copy = catalogue.descriptors.single { it.name == "halo_canvas_add_text" }.definition.description
             assertTrue(copy.contains("independent text"))
             assertTrue(copy.contains("Does not create a live source link"))
+        }
+    }
+
+    @Test fun discoveringReferenceExposesAvailableVersionReadersWithoutExecutingOrBypassingPolicy() {
+        WorkspaceFileToolsFixture().use { f ->
+            val c = Catalogue(f)
+            val readers = setOf("halo_note_get", "halo_get_file_metadata", "halo_workspace_canvases").map(::ToolId).toSet()
+            val mutation = ToolId(attach)
+            assertEquals(readers, c.descriptors.single { it.id == mutation }.dependencies)
+            val planner = ToolExposurePlanner(c.registry, c.availability)
+            assertEquals(readers + mutation, planner.expand(planner.initialExposure(), listOf(attach)).effective)
+            readers.forEach { reader ->
+                val descriptor = c.descriptors.single { it.id == reader }
+                assertEquals(ToolRiskClass.READ_ONLY, descriptor.security.risk)
+                assertEquals(ConfirmationPolicy.NONE, descriptor.security.confirmation)
+            }
+            val gate = ToolExposureGate { descriptor, _ ->
+                if (descriptor.id in readers) ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED)
+                else ToolExposureDecision.Allow
+            }
+            assertEquals(setOf(mutation), planner.expand(planner.initialExposure(), listOf(attach), gate).effective)
+            c.capabilities.value = c.capabilities.value.copy(revision = 1,
+                capabilities = c.capabilities.value.capabilities.map {
+                    if (it.id == CapabilityId("workspace.read")) it.copy(availability = CapabilityAvailability.UNAVAILABLE) else it
+                })
+            val unavailable = planner.expand(planner.initialExposure(), listOf(attach)).effective
+            assertFalse(ToolId("halo_note_get") in unavailable)
+            assertFalse(ToolId("halo_workspace_canvases") in unavailable)
+            assertTrue(mutation in unavailable)
+            assertTrue(c.executors.all { it.executions == 0 })
         }
     }
 
