@@ -26,7 +26,7 @@ internal fun homeRecoveryActions(
     when {
         options.needsReview -> add(ShellPageAction("review", "Review", HaloGlyph.APPROVAL, onInvoke = onActivity))
         options.retryable && options.sameConversation -> add(ShellPageAction("retry", "Retry", HaloGlyph.ACTIVITY,
-            enabled = options.canRetry, onInvoke = onRetry))
+            enabled = options.canRetry && !options.answersNeedSetup, onInvoke = onRetry))
         options.needsRecovery && options.sameConversation -> add(ShellPageAction("recover", "Open Activity", HaloGlyph.ACTIVITY, onInvoke = onActivity))
     }
     when {

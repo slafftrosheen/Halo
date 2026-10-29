@@ -501,6 +501,9 @@ fun HomeScreen(
                     )
                 }
             }
+            if (shellOwnsOrb) HomeComposerNotice(homeComposerNotice(
+                providerNeedsAttention || connectionNeedsAttention, submission, draftKey,
+                active = isListening || isSpeechProcessing || isSpeaking || isActiveSession || presentation.needsReview))
             ComposerDraftNotice(viewModel, draftKey)
             HaloComposer(
                 draftIdentity = draftKey, draftRevision = drafts[draftKey]?.revision ?: 0L,
@@ -542,6 +545,20 @@ fun HomeScreen(
         com.halo.app.ui.presence.BindShellUtilityBand(homeOwner, homeComposer)
         val todayLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day)
         com.halo.app.ui.presence.BindShellPageActions(homeOwner, buildList {
+            // Hosted Home has one status owner (the shell Orb); retain every recovery
+            // callback in its current-page action lease instead of another header/strip.
+            addAll(homeRecoveryActions(HomeRecoveryOptions(
+                needsReview = presentation.needsReview,
+                retryable = submission.retryable,
+                needsRecovery = submission.needsRecovery,
+                sameConversation = submission.conversationId == draftKey,
+                canRetry = canSend && textInput.isNotBlank() && !providerNeedsAttention && !connectionNeedsAttention,
+                answersNeedSetup = providerNeedsAttention || connectionNeedsAttention,
+                microphoneGranted = uiState.microphonePermissionGranted,
+                speechReady = uiState.speechReady),
+                onActivity = onOpenActivity, onRetry = { submitText() },
+                onAnswers = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
+                onMicrophone = onRequestMicrophonePermission, onVoice = viewModel::navigateToVoice))
             add(com.halo.app.ui.presence.ShellPageAction("new-chat", "New conversation", HaloGlyph.NOTE,
                 enabled = !changingConversation, onInvoke = viewModel::newConversation))
             add(com.halo.app.ui.presence.ShellPageAction("history", "Conversation history", HaloGlyph.ACTIVITY) { showHistory = true })
@@ -550,20 +567,7 @@ fun HomeScreen(
             add(com.halo.app.ui.presence.ShellPageAction("clear-chat", "Clear conversation", HaloGlyph.TRASH,
                 enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { confirmClear = true })
             if (daily.items.isNotEmpty()) add(com.halo.app.ui.presence.ShellPageAction("today", todayLabel, HaloGlyph.HOME) { showToday = true })
-            // Hosted Home has one status owner (the shell Orb); retain every recovery
-            // callback in its current-page action lease instead of another header/strip.
-            addAll(homeRecoveryActions(HomeRecoveryOptions(
-                needsReview = presentation.needsReview,
-                retryable = submission.retryable,
-                needsRecovery = submission.needsRecovery,
-                sameConversation = submission.conversationId == draftKey,
-                canRetry = canSend && textInput.isNotBlank(),
-                answersNeedSetup = providerNeedsAttention || connectionNeedsAttention,
-                microphoneGranted = uiState.microphonePermissionGranted,
-                speechReady = uiState.speechReady),
-                onActivity = onOpenActivity, onRetry = { submitText() },
-                onAnswers = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
-                onMicrophone = onRequestMicrophonePermission, onVoice = viewModel::navigateToVoice))
+
 
         })
         if (modeMenuExpanded) androidx.compose.material3.AlertDialog(

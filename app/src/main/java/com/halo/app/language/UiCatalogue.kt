@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4202) {
+    buildMap(4204) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4246,6 +4246,8 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Answer checked, but the schedule could not be updated" to R.string.ui_10ef40de7208,
     "Halo cannot check this answer automatically. Compare both and mark yourself." to R.string.ui_6d9e8da7f644,
     "Not quite. This card goes back to the start of the ladder." to R.string.ui_09419ac42d0d,
+    "Answers need setup. Choose Set up answers below." to R.string.ui_b8785b2ff8e5,
+    "Your message wasn’t accepted. You can try again." to R.string.ui_f4f93535ef23,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

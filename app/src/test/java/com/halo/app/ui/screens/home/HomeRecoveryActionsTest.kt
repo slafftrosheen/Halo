@@ -35,4 +35,11 @@ class HomeRecoveryActionsTest {
         assertEquals(listOf("microphone"), calls)
         assertTrue(actions(ready).isEmpty())
     }
+    @Test fun answerSetupDisablesRetryWithoutReplacingCanonicalSetupCallback() {
+        val calls = mutableListOf<String>()
+        val actions = actions(ready.copy(retryable = true, answersNeedSetup = true), calls)
+        assertFalse(actions.first { it.id == "retry" }.enabled)
+        actions.single { it.id == "setup-answers" }.onInvoke()
+        assertEquals(listOf("answers"), calls)
+    }
 }

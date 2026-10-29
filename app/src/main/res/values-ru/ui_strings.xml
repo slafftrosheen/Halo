@@ -4185,4 +4185,6 @@
     <string name="ui_10ef40de7208" formatted="false">"Ответ проверен, но обновить расписание не удалось"</string>
     <string name="ui_6d9e8da7f644" formatted="false">"halo не может проверить этот ответ автоматически. Сравните оба ответа и оцените себя."</string>
     <string name="ui_09419ac42d0d" formatted="false">"Не совсем верно. Эта карточка возвращается к началу лестницы повторений."</string>
+    <string name="ui_b8785b2ff8e5" formatted="false">"Нужно настроить ответы. Выберите «Настроить ответы» ниже."</string>
+    <string name="ui_f4f93535ef23" formatted="false">"Сообщение не было принято. Можно попробовать ещё раз."</string>
 </resources>

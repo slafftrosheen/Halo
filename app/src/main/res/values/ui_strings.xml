@@ -4185,4 +4185,6 @@
     <string name="ui_10ef40de7208" formatted="false">"Answer checked, but the schedule could not be updated"</string>
     <string name="ui_6d9e8da7f644" formatted="false">"halo cannot check this answer automatically. Compare both and mark yourself."</string>
     <string name="ui_09419ac42d0d" formatted="false">"Not quite. This card goes back to the start of the ladder."</string>
+    <string name="ui_b8785b2ff8e5" formatted="false">"Answers need setup. Choose Set up answers below."</string>
+    <string name="ui_f4f93535ef23" formatted="false">"Your message wasn’t accepted. You can try again."</string>
 </resources>

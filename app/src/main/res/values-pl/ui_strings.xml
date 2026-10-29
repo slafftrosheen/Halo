@@ -4185,4 +4185,6 @@
     <string name="ui_10ef40de7208" formatted="false">"Odpowiedź sprawdzono, ale nie udało się zaktualizować harmonogramu"</string>
     <string name="ui_6d9e8da7f644" formatted="false">"halo nie może automatycznie sprawdzić tej odpowiedzi. Porównaj obie odpowiedzi i oceń się samodzielnie."</string>
     <string name="ui_09419ac42d0d" formatted="false">"Nie całkiem. Ta karta wraca na początek drabiny powtórek."</string>
+    <string name="ui_b8785b2ff8e5" formatted="false">"Odpowiedzi wymagają konfiguracji. Wybierz poniżej „Skonfiguruj odpowiedzi”."</string>
+    <string name="ui_f4f93535ef23" formatted="false">"Wiadomość nie została przyjęta. Możesz spróbować ponownie."</string>
 </resources>

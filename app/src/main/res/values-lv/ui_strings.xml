@@ -4185,4 +4185,6 @@
     <string name="ui_10ef40de7208" formatted="false">"Atbilde ir pārbaudīta, bet atkārtošanas grafiku neizdevās atjaunināt"</string>
     <string name="ui_6d9e8da7f644" formatted="false">"halo nevar automātiski pārbaudīt šo atbildi. Salīdzini abas atbildes un novērtē sevi."</string>
     <string name="ui_09419ac42d0d" formatted="false">"Ne gluži. Šī kartīte atgriežas atkārtošanas kāpņu sākumā."</string>
+    <string name="ui_b8785b2ff8e5" formatted="false">"Jāiestata atbildes. Zemāk izvēlieties «Iestatīt atbildes»."</string>
+    <string name="ui_f4f93535ef23" formatted="false">"Ziņojums netika pieņemts. Varat mēģināt vēlreiz."</string>
 </resources>
