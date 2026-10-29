@@ -209,7 +209,15 @@
       160
     ],
     "outputBytes": 2562,
-    "projectRestartReopen": "PASS"
+    "projectRestartReopen": "PASS",
+    "canvasHandoff": {
+      "status": "PASS_SCOPED",
+      "canvasId": "e145715f-9ba8-45db-9045-8abd3c877baa",
+      "canvasRevision": 8,
+      "imageNodeId": "6809aa88-57fd-43f3-9900-3ebde9e8200a",
+      "refObjectId": "dade3c21-af3a-4f9c-95f6-951647d3cb14",
+      "renderedAndOpenedOriginal": "PASS"
+    }
   },
   "localModelDiagnostics": {
     "appSha256": "46e9b75a7c420cbf4097c0bc859adc9f1363a585ba0bb2dbd0552e64ca3d59b6",
@@ -234,5 +242,26 @@
     60,
     61,
     62
-  ]
+  ],
+  "fullAppHostGate": {
+    "sourceCommit": "570d7daf4650ff79ec58702ae6fe209d5ef31885",
+    "duration": "20m33s",
+    "totals": {
+      "tests": 2211,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "classes": 465
+  },
+  "imageStudyHandoff": {
+    "status": "PASS_IDENTITY_AND_CAPABILITY_WARNING_ONLY",
+    "sessionId": "220b171d-5604-4712-b7c0-2fa6c4b100ca",
+    "sourceId": "dade3c21-af3a-4f9c-95f6-951647d3cb14",
+    "sourceVersion": "a2028c4a2bd7e95ca87d85bc20f4a4f762d1f3aacec528feeac2a80d470f2d91",
+    "readableSources": 0,
+    "sourcesNeedingAttention": 1,
+    "imageTutoring": "NOT_VERIFIED"
+  },
+  "evidenceUpdatedUtc": "2026-10-29T10:15:04.110652+00:00"
 }

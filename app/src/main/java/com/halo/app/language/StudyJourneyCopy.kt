@@ -4,6 +4,13 @@ package com.halo.app.language
 internal object StudyJourneyCopy {
     private data class Copy(val ru: String, val lv: String, val pl: String)
     private val messages = mapOf(
+        "Open file" to Copy("Открыть файл", "Atvērt failu", "Otwórz plik"),
+        "Progress" to Copy("Прогресс", "Progress", "Postęp"),
+        "Partial" to Copy("Частично", "Daļēji", "Częściowo"),
+        "No readable text" to Copy("Нет доступного текста", "Nav nolasāma teksta", "Brak tekstu do odczytu"),
+        "Image · Requires verified vision" to Copy("Изображение · Нужна проверенная модель с поддержкой изображений", "Attēls · Nepieciešams pārbaudīts attēlu izpratnes modelis", "Obraz · Wymagany zweryfikowany model rozumienia obrazów"),
+        "PDF page image · Requires verified vision · OCR not installed" to Copy("Изображение страницы PDF · Нужна проверенная модель с поддержкой изображений · Распознавание текста не установлено", "PDF lapas attēls · Nepieciešams pārbaudīts attēlu izpratnes modelis · Teksta atpazīšana nav instalēta", "Obraz strony PDF · Wymagany zweryfikowany model rozumienia obrazów · Rozpoznawanie tekstu nie jest zainstalowane"),
+        "Only part of this source is included (%1\$d of %2\$d characters omitted)." to Copy("Используется только часть источника (пропущено %1\$d из %2\$d символов).", "Tiek izmantota tikai daļa avota (izlaistas %1\$d no %2\$d rakstzīmēm).", "Uwzględniono tylko część źródła (pominięto %1\$d z %2\$d znaków)."),
         "Could not save the material selection. Choose it again after reopening this lesson." to Copy("Не удалось сохранить выбор материала. Выберите его снова после открытия урока.", "Materiāla atlasi neizdevās saglabāt. Pēc nodarbības atkārtotas atvēršanas atlasi to vēlreiz.", "Nie udało się zapisać wyboru materiału. Wybierz go ponownie po otwarciu lekcji."),
         "Page" to Copy("Страница", "Lappuse", "Strona"),
         "Selected passage" to Copy("Выбранный отрывок", "Atlasītais fragments", "Zaznaczony fragment"),

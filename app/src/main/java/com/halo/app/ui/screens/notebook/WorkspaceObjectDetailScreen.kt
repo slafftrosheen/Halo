@@ -365,11 +365,11 @@ private fun FileDetailCard(
             color = MaterialTheme.colorScheme.secondary
         )
         HaloWorkspaceButton(
-            text = when {
+            text = uiText(when {
                 busy -> "Working…"
                 canOpen -> "Open file"
                 else -> "File unavailable"
-            },
+            }),
             onClick = onOpen,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             enabled = !busy && canOpen

@@ -922,7 +922,15 @@ private fun SourceCard(
                 val page = state.pdfPages[source.objectId] ?: (source.resolved as? ResolvedStudySource.Pdf)?.selectedPage ?: 1
                 TextButton(onClick={com.halo.app.di.ManualDependencyGraph.extractionReview.workspace(source.objectId,page,page)}) { Text(uiText("Read the words in this image/page")) }
             }
-            source.status?.let { Text(if (it == "Ready") uiText("Ready") else it, style = MaterialTheme.typography.labelSmall) }
+            source.status?.let { status ->
+                // Translate only these host-authored statuses; preserve arbitrary source reasons.
+                val label = when (status) {
+                    "Ready", "Partial", "No readable text", "Image · Requires verified vision",
+                    "PDF page image · Requires verified vision · OCR not installed" -> uiText(status)
+                    else -> status
+                }
+                Text(label, style = MaterialTheme.typography.labelSmall)
+            }
             source.excerpt?.let { excerpt ->
                 Spacer(Modifier.height(4.dp))
                 Text(excerpt, style = MaterialTheme.typography.bodySmall, maxLines = 4)
@@ -935,8 +943,8 @@ private fun SourceCard(
                     )
                 SourceCoverage.PARTIAL ->
                     Text(
-                        "Coverage: partial — ${source.omittedCharacters} of ${source.totalCharacters} " +
-                            "characters are not sent to the model.",
+                        uiText("Only part of this source is included (%1\$d of %2\$d characters omitted).",
+                            source.omittedCharacters, source.totalCharacters),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

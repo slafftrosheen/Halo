@@ -49,6 +49,38 @@ Native Export PNG produced ACTIVE managed file `dade3c21-af3a-4f9c-95f6-951647d3
 
 Force-stopped Halo, cold-opened Studio, selected the saved QA project from its list, and observed its rendered document and “All changes saved” status. **PASS for this touch edit/save/export/project-reopen chain**. This is not a typed assistant recipe, Canvas/Study insertion of the output, arbitrary format fidelity, physical Ink or every stale/cancel/recovery case. Evidence: `nonvoice-studio-persistence.json`, `nonvoice-studio-output-provenance.json`, `nonvoice-studio-export.png`, `nonvoice-studio-restart-list` and `nonvoice-studio-reopened` outside Git.
 
+Reviewed QA-only visual evidence: [self-generated input](issue62/2026-10-29/studio-input.png), [actual saved output](issue62/2026-10-29/studio-output.png), and [Studio after process restart/reopen](issue62/2026-10-29/studio-reopened.png). These contain only this task's generated geometric artwork and QA annotation; no user photos/documents or external-application captures are published. Cropping/rotation applies to the whole composed document, including the text, as recorded in its recipe; these are functional QA artifacts, not aesthetic approval of every app screen.
+
+### Additional saved-image → Canvas handoff — PASS for the touch boundary
+
+After pausing foreground testing during an active call, resumed only after Halo was foreground and Android reported requested/actual MODE_NORMAL with no mode owner. No call or audio state was changed by QA.
+
+Actual path: Library → exact exported PNG → Continue in… → Add to Canvas → `HALO-QA-20261028-BOARD`. The owner displayed “Reference added.” Fresh canonical readback finds Canvas `e145715f-9ba8-45db-9045-8abd3c877baa` at revision **8**, containing new IMAGE node `6809aa88-57fd-43f3-9900-3ebde9e8200a` with exact `refObjectId` **`dade3c21-af3a-4f9c-95f6-951647d3cb14`**. It is a real file reference, not copied title text or an invented linked card.
+
+Opened the board through Library and used Show all cards. The actual UI rendered all three cards at 43%, including the exported image. Its own Open source action returned to the exact `HALO-QA-20261029-STUDIO.png` saved-file detail (2.5 KB, on-phone storage). This advances the Studio → saved versioned output → Canvas → original-file boundary. It does not qualify the corresponding typed/spoken assistant recipe, every zoom/accessibility condition, stale/replay cases or grounded image tutoring. Evidence: `nonvoice-studio-canvas-handoff.json`, `nonvoice-canvas-handoff-fitted` and `nonvoice-canvas-image-original-open` outside Git.
+
+### Image → Study identity and truthful capability boundary
+
+Continued that exact saved image into Study through its native handoff, set own goal `Describe colors. HALO-QA-20261029-IMAGE`, selected On this phone, and started the lesson. Canonical ACTIVE session `220b171d-5604-4712-b7c0-2fa6c4b100ca` is ADULT/GUIDED/SOURCE_ONLY, ASK stage, with only source `dade3c21-af3a-4f9c-95f6-951647d3cb14`. `sourcesJson` retains its exact SHA version `a2028c4a2bd7e95ca87d85bc20f4a4f762d1f3aacec528feeac2a80d470f2d91`; the legacy numeric sourceRevision is null for this hash-valued file version. No raw source IDs, revisions or regions were fabricated.
+
+The inspector identifies the PNG and reports **0 readable sources / 1 requiring attention**, “Image · Requires verified vision” and no available readable text. This qualifies exact image-source setup and an explicit capability requirement, **not image tutoring, OCR, model output or accepted progress**. No generation, media upload, voice, provider/role selection or permission change was used for this boundary. Evidence: `nonvoice-image-study-canonical.json`, `nonvoice-image-study-started` and `nonvoice-image-study-source`.
+
+That actual Russian screen exposed untranslated first-party image/PDF/partial-source status copy, plus missing Open file/Progress catalogue labels in the surrounding flows. A small localization delta translates only known app-authored statuses and the numeric partial-coverage template; unknown source reasons, filenames, source excerpts, learner text and model output stay literal. RU/LV/PL fallback copy is added through the existing catalogue owner, with English fallback unchanged. The file-detail button also needed its caller wrapped in the existing `uiText` lookup; adding catalogue copy alone did not translate that raw label.
+
+### Localization delta installed and physically checked
+
+Final grouped localization/source-refresh gate: **17/17 PASS**, four classes, zero failures/errors/skips; build **SUCCESSFUL in 6m8s**, including the file-button caller correction. Installed APK SHA-256 **`1858152f4f27184e21d3afc7fd4c51e98c386e71c8901ff8b47984fc179e320c`**, independently matching the phone's base.apk. [Separate localization gate](issue62/2026-10-29/nonvoice-localization-gate.json) records its three source hashes. Earlier artifacts/gates retain their own source identity; the full 2211-case gate below predates this copy delta.
+
+Resumed the exact QA image lesson from Study home. Physically touched its Sources and progress orbit target and observed the correct Material sheet with the exact exported filename. Expanded the sheet and verified the complete Russian vision requirement, without the former English status. Scrolled the tab row, opened **Прогресс**, and verified **0 saved attempts / 0 due / 0 mastered**; this is truthful empty progress, not generated practice. Open source returned to the exact native file detail, now showing **Открыть файл**. Long-pressing that page's Orb opened the existing full action list; choosing its Back action restored the same image lesson's Material sheet. No speech/capture/playback or assistant model request was initiated.
+
+Temporarily tested system font scale **2.0** on this Russian portrait inspector at the phone's native 440 density. Its scroll region expanded and the full warning plus no-readable-text notice became visible and wrapped within the source card. **PASS for this warning's readability/reachability**, not the whole app, all controls, TalkBack or a measured contrast audit. Font scale **1.0**, density 440 and automatic rotation **1** are verified restored/preserved. Physical LV/PL, PDF and partial-coverage examples remain **NOT_RUN**. The orbital touch and long-press list are scoped physical integration evidence, not acceptance of every legacy fan/destination, route or active-capture handoff.
+
+Reviewed QA-only screenshots: [Russian material inspector](issue62/2026-10-29/study-material-ru.png) and [200% font](issue62/2026-10-29/study-material-ru-font200.png). Exact UI-tree/log evidence remains outside Git under `nonvoice-locale-*`. Issues 55–62 remain **KEEP_OPEN**; voice deferral does not waive their other acceptance.
+
+## Broader app regression on the published preview fix
+
+Full `:app:testDebugUnitTest` against source `570d7daf4650ff79ec58702ae6fe209d5ef31885`: **2211/2211 PASS**, **465 classes**, zero failures/errors/skips, **20m33s**. Exact full XML is preserved outside Git in `nonvoice-full-app-results`; `nonvoice-full-app-gate.json` records all suite counts. These cases overlap the 63-case affected gate and are not cumulative unique tests. This host gate follows the preview/Study feedback correction and precedes the subsequently identified localization delta; it is not physical, spoken, cloud or offline model-quality acceptance.
+
 ## Installed local artifact — metadata PASS only
 
 The existing SmolLM2 360M file was verified directly on the phone: **373719040 bytes**, SHA-256 `8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e`, matching the pinned catalogue artifact. No download, import or model-selection change occurred.

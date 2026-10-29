@@ -1,0 +1,89 @@
+{
+  "recordedUtc": "2026-10-29T10:32:42.773845+00:00",
+  "baselineCommit": "570d7daf4650ff79ec58702ae6fe209d5ef31885",
+  "sourceDirtyAtBuild": true,
+  "sourceWitness": [
+    {
+      "path": "app/src/main/java/com/halo/app/language/StudyJourneyCopy.kt",
+      "sha256": "7bb579b1bc963673a60217320d0fb81d3f8511cc89f521f104943cf804cf09da",
+      "gitBlob": "5d368d2bc6d502ceee879f42260676544b5668e0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/study/StudyScreen.kt",
+      "sha256": "08f71d6488d3cb44870e7ad5cb0b88a381126de8029f772419844ea27626969f",
+      "gitBlob": "3a1ffa956c70a4fa758aeeb0811ae15227269a13"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/notebook/WorkspaceObjectDetailScreen.kt",
+      "sha256": "1da78db5f8cda55ac6dc14350dd21106e326236bc060a2a52f00814b70610709",
+      "gitBlob": "3b56692094b9cd08b62c9402b19e8be58c98c079"
+    }
+  ],
+  "appSha256": "1858152f4f27184e21d3afc7fd4c51e98c386e71c8901ff8b47984fc179e320c",
+  "installedAppSha256": "1858152f4f27184e21d3afc7fd4c51e98c386e71c8901ff8b47984fc179e320c",
+  "deviceSerial": "f01fe673",
+  "device": "Redmi 23124RA7EO",
+  "android": "15",
+  "uiLanguage": "ru",
+  "build": {
+    "status": "PASS",
+    "duration": "6m8s",
+    "log": "nonvoice-localization-final-build.log"
+  },
+  "focusedHostGate": {
+    "status": "PASS",
+    "classes": 4,
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      "com.halo.app.language.AppLanguageTest",
+      "com.halo.app.language.AppLanguageUiTest",
+      "com.halo.app.ui.screens.study.StudyMasteryLocalizationTest",
+      "com.halo.app.ui.screens.study.StudySourceRefreshStateTest"
+    ]
+  },
+  "priorFullGate": {
+    "commit": "570d7daf4650ff79ec58702ae6fe209d5ef31885",
+    "tests": 2211,
+    "classes": 465,
+    "status": "PASS",
+    "boundary": "Before this later localization delta; not rerun on it"
+  },
+  "physical": {
+    "imageStatus": "PASS",
+    "openFileLabel": "PASS",
+    "progressLabelAndZeroSavedAttempts": "PASS",
+    "studyOrbitSourcesTarget": "PASS",
+    "longPressFullMenuAndBackToSameSource": "PASS",
+    "font200": {
+      "originalFontScale": "1.0",
+      "testedFontScale": "2.0",
+      "warningReachable": true,
+      "warningBounds": [
+        99,
+        1674,
+        981,
+        1946
+      ],
+      "capture": "nonvoice-locale-font200-1",
+      "restoredFontScale": "1.0"
+    },
+    "density": "440 physical; no override",
+    "automaticRotation": "1 preserved",
+    "visualScope": "Russian portrait Study material warning only; not whole-app font/TalkBack/contrast qualification",
+    "lvPlPhysical": "NOT_RUN",
+    "pdfAndPartialCoveragePhysical": "NOT_RUN",
+    "voice": "DEFERRED_BY_USER",
+    "generation": "NOT_VERIFIED"
+  },
+  "studySessionId": "220b171d-5604-4712-b7c0-2fa6c4b100ca",
+  "sourceObjectId": "dade3c21-af3a-4f9c-95f6-951647d3cb14",
+  "sourceVersion": "a2028c4a2bd7e95ca87d85bc20f4a4f762d1f3aacec528feeac2a80d470f2d91",
+  "reviewedQaCaptures": {
+    "study-material-ru.png": "456163d7863350c3c950d9211e38406209479b7a954ecea3ce41dffd1497d157",
+    "study-material-ru-font200.png": "93c5719b919da15a6457fbd6ff7e21bd05030bd8b2d69e4a0b3be9e8e744dcd5"
+  },
+  "issueDisposition": "KEEP_OPEN"
+}
