@@ -68,6 +68,22 @@ class NativePhoneWorkflowActivityTest {
         )
     }
 
+    @Test fun transactionPlanRetainsOneOwnedHeadingWithoutPhoneFallbackOrItemChanges() {
+        val run = step("phone-plan", "flow", 1, 1, "TAP", AgentRunState.COMPLETED, ActionTruth.CONFIRMED)
+        val canonical = com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(run.steps, title = "Plan")
+        val projected = activityJournalPresentation(run.steps)
+        val sourceCard = canonical.root as com.halo.runtime.cognition.interaction.PresentationNode.Card
+        val hostCard = projected.root as com.halo.runtime.cognition.interaction.PresentationNode.Card
+        assertEquals("Plan", (sourceCard.children.first() as com.halo.runtime.cognition.interaction.PresentationNode.Heading).text)
+        assertEquals(sourceCard.children.drop(1), hostCard.children)
+        assertTrue(hostCard.children.none { it is com.halo.runtime.cognition.interaction.PresentationNode.Heading })
+        assertEquals(ActivityPlanProgress(1, 1, false), activityPlanProgress(projected, true))
+        // The grouped native workflow keeps its existing resource-backed title path.
+        val workflow = NativePhoneWorkflowActivity.project(listOf(run)).single()
+        assertNull(workflow.planTitleKey)
+        assertNull(workflow.planPresentation)
+    }
+
     @Test fun confirmedWorkflowIsOneCardWithoutTypedArguments() {
         val first = step("first", "phone-flow", 1, 3, "OPEN_APP",
             AgentRunState.COMPLETED, ActionTruth.CONFIRMED)

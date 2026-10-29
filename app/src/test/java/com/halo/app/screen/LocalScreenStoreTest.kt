@@ -131,4 +131,62 @@ class LocalScreenStoreTest {
         assertEquals(latest, store.layout.value)
         assertTrue(store.items.value.isEmpty())
     }
+
+    private fun typedRoutineResult(): ScreenItem = ScreenItem(
+        "automation:typed", ScreenSourceType.AUTOMATION, "routine-id", "User's routine title",
+        "1 of 2 actions finished", ScreenContentType.SUMMARY, Instant.parse("2026-10-29T09:00:00Z"),
+        Instant.parse("2026-10-29T09:00:00Z"), null, ScreenItemState.READY, ScreenSensitivity.PRIVATE,
+        null, listOf(ScreenAction.OpenSource), sourceRevision = "producing-revision",
+        appSummary = ScreenAppSummary.RoutineActionsFinished(1, 2),
+    )
+
+    @Test fun typedSummaryRoundTripPreservesRawSourceAndExactRevision() = runBlocking {
+        val original = typedRoutineResult()
+        LocalScreenStore(context).publish(original)
+        assertEquals(original, LocalScreenStore(context).items.value.single())
+    }
+
+    @Test fun absentUnknownOrMalformedSummaryMetadataNeverDropsSourceItem() = runBlocking {
+        val original = typedRoutineResult()
+        LocalScreenStore(context).publish(original)
+        val preferences = context.getSharedPreferences("halo_screen", 0)
+        val saved = requireNotNull(preferences.getString("items", null))
+        val variants = listOf(
+            null,
+            org.json.JSONObject().put("version", 2).put("kind", "ROUTINE_ACTIONS_FINISHED").put("completed", 1).put("total", 2),
+            org.json.JSONObject().put("version", 1).put("kind", "FUTURE_KIND").put("completed", 1).put("total", 2),
+            org.json.JSONObject().put("version", 1).put("kind", "ROUTINE_ACTIONS_FINISHED").put("completed", 3).put("total", 2),
+            org.json.JSONObject().put("version", 1).put("kind", "ROUTINE_ACTIONS_FINISHED").put("completed", "1").put("total", 2),
+            org.json.JSONObject().put("version", 1).put("kind", "ROUTINE_ACTIONS_FINISHED").put("completed", 1.5).put("total", 2),
+            org.json.JSONObject().put("version", 1).put("kind", "ROUTINE_ACTIONS_FINISHED").put("completed", 1),
+            "invalid optional object",
+        )
+        variants.forEach { metadata ->
+            val array = org.json.JSONArray(saved)
+            array.getJSONObject(0).put("appSummary", metadata)
+            preferences.edit().putString("items", array.toString()).commit()
+            assertEquals(metadata.toString(), original.copy(appSummary = null), LocalScreenStore(context).items.value.single())
+        }
+    }
+
+    @Test fun failedRefreshRetainsTypedLastGoodSummaryAcrossRestart() = runBlocking {
+        val store = LocalScreenStore(context)
+        val original = typedRoutineResult()
+        store.publish(original)
+        val failedAt = requireNotNull(original.updatedAt).plusSeconds(60)
+        store.markFailed(original.id, failedAt)
+        assertEquals(original.copy(state = ScreenItemState.STALE, updatedAt = failedAt),
+            LocalScreenStore(context).items.value.single())
+    }
+
+    @Test fun newerPublicationUpdatesCountsWithoutChangingStableCardIdentity() = runBlocking {
+        val store = LocalScreenStore(context)
+        val original = typedRoutineResult()
+        store.publish(original)
+        val changed = original.copy(summary = "2 of 2 actions finished", sourceRevision = "new-revision",
+            updatedAt = requireNotNull(original.updatedAt).plusSeconds(60),
+            appSummary = ScreenAppSummary.RoutineActionsFinished(2, 2))
+        store.publish(changed)
+        assertEquals(listOf(changed), LocalScreenStore(context).items.value)
+    }
 }

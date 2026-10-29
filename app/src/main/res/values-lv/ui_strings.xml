@@ -4187,4 +4187,32 @@
     <string name="ui_09419ac42d0d" formatted="false">"Ne gluži. Šī kartīte atgriežas atkārtošanas kāpņu sākumā."</string>
     <string name="ui_b8785b2ff8e5" formatted="false">"Jāiestata atbildes. Zemāk izvēlieties «Iestatīt atbildes»."</string>
     <string name="ui_f4f93535ef23" formatted="false">"Ziņojums netika pieņemts. Varat mēģināt vēlreiz."</string>
+    <string name="ui_9ea313898ed1" formatted="false">"Pabeigtās darbības: %1$d no %2$d"</string>
+    <string name="ui_ba748307c008" formatted="false">"%1$d / %2$d soļi pabeigti"</string>
+    <string name="ui_10c5739b95bd" formatted="false">"Gaida apstiprinājumu"</string>
+    <string name="ui_566181254b29" formatted="false">"Vakar"</string>
+    <string name="ui_6ed40edc78ca" formatted="false">"Pirms %1$d d."</string>
+    <string name="ui_818d1b332c05" formatted="false">"Apskatīti tavi avoti"</string>
+    <string name="ui_9e11f505d427" formatted="false">"Izveidots plāns"</string>
+    <string name="ui_9e43e23deae9" formatted="false">"Sagatavota darbība"</string>
+    <string name="ui_965afdf98607" formatted="false">"Darbība sākta"</string>
+    <string name="ui_23703c2aad12" formatted="false">"Darbības rezultāts"</string>
+    <string name="ui_48be5b1bbbd2" formatted="false">"Neizdevās pabeigt darbību"</string>
+    <string name="ui_dcc807950ba8" formatted="false">"Vispirms lūgta tava atļauja"</string>
+    <string name="ui_590495f7d2dd" formatted="false">"Saņemta tava izvēle"</string>
+    <string name="ui_c996086ea87d" formatted="false">"Pieprasījums pārdomāts"</string>
+    <string name="ui_31d3724c36ca" formatted="false">"Atbilde sagatavota"</string>
+    <string name="ui_0d207e7c0c38" formatted="false">"Atbilde saglabāta"</string>
+    <string name="ui_f3c50015b052" formatted="false">"Veikts darbs ar ekrānu"</string>
+    <string name="ui_8b72b7037340" formatted="false">"Izmantota lietotnes darbība"</string>
+    <string name="ui_55c2b94b90dc" formatted="false">"Uzdevums atjaunināts"</string>
+    <string name="ui_113eb8196683" formatted="false">"Izmantota pašreizējās lietotnes darbība"</string>
+    <string name="ui_b6e2ec29aebf" formatted="false">"Izmantoti izvēlētie avoti un apstiprinātās atmiņas"</string>
+    <string name="ui_60d823be4292" formatted="false">"Veikts darbs ar pašreizējo ekrānu"</string>
+    <string name="ui_756689f36290" formatted="false">"Tiek gatavota atbilde"</string>
+    <string name="ui_3708b9b6571f" formatted="false">"Atbilde ir gatava"</string>
+    <string name="ui_0bb3d25e2978" formatted="false">"Tava izvēle ir saņemta"</string>
+    <string name="ui_1455ebb3baa9" formatted="false">"Šī darbība nebija atļauta. Nekas netika mainīts."</string>
+    <string name="ui_b57a8874efe5" formatted="false">"Šo darbību neizdevās pabeigt. Pārskati to pirms atkārtota mēģinājuma."</string>
+    <string name="ui_813aeb18abd0" formatted="false">"Apturēts, lai nepārsniegtu pieprasījuma ierobežojumus"</string>
 </resources>

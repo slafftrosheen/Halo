@@ -4187,4 +4187,32 @@
     <string name="ui_09419ac42d0d" formatted="false">"Not quite. This card goes back to the start of the ladder."</string>
     <string name="ui_b8785b2ff8e5" formatted="false">"Answers need setup. Choose Set up answers below."</string>
     <string name="ui_f4f93535ef23" formatted="false">"Your message wasn’t accepted. You can try again."</string>
+    <string name="ui_9ea313898ed1" formatted="false">"Actions completed: %1$d of %2$d"</string>
+    <string name="ui_ba748307c008" formatted="false">"%1$d / %2$d steps complete"</string>
+    <string name="ui_10c5739b95bd" formatted="false">"Waiting for approval"</string>
+    <string name="ui_566181254b29" formatted="false">"Yesterday"</string>
+    <string name="ui_6ed40edc78ca" formatted="false">"%1$d days ago"</string>
+    <string name="ui_818d1b332c05" formatted="false">"Looked at your sources"</string>
+    <string name="ui_9e11f505d427" formatted="false">"Made a plan"</string>
+    <string name="ui_9e43e23deae9" formatted="false">"Prepared an action"</string>
+    <string name="ui_965afdf98607" formatted="false">"Started an action"</string>
+    <string name="ui_23703c2aad12" formatted="false">"Action result"</string>
+    <string name="ui_48be5b1bbbd2" formatted="false">"Could not complete an action"</string>
+    <string name="ui_dcc807950ba8" formatted="false">"Asked you first"</string>
+    <string name="ui_590495f7d2dd" formatted="false">"Received your choice"</string>
+    <string name="ui_c996086ea87d" formatted="false">"Thought about your request"</string>
+    <string name="ui_31d3724c36ca" formatted="false">"Prepared an answer"</string>
+    <string name="ui_0d207e7c0c38" formatted="false">"Saved your answer"</string>
+    <string name="ui_f3c50015b052" formatted="false">"Worked with your screen"</string>
+    <string name="ui_8b72b7037340" formatted="false">"Used an app action"</string>
+    <string name="ui_55c2b94b90dc" formatted="false">"Updated your task"</string>
+    <string name="ui_113eb8196683" formatted="false">"Used an action in the current app"</string>
+    <string name="ui_b6e2ec29aebf" formatted="false">"Used your selected sources and approved memories"</string>
+    <string name="ui_60d823be4292" formatted="false">"Worked with the current screen"</string>
+    <string name="ui_756689f36290" formatted="false">"Preparing your answer"</string>
+    <string name="ui_3708b9b6571f" formatted="false">"Your answer is ready"</string>
+    <string name="ui_0bb3d25e2978" formatted="false">"Your choice was received"</string>
+    <string name="ui_1455ebb3baa9" formatted="false">"This action was not allowed. Nothing was changed."</string>
+    <string name="ui_b57a8874efe5" formatted="false">"This action could not finish. Review it before trying again."</string>
+    <string name="ui_813aeb18abd0" formatted="false">"Stopped to keep your request within its limits"</string>
 </resources>

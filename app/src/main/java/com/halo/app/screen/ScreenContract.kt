@@ -10,6 +10,13 @@ enum class ScreenItemState { READY, LOADING, REFRESHING, EMPTY, NEEDS_SETUP, PER
 enum class ScreenSensitivity { PUBLIC, PERSONAL, PRIVATE }   // PERSONAL/PRIVATE are masked in full screen when "Hide private details" is on
 enum class CardSize { COMPACT, STANDARD, EXPANDED }
 
+/** App-owned presentation facts, distinct from the unchanged source title/summary. */
+sealed interface ScreenAppSummary {
+    data class RoutineActionsFinished(val completed: Int, val total: Int) : ScreenAppSummary {
+        val valid: Boolean get() = total >= 0 && completed in 0..total
+    }
+}
+
 sealed interface ScreenAction {            // action ids are stable strings for analytics + tests
     val id: String
     data object ReadAloud : ScreenAction { override val id = "screen.read_aloud" }
@@ -38,6 +45,7 @@ data class ScreenItem(
     val availableActions: List<ScreenAction>,
     val sourceLinks: List<ScreenSourceLink> = emptyList(),
     val sourceRevision: String? = null, // exact producing owner revision; absent on legacy publications
+    val appSummary: ScreenAppSummary? = null,
 )
 
 data class ScreenSourceLink(val title: String, val url: String)

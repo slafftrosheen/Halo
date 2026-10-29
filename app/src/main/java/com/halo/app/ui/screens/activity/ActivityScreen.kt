@@ -44,9 +44,12 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -285,7 +288,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
             Text(if (story.phoneTotal != null) stringResource(phoneSummaryResource(story)) else uiText(story.summary),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            story.planProgress?.let { progress ->
+            (story.typedPlanProgress?.let { localizedActivityProgress(it) } ?: story.planProgress)?.let { progress ->
                 Text(if (story.phoneTotal != null) stringResource(R.string.halo_phone_progress,
                     story.phoneConfirmed ?: 0, story.phoneTotal) else progress,
                     style = MaterialTheme.typography.bodyMedium)
@@ -323,7 +326,10 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                 Text(uiText(if (expanded) "Hide details" else "Details"))
             }
             if (expanded) {
-                story.planPresentation?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
+                story.planPresentation?.let {
+                    story.planTitleKey?.let { title -> Text(uiText(title), style = MaterialTheme.typography.titleSmall) }
+                    com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth())
+                }
                 story.speechProvenance?.let { Text(uiText("Speech recognition"), style = MaterialTheme.typography.bodyMedium) }
                 // The journal may contain dozens of diagnostic steps. Present
                 // the first five in a compact timeline; all evidence remains
@@ -374,7 +380,7 @@ internal fun activityVisibleRecordedSteps(
 ): List<ActivityStep> = if (showAll) steps else steps.take(5)
 
 @Composable
-private fun ActivityRecordedStepRow(step: ActivityStep, phoneTotal: Int?) {
+internal fun ActivityRecordedStepRow(step: ActivityStep, phoneTotal: Int?) {
     val scheme = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -390,14 +396,14 @@ private fun ActivityRecordedStepRow(step: ActivityStep, phoneTotal: Int?) {
             val title = if (phoneTotal != null && step.phoneOrdinal != null) {
                 stringResource(R.string.halo_phone_step, step.phoneOrdinal,
                     phoneTotal, stringResource(phoneKindResource(step.phoneKind)))
-            } else step.title
+            } else if (step.hostOwnedCopy) uiText(step.title) else step.title
             Text(title, style = MaterialTheme.typography.titleSmall)
             Text(
                 if (phoneTotal != null && step.phoneForegroundVerified)
                     stringResource(R.string.halo_phone_foreground_verified)
                 else if (phoneTotal != null)
                     stringResource(phoneOutcomeResource(step.phoneOutcome))
-                else step.message,
+                else if (step.hostOwnedMessageCopy) uiText(step.message) else step.message,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (step.failed) scheme.error else scheme.onSurfaceVariant,
             )
@@ -470,6 +476,7 @@ internal enum class ActivityFilter(val label: String) {
  * Large text may scroll instead of truncating a translated label.
  */
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 internal fun ActivitySegmentedPill(
     selected: ActivityFilter,
     counts: Map<ActivityFilter, Int>,
@@ -493,10 +500,15 @@ internal fun ActivitySegmentedPill(
             listOf(ActivityFilter.REVIEW, ActivityFilter.RUNNING, ActivityFilter.HISTORY)
                 .forEach { option ->
                     val selectedTab = option == selected
+                    val reveal = remember { BringIntoViewRequester() }
+                    var placed by remember { mutableStateOf(false) }
+                    LaunchedEffect(selectedTab, largeText, placed) {
+                        if (selectedTab && largeText && placed) reveal.bringIntoView()
+                    }
                     Surface(
                         onClick = { onSelect(option) },
                         modifier = (if (largeText) Modifier.widthIn(min = 118.dp)
-                            else Modifier.weight(1f)).heightIn(min = 48.dp),
+                            else Modifier.weight(1f)).heightIn(min = 48.dp).bringIntoViewRequester(reveal).onGloballyPositioned { placed = true },
                         shape = com.halo.app.ui.design.HaloShapes.pill,
                         color = if (selectedTab) colors.primaryContainer.copy(alpha = 0.70f)
                             else androidx.compose.ui.graphics.Color.Transparent,
@@ -545,6 +557,9 @@ data class ActivityStep(
     val phoneKind: String? = null,
     val phoneOutcome: NativeActionOutcome? = null,
     val phoneForegroundVerified: Boolean = false,
+    /** Fixed host event label; external timeline/model/user text retains the default. */
+    val hostOwnedCopy: Boolean = false,
+    val hostOwnedMessageCopy: Boolean = hostOwnedCopy,
 )
 
 enum class ActivityKind { USER, SYSTEM, HALO, ERROR }
@@ -565,8 +580,10 @@ data class ActivityStory(
      * never mark a step complete — the checklist reflects recorded execution evidence.
      */
     val planPresentation: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
-    /** Compact "3 / 4 steps complete" line for the collapsed row. */
+    /** Legacy/external fallback; typed journal progress is localized only at rendering. */
     val planProgress: String? = null,
+    val typedPlanProgress: ActivityPlanProgress? = null,
+    val planTitleKey: String? = null,
     val children: List<ActivityStory> = emptyList(),
     val speechProvenance: String? = null,
     val reviewRunId: String? = null,
@@ -859,6 +876,11 @@ internal fun AgentRun.toStory(): ActivityStory {
             step.id.value,
             title,
             message,
+            hostOwnedCopy = true,
+            // Composite action labels can contain app-provided semantic names. Keep them
+            // literal until they have separately typed label/status arguments.
+            hostOwnedMessageCopy = step !is AgentStep.ToolExecutionClaimed &&
+                step !is AgentStep.ToolOutcomeRecorded && step !is AgentStep.ToolCompleted,
             failed = step is AgentStep.ToolFailed || step is AgentStep.ToolRejected ||
                 (step is AgentStep.ToolOutcomeRecorded && !step.success),
         )
@@ -878,17 +900,9 @@ internal fun AgentRun.toStory(): ActivityStory {
     val planPresentation = if (evidencedPhases >= 2) {
         // Title is fixed copy: the run title already appears above, and the checklist must not restate
         // the user's request to itself.
-        com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(
-            steps = steps,
-            title = "Plan",
-        )
+        activityJournalPresentation(steps)
     } else null
-    val planProgress = if (evidencedPhases >= 2) {
-        com.halo.runtime.cognition.interaction.PlanPresentationProjector.progressLine(steps)?.let { progress ->
-            // Historical pending input is not an actionable approval after a canonical terminal state.
-            if (state.isTerminal) progress.substringBefore(" · Waiting for approval") else progress
-        }
-    } else null
+    val typedPlanProgress = planPresentation?.let { activityPlanProgress(it, state.isTerminal) }
 
     return ActivityStory(
         id = "agent:${id.value}",
@@ -902,7 +916,8 @@ internal fun AgentRun.toStory(): ActivityStory {
         steps = activitySteps,
         sourceRunId = id.value,
         planPresentation = planPresentation,
-        planProgress = planProgress,
+        typedPlanProgress = typedPlanProgress,
+        planTitleKey = "Plan".takeIf { planPresentation != null },
         reviewRunId = id.value.takeIf { pendingInput != null && state in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION) },
     )
 }

@@ -4187,4 +4187,32 @@
     <string name="ui_09419ac42d0d" formatted="false">"Не совсем верно. Эта карточка возвращается к началу лестницы повторений."</string>
     <string name="ui_b8785b2ff8e5" formatted="false">"Нужно настроить ответы. Выберите «Настроить ответы» ниже."</string>
     <string name="ui_f4f93535ef23" formatted="false">"Сообщение не было принято. Можно попробовать ещё раз."</string>
+    <string name="ui_9ea313898ed1" formatted="false">"Выполнено действий: %1$d из %2$d"</string>
+    <string name="ui_ba748307c008" formatted="false">"%1$d / %2$d этапов завершено"</string>
+    <string name="ui_10c5739b95bd" formatted="false">"Ожидание одобрения"</string>
+    <string name="ui_566181254b29" formatted="false">"Вчера"</string>
+    <string name="ui_6ed40edc78ca" formatted="false">"%1$d дн. назад"</string>
+    <string name="ui_818d1b332c05" formatted="false">"Просмотрены ваши источники"</string>
+    <string name="ui_9e11f505d427" formatted="false">"Составлен план"</string>
+    <string name="ui_9e43e23deae9" formatted="false">"Подготовлено действие"</string>
+    <string name="ui_965afdf98607" formatted="false">"Действие начато"</string>
+    <string name="ui_23703c2aad12" formatted="false">"Результат действия"</string>
+    <string name="ui_48be5b1bbbd2" formatted="false">"Не удалось завершить действие"</string>
+    <string name="ui_dcc807950ba8" formatted="false">"Сначала запрошено ваше разрешение"</string>
+    <string name="ui_590495f7d2dd" formatted="false">"Ваш выбор получен"</string>
+    <string name="ui_c996086ea87d" formatted="false">"Запрос обдуман"</string>
+    <string name="ui_31d3724c36ca" formatted="false">"Ответ подготовлен"</string>
+    <string name="ui_0d207e7c0c38" formatted="false">"Ответ сохранён"</string>
+    <string name="ui_f3c50015b052" formatted="false">"Выполнена работа с экраном"</string>
+    <string name="ui_8b72b7037340" formatted="false">"Использовано действие приложения"</string>
+    <string name="ui_55c2b94b90dc" formatted="false">"Задача обновлена"</string>
+    <string name="ui_113eb8196683" formatted="false">"Использовано действие текущего приложения"</string>
+    <string name="ui_b6e2ec29aebf" formatted="false">"Использованы выбранные источники и разрешённые воспоминания"</string>
+    <string name="ui_60d823be4292" formatted="false">"Выполнена работа с текущим экраном"</string>
+    <string name="ui_756689f36290" formatted="false">"Подготовка ответа"</string>
+    <string name="ui_3708b9b6571f" formatted="false">"Ответ готов"</string>
+    <string name="ui_0bb3d25e2978" formatted="false">"Ваш выбор получен"</string>
+    <string name="ui_1455ebb3baa9" formatted="false">"Действие не разрешено. Ничего не изменено."</string>
+    <string name="ui_b57a8874efe5" formatted="false">"Не удалось завершить действие. Проверьте его перед повторной попыткой."</string>
+    <string name="ui_813aeb18abd0" formatted="false">"Остановлено, чтобы не выйти за ограничения запроса"</string>
 </resources>

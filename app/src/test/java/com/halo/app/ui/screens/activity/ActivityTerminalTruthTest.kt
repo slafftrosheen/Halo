@@ -24,14 +24,14 @@ class ActivityTerminalTruthTest {
         assertEquals("Stopped", activityStatusLabel(story))
         assertEquals(AgentRunState.COMPLETED, source.state)
         assertTrue(story.summary.contains("Stopped safely"))
-        assertFalse(story.planProgress.orEmpty().contains("Waiting for approval"))
+        assertEquals(false, story.typedPlanProgress?.waiting)
         assertNull(story.reviewRunId)
     }
     @Test fun cancelledAndInterruptedKeepTheirOutcomeAndNoLiveWaitingSuffix() {
         listOf(AgentRunState.CANCELLED to "Stopped", AgentRunState.INTERRUPTED to "Interrupted").forEach { (state, label) ->
             val story = run(state, listOf(completed, pending)).toStory()
             assertEquals(label, activityStatusLabel(story))
-            assertFalse(story.planProgress.orEmpty().contains("Waiting for approval"))
+            assertEquals(false, story.typedPlanProgress?.waiting)
             assertFalse(story.summary.contains("Waiting for your answer"))
         }
     }
@@ -39,6 +39,7 @@ class ActivityTerminalTruthTest {
         val waiting = run(AgentRunState.WAITING_FOR_CLARIFICATION, listOf(completed, pending)).toStory()
         assertEquals("Needs your review", activityStatusLabel(waiting))
         assertEquals("run", waiting.reviewRunId)
+        assertEquals(true, waiting.typedPlanProgress?.waiting)
         assertEquals("Completed", activityStatusLabel(run(AgentRunState.COMPLETED, listOf(completed)).toStory()))
     }
     @Test fun unknownDispatchKeepsUnknownPrecedenceOverGuardStop() {

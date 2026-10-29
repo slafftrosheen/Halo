@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4204) {
+    buildMap(4232) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -17,6 +17,7 @@ internal val uiCatalogue: Map<String, Int> by lazy {
         putAll(uiCataloguePart11())
         putAll(uiCataloguePart12())
         putAll(uiCataloguePart13())
+        putAll(uiCataloguePart14())
         putAll(uiCatalogueAliases())
     }
 }
@@ -4248,6 +4249,37 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Not quite. This card goes back to the start of the ladder." to R.string.ui_09419ac42d0d,
     "Answers need setup. Choose Set up answers below." to R.string.ui_b8785b2ff8e5,
     "Your message wasn’t accepted. You can try again." to R.string.ui_f4f93535ef23,
+    "Actions completed: %1\$d of %2\$d" to R.string.ui_9ea313898ed1,
+    "%1\$d / %2\$d steps complete" to R.string.ui_ba748307c008,
+    "Waiting for approval" to R.string.ui_10c5739b95bd,
+    "Yesterday" to R.string.ui_566181254b29,
+    "%1\$d days ago" to R.string.ui_6ed40edc78ca,
+    "Looked at your sources" to R.string.ui_818d1b332c05,
+    "Made a plan" to R.string.ui_9e11f505d427,
+    "Prepared an action" to R.string.ui_9e43e23deae9,
+    "Started an action" to R.string.ui_965afdf98607,
+    "Action result" to R.string.ui_23703c2aad12,
+    "Could not complete an action" to R.string.ui_48be5b1bbbd2,
+    "Asked you first" to R.string.ui_dcc807950ba8,
+    "Received your choice" to R.string.ui_590495f7d2dd,
+)
+
+private fun uiCataloguePart14(): Map<String, Int> = mapOf(
+    "Thought about your request" to R.string.ui_c996086ea87d,
+    "Prepared an answer" to R.string.ui_31d3724c36ca,
+    "Saved your answer" to R.string.ui_0d207e7c0c38,
+    "Worked with your screen" to R.string.ui_f3c50015b052,
+    "Used an app action" to R.string.ui_8b72b7037340,
+    "Updated your task" to R.string.ui_55c2b94b90dc,
+    "Used an action in the current app" to R.string.ui_113eb8196683,
+    "Used your selected sources and approved memories" to R.string.ui_b6e2ec29aebf,
+    "Worked with the current screen" to R.string.ui_60d823be4292,
+    "Preparing your answer" to R.string.ui_756689f36290,
+    "Your answer is ready" to R.string.ui_3708b9b6571f,
+    "Your choice was received" to R.string.ui_0bb3d25e2978,
+    "This action was not allowed. Nothing was changed." to R.string.ui_1455ebb3baa9,
+    "This action could not finish. Review it before trying again." to R.string.ui_b57a8874efe5,
+    "Stopped to keep your request within its limits" to R.string.ui_813aeb18abd0,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

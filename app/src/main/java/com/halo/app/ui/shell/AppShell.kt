@@ -440,11 +440,8 @@ fun AppShell(
                     actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateSafely,
                     attentionCount = if (kidsMode) 0 else inbox.items.count { it.active } + activity.events.filter { it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.mapNotNull { it.reviewRunId }.distinct().size,
                     utility = {
-                        if (currentRoute?.startsWith("activity") == true || currentRoute == "notifications") Row {
-                            TextButton(onClick = { navigateSafely("activity") }) { Text(uiText("Activities")) }
-                            TextButton(onClick = { navigateSafely("notifications") }) { Text(uiText("Notifications")) }
-                            TextButton(onClick = { navController.popBackStack() }) { Text(uiText("Close")) }
-                        }
+                        if (currentRoute?.startsWith("activity") == true || currentRoute == "notifications")
+                            BellSubviewControls(currentRoute, ::navigateSafely, { navController.popBackStack() })
                         utilityBand.value?.takeIf { pageOwnerFilter(it.owner) }?.let { com.halo.app.ui.presence.RenderShellUtilityBand(it) }
                     }, orb = { zoneOrbSize ->
                 val scopedOrb = orbOverride.value.takeIf { kidsMode && currentRoute == "home" }

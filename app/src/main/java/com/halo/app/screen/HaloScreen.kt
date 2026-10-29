@@ -101,6 +101,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     // Same Home/CognitiveSession projection; observing it cannot start a turn or recording.
     val assistant by ManualDependencyGraph.homeViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val screenResources = androidx.compose.ui.platform.LocalResources.current
     val environment = rememberScreenEnvironment()
     val maskSensitive = screenMasksSensitive(fullScreen, hidePrivate, environment)
     val canInteract = environment.resumed && environment.interactive && !environment.locked && !orbActive
@@ -321,7 +322,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 null, true, item.updatedAt, sourceTitle = true, sourceSummary = true, detailSummary = summary,
                 showFullTimestamp = true)
         } ?: ScreenDisplay("Research", "Save a sourced web search to keep it here.", "No saved research yet", null, true)
-        "tasks" -> ScreenDisplay("Needs attention", daily.primary?.title ?: "No tasks to catch up on",
+        "tasks" -> ScreenDisplay("Needs attention", daily.primary?.let { ScreenSummaryCopy.dailyTitle(it, screenResources) } ?: "No tasks to catch up on",
             if (daily.items.isEmpty()) "No pending items" else "Updates: %1\$d", daily.primary?.action?.let {
                 com.halo.app.ui.shell.dailyOwnerRoute(it)
             } ?: "activity", true,
@@ -381,7 +382,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
                 else null
             if (item == null) ScreenDisplay("Routine results", "A finished routine will update this card.", "Waiting for a result", "automation", true)
-            else ScreenDisplay(item.title, item.summary.orEmpty(),
+            else ScreenDisplay(item.title, ScreenSummaryCopy.summary(item, screenResources),
                 screenItemStateLabel(item, now),
                 item.sourceId?.takeIf { item.sourceRevision != null }?.let {
                     "automation?routineId=${android.net.Uri.encode(it)}"

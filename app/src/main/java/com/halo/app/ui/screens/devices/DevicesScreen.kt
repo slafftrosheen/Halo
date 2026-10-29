@@ -136,6 +136,7 @@ data class GenericDeviceUiState(
     val sessionState: com.halo.sdk.runtime.embodiment.SessionState? = null,
     val mediaPhotoCount: Int? = null,
     val hasLiveGlasses: Boolean = false,
+    val lastSeenElapsedMs: Long? = null,
 )
 
 data class DevicesUiState(
@@ -293,6 +294,9 @@ class DevicesViewModel(
                             driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown"
                         } else record.firmwareVersion ?: "Unknown",
                         lastSeen = if (isConnected) "Now" else if (record.lastSeenMs > 0L) "Last seen ${formatLastSeen(record.lastSeenMs)}" else "Never",
+                        lastSeenElapsedMs = record.lastSeenMs.takeIf { it > 0L }?.let {
+                            (System.currentTimeMillis() - it).coerceAtLeast(0L)
+                        },
                         photoState = photoStates[record.identity.deviceId] ?: PhotoActionState.READY,
                         videoState = if (liveHeyCyan) driverState.videoRecordingState
                             else com.halo.drivers.heycyan.protocol.VideoRecordingState.UNKNOWN,
@@ -758,7 +762,7 @@ private fun DeviceCard(
             // The list is for identity and connection, not a second
             // diagnostics page. Detail owns firmware, all capabilities,
             // resource leases and the saved auto-connect switch.
-            val facts = deviceListSecondaryFacts(device)
+            val facts = deviceListSecondaryFacts(device, localizedDeviceSeenValue(device))
             if (facts.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(),
@@ -823,15 +827,15 @@ private fun DeviceCard(
  * Keep the Devices hub at the compact Round 2 hierarchy, while the matching
  * device detail page continues to expose diagnostics and preferences.
  */
-internal fun deviceListSecondaryFacts(device: GenericDeviceUiState): List<Pair<String,String>> =
+internal fun deviceListSecondaryFacts(device: GenericDeviceUiState, seenValue: String = device.lastSeen): List<Pair<String,String>> =
     if (device.isConnected) {
         listOfNotNull(
             device.battery.takeUnless { it == "Unknown" }?.let { "Battery" to it },
-            device.lastSeen.takeUnless { it == "Now" || it == "Never" }?.let { "Seen" to it },
+            device.lastSeen.takeUnless { it == "Now" || it == "Never" }?.let { "Seen" to seenValue },
         )
     } else {
         listOfNotNull(
-            device.lastSeen.takeUnless { it == "Never" }?.let { "Seen" to it },
+            device.lastSeen.takeUnless { it == "Never" }?.let { "Seen" to seenValue },
         )
     }
 

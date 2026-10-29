@@ -771,7 +771,8 @@ object ManualDependencyGraph {
                     com.halo.app.screen.ScreenContentType.SUMMARY, timestamp, timestamp, null,
                     com.halo.app.screen.ScreenItemState.READY, com.halo.app.screen.ScreenSensitivity.PRIVATE,
                     null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen),
-                    sourceRevision = routine.updatedAt.toString()))
+                    sourceRevision = routine.updatedAt.toString(),
+                    appSummary = com.halo.app.screen.ScreenAppSummary.RoutineActionsFinished(completed, routine.actions.size)))
             } else if (screenStore.items.value.any { it.id == key }) screenStore.markFailed(key, timestamp)
             else screenStore.publish(com.halo.app.screen.ScreenItem(key, com.halo.app.screen.ScreenSourceType.AUTOMATION,
                 routine.id.value, routine.name, "This routine needs attention. Open it to review what happened.",

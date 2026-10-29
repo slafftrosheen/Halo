@@ -201,7 +201,8 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
                                 if (title.isNotBlank() && url.startsWith("https://")) ScreenSourceLink(title, url) else null
                             }
                         }.take(8)
-                    }.orEmpty(), j.optString("sourceRevision").takeUnless { it.isBlank() || it == "null" }).also(::validateItem)
+                    }.orEmpty(), j.optString("sourceRevision").takeUnless { it.isBlank() || it == "null" },
+                    decodeAppSummary(j.optJSONObject("appSummary"))).also(::validateItem)
             }.getOrNull()
         }.asReversed().distinctBy { it.id }.asReversed()
     }.getOrDefault(emptyList())
@@ -224,9 +225,29 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         .put("expiresAt", expiresAt?.toString()).put("state", state.name).put("sensitivity", sensitivity.name)
         .put("attribution", attribution).put("availableActions", JSONArray().apply {
             availableActions.distinctBy { it.id }.forEach { put(it.id) }
-        }).put("sourceRevision", sourceRevision).put("sourceLinks", JSONArray().apply {
+        }).put("sourceRevision", sourceRevision).put("appSummary", encodeAppSummary(appSummary)).put("sourceLinks", JSONArray().apply {
             sourceLinks.take(8).forEach { link -> put(JSONObject().put("title", link.title.take(200)).put("url", link.url.take(2048))) }
         })
+
+    /** Optional metadata must never make a valid source item unreadable after an upgrade. */
+    private fun decodeAppSummary(value: JSONObject?): ScreenAppSummary? = runCatching {
+        if (value == null || value.opt("version") != 1 || value.optString("kind") != "ROUTINE_ACTIONS_FINISHED") return null
+        fun count(key: String): Int? = when (val number = value.opt(key)) {
+            is Int -> number
+            is Long -> number.takeIf { it in 0..Int.MAX_VALUE.toLong() }?.toInt()
+            else -> null
+        }
+        ScreenAppSummary.RoutineActionsFinished(count("completed") ?: return null, count("total") ?: return null)
+            .takeIf { it.valid }
+    }.getOrNull()
+
+    private fun encodeAppSummary(value: ScreenAppSummary?): JSONObject? = when (value) {
+        is ScreenAppSummary.RoutineActionsFinished -> value.takeIf { it.valid }?.let {
+            JSONObject().put("version", 1).put("kind", "ROUTINE_ACTIONS_FINISHED")
+                .put("completed", it.completed).put("total", it.total)
+        }
+        null -> null
+    }
 }
 
 object ScreenWidgets {

@@ -4187,4 +4187,32 @@
     <string name="ui_09419ac42d0d" formatted="false">"Nie całkiem. Ta karta wraca na początek drabiny powtórek."</string>
     <string name="ui_b8785b2ff8e5" formatted="false">"Odpowiedzi wymagają konfiguracji. Wybierz poniżej „Skonfiguruj odpowiedzi”."</string>
     <string name="ui_f4f93535ef23" formatted="false">"Wiadomość nie została przyjęta. Możesz spróbować ponownie."</string>
+    <string name="ui_9ea313898ed1" formatted="false">"Wykonane działania: %1$d z %2$d"</string>
+    <string name="ui_ba748307c008" formatted="false">"%1$d / %2$d kroków ukończono"</string>
+    <string name="ui_10c5739b95bd" formatted="false">"Oczekiwanie na zatwierdzenie"</string>
+    <string name="ui_566181254b29" formatted="false">"Wczoraj"</string>
+    <string name="ui_6ed40edc78ca" formatted="false">"%1$d dni temu"</string>
+    <string name="ui_818d1b332c05" formatted="false">"Przejrzano Twoje źródła"</string>
+    <string name="ui_9e11f505d427" formatted="false">"Utworzono plan"</string>
+    <string name="ui_9e43e23deae9" formatted="false">"Przygotowano działanie"</string>
+    <string name="ui_965afdf98607" formatted="false">"Rozpoczęto działanie"</string>
+    <string name="ui_23703c2aad12" formatted="false">"Wynik działania"</string>
+    <string name="ui_48be5b1bbbd2" formatted="false">"Nie udało się ukończyć działania"</string>
+    <string name="ui_dcc807950ba8" formatted="false">"Najpierw poproszono Cię o zgodę"</string>
+    <string name="ui_590495f7d2dd" formatted="false">"Otrzymano Twój wybór"</string>
+    <string name="ui_c996086ea87d" formatted="false">"Przeanalizowano Twoją prośbę"</string>
+    <string name="ui_31d3724c36ca" formatted="false">"Przygotowano odpowiedź"</string>
+    <string name="ui_0d207e7c0c38" formatted="false">"Zapisano odpowiedź"</string>
+    <string name="ui_f3c50015b052" formatted="false">"Wykonano działania na ekranie"</string>
+    <string name="ui_8b72b7037340" formatted="false">"Użyto działania aplikacji"</string>
+    <string name="ui_55c2b94b90dc" formatted="false">"Zaktualizowano zadanie"</string>
+    <string name="ui_113eb8196683" formatted="false">"Użyto działania w bieżącej aplikacji"</string>
+    <string name="ui_b6e2ec29aebf" formatted="false">"Użyto wybranych źródeł i zatwierdzonych wspomnień"</string>
+    <string name="ui_60d823be4292" formatted="false">"Wykonano działania na bieżącym ekranie"</string>
+    <string name="ui_756689f36290" formatted="false">"Przygotowywanie odpowiedzi"</string>
+    <string name="ui_3708b9b6571f" formatted="false">"Odpowiedź jest gotowa"</string>
+    <string name="ui_0bb3d25e2978" formatted="false">"Otrzymano Twój wybór"</string>
+    <string name="ui_1455ebb3baa9" formatted="false">"To działanie nie było dozwolone. Nic nie zmieniono."</string>
+    <string name="ui_b57a8874efe5" formatted="false">"Nie udało się ukończyć działania. Sprawdź je przed ponowną próbą."</string>
+    <string name="ui_813aeb18abd0" formatted="false">"Zatrzymano, aby nie przekroczyć limitów prośby"</string>
 </resources>
