@@ -55,7 +55,8 @@ internal fun StudioDocumentPreview(service: StudioService, document: StudioDocum
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { failed = true }
         }
-        DisposableEffect(bitmap) { onDispose { bitmap?.takeUnless { it.isRecycled }?.recycle() } }
+        // Published pixels may remain in Compose/Android display lists after disposal.
+        // Let their final renderer references govern collection; never recycle them here.
         Box(modifier.testTag("studio-preview"), contentAlignment = Alignment.Center) {
             bitmap?.let { InspectableImage(it, stringResource(R.string.studio_title), Modifier.fillMaxSize()) }
                 ?: if (failed) Text(stringResource(R.string.studio_preview_error), Modifier.padding(16.dp))

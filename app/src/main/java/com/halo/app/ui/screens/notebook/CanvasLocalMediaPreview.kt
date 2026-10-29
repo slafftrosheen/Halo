@@ -37,7 +37,7 @@ internal fun CanvasLocalFileThumbnail(file: WorkspaceFile, modifier: Modifier = 
         finally { loading = false }
     }
 
-    DisposableEffect(preview) { onDispose { preview?.recycle() } }
+    // Published preview pixels must outlive any retained Android display list.
     if (preview == null) {
         Box(modifier, contentAlignment = androidx.compose.ui.Alignment.Center) {
             if (loading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)

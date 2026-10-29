@@ -111,7 +111,7 @@ internal fun CanvasSourceInkDialog(
     } }
     val currentPage = rendered?.takeIf { it.page == page }
     val displayedBitmap = rendered?.bitmap
-    DisposableEffect(displayedBitmap) { onDispose { displayedBitmap?.recycle() } }
+    // Published pixels are collected only after retained rendering references end.
     val selectionCallback by rememberUpdatedState(onSelectionChanged)
     LaunchedEffect(file.objectId.value, page) {
         selectionCallback(null)
@@ -199,7 +199,7 @@ internal fun CanvasAnnotatedFilePreview(file: WorkspaceFile, encoded: String, mo
         finally { loading = false }
     } }
     val previewBitmap = rendered?.bitmap
-    DisposableEffect(previewBitmap) { onDispose { previewBitmap?.takeUnless { it.isRecycled }?.recycle() } }
+    // Published pixels are collected only after retained rendering references end.
     LaunchedEffect(rendered) { rendered?.let { onPageCount(it.count); onAspectRatio(it.bitmap.width.toFloat() / it.bitmap.height) } }
     val strokes = remember(encoded, page) { CanvasFileMarkupCodec.decode(encoded).pages[page].orEmpty() }
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {

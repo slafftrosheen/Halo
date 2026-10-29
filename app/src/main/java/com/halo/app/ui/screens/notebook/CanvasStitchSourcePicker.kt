@@ -106,7 +106,7 @@ private fun CanvasStitchSourceThumbnail(source: CanvasStitchSource) {
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { value = null }
     }
-    DisposableEffect(bitmap) { onDispose { bitmap?.recycle() } }
+    // Published preview pixels must outlive any retained Android display list.
     if (bitmap != null) {
         Image(bitmap!!.asImageBitmap(), contentDescription = null,
             modifier = Modifier.size(52.dp), contentScale = ContentScale.Crop)

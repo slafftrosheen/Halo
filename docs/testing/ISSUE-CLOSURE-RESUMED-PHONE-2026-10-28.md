@@ -1,5 +1,7 @@
 # Resumed physical acceptance — 2026-10-28
 
+Latest continuation: [non-voice qualification and preview/Study fixes, 2026-10-29](ISSUE-CLOSURE-NONVOICE-2026-10-29.md). The historical results below retain their original binary and evidence boundaries.
+
 Status: **IN_PROGRESS**. The owner resumed phone testing with “u have the phone continue to close all pending verif issues.” The earlier phone deferral no longer applies. Open issue inventory was refreshed: 55–62 remain open. No issue is closed by this intermediate checkpoint.
 
 ## Source, installation and restoration

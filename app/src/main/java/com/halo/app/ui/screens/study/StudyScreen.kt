@@ -314,7 +314,14 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                             Text(uiText("Restart updated lesson"))
                         }
                     }
-                    OutlinedButton(viewModel::createPracticeCards, enabled = !state.isGenerating && state.sources.isNotEmpty()) { StudyActionLabel(HaloGlyph.MEMORY, "Create practice cards") }
+                    OutlinedButton(onClick = {
+                        // Generation progress, refusal and draft review belong to the lesson.
+                        // Keep the modal from covering the result of this action.
+                        showDetails = false
+                        viewModel.createPracticeCards()
+                    }, enabled = !state.isGenerating && state.sources.isNotEmpty()) {
+                        StudyActionLabel(HaloGlyph.MEMORY, "Create practice cards")
+                    }
                 }
                 "Languages" -> state.session?.languages?.let { languages ->
                     var assignment by remember(languages) { mutableStateOf(languages.assignmentLanguage.orEmpty()) }

@@ -41,7 +41,7 @@ internal fun CanvasLocalImageToolsDialog(
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { previewFailed = true }
     }
-    DisposableEffect(bitmap) { onDispose { bitmap?.recycle() } }
+    // Published preview pixels must outlive any retained Android display list.
     WorkspaceToolDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(uiText("Image tools")) },

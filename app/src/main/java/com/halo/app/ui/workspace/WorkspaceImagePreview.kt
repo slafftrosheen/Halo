@@ -86,7 +86,8 @@ private fun ImageSourcePreview(key: Any, label: String, modifier: Modifier, onOp
         value = ImagePreviewState(bitmap, loading = false)
     } }
     LaunchedEffect(state.bitmap) { state.bitmap?.let { onAspectRatio(it.width.toFloat() / it.height) } }
-    DisposableEffect(state.bitmap) { val owned = state.bitmap; onDispose { owned?.takeUnless { it.isRecycled }?.recycle() } }
+    // Published pixels are collected after the last Compose/display-list reference.
+    // Only unpublished/cancelled decoder buffers above are explicitly recycled.
     Surface(modifier, shape = HaloShapes.control, color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             val bitmap = state.bitmap

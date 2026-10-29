@@ -1,0 +1,238 @@
+{
+  "baselineCommit": "96f99dfaf5456b758335ef0ec246fc8a45db866f",
+  "sourceDirtyAtBuild": true,
+  "hostTests": [
+    {
+      "class": "com.halo.app.backup.StudioArchiveTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.studio.StudioDocumentTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.studio.StudioMigrationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.studio.StudioProjectRepositoryTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.studio.StudioUiRequestsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.workspace.WorkspaceAssistantWorkflowsTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.data.workspace.WorkspaceContinuityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.screens.notebook.CanvasAnnotatedPreviewTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioAiProvenanceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioInkSessionTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioPreviewLifetimeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.workspace.WorkspaceImagePreviewTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.halo.app.ui.workspace.WorkspacePreviewConcurrencyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "appSha256": "08b3a82e45cfcfc556c8a5e20336d0321d34c9b83336b8417fc159264a41e88f",
+  "testSha256": "6931becf6947b4e7709692ac3f37c6e9d57c24937162d99f7616454216d4bdc4",
+  "capturedUtc": "2026-10-29T09:47:04.732003+00:00",
+  "appInstalledAndChecksumVerified": true,
+  "sourceWitness": {
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasImageStitchDialog.kt": {
+      "sha256": "4f84b698643e083f4d4e3c1f85f3ffe393fc2ab54a1db4e536384f4c8693ece0",
+      "gitBlob": "f8b0dbf8cafcc357e200afab49c7a89168832c24"
+    },
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasLocalImageToolsDialog.kt": {
+      "sha256": "0afee5c79131f31098995c4af76e723473155097ffd23b59c9cbf9f258b1d2af",
+      "gitBlob": "ba5459a9b9ba1c1392c52ec7211da8faf679dd33"
+    },
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasLocalMediaPreview.kt": {
+      "sha256": "4e00ce25042c6b4f0d7cf356ca4289b8af9337975fdbe25e590c94a84d21738a",
+      "gitBlob": "13f5bf146947cefba16a77cfb976ef30b8937b5d"
+    },
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasPdfPageDialog.kt": {
+      "sha256": "abec60f4a703d4f605ce43ac5fcf09ab45f323c59073597f5033e3cdc7056220",
+      "gitBlob": "6ed9e59bd8908d573e3ae075f71876525f753e24"
+    },
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasSourceInkDialog.kt": {
+      "sha256": "209ddedfe478f399feaa48d683cb97dc2a229729757d78c7efc3a58df6340771",
+      "gitBlob": "e6172e3b67fd11ed74aa031982ff26d47aa27694"
+    },
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasStitchSourcePicker.kt": {
+      "sha256": "81c17802059d3ee124923ec1b0a3e992f20e4c0b5ba12466bfc16dbf1cd51720",
+      "gitBlob": "d06141c1b87535351278d6fe7cf33b0dfc48d797"
+    },
+    "app/src/main/java/com/halo/app/ui/screens/study/StudyScreen.kt": {
+      "sha256": "fd269e29c47e72efd5e2bc5745f4ed4d2529c1d1066e5a949e95b9964824438d",
+      "gitBlob": "5a28b6ce0d55af5f238a09fd7524350ebf397a48"
+    },
+    "app/src/main/java/com/halo/app/ui/workspace/StudioInkDialog.kt": {
+      "sha256": "d44903ce44c12f0f561036067df9eacf40c91cd2fc158bc5f8e78f2a58e475f5",
+      "gitBlob": "ad15da0ef93f713a4fd7a24f2ba6c70d7c32f9e2"
+    },
+    "app/src/main/java/com/halo/app/ui/workspace/StudioPanels.kt": {
+      "sha256": "35cf38cc0178f2abcdbd6aebece8cce5d7b92d21d2d4f2cf501749b0f280ca1b",
+      "gitBlob": "76ff0819c19e215d2f5f1c6d9be160d6a54f5213"
+    },
+    "app/src/main/java/com/halo/app/ui/workspace/WorkspaceImagePreview.kt": {
+      "sha256": "e78df4aaa07604aae788805529d04f286045bebed60df4af13b4c0a9741d3d0b",
+      "gitBlob": "fb4be987763be6a999b78fb1d75be289889277ef"
+    },
+    "app/src/androidTest/java/com/halo/app/ui/shell/MainActivityStudioPreviewPhysicalTest.kt": {
+      "sha256": "3953bfcd5b4c96b3d09b74bcd1616859f4ebdc71b3a1c423dd0d2ecbaa282f0c",
+      "gitBlob": "e6961c389efabf3bc941f20b6b4b72d9ce36a3d5"
+    },
+    "app/src/test/java/com/halo/app/ui/workspace/StudioPreviewLifetimeTest.kt": {
+      "sha256": "22af925c33d7606e87ead23b3932801df99a2b86f25c1d81b96636f2b8fa1b5c",
+      "gitBlob": "7c130f59860ad1eb281d73c4d7e6094adaff2c8e"
+    }
+  },
+  "nativeStudioPreview": {
+    "tests": 1,
+    "failures": 0,
+    "ignored": 0,
+    "seconds": 32.005
+  },
+  "studyPracticeFeedback": "PASS_LOCAL_REFUSAL_VISIBLE_WITHOUT_EXTRA_DISMISS",
+  "studioTouchJourney": {
+    "status": "PASS_SCOPED",
+    "projectId": "44079031-958d-479a-ab69-95f9d45a95f1",
+    "savedRevision": 5,
+    "sourceFileId": "c7ab8b15-aba0-4f04-8952-a0fe92ce5b3c",
+    "sourceSha256": "cb2c8051b589f086ed959160c8b1acc1bf5be6c459228a177e789c5954574f15",
+    "outputFileId": "dade3c21-af3a-4f9c-95f6-951647d3cb14",
+    "outputSha256": "a2028c4a2bd7e95ca87d85bc20f4a4f762d1f3aacec528feeac2a80d470f2d91",
+    "outputDimensions": [
+      160,
+      160
+    ],
+    "outputBytes": 2562,
+    "projectRestartReopen": "PASS"
+  },
+  "localModelDiagnostics": {
+    "appSha256": "46e9b75a7c420cbf4097c0bc859adc9f1363a585ba0bb2dbd0552e64ca3d59b6",
+    "modelId": "smollm2-360m-instruct",
+    "sha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
+    "metadata": "PASS",
+    "residentCpuEndurance": "FAILED_SEMANTIC_COMPLETION",
+    "requestedTurns": 10,
+    "attemptedTurns": 2,
+    "successfulTurns": 1,
+    "sampledPeakPssKiB": 1626335,
+    "roleSelectionsChanged": false
+  },
+  "voice": "DEFERRED_BY_OWNER",
+  "closure": "KEEP_OPEN",
+  "openIssues": [
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62
+  ]
+}

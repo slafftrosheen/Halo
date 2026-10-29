@@ -35,7 +35,7 @@ internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
         catch (_: Exception) { previewFailed = true }
     }
     DisposableEffect(session) { onDispose { selectionJob?.cancel(); service.detachInkSelectionOwner(session.ownerToken) } }
-    DisposableEffect(background) { onDispose { background?.takeUnless { it.isRecycled }?.recycle() } }
+    // The renderer may still hold published pixels after this composition leaves.
     StudioAlertDialog(onDismissRequest = onDismiss, title = { Text(layer.name) }, text = {
         Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.studio_ink_help), style = MaterialTheme.typography.bodySmall)

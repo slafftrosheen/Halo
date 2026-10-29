@@ -45,7 +45,7 @@ internal fun CanvasImageStitchDialog(
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { previewError = true }
     }
-    DisposableEffect(preview) { onDispose { preview?.recycle() } }
+    // Published preview pixels must outlive any retained Android display list.
     WorkspaceToolDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(uiText("Combine images")) },
