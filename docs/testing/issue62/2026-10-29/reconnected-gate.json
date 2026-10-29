@@ -1,0 +1,23 @@
+{
+  "capturedUtc": "2026-10-29T08:01:48.985390+00:00",
+  "productionCommit": "a3513d4eff51b6304c15053286bf937d87a59e7d",
+  "appSha256": "46e9b75a7c420cbf4097c0bc859adc9f1363a585ba0bb2dbd0552e64ca3d59b6",
+  "appInstalledAndChecksumVerified": true,
+  "testSha256": "9851ed50ad08b294862493949fdb4cd0d64759bc83e29f1bf86b6e978e02767b",
+  "nativeComposerGate": {
+    "tests": 2,
+    "failures": 0,
+    "ignored": 0,
+    "seconds": 70.501
+  },
+  "rawAdbBurst": "FAILED_INPUT_DELIVERY_ANDROID_STALE_EVENTS",
+  "touchCanvasExport": {
+    "status": "PASS_SCOPED",
+    "noteId": "976cc0b3-febc-4bde-a315-b2699fbdeb9c",
+    "revision": 1,
+    "sourceId": "1e543729-b284-4d79-8226-1f20f4ccc618"
+  },
+  "voice": "DEFERRED_BY_OWNER",
+  "closure": "KEEP_OPEN",
+  "testSourceSha256": "5f1022ab6c35e5330f6dea68164c36ac095b011efa8ac6af3e2068c9fdb6d1ed"
+}

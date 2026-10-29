@@ -2,7 +2,7 @@
 
 **Resumed by the owner later on 2026-10-28.** Automatic rotation has been restored to 1 and the final APK has been installed and checksum-verified. The following text preserves the earlier handoff; current results and remaining acceptance are tracked in [the resumed physical ledger](ISSUE-CLOSURE-RESUMED-PHONE-2026-10-28.md).
 
-The device disconnected again during the resumed session. The newer combined runtime/composer fix is built but **not installed**; use the latest artifact hashes and next-step list at the end of that resumed ledger, rather than the historical installation instructions below.
+**Reconnected on 2026-10-29:** the combined runtime/composer app `46e9b75a…` is now installed and independently checksum-verified. Native composer and touch-export results are in the resumed ledger. The owner has deferred **voice tests only** with “Voice testing later”; independent automated device checks continue. The instructions below preserve the historical handoff and are not current installation or settings instructions.
 
 The owner explicitly answered **“Phone tests later”** after ADB disconnected. Do not poll for reconnection, request speech participation, or substitute fixtures for physical acceptance during that deferral. Continue only when the owner resumes device testing. See [the evidence ledger](ISSUE-CLOSURE-ACCEPTANCE-2026-10-28.md) for completed checks and artifact identities.
 

@@ -2,6 +2,8 @@ package com.halo.app.ui.shell
 
 import android.content.Intent
 import android.os.SystemClock
+import android.view.KeyCharacterMap
+import android.view.KeyEvent
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -52,13 +54,32 @@ class MainActivityComposerPhysicalTest {
         assertEquals(newer, owner.current(id)?.text)
     }
 
-    @Test fun hardwareKeyBurstPreservesTheWholeLiteralInTheRealShell() = withQaConversation { id ->
+    @Test fun freshHardwareKeysPreserveTheWholeLiteralInTheRealShell() = withQaConversation { id ->
         val literal = "HALO-QA-KEYS-" + (0 until 80).joinToString("-") { it.toString().padStart(3, '0') }
         val field = device.findObject(fieldSelector)
         field.click()
-        device.executeShellCommand("input text $literal")
-        eventually("Hardware key burst was shortened in the visible composer") {
-            device.findObject(fieldSelector)?.text == literal
+        // `input text` timestamps the entire array up front. On a busy debug device
+        // Android rejects the tail as stale before the app can receive it. Give
+        // every actual injected event a fresh timestamp and assert admission.
+        val events = requireNotNull(KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
+            .getEvents(literal.toCharArray()))
+        events.forEachIndexed { index, event ->
+            val now = SystemClock.uptimeMillis()
+            val fresh = KeyEvent(now, now, event.action, event.keyCode, event.repeatCount,
+                event.metaState, event.deviceId, event.scanCode, event.flags, event.source)
+            assertTrue("Android rejected test key event $index",
+                instrumentation.uiAutomation.injectInputEvent(fresh, true))
+        }
+        var observed: String? = null
+        try {
+            eventually("Admitted hardware keys did not reach the visible composer") {
+                observed = device.findObject(fieldSelector)?.text
+                observed == literal
+            }
+        } catch (failure: AssertionError) {
+            // Only this test-owned synthetic literal is eligible for diagnostic output.
+            throw AssertionError("${failure.message}; expected=$literal; visible=$observed; " +
+                "canonical=${ManualDependencyGraph.composerDraftStore.current(id)?.text}", failure)
         }
         assertEquals(literal, ManualDependencyGraph.composerDraftStore.current(id)?.text)
     }

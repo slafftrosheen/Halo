@@ -100,3 +100,38 @@ The physical test's observation predicates were also tightened so a missing fiel
 7. Finish remaining active-capture/interrupt/Mini continuity, supported-language and accessibility/responsive checks, and installed offline artifact qualification where required. Retain explicit unavailable hardware/provider limits and genuine human speech boundaries.
 
 **Issues 55–62 remain open.** The reconnection request is pending; no renewed user deferral or permission to waive acceptance has been received. Publishing these validated fixes does not establish full issue completion.
+
+## Reconnected qualification — 2026-10-29
+
+The owner reconnected the same authorized Redmi. `main` was refreshed and remains at `a3513d4eff51b6304c15053286bf937d87a59e7d`, with zero divergence. Replacement installation of the prepared app `46e9b75a…` and test APK `8f920832…` succeeded; installed `base.apk` independently matches the full app SHA-256 in the table above. No app rebuild was required. Current density 440 and font scale 1.0 were read without changing them; automatic rotation remains available.
+
+The first two-case invocation could not observe Home because Android's notification shade was open. After collapsing that system overlay and observing the actual Home field, the same installed tests ran in 66.601 seconds: **one PASS, one FAIL**. `canonicalClearUpdatesTheRealComposerAndCannotReplaceANewerEdit` passed, including full accessibility/IME literal input, canonical guarded clear reaching the visible field, and protection of a newer unsent edit. `hardwareKeyBurstPreservesTheWholeLiteralInTheRealShell` failed its exact visible-literal assertion. This is not a complete composer PASS. A single-case diagnostic reproduction also failed in 49.409 seconds; concurrent external UIAutomator dumps were killed and supplied no usable text observation. Further evidence must come from the test's own accessibility connection.
+
+The initially suspected landscape Library clipping was checked through its actual scrollable container: a UI-tree-derived swipe revealed the QA board and other saved Canvas cards. The top controls consume initial space but the list is reachable; do not label this as an inaccessible-list defect or change the layout on that premise.
+
+The owner explicitly answered **“Voice testing later.”** Real speech/export/heard-response acceptance is deferred again. Continue independent native/source/UI qualification without requesting more speech or treating that deferral as a waiver of issue acceptance. Exact logs and installation manifest remain outside Git under `closure-pass/reconnected-*`; unrelated notification content is not eligible for publication.
+
+### Actual touch export — PASS for local persistence, separate from assistant approval
+
+Actual UI path on app `46e9b75a…`: Workspace → Canvas filter → scroll to `HALO-QA-20261028-BOARD` → open board → Tools → scroll sheet → Export to note. The editor opened the saved note and displayed its on-phone saved status. Canonical readback identifies new ACTIVE note `976cc0b3-febc-4bde-a315-b2699fbdeb9c`, revision 1, titled `HALO-QA-20261028-BOARD`. Its exact body is:
+
+```text
+# HALO-QA-20261028-BOARD
+
+Reference to note: 1e543729-b284-4d79-8226-1f20f4ccc618
+
+## HALO-QA-20261028-SOURCE
+
+Explicit note reference: Amber leaves gather beside a quiet river. The river flows north.
+Source: 1e543729-b284-4d79-8226-1f20f4ccc618
+```
+
+The original source `1e543729-b284-4d79-8226-1f20f4ccc618` remains ACTIVE, revision 1, with its unchanged river/leaves body. This advances the real note → Canvas → exported-note chain for the touch path; Study, assistant export, delayed human approval and cancellation/stale/interrupted integration acceptance remain separate. Evidence: `reconnected-canvas-touch-export` capture and `reconnected-touch-export-readback.json` outside Git.
+
+### Composer input diagnosis and final native gate — 2/2 PASS
+
+Test-owned diagnostic readback found the same 72-character prefix in the visible field and canonical draft, out of the requested 332 characters. Scoped Android logs from that invocation show repeated `InputDispatcher: Dropped event because it is stale` and failed injection from the shell input process. Those raw `input text` events shared their original timestamp. This establishes an automation input-delivery failure; it does not establish that Halo dropped delivered characters. The failing raw-burst result remains recorded above.
+
+The hardware test now generates the same complete literal as actual keyboard events, timestamps each event immediately before injection, asserts Android's admission of every event, and verifies exact UI and canonical text. It does not replace the input using accessibility setText, mutate the owner to simulate typing, or relax the literal assertion. The prior accessibility/IME clear case remains separate. Test-only compile succeeded in 44 seconds; no production source changed, and the app APK remains byte-identical at `46e9b75a…`.
+
+Installed test APK SHA-256: `9851ed50ad08b294862493949fdb4cd0d64759bc83e29f1bf86b6e978e02767b`. Final physical invocation: **2 tests, 0 failures, 0 ignored, 70.501 seconds**, `OK (2 tests)`. Cases: `canonicalClearUpdatesTheRealComposerAndCannotReplaceANewerEdit` and `freshHardwareKeysPreserveTheWholeLiteralInTheRealShell`. This qualifies those two native composer boundaries; it is not a full human-typing, input-latency or whole-app acceptance claim. Local evidence: `reconnected-composer-fresh-keys-20261029.log` and scoped `reconnected-keyburst-stale-input-evidence.txt`.
