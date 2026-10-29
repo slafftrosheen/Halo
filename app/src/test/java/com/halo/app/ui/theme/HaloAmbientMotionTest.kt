@@ -50,25 +50,25 @@ class HaloAmbientMotionTest {
             runCurrent(); advanceTimeBy(500); runCurrent()
             assertEquals(0f, phase.floatValue, .00001f)
             owner.registry.currentState = Lifecycle.State.RESUMED
-            runCurrent(); advanceTimeBy(499); runCurrent()
-            assertEquals("No decorative update before half a second", 0f, phase.floatValue, .00001f)
+            runCurrent(); advanceTimeBy(999); runCurrent()
+            assertEquals("No decorative update before one second", 0f, phase.floatValue, .00001f)
             advanceTimeBy(1); runCurrent()
-            assertEquals(.015f, phase.floatValue, .00001f)
-            advanceTimeBy(500); runCurrent()
             assertEquals("Preserve the nominal .03 radians per second", .03f, phase.floatValue, .00001f)
+            advanceTimeBy(1_000); runCurrent()
+            assertEquals(.06f, phase.floatValue, .00001f)
             // A partial interval before pausing must not cause an early catch-up tick.
             advanceTimeBy(250); runCurrent()
             owner.registry.currentState = Lifecycle.State.STARTED
             runCurrent(); advanceTimeBy(1_000); runCurrent()
-            assertEquals(.03f, phase.floatValue, .00001f)
+            assertEquals(.06f, phase.floatValue, .00001f)
             owner.registry.currentState = Lifecycle.State.RESUMED
-            runCurrent(); advanceTimeBy(499); runCurrent()
-            assertEquals("Resume preserves position without catching up hidden time", .03f, phase.floatValue, .00001f)
+            runCurrent(); advanceTimeBy(999); runCurrent()
+            assertEquals("Resume preserves position without catching up hidden time", .06f, phase.floatValue, .00001f)
             advanceTimeBy(1); runCurrent()
-            assertEquals(.045f, phase.floatValue, .00001f)
+            assertEquals(.09f, phase.floatValue, .00001f)
             owner.registry.currentState = Lifecycle.State.DESTROYED
             runCurrent(); advanceTimeBy(1_000); runCurrent()
-            assertEquals(.045f, phase.floatValue, .00001f)
+            assertEquals(.09f, phase.floatValue, .00001f)
             assertTrue(job.isCompleted)
         } finally {
             job.cancelAndJoin()

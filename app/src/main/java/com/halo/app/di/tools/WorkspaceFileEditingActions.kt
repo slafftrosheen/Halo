@@ -63,7 +63,7 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
             mapOf("noteId" to id, "revision" to revision, "page" to integer(1, 9999), "ink" to text(262144))),
         definition("halo_pdf_annotation_export_page_image", "Export an exact annotation-note page as a new PNG, retaining original PDF and vector annotation note. Raster output, not native PDF editing.",
             mapOf("noteId" to id, "revision" to revision, "page" to integer(1, 9999))),
-        definition("halo_file_attach_canvas", "Requires exact current canvasVersion from halo_workspace_canvases as well as source version. Add an exact active file/note version as a Canvas reference. Source remains authoritative in Workspace; this never shares it externally.",
+        definition("halo_file_attach_canvas", "Create a linked reference card on a Canvas board from an existing Workspace note or file. Source remains authoritative; this does not copy its text or share it externally. Requires exact current canvasVersion from halo_workspace_canvases as well as source version.",
             mapOf("canvasId" to id, "canvasVersion" to version, "objectId" to id, "version" to version))
     )
     private val names by lazy { definitions().map { it.name }.toSet() }

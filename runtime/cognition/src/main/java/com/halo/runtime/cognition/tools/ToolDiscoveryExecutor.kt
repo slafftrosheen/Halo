@@ -78,7 +78,8 @@ class ToolDiscoveryExecutor(
             append("count=").append(candidates.size).append('\n')
             append(discovery.describe(candidates)).append('\n')
             append(ToolExposureDirective.emit(expandable)).append('\n')
-            append("next=CALL_THE_ACTION_NOW")
+            append("next=USE_MATCHING_ACTION_OR_REFINE_SEARCH\n")
+            append("Use an action only if it satisfies the requested effect and relationship. Otherwise search again with those details; discovered matches are not proof that the requested work is complete.")
         }
 
         return ToolExecutionResult.Success(

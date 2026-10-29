@@ -29,7 +29,7 @@ import kotlin.math.sin
 
 /** Decorative, non-interactive Open Ring fragments. No session state or input handling.
  * Only retained motif-layer translations read phase; motif drawing and base stay static.
- * Two tiny position updates/second, paused outside RESUMED or under power/thermal limits.
+ * One tiny position update/second, paused outside RESUMED or under power/thermal limits.
  */
 @Composable
 fun HaloAmbientBackdrop(modifier: Modifier = Modifier, palette: HaloPalette = LocalHaloPalette.current,
@@ -127,8 +127,8 @@ internal fun haloAmbientDrift(phase: Float, width: Float, height: Float, motif: 
 internal suspend fun advanceHaloAmbientPhase(lifecycle: Lifecycle, moving: Boolean, phase: MutableFloatState) {
     if (moving) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
         while (true) {
-            delay(500)
-            phase.floatValue = (phase.floatValue + .015f) % (2f * Math.PI.toFloat())
+            delay(1_000)
+            phase.floatValue = (phase.floatValue + .03f) % (2f * Math.PI.toFloat())
         }
     }
 }

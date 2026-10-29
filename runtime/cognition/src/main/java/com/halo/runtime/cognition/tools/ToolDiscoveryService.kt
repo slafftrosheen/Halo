@@ -30,7 +30,9 @@ class ToolDiscoveryService(
         fun discoveryToolDefinition(summary: String = ""): ToolDefinition {
             val baseDesc = "Find the actions Halo can actually perform on this device and make them callable " +
                 "for this turn. Search by plain words such as \"alarm\", \"volume\", \"call Alice\" or \"settings\", " +
-                "or pass exact tool ids. Always call this before using an action whose schema you were not given."
+                "or pass exact tool ids. Include the intended operation and relationship, not only the destination. " +
+                "If matches do not satisfy the requested effect (such as a source reference versus copied text), " +
+                "refine the search instead of substituting another effect. Always call this before using an action whose schema you were not given."
             val fullDesc = if (summary.isNotBlank()) "$baseDesc\n\n$summary" else baseDesc
 
             return ToolDefinition(

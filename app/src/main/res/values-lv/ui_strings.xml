@@ -4180,4 +4180,9 @@
     <string name="ui_2af3c5c4794f" formatted="false">"Tiek izmantota tikai daļa avota (izlaistas %1$d no %2$d rakstzīmēm)."</string>
     <string name="ui_8df7512b27d9" formatted="false">"Darbība nosūtīta izpildei; pabeigšana nav apstiprināta."</string>
     <string name="ui_ed59ec34d99d" formatted="false">"Izmanto noklusējuma sarunu modeli"</string>
+    <string name="ui_0863000d7f0d" formatted="false">"Pareizi. Nākamā atkārtošana pēc %1$d d."</string>
+    <string name="ui_c7841310d72c" formatted="false">"Pareizi. Šī kartīte tagad ir atzīmēta kā apgūta."</string>
+    <string name="ui_10ef40de7208" formatted="false">"Atbilde ir pārbaudīta, bet atkārtošanas grafiku neizdevās atjaunināt"</string>
+    <string name="ui_6d9e8da7f644" formatted="false">"halo nevar automātiski pārbaudīt šo atbildi. Salīdzini abas atbildes un novērtē sevi."</string>
+    <string name="ui_09419ac42d0d" formatted="false">"Ne gluži. Šī kartīte atgriežas atkārtošanas kāpņu sākumā."</string>
 </resources>

@@ -4180,4 +4180,9 @@
     <string name="ui_2af3c5c4794f" formatted="false">"Используется только часть источника (пропущено %1$d из %2$d символов)."</string>
     <string name="ui_8df7512b27d9" formatted="false">"Действие передано на выполнение; завершение не подтверждено."</string>
     <string name="ui_ed59ec34d99d" formatted="false">"Используется модель разговоров по умолчанию"</string>
+    <string name="ui_0863000d7f0d" formatted="false">"Верно. Следующее повторение через %1$d дн."</string>
+    <string name="ui_c7841310d72c" formatted="false">"Верно. Эта карточка теперь отмечена как освоенная."</string>
+    <string name="ui_10ef40de7208" formatted="false">"Ответ проверен, но обновить расписание не удалось"</string>
+    <string name="ui_6d9e8da7f644" formatted="false">"halo не может проверить этот ответ автоматически. Сравните оба ответа и оцените себя."</string>
+    <string name="ui_09419ac42d0d" formatted="false">"Не совсем верно. Эта карточка возвращается к началу лестницы повторений."</string>
 </resources>

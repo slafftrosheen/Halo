@@ -108,6 +108,30 @@ class StudySourceRefreshStateTest {
             model.uiState.value.mastery.containsKey(card.id)
     }
 
+    @Test fun exactAnswerCarriesTypedReviewDaysWithoutChangingCanonicalFeedbackOrSavedSchedule() {
+        finishRead(0)
+        loaded()
+        val reviewStarted = System.currentTimeMillis()
+        commands.launch { model.setCardAnswer(card.id, card.answer); model.checkCardAnswer(card.id) }
+        await("checked answer must publish its typed review interval") {
+            model.uiState.value.cardResults[card.id] != null && card.id !in model.uiState.value.reviewing
+        }
+        val result = model.uiState.value.cardResults.getValue(card.id)
+        val saved = runBlocking { requireNotNull(repository.getPracticeItem(card.id)) }
+        val reviewFinished = System.currentTimeMillis()
+        val decision = StudyReviewPolicy().schedule(card, true, 0)
+        val recorded = runBlocking { repository.getReviewEvents(card.id).single() }
+        assertEquals(true, result.verdict)
+        assertEquals(decision.intervalDays, result.nextReviewIntervalDays)
+        assertEquals("Correct. Next review in ${decision.intervalDays} day(s).", result.message)
+        assertEquals(recorded.nextDueAtEpochMs, saved.dueAtEpochMs)
+        assertTrue(saved.dueAtEpochMs - decision.intervalDays * StudyMasteryModel.DAY_MS in reviewStarted..reviewFinished)
+        assertEquals(card.question, saved.question)
+        assertEquals(card.answer, saved.answer)
+        assertEquals(card.sourceObjectId, saved.sourceObjectId)
+        assertEquals(card.reviewCount + 1, saved.reviewCount)
+    }
+
     @Test fun lateResumeRefreshCannotRestoreLoadingOrOverwriteNewerPracticeMasteryAndLearnerDraft() {
         lateinit var refresh: Job
         commands.launch { refresh = model.refreshSources() }

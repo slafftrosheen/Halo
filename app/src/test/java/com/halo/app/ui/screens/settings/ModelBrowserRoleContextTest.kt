@@ -4,8 +4,13 @@ import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
@@ -39,12 +44,13 @@ class ModelBrowserRoleContextTest {
         val utility = mutableStateOf<ShellUtilityProjection?>(null)
         val language = AppLanguagePreferences(MemoryStorage(), "ru")
         var backs = 0
+        var referenceLayout: TextLayoutResult? = null
         compose.setContent {
             AppLanguageProvider(language) {
                 HaloTheme(darkTheme = false, fontScale = 2f) {
                     CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions,
                         LocalShellUtilityBand provides utility) {
-                        Column(Modifier.width(240.dp)) {
+                        Column(Modifier.width(240.dp).testTag("role-context-host")) {
                             val navigation = rememberNavController()
                             Box(Modifier.height(1.dp)) {
                                 NavHost(navigation, startDestination = "models") {
@@ -54,6 +60,10 @@ class ModelBrowserRoleContextTest {
                                 }
                             }
                             utility.value?.let { RenderShellUtilityBand(it) }
+                            // Same width/style without a relocated page: distinguish actual
+                            // clipped glyphs from paragraph-canvas metric rounding.
+                            Text("Модели · Действия и инструменты", Modifier.width(216.dp).clearAndSetSemantics {},
+                                style = MaterialTheme.typography.titleSmall, onTextLayout = { referenceLayout = it })
                         }
                     }
                 }
@@ -68,7 +78,35 @@ class ModelBrowserRoleContextTest {
         compose.onNodeWithText("Модели · Действия и инструменты")
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
         assertTrue(layouts.isNotEmpty())
-        assertFalse(layouts.single().hasVisualOverflow)
+        val layout = layouts.single()
+        val nodeBounds = compose.onNodeWithText("Модели · Действия и инструменты").fetchSemanticsNode().boundsInRoot
+        val parentBounds = compose.onNodeWithTag("role-context-host").fetchSemanticsNode().boundsInRoot
+        val control = requireNotNull(referenceLayout)
+        val diagnostic = "labelSize=${layout.size} constraints=${layout.layoutInput.constraints} " +
+            "paragraph=${layout.multiParagraph.width}x${layout.multiParagraph.height} " +
+            "overflow=${layout.didOverflowWidth}/${layout.didOverflowHeight} lines=${layout.lineCount} " +
+            "node=$nodeBounds parent=$parentBounds controlSize=${control.size} " +
+            "controlParagraph=${control.multiParagraph.width}x${control.multiParagraph.height} " +
+            "controlOverflow=${control.didOverflowWidth}/${control.didOverflowHeight} " +
+            (0 until layout.lineCount).joinToString { line ->
+                "line$line=[${layout.getLineLeft(line)},${layout.getLineRight(line)},${layout.getLineBottom(line)},end=${layout.getLineEnd(line, true)}]"
+            }
+        println(diagnostic)
+        assertTrue(diagnostic, layout.lineCount > 0)
+        // Complete glyph/line containment is the acceptance gate. A paragraph
+        // canvas flag may also overflow on the same unconstrained text control.
+        assertEquals(diagnostic, control.hasVisualOverflow, layout.hasVisualOverflow)
+        assertEquals(diagnostic, layout.size.width.toFloat(), nodeBounds.width, 1f)
+        assertEquals(diagnostic, layout.size.height.toFloat(), nodeBounds.height, 1f)
+        assertTrue(diagnostic, nodeBounds.left >= parentBounds.left && nodeBounds.right <= parentBounds.right)
+        assertTrue(diagnostic, nodeBounds.top >= parentBounds.top && nodeBounds.bottom <= parentBounds.bottom)
+        for (line in 0 until layout.lineCount) {
+            assertFalse(diagnostic, layout.isLineEllipsized(line))
+            assertTrue(diagnostic, layout.getLineLeft(line) >= -1f)
+            assertTrue(diagnostic, layout.getLineRight(line) <= layout.size.width + 1f)
+            assertTrue(diagnostic, layout.getLineBottom(line) <= layout.size.height + 1f)
+        }
+        assertEquals(diagnostic, layout.layoutInput.text.length, layout.getLineEnd(layout.lineCount - 1, true))
         compose.runOnIdle {
             val current = requireNotNull(actions.value)
             assertEquals(generic.owner.navigationEntryId, current.owner.navigationEntryId)

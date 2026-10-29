@@ -108,6 +108,8 @@ data class CardReviewResult(
     val message: String,
     val meaningComparison: String? = null,
     val meaningExecutionLabel: String? = null,
+    /** Transient host formatting metadata; the canonical message and saved schedule stay unchanged. */
+    val nextReviewIntervalDays: Int? = null,
 )
 
 data class StudyUiState(
@@ -1413,6 +1415,8 @@ class StudyViewModel(
                         verdict -> "Correct. Next review in ${outcome.decision.intervalDays} day(s)."
                         else -> "Not quite. This card goes back to the start of the ladder."
                     },
+                    nextReviewIntervalDays = if (verdict && outcome != null && !outcome.decision.mastered)
+                        outcome.decision.intervalDays else null,
                 )),
                 revealedAnswers = mutableUiState.value.revealedAnswers + itemId,
                 cardAnswers = mutableUiState.value.cardAnswers - itemId,

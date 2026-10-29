@@ -566,7 +566,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                             } else {
                                 result?.let { outcome ->
                                     CardMeaningFeedback(outcome)
-                                    Text(uiText(outcome.message), style = MaterialTheme.typography.bodyMedium,
+                                    Text(localizedCardReviewMessage(outcome), style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 if (!autoReviewed) {
@@ -1329,7 +1329,7 @@ private fun PracticeItemRow(
                     Spacer(Modifier.height(4.dp))
                 }
                 Text(
-                    uiText(outcome.message),
+                    localizedCardReviewMessage(outcome),
                     style = MaterialTheme.typography.labelSmall,
                     color = when (outcome.verdict) {
                         true -> MaterialTheme.colorScheme.primary
