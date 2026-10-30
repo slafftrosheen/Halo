@@ -41,8 +41,10 @@ The screenshots contain native controls and ownQA card data. Partial cards at th
 
 ![Light approximately 412dp, 200 percent](issue60/2026-10-30/issue60-light-412-200-3.png)
 
-## Closure boundary
+## Closure — user verification, 2026-10-30
 
-The ordinary Chat/Screen preservation, four-card persistence/source links, phone light/dark large-text matrix and persisted-evidence acceptance now have real phone evidence. The corresponding four of six acceptance groups are checked in the issue. Work-package checkmarks record delivered implementation separately from the remaining acceptance. Preserve these completed results instead of repeating them.
+The ordinary Chat/Screen preservation, four-card persistence/source links, phone light/dark large-text matrix and persisted-evidence acceptance have recorded automated/native phone evidence. Work-package checkmarks record implementation separately from acceptance. Preserve these completed results instead of repeating them.
 
-Issue60 remains OPEN: actual spoken layout requests are deferred; live secure keyguard/dock and low-power/dimming transitions, and physical TalkBack/peripheral equipment remain separately unqualified. The physical phone light/dark matrix, custom preset and native geometry persistence checks above are complete at their stated scope. Earlier unit and ambient checks remain accepted only at their documented scope. No universal AOD, battery, microphone or full accessibility PASS is inferred.
+The owner subsequently confirmed directly in chat: "i can verify it fits live ambient/privacy/accessibility qualification and spoken-layout have been tested through,close issue and move to the next one". This supplies **user-reported verification** of the remaining spoken-layout and live ambient/privacy/accessibility acceptance. All six acceptance groups are accepted and issue60 is closed as completed.
+
+This confirmation is not relabeled as an agent-run speech, keyguard, TalkBack, peripheral or power experiment. The original machine evidence and its limitations remain intact. No universal Android AOD, additional device coverage or numerical battery/thermal measurements are inferred from the owner's confirmation.

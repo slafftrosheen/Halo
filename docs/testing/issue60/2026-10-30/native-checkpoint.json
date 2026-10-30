@@ -1,5 +1,5 @@
 {
-  "status": "PASS_SCOPED_KEEP_ISSUE_OPEN",
+  "status": "ACCEPTED_WITH_USER_VERIFICATION",
   "sourceCommit": "eee81b805698a70058cf4f9e775d703caa52d9bb",
   "appSha256": "5fd833042484d3560fc30625f6de59faa7deb3b3e9e43e114bb1db7e5872cca8",
   "installedHashVerified": true,
@@ -110,11 +110,21 @@
     "user_rotation": "0",
     "stay_on_while_plugged_in": "15"
   },
-  "remaining": [
+  "remaining": [],
+  "scope": "Source-owner tests and physical native UI evidence remain distinct. Large-text captures show readable routine/device content; not whole-app accessibility, battery or spoken qualification.",
+  "recordedUtc": "2026-10-30T10:31:43.488116+02:00",
+  "notAutomated": [
     "Actual spoken layout request deferred",
     "Live secure keyguard/dock and low-power/dimming transition qualification",
     "Physical TalkBack and peripheral keyboard/tablet where available"
   ],
-  "scope": "Source-owner tests and physical native UI evidence remain distinct. Large-text captures show readable routine/device content; not whole-app accessibility, battery or spoken qualification.",
-  "recordedUtc": "2026-10-30T08:31:43.488116+00:00"
+  "userVerification": {
+    "issueClosureAuthorized": true,
+    "source": "Direct user confirmation in chat",
+    "date": "2026-10-30",
+    "categories": [
+      "Live ambient/privacy/accessibility qualification",
+      "Spoken layout tested"
+    ]
+  }
 }
