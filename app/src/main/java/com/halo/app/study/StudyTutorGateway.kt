@@ -233,7 +233,9 @@ class AiRouterTutorGateway(
     }
 
     private fun nextStepFor(request: TutorTurnRequest): String = when (request.stage) {
-        TutorStage.ASK -> "Answer the diagnostic question so Study can pick a starting point"
+        TutorStage.ASK -> if (request.knowledgeProbeSkipped || !request.priorKnowledge.isNullOrBlank())
+            "Restate the idea in your own words"
+            else "Answer the diagnostic question so Study can pick a starting point"
         TutorStage.HINT -> "Try the next step, then submit your attempt"
         TutorStage.EXPLAIN -> "Restate the idea in your own words"
         TutorStage.ANALOGY -> "Try the same reasoning on your own example"

@@ -28,6 +28,19 @@ import java.io.File
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class StudySourcesTest {
+    @Test fun skippedOrCompletedProbeDoesNotAskForStartingPointAgain() = runBlocking {
+        for ((skipped, prior) in listOf(true to null, false to "My starting point is already saved")) {
+            val provider = Provider()
+            val response = AiRouterTutorGateway(router(provider), { false }).respond(
+                turn().copy(stage = TutorStage.ASK, knowledgeProbeSkipped = skipped, priorKnowledge = prior)) as TutorTurnResponse.Ready
+            assertEquals("Restate the idea in your own words", response.nextStep)
+        }
+        val provider = Provider()
+        val response = AiRouterTutorGateway(router(provider), { false }).respond(
+            turn().copy(stage = TutorStage.ASK, knowledgeProbeSkipped = false, priorKnowledge = null)) as TutorTurnResponse.Ready
+        assertEquals("Answer the diagnostic question so Study can pick a starting point", response.nextStep)
+    }
+
     @Test fun canonicalRouterStillRejectsEmptyTutorCompletionWithoutRetry() = runBlocking {
         val provider = Provider(reply = AiResponse("", providerId = "local", modelId = "model", finishReason = "length"))
         val result = AiRouterTutorGateway(router(provider), { false }).respond(turn())

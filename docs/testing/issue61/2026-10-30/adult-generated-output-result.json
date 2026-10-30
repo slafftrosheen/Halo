@@ -1,0 +1,35 @@
+{
+  "persistence": "PASS",
+  "sourceOnlyContent": "FAIL",
+  "fullAdultQualification": "KEEP_OPEN",
+  "sessionId": "211a9852-79d1-41df-8227-df9e37d9b3b0",
+  "sourceId": "c44d7c07-180c-4250-b5d7-0b2771b88ec6",
+  "sourceRevision": 12,
+  "sourceRange": [
+    0,
+    444
+  ],
+  "savedNoteId": "e90d4692-4430-44b0-8497-d0668d30acec",
+  "savedNoteUnchangedAfterRestart": true,
+  "turnsRetained": 3,
+  "acceptedCards": [
+    "0053d816-0d67-4c2f-8267-9002854652f2",
+    "df997fff-9c6d-4488-baf0-7947e9a82eda",
+    "e822f6a8-91d2-4ea2-ba1a-7fd2b48d2207"
+  ],
+  "unacceptedDrafts": 2,
+  "reviewCount": 0,
+  "masteryClaim": false,
+  "configuredProvider": "openrouter",
+  "configuredModelAlias": "openrouter/free",
+  "actualServedModel": "NOT_RECORDED",
+  "voice": "NOT_RUN - deferred",
+  "limitations": [
+    "First reply introduced surface tension absent from selected source. UNVERIFIED is not proof of strict source-only grounding.",
+    "Q3 needed one explicit retry after network failure; original draft and two earlier replies survived.",
+    "First card reply was rejected with zero saved drafts; one diagnostic reproduction returned valid JSON and persisted five drafts. Debugger-observed functional evidence, not ordinary unassisted reliability or performance.",
+    "Saved historical next-step text is preserved. The new gateway correction applies to future replies."
+  ],
+  "mainApkSha256": "323f34f67d1b1bc4b325d13929666f3bbb6acf256e16d2d04529a6f07c31370b",
+  "generationApkSha256": "be6b200503bef3192d97d50beb81d7c36d21ab517fb15ff292e7009fdd882b4d"
+}

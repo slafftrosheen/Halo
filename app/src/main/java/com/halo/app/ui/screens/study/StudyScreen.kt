@@ -1039,7 +1039,7 @@ private fun CitationRow(citation: StudyCitation, onOpenSource: (String) -> Unit)
         Spacer(Modifier.width(6.dp))
         Column {
             Text(
-                "${citation.sourceTitle ?: "Source"}${citation.locator?.let { " · $it" }.orEmpty()}",
+                "${citation.sourceTitle ?: uiText("Source")}${citation.locator?.let { " · ${uiText(it)}" }.orEmpty()}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1268,7 +1268,7 @@ private fun PracticeItemRow(
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            item.sourceLocator?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
+            item.sourceLocator?.let { Text(uiText(it), style = MaterialTheme.typography.labelSmall) }
             TextButton({ editCard = true }) { Text(uiText("Edit")) }
             if (stale) {
                 Text(uiText("Source changed · this card keeps its original version"),

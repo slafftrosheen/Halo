@@ -167,3 +167,10 @@ change afterward. Existing edited documents are not silently rewritten.
 
 Remaining acceptance is still reported separately: actual grounded generation and representative
 typed/spoken routes are not established by these persistence/denial checks. No full closure yet.
+
+The subsequent [actual adult Study journey](ISSUE-61-ACCEPTANCE-2026-10-30.md) adds three real
+typed provider replies, three natively reviewed/kept questions and a saved summary with a live
+source reference. Restart readback preserves the exact passage/revision, replies, card states
+and note/provenance. Strict source-only content failed on an extra fact in the first reply;
+that result is retained separately from the passing persistence checks. Spoken routes remain
+deferred; this is not full issue closure.

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.study.StudySourcesTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-30T11:12:14.865Z" hostname="MINIFOXEY" time="6.082">
+  <properties/>
+  <testcase name="skippedOrCompletedProbeDoesNotAskForStartingPointAgain" classname="com.halo.app.study.StudySourcesTest" time="5.662"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

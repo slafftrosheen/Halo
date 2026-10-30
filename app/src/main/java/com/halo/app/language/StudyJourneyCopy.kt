@@ -4,6 +4,14 @@ package com.halo.app.language
 internal object StudyJourneyCopy {
     private data class Copy(val ru: String, val lv: String, val pl: String)
     private val messages = mapOf(
+        "The selected provider could not be reached over the network. Your work is kept; you can retry." to Copy("Не удалось подключиться к выбранному сервису ИИ. Работа сохранена; можно повторить попытку.", "Neizdevās izveidot savienojumu ar izvēlēto MI pakalpojumu. Tavs darbs ir saglabāts; vari mēģināt vēlreiz.", "Nie udało się połączyć z wybraną usługą AI. Twoja praca jest zachowana; możesz spróbować ponownie."),
+        "Answer the diagnostic question so Study can pick a starting point" to Copy("Ответь на вводный вопрос, чтобы выбрать, с чего начать.", "Atbildi uz ievadjautājumu, lai izvēlētos, ar ko sākt.", "Odpowiedz na pytanie wstępne, aby wybrać punkt wyjścia."),
+        "Restate the idea in your own words" to Copy("Перескажи идею своими словами.", "Pārstāsti domu saviem vārdiem.", "Opowiedz tę myśl własnymi słowami."),
+        "Try the next step, then submit your attempt" to Copy("Попробуй следующий шаг и отправь свой ответ.", "Izmēģini nākamo soli un iesniedz savu atbildi.", "Spróbuj wykonać następny krok i prześlij swoją próbę."),
+        "Try the same reasoning on your own example" to Copy("Примени это рассуждение к своему примеру.", "Izmanto šo pašu domu gaitu savā piemērā.", "Zastosuj to samo rozumowanie do własnego przykładu."),
+        "Correct the step that needs work and submit again" to Copy("Исправь шаг, над которым ещё нужно поработать, и отправь ответ снова.", "Izlabo soli, kas vēl jāuzlabo, un iesniedz atbildi vēlreiz.", "Popraw krok wymagający dopracowania i prześlij odpowiedź ponownie."),
+        "Finish the remaining step yourself" to Copy("Выполни оставшийся шаг самостоятельно.", "Pabeidz atlikušo soli patstāvīgi.", "Wykonaj pozostały krok samodzielnie."),
+        "Redo the exercise without looking at the solution" to Copy("Реши упражнение ещё раз, не подглядывая в решение.", "Izpildi uzdevumu vēlreiz, neskatoties risinājumā.", "Rozwiąż ćwiczenie ponownie, nie zaglądając do rozwiązania."),
         "Could not save the material selection. Choose it again after reopening this lesson." to Copy("Не удалось сохранить выбор материала. Выберите его снова после открытия урока.", "Materiāla atlasi neizdevās saglabāt. Pēc nodarbības atkārtotas atvēršanas atlasi to vēlreiz.", "Nie udało się zapisać wyboru materiału. Wybierz go ponownie po otwarciu lekcji."),
         "Page" to Copy("Страница", "Lappuse", "Strona"),
         "Selected passage" to Copy("Выбранный отрывок", "Atlasītais fragments", "Zaznaczony fragment"),

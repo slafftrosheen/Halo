@@ -1,0 +1,83 @@
+[
+  {
+    "exercise": "",
+    "origins": [
+      "c44d7c07-180c-4250-b5d7-0b2771b88ec6"
+    ],
+    "id": "211a9852-79d1-41df-8227-df9e37d9b3b0:no-exercise:ca096910-1aaa-4175-9387-d6709216b4cd:1",
+    "stage": "ASK",
+    "text": "[source] HALO-QA-20261029 EVAPORATION\n\n**Hint**\nWater molecules at the surface constantly gain energy from heat and their surroundings. When a molecule’s kinetic energy is high enough, it can break free into the air as vapour, even if the bulk liquid has not reached the boiling point.\n\n**Why**\nThe source explains that evaporation “can occur below the boiling point because some surface molecules have enough energy to escape.” Heat adds energy to these molecules, raising the chance that some will overcome the liquid’s surface tension and leave.\n\n**Next step**\nThink of a glass of water left on a cool table. Why does the water level drop slowly over hours? Your answer may cite [source].\n\n---",
+    "sourceVersions": {
+      "c44d7c07-180c-4250-b5d7-0b2771b88ec6": "12"
+    },
+    "materialFocus": "[null,null,null]",
+    "next": "Answer the diagnostic question so Study can pick a starting point",
+    "uncertainty": "Halo has not verified this explanation against a trusted answer key",
+    "question": "HALO-QA-20261029 Q1: Explain why water can evaporate below its boiling point. Use only the selected source and cite it. Answer in English.",
+    "verdict": "UNVERIFIED",
+    "citations": [
+      {
+        "source": "c44d7c07-180c-4250-b5d7-0b2771b88ec6",
+        "revision": 12,
+        "locator": "Selected passage · characters 0–444",
+        "excerpt": "HALO-QA-20261029 EVAPORATION. Evaporation changes liquid water into water vapour. It can occur below the boiling point because some surface molecules have enough energy to escape. Adding heat supplies energy to the molecules and usually makes evaporation faster. Boiling forms bubbles throughout a liquid at its boiling point, while evaporation happens at the surface. Moving air removes water vapour",
+        "version": "12",
+        "title": "HALO-QA-20261029 EVAPORATION. Evaporation changes liquid water into water vapour"
+      }
+    ]
+  },
+  {
+    "exercise": "",
+    "origins": [
+      "c44d7c07-180c-4250-b5d7-0b2771b88ec6"
+    ],
+    "id": "211a9852-79d1-41df-8227-df9e37d9b3b0:no-exercise:0a17f25b-0c6e-45d3-bbc7-c65ed36d6204:2",
+    "stage": "ASK",
+    "text": "[source] HALO-QA-20261029 EVAPORATION\n\n**Hint**\nBoth processes turn liquid into vapour, but they differ in location. Evaporation only involves surface molecules, while boiling creates bubbles from the bulk liquid.\n\n**Why**\nThe source states evaporation “can occur below the boiling point because some surface molecules have enough energy to escape.” Boiling “forms bubbles throughout a liquid at its boiling point.” Thus, evaporation happens at the surface, boiling occurs throughout.\n\n**Next step**\nImagine a pot on a stove. At what temperature do bubbles first appear throughout the water? Your answer may cite [source].",
+    "sourceVersions": {
+      "c44d7c07-180c-4250-b5d7-0b2771b88ec6": "12"
+    },
+    "materialFocus": "[null,null,null]",
+    "next": "Answer the diagnostic question so Study can pick a starting point",
+    "uncertainty": "Halo has not verified this explanation against a trusted answer key",
+    "question": "HALO-QA-20261029 Q2: Compare evaporation with boiling. Where does each happen in the liquid? Use only the paragraph, with no extra facts, and cite it. Answer in English.",
+    "verdict": "UNVERIFIED",
+    "citations": [
+      {
+        "source": "c44d7c07-180c-4250-b5d7-0b2771b88ec6",
+        "revision": 12,
+        "locator": "Selected passage · characters 0–444",
+        "excerpt": "HALO-QA-20261029 EVAPORATION. Evaporation changes liquid water into water vapour. It can occur below the boiling point because some surface molecules have enough energy to escape. Adding heat supplies energy to the molecules and usually makes evaporation faster. Boiling forms bubbles throughout a liquid at its boiling point, while evaporation happens at the surface. Moving air removes water vapour",
+        "version": "12",
+        "title": "HALO-QA-20261029 EVAPORATION. Evaporation changes liquid water into water vapour"
+      }
+    ]
+  },
+  {
+    "exercise": "",
+    "origins": [
+      "c44d7c07-180c-4250-b5d7-0b2771b88ec6"
+    ],
+    "id": "211a9852-79d1-41df-8227-df9e37d9b3b0:no-exercise:943ab751-4521-4958-bbce-35971c90c994:4",
+    "stage": "ASK",
+    "text": "**Hint**\nThe source links heat to energy for escaping molecules, and moving air to removing vapour near the surface.\n\n**Why**\n[source] states: “Adding heat supplies energy to the molecules and usually makes evaporation faster.” It also notes that “Moving air removes water vapour near the surface and can speed evaporation.” Heat raises molecule kinetic energy; airflow strips away vapour so more molecules can leave.\n\n**Next step**\nExplain, in one sentence each, how heat and moving air speed evaporation, then contrast their roles. Use only the paragraph and cite [source].",
+    "sourceVersions": {
+      "c44d7c07-180c-4250-b5d7-0b2771b88ec6": "12"
+    },
+    "materialFocus": "[null,null,null]",
+    "next": "Answer the diagnostic question so Study can pick a starting point",
+    "uncertainty": "Halo has not verified this explanation against a trusted answer key",
+    "question": "HALO-QA-20261029 Q3: Explain how heat and moving air each speed evaporation, then contrast their roles. Stay strictly within the paragraph, with no extra mechanisms or facts. Cite the source and answer in English.",
+    "verdict": "UNVERIFIED",
+    "citations": [
+      {
+        "source": "c44d7c07-180c-4250-b5d7-0b2771b88ec6",
+        "revision": 12,
+        "locator": "Selected passage · characters 0–444",
+        "excerpt": "HALO-QA-20261029 EVAPORATION. Evaporation changes liquid water into water vapour. It can occur below the boiling point because some surface molecules have enough energy to escape. Adding heat supplies energy to the molecules and usually makes evaporation faster. Boiling forms bubbles throughout a liquid at its boiling point, while evaporation happens at the surface. Moving air removes water vapour",
+        "version": "12",
+        "title": "HALO-QA-20261029 EVAPORATION. Evaporation changes liquid water into water vapour"
+      }
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "sourceBase": "4a227e33eb8e6812ad30481b36e0ceb0f17f4cbd",
+  "exit": 0,
+  "sourceDrift": [],
+  "elapsedSeconds": 309.5,
+  "scope": "Only skipped/completed-probe next-step regression and main APK assembly. App-authored Study locator/error/next-step copy only; no generic suites/lint or unchanged instrumentation rebuild.",
+  "mainApkSha256": "323f34f67d1b1bc4b325d13929666f3bbb6acf256e16d2d04529a6f07c31370b"
+}
