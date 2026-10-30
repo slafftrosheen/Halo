@@ -98,3 +98,72 @@ the existing whole-note export handoff is separate evidence. The complete negati
 matrix, three real UI/typed/spoken routes and correlated Private→cloud zero-outbound case remain
 separate gates. Unsupported PDF extraction and physical Ink/stylus remain explicitly bounded.
 These results do not establish full issue closure.
+
+## Continuation: linked output, replay, conflict and offline
+
+**PASS — native linked output and a new Study from that output.** Save study notes created note
+`6f115dcb-f77a-4c90-8967-ce169acb9cc8`, revision 1, with a real REFERENCE block to the original
+source and canonical `object_provenance` linking the exact anchored Study session. Force-stop,
+native resume and repeating export reused the same note, revision and body hash. An intentional
+native edit of this QA note then produced revision 2; exporting again refused to overwrite it
+and displayed the localized conflict notice. Its edit and original creation receipt were preserved.
+[Readback](issue57/2026-10-30/selected-output-replay-conflict-result.json).
+
+The edited note then entered native Study setup as a new source. New session
+`f1dd8094-0a67-4743-a3ae-b018cb8f81b7` references that note at its actual current revision 2;
+it does not misattribute the original session or label the historical export receipt as revision 2.
+After an explicit verified process stop, native resume and Open original reached the same note
+with the same body hash. This verifies the saved-source/output/session chain. A generated explanation
+and the spoken route are separate requirements, not inferred from metadata export.
+[Readback](issue57/2026-10-30/exported-note-study-link-result.json).
+
+**PASS — offline local source access.** With Android reporting `Active default network: none`,
+the native source inspector still showed exactly `Copper` and Open original reached the correct
+full original note. Original Wi-Fi off/mobile data on settings were restored in `finally` and read
+back. No provider generation or offline voice claim.
+[Result](issue57/2026-10-30/offline-source-result.json).
+
+## Private denial deadlock: reproduced, fixed and physically verified
+
+The first correlated negative check exposed an actual lock inversion, not a model timeout.
+`PrivacyModeStore.acquire` held its authority lock while the denied-request audit called provider
+discovery. Another thread held the provider registry lock while reading the processing profile.
+Both blocked. The initial run was stopped; the bounded diagnostic run failed after 30 seconds.
+[Thread proof](issue57/2026-10-30/private-lock-thread-proof.log) and
+[failure](issue57/2026-10-30/private-before-fix-timeout.log) are retained.
+
+`PrivateDeniedAuditLockTest` reproduced the lock ownership failure before the production change.
+The fix finalizes denial under the same authority lock, then enriches its BLOCKED receipt outside
+that lock. Permission checks, STARTED receipt handling and granted lease registration/revalidation
+retain their original synchronization. A later mode change cannot turn that denial into a grant.
+
+**PASS — focused regression and real selected-source negative case.** The lock regression and the
+two directly affected Workspace-category and queued-revision dispatch tests passed (3 total,
+zero failures/errors/skips). No generic suite or lint was rerun. The app and test APKs were built,
+installed and fingerprinted. The same cold-production-graph physical method now finishes in 2.269s:
+native Private active; real saved source/revision/range resolves locally to `Copper`; remote object
+permission denies; an explicit adverse attempt through the production OpenRouter provider and
+dispatch policy records BLOCKED. Its observer-instrumented client reports zero DNS lookups,
+connections, request headers and body bytes. The independent DNS containment would fail the test
+if reached; it is not used as proof of policy denial. The actual BLOCKED receipt is correlated by ID.
+
+The native control restored original Power mode; both complete mode profile contents and sharing
+acknowledgment match their baseline (intent revision counters may advance). No credentials,
+permissions, source rows or Working Set selections were changed by the harness.
+[Result](issue57/2026-10-30/private-lock-fix-result.json),
+[provider observation](issue57/2026-10-30/selected-source-private-result.json),
+[receipt](issue57/2026-10-30/private-blocked-receipt.json).
+
+Installed main APK: `be6b200503bef3192d97d50beb81d7c36d21ab517fb15ff292e7009fdd882b4d`.
+Installed test APK: `387db24c935088da234e61345c5cf80f88a85c0315068ae1fb0becb032398e98`.
+[Frozen source hashes](issue57/2026-10-30/private-lock-fix-source-hashes.json) identify the changed
+source independently of the base-commit BuildConfig metadata. Device remains `f01fe673`, Redmi
+23124RA7EO, Android 15.
+
+The Russian export also exposed an English selected-range label. Rendered export labels now use
+the existing EN/RU/LV/PL Study copy owner while preserving exact offsets and canonical locator
+metadata. The two focused copy cases passed before the separate lock fix; that copy source did not
+change afterward. Existing edited documents are not silently rewritten.
+
+Remaining acceptance is still reported separately: actual grounded generation and representative
+typed/spoken routes are not established by these persistence/denial checks. No full closure yet.

@@ -167,16 +167,20 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     }
 
     override fun acquire(request: RemoteDispatchRequest, expectedRevision: Long, recordActivity: Boolean,
-        cancel: () -> Unit): RemoteDispatchLease = synchronized(lock) {
-        if (!permits(request, expectedRevision)) {
-            if (recordActivity) runCatching { activity.record(request.copy(providerId = request.providerId.takeIf {
-                it in configuredProviders() } ?: "unavailable"), RemoteDispatchOutcome.BLOCKED) }
-            throw RemoteDispatchBlocked()
+        cancel: () -> Unit): RemoteDispatchLease {
+        val granted = synchronized(lock) {
+            if (!permits(request, expectedRevision)) return@synchronized null
+            val receiptId = if (recordActivity) try { activity.record(request, RemoteDispatchOutcome.STARTED) }
+                catch (_: Exception) { loadError = "Online activity could not be saved. Check available storage."; throw RemoteDispatchBlocked() }
+                else null
+            Lease(request, expectedRevision, receiptId, cancel).also(leases::add)
         }
-        val receiptId = if (recordActivity) try { activity.record(request, RemoteDispatchOutcome.STARTED) }
-            catch (_: Exception) { loadError = "Online activity could not be saved. Check available storage."; throw RemoteDispatchBlocked() }
-            else null
-        Lease(request, expectedRevision, receiptId, cancel).also(leases::add)
+        if (granted != null) return granted
+        // Denial is final. Audit enrichment can initialize providers, whose registry reads the
+        // processing profile; holding the authority lock here would invert those two locks.
+        if (recordActivity) runCatching { activity.record(request.copy(providerId = request.providerId.takeIf {
+            it in configuredProviders() } ?: "unavailable"), RemoteDispatchOutcome.BLOCKED) }
+        throw RemoteDispatchBlocked()
     }
 
     private fun permits(request: RemoteDispatchRequest, expectedRevision: Long): Boolean {

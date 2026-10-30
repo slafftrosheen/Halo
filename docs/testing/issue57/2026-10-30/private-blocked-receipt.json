@@ -1,0 +1,12 @@
+{
+  "id": "c8b19912-c9a7-45e4-b3e6-d2b343b96f77",
+  "at": 1793356181519,
+  "provider": "openrouter",
+  "operation": "INFERENCE",
+  "categories": [
+    "WORKSPACE",
+    "TEXT"
+  ],
+  "outcome": "BLOCKED",
+  "cost": null
+}

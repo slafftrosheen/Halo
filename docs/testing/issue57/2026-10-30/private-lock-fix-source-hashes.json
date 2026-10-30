@@ -1,0 +1,8 @@
+{
+  "app/src/main/java/com/halo/app/ai/PrivacyModeStore.kt": "a8ecced10fc950e4a0383590787af79171426ee76ebe3cf730b344231ef0c0d9",
+  "app/src/main/java/com/halo/app/language/StudyJourneyCopy.kt": "c44bfcc71162fac1a98e0f912fa801734dab1a3fc032c76146402a246734f1c5",
+  "app/src/main/java/com/halo/app/ui/screens/study/StudyViewModel.kt": "ee804479503fe1827053b99af0b25f3d2c9025de1506f565281eab53593137c3",
+  "app/src/androidTest/java/com/halo/app/context/SelectedSourcePrivateDispatchPhysicalTest.kt": "a7dca4a1e049b7da37a569762e124664ffc3229f93990fbfed95f24c7929eb6e",
+  "app/src/test/java/com/halo/app/ai/PrivateDeniedAuditLockTest.kt": "05a5d4d92b3c54b3b3302586537d31d19f3d9562f67d81123daad09bc5730ff4",
+  "app/src/test/java/com/halo/app/ui/screens/study/SelectedPassageExportCopyTest.kt": "3fd42cd2048bcef9502a2e921766166295906737e74a72744ada4585288b566e"
+}

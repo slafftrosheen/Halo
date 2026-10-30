@@ -1,0 +1,43 @@
+{
+  "result": "PASS",
+  "scope": "Native new Study from the exported note at its current edited revision 2, followed by verified process stop, native resume and exact Open original. Earlier export creation provenance remains historical revision 1; no revision is relabelled.",
+  "session": {
+    "id": "f1dd8094-0a67-4743-a3ae-b018cb8f81b7",
+    "goal": "HALO-QA-20261029-OUTPUT-LINK",
+    "assignmentLanguage": null,
+    "explanationLanguage": null,
+    "strongestLanguage": null,
+    "sourceObjectIdsJson": "[\"6f115dcb-f77a-4c90-8967-ce169acb9cc8\"]",
+    "sourceRevision": 2,
+    "conversationId": null,
+    "runId": null,
+    "interactionId": null,
+    "tutorStage": "ASK",
+    "lifecycle": "ACTIVE",
+    "currentExerciseId": null,
+    "solutionRevealed": 0,
+    "completedAtEpochMs": null,
+    "schemaVersion": 3,
+    "createdAtEpochMs": 1793354467269,
+    "updatedAtEpochMs": 1793354467273,
+    "sourcesJson": "[{\"objectId\":\"6f115dcb-f77a-4c90-8967-ce169acb9cc8\",\"revision\":\"2\",\"textAnchor\":null}]",
+    "learnerLevel": "ADULT",
+    "supportStyle": "GUIDED",
+    "knowledgePolicy": "SOURCE_ONLY"
+  },
+  "sourceNoteId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+  "sourceRevision": 2,
+  "sourceBodySha256": "0e99ec632fc0cf24e229cda3f6333869c0b88784af1949a110bcdf8544bc4c9b",
+  "creationProvenance": {
+    "objectId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+    "sourceId": "study-summary:6dcb8501-d113-4e17-9d59-54f272df52be",
+    "revision": "v1",
+    "metadata": "{\"operation\":\"study-summary\",\"sessionId\":\"6dcb8501-d113-4e17-9d59-54f272df52be\",\"noteRevision\":1}"
+  },
+  "processStop": {
+    "beforePid": "8796",
+    "afterForceStop": "",
+    "exit": 1
+  },
+  "mainApkSha256": "c08a9520e366bfcae30283d673624dd5eb9310ace78d48ee194732076752eb80"
+}

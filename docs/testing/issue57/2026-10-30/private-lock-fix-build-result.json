@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "sourceBase": "fe7b464af177d03579c80b1a38e7df050414ee0a",
+  "exit": 0,
+  "sourceDrift": [],
+  "elapsedSeconds": 315.3,
+  "scope": "Only denied-audit lock regression and two directly affected dispatch/lease guard cases, plus app/test APK assembly. No generic suites/lint. Physical denial remains separate.",
+  "mainApkSha256": "be6b200503bef3192d97d50beb81d7c36d21ab517fb15ff292e7009fdd882b4d",
+  "testApkSha256": "387db24c935088da234e61345c5cf80f88a85c0315068ae1fb0becb032398e98"
+}

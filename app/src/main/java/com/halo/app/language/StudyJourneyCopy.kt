@@ -43,7 +43,17 @@ internal object StudyJourneyCopy {
         "Not specified" to Copy("Не указан", "Nav norādīta", "Nie podano"),
     )
 
-    fun translate(english: String, language: String): String = messages[english]?.let {
+    private val selectedRange = Regex("^Selected passage · characters ([0-9]+)–([0-9]+)$")
+
+    fun translate(english: String, language: String): String {
+        selectedRange.matchEntire(english)?.let { range ->
+            val characters = when (language.substringBefore('-').lowercase()) {
+                "ru" -> "символы"; "lv" -> "rakstzīmes"; "pl" -> "znaki"; else -> "characters"
+            }
+            return "${translate("Selected passage", language)} · $characters ${range.groupValues[1]}–${range.groupValues[2]}"
+        }
+        return messages[english]?.let {
         when (language.substringBefore('-').lowercase()) { "ru" -> it.ru; "lv" -> it.lv; "pl" -> it.pl; else -> english }
-    } ?: english
+        } ?: english
+    }
 }

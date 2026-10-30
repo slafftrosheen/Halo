@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "scope": "Native saved selected-source inspection/Open original with no active default network; no provider generation or offline voice claim.",
+  "baseline": {
+    "wifi_on": "0",
+    "mobile_data": "1"
+  },
+  "offlineDefaultNetwork": "Active default network: none",
+  "restored": {
+    "wifi_on": "0",
+    "mobile_data": "1"
+  }
+}

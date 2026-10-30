@@ -1,0 +1,91 @@
+{
+  "result": "PASS",
+  "scope": "Native export of exact selected-passage Study metadata to a new note; canonical session provenance/live source reference; force-stop/reopen/export replay reuses exact note; later user edit refuses overwrite. No generated explanation/voice/PDF/Ink claim.",
+  "states": [
+    {
+      "stage": "saved",
+      "noteId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+      "noteRevision": 1,
+      "bodySha256": "b59f418506fff193afd3f15ea68fd9cc30ce141c0d46e53b90d0213f6c6042bb",
+      "provenance": {
+        "objectId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+        "sourceId": "study-summary:6dcb8501-d113-4e17-9d59-54f272df52be",
+        "revision": "v1",
+        "metadata": "{\"operation\":\"study-summary\",\"sessionId\":\"6dcb8501-d113-4e17-9d59-54f272df52be\",\"noteRevision\":1}"
+      },
+      "liveReference": {
+        "id": "e33bbcb8-c5be-49d4-af77-13217911c10a",
+        "type": "REFERENCE",
+        "refObjectId": "e38b5c57-7f62-42e6-bd79-cda25c86b396"
+      },
+      "sessionSources": [
+        {
+          "objectId": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+          "revision": "1",
+          "textAnchor": {
+            "blockId": "efcf898c-36a4-4cae-88ad-0b68a431ef70",
+            "start": 0,
+            "end": 6
+          }
+        }
+      ]
+    },
+    {
+      "stage": "replayed_after_restart",
+      "noteId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+      "noteRevision": 1,
+      "bodySha256": "b59f418506fff193afd3f15ea68fd9cc30ce141c0d46e53b90d0213f6c6042bb",
+      "provenance": {
+        "objectId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+        "sourceId": "study-summary:6dcb8501-d113-4e17-9d59-54f272df52be",
+        "revision": "v1",
+        "metadata": "{\"operation\":\"study-summary\",\"sessionId\":\"6dcb8501-d113-4e17-9d59-54f272df52be\",\"noteRevision\":1}"
+      },
+      "liveReference": {
+        "id": "e33bbcb8-c5be-49d4-af77-13217911c10a",
+        "type": "REFERENCE",
+        "refObjectId": "e38b5c57-7f62-42e6-bd79-cda25c86b396"
+      },
+      "sessionSources": [
+        {
+          "objectId": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+          "revision": "1",
+          "textAnchor": {
+            "blockId": "efcf898c-36a4-4cae-88ad-0b68a431ef70",
+            "start": 0,
+            "end": 6
+          }
+        }
+      ]
+    },
+    {
+      "stage": "user_edit_protected",
+      "noteId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+      "noteRevision": 2,
+      "bodySha256": "0e99ec632fc0cf24e229cda3f6333869c0b88784af1949a110bcdf8544bc4c9b",
+      "provenance": {
+        "objectId": "6f115dcb-f77a-4c90-8967-ce169acb9cc8",
+        "sourceId": "study-summary:6dcb8501-d113-4e17-9d59-54f272df52be",
+        "revision": "v1",
+        "metadata": "{\"operation\":\"study-summary\",\"sessionId\":\"6dcb8501-d113-4e17-9d59-54f272df52be\",\"noteRevision\":1}"
+      },
+      "liveReference": {
+        "id": "e33bbcb8-c5be-49d4-af77-13217911c10a",
+        "type": "REFERENCE",
+        "refObjectId": "e38b5c57-7f62-42e6-bd79-cda25c86b396"
+      },
+      "sessionSources": [
+        {
+          "objectId": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+          "revision": "1",
+          "textAnchor": {
+            "blockId": "efcf898c-36a4-4cae-88ad-0b68a431ef70",
+            "start": 0,
+            "end": 6
+          }
+        }
+      ]
+    }
+  ],
+  "mainApkSha256": "6669346563e75e4f5a65309ee7d1502c6624324a277d900e6b50480d77c469d1"
+}

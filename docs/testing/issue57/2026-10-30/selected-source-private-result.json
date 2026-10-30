@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "scope": "Actual saved selected passage, native Private profile, production OpenRouter provider\/dispatch policy; observed no DNS, connection, headers or body bytes. Not a successful cloud\/model\/voice check.",
+  "sessionId": "6dcb8501-d113-4e17-9d59-54f272df52be",
+  "sourceId": "e38b5c57-7f62-42e6-bd79-cda25c86b396",
+  "sourceRevision": "1",
+  "blockId": "efcf898c-36a4-4cae-88ad-0b68a431ef70",
+  "start": 0,
+  "end": 6,
+  "remotePermitted": false,
+  "receiptId": "c8b19912-c9a7-45e4-b3e6-d2b343b96f77",
+  "outcome": "BLOCKED",
+  "dns": 0,
+  "connects": 0,
+  "requestHeaders": 0,
+  "bodyBytes": 0
+}

@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "stage": "restored",
+  "mode": "CLOUD",
+  "profileContentPreserved": true,
+  "profileHashes": {
+    "private": "0302ac456d350e3fbba19d896fcac2e3867815f7d0189c7711eb3e178e7aab09",
+    "power": "bf1c1bb7a48ba0362604bc24423491aebc8d91c7ea1ce761ed3c9d2d706c04a1"
+  }
+}

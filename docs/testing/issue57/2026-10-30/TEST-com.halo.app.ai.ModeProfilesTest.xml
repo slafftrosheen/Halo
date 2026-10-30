@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.ai.ModeProfilesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-30T10:24:05.852Z" hostname="MINIFOXEY" time="0.186">
+  <properties/>
+  <testcase name="workspaceProvenanceGetsItsOwnFinalDispatchCheckAndReceiptCategory" classname="com.halo.app.ai.ModeProfilesTest" time="0.093"/>
+  <testcase name="profileRevisionRejectsQueuedIntentEvenAfterModeReturnsToPower" classname="com.halo.app.ai.ModeProfilesTest" time="0.079"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

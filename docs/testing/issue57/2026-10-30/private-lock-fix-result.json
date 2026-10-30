@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "sourceBase": "fe7b464af177d03579c80b1a38e7df050414ee0a",
+  "mainApkSha256": "be6b200503bef3192d97d50beb81d7c36d21ab517fb15ff292e7009fdd882b4d",
+  "testApkSha256": "387db24c935088da234e61345c5cf80f88a85c0315068ae1fb0becb032398e98",
+  "physicalMethodSeconds": 2.269,
+  "unitSuites": [
+    {
+      "name": "com.halo.app.ai.PrivateDeniedAuditLockTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ai.ModeProfilesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "scope": "Cold production graph selected-source Private denial, independent DNS/connection/header/body observers; before-fix timeout and lock inversion retained. Original mode/profile contents restored. No successful cloud inference/voice claim."
+}

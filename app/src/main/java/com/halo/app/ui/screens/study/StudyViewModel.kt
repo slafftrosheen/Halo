@@ -1766,7 +1766,7 @@ class StudyViewModel(
                     val locator = if (source.objectId == state.activeVisualId && source.resolved is ResolvedStudySource.Pdf &&
                         source.version == state.visualSourceVersion) "${copy("Page")} ${state.pdfPages[source.objectId] ?: source.resolved.selectedPage}"
                         else source.locator
-                    locator?.let { append(copy("Passage")).append(": ").append(it).append("\n") }
+                    locator?.let { append(copy("Passage")).append(": ").append(copy(it)).append("\n") }
                 }
                 append("\n## ").append(copy("My starting point")).append("\n")
                 append(if (state.journey.probeSkipped) copy("Introductory question skipped") else state.journey.priorKnowledge).append("\n")
@@ -1778,7 +1778,7 @@ class StudyViewModel(
                     append(turn.text).append("\n")
                     turn.citations.forEach { cite ->
                         append(copy("Source")).append(": ").append(cite.sourceTitle ?: cite.sourceObjectId).append(" · ").append(copy("Version")).append(" ").append(cite.sourceVersion ?: cite.sourceRevision ?: copy("Not specified"))
-                            .append(" · ").append(cite.locator.orEmpty()).append("\n")
+                            .append(" · ").append(copy(cite.locator.orEmpty())).append("\n")
                         if (cite.excerpt.isNotBlank()) append("> ").append(cite.excerpt).append("\n")
                     }
                     turn.uncertainty?.let { append(it).append("\n") }
