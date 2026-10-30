@@ -26,8 +26,9 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
     orbControl: (@Composable (Dp) -> Unit)?, shellZone: Boolean = false) {
     if (shellZone) {
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HomeSurfaceSwitch(true, { if (!it) onChat() }, compact = true)
             if (editing) {
+                Text(uiText("Preview"), Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary)
                 TextButton(onClick = onApply, enabled = interactionAllowed, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
                 TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
             }

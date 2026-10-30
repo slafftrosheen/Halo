@@ -385,7 +385,8 @@ fun AppShell(
     val orbContext = remember(contextualRoute, kidsMode, currentContextObjectId, livePageActions) {
         val page = if (!kidsMode && currentContextObjectId != null)
             listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
-        val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph, enabled = it.enabled) }
+        val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph,
+            enabled = it.enabled, disabledReason = if (it.enabled) null else livePageActions.owner.disabledActionReasons[it.id]) }
             ?: if (kidsMode) ShellOrbCatalog.context(contextualRoute, true) else emptyList()
         actions + page +
             if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()

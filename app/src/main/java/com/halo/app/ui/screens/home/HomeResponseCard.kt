@@ -34,9 +34,9 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
             .fillMaxWidth()
             .padding(top = 0.dp),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.background,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

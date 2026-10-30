@@ -127,7 +127,7 @@ data class NotebookLibraryView(
     val mutating: Boolean,
     val ownerRevision: Long,
 ) {
-    val settled: Boolean get() = rendered.isLoaded && rendered.resolvedQuery == query.trim() &&
+    val settled: Boolean get() = rendered.isLoaded && !rendered.loadError && rendered.resolvedQuery == query.trim() &&
         rendered.query == query && rendered.filter == filter && rendered.sort == sort &&
         rendered.selectedCollectionId == collectionId
 }

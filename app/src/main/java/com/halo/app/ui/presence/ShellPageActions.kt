@@ -9,7 +9,9 @@ data class ShellPageOwner(val routeFamily: String, val objectId: String? = null,
     val canonicalSourceVersion: String? = null,
     val selectionIds: List<String> = emptyList(),
     val canonicalToolIds: List<String> = emptyList(),
-    val activeToolId: String? = null)
+    val activeToolId: String? = null,
+    /** Localized presentation only; no new callable action or authority. */
+    val disabledActionReasons: Map<String, String> = emptyMap())
 data class ShellPageActionMetadata(val id: String, val title: String, val glyph: HaloGlyph, val enabled: Boolean)
 data class ShellPageAction(val id: String, val title: String, val glyph: HaloGlyph,
     val enabled: Boolean = true, val onInvoke: () -> Unit)

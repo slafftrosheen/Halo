@@ -85,12 +85,15 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var topicsOpen by rememberSaveable { mutableStateOf(false) }
     var topicsDraft by rememberSaveable { mutableStateOf("") }
     val daily by ManualDependencyGraph.dailyAssistantController.snapshot.collectAsStateWithLifecycle()
-    val workspace by remember { ManualDependencyGraph.workspaceRepository.observe(WorkspaceQuery()) }
-        .collectAsStateWithLifecycle(emptyList())
-    val activeStudySessions by remember { ManualDependencyGraph.studyUseCases.observeActiveSessions() }
-        .collectAsStateWithLifecycle(emptyList())
-    val followUps by remember { ManualDependencyGraph.followUpRepository.observeRecentWatches() }
-        .collectAsStateWithLifecycle(emptyList())
+    val workspaceSource by remember { ManualDependencyGraph.workspaceRepository.observe(WorkspaceQuery()) }
+        .collectAsStateWithLifecycle(initialValue = null)
+    val workspace = workspaceSource.orEmpty()
+    val studySource by remember { ManualDependencyGraph.studyUseCases.observeActiveSessions() }
+        .collectAsStateWithLifecycle(initialValue = null)
+    val activeStudySessions = studySource.orEmpty()
+    val followUpSource by remember { ManualDependencyGraph.followUpRepository.observeRecentWatches() }
+        .collectAsStateWithLifecycle(initialValue = null)
+    val followUps = followUpSource.orEmpty()
     val visibleFollowUps = followUps.filter { watch -> when (val behavior = watch.behavior) {
         is com.halo.runtime.cognition.watch.WatchBehavior.Notify -> true
         is com.halo.runtime.cognition.watch.WatchBehavior.MakeRunResumable ->
@@ -169,12 +172,24 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var detailCard by remember { mutableStateOf<ScreenCard?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     var canUndo by remember { mutableStateOf(store.hasUndo()) }
-    BindShellPageActions(ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen"), listOf(
-        ShellPageAction("page.screen.customize", "Customize", HaloGlyph.SETTINGS,
+    val editUnavailable = stringResource(if (layout == null) R.string.zone5_choose_layout else R.string.zone5_screen_busy)
+    val screenOwner = ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen",
+        activeToolId = "screen", canonicalToolIds = (com.halo.app.di.tools.ScreenOperabilityContracts.readTools +
+            com.halo.app.di.tools.ScreenOperabilityContracts.mutationTools).toList(),
+        disabledActionReasons = listOf("page.screen.add", "page.screen.customize", "page.screen.appearance")
+            .associateWith { if (customizing && canInteract) uiText("Preview") else editUnavailable })
+    BindShellPageActions(screenOwner, listOf(
+        ShellPageAction("page.screen.add", stringResource(R.string.zone5_widgets), HaloGlyph.NOTE, layout != null && canInteract) {
+            if (!customizing) setCustomizing(true)
+            picker = true
+        },
+        ShellPageAction("page.screen.customize", stringResource(R.string.zone5_arrange), HaloGlyph.SETTINGS,
             layout != null && !customizing && canInteract) { setCustomizing(true) },
+        ShellPageAction("page.screen.appearance", "Appearance", HaloGlyph.APPEARANCE, layout != null && canInteract) {
+            if (!customizing) setCustomizing(true)
+            appearanceOpen = true
+        },
         ShellPageAction("page.screen.settings", "Screen settings", HaloGlyph.SETTINGS, canInteract) { onFullScreen(false); settings = true },
-        ShellPageAction("page.screen.add", "Add card", HaloGlyph.NOTE, customizing && canInteract) { picker = true },
-        ShellPageAction("page.screen.appearance", "Appearance", HaloGlyph.APPEARANCE, customizing && canInteract) { appearanceOpen = true },
         ShellPageAction("page.screen.ambient", "Screen", HaloGlyph.HOME, canInteract) { onFullScreen(!fullScreen) },
         ShellPageAction("page.screen.note", "New note", HaloGlyph.NOTE, canInteract) { onQuickNote() },
     ))
@@ -328,7 +343,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             } ?: "activity", true,
             sourceSummary = daily.primary != null,
             stateArguments = if (daily.items.isEmpty()) emptyList() else listOf(daily.items.size))
-        "notebook" -> workspace.firstOrNull { card.itemId == null || it.id.value == card.itemId }?.let { note ->
+        "notebook" -> if (workspaceSource == null) ScreenDisplay("Workspace", stringResource(R.string.screen_source_loading),
+            stringResource(R.string.screen_source_loading), null, true, sourceSummary = true)
+        else workspace.firstOrNull { card.itemId == null || it.id.value == card.itemId }?.let { note ->
             val kind = when (note.type) {
                 com.halo.app.data.notebook.WorkspaceObjectType.CANVAS -> "canvas"
                 com.halo.app.data.notebook.WorkspaceObjectType.CONVERSATION -> "conversation"
@@ -342,7 +359,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         } ?: if (card.itemId != null) ScreenDisplay("Workspace", stringResource(R.string.screen60_source_changed),
             "Needs attention", null, true, sourceSummary = true)
         else ScreenDisplay("Workspace", "Your saved work will appear here.", "Nothing saved yet", "notebook", true)
-        "study" -> activeStudySessions.firstOrNull { card.itemId == null || it.id == card.itemId }?.let { session ->
+        "study" -> if (studySource == null) ScreenDisplay("Continue studying", stringResource(R.string.screen_source_loading),
+            stringResource(R.string.screen_source_loading), null, true, sourceSummary = true)
+        else activeStudySessions.firstOrNull { card.itemId == null || it.id == card.itemId }?.let { session ->
             ScreenDisplay(session.goal?.take(160) ?: uiText("Continue studying"), uiText("Resume your saved Study session."),
                 uiText("Saved on this phone"), "notebook/study/${android.net.Uri.encode(session.id)}", true,
                 updatedAt = Instant.ofEpochMilli(session.updatedAtEpochMs), sourceTitle = true, sourceSummary = true,
@@ -358,7 +377,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             ScreenDisplay("What halo did", progress ?: activity.events.firstOrNull()?.title ?: "No activity yet",
                 "Activity", "activity", true, sourceSummary = progress != null || activity.events.isNotEmpty())
         }
-        "follow_up" -> visibleFollowUps.firstOrNull { card.itemId == null || it.id.value == card.itemId }?.let { watch ->
+        "follow_up" -> if (followUpSource == null) ScreenDisplay(stringResource(R.string.screen60_follow_up),
+            stringResource(R.string.screen_source_loading), stringResource(R.string.screen_source_loading), null, true,
+            sourceTitle = true, sourceSummary = true)
+        else visibleFollowUps.firstOrNull { card.itemId == null || it.id.value == card.itemId }?.let { watch ->
             val label = when (watch.status) {
                 com.halo.runtime.cognition.watch.WatchStatus.ACTIVE -> R.string.screen60_watch_waiting
                 com.halo.runtime.cognition.watch.WatchStatus.MATCH_CLAIMED -> R.string.screen60_watch_processing
@@ -409,7 +431,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             onTalk = onTalk, orbControl = orbControl, shellZone = shellZone)
     }
     val utilityProjected = com.halo.app.ui.presence.BindShellUtilityBand(
-        ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen"), screenUtility)
+        screenOwner, screenUtility)
     Box(Modifier.fillMaxSize()) {
     com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize(),
         animate = canInteract && !fullScreen,
@@ -421,6 +443,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         }
     }.offset(x = shift.dp, y = shift.dp)
         .padding(horizontal = if (fullScreen) 24.dp else 16.dp)) {
+        if (!fullScreen) com.halo.app.ui.zone5.Zone5PageHeading("HaloScreen")
         if (!utilityProjected) screenUtility()
         if (workingLayout == null) {
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(vertical = 16.dp), verticalArrangement = Arrangement.Center,

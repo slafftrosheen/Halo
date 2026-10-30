@@ -1,0 +1,736 @@
+{
+  "date": "2026-10-30",
+  "phase": "broad-checkpoint",
+  "branch": "codex/halo-zone5-batch3",
+  "base": "af56749a590531b7786850832a62c1387c3aa9a9",
+  "totals": {
+    "tests": 473,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.context.CurrentScreenToolsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.SavedChatToolsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.HostFirstSkillAuditTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.tools.AssistantToolsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.tools.ScreenToolExecutorTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.LocalScreenStoreTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenAmbientPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenAppearanceSheetTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenGridInteractionTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenGridTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutPersistenceTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutRequestsTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenShellOrbConsolidationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenSummaryCopyTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenWindowPolicyTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenWorkspaceChromeTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.Zone5ScreenChromeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloOrbThemeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeAttachmentSheetTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeChatControlsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeChatVisualTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerEditBufferTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerInteractionTest",
+      "tests": 14,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerNoticeHostTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerNoticeTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerPriorityTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerVisualTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeFeedFollowingTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeNoteHandoffTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeRecoveryActionsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeThreadPresentationTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasAiDraftActionPickerTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasAiDraftReviewControlsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasAnnotatedPreviewTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasArrangementFxTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasArrangementMotionTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasCardFrameTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasDraftDrawOnFxTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEmptyStarterTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasErasedSketchUiTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasShellAssistantEntryTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasWorkflowPersistenceTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.EditorWorkspaceChromeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.MemoryDetailCopyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookBatchNoticeLocalizationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookGuidanceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "tests": 9,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookMemoryReviewTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NoteEditorViewModelTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NoteFieldSynchronizationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.BellActivityLargeTextTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloAssistantScreenParityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.PermissionsScreenTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellFooterViewportTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellInteractionSurfaceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.BrandLauncherIconTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.BrandPaletteParityTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.BrandTypographyTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.FontScaleTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.PaletteTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.PaletteVisualTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.HaloZone5IconRenderTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.screens.home.HomeComposerInteractionTest",
+      "test": "shellLargeTextKeepsFullWidthDraftAboveAllFourControls",
+      "reason": "java.lang.AssertionError: Assert failed: The component with ContentDescription = 'Chat or Screen' (ignoreCase: false) is not displayed!"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "libraryLandingAndSuiteNavigationPreserveSearchAndRejectStaleActions",
+      "reason": "java.lang.AssertionError"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "librarySearchPlacesAllMatchingResultsBeforeSecondaryTools",
+      "reason": "java.lang.AssertionError: Failed: assertDoesNotExist.\nReason: Did not expect any node but found '1' node that satisfies: (Text + InputText + EditableText contains 'Tools' (ignoreCase: false))\nNode found:\nNode #1068 at (l=450.0, t=98.0, r=880.0, b=155.0)px\nFocused = 'false'\nRole = 'Tab'\nSelected = 'false'\nShape = 'RectangleShape'\nText = '[Tools]'\nActions = [ClearTextSubstitution, GetTextLayoutResult, OnClick, RequestFocus, SetTextSubstitution, ShowTextSubstitution]\nMergeDescendants = 'true'\nHas 17 siblings\n"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "constrainedLandscapeKeepsToolsAndMatchingObjectCallbacksReachableByScrolling",
+      "reason": "java.lang.AssertionError"
+    }
+  ]
+}

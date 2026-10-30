@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-30",
+  "phase": "library-confirmation",
+  "branch": "codex/halo-zone5-batch3",
+  "base": "af56749a590531b7786850832a62c1387c3aa9a9",
+  "totals": {
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "failures": [],
+  "build": "PASS",
+  "apk": {
+    "path": "app/build/outputs/apk/debug/app-debug.apk",
+    "package": "com.aistudio.braintool.xkqzps",
+    "size": 291398860,
+    "sha256": "c1421b439e7fc65ae9c940fc235ccf21780e84d7c644d5df76c004a3623c7b93"
+  },
+  "production_source_sha256": {
+    "app/src/main/java/com/halo/app/screen/HaloScreen.kt": "900d59b38c391cb39f94acbe5925595704a9d2c8699f7b142c18b6b44b47096b",
+    "app/src/main/java/com/halo/app/screen/ScreenWorkspaceChrome.kt": "a5ef5f436acdbf43a44d4105cbf39ea4c263750b162d6e8decf6321a107b9753",
+    "app/src/main/java/com/halo/app/ui/presence/HaloZone5OrbLauncher.kt": "e95cd683b6ece7b39f7e8fe8d8a6c0994c9106c28ad957d74c39bf9951d2be10",
+    "app/src/main/java/com/halo/app/ui/presence/ShellPageActions.kt": "f46434610f40d616f1539a5e104f8438c1bb470bf429c3a7d56bbd60649a9aa1",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeComposer.kt": "a1b18380d16d14da14ce0a99e7d5504b7f1cbed6ffb73e5e07e165c6c64eac93",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeResponseCard.kt": "04fe505af008982d5d0034bd087bd86577c7778a0a407cc8eca5799e7b7ee897",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeScreen.kt": "1b9aeef59d73542df675a8b84c30e65f5734bdb165fbdfaf4dcb0f8e7f833f63",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeTranscriptMessage.kt": "856531e3d8ad2abd5a9143beaf4131d9b326b4191ac1974d550e9848cdf108b3",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookLibraryBinding.kt": "94740f9c97813920ca90cb4ff5f210a4dcd5a58adf8d64acc5942068fda277d6",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookLibrarySession.kt": "ce8932f5ca78966b4b808028ec0dc8da3b4b17612d85cb3b2a7d8a03170fc1f4",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookScreen.kt": "b757b1c71127bf2cc7e956e45751fd0f20637f980462d37b3728407ad9e8d1a8",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookViewModel.kt": "ffd61ec83bff47060aae2e1cb9ad07d113d95f710fe2ea78cd0fa5f978655280",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/Zone5Workspace.kt": "707cf8e536644c5cbe97e74712bce98b31d44a7c7547778f35e353582e87f516",
+    "app/src/main/java/com/halo/app/ui/shell/AppShell.kt": "fd02316dddbecd0ca5d96e0c7607eacb66dc3aa51311ae23587744c921b56216",
+    "app/src/main/java/com/halo/app/ui/zone5/HaloZone5Presentation.kt": "01e200aa0f77a25eb8e7bb0d5112b902499944fdf2d05644febcb4f7ce5d777b",
+    "app/src/main/java/com/halo/app/ui/zone5/Zone5PageHeading.kt": "37cf187fab9bb80c9732f3647c0a93be7a793ac4ef9e61fb66406b83cd886b26",
+    "app/src/main/res/values-lv/strings_zone5.xml": "83314da87c9c53e0f3318ba65467a0cfcbebc4c6b8f47d60fa68899e4ff3cb09",
+    "app/src/main/res/values-ru/strings_zone5.xml": "d3c597d037e54dcbe09ded436e85ea4b6f74336ce9b9dfd6d45b6eb00410a970",
+    "app/src/main/res/values/strings_zone5.xml": "b013c3a9a2c650fde6f7e39a8c745c1efca7ad79a3b3df1ec8457b8bdb5b02c6"
+  },
+  "native_device": "NOT_RUN - deferred by user",
+  "talkback_spoken_provider": "NOT_RUN"
+}

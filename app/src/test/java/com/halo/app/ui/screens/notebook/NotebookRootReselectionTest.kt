@@ -11,6 +11,7 @@ import com.halo.app.ui.presence.ShellPageProjection
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
@@ -54,7 +55,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Root presentation reset against isolated canonical owners; unexecuted regression source. */
+/** Root presentation reset against isolated canonical owners. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w900dp-h1800dp")
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -68,8 +69,10 @@ class NotebookRootReselectionTest {
     private val navigation = CopyOnWriteArrayList<NotebookNavigation>()
     private val actions = mutableStateOf<ShellPageProjection?>(null)
     private val rootRequest = mutableStateOf(0L)
+    private val restoration = StateRestorationTester(compose)
 
     @Before fun setup() {
+        NoDerivedSearchHits.unavailable = false
         Dispatchers.setMain(UnconfinedTestDispatcher(scheduler))
         fixture = WorkspaceFileToolsFixture()
         val preferences = MemoryStorage()
@@ -109,33 +112,76 @@ class NotebookRootReselectionTest {
         }
     }
 
-    @Test fun sameRouteRootRequestLeavesLibraryQueryFilterAndSelectionIntact() {
-        compose.setContent { HostlessHaloTheme {
-            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
-                Box(Modifier.width(900.dp).height(1800.dp)) {
-                    NotebookScreen(model, onOpenStudy = {}, rootRequest = rootRequest.value)
-                }
-            }
-        } }
-        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.isLoaded }
+    @Test fun localLibraryToolsRoundTripPreservesQueryFilterAndSelection() {
+        renderWorkspace()
         compose.runOnIdle {
             model.setQuery(QUERY)
             model.setFilter(NotebookFilter.NOTES)
             model.toggleSelection(resultIds.getValue(NOTE_TITLE))
         }
         compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.query == QUERY }
-        for (suite in listOf("office", "studio")) {
-            compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.$suite")) }
-            lateinit var nested: ShellPageProjection
-            compose.runOnIdle { nested = actions.value!!; assertEquals(suite, nested.owner.activeToolId); rootRequest.value++ }
+        repeat(2) {
+            val library = actions.value!!
+            compose.onNodeWithText("Tools").performClick()
+            compose.runOnIdle { assertEquals("tools", actions.value!!.owner.activeToolId); assertFalse(library.invoke("page.notebook.new-note")) }
+            compose.onNodeWithText("Library").performClick()
             compose.runOnIdle {
                 assertEquals("library", actions.value!!.owner.activeToolId)
-                assertFalse(nested.invoke("page.notebook.suites"))
                 assertEquals(QUERY, model.queryText.value)
                 assertEquals(NotebookFilter.NOTES, model.uiState.value.filter)
                 assertEquals(setOf(resultIds.getValue(NOTE_TITLE)), model.selectedIds.value)
                 assertTrue(navigation.isEmpty())
             }
+        }
+    }
+
+    @Test fun toolsTabRestoresAfterRecreation() {
+        renderWorkspace()
+        compose.onNodeWithText("Tools").performClick()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.runOnIdle { assertEquals("tools", actions.value!!.owner.activeToolId); assertTrue(actions.value!!.actions.isEmpty()) }
+        compose.onNodeWithText("Office Tools", ignoreCase = true).assertIsDisplayed()
+    }
+
+    @Test fun failedLibrarySearchKeepsNavigationUsableAndCanRetry() {
+        renderWorkspace()
+        compose.runOnIdle { NoDerivedSearchHits.unavailable = true; model.setQuery(QUERY) }
+        compose.waitUntil(5_000) {
+            scheduler.runCurrent()
+            compose.onAllNodesWithText("Library unavailable").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Tools").performClick()
+        compose.onNodeWithText("Study").assertIsDisplayed()
+        compose.onNodeWithText("Library").performClick()
+        compose.runOnIdle { NoDerivedSearchHits.unavailable = false }
+        compose.onNodeWithText("Try again").performClick()
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.resolvedQuery == QUERY && model.uiState.value.isLoaded &&
+            compose.onAllNodesWithText("Library unavailable").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("Library unavailable").assertDoesNotExist()
+        assertEquals(QUERY, model.queryText.value)
+    }
+
+    @Test fun aFailedRefreshCannotAdmitActionsAgainstOtherwiseMatchingCachedResults() {
+        val library = NotebookLibrarySession { true }
+        renderWorkspace(library)
+        compose.runOnIdle { model.setQuery(QUERY) }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); library.read()?.view?.settled == true && model.uiState.value.resolvedQuery == QUERY }
+        val selectedBefore = setOf(resultIds.getValue(NOTE_TITLE))
+        compose.runOnIdle { model.toggleSelection(resultIds.getValue(NOTE_TITLE)); NoDerivedSearchHits.unavailable = true }
+        runBlocking { fixture.notes.createNote("New synthetic result.", title = "$QUERY added") }
+        compose.waitUntil(5_000) {
+            scheduler.runCurrent()
+            compose.onAllNodesWithText("Library unavailable").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Select visible").assertIsNotEnabled()
+        compose.onNodeWithText("Actions").assertIsNotEnabled()
+        compose.runOnIdle {
+            val frame = library.read()!!
+            assertTrue("The last usable list stays visible", frame.view.rendered.isLoaded)
+            assertEquals(QUERY, frame.view.rendered.resolvedQuery)
+            assertFalse("A failed refresh is not settled", frame.view.settled)
+            assertNull(library.set(frame.snapshot, NotebookLibraryChange.Selection(setOf(resultIds.getValue(SECOND_NOTE_TITLE)))))
+            assertEquals(selectedBefore, model.selectedIds.value)
         }
     }
 
@@ -161,8 +207,8 @@ class NotebookRootReselectionTest {
             assertNull("Hidden Library cannot remain an assistant target", library.read())
         }
         compose.onNodeWithText("Study").performClick()
-        compose.onNodeWithText("Halo Studio").performClick()
-        compose.onNodeWithText("Office Tools").performClick()
+        compose.onNodeWithText("Halo Studio", ignoreCase = true).performClick()
+        compose.onNodeWithText("Office Tools", ignoreCase = true).performClick()
         compose.onNodeWithText("Memory").performClick()
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.any { it is NotebookNavigation.OpenMemoryHub } }
         assertEquals(1, study); assertEquals(1, studio); assertEquals(1, office)
@@ -188,7 +234,7 @@ class NotebookRootReselectionTest {
 
     private fun renderWorkspace(library: NotebookLibrarySession? = null,
         study: () -> Unit = {}, studio: () -> Unit = {}, office: () -> Unit = {}) {
-        compose.setContent { HostlessHaloTheme {
+        restoration.setContent { HostlessHaloTheme {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                 Box(Modifier.width(900.dp).height(1800.dp)) {
                     val nav = androidx.navigation.compose.rememberNavController()
@@ -206,7 +252,11 @@ class NotebookRootReselectionTest {
 
     /** No platform index/provider IO; Notebook's actual canonical title-match path is exercised. */
     private object NoDerivedSearchHits : WorkspaceSearchEngine {
-        override suspend fun search(query: WorkspaceSearchQuery) = WorkspaceSearchResult(query.query, emptyList())
+        @Volatile var unavailable = false
+        override suspend fun search(query: WorkspaceSearchQuery): WorkspaceSearchResult {
+            if (unavailable) throw java.io.IOException("Synthetic unavailable index")
+            return WorkspaceSearchResult(query.query, emptyList())
+        }
         override suspend fun indexObject(objectId: WorkspaceObjectId, type: WorkspaceObjectType,
             title: String, content: String, updatedAt: Long) = Unit
         override suspend fun removeObject(objectId: WorkspaceObjectId) = Unit

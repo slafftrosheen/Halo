@@ -253,7 +253,7 @@ class HomeComposerInteractionTest {
         assertEquals(1, sends)
     }
     @Test @Config(qualifiers = "w360dp-h800dp")
-    fun shellLargeTextKeepsFullWidthDraftAboveAllFourControls() {
+    fun shellLargeTextKeepsFullWidthDraftAboveSendWithoutDuplicateZoneControls() {
         val draft = mutableStateOf("Keep this draft")
         var sends = 0
         var attachments = 0
@@ -271,16 +271,15 @@ class HomeComposerInteractionTest {
         }
         val field = compose.onNodeWithTag("home_composer_editor", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         assertTrue("Enlarged draft needs the full row", field.width >= with(compose.density) { 280.dp.toPx() })
-        listOf("Chat or Screen", "Attach", "Tools", "Send").forEach { label ->
-            val control = compose.onNodeWithContentDescription(label)
-            control.assertIsDisplayed().assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
-            assertTrue("$label overlaps the draft", control.fetchSemanticsNode().boundsInRoot.top >= field.bottom)
+        listOf("Chat or Screen", "Attach", "Tools").forEach { label ->
+            compose.onNodeWithContentDescription(label).assertDoesNotExist()
         }
-        compose.onNodeWithContentDescription("Attach").performClick()
-        compose.onNodeWithContentDescription("Tools").performClick()
+        val send = compose.onNodeWithContentDescription("Send")
+        send.assertIsDisplayed().assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+        assertTrue("Send overlaps the draft", send.fetchSemanticsNode().boundsInRoot.top >= field.bottom)
         compose.onNode(hasSetTextAction()).performTextInput(" preserved")
         compose.onNodeWithContentDescription("Send").performClick()
-        assertEquals(1, attachments); assertEquals(1, tools); assertEquals(1, sends)
+        assertEquals(0, attachments); assertEquals(0, tools); assertEquals(1, sends)
         assertTrue(draft.value.contains("preserved"))
         compose.onNodeWithContentDescription("Talk").assertDoesNotExist()
     }

@@ -1,4 +1,25 @@
 <resources>
+    <string name="zone5_library_unavailable">Library unavailable</string>
+    <string name="zone5_library_error">Your saved items are unchanged. Try again to load this view.</string>
+    <string name="zone5_library_stale">Showing the last loaded view. Your saved items are unchanged.</string>
+    <string name="zone5_refresh_first">Refresh this view first.</string>
+    <string name="zone5_conversation_changing">Switching conversations. Please wait.</string>
+    <string name="zone5_select_first">Select items first.</string>
+    <string name="zone5_workspace_subtitle">Your saved work and tools</string>
+    <string name="zone5_choose_tool">Choose a tool</string>
+    <string name="zone5_study_purpose">Guided lessons and practice</string>
+    <string name="zone5_memory_purpose">Review what Halo remembers</string>
+    <string name="zone5_studio_purpose">Canvases and image editing</string>
+    <string name="zone5_office_purpose">Notes, documents and files</string>
+    <string name="zone5_creations_in_library">Your creations stay in Library.</string>
+    <string name="zone5_tools_controls">Open a tool to see its controls here.</string>
+    <string name="zone5_host_unavailable">Unavailable here. Open the full app.</string>
+    <string name="zone5_new_chat">New chat</string>
+    <string name="zone5_widgets">Widgets</string>
+    <string name="zone5_arrange">Arrange</string>
+    <string name="zone5_organize">Organize</string>
+    <string name="zone5_choose_layout">Choose a starting layout first.</string>
+    <string name="zone5_screen_busy">Finish the current interaction to edit.</string>
     <string name="zone5_theme_colors">Your selected theme colors the Halo orb, controls, and surfaces. Attention and errors use the theme’s status colors.</string>
     <string name="zone5_menu">Menu</string>
     <string name="zone5_navigation">Navigation</string>

@@ -7,8 +7,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavBackStackEntry
 
-/** Only the resumed root Library entry supplies its live owner. In-place suite carousels keep
- * that same Library body visible; nested routes and covered modal states do not. */
+/** Only the resumed, visible Library entry supplies its live owner.
+ * Tools, nested routes and covered modal states never retain a Library lease. */
 @Composable
 internal fun BindNotebookLibrary(session: NotebookLibrarySession?, model: NotebookViewModel, libraryVisible: Boolean) {
     val entry = LocalLifecycleOwner.current as? NavBackStackEntry

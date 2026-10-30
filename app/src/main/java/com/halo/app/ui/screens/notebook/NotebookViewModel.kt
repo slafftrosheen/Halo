@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -82,6 +83,7 @@ data class NotebookUiState(
     val studySessions: List<StudySessionRecord> = emptyList(),
     /** Accepted practice cards whose review is due now, across every session. */
     val duePractice: List<StudyPracticeItem> = emptyList(),
+    val loadError: Boolean = false,
 )
 
 sealed interface NotebookNavigation {
@@ -140,6 +142,7 @@ class NotebookViewModel(
     val isMutating: StateFlow<Boolean> = mutating
     private val filter = MutableStateFlow(NotebookFilter.ALL)
     private val selectedCollection = MutableStateFlow<String?>(null)
+    private val refreshRevision = MutableStateFlow(0L)
     private val navigationChannel = Channel<NotebookNavigation>(Channel.BUFFERED)
     private val creatingNote = AtomicBoolean(false)
     private val creatingCanvas = AtomicBoolean(false)
@@ -180,6 +183,7 @@ class NotebookViewModel(
             rawText, text, selectedFilter, collectionId ->
         QueryState(rawText, text, selectedFilter, collectionId)
     }
+        .combine(refreshRevision) { requested, _ -> requested }
         .flatMapLatest { queryState ->
             val rawText = queryState.rawText
             val text = queryState.text
@@ -267,7 +271,7 @@ class NotebookViewModel(
                     studySessions = sessionRows,
                     duePractice = aux.duePractice,
                 )
-            }
+            }.catch { emit(libraryFailure(queryState)) }
         }
         .combine(sort) { state, order ->
             val sorted = when (order) {
@@ -279,6 +283,17 @@ class NotebookViewModel(
         }
         .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
+
+    /** Keep a successful prior view available; an error never becomes a loaded-empty result. */
+    private fun libraryFailure(requested: QueryState): NotebookUiState {
+        val previous = uiState.value
+        return if (previous.query == requested.rawText && previous.filter == requested.filter &&
+            previous.selectedCollectionId == requested.collectionId) previous.copy(loadError = true)
+        else NotebookUiState(query = requested.rawText, resolvedQuery = requested.text,
+            filter = requested.filter, selectedCollectionId = requested.collectionId, loadError = true)
+    }
+
+    fun retryLibraryLoad() { libraryRevision++; refreshRevision.value += 1 }
 
     private var libraryRevision = 0L
     fun setQuery(value: String) { libraryRevision++; query.value = value; selection.value = emptySet() }

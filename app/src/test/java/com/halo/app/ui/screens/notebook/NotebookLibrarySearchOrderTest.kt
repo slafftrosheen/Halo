@@ -1,7 +1,6 @@
 package com.halo.app.ui.screens.notebook
 
 import android.app.Application
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
@@ -30,6 +29,10 @@ import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.ui.presence.LocalShellHaloOrb
 import com.halo.app.ui.theme.HostlessHaloTheme
+import com.halo.app.ui.theme.HaloAccent
+import com.halo.app.ui.theme.HaloPalette
+import com.halo.app.ui.theme.HaloTone
+import com.github.takahirom.roborazzi.captureRoboImage
 import com.halo.sdk.runtime.Storage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -53,6 +56,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /** Actual Notebook screen and canonical isolated Room projection; no live graph or OS actions. */
 @RunWith(RobolectricTestRunner::class)
@@ -110,9 +114,9 @@ class NotebookLibrarySearchOrderTest {
         }
     }
 
-    @Test fun librarySearchPlacesAllMatchingResultsBeforeSecondaryTools() {
-        // A tall inspection viewport makes all three real result rows and Tools measurable
-        // together. This proves rendered order, not a phone first-screen/scroll-count claim.
+    @Test fun librarySearchKeepsAllMatchingResultsWithoutInstrumentRows() {
+        // A tall inspection viewport makes all three real result rows measurable.
+        // This proves rendered order, not a phone first-screen/scroll-count claim.
         render(height = 1800)
         compose.onNode(hasContentDescription("Search your workspace") and hasSetTextAction())
             .performTextInput(QUERY)
@@ -120,7 +124,10 @@ class NotebookLibrarySearchOrderTest {
         compose.onNode(hasContentDescription("Search your workspace") and hasSetTextAction())
             .assertTextContains(QUERY)
         compose.runOnIdle { model.toggleSelection(resultIds.getValue(NOTE_TITLE)) }
-        compose.onNodeWithText("Tools").assertDoesNotExist()
+        compose.onNodeWithText("Tools").assertIsDisplayed()
+        listOf("Study", "Memory", "Halo Studio", "Office Tools").forEach {
+            compose.onNodeWithText(it, ignoreCase = true).assertDoesNotExist()
+        }
         resultIds.keys.forEach { title ->
             compose.onNodeWithText(title).assertIsDisplayed()
         }
@@ -137,13 +144,18 @@ class NotebookLibrarySearchOrderTest {
     fun constrainedLandscapeKeepsToolsAndMatchingObjectCallbacksReachableByScrolling() {
         render(height = 280)
         enterSearch()
-        val list = compose.onNode(hasScrollToIndexAction())
-        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.study")) }
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Tools"))
+        compose.onNodeWithText("Tools").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Study"))
+        compose.onNodeWithText("Study").performClick()
         assertEquals(1, studyOpens)
-        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.memory")) }
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Memory"))
+        compose.onNodeWithText("Memory").performClick()
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.size == 1 }
         assertEquals(NotebookNavigation.OpenMemoryHub(), navigation.single())
-        list.performScrollToNode(hasText(NOTE_TITLE))
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Library"))
+        compose.onNodeWithText("Library").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(NOTE_TITLE))
         compose.onNodeWithText(NOTE_TITLE).assertIsDisplayed().performClick()
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.size == 2 }
         assertEquals(NotebookNavigation.OpenNote(resultIds.getValue(NOTE_TITLE)), navigation.last())
@@ -154,26 +166,29 @@ class NotebookLibrarySearchOrderTest {
         assertEquals(1, studyOpens)
     }
 
-    @Test fun libraryLandingAndSuiteNavigationPreserveSearchAndRejectStaleActions() {
-        render(height = 1800)
+    @Test fun explicitToolNavigationPreservesSearchAndRejectsStaleLibraryActions() {
+        var officeOpens = 0; var studioOpens = 0
+        render(height = 1800, office = { officeOpens++ }, studio = { studioOpens++ })
         enterSearch()
         compose.onNodeWithText("Open Library").assertDoesNotExist()
         compose.onNodeWithText("Continue").assertDoesNotExist()
         lateinit var root: ShellPageProjection
-        compose.runOnIdle { root = actions.value!!; assertTrue(root.invoke("page.notebook.office")) }
+        compose.runOnIdle { root = actions.value!! }
+        compose.onNodeWithText("Tools").performClick()
+        compose.runOnIdle {
+            assertFalse(root.invoke("page.notebook.new-note"))
+            assertTrue(actions.value!!.actions.isEmpty())
+            assertFalse("halo_library_set_view" in actions.value!!.owner.canonicalToolIds)
+        }
+        compose.onNodeWithText("Office Tools", ignoreCase = true).performClick()
+        compose.onNodeWithText("Halo Studio", ignoreCase = true).performClick()
+        assertEquals(1, officeOpens); assertEquals(1, studioOpens)
+        compose.onNodeWithText("Library").performClick()
         compose.runOnIdle {
             assertFalse(root.invoke("page.notebook.new-note"))
             assertTrue(actions.value!!.actions.any { it.id == "page.notebook.import" })
             assertTrue("halo_library_set_view" in actions.value!!.owner.canonicalToolIds)
-            assertEquals("Library", actions.value!!.actions.single { it.id == "page.notebook.suites" }.title)
-            assertTrue(actions.value!!.invoke("page.notebook.suites"))
-        }
-        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.studio")) }
-        compose.runOnIdle {
-            assertTrue(actions.value!!.actions.any { it.id == "page.notebook.new-canvas" })
             assertTrue("halo_library_organize" in actions.value!!.owner.canonicalToolIds)
-            assertEquals("Library", actions.value!!.actions.single { it.id == "page.notebook.suites" }.title)
-            assertTrue(actions.value!!.invoke("page.notebook.suites"))
         }
         assertEquals(QUERY, model.uiState.value.query)
         assertEquals(NotebookSort.TITLE, model.uiState.value.sort)
@@ -181,14 +196,39 @@ class NotebookLibrarySearchOrderTest {
         assertEquals(0, studyOpens)
     }
 
-    private fun render(height: Int) {
-        val preferences = AppLanguagePreferences(MemoryStorage(), "en")
+    @Test @Config(qualifiers = "en-rUS-w360dp-h800dp") @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun libraryNarrowDarkBlue() {
+        render(height = 800, dark = true, palette = HaloPalette(HaloAccent.BLUE, HaloTone.COOL))
+        compose.onNode(hasText("Library") and SemanticsMatcher.expectValue(
+            androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.Tab)).assertIsDisplayed()
+        compose.onRoot().captureRoboImage()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(NOTE_TITLE))
+        compose.onNodeWithText(NOTE_TITLE).assertIsDisplayed()
+    }
+
+    @Test @Config(qualifiers = "lv-rLV-w360dp-h800dp") @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun libraryNarrowLatvian200() {
+        render(height = 800, language = "lv", scale = 2f, palette = HaloPalette(HaloAccent.ROSE, HaloTone.WARM))
+        compose.onNode(hasText("Bibliotēka") and SemanticsMatcher.expectValue(
+            androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.Tab)).assertIsDisplayed()
+        compose.onRoot().captureRoboImage()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(NOTE_TITLE))
+        compose.onNodeWithText(NOTE_TITLE).assertIsDisplayed()
+        compose.onRoot().captureRoboImage("build/outputs/roborazzi/zone5-library-lv-200-items.png")
+    }
+
+    private fun render(height: Int, office: (() -> Unit)? = null, studio: (() -> Unit)? = null,
+        language: String = "en", scale: Float = 0f, dark: Boolean = false, palette: HaloPalette = HaloPalette()) {
+        val preferences = AppLanguagePreferences(MemoryStorage(), language)
         compose.setContent {
             AppLanguageProvider(preferences) {
                 CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
-                    HostlessHaloTheme {
-                        Box(Modifier.width(900.dp).height(height.dp)) {
-                            NotebookScreen(model, onOpenStudy = { studyOpens++ })
+                    HostlessHaloTheme(darkTheme = dark, fontScale = scale, palette = palette) {
+                        // Match AppShell's backdrop/content roles; hosted pages are transparent.
+                        androidx.compose.material3.Surface(Modifier.width(900.dp).height(height.dp),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.background,
+                            contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface) {
+                            NotebookScreen(model, onOpenStudy = { studyOpens++ }, onOpenStudio = studio, onOpenFileTools = office)
                         }
                     }
                 }

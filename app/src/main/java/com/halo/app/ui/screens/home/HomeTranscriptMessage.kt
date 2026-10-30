@@ -34,8 +34,8 @@ internal fun HomeTranscriptMessage(identity: String, text: String, user: Boolean
     Column(Modifier.fillMaxWidth().padding(start = if (user) 32.dp else 0.dp,
         end = if (user) 0.dp else 16.dp)) {
         Surface(shape = MaterialTheme.shapes.medium,
-            color = if (user) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+            color = if (user) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(uiText(if (user) "You" else "halo"), Modifier.weight(1f),
                         style = MaterialTheme.typography.labelMedium,

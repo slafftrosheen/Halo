@@ -467,7 +467,12 @@ fun HomeScreen(
         providerNeedsAttention || connectionNeedsAttention -> HaloLight.ERROR
         else -> HaloLight.IDLE
     }
-    val homeOwner = com.halo.app.ui.presence.ShellPageOwner("home", objectId = uiState.conversationId)
+    val changingLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_conversation_changing)
+    val homeOwner = com.halo.app.ui.presence.ShellPageOwner("home", objectId = uiState.conversationId,
+        canonicalToolIds = listOf(com.halo.app.di.tools.host.SavedChatTools.LIST, com.halo.app.di.tools.host.SavedChatTools.SEARCH,
+            com.halo.app.di.tools.host.SavedChatTools.GET, com.halo.app.di.tools.host.SavedChatTools.OPEN),
+        disabledActionReasons = mapOf("attach" to if (importingSource) androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing) else changingLabel,
+            "new-chat" to changingLabel, "tools" to changingLabel))
     val homeComposer: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (shellOwnsOrb) 0.dp else 6.dp)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(if (shellOwnsOrb) 2.dp else 8.dp),
@@ -545,6 +550,11 @@ fun HomeScreen(
         com.halo.app.ui.presence.BindShellUtilityBand(homeOwner, homeComposer)
         val todayLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day)
         com.halo.app.ui.presence.BindShellPageActions(homeOwner, buildList {
+            add(com.halo.app.ui.presence.ShellPageAction("attach", "Attach", HaloGlyph.FILE,
+                enabled = !changingConversation && !importingSource) { focusManager.clearFocus(); showContext = true })
+            add(com.halo.app.ui.presence.ShellPageAction("new-chat", androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_new_chat), HaloGlyph.NOTE,
+                enabled = !changingConversation, onInvoke = viewModel::newConversation))
+            add(com.halo.app.ui.presence.ShellPageAction("history", "History", HaloGlyph.ACTIVITY) { showHistory = true })
             // Hosted Home has one status owner (the shell Orb); retain every recovery
             // callback in its current-page action lease instead of another header/strip.
             addAll(homeRecoveryActions(HomeRecoveryOptions(
@@ -559,9 +569,11 @@ fun HomeScreen(
                 onActivity = onOpenActivity, onRetry = { submitText() },
                 onAnswers = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
                 onMicrophone = onRequestMicrophonePermission, onVoice = viewModel::navigateToVoice))
-            add(com.halo.app.ui.presence.ShellPageAction("new-chat", "New conversation", HaloGlyph.NOTE,
-                enabled = !changingConversation, onInvoke = viewModel::newConversation))
-            add(com.halo.app.ui.presence.ShellPageAction("history", "Conversation history", HaloGlyph.ACTIVITY) { showHistory = true })
+            add(com.halo.app.ui.presence.ShellPageAction("tools", "Tools", HaloGlyph.TOOL,
+                enabled = !changingConversation) {
+                focusManager.clearFocus(); toolGroup = HomeToolGroup.CREATE.name; toolEntry = null
+                viewModel.refreshToolCatalog(); showActions = true
+            })
             add(com.halo.app.ui.presence.ShellPageAction("mode", homeModeLabel(currentMode), HaloGlyph.MODEL,
                 enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { modeMenuExpanded = true })
             add(com.halo.app.ui.presence.ShellPageAction("clear-chat", "Clear conversation", HaloGlyph.TRASH,
@@ -594,6 +606,8 @@ fun HomeScreen(
             accent = MaterialTheme.colorScheme.primaryContainer, apricot = MaterialTheme.colorScheme.tertiary),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        if (shellOwnsOrb && !keyboardVisible) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Home"),
+            modifier = Modifier.padding(horizontal = 20.dp))
         // Standalone hosts retain local controls; the app shell projects them into Halo Zone.
         if (!shellOwnsOrb && (!shortScreen || !keyboardVisible)) Box(Modifier.fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = if (shortScreen) 4.dp else 12.dp)) {

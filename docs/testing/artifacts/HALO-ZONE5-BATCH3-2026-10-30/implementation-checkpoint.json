@@ -1,0 +1,29 @@
+{
+  "suites": [
+    {
+      "name": "com.halo.app.screen.Zone5ScreenChromeTest",
+      "tests": 1,
+      "failures": []
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerInteractionTest",
+      "tests": 1,
+      "failures": []
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "tests": 6,
+      "failures": [
+        {
+          "test": "failedLibrarySearchKeepsNavigationUsableAndCanRetry",
+          "reason": "androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 5000 ms"
+        },
+        {
+          "test": "toolsHaveNoLibraryLeaseAndOpenEachActualInstrumentInOneClick",
+          "reason": "java.lang.AssertionError: Failed to inject touch input.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Halo Studio' (ignoreCase: false))\n"
+        }
+      ]
+    }
+  ],
+  "note": "6/8 passed. Fixed capitalization-sensitive fixture and added real Library load recovery after missing recovery reproduced. Final gate pending."
+}

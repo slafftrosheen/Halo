@@ -1,4 +1,25 @@
 <resources>
+    <string name="zone5_library_unavailable">Библиотека недоступна</string>
+    <string name="zone5_library_error">Сохранённые материалы не изменены. Попробуйте загрузить этот список снова.</string>
+    <string name="zone5_library_stale">Показан последний загруженный список. Сохранённые материалы не изменены.</string>
+    <string name="zone5_refresh_first">Сначала обновите этот список.</string>
+    <string name="zone5_conversation_changing">Переключаем чат. Подождите.</string>
+    <string name="zone5_select_first">Сначала выберите материалы.</string>
+    <string name="zone5_workspace_subtitle">Ваши сохранённые материалы и инструменты</string>
+    <string name="zone5_choose_tool">Выберите инструмент</string>
+    <string name="zone5_study_purpose">Уроки и практика</string>
+    <string name="zone5_memory_purpose">Что помнит Halo</string>
+    <string name="zone5_studio_purpose">Холсты и работа с изображениями</string>
+    <string name="zone5_office_purpose">Заметки, документы и файлы</string>
+    <string name="zone5_creations_in_library">Созданные материалы остаются в библиотеке.</string>
+    <string name="zone5_tools_controls">Откройте инструмент, чтобы увидеть его действия.</string>
+    <string name="zone5_host_unavailable">Недоступно здесь. Откройте приложение Halo.</string>
+    <string name="zone5_new_chat">Новый чат</string>
+    <string name="zone5_widgets">Виджеты</string>
+    <string name="zone5_arrange">Расстановка</string>
+    <string name="zone5_organize">Организовать</string>
+    <string name="zone5_choose_layout">Сначала выберите начальный макет.</string>
+    <string name="zone5_screen_busy">Завершите текущее действие для редактирования.</string>
     <string name="zone5_theme_colors">Выбранная тема меняет цвета орба Halo, элементов управления и поверхностей. Для внимания и ошибок используются цвета состояния темы.</string>
     <string name="zone5_menu">Меню</string>
     <string name="zone5_navigation">Навигация</string>

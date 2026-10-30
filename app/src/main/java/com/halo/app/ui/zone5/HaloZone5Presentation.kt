@@ -32,6 +32,9 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
     "type-message" -> "office_edit_text"
     "new-note", "page.notebook.new-note", "page.screen.note" -> "office_new_note"
     "page.notebook.import" -> "action_import"
+    "page.notebook.organize", "page.notebook.selection-actions" -> "action_organize"
+    "page.notebook.select-visible", "page.notebook.selection-done" -> "action_check"
+    "tools" -> "action_tools"
     "page.notebook.capture" -> "action_quick_capture"
     "page.notebook.chats" -> "library_saved_chat"
     "page.notebook.inbox" -> "library_inbox"
@@ -41,7 +44,7 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
     "page.notebook.memory" -> "tool_memory"
     "page.notebook.new-canvas" -> "type_canvas"
     "page.screen.customize" -> "screen_arrange"
-    "page.screen.add" -> "screen_add_widget"
+    "page.screen.add" -> "screen_widgets"
     "page.screen.appearance" -> "setting_appearance"
     "page.screen.ambient" -> "screen_display_mode"
     "page.note.rename" -> "action_rename"
@@ -71,13 +74,14 @@ internal fun Zone5Icon(iconId: String, fallback: HaloGlyph, modifier: Modifier =
 @Composable
 internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val label = uiText(action.title)
+    val reason = if (action.enabled) null else action.disabledReason?.let { uiText(it) }
     val ink = if (action.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = .6f)
     CompositionLocalProvider(LocalContentColor provides ink) {
         Column(modifier.clip(RoundedCornerShape(16.dp))
             .clickable(enabled = action.enabled, role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics(mergeDescendants = true) {
                 contentDescription = label
-                action.disabledReason?.let { stateDescription = it }
+                reason?.let { stateDescription = it }
             }.padding(horizontal = 4.dp, vertical = 4.dp).heightIn(min = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),

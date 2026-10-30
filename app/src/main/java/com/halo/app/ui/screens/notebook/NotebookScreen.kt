@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -110,7 +111,7 @@ private val primaryFilters = listOf(
 private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::contains)
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
     onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L) {
@@ -126,16 +127,22 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val batchNotice by viewModel.batchNotice.collectAsStateWithLifecycle()
     val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
+    val canUseSelection = !mutating && state.isLoaded && !state.loadError
     val trashUndoIds by viewModel.trashUndoIds.collectAsStateWithLifecycle()
     var selecting by rememberSaveable { mutableStateOf(false) }
     val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
-    // Library is the Workspace landing, including when no filter is selected.
-    val showLibrary = true
-    var suite by rememberSaveable { mutableStateOf<String?>(null) }
+    var workspaceView by rememberSaveable { mutableStateOf("library") }
+    val showLibrary = workspaceView == "library"
+    val libraryList = androidx.compose.foundation.lazy.rememberLazyListState()
+    val toolsList = androidx.compose.foundation.lazy.rememberLazyListState()
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val selectView: (Boolean) -> Unit = { library ->
+        focusManager.clearFocus(); workspaceView = if (library) "library" else "tools"
+    }
     var consumedRootRequest by rememberSaveable { mutableStateOf(0L) }
     LaunchedEffect(rootRequest) {
         if (rootRequest != consumedRootRequest) {
-            suite = null
+            workspaceView = "library"
             consumedRootRequest = rootRequest
         }
     }
@@ -154,30 +161,23 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var showInboxCapture by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var importFile by rememberSaveable { mutableStateOf(false) }
     var showLocalSearch by rememberSaveable { mutableStateOf(false) }
-    BindNotebookLibrary(librarySession, viewModel, libraryVisible = !sortMenu && !batchMenu &&
+    BindNotebookLibrary(librarySession, viewModel, libraryVisible = showLibrary && !sortMenu && !batchMenu &&
         !confirmTrash && !showWorkingSet && !showNewCollection && !showDeleteCollection && !showInboxCapture && !showLocalSearch)
-    val libraryActions = when (suite) {
-        "office" -> listOfNotNull(
-            ShellPageAction("page.notebook.suites", "Library", HaloGlyph.PREVIOUS) { suite = null },
-            ShellPageAction("page.notebook.new-note", "New note", HaloGlyph.NOTE, !mutating) { viewModel.createNote() },
-            onOpenFileTools?.let { open -> ShellPageAction("page.notebook.files", "Office Tools", HaloGlyph.TOOL) { open() } },
-            ShellPageAction("page.notebook.import", "Import", HaloGlyph.NOTE, !mutating) { importFile = true; showInboxCapture = true },
-            ShellPageAction("page.notebook.notes", "Notes", HaloGlyph.NOTE) { viewModel.setFilter(NotebookFilter.NOTES); suite = null },
-        )
-        "studio" -> listOfNotNull(
-            ShellPageAction("page.notebook.suites", "Library", HaloGlyph.PREVIOUS) { suite = null },
-            ShellPageAction("page.notebook.new-canvas", "New canvas", HaloGlyph.NOTE, !mutating) { viewModel.createCanvas() },
-            onOpenStudio?.let { open -> ShellPageAction("page.notebook.graphics", "Graphics editor", HaloGlyph.TOOL) { open() } },
-            ShellPageAction("page.notebook.boards", "Canvases", HaloGlyph.NOTE) { viewModel.setFilter(NotebookFilter.CANVASES); suite = null },
+    val libraryActions = when {
+        !showLibrary -> emptyList()
+        selecting -> listOf(
+            ShellPageAction("page.notebook.select-visible", "Select visible", HaloGlyph.NOTE,
+                canUseSelection && visibleItems.isNotEmpty()) { viewModel.selectVisible() },
+            ShellPageAction("page.notebook.selection-actions", "Actions", HaloGlyph.TOOL,
+                canUseSelection && selectedIds.isNotEmpty()) { batchMenu = true },
+            ShellPageAction("page.notebook.selection-done", "Done", HaloGlyph.SUCCESS) { selecting = false; viewModel.clearSelection() },
         )
         else -> listOf(
-            ShellPageAction("page.notebook.office", "Office Tools", HaloGlyph.NOTE) { suite = "office" },
-            ShellPageAction("page.notebook.studio", "Halo Studio", HaloGlyph.TOOL) { suite = "studio" },
-            ShellPageAction("page.notebook.study", "Study", HaloGlyph.QUESTION) { onOpenStudy() },
-            ShellPageAction("page.notebook.memory", "Memory", HaloGlyph.MEMORY) { viewModel.openMemoryHub() },
             ShellPageAction("page.notebook.new-note", "New note", HaloGlyph.NOTE, !mutating) { viewModel.createNote() },
-            ShellPageAction("page.notebook.capture", "Quick capture", HaloGlyph.NOTE, !mutating) { showInboxCapture = true },
             ShellPageAction("page.notebook.import", "Import", HaloGlyph.TOOL, !mutating) { importFile = true; showInboxCapture = true },
+            ShellPageAction("page.notebook.organize", stringResource(R.string.zone5_organize), HaloGlyph.TOOL,
+                canUseSelection) { selecting = true },
+            ShellPageAction("page.notebook.capture", "Quick capture", HaloGlyph.NOTE, !mutating) { showInboxCapture = true },
             ShellPageAction("page.notebook.related", "Find related notes", HaloGlyph.SEARCH) { showLocalSearch = true },
             ShellPageAction("page.notebook.context", "In chat", HaloGlyph.NOTE) { showWorkingSet = true },
             ShellPageAction("page.notebook.chats", "Saved chats", HaloGlyph.NOTE) { viewModel.setFilter(NotebookFilter.CHATS) },
@@ -188,20 +188,65 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             if (pendingMemoryReviews > 0) ShellPageAction("page.notebook.memory-review", "Memory suggestions", HaloGlyph.MEMORY) { viewModel.openMemoryHub("Suggestions") } else null,
         )
     }
-    BindShellPageActions(ShellPageOwner("notebook", sourceIdentity = "${state.filter}:${state.selectedCollectionId}:$suite:${selectedIds.sorted()}",
-        selectionIds = selectedIds.sorted(), activeToolId = suite ?: "library",
-        canonicalToolIds = listOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize",
+    BindShellPageActions(ShellPageOwner("notebook", sourceIdentity = "${state.filter}:${state.selectedCollectionId}:$queryText:${state.resolvedQuery}:${state.sort}:$workspaceView:$selecting:${selectedIds.sorted()}",
+        selectionIds = if (showLibrary) selectedIds.sorted() else emptyList(), activeToolId = workspaceView,
+        canonicalToolIds = if (!showLibrary) listOf("halo_list_screens", "halo_open_screen") else listOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize",
             "halo_library_batch", "halo_library_apply_batch", "halo_note_get", "halo_note_purge_status",
-            "halo_note_purge", "halo_note_purge_retry")), libraryActions)
-    BackHandler(enabled = suite != null) { suite = null }
+            "halo_note_purge", "halo_note_purge_retry"),
+        disabledActionReasons = mapOf(
+            "page.notebook.new-note" to uiText("Updating..."), "page.notebook.import" to uiText("Updating..."),
+            "page.notebook.organize" to if (mutating) uiText("Updating...") else stringResource(R.string.zone5_refresh_first),
+            "page.notebook.select-visible" to uiText(if (mutating) "Updating..." else "Nothing in this view"),
+            "page.notebook.selection-actions" to stringResource(if (state.loadError) R.string.zone5_refresh_first else R.string.zone5_select_first))), libraryActions)
+    BackHandler(enabled = !showLibrary) { workspaceView = "library" }
     LaunchedEffect(requestLocalSearch) {
-        if (requestLocalSearch) { showLocalSearch = true; onLocalSearchOpened() }
+        if (requestLocalSearch) { workspaceView = "library"; showLocalSearch = true; onLocalSearchOpened() }
+    }
+    if (!showLibrary) {
+        com.halo.app.ui.presence.BindShellUtilityBand(ShellPageOwner("notebook", activeToolId = "tools")) {
+            Text(stringResource(R.string.zone5_tools_controls), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        LazyColumn(state = toolsList, modifier = Modifier.fillMaxSize()
+            .background(com.halo.app.ui.theme.haloWorkspaceBackground()).padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            item("workspace-heading") { WorkspaceHeadingAndTabs(false, selectView) }
+            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools) }
+            item("workspace-bottom") { Spacer(Modifier.height(12.dp)) }
+        }
+        return
     }
     if (showInboxCapture) InboxCaptureDialog(initialImport = importFile) { showInboxCapture = false; importFile = false }
     if (showLocalSearch) NotebookLocalSearchSheet(
         viewModel = viewModel, items = state.items, studySessions = state.studySessions,
         onOpenModels = onOpenModels, onDismiss = { showLocalSearch = false },
     )
+    if (batchMenu) com.halo.app.ui.presence.LocalizedMaterialBottomSheet(
+        onDismissRequest = { batchMenu = false },
+        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(uiText("%1\$d selected", selectedIds.size), style = MaterialTheme.typography.titleLarge)
+            if (!canUseSelection) Text(if (mutating) uiText("Updating...") else stringResource(R.string.zone5_refresh_first),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            @Composable fun batchAction(label: String, invoke: () -> Unit) {
+                TextButton(onClick = { batchMenu = false; invoke() }, enabled = canUseSelection && selectedIds.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(label)) }
+            }
+            if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
+                batchAction("Add to Halo context") { viewModel.applyToSelection(NotebookBatchAction.CONTEXT) }
+                batchAction("Archive") { viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) }
+            } else batchAction("Restore") { viewModel.applyToSelection(NotebookBatchAction.RESTORE) }
+            if (state.filter != NotebookFilter.TRASH) batchAction("Move to trash") { confirmTrash = true }
+            state.collections.forEach { collection ->
+                TextButton(onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.COLLECTION, collection.id) },
+                    enabled = canUseSelection && selectedIds.isNotEmpty(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text(uiText("Add to %1\$s", collection.name))
+                }
+            }
+            TextButton(onClick = { batchMenu = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
+        }
+    }
 
     if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
         title = { Text(uiText("Move %1\$d items to trash?", selectedIds.size)) }, text = { Text(uiText("You can restore them from the Trash filter.")) },
@@ -261,12 +306,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     }
 
     LazyColumn(
+        state = libraryList,
         modifier = Modifier
             .fillMaxSize()
             .background(com.halo.app.ui.theme.haloWorkspaceBackground())
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item(key = "workspace-heading") { WorkspaceHeadingAndTabs(true, selectView) }
         if (!shellHosted) item(key = "standalone-actions") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 libraryActions.forEach { action -> TextButton(onClick = action.onInvoke, enabled = action.enabled) { Text(uiText(action.title)) } }
@@ -343,9 +390,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                             onClick = { viewModel.setSort(sort); sortMenu = false }) }
                     }
                 }
-                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() },
+                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }, enabled = selecting || canUseSelection,
                     modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText(if (selecting) "Done" else "Select"))
+                    Text(if (selecting) uiText("Done") else stringResource(R.string.zone5_organize))
                 }
             }
             if (selecting) FlowRow(
@@ -354,20 +401,10 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(uiText("%1\$d selected", selectedIds.size), style = MaterialTheme.typography.bodySmall)
-                TextButton(onClick = viewModel::selectVisible, enabled = !mutating,
+                TextButton(onClick = viewModel::selectVisible, enabled = canUseSelection && visibleItems.isNotEmpty(),
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Select visible")) }
                 Box {
-                    TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(uiText(if (mutating) "Updating..." else "Actions")) }
-                    DropdownMenu(batchMenu, { batchMenu = false }) {
-                        if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
-                            DropdownMenuItem(text = { Text(uiText("Add to Halo context")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
-                            DropdownMenuItem(text = { Text(uiText("Archive")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
-                        } else DropdownMenuItem(text = { Text(uiText("Restore")) }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
-                        if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text(uiText("Move to trash")) }, onClick = { batchMenu = false; confirmTrash = true })
-                        state.collections.forEach { collection -> DropdownMenuItem(text = { Text(uiText("Add to %1\$s", collection.name)) }, onClick = {
-                            batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.COLLECTION, collection.id)
-                        }) }
-                    }
+                    TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && canUseSelection) { Text(uiText(if (mutating) "Updating..." else "Actions")) }
                 }
             }
             if (batchNotice != null || notice != null) Row(verticalAlignment = Alignment.CenterVertically) {
@@ -382,18 +419,38 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         }
         if (showLibrary) item(key = "library-title") {
             val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: uiText(state.filter.label)
-            SectionTitle(location, uiText("Items: %1\$d", visibleItems.size))
+            SectionTitle(location, if (state.isLoaded) uiText("Items: %1\$d", visibleItems.size) else "")
         }
 
-        if (!state.isLoaded) {
+        if (state.loadError) item(key = "library-error") {
+            Surface(color = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.zone5_library_unavailable), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(if (state.isLoaded) R.string.zone5_library_stale else R.string.zone5_library_error),
+                        style = MaterialTheme.typography.bodyMedium)
+                    TextButton(onClick = viewModel::retryLibraryLoad, enabled = !mutating,
+                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Try again")) }
+                }
+            }
+        }
+
+        if (!state.isLoaded && !state.loadError) {
             item(key = "loading") {
                 HaloProgressPresentation(uiText("Loading your library…"))
             }
-        } else if (visibleItems.isEmpty() && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
+        } else if (!state.loadError && visibleItems.isEmpty() && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
             item(key = "empty") {
                 NotebookEmptyGuidance(state.query, state.filter, state.selectedCollectionId != null, !mutating,
                     viewModel::createNote, viewModel::createCanvas) {
                     viewModel.setQuery(""); viewModel.setFilter(NotebookFilter.ALL); viewModel.selectCollection(null)
+                }
+                if (notebookEmptyAction(state.query, state.filter, state.selectedCollectionId != null) == NotebookEmptyAction.CREATE_NOTE) {
+                    TextButton(onClick = { importFile = true; showInboxCapture = true }, enabled = !mutating,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                        com.halo.app.ui.zone5.Zone5Icon("action_import", HaloGlyph.FILE, Modifier.size(24.dp))
+                        Spacer(Modifier.width(8.dp)); Text(uiText("Import"))
+                    }
                 }
             }
         } else if (showLibrary) {
@@ -401,14 +458,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 key = { it.objectRef.id.value }) { item ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                 if (selecting) androidx.compose.material3.Checkbox(checked = item.objectRef.id.value in selectedIds,
-                    enabled = !mutating, onCheckedChange = { viewModel.toggleSelection(item.objectRef.id.value) })
+                    enabled = canUseSelection, onCheckedChange = { viewModel.toggleSelection(item.objectRef.id.value) })
                 WorkspaceObjectRow(
                     item = item,
                     selected = item.objectRef.id.value in state.workingSet,
                     favorite = item.objectRef.id.value in state.favorites,
                     collections = collectionChoices,
                     inSelectedCollection = item.objectRef.id.value in state.selectedCollectionMembers,
-                    onOpen = { if (selecting) viewModel.toggleSelection(item.objectRef.id.value) else viewModel.openSearchItem(item) },
+                    onOpen = { if (selecting) { if (canUseSelection) viewModel.toggleSelection(item.objectRef.id.value) } else viewModel.openSearchItem(item) },
                     onStudy = { viewModel.startStudy(item.objectRef.id.value) },
                     onToggleFavorite = { viewModel.toggleFavorite(item.objectRef.id.value) },
                     onAddToCollection = { viewModel.addToCollection(item.objectRef.id.value, it) },
@@ -416,10 +473,10 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     onToggleContext = {
                         viewModel.selectContext(item.objectRef.id.value, item.objectRef.id.value !in state.workingSet)
                     },
-                    onMultiSelect = {
+                    onMultiSelect = if (canUseSelection) ({
                         if (!selecting) { selecting = true; viewModel.clearSelection() }
                         viewModel.toggleSelection(item.objectRef.id.value)
-                    },
+                    }) else null,
                     onRestore = if (item.objectRef.lifecycle ==
                         com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED && !mutating)
                         ({ viewModel.restore(item.objectRef.id.value) }) else null,
@@ -662,7 +719,7 @@ internal fun WorkspaceObjectRow(
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(workspaceDisplayTitle(row.title, item.snippet, uiText(workspaceTypeLabel(row))), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(workspaceDisplayTitle(row.title, item.snippet, uiText(workspaceTypeLabel(row))), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val typeLabel = uiText(workspaceTypeLabel(row))
                 val dateLabel = java.text.DateFormat.getDateTimeInstance(
                     java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT,
@@ -890,10 +947,11 @@ internal fun workspaceDisplayTitle(title: String, snippet: String?, fallback: St
 }
 
 private fun workspaceIconResource(row: WorkspaceObject): Int = when (row.type) {
-    WorkspaceObjectType.NOTE -> com.halo.app.R.drawable.halo_ic_new_note
-    WorkspaceObjectType.CANVAS -> com.halo.app.R.drawable.halo_ic_canvas
-    WorkspaceObjectType.CONVERSATION -> com.halo.app.R.drawable.halo_ic_saved_chat
-    WorkspaceObjectType.MEMORY -> com.halo.app.R.drawable.halo_ic_memory
-    WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> com.halo.app.R.drawable.halo_ic_file_doc
-    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("studio:")) com.halo.app.R.drawable.halo_ic_sketch else if (row.contentRef.startsWith("canvas:")) com.halo.app.R.drawable.halo_ic_canvas else com.halo.app.R.drawable.halo_ic_file_doc
+    WorkspaceObjectType.NOTE -> R.drawable.ic_halo_type_note
+    WorkspaceObjectType.CANVAS -> R.drawable.ic_halo_type_canvas
+    WorkspaceObjectType.CONVERSATION -> R.drawable.ic_halo_library_saved_chat
+    WorkspaceObjectType.MEMORY -> R.drawable.ic_halo_tool_memory
+    WorkspaceObjectType.FILE -> R.drawable.ic_halo_type_file
+    WorkspaceObjectType.MEDIA -> R.drawable.ic_halo_type_file
+    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("studio:")) R.drawable.ic_halo_tool_studio else if (row.contentRef.startsWith("canvas:")) R.drawable.ic_halo_type_canvas else R.drawable.ic_halo_type_file
 }

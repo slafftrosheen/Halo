@@ -105,7 +105,7 @@ internal fun HaloComposer(
     }
     var showSurfaceSwitcher by remember { mutableStateOf(false) }
     val actions: @Composable RowScope.() -> Unit = {
-        surfaceSwitcher?.let { switcher ->
+        surfaceSwitcher?.takeUnless { shellOwnsOrb }?.let { switcher ->
             Box {
                 IconButton(onClick = { showSurfaceSwitcher = true }, modifier = Modifier.size(48.dp)) {
                     HaloIcon(HaloGlyph.HOME, stringResource(R.string.home_chat_screen_switch))
@@ -116,12 +116,12 @@ internal fun HaloComposer(
             }
         }
 
-        onAttach?.let { action ->
+        onAttach?.takeUnless { shellOwnsOrb }?.let { action ->
             IconButton(onClick = action, modifier = Modifier.size(48.dp)) {
                 Icon(painterResource(R.drawable.halo_ic_add), uiText("Attach"), Modifier.size(24.dp))
             }
         }
-        onTools?.let { action ->
+        onTools?.takeUnless { shellOwnsOrb }?.let { action ->
             Box {
                 if (!compact && androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.5f) {
                     TextButton(onClick = action, modifier = Modifier.heightIn(min = 48.dp)) {

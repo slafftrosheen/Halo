@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-30",
+  "phase": "review-red",
+  "branch": "codex/halo-zone5-batch3",
+  "base": "af56749a590531b7786850832a62c1387c3aa9a9",
+  "totals": {
+    "tests": 18,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.screen.Zone5ScreenChromeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.HomeComposerInteractionTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "tests": 7,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "tests": 9,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "aFailedRefreshCannotAdmitActionsAgainstOtherwiseMatchingCachedResults",
+      "reason": "java.lang.AssertionError: Failed to assert the following: (is not enabled)\nSemantics of the node:\nNode #201 at (l=39.0, t=461.0, r=97.0, b=512.0)px\nFocused = 'false'\nRole = 'Button'\nShape = 'RoundedCornerShape(topStart = CornerSize(size = 50.0%), topEnd = CornerSize(size = 50.0%), bottomEnd = CornerSize(size = 50.0%), bottomStart = CornerSize(size = 50.0%))'\nText = '[Select visible]'\nActions = [ClearTextSubstitution, GetTextLayoutResult, OnClick, RequestFocus, SetTextSubstitution, ShowTextSubstitution]\nMergeDescendants = 'true'\nHas 20 siblings\nSelector used: (Text + InputText + EditableText contains 'Select visible' (ignoreCase: false))\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "enabledActionsNeverAnnounceDisabledReasons",
+      "reason": "java.lang.AssertionError: Failed to assert the following: (StateDescription is NOT defined)\nSemantics of the node:\nNode #231 at (l=0.0, t=0.0, r=72.0, b=78.0)px\nContentDescription = '[New note]'\nFocused = 'false'\nRole = 'Button'\nShape = 'RoundedCornerShape(topStart = CornerSize(size = 16.0.dp), topEnd = CornerSize(size = 16.0.dp), bottomEnd = CornerSize(size = 16.0.dp), bottomStart = CornerSize(size = 16.0.dp))'\nStateDescription = 'Source unavailable'\nText = '[New note]'\nActions = [ClearTextSubstitution, GetTextLayoutResult, OnClick, RequestFocus, SetTextSubstitution, ShowTextSubstitution]\nMergeDescendants = 'true'\nSelector used: (Text + InputText + EditableText contains 'New note' (ignoreCase: true))\n"
+    }
+  ]
+}

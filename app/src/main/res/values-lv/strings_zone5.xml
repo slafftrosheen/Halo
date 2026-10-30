@@ -1,4 +1,25 @@
 <resources>
+    <string name="zone5_library_unavailable">Bibliotēka nav pieejama</string>
+    <string name="zone5_library_error">Saglabātie materiāli nav mainīti. Mēģiniet ielādēt šo skatu vēlreiz.</string>
+    <string name="zone5_library_stale">Redzams pēdējais ielādētais skats. Saglabātie materiāli nav mainīti.</string>
+    <string name="zone5_refresh_first">Vispirms atjauniniet šo skatu.</string>
+    <string name="zone5_conversation_changing">Notiek sarunas maiņa. Lūdzu, uzgaidiet.</string>
+    <string name="zone5_select_first">Vispirms atlasiet materiālus.</string>
+    <string name="zone5_workspace_subtitle">Saglabātie materiāli un rīki</string>
+    <string name="zone5_choose_tool">Izvēlieties rīku</string>
+    <string name="zone5_study_purpose">Vadītas nodarbības un vingrinājumi</string>
+    <string name="zone5_memory_purpose">Pārskatiet, ko Halo atceras</string>
+    <string name="zone5_studio_purpose">Audekli un attēlu rediģēšana</string>
+    <string name="zone5_office_purpose">Piezīmes, dokumenti un faili</string>
+    <string name="zone5_creations_in_library">Izveidotie materiāli paliek bibliotēkā.</string>
+    <string name="zone5_tools_controls">Atveriet rīku, lai šeit redzētu tā darbības.</string>
+    <string name="zone5_host_unavailable">Šeit nav pieejams. Atveriet lietotni Halo.</string>
+    <string name="zone5_new_chat">Jauna saruna</string>
+    <string name="zone5_widgets">Logrīki</string>
+    <string name="zone5_arrange">Izkārtojums</string>
+    <string name="zone5_organize">Kārtot</string>
+    <string name="zone5_choose_layout">Vispirms izvēlieties sākuma izkārtojumu.</string>
+    <string name="zone5_screen_busy">Lai rediģētu, pabeidziet pašreizējo darbību.</string>
     <string name="zone5_theme_colors">Izvēlētā tēma nosaka Halo lodes, vadīklu un virsmu krāsas. Uzmanībai un kļūdām tiek izmantotas tēmas statusa krāsas.</string>
     <string name="zone5_menu">Izvēlne</string>
     <string name="zone5_navigation">Navigācija</string>

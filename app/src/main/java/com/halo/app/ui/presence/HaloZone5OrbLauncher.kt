@@ -107,10 +107,11 @@ internal fun HaloZone5OrbLauncher(
         actionListControl(Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
     }
+    if (flatLabels) Box(Modifier.fillMaxWidth()) { navigation.profileStatus() }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
             if (!flatLabels && actions.isNotEmpty()) actionListControl(Modifier)
-            navigation.profileStatus()
+            if (!flatLabels) navigation.profileStatus()
         }
         Column(Modifier.width(if (size <= 48.dp) 64.dp else 112.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             HaloSignalFace(signal, gesture, size = size, contentDescription = primary,
