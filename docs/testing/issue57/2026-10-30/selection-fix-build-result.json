@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "exit": 0,
+  "sourceDrift": [],
+  "elapsedSeconds": 380.1,
+  "scope": "Only selected-passage setup regression class and main APK assembly; no generic tests/lint.",
+  "mainApkSha256": "6669346563e75e4f5a65309ee7d1502c6624324a277d900e6b50480d77c469d1"
+}

@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "scope": "Native Studio copy reopen after prior process restarts; exact saved state and original preserved",
+  "projects": [
+    {
+      "id": "44079031-958d-479a-ab69-95f9d45a95f1",
+      "revision": 5,
+      "committedSha256": "6c91e8fee1d2846232ec1b9719eb6b9ad69dbcb9aa61722cd6fdb83b0887adeb",
+      "sessionSha256": "ef1458cc2490817cda5a4538b02a0486b6e3a989811b7994b805dfa65df2bb02"
+    },
+    {
+      "id": "2b1f7e56-c54d-46cd-9e4f-e7d8df9cc57b",
+      "revision": 5,
+      "committedSha256": "6f1e13787a737d0115b4bfc08fb3d5cc18551b3d5be621a05e830b79279fe0af",
+      "sessionSha256": "70f46eefe80f4f802a1e7fc320f36a40ea4a05a3ece29fc7085a504af191a22d"
+    }
+  ],
+  "phoneSettingsRestored": {
+    "accelerometer_rotation": "1",
+    "user_rotation": "0",
+    "font_scale": "1.0"
+  },
+  "mainSource": "eee81b805698a70058cf4f9e775d703caa52d9bb",
+  "mainApkSha256": "5fd833042484d3560fc30625f6de59faa7deb3b3e9e43e114bb1db7e5872cca8",
+  "testSource": "1253093d8ba5a6c9ba007159e9614fa8227c70da",
+  "testApkSha256": "b5c8fafcf596b895ac5c5449faf0c6ba3c1821fac11855c5eebe3eca83579c48",
+  "device": "f01fe673 / Redmi 23124RA7EO / Android 15"
+}

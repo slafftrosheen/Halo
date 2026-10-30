@@ -1,0 +1,38 @@
+{
+  "result": "PASS",
+  "scope": "Native saved-note word selection -> anchored Study setup -> force-stop -> same lesson/source -> Open original. Not generated note output, model answer, spoken or PDF/Ink acceptance.",
+  "session": {
+    "id": "6dcb8501-d113-4e17-9d59-54f272df52be",
+    "goal": "HALO-QA-20261029-SELECTED-PASSAGE",
+    "assignmentLanguage": null,
+    "explanationLanguage": null,
+    "strongestLanguage": null,
+    "sourceObjectIdsJson": "[\"e38b5c57-7f62-42e6-bd79-cda25c86b396\"]",
+    "sourceRevision": 1,
+    "conversationId": null,
+    "runId": null,
+    "interactionId": null,
+    "tutorStage": "ASK",
+    "lifecycle": "ACTIVE",
+    "currentExerciseId": null,
+    "solutionRevealed": 0,
+    "completedAtEpochMs": null,
+    "schemaVersion": 3,
+    "createdAtEpochMs": 1793352030325,
+    "updatedAtEpochMs": 1793352030340,
+    "sourcesJson": "[{\"objectId\":\"e38b5c57-7f62-42e6-bd79-cda25c86b396\",\"revision\":\"1\",\"textAnchor\":{\"blockId\":\"efcf898c-36a4-4cae-88ad-0b68a431ef70\",\"start\":0,\"end\":6}}]",
+    "learnerLevel": "ADULT",
+    "supportStyle": "PRACTICE",
+    "knowledgePolicy": "SOURCE_ONLY"
+  },
+  "execution": "phone",
+  "selectedText": "Copper",
+  "originalNoteUnchanged": {
+    "body": "Copper leaves rest beside a quiet lake. The lake is deep.",
+    "revision": 1
+  },
+  "mainApkSha256": "6669346563e75e4f5a65309ee7d1502c6624324a277d900e6b50480d77c469d1",
+  "baseCommit": "1253093d8ba5a6c9ba007159e9614fa8227c70da",
+  "sourceIdentity": "Exact changed-source SHA-256 manifest; APK assembled before evidence commit.",
+  "device": "f01fe673 / Redmi 23124RA7EO / Android 15"
+}

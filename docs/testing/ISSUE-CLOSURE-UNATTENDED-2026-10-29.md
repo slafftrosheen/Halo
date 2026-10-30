@@ -181,3 +181,20 @@ Cleanup used native Forget/confirmation only on the exact ownQA copper test fact
 | #60 | Complete four-card source/revision/restart qualification, remaining personalization and protected ambient/lifecycle requirements. |
 | #61 | Fully grounded adult progression/three reviewed questions and required child/mixed-media journeys remain incomplete. |
 | #62 | Changed Bell/Screen/Memory fixes need the affected gate/install; remaining whole-app UX, accessibility, protected journeys and delayed human approval/voice criteria are not established. |
+
+## Focused continuation — 2026-10-30
+
+The decision table above is historical. **#60 is now closed** with recorded native evidence and
+the owner's explicit remaining live ambient/privacy/accessibility and spoken-layout verification;
+see [the acceptance record](ISSUE-60-ACCEPTANCE-2026-10-30.md).
+
+For #57, native explicit review/Keep → production recall → native correction → stale-hit rejection
+→ native Forget → fresh-recall absence and both retained-hit rejections now **PASS** on the actual
+phone. The separate saved Studio copy native reopen also passed exact persisted-state/original
+preservation readback, filling the previous Chain B gap. Automatic rotation was restored. These
+replace the earlier NOT_RUN statements only for those exact checks. No model influence, generated
+suggestion, voice or remote-context proof is inferred. The native selected-passage setup check
+found a dropped-anchor defect. The fix passed two focused regression cases, was built/installed,
+and passed native exact-selection/setup/source-inspector/force-stop/reopen/Open-original readback.
+The full newly saved linked-output chain and remaining policy/voice gates stay open, as tracked in
+[the #57 acceptance record](ISSUE-57-ACCEPTANCE-2026-10-30.md). No generic suite was rerun.

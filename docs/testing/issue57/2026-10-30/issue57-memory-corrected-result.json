@@ -1,0 +1,14 @@
+{
+  "kind": "LOCAL_PRODUCTION_RECALL_NOT_MODEL_INFLUENCE",
+  "runId": "issue57-memory-20261030",
+  "checkpoint": "CORRECTED",
+  "atMs": 1793350527490,
+  "targetIsLocal": true,
+  "current": {
+    "id": "97400eb6-9186-4222-96ad-369b4a313bbc",
+    "version": "550d88f050a09ad7560696c491e81a4564553006163436ee6c109582f0e51148",
+    "contentSha256": "fe7c302611f82fe12dbf679ad047ae7e7d063519f95af29e4f864d9d6783c148"
+  },
+  "originalRejected": true,
+  "result": "PASS"
+}

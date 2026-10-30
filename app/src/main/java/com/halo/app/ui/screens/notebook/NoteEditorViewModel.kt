@@ -1014,6 +1014,22 @@ class NoteEditorViewModel(
      * [goal] is also how a selected passage enters Study: the caller passes the passage text so the
      * session keeps the learner's intent without inventing a new source type.
      */
+    /** Freeze the real saved selection before leaving the editor for setup. */
+    suspend fun studySetupSource(): com.halo.sdk.runtime.study.StudySessionSource? {
+        val selected = mutableUiState.value.selection
+        val block = selected?.let { s -> mutableUiState.value.blocks.firstOrNull { it.id == s.blockId } }
+        if (!flushBeforeStudy() || selected != mutableUiState.value.selection ||
+            block != selected?.let { s -> mutableUiState.value.blocks.firstOrNull { it.id == s.blockId } }) return null
+        val range = selected?.let { s -> block?.let { s.normalized(it.text.length) } }
+        if (selected != null && block == null) return null
+        if (range != null && (range.end - range.start > 8000 ||
+                (selected.start != selected.end && range.start == range.end))) return null
+        val anchor = range?.takeIf { it.end > it.start }?.let {
+            com.halo.sdk.runtime.study.StudyTextAnchor(it.blockId, it.start, it.end)
+        }
+        return com.halo.sdk.runtime.study.StudySessionSource(noteId, revision.toString(), anchor)
+    }
+
     suspend fun startStudy(goal: String? = null): StudyHandoff {
         val studyUseCases = study ?: return StudyHandoff.Unavailable("Study is not available in this build")
         val selected = mutableUiState.value.selection

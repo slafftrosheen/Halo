@@ -570,14 +570,24 @@ fun AppShell(
                     )
                     }
                 }
-                composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}", arguments = listOf(
+                composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}&sourceReference={sourceReference}", arguments = listOf(
                     navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("goal") { type = NavType.StringType; nullable = true; defaultValue = null },
-                    navArgument("sourceVersion") { type = NavType.StringType; nullable = true; defaultValue = null }
+                    navArgument("sourceVersion") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("sourceReference") { type = NavType.StringType; nullable = true; defaultValue = null }
                 )) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
                         factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage, versionReader = ManualDependencyGraph.workspaceContext::versionFor))
-                    LaunchedEffect(model, entry.arguments?.getString("captureSource"), entry.arguments?.getString("sourceVersion")) { entry.arguments?.getString("captureSource")?.let { id -> model.select(id, entry.arguments?.getString("sourceVersion")) } }
+                    LaunchedEffect(model, entry.arguments?.getString("captureSource"), entry.arguments?.getString("sourceVersion"), entry.arguments?.getString("sourceReference")) {
+                        entry.arguments?.getString("captureSource")?.let { id ->
+                            val encoded = entry.arguments?.getString("sourceReference")
+                            // A malformed exact reference must never become a whole-note fallback.
+                            if (encoded == null) model.select(id, entry.arguments?.getString("sourceVersion"))
+                            else runCatching { com.halo.app.data.study.StudyJson.decodeSources(encoded, emptyList(), null).singleOrNull() }.getOrNull()?.let {
+                                model.select(id, entry.arguments?.getString("sourceVersion"), it)
+                            }
+                        }
+                    }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
                         onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
                         onReview = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}?review=true") },
@@ -673,8 +683,8 @@ fun AppShell(
                             onOpenCanvas = { canvasId, selectionId ->
                                 navigateSafely("notebook/canvas/${android.net.Uri.encode(canvasId)}?nodeId=${android.net.Uri.encode(selectionId)}")
                             },
-                            onStartStudySetup = { goal ->
-                                val source = "study?captureSource=${android.net.Uri.encode(noteId)}"
+                            onStartStudySetup = { goal, reference ->
+                                val source = "study?captureSource=${android.net.Uri.encode(noteId)}&sourceReference=${android.net.Uri.encode(com.halo.app.data.study.StudyJson.encodeSources(listOf(reference)))}"
                                 navigateSafely(source + (goal?.takeIf { it.isNotBlank() }?.let {
                                     "&goal=${android.net.Uri.encode(it)}"
                                 } ?: ""))

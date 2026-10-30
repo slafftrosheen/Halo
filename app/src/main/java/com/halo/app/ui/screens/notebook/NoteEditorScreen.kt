@@ -155,7 +155,7 @@ fun NoteEditorScreen(
     onBack: () -> Unit,
     onOpenStudy: (String) -> Unit = {},
     onOpenCanvas: (String, String) -> Unit = { _, _ -> },
-    onStartStudySetup: ((String?) -> Unit)? = null,
+    onStartStudySetup: ((String?, com.halo.sdk.runtime.study.StudySessionSource) -> Unit)? = null,
     onReviewMemory: (String) -> Unit = {},
     onOpenStudio: ((String, String) -> Unit)? = null,
 ) {
@@ -238,8 +238,9 @@ fun NoteEditorScreen(
                 // The source must be durably saved before Study reads it.
                 // A failed/conflicted note stays in the editor for recovery.
                 scope.launch {
-                    if (viewModel.flushBeforeStudy()) onStartStudySetup(passage)
-                    else studyError = "Your note could not be saved. Try again before starting Study."
+                    val source = viewModel.studySetupSource()
+                    if (source != null) onStartStudySetup(passage, source)
+                    else studyError = "Your selected passage changed. Select it again before starting Study."
                 }
             } else {
                 scope.launch {

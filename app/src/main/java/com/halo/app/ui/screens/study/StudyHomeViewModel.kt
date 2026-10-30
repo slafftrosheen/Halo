@@ -29,13 +29,21 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     private val preview = MutableStateFlow<List<ResolvedStudySource>>(emptyList())
     val previews = preview.asStateFlow()
     private val expectedContextVersions = mutableMapOf<String, String>()
-    fun select(id: String, expectedVersion: String? = null) {
+    private val sourceReferences = mutableMapOf<String, StudySessionSource>()
+    fun select(id: String, expectedVersion: String? = null, sourceReference: StudySessionSource? = null) {
         if (working.value || id in selected.value || selected.value.size >= StudySourceLimits.MAX_SOURCES) return
+        if (sourceReference != null) {
+            if (sourceReference.objectId != id || sourceReference.revision == null) {
+                message.value = StudyUnavailableReason.SOURCE_CHANGED.explanation
+                return
+            }
+            sourceReferences[id] = sourceReference
+        }
         if (expectedVersion != null) expectedContextVersions[id] = expectedVersion
         selected.value = selected.value + id
         refreshPreview()
     }
-    fun remove(id: String) { if (!working.value) { selected.value = selected.value - id; expectedContextVersions.remove(id); refreshPreview() } }
+    fun remove(id: String) { if (!working.value) { selected.value = selected.value - id; expectedContextVersions.remove(id); sourceReferences.remove(id); refreshPreview() } }
     /** Clear an explicitly requested new lesson's material; never clear material
      * preselected by an external Study entry point on first composition.
      */
@@ -43,20 +51,25 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         if (working.value) return
         selected.value = emptyList()
         expectedContextVersions.clear()
+        sourceReferences.clear()
         preview.value = emptyList()
         message.value = null
     }
     private fun refreshPreview() = viewModelScope.launch {
         val ids = selected.value
         val expected = expectedContextVersions.toMap()
+        val references = sourceReferences.toMap()
         val sources = ids.mapNotNull { id ->
             val version = expected[id]
             if (version != null && versionReader?.invoke(id) != version) ResolvedStudySource.Unsupported(id, "Material", "Source changed. Select it again.")
-            else resolver?.resolve(id, "")?.let { source ->
-                if (version != null && versionReader?.invoke(id) != version) ResolvedStudySource.Unsupported(id, source.title, "Source changed. Select it again.") else source
+            else (references[id]?.textAnchor?.let { resolver?.resolveTextAnchor(id, references.getValue(id).revision!!, it) }
+                ?: resolver?.resolve(id, ""))?.let { source ->
+                if ((version != null && versionReader?.invoke(id) != version) ||
+                    references[id]?.let { it.revision != source.revision } == true)
+                    ResolvedStudySource.Unsupported(id, source.title, "Source changed. Select it again.") else source
             }
         }
-        if (selected.value == ids) preview.value = sources
+        if (selected.value == ids && sourceReferences == references) preview.value = sources
     }
     fun importMaterial(uri: android.net.Uri) = viewModelScope.launch {
         if (working.value || selected.value.size >= StudySourceLimits.MAX_SOURCES) return@launch
@@ -113,7 +126,8 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
                 val expected = preview.value.mapNotNull { source -> source.revision?.takeIf { source !is ResolvedStudySource.Unsupported }?.let { source.objectId to it } }.toMap()
                 val languages = StudyLanguagePreferences(assignment.takeIf { it.isNotBlank() }, language.takeIf { it.isNotBlank() }, strongest.takeIf { it.isNotBlank() })
                 val result = if (selected.value.isEmpty()) study.startTopic(topic, language.trim().takeIf { it.isNotBlank() })
-                    else study.startMaterial(selected.value, languages, topic.takeIf { it.isNotBlank() }, level, style, policy, expectedVersions = expected)
+                    else study.startMaterial(selected.value, languages, topic.takeIf { it.isNotBlank() }, level, style, policy,
+                        expectedVersions = expected, sourceReferences = sourceReferences.toMap())
                 when (result) {
                     is StudyStartResult.Started -> {
                         if (executionChoice in setOf("phone", "cloud"))

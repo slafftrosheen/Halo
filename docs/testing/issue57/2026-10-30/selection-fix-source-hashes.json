@@ -1,0 +1,8 @@
+{
+  "app/src/main/java/com/halo/app/study/StudyUseCases.kt": "dc546e9b4a9f70414fe3b3a94d1be4ec35fbb780a12ec4f41e1223ea8bfb7563",
+  "app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorScreen.kt": "1a7108f9ed17ca49f7b01909c95801ba117980dece8f3c11dd7098a86c1ca4d5",
+  "app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorViewModel.kt": "dc62abcfe41342be267bb3fead0508840081c36d5685039fbb6cfefb3989fb2c",
+  "app/src/main/java/com/halo/app/ui/screens/study/StudyHomeViewModel.kt": "c7a94284d82f3e497cd2a9a388e2a83ce4ec0815fd9788a762bb9934bf04f788",
+  "app/src/main/java/com/halo/app/ui/shell/AppShell.kt": "644c77f8f291293c7547b9c50031c99123675f7ea0d5394f0afdd3cf0188957d",
+  "app/src/test/java/com/halo/app/data/workspace/SelectedPassageSetupRegressionTest.kt": "bf0c88801560eff035513832a3de952db5f7386aab62ec8934f2a0e1298dad6c"
+}

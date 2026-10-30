@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.app.data.workspace.SelectedPassageSetupRegressionTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-30T09:16:25.348Z" hostname="MINIFOXEY" time="10.509">
+  <properties/>
+  <testcase name="setupPreservesSelectionPreviewSavedAnchorAndLearnerChoices" classname="com.halo.app.data.workspace.SelectedPassageSetupRegressionTest" time="9.849"/>
+  <testcase name="sourceEditDuringSetupRejectsInsteadOfBroadeningOrCreatingALesson" classname="com.halo.app.data.workspace.SelectedPassageSetupRegressionTest" time="0.172"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

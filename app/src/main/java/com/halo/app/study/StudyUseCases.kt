@@ -234,13 +234,24 @@ class StudyUseCases(
         policy: StudyKnowledgePolicy = StudyKnowledgePolicy.SOURCE_ONLY,
         conversationId: String? = null, runId: String? = null, interactionId: String? = null,
         expectedVersions: Map<String, String> = emptyMap(),
+        sourceReferences: Map<String, StudySessionSource> = emptyMap(),
         validateSources: suspend () -> Boolean = { true },
     ): StudyStartResult {
         val ids = objectIds.distinct()
         if (ids.isEmpty() || ids.size > StudySourceLimits.MAX_SOURCES) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_NOT_FOUND)
-        val resolver = sourceResolver ?: return if (expectedVersions.isNotEmpty()) StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_STORE_UNAVAILABLE)
+        val resolver = sourceResolver ?: return if (expectedVersions.isNotEmpty() || sourceReferences.isNotEmpty()) StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_STORE_UNAVAILABLE)
             else start(StartStudyRequest(ids.first(), languages.assignmentLanguage, languages.explanationLanguage, languages.strongestLanguage, goal))
-        val sources = ids.map { resolver.resolve(it, goal.orEmpty()) }
+        if (sourceReferences.any { (id, ref) -> id !in ids || ref.objectId != id || ref.revision == null })
+            return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
+        val sources = ids.map { id ->
+            val ref = sourceReferences[id]
+            val anchor = ref?.textAnchor
+            if (anchor != null) resolver.resolveTextAnchor(id, ref.revision!!, anchor)
+            else resolver.resolve(id, goal.orEmpty())
+        }
+        if (sources.any { source -> sourceReferences[source.objectId]?.let {
+                source is ResolvedStudySource.Unsupported || source.revision != it.revision
+            } == true }) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
         if (expectedVersions.keys.any { it !in ids } || sources.any { source ->
             expectedVersions[source.objectId]?.let { it != source.revision || source is ResolvedStudySource.Unsupported } == true
         }) return StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED)
@@ -256,9 +267,16 @@ class StudyUseCases(
             return StudyStartResult.Unavailable(reason)
         }
         return try {
-            StudyStartResult.Started(repository.createMaterialSession(sources.map { StudySessionSource(it.objectId, it.revision) },
+            StudyStartResult.Started(repository.createMaterialSession(sources.map { StudySessionSource(it.objectId, it.revision, sourceReferences[it.objectId]?.textAnchor) },
                 languages, goal, level, style, policy, conversationId, runId, interactionId,
-                validateSources = { if (!validateSources()) throw StudySourceChanged() }))
+                validateSources = {
+                    if (!validateSources()) throw StudySourceChanged()
+                    for ((id, ref) in sourceReferences) {
+                        val current = ref.textAnchor?.let { resolver.resolveTextAnchor(id, ref.revision!!, it) }
+                            ?: resolver.resolve(id, goal.orEmpty())
+                        if (current is ResolvedStudySource.Unsupported || current.revision != ref.revision) throw StudySourceChanged()
+                    }
+                }))
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: StudySourceChanged) { StudyStartResult.Unavailable(StudyUnavailableReason.SOURCE_CHANGED) }
         catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
