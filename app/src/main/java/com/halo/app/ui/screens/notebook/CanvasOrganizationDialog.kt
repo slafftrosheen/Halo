@@ -18,13 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
+import com.halo.app.ui.workspace.StudioAlertDialog
 
 @Composable
 internal fun CanvasOrganizationDialog(viewModel: CanvasEditorViewModel, state: CanvasEditorUiState) {
     val proposal = state.organization ?: return
     val newGroupLabel = uiText("New group")
     var showTechnical by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(onDismissRequest = viewModel::cancelOrganization,
+    StudioAlertDialog(onDismissRequest = viewModel::cancelOrganization,
         title = { Text(uiText("Preview organization")) },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
