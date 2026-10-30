@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.compose.composable
 import com.halo.app.data.RoomConversationStore
 import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.memory.RoomMemoryRepository
@@ -136,6 +137,71 @@ class NotebookRootReselectionTest {
                 assertTrue(navigation.isEmpty())
             }
         }
+    }
+
+    @Test fun libraryStartsWithCreationImportAndVisibleOrganization() {
+        renderWorkspace()
+        compose.runOnIdle {
+            assertEquals(listOf("page.notebook.new-note", "page.notebook.import", "page.notebook.organize"),
+                actions.value!!.actions.take(3).map { it.id })
+            assertTrue(actions.value!!.invoke("page.notebook.organize"))
+        }
+        compose.onNodeWithText("0 selected").assertExists()
+    }
+
+    @Test fun toolsHaveNoLibraryLeaseAndOpenEachActualInstrumentInOneClick() {
+        val library = NotebookLibrarySession { true }
+        var study = 0; var studio = 0; var office = 0
+        renderWorkspace(library, { study++ }, { studio++ }, { office++ })
+        compose.waitUntil(5_000) { scheduler.runCurrent(); library.read() != null }
+        compose.onNodeWithText("Tools").performClick()
+        compose.runOnIdle {
+            assertEquals("tools", actions.value!!.owner.activeToolId)
+            assertTrue(actions.value!!.actions.isEmpty())
+            assertNull("Hidden Library cannot remain an assistant target", library.read())
+        }
+        compose.onNodeWithText("Study").performClick()
+        compose.onNodeWithText("Halo Studio").performClick()
+        compose.onNodeWithText("Office Tools").performClick()
+        compose.onNodeWithText("Memory").performClick()
+        compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.any { it is NotebookNavigation.OpenMemoryHub } }
+        assertEquals(1, study); assertEquals(1, studio); assertEquals(1, office)
+    }
+
+    @Test fun rootReselectionReturnsToolsToLibraryWithoutDiscardingQueryOrSelection() {
+        renderWorkspace()
+        compose.runOnIdle {
+            model.setQuery(QUERY); model.setFilter(NotebookFilter.NOTES)
+            model.toggleSelection(resultIds.getValue(NOTE_TITLE))
+        }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.query == QUERY }
+        compose.onNodeWithText("Tools").performClick()
+        lateinit var previous: ShellPageProjection
+        compose.runOnIdle { previous = actions.value!!; rootRequest.value++ }
+        compose.runOnIdle {
+            assertEquals("library", actions.value!!.owner.activeToolId)
+            assertEquals(QUERY, model.queryText.value)
+            assertEquals(setOf(resultIds.getValue(NOTE_TITLE)), model.selectedIds.value)
+            assertNotSame(previous, actions.value)
+        }
+    }
+
+    private fun renderWorkspace(library: NotebookLibrarySession? = null,
+        study: () -> Unit = {}, studio: () -> Unit = {}, office: () -> Unit = {}) {
+        compose.setContent { HostlessHaloTheme {
+            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
+                Box(Modifier.width(900.dp).height(1800.dp)) {
+                    val nav = androidx.navigation.compose.rememberNavController()
+                    androidx.navigation.compose.NavHost(nav, startDestination = "notebook") {
+                        composable("notebook") {
+                            NotebookScreen(model, onOpenStudy = study, onOpenStudio = studio, onOpenFileTools = office,
+                                rootRequest = rootRequest.value, librarySession = library)
+                        }
+                    }
+                }
+            }
+        } }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.isLoaded }
     }
 
     /** No platform index/provider IO; Notebook's actual canonical title-match path is exercised. */

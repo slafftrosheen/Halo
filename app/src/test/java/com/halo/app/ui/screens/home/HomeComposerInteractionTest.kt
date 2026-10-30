@@ -29,6 +29,22 @@ import org.robolectric.annotation.Config
 class HomeComposerInteractionTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun hostedComposerHasOneEditorAndSendWithoutDuplicatingZoneActions() {
+        var sent = 0
+        compose.setContent { HaloTheme {
+            androidx.compose.runtime.CompositionLocalProvider(com.halo.app.ui.presence.LocalShellHaloOrb provides true) {
+                HaloComposer("Keep this draft", {}, { sent++ }, {}, {}, true, true, false, "Talk", false,
+                    onAttach = {}, onTools = {}, surfaceSwitcher = { androidx.compose.material3.Text("Surface picker fixture") })
+            }
+        } }
+        compose.onAllNodes(hasSetTextAction()).assertCountEquals(1)
+        compose.onNodeWithContentDescription("Attach").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Tools").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Home / Screen").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Send").assertIsDisplayed().performClick()
+        assertEquals(1, sent)
+    }
+
     @Test fun progressiveTypingSubmitsTheWholeVisibleDraft() {
         val drafts = mutableStateOf(hashMapOf<String, String>())
         var submitted = ""
