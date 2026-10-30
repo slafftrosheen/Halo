@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_card_pin">Piespraust</string>
+    <string name="screen_card_unpin">Atspraust</string>
+</resources>

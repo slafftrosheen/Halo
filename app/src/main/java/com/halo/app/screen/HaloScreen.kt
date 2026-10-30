@@ -519,7 +519,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = { change(workingLayout.cards.mapIndexed { i, c -> if (i == selected) c.copy(pinned = !c.pinned) else c }, "Card updated") }) {
-                            Text(uiText(if (card.pinned) "Unpin" else "Pin"))
+                            Text(stringResource(if (card.pinned) R.string.screen_card_unpin else R.string.screen_card_pin))
                         }
                         TextButton(onClick = {
                             change(workingLayout.cards.mapIndexed { i, c -> if (i == selected) c.copy(archived = !c.archived) else c }, "Card updated")
