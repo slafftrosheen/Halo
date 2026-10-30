@@ -1,0 +1,4355 @@
+{
+  "date": "2026-10-30",
+  "phase": "final-host",
+  "base": "70ee2a113915ea3a046d48a7fc21b92218169624",
+  "branch": "codex/halo-zone5-batch4",
+  "suites": [
+    {
+      "name": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.studio.StudioDocumentTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.studio.StudioMigrationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.studio.StudioProjectRepositoryTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.studio.StudioUiRequestsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceFileEditingActionsTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceStudyContinuityTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.HostFirstSkillAuditTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.tools.AssistantToolsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.di.tools.StudySessionToolsTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.ActiveStudyToolsOwnerTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.ExtractionDraftStoreTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyDeviceRegressionTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyDocxTextTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyLessonCountTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyMasteryModelTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyReaderRecoveryTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudyReviewPolicyTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudySourceMigrationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.study.StudySourcesTest",
+      "tests": 51,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloOrbThemeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsHomeChoicesTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsLessonCompletionFxTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsPreferencesTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsReadAlongTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsResponsiveCardsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsShellOrbBindingTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsVisualTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.StudyKidsBrandBookTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasAiDraftActionPickerTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasAiDraftReviewControlsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasAnnotatedPreviewTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasArrangementFxTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasArrangementMotionTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasCardFrameTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasDraftDrawOnFxTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasEmptyStarterTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasErasedSketchUiTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasShellAssistantEntryTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.CanvasWorkflowPersistenceTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.EditorWorkspaceChromeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.MemoryDetailCopyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookBatchNoticeLocalizationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookGuidanceTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookMemoryReviewTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NoteEditorViewModelTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.NoteFieldSynchronizationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.SelectedPassageExportCopyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyCardReviewCopyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyCompletionFxTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyGuideTracePolicyTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyHaloFxInteractionTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyMasteryLocalizationTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyRecallActionsTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyRecallVisualTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyReviewQuestionFaceTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudySetupGeometryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.BellActivityLargeTextTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloAssistantScreenParityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.PermissionsScreenTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellFooterViewportTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellInteractionSurfaceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.BrandLauncherIconTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.BrandPaletteParityTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.BrandTypographyTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.FontScaleTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.PaletteTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.theme.PaletteVisualTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.workspace.StudioAiProvenanceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.workspace.StudioInkSessionTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.workspace.StudioPreviewLifetimeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.HaloZone5IconRenderTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "cases": [
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "inferredSuggestionBecomesSavedOnlyAfterExplicitApprovalWithOriginRetained",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "unclassifiedInferredContentRemainsRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "boundedMemoryContextSourceRetrievesRelevantMemories",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "browsingAndSharedSearchLeaveUsageUntouchedAndSecretsCreateNothing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "explicitImportConfirmationPreservesOriginContentConfidenceScopeAndExpiry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "forgetDetachesWorkingSetAndLeavesRevisionHistory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "hubUsesSharedSearchAndRequiresExplicitConflictReviewWithoutUsageWrites",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "reviewedNoteRetainsExactSourceRevisionAndLongNoteIsNotTruncated",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "conflictReviewWritesNothingAndReinforcementKeepsOneRecord",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "promoteCandidateCreatesMemoryRecordAndAllowsRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "neverAgainSuppressesOnlySameFingerprint",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "unsupportedOrMalformedDataNeverBecomesAnEmptyDocument",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "historyIsPersistedBoundedAndSelectionDoesNotConsumeUndo",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "documentAndCropLimitsAreEnforcedBeforeRendering",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "parserRejectsPathsSourceRewritesAndFractionalGeometry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "lockedLayersNeedAnExplicitUnlockBeforeAnyEdit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "templatesRemainOrdinaryEditableLayers",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioDocumentTest",
+      "test": "exactSourceAndNonDestructiveEditsSurviveRoundTrip",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "changedOrTrashedImageFailsClosedAndManagedPublicationRollsBack",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "staleAvailabilityObservationCannotOverwriteAnOwnedPromotion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "cropRotateAndMirrorReuseCanonicalPixelTransform",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "keepingAiProposalCreatesIndependentCopyAndPreservesConcurrentLocalEdits",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "assistantUsesSameRevisionGuardAndDispatchReceiptsAsLocalEditing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "localImportEditExportReopenAndCanvasInsertRetainExactSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "legacyOwnedCopyGetsVerifiedHashAndCorruptOwnedCopyIsNotReimported",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "inkSelectionRequiresThePublishingSessionsOwnPersistedRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "previewIsBoundedAndMaskClipsPixelsWithoutChangingSourceDocument",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioMigrationTest",
+      "test": "additiveMigrationPreservesExistingObjectsAndCascadesOnlyTheirOwnedStudioRows",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioProjectRepositoryTest",
+      "test": "draftUndoAndRedoSurviveReopeningWithoutChangingSavedOriginal",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioProjectRepositoryTest",
+      "test": "concurrentStaleCommandsHaveOneWinnerAndNeverRefreshTheirAuthority",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioProjectRepositoryTest",
+      "test": "trashedOrCorruptProjectsAreNeverSilentlyRecreated",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioProjectRepositoryTest",
+      "test": "saveAsPinsSourceRevisionAndRestoringVersionIsUndoable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioUiRequestsTest",
+      "test": "launchFailureClearsPendingAndRetainsOnlyBoundedReceipts",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioUiRequestsTest",
+      "test": "expiryRemovesUndeliveredPromptAndDoesNotReplayIt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.studio.StudioUiRequestsTest",
+      "test": "claimIsSingleUseAndPreservesOriginalPrivacyAuthority",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "test": "malformedArgumentsAndUnknownCoordinatesCannotCreateOrMoveAnything",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "test": "staleBoardVersionRefusesTextReplacementWithoutChangingAnyRowsOrRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "test": "typedCanvasChangesAreSavedInTheEditorOwnerAndRejectStaleOrLinkedTextWrites",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "test": "clearRejectsStaleMalformedMissingForeignAndNonSketchTargetsWithoutMutation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasActionsTest",
+      "test": "clearSketchPersistsThroughCanonicalOwnerPreservingCardAspectLinksAndOtherContent",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "renameGroupsTagsDuplicatesAndBothArrangementModesUseSavedEditorObjects",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "groupMoveUsesSpatialFallbackWithoutMovingOutsideOrNestedGroupCards",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "everyAddedOperationRejectsStaleBoardWithoutChangingAnyPersistedData",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "explicitGroupMembershipOverridesGeometryAndStaleMoveCannotMoveMembersTwice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "disconnectAndDeleteRemoveOnlyExactLinksAndCardsPreservingSourcesAndUnrelatedEdges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "maximumLegalSelectionReceiptFitsTheRegisteredOutputBudgetWithoutLosingIds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "ungroupPreservesMembersAndRejectsMixedSelectionBeforeRemovingAnything",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "malformedForeignAndDuplicateSelectionsFailAtomicallyForEverySelectionEdit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceCanvasEditingParityTest",
+      "test": "olderEditorUndoCannotRestoreCardsAfterAnAssistantRemoval",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceFileEditingActionsTest",
+      "test": "everyOperationHasCanonicalPolicyAndWorkspaceContentBoundary",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceFileEditingActionsTest",
+      "test": "sharedActionsUseExactRevisionBoundedReadsAndDispatchTruth",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "malformedArgumentsAndUnsupportedFieldCombinationsNeverWrite",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "insertAndPartialEditPreserveOtherBlocksAndOmittedChecklistFields",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "databaseFailureRollsBackRevisionAndBlockMutationTogether",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "archiveTrashRestoreAndInboxUseExistingLifecycleWithoutChangingContent",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "blockCapacityAndSurrogateBoundaryRefuseLossyOperations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "markdownReplacementReportsLiteralFallbackAndRejectsNewUnversionedReferences",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "addingOrRemovingAnAttachmentInvalidatesAnOlderTrashApprovalWithoutChangingNoteRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "referenceCannotReadUnsupportedWorkspaceKindsThroughAGuessedVersion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "referencesRequireExactActiveTargetAndCannotMutateTheirSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "renameUsesCanonicalRevisionAndRejectsAStaleOrConcurrentEditorWrite",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "concurrentEditsOfAnObservedVersionCommitExactlyOnce",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "splitMergeDuplicateAndDeleteShareEditorSemanticsAndStableAnchors",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "laterPagesRequireTheOriginalObservedVersionAndRejectInterleavedEdits",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "readingLegacyNoteInitializesStableBlocksWithoutChangingCommittedRevisionOrText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "hostileControlTextAndManyBlockReceiptsRemainBoundedWithExplicitPaging",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "registrationContractsBundledRisksAndDestructivePolicyMatchActualOwners",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "foreignBlockAndMissingAnchorCannotEditAnotherNoteOrAppendByGuessing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "replacementCannotSilentlyDropTheTailBeyondTheCanonicalBlockLimit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "specializedDocumentsKeepTheirOwnOwnerAndCannotBeForgedThroughCodeLanguage",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "everyWriteRefusesPendingRecoveryIncludingLegacyDraftAndDoesNotAcknowledgeIt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "readingAnOversizedLegacyNoteCannotInitializeATruncatedDocument",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceNoteActionsTest",
+      "test": "moveAndIndentUseCanonicalListBoundsWithoutSilentlyClamping",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "actualHighValueOperationsHaveVersionedContractsAndSafeReplayMetadata",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "canvasEditingDescriptorsKeepDestructiveApprovalAndExactContractsWithoutRestrictingOrdinaryAllowedEdits",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "attachmentChangeBetweenResolutionAndPersistenceCannotCreateAStudySession",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "assistantStudyRequiresExactObservedVersionAndPersistsThroughTheSameStudyOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "attachedPhotoUsesContextIdentityAndItsDistinctStudyCitationRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "canvasClearCannotUseAlwaysAllowOrReuseAnEarlierScopeApproval",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceOperabilityTest",
+      "test": "fileInsertionChecksTargetRevisionWithoutOverwritingEitherSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "concurrentReviewsOfOneObservedCardRecordExactlyOneEvent",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "sessionCompletionAndDeletionOnlyAskNarrationToStopTheirOwnSession",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "sessionAndCardPagesStayBoundedAndDeterministic",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "editingTheObservedCardPreservesAcceptanceSourcesAndReviewHistory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "changedExerciseOrSessionNeverReceivesAnOldAttempt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "skippedKnowledgeProbePersistsWithoutInventingKnowledgeOrGrading",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "omittedPreferencesStaySavedAndContentVersionsWorkWithAnUnchangedClock",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "cancellationAfterDatabaseCommitCannotRestoreDeletedLocalHistory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "completionIsSavedWithoutInventingMasteryAndFinishedSessionsRejectNewAttempts",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "deletingStudyDataRetainsOriginalMaterialAndRejectsStaleSessionVersions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "literalAttemptUsesExactExerciseAndStableReceiptWithoutInventedFeedback",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "deletingACardCascadesItsReviewsAndPreservesItsSession",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "localCleanupFailureRollsBackDatabaseDeletionAndRestoresObservedHistory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "failedSessionInvalidationCannotLeaveAnInsertedAttemptBehind",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "deletionGuardsAllLocalLessonWritersAndClearsHistoryJourneyAndRecovery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "learnerCardCreationDoesNotForgeGroundingAndProtectsAgainstRegeneration",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "unacceptedCardsAndInventedRecallRatingsNeverCreateReviews",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "everyCanonicalChildWriteInvalidatesAnOlderDeletionApprovalEvenWithAFixedClock",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "invalidLaterPreferenceRollsBackEarlierWritesInTheSameTransaction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "malformedArgumentsDoNotWriteAndUntrustedCardTextStaysLiteral",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "registeredWorkspaceExecutorHasClosedContractsAndCanonicalRiskForAllLearnerActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "aWriterWaitingBehindDeletionCannotResurrectRecoveryData",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyActionsTest",
+      "test": "foreignCardCannotBeReadChangedReviewedOrDeletedThroughAnotherSession",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyContinuityTest",
+      "test": "staleHandoffDoesNotCreateAStudySessionButExactCurrentSourceDoes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyContinuityTest",
+      "test": "exactHandoffCannotBypassAnUnavailableSourceResolver",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.workspace.WorkspaceStudyContinuityTest",
+      "test": "trashedHandoffCannotBeSilentlyTurnedIntoAGeneralKnowledgeLesson",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.HostFirstSkillAuditTest",
+      "test": "everyBundledSkillResolvesThroughTheSharedAuthorityWithoutHome",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.HostFirstSkillAuditTest",
+      "test": "currentPageDiscoveryResolvesToGovernedNativeOwnersWithoutHome",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "new tools have manifest discovery policy and exact descriptor ownership",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "invalid preferences do not partially change the theme",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "configuration mutations require foreground grown-up admission before any owner write",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "navigation has versioned operability and dispatches every exact assistant destination",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "settings persist and a new repository restores the same values",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "read and stop reach shared output and never claim playback complete",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "test": "opening an internal page uses a bounded explicit intent and reports dispatch",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.StudySessionToolsTest",
+      "test": "fieldsAreClosedAndCurrentInteractionAdmissionIsRequired",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.di.tools.StudySessionToolsTest",
+      "test": "scopedDispatchKeepsLiteralLearnerTextAndNeverClaimsNativeCompletion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ActiveStudyToolsOwnerTest",
+      "test": "attachmentDraftAndExactViewTokensCannotRouteActionsToAnUnrelatedLesson",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ActiveStudyToolsOwnerTest",
+      "test": "scopedTutorDispatchQueuesTheNativeOwnerAndReadbackWaitsForActualTurn",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ActiveStudyToolsOwnerTest",
+      "test": "explicitSkipUsesSameOwnerPreservesDraftAndConsumesItsExactToken",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ActiveStudyToolsOwnerTest",
+      "test": "firstCanonicalWriteRejectsAChangedSavedSessionInsideItsTransaction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ExtractionDraftStoreTest",
+      "test": "restoredDraftRetainsEditedTextOrderVersionsAndSavedNote",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ExtractionDraftStoreTest",
+      "test": "oversizedOrUnknownDraftCannotBeRestored",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.ExtractionDraftStoreTest",
+      "test": "rejectedReplacementLeavesTheExistingDraftIntact",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyDeviceRegressionTest",
+      "test": "childLessonStartsLocallyWithoutGrantAndUsesCloudOnlyWithGrant",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyDeviceRegressionTest",
+      "test": "discoveryPersistsLearnerWordsWhileTutorReceivesTeachingInstruction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyDocxTextTest",
+      "test": "externalEntitiesAreRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyDocxTextTest",
+      "test": "sentenceRangesKeepWhitespaceAndRepeatedTextIdentity",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyDocxTextTest",
+      "test": "paragraphTabsBreaksAndDiacriticsArePreserved",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyDocxTextTest",
+      "test": "archiveExpansionIsBounded",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyLessonCountTest",
+      "test": "interruptedAttemptKeepsDraftAndSubmissionIdentityAcrossStoreRecreation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyLessonCountTest",
+      "test": "repliesCountWithoutGradingAndStayCorrectAcrossRestoreAndDeletion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "first review outcome affects difficulty immediately",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "nothing is claimed before the first review",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "a card without history draws no curve",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "recall probability falls monotonically with time since the last review",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "the retention target moves the due date and never the measured mastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "an overdue card keeps its fall inside the window",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "a repeated success raises stability and mastery without bound drift",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "the curve covers the due date and stays inside the chart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "a failed recall lowers stability compared with a successful one",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "the due date is where recall probability reaches the chosen target",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyMasteryModelTest",
+      "test": "an untouched card is not measured",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReaderRecoveryTest",
+      "test": "interruptedGenerationRestoresDraftWithoutReplayingTheTutor",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReaderRecoveryTest",
+      "test": "pauseKeepsPositionAndLateCompletionCannotAdvanceResumedReader",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReaderRecoveryTest",
+      "test": "explicitKnowledgeSkipAndDepthPreserveDraftAndRestoreWithoutTutorOrGrading",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "test": "a store that goes away still yields the default rather than crashing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "test": "a late mirror emission from before a selection never overwrites it",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "test": "a failed write is reported and leaves the previous value in place",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "test": "the controller mirrors what the store already holds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "test": "an unknown stored name falls back to the default",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewIntensityControllerTest",
+      "test": "selecting a new intensity persists it and publishes it",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "a remembered card moves one rung up",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "a forgotten card drops one rung",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "the ladder never schedules in the past",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "two remembered cards in a row skip a rung",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "the last rung is mastered and kept on maintenance",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "the ladder ignores the memory model's retention target",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "almostHoldsRungResetsStreaksAndCannotClaimMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudyReviewPolicyTest",
+      "test": "two forgotten reviews reset the ladder",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourceMigrationTest",
+      "test": "migrationPreservesLessonAttemptsAndCardHistory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "revokedSourceWhileInferenceRunsCannotBecomeAcceptedLesson",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "practiceParserStillRejectsEmptyInvalidAndUnboundResponsesAsWholeBatch",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "selectionChangeAfterVisionPreflightKeepsTheVerifiedTarget",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "selectedPdfPageAndNoteBUseOneImageAndBoundedText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "selectorNeverExceedsCharacterAndPassageBudget",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "legacyMultiSourceRevisionBelongsOnlyToFirstObject",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "simpleCardGrammarKeepsExactSourceAndRejectsUnknownSources",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "skippedOrCompletedProbeDoesNotAskForStartingPointAgain",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "policyChangeDuringPreparationStopsGeneration",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "allLearnerLevelsReachBoundedPromptAndGeneralPolicyIsExplicit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "shortMultiBlockNoteSuppliesAllRealBlocks",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "missingSourceDoesNotBlockOtherReadableMaterial",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "canonicalRouterStillRejectsEmptyTutorCompletionWithoutRetry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "missingOrInactiveVisualCannotBeCited",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "childLessonCannotUseAdultCloudConsentWithoutTheChildGrant",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "practicePromptMinimumMatchesStrictParserNonemptyBatchContract",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "explicitDepthPreservesHintRestrictionsLevelWordLimitAndSourceBoundaries",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "canonicalLongNoteRetrievesLaterExercise",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "localOnlyLessonHistoryCannotBecomeRemoteContext",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "fourSourcesRespectCombinedBudgetAndDistinctVersions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "recreatedRepositoryRestoresStagePreferencesAndIdempotentAttempt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "utf8FileCapAndPartialCoverageAreHonest",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "practiceCardPromptRequiresBoundAnswersWithoutNarrativeHintRestriction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "solutionRequiresExplicitReveal",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "sourceOnlyAndLevelLanguageInstructionsReachProvider",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "compactExplanationRetainsSourceAndRevealRules",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "topicLessonUsesQuestionWithoutCitations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "initialAskIncludesBeginningAndGoalWhereBudgetAllows",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "laterPassageWinsLexicalSelection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "onlyCanonicalFourSourceKeysCanCreateCitations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "reviewRetainsCardIdentityAndEditedCardRejectsRegeneration",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "strictPracticeCardsCarryExactProvenance",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "ordinaryHintPromptStillForbidsAnswerRevealAndDoesNotRequestCards",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "bomIsRemovedAndInvalidUtf8IsUnsupported",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "staleReviewSnapshotCannotDuplicateMasteryOrScheduleUpdates",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "oversizedPdfDimensionsAreBoundedWithoutChangingPageIdentity",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "localPracticeRequestKeepsNonemptyCardCountAndSourceBoundAnswerContract",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "startingFromUnavailableSourcesRequiresReadableMaterialOrPermittedTopic",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "unknownMarkerAndUnmarkedTextHaveNoCitations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "invalidCardsAreRejectedAsWholeBatch",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "workspaceSharingOffRefusesRemoteText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "onlyActualSecondMarkerCreatesCitation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "localAndRemoteTutorRequestsDisableReasoningWithinExistingTaskCaps",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "uriPermissionLossIsExplicit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "smallBudgetPreservesRelevantLaterPassage",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "unknownLegacyHistoryIsOmittedFromNewPrompts",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "missingMaterialNeedsExplicitGeneralPermissionForTopic",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "mandatoryReasoningRejectionDoesNotRetryOrSelectAnotherProvider",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "textOnlyTargetNeverReceivesVisualBytes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "localOnlyVisualExcludesRemoteProviderBeforePreparation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.study.StudySourcesTest",
+      "test": "perSourceVersionsAndLanguagesRoundTripIndependently",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloOrbThemeTest",
+      "test": "zoneOrbAndControlsFollowAccentAndToneChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloOrbThemeTest",
+      "test": "legacyAndReducedMotionOrbsFollowTheSameTheme",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "test": "disposingCurrentPageRemovesItsProjectionWithoutDispatchOrReplay",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "test": "animatedOutgoingAndIncomingPagesPublishOnlyCurrentExactOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "test": "disabledRemovedAndDifferentExactSourceActionsCannotUseCachedProjection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "test": "sameFamilyAndSameObjectTransitionStillRequiresExactBackStackEntry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "test": "disposalClearsOnlyOwnProjectionAndInvalidatesPreviouslyCapturedCallbacks",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "test": "callbackOnlyUpdatesKeepProjectionStableAndDispatchLatestCallback",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest",
+      "test": "previewDoesNotSaveAndChangeEditsActualDraftAtLargeText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest",
+      "test": "savedProjectHasNoDiscardOrDuplicateKeepAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest",
+      "test": "answerFaceUsesSavedAnswerAndStoryPageKeepsLongTextAtTwoHundredPercent",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest",
+      "test": "discardNeedsExplicitConfirmation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "test": "draftDark360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "test": "draftLight360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "test": "storyLargeText412",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "test": "reviewBack360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "test": "draftLargeText360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "test": "reviewFront360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "test": "blankWordingCannotStartAnExercise",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "test": "wordingPreviewEditsBeforeExplicitConfirmationAtLargeText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "test": "photoPreviewRequiresUseAndRetakeDoesNotAcceptIt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "test": "previewDecodeRejectsInvalidLocalFileWithoutPublishingAnything",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "test": "pageNavigationWrapsAtLargeTextAndRespectsBothBounds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "test": "unreadablePhotoCannotBeAccepted",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "test": "wordingStudyLight360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "test": "wordingKidsLargeText360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "test": "wordingKidsDark412",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "test": "unreadablePhoto360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "test": "wordingKidsLight360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsHomeChoicesTest",
+      "test": "threeHomeChoicesNavigateOnlyWhenTapped",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsHomeChoicesTest",
+      "test": "storyCannotSubmitBeforeIdeaIsEntered",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsHomeChoicesTest",
+      "test": "busyStoryHasNoSubmissionAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsLessonCompletionFxTest",
+      "test": "finishOnlyAvailableForActiveNonBusyLesson",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsPreferencesTest",
+      "test": "mode is opt in persisted and reversible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsReadAlongTest",
+      "test": "followsExactTtsCharacterRangeAndNothingElse",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsReadAlongTest",
+      "test": "ignoresStaleOrInvalidRangeInsteadOfGuessing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsResponsiveCardsTest",
+      "test": "wideDisplayRetainsTwoEqualChoices",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsResponsiveCardsTest",
+      "test": "narrowScreenOrLargeTextStacksChoiceCards",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsResponsiveCardsTest",
+      "test": "ordinaryPhoneStacksTranslatedLabels",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsShellOrbBindingTest",
+      "test": "shellDispatchesLatestScopedKidsTargetAndClearsWithoutReplayOnExit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsShellOrbBindingTest",
+      "test": "shellOwnedDockKeepsTypedAndHelpActionsWithoutAnotherMicrophone",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsVisualTest",
+      "test": "latvianLargeText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsVisualTest",
+      "test": "dark",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsVisualTest",
+      "test": "light",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsVisualTest",
+      "test": "russianLargeText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookTest",
+      "test": "enlargedResumeHasOneAccessibleContinueTarget",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookTest",
+      "test": "liveDockStopsWithoutStartingAnotherCapture",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookTest",
+      "test": "darkKidsBodyHasReadableForegroundOutsideCards",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "kidsLight360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "kidsLight412",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "studyLargeText360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "kidsLargeText360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "kidsDark360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "studyDark360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "studyDark412",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "test": "studyLight360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "studyRemainsAnExplicitNotebookToolAlongsideMemory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "round2CreationCardsPreserveAllFourDestinations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "continueIsLearningFirstAndDoesNotCrowdTheFourLaunchers",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "longPressEntersSelectionInsteadOfOpeningNoteAndFavoriteIsDirect",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "previewIsOneRowWhileLibraryRetainsEveryItem",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "studySourceActionsIncludeReadableFilesButNeverTrashedItems",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNotebookHubTest",
+      "test": "russianFavoriteActionsToggleWhileSourceTitleStaysLiteral",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "attachmentImportRemainsAnExplicitAddMenuChoice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "editorTitleAndRevisionRemainVisibleWithDirectRename",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "addBlockMenuDoesNotInsertUntilATypeIsChosen",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "busyEditorCannotOpenHaloFromHeader",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "literalFileModesKeepRawEditorAndReadViewWithoutMarkdownWrapper",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "modePickerHasExactlyThreeReachableChoices",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandNoteEditorControlsTest",
+      "test": "haloActionCannotExecuteWhenDisabled",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "test": "longLibraryMetadata",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "test": "canvasDockAdaptsWithoutHidingAccessibleActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "test": "lightWorkspace",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "test": "darkWorkspace",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "test": "russianLarge",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.BrandWorkspaceVisualTest",
+      "test": "generatedTitlesUseReadableContentWithoutChangingNamedItems",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftActionPickerTest",
+      "test": "rewriteNeedsAnUnlinkedEditableTextCard",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftActionPickerTest",
+      "test": "unavailableRewriteIsNotAnAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftActionPickerTest",
+      "test": "aiDraftIsStillAnUncommittedProposal",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftActionPickerTest",
+      "test": "choicesOnlyChangeTheChosenDraftTask",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftReviewControlsTest",
+      "test": "inlineKeepRequiresExplicitTap",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftReviewControlsTest",
+      "test": "inlineDraftDoesNotKeepBeforeExplicitAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftReviewControlsTest",
+      "test": "keepAndDiscardDisabledWhileRegenerationInProgress",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAiDraftReviewControlsTest",
+      "test": "emptyDraftCannotBeCommittedFromReviewSheet",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasAnnotatedPreviewTest",
+      "test": "imageAndLegacyInkUseExactlyTheSameFittedBounds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasArrangementFxTest",
+      "test": "onlyActualNewOrganizationWritesPlayArrange",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasArrangementMotionTest",
+      "test": "onlyApprovedAffectedNodesAnimate",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasArrangementMotionTest",
+      "test": "noAnimationForManualOrUncommittedMovement",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasCardFrameTest",
+      "test": "zoomScalesContentAndHitFrameTogether",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasDraftDrawOnFxTest",
+      "test": "editingNeverAdvancesTheGeneratedDraftRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasDraftDrawOnFxTest",
+      "test": "onlyNewGeneratedDraftCanUseTheOneShot",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "test": "everyMutatingOrUnavailableStateBlocksEditing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "test": "clearingBusyStateRestoresEditing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "test": "newGenerationCannotOverwritePendingAiDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "test": "activeContextNeverProjectsBusyOrPendingDraftSelection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorBusyPolicyTest",
+      "test": "readyCanvasAcceptsEditing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "leavingImmediatelyFlushesLatestTextPositionAndViewport",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "reopeningChangedSketchCannotConsumeItsOlderRecoveryDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "savingOrCancellingAnotherSketchRetainsTheUnrelatedRecoveryDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "assistantClearCannotBeReversedByAnAlreadyOpenEditorOrItsRecoveryDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "corruptSketchAndEmptyNewSketchCannotPublishOrDiscardDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "observedDraftCannotBeConsumedBySavingADifferentSketchPayload",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "manualOrganizationWorksWithoutProviderAndCancelDoesNotMutate",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "erasedEditRejectsChangedSourceAndRetainsRecoveryDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "olderSaveAndCancelCannotConsumeAnIdenticalDraftFromANewEditor",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "selectingGroupAndMemberMovesEachOnlyOnce",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "annotationSaveClearsOnlyARecoveryDraftForTheExactFileVersion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "olderSaveAndCancelCannotConsumeANewerDraftForTheSameSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "editorAndAssistantGroupMovesPersistTheSameMemberPositions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorPersistenceTest",
+      "test": "erasedFinalStrokePersistsOnExistingCardAndClearsRecoveryDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "test": "groupTitleTapTogglesCanonicalSelectionWithoutTextWriteOrEditableFocus",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "test": "shellOwnedCanvasHasNoHeaderOrDockAssistantLauncherButKeepsTools",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "test": "ordinaryTextEditingStillFocusesAndPersistsThroughTheSameOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "test": "tagTitleTapTogglesCanonicalSelectionWithoutTextWriteOrEditableFocus",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEditorSelectionInteractionTest",
+      "test": "textBodyTapTogglesCanonicalSelectionWithoutTextWriteOrEditableFocus",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEmptyStarterTest",
+      "test": "emptyBoardOffersThreeActionsThatCallTheirRealOwners",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasEmptyStarterTest",
+      "test": "emptyBoardDoesNotOfferActionsDuringMutation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasErasedSketchUiTest",
+      "test": "recoveredEmptyExistingSketchCanBeSavedExactlyOnce",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasErasedSketchUiTest",
+      "test": "emptyNewSketchRemainsUnsavable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasErasedSketchUiTest",
+      "test": "corruptExistingSketchRemainsUnsavableAndCancelDoesNotPublish",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "test": "bookmarkDecoderRejectsOversizedPayloadBeforeParsing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "test": "pdfSelectionCommitsMarkupAndBookmarkTogetherAndTracksFileVersion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "test": "savedSketchBookmarkResolvesUntilItsSourceChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "test": "sourceEditDeletionOrCanvasArchivalRejectsPendingHandoff",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "test": "exactHandoffRejectsReplacedBookmarkWithoutChangingWorkingSet",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionBookmarkTest",
+      "test": "delayedHandoffCannotRestoreDeselectedRegion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "test": "legacyCropUsesBoundsRatioWithoutMigratingTheSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "test": "wideRegionKeepsItsShapeAndCrossingInkCannotEnterTopMargins",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "test": "tallRegionKeepsItsShapeAndCrossingInkCannotEnterSideMargins",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "test": "sketchCropContainsOnlySelectedStrokesAndClipsToSavedBounds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionCropTest",
+      "test": "imagePageCropContainsSourcePixelsAndOnlySelectedPageInk",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "test": "legacyFallbackStillAccountsForTheSelectedBounds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "test": "minimumWidthBitmapDoesNotWidenAnExtremePortraitRegion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "test": "originalDocumentCoordinatesMapToTheSameCropInEveryViewport",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "test": "zeroSizedCompositionHasNoInvalidOrInfiniteProjection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "test": "sourceAspectAndRegionDimensionsBothDetermineTheVisibleShape",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasInkSelectionGeometryTest",
+      "test": "minimumHeightBitmapDoesNotHeightenAnExtremeLandscapeRegion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "deferredCardDoesNotDecodeUntilExplicitlySelectedAndDraggingDoesNotInspect",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "widePhotoKeepsItsAspectWithoutCropping",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "bodySelectsAndOnlyExplicitInspectionOpensZoomWithoutChangingSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "missingCanonicalFileCannotFallBackToAnOldAttachment",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "replacingTheSourceClosesItsOldInspection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "tallPhotoUsesMostOfTheCardViewportInDark200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMediaCardTest",
+      "test": "latvianCard200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "test": "unsupportedPhoneRoutingDoesNotAcquireMicrophoneOrCreateStagingFiles[26]",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "test": "unsupportedPlaybackRoutingDoesNotAcquireAudioOrStartPlayback[26]",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "test": "unsupportedPhoneRoutingDoesNotAcquireMicrophoneOrCreateStagingFiles",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "test": "unsupportedPlaybackRoutingDoesNotAcquireAudioOrStartPlayback",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "test": "busyHaloMicrophoneIsNeverPreemptedAndCancelDoesNotReleaseItsLease",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasMemoOwnershipTest",
+      "test": "failedPhoneMicrophoneSetupReleasesOwnedLeaseAndDoesNotProduceSavedAudio",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "test": "narrowAndWideImagesCannotBePannedCompletelyOutOfView",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "test": "overlappingLargeProjectIsBoundedAndExplicitSelectionWins",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "test": "panningReleasesOldSourcesAndDoesNotAdmitInvalidOrOffscreenCards",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "test": "distantSourcesWaitUntilTheyBecomeVisibleAndDuplicateIdsCannotSpendTheBudget",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasPreviewPolicyTest",
+      "test": "zoomHonorsTheGestureAnchorAndRejectsInvalidInputs",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasShellAssistantEntryTest",
+      "test": "shellOwnedDockOmitsLocalOrbAndRetainsAllSixEditingCallbacks",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasShellAssistantEntryTest",
+      "test": "standaloneDockKeepsOneActionableOrbAndRemovesItWhenShellTakesOwnership",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasShellAssistantEntryTest",
+      "test": "shellOwnedEmptyStarterKeepsCreationAndImportWithoutAnotherAssistantEntry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasWorkflowPersistenceTest",
+      "test": "exportReturnsOnlyPersistedNoteAndUndispatchedStudyTarget",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasWorkflowPersistenceTest",
+      "test": "sourcePolicyAndStaleBoardRejectBeforeExportCreatesAnything",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasWorkflowPersistenceTest",
+      "test": "finalLeaseFailureRollsBackCreatedNoteCardAndEdgeTogether",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.CanvasWorkflowPersistenceTest",
+      "test": "reviewedDraftEditInvalidatesOldHashAndSaveReturnsRealSourceLinkedCard",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.EditorWorkspaceChromeTest",
+      "test": "toolsLeaveRoomAndPreserveDraftWhenToggled",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryDetailCopyTest",
+      "test": "fixedMetadataChangesLanguageWithoutTranslatingFactSourceOrRecord",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryDetailCopyTest",
+      "test": "namedScopeAndUsedSummaryStayLiteralAndDatesUseAppLocaleInsteadOfDeviceDefault",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "test": "datesRespectDeviceZoneAndHumanLabels",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "test": "filtersDoNotInventKinds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "test": "everyOriginRetainsAuthorshipSeparatelyFromApproval",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "test": "importConfirmationDoesNotImpersonateAuthorship",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.MemoryPresentationTest",
+      "test": "staleAndMissingScopeAreTruthful",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookBatchNoticeLocalizationTest",
+      "test": "partialResultsAndRollbackUncertaintyAreLocalizedWithoutLosingCounts",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookGuidanceTest",
+      "test": "canvasGuidanceInvokesCanvasAndHonorsBusyState",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookGuidanceTest",
+      "test": "emptyCollectionRecoversWithoutCreatingOrDeletingAnything",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookGuidanceTest",
+      "test": "searchAndTrashDoNotSuggestCreatingReplacementData",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "cancellationKeepsCommittedTrashPrefixUndoAndOnlyUnattemptedSelection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "contextUsesCanonicalWorkingSetWithoutGrantingCloudSharingAndTypedReadReturnsNoContent",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "mixedTrashHasExactSuccessfulUndoAndNeverChangesActiveChatWriter",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "revokedDisclosureAfterCommittedTrashReturnsUnknownWithoutSourceIdentifiers",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "savedChatCanonicalVersionAndWriterMutexCoverArchiveTrashAndRestore",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "bundledAndRuntimeDiscoveryKeepBatchReadOnlyAndWritesDestructive",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "typedBatchNoticeClearsWithDismissalAndCannotMaskANewerOrdinaryNotice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "noteRecoveryDraftKeepsItsExistingLifecycleProtectionWithinAMixedBatch",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "selectionAndEntryChangesConsumeStaleTicketsAndCannotRetargetTheirSourceSet",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "leaseRevocationDuringObjectTransactionRollsBackAndLastTrashIsInvalidatedByNextBatch",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "changedCanonicalNoteAtSameHeaderTimestampIsPartialAndUndoDoesNotOverwriteLaterSource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "actualTouchCallbacksAndTypedRestoreUseTheSameMixedSelectionOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "ownerExceptionRemainsUnconfirmedAndNeverBecomesASuccessfulTrashUndoTarget",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "membershipAndCollectionChangesAreGuardedWithoutRemovingOtherMembers",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryBatchTest",
+      "test": "staleSavedChatVersionIsKnownUnchangedRatherThanUnknownCompletion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "explicitToolNavigationPreservesSearchAndRejectsStaleLibraryActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "librarySearchKeepsAllMatchingResultsWithoutInstrumentRows",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "semanticViewUsesRealOwnerAndRejectsStaleEntrySelectionAndReplay",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "ownedReadbackRejectsRevocationDetachAndReplacementOfTheSameEntryId",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "organizationSessionUsesExistingRoomOwnerAndRejectsReplayAndRevocation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "ownedSetReadbackSurvivesRenderingButRejectsACompetingUserEdit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "typedLibraryToolChangesActualQueryAndReportsPendingInsteadOfOldHitsAsFresh",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "constrainedLandscapeKeepsToolsAndMatchingObjectCallbacksReachableByScrolling",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "actualOrganizationEffectWithRevokedReadbackReturnsContentFreeUnknown",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "libraryNarrowLatvian200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test": "libraryNarrowDarkBlue",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "test": "registryContractsRequireApprovalAndForbidReplayingMutations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "test": "batchWriteRequiresBothDirectAuthorityAndAnInteractionBeforeOwnerAccess",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "test": "persistentWriteWithoutRuntimeInteractionIsDeniedBeforeOwnerAccess",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLibraryToolsPolicyTest",
+      "test": "unscopedAndRemoteCallsCannotReachTheLibraryOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "audioChoicesAreExactAttachmentsOwnedByVisibleActiveNotes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "canvasPictureChoicesAreExactImagesOnVisibleActiveBoards",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "duplicateItemsDoNotExpandSourceAllowlist",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "localSearchOnlyOffersActiveTextBackedNotebookRecords",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "canvasImagesRemainAvailableWhenNotebookExceedsSourceLimit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "inboxVoiceMemoChoiceRequiresActiveAudioOwnerAndOwnCaptureUri",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "pictureChoicesAreExactAttachmentsOwnedByVisibleActiveNotes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "lowMemoryAndUnknownFailuresUseBoundedUserLanguage",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookLocalSearchSourcesTest",
+      "test": "videoChoicesAreExactAttachmentsOwnedByVisibleActiveNotes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookMemoryReviewTest",
+      "test": "onlyDecodablePendingMemoryProposalsAreCounted",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookMemoryReviewTest",
+      "test": "tappingNonEmptyMemoryReviewOpensTheExistingReviewOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookMemoryReviewTest",
+      "test": "noReviewBannerForEmptyQueue",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "aFailedRefreshCannotAdmitActionsAgainstOtherwiseMatchingCachedResults",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "failedLibrarySearchKeepsNavigationUsableAndCanRetry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "rootReselectionReturnsToolsToLibraryWithoutDiscardingQueryOrSelection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "libraryStartsWithCreationImportAndVisibleOrganization",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "toolsTabRestoresAfterRecreation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "localLibraryToolsRoundTripPreservesQueryFilterAndSelection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NotebookRootReselectionTest",
+      "test": "toolsHaveNoLibraryLeaseAndOpenEachActualInstrumentInOneClick",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NoteEditorViewModelTest",
+      "test": "newerDraftIsRecoveredAndThenCommitted",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NoteEditorViewModelTest",
+      "test": "editWritesRecoveryDraftBeforeDebouncedCommit",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NoteFieldSynchronizationTest",
+      "test": "currentUndoAndExternalReplacementStillReachTheEditor",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.NoteFieldSynchronizationTest",
+      "test": "delayedTypingEchoCannotRemoveNewerCharactersOrMoveCaret",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "test": "russian200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "test": "shortLandscape200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "test": "light360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "test": "dark412",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.notebook.WorkspaceHubDestinationsTest",
+      "test": "latvian200Dark",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.SelectedPassageExportCopyTest",
+      "test": "selectedRangeExportUsesSupportedLanguageAndKeepsExactOffsets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.SelectedPassageExportCopyTest",
+      "test": "ordinarySourceTextDoesNotBecomeTranslatedMetadata",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyCardReviewCopyTest",
+      "test": "absentInvalidOrNonCorrectTypedMetadataKeepsTheExistingCanonicalFallback",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyCardReviewCopyTest",
+      "test": "typedIntervalFormatsInFourLocalesWhileCanonicalAndSourceFeedbackStayLiteral",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyCompletionFxTest",
+      "test": "onlyActiveToDurablyCompletedCanBloom",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393ExactGoalAt200PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393QuestionAndMasteryHaveSeparateReadableBands",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393At200PercentQuestionAndMasteryHaveSeparateReadableBands",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal360At200PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question360At100PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question360At200PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal412At100PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393ExactGoalIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question412At100PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question412At200PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "draftAnswerAndSourceAreReviewableBeforeKeepWithoutRecallSideEffects",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal360At100PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal412At200PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "test": "guidedStepNamesNeverRevealFullSolutionImplicitly",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "test": "finishedLearningPathDoesNotClaimItIsStillReviewing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "test": "completedSessionIsNotShownAsActivePractice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "test": "startsWithExploreAndPrioritizesAnOwnAttempt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "test": "explanationDoesNotAdvanceTheSavedJourneyToPractice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyFlowGuideTest",
+      "test": "submissionIsDisabledWhileBusyOrLoading",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyGuideTracePolicyTest",
+      "test": "guideRequiresOneActionThatIsEnabledAndActive",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyHaloFxInteractionTest",
+      "test": "spotlightCallsOnlyTheActualAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyHaloFxInteractionTest",
+      "test": "disabledSpotlightDoesNotAct",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyHaloFxInteractionTest",
+      "test": "learningPathExplainsNextStepWithoutPretendingToMeasureMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyMasteryLocalizationTest",
+      "test": "polishMasteryAndDurationsUsePolishHostCopy",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyMasteryLocalizationTest",
+      "test": "russianMasteryAndDurationsUseRussianHostCopy",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyMasteryLocalizationTest",
+      "test": "englishMasteryAndDurationsRemainReadableAtBothFontScales",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyMasteryLocalizationTest",
+      "test": "latvianMasteryAndDurationsUseLatvianHostCopy",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyRecallActionsTest",
+      "test": "reviewInProgressBlocksAllRatings",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyRecallActionsTest",
+      "test": "allThreeRatingsCallOnlyTheirOwnHandler",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyRecallVisualTest",
+      "test": "dark",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyRecallVisualTest",
+      "test": "light",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyRecallVisualTest",
+      "test": "largeText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyReviewQuestionFaceTest",
+      "test": "showsOnlySavedQuestionAndHonestQuestionLabel",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupGeometryTest",
+      "test": "progressSegmentsNeverBypassSourceOrGoalValidation",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "blankGoalAndNoSourcesCannotBypassMaterialSelectionOrStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "ungroundedTopicLessonUsesGeneralKnowledgeInsteadOfClaimingASource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "goalOrSelectedMaterialAllowsStepProgressAndStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "backNavigationRemainsAvailableAndBusyStateBlocksChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "sourceFirstCanAdvanceFromBlankGoalToMaterialPicker",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "test": "exactAnswerCarriesTypedReviewDaysWithoutChangingCanonicalFeedbackOrSavedSchedule",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "test": "oldSourceRefreshCannotReplaceNewlySelectedCanonicalMaterialOrItsSession",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "test": "lateResumeRefreshCannotRestoreLoadingOrOverwriteNewerPracticeMasteryAndLearnerDraft",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "test": "suspendedMaterialSearchCannotReplaceNewerLearnerInputWithItsStartingSnapshot",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySourceRefreshStateTest",
+      "test": "initialRestoreCannotRevertCanonicalMaterialChangedWhileItsSourceReadWasPending",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.BellActivityLargeTextTest",
+      "test": "nestedRussianUtilityKeepsCloseBoundedAndSelectedHistoryVisible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "test": "microphoneStatusReflectsAndroidPermissionButNeverImpliesOtherGrants",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "test": "permissionScreenUsesSameSevenAbilitiesAsDevices",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "approximateLocationIsUsableAndNeverShownAsPrecise",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "exhaustedSequenceShowsCompletionAndDisablesStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "androidGrantAndRevocationOverrideSavedSetupReceipts",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "skipNeverLaunchesAndDoesNotRecordAnAttempt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "restoredPendingRequestDoesNotReplayWithoutUserAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "openingGuideNeverLaunchesAndExplicitStartRequestsOnlyCurrentCapability",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "denialAdvancesWithoutFalseGrantOrAnotherAutomaticPrompt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "test": "assistantRoleIsUnavailableOnAndroidBeforeRoleApi",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "test": "repeatedExactWorkspaceRequestsDoNotRestoreVoiceAboveWorkspace",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "test": "existingRestorationCallersStillRestoreTheirChildStack",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "test": "exactRootDoesNotRestoreAnotherRootsSavedChildStack",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "bluetoothUsesRuntimePermissionsOnlyOnAndroidSAndNewer",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "setupOmitsGrantedAndPreviouslyDeclinedCapabilities",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "setupRequestsOnlyShippedRuntimeCapabilitiesForThisAndroidVersion",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "versionBoundariesAndSpecialAccessNeverRequestBroadStorage",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "sequenceSkipsGrantedAttemptedSkippedAndUnavailableIncludingInterruptedRequest",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "actualGrantOverridesReceiptsAndRevocationDoesNotStayAllowed",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "test": "locationRequestsCoarseAndFineTogether",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloAssistantScreenParityTest",
+      "test": "everyDeterministicAssistantDestinationHasACanonicalHostDestination",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "test": "legacyObjectAndStudyRoutesStillSelectWorkspace",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "test": "notebookUsesOneHumanFacingName",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "test": "stoppedHostCannotStealItsResumedSuccessorsRequestOrReplayOnReturn",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "test": "repeatedWarmRequestsDoNotNeedAComposeFrameOrDifferentRouteKey",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "test": "queuedRequestsAreRetainedWhileStoppedAndConsumedOnlyOnResume",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "test": "anObservedNullCannotConsumeANewRequest",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "test": "anObservedRequestCannotConsumeItsNewerReplacement",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "test": "arbitraryRoutesAreDiscarded",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "test": "backgroundHostCannotStealTheCompactHostsRequest",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "compactLargeTextKeepsVoiceMenuAndFullListSeparate",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "removingAllActionsKeepsTheOrbOnItsBottomAnchor",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "kidsMenuKeepsTheAllowlistAndIdentifiesTheActiveStudyInstrument",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "actionListUsesCurrentInstrumentWhileDragCannotExecute",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "destructiveCommandsRemainInTheFullListWithoutBecomingDefaultSatellites",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "holdAndSwipeOpenTheSameMenuAndNeverStartVoice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "activityAndNotificationsSelectTheirOwnMenuDestination",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "menuExposesRootsAndProfileWithoutInstrumentActionsOrVoice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "replacingAnEntryWithTheSameRoutePatternDismissesItsOldDisclosure",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "switchingInstrumentDoesNotCarryItsPreviousScrollPosition",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test": "lightStaticOrbRetainsNonTextContrast",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "narrowShortWindowUsesAListWithUnshrunkVoiceAndMenuTargets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "latvianLargeTextRetainsExplicitMenuAndActionList",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "normalFooterShowsThreeLabelledActionsWithDisjointVoiceAndMenuBounds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "sparseActionsRemainLabelledAndDoNotCoverVoice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "childBackRemainsDirectWhileTheFullListKeepsTheSamePageAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "manualOrbitDragKeepsTheOrbAnchoredAndNeverExecutes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "russianLargeTextKeepsProfileReadOnlyUntilMenuDisclosure",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.PermissionsScreenTest",
+      "test": "grantMicrophoneButtonInvokesHostPermissionAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellFooterViewportTest",
+      "test": "exceptionallyShortImeViewportRetainsEveryFullSizeActionByScrolling",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellFooterViewportTest",
+      "test": "crossingImeHeightThresholdPreservesFocusedEditorCaretAndComposition",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellInteractionSurfaceTest",
+      "test": "passiveProgressDoesNotMountBehindTheWorkingSurfaceOrResolveAnything",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellInteractionSurfaceTest",
+      "test": "pendingApprovalAfterProgressStillRequiresAnExplicitTypedResponse",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "test": "kidsMenuCannotExposeAdultDestinationsAsUsable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "test": "kidsKeepsOnlyAlreadyAllowedChildPageProjections",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "test": "contextualEntriesUseExistingCatalogWithoutSynthesizingSelectionsOrOperations",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "test": "activePageActionsRequireTheExactObjectAndPageFamily",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "test": "kidsStudyFallbackUsesExactDirectRouteWithoutAdultHomeCatalogue",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "test": "globalMenuContainsEveryUsableExactDestinationWithoutInventingObjectsOrLabs",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "test": "configurationChangeAndCompositionDisposalPreserveRetainedSpeechOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "test": "replacingPresentationDoesNotCancelOrReplayAnInteraction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "test": "miniRouteStopDoesNotReleaseCaptureUntilItsNativeHostStops",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "test": "actualBackgroundReleasesCaptureOnce",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "test": "successfulOwnAppHandoffSkipsOnlyTheFinishingHostStop",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "test": "failedHandoffReleasesCaptureAndDoesNotExemptLaterBackgroundOrClose",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "failedPaletteCommitDoesNotAttemptModeAndRestoresItsOriginalPair",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "cancellationWithUnacknowledgedCompensationIsReportedAsUncertain",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "newerModeSelectionSurvivesCompensationAndItsQueuedWrite",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "newerPaletteSelectionSurvivesFailedApplyAndItsQueuedWrite",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "rollbackFailureStaysUncertainUntilSuccessfulReapply",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "staleSnapshotIsRejectedWithoutWritingEitherStore",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "cancellationDuringModeCommitCompensatesBothStoresBeforeReturning",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "test": "failedModeCommitRestoresOriginalIndependentPalettesAndMode",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "test": "defaultsToSystemAndPersistsExplicitMode",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "test": "orbShortcutsPersistEmptySelectionWithoutChangingTheme",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "test": "unknownShortcutNamesNeverBecomeRoutesAndReloadUsesExistingOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "test": "latestShortcutChoiceBeforeInitialLoadWinsAndDoesNotCancelModeRestore",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "test": "explicitSystemChoiceBeforeInitialLoadWinsOverStoredDarkMode",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandLauncherIconTest",
+      "test": "adaptiveIconInflatesWithNightInkBackground",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandPaletteParityTest",
+      "test": "canonicalLightAndDarkSchemesKeepAccessibleTextAndActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandPaletteParityTest",
+      "test": "canonicalBrandTokensMatchTheWebsite",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandPaletteParityTest",
+      "test": "brandDefaultsMatchIntendedIdentitySurfaces",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandTypographyTest",
+      "test": "ReadingAndUiLabelsUseTheSharedAccessibleBodySlot",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandTypographyTest",
+      "test": "russianUiUsesBundledOnestWhileEnglishAndLatvianKeepBrandFaces",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandTypographyTest",
+      "test": "headingsUseTheSharedBrandDisplaySlot",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.FontScaleTest",
+      "test": "systemDefaultAndLargerAppPreferenceAreRespected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.FontScaleTest",
+      "test": "appPreferenceCannotShrinkAccessibilityText",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "test": "stillRendersOnlyTheUnmodifiedBase",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "test": "haloFragmentsVisiblyMoveByLayerTranslationAndHoldAtTheSamePhase",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "test": "mistGradientsVisiblyMoveByLayerTranslationAndHoldAtTheSamePhase",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "test": "highContrastRendersOnlyTheUnmodifiedBase",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "test": "phaseTicksOnlyWhileResumedAndRestartsWithoutResettingItsPosition",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "test": "everyExistingMotionGateCanIndependentlyStopDrift",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "test": "bothMotifsKeepTheOriginalAmplitudeWithOppositeParallax",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "test": "oneSecondOfMotionPreservesBothMotifsDisplacementFromAnExistingPosition",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "test": "gatedMotionStartsNoTickerEvenForAResumedOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "test": "staticSvgRecolorsPaintWithoutChangingOpacityOrGeometry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "test": "gradientRecoloringPreservesStopsAndTheirOpacityPositions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "test": "authoredAnimationsRetainTheirTimingAndParseAfterRecoloring",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "test": "legacyGradientAnimationRepaintsWhenThePaletteChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "test": "zoneShapeAnimationRepaintsWhenThePaletteChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "test": "extended backgrounds persist independently without replacing old profile fields",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "test": "unknown stored choices fall back to readable defaults",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "test": "editing light before initial load preserves stored dark colours",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "test": "apply acknowledges and restores both independent drafts",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "test": "light and dark persist independently",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PaletteTest",
+      "test": "every colour and tone in both themes preserves body and action contrast",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PaletteVisualTest",
+      "test": "lightControls",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PaletteVisualTest",
+      "test": "russianLargeControls",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PaletteVisualTest",
+      "test": "darkControls",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioAiProvenanceTest",
+      "test": "deferredReviewKeepsScreenMemoryAndOriginalRevisionAtActualGeneration",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioAiProvenanceTest",
+      "test": "staleOrBarredOriginsCannotReachGenerationOrReceiveFreshAuthority",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioInkSessionTest",
+      "test": "completedSnapshotsCoalesceAndExternalEditsStopWithoutOverwritingTheirWinner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "test": "lightPhone360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "test": "latvianLargePhone200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "test": "russianShortLandscape200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.StudioPreviewLifetimeTest",
+      "test": "publishedPreviewRemainsDrawableAcrossDocumentChangesAndDisposal",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "test": "lightPhone360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "test": "latvianLargePhone200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "test": "russianShortLandscape200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.HaloZone5IconRenderTest",
+      "test": "semanticVectorsAt24_32_48DpInBothThemes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "canvasArrangeOpensWithoutMutatingTheBoard",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studyPracticeReviewAndBackUseExclusiveViews",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "changingASourceWhileNamingASelectedGroupCannotCommitIt",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "officeLandingHasCreationOpenAndTruthfullyDisabledExport",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "insertingABlockUsesTheExistingDocumentOwnerAndAChangedSourceDisablesTheSheet",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "noteDefaultActionsBelongToTheCurrentDocument",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryHasOneDefaultSatelliteWhileSettingsRemainInAllActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "instrumentBackIsVisibleAndInvokesTheExistingOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "childAppearanceKeepsTheCurrentPaletteAcrossThemeChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studyUsesLessonPracticeAndNarrationAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "canvasUsesAddArrangeAndFitAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studioUsesLayerAndExportAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "notesUseInsertionOutlineAndFindAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryDetailUsesSourceEditAndForgetAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "largeTextUtilityIdentityWrapsInsteadOfLosingTheDocumentName",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "officeUsesDocumentOpenAndExportAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test": "russianLargeHeaderKeepsBackAndStopReachable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test": "hostedChildDockHasLabeledCallbacksWithoutASecondVoiceControl",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test": "latvianLargeHeaderKeepsBackAndStopReachable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "homeDarkBlue",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "homeLightRose",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "screenRussian200Preview",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "enabledActionsNeverAnnounceDisabledReasons",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "toolsDarkSage",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "toolsLatvian200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "homeRussian200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "screenDarkBlue",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test": "screenLightRosePreview",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "searchFailureHasAnExplicitRetryWithoutLosingTheRequestedQuery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "failedSearchCanRecoverWhenTheQueryChanges",
+      "status": "PASS"
+    }
+  ],
+  "failures": [],
+  "totals": {
+    "tests": 649,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device_spoken_provider": "NOT_RUN - host only requested",
+  "build": "PASS",
+  "apk": {
+    "path": "app/build/outputs/apk/debug/app-debug.apk",
+    "package": "com.aistudio.braintool.xkqzps",
+    "bytes": 293374551,
+    "sha256": "d07059d8a0cd55398b576c677782e4412a03780b1fc7925f8bb9d4ce3061b7a7"
+  },
+  "production_source_sha256": {
+    "app/src/main/java/com/halo/app/data/studio/StudioService.kt": "b68464dbfb00974a460273c267c89c108b9db48b58f666cdbb2d53e23b934cd4",
+    "app/src/main/java/com/halo/app/ui/presence/ShellChildPage.kt": "6700f144c25ce436d8ea06cdc0bdbba933d00e4425169403598ba2c6e2dfe672",
+    "app/src/main/java/com/halo/app/ui/screens/kids/KidsHomeChoices.kt": "90a7a73319c7fd483a1c20faba5425619c2451356d556053406aebfe74d3a3f4",
+    "app/src/main/java/com/halo/app/ui/screens/kids/KidsHomeHero.kt": "c10317596c26ed7432b3ef2fe85002f7b7d5801fd8adddc7d56f64496dc54b30",
+    "app/src/main/java/com/halo/app/ui/screens/kids/KidsVoiceDock.kt": "d67169c97eb220db89d27e28851e92fd2a9e5034d0ca844d5dd012fcce8af7e7",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorScreen.kt": "e1ae3a87f58d9bfa97caef2048333f0cad314f77799922e207fa0cda4019bc5b",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorViewModel.kt": "0a78759237673be26df2994d67b0c381d64d21c1fe7078f64693098e8116269e",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasOrganizationDialog.kt": "fd587d57e7a64af403c9a811e27449e3ee06b464f181f7e82da0638c16dfd9a7",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/MemoryDetailViewModel.kt": "19ef56a8467c770a17d1c6e7317440fa2ff52f284bef5d6e8f791dfe48999977",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/MemoryHubScreen.kt": "924ad54b62399a9b8506b42019dc403d254c18019368129eee19d447f6e6213f",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/MemoryHubViewModel.kt": "6af71518ba851a9a5290cc0ca07d57920c01389da6252a7e6eb437ee8b1014fc",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorScreen.kt": "fd99fa8fb8c92262913301dfb9b3ef80bde1ff6037d76f2245946ae5d521bb8d",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/ToolZoneHeader.kt": "028fb119590c4d6c1d1aeba1c7fe20677cd2376ea44c1c952cfa62d9f2b2aac9",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/WorkspaceObjectDetailScreen.kt": "580afc0ffdd362bc560edd48fec91433d0796383efa8e7cc54d1c1f55b7f3af3",
+    "app/src/main/java/com/halo/app/ui/screens/study/StudyHomeScreen.kt": "628a4115dd76e3fdfb8dbbd0107612d4054db84d85c41fe6d6346c1affac5a64",
+    "app/src/main/java/com/halo/app/ui/screens/study/StudyScreen.kt": "af1f93816555fc8db16db68c0ecf6ac995e16be2f954a782f91ad35a7a580b62",
+    "app/src/main/java/com/halo/app/ui/shell/AppShell.kt": "7b83e7be9643a222219c3e12bbbc5c2bd2183d8f6e33cac1dc3cc3c889b447f6",
+    "app/src/main/java/com/halo/app/ui/shell/HaloZone.kt": "c23f7cff7ec90fb28a1c79f3c564ebef73c6cea586dc5e50a44256079885f03c",
+    "app/src/main/java/com/halo/app/ui/workspace/StudioRoute.kt": "d5a0c67ff6e9096125c19d4e5dcaee7bd6034eb522c9ca20baa0998aa1690ac6",
+    "app/src/main/java/com/halo/app/ui/workspace/StudioScreen.kt": "eee087ae64ee23e13ed24d57d26cef9c788931b02a6c308344469407b9a8ce04",
+    "app/src/main/java/com/halo/app/ui/workspace/StudioViewModel.kt": "0e34c1c154403a82227095c6282d9b670250e13d9730f720aa91c617a65c3de4",
+    "app/src/main/java/com/halo/app/ui/workspace/WorkspaceFileToolsScreen.kt": "cf24aa9fd948f7650e39c791b3985619a0430926df4ef4c866b6ed90903d0fb5",
+    "app/src/main/java/com/halo/app/ui/workspace/WorkspaceFileToolsViewModel.kt": "d8a365dc31da03c2fbc30fbb536d7258ed7c1b37ffe8618da3bba7d77dab1752",
+    "app/src/main/java/com/halo/app/ui/zone5/HaloZone5Presentation.kt": "40eaccab5ee60e02119bd125b2c00a673c7e224ff83d630373ed06e8036550f7",
+    "app/src/main/java/com/halo/app/ui/zone5/Zone5Instruments.kt": "c5258592ee8b7b3d48c84ee9d760c62bff083d25a44670273013c20721a590d1",
+    "app/src/main/res/values-lv/strings_zone5.xml": "8caff1e48b99b40d5dbc3f8694730eb33bf9636dde16af9a18d65ec777fefd68",
+    "app/src/main/res/values-ru/strings_zone5.xml": "c221b283ed7d49e9502e710374dec6e45d1894e81276aed36405ca94bc92a215",
+    "app/src/main/res/values/strings_zone5.xml": "01eb8e6bf26f0d70125bf67deb8944c672245e14c236fbc71e720d4c01a31d42"
+  },
+  "build_source_commit": "5c8361c8e3bd80326a8faf7dad75454771c0cc76",
+  "build_git_dirty": false,
+  "captures": [
+    {
+      "file": "notes-dark-blue.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "2d8342ca1def9f62568e1bba2f7e16c8d923532445eb3e305fae6ec07ac16c0f",
+      "test": "Zone5DocumentActionsTest.noteDefaultActionsBelongToTheCurrentDocument"
+    },
+    {
+      "file": "office-dark-blue.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "eb602d0df9d807d3ac9a23924dd4a7debcadc28e87499aa1e2be011209506e71",
+      "test": "Zone5DocumentActionsTest.officeLandingHasCreationOpenAndTruthfullyDisabledExport"
+    },
+    {
+      "file": "canvas-light-rose.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "f616d5a252aa617940b3bd2f0c8d23e1da6f1282807fabcbe65d143fb9205468",
+      "test": "Zone5CreativeActionsTest.canvasArrangeOpensWithoutMutatingTheBoard"
+    },
+    {
+      "file": "studio-light-rose.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "3cba541b4595ddcbe75c6cfd1facbdca95a96b788a79d6f7e2f1b6ea0f3abf7e",
+      "test": "Zone5CreativeActionsTest.studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected"
+    },
+    {
+      "file": "study-light-rose.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "2eca2cc875add550595f8a184571ad26e53ec95419b6b9426b6ea0d43a503f06",
+      "test": "Zone5CreativeActionsTest.studyPracticeReviewAndBackUseExclusiveViews"
+    },
+    {
+      "file": "canvas-group-review.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "90ccf5eaf4921f8e9a386d79383f12db3dbc606c446660e756e73d81c2b005a2",
+      "test": "Zone5CreativeActionsTest.groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo"
+    },
+    {
+      "file": "canvas-group-stale.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "fb0bda5990806dfdab87a8e80370dbe02e523a2bf631228f4774b44c03d240fe",
+      "test": "Zone5CreativeActionsTest.changingASourceWhileNamingASelectedGroupCannotCommitIt"
+    },
+    {
+      "file": "kids-light-rose.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "3a1fd4f3ff5efb27c9ba3b3be99db5ac9e5eb20b3e35c29cf0ebe749df3eff62",
+      "test": "Zone5KidsControlsTest.hostedChildDockHasLabeledCallbacksWithoutASecondVoiceControl"
+    },
+    {
+      "file": "kids-ru-200.png",
+      "width": 320,
+      "height": 165,
+      "sha256": "2d5fd8e4a4f47f8163d2321ed4789900de0feae052d8f47d3230c6f9aae78687",
+      "test": "Zone5KidsControlsTest.russianLargeHeaderKeepsBackAndStopReachable"
+    },
+    {
+      "file": "kids-lv-200.png",
+      "width": 320,
+      "height": 164,
+      "sha256": "c44c9226b0f5c702f19608e1d32e32d067f5d7e0ddc630d324447ade4eec7aed",
+      "test": "Zone5KidsControlsTest.latvianLargeHeaderKeepsBackAndStopReachable"
+    },
+    {
+      "file": "memory-dark-blue.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "c1b779b04f0974549ecd03a067bdb8f2e934e15fba5a98559cc7b8698fcade23",
+      "test": "Zone5MemoryRecoveryTest.hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection"
+    },
+    {
+      "file": "memory-detail-dark-blue.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "0b85b94d1bce68d365f90fc215e82d0e7bbd8ff197c21cc723308910e9cdce3b",
+      "test": "Zone5MemoryRecoveryTest.detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview"
+    },
+    {
+      "file": "utility-en-200.png",
+      "width": 320,
+      "height": 129,
+      "sha256": "0240bd45351270d8255bc58ec5b6587cbef32038b9613b39a899623b98bfa279",
+      "test": "Zone5InstrumentContractsTest.largeTextUtilityIdentityWrapsInsteadOfLosingTheDocumentName"
+    },
+    {
+      "file": "memory-correction-dark-blue.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "eaa105d7b6d5dd6a431dfa64be4709396ba70e8a1f67cd682d210775387ddbc3",
+      "test": "Zone5MemoryRecoveryTest.detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview"
+    },
+    {
+      "file": "office-csv-light-360.png",
+      "width": 360,
+      "height": 800,
+      "sha256": "75b9a998b5484c13473de15f2a94fe1b1e916371c8b60b231145f94737aff481",
+      "test": "WorkspaceCsvLayoutTest"
+    },
+    {
+      "file": "office-csv-dark-ru-landscape-200.png",
+      "width": 740,
+      "height": 360,
+      "sha256": "2ca5ccf4c76771d514d89691fd8c0f0be4bd12c8203982b5fb03ead155c279b1",
+      "test": "WorkspaceCsvLayoutTest"
+    },
+    {
+      "file": "office-csv-light-lv-412-200.png",
+      "width": 412,
+      "height": 900,
+      "sha256": "9243c0370c28f2573a7eb8bb2add01a973f7f85aad33115b4e3ed7f0f12b37aa",
+      "test": "WorkspaceCsvLayoutTest"
+    }
+  ],
+  "native_device_spoken_provider": "NOT_RUN - host only"
+}
