@@ -34,6 +34,7 @@
             <option value="$PROJECT_DIR$/engines/speech" />
             <option value="$PROJECT_DIR$/engines/workflow" />
             <option value="$PROJECT_DIR$/host-android" />
+            <option value="$PROJECT_DIR$/host-ink" />
             <option value="$PROJECT_DIR$/lab" />
             <option value="$PROJECT_DIR$/lab/analysis" />
             <option value="$PROJECT_DIR$/lab/capture" />
