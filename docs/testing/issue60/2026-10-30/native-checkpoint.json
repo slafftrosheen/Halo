@@ -22,6 +22,7 @@
   ],
   "qaDraftSurvivedAppUpdate": true,
   "qaDraftClearedWithoutSending": true,
+  "existingConversationRowsUnchanged": true,
   "routineRun": {
     "id": "routine:82c665d8-93de-496f-93df-28e2922df5a1:manual:cd291a39-89f6-4974-8c22-4b7f54c58efe",
     "state": "COMPLETED",
@@ -115,5 +116,5 @@
     "Physical TalkBack and peripheral keyboard/tablet where available"
   ],
   "scope": "Source-owner tests and physical native UI evidence remain distinct. Large-text captures show readable routine/device content; not whole-app accessibility, battery or spoken qualification.",
-  "recordedUtc": "2026-10-30T08:28:53.638122+00:00"
+  "recordedUtc": "2026-10-30T08:31:43.488116+00:00"
 }

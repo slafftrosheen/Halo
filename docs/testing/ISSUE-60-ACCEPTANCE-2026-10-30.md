@@ -15,7 +15,7 @@ Screen card options displayed literal English **Pin/Unpin** in Russian. Commit `
 
 | Check | Result and precise scope |
 | --- | --- |
-| Chat ↔ Screen / app update | An exact ownQA unsent draft survived mode switching, the APK update and reopening Chat. Cleared only that exact QA draft afterward, without sending it. Other conversation contents were not edited. |
+| Chat ↔ Screen / app update | An exact ownQA unsent draft survived mode switching, the APK update and reopening Chat. All persisted turns of the existing QA conversation also matched the earlier Room snapshot exactly. Cleared only that exact QA draft afterward, without sending it. Other conversation contents were not edited. |
 | Four real card types | Clock, Study continuation, routine result and phone status survived the APK update/process restart with the saved layout unchanged. The phone card changed from95/96% to100%, matching Android battery/charging observations. |
 | Exact source navigation | Study opened session `ea09dbc3-86ab-4e3f-8548-c57a8040c409`, retaining its exact saved source/revision and draft. Workspace continuation opened the exact ownQA exported PNG. Routine result opened its exact saved routine. |
 | Routine source refresh / deduplication | One explicitly confirmed manual silent run completed1/1 with `SURFACED_SILENTLY`. The existing `automation:82c665d8-93de-496f-93df-28e2922df5a1` publication updated once with typed counts and the actual producing routine revision. Russian Screen copy displayed **Выполнено действий: 1 из 1**; canonical English source summary stayed literal. Routine remained OFF with no scheduled next run. |
@@ -43,6 +43,6 @@ The screenshots contain native controls and ownQA card data. Partial cards at th
 
 ## Closure boundary
 
-The ordinary Chat/Screen preservation and four-card persistence/source-link acceptance now have real phone evidence. Preserve those completed results instead of repeating them.
+The ordinary Chat/Screen preservation, four-card persistence/source links, phone light/dark large-text matrix and persisted-evidence acceptance now have real phone evidence. The corresponding four of six acceptance groups are checked in the issue. Work-package checkmarks record delivered implementation separately from the remaining acceptance. Preserve these completed results instead of repeating them.
 
 Issue60 remains OPEN: actual spoken layout requests are deferred; live secure keyguard/dock and low-power/dimming transitions, and physical TalkBack/peripheral equipment remain separately unqualified. The physical phone light/dark matrix, custom preset and native geometry persistence checks above are complete at their stated scope. Earlier unit and ambient checks remain accepted only at their documented scope. No universal AOD, battery, microphone or full accessibility PASS is inferred.
