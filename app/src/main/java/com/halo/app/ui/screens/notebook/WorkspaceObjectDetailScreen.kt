@@ -300,7 +300,7 @@ fun WorkspaceObjectDetailScreen(
                 if (source.available == false) Text(uiText("Original source is no longer available"))
                 source.objectRef?.let { ref -> Zone5ActionButton(ref.title, "study_source", !detailBusy) { showSources = false; onOpenSource(ref) } }
             }
-        } }, confirmButton = { TextButton({ showSources = false }) { Text(uiText("Close")) } })
+        } }, confirmButton = { TextButton({ showSources = false }) { Text(uiText("Close")) } }, dismissButton = {})
     if (editingMemory) StudioAlertDialog(onDismissRequest = { if (!detailBusy) editingMemory = false },
         title = { Text(uiText("Correct memory")) }, text = {
             Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
