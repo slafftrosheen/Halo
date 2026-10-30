@@ -29,15 +29,6 @@ class HaloZoneLayoutTest {
     private val invoked = mutableListOf<String>()
     private val actions = (1..9).map { HaloOrbContextAction("tool-$it", "Action $it", HaloGlyph.TOOL) }
 
-    @Test fun selectedWorkspaceRemainsAnActionableRootButton() {
-        show(childHeader = true)
-        compose.onNodeWithContentDescription("Workspace").assertIsSelected()
-            .assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role,
-                androidx.compose.ui.semantics.Role.Button))
-            .assertHasClickAction().performTouchInput { click() }
-        assertEquals(listOf("notebook"), invoked)
-    }
-
     private fun show(compact: Boolean = false, scale: Float = 1f, childHeader: Boolean = false,
         mode: com.halo.app.ai.PrivacyMode = com.halo.app.ai.PrivacyMode.PRIVATE, headerTool: Boolean = false,
         actionCount: Int = actions.size) {
@@ -70,163 +61,94 @@ class HaloZoneLayoutTest {
                             HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, { invoked += "talk" }, {}, {},
                             size = size, contextActions = shownActions, onContextAction = { invoked += it.id }) },
                         profile = { com.halo.app.ui.components.CompactPrivacyModeButton(
-                            mode, "Current mode", true, { invoked += "profile" }) }, backdrop = {})
+                            mode, "Current mode", true, { invoked += "profile" }) }, backdrop = {}, profileStatus = { Text("Local") })
                 }
             }
         } }
     }
 
-    @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp")
-    fun russianCompactPowerDoesNotSqueezeHintOrMoveRootsAboveFooter() {
-        show(compact = true, scale = 2f, mode = com.halo.app.ai.PrivacyMode.CLOUD)
-        val root = compose.onNode(isRoot()).fetchSemanticsNode().boundsInRoot
-        val mode = compose.onNodeWithContentDescription("Current mode").assertIsDisplayed().assertIsToggleable().fetchSemanticsNode().boundsInRoot
-        val home = compose.onNodeWithContentDescription("Главная").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        assertTrue("Compact footer must stay in the lower quarter", home.top >= root.height * .75f)
-        assertTrue("Mode must not consume most of the row", mode.width <= root.width * .34f)
-        compose.onNodeWithContentDescription("Current mode").performClick()
-        assertEquals(listOf("profile"), invoked)
+
+    @Test fun normalFooterShowsThreeLabelledActionsWithDisjointVoiceAndMenuBounds() {
+        show()
+        val voice = compose.onNodeWithContentDescription("Talk").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val menu = compose.onNodeWithText("Menu").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        for (label in listOf("Action 1", "Action 2", "Action 3")) {
+            val action = compose.onNodeWithText(label).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            assertFalse(action.overlaps(voice)); assertFalse(action.overlaps(menu))
+            assertTrue(action.width >= 48); assertTrue(action.height >= 48)
+        }
+        compose.onNodeWithText("Action 4").assertIsNotDisplayed()
         compose.onNode(isRoot()).captureRoboImage()
     }
 
-    @Test fun scopedKidsCompactMenuKeepsOnlyStudyAndUsesGuardedRoute() {
-        val childActions = ShellOrbCatalog.context("home", kids = true)
-        compose.setContent { HostlessHaloTheme(fontScale = 2f) {
-            HaloOrbLauncher(HaloSignalPresentation(state = HaloSignalState.IDLE, label = "Ready", reducedMotion = true),
-                HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, {}, {},
-                onTools = {}, showToolCatalog = false, destinations = emptyList(), size = 56.dp,
-                contextActions = childActions, onContextAction = { action ->
-                    ShellOrbCatalog.directContextRoute(action, kids = true)?.let { invoked += it }
-                })
-        } }
-        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
-        compose.onNode(hasText("Study") and hasClickAction()).assertIsDisplayed()
-        listOf("Workspace", "Studio", "Settings", "Activity", "Tools").forEach {
-            compose.onNode(hasText(it) and hasClickAction()).assertDoesNotExist()
-        }
-        compose.onNode(hasText("Study") and hasClickAction()).performClick()
-        assertEquals(listOf("study"), invoked)
+    @Test fun manualOrbitDragKeepsTheOrbAnchoredAndNeverExecutes() {
+        show()
+        val before = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithText("Action 2").performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        assertEquals(before, compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot)
+        assertTrue(invoked.isEmpty())
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNode(hasText("Action 9") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(listOf("tool-9"), invoked)
     }
 
-    @Test fun normalHeaderOmitsOnlyMatchingToolAndFullListContainsNoGlobalRoots() {
+    @Test fun childBackRemainsDirectWhileTheFullListKeepsTheSamePageAction() {
         show(childHeader = true, headerTool = true)
-        compose.onAllNodesWithContentDescription("More tools").assertCountEquals(1)
-        compose.onNodeWithContentDescription("Read aloud").assertIsDisplayed().performClick()
-        assertEquals(listOf("read"), invoked)
-        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
-        compose.onNode(hasText("More tools") and hasClickAction()).assertIsDisplayed()
-        listOf("Home", "Workspace", "Activity", "Studio", "Devices", "Settings").forEach {
-            compose.onNode(hasText(it) and hasClickAction()).assertDoesNotExist()
-        }
-    }
-
-    @Test fun compactHeaderKeepsItsToolsWhenCarouselIsAbsent() {
-        show(compact = true, scale = 2f, childHeader = true, headerTool = true)
-        compose.onAllNodesWithContentDescription("More tools").assertCountEquals(1)
-        compose.onNodeWithContentDescription("More tools").assertIsDisplayed().performClick()
-        assertEquals(listOf("header-tools"), invoked)
-        compose.onNodeWithContentDescription("Read aloud").assertIsDisplayed()
-    }
-
-    @Test fun normalChildShowsOneBackAndRetainsFullActionList() {
-        show(childHeader = true)
         compose.onAllNodesWithContentDescription("Back").assertCountEquals(1)
         compose.onNodeWithContentDescription("Back").performClick()
-        assertEquals(listOf("page:test.back"), invoked)
-        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
-        compose.onNode(hasText("Back") and hasClickAction()).assertIsDisplayed()
-    }
-
-    @Test fun compactChildRetainsDirectHeaderBack() {
-        show(compact = true, scale = 2f, childHeader = true)
-        compose.onAllNodesWithContentDescription("Back").assertCountEquals(1)
-        compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
         assertEquals(listOf("header-back"), invoked)
+        compose.onAllNodesWithContentDescription("More tools").assertCountEquals(1)
+        compose.onNodeWithContentDescription("Read aloud").assertIsDisplayed()
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNode(hasText("Back") and hasClickAction()).assertIsDisplayed().performClick()
+        assertEquals(listOf("header-back", "page:test.back"), invoked)
     }
 
-    @Test fun rotationDoesNotMoveRootsOrLaunchAnAction() {
-        show()
-        val before = compose.onNodeWithContentDescription("Home").fetchSemanticsNode().boundsInRoot
-        assertEquals(before.top, compose.onNodeWithContentDescription("Devices").fetchSemanticsNode().boundsInRoot.top)
-        assertEquals(compose.onNodeWithContentDescription("Workspace").fetchSemanticsNode().boundsInRoot.top,
-            compose.onNodeWithContentDescription("Settings").fetchSemanticsNode().boundsInRoot.top)
-        compose.onNodeWithContentDescription("Action 2").performTouchInput { swipeLeft() }
-        compose.waitForIdle()
-        assertEquals(before, compose.onNodeWithContentDescription("Home").fetchSemanticsNode().boundsInRoot)
-        assertTrue(invoked.isEmpty())
-        compose.onNodeWithContentDescription("Devices").performClick()
-        assertEquals(listOf("devices"), invoked)
-        compose.onNode(isRoot()).captureRoboImage()
-    }
-
-    @Test fun curvedActionTouchDoesNotInvokePttOrTheFullList() {
-        show()
-        val action = compose.onNodeWithContentDescription("Action 2")
-        val actionBounds = action.fetchSemanticsNode().boundsInRoot
-        val ptt = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
-        val list = compose.onNodeWithContentDescription("Show Halo shortcuts").fetchSemanticsNode().boundsInRoot
-        assertFalse("Action and PTT must be disjoint", actionBounds.overlaps(ptt))
-        assertFalse("Action and explicit list must be disjoint", actionBounds.overlaps(list))
-        action.performTouchInput { click(center) }
-        assertEquals(listOf("tool-2"), invoked)
-    }
-
-    @Test fun singleCenteredToolKeepsItsTouchTargetAbovePtt() {
+    @Test fun sparseActionsRemainLabelledAndDoNotCoverVoice() {
         show(actionCount = 1)
-        val action = compose.onNodeWithContentDescription("Action 1")
-        val bounds = action.fetchSemanticsNode().boundsInRoot
-        val ptt = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
-        assertFalse(bounds.overlaps(ptt))
-        assertTrue(bounds.bottom <= ptt.top)
-        action.performTouchInput { click(center) }
+        val action = compose.onNodeWithText("Action 1").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val voice = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
+        assertFalse(action.overlaps(voice))
+        compose.onNodeWithText("Action 1").performTouchInput { click() }
         assertEquals(listOf("tool-1"), invoked)
     }
 
-    @Test fun twoSparseToolsDoNotCoverTheFixedPtt() {
-        show(actionCount = 2)
-        val ptt = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
-        for (title in listOf("Action 1", "Action 2")) {
-            assertFalse(compose.onNodeWithContentDescription(title).assertIsDisplayed()
-                .fetchSemanticsNode().boundsInRoot.overlaps(ptt))
-        }
-        compose.onNodeWithContentDescription("Action 2").performTouchInput { click(center) }
-        assertEquals(listOf("tool-2"), invoked)
+    @Test @Config(qualifiers = "w280dp-h520dp")
+    fun narrowShortWindowUsesAListWithUnshrunkVoiceAndMenuTargets() {
+        show(compact = true)
+        compose.onNodeWithText("Action 1").assertDoesNotExist()
+        val face = compose.onNodeWithContentDescription("Talk").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val menu = compose.onNodeWithText("Menu").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertFalse(face.overlaps(menu))
+        assertTrue(face.width >= 48 && face.height >= 48)
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNode(hasText("Action 1") and hasClickAction()).assertIsDisplayed()
     }
 
-    @Test @Config(qualifiers = "w280dp-h800dp")
-    fun narrowWindowReflowsFourFixedDestinationsWithoutShrinkingTargets() {
-        show()
-        val roots = listOf("Home", "Workspace", "Devices", "Settings").map {
-            compose.onNodeWithContentDescription(it).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        }
-        for (i in roots.indices) for (j in i + 1 until roots.size) {
-            assertFalse("Fixed roots must not overlap", roots[i].overlaps(roots[j]))
-        }
-        compose.onNodeWithContentDescription("Talk").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Show Halo shortcuts").assertIsDisplayed().performClick()
-        compose.onNodeWithText("Action 1").assertIsDisplayed()
-    }
-
-    @Test @Config(qualifiers = "w340dp-h800dp")
-    fun middleWidthUsesListInsteadOfSqueezingFourOrbitTargets() {
-        show()
-        listOf("Home", "Workspace", "Devices", "Settings").forEach {
-            compose.onNodeWithContentDescription(it).assertIsDisplayed()
-        }
-        compose.onNodeWithContentDescription("Action 1").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
-        compose.onNodeWithText("Action 1").assertIsDisplayed()
-    }
-
-    @Test fun compactOrbAndMenuHaveSeparateHitTargets() {
+    @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp")
+    fun russianLargeTextKeepsProfileReadOnlyUntilMenuDisclosure() {
         show(compact = true, scale = 2f)
-        val face = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
-        val menu = compose.onNodeWithContentDescription("Show Halo shortcuts").fetchSemanticsNode().boundsInRoot
-        assertTrue("Orb and list must not overlap", face.right <= menu.left || menu.right <= face.left)
-        listOf("Home", "Workspace", "Devices", "Settings").forEach { compose.onNodeWithContentDescription(it).assertIsDisplayed() }
+        compose.onNodeWithContentDescription("Current mode").assertDoesNotExist()
+        compose.onNodeWithText("Меню").assertIsDisplayed()
+        compose.onNodeWithText("Все действия").assertIsDisplayed()
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNodeWithText("Все действия").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) {
+            it(layouts)
+        }
         compose.onNode(isRoot()).captureRoboImage()
-        compose.onNodeWithContentDescription("Show Halo shortcuts").performClick()
-        compose.onNodeWithText("Action 1").assertIsDisplayed().performClick()
-        assertEquals(listOf("tool-1"), invoked)
+        println("ZONE5_RU_ACTION_LABEL width=${layouts.single().size.width} lines=${layouts.single().lineCount}")
+        assertTrue("The compact action label must fit on two readable lines", layouts.single().lineCount <= 2)
+        compose.onNodeWithText("Меню").performClick()
+        compose.onNodeWithContentDescription("Current mode").performScrollTo().assertIsDisplayed().performClick()
+        assertEquals(listOf("profile"), invoked)
+    }
+
+    @Test @Config(qualifiers = "lv-rLV-w412dp-h844dp")
+    fun latvianLargeTextRetainsExplicitMenuAndActionList() {
+        show(scale = 2f)
+        compose.onNodeWithText("Izvēlne").assertIsDisplayed()
+        compose.onNodeWithText("Visas darbības").assertIsDisplayed()
+        compose.onNode(isRoot()).captureRoboImage()
     }
 }

@@ -570,24 +570,9 @@ internal fun KidsReadAlongText(sentence: String, activeRange: IntRange?) {
 
 @Composable
 internal fun KidsBrandTheme(content: @Composable () -> Unit) {
-    // BrandBook 3.0 Package D: warm surfaces with the user's accent and 18sp body.
+    // Keep the child-sized typography and targets within the user-selected appearance.
     val type = MaterialTheme.typography
-    val dark = MaterialTheme.colorScheme.background.let { it.red + it.green + it.blue < 1.5f }
-    val base = MaterialTheme.colorScheme
-    val warm = base.copy(
-        background = androidx.compose.ui.graphics.Color(if (dark) 0xFF160E1C else 0xFFFFF3EA),
-        surface = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFFFF),
-        surfaceContainerLowest = androidx.compose.ui.graphics.Color(if (dark) 0xFF160E1C else 0xFFFFF3EA),
-        surfaceContainerLow = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFFFF),
-        surfaceContainer = androidx.compose.ui.graphics.Color(if (dark) 0xFF22182A else 0xFFFFFCF8),
-        surfaceContainerHigh = androidx.compose.ui.graphics.Color(if (dark) 0xFF2E2238 else 0xFFF7E9DD),
-        surfaceContainerHighest = androidx.compose.ui.graphics.Color(if (dark) 0xFF3A2C46 else 0xFFEEDCCD),
-        surfaceVariant = androidx.compose.ui.graphics.Color(if (dark) 0xFF2E2238 else 0xFFF7E9DD),
-        outlineVariant = androidx.compose.ui.graphics.Color(if (dark) 0xFFFBF6F0 else 0xFF1A0F14).copy(alpha = if (dark) .10f else .11f),
-        onBackground = androidx.compose.ui.graphics.Color(if (dark) 0xFFFBF6F0 else 0xFF1A0F14),
-        onSurface = androidx.compose.ui.graphics.Color(if (dark) 0xFFFBF6F0 else 0xFF1A0F14),
-        onSurfaceVariant = androidx.compose.ui.graphics.Color(if (dark) 0xFFC9BCC4 else 0xFF5E4F55),
-    )
+    val warm = MaterialTheme.colorScheme
     MaterialTheme(colorScheme = warm, typography = type.copy(
             bodyLarge = type.bodyLarge.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),
             bodyMedium = type.bodyMedium.copy(fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp)),

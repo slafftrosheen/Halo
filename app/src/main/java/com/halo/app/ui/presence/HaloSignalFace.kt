@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,27 +53,30 @@ fun HaloSignalFace(
     onLongClick: (() -> Unit)? = null,
     kids: Boolean = false,
     onClickLabel: String? = null,
+    zone5: Boolean = false,
 ) {
     val localizedLabel = uiText(presentation.label)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    // DevKit 4.0: appearance accents never recolor the Open Ring identity.
-    // Use the supplied state artwork, including its attention/error semantics.
-    val accentIndex = 0
     val systemReducedMotion = com.halo.app.ui.fx.rememberHaloReducedMotion()
-    val reduced = presentation.reducedMotion || systemReducedMotion
+    val highContrast = com.halo.app.ui.theme.rememberVisualPreferences().higherContrast
+    val reduced = presentation.reducedMotion || systemReducedMotion || (zone5 && highContrast)
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val artwork = presentation.presenceArtwork()
-    val foreground = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
-    val policy = artwork.motionPolicy(size.value, reduced, foreground)
+    val foreground = lifecycleState.isAtLeast(if (zone5) Lifecycle.State.RESUMED else Lifecycle.State.STARTED)
+    val zone5Resource = if (zone5) zone5OrbMotionResource(presentation, size.value, dark, !reduced && foreground) else null
+    val policy = if (zone5) PresenceMotionPolicy(zone5Resource != null, loop = true)
+        else artwork.motionPolicy(size.value, reduced, foreground)
     // Keep an eligible composition mounted as the Activity pauses. Discarding it on
     // ON_STOP would reset one-shot success/warning motion when Android resumes.
-    val keepComposition = artwork.canKeepLottieComposition(size.value, reduced)
+    val keepComposition = if (zone5) zone5Resource != null else artwork.canKeepLottieComposition(size.value, reduced)
     val prefix = if (kids) "halo_kids_orb_" else "halo_orb_"
     // Request Lottie only for foreground, standard-sized and motion-enabled faces.
     // Keep a same-state static fallback while composition loads or parsing fails.
     val assetPath = "halo/$prefix" + artwork.key + if (dark) "_dark.json" else "_light.json"
     val composition = if (keepComposition) {
-        rememberLottieComposition(LottieCompositionSpec.Asset(assetPath)).value
+        com.halo.app.ui.theme.rememberHaloThemedLottie(
+            asset = if (zone5Resource == null) assetPath else null, rawRes = zone5Resource,
+            accent = haloSignalInk(presentation.state, MaterialTheme.colorScheme))
     } else null
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
@@ -86,27 +90,20 @@ fun HaloSignalFace(
             interactionSource = interactions, indication = null, role = Role.Button,
             onClickLabel = onClickLabel ?: uiText("Talk to Halo"), onClick = { onClick?.invoke() }, onLongClick = onLongClick,
         ) else Modifier), contentAlignment = Alignment.Center) {
-        val staticResource = if (size <= 32.dp) artwork.microResource()
-            else artwork.staticResource(dark, kids, accentIndex)
         // Compact active states pulse; idle stays still without a permanent frame clock.
         when {
-            policy.compact -> key(artwork, staticResource) {
-                CompactPresenceFrame(artwork, staticResource)
+            policy.compact -> key(artwork) {
+                CompactPresenceFrame(artwork, presentation)
             }
-            composition == null -> Image(
-                painterResource(staticResource),
-                contentDescription = null,
-                modifier = Modifier.matchParentSize()
-            )
+            composition == null -> ThemedPresenceFrame(presentation, Modifier.matchParentSize())
         }
-        if (keepComposition) key(artwork, dark, kids) {
+        if (keepComposition) key(artwork, kids) {
             if (composition != null) {
                 LottieAnimation(
                     composition = composition,
                     iterations = if (policy.loop) Int.MAX_VALUE else 1,
                     isPlaying = foreground,
                     restartOnPlay = false,
-                    dynamicProperties = null,
                     modifier = Modifier.matchParentSize()
                 )
             }
@@ -133,25 +130,23 @@ fun HaloSignalFace(
 
 @Composable
 private fun Badge(glyph: HaloGlyph, size: Dp, condition: Boolean, modifier: Modifier, failure: Boolean = false) {
-    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
+    val colors = MaterialTheme.colorScheme
     // Apricot is a semantic attention signal, not a selectable accent. On light
     // surfaces the deep shade is essential for non-text contrast (BrandAssets v0.7).
     val background = when {
-        !condition -> Color(0xFF1A1760)
-        failure && dark -> Color(0xFFFF7A7A)
-        failure -> Color(0xFFC53030)
-        dark -> Color(0xFFFF9F6B)
-        else -> Color(0xFFD9692A)
+        !condition -> colors.primaryContainer
+        failure -> colors.errorContainer
+        else -> colors.tertiaryContainer
     }
     val foreground = when {
-        !condition -> Color(0xFF0CF2BA)
-        failure && !dark -> Color(0xFFFAFAF4)
-        else -> Color(0xFF060330)
+        !condition -> colors.onPrimaryContainer
+        failure -> colors.onErrorContainer
+        else -> colors.onTertiaryContainer
     }
     Surface(
         modifier = modifier.size(size),
         shape = CircleShape,
-        border = BorderStroke(size / 7f, Color(0xFF060330)),
+        border = BorderStroke(size / 7f, colors.surface),
         color = background
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -188,7 +183,7 @@ private val compactArtwork = setOf(
 
 /** Preserve legibility at compact sizes: no miniature waveforms, glow or ripples. */
 @Composable
-private fun CompactPresenceFrame(artwork: PresenceArtwork, drawable: Int) {
+private fun CompactPresenceFrame(artwork: PresenceArtwork, signal: HaloSignalPresentation) {
     val halfDuration = when (artwork) {
         PresenceArtwork.THINKING -> 1500
         else -> 1000
@@ -203,9 +198,7 @@ private fun CompactPresenceFrame(artwork: PresenceArtwork, drawable: Int) {
         ),
         label = "halo_compact_pulse"
     )
-    Image(
-        painter = painterResource(drawable),
-        contentDescription = null,
+    ThemedPresenceFrame(signal,
         modifier = Modifier.fillMaxSize().graphicsLayer {
             alpha = .90f + .10f * pulse
         }

@@ -26,7 +26,7 @@ object HaloGlassColors {
     val BorderSubtle: Color @Composable get() = MaterialTheme.colorScheme.outlineVariant
     val BorderStandard: Color @Composable get() = MaterialTheme.colorScheme.outlineVariant
     val BorderStrong: Color @Composable get() = MaterialTheme.colorScheme.outline
-    val Warning: Color @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFF0B86B) else Color(0xFF895600)
+    val Warning: Color @Composable get() = MaterialTheme.colorScheme.tertiary
     val HighlightTop = Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
     val HighlightBottom = HighlightTop
 }

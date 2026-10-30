@@ -1,0 +1,159 @@
+{
+  "tests": 158,
+  "failures": 0,
+  "skipped": 0,
+  "classes": [
+    {
+      "name": "com.halo.app.context.CurrentScreenToolsTest",
+      "tests": 4
+    },
+    {
+      "name": "com.halo.app.data.workspace.CurrentCanvasContextOwnerTest",
+      "tests": 5
+    },
+    {
+      "name": "com.halo.app.di.HostFirstSkillAuditTest",
+      "tests": 2
+    },
+    {
+      "name": "com.halo.app.di.tools.AssistantToolsTest",
+      "tests": 7
+    },
+    {
+      "name": "com.halo.app.di.tools.host.NavigationToolsTest",
+      "tests": 4
+    },
+    {
+      "name": "com.halo.app.screen.ScreenShellOrbConsolidationTest",
+      "tests": 1
+    },
+    {
+      "name": "com.halo.app.ui.presence.BrandPresenceVisualTest",
+      "tests": 5
+    },
+    {
+      "name": "com.halo.app.ui.presence.GlobalOrbLayoutTest",
+      "tests": 5
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloIdentitySnapshotTest",
+      "tests": 3
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloOrbActionsTest",
+      "tests": 8
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloOrbLauncherTest",
+      "tests": 9
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloOrbVisualTest",
+      "tests": 8
+    },
+    {
+      "name": "com.halo.app.ui.presence.HaloSharedOrbMotionTest",
+      "tests": 1
+    },
+    {
+      "name": "com.halo.app.ui.presence.LocalizedMaterialBottomSheetTest",
+      "tests": 4
+    },
+    {
+      "name": "com.halo.app.ui.presence.OrbStateMeaningTest",
+      "tests": 3
+    },
+    {
+      "name": "com.halo.app.ui.presence.PresenceArtworkContractTest",
+      "tests": 7
+    },
+    {
+      "name": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "tests": 6
+    },
+    {
+      "name": "com.halo.app.ui.presence.ShellUtilityBandTest",
+      "tests": 1
+    },
+    {
+      "name": "com.halo.app.ui.presence.Zone5OrbMotionTest",
+      "tests": 3
+    },
+    {
+      "name": "com.halo.app.ui.screens.home.ShellOrbConsolidationTest",
+      "tests": 3
+    },
+    {
+      "name": "com.halo.app.ui.screens.kids.KidsShellOrbBindingTest",
+      "tests": 2
+    },
+    {
+      "name": "com.halo.app.ui.shell.BellActivityLargeTextTest",
+      "tests": 1
+    },
+    {
+      "name": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "tests": 2
+    },
+    {
+      "name": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "tests": 8
+    },
+    {
+      "name": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "tests": 3
+    },
+    {
+      "name": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "tests": 7
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloAssistantScreenParityTest",
+      "tests": 1
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "tests": 2
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "tests": 3
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "tests": 4
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "tests": 11
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "tests": 7
+    },
+    {
+      "name": "com.halo.app.ui.shell.PermissionsScreenTest",
+      "tests": 1
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellFooterViewportTest",
+      "tests": 2
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellInteractionSurfaceTest",
+      "tests": 2
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": 6
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "tests": 6
+    },
+    {
+      "name": "com.halo.app.ui.zone5.HaloZone5IconRenderTest",
+      "tests": 1
+    }
+  ]
+}

@@ -150,7 +150,7 @@ fun SpeechRecognitionSettingsScreen(
                 val resident = uiState.residentModelId == spec.id
                 val compatible = spec.supportsLanguage(uiState.selectedLocale)
                 val downloading = uiState.downloadingModelId == spec.id
-                HaloWorkspaceCard(accent = HaloPastelBlue) {
+                HaloWorkspaceCard(accent = MaterialTheme.colorScheme.primary) {
                     Text(uiText(listeningChoiceLabel(spec.providerId)), style = MaterialTheme.typography.titleSmall)
                     Text(uiText(when (spec.tier) {
                         com.halo.providers.sherpa.stt.SpeechModelTier.FAST -> "Fast"

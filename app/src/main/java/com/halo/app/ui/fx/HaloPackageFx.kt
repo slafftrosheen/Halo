@@ -39,13 +39,17 @@ enum class HaloPackageMoment(
 /** The event owner supplies the key. Changing theme never invents a new event. */
 @Composable
 fun HaloPackageFx(moment: HaloPackageMoment, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    val colors = MaterialTheme.colorScheme
+    val ink = when (moment.glyph) {
+        HaloGlyph.ERROR -> colors.error
+        HaloGlyph.WARNING, HaloGlyph.APPROVAL -> colors.tertiary
+        else -> colors.primary
+    }
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     val reduced = rememberHaloReducedMotion()
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val theme = if (dark) "dark" else "light"
-    val composition = if (enabled && !reduced) rememberLottieComposition(
-        LottieCompositionSpec.Asset("halo/fx/halo_fx_${moment.asset}_$theme.json")
-    ).value else null
+    val composition = if (enabled && !reduced) com.halo.app.ui.theme.rememberHaloThemedLottie(asset = "halo/fx/halo_fx_${moment.asset}_$theme.json", accent = ink) else null
     if (composition != null) {
         // A phase change within one composition (receipt, task or Kids gate)
         // starts that marker. A lifecycle pause keeps the same playback owner.
@@ -58,15 +62,16 @@ fun HaloPackageFx(moment: HaloPackageMoment, modifier: Modifier = Modifier, enab
         }
     } else {
         val context = LocalContext.current
-        val request = remember(context, moment, theme) {
+        val svg = com.halo.app.ui.theme.rememberHaloThemedSvg("halo/fx/static/halo_fx_${moment.still}_$theme.svg", accent = ink)
+        val request = remember(context, moment, theme, svg) {
             ImageRequest.Builder(context)
-                .data("file:///android_asset/halo/fx/static/halo_fx_${moment.still}_$theme.svg")
+                .data(svg)
                 .decoderFactory(SvgDecoder.Factory()).build()
         }
         val painter = rememberAsyncImagePainter(request)
         if (painter.state is AsyncImagePainter.State.Success)
             Image(painter, contentDescription = null, modifier = modifier)
-        else HaloIcon(moment.glyph, contentDescription = null, modifier = modifier)
+        else HaloIcon(moment.glyph, contentDescription = null, modifier = modifier, tint = ink)
     }
 }
 

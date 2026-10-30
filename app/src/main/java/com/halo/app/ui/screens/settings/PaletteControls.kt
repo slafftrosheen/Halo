@@ -162,7 +162,7 @@ import kotlinx.coroutines.launch
             TextButton(onClick = { draft = draft.editPalette(dark, HaloPalette()) }, enabled = !saving,
                 modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.interface4_appearance_defaults)) }
         }
-        Text(uiText("The halo ring stays Mint in every theme. Apricot means halo needs you. Red means a problem."),
+        Text(stringResource(R.string.zone5_theme_colors),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         AppearanceLabel("Text size")
         Text(uiText("Follows Android. You can make it bigger here."), style = MaterialTheme.typography.bodyMedium)
@@ -208,9 +208,10 @@ import kotlinx.coroutines.launch
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(
                         if (dark) com.halo.app.R.drawable.halo_wordmark_dark else com.halo.app.R.drawable.halo_wordmark_light),
-                        contentDescription = null, modifier = Modifier.width(48.dp).height(26.dp))
+                        contentDescription = null, modifier = Modifier.width(48.dp).height(26.dp),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(scheme.onSurface))
                     Spacer(Modifier.weight(1f))
-                    HaloIcon(HaloGlyph.HALO, null, Modifier.size(24.dp), tint = Color(0xFF0CF2BA))
+                    HaloIcon(HaloGlyph.HALO, null, Modifier.size(24.dp), tint = scheme.primary)
                 }
                 Surface(Modifier.align(Alignment.End), shape = com.halo.app.ui.design.HaloShapes.card,
                     color = scheme.primaryContainer.copy(alpha = .2f)) {
@@ -221,7 +222,7 @@ import kotlinx.coroutines.launch
                         Text(uiText("Lemon chicken traybake, 50 min."), style = MaterialTheme.typography.bodyMedium)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             PreviewBadge("Apply", scheme.primaryContainer, scheme.onPrimaryContainer)
-                            PreviewBadge("Needs your OK", Color(0xFFFF9F6B).copy(alpha = .16f), Color(if (dark) 0xFFFF9F6B else 0xFFA84B12))
+                            PreviewBadge("Needs your OK", scheme.tertiaryContainer, scheme.onTertiaryContainer)
                             PreviewBadge("Error", scheme.error.copy(alpha = .12f), scheme.error)
                         }
                     }

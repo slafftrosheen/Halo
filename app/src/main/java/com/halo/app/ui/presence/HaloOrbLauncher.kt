@@ -51,6 +51,11 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
     onContextAction: (HaloOrbContextAction) -> Unit = {},
     hint: String? = null, onDismissHint: () -> Unit = {}, leading: (@Composable () -> Unit)? = null,
     showToolCatalog: Boolean = true) {
+    LocalHaloZone5Navigation.current?.let { navigation ->
+        HaloZone5OrbLauncher(signal, interaction, onPrimary, onStop, contextActions, onContextAction,
+            size, orbModifier, navigation)
+        return
+    }
     var expanded by rememberSaveable { mutableStateOf(false) }
     var satellites by rememberSaveable { mutableStateOf(false) }
     var customizing by remember { mutableStateOf(false) }

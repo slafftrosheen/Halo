@@ -168,8 +168,8 @@ fun HaloMetricCard(label: String, value: String, modifier: Modifier = Modifier) 
 fun HaloEngineCard(name: String, state: ProcessState) {
     val color = when (state) {
         ProcessState.Running -> MaterialTheme.colorScheme.primary
-        ProcessState.Paused -> HaloWarning
-        ProcessState.Crashed -> HaloDanger
+        ProcessState.Paused -> MaterialTheme.colorScheme.tertiary
+        ProcessState.Crashed -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     HaloCard(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -311,7 +311,7 @@ fun HaloStatus(label: String, statusText: String, isHealthy: Boolean, modifier: 
     ) {
         Text(text = label, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            HaloPixelSignal(color = if (isHealthy) MaterialTheme.colorScheme.primary else HaloDanger, active = isHealthy)
+            HaloPixelSignal(color = if (isHealthy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, active = isHealthy)
             Spacer(modifier = Modifier.width(6.dp))
             Text(text = statusText, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         }

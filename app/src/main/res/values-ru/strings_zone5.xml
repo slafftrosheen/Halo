@@ -1,0 +1,11 @@
+<resources>
+    <string name="zone5_theme_colors">Выбранная тема меняет цвета орба Halo, элементов управления и поверхностей. Для внимания и ошибок используются цвета состояния темы.</string>
+    <string name="zone5_menu">Меню</string>
+    <string name="zone5_navigation">Навигация</string>
+    <string name="zone5_open_menu">Открыть меню навигации</string>
+    <string name="zone5_all_actions">Все действия</string>
+    <string name="zone5_tap_to_talk">Нажмите, чтобы говорить</string>
+    <string name="zone5_activities">Действия и уведомления</string>
+    <string name="zone5_no_actions">Для этого инструмента нет действий.</string>
+    <string name="zone5_unavailable">Недоступно в текущем состоянии.</string>
+</resources>

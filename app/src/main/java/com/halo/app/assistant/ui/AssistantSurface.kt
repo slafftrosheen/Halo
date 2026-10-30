@@ -61,7 +61,7 @@ fun AssistantSurface(
     BoxWithConstraints(Modifier.fillMaxWidth().imePadding()
         .haloAssistantEdge(active = interactionState is InteractionTurnState.Listening || interactionSurface?.inputRequestId != null,
             attention = interactionSurface?.inputRequestId != null, accent = MaterialTheme.colorScheme.primaryContainer,
-            apricot = androidx.compose.ui.graphics.Color(0xFFFF9F6B)), contentAlignment = Alignment.BottomCenter) {
+            apricot = MaterialTheme.colorScheme.tertiary), contentAlignment = Alignment.BottomCenter) {
         var invoke by remember { mutableStateOf(interactionState is InteractionTurnState.Listening) }
         LaunchedEffect(Unit) { if (invoke) { kotlinx.coroutines.delay(900); invoke = false } }
         if (invoke) com.halo.app.ui.fx.HaloPackageFx(com.halo.app.ui.fx.HaloPackageMoment.ASSIST_INVOKE,
@@ -76,7 +76,7 @@ fun AssistantSurface(
             shadowElevation = 1.dp,
         ) {
             Column(Modifier.haloStateAura(signal.state.light(), MaterialTheme.colorScheme.primaryContainer,
-                androidx.compose.ui.graphics.Color(0xFFFF9F6B), MaterialTheme.colorScheme.error).navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error).navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     HaloSignalFace(signal, size = 80.dp, contentDescription = uiText("halo assistant"))

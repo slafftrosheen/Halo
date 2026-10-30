@@ -1,0 +1,19 @@
+{
+  "mode": "DARK",
+  "dark": {
+    "accent": "MINT",
+    "tone": "WARM",
+    "style": "STILL"
+  },
+  "light": {
+    "accent": "CORAL",
+    "tone": "COOL",
+    "style": "HALO"
+  },
+  "temporaryDeviceDark": {
+    "accent": "ROSE",
+    "tone": "WARM",
+    "style": "STILL"
+  },
+  "restoreStatus": "DEFERRED - phone disconnected; user selected host checks only"
+}

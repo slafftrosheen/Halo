@@ -647,7 +647,7 @@ private fun RecoveryBanner(preview: String, onApply: () -> Unit, onDiscard: () -
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 6.dp),
         shape = com.halo.app.ui.design.HaloShapes.control,
-        color = HaloPastelBlue.copy(alpha = 0.18f),
+        color = MaterialTheme.colorScheme.secondaryContainer,
     ) {
         Column(Modifier.padding(12.dp)) {
             Text(uiText("Unsaved text found"), style = MaterialTheme.typography.titleSmall)
@@ -1257,7 +1257,7 @@ private fun ReadBlock(block: NoteBlock) {
         NoteBlockType.QUOTE -> Row(Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp)) {
             Box(Modifier.width(3.dp).height(38.dp).background(MaterialTheme.colorScheme.primary))
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text), style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
         }
         NoteBlockType.REFERENCE -> Surface(
             Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp),
@@ -1281,10 +1281,10 @@ private fun ReadBlock(block: NoteBlock) {
                 if (block.checked) Icons.Rounded.Check else Icons.Rounded.Close,
                 contentDescription = if (block.checked) "Checked" else "Not checked",
                 modifier = Modifier.size(16.dp),
-                tint = if (block.checked) HaloPastelMint else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (block.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text), style = MaterialTheme.typography.bodyMedium)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = MaterialTheme.typography.bodyMedium)
         }
         NoteBlockType.BULLET_LIST, NoteBlockType.NUMBERED_LIST -> Row(
             Modifier.padding(start = indent, top = 3.dp, bottom = 3.dp),
@@ -1296,10 +1296,10 @@ private fun ReadBlock(block: NoteBlock) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text), style = MaterialTheme.typography.bodyMedium)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = MaterialTheme.typography.bodyMedium)
         }
         else -> Text(
-            text = renderInline(block.text.ifBlank { " " }),
+            text = renderInline(block.text.ifBlank { " " }, MaterialTheme.colorScheme.primary),
             style = when (block.type) {
                 NoteBlockType.HEADING -> MaterialTheme.typography.headlineSmall
                 NoteBlockType.HEADING_2 -> MaterialTheme.typography.titleLarge
@@ -1717,7 +1717,7 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
 @Composable
 private fun MissingNoteState(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Surface(onClick = onBack, shape = com.halo.app.ui.design.HaloShapes.card, color = HaloPastelPink.copy(alpha = 0.16f)) {
+        Surface(onClick = onBack, shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.tertiaryContainer) {
             Column(modifier = Modifier.padding(18.dp)) {
                 Text(uiText("Note unavailable"), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
@@ -1731,7 +1731,7 @@ private fun MissingNoteState(onBack: () -> Unit, modifier: Modifier = Modifier) 
 }
 
 /** Minimal inline markdown renderer for the block surface. */
-private fun renderInline(text: String): AnnotatedString = buildAnnotatedString {
+private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.Color): AnnotatedString = buildAnnotatedString {
     var index = 0
     while (index < text.length) {
         when {
@@ -1777,7 +1777,7 @@ private fun renderInline(text: String): AnnotatedString = buildAnnotatedString {
                 val labelEnd = text.indexOf("](", index)
                 val urlEnd = if (labelEnd > index) text.indexOf(')', labelEnd) else -1
                 if (labelEnd > index && urlEnd > labelEnd) {
-                    withStyle(SpanStyle(color = androidx.compose.ui.graphics.Color(0xFF4A78C2))) {
+                    withStyle(SpanStyle(color = linkColor)) {
                         append(text.substring(index + 1, labelEnd))
                     }
                     index = urlEnd + 1

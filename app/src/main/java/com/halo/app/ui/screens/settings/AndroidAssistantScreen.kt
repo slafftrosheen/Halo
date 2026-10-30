@@ -277,7 +277,7 @@ private fun DiagnosticStateRow(label: String, value: String, pass: Boolean, unkn
         value,
         when {
             unknown -> MaterialTheme.colorScheme.tertiary
-            pass -> HaloPastelMint
+            pass -> MaterialTheme.colorScheme.primary
             else -> MaterialTheme.colorScheme.error
         },
     )
@@ -309,7 +309,7 @@ private fun BreakdownRow(label: String, pass: Boolean) {
         ) {
             Text(uiText(label), style = MaterialTheme.typography.bodyMedium)
             Text(if (pass) "PASS ✓" else "FAIL ✕", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
-                color = if (pass) HaloPastelMint else MaterialTheme.colorScheme.error)
+                color = if (pass) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
         }
     }
 }

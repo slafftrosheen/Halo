@@ -131,9 +131,9 @@ fun MemoryNode(
 @Composable
 fun GoalChip(goal: String, priority: String) {
     val (color, bgColor) = when (priority.lowercase()) {
-        "high" -> HaloWarning to HaloWarning.copy(alpha = 0.1f)
-        "critical" -> HaloDanger to HaloDanger.copy(alpha = 0.1f)
-        else -> HaloInformation to HaloInformation.copy(alpha = 0.1f)
+        "high" -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiaryContainer
+        "critical" -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primaryContainer
     }
     
     Row(

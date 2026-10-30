@@ -246,7 +246,7 @@ private fun BuddyBotJoystick(
     val release = rememberUpdatedState(onRelease)
     DisposableEffect(Unit) { onDispose { release.value() } }
     val surface = MaterialTheme.colorScheme.surfaceVariant
-    val warning = HaloWarning
+    val warning = MaterialTheme.colorScheme.tertiary
     val outline = MaterialTheme.colorScheme.outline
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val accent = MaterialTheme.colorScheme.secondary

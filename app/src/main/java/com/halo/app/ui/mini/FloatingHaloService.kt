@@ -24,6 +24,7 @@ class FloatingHaloService : Service() {
     private lateinit var windows: WindowManager
     private var bubble: ImageView? = null
     private var dismiss: TextView? = null
+    private var paintedScheme: androidx.compose.material3.ColorScheme? = null
     private val parameters = WindowManager.LayoutParams(1, 1, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
         android.graphics.PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.LEFT }
@@ -126,13 +127,19 @@ class FloatingHaloService : Service() {
         paintOrb()
     }
     private fun paintOrb() { scope.launch {
-        val bitmap = withContext(Dispatchers.IO) { nearbyOrb(this@FloatingHaloService, (56*resources.displayMetrics.density).toInt(), floating = true) }
-        bubble?.setImageBitmap(bitmap)
+        val paint = withContext(Dispatchers.IO) {
+            val scheme = nearbyScheme(this@FloatingHaloService)
+            nearbyOrb(this@FloatingHaloService, (56*resources.displayMetrics.density).toInt(), floating = true, scheme = scheme) to scheme
+        }
+        paintedScheme = paint.second
+        bubble?.setImageBitmap(paint.first)
+        dismiss?.apply { setTextColor(paint.second.onSurface.toArgb()); setBackgroundColor(paint.second.surfaceContainerHigh.toArgb()) }
     } }
     private fun showDismiss() {
         if (dismiss != null) return
+        val colors = paintedScheme ?: return
         val view = TextView(this).apply { text = nativeUi("Drop here to hide"); gravity = Gravity.CENTER
-            setTextColor(android.graphics.Color.WHITE); setBackgroundColor(0xCC20242A.toInt()) }
+            setTextColor(colors.onSurface.toArgb()); setBackgroundColor(colors.surfaceContainerHigh.toArgb()) }
         val params = WindowManager.LayoutParams((160*resources.displayMetrics.density).toInt(), (56*resources.displayMetrics.density).toInt(),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
             android.graphics.PixelFormat.TRANSLUCENT).apply { gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL; y = (24*resources.displayMetrics.density).toInt(); alpha = .8f }

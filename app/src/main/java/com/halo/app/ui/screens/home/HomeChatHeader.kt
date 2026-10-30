@@ -47,7 +47,8 @@ internal fun HomeChatHeader(mode: String, modeEnabled: Boolean, onMode: () -> Un
                 else if (surfaceSwitcher != null) surfaceSwitcher()
                 else Image(painterResource(if (MaterialTheme.colorScheme.background.luminance() < .5f)
                     R.drawable.halo_wordmark_dark else R.drawable.halo_wordmark_light),
-                    uiText("halo"), Modifier.width(64.dp).height(28.dp))
+                    uiText("halo"), Modifier.width(64.dp).height(28.dp),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onSurface))
             }
             IconButton(onClick = onNew, modifier = Modifier.size(48.dp)) {
                 Icon(painterResource(R.drawable.halo_ic_new_chat), uiText("New conversation"), Modifier.size(24.dp))

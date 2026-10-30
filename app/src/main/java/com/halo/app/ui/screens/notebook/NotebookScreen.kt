@@ -688,7 +688,7 @@ internal fun WorkspaceObjectRow(
                 Icon(
                     if (favorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     contentDescription = uiText(if (favorite) "Remove favorite" else "Add favorite"),
-                    tint = if (favorite && isDark) Color(0xFFFF9F6B)
+                    tint = if (favorite) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

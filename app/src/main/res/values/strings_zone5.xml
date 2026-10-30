@@ -1,0 +1,11 @@
+<resources>
+    <string name="zone5_theme_colors">Your selected theme colors the Halo orb, controls, and surfaces. Attention and errors use the theme’s status colors.</string>
+    <string name="zone5_menu">Menu</string>
+    <string name="zone5_navigation">Navigation</string>
+    <string name="zone5_open_menu">Open navigation menu</string>
+    <string name="zone5_all_actions">All actions</string>
+    <string name="zone5_tap_to_talk">Tap to talk</string>
+    <string name="zone5_activities">Activities &amp; notifications</string>
+    <string name="zone5_no_actions">No actions for this instrument.</string>
+    <string name="zone5_unavailable">Unavailable in the current state.</string>
+</resources>

@@ -30,38 +30,32 @@ internal fun nearbyScheme(context: Context): androidx.compose.material3.ColorSch
 }
 
 /** A static version of Halo's orbital ring for RemoteViews and the collapsed bubble. */
-internal fun nearbyOrb(context: Context, size: Int, floating: Boolean = false): Bitmap {
-    val scheme = nearbyScheme(context)
-    val accent = when (scheme.primaryContainer.toArgb()) {
-        0xFF8EC5FF.toInt() -> 1
-        0xFFC9B8FF.toInt() -> 2
-        0xFFFF9EB3.toInt() -> 3
-        else -> 0
-    }
-    val dark = floating || scheme.background.luminance() < .5f
-    val resource = com.halo.app.ui.presence.PresenceArtwork.IDLE.staticResource(dark, false, accent)
-    val drawable = requireNotNull(androidx.core.content.ContextCompat.getDrawable(context, resource))
+internal fun nearbyOrb(context: Context, size: Int, floating: Boolean = false,
+    scheme: androidx.compose.material3.ColorScheme = nearbyScheme(context)): Bitmap {
+    val drawable = requireNotNull(androidx.core.content.ContextCompat.getDrawable(context, com.halo.app.R.drawable.ic_halo_brand_halo)).mutate()
+    androidx.core.graphics.drawable.DrawableCompat.setTint(drawable, scheme.primary.toArgb())
     val bitmap = Bitmap.createBitmap(size.coerceAtLeast(1), size.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
     drawable.setBounds(0, 0, bitmap.width, bitmap.height)
     val canvas = Canvas(bitmap)
     if (floating) canvas.drawCircle(bitmap.width / 2f, bitmap.height / 2f, bitmap.width / 2f,
-        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = HaloNightInk.toArgb() })
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = scheme.background.toArgb() })
     drawable.draw(canvas)
     return bitmap
 }
 
 internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: Int): Bitmap {
+    val contrast = if (androidx.core.graphics.ColorUtils.calculateLuminance(colour) < .5) android.graphics.Color.WHITE else android.graphics.Color.BLACK
     val bitmap = Bitmap.createBitmap(width.coerceIn(1, 1200), height.coerceIn(1, 1200), Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val bounds = RectF(density / 2, density / 2, bitmap.width - density / 2, bitmap.height - density / 2)
     canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = colour
         shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(),
-            intArrayOf(androidx.core.graphics.ColorUtils.blendARGB(colour, 0xFFB4E6D6.toInt(), .10f), colour),
+            intArrayOf(androidx.core.graphics.ColorUtils.blendARGB(colour, contrast, .04f), colour),
             null, Shader.TileMode.CLAMP)
     })
     canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = androidx.core.graphics.ColorUtils.blendARGB(colour, 0xFF9A9EB5.toInt(), .28f)
+        color = androidx.core.graphics.ColorUtils.blendARGB(colour, contrast, .16f)
         style = Paint.Style.STROKE; strokeWidth = density
     })
     return bitmap

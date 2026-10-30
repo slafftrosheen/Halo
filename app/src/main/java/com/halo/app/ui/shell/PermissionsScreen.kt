@@ -179,7 +179,7 @@ fun PermissionsScreen(
         }
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceCard(accent = if (micGranted) HaloPastelMint else HaloPastelYellow) {
+        HaloWorkspaceCard(accent = if (micGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary) {
             Text(
                 text = uiText(if (micGranted) "Voice input can use the microphone" else "Microphone access is off"),
                 style = MaterialTheme.typography.titleMedium,
@@ -195,7 +195,7 @@ fun PermissionsScreen(
         Spacer(Modifier.height(20.dp))
 
         if (Build.VERSION.SDK_INT >= 37 && !localNetworkGranted) {
-            HaloWorkspaceCard(accent = HaloPastelYellow) {
+            HaloWorkspaceCard(accent = MaterialTheme.colorScheme.tertiary) {
                 Text(uiText("Local network access"), style = MaterialTheme.typography.titleMedium)
                 Text(uiText("Allow access when connecting to nearby devices or a local AI server."))
                 HaloWorkspaceButton(uiText("Allow local network access"), {

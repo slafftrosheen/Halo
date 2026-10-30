@@ -589,9 +589,9 @@ fun HomeScreen(
     }
     Box(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground())
         .haloStateAura(light, MaterialTheme.colorScheme.primaryContainer,
-            androidx.compose.ui.graphics.Color(0xFFFF9F6B), MaterialTheme.colorScheme.error)
+            MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error)
         .haloAssistantEdge(active = actingOnPhone && !lightStopped, attention = presentation.needsReview,
-            accent = MaterialTheme.colorScheme.primaryContainer, apricot = androidx.compose.ui.graphics.Color(0xFFFF9F6B)),
+            accent = MaterialTheme.colorScheme.primaryContainer, apricot = MaterialTheme.colorScheme.tertiary),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
         // Standalone hosts retain local controls; the app shell projects them into Halo Zone.

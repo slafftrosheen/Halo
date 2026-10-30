@@ -7,6 +7,15 @@ import com.halo.app.ui.screens.settings.isDeveloperDestination
 
 /** Exact navigation whitelist shared with assistant discovery; never synthesizes object IDs. */
 internal object ShellOrbCatalog {
+    /** Adult shell roots only. Child mode retains its existing allowlist. */
+    fun globalDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) destinations(true) else listOf(
+        HaloOrbDestination("screen", "HaloScreen", HaloGlyph.HOME),
+        HaloOrbDestination("home", "Home", HaloGlyph.HOME),
+        HaloOrbDestination("notebook", "Workspace", HaloGlyph.NOTE),
+        HaloOrbDestination("devices", "Devices", HaloGlyph.DEVICE),
+        HaloOrbDestination("activity", "Activities & notifications", HaloGlyph.ACTIVITY),
+        HaloOrbDestination("settings", "Settings", HaloGlyph.SETTINGS),
+    )
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =
         !kids || owner.routeFamily in setOf("note", "canvas", "study")

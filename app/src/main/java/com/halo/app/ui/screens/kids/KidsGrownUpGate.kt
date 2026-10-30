@@ -41,7 +41,7 @@ internal fun rememberKidsGrownUpGate(onVerified: () -> Unit, onUnavailable: () -
     }
     if (open) AlertDialog(
         onDismissRequest = { if (!credentialPending && !unlocked) open = false },
-        containerColor = Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFF2E2238 else 0xFFFFF3EA),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         icon = { key(unlocked) { HaloPackageFx(if (unlocked) HaloPackageMoment.KIDS_UNLOCK else HaloPackageMoment.KIDS_LOCK, Modifier.size(80.dp)) } },
         title = { Text(uiText(if (unlocked) "Unlocked" else "Ask a grown-up")) },
         text = { Text(uiText("This part is for grown-ups. They’ll unlock it with the phone’s screen lock.")) },

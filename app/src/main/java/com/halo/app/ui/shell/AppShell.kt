@@ -381,11 +381,12 @@ fun AppShell(
         onDispose { contextJob?.cancel(); contextJob = null }
     }
 
+    val orbDestinations = remember(kidsMode) { ShellOrbCatalog.globalDestinations(kidsMode) }
     val orbContext = remember(contextualRoute, kidsMode, currentContextObjectId, livePageActions) {
         val page = if (!kidsMode && currentContextObjectId != null)
             listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
         val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph, enabled = it.enabled) }
-            ?: ShellOrbCatalog.context(contextualRoute, kidsMode)
+            ?: if (kidsMode) ShellOrbCatalog.context(contextualRoute, true) else emptyList()
         actions + page +
             if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
     }
@@ -435,7 +436,7 @@ fun AppShell(
                     }
                 val inbox by ManualDependencyGraph.notificationInboxSource.state.collectAsStateWithLifecycle()
                 val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
-                HaloZone(if (bellOpen) lastWorkingRoot else contextualRoute, this@BoxWithConstraints.maxHeight,
+                HaloZone(contextualRoute, this@BoxWithConstraints.maxHeight,
                     compact = this@BoxWithConstraints.maxHeight < 520.dp || WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0,
                     actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateSafely,
                     attentionCount = if (kidsMode) 0 else inbox.items.count { it.active } + activity.events.filter { it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.mapNotNull { it.reviewRunId }.distinct().size,
@@ -447,12 +448,15 @@ fun AppShell(
                 val scopedOrb = orbOverride.value.takeIf { kidsMode && currentRoute == "home" }
                 if (scopedOrb != null) com.halo.app.ui.presence.HaloOrbLauncher(
                     scopedOrb.signal, scopedOrb.interaction, emptySet(), {}, scopedOrb.onPrimary, scopedOrb.onStop,
-                    onTools = {}, showToolCatalog = false, destinations = emptyList(), onNavigate = ::navigateSafely,
+                    onTools = {}, showToolCatalog = false, destinations = orbDestinations, onNavigate = ::navigateSafely,
                     contextActions = orbContext, onContextAction = dispatchContext, size = zoneOrbSize)
                 else com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions, ::navigateSafely,
-                    size = zoneOrbSize, destinations = emptyList(), onNavigate = ::navigateSafely,
+                    size = zoneOrbSize, destinations = orbDestinations, onNavigate = ::navigateSafely,
                     contextActions = orbContext, onContextAction = dispatchContext, hint = null, onDismissHint = ::dismissOrbHint)
-                })
+                }, destinations = orbDestinations,
+                    entryId = backStackEntry?.id,
+                    composer = contextualRoute == "home" && !kidsMode,
+                    profileStatus = { com.halo.app.ui.components.PrivacyModeStatus() })
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing

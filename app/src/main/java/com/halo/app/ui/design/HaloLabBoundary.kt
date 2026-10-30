@@ -9,15 +9,11 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import com.halo.app.language.uiText
 
-/** Technical destinations keep a visible, quiet identity independent of the chosen accent. */
+/** Technical destinations keep their explicit label while honoring the selected appearance. */
 @Composable
 internal fun HaloLabBoundary(enabled: Boolean, content: @Composable () -> Unit) {
     val current = MaterialTheme.colorScheme
-    val dark = current.background.luminance() < .5f
-    val colors = if (!enabled) current else current.copy(
-        primary = Color(if (dark) 0xFFC9B8FF else 0xFF6446D6),
-        primaryContainer = Color(0xFFC9B8FF), onPrimaryContainer = Color(0xFF160E3A),
-    )
+    val colors = current
     MaterialTheme(colorScheme = colors) {
         Surface(Modifier.fillMaxSize(), color = if (enabled) colors.background else com.halo.app.ui.theme.haloWorkspaceBackground()) {
             Column(Modifier.fillMaxSize()) {

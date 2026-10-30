@@ -247,8 +247,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
     var showEveryStep by remember(story.id) { mutableStateOf(false) }
     val needsYou = story.reviewRunId != null
     // Apricot means the user is needed, never an active/completed step.
-    val attentionInk = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
-        Color(0xFFFF9F6B) else Color(0xFFA84B12)
+    val attentionInk = MaterialTheme.colorScheme.tertiary
     val statusInk = when {
         story.status == ActivityStatus.FAILED -> MaterialTheme.colorScheme.error
         needsYou -> attentionInk

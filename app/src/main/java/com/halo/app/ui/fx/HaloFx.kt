@@ -88,9 +88,8 @@ fun HaloFxAnimation(
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val composition = if (enabled && !reduced) {
-        rememberLottieComposition(LottieCompositionSpec.Asset(
-            "halo/fx/halo_fx_${moment.asset}_${if (dark) "dark" else "light"}.json"
-        )).value
+        com.halo.app.ui.theme.rememberHaloThemedLottie(asset =
+            "halo/fx/halo_fx_${moment.asset}_${if (dark) "dark" else "light"}.json")
     } else null
     if (composition != null) {
         LottieAnimation(composition = composition,
@@ -175,19 +174,18 @@ private fun StagedHaloFx(asset: String, marker: String, loop: Boolean, modifier:
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val composition = if (enabled && !reduced) {
-        rememberLottieComposition(LottieCompositionSpec.Asset(
-            "halo/fx/halo_fx_${asset}_${if (dark) "dark" else "light"}.json"
-        )).value
+        com.halo.app.ui.theme.rememberHaloThemedLottie(asset =
+            "halo/fx/halo_fx_${asset}_${if (dark) "dark" else "light"}.json")
     } else null
     if (composition != null) {
-        key(asset, marker, dark) {
+        key(asset, marker) {
             LottieAnimation(
                 composition = composition,
                 clipSpec = LottieClipSpec.Marker(marker),
                 iterations = if (loop) Int.MAX_VALUE else 1,
                 isPlaying = lifecycle.isAtLeast(Lifecycle.State.STARTED),
                 restartOnPlay = false, modifier = modifier,
-            )
+                )
         }
     } else {
         HaloStaticFx(asset, dark, haloStagedFallback(asset), modifier)
@@ -208,9 +206,10 @@ private fun HaloStaticFx(
 ) {
     val filename = haloStaticAssetName(asset, dark)
     val context = LocalContext.current
-    val request = remember(context, filename) {
+    val svg = com.halo.app.ui.theme.rememberHaloThemedSvg("halo/fx/static/$filename")
+    val request = remember(context, filename, svg) {
         ImageRequest.Builder(context)
-            .data("file:///android_asset/halo/fx/static/$filename")
+            .data(svg)
             .decoderFactory(SvgDecoder.Factory())
             .build()
     }
@@ -306,7 +305,8 @@ fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): M
 }
 
 /** Aura is for a hero/presence area; never combine with a simultaneous Guide trace. */
-fun Modifier.haloAura(accent: Color, warm: Color = Color(0xFFFF9F6B)): Modifier = composed {
+fun Modifier.haloAura(accent: Color, warm: Color = Color.Unspecified): Modifier = composed {
+    val secondary = if (warm == Color.Unspecified) MaterialTheme.colorScheme.tertiary else warm
     val reduced = rememberHaloReducedMotion()
     val foreground = rememberHaloMotionForeground()
     val pulse = if (reduced || !foreground) 0.5f else {
@@ -320,7 +320,7 @@ fun Modifier.haloAura(accent: Color, warm: Color = Color(0xFFFF9F6B)): Modifier 
         val radius = size.minDimension * (0.70f + 0.06f * pulse)
         drawCircle(Brush.radialGradient(
             0f to accent.copy(alpha = 0.30f),
-            0.52f to warm.copy(alpha = 0.09f),
+            0.52f to secondary.copy(alpha = 0.09f),
             1f to Color.Transparent,
             center = center, radius = radius
         ), radius = radius, alpha = 0.55f + 0.25f * pulse)

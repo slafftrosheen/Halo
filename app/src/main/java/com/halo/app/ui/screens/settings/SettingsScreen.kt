@@ -317,7 +317,7 @@ internal fun SettingsContent(
             }
 
             if (advanced && group.key == "advanced_essentials") item(key = "developer_tools") {
-                val labInk = androidx.compose.ui.graphics.Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFFC9B8FF else 0xFF6446D6)
+                val labInk = MaterialTheme.colorScheme.primary
                 Surface(shape = com.halo.app.ui.design.HaloShapes.card,
                     border = BorderStroke(1.dp, labInk.copy(alpha = .35f)),
                     color = MaterialTheme.colorScheme.surfaceContainerLow) {
@@ -406,7 +406,7 @@ private fun SettingsGroup(
 
 @Composable
 internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit, divider: Boolean = false, laboratory: Boolean = false, technical: Boolean = false) {
-    val labInk = androidx.compose.ui.graphics.Color(if (MaterialTheme.colorScheme.background.luminance() < .5f) 0xFFC9B8FF else 0xFF6446D6)
+    val labInk = MaterialTheme.colorScheme.primary
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -429,9 +429,9 @@ internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onC
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(uiText(title), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f, fill = false))
                     if (laboratory) Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
-                        color = androidx.compose.ui.graphics.Color(0xFFC9B8FF).copy(alpha = .18f)) {
+                        color = MaterialTheme.colorScheme.primaryContainer) {
                         Text(uiText("Lab"), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelSmall, color = labInk)
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
                 Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),

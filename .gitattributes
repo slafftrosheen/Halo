@@ -1,0 +1,3 @@
+# Preserve the supplied native asset bytes for manifest checks and idempotent imports.
+app/src/main/res/drawable/ic_halo_*.xml text eol=lf
+app/src/main/res/raw/halo5_motion_*.json text eol=lf

@@ -157,17 +157,16 @@ private fun InteractionSupplements(surface: InteractionSurface) {
     }
 }
 
-/** Apricot marks an outstanding human decision; it does NOT signify
+/** The theme's attention role marks an outstanding human decision; it does NOT signify
  * successful execution, even if a provider or tool requested this approval.
  */
-internal fun haloApprovalInk(dark: Boolean): androidx.compose.ui.graphics.Color =
-    if (dark) androidx.compose.ui.graphics.Color(0xFFFF9F6B)
-    else androidx.compose.ui.graphics.Color(0xFFA84B12)
+internal fun haloApprovalInk(scheme: androidx.compose.material3.ColorScheme): androidx.compose.ui.graphics.Color =
+    scheme.tertiary
 
 @Composable
 private fun HaloApprovalHeading(subject: String) {
     val scheme = MaterialTheme.colorScheme
-    val ink = haloApprovalInk(scheme.background.luminance() < .5f)
+    val ink = haloApprovalInk(scheme)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.size(44.dp).background(ink.copy(alpha = .12f),
@@ -237,7 +236,7 @@ private fun HaloConfirmationSurface(
         }
     }
     val scheme = MaterialTheme.colorScheme
-    val attention = haloApprovalInk(scheme.background.luminance() < .5f)
+    val attention = haloApprovalInk(scheme)
     if (mode == SurfaceRenderMode.COMPACT) {
         Surface(
             modifier = Modifier.fillMaxWidth().padding(4.dp),

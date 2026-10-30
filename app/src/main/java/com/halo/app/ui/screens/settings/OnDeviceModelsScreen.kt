@@ -964,7 +964,7 @@ private fun ModelCard(
                 if (selected || resident) {
                     Surface(
                         shape = com.halo.app.ui.design.HaloShapes.control,
-                        color = HaloPastelMint,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
@@ -1146,7 +1146,7 @@ private fun ModelCard(
                     result.summaryLine(),
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,
-                    color = if (result.controlProbePassed) HaloPastelMint else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (result.controlProbePassed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 

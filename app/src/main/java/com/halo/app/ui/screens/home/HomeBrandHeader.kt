@@ -27,7 +27,7 @@ internal fun HomeBrandHeader(onUpdates: () -> Unit, surfaceSwitcher: (@Composabl
         Image(painterResource(if (scheme.background.luminance() < .5f)
             R.drawable.halo_wordmark_dark else R.drawable.halo_wordmark_light),
             contentDescription = uiText("halo"), modifier = Modifier.width(64.dp).height(28.dp),
-            contentScale = ContentScale.Fit)
+            contentScale = ContentScale.Fit, colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(scheme.onSurface))
         if (surfaceSwitcher != null) Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
             surfaceSwitcher()
         }

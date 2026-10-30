@@ -1,0 +1,11 @@
+<resources>
+    <string name="zone5_theme_colors">Izvēlētā tēma nosaka Halo lodes, vadīklu un virsmu krāsas. Uzmanībai un kļūdām tiek izmantotas tēmas statusa krāsas.</string>
+    <string name="zone5_menu">Izvēlne</string>
+    <string name="zone5_navigation">Navigācija</string>
+    <string name="zone5_open_menu">Atvērt navigācijas izvēlni</string>
+    <string name="zone5_all_actions">Visas darbības</string>
+    <string name="zone5_tap_to_talk">Pieskarieties, lai runātu</string>
+    <string name="zone5_activities">Darbības un paziņojumi</string>
+    <string name="zone5_no_actions">Šim rīkam nav darbību.</string>
+    <string name="zone5_unavailable">Pašlaik nav pieejams.</string>
+</resources>

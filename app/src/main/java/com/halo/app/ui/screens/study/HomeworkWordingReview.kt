@@ -39,8 +39,7 @@ internal fun HomeworkWordingReview(text: String, uncertainty: String?, kids: Boo
             }
         }
         uncertainty?.takeIf { it.isNotBlank() }?.let {
-            val attention = if (MaterialTheme.colorScheme.background.luminance() < .5f)
-                com.halo.app.ui.theme.HaloSunriseApricot else Color(0xFFD9692A)
+            val attention = MaterialTheme.colorScheme.tertiary
             Surface(shape = HaloShapes.control,
                 color = lerp(MaterialTheme.colorScheme.surface, attention, .13f),
                 border = BorderStroke(1.dp, attention.copy(alpha = .4f))) {

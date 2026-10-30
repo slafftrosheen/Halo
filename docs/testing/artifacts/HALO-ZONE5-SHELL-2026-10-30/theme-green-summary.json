@@ -1,0 +1,832 @@
+{
+  "date": "2026-10-30",
+  "branch": "codex/halo-zone5-shell",
+  "implementation_base": "e2fbba32395e65612dae8bb365c50404f0cca60e",
+  "pack_sha256": "105831ba90909dd0e303590266117f3d0479a1b896f1987c08bf9a0404497404",
+  "build": "PASS",
+  "host_tests": {
+    "tests": 277,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "suite": "com.halo.app.context.CurrentScreenToolsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.di.HostFirstSkillAuditTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.di.tools.AssistantToolsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.interaction.ActivityReviewPresentationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.interaction.ApprovalLocalizationTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.interaction.HaloApprovalRound2Test",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.mini.BubblePositionTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.mini.MiniHaloHostContextTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.mini.MiniHaloHostVisibilityTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.mini.MiniHaloInteractionTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.mini.MiniHaloServiceTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.mini.MiniHaloVisualTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.BrandPresenceVisualTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.GlobalOrbLayoutTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloIdentitySnapshotTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloOrbActionsTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloOrbLauncherTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloOrbThemeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloOrbVisualTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.HaloSharedOrbMotionTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.LocalizedMaterialBottomSheetTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.OrbStateMeaningTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.PresenceArtworkContractTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellPageActionsTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.ShellUtilityBandTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.presence.Zone5OrbMotionTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.BrandBookReviewFlowsVisualTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.HomeworkIntakeBrandBookVisualTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsHomeChoicesTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsLessonCompletionFxTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsPreferencesTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsReadAlongTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsResponsiveCardsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsShellOrbBindingTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.KidsVisualTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.kids.StudyKidsBrandBookVisualTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.settings.AppearanceDraftTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.settings.AppearanceTransactionTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.settings.BrandSettingsNavigationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.screens.settings.SettingsNavigationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.BellActivityLargeTextTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.BrandPermissionAbilitiesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.CapabilitySetupGuideTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.GuidedCapabilitySetupTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloAssistantScreenParityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestLifecycleTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.PermissionsScreenTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellFooterViewportTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellInteractionSurfaceTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.shell.ShellSpeechLifecycleTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearanceApplyRollbackTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.AppearancePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandLauncherIconTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandPaletteParityTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.BrandTypographyTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.FontScaleTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientLayerRenderingTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloAmbientMotionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.HaloArtworkThemeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PalettePreferencesTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PaletteTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "com.halo.app.ui.theme.PaletteVisualTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "verification_sequence": {
+    "broad": {
+      "tests": 277,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    "focused_animation_recheck": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "explanation": "Only the Robolectric wait changed after the broad run: explicitly drain the main Handler used by LottieTask and wait for Compose idle. The same composition identity and pixel assertions pass. Production sources and APK did not change. Final suite results replace the initial timed-out animation suite."
+  },
+  "gradle_tasks": [
+    ":app:testDebugUnitTest",
+    ":app:assembleDebug"
+  ],
+  "test_filters": [
+    "com.halo.app.ui.presence.*",
+    "com.halo.app.ui.theme.*",
+    "com.halo.app.ui.shell.*",
+    "com.halo.app.ui.mini.*",
+    "com.halo.app.ui.screens.settings.*Appearance*",
+    "com.halo.app.ui.screens.settings.*Palette*",
+    "com.halo.app.ui.screens.settings.SettingsNavigationTest",
+    "com.halo.app.ui.screens.settings.BrandSettingsNavigationTest",
+    "com.halo.app.ui.screens.kids.*",
+    "com.halo.app.di.HostFirstSkillAuditTest",
+    "com.halo.app.di.tools.AssistantToolsTest",
+    "com.halo.app.context.CurrentScreenToolsTest",
+    "com.halo.app.interaction.*"
+  ],
+  "gradle_options": [
+    "-Proborazzi.test.record=true",
+    "--max-workers=2",
+    "--console=plain"
+  ],
+  "focused_recheck_tasks_and_filter": [
+    ":app:testDebugUnitTest",
+    "--tests",
+    "com.halo.app.ui.theme.HaloArtworkThemeTest",
+    ":app:assembleDebug"
+  ],
+  "apk": {
+    "path": "app/build/outputs/apk/debug/app-debug.apk",
+    "size": 291387092,
+    "sha256": "3058110259a19dd9c784880b837df5205788741954f01ce01068238ff74582c5",
+    "package": "com.aistudio.braintool.xkqzps"
+  },
+  "device_final_themed_install": "NOT_RUN - user deferred after phone disconnected",
+  "speech_provider_talkback": "NOT_RUN",
+  "production_source_sha256": {
+    "app/src/main/java/com/halo/app/assistant/ui/AssistantSurface.kt": "e32475c141dfc98384f8a493a7212630d9e434b93c4260599a117b3ed0f92607",
+    "app/src/main/java/com/halo/app/interaction/InteractionSurfaceRenderer.kt": "cc61abd52be5e894bf5b35854e4ebff71d5cddd7dba5c95c8f6ce9cc96c46ba5",
+    "app/src/main/java/com/halo/app/ui/components/CognitiveVisualizations.kt": "cc31514457a49b496dd61407008c2cf83b5f55baccc0406f2e5492461e7c72aa",
+    "app/src/main/java/com/halo/app/ui/components/HaloDesignSystem.kt": "f2422b927945b340f102f92ff1caf4791b0448729874694a4740cdfefb8d6fff",
+    "app/src/main/java/com/halo/app/ui/components/PrivacyModeControl.kt": "84e8dca81923b00d61915a4ae726759f0aec6c2763795900dbbc7b6967b9c47f",
+    "app/src/main/java/com/halo/app/ui/design/HaloLabBoundary.kt": "bd05ded6955d068a92b86b0fc6d7d8a4a40c4dfe13440202232f491012be1848",
+    "app/src/main/java/com/halo/app/ui/fx/HaloFx.kt": "c0bebc0ccb7968bba7cc7dd2b679a00468626cc1274f7613fc1f2943d3ea7c60",
+    "app/src/main/java/com/halo/app/ui/fx/HaloPackageFx.kt": "673b1008899069aa8dfbf5cc8e3a53d6054822475f9a1bd0a709e42c25b1d553",
+    "app/src/main/java/com/halo/app/ui/glass/material/HaloGlassColors.kt": "e5d95277c38befa1409c41d43dd69b0a9103257c2af8e182a469ee0c81d5a9f3",
+    "app/src/main/java/com/halo/app/ui/mini/FloatingHaloService.kt": "e47149cd16e60ce10fc07346f7bed87154e4f49428cd88007ce47be5665230f2",
+    "app/src/main/java/com/halo/app/ui/mini/HaloNearby.kt": "9f999898dcff70ab7776e5d14f4cffb1099f7f57acbec2a598dd76338f0a1e42",
+    "app/src/main/java/com/halo/app/ui/presence/HaloOrbLauncher.kt": "d8a65815736355fbd50b1a498c20b560c3476ba410adefce93293cf96ab01c55",
+    "app/src/main/java/com/halo/app/ui/presence/HaloOrbMenu.kt": "65f2101319c1cb432340f71108a7f4691d4cc047eb0907ad6e856e2ab4827670",
+    "app/src/main/java/com/halo/app/ui/presence/HaloSignalFace.kt": "78defed886f5c356b1d6d3c2ee8e6bd64f1af18c081cd8f111beb56b7252cd80",
+    "app/src/main/java/com/halo/app/ui/presence/HaloZone5OrbLauncher.kt": "2ece4cb81b01253c05b3ed5218f22369df4fea2b17fdc11a85926e878afa6189",
+    "app/src/main/java/com/halo/app/ui/presence/ThemedPresenceFrame.kt": "b45192052c121ce4d0659530efd368a7b6c151d10d8b5354b74e5236a114c0e4",
+    "app/src/main/java/com/halo/app/ui/presence/Zone5OrbMotion.kt": "312ad2262ab1ecbcd4bb99f974987d28c30230f191f05a28f00192000a71c081",
+    "app/src/main/java/com/halo/app/ui/screens/activity/ActivityScreen.kt": "e45a3b9793b65f4da3ce1ac2938645f1401c6c4c98cb854bcb7d5953df327586",
+    "app/src/main/java/com/halo/app/ui/screens/devices/BuddyBotControlScreen.kt": "6d72d29a47f511d023b5ae06e4b27261554a7f651edbad28821b41829213397e",
+    "app/src/main/java/com/halo/app/ui/screens/devices/DevicesScreen.kt": "7202d735feee674cd648c9b44ad04233f1a6ef8ce7b5a2d3a4b26a73c1612d88",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeBrandHeader.kt": "f725bc835f48408aa9245f7c7246aae3101d8d4a6aaa0e78675cd716c72de29e",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeChatHeader.kt": "a01ac36e23659fb8be2219662d12708170bb42abe25b2a983b225c32b137bc7d",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeResponseCard.kt": "400abf771f2e999db31fa71bee4a3f36547e17892a8ecdde2abbf8b0ec5c24b2",
+    "app/src/main/java/com/halo/app/ui/screens/home/HomeScreen.kt": "13369b719d0e72a09b35d270b965761648fe311b89759c4816bb39653599c9ec",
+    "app/src/main/java/com/halo/app/ui/screens/kids/KidsGrownUpGate.kt": "ac9948f0e997dc009204a44840491811cf4c12fecb3d0f4e25c41770a32625c1",
+    "app/src/main/java/com/halo/app/ui/screens/kids/KidsModeScreen.kt": "e7d1d467bda0ad55c344a743dbd3bca399269d6c13d630fd410ee9f416850081",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorScreen.kt": "0fbfcc5b026f06b9a18653c13e29e552422b99c46f10250334162d09f4ee89c8",
+    "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookScreen.kt": "7bfcf77de5b2c8ffcde0889e052c115be88f0eb366a86d8943f5ffcd86562d51",
+    "app/src/main/java/com/halo/app/ui/screens/settings/AndroidAssistantScreen.kt": "6b265568b693738fae3709ed8dab7e91d96b646ed49dbbe4e9f26d88f77b58e1",
+    "app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt": "41366da189a0942f7d2b911e82d7746a493385e5fb277a9e06bbd96e9bfd41cf",
+    "app/src/main/java/com/halo/app/ui/screens/settings/PaletteControls.kt": "a31d7a4d388cab2ecb80497015ee4b89af97b11ae2b36c98485c506cffa94e56",
+    "app/src/main/java/com/halo/app/ui/screens/settings/SettingsScreen.kt": "be97586db988277a372a5164d16272bf630d37fc8ff6a35068e8d4fe17385722",
+    "app/src/main/java/com/halo/app/ui/screens/settings/VoiceSettingsScreen.kt": "a302930f4a21260b58c8ce25d5cb5d332c8bfd9ae442a38b2bbdad0e8a8641cf",
+    "app/src/main/java/com/halo/app/ui/screens/study/HomeworkWordingReview.kt": "44513828cc51f151a0e6c185e9b27c4443ec7d26f44982cec8f466c97cfba81c",
+    "app/src/main/java/com/halo/app/ui/shell/AppShell.kt": "f1dcdc8d868a922d5bd22130d255a5e2fbb3eb87c6f6e597cdf706c228b2f278",
+    "app/src/main/java/com/halo/app/ui/shell/ContextToolOrbit.kt": "4c7017b1bf56b783f7b5a9a6ec1b6182aea4282c311ac3f088fbbfc6292c5ec8",
+    "app/src/main/java/com/halo/app/ui/shell/HaloZone.kt": "e0c493d4d357b44b9482f9347d047a64d8ad21135b1148574c2efbce432c959b",
+    "app/src/main/java/com/halo/app/ui/shell/PermissionsScreen.kt": "af240c6155224cea326a860c02026037c07bd85ab9b4d4d3e872b0bb2cbf33f0",
+    "app/src/main/java/com/halo/app/ui/shell/ShellOrbCatalog.kt": "c5a2397d2f9feae63fbde19c5688770b30844e7db0edaba81cac0ae9798cfdf9",
+    "app/src/main/java/com/halo/app/ui/theme/HaloArtworkTheme.kt": "165737f1cfb6397a3c3506509eb155cb764bc453f11d7dcff10963fc2f0a4693",
+    "app/src/main/java/com/halo/app/ui/zone5/HaloZone5Icons.kt": "1cd54211f72c2bf172b1da2d760be8600ba8952a61f97b1f6e41951cdb74ec09",
+    "app/src/main/java/com/halo/app/ui/zone5/HaloZone5Presentation.kt": "fc7d00e8d4d3c714db6705ffdd04ccd84655894858874a7c52118b26e9d35d35",
+    "app/src/main/res/drawable/ic_halo_action_add.xml": "8bb9e71a2beea612e97f0f64e38c1a2cc9cb4517411d0e93fdbfa5316b30ffb3",
+    "app/src/main/res/drawable/ic_halo_action_add_context.xml": "2795a0d959eff4c1009880938901aec20d102fc4a5f2cbbd23c5f840cf4b7b1e",
+    "app/src/main/res/drawable/ic_halo_action_attach.xml": "d14365e4379eed3862c9925a78e9ed7bbf8f4582666a498ee70c2514b1900048",
+    "app/src/main/res/drawable/ic_halo_action_back.xml": "03ac233fcc81c387bc70adeb7d8c5be19c708e9e3b931edfa0a6e863dba95122",
+    "app/src/main/res/drawable/ic_halo_action_bookmark.xml": "c5418d3ec99cc545c574a03ce728b997f7e8ac24b1edb204952899076fdac6c6",
+    "app/src/main/res/drawable/ic_halo_action_check.xml": "899dc5955ef05864525084063248b790f690c0a42a7aa2582c35fbd0f34eac54",
+    "app/src/main/res/drawable/ic_halo_action_close.xml": "4f263c73fb4cbcd0e660f571174b49eb9ce0cd26c4cee178146f37c79355137d",
+    "app/src/main/res/drawable/ic_halo_action_copy.xml": "839501aa21ec1301e08f7649442d9c7d69e1eaeadf0420789d1877ff1bf6efe0",
+    "app/src/main/res/drawable/ic_halo_action_down.xml": "bd5528e222829f8558cdc7234b15375fc3fda3fc484402710b948154e5d976fa",
+    "app/src/main/res/drawable/ic_halo_action_download.xml": "1bbd12c2affc61a57bfa685a60bcd8bcb132afc3a6a382b38ebdf4194f30427e",
+    "app/src/main/res/drawable/ic_halo_action_duplicate.xml": "23518b9476cd5de792015f89381762d417d90ab94a1d099e6843ce752fa6d247",
+    "app/src/main/res/drawable/ic_halo_action_execute.xml": "cc560bb7b52ab5bfd0544352a3b463d51043aa516f24b821f0c3372d40cb79ee",
+    "app/src/main/res/drawable/ic_halo_action_export.xml": "d287a2e2dcce40333bae185af58513af31f6dd7151bc64ac782d9076ae21916a",
+    "app/src/main/res/drawable/ic_halo_action_external.xml": "d83fa1de8de114c7ff1879bbfe55e78bdadd257c5c3992c57551c0143884acbe",
+    "app/src/main/res/drawable/ic_halo_action_filter.xml": "a83cc867e6f42733658bde0ca31bfd539fe56b2569ecb5073e16def43c4fcbed",
+    "app/src/main/res/drawable/ic_halo_action_forward.xml": "dcff0708922a3e83e08c05b8a018f38e6de686fe54ecaf39be9b896488755f87",
+    "app/src/main/res/drawable/ic_halo_action_help.xml": "b8501f693d659224442bdf6110e03fef42d748a455b345318e7fc8f7db7abaee",
+    "app/src/main/res/drawable/ic_halo_action_import.xml": "a4504b747d5474622eebe6305ffe9e3e0027a0894bdd6a31bfa4e6fb739366a6",
+    "app/src/main/res/drawable/ic_halo_action_link.xml": "eb7a7367b7de4e7db5fcdd861d9a4685b6f8f808c8afcc23da6151b93a89d726",
+    "app/src/main/res/drawable/ic_halo_action_lock.xml": "9a643956aade7e1852e859ea85104f67a0ec189c2d5dd16b82fde7cdc878aa9f",
+    "app/src/main/res/drawable/ic_halo_action_menu.xml": "7ed87dab3878438f0f9c7ac3a8e9e4f35276f4a1d393594c9e1585eef88922e3",
+    "app/src/main/res/drawable/ic_halo_action_more.xml": "f8c3ac55b323e595aff3f1ad54691c262e5057489e8dc325ed51dfdf154e072e",
+    "app/src/main/res/drawable/ic_halo_action_notifications.xml": "452c75ea7f727cb552d4c457faf321bc4841d0e016b23e44847f7e9ba787902e",
+    "app/src/main/res/drawable/ic_halo_action_open_app.xml": "701423a0f8d9d81ab50340c3e979ef0a2f64f0542adcb9abcb323e5cd1448303",
+    "app/src/main/res/drawable/ic_halo_action_organize.xml": "86f452ba7632ed1387acfd818cc5e284d2d8914bf17714710b0995351cd38fca",
+    "app/src/main/res/drawable/ic_halo_action_quick_capture.xml": "1135a1564ea4d691a7d1ebb29f8ffa15392a8d24f0095ef53cf604bec9d5d0dc",
+    "app/src/main/res/drawable/ic_halo_action_read_aloud.xml": "40b1286fac7b39b580b216034ab70cb5d5582a8063fc9b90801b1940b7478baf",
+    "app/src/main/res/drawable/ic_halo_action_redo.xml": "f806b9dfdda5b0b4568579e5e873d9dc06a72f66278af0ca83e9249a7ff3fdf1",
+    "app/src/main/res/drawable/ic_halo_action_refresh.xml": "a5785345ff87c6b94735bea941d360ad3b8ea096dd6947cc1c9efd9ae688cdcb",
+    "app/src/main/res/drawable/ic_halo_action_rename.xml": "e42579e68747f1d366bcedd440d2de19c712c29931a224c6a59bf862786a536e",
+    "app/src/main/res/drawable/ic_halo_action_save.xml": "ed0168b76752beb8f53d173977dba5349a0950c0fd93aab3ebdc7586e9e2683e",
+    "app/src/main/res/drawable/ic_halo_action_search.xml": "3b5b96a17795d96339684af084bd53999667b983ba0dc6001e7447c0ba018291",
+    "app/src/main/res/drawable/ic_halo_action_select.xml": "d116295200aac5ad3ed24638fbcea4f644d8f947f3f881390b64a29d15336f5b",
+    "app/src/main/res/drawable/ic_halo_action_select_all.xml": "bff82daaa51872b43e74af07ac0d4aaf2bda172a6f9864377a70e5f354b98b01",
+    "app/src/main/res/drawable/ic_halo_action_send.xml": "7f3aba160d016d739af39fad8fcf6ad64de2220ca225f2867c9a59dde1d7e69b",
+    "app/src/main/res/drawable/ic_halo_action_share.xml": "4835fda0c9eb59e520b2e0a193306fc7e100c35c37a16786a18e281ff61dd3fc",
+    "app/src/main/res/drawable/ic_halo_action_sort.xml": "706c120be37f7d9257ea8bdc81b74a826c74b56dbf02cb68fd509212b3594186",
+    "app/src/main/res/drawable/ic_halo_action_tools.xml": "56b76a57f2fb0f3de8f6e5ab5a29c3d93ecff94db725d3cab0fecaf803e47e9d",
+    "app/src/main/res/drawable/ic_halo_action_trash.xml": "6ff63cfbd5292e67402ed73969977edfd2f57eaecee6be32466ce4236cd4d43a",
+    "app/src/main/res/drawable/ic_halo_action_undo.xml": "7defbd9c93aa2539fc6eca8f8441ece306d088e8f74de8503a5ce799a9e4aa60",
+    "app/src/main/res/drawable/ic_halo_action_unlock.xml": "42349c88e1f3364689d50c5313693a73957722d9584526642c47ce4e25a0393f",
+    "app/src/main/res/drawable/ic_halo_action_up.xml": "1114c5c9648aa36c30a7504152d4d241f76ef15da244017f3171b411d940ed49",
+    "app/src/main/res/drawable/ic_halo_brand_halo.xml": "433573ad0831fa76f2db024e392087b7341b5e72853bef2ee7247bdb08b8fb52",
+    "app/src/main/res/drawable/ic_halo_canvas_fit.xml": "055d4dda60f96389fb6cebe69d6d85608afbf4cd3ef9cd742dedf0dac168ccc5",
+    "app/src/main/res/drawable/ic_halo_capture_camera.xml": "fa104f3b82a41d55f1e5f5935ec36397f3664eb47c2fbe0c957f34fcf3a29109",
+    "app/src/main/res/drawable/ic_halo_capture_record.xml": "cce3ab94bd45c9597135240c68dd691603a7dacd79f57656bf8ab0830cef3d9c",
+    "app/src/main/res/drawable/ic_halo_chat_answer_mode.xml": "e6fc86e78fa5887cb1200909c8b287fc95eaea03fc5cf35a60be836173bc086d",
+    "app/src/main/res/drawable/ic_halo_chat_clear.xml": "8f29d44112320a3efffd4318d324c5aac26799cf5d9e44223eb2cab09eaf57be",
+    "app/src/main/res/drawable/ic_halo_chat_history.xml": "b8612da13c7d96bc486e0d6eb76ae56e163a81c59e74b3622c37cdc4f50a868d",
+    "app/src/main/res/drawable/ic_halo_chat_new.xml": "af3c7773283132a9f84b4e0aa75e48b96e4e044f65bd997a629d427b45dad406",
+    "app/src/main/res/drawable/ic_halo_cognition_think.xml": "67a54f6491d15282462cfe08e5c3acd1030238e1ea693b78d15fb002d51abe5d",
+    "app/src/main/res/drawable/ic_halo_device_add.xml": "cb8365904bdd237282ddda73f8f5b7e760e0c5b65424a8ad9615b1fee6b2cc09",
+    "app/src/main/res/drawable/ic_halo_device_battery.xml": "ac09ea68c26eca4d6d02c44aeaa769351707116ed418ef7771c4b01f2d90cf19",
+    "app/src/main/res/drawable/ic_halo_device_battery_charge.xml": "d3992c334274ec2d7cb0d9a5571970eca6a4442827ba45e1c7eab3e9c71f2c01",
+    "app/src/main/res/drawable/ic_halo_device_bluetooth.xml": "7a7d412caa9ac3812e978436ec602d042ec2d54378ae56252f222eb6a20d8cf2",
+    "app/src/main/res/drawable/ic_halo_device_connect.xml": "7db751d9f409c3f0e952d99f6c0ddd1719148a8636ca8f67ff5346fd260fc1d2",
+    "app/src/main/res/drawable/ic_halo_device_control.xml": "1434755bd114b94d9e118461dac51b7c1e113847e6c3322c606370e087a28e27",
+    "app/src/main/res/drawable/ic_halo_device_disconnect.xml": "a58c52fa036c8e4eaf5ffecd6e792c471d85a80ca3acd7b1334815a010ab2856",
+    "app/src/main/res/drawable/ic_halo_device_generic.xml": "0e8a928723a31c67f554b37e200543866aed4cfb092a8f3642bf6ca8df5f18cb",
+    "app/src/main/res/drawable/ic_halo_device_glasses.xml": "9ad9591ae708ee9477b6f4de7178db45c9d7f65e08240c9be5dfc1c0f3a283c6",
+    "app/src/main/res/drawable/ic_halo_device_headphones.xml": "20afbe65a6e8c3fb1656bfa8e92d372c3024be4ce1cfa54b8ea56d7c389021f8",
+    "app/src/main/res/drawable/ic_halo_device_offline.xml": "31c53a4ac3a8ffa79550dfd79ed35417112c813263d6131917a5408bcc08901c",
+    "app/src/main/res/drawable/ic_halo_device_phone.xml": "ec3d52487596c00535763cfcabe5d577ecee2f4fc744ad83f308f5408b31ebf3",
+    "app/src/main/res/drawable/ic_halo_device_robot.xml": "53d7acf7690d88eb0c90a568bd45cab936a1171ebe8c0ef8e491fa253cd7f6a9",
+    "app/src/main/res/drawable/ic_halo_device_speaker.xml": "e516a8919080c9d5f48692ac005885caef075122ee1141f3513b8f8568b10a07",
+    "app/src/main/res/drawable/ic_halo_device_watch.xml": "6e47e9aa921c05c0063626ea9811c8dfd94bc567c56c43062ad54b6d8d201376",
+    "app/src/main/res/drawable/ic_halo_device_wifi.xml": "42474f8a0377ec44959fafbbb4b630e13e353ae4ecdcbdda4a4513276ee6c75f",
+    "app/src/main/res/drawable/ic_halo_library_collection.xml": "21ab5ad964463748917002aefc1e3918ae88cd4c809f0cf5808dc0d871f7c302",
+    "app/src/main/res/drawable/ic_halo_library_collection_add.xml": "93b6f3c185f5be7579c5e032afa6100727673c2baa7c8524c8346daee603c893",
+    "app/src/main/res/drawable/ic_halo_library_inbox.xml": "257aa3da78e6fd14c441b0cc446e98e66d89dfdef1dd039cda0d6b29686edd45",
+    "app/src/main/res/drawable/ic_halo_library_open.xml": "cdb806563aa353b1fc604e203366fe8f249e38749e3e8aecc8347001cdf3b37f",
+    "app/src/main/res/drawable/ic_halo_library_saved_chat.xml": "5daf452e6672ac153b9e4661e9c86a3f906c0e3a51b3c72ed3bfd1f382762243",
+    "app/src/main/res/drawable/ic_halo_media_next.xml": "3cef99b0fc25edd0147c38d8c1d0055c0e21f90f888ef43225cd48b4e4cc7598",
+    "app/src/main/res/drawable/ic_halo_media_pause.xml": "2cb7ca812d053237a8351ad479aa88a53a614b4622e61fbc1089c3d797f7e49c",
+    "app/src/main/res/drawable/ic_halo_media_play.xml": "484f2cb8b87b95e9266e75cf9bfb2811d4a82c2095edfe3b9707f9fc138d7f07",
+    "app/src/main/res/drawable/ic_halo_media_previous.xml": "0d1443c41eac98f0f9f587a781836d4dc5d613287a3832e8567d954c072c583d",
+    "app/src/main/res/drawable/ic_halo_media_stop.xml": "383cc9d0c6e5105d138f01595b5fdeb4bb0e59bb684843fb31bbd6917bc67841",
+    "app/src/main/res/drawable/ic_halo_memory_add.xml": "d05e402df5d340a30c77b48d6428891e5ea68b6bd1cf1a8480ab1e7d9bf8f4f3",
+    "app/src/main/res/drawable/ic_halo_memory_fact.xml": "ea1e488043fc1058c0662c2466c0290454cfbe4bc815d4212adba79cb90474b6",
+    "app/src/main/res/drawable/ic_halo_memory_forget.xml": "c462ee62aea43920ac5587d444d1c0211d7179f902899985081b70f4807ad315",
+    "app/src/main/res/drawable/ic_halo_memory_people.xml": "7739690c8f83a3fa3cf0fa62c11f843d59afe6280c0477c0a741029ff3bd0284",
+    "app/src/main/res/drawable/ic_halo_memory_private.xml": "fe52827988ee537b2b1aab1fe0547ba4a9b45deccc6865f166ab4d74628e54fa",
+    "app/src/main/res/drawable/ic_halo_memory_review.xml": "555a6adf51da65c48d958cc664068e3eeb7551472da758e80e61406693b5b25a",
+    "app/src/main/res/drawable/ic_halo_memory_timeline.xml": "12f12e4da53ce3d07f5c617c51ae89743433739d0fb41ef29958516c9fcd9517",
+    "app/src/main/res/drawable/ic_halo_nav_activity.xml": "bfea75db4557fa1bb562ded54126efd0273e2d2708f5d4503b5701202699ebfe",
+    "app/src/main/res/drawable/ic_halo_nav_devices.xml": "fe72147e86cf0c85d48889a8420d99dae8d8f25586a48a33ec2686c03c408651",
+    "app/src/main/res/drawable/ic_halo_nav_home.xml": "55471332bdc1148f8b56bbb313fa53ee1a8a64ce6a0d5a8d7646652b60bd9020",
+    "app/src/main/res/drawable/ic_halo_nav_screen.xml": "162377417dd4467d71bd74295408f416c0b57d060a4bbd8dad25115d715fc98a",
+    "app/src/main/res/drawable/ic_halo_nav_settings.xml": "13c7fd79bdc1284ff1e0e8680cc34efd957a4e9e84b2f2386748bc96ce2668a1",
+    "app/src/main/res/drawable/ic_halo_nav_workspace.xml": "2281bc9ddb534ab46f0b71f454df39a291f13d8bbe35cea5e2a8c44121d97813",
+    "app/src/main/res/drawable/ic_halo_office_bullets.xml": "96c819ec7cf7892cf2042a1371d734f72697705c874c0bd6fc8ec335b3181e74",
+    "app/src/main/res/drawable/ic_halo_office_checklist.xml": "cbfd0dde9fbe833dc9794a32dfd50b8e7ecc32a2ae8082bc00aaf8f6ea472bdc",
+    "app/src/main/res/drawable/ic_halo_office_document.xml": "baca11142b9f7baf87a09a1cf5e476a80a3e5bb8d2ac6ce873823c7c3fb4a87d",
+    "app/src/main/res/drawable/ic_halo_office_edit_text.xml": "328482f34a93173c776b7f2b187803d9d8487865004e1183d5a410773d3375c3",
+    "app/src/main/res/drawable/ic_halo_office_extract_image.xml": "e9ca213c2892716539af73262aa19e49261b68a6b03bebb0cba18f7b02cd9e3e",
+    "app/src/main/res/drawable/ic_halo_office_find_replace.xml": "a65a7b06e7f01019ebe3516e9eb836f0835894b7042a6a315708d9c601d8f961",
+    "app/src/main/res/drawable/ic_halo_office_heading.xml": "90b9548cb064dc987ea539296920fc9c83b3ae784632c07e8e175b32894d081f",
+    "app/src/main/res/drawable/ic_halo_office_new_note.xml": "45d9032fab3fc08392d719b7e2089e9653d459d914ea181475a2dabd50c8f5f2",
+    "app/src/main/res/drawable/ic_halo_office_outline.xml": "38e6bb4686bbf14af4c7a556bfd91076690705ef5a74f16b1480157982537df2",
+    "app/src/main/res/drawable/ic_halo_office_pdf_page.xml": "459ecd58f7474ff4ec4ebaa4e2cdcab043c421cb22c67ddf9c0217028b151847",
+    "app/src/main/res/drawable/ic_halo_office_pdf_read.xml": "bc9587a2e76c2faf16bd5dc68c8ef584c405aa953abb32f5a42fee5410d41e88",
+    "app/src/main/res/drawable/ic_halo_office_table.xml": "f99eb0b5bfd652ef8b3f74aaac87cb8a915e120a054a6224767be5ad3900748b",
+    "app/src/main/res/drawable/ic_halo_privacy_cloud.xml": "d09863ba2253e2eca7987c059b9a7677eef33d1a45bb94345167dd6d4dd38def",
+    "app/src/main/res/drawable/ic_halo_privacy_local.xml": "b08df295f2137f5f71e6425a4bba0100590f4a39b902c4e7795935191d6538dc",
+    "app/src/main/res/drawable/ic_halo_screen_add_widget.xml": "c3ede63bafab764aaf858906e6c56ad9ddd349ad5e48e00efbe95492b658e788",
+    "app/src/main/res/drawable/ic_halo_screen_arrange.xml": "9f24d8c736e234d0e947c3d50c06daa4a97ac3f82e818288317c884949655fa7",
+    "app/src/main/res/drawable/ic_halo_screen_calendar.xml": "5d5c88ec620f5d2af8eab2e2cbb10fb362d4a85eade517012c2163fde9bbbe91",
+    "app/src/main/res/drawable/ic_halo_screen_clock.xml": "a1036dac07345e5eaf86c8ec7ff00f9adbffdbacf49bf9120c191c93fbefd094",
+    "app/src/main/res/drawable/ic_halo_screen_display_mode.xml": "97bc31b3c71e7347361dd6b328c10923d685061c8326f784ac9d6416a64757ad",
+    "app/src/main/res/drawable/ic_halo_screen_weather.xml": "54c72a4d2d4f241f0d5f9a0a769b252451cb54f614c5bb00878a2169ff600f73",
+    "app/src/main/res/drawable/ic_halo_screen_widgets.xml": "f7cac1a33ea7511ad391bd0be563790f61654ac220e29058f30ec03dcb17e499",
+    "app/src/main/res/drawable/ic_halo_setting_about.xml": "c47c1776780ea0f3957a365d1256de379bfd271ec8ca26b07abababfb5a990a1",
+    "app/src/main/res/drawable/ic_halo_setting_accessibility.xml": "3bb3e239bf8ea954db118aacb14dafbdefe1dc43f2386b0cde52fc187106c10c",
+    "app/src/main/res/drawable/ic_halo_setting_account.xml": "8c0db50ce80551e8374ff68a7d5bb2cea1285c84071c3778a39bb72be7cdee53",
+    "app/src/main/res/drawable/ic_halo_setting_appearance.xml": "976cfaba8cc290027f6062e6d53a3d5f0d11866c50c995d1042122a9a7419cb0",
+    "app/src/main/res/drawable/ic_halo_setting_automation.xml": "140d03da033af24a9bdd59c9bad735c931b8c9910a223dd476c9c6ca4d009bd1",
+    "app/src/main/res/drawable/ic_halo_setting_brain.xml": "08e91556dafa43b0cf08a4c323ee3d20b93d6e36db61442bf2067b3137002532",
+    "app/src/main/res/drawable/ic_halo_setting_integrations.xml": "e882412cc8e35f3e30a47420704902689d1e4a0b52c8a38b1881942c8e26b89d",
+    "app/src/main/res/drawable/ic_halo_setting_language.xml": "5ac3494fce7872197317707a7a7f150022048cd007b1df5910467eeb68fc6f66",
+    "app/src/main/res/drawable/ic_halo_setting_models.xml": "e82eea47f22533abd8fc3a61a16a1d2a9ef1e0c2d67c96de3ed02d0caed6bc41",
+    "app/src/main/res/drawable/ic_halo_setting_network.xml": "db5513924e08ac9c9f26d47ef9619474866dd40a50168e2ca7672d80fac83ade",
+    "app/src/main/res/drawable/ic_halo_setting_privacy.xml": "8d02eb2d05443064778a2c6a239a3f529110ab65cf221a29ec444e90c519beef",
+    "app/src/main/res/drawable/ic_halo_setting_providers.xml": "9dccd3dc2f862deb21448c2d8648d221d02a5e2edc7190de24508e4a0c86e34f",
+    "app/src/main/res/drawable/ic_halo_setting_skills.xml": "b35bed5a0792dc67bd68ba4aae0fa61041e7a77bfebf4f1100a4c38e62c7652b",
+    "app/src/main/res/drawable/ic_halo_setting_storage.xml": "0bea5e3eb822a41e7d105fd2c0ca55654cf2367c28cadf876e73eda64a2fd66b",
+    "app/src/main/res/drawable/ic_halo_setting_vision.xml": "886c7f74ffa00001b115edaf79812eb8c73ba2f1682c4d172ef513ed4ff69983",
+    "app/src/main/res/drawable/ic_halo_setting_voice.xml": "88b27d5ff6a4a77fb4fca9c675e402ec3ea9044a042d591807765f51d6efae84",
+    "app/src/main/res/drawable/ic_halo_status_approval.xml": "3d5c3737577c35ab78e27e424b9a60f2d40e58d5bfb632a216b718afc2d205e0",
+    "app/src/main/res/drawable/ic_halo_status_badge.xml": "e4c32f3b6b24e9c6d158bf3047d863af116691435947f3fee1059fa81bf08e4d",
+    "app/src/main/res/drawable/ic_halo_status_cancelled.xml": "9132c07ccc54277f98d053234866f62e889c2cc487882cae09d4407371cb5441",
+    "app/src/main/res/drawable/ic_halo_status_complete.xml": "1c2d0649d492feebe2acb9bd93f8fafeefb4667b000129419d51d541ca57d5de",
+    "app/src/main/res/drawable/ic_halo_status_diagnostics.xml": "ab2c423684ba66da5736780bc7b61b1e4ab77f767862a036909dee6ebd3c7bd0",
+    "app/src/main/res/drawable/ic_halo_status_error.xml": "fd4ff13e34f17150f5af4911bd090c68ca9c07684972e44fca62d7f51ba5c2ef",
+    "app/src/main/res/drawable/ic_halo_status_ready.xml": "d7e45d2c24394a7033415eccfcf5bfefb0d624ef7e0d3c1de61a2cb2f3996820",
+    "app/src/main/res/drawable/ic_halo_status_runtime.xml": "0b1f77062adf0d45648fab0109af7dda4eec7041394d2ceda9ccbd1d46544f5c",
+    "app/src/main/res/drawable/ic_halo_status_waiting.xml": "e2294d1d7c8af4691f5cc6f381f208aaa90f9ac5127fe85a77290899edb7bcad",
+    "app/src/main/res/drawable/ic_halo_status_warning.xml": "0eedfc06b0bab3d19e8970df0db3718cd1a17ad2af8282bfbe05104fc9916d43",
+    "app/src/main/res/drawable/ic_halo_status_working.xml": "cc28a1aae5e3e0f8a077ec2999222cc6a1093a39d9eafd1563fc195675fb44c8",
+    "app/src/main/res/drawable/ic_halo_studio_align.xml": "b29d764b46942cb67f0288d5a48b7c58712ae1c864f0d1ca874155abdf16e0cc",
+    "app/src/main/res/drawable/ic_halo_studio_brush.xml": "ee902391f20639589fd9db25c41db28bc762bdc8c70b9ddac00088a17c50f6d4",
+    "app/src/main/res/drawable/ic_halo_studio_crop.xml": "54a2c162de4788974b5f4d0a6f3223d8544d4e3c9354ff8a578bbea51936c315",
+    "app/src/main/res/drawable/ic_halo_studio_draw.xml": "8c551e10281b7e0f7ea26b45732aae37e36439606c701fe10af27dce9a63b9ca",
+    "app/src/main/res/drawable/ic_halo_studio_eraser.xml": "20d54614a813fed6594f88062420b4f036ac952c0ad5e69e883505439a9d49c5",
+    "app/src/main/res/drawable/ic_halo_studio_fill.xml": "d750651ec6c6363c784ff14d1dc74118bfdc9db2d8c301f65d390da966e16bf8",
+    "app/src/main/res/drawable/ic_halo_studio_flip.xml": "6880eef4d8db1192d44f30c3f583b85eccc34ccbdf03a3df39ba44317bee3eb7",
+    "app/src/main/res/drawable/ic_halo_studio_group.xml": "f23d8088b68a37a92a1fb6237c0625edbfd26a448c9a4b1e68147523e5d889bd",
+    "app/src/main/res/drawable/ic_halo_studio_layer_add.xml": "abe247fe396d9ef314a3d5a2bd25e88c233b4d236b1b439a37fe15543b0c7a60",
+    "app/src/main/res/drawable/ic_halo_studio_layer_visibility.xml": "f2c9baeee64f7ec8fdc99dac4c05ae3644aa0fe87d7919249d716b25adb38b92",
+    "app/src/main/res/drawable/ic_halo_studio_layers.xml": "591ec0fc2d72563f699612ac7ca993861c659cba0b61be11415ba016c5531863",
+    "app/src/main/res/drawable/ic_halo_studio_palette.xml": "c34dec99172a4b8f2418723c2424cee5ec866739ebcc79e1234bcaaf6aa49e3b",
+    "app/src/main/res/drawable/ic_halo_studio_pan.xml": "5241431688ea0bda353603f1c1bf6ac1a42cd6ccbfc7461ef8c4c728fdc6cf83",
+    "app/src/main/res/drawable/ic_halo_studio_pen.xml": "eba54c6ee57638156a0c2eed0859bd385bec8b3aba232dc8422af1fb54ed0627",
+    "app/src/main/res/drawable/ic_halo_studio_resize.xml": "4ff65348b0eadb5a974e558e96f6dc6084614a2caf12bddb7b052eac3726787d",
+    "app/src/main/res/drawable/ic_halo_studio_rotate.xml": "2e22efaa15dbaa2c4ef6aacd58a06e823e2c4ed892cad15721c51031897b7a80",
+    "app/src/main/res/drawable/ic_halo_studio_select_area.xml": "93c352a13c3c6265211654c3fce0a6182a025ee987651b84255687f80cecf65d",
+    "app/src/main/res/drawable/ic_halo_studio_shapes.xml": "81e6cc8a018046de0af658d2180ddf192bd9cef0a66ac1f43470096d994e9c16",
+    "app/src/main/res/drawable/ic_halo_studio_text.xml": "056c00bebd64296b3d0206c72d3f7884d2bdc1dcacda5e145811fa6697204e78",
+    "app/src/main/res/drawable/ic_halo_studio_transform.xml": "a6bf541604ff440e72b2c1c0ccf7b896455fb96499cf68c00807002bc5fa3eb6",
+    "app/src/main/res/drawable/ic_halo_studio_ungroup.xml": "75b58a18819dd6715e449d13d020783ed99a27e3aed284e6e0533524b891c1a0",
+    "app/src/main/res/drawable/ic_halo_study_flashcard.xml": "aea2ad73ca64dff6f4ce78d01d6f99531837ad1d4185812c169d56fe082fd08a",
+    "app/src/main/res/drawable/ic_halo_study_hint.xml": "b97cbf4b3d71599f8ddf1498fefa39821ae874c226ff798bf17b8493b0ebee49",
+    "app/src/main/res/drawable/ic_halo_study_homework.xml": "1fee6a1be8a0bff42c58908a885c60b5510197432cfc106a03cedce7412e831e",
+    "app/src/main/res/drawable/ic_halo_study_kids.xml": "0f44b3b5adfd6e78b84937f15c441a8a8ac9b667038623a0e2584efdb824c51c",
+    "app/src/main/res/drawable/ic_halo_study_lesson.xml": "d03900de4aa96a904a7a3514cdd7798b14ba36e335edfcf963f47f8e203f97aa",
+    "app/src/main/res/drawable/ic_halo_study_path.xml": "c9b135d9d46ba68cf104a51c04682cf04dd28754bc8501c97b3777d2a5162746",
+    "app/src/main/res/drawable/ic_halo_study_practice.xml": "ef18b89aac0cbe453004d564a2db90bde57e8100edb471f42c3d67483ae144f2",
+    "app/src/main/res/drawable/ic_halo_study_progress.xml": "9d1bd8c2243626272fd7d74448dd446f5a1f2c03ea0dc307c677f77ff745b2fa",
+    "app/src/main/res/drawable/ic_halo_study_quiz.xml": "e20b590853444bcbe611f5e57fcfd839fcb64ca78fea8e1987983bfaddfe40d4",
+    "app/src/main/res/drawable/ic_halo_study_review.xml": "7c6528f5e1292ce9bd2ec3dc2d3219bdd5d31b07175c14ba94f0ad4ea7664b21",
+    "app/src/main/res/drawable/ic_halo_study_source.xml": "bcdebb0144a2c7f6f20d66d49d5a91c03f81c37d7472e56734c269337521542d",
+    "app/src/main/res/drawable/ic_halo_tool_memory.xml": "1869c510278b98f7b119918e6af68aa25dbebcc455877e528e7cf8bf273bb616",
+    "app/src/main/res/drawable/ic_halo_tool_office.xml": "04d048f5acff04a33a7d7afc26d228ccea0ce42d171b95f2a59422101aa626fe",
+    "app/src/main/res/drawable/ic_halo_tool_studio.xml": "34c4663fea47a175315e1730e09fe9716c98983902103831db15e6d49d1116ab",
+    "app/src/main/res/drawable/ic_halo_tool_study.xml": "e36506091cb5e878baaa302805f9c1a030ae1bda4e770fca060f8e1fccfa2e35",
+    "app/src/main/res/drawable/ic_halo_type_audio.xml": "a4334709e29e1b339bd6fd2065e54610f0261418b1693e0c520dc9c47d167e13",
+    "app/src/main/res/drawable/ic_halo_type_canvas.xml": "33d4160acc7d18df8ce3263cabc61816b632b1f2b457370cf634231e1484079d",
+    "app/src/main/res/drawable/ic_halo_type_conversation.xml": "e32766a435817ca89800fa1e398729443851b54f767e5751632fe2af0d8a0caa",
+    "app/src/main/res/drawable/ic_halo_type_csv.xml": "17d765c3996d79bf68fcbca05013249b17e2231338a876e57abcaefc311220c1",
+    "app/src/main/res/drawable/ic_halo_type_file.xml": "ceb9c3025ef35caae29fe42bbc90d1c970cfbca8c84433a2f798380e4edab2f1",
+    "app/src/main/res/drawable/ic_halo_type_image.xml": "de5ff48602db8986c06c19110fc6b87da3158679f6f01d0f31f60015ac7f5f20",
+    "app/src/main/res/drawable/ic_halo_type_note.xml": "03c6eed444a0d8ae1686cf24f0f5a4ab3b446edbad368db76b9bd3efe3467cfc",
+    "app/src/main/res/drawable/ic_halo_type_pdf.xml": "9ec808228925ef7bd21b2065979c8b4e5188fac55197a84761743548981ab189",
+    "app/src/main/res/drawable/ic_halo_type_text.xml": "8ffad6ab1cc2225848ebfe1397c8c95f883e4f31d7f305731af83f020c3c1378",
+    "app/src/main/res/drawable/ic_halo_type_video.xml": "db1442bf964ae27017e702047962679dbe31f703cc14b705486f53be7c8b8bd1",
+    "app/src/main/res/drawable/ic_halo_vision_see.xml": "5669140a6e744e5409088df3d6eefc6c3ce160b40f6fd83a8d254950102dd5fc",
+    "app/src/main/res/drawable/ic_halo_voice_listen.xml": "25e8eec703b4e6e65d3bf20a79f664bc4c20c180f07cc20284a60deca0fe972b",
+    "app/src/main/res/drawable/ic_halo_voice_speak.xml": "82debadd670e7bef1a20071051d6eb4a34ed35d7c52f3f7def9a7217df6d0f35",
+    "app/src/main/res/raw/halo5_motion_attention_needed_dark.json": "32453c9ccafd09895bc6eb9ac14439c4e8d7b165119fe6a0a942c7e2f293383a",
+    "app/src/main/res/raw/halo5_motion_attention_needed_light.json": "f9b4975a5a449f509ca90e7833a50d5451fba77a7d7e35bc0ab624879556752e",
+    "app/src/main/res/raw/halo5_motion_device_connecting_dark.json": "d901f64be75ad55c96956071a0bf93da572e2bb3e33bf9eec514ed334d74421a",
+    "app/src/main/res/raw/halo5_motion_device_connecting_light.json": "c68ab66dda7458fa1afe42db778f7ab567baf5b7b932266ec93dc8516fbeb129",
+    "app/src/main/res/raw/halo5_motion_device_ready_dark.json": "b5421fa13f3bd0ee077632ead3e70235c8c7c92b88ed373a4758e3a395e2efff",
+    "app/src/main/res/raw/halo5_motion_device_ready_light.json": "bb5c82858ea3be9ce27146438d33c092bb649b63f5af244e11c655bc9755a71e",
+    "app/src/main/res/raw/halo5_motion_device_scanning_dark.json": "857a6ecbb70fbe91b214402c2f9448c61dab47c5519a27b6fbb767e75895ccc2",
+    "app/src/main/res/raw/halo5_motion_device_scanning_light.json": "9baa73a5d5e3c6ee3223bf4002b8403cb3753b7c6c5bcaaf2ced613daa7af71e",
+    "app/src/main/res/raw/halo5_motion_download_active_dark.json": "134dffce123f03524ec879416ce1c26d7cbae68d4d53719700e4a3320ef48fed",
+    "app/src/main/res/raw/halo5_motion_download_active_light.json": "a542977e1030f5bc3d30d72da15efdfa6a85229b71929e9d2e2b41962a505c24",
+    "app/src/main/res/raw/halo5_motion_feedback_success_dark.json": "0ba07a5a89698637bb1417ee9e72b1a08d67a6d27447d036df8af8e503d3dfdd",
+    "app/src/main/res/raw/halo5_motion_feedback_success_light.json": "5e4d15e27b97b93f2f272b8dbe78ebb789d62f055d9e72b70edbbffe50ccaecb",
+    "app/src/main/res/raw/halo5_motion_import_active_dark.json": "09815ce50f09e12185af248171bc403b540ef7c5a953a003c6efef6a6fd28f48",
+    "app/src/main/res/raw/halo5_motion_import_active_light.json": "3faea80833e3853797cb7118b04c77fc1f5299ff86485968d8393f3a823eb2e6",
+    "app/src/main/res/raw/halo5_motion_library_empty_dark.json": "39efdb0f16b47e453281e4be782fc0f5f737dad1b2a3899cbdceceb4b7f15742",
+    "app/src/main/res/raw/halo5_motion_library_empty_light.json": "72dccf73e4bdcd0e12a0bf72f37ab1ffa507ae89e9edab01e152e9ef06014345",
+    "app/src/main/res/raw/halo5_motion_orb_listening_dark.json": "f3873e59cf357d6997c5e5fe8bbaf714d8512ef4c6fc89135d11c992c777b0f1",
+    "app/src/main/res/raw/halo5_motion_orb_listening_light.json": "678b81349a031137904bcaee573df56089b85bfab3d51d2ea7be5505df53713f",
+    "app/src/main/res/raw/halo5_motion_orb_speaking_dark.json": "b7fadb0ba4afe97ead8e197c026f306ff52b459cadc743d4067d3ac18946b054",
+    "app/src/main/res/raw/halo5_motion_orb_speaking_light.json": "6a2767f363885d727fc1bbc582fc145fbf502ed3ea3940ef84bdb2e37bd01d0e",
+    "app/src/main/res/raw/halo5_motion_orb_thinking_dark.json": "63c0a3dba33c77ce4baa9457d4ebbb97310ebfcff0c2ce8376b9207d62be3430",
+    "app/src/main/res/raw/halo5_motion_orb_thinking_light.json": "5dfd08cc54af1f8e2b2917633bfb46cd5fa717d9d5053c525bcc298edc4c553a",
+    "app/src/main/res/raw/halo5_motion_progress_verified_dark.json": "d3ed251659c0d3376c8aabce8df15ae23786fef477d9492a3aaea67e1e361782",
+    "app/src/main/res/raw/halo5_motion_progress_verified_light.json": "2082f07aaaef50a7bc463e112736ac35a684aa6ee1fac0d10e89171c00972efc",
+    "app/src/main/res/raw/halo5_motion_study_milestone_dark.json": "48f7767352df0bb4d5ad1f1eb7eed1a4036c74c665c3f8423bbf6917d618594c",
+    "app/src/main/res/raw/halo5_motion_study_milestone_light.json": "11f2534f42765726eba7c8e6ab9311185a09b20441439d6c2f6c60c61e009243",
+    "app/src/main/res/values-lv/strings_zone5.xml": "abf9e01fd3e64337af6a70575dd8e3dfef58252bec6029395d1ba55931f3a534",
+    "app/src/main/res/values-ru/strings_zone5.xml": "1deefcbc5c41c2156a68006840aed5f77dc62d6294d6c20d00dd09c3fc2b954f",
+    "app/src/main/res/values/strings_zone5.xml": "519651022eef71fd9d47db5d5ae50a031e89db056ccf3182447bf9242f85264b"
+  }
+}

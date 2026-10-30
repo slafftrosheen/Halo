@@ -46,8 +46,7 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                         glyph = HaloGlyph.HALO,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = if (MaterialTheme.colorScheme.background.luminance() < 0.5f)
-                            HaloMint else HaloDeepMint,
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(

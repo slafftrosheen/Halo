@@ -15,6 +15,13 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
+/** Read-only dock projection; changing mode remains inside the existing disclosure/control. */
+@Composable fun PrivacyModeStatus() {
+    val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
+    Text(uiText(if (mode == PrivacyMode.PRIVATE) "Local" else "Power"),
+        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
 /** Compact shell projection; uses exactly the same durable profiles and sharing disclosure. */
 @Composable fun CompactPrivacyModeControl(modifier: Modifier = Modifier) {
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()

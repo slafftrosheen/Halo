@@ -6,4 +6,5 @@ import com.halo.app.ui.icons.HaloGlyph
 data class HaloOrbDestination(val route: String, val title: String, val glyph: HaloGlyph)
 
 data class HaloOrbContextAction(val id: String, val title: String, val glyph: HaloGlyph,
-    val catalog: HaloToolCatalogRequest? = null, val enabled: Boolean = true)
+    val catalog: HaloToolCatalogRequest? = null, val enabled: Boolean = true,
+    val disabledReason: String? = null)

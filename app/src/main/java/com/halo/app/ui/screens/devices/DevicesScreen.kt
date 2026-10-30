@@ -684,7 +684,7 @@ private fun DeviceCard(
     val preparing = device.sessionState in setOf(SessionState.CONNECTED, SessionState.HANDSHAKE, SessionState.CAPABILITY_SYNC, SessionState.STATE_SYNC)
     val displayedStatus = if (preparing && device.healthWarning == null) "Connected · getting ready" else statusLabel
     val statusColor = when {
-        device.healthWarning != null -> com.halo.app.ui.theme.HaloWarning
+        device.healthWarning != null -> androidx.compose.material3.MaterialTheme.colorScheme.tertiary
         device.connectionStateText.equals("Error", ignoreCase = true) ->
             androidx.compose.material3.MaterialTheme.colorScheme.error
         device.isConnected -> androidx.compose.material3.MaterialTheme.colorScheme.primary
@@ -809,7 +809,7 @@ private fun DeviceCard(
                 Text(
                     text = device.healthWarning,
                     fontSize = 14.sp,
-                    color = com.halo.app.ui.theme.HaloWarning
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.tertiary
                 )
             } else if (device.isConnected && device.isBatteryStale) {
                 Spacer(Modifier.height(12.dp))
