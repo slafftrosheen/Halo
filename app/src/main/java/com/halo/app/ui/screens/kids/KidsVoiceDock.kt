@@ -5,6 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
@@ -25,37 +27,29 @@ internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 12.dp))
-        Box(Modifier.fillMaxWidth()) {
-        Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(44.dp),
+        Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            shadowElevation = 4.dp, color = MaterialTheme.colorScheme.surface) {
-            Row(Modifier.fillMaxWidth().heightIn(min = 88.dp).padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                FilledTonalIconButton(onClick = onType, enabled = !saving,
-                    modifier = Modifier.size(56.dp), shape = CircleShape,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface)) {
-                    HaloIcon(HaloGlyph.NOTE, uiText("Type instead"), Modifier.size(28.dp))
-                }
-                if (!shellOwnsOrb) Spacer(Modifier.size(72.dp))
-                FilledTonalIconButton(onClick = onHelp, modifier = Modifier.size(56.dp), shape = CircleShape,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface)) {
-                    HaloIcon(HaloGlyph.QUESTION, uiText("What can I say?"), Modifier.size(28.dp))
-                }
+            color = MaterialTheme.colorScheme.surfaceContainerLow) {
+            val controls: @androidx.compose.runtime.Composable (Modifier) -> Unit = { controlModifier ->
+                com.halo.app.ui.zone5.Zone5ActionButton(uiText("Type instead"), "office_edit_text",
+                    enabled = !saving, modifier = controlModifier.heightIn(min = 56.dp), onClick = onType)
+                com.halo.app.ui.zone5.Zone5ActionButton(uiText("What can I say?"), "action_help",
+                    modifier = controlModifier.heightIn(min = 56.dp), onClick = onHelp)
             }
+            if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.4f)
+                Column(Modifier.fillMaxWidth().padding(8.dp)) { controls(Modifier.fillMaxWidth()) }
+            else Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) { controls(Modifier.weight(1f)) }
         }
-                if (!shellOwnsOrb) FilledIconButton(onClick = if (busy) onStop else onSpeak, enabled = !saving,
-                    modifier = Modifier.align(Alignment.Center).offset(y = (-15).dp).size(72.dp), shape = CircleShape,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (busy) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = if (busy) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onPrimaryContainer)) {
-                    HaloIcon(if (busy) HaloGlyph.STOP else HaloGlyph.LISTEN,
-                        uiText(if (busy) "Stop" else "Talk to halo"), Modifier.size(32.dp))
-                }
+        if (!shellOwnsOrb) FilledIconButton(onClick = if (busy) onStop else onSpeak, enabled = !saving,
+            modifier = Modifier.padding(top = 8.dp).size(72.dp), shape = CircleShape,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer)) {
+            val label = uiText(if (busy) "Stop" else "Talk to halo")
+            androidx.compose.runtime.CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer) {
+                com.halo.app.ui.zone5.Zone5Icon(if (busy) "media_stop" else "voice_listen", HaloGlyph.LISTEN,
+                    Modifier.size(32.dp).then(Modifier.semantics { contentDescription = label }))
+            }
         }
     }
 }

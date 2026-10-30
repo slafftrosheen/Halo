@@ -8,6 +8,7 @@ import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.workspace.*
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -22,6 +23,11 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     private val renderer: StudioRenderer, private val assets: NotebookAssetRepository,
     private val canvases: com.halo.app.data.notebook.NotebookCanvasRepository,
     private val provenance: com.halo.app.data.WorkspaceContextDao, val uiRequests: StudioUiRequests) {
+    /** Metadata only; browsing Studio never opens or attaches a canvas document. */
+    val availableCanvases = workspace.observe(WorkspaceQuery(types = setOf(
+        com.halo.app.data.notebook.WorkspaceObjectType.CANVAS, com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)))
+        .map { rows -> rows.filter { it.type == com.halo.app.data.notebook.WorkspaceObjectType.CANVAS || it.contentRef.startsWith("canvas:") } }
+    suspend fun createCanvas(title: String): String = canvases.create(title)
     private data class Binding(val projectId: String, val token: String)
     private val active = java.util.concurrent.atomic.AtomicReference<Binding?>(null)
     fun attachProject(id: String): String = java.util.UUID.randomUUID().toString().also {

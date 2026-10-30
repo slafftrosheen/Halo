@@ -31,7 +31,7 @@ internal fun HaloZone(
         BoxWithConstraints {
             val fallback = compact || largeText || maxWidth < 360.dp || availableHeight < 520.dp
             val header = LocalShellUtilityBand.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
-            val contextual = actions.filterNot {
+            val contextual = com.halo.app.ui.zone5.zone5InstrumentOrbitActions(actions).filterNot {
                 it.glyph == HaloGlyph.TRASH || it.id in setOf("page-context", "type-message")
             }
             val orbitActions = if (header == null) contextual else contextual.filterNot {

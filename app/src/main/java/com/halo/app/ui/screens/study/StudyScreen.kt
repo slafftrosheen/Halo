@@ -5,6 +5,9 @@ import kotlin.math.roundToInt
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
+import com.halo.app.ui.zone5.Zone5InstrumentHeading
+import androidx.compose.ui.res.stringResource
+import com.halo.app.ui.zone5.Zone5ActionButton
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
@@ -132,28 +135,54 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var listenMode by remember { mutableStateOf(false) }
     if (listenMode) StudyListenMode(state, viewModel) { listenMode = false }
     var showDetails by rememberSaveable { mutableStateOf(false) }
+    var detailsTab by rememberSaveable { mutableStateOf("Material") }
     var confirmDelete by remember { mutableStateOf(false) }
     var showCards by rememberSaveable { mutableStateOf(false) }
     var showSaveCard by remember { mutableStateOf(false) }
     var showComposer by rememberSaveable { mutableStateOf(false) }
-    var cardQuestion by remember { mutableStateOf("") }
+    var cardQuestion by rememberSaveable { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
-    val pageActionsReady = !state.isGenerating && state.comparingCards.isEmpty()
+    var practiceOpen by rememberSaveable { mutableStateOf(false) }
+    val pageActionsReady = state.session != null && !state.loading && state.unavailable == null &&
+        !state.isGenerating && !state.isSubmitting && state.comparingCards.isEmpty()
+    val backFromLesson: () -> Unit = {
+        when {
+            showComposer -> showComposer = false
+            showDetails -> showDetails = false
+            showMenu -> showMenu = false
+            practiceOpen -> { practiceOpen = false; viewModel.stopReading("Left practice") }
+            focusedReview -> { focusedReview = false; skippedReviewIds = emptyList(); viewModel.stopReading("Left review") }
+            else -> { viewModel.stopReading("Left the Study screen"); onBack() }
+        }
+    }
+    val currentTurn = state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId && it.failure == null && it.text.isNotBlank() }
+    val canRead = pageActionsReady && (currentTurn != null || state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale })
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = ShellPageOwner("study", state.session?.id,
-        "${state.session?.updatedAtEpochMs}:${state.session?.currentExerciseId}:${state.sources.hashCode()}",
+        "${state.session?.updatedAtEpochMs}:${state.session?.currentExerciseId}:${state.sources.hashCode()}:$practiceOpen:$focusedReview:${state.reader?.speaking}",
         selectionIds = listOfNotNull(state.session?.currentExerciseId),
-        canonicalToolIds = listOf("halo_study_current", "halo_study_state"))
-    BindShellPageActions(pageOwner, listOf(
+        canonicalToolIds = listOf("halo_study_current", "halo_study_state", "halo_study_session_action"),
+        disabledActionReasons = mapOf("page.study.read" to stringResource(com.halo.app.R.string.zone5_nothing_to_read),
+            "page.study.practice" to stringResource(com.halo.app.R.string.zone5_open_lesson_first)))
+    BindShellPageActions(pageOwner, buildList {
+        if (!practiceOpen && !focusedReview) {
+            add(ShellPageAction("page.study.details", "Sources", HaloGlyph.FILE, pageActionsReady) { detailsTab = "Material"; showDetails = true })
+            add(ShellPageAction("page.study.practice", "Practice", HaloGlyph.QUESTION, pageActionsReady) { practiceOpen = true })
+            if (state.reader?.speaking == true) add(ShellPageAction("page.study.stop-reading", "Stop reading", HaloGlyph.STOP) { viewModel.stopReading() })
+            else add(ShellPageAction("page.study.read", "Read aloud", HaloGlyph.SPEAK, canRead) {
+                if (currentTurn != null) viewModel.readTurnAloud(currentTurn) else viewModel.readSourceAloud()
+            })
+        } else add(ShellPageAction("page.study.back-to-lesson", "Back to tutor", HaloGlyph.PREVIOUS, onInvoke = backFromLesson))
+        addAll(listOf(
         ShellPageAction("page.study.finish", "Finish lesson", HaloGlyph.SUCCESS, pageActionsReady && !state.isFinished) { viewModel.finishSession() },
         ShellPageAction("page.study.delete", "Delete this session's data", HaloGlyph.TRASH, pageActionsReady) { confirmDelete = true },
-        ShellPageAction("page.study.details", "Sources and progress", HaloGlyph.FILE, pageActionsReady) { showDetails = true },
         ShellPageAction("page.study.listen", "Listen, then explain", HaloGlyph.SPEAK,
             pageActionsReady && state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale }) { viewModel.listenThenExplain() },
         ShellPageAction("page.study.save-notes", "Save study notes to Workspace", HaloGlyph.NOTE,
             pageActionsReady && !state.savingSummary && !state.loading) { viewModel.saveSummaryToNotebook() },
-    ))
+        ))
+    })
     val nextAction = rememberLearningNextAction(state, kids = false,
         blocking = showComposer || showDetails || showMenu || confirmDelete || focusedReview)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -179,21 +208,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
 
     // S03/S05: returning from focused review is not leaving the lesson.
     // Otherwise, leaving stops playback while durable session progress remains.
-    BackHandler(enabled = true) {
-        when {
-            focusedReview -> {
-                focusedReview = false
-                skippedReviewIds = emptyList()
-            }
-            showComposer -> showComposer = false
-            showDetails -> showDetails = false
-            showMenu -> showMenu = false
-            else -> {
-                viewModel.stopReading("Left the Study screen")
-                onBack()
-            }
-        }
-    }
+    BackHandler(enabled = true, onBack = backFromLesson)
 
     LaunchedEffect(state.isGenerating) {
         // Keep the in-flight turn visible; preserve drafts when the request fails.
@@ -230,7 +245,6 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         title = { Text(uiText("Delete this session?")) }, text = { Text(uiText("Its attempts and review cards will be removed.")) },
         confirmButton = { TextButton(onClick = { viewModel.deleteAllSessionData(); confirmDelete = false }) { Text(uiText("Delete")) } },
         dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(uiText("Keep session")) } })
-    var detailsTab by remember { mutableStateOf("Material") }
     var findQuery by remember { mutableStateOf("") }
     var sourcePicker by remember { mutableStateOf(false) }
     var removeSource by remember { mutableStateOf<String?>(null) }
@@ -349,7 +363,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
 
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         com.halo.app.ui.screens.notebook.ToolZoneHeader(state.session?.goal?.takeIf { it.isNotBlank() } ?: uiText("Study"),
-            onBack = { viewModel.stopReading("Left the Study screen"); onBack() }) {
+            onBack = backFromLesson) {
             StudyLessonOverflow(pageActionsReady, showMenu, { showMenu = it },
                 canListen = state.sources.any { !it.excerpt.isNullOrBlank() && !it.stale },
                 canSave = !state.savingSummary && !state.loading, completed = state.isFinished,
@@ -364,6 +378,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             .background(com.halo.app.ui.theme.haloWorkspaceBackground())
             .padding(horizontal = 20.dp)
     ) {
+        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Study"), "tool_study",
+            state.session?.goal?.takeIf { it.isNotBlank() },
+            state = if (practiceOpen || focusedReview) uiText(if (focusedReview) "Focused review" else "Practice") else null)
         if (!shellOwnsOrb) HaloScreenHeader(
             title = state.session?.goal?.takeIf { it.isNotBlank() } ?: uiText("Study"),
             subtitle = uiText(if (focusedReview) "Focused review" else "One step at a time."),
@@ -481,6 +498,13 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             return@Column
         }
 
+        if (practiceOpen) {
+            Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Zone5ActionButton(uiText("Back to tutor"), "action_back", onClick = backFromLesson)
+                PracticeSection(state, viewModel)
+            }
+            return@Column
+        }
         if (focusedReview) StudySessionGuide(state, reviewing = true)
         else StudyJourneyProgress(state.journey.stage)
         Spacer(Modifier.height(12.dp))

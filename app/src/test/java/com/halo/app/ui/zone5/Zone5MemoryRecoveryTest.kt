@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.navigation.compose.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,9 +34,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import com.github.takahirom.roborazzi.captureRoboImage
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class, qualifiers = "w900dp-h1400dp")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [34], application = Application::class, qualifiers = "en-rUS-w360dp-h800dp")
 @OptIn(ExperimentalCoroutinesApi::class)
 class Zone5MemoryRecoveryTest {
     @get:Rule val compose = createComposeRule()
@@ -70,7 +74,7 @@ class Zone5MemoryRecoveryTest {
             runBlocking { withTimeout(10_000) { jobs.forEach { it.join() }; fixture.scope.coroutineContext[Job]?.cancelAndJoin() } }
         } finally { try { fixture.close() } finally { Dispatchers.resetMain() } }
     }
-    private fun await(predicate: () -> Boolean) = compose.waitUntil(5_000) { scheduler.advanceTimeBy(300); scheduler.runCurrent(); predicate() }
+    private fun await(predicate: () -> Boolean) = compose.waitUntil(5_000) { scheduler.advanceTimeBy(300); scheduler.runCurrent(); if (!compose.mainClock.autoAdvance) compose.mainClock.advanceTimeByFrame(); predicate() }
 
     @Test fun failedSearchCanRecoverWhenTheQueryChanges() {
         compose.setContent { HostlessHaloTheme { val state by model.state.collectAsStateWithLifecycle(); Text(state.query) } }
@@ -82,7 +86,7 @@ class Zone5MemoryRecoveryTest {
         assertEquals(1, runBlocking { memories.observeMemories().first().size })
     }
 
-    private fun renderHub() {
+    private fun renderHub(detail: Boolean = false) {
         val preferences = object : Storage {
             private val values = java.util.concurrent.ConcurrentHashMap<String, Any>()
             override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
@@ -110,14 +114,26 @@ class Zone5MemoryRecoveryTest {
             notebook = NotebookViewModel(workspace, notes, NotebookOrganizationRepository(fixture.database.notebookOrganizationDao()), fixture.canvases)
             own("notebook", notebook)
         }
-        compose.setContent { HostlessHaloTheme {
+        val memoryId = runBlocking { memories.observeMemories().first().single().id }
+        lateinit var detailModel: MemoryDetailViewModel
+        if (detail) compose.runOnUiThread {
+            detailModel = MemoryDetailViewModel(memoryId, memories, { _, _ -> null }, { false }, { null }); own("detail", detailModel)
+        }
+        compose.setContent { HostlessHaloTheme(darkTheme = true, palette = com.halo.app.ui.theme.HaloPalette(com.halo.app.ui.theme.HaloAccent.BLUE, com.halo.app.ui.theme.HaloTone.COOL)) {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onSurface) {
-                    MemoryHubScreen(model, notebook, {}, {}, {})
+                    val nav = rememberNavController()
+                    NavHost(nav, "workspace-detail") {
+                        composable("workspace-detail") {
+                            if (detail) WorkspaceObjectDetailScreen(memoryId, "memory", workspace, memoryDetailModel = detailModel, onBack = {})
+                            else MemoryHubScreen(model, notebook, {}, {}, {})
+                        }
+                    }
                 }
             }
         } }
-        await { !model.state.value.loading }
+        await { if (detail) detailModel.state.value.item != null else !model.state.value.loading }
+        compose.onRoot().captureRoboImage()
     }
     @Test fun hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection() {
         renderHub()
@@ -130,7 +146,7 @@ class Zone5MemoryRecoveryTest {
         }
         compose.onNodeWithText("Learning history").performClick()
         compose.onNodeWithText("Memories").performClick()
-        compose.onNodeWithText("Basil needs bright light.").assertIsDisplayed()
+        compose.onNodeWithText("Basil needs bright light.").performScrollTo().assertIsDisplayed()
     }
     @Test fun searchFailureHasAnExplicitRetryWithoutLosingTheRequestedQuery() {
         renderHub()
@@ -141,4 +157,25 @@ class Zone5MemoryRecoveryTest {
         compose.onNodeWithText("Try again").performClick()
         await { model.state.value.error == null && model.state.value.query == "garden" && !model.state.value.loading }
     }
+    @Test fun detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview() {
+        renderHub(detail = true)
+        val id = runBlocking { memories.observeMemories().first().single().id }
+        // Native TextField focus/caret animation is not a durable operation.
+        // Drive frames explicitly while retaining every canonical/UI assertion.
+        compose.mainClock.autoAdvance = false
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("object.memory.edit")) }
+        compose.mainClock.advanceTimeBy(300)
+        compose.onNode(hasSetTextAction()).performTextReplacement("Basil needs a sunny window.")
+        compose.mainClock.advanceTimeByFrame()
+        compose.onNodeWithText("Save correction").performClick()
+        await { runBlocking { memories.getMemory(id)?.content } == "Basil needs a sunny window." && compose.onAllNodesWithText("Save correction").fetchSemanticsNodes().isEmpty() }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("object.memory.edit")) }
+        compose.mainClock.advanceTimeBy(300)
+        compose.onNode(hasSetTextAction()).performTextReplacement("Unsaved draft.")
+        runBlocking { memories.correctMemory(id, "External correction.") }
+        await { compose.onAllNodesWithText("This memory changed. Close and review it before saving or forgetting.").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Save correction").assertIsNotEnabled()
+        assertEquals("External correction.", runBlocking { memories.getMemory(id)?.content })
+    }
+
 }

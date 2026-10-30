@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.study
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
+import com.halo.app.ui.zone5.Zone5InstrumentHeading
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
@@ -139,14 +140,14 @@ fun StudyHomeScreen(
     // first step cancels only unfinished setup; a saved lesson is untouched.
     BackHandler(enabled = setupActive, onBack = returnFromSetup)
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
-    val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}",
+    val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}:${previews.hashCode()}:$busy",
         canonicalToolIds = listOf("halo_study_sessions"))
-    BindShellPageActions(pageOwner, listOf(
-        ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy && !setupActive) { startNewLesson() },
-        ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, setupActive && setupStep == 1 && !busy) { picker = true },
-        ShellPageAction("page.study.options", "Age, language & learning options", HaloGlyph.SETTINGS,
-            setupActive && setupStep == 3 && !busy) { optionsExpanded = !optionsExpanded },
-    ))
+    BindShellPageActions(pageOwner, buildList {
+        if (!setupActive) add(ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy) { startNewLesson() })
+        if (setupActive && setupStep == 1) add(ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, !busy) { picker = true })
+        if (setupActive && setupStep == 3) add(ShellPageAction("page.study.options", "Age, language & learning options", HaloGlyph.SETTINGS,
+            !busy) { optionsExpanded = !optionsExpanded })
+    })
 
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         com.halo.app.ui.screens.notebook.ToolZoneHeader(
@@ -165,6 +166,12 @@ fun StudyHomeScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            if (shellOwnsOrb) item("study-heading") {
+                Zone5InstrumentHeading(uiText("Study"), "tool_study",
+                    document = if (setupActive) uiText(setupLabels[setupStep.coerceIn(0, 3)]) else null,
+                    state = if (setupActive) uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
+                        uiText(setupLabels[setupStep.coerceIn(0, 3)])) else null)
+            }
             if (!shellOwnsOrb) item(key = "header") {
                 HaloScreenHeader(
                     title = uiText(if (setupActive) "New lesson" else "Study"),

@@ -17,14 +17,32 @@ internal data class WorkspaceFileToolsState(val selected: WorkspaceFileToolsObje
     val loading: Boolean = false, val busy: Boolean = false, val error: Boolean = false, val cancelled: Boolean = false,
     val output: WorkspaceFile? = null, val textHistory: WorkspaceTextDocuments.HistoryStatus = WorkspaceTextDocuments.HistoryStatus())
 
+internal data class OfficeLibraryStatus(val objectsLoading: Boolean = true, val filesLoading: Boolean = true,
+    val objectsError: Boolean = false, val filesError: Boolean = false)
+
 /** Screen adapter only. Mutations use the same revision/source contracts as assistant actions. */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initialId: String? = null,
     private val savedState: SavedStateHandle = SavedStateHandle()) : ViewModel() {
     private val mutable = MutableStateFlow(WorkspaceFileToolsState())
     val state = mutable.asStateFlow()
-    val objects = tools.workspace.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.FILE, WorkspaceObjectType.NOTE)))
+    private val libraryRevision = MutableStateFlow(0L)
+    private val mutableLibraryStatus = MutableStateFlow(OfficeLibraryStatus())
+    val libraryStatus = mutableLibraryStatus.asStateFlow()
+    val objects = libraryRevision.flatMapLatest {
+        tools.workspace.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.FILE, WorkspaceObjectType.NOTE)))
+            .onStart { mutableLibraryStatus.update { it.copy(objectsLoading = true, objectsError = false) } }
+            .onEach { mutableLibraryStatus.update { it.copy(objectsLoading = false, objectsError = false) } }
+            .catch { mutableLibraryStatus.update { it.copy(objectsLoading = false, objectsError = true) } }
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val files = tools.files.observeFiles().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val files = libraryRevision.flatMapLatest {
+        tools.files.observeFiles()
+            .onStart { mutableLibraryStatus.update { it.copy(filesLoading = true, filesError = false) } }
+            .onEach { mutableLibraryStatus.update { it.copy(filesLoading = false, filesError = false) } }
+            .catch { mutableLibraryStatus.update { it.copy(filesLoading = false, filesError = true) } }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun retryLibrary() { libraryRevision.value += 1 }
     private var selectedId: String? = null
     val selectedObjectId: String? get() = selectedId
     private var observation: Job? = null

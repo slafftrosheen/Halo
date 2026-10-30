@@ -1,0 +1,9 @@
+{
+  "vectors": 187,
+  "source_byte_match": true,
+  "matching_en_ru_lv_keys": 55,
+  "utf8_xml": "PASS",
+  "archive_sha256": "105831ba90909dd0e303590266117f3d0479a1b896f1987c08bf9a0404497404",
+  "motions": 26,
+  "motion_source_byte_match": true
+}

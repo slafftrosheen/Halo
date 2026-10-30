@@ -13,6 +13,10 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import com.halo.app.ui.zone5.*
+import com.halo.app.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -80,6 +84,7 @@ fun WorkspaceObjectDetailScreen(
     onStudy: ((String) -> Unit)? = null,
     onStudio: ((String) -> Unit)? = null,
     onFileTools: ((String) -> Unit)? = null,
+    memoryDetailModel: MemoryDetailViewModel? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -89,6 +94,23 @@ fun WorkspaceObjectDetailScreen(
     var actionMessage by remember(id, type) { mutableStateOf<String?>(null) }
     var forgottenMoment by remember(id) { mutableStateOf(false) }
     var confirmForget by remember(id) { mutableStateOf(false) }
+    var editingMemory by rememberSaveable(id) { mutableStateOf(false) }
+    var correction by rememberSaveable(id) { mutableStateOf("") }
+    var editedIdentity by rememberSaveable(id) { mutableStateOf<String?>(null) }
+    var forgetIdentity by rememberSaveable(id) { mutableStateOf<String?>(null) }
+    var showSources by rememberSaveable(id) { mutableStateOf(false) }
+    // Root lifetime: scrolling a card out of view must not remove its action owner.
+    val model = if (type == "memory") memoryDetailModel ?: memoryDetailOwner(id) else null
+    val memoryState = model?.state?.collectAsStateWithLifecycle()?.value
+    val memory = memoryState?.item?.record
+    val memoryIdentity = memory?.let(::memoryEditIdentity)
+    val changedMessage = stringResource(R.string.zone5_memory_changed)
+    val beginEdit: () -> Unit = {
+        memory?.let { correction = it.content; editedIdentity = memoryEditIdentity(it); editingMemory = true }
+    }
+    val beginForget: () -> Unit = {
+        memory?.let { forgetIdentity = memoryEditIdentity(it); confirmForget = true }
+    }
 
     val detailState by produceState<WorkspaceDetailState>(
         initialValue = WorkspaceDetailState.Loading,
@@ -125,11 +147,23 @@ fun WorkspaceObjectDetailScreen(
     }
 
     val currentDetail = detailState as? WorkspaceDetailState.Ready
+    val detailBusy = actionBusy || memoryState?.busy == true
     val shellHosted = BindShellChildPage(currentDetail?.item?.title ?: currentDetail?.file?.displayName
-        ?: if (type == "memory") "Memory" else "File", onBack, objectId = id, titleIsSource = true,
-        sourceIdentity = "$id:$type:$revision:${currentDetail?.file?.version}:$actionBusy",
-        actions = listOf(ShellPageAction("object.refresh", "Refresh", HaloGlyph.NOTE,
-            !actionBusy && detailState !is WorkspaceDetailState.Loading) { revision++ }))
+        ?: uiText(if (type == "memory") "Memory" else "File"), onBack, objectId = id, titleIsSource = true,
+        instrumentHeader = type == "memory",
+        canonicalToolIds = if (type == "memory") listOf("halo_read_memory", "halo_update_memory", "halo_forget_memory") else null,
+        disabledActionReasons = if (type == "memory") mapOf("object.memory.source" to stringResource(R.string.zone5_no_memory_source)) else emptyMap(),
+        sourceIdentity = "$id:$type:$revision:${currentDetail?.file?.version}:$memoryIdentity:$detailBusy:$editingMemory:$confirmForget:$showSources:${memoryState?.failed}",
+        actions = buildList {
+            if (type == "memory") {
+                add(ShellPageAction("object.memory.source", "Sources", HaloGlyph.FILE,
+                    !detailBusy && memoryState?.sources?.any { it.objectRef != null } == true) { showSources = true })
+                add(ShellPageAction("object.memory.edit", "Correct", HaloGlyph.NOTE, !detailBusy && memory != null, beginEdit))
+                add(ShellPageAction("object.memory.forget", "Forget", HaloGlyph.TRASH, !detailBusy && memory != null, beginForget))
+            }
+            add(ShellPageAction("object.refresh", "Refresh", HaloGlyph.NOTE,
+                !detailBusy && detailState !is WorkspaceDetailState.Loading) { revision++; model?.retry() })
+        })
 
     LazyColumn(
         modifier = Modifier
@@ -229,25 +263,16 @@ fun WorkspaceObjectDetailScreen(
                                 message = "It may already have been forgotten."
                             )
                         } else {
-                            MemoryDetailCard(
-                                memory = memory,
-                                busy = actionBusy,
-                                onSave = { correction ->
-                                    actionBusy = true
-                                    actionMessage = null
-                                    scope.launch {
-                                        runCatching { workspace.correctMemory(id, correction) }
-                                            .onSuccess { saved ->
-                                                actionMessage = if (saved) "Memory updated" else "Memory could not be updated"
-                                                if (saved) revision++
-                                            }
-                                            .onFailure { actionMessage = it.message ?: "Could not update memory" }
-                                        actionBusy = false
-                                    }
-                                },
-                                onForget = { confirmForget = true },
-                                onOpenSource = onOpenSource
-                            )
+                            if (memoryState?.loading == true) CircularProgressIndicator()
+                            else if (memoryState?.failed == true) {
+                                Text(stringResource(R.string.zone5_memory_load_error), color = MaterialTheme.colorScheme.error)
+                                Zone5ActionButton(uiText("Try again"), "action_refresh", onClick = { model?.retry() })
+                            } else if (memoryState?.item == null) Text(uiText("Memory is unavailable"))
+                            else {
+                                if (shellHosted) Zone5InstrumentHeading(uiText("Memory"), "tool_memory", state = uiText("What Halo can remember"))
+                                MemoryDetailCard(memoryState, detailBusy, onEdit = beginEdit, onConfirm = { model?.confirm() },
+                                    onForget = beginForget, onOpenSource = onOpenSource)
+                            }
                         }
                     }
                 }
@@ -266,6 +291,40 @@ fun WorkspaceObjectDetailScreen(
         }
     }
 
+    if (showSources) AlertDialog(onDismissRequest = { showSources = false }, title = { Text(uiText("Sources")) },
+        text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+            if (memoryState?.sources.isNullOrEmpty()) Text(stringResource(R.string.zone5_no_memory_source))
+            memoryState?.sources.orEmpty().forEach { source ->
+                Text(uiText(source.label))
+                if (source.available == false) Text(uiText("Original source is no longer available"))
+                source.objectRef?.let { ref -> Zone5ActionButton(ref.title, "study_source", !detailBusy) { showSources = false; onOpenSource(ref) } }
+            }
+        } }, confirmButton = { TextButton({ showSources = false }) { Text(uiText("Close")) } })
+    if (editingMemory) AlertDialog(onDismissRequest = { if (!detailBusy) editingMemory = false },
+        title = { Text(uiText("Correct memory")) }, text = {
+            Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                Text(uiText("Current")); Text(memory?.content.orEmpty())
+                HaloTextField(correction, { correction = it }, enabled = !detailBusy, label = { Text(uiText("Correction")) },
+                    modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)
+                if (correction.length >= 900) Text("${correction.length}/1000")
+                if (memoryIdentity != editedIdentity) Text(changedMessage, color = MaterialTheme.colorScheme.error)
+                actionMessage?.let { Text(uiText(it)) }
+            }
+        }, confirmButton = { TextButton(enabled = !detailBusy && memory != null && memoryIdentity == editedIdentity &&
+            correction.trim().length in 1..1000 && correction.trim() != memory.content, onClick = {
+                actionBusy = true; actionMessage = null
+                scope.launch {
+                    try {
+                        if (workspace.getMemory(id)?.let(::memoryEditIdentity) != editedIdentity) actionMessage = changedMessage
+                        else if (workspace.correctMemory(id, correction.trim())) { revision++; editingMemory = false }
+                        else actionMessage = "Memory could not be updated"
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) { actionMessage = "Could not update memory" }
+                    finally { actionBusy = false }
+                }
+            }) { Text(uiText("Save correction")) } },
+        dismissButton = { TextButton({ editingMemory = false }, enabled = !detailBusy) { Text(uiText("Cancel")) } })
+
     if (forgottenMoment) androidx.compose.ui.window.Dialog(onDismissRequest = onBack) {
         androidx.compose.material3.Surface(shape = com.halo.app.ui.design.HaloShapes.card) {
             Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -278,14 +337,22 @@ fun WorkspaceObjectDetailScreen(
         AlertDialog(
             onDismissRequest = { if (!actionBusy) confirmForget = false },
             title = { Text(uiText("Forget this memory?")) },
-            text = { Text(uiText("halo will stop using this memory. Your notes are kept. Copies in existing backups follow your storage settings.")) },
+            text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                Text(uiText("halo will stop using this memory. Your notes are kept. Copies in existing backups follow your storage settings."))
+                if (memoryIdentity != forgetIdentity) Text(changedMessage, color = MaterialTheme.colorScheme.error)
+            } },
             confirmButton = {
                 TextButton(
-                    enabled = !actionBusy,
+                    enabled = !detailBusy && memory != null && memoryIdentity == forgetIdentity,
                     onClick = {
                         actionBusy = true
                         scope.launch {
-                            val forgotten = runCatching { workspace.forgetMemory(id) }.getOrDefault(false)
+                            val forgotten = try {
+                                if (workspace.getMemory(id)?.let(::memoryEditIdentity) != forgetIdentity) {
+                                    actionMessage = changedMessage; false
+                                } else workspace.forgetMemory(id)
+                            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { false }
                             actionBusy = false
                             confirmForget = false
                             if (forgotten) {
@@ -401,22 +468,26 @@ private fun FileDetailCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (String) -> Unit,
-    onForget: () -> Unit, onOpenSource: (WorkspaceObject) -> Unit) {
+private fun memoryDetailOwner(id: String): MemoryDetailViewModel {
     val graph = com.halo.app.di.ManualDependencyGraph
-    val model: MemoryDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "memory-detail-${memory.id}", factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T = MemoryDetailViewModel(memory.id, graph.memoryRepository,
-            scopeName = { scope, id -> if (scope == com.halo.app.data.memory.MemoryScope.DEVICE) graph.deviceRegistry.getDevice(id)?.identity?.displayName else graph.workspaceUseCases.getObject(id)?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE }?.title },
+    return androidx.lifecycle.viewmodel.compose.viewModel(key = "memory-detail-$id", factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST") override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T = MemoryDetailViewModel(id, graph.memoryRepository,
+            scopeName = { scope, sourceId -> if (scope == com.halo.app.data.memory.MemoryScope.DEVICE) graph.deviceRegistry.getDevice(sourceId)?.identity?.displayName else graph.workspaceUseCases.getObject(sourceId)?.takeIf { it.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE }?.title },
             exists = graph.personalLearning::exists, sourceObject = graph.workspaceUseCases::getObject) as T
     })
-    val detail by model.state.collectAsStateWithLifecycle()
-    val item = detail.item ?: MemoryPresentation.item(memory)
+}
+
+private fun memoryEditIdentity(record: MemoryRecord): String =
+    "${record.id}:${record.updatedAt}:${record.content.hashCode()}:${record.kind}:${record.scope}:${record.scopeId}"
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MemoryDetailCard(detail: MemoryDetailUi, busy: Boolean, onEdit: () -> Unit, onConfirm: () -> Unit,
+    onForget: () -> Unit, onOpenSource: (WorkspaceObject) -> Unit) {
+    val item = detail.item ?: return
     val copy = memoryDetailCopy(item)
-    var editing by rememberSaveable(memory.id) { mutableStateOf(false) }
-    var history by rememberSaveable(memory.id) { mutableStateOf(false) }
-    var correction by rememberSaveable(memory.id, memory.content) { mutableStateOf(memory.content) }
+    var history by rememberSaveable(item.record.id) { mutableStateOf(false) }
     HaloWorkspaceCard {
         Text(copy.kind, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
@@ -442,7 +513,7 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
         TextButton({ history = !history }) { Text(uiText(if (history) "Hide history" else "History: %1\$d changes", detail.revisions.size)) }
         if (history) detail.revisions.forEach { revision ->
             Text(MemoryPresentation.date(revision.changedAt))
-            Text(if (revision.reason == "User accepted updated memory") "You approved an updated suggestion" else "You corrected this")
+            Text(uiText(if (revision.reason == "User accepted updated memory") "You approved an updated suggestion" else "You corrected this"))
             Text(uiText("Before")); Text(revision.previousContent); Text(uiText("After")); Text(revision.newContent)
         }
         detail.message?.let { Text(it) }
@@ -452,25 +523,17 @@ private fun MemoryDetailCard(memory: MemoryRecord, busy: Boolean, onSave: (Strin
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (!item.record.userConfirmed || item.stale)
-                TextButton(enabled = !busy && !detail.busy, onClick = model::confirm,
+                TextButton(enabled = !busy && !detail.busy, onClick = onConfirm,
                     modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(uiText(if (item.stale) "Confirm still true" else "Confirm"))
                 }
-            TextButton(enabled = !busy, onClick = { editing = true },
+            TextButton(enabled = !busy, onClick = onEdit,
                 modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Correct")) }
             TextButton(enabled = !busy, onClick = onForget,
                 modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Forget")) }
         }
         if (item.stale) Text(uiText("Confirmation keeps the original expiry rules. Correct the information if it has changed."), style = MaterialTheme.typography.bodySmall)
     }
-    if (editing) AlertDialog(onDismissRequest = { if (!busy) editing = false }, title = { Text(uiText("Correct memory")) }, text = {
-        Column {
-            Text(uiText("Current")); Text(item.record.content)
-            HaloTextField(correction, { correction = it }, label = { Text(uiText("Correction")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)
-            if (correction.length >= 900) Text("${correction.length}/1000")
-        }
-    }, confirmButton = { TextButton(enabled = !busy && correction.trim().length in 1..1000 && correction.trim() != item.record.content, onClick = { onSave(correction.trim()); editing = false }) { Text(uiText("Save correction")) } },
-        dismissButton = { TextButton({ editing = false }) { Text(uiText("Cancel")) } })
 }
 
 @Composable

@@ -10,19 +10,50 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
 
 data class StudioUiState(val project: StudioProject? = null, val loading: Boolean = false,
     val busy: Boolean = false, val aiReview: Boolean = false, val error: Boolean = false, val output: WorkspaceFile? = null,
-    val versions: List<StudioProjectVersion> = emptyList())
+    val versions: List<StudioProjectVersion> = emptyList(), val versionsLoaded: Boolean = false)
+
+data class StudioLibraryStatus(val projectsLoading: Boolean = true, val canvasesLoading: Boolean = true,
+    val projectsError: Boolean = false, val canvasesError: Boolean = false,
+    val imagesLoading: Boolean = true, val imagesError: Boolean = false)
 
 /** Owns presentation/session attachment only. Every edit is delegated to the shared data owner. */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class StudioViewModel(val service: StudioService, private val files: WorkspaceFileRepository,
     private val imageService: com.halo.app.ai.WorkspaceImageService, private val assets: NotebookAssetRepository,
     initialProjectId: String? = null, private val savedState: androidx.lifecycle.SavedStateHandle = androidx.lifecycle.SavedStateHandle()) : ViewModel() {
     private val mutable = MutableStateFlow(StudioUiState())
     val state = mutable.asStateFlow()
-    val projects = service.projects.observeProjects().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val images = service.availableImages.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val libraryRevision = MutableStateFlow(0L)
+    private val mutableLibraryStatus = MutableStateFlow(StudioLibraryStatus())
+    val libraryStatus = mutableLibraryStatus.asStateFlow()
+    val projects = libraryRevision.flatMapLatest {
+        service.projects.observeProjects()
+            .onStart { mutableLibraryStatus.update { it.copy(projectsLoading = true, projectsError = false) } }
+            .onEach { mutableLibraryStatus.update { it.copy(projectsLoading = false, projectsError = false) } }
+            .catch { mutableLibraryStatus.update { it.copy(projectsLoading = false, projectsError = true) } }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val canvases = libraryRevision.flatMapLatest {
+        service.availableCanvases
+            .onStart { mutableLibraryStatus.update { it.copy(canvasesLoading = true, canvasesError = false) } }
+            .onEach { mutableLibraryStatus.update { it.copy(canvasesLoading = false, canvasesError = false) } }
+            .catch { mutableLibraryStatus.update { it.copy(canvasesLoading = false, canvasesError = true) } }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun retryLibrary() { libraryRevision.value += 1 }
+    private val canvasNavigation = Channel<String>(Channel.BUFFERED)
+    val openedCanvases = canvasNavigation.receiveAsFlow()
+    fun createCanvas(title: String) = operation {
+        require(title.trim().isNotBlank())
+        canvasNavigation.send(service.createCanvas(title.trim().take(160)))
+    }
+    val images = libraryRevision.flatMapLatest { service.availableImages
+        .onStart { mutableLibraryStatus.update { it.copy(imagesLoading = true, imagesError = false) } }
+        .onEach { mutableLibraryStatus.update { it.copy(imagesLoading = false, imagesError = false) } }
+        .catch { mutableLibraryStatus.update { it.copy(imagesLoading = false, imagesError = true) } }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private var aiSource: StudioProject? = null
     private var aiRequestId: String? = null
     private var aiTitle: String = "AI draft"
@@ -126,16 +157,22 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
     }
     fun versions() {
         val project = mutable.value.project ?: return
-        operation { mutable.value = mutable.value.copy(versions = service.projects.versions(project.id)) }
+        mutable.value = mutable.value.copy(versionsLoaded = false)
+        operation { mutable.value = mutable.value.copy(versions = service.projects.versions(project.id), versionsLoaded = true) }
     }
-    fun restore(version: Long) {
-        val project = mutable.value.project ?: return
+    fun restore(version: Long, expectedRevision: Long? = null, expectedProjectId: String? = null): Boolean {
+        val project = mutable.value.project ?: return false
+        if (mutable.value.busy) return false
+        if (expectedProjectId != null && project.id != expectedProjectId || expectedRevision != null && project.revision != expectedRevision) {
+            reportError(); return false
+        }
         operation {
             service.projects.restoreVersion(project.id, project.revision, version)
-            mutable.value = mutable.value.copy(versions = emptyList())
+            mutable.value = mutable.value.copy(versions = emptyList(), versionsLoaded = false)
         }
+        return true
     }
-    fun dismissVersions() { mutable.value = mutable.value.copy(versions = emptyList()) }
+    fun dismissVersions() { mutable.value = mutable.value.copy(versions = emptyList(), versionsLoaded = false) }
     fun importExisting(id: String, sourceVersion: String) {
         val project = mutable.value.project ?: return
         operation { service.importImage(project.id, project.revision, id, expectedSourceVersion = sourceVersion) }

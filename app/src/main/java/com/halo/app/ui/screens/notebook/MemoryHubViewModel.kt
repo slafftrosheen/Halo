@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.*
 
 data class MemoryScopeChoice(val scope: MemoryScope, val id: String?, val label: String)
 data class MemoryReview(val candidate: MemoryCandidate, val conflict: MemoryConflict)
+data class MemoryListStatus(val loading: Boolean = true, val failed: Boolean = false)
 data class MemoryHubState(val items: List<MemoryUiItem> = emptyList(), val count: Int = 0,
     val loading: Boolean = true, val query: String = "", val group: MemoryGroup = MemoryGroup.ALL,
     val scope: MemoryScope? = null, val sort: MemorySort = MemorySort.UPDATED, val error: String? = null)
@@ -29,8 +30,21 @@ class MemoryHubViewModel(
     private val scopeName: suspend (MemoryScope, String) -> String?,
     private val eligibleScopes: suspend () -> List<MemoryScopeChoice>,
 ) : ViewModel() {
-    val pending = learning.pending.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val episodes = learning.episodes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val refresh = MutableStateFlow(0L)
+    private val pendingStatusMutable = MutableStateFlow(MemoryListStatus())
+    val pendingStatus = pendingStatusMutable.asStateFlow()
+    private val episodeStatusMutable = MutableStateFlow(MemoryListStatus())
+    val episodeStatus = episodeStatusMutable.asStateFlow()
+    val pending = refresh.flatMapLatest { learning.pending
+        .onStart { pendingStatusMutable.value = MemoryListStatus() }
+        .onEach { pendingStatusMutable.value = MemoryListStatus(loading = false) }
+        .catch { pendingStatusMutable.value = MemoryListStatus(loading = false, failed = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val episodes = refresh.flatMapLatest { learning.episodes
+        .onStart { episodeStatusMutable.value = MemoryListStatus() }
+        .onEach { episodeStatusMutable.value = MemoryListStatus(loading = false) }
+        .catch { episodeStatusMutable.value = MemoryListStatus(loading = false, failed = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private val query = MutableStateFlow("")
     private val group = MutableStateFlow(MemoryGroup.ALL)
     private val scope = MutableStateFlow<MemoryScope?>(null)
@@ -48,8 +62,9 @@ class MemoryHubViewModel(
     val scopeChoices = mutableScopes.asStateFlow()
     private data class Filters(val query: String, val group: MemoryGroup, val scope: MemoryScope?, val sort: MemorySort)
     private val filters = combine(query.debounce(250), group, scope, sort, ::Filters)
-    val state = combine(memories.observeMemories(), filters) { records, filters -> records to filters }
-        .mapLatest { (records, filters) ->
+    private var lastLoaded = MemoryHubState()
+    val state = combine(filters, refresh) { filters, _ -> filters }.flatMapLatest { filters ->
+        memories.observeMemories().mapLatest { records ->
             val safe = records.filter { it.scope != MemoryScope.CONVERSATION &&
                 MemorySensitivityClassifier.classify(it.content) != MemorySensitivity.SECRET }
             val selected = if (filters.query.isBlank()) safe else {
@@ -65,12 +80,22 @@ class MemoryHubViewModel(
             }
             MemoryHubState(sorted.take(100).map { record -> MemoryPresentation.item(record,
                 record.scopeId?.let { scopeName(record.scope, it) }) }, safe.size, false,
-                filters.query, filters.group, filters.scope, filters.sort)
-        }.catch { emit(MemoryHubState(loading = false, error = "Memory could not be loaded.")) }
+                filters.query, filters.group, filters.scope, filters.sort).also { lastLoaded = it }
+        }.onStart { emit(lastLoaded.copy(items = if (lastLoaded.query == filters.query && lastLoaded.group == filters.group && lastLoaded.scope == filters.scope) lastLoaded.items else emptyList(),
+            loading = true, query = filters.query, group = filters.group, scope = filters.scope, sort = filters.sort, error = null)) }
+        .catch { emit(lastLoaded.copy(items = if (lastLoaded.query == filters.query && lastLoaded.group == filters.group && lastLoaded.scope == filters.scope) lastLoaded.items else emptyList(),
+            loading = false, query = filters.query, group = filters.group, scope = filters.scope, sort = filters.sort, error = "Memory could not be loaded.")) }
+    }
         .combine(error) { state, error -> state.copy(error = error ?: state.error) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MemoryHubState())
 
-    init { viewModelScope.launch(Dispatchers.IO) { mutableScopes.value = mutableScopes.value + eligibleScopes().distinctBy { it.scope to it.id } } }
+    init { loadScopes() }
+    private fun loadScopes() = viewModelScope.launch(Dispatchers.IO) {
+        try { mutableScopes.value = listOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) + eligibleScopes().distinctBy { it.scope to it.id } }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { error.value = "Memory scopes could not be loaded. Try again." }
+    }
+    fun retry() { error.value = null; refresh.value += 1; loadScopes() }
     fun search(value: String) { query.value = value.take(MemoryRetriever.MAX_QUERY_CHARS) }
     fun filter(value: MemoryGroup) { group.value = value }
     fun filterScope(value: MemoryScope?) { scope.value = value }

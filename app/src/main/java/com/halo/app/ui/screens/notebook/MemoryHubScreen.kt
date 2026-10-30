@@ -4,6 +4,11 @@ import androidx.compose.foundation.verticalScroll
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
+import com.halo.app.ui.zone5.*
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.platform.LocalFocusManager
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.horizontalScroll
@@ -39,6 +44,8 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val pending by viewModel.pending.collectAsStateWithLifecycle()
     val episodes by viewModel.episodes.collectAsStateWithLifecycle()
+    val pendingStatus by viewModel.pendingStatus.collectAsStateWithLifecycle()
+    val episodeStatus by viewModel.episodeStatus.collectAsStateWithLifecycle()
     val useMemory by viewModel.memoryUse.collectAsStateWithLifecycle()
     val review by viewModel.review.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
@@ -56,7 +63,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             showRemember = false
         }
     }
-    var section by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialSection) }
+    var section by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialSection.takeIf { it in listOf("Memories", "Suggestions", "Learning history") } ?: "Memories") }
     var editor by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate != null) }
     var draft by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.content.orEmpty()) }
     var kind by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.kind ?: MemoryKind.FACT) }
@@ -67,34 +74,43 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     var search by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf("") }
     LaunchedEffect(search, viewModel) { viewModel.search(search) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
-    val pageOwner = com.halo.app.ui.presence.ShellPageOwner("memory", sourceIdentity = "$savedRevision:$section:${state.group}:${state.scope}",
-        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory"))
+    val pageOwner = com.halo.app.ui.presence.ShellPageOwner("memory", sourceIdentity = "$savedRevision:$section:${state.group}:${state.scope}:${state.sort}:${search.hashCode()}:${state.query.hashCode()}:$editor:${review.hashCode()}:$busy",
+        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory", "halo_remember", "halo_propose_memory"))
     com.halo.app.ui.presence.BindShellPageActions(pageOwner, listOf(
         com.halo.app.ui.presence.ShellPageAction("page.memory.add", "Remember something", HaloGlyph.MEMORY, !busy) { editor = true },
-        com.halo.app.ui.presence.ShellPageAction("page.memory.saved", "Memories", HaloGlyph.MEMORY) { section = "Memories" },
-        com.halo.app.ui.presence.ShellPageAction("page.memory.suggestions", "Suggestions", HaloGlyph.QUESTION) { section = "Suggestions" },
-        com.halo.app.ui.presence.ShellPageAction("page.memory.history", "Learning history", HaloGlyph.ACTIVITY) { section = "Learning history" },
         com.halo.app.ui.presence.ShellPageAction("page.memory.settings", "Learning settings", HaloGlyph.SETTINGS, !busy, onSettings),
     ))
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         ToolZoneHeader(uiText("Memory") + " · " + uiText(section), onBack)
     }
+    val memoryScroll = rememberLazyListState()
+    val suggestionsScroll = rememberLazyListState()
+    val historyScroll = rememberLazyListState()
+    val focus = LocalFocusManager.current
+    var showUsage by rememberSaveable { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+    Zone5LocalTabs(listOf(Zone5LocalTab("Memories", uiText("Memories"), "tool_memory"),
+        Zone5LocalTab("Suggestions", uiText("Suggestions"), "memory_suggestions"),
+        Zone5LocalTab("Learning history", uiText("Learning history"), "memory_history")), section,
+        onSelect = { focus.clearFocus(); section = it })
+    LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = when (section) { "Suggestions" -> suggestionsScroll; "Learning history" -> historyScroll; else -> memoryScroll },
+        contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!shellOwnsOrb) item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
+        else item { Zone5InstrumentHeading(uiText("Memory"), "tool_memory", state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size)) }
         item {
-            Text(uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
+            TextButton({ showUsage = !showUsage }) { Text(stringResource(R.string.zone5_memory_usage_details)) }
+            if (showUsage) {
             Text(uiText(if (useMemory) "Halo may retrieve relevant saved memories that fit the current scope and context budget." else
                 "Saved memories stay here, but Halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
             Text(uiText("Remote AI receives memory only when your existing cloud-memory permission allows it."), style = MaterialTheme.typography.bodySmall)
-        }
-        if (!shellOwnsOrb) item {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Memories", "Suggestions", "Learning history").forEach { tab -> FilterChip(section == tab, { section = tab }, label = { Text(uiText(tab)) }) }
             }
         }
-        state.error?.let { message -> item { Text(message, color = MaterialTheme.colorScheme.error) } }
+        state.error?.let { message -> item {
+            Text(if (message == "Memory could not be loaded.") stringResource(R.string.zone5_memory_load_error) else uiText(message), color = MaterialTheme.colorScheme.error)
+            Zone5ActionButton(uiText("Try again"), "action_refresh", onClick = viewModel::retry)
+        } }
         when (section) {
             "Memories" -> {
                 item {
@@ -118,7 +134,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     if (!shellOwnsOrb) HaloFocusAction(uiText("Remember something"), HaloGlyph.MEMORY, !busy, { editor = true }, active = state.items.isEmpty())
                 }
                 if (state.loading) item { CircularProgressIndicator() }
-                else if (state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "Nothing remembered here yet. Add something to remember, or review Suggestions." else "No memories match. Try another word or change the filters.")) }
+                else if (state.error == null && state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "Nothing remembered here yet. Add something to remember, or review Suggestions." else "No memories match. Try another word or change the filters.")) }
                 items(state.items, key = { it.record.id }) { item ->
                     HaloWorkspaceCard {
                         Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
@@ -135,12 +151,16 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             }
             "Suggestions" -> {
                 item { Text(uiText("Suggestions are not saved facts. Nothing is remembered until you approve it.")) }
-                if (pending.isEmpty()) item { Text(uiText("No suggestions awaiting review")) }
+                if (pendingStatus.loading) item { Text(stringResource(R.string.zone5_suggestions_loading)); LinearProgressIndicator(Modifier.fillMaxWidth()) }
+                else if (pendingStatus.failed) item { Text(stringResource(R.string.zone5_memory_load_error), color = MaterialTheme.colorScheme.error); Zone5ActionButton(uiText("Try again"), "action_refresh", onClick = viewModel::retry) }
+                else if (pending.isEmpty()) item { Text(uiText("No suggestions awaiting review")) }
                 items(pending, key = { it.id }) { row -> SuggestionCard(row, notebook) { block -> viewModel.act(block); Unit } }
             }
             else -> {
                 item { Text(uiText("Past tasks Halo may use to understand repeated workflows. These are historical summaries, not current facts about you.")) }
-                if (episodes.isEmpty()) item { Text(uiText("No meaningful task history yet.")) }
+                if (episodeStatus.loading) item { Text(stringResource(R.string.zone5_history_loading)); LinearProgressIndicator(Modifier.fillMaxWidth()) }
+                else if (episodeStatus.failed) item { Text(stringResource(R.string.zone5_memory_load_error), color = MaterialTheme.colorScheme.error); Zone5ActionButton(uiText("Try again"), "action_refresh", onClick = viewModel::retry) }
+                else if (episodes.isEmpty()) item { Text(uiText("No meaningful task history yet.")) }
                 items(episodes, key = { it.id.value }) { episode ->
                     HaloWorkspaceCard {
                         Text(uiText(MemoryPresentation.date(episode.endedAt.toEpochMilli())) + " · " + uiText(if (episode.unknownCompletion) "Completion wasn't confirmed" else when (episode.outcome) {
@@ -166,6 +186,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             if (!shellOwnsOrb) TextButton(onSettings) { Text(uiText("Learning settings")) }
         }
     }
+    }
     if (showRemember) {
         HaloFxAnimation(
             moment = HaloFxMoment.REMEMBER,
@@ -175,7 +196,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     }
     }
     if (editor && review == null) AlertDialog(onDismissRequest = { if (!busy) editor = false }, title = { Text(uiText("Remember something")) }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))
             if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact Halo should remember."))
             HaloTextField(draft, { draft = it }, enabled = !busy, label = { Text(uiText("What should halo remember?")) }, modifier = Modifier.fillMaxWidth(), maxLines = 6, kind = VoiceFieldKind.TEXT)

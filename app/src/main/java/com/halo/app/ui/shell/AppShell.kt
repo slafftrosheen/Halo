@@ -387,7 +387,7 @@ fun AppShell(
             listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
         val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph,
             enabled = it.enabled, disabledReason = if (it.enabled) null else livePageActions.owner.disabledActionReasons[it.id]) }
-            ?: if (kidsMode) ShellOrbCatalog.context(contextualRoute, true) else emptyList()
+            ?: if (kidsMode && contextualRoute != "home") ShellOrbCatalog.context(contextualRoute, true) else emptyList()
         actions + page +
             if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
     }
@@ -696,6 +696,7 @@ fun AppShell(
                             },
                             onReviewMemory = { id -> navigateSafely("notebook/memory?noteId=${android.net.Uri.encode(id)}") },
                             onOpenStudio = { id, attachment -> navigateSafely("studio?sourceId=${android.net.Uri.encode(id)}&attachmentId=${android.net.Uri.encode(attachment)}") },
+                            onOpenOffice = if (kidsMode) null else { id -> navigateSafely("file_tools?objectId=${android.net.Uri.encode(id)}") },
                         )
                     }
                 }

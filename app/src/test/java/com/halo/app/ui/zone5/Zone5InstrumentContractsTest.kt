@@ -27,8 +27,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import com.github.takahirom.roborazzi.captureRoboImage
 
 @RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp")
 class Zone5InstrumentContractsTest {
     @get:Rule val compose = createComposeRule()
@@ -47,6 +50,7 @@ class Zone5InstrumentContractsTest {
         val layouts = mutableListOf<TextLayoutResult>()
         compose.onNodeWithText("Light and sound notes").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
         assertEquals(1, layouts.size)
+        compose.onRoot().captureRoboImage()
         assertFalse("The visible document identity is ellipsized", layouts.single().hasVisualOverflow)
     }
 

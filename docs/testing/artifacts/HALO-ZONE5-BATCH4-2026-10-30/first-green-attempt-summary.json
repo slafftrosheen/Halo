@@ -1,0 +1,211 @@
+{
+  "date": "2026-10-30",
+  "phase": "first-green-attempt",
+  "base": "70ee2a113915ea3a046d48a7fc21b92218169624",
+  "branch": "codex/halo-zone5-batch4",
+  "suites": [
+    {
+      "name": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "tests": 10,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "tests": 4,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "cases": [
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "blankGoalAndNoSourcesCannotBypassMaterialSelectionOrStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "ungroundedTopicLessonUsesGeneralKnowledgeInsteadOfClaimingASource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "goalOrSelectedMaterialAllowsStepProgressAndStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "backNavigationRemainsAvailableAndBusyStateBlocksChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "sourceFirstCanAdvanceFromBlankGoalToMaterialPicker",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "canvasArrangeIsAPreviewAndOldActionsExpireWhenSelectionChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studyPracticeChangesOnlyTheLocalViewAndBackRestoresLessonActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "officeLandingHasCreationOpenAndTruthfullyDisabledExport",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "insertingABlockUsesTheExistingDocumentOwnerAndAChangedSourceDisablesTheSheet",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "noteDefaultActionsBelongToTheCurrentDocument",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryHasOneDefaultSatelliteWhileSettingsRemainInAllActions",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "instrumentBackIsVisibleAndInvokesTheExistingOwner",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "childAppearanceKeepsTheCurrentPaletteAcrossThemeChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studyUsesLessonPracticeAndNarrationAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "canvasUsesAddArrangeAndFitAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studioUsesLayerAndExportAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "notesUseInsertionOutlineAndFindAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryDetailUsesSourceEditAndForgetAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "largeTextUtilityIdentityWrapsInsteadOfLosingTheDocumentName",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "officeUsesDocumentOpenAndExportAssets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test": "russianLargeHeaderKeepsBackAndStopReachable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test": "hostedChildDockHasLabeledCallbacksWithoutASecondVoiceControl",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test": "latvianLargeHeaderKeepsBackAndStopReachable",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "searchFailureHasAnExplicitRetryWithoutLosingTheRequestedQuery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "failedSearchCanRecoverWhenTheQueryChanges",
+      "status": "PASS"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "largeTextUtilityIdentityWrapsInsteadOfLosingTheDocumentName",
+      "reason": "java.lang.AssertionError: The visible document identity is ellipsized"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "reason": "androidx.test.espresso.AppNotIdleException: Compose did not get idle after 137639 attempts in 60 SECONDS.\n\n1. Check your measure/layout lambdas for infinite composition loops.\n2. Verify that the 'busy' resources listed above are not deadlocked.\n3. Increase Espresso's master idling policy if a longer timeout is required.\n The following Idle Conditions failed ."
+    }
+  ],
+  "totals": {
+    "tests": 28,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device_spoken_provider": "NOT_RUN - host only requested"
+}

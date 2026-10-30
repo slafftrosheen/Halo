@@ -3,6 +3,11 @@ package com.halo.app.ui.screens.notebook
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
+import com.halo.app.ui.zone5.Zone5InstrumentHeading
+import com.halo.app.ui.zone5.Zone5ActionButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import com.halo.app.ui.zone5.Zone5Icon
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
@@ -123,6 +128,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -158,6 +164,7 @@ fun NoteEditorScreen(
     onStartStudySetup: ((String?, com.halo.sdk.runtime.study.StudySessionSource) -> Unit)? = null,
     onReviewMemory: (String) -> Unit = {},
     onOpenStudio: ((String, String) -> Unit)? = null,
+    onOpenOffice: ((String) -> Unit)? = null,
 ) {
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -170,6 +177,7 @@ fun NoteEditorScreen(
     val referenceCandidates by viewModel.referenceCandidates.collectAsStateWithLifecycle()
 
     var showOutline by remember { mutableStateOf(false) }
+    var insertTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var showReferencePicker by remember { mutableStateOf(false) }
     // Non-null while the picker is repairing an existing reference block instead of inserting one.
     var relinkBlockId by remember { mutableStateOf<String?>(null) }
@@ -182,14 +190,30 @@ fun NoteEditorScreen(
     var confirmTrash by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
-    val pageOwner = ShellPageOwner("note", viewModel.noteId, "${state.revision}:${state.mode}:${state.selection}",
+    val insertEnabled = state.isEditable && state.mode == EditorMode.EDIT && literalFileFormat == null && !state.isGenerating
+    val pageOwner = ShellPageOwner("note", viewModel.noteId, "${state.revision}:${state.status}:${state.blocks.hashCode()}:${state.mode}:${state.selection}",
+        canonicalSourceVersion = state.revision.toString().takeIf { state.status == SaveStatus.SAVED },
         selectionIds = listOfNotNull(state.selection?.blockId),
-        canonicalToolIds = listOf("halo_note_get", "halo_note_read_block"))
+        canonicalToolIds = listOf("halo_note_get", "halo_note_read_block", "halo_note_insert_block", "halo_note_edit_block",
+            "halo_note_replace_content", "halo_note_rename"),
+        disabledActionReasons = mapOf("page.note.insert" to if (literalFileFormat != null) stringResource(R.string.zone5_literal_format)
+            else if (state.isGenerating) uiText("Updating...") else stringResource(R.string.zone5_edit_first),
+            "page.note.export" to stringResource(if (onOpenOffice == null) R.string.zone5_host_unavailable else R.string.zone5_save_first)))
     BindShellPageActions(pageOwner, listOf(
+        ShellPageAction("page.note.insert", stringResource(R.string.zone5_insert), HaloGlyph.NOTE, insertEnabled) {
+            val current = viewModel.uiState.value
+            if (current.isEditable && current.mode == EditorMode.EDIT && !current.isGenerating)
+                insertTarget = (current.selection?.blockId ?: current.blocks.lastOrNull()?.id) to noteInsertSignature(current)
+        },
+        ShellPageAction("page.note.outline", "Outline", HaloGlyph.NOTE, state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING)) { showOutline = true },
+        ShellPageAction("page.note.find", "Find and replace", HaloGlyph.SEARCH, state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING)) { showFindBar = !showFindBar },
         ShellPageAction("page.note.rename", "Rename", HaloGlyph.NOTE, state.isEditable) { titleDraft = state.title; showRename = true },
         ShellPageAction("page.note.assist", "Think with halo", HaloGlyph.TOOL, state.isEditable) { showHaloSheet = true },
-        ShellPageAction("page.note.outline", "Outline", HaloGlyph.NOTE) { showOutline = true },
-        ShellPageAction("page.note.find", "Find and replace", HaloGlyph.SEARCH) { showFindBar = !showFindBar },
+        ShellPageAction("page.note.export", stringResource(R.string.zone5_export_from_office), HaloGlyph.FILE,
+            onOpenOffice != null && state.status == SaveStatus.SAVED && state.mode != EditorMode.SOURCE && !state.isGenerating) {
+            val current = viewModel.uiState.value
+            if (current.status == SaveStatus.SAVED && current.mode != EditorMode.SOURCE && !current.isGenerating) onOpenOffice?.invoke(viewModel.noteId)
+        },
         ShellPageAction("page.note.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = true },
     ))
 
@@ -197,13 +221,11 @@ fun NoteEditorScreen(
         ToolZoneHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")),
             onBack = { viewModel.flush(); onBack() },
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null) {
-            if (state.displayBody.isNotBlank()) com.halo.app.ui.components.HaloReadAloud(state.displayBody, compact = true)
-            // The carousel opens the same panel. Keep the header's distinct close toggle when open.
-            ToolZoneHeaderAction(if (toolsExpanded) "note.close-tools" else "page.note.tools") {
-                IconButton(onClick = { toolsExpanded = !toolsExpanded }, modifier = Modifier.size(48.dp)) {
-                    com.halo.app.ui.icons.HaloIcon(HaloGlyph.TOOL, uiText("More tools"))
-                }
+            val renameLabel = uiText("Rename")
+            IconButton(onClick = { titleDraft = state.title; showRename = true }, enabled = state.isEditable, modifier = Modifier.size(48.dp)) {
+                Box(Modifier.semantics { contentDescription = renameLabel }) { Zone5Icon("action_rename", HaloGlyph.NOTE, Modifier.size(24.dp)) }
             }
+            if (state.displayBody.isNotBlank()) com.halo.app.ui.components.HaloReadAloud(state.displayBody, compact = true)
         }
     }
 
@@ -213,6 +235,31 @@ fun NoteEditorScreen(
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::addAttachment)
+    }
+    insertTarget?.let { target ->
+        val valid = insertEnabled && noteInsertSignature(state) == target.second
+        ModalBottomSheet(onDismissRequest = { insertTarget = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.zone5_insert), style = MaterialTheme.typography.titleLarge)
+                if (!valid) Text(stringResource(R.string.zone5_document_changed), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                listOf(NoteBlockType.PARAGRAPH, NoteBlockType.HEADING, NoteBlockType.BULLET_LIST,
+                    NoteBlockType.NUMBERED_LIST, NoteBlockType.CHECKLIST, NoteBlockType.QUOTE,
+                    NoteBlockType.CODE, NoteBlockType.DIVIDER).forEach { type ->
+                    Zone5ActionButton(uiText(type.label), "action_add", valid, Modifier.fillMaxWidth()) {
+                        val current = viewModel.uiState.value
+                        if (noteInsertSignature(current) == target.second && current.isEditable) viewModel.insertBlock(target.first, type)
+                        insertTarget = null
+                    }
+                }
+                Zone5ActionButton(uiText("Attach"), "action_attach", valid, Modifier.fillMaxWidth()) {
+                    insertTarget = null; filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*"))
+                }
+                Zone5ActionButton(uiText("Link a workspace item"), "action_link", valid, Modifier.fillMaxWidth()) {
+                    insertTarget = null; relinkBlockId = null; showReferencePicker = true
+                }
+            }
+        }
     }
 
     DisposableEffect(lifecycleOwner, viewModel) {
@@ -417,6 +464,11 @@ fun NoteEditorScreen(
             // Keep the selection toolbar directly above the keyboard instead of under it.
             .then(if (shellOwnsOrb) Modifier else Modifier.imePadding())
     ) {
+        if (shellOwnsOrb) Zone5InstrumentHeading(
+            if (literalFileFormat == null) uiText("Notes") else stringResource(R.string.file52_title),
+            if (literalFileFormat == null) "type_note" else "office_document",
+            workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")),
+            state = literalFileFormat?.let { stringResource(R.string.zone5_literal_format) })
         if (!shellOwnsOrb) EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")), toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded },
             onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
@@ -508,7 +560,10 @@ fun NoteEditorScreen(
         }
         if (state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
             onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
-            onHalo = { showHaloSheet = true })
+            onHalo = { showHaloSheet = true },
+            onExport = onOpenOffice?.takeIf { literalFileFormat != null }?.let { open -> ({
+                if (viewModel.uiState.value.status == SaveStatus.SAVED) open(viewModel.noteId)
+            }) })
         EditorStatusBar(state)
     }
 }
@@ -1145,12 +1200,12 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
                         label = { Text(uiText("Replace with")) },
                         modifier = Modifier.widthIn(min = 140.dp), kind = VoiceFieldKind.TEXT)
                     TextButton(onClick = viewModel::replaceActiveMatch,
-                        enabled = state.matches.isNotEmpty(),
+                        enabled = state.matches.isNotEmpty() && state.isEditable,
                         modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(uiText("Replace"))
                     }
                     TextButton(onClick = viewModel::replaceAllMatches,
-                        enabled = state.matches.isNotEmpty(),
+                        enabled = state.matches.isNotEmpty() && state.isEditable,
                         modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(uiText("All"))
                     }
@@ -1797,31 +1852,31 @@ private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.C
 /** NB02: the six daily editing actions remain above the keyboard. */
 @Composable
 private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewModel,
-    onAdd: () -> Unit, onHalo: () -> Unit) {
+    onAdd: () -> Unit, onHalo: () -> Unit, onExport: (() -> Unit)? = null) {
     Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)) {
-        Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.SpaceEvenly,
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically) {
+            Zone5ActionButton(uiText("Undo"), "action_undo", state.canUndo, onClick = viewModel::undo)
+            Zone5ActionButton(uiText("Redo"), "action_redo", state.canRedo, onClick = viewModel::redo)
+            onExport?.let { export -> Zone5ActionButton(uiText("Export"), "action_export",
+                state.status == SaveStatus.SAVED && !state.isGenerating, onClick = export) }
             val literal = state.blocks.singleOrNull()?.let { com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) } != null
             if (!literal) {
-            NoteBlockAddMenu(onBlock = { type ->
+            ToolZoneHeaderAction("page.note.insert") { NoteBlockAddMenu(onBlock = { type ->
                 viewModel.insertBlock(state.selection?.blockId ?: state.blocks.lastOrNull()?.id, type)
-            }, onAttachment = onAdd)
-            IconButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.BOLD) }, enabled = state.selection != null) {
-                Icon(painterResource(R.drawable.halo_ic_bold), uiText("Bold"))
+            }, onAttachment = onAdd) }
+            TextButton(onClick = { viewModel.toggleInlineStyle(InlineStyle.BOLD) }, enabled = state.selection != null,
+                modifier = Modifier.heightIn(min = 48.dp)) {
+                Icon(painterResource(R.drawable.halo_ic_bold), null, Modifier.size(24.dp)); Spacer(Modifier.width(8.dp)); Text(uiText("Bold"))
             }
-            IconButton(onClick = { viewModel.convertSelectionTo(NoteBlockType.BULLET_LIST) }, enabled = state.selection != null) {
-                Icon(painterResource(R.drawable.halo_ic_bullet_list), uiText("List"))
-            }
+            Zone5ActionButton(uiText("List"), "office_bullets", state.selection != null) { viewModel.convertSelectionTo(NoteBlockType.BULLET_LIST) }
             }
             HaloVoiceTextActions(text = "", onText = viewModel::addDictatedParagraph,
                 enabled = !state.isGenerating, maxChars = 12000,
                 fieldContent = { control -> control() })
-            IconButton(onClick = onHalo) { HaloIcon(HaloGlyph.HALO, uiText("Ask halo")) }
-            IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
-                Icon(painterResource(R.drawable.halo_ic_undo), uiText("Undo"))
-            }
+            Zone5ActionButton(uiText("Ask halo"), "cognition_think", onClick = onHalo)
         }
     }
 }
@@ -1830,9 +1885,10 @@ private fun NoteFocusDock(state: NoteEditorUiState, viewModel: NoteEditorViewMod
 @Composable
 internal fun NoteBlockAddMenu(onBlock: (NoteBlockType) -> Unit, onAttachment: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    val label = uiText("Add block")
     Box {
         IconButton(onClick = { expanded = true }) {
-            Icon(painterResource(R.drawable.halo_ic_add_block), uiText("Add block"))
+            Box(Modifier.semantics { contentDescription = label }) { Zone5Icon("action_add", HaloGlyph.NOTE, Modifier.size(24.dp)) }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             listOf(NoteBlockType.PARAGRAPH, NoteBlockType.HEADING, NoteBlockType.BULLET_LIST,
@@ -1850,3 +1906,6 @@ internal fun NoteBlockAddMenu(onBlock: (NoteBlockType) -> Unit, onAttachment: ()
         }
     }
 }
+
+/** Ignore storage timestamps; a changed insertion scope must be deliberately reopened. */
+private fun noteInsertSignature(state: NoteEditorUiState): Int = state.blocks.map { Triple(it.id, it.type, it.text) }.hashCode()

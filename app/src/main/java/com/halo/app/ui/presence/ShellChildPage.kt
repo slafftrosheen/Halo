@@ -14,14 +14,18 @@ import com.halo.app.ui.icons.HaloGlyph
 @Composable
 internal fun BindShellChildPage(title: String, onBack: () -> Unit,
     objectId: String? = null, sourceIdentity: String? = null, titleIsSource: Boolean = false,
+    instrumentHeader: Boolean = false, canonicalToolIds: List<String>? = null,
+    disabledActionReasons: Map<String, String> = emptyMap(),
     actions: List<ShellPageAction> = emptyList()): Boolean {
     if (!LocalShellHaloOrb.current) return false
     val entry = androidx.lifecycle.compose.LocalLifecycleOwner.current as? androidx.navigation.NavBackStackEntry ?: return false
     val route = entry.destination.route ?: return false
     val owner = ShellPageOwner(route, objectId, sourceIdentity ?: title, entry.id,
-        canonicalToolIds = shellChildCanonicalTools(route))
+        canonicalToolIds = canonicalToolIds ?: shellChildCanonicalTools(route), disabledActionReasons = disabledActionReasons)
     BindShellPageActions(owner, listOf(ShellPageAction("child.back", "Back", HaloGlyph.PREVIOUS, onInvoke = onBack)) + actions)
     BindShellUtilityBand(owner) {
+        if (instrumentHeader) com.halo.app.ui.screens.notebook.ToolZoneHeader(title, onBack)
+        else
         Text(if (titleIsSource) title else uiText(title), Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
             style = MaterialTheme.typography.titleSmall, maxLines = 2,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)

@@ -23,6 +23,9 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.zone5.Zone5Icon
+import com.halo.app.ui.zone5.Zone5ActionButton
+import com.halo.app.ui.icons.HaloGlyph
 
 internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
 
@@ -72,8 +75,14 @@ internal fun KidsChoice(title: String, icon: Int, modifier: Modifier = Modifier,
             Box(Modifier.size(52.dp).background(
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = .55f),
                 RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
-                Icon(painterResource(icon), null, Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.primary)
+                androidx.compose.runtime.CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                    Zone5Icon(when (icon) {
+                        R.drawable.halo_ic_ask_mode -> "action_help"
+                        R.drawable.halo_ic_study -> "study_kids"
+                        R.drawable.halo_ic_sketch -> "studio_draw"
+                        else -> "action_help"
+                    }, HaloGlyph.TOOL, Modifier.size(28.dp))
+                }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleMedium.copy(
@@ -117,6 +126,7 @@ internal fun KidsCreationPanel(
 
 /** Compact Kids header for task screens; the 160dp orb belongs only on Home. */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 internal fun KidsActivityHeader(
     destination: KidsDestination,
     signal: HaloSignalPresentation,
@@ -130,18 +140,13 @@ internal fun KidsActivityHeader(
         KidsDestination.CREATE -> "Create a story with halo"
         KidsDestination.HOME -> "Kids"
     }
-    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
-            Icon(painterResource(R.drawable.halo_ic_back),
-                contentDescription = uiText("Back to choices"))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Zone5ActionButton(uiText("Back to choices"), "action_back", modifier = Modifier.heightIn(min = 56.dp), onClick = onBack)
+            Zone5ActionButton(uiText("Stop"), "media_stop", modifier = Modifier.heightIn(min = 56.dp), onClick = onStop)
         }
-        Text(lessonTitle?.takeIf { it.isNotBlank() } ?: uiText(title), modifier = Modifier.weight(1f),
+        Text(lessonTitle?.takeIf { it.isNotBlank() } ?: uiText(title), modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.titleLarge.copy(fontSize = 23.sp, lineHeight = 30.sp),
             maxLines = 2)
-        IconButton(onClick = onStop, modifier = Modifier.size(56.dp)) {
-            Icon(painterResource(R.drawable.halo_ic_stop), contentDescription = uiText("Stop"))
-        }
     }
 }

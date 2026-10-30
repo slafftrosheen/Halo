@@ -8,6 +8,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.*
+import com.halo.app.ui.zone5.Zone5Icon
 import com.halo.app.language.uiText
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
@@ -16,17 +19,36 @@ import com.halo.app.ui.icons.HaloIcon
 @Composable
 internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean = true,
     onTitleClick: (() -> Unit)? = null, trailing: @Composable RowScope.() -> Unit = {}) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    val density = LocalDensity.current
+    val keyboard = WindowInsets.ime.getBottom(density) > 0
+    val stacked = density.fontScale >= 1.4f && !keyboard
+    val back: @Composable () -> Unit = {
         if (!com.halo.app.ui.presence.LocalShellCarouselBackVisible.current) {
-            IconButton(onClick = onBack, enabled = enabled, modifier = Modifier.size(48.dp)) {
-                HaloIcon(HaloGlyph.PREVIOUS, uiText("Back"))
+            val label = uiText("Back")
+            TextButton(onClick = onBack, enabled = enabled,
+                modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = label }) {
+                Zone5Icon("action_back", HaloGlyph.PREVIOUS, Modifier.size(24.dp))
+                Spacer(Modifier.width(6.dp)); Text(label)
             }
         }
-        Box(Modifier.weight(1f).heightIn(min = 48.dp).then(
-            if (onTitleClick != null) Modifier.clickable(enabled = enabled, onClickLabel = uiText("Rename"), onClick = onTitleClick)
+    }
+    val identity: @Composable (Modifier) -> Unit = { modifier ->
+        Box(modifier.heightIn(min = 48.dp).then(
+            if (onTitleClick != null) Modifier.clickable(enabled = enabled, role = Role.Button,
+                onClickLabel = uiText("Rename"), onClick = onTitleClick)
             else Modifier), contentAlignment = Alignment.CenterStart) {
-            Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = MaterialTheme.typography.titleSmall,
+                maxLines = if (keyboard) 1 else 2, overflow = TextOverflow.Ellipsis)
         }
+    }
+    if (stacked) Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            back(); Spacer(Modifier.weight(1f)); trailing()
+        }
+        identity(Modifier.fillMaxWidth())
+    } else Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        back()
+        identity(Modifier.weight(1f))
         trailing()
     }
 }

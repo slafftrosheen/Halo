@@ -46,11 +46,13 @@ fun StudioRoute(projectId: String?, sourceId: String?, attachmentId: String?, re
             else model.openSource(id, attachmentId, source.title.take(120).ifBlank { defaultName }, sourceVersion, handoffId)
         }
     }
+    LaunchedEffect(model) { model.openedCanvases.collect { id -> onOpenCanvas(id, null) } }
     StudioScreen(model, onBack, { onOpenFile(it.objectId.value) }, { output ->
         if (returnCanvasId != null) model.insertOutput(returnCanvasId, output) { node -> onOpenCanvas(returnCanvasId, node) }
         else pendingOutputId = output.objectId.value
     }, camera.take, { project -> model.prepareAi(project, aiTitle) },
-        onRecoverCamera = camera.retry.takeIf { camera.recoveryAvailable }, externalBusy = camera.busy)
+        onRecoverCamera = camera.retry.takeIf { camera.recoveryAvailable }, externalBusy = camera.busy,
+        onOpenCanvas = { id -> onOpenCanvas(id, null) })
     if (state.aiReview) WorkspaceImageDialog(model.imageStudio, saveLabel = stringResource(R.string.studio_keep_copy),
         scopeLabel = stringResource(R.string.studio_ai_copy_scope), dismissLabel = stringResource(R.string.studio_discard_proposal)) { model.dismissAi() }
     pendingOutputId?.let { outputId ->

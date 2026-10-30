@@ -15,6 +15,7 @@ import com.halo.app.R
 import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.zone5.Zone5ActionButton
 
 /** K01 chrome; the credential gate is owned by the caller. */
 @Composable
@@ -27,12 +28,11 @@ internal fun KidsHomeHero(signal: HaloSignalPresentation, onListen: () -> Unit,
             Text(uiText("Hi there!"), Modifier.weight(1f),
                 style = MaterialTheme.typography.titleLarge.copy(fontSize = 23.sp,
                     lineHeight = 30.sp, fontWeight = FontWeight.SemiBold))
-            if (showStop) IconButton(onStop, Modifier.size(56.dp)) {
-                Icon(painterResource(R.drawable.halo_ic_stop), uiText("Stop"))
-            }
-            IconButton(onGrownUp, Modifier.size(56.dp)) {
-                Icon(painterResource(R.drawable.halo_ic_privacy), uiText("Grown-up space"))
-            }
+        }
+        // Labels wrap independently of the greeting at large text sizes.
+        Column(Modifier.fillMaxWidth()) {
+            if (showStop) Zone5ActionButton(uiText("Stop"), "media_stop", modifier = Modifier.heightIn(min = 56.dp), onClick = onStop)
+            Zone5ActionButton(uiText("Grown-up space"), "action_lock", modifier = Modifier.heightIn(min = 56.dp), onClick = onGrownUp)
         }
         if (!com.halo.app.ui.presence.LocalShellHaloOrb.current)
             HaloSignalFace(signal, kids = true, size = if (enlarged) 64.dp else 96.dp,

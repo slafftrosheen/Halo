@@ -4,6 +4,17 @@ import android.app.Application
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.ui.test.*
+import com.github.takahirom.roborazzi.captureRoboImage
+import org.robolectric.annotation.GraphicsMode
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.halo.app.ui.theme.HaloPalette
+import com.halo.app.ui.theme.HaloAccent
+import com.halo.app.ui.theme.HaloTone
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
@@ -31,7 +42,8 @@ import org.robolectric.annotation.Config
 
 /** Actual entry-scoped page projections backed by isolated canonical Room owners. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class, qualifiers = "w900dp-h1400dp")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [34], application = Application::class, qualifiers = "en-rUS-w360dp-h800dp")
 @OptIn(ExperimentalCoroutinesApi::class)
 class Zone5DocumentActionsTest {
     @get:Rule val compose = createComposeRule()
@@ -53,7 +65,7 @@ class Zone5DocumentActionsTest {
         } finally { try { fixture.close() } finally { Dispatchers.resetMain() } }
     }
     private fun render(route: String, content: @Composable () -> Unit) {
-        compose.setContent { HostlessHaloTheme {
+        compose.setContent { HostlessHaloTheme(darkTheme = true, palette = HaloPalette(HaloAccent.BLUE, HaloTone.COOL)) {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onSurface) {
                     val nav = rememberNavController()
@@ -69,6 +81,7 @@ class Zone5DocumentActionsTest {
         compose.runOnUiThread { model = NoteEditorViewModel(note.id, NotebookUseCases(fixture.notes), document = fixture.documents); own(model) }
         render("notebook/note/{noteId}") { NoteEditorScreen(model, {}) }
         compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.status == SaveStatus.SAVED }
+        compose.onRoot().captureRoboImage()
         compose.runOnIdle {
             assertEquals(note.id, actions.value!!.owner.objectId)
             assertNotNull(actions.value!!.owner.navigationEntryId)
@@ -79,10 +92,26 @@ class Zone5DocumentActionsTest {
         lateinit var model: WorkspaceFileToolsViewModel
         compose.runOnUiThread { model = WorkspaceFileToolsViewModel(fixture.tools); own(model) }
         render("file_tools") { WorkspaceFileToolsScreen(model, {}, {}, {}, {}, {}, {}) }
+        compose.onRoot().captureRoboImage()
         compose.runOnIdle {
             assertEquals(listOf("page.office.new", "page.office.open", "page.office.export"), actions.value!!.actions.take(3).map { it.id })
             assertFalse(actions.value!!.actions.single { it.id == "page.office.export" }.enabled)
             assertFalse(actions.value!!.invoke("page.office.export"))
         }
     }
+    @Test fun insertingABlockUsesTheExistingDocumentOwnerAndAChangedSourceDisablesTheSheet() {
+        val note = runBlocking { fixture.notes.createNote("Original paragraph.", title = "Field notes") }
+        lateinit var model: NoteEditorViewModel
+        compose.runOnUiThread { model = NoteEditorViewModel(note.id, NotebookUseCases(fixture.notes), document = fixture.documents); own(model) }
+        render("notebook/note/{noteId}") { NoteEditorScreen(model, {}) }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.status == SaveStatus.SAVED }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.insert")) }
+        compose.onNodeWithText("Heading 1").performScrollTo().performClick()
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.blocks.size == 2 }
+        assertEquals(com.halo.app.data.notebook.NoteBlockType.HEADING, model.uiState.value.blocks.last().type)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.insert")); model.updateBlock(model.uiState.value.blocks.first().id, "Updated paragraph.") }
+        compose.onNodeWithText("Heading 1").assertIsNotEnabled()
+        assertEquals(2, model.uiState.value.blocks.size)
+    }
+
 }

@@ -3,6 +3,8 @@ package com.halo.app.ui.screens.notebook
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
+import com.halo.app.ui.zone5.Zone5InstrumentHeading
+import com.halo.app.ui.zone5.Zone5ActionButton
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
@@ -166,6 +168,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var aiAction by rememberSaveable { mutableStateOf("Review") }
     var aiInstructions by rememberSaveable { mutableStateOf("") }
     var menu by remember { mutableStateOf(false) }
+    var arrangeTarget by remember(viewModel.canvasId) { mutableStateOf<Pair<Set<String>, Int>?>(null) }
     // NB04: one contextual suggestion, never an automatic graph mutation.
     // The user must have explicitly selected four cards. Dismissing this
     // suggestion leaves the cards and selection untouched.
@@ -219,12 +222,22 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     val pageOwner = ShellPageOwner("canvas", viewModel.canvasId,
         "${state.nodes.hashCode()}:${state.edges.hashCode()}:${state.selectedNodeIds.sorted()}:${state.selectedNodeId}",
         selectionIds = state.selectedNodeIds.ifEmpty { setOfNotNull(state.selectedNodeId) }.sorted(),
-        canonicalToolIds = listOf("halo_canvas_current", "halo_canvas_get"))
+        canonicalToolIds = listOf("halo_canvas_current", "halo_canvas_get", "halo_canvas_add_text", "halo_canvas_arrange",
+            "halo_canvas_edit_text", "halo_canvas_export_note"),
+        disabledActionReasons = mapOf("page.canvas.add" to uiText("Updating..."),
+            "page.canvas.arrange" to uiText(if (state.nodes.isEmpty()) "Nothing in this view" else "Updating..."),
+            "page.canvas.fit" to uiText("Nothing in this view")))
     BindShellPageActions(pageOwner, listOf(
-        ShellPageAction("page.canvas.options", "Tools", HaloGlyph.ACTION, !state.loading && !state.missing) { menu = true },
-        ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true },
+        ShellPageAction("page.canvas.add", "Add", HaloGlyph.NOTE, boardEditingEnabled) { insertMenu = true },
+        ShellPageAction("page.canvas.arrange", stringResource(com.halo.app.R.string.zone5_arrange), HaloGlyph.TOOL,
+            boardEditingEnabled && state.nodes.isNotEmpty()) {
+            val current = viewModel.uiState.value
+            arrangeTarget = current.selectedNodeIds.ifEmpty { setOfNotNull(current.selectedNodeId) } to current.nodes.hashCode()
+        },
         ShellPageAction("page.canvas.fit", "Fit all cards", HaloGlyph.NOTE,
             state.nodes.isNotEmpty() && !state.loading && !state.missing) { viewModel.fitToContent() },
+        ShellPageAction("page.canvas.options", "Tools", HaloGlyph.ACTION, !state.loading && !state.missing) { menu = true },
+        ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true },
         ShellPageAction("page.canvas.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = !toolsExpanded },
     ))
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
@@ -251,6 +264,39 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var groupTitle by rememberSaveable { mutableStateOf("") }
     var tagDialog by remember { mutableStateOf(false) }
     var tagTitle by rememberSaveable { mutableStateOf("") }
+
+    arrangeTarget?.let { target ->
+        val currentIds = state.selectedNodeIds.ifEmpty { setOfNotNull(state.selectedNodeId) }
+        val valid = boardEditingEnabled && state.nodes.hashCode() == target.second && currentIds == target.first
+        fun applyCurrent(action: () -> Unit) {
+            val live = viewModel.uiState.value
+            if (valid && live.nodes.hashCode() == target.second && live.selectedNodeIds.ifEmpty { setOfNotNull(live.selectedNodeId) } == target.first) {
+                arrangeTarget = null; action()
+            }
+        }
+        ModalBottomSheet(onDismissRequest = { arrangeTarget = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(com.halo.app.R.string.zone5_arrange), style = MaterialTheme.typography.titleLarge)
+                if (!valid) Text(stringResource(com.halo.app.R.string.zone5_document_changed))
+                Zone5ActionButton(uiText("Organize whole board"), "action_organize", valid, Modifier.fillMaxWidth()) {
+                    applyCurrent { viewModel.organize(wholeBoard = true, ai = false) }
+                }
+                Zone5ActionButton(uiText("Organize selected"), "studio_align", valid && target.first.isNotEmpty(), Modifier.fillMaxWidth()) {
+                    applyCurrent { viewModel.organize(wholeBoard = false, ai = false) }
+                }
+                Zone5ActionButton(uiText("Create group"), "studio_group", valid && target.first.size >= 2, Modifier.fillMaxWidth()) {
+                    applyCurrent { groupDialog = true }
+                }
+                Zone5ActionButton(uiText("Bring forward"), "action_up", valid && target.first.isNotEmpty(), Modifier.fillMaxWidth()) {
+                    applyCurrent { viewModel.manualSelectionAction("Bring forward") }
+                }
+                Zone5ActionButton(uiText("Ungroup"), "studio_ungroup", valid && selected?.type == CanvasNodeType.GROUP, Modifier.fillMaxWidth()) {
+                    applyCurrent { viewModel.manualSelectionAction("Ungroup") }
+                }
+            }
+        }
+    }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.importSource(uri)
@@ -560,32 +606,32 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(uiText("More tools"), style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 8.dp))
-                CanvasSheetAction("Think with halo", com.halo.app.R.drawable.halo_ic_think_with_halo,
+                CanvasSheetAction("Think with halo", com.halo.app.R.drawable.ic_halo_cognition_think,
                     enabled = boardEditingEnabled, accent = true) {
                     menu = false; showAi = true
                 }
-                CanvasSheetAction("Organize whole board", com.halo.app.R.drawable.halo_ic_ai_organize,
+                CanvasSheetAction("Organize whole board", com.halo.app.R.drawable.ic_halo_action_organize,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.organize(wholeBoard = true)
                 }
-                CanvasSheetAction("Study this canvas", com.halo.app.R.drawable.halo_ic_study_this,
+                CanvasSheetAction("Study this canvas", com.halo.app.R.drawable.ic_halo_tool_study,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.exportToNote(startStudy = true)
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.padding(vertical = 4.dp))
-                CanvasSheetAction("Find on canvas", com.halo.app.R.drawable.halo_ic_search) {
+                CanvasSheetAction("Find on canvas", com.halo.app.R.drawable.ic_halo_action_search) {
                     menu = false; searchOpen = true
                 }
-                CanvasSheetAction("Fit all cards", com.halo.app.R.drawable.halo_ic_fit_all,
+                CanvasSheetAction("Fit all cards", com.halo.app.R.drawable.ic_halo_canvas_fit,
                     enabled = state.nodes.isNotEmpty() && !state.loading && !state.missing) {
                     menu = false; viewModel.fitToContent()
                 }
-                CanvasSheetAction("Export to note", com.halo.app.R.drawable.halo_ic_export,
+                CanvasSheetAction("Export to note", com.halo.app.R.drawable.ic_halo_action_export,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.exportToNote()
                 }
-                CanvasSheetAction("Rename", com.halo.app.R.drawable.halo_ic_new_note,
+                CanvasSheetAction("Rename", com.halo.app.R.drawable.ic_halo_action_rename,
                     enabled = boardEditingEnabled) {
                     menu = false; title = state.title; rename = true
                 }
@@ -617,6 +663,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Canvas"), "type_canvas", state.title,
+            modifier = Modifier.padding(horizontal = 20.dp))
         if (!shellOwnsOrb) EditorWorkspaceHeader(state.title, menu,
             onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
             onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
@@ -1229,7 +1277,7 @@ internal fun canvasDockLabelsVisible(fontScale: Float): Boolean = fontScale < 1.
 internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () -> Unit,
     onText: () -> Unit, onSketch: () -> Unit, onLink: () -> Unit, onGroup: () -> Unit,
     onImport: () -> Unit, onHalo: () -> Unit, haloThinking: Boolean = false) {
-    val showLabels = canvasDockLabelsVisible(LocalDensity.current.fontScale)
+    val showLabels = com.halo.app.ui.presence.LocalShellHaloOrb.current || canvasDockLabelsVisible(LocalDensity.current.fontScale)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),
@@ -1241,12 +1289,12 @@ internal fun CanvasBrandDock(enabled: Boolean, selecting: Boolean, onSelect: () 
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 val actions = listOf(
-                    Triple(if (selecting) "Done selecting" else "Select", com.halo.app.R.drawable.halo_ic_select, onSelect),
-                    Triple("Text", com.halo.app.R.drawable.halo_ic_new_note, onText),
-                    Triple("Sketch", com.halo.app.R.drawable.halo_ic_sketch, onSketch),
-                    Triple("Link", com.halo.app.R.drawable.halo_ic_link, onLink),
-                    Triple("Group", com.halo.app.R.drawable.halo_ic_group, onGroup),
-                    Triple("Import", com.halo.app.R.drawable.halo_ic_import, onImport))
+                    Triple(if (selecting) "Done selecting" else "Select", com.halo.app.R.drawable.ic_halo_action_select, onSelect),
+                    Triple("Text", com.halo.app.R.drawable.ic_halo_office_edit_text, onText),
+                    Triple("Sketch", com.halo.app.R.drawable.ic_halo_studio_draw, onSketch),
+                    Triple("Link", com.halo.app.R.drawable.ic_halo_action_link, onLink),
+                    Triple("Group", com.halo.app.R.drawable.ic_halo_studio_group, onGroup),
+                    Triple("Import", com.halo.app.R.drawable.ic_halo_action_import, onImport))
                 actions.forEachIndexed { index, (label, icon, action) ->
                     val active = selecting && index == 0
                     val spokenLabel = uiText(label)

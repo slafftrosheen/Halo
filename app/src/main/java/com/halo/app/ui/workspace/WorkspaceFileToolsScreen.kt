@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -20,6 +21,11 @@ import com.halo.app.R
 import com.halo.app.data.notebook.*
 import com.halo.app.data.workspace.*
 import com.halo.app.ui.screens.notebook.*
+import com.halo.app.ui.zone5.Zone5InstrumentHeading
+import com.halo.app.ui.zone5.Zone5ActionButton
+import com.halo.app.ui.zone5.Zone5Icon
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.language.uiText
 
 private data class FileToolImageSelection(val minimum: Int, val sources: List<WorkspaceFile>)
 private data class FileToolImageEdit(val sources: List<WorkspaceFile>, val batch: Boolean)
@@ -34,6 +40,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     val state by model.state.collectAsStateWithLifecycle()
     val objects by model.objects.collectAsStateWithLifecycle()
     val files by model.files.collectAsStateWithLifecycle()
+    val library by model.libraryStatus.collectAsStateWithLifecycle()
     val active = objects.mapTo(HashSet()) { it.id.value }
     val availableImages = files.filter { it.objectId.value in active && it.mimeType.startsWith("image/") && it.version != null &&
         it.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL) }.take(100)
@@ -47,19 +54,40 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     var table by remember(selected?.id) { mutableStateOf(false) }
     var ink by remember { mutableStateOf<FileToolInkEdit?>(null) }
     var moreFormats by remember { mutableStateOf(false) }
+    var exportSource by remember { mutableStateOf<WorkspaceFileToolsObject?>(null) }
     val batchTitle = stringResource(R.string.file52_batch_receipt)
     val annotationTitle = stringResource(R.string.file52_annotation_name)
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(model::importFile) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val sourceAvailable = state.file?.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)
+    val canExport = !busy && !state.loading && selected != null && when (selected.kind) {
+        WorkspaceFileToolsKind.NOTE -> true
+        WorkspaceFileToolsKind.TEXT_DOCUMENT -> state.text != null
+        WorkspaceFileToolsKind.FILE -> sourceAvailable && state.file?.let { it.mimeType.startsWith("image/") || it.mimeType == "application/pdf" } == true
+        WorkspaceFileToolsKind.PDF_ANNOTATIONS -> sourceAvailable && state.annotations != null && state.file?.version == state.annotations?.source?.version
+        WorkspaceFileToolsKind.BATCH_RECEIPT -> false
+    }
+    val openExport: () -> Unit = {
+        if (canExport && selected != null) when (selected.kind) {
+            WorkspaceFileToolsKind.FILE -> state.file?.let { file ->
+                if (file.mimeType == "application/pdf") extracting = file else imageEdit = FileToolImageEdit(listOf(file), false)
+            }
+            else -> exportSource = selected
+        }
+    }
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("file_tools", selected?.id,
         "${selected?.version}:${state.file?.version}:${state.text?.revision}:${state.annotations?.revision}",
         canonicalSourceVersion = selected?.takeIf { it.kind == WorkspaceFileToolsKind.FILE }?.version,
-        canonicalToolIds = listOf("halo_file_tool_capabilities", "halo_get_file_metadata", "halo_text_get", "halo_pdf_annotation_get"))
+        canonicalToolIds = listOf("halo_file_tool_capabilities", "halo_get_file_metadata", "halo_text_get", "halo_text_export", "halo_pdf_annotation_get"),
+        disabledActionReasons = mapOf("page.office.export" to if (busy) uiText("Updating...")
+            else if (selected?.kind == WorkspaceFileToolsKind.FILE && state.file?.mimeType?.startsWith("text/") == true) stringResource(R.string.zone5_edit_text_first)
+            else stringResource(R.string.zone5_select_export)))
     com.halo.app.ui.presence.BindShellPageActions(pageOwner, buildList {
         add(com.halo.app.ui.presence.ShellPageAction("page.office.new", stringResource(R.string.file52_new_document), com.halo.app.ui.icons.HaloGlyph.NOTE, !busy) { creating = true })
         add(com.halo.app.ui.presence.ShellPageAction("page.office.open", stringResource(R.string.file52_open_file), com.halo.app.ui.icons.HaloGlyph.FILE, !busy) {
             picker.launch(arrayOf("text/*", "image/*", "application/pdf", "application/octet-stream"))
         })
+        add(com.halo.app.ui.presence.ShellPageAction("page.office.export", uiText("Export"), HaloGlyph.FILE, canExport, openExport))
         add(com.halo.app.ui.presence.ShellPageAction("page.office.graphics", stringResource(R.string.file52_create_image), com.halo.app.ui.icons.HaloGlyph.APPEARANCE, !busy) { onOpenStudio(null) })
         if (selected != null) {
             if (selected.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) add(com.halo.app.ui.presence.ShellPageAction(
@@ -91,7 +119,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         if (imageEdit?.let { it.batch && stale(it.sources) } == true) imageEdit = null
         if (collage?.let(::stale) == true) collage = null
     }
-    Scaffold(topBar = {
+    Scaffold(containerColor = com.halo.app.ui.theme.haloWorkspaceBackground(), topBar = {
         if (!shellOwnsOrb) TopAppBar(title = { Text(stringResource(R.string.file52_title)) }, navigationIcon = {
             IconButton(onClick = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.file52_back))
@@ -100,6 +128,8 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("file-tools-content"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
+                if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Office Tools"), "tool_office", selected?.title,
+                    state = if (selected == null) stringResource(R.string.zone5_office_kinds) else stringResource(R.string.file52_local_scope))
                 Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodyMedium)
                 if (!shellOwnsOrb) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { creating = true }, enabled = !busy) { Text(stringResource(R.string.file52_new_document)) }
@@ -125,13 +155,13 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
             }
             selected?.let { source ->
                 item {
-                    Text(source.title, style = MaterialTheme.typography.headlineSmall)
+                    if (!shellOwnsOrb) Text(source.title, style = MaterialTheme.typography.headlineSmall)
                     WorkspaceContinueButton(source.id, if (source.kind == WorkspaceFileToolsKind.FILE) source.version else null, enabled = !busy)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = { onAttach(source) }, enabled = !busy) { Text(stringResource(R.string.file52_attach_canvas)) }
                         if (source.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) TextButton(onClick = {
-                            onStudy(if (source.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS) requireNotNull(state.annotations).source.objectId else source.id)
-                        }, enabled = !busy) { Text(stringResource(R.string.file52_attach_study)) }
+                            if (source.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS) state.annotations?.source?.objectId?.let(onStudy) else onStudy(source.id)
+                        }, enabled = !busy && (source.kind != WorkspaceFileToolsKind.PDF_ANNOTATIONS || state.annotations != null)) { Text(stringResource(R.string.file52_attach_study)) }
                     }
                 }
                 when (source.kind) {
@@ -230,16 +260,51 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
                 }
             }
             item { Text(stringResource(R.string.file52_recent), style = MaterialTheme.typography.titleMedium) }
-            if (objects.isEmpty()) item { Text(stringResource(R.string.file52_empty)) }
+            if (library.objectsLoading && objects.isEmpty()) item { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
+            if (library.objectsError || library.filesError) item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.file52_error), color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = model::retryLibrary) { Text(uiText("Try again")) }
+                }
+            }
+            if (!library.objectsLoading && !library.objectsError && objects.isEmpty()) item { Text(stringResource(R.string.file52_empty)) }
             items(objects.take(100), key = { it.id.value }) { item ->
                 TextButton(onClick = { model.open(item.id.value) }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(item.title, Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Zone5Icon(if (item.type == WorkspaceObjectType.NOTE) "type_note" else "type_file", HaloGlyph.FILE, Modifier.size(24.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text(item.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
             item {
                 TextButton(onClick = { moreFormats = !moreFormats }) { Text(stringResource(R.string.file52_supported_tools)) }
                 if (moreFormats) {
                     WorkspaceFileToolCatalog.capabilities.forEach { capability -> WorkspaceFileToolCapabilityRow(capability) }
+                }
+            }
+        }
+    }
+    exportSource?.let { snapshot ->
+        val valid = !busy && canExport && selected?.id == snapshot.id && selected?.version == snapshot.version
+        ModalBottomSheet(onDismissRequest = { exportSource = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(uiText("Export") + " · " + snapshot.title, style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.zone5_export_snapshot), style = MaterialTheme.typography.bodyMedium)
+                if (!valid) Text(stringResource(R.string.zone5_document_changed))
+                val formats = if (snapshot.kind == WorkspaceFileToolsKind.NOTE) listOf(WorkspaceTextFormat.TXT, WorkspaceTextFormat.MARKDOWN)
+                    else if (snapshot.kind == WorkspaceFileToolsKind.TEXT_DOCUMENT) listOfNotNull(state.text?.format) else emptyList()
+                formats.forEach { format ->
+                    Zone5ActionButton(stringResource(when (format) {
+                        WorkspaceTextFormat.TXT -> R.string.file52_export_txt
+                        WorkspaceTextFormat.MARKDOWN -> R.string.file52_export_md
+                        WorkspaceTextFormat.CSV -> R.string.file52_export_csv
+                    }), "action_export", valid, Modifier.fillMaxWidth()) { exportSource = null; model.exportText(snapshot, format) }
+                }
+                if (snapshot.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS) state.annotations?.let { note ->
+                    note.markup.pages.keys.sorted().ifEmpty { listOf(1) }.forEach { page ->
+                        Zone5ActionButton(stringResource(R.string.file52_export_page, page), "office_extract_image", valid,
+                            Modifier.fillMaxWidth()) { exportSource = null; model.exportAnnotation(note, page) }
+                    }
                 }
             }
         }
