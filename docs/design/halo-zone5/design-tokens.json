@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0.0",
+  "design_version": "5.0.0",
+  "status": "approved visual direction; proposed implementation contract",
+  "source_commit": "4a227e33eb8e6812ad30481b36e0ceb0f17f4cbd",
+  "color": {
+    "primitive": {
+      "mint": "#0CF2BA",
+      "nightInk": "#060330",
+      "cream": "#FAFAF4",
+      "mintSoft": "#B4E6D6",
+      "blueSoft": "#B6DFE2",
+      "pinkSoft": "#F3C0D9",
+      "apricot": "#FF9F6B"
+    },
+    "dark": {
+      "background": "#060330",
+      "surface": "#110E45",
+      "surfaceRaised": "#1A1760",
+      "text": "#FAFAF4",
+      "textSecondary": "#B7B9D3",
+      "primary": "#0CF2BA",
+      "onPrimary": "#060330",
+      "outline": "#74739A",
+      "focus": "#0CF2BA",
+      "success": "#0CF2BA",
+      "warning": "#F4C56A",
+      "danger": "#FF8FA3",
+      "info": "#B6DFE2"
+    },
+    "light": {
+      "background": "#FAFAF4",
+      "surface": "#FFFFFF",
+      "surfaceRaised": "#EEF1F0",
+      "text": "#060330",
+      "textSecondary": "#50516B",
+      "primary": "#006F55",
+      "onPrimary": "#FFFFFF",
+      "outline": "#76788A",
+      "focus": "#006F55",
+      "success": "#006F55",
+      "warning": "#805100",
+      "danger": "#A82948",
+      "info": "#176A83"
+    },
+    "suiteDark": {
+      "study": "#B4E6D6",
+      "memory": "#B6DFE2",
+      "studio": "#F3C0D9",
+      "office": "#FF9F6B"
+    },
+    "suiteLight": {
+      "study": "#136F5B",
+      "memory": "#176A83",
+      "studio": "#A13969",
+      "office": "#9B4B19"
+    },
+    "highContrast": {
+      "darkBackground": "#000000",
+      "darkForeground": "#FFFFFF",
+      "lightBackground": "#FFFFFF",
+      "lightForeground": "#000000",
+      "decorativeOpacity": 0
+    }
+  },
+  "type": {
+    "headingFont": "Sora",
+    "bodyFont": "Atkinson Hyperlegible Next",
+    "cyrillicFont": "Onest",
+    "scaleSp": {
+      "display": 48,
+      "screenTitle": 26,
+      "sectionTitle": 20,
+      "body": 16,
+      "support": 14,
+      "actionLabel": 14,
+      "caption": 12
+    },
+    "lineHeightMultiplier": 1.4,
+    "maxActionLabelLines": 2,
+    "fontScalePolicy": "Honor user font scale; switch layout before truncating action labels."
+  },
+  "spaceDp": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    40,
+    48
+  ],
+  "radiusDp": {
+    "small": 8,
+    "field": 16,
+    "surface": 20,
+    "sheet": 24,
+    "satellite": 24
+  },
+  "strokeDp": {
+    "icon": 1.8,
+    "divider": 1,
+    "focus": 2,
+    "orb": 5.5
+  },
+  "layout": {
+    "referenceViewportDp": {
+      "width": 390,
+      "height": 844
+    },
+    "workFraction": 0.75,
+    "haloFraction": 0.25,
+    "pagePaddingDp": 24,
+    "compactPagePaddingDp": 16,
+    "maxReadableContentDp": 840,
+    "minimumInteractiveTargetDp": 48,
+    "minimumTargetGapDp": 8,
+    "preferredSatelliteGroupWidthDp": 88,
+    "satellitesVisible": 3,
+    "satelliteVisualDp": 48,
+    "satelliteGlyphDp": 24,
+    "suiteGlyphDp": 40,
+    "orbVisualDp": 72,
+    "composerOrbVisualDp": 64,
+    "compactOrbVisualDp": 48,
+    "composerMinHeightDp": 48,
+    "zoneMinWithoutComposerDp": 196,
+    "zoneMinWithComposerDp": 216,
+    "zonePreferredMaxDp": 248,
+    "orbBottomAnchorDp": 62,
+    "compactWhenIme": true,
+    "largeTextFlatActionsFromScale": 1.4,
+    "zoneMeasurementPolicy": "Measure after safe insets. Target 25%; measured control minimums and readable labels take priority. Use compact/list projection when height or text size makes the orbit unsafe. Expanded temporary sheets may cover the work area."
+  },
+  "motion": {
+    "pressMs": 100,
+    "controlChangeMs": 180,
+    "satelliteSnapMs": 180,
+    "sheetEnterMs": 260,
+    "sheetExitMs": 180,
+    "routeEnterMs": 200,
+    "routeExitMs": 120,
+    "successMs": 600,
+    "maxAnimatedFps": 30,
+    "standardEasing": [
+      0.333,
+      0,
+      0.667,
+      1
+    ],
+    "reducedMotion": "Static fallback; no parallax, autonomous orbit, spring overshoot or decorative loops.",
+    "autoRotateSatellites": false
+  },
+  "semantics": {
+    "globalMenuDestinations": [
+      "HaloScreen",
+      "Home",
+      "Workspace",
+      "Devices",
+      "Activities & notifications",
+      "Settings"
+    ],
+    "workspaceTabs": [
+      "Library",
+      "Tools"
+    ],
+    "workspaceDefault": "Library",
+    "workspaceTools": [
+      "Study",
+      "Memory",
+      "Halo Studio",
+      "Office Tools"
+    ],
+    "modeStatus": "read-only near orb; existing Local/Power control inside global menu",
+    "satelliteScope": "Only active instrument actions; an unopened Tools launcher has no satellites."
+  }
+}

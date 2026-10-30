@@ -1,0 +1,799 @@
+{
+  "schema_version": "1.0.0",
+  "pack": "Halo Zone 5.0",
+  "canvas": {
+    "width": 256,
+    "height": 256
+  },
+  "theme_variants": {
+    "logical_states": 13,
+    "lottie_files": 26,
+    "note": "Dark and light are colour variants of the same thirteen states, not extra states.",
+    "dark": {
+      "primary": "#0CF2BA",
+      "secondary": "#FAFAF4",
+      "surface": "#060330"
+    },
+    "light": {
+      "primary": "#006F55",
+      "secondary": "#060330",
+      "surface": "#FAFAF4"
+    }
+  },
+  "idle_fallbacks": {
+    "dark": "motion/svg/orb_idle.svg",
+    "light": "motion/themes/light/svg/orb_idle.svg",
+    "high_contrast": "motion/svg-high-contrast/orb_idle.svg"
+  },
+  "identity": {
+    "open_ring_gap_clock": "1–2 o'clock",
+    "gap_fixed": true,
+    "night_ink": "#060330",
+    "mint": "#0CF2BA",
+    "cream": "#FAFAF4"
+  },
+  "tokens": {
+    "press_feedback_ms": 100,
+    "control_change_ms": 180,
+    "sheet_enter_ms": 260,
+    "sheet_exit_ms": 180,
+    "satellite_snap_ms": 180,
+    "success_max_ms": 600,
+    "onboarding_hint_idle_delay_ms": 1200,
+    "attention_pulse_max_repeats": 1,
+    "loop_fps_cap": 30,
+    "high_refresh_required": false,
+    "easing": {
+      "standard": [
+        0.333,
+        0,
+        0.667,
+        1
+      ],
+      "exit": [
+        0.4,
+        0,
+        1,
+        1
+      ]
+    },
+    "satellite_auto_rotation": false,
+    "shake_on_error": false,
+    "elapsed_time_implies_percent": false
+  },
+  "global_lifecycle": {
+    "play_only": "Relevant state, visible route, screen on, lifecycle RESUMED, motion allowed",
+    "stop_when": [
+      "state exits",
+      "route hidden",
+      "screen off",
+      "lifecycle below RESUMED"
+    ],
+    "static_when": [
+      "reduced motion",
+      "high contrast",
+      "battery saver",
+      "thermal restriction"
+    ],
+    "never_dispatch": "Animation completion must never execute a command or mark a task successful"
+  },
+  "assets": [
+    {
+      "id": "orb_listening",
+      "name": "Listening",
+      "file": "motion/lottie/orb_listening.json",
+      "fallback": "motion/svg/orb_listening.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/orb_listening.svg",
+      "trigger": "Microphone owner reports active capture",
+      "loop": true,
+      "duration_ms": 2400,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 71,
+        "out_exclusive": 72
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/orb_listening.json",
+          "fallback": "motion/svg/orb_listening.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/orb_listening.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/orb_listening.json",
+          "fallback": "motion/themes/light/svg/orb_listening.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "el",
+        "fl",
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "A generic active-capture state. This does not visualize live audio amplitude.",
+      "render_qa_frames": [
+        0,
+        36,
+        71
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "orb_thinking",
+      "name": "Processing",
+      "file": "motion/lottie/orb_thinking.json",
+      "fallback": "motion/svg/orb_thinking.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/orb_thinking.svg",
+      "trigger": "Runtime reports preparing or processing without verified progress",
+      "loop": true,
+      "duration_ms": 1800,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 53,
+        "out_exclusive": 54
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/orb_thinking.json",
+          "fallback": "motion/svg/orb_thinking.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/orb_thinking.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/orb_thinking.json",
+          "fallback": "motion/themes/light/svg/orb_thinking.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "el",
+        "fl",
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Indeterminate. No elapsed-time-to-progress mapping; no implied completion deadline.",
+      "render_qa_frames": [
+        0,
+        27,
+        53
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "orb_speaking",
+      "name": "Speaking",
+      "file": "motion/lottie/orb_speaking.json",
+      "fallback": "motion/svg/orb_speaking.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/orb_speaking.svg",
+      "trigger": "Speech-output owner reports active playback",
+      "loop": true,
+      "duration_ms": 2000,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 59,
+        "out_exclusive": 60
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/orb_speaking.json",
+          "fallback": "motion/svg/orb_speaking.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/orb_speaking.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/orb_speaking.json",
+          "fallback": "motion/themes/light/svg/orb_speaking.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Generic output activity only; not a fabricated audio amplitude or lip-sync signal.",
+      "render_qa_frames": [
+        0,
+        30,
+        59
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "feedback_success",
+      "name": "Completed",
+      "file": "motion/lottie/feedback_success.json",
+      "fallback": "motion/svg/feedback_success.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/feedback_success.svg",
+      "trigger": "Canonical operation owner confirms successful completion",
+      "loop": false,
+      "duration_ms": 600,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 17,
+        "out_exclusive": 18
+      },
+      "playback": "one_shot",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/feedback_success.json",
+          "fallback": "motion/svg/feedback_success.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/feedback_success.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/feedback_success.json",
+          "fallback": "motion/themes/light/svg/feedback_success.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tm",
+        "tr"
+      ],
+      "notes": "Play once, then retain static result or dismiss according to context. Never synthesize success on timeout.",
+      "render_qa_frames": [
+        0,
+        9,
+        17
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "attention_needed",
+      "name": "Needs your review",
+      "file": "motion/lottie/attention_needed.json",
+      "fallback": "motion/svg/attention_needed.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/attention_needed.svg",
+      "trigger": "One newly surfaced unresolved user decision, after current interaction becomes idle",
+      "loop": false,
+      "duration_ms": 1000,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 29,
+        "out_exclusive": 30
+      },
+      "playback": "one_shot",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/attention_needed.json",
+          "fallback": "motion/svg/attention_needed.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/attention_needed.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/attention_needed.json",
+          "fallback": "motion/themes/light/svg/attention_needed.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "el",
+        "fl",
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "At most one play per canonical decision ID. No takeover of orb voice state; menu badge remains until resolved.",
+      "render_qa_frames": [
+        0,
+        15,
+        29
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "device_scanning",
+      "name": "Scanning for devices",
+      "file": "motion/lottie/device_scanning.json",
+      "fallback": "motion/svg/device_scanning.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/device_scanning.svg",
+      "trigger": "Device discovery owner reports scan active",
+      "loop": true,
+      "duration_ms": 2400,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 71,
+        "out_exclusive": 72
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/device_scanning.json",
+          "fallback": "motion/svg/device_scanning.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/device_scanning.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/device_scanning.json",
+          "fallback": "motion/themes/light/svg/device_scanning.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "el",
+        "fl",
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Only while scan is actually active. Stop when app backgrounds or scan stops; empty result is not an error animation.",
+      "render_qa_frames": [
+        0,
+        36,
+        71
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "device_connecting",
+      "name": "Connecting",
+      "file": "motion/lottie/device_connecting.json",
+      "fallback": "motion/svg/device_connecting.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/device_connecting.svg",
+      "trigger": "Device owner reports connection or handshake in progress",
+      "loop": true,
+      "duration_ms": 2000,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 59,
+        "out_exclusive": 60
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/device_connecting.json",
+          "fallback": "motion/svg/device_connecting.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/device_connecting.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/device_connecting.json",
+          "fallback": "motion/themes/light/svg/device_connecting.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "el",
+        "fl",
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "A BLE link alone must not trigger Ready; this clip stops only when canonical readiness, failure or cancellation arrives.",
+      "render_qa_frames": [
+        0,
+        30,
+        59
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "device_ready",
+      "name": "Device ready",
+      "file": "motion/lottie/device_ready.json",
+      "fallback": "motion/svg/device_ready.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/device_ready.svg",
+      "trigger": "Selected device reaches canonical READY state",
+      "loop": false,
+      "duration_ms": 600,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 17,
+        "out_exclusive": 18
+      },
+      "playback": "one_shot",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/device_ready.json",
+          "fallback": "motion/svg/device_ready.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/device_ready.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/device_ready.json",
+          "fallback": "motion/themes/light/svg/device_ready.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tm",
+        "tr"
+      ],
+      "notes": "Not triggered by pairing prompt, GATT connection or CCCD write alone.",
+      "render_qa_frames": [
+        0,
+        9,
+        17
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "download_active",
+      "name": "Downloading",
+      "file": "motion/lottie/download_active.json",
+      "fallback": "motion/svg/download_active.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/download_active.svg",
+      "trigger": "Download owner reports active transfer with unknown total",
+      "loop": true,
+      "duration_ms": 2000,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 59,
+        "out_exclusive": 60
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/download_active.json",
+          "fallback": "motion/svg/download_active.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/download_active.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/download_active.json",
+          "fallback": "motion/themes/light/svg/download_active.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Do not display invented percent. Show actual transferred bytes if supplied by the owner.",
+      "render_qa_frames": [
+        0,
+        30,
+        59
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "import_active",
+      "name": "Importing",
+      "file": "motion/lottie/import_active.json",
+      "fallback": "motion/svg/import_active.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/import_active.svg",
+      "trigger": "Import owner reports parse, copy or indexing in progress without reliable total",
+      "loop": true,
+      "duration_ms": 2000,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 59,
+        "out_exclusive": 60
+      },
+      "playback": "state_loop",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/import_active.json",
+          "fallback": "motion/svg/import_active.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/import_active.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/import_active.json",
+          "fallback": "motion/themes/light/svg/import_active.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "el",
+        "fl",
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Do not complete when a file picker closes. Keep stage text based on actual owner state.",
+      "render_qa_frames": [
+        0,
+        30,
+        59
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "library_empty",
+      "name": "Your library is ready",
+      "file": "motion/lottie/library_empty.json",
+      "fallback": "motion/svg/library_empty.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/library_empty.svg",
+      "trigger": "Library owner confirms loaded and empty, once per entry session",
+      "loop": false,
+      "duration_ms": 800,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 23,
+        "out_exclusive": 24
+      },
+      "playback": "one_shot",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/library_empty.json",
+          "fallback": "motion/svg/library_empty.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/library_empty.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/library_empty.json",
+          "fallback": "motion/themes/light/svg/library_empty.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Never replace loading or failed-load states with empty-state artwork. No autonomous idle animation.",
+      "render_qa_frames": [
+        0,
+        12,
+        23
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "study_milestone",
+      "name": "Learning milestone",
+      "file": "motion/lottie/study_milestone.json",
+      "fallback": "motion/svg/study_milestone.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/study_milestone.svg",
+      "trigger": "Study owner records an actual completed milestone",
+      "loop": false,
+      "duration_ms": 800,
+      "fps": 30,
+      "frames": {
+        "first": 0,
+        "last": 23,
+        "out_exclusive": 24
+      },
+      "playback": "one_shot",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/study_milestone.json",
+          "fallback": "motion/svg/study_milestone.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/study_milestone.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/study_milestone.json",
+          "fallback": "motion/themes/light/svg/study_milestone.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tr"
+      ],
+      "notes": "Play once per milestone ID. No fabricated points, confetti, sound or navigation takeover.",
+      "render_qa_frames": [
+        0,
+        12,
+        23
+      ],
+      "mobile_runtime_verified": false
+    },
+    {
+      "id": "progress_verified",
+      "name": "Verified progress",
+      "file": "motion/lottie/progress_verified.json",
+      "fallback": "motion/svg/progress_verified.svg",
+      "high_contrast_fallback": "motion/svg-high-contrast/progress_verified.svg",
+      "trigger": "Owner supplies finite completed and total values, total > 0",
+      "loop": false,
+      "duration_ms": 1010,
+      "fps": 100,
+      "frames": {
+        "first": 0,
+        "last": 100,
+        "out_exclusive": 101
+      },
+      "playback": "verified_progress_only",
+      "reduced_motion": "Use static SVG, retain localized textual state; no crossfade required",
+      "theme": {
+        "background": "transparent",
+        "primary": "#0CF2BA",
+        "secondary": "#FAFAF4",
+        "intended_surface": "#060330"
+      },
+      "themes": {
+        "dark": {
+          "file": "motion/lottie/progress_verified.json",
+          "fallback": "motion/svg/progress_verified.svg",
+          "high_contrast_fallback": "motion/svg-high-contrast/progress_verified.svg"
+        },
+        "light": {
+          "file": "motion/themes/light/lottie/progress_verified.json",
+          "fallback": "motion/themes/light/svg/progress_verified.svg",
+          "palette": {
+            "primary": "#006F55",
+            "secondary": "#060330",
+            "surface": "#FAFAF4"
+          },
+          "high_contrast_ink": "#060330"
+        }
+      },
+      "primitives": [
+        "gr",
+        "sh",
+        "st",
+        "tm",
+        "tr"
+      ],
+      "notes": "SCRUB ONLY: stop at frame floor(100 * completed / total). Never call play(). A full arc means the measured phase is complete, not overall success. Keep actual percentage in localized UI text.",
+      "render_qa_frames": [
+        0,
+        37,
+        100
+      ],
+      "mobile_runtime_verified": false
+    }
+  ]
+}

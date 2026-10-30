@@ -1,0 +1,174 @@
+{
+  "version": "5.0.0",
+  "components": [
+    {
+      "id": "HaloZoneHost",
+      "purpose": "One bottom owner for contextual controls and voice.",
+      "inputs": [
+        "activeEntryId",
+        "activeOwner",
+        "utilityProjection",
+        "currentPageActions",
+        "orbState",
+        "safeInsets",
+        "imeInsets",
+        "fontScale"
+      ],
+      "invariants": [
+        "One visible orb; no duplicate microphone control.",
+        "Global navigation never appears in the contextual carousel.",
+        "No context read or command execution caused by visibility, animation or scrolling.",
+        "Preserve entry-scoped action lease validation."
+      ]
+    },
+    {
+      "id": "GlobalNavigationSheet",
+      "purpose": "Named global destinations disclosed from the orb.",
+      "inputs": [
+        "selectedRoot",
+        "destinations",
+        "attentionSummary",
+        "existingProfileControl"
+      ],
+      "invariants": [
+        "Hold, upward orb swipe and Menu open the same sheet.",
+        "Selected destination is expressed in text/semantics, not color alone.",
+        "Back closes disclosure before route navigation.",
+        "Invoking a root opens its landing page; current draft/session remains owned by its existing owner."
+      ]
+    },
+    {
+      "id": "LabelledSatellite",
+      "purpose": "A recognizable action with a persistent adjacent label.",
+      "inputs": [
+        "stableId",
+        "iconId",
+        "localizedLabel",
+        "enabled",
+        "disabledReason",
+        "selected",
+        "badge"
+      ],
+      "invariants": [
+        "Icon and label form one focus and activation target.",
+        "Minimum 48dp hit target and non-overlapping label bounds.",
+        "No one-label-under-orb pattern.",
+        "No destructive action as a default prominent satellite."
+      ]
+    },
+    {
+      "id": "ContextOrbit",
+      "purpose": "Manual carousel for the current owner.",
+      "inputs": [
+        "ownerRevision",
+        "orderedActions",
+        "savedFirstVisibleId",
+        "reducedMotion"
+      ],
+      "invariants": [
+        "At most three visible controls; fewer when fewer actions exist.",
+        "Stable semantic ordering, no automatic rotation.",
+        "Drag never invokes action.",
+        "Full list exposes the same current-page action set, not a second catalog.",
+        "At large text/short height use labelled flat/list presentation."
+      ]
+    },
+    {
+      "id": "InstrumentHeader",
+      "purpose": "Identify the current document/tool and provide back or close in the zone utility band.",
+      "inputs": [
+        "toolName",
+        "documentTitle",
+        "backAction",
+        "saveState",
+        "selectionSummary"
+      ],
+      "invariants": [
+        "Opening a tool visibly changes both working area and owner title.",
+        "Never silently replace only orbit actions.",
+        "Long titles wrap in the work area; essential back/close stays reachable."
+      ]
+    },
+    {
+      "id": "WorkspaceSwitcher",
+      "purpose": "Separate saved objects from instruments.",
+      "inputs": [
+        "selectedTab",
+        "libraryState",
+        "availableTools"
+      ],
+      "invariants": [
+        "Default Library; preserve local tab and scroll on return.",
+        "Tools list opens each actual owner directly.",
+        "No tool-launcher actions leak into Library or an editor."
+      ]
+    },
+    {
+      "id": "ObjectRow",
+      "purpose": "A saved item with type, name, secondary metadata and true availability.",
+      "inputs": [
+        "objectId",
+        "typeIcon",
+        "title",
+        "summary",
+        "updatedAt",
+        "availableActions",
+        "selectionState"
+      ],
+      "invariants": [
+        "Icon encodes content type; label names actual object.",
+        "Unavailable content explains why and exposes recovery.",
+        "Selection mode changes actions explicitly and preserves actual IDs."
+      ]
+    },
+    {
+      "id": "HintHost",
+      "purpose": "Nonintrusive contextual instruction with remembered dismissal.",
+      "inputs": [
+        "eligibleHints",
+        "entryId",
+        "activeInteraction",
+        "acknowledgements"
+      ],
+      "invariants": [
+        "One hint at a time.",
+        "Never steal focus or cover active drawing/typing/voice.",
+        "Dismissal is persisted according to catalog policy.",
+        "Help remains rediscoverable from Settings/Help."
+      ]
+    },
+    {
+      "id": "AttentionBadge",
+      "purpose": "Truthful outstanding attention derived from canonical events.",
+      "inputs": [
+        "canonicalId",
+        "category",
+        "state",
+        "seen",
+        "resolved"
+      ],
+      "invariants": [
+        "Deduplicate projections by canonical event/run/decision ID.",
+        "Unread, actionable, active and failed are distinct meanings.",
+        "Completion is not automatically an unread badge.",
+        "Color always paired with text, shape or count."
+      ]
+    },
+    {
+      "id": "StateSurface",
+      "purpose": "Consistent loading/empty/error/offline/restricted states.",
+      "inputs": [
+        "loaded",
+        "contentCount",
+        "operationState",
+        "reason",
+        "recoveryAction"
+      ],
+      "invariants": [
+        "Empty only after successful empty load.",
+        "No fake progress or success from elapsed time.",
+        "Unavailability does not disable independent navigation or local editor actions."
+      ]
+    }
+  ]
+}

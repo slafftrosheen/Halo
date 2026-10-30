@@ -1,0 +1,3 @@
+Halo Zone 5.0 icon geometry
+
+These path-native icon geometries were authored for the Halo project in this asset pack. No third-party icon path collection was copied or embedded. The Halo project owner may use, modify, redistribute and incorporate these assets in the Halo project and related products without attribution to the authoring assistant. This note documents provenance and intended permission; it makes no claim that common interface symbols or the word Halo are exclusive intellectual property.
