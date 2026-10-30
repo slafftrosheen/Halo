@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "sourceCommit": "eee81b805698a70058cf4f9e775d703caa52d9bb",
+  "exit": 0,
+  "sourceDrift": [],
+  "elapsedSeconds": 324.0,
+  "completedUtc": "2026-10-30T07:51:32.046716+00:00",
+  "scope": "Pin/Unpin resource-only presentation delta: four-locale XML validation and app assembly. Earlier 65 tests/lint belong to preceding 53ffc6153 source; not rerun or relabeled.",
+  "appSha256": "5fd833042484d3560fc30625f6de59faa7deb3b3e9e43e114bb1db7e5872cca8"
+}

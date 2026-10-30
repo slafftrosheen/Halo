@@ -1,0 +1,119 @@
+{
+  "status": "PASS_SCOPED_KEEP_ISSUE_OPEN",
+  "sourceCommit": "eee81b805698a70058cf4f9e775d703caa52d9bb",
+  "appSha256": "5fd833042484d3560fc30625f6de59faa7deb3b3e9e43e114bb1db7e5872cca8",
+  "installedHashVerified": true,
+  "device": "23124RA7EO Android15",
+  "language": "ru",
+  "cardTypesSurvivedAppUpdate": [
+    "clock",
+    "study",
+    "automation_result",
+    "device"
+  ],
+  "workspaceSourceAlsoOpened": true,
+  "studySessionId": "ea09dbc3-86ab-4e3f-8548-c57a8040c409",
+  "studySources": [
+    {
+      "objectId": "5b10207a-9e0e-47db-8f04-396941ded2cf",
+      "revision": "1",
+      "textAnchor": null
+    }
+  ],
+  "qaDraftSurvivedAppUpdate": true,
+  "qaDraftClearedWithoutSending": true,
+  "routineRun": {
+    "id": "routine:82c665d8-93de-496f-93df-28e2922df5a1:manual:cd291a39-89f6-4974-8c22-4b7f54c58efe",
+    "state": "COMPLETED",
+    "actionsCompleted": 1,
+    "actionsTotal": 1,
+    "deliveryOutcome": "SURFACED_SILENTLY"
+  },
+  "routinePublicationId": "automation:82c665d8-93de-496f-93df-28e2922df5a1",
+  "routineSourceRevision": "2026-10-29T21:15:35.934Z",
+  "routineStillDisabled": true,
+  "oneStableRoutinePublication": true,
+  "localizedFreshRoutineCount": true,
+  "pinAndUnpinLocalizedOnDevice": true,
+  "textNativeProposalReviewedOnly": true,
+  "existingCardsRequestRejectedAsNoOp": true,
+  "layoutAddApplyRestart": true,
+  "twoAxisResizePreviewCancelledWithoutPersistence": true,
+  "pinPreviewCancelledWithoutPersistence": true,
+  "quietPresetApplied": true,
+  "persistedUndoRestoredOriginalContent": true,
+  "layoutVersions": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "nativePersonalization": {
+    "status": "PASS_NATIVE_PERSONALIZATION",
+    "geometry": {
+      "column": 0,
+      "row": 1,
+      "width": 6,
+      "height": 2
+    },
+    "geometrySurvivedForceStop": true,
+    "customPresetSavedAndSurvivedForceStop": true,
+    "customPresetLoadedThroughUi": true,
+    "undoRestoredOriginal": true,
+    "ownPresetRemoved": true,
+    "finalVersion": 16
+  },
+  "responsiveDarkRussian200Percent": [
+    {
+      "requestedWidthDp": 360,
+      "density": 480,
+      "fontScale": 2.0,
+      "routineCountVisible": true,
+      "deviceCardVisible": true
+    },
+    {
+      "requestedWidthDp": 412,
+      "density": 419,
+      "fontScale": 2.0,
+      "routineCountVisible": true,
+      "deviceCardVisible": true
+    }
+  ],
+  "responsiveLightRussian200Percent": [
+    {
+      "requestedWidthDp": 360,
+      "density": 480,
+      "fontScale": 2.0,
+      "workspaceCardVisible": true,
+      "unconfiguredWeatherTruthful": true,
+      "fourRootDestinationsPresent": true
+    },
+    {
+      "requestedWidthDp": 412,
+      "density": 419,
+      "fontScale": 2.0,
+      "workspaceCardVisible": true,
+      "unconfiguredWeatherTruthful": true,
+      "fourRootDestinationsPresent": true
+    }
+  ],
+  "appearanceAndPalettesRestored": true,
+  "displaySettingsRestored": {
+    "font_scale": "1.0",
+    "accelerometer_rotation": "1",
+    "user_rotation": "0",
+    "stay_on_while_plugged_in": "15"
+  },
+  "remaining": [
+    "Actual spoken layout request deferred",
+    "Live secure keyguard/dock and low-power/dimming transition qualification",
+    "Physical TalkBack and peripheral keyboard/tablet where available"
+  ],
+  "scope": "Source-owner tests and physical native UI evidence remain distinct. Large-text captures show readable routine/device content; not whole-app accessibility, battery or spoken qualification.",
+  "recordedUtc": "2026-10-30T08:28:53.638122+00:00"
+}

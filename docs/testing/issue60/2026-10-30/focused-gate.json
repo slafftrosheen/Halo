@@ -1,0 +1,81 @@
+{
+  "status": "PASS",
+  "sourceCommit": "53ffc6153cbda85a48fd1abb4b2037fa9839355b",
+  "exit": 0,
+  "classes": [
+    {
+      "name": "com.halo.app.di.tools.ScreenToolExecutorTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.LocalScreenStoreTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenAmbientPolicyTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenGridInteractionTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutPersistenceTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.screen.ScreenSummaryCopyTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.activity.ActivityOwnedCopyTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.activity.NativePhoneWorkflowActivityTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.notebook.MemoryDetailCopyTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "counts": {
+    "tests": 65,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "sourceDrift": [],
+  "elapsedSeconds": 1489.4,
+  "completedUtc": "2026-10-30T07:26:59.143015+00:00",
+  "scope": "Focused Screen persistence/policy/presentation plus previously changed copy fixtures, app lint and app assembly. No whole-repository or spoken acceptance.",
+  "appSha256": "481df776a0e0d8a78645e8cbd43952d3c9b5480c4f856bf261e6771e3c82bea6"
+}
