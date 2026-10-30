@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "scope": "Native edit of own QA source then Repeat and Continue refuses stale exact passage without broadening; canonical session anchor/revision, three existing replies, all five draft states and saved summary preserved.",
+  "sessionId": "211a9852-79d1-41df-8227-df9e37d9b3b0",
+  "sourceId": "c44d7c07-180c-4250-b5d7-0b2771b88ec6",
+  "currentRevision": 15,
+  "retainedRevision": 12,
+  "retainedRange": [
+    0,
+    444
+  ],
+  "newTutorTurns": 0,
+  "newCards": 0,
+  "summaryChanged": false,
+  "limitations": [
+    "No packet observer was attached for this native check; zero new replies is not a measured zero-network claim.",
+    "Three stale-recovery notices still render in English under Russian UI; localization gap remains.",
+    "QA source intentionally remains at its new revision; reselect passage explicitly before further generation."
+  ],
+  "mainApkSha256": "323f34f67d1b1bc4b325d13929666f3bbb6acf256e16d2d04529a6f07c31370b"
+}

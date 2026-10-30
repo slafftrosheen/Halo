@@ -174,3 +174,17 @@ source reference. Restart readback preserves the exact passage/revision, replies
 and note/provenance. Strict source-only content failed on an extra fact in the first reply;
 that result is retained separately from the passing persistence checks. Spoken routes remain
 deferred; this is not full issue closure.
+
+**PASS — native stale selected-passage refusal.** The actual generated-lesson QA source was
+edited through its native Word field from revision 12 to 15. Repeat refused with the material
+changed notice. Material showed zero available / one requiring attention, preserved the
+historical version, and explicitly required selecting the passage again. Continue with current
+source also refused; it did not silently broaden the selection to the full edited note. Independent
+readback confirms the session retains revision 12 and `[0,444)`, all three prior replies and all
+five draft states are identical, and the saved summary blocks remain unchanged. No new tutor
+turn or card was persisted. This check had no packet observer, so it adds no measured
+zero-network claim. [Result](issue57/2026-10-30/native-stale-passage-result.json).
+
+The QA source intentionally remains edited and requires an explicit new selection before
+further generation. Three recovery notices appeared in English under Russian UI; that UI gap
+is open. No closure or complete negative-matrix claim follows from this one physical case.
