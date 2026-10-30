@@ -152,7 +152,7 @@ class MemoryRepositoryTest {
             assertTrue(!enabled.value)
             assertEquals(1, memoryRepo.observeMemories().first().size)
             model.search("Fahrenheit")
-            val hits = model.state.first { it.query == "Fahrenheit" }
+            val hits = model.state.first { it.query == "Fahrenheit" && !it.loading }
             assertEquals(original.id, hits.items.single().record.id)
             assertTrue(searched > 0)
             assertEquals(0L, memoryRepo.getMemory(original.id)?.usageCount)

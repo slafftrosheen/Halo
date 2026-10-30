@@ -286,7 +286,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     applyCurrent { viewModel.organize(wholeBoard = false, ai = false) }
                 }
                 Zone5ActionButton(uiText("Create group"), "studio_group", valid && target.first.size >= 2, Modifier.fillMaxWidth()) {
-                    applyCurrent { groupDialog = true }
+                    applyCurrent { viewModel.organize(wholeBoard = false, ai = false) }
                 }
                 Zone5ActionButton(uiText("Bring forward"), "action_up", valid && target.first.isNotEmpty(), Modifier.fillMaxWidth()) {
                     applyCurrent { viewModel.manualSelectionAction("Bring forward") }

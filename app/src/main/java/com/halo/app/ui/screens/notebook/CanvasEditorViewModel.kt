@@ -428,7 +428,7 @@ class CanvasEditorViewModel(
             sourceEdgesFingerprint = com.halo.app.data.notebook.canvasEdgesFingerprint(repository.snapshot(canvasId).second.filter { edge ->
                 scope.any { it.id == edge.fromNodeId || it.id == edge.toNodeId }
             }))
-        mutableState.value = mutableState.value.copy(organization = proposal)
+        mutableState.value = mutableState.value.copy(organization = proposal, notice = null)
         if (!ai) return@command
         val engine = router ?: run { mutableState.value = mutableState.value.copy(notice = "No AI provider is ready. You can organize these cards manually."); return@command }
         mutableState.value = mutableState.value.copy(aiBusy = true)

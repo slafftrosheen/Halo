@@ -1,0 +1,296 @@
+{
+  "date": "2026-10-30",
+  "phase": "review-driver-checkpoint",
+  "base": "70ee2a113915ea3a046d48a7fc21b92218169624",
+  "branch": "codex/halo-zone5-batch4",
+  "suites": [
+    {
+      "name": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "tests": 5,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "tests": 4,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "cases": [
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "inferredSuggestionBecomesSavedOnlyAfterExplicitApprovalWithOriginRetained",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "unclassifiedInferredContentRemainsRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "boundedMemoryContextSourceRetrievesRelevantMemories",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "browsingAndSharedSearchLeaveUsageUntouchedAndSecretsCreateNothing",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "explicitImportConfirmationPreservesOriginContentConfidenceScopeAndExpiry",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "forgetDetachesWorkingSetAndLeavesRevisionHistory",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "hubUsesSharedSearchAndRequiresExplicitConflictReviewWithoutUsageWrites",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "reviewedNoteRetainsExactSourceRevisionAndLongNoteIsNotTruncated",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "conflictReviewWritesNothingAndReinforcementKeepsOneRecord",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "promoteCandidateCreatesMemoryRecordAndAllowsRevision",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.data.memory.MemoryRepositoryTest",
+      "test": "neverAgainSuppressesOnlySameFingerprint",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393ExactGoalAt200PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393QuestionAndMasteryHaveSeparateReadableBands",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393At200PercentQuestionAndMasteryHaveSeparateReadableBands",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal360At200PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question360At100PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question360At200PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal412At100PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "russianPhone393ExactGoalIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question412At100PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "question412At200PercentKeepsWidthAndMastery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "draftAnswerAndSourceAreReviewableBeforeKeepWithoutRecallSideEffects",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal360At100PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudyDraftReviewLayoutTest",
+      "test": "longGoal412At200PercentIsBoundedAndAccessible",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "narrowShortWindowUsesAListWithUnshrunkVoiceAndMenuTargets",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "latvianLargeTextRetainsExplicitMenuAndActionList",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "normalFooterShowsThreeLabelledActionsWithDisjointVoiceAndMenuBounds",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "sparseActionsRemainLabelledAndDoNotCoverVoice",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "childBackRemainsDirectWhileTheFullListKeepsTheSamePageAction",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "manualOrbitDragKeepsTheOrbAnchoredAndNeverExecutes",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "russianLargeTextKeepsProfileReadOnlyUntilMenuDisclosure",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "test": "lightPhone360",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "test": "latvianLargePhone200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.workspace.WorkspaceCsvLayoutTest",
+      "test": "russianShortLandscape200",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "canvasArrangeOpensWithoutMutatingTheBoard",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studyPracticeReviewAndBackUseExclusiveViews",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "changingASourceWhileNamingASelectedGroupCannotCommitIt",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "searchFailureHasAnExplicitRetryWithoutLosingTheRequestedQuery",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "failedSearchCanRecoverWhenTheQueryChanges",
+      "status": "PASS"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studyPracticeReviewAndBackUseExclusiveViews",
+      "reason": "java.lang.AssertionError: Action performScrollTo() failed.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Show answer' (ignoreCase: false))\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "changingASourceWhileNamingASelectedGroupCannotCommitIt",
+      "reason": "java.lang.AssertionError: Action performScrollTo() failed.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Create group' (ignoreCase: false))\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo",
+      "reason": "java.lang.AssertionError: Action performScrollTo() failed.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Create group' (ignoreCase: false))\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "reason": "androidx.test.espresso.AppNotIdleException: Compose did not get idle after 145825 attempts in 60 SECONDS.\n\n1. Check your measure/layout lambdas for infinite composition loops.\n2. Verify that the 'busy' resources listed above are not deadlocked.\n3. Increase Espresso's master idling policy if a longer timeout is required.\n The following Idle Conditions failed ."
+    }
+  ],
+  "totals": {
+    "tests": 43,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device_spoken_provider": "NOT_RUN - host only requested"
+}

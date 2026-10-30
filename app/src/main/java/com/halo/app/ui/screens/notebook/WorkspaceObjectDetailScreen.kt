@@ -60,6 +60,7 @@ import com.halo.app.data.workspace.WorkspaceFileAvailability
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.app.ui.workspace.StudioAlertDialog
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -291,7 +292,7 @@ fun WorkspaceObjectDetailScreen(
         }
     }
 
-    if (showSources) AlertDialog(onDismissRequest = { showSources = false }, title = { Text(uiText("Sources")) },
+    if (showSources) StudioAlertDialog(onDismissRequest = { showSources = false }, title = { Text(uiText("Sources")) },
         text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
             if (memoryState?.sources.isNullOrEmpty()) Text(stringResource(R.string.zone5_no_memory_source))
             memoryState?.sources.orEmpty().forEach { source ->
@@ -300,7 +301,7 @@ fun WorkspaceObjectDetailScreen(
                 source.objectRef?.let { ref -> Zone5ActionButton(ref.title, "study_source", !detailBusy) { showSources = false; onOpenSource(ref) } }
             }
         } }, confirmButton = { TextButton({ showSources = false }) { Text(uiText("Close")) } })
-    if (editingMemory) AlertDialog(onDismissRequest = { if (!detailBusy) editingMemory = false },
+    if (editingMemory) StudioAlertDialog(onDismissRequest = { if (!detailBusy) editingMemory = false },
         title = { Text(uiText("Correct memory")) }, text = {
             Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
                 Text(uiText("Current")); Text(memory?.content.orEmpty())
@@ -334,7 +335,7 @@ fun WorkspaceObjectDetailScreen(
         }
     }
     if (confirmForget) {
-        AlertDialog(
+        StudioAlertDialog(
             onDismissRequest = { if (!actionBusy) confirmForget = false },
             title = { Text(uiText("Forget this memory?")) },
             text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {

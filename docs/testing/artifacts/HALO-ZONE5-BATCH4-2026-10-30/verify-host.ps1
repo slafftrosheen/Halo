@@ -5,6 +5,7 @@ $filters = @(
     'com.halo.app.ui.zone5.*'
     'com.halo.app.ui.screens.notebook.*'
     'com.halo.app.ui.workspace.Studio*'
+    'com.halo.app.ui.workspace.WorkspaceCsvLayoutTest'
     'com.halo.app.data.studio.*'
     'com.halo.app.ui.screens.study.*'
     'com.halo.app.study.*'

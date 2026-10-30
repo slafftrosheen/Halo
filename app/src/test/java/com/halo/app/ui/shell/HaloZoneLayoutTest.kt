@@ -101,7 +101,7 @@ class HaloZoneLayoutTest {
         compose.onAllNodesWithContentDescription("More tools").assertCountEquals(1)
         compose.onNodeWithContentDescription("Read aloud").assertIsDisplayed()
         compose.onNodeWithText("All actions").performClick()
-        compose.onNode(hasText("Back") and hasClickAction()).assertIsDisplayed().performClick()
+        compose.onNode(hasText("Back") and hasClickAction() and hasAnyAncestor(hasScrollAction())).assertIsDisplayed().performClick()
         assertEquals(listOf("header-back", "page:test.back"), invoked)
     }
 

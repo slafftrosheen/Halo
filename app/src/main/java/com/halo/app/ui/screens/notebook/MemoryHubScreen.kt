@@ -195,7 +195,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         )
     }
     }
-    if (editor && review == null) AlertDialog(onDismissRequest = { if (!busy) editor = false }, title = { Text(uiText("Remember something")) }, text = {
+    if (editor && review == null) StudioAlertDialog(onDismissRequest = { if (!busy) editor = false }, title = { Text(uiText("Remember something")) }, text = {
         Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))
             if (draft.length > MemoryLimits.CONTENT) Text(uiText("This note is too long to store as one memory. Write the concise fact Halo should remember."))
@@ -217,7 +217,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     // NB07: comparing existing memory with a proposed update must stay readable
     // at large font scales. Nothing is persisted until the user chooses an action.
     review?.let { reviewed ->
-        AlertDialog(
+        StudioAlertDialog(
             onDismissRequest = {
                 if (!busy) { viewModel.discardReview(); editor = false }
             },

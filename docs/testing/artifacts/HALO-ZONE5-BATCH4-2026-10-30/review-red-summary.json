@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-30",
+  "phase": "review-red",
+  "base": "70ee2a113915ea3a046d48a7fc21b92218169624",
+  "branch": "codex/halo-zone5-batch4",
+  "suites": [
+    {
+      "name": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "tests": 5,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "cases": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "canvasArrangeOpensWithoutMutatingTheBoard",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studyPracticeReviewAndBackUseExclusiveViews",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "changingASourceWhileNamingASelectedGroupCannotCommitIt",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "status": "FAIL"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studyPracticeReviewAndBackUseExclusiveViews",
+      "reason": "java.lang.AssertionError: Action performScrollTo() failed.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Show answer' (ignoreCase: false))\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "changingASourceWhileNamingASelectedGroupCannotCommitIt",
+      "reason": "androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo",
+      "reason": "androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 10000 ms"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview",
+      "reason": "androidx.test.espresso.AppNotIdleException: Compose did not get idle after 168670 attempts in 60 SECONDS.\n\n1. Check your measure/layout lambdas for infinite composition loops.\n2. Verify that the 'busy' resources listed above are not deadlocked.\n3. Increase Espresso's master idling policy if a longer timeout is required.\n The following Idle Conditions failed ."
+    }
+  ],
+  "totals": {
+    "tests": 6,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device_spoken_provider": "NOT_RUN - host only requested"
+}

@@ -27,6 +27,7 @@ internal fun CanvasOrganizationDialog(viewModel: CanvasEditorViewModel, state: C
     AlertDialog(onDismissRequest = viewModel::cancelOrganization,
         title = { Text(uiText("Preview organization")) },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
             Text(uiText("%1\$d source cards · %2\$d groups", proposal.sourceFingerprints.size, proposal.groups.size))
             val arranged = proposal.groups.sumOf { it.memberIds.size }
             Text(uiText("%1\$d cards will move; %2\$d will stay where they are.", arranged, proposal.sourceFingerprints.size - arranged))

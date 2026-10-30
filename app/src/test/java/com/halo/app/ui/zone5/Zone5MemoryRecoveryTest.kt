@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.navigation.compose.*
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,8 +44,9 @@ import com.github.takahirom.roborazzi.captureRoboImage
 @Config(sdk = [34], application = Application::class, qualifiers = "en-rUS-w360dp-h800dp")
 @OptIn(ExperimentalCoroutinesApi::class)
 class Zone5MemoryRecoveryTest {
-    @get:Rule val compose = createComposeRule()
     private val scheduler = TestCoroutineScheduler()
+    private val main = UnconfinedTestDispatcher(scheduler)
+    @get:Rule val compose = createComposeRule(effectContext = main)
     private val owners = ViewModelStore()
     private val jobs = mutableListOf<Job>()
     private lateinit var fixture: WorkspaceFileToolsFixture
@@ -58,7 +61,7 @@ class Zone5MemoryRecoveryTest {
     }
     private val actions = mutableStateOf<ShellPageProjection?>(null)
     @Before fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher(scheduler)); fixture = WorkspaceFileToolsFixture()
+        Dispatchers.setMain(main); fixture = WorkspaceFileToolsFixture()
         memories = RoomMemoryRepository(fixture.database)
         runBlocking { memories.promoteCandidate(MemoryCandidate("Basil needs bright light.")) }
         compose.runOnUiThread {
@@ -160,21 +163,21 @@ class Zone5MemoryRecoveryTest {
     @Test fun detailCorrectionUsesTheCanonicalMemoryAndRejectsAChangedReview() {
         renderHub(detail = true)
         val id = runBlocking { memories.observeMemories().first().single().id }
-        // Native TextField focus/caret animation is not a durable operation.
-        // Drive frames explicitly while retaining every canonical/UI assertion.
-        compose.mainClock.autoAdvance = false
+        // Share the effect/VM scheduler across native dialog windows.
         compose.runOnIdle { assertTrue(actions.value!!.invoke("object.memory.edit")) }
-        compose.mainClock.advanceTimeBy(300)
-        compose.onNode(hasSetTextAction()).performTextReplacement("Basil needs a sunny window.")
+        await { compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size == 1 }
+        compose.onNode(hasSetTextAction()).performSemanticsAction(SemanticsActions.SetText) { assertTrue(it(AnnotatedString("Basil needs a sunny window."))) }
         compose.mainClock.advanceTimeByFrame()
+        compose.onNode(isDialog()).captureRoboImage("build/outputs/roborazzi/zone5-memory-correction.png")
         compose.onNodeWithText("Save correction").performClick()
         await { runBlocking { memories.getMemory(id)?.content } == "Basil needs a sunny window." && compose.onAllNodesWithText("Save correction").fetchSemanticsNodes().isEmpty() }
         compose.runOnIdle { assertTrue(actions.value!!.invoke("object.memory.edit")) }
-        compose.mainClock.advanceTimeBy(300)
-        compose.onNode(hasSetTextAction()).performTextReplacement("Unsaved draft.")
+        await { compose.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size == 1 }
+        compose.onNode(hasSetTextAction()).performSemanticsAction(SemanticsActions.SetText) { assertTrue(it(AnnotatedString("Unsaved draft."))) }
         runBlocking { memories.correctMemory(id, "External correction.") }
         await { compose.onAllNodesWithText("This memory changed. Close and review it before saving or forgetting.").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Save correction").assertIsNotEnabled()
+        compose.onNode(hasSetTextAction()).assertTextContains("Unsaved draft.")
         assertEquals("External correction.", runBlocking { memories.getMemory(id)?.content })
     }
 

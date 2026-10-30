@@ -168,7 +168,10 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     BindShellPageActions(pageOwner, buildList {
         if (!practiceOpen && !focusedReview) {
             add(ShellPageAction("page.study.details", "Sources", HaloGlyph.FILE, pageActionsReady) { detailsTab = "Material"; showDetails = true })
-            add(ShellPageAction("page.study.practice", "Practice", HaloGlyph.QUESTION, pageActionsReady) { practiceOpen = true })
+            add(ShellPageAction("page.study.practice", "Practice", HaloGlyph.QUESTION, pageActionsReady) {
+                viewModel.stopReading("Changed Study view")
+                focusedReview = false; practiceOpen = true
+            })
             if (state.reader?.speaking == true) add(ShellPageAction("page.study.stop-reading", "Stop reading", HaloGlyph.STOP) { viewModel.stopReading() })
             else add(ShellPageAction("page.study.read", "Read aloud", HaloGlyph.SPEAK, canRead) {
                 if (currentTurn != null) viewModel.readTurnAloud(currentTurn) else viewModel.readSourceAloud()
@@ -435,6 +438,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 Spacer(Modifier.weight(1f))
                 if (focusedReview || state.dueReviewItems.isNotEmpty()) {
                     TextButton(onClick = {
+                        viewModel.stopReading("Changed Study view")
+                        practiceOpen = false
                         focusedReview = !focusedReview
                         skippedReviewIds = emptyList()
                     }) {

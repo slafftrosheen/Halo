@@ -14,6 +14,7 @@ import com.halo.app.ui.presence.LocalShellUtilityBand
 import com.halo.app.ui.presence.ShellUtilityProjection
 import com.halo.app.ui.presence.RenderShellUtilityBand
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -160,7 +161,7 @@ class StudyDraftReviewLayoutTest {
     }
     private fun header(width: Int, scale: Float, language: String = "en", goal: String = GOAL) {
         render(width, scale, goal, language)
-        val title = compose.onNodeWithText(goal, useUnmergedTree = true)
+        val title = compose.onNode(hasText(goal) and hasAnyAncestor(hasTestTag("study-utility")), useUnmergedTree = true)
         val layout = layout(title)
         println("Study header fixture lang=$language width=$width font=$scale titleLines=${layout.lineCount} titleWidthDp=${layout.size.width / pixelsPerDp} titleHeightDp=${layout.size.height / pixelsPerDp}")
         assertTrue("A long Study goal must not become a five-line app bar", layout.lineCount <= 2)
@@ -199,7 +200,7 @@ class StudyDraftReviewLayoutTest {
                         CompositionLocalProvider(LocalShellUtilityBand provides utility) {
                             Column(Modifier.width(width.dp).height(900.dp)) {
                                 Box(Modifier.weight(1f).fillMaxWidth()) { StudyScreen(model, onBack = {}) }
-                                utility.value?.let { RenderShellUtilityBand(it) }
+                                Box(Modifier.testTag("study-utility")) { utility.value?.let { RenderShellUtilityBand(it) } }
                             }
                         }
                     }
