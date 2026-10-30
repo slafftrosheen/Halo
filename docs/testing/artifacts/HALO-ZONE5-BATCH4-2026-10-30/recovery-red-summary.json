@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-30",
+  "phase": "recovery-red",
+  "base": "70ee2a113915ea3a046d48a7fc21b92218169624",
+  "branch": "codex/halo-zone5-batch4",
+  "suites": [
+    {
+      "name": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "tests": 3,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "cases": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryHasOneDefaultSatelliteWhileSettingsRemainInAllActions",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "searchFailureHasAnExplicitRetryWithoutLosingTheRequestedQuery",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "failedSearchCanRecoverWhenTheQueryChanges",
+      "status": "FAIL"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryHasOneDefaultSatelliteWhileSettingsRemainInAllActions",
+      "reason": "java.lang.AssertionError: Failed: assertDoesNotExist.\nReason: Did not expect any node but found '1' node that satisfies: (Text + InputText + EditableText contains 'Learning settings' (ignoreCase: false))\nNode found:\nNode #40 at (l=184.0, t=8.0, r=291.0, b=103.0)px\nContentDescription = '[Learning settings]'\nFocused = 'false'\nRole = 'Button'\nShape = 'RoundedCornerShape(topStart = CornerSize(size = 16.0.dp), topEnd = CornerSize(size = 16.0.dp), bottomEnd = CornerSize(size = 16.0.dp), bottomStart = CornerSize(size = 16.0.dp))'\nText = '[Learning settings]'\nActions = [ClearTextSubstitution, GetTextLayoutResult, OnClick, RequestFocus, SetTextSubstitution, ShowTextSubstitution]\nMergeDescendants = 'true'\nHas 1 sibling\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "searchFailureHasAnExplicitRetryWithoutLosingTheRequestedQuery",
+      "reason": "java.lang.AssertionError: Failed to inject touch input.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Try again' (ignoreCase: false))\n"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection",
+      "reason": "java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'Memories' (ignoreCase: false) is not displayed!"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5MemoryRecoveryTest",
+      "test": "failedSearchCanRecoverWhenTheQueryChanges",
+      "reason": "androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 5000 ms"
+    }
+  ],
+  "totals": {
+    "tests": 4,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device_spoken_provider": "NOT_RUN - host only requested"
+}

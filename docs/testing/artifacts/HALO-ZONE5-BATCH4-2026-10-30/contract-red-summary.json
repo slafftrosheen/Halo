@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-30",
+  "phase": "contract-red",
+  "base": "70ee2a113915ea3a046d48a7fc21b92218169624",
+  "branch": "codex/halo-zone5-batch4",
+  "suites": [
+    {
+      "name": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "tests": 2,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "tests": 9,
+      "failures": 8,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "cases": [
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "blankGoalAndNoSourcesCannotBypassMaterialSelectionOrStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "ungroundedTopicLessonUsesGeneralKnowledgeInsteadOfClaimingASource",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "goalOrSelectedMaterialAllowsStepProgressAndStart",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "backNavigationRemainsAvailableAndBusyStateBlocksChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.screens.study.StudySetupNavigationTest",
+      "test": "sourceFirstCanAdvanceFromBlankGoalToMaterialPicker",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "officeLandingHasCreationOpenAndTruthfullyDisabledExport",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "noteDefaultActionsBelongToTheCurrentDocument",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "instrumentBackIsVisibleAndInvokesTheExistingOwner",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "childAppearanceKeepsTheCurrentPaletteAcrossThemeChanges",
+      "status": "PASS"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studyUsesLessonPracticeAndNarrationAssets",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "canvasUsesAddArrangeAndFitAssets",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studioUsesLayerAndExportAssets",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "notesUseInsertionOutlineAndFindAssets",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryDetailUsesSourceEditAndForgetAssets",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "largeTextUtilityIdentityWrapsInsteadOfLosingTheDocumentName",
+      "status": "FAIL"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "officeUsesDocumentOpenAndExportAssets",
+      "status": "FAIL"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "officeLandingHasCreationOpenAndTruthfullyDisabledExport",
+      "reason": "java.lang.AssertionError: expected:<[page.office.new, page.office.open, page.office.export]> but was:<[page.office.new, page.office.open, page.office.graphics]>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test": "noteDefaultActionsBelongToTheCurrentDocument",
+      "reason": "java.lang.AssertionError: expected:<[page.note.insert, page.note.outline, page.note.find]> but was:<[page.note.rename, page.note.assist, page.note.outline]>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "instrumentBackIsVisibleAndInvokesTheExistingOwner",
+      "reason": "java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains 'Back' (ignoreCase: false) is not displayed!"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studyUsesLessonPracticeAndNarrationAssets",
+      "reason": "org.junit.ComparisonFailure: page.study.new expected:<[study_lesson]> but was:<[type_note]>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "canvasUsesAddArrangeAndFitAssets",
+      "reason": "org.junit.ComparisonFailure: page.canvas.add expected:<[action_add]> but was:<[type_note]>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studioUsesLayerAndExportAssets",
+      "reason": "org.junit.ComparisonFailure: page.studio.add-layer expected:<[studio_layer_add]> but was:<[type_note]>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "notesUseInsertionOutlineAndFindAssets",
+      "reason": "org.junit.ComparisonFailure: page.note.insert expected:<[action_add]> but was:<[type_note]>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryDetailUsesSourceEditAndForgetAssets",
+      "reason": "org.junit.ComparisonFailure: object.memory.source expected:<[study_sourc]e> but was:<[type_not]e>"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "largeTextUtilityIdentityWrapsInsteadOfLosingTheDocumentName",
+      "reason": "java.lang.AssertionError: The visible document identity is ellipsized"
+    },
+    {
+      "suite": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "officeUsesDocumentOpenAndExportAssets",
+      "reason": "org.junit.ComparisonFailure: page.office.new expected:<[office_document]> but was:<[type_note]>"
+    }
+  ],
+  "totals": {
+    "tests": 16,
+    "failures": 10,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device_spoken_provider": "NOT_RUN - host only requested"
+}
