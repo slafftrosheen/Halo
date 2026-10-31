@@ -87,4 +87,22 @@ class KidsShellOrbBindingTest {
         compose.runOnIdle { host.onBackPressedDispatcher.onBackPressed() }
         compose.runOnIdle { assertEquals(KidsDestination.HOME, destination.value); assertEquals(2, stopped) }
     }
+    @Test fun returningHomeOrCreatingDoesNotKeepAnOldLessonIdentity() {
+        val destination = mutableStateOf(KidsDestination.LEARN)
+        compose.setContent { HostlessHaloTheme {
+            val band = remember { mutableStateOf<ShellUtilityProjection?>(null) }
+            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellUtilityBand provides band) {
+                KidsZoneBinding(destination.value, "Volcano lesson", "Talk or type", false, false, {}, {}, {}, {})
+                band.value?.let { RenderShellUtilityBand(it) }
+            }
+        } }
+        compose.onNodeWithText("Volcano lesson").assertIsDisplayed()
+        compose.runOnIdle { destination.value = KidsDestination.HOME }
+        compose.onNodeWithText("Kids").assertIsDisplayed()
+        compose.onNodeWithText("Volcano lesson").assertDoesNotExist()
+        compose.runOnIdle { destination.value = KidsDestination.CREATE }
+        compose.onNodeWithText("My project").assertIsDisplayed()
+        compose.onNodeWithText("Volcano lesson").assertDoesNotExist()
+    }
+
 }

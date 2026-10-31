@@ -19,11 +19,11 @@ internal fun KidsZoneBinding(destination: KidsDestination, lessonTitle: String?,
         ShellPageAction("page.kids.stop", "Stop", HaloGlyph.STOP, busy, onStop),
         ShellPageAction("page.kids.grown-up", "Grown-up space", HaloGlyph.SECURITY, onInvoke = onGrownUp),
     ))
-    val title = lessonTitle?.takeIf(String::isNotBlank) ?: uiText(when (destination) {
-        KidsDestination.HOME -> "Kids"
-        KidsDestination.CREATE -> "My project"
-        else -> "Learn something"
-    })
+    val title = when (destination) {
+        KidsDestination.HOME -> uiText("Kids")
+        KidsDestination.CREATE -> uiText("My project")
+        else -> lessonTitle?.takeIf(String::isNotBlank) ?: uiText("Learn something")
+    }
     BindShellUtilityBand(owner) {
         KidsBrandTheme { ToolZoneHeader(title, onBack = {}, subtitle = uiText(status)) }
     }
