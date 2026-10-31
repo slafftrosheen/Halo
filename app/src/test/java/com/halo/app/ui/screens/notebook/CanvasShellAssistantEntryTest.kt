@@ -64,6 +64,6 @@ class CanvasShellAssistantEntryTest {
         compose.onNodeWithText("Add text card").assertDoesNotExist()
         compose.onNodeWithText("Bring in a note or file").assertDoesNotExist()
         compose.onNodeWithText("Make room for your ideas").assertIsDisplayed()
-        assertTrue(calls.isEmpty())
+        assertEquals(emptyList<String>(), calls)
     }
 }
