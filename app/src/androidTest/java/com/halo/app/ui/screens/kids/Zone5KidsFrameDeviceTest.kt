@@ -43,7 +43,13 @@ class Zone5KidsFrameDeviceTest {
         var primary = Color.Unspecified
         lateinit var host: androidx.activity.ComponentActivity
         compose.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) {
+            val base = LocalContext.current
+            val english = remember(base) { base.createConfigurationContext(android.content.res.Configuration(base.resources.configuration).apply {
+                setLocale(java.util.Locale.ENGLISH)
+            }) }
+            CompositionLocalProvider(LocalInspectionMode provides true,
+                androidx.compose.ui.platform.LocalConfiguration provides english.resources.configuration,
+                androidx.compose.ui.platform.LocalResources provides english.resources) {
                 HaloTheme(darkTheme = dark.value, fontScale = scale.value, palette = HaloPalette(accent.value)) {
                     val ink = MaterialTheme.colorScheme.primary
                     SideEffect { primary = ink }
@@ -80,7 +86,7 @@ class Zone5KidsFrameDeviceTest {
                                             } else KidsHomeChoices(onSelect = { destination.value = it })
                                         }
                                     }
-                                    HaloZone("home", maxHeight, compact.value || keyboard, actions, invoke, {}, 0,
+                                    HaloZone("home", this@BoxWithConstraints.maxHeight, compact.value || keyboard, actions, invoke, {}, 0,
                                         utility = { band.value?.let { RenderShellUtilityBand(it) } },
                                         orb = { size -> HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true),
                                             HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, {}, {}, {}, size = size,
