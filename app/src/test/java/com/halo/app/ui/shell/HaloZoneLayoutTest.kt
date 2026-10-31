@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
@@ -51,7 +52,7 @@ class HaloZoneLayoutTest {
                     }
                 }
                 Column(Modifier.fillMaxSize()) {
-                    Box(Modifier.weight(1f)) { Text("Working document") }
+                    Box(Modifier.weight(1f).testTag("zone5-working")) { Text("Working document") }
                     HaloZone("notebook", 800.dp, compact, shownActions, { invoked += it.id }, { invoked += it }, 2,
                         utility = {
                             if (childHeader) band.value?.let { RenderShellUtilityBand(it) }
@@ -158,7 +159,7 @@ class HaloZoneLayoutTest {
         val voice = compose.onNodeWithContentDescription("Говорить").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val menu = compose.onNodeWithText("Меню").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val all = compose.onNodeWithText("Все действия").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        val work = compose.onNodeWithText("Working document").fetchSemanticsNode().parent!!.boundsInRoot
+        val work = compose.onNodeWithTag("zone5-working").fetchSemanticsNode().boundsInRoot
         assertTrue("The footer must leave at least 120dp for the working viewport: $work", work.height >= 120 * compose.density.density)
         assertFalse(voice.overlaps(menu)); assertFalse(voice.overlaps(all)); assertFalse(menu.overlaps(all))
         compose.onNodeWithText("Меню").performClick()
