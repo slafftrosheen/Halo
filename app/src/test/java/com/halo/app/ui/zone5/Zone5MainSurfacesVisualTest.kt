@@ -90,7 +90,6 @@ class Zone5MainSurfacesVisualTest {
                             }
                             "tools" -> LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
                                 verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                                item { WorkspaceHeadingAndTabs(false, {}) }
                                 item { WorkspaceToolsList({}, {}, {}, {}, onCanvas = {}) }
                             }
                             else -> Column(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp)) {
@@ -114,7 +113,7 @@ class Zone5MainSurfacesVisualTest {
                                 when(page) {
                                     "home" -> HaloComposer("", {}, {}, {}, {}, true, true, false, "Talk", false,
                                         onAttach = {}, onTools = {})
-                                    "tools" -> Text(stringResource(R.string.zone5_tools_controls), style = MaterialTheme.typography.bodyMedium)
+                                    "tools" -> com.halo.app.ui.screens.notebook.WorkspaceSectionSwitcher(false, {})
                                     else -> ScreenWorkspaceChrome(true, editing, false, true, false, true,
                                         {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, null, shellZone = true)
                                 }

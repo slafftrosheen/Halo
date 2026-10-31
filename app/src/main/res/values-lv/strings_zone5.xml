@@ -78,5 +78,6 @@
     <string name="zone5_guide_studio">Sāciet grafikas projektu ar attēlu, zīmējumu, tekstu vai figūrām.</string>
     <string name="zone5_guide_studio_layer">Pievienojiet pirmo slāni: attēlu, zīmējumu, tekstu vai figūru.</string>
     <string name="zone5_guide_canvas_new">Izveidojiet audeklu, lai apvienotu failus un idejas.</string>
+    <string name="zone5_note_editor_hint">Atveriet teksta redaktoru izvēlnē Rediģēt vai saglabājiet kopiju izvēlnē Fails.</string>
     <string name="zone5_guide_library">Izveidojiet piezīmi vai importējiet failu bibliotēkā.</string>
 </resources>

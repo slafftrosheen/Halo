@@ -240,11 +240,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         ShellPageAction("page.canvas.fit", "Fit all cards", HaloGlyph.NOTE,
             state.nodes.isNotEmpty() && !state.loading && !state.missing) { viewModel.fitToContent() },
         ShellPageAction("page.canvas.options", "Tools", HaloGlyph.ACTION, !state.loading && !state.missing) { menu = true },
-        ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true },
+        ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true; toolsExpanded = true },
         ShellPageAction("page.canvas.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = !toolsExpanded },
         ShellPageAction("page.canvas.undo", "Undo", HaloGlyph.PREVIOUS, boardEditingEnabled && state.undoAvailable) { viewModel.undo() },
         ShellPageAction("page.canvas.export", "Export to note", HaloGlyph.FILE, boardEditingEnabled && state.nodes.isNotEmpty()) { viewModel.exportToNote() },
         ShellPageAction("page.canvas.rename", "Rename", HaloGlyph.NOTE, boardEditingEnabled) { title = state.title; rename = true },
+        ShellPageAction("page.canvas.view-select", if (state.selectionMode) "Done selecting" else "Select cards", HaloGlyph.TOOL,
+            boardEditingEnabled, viewModel::toggleSelectionMode),
     ))
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         ToolZoneHeader(state.title, onBack = { viewModel.leave(onBack) }) {
@@ -353,6 +355,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     onClick = { insertMenu = false; filePicker.launch(arrayOf("*/*")) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
                 ) { Text(uiText("Add a file or PDF")) }
+                OutlinedButton(onClick = { insertMenu = false; groupDialog = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Group")) }
                 if (viewModel.imageStudio != null) OutlinedButton(
                     onClick = {
                         insertMenu = false
@@ -621,7 +625,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     modifier = Modifier.padding(vertical = 4.dp))
                 Text(stringResource(com.halo.app.R.string.zone5_group_view), style = MaterialTheme.typography.titleSmall)
                 CanvasSheetAction("Find on canvas", com.halo.app.R.drawable.ic_halo_action_search) {
-                    menu = false; searchOpen = true
+                    menu = false; searchOpen = true; toolsExpanded = true
                 }
                 CanvasSheetAction("Fit all cards", com.halo.app.R.drawable.ic_halo_canvas_fit,
                     enabled = state.nodes.isNotEmpty() && !state.loading && !state.missing) {
@@ -671,32 +675,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
 
-    Column(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
-        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Canvas"), "tool_canvas", state.title,
-            modifier = Modifier.padding(horizontal = 20.dp))
-        if (!shellOwnsOrb) EditorWorkspaceHeader(state.title, menu,
-            onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
-            onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
-            haloEnabled = boardEditingEnabled)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(com.halo.app.R.string.canvas_count_zoom_summary,
-                    pluralStringResource(com.halo.app.R.plurals.canvas_card_count, state.nodes.size, state.nodes.size),
-                    pluralStringResource(com.halo.app.R.plurals.canvas_connection_count, state.edges.size, state.edges.size),
-                    (state.viewportScale * 100).roundToInt()),
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (state.nodes.isNotEmpty()) {
-                TextButton(
-                    onClick = viewModel::fitToContent,
-                    enabled = !state.loading && !state.missing,
-                    modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text(uiText("Fit all cards")) }
-            }
-        }
-        if (toolsExpanded) EditorToolsPanel {
+    if (toolsExpanded) ModalBottomSheet(onDismissRequest = { toolsExpanded = false },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(vertical = 12.dp)) {
+
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text(uiText("More tools"), modifier = Modifier.weight(1f),
@@ -876,6 +858,33 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
             }
         }
+                }
+    }
+
+    Column(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Canvas"), "tool_canvas", state.title,
+            modifier = Modifier.padding(horizontal = 20.dp))
+        if (!shellOwnsOrb) EditorWorkspaceHeader(state.title, menu,
+            onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
+            onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
+            haloEnabled = boardEditingEnabled)
+        if (!shellOwnsOrb) Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(com.halo.app.R.string.canvas_count_zoom_summary,
+                    pluralStringResource(com.halo.app.R.plurals.canvas_card_count, state.nodes.size, state.nodes.size),
+                    pluralStringResource(com.halo.app.R.plurals.canvas_connection_count, state.edges.size, state.edges.size),
+                    (state.viewportScale * 100).roundToInt()),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (state.nodes.isNotEmpty()) {
+                TextButton(
+                    onClick = viewModel::fitToContent,
+                    enabled = !state.loading && !state.missing,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(uiText("Fit all cards")) }
+            }
         }
         if (state.transcribing) Row(Modifier.padding(horizontal = 16.dp)) {
             CircularProgressIndicator(Modifier.size(20.dp))
@@ -897,7 +906,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             CircularProgressIndicator(Modifier.size(20.dp))
             Text(uiText("Importing into Workspace…"), Modifier.padding(start = 12.dp), style = MaterialTheme.typography.bodySmall)
         }
-        if (state.selectionMode && state.selectedNodeIds.size == 2 && boardEditingEnabled)
+        if (!shellOwnsOrb && state.selectionMode && state.selectedNodeIds.size == 2 && boardEditingEnabled)
             TextButton(onClick = { pairReview = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text(uiText("Connect selected cards"))
@@ -1184,7 +1193,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
         // Editing commands are not actionable while a file, model draft or export
         // is mutating the board. Selection/viewport are preserved on suspension.
-        CanvasBrandDock(enabled = boardEditingEnabled, haloThinking = state.aiBusy,
+        if (!shellOwnsOrb) CanvasBrandDock(enabled = boardEditingEnabled, haloThinking = state.aiBusy,
             selecting = state.selectionMode, onSelect = viewModel::toggleSelectionMode,
             onText = { viewModel.addTextNode() },
             onSketch = { sketchTarget = null; sketchOriginal = ""; sketchOpen = true },
@@ -1264,11 +1273,11 @@ internal fun CanvasEmptyStarter(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        com.halo.app.ui.components.HaloActionButton(onClick = onText, enabled = enabled,
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) com.halo.app.ui.components.HaloActionButton(onClick = onText, enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text(uiText("Add text card"))
         }
-        OutlinedButton(onClick = onImport, enabled = enabled,
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) OutlinedButton(onClick = onImport, enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text(stringResource(com.halo.app.R.string.brand_canvas_import_choice))
         }

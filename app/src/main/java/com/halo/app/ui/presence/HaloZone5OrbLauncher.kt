@@ -36,6 +36,7 @@ internal class HaloZone5Navigation(
     val entryId: String? = null,
     val compact: Boolean = false,
     val onDisclosureChanged: (Boolean) -> Unit = {},
+    val inlineControls: Boolean = false,
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -47,6 +48,7 @@ internal fun HaloZone5OrbLauncher(
     actions: List<HaloOrbContextAction>, onAction: (HaloOrbContextAction) -> Unit,
     size: Dp, orbModifier: Modifier, navigation: HaloZone5Navigation,
 ) {
+    val listedActions = actions.filterNot { it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS }
     // One disclosure owner, two intentionally separate lists.
     var disclosure by rememberSaveable { mutableStateOf<String?>(null) }
     var opener by remember { mutableStateOf("menu") }
@@ -68,7 +70,7 @@ internal fun HaloZone5OrbLauncher(
     LaunchedEffect(restoreFocus) {
         val target = restoreFocus ?: return@LaunchedEffect
         withFrameNanos { }
-        when (target) { "orb" -> orbFocus; "actions" -> if (actions.isNotEmpty()) actionsFocus else menuFocus; else -> menuFocus }.requestFocus()
+        when (target) { "orb" -> orbFocus; "actions" -> if (listedActions.isNotEmpty()) actionsFocus else menuFocus; else -> menuFocus }.requestFocus()
         restoreFocus = null
     }
     DisposableEffect(lifecycle) {
@@ -104,13 +106,13 @@ internal fun HaloZone5OrbLauncher(
             Text(actionsLabel, textAlign = TextAlign.Center)
         }
     }
-    if (navigation.compact) {
+    if (navigation.compact || navigation.inlineControls) {
         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { isTraversalGroup = true },
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                if (actions.isNotEmpty()) actionListControl(Modifier)
+                if (listedActions.isNotEmpty()) actionListControl(Modifier)
             }
-            HaloSignalFace(signal, gesture, size = 48.dp, contentDescription = primary,
+            HaloSignalFace(signal, gesture, size = if (navigation.compact) 48.dp else size, contentDescription = primary,
                 onClick = { act { onPrimary(interaction.primary) } }, onClickLabel = primary,
                 onLongClick = { open("menu", "orb") }, zone5 = true)
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
@@ -125,14 +127,14 @@ internal fun HaloZone5OrbLauncher(
         }
     } else {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-    if (flatLabels && actions.isNotEmpty()) {
+    if (flatLabels && listedActions.isNotEmpty()) {
         actionListControl(Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
     }
     if (flatLabels) Box(Modifier.fillMaxWidth()) { navigation.profileStatus() }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-            if (!flatLabels && actions.isNotEmpty()) actionListControl(Modifier)
+            if (!flatLabels && listedActions.isNotEmpty()) actionListControl(Modifier)
             if (!flatLabels) navigation.profileStatus()
         }
         Column(Modifier.width(if (size <= 48.dp) 64.dp else 112.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -189,8 +191,8 @@ internal fun HaloZone5OrbLauncher(
                 HorizontalDivider()
                 navigation.profileControl()
             } else {
-                if (actions.isEmpty()) Text(stringResource(R.string.zone5_no_actions))
-                actions.forEach { action ->
+                if (listedActions.isEmpty()) Text(stringResource(R.string.zone5_no_actions))
+                listedActions.forEach { action ->
                     Column {
                         TextButton(onClick = { if (action.enabled) act { onAction(action) } }, enabled = action.enabled,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {

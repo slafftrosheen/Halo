@@ -28,6 +28,7 @@ internal fun ContextToolOrbit(
     ownerKey: String? = null,
     minimumHeight: Dp = 180.dp,
     guidedActionId: String? = null,
+    dense: Boolean = false,
 ) {
     val state = rememberSaveable(ownerKey, saver = LazyListState.Saver) { LazyListState() }
     Column(Modifier.fillMaxWidth().heightIn(min = minimumHeight), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
@@ -51,8 +52,8 @@ internal fun ContextToolOrbit(
                 contentPadding = PaddingValues(horizontal = inset)) {
                 itemsIndexed(actions, key = { _, action -> action.id }) { index, action ->
                     LabelledSatellite5(action, { onAction(action) },
-                        Modifier.width(slotWidth).padding(top = if (index % 3 == 1) 0.dp else 12.dp),
-                        guided = !state.isScrollInProgress && action.id.removePrefix("page:") == guidedActionId)
+                        Modifier.width(slotWidth).padding(top = if (index % 3 == 1) 0.dp else if (dense) 4.dp else 12.dp),
+                        guided = !state.isScrollInProgress && action.id.removePrefix("page:") == guidedActionId, dense = dense)
                 }
             }
         }

@@ -44,6 +44,29 @@ internal fun WorkspaceHeadingAndTabs(library: Boolean, onSelect: (Boolean) -> Un
     else Row(Modifier.fillMaxWidth()) { tabs(Modifier.weight(1f)) }
 }
 
+/** Workspace navigation belongs to the Zone; the working area contains saved objects or instruments. */
+@Composable
+internal fun WorkspaceSectionSwitcher(library: Boolean, onSelect: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth()) {
+        listOf(true, false).forEach { isLibrary ->
+            val selected = library == isLibrary
+            val ink = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            Surface(onClick = { onSelect(isLibrary) }, color = Color.Transparent, contentColor = ink,
+                modifier = Modifier.weight(1f).semantics { role = Role.Tab; this.selected = selected }) {
+                Column {
+                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Zone5Icon(if (isLibrary) "nav_workspace" else "action_tools", HaloGlyph.TOOL, Modifier.size(24.dp))
+                        Text(uiText(if (isLibrary) "Library" else "Tools"), Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                    }
+                    HorizontalDivider(thickness = if (selected) 3.dp else 1.dp,
+                        color = if (selected) ink else MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+    }
+}
+
 /** Rows navigate straight to existing owners. No suite state or operation lives here. */
 @Composable
 internal fun WorkspaceToolsList(onStudy: () -> Unit, onMemory: () -> Unit,

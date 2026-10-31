@@ -81,6 +81,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var pickerProjectId by rememberSaveable { mutableStateOf<String?>(null) }
     var pickerProjectRevision by rememberSaveable { mutableStateOf<Long?>(null) }
     var importBaseRevision by remember(project?.id) { mutableStateOf<Long?>(null) }
+    var handoff by remember(project?.id) { mutableStateOf<Pair<String, String>?>(null) }
     val showVersions: () -> Unit = { historyOpen = true; viewModel.versions() }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val drawName = stringResource(R.string.studio_draw)
@@ -143,6 +144,9 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.transform", stringResource(R.string.studio_transforms), HaloGlyph.TOOL, !busy) { transforms = project },
             ShellPageAction("page.studio.background", stringResource(R.string.studio_background), HaloGlyph.APPEARANCE, !busy) { background = project },
             ShellPageAction("page.studio.ai", stringResource(R.string.studio_ai), HaloGlyph.THINK, !busy) { onAiDraft(project) },
+            ShellPageAction("page.studio.continue", stringResource(R.string.link53_continue), HaloGlyph.FILE, !busy) {
+                handoff = project.id to project.revision.toString()
+            },
         ))
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val targetId = pickerProjectId; val targetRevision = pickerProjectRevision
@@ -169,7 +173,9 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         com.halo.app.ui.screens.notebook.ToolZoneHeader(project?.title ?: stringResource(if (canvasLibrary) R.string.zone5_tool_canvas else R.string.zone5_tool_studio),
             onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy,
-            onTitleClick = if (project != null) ({ nameProject("rename") }) else null) {
+            onTitleClick = if (project != null) ({ nameProject("rename") }) else null,
+            subtitle = project?.let { stringResource(R.string.zone5_graphics_dimensions, it.session.current.width,
+                it.session.current.height, it.session.current.layers.size) }) {
                 if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
                     val saveLabel = stringResource(R.string.studio_save)
                     Box(Modifier.semantics { contentDescription = saveLabel }) { Zone5Icon("action_save", HaloGlyph.NOTE, Modifier.size(24.dp)) }
@@ -227,7 +233,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                             TextButton(viewModel::retryLibrary) { Text(uiText("Try again")) }
                         }
                         if (!library.canvasesLoading && !library.canvasesError && canvases.isEmpty()) Text(stringResource(R.string.zone5_no_canvases))
-                        Zone5ActionButton(uiText("New canvas"), "action_add", !busy && onOpenCanvas != null) { naming = "canvas" }
+                        if (!shellOwnsOrb) Zone5ActionButton(uiText("New canvas"), "action_add", !busy && onOpenCanvas != null) { naming = "canvas" }
                         if (onOpenCanvas == null) Text(stringResource(R.string.zone5_host_unavailable))
                     }
                     items(canvases, key = { it.id.value }) { canvas ->
@@ -240,13 +246,13 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     }
                 } else if (project == null && !state.loading) {
                     item {
-                        Text(stringResource(R.string.studio_local), style = MaterialTheme.typography.bodyMedium)
+                        if (!shellOwnsOrb) Text(stringResource(R.string.studio_local), style = MaterialTheme.typography.bodyMedium)
                         if (library.projectsLoading && projects.isEmpty()) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
                         if (library.projectsError) {
                             Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
                             TextButton(viewModel::retryLibrary) { Text(uiText("Try again")) }
                         }
-                        Button(onClick = { naming = "new" }, enabled = !busy) { Text(stringResource(R.string.studio_new_project)) }
+                        if (!shellOwnsOrb) Button(onClick = { naming = "new" }, enabled = !busy) { Text(stringResource(R.string.studio_new_project)) }
                     }
                     items(projects, key = { it.id }) { item ->
                         OutlinedCard(onClick = { viewModel.open(item.id) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
@@ -278,6 +284,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         }, { naming = null }, enabled = !busy && project != null && project.revision == namingRevision,
             title = if (mode == "rename") uiText("Rename") else stringResource(R.string.studio_project_name))
     }
+    handoff?.let { (id, revision) -> WorkspaceContinueSheet(id, revision) { handoff = null } }
     if (addingLayer && project != null) ModalBottomSheet(onDismissRequest = { addingLayer = false },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(20.dp),

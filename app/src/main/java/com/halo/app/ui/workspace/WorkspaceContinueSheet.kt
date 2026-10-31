@@ -25,7 +25,7 @@ fun WorkspaceContinueButton(objectId: String, expectedVersion: String? = null, e
 }
 
 @Composable
-private fun WorkspaceContinueSheet(objectId: String, expectedVersion: String?, onDismiss: () -> Unit) {
+internal fun WorkspaceContinueSheet(objectId: String, expectedVersion: String?, onDismiss: () -> Unit) {
     val owner = Graph.workspaceContinuity
     val scope = rememberCoroutineScope()
     var item by remember(objectId, expectedVersion) { mutableStateOf<WorkspaceContinuityItem?>(null) }

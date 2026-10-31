@@ -78,5 +78,6 @@
     <string name="zone5_guide_studio">Start a graphics project with an image, drawing, text or shapes.</string>
     <string name="zone5_guide_studio_layer">Add your first layer: an image, drawing, text or shape.</string>
     <string name="zone5_guide_canvas_new">Create a canvas to bring your files and ideas together.</string>
+    <string name="zone5_note_editor_hint">Open the text editor from Edit, or save a copy from File.</string>
     <string name="zone5_guide_library">Create a note, or import a file into your Library.</string>
 </resources>

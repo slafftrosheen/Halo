@@ -94,16 +94,15 @@ class HaloZoneLayoutTest {
         assertEquals(listOf("tool-9"), invoked)
     }
 
-    @Test fun childBackRemainsDirectWhileTheFullListKeepsTheSamePageAction() {
+    @Test fun utilityDoesNotDuplicateSystemBackAndKeepsItsOtherControls() {
         show(childHeader = true, headerTool = true)
-        compose.onAllNodesWithContentDescription("Back").assertCountEquals(1)
-        compose.onNodeWithContentDescription("Back").performClick()
-        assertEquals(listOf("header-back"), invoked)
+        compose.onAllNodesWithContentDescription("Back").assertCountEquals(0)
         compose.onAllNodesWithContentDescription("More tools").assertCountEquals(1)
         compose.onNodeWithContentDescription("Read aloud").assertIsDisplayed()
         compose.onNodeWithText("All actions").performClick()
-        compose.onNode(hasText("Back") and hasClickAction() and hasAnyAncestor(hasScrollAction())).assertIsDisplayed().performClick()
-        assertEquals(listOf("header-back", "page:test.back"), invoked)
+        compose.onNode(hasText("Back") and hasClickAction()).assertDoesNotExist()
+        compose.onNode(hasText("Action 9") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(listOf("tool-9"), invoked)
     }
 
     @Test fun sparseActionsRemainLabelledAndDoNotCoverVoice() {

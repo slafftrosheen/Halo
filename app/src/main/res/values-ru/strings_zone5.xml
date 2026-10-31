@@ -78,5 +78,6 @@
     <string name="zone5_guide_studio">Начните графический проект с изображения, рисунка, текста или фигур.</string>
     <string name="zone5_guide_studio_layer">Добавьте первый слой: изображение, рисунок, текст или фигуру.</string>
     <string name="zone5_guide_canvas_new">Создайте холст, чтобы объединить файлы и идеи.</string>
+    <string name="zone5_note_editor_hint">Откройте текстовый редактор в меню «Правка» или сохраните копию в меню «Файл».</string>
     <string name="zone5_guide_library">Создайте заметку или импортируйте файл в библиотеку.</string>
 </resources>

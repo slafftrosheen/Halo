@@ -20,7 +20,7 @@ internal fun Zone5InstrumentHeading(tool: String, icon: String, document: String
     state: String? = null, modifier: Modifier = Modifier) {
     val density = LocalDensity.current
     // The utility band still identifies the document while the keyboard needs the work area.
-    if (LocalShellHaloOrb.current && WindowInsets.ime.getBottom(density) > 0) return
+    if (LocalShellHaloOrb.current) return
     Column(modifier.fillMaxWidth().padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {

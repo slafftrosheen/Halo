@@ -110,7 +110,8 @@ internal fun Zone5Icon(iconId: String, fallback: HaloGlyph, modifier: Modifier =
 
 /** One merged, wrapping target; no independent icon click or decorative action. */
 @Composable
-internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Unit, modifier: Modifier = Modifier, guided: Boolean = false) {
+internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Unit, modifier: Modifier = Modifier, guided: Boolean = false,
+    dense: Boolean = false) {
     val label = uiText(action.title)
     val reason = if (action.enabled) null else action.disabledReason?.let { uiText(it) }
     val ink = if (action.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = .6f)
@@ -125,11 +126,11 @@ internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Uni
                 reason?.let { stateDescription = it }
             }.padding(horizontal = 4.dp, vertical = 4.dp).heightIn(min = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            Box(Modifier.size(if (dense) 32.dp else 48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .border(1.dp, border, CircleShape),
                 contentAlignment = Alignment.Center) { Zone5Icon(zone5ActionIconId(action), action.glyph, Modifier.size(24.dp)) }
             Spacer(Modifier.height(4.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, lineHeight = 20.sp),
+            Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = if (dense) 12.sp else 14.sp, lineHeight = if (dense) 16.sp else 20.sp),
                 textAlign = TextAlign.Center, softWrap = true)
         }
     }

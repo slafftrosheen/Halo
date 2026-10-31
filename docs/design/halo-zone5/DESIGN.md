@@ -2,7 +2,7 @@
 
 Version 5.0.0 · 30 October 2026 · Android first · approved visual direction, implementation proposed.
 
-The [workspace tool contract](WORKSPACE-TOOL-CONTRACT.md) records the user's 31 October updates: the five Halo families, shared instrument menus, classic thick orb, compact keyboard/Settings state and Screen roadmap. Those decisions supersede the original four-tool list and thin orb artwork below. The remaining asset-pack material is preserved for provenance.
+The [workspace tool contract](WORKSPACE-TOOL-CONTRACT.md) records the user's 31 October updates: the five Halo families, shared instrument menus, classic thick orb, compact keyboard/Settings state, measured quarter-height Zone, work-only upper editor and Screen roadmap. Those decisions supersede the original four-tool list and thin orb artwork below. The remaining asset-pack material is preserved for provenance.
 
 ## Product and user outcome
 

@@ -49,6 +49,7 @@ class Zone5CreativeActionsTest {
     private val jobs = mutableListOf<Job>()
     private lateinit var fixture: WorkspaceFileToolsFixture
     private val actions = mutableStateOf<ShellPageProjection?>(null)
+    private var systemBack: (() -> Unit)? = null
     @Before fun setup() {
         Dispatchers.setMain(main); fixture = WorkspaceFileToolsFixture()
         val context = ApplicationProvider.getApplicationContext<Application>()
@@ -66,6 +67,8 @@ class Zone5CreativeActionsTest {
         compose.setContent { HostlessHaloTheme(darkTheme = false, fontScale = scale, palette = HaloPalette(HaloAccent.ROSE, HaloTone.WARM)) {
             val utility = remember { mutableStateOf<ShellUtilityProjection?>(null) }
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions, LocalShellUtilityBand provides utility) {
+                val back = androidx.activity.compose.LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
+                SideEffect { systemBack = { back.onBackPressed() } }
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onSurface) {
                     Column(Modifier.fillMaxSize()) {
                         Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -153,7 +156,7 @@ class Zone5CreativeActionsTest {
         compose.onNodeWithText("Review (1)").performClick()
         compose.onNodeWithText("Show answer").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Memory progress").assertDoesNotExist()
-        compose.onNodeWithText("Back").performClick()
+        compose.runOnIdle { requireNotNull(systemBack).invoke() }
         compose.runOnIdle { assertEquals("page.study.details", actions.value!!.actions.first().id) }
         assertEquals(0, leftLesson)
         assertEquals(original, runBlocking { repository.getSession(session.id) })
@@ -174,7 +177,7 @@ class Zone5CreativeActionsTest {
             WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets); own(model) }
         render("canvases") { StudioScreen(model, {}, {}, {}, {}, {}, onOpenCanvas = { opened = it }, canvasLibrary = true) }
         await { !model.libraryStatus.value.canvasesLoading && model.canvases.value.isNotEmpty() }
-        compose.onNode(hasText("HaloCanvas") and hasAnyAncestor(hasScrollToIndexAction())).assertExists()
+        compose.onNodeWithText("HaloCanvas").assertExists()
         compose.onNodeWithText("Connected field idea").performClick()
         assertEquals(id, opened)
         compose.runOnIdle {

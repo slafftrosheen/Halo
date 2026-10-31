@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Devices
@@ -392,7 +396,7 @@ fun AppShell(
         val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph,
             enabled = it.enabled, disabledReason = if (it.enabled) null else livePageActions.owner.disabledActionReasons[it.id]) }
             ?: if (kidsMode && contextualRoute != "home") ShellOrbCatalog.context(contextualRoute, true) else emptyList()
-        actions + page +
+        actions.filterNot { it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS } + page +
             if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
     }
     val orbOverride = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellOrbOverride?>(null) }
@@ -413,9 +417,6 @@ fun AppShell(
                 val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
                 val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
-                com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
-                    onVoiceSettings = { navigateSafely("settings/voice/output") })
-                contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
                 val dispatchContext: (com.halo.app.ui.presence.HaloOrbContextAction) -> Unit = { action ->
                         if (!action.enabled) Unit
                         else if (action.id.startsWith("page:")) {
@@ -444,11 +445,16 @@ fun AppShell(
                     }
                 val inbox by ManualDependencyGraph.notificationInboxSource.state.collectAsStateWithLifecycle()
                 val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
-                HaloZone(contextualRoute, this@BoxWithConstraints.maxHeight,
+                HaloZone(contextualRoute, (this@BoxWithConstraints.maxHeight -
+                    WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() -
+                    WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()).coerceAtLeast(0.dp),
                     compact = this@BoxWithConstraints.maxHeight < 520.dp || WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0,
                     actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateSafely,
                     attentionCount = if (kidsMode) 0 else inbox.items.count { it.active } + activity.events.filter { it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.mapNotNull { it.reviewRunId }.distinct().size,
                     utility = {
+                        com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
+                            onVoiceSettings = { navigateSafely("settings/voice/output") })
+                        contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
                         if (currentRoute?.startsWith("activity") == true || currentRoute == "notifications")
                             BellSubviewControls(currentRoute, ::navigateSafely, { navController.popBackStack() })
                         utilityBand.value?.takeIf { pageOwnerFilter(it.owner) }?.let { com.halo.app.ui.presence.RenderShellUtilityBand(it) }
@@ -476,7 +482,8 @@ fun AppShell(
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
+        Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)
+            .semantics { testTagsAsResourceId = true }.testTag("halo-working-area")) {
         Column(Modifier.weight(1f).fillMaxSize()) {
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (kidsMode && backStackEntry?.destination?.route != "home" && backStackEntry?.destination?.route != "guided_setup")

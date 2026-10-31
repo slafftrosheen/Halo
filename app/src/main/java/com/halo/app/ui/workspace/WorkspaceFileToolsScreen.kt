@@ -55,6 +55,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     var ink by remember { mutableStateOf<FileToolInkEdit?>(null) }
     var moreFormats by remember { mutableStateOf(false) }
     var exportSource by remember { mutableStateOf<WorkspaceFileToolsObject?>(null) }
+    var pendingEditor by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     val batchTitle = stringResource(R.string.file52_batch_receipt)
     val annotationTitle = stringResource(R.string.file52_annotation_name)
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(model::importFile) }
@@ -75,10 +76,89 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
             else -> exportSource = selected
         }
     }
+    var sourceToolsOpen by remember(selected?.id) { mutableStateOf(false) }
+    val sourceActions: @Composable (WorkspaceFileToolsObject) -> Unit = { source ->
+        Text(stringResource(R.string.zone5_group_add), style = MaterialTheme.typography.titleSmall)
+FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { onAttach(source) }, enabled = !busy) { Text(stringResource(R.string.file52_attach_canvas)) }
+                        if (source.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) TextButton(onClick = {
+                            if (source.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS) state.annotations?.source?.objectId?.let(onStudy) else onStudy(source.id)
+                        }, enabled = !busy && (source.kind != WorkspaceFileToolsKind.PDF_ANNOTATIONS || state.annotations != null)) { Text(stringResource(R.string.file52_attach_study)) }
+                    }
+        com.halo.app.ui.workspace.WorkspaceContinueButton(source.id,
+            if (source.kind == WorkspaceFileToolsKind.FILE) source.version else null, enabled = !busy)
+        HorizontalDivider()
+        Text(stringResource(R.string.zone5_group_edit), style = MaterialTheme.typography.titleSmall)
+        when (source.kind) {
+            WorkspaceFileToolsKind.TEXT_DOCUMENT -> state.text?.let { document ->
+FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { onOpenNote(document.id) }, enabled = !busy) { Text(stringResource(R.string.file52_edit_text)) }
+                            if (document.format == WorkspaceTextFormat.CSV) OutlinedButton(onClick = { table = true }, enabled = !busy) { Text(stringResource(R.string.file52_edit_table)) }
+                            TextButton(onClick = { model.exportText(source, document.format) }, enabled = !busy) { Text(stringResource(when (document.format) {
+                                WorkspaceTextFormat.TXT -> R.string.file52_export_txt; WorkspaceTextFormat.MARKDOWN -> R.string.file52_export_md; WorkspaceTextFormat.CSV -> R.string.file52_export_csv
+                            })) }
+                            TextButton(onClick = { model.undoText(document) }, enabled = !busy && state.textHistory.canUndo) { Text(stringResource(R.string.file52_undo)) }
+                            TextButton(onClick = { model.redoText(document) }, enabled = !busy && state.textHistory.canRedo) { Text(stringResource(R.string.file52_redo)) }
+                        }
+            }
+            WorkspaceFileToolsKind.NOTE -> {
+FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { onOpenNote(source.id) }, enabled = !busy) { Text(stringResource(R.string.file52_edit_text)) }
+                            TextButton(onClick = { model.exportText(source, WorkspaceTextFormat.TXT) }, enabled = !busy) { Text(stringResource(R.string.file52_export_txt)) }
+                            TextButton(onClick = { model.exportText(source, WorkspaceTextFormat.MARKDOWN) }, enabled = !busy) { Text(stringResource(R.string.file52_export_md)) }
+                        }
+            }
+            WorkspaceFileToolsKind.FILE -> state.file?.let { file ->
+                val available = file.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)
+FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { onOpenFile(file.objectId.value) }, enabled = !busy) { Text(stringResource(R.string.file52_open_original)) }
+                            if (WorkspaceTextFormat.fromFile(file.displayName, file.mimeType) != null) Button(onClick = { model.importText(file) }, enabled = !busy && available) { Text(stringResource(R.string.file52_edit_text)) }
+                            else if (file.mimeType.startsWith("image/")) {
+                                Button(onClick = { imageEdit = FileToolImageEdit(listOf(file), false) }, enabled = !busy && available) { Text(stringResource(R.string.file52_convert_image)) }
+                                TextButton(onClick = { onOpenStudio(file.objectId.value) }, enabled = !busy && available) { Text(stringResource(R.string.file52_create_image)) }
+                            } else if (file.mimeType == "application/pdf") {
+                                Button(onClick = { extracting = file }, enabled = !busy && available) { Text(stringResource(R.string.file52_pdf_extract)) }
+                                TextButton(onClick = { model.createAnnotations(file, (file.displayName.take(80) + " · " + annotationTitle).take(120)) }, enabled = !busy && available) { Text(stringResource(R.string.file52_annotate_pdf)) }
+                            } else Text(stringResource(R.string.file52_unsupported), style = MaterialTheme.typography.bodySmall)
+                        }
+            }
+            WorkspaceFileToolsKind.PDF_ANNOTATIONS -> state.annotations?.let { note ->
+                val file = state.file
+                val recovered = state.recovery
+                val stale = recovered != null && recovered.baseRevision != note.revision
+FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = {
+                                runCatching {
+                                    val draft = recovered?.takeIf { it.baseRevision == note.revision }?.blocks?.singleOrNull()?.let { block ->
+                                    require(block.id == note.block.id && block.language == WorkspaceFileAnnotations.LANGUAGE)
+                                    val marks = CanvasFileMarkupCodec.decode(block.text)
+                                    require(CanvasFileMarkupCodec.merge(marks.title, marks.pages) == block.text)
+                                    CanvasDrawingDraft(null, "annotation", note.block.text,
+                                        pages = (note.markup.pages.keys + marks.pages.keys).associateWith { marks.pages[it].orEmpty() }, fileVersion = note.source.version)
+                                }
+                                    FileToolInkEdit(note, requireNotNull(file), draft)
+                                }.onSuccess { ink = it }.onFailure { model.reportError() }
+                            }, enabled = !busy && file != null && !stale) { Text(stringResource(R.string.file52_annotate)) }
+                            TextButton(onClick = { onOpenFile(note.source.objectId) }, enabled = !busy) { Text(stringResource(R.string.file52_open_original)) }
+                            if (stale) TextButton(onClick = { onOpenNote(note.id) }, enabled = !busy) { Text(stringResource(R.string.file52_open_editor)) }
+                            for (page in note.markup.pages.keys.sorted().ifEmpty { listOf(1) }) TextButton(onClick = { model.exportAnnotation(note, page) }, enabled = !busy && file != null) {
+                                Text(stringResource(R.string.file52_export_page, page))
+                            }
+                        }
+            }
+            WorkspaceFileToolsKind.BATCH_RECEIPT -> Unit
+        }
+    }
+    val imageActions: @Composable () -> Unit = {
+FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { choosing = FileToolImageSelection(1, availableImages.toList()) }, enabled = !busy && availableImages.isNotEmpty()) { Text(stringResource(R.string.file52_image_batch)) }
+                    OutlinedButton(onClick = { choosing = FileToolImageSelection(2, availableImages.toList()) }, enabled = !busy && availableImages.size >= 2) { Text(stringResource(R.string.file52_collage)) }
+                }
+    }
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("file_tools", selected?.id,
         "${selected?.version}:${state.file?.version}:${state.text?.revision}:${state.annotations?.revision}",
         canonicalSourceVersion = selected?.takeIf { it.kind == WorkspaceFileToolsKind.FILE }?.version,
-        nextStep = if (selected == null && !busy && !state.loading && !state.error && !creating)
+        nextStep = if (selected == null && !busy && !state.loading && !state.error && !creating && !sourceToolsOpen)
             com.halo.app.ui.presence.ShellNextStep("notes-open.v1", "page.office.open", stringResource(R.string.zone5_guide_office)) else null,
         canonicalToolIds = listOf("halo_file_tool_capabilities", "halo_get_file_metadata", "halo_text_get", "halo_text_export", "halo_pdf_annotation_get"),
         disabledActionReasons = mapOf("page.office.export" to if (busy) uiText("Updating...")
@@ -91,7 +171,10 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         })
         add(com.halo.app.ui.presence.ShellPageAction("page.office.export", uiText("Export"), HaloGlyph.FILE, canExport, openExport))
         add(com.halo.app.ui.presence.ShellPageAction("page.office.graphics", stringResource(R.string.file52_create_image), com.halo.app.ui.icons.HaloGlyph.APPEARANCE, !busy) { onOpenStudio(null) })
+        add(com.halo.app.ui.presence.ShellPageAction("page.office.tools", uiText("More tools"), HaloGlyph.TOOL, !busy) { sourceToolsOpen = true })
         if (selected != null) {
+            if (selected.kind in setOf(WorkspaceFileToolsKind.NOTE, WorkspaceFileToolsKind.TEXT_DOCUMENT))
+                add(com.halo.app.ui.presence.ShellPageAction("page.office.edit", stringResource(R.string.file52_edit_text), HaloGlyph.NOTE, !busy) { onOpenNote(selected.id) })
             if (selected.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) add(com.halo.app.ui.presence.ShellPageAction(
                 "page.office.study", stringResource(R.string.file52_attach_study), com.halo.app.ui.icons.HaloGlyph.QUESTION,
                 !busy && (selected.kind != WorkspaceFileToolsKind.PDF_ANNOTATIONS || state.annotations != null)) {
@@ -104,6 +187,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: stringResource(R.string.zone5_tool_notes),
             onBack = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy)
     }
+    BackHandler(enabled = selected != null && !busy) { model.closeSelection() }
     BackHandler(enabled = busy) { }
     // A source change dismisses its old preview; it never grants a fresh version to an in-progress edit.
     LaunchedEffect(state.file?.objectId, state.file?.version, state.annotations?.source, state.error) {
@@ -121,6 +205,28 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         if (imageEdit?.let { it.batch && stale(it.sources) } == true) imageEdit = null
         if (collage?.let(::stale) == true) collage = null
     }
+    LaunchedEffect(selected?.id, selected?.kind, pendingEditor, busy, state.loading) {
+        val id = pendingEditor
+        if (id != null && !busy && !state.loading && selected?.id == id) {
+            pendingEditor = null
+            if (selected.kind in setOf(WorkspaceFileToolsKind.NOTE, WorkspaceFileToolsKind.TEXT_DOCUMENT)) {
+                model.closeSelection()
+                onOpenNote(id)
+            }
+        } else if (!busy && state.error) pendingEditor = null
+    }
+    LaunchedEffect(selected?.id, selected?.version) { sourceToolsOpen = false }
+    if (sourceToolsOpen) ModalBottomSheet(onDismissRequest = { sourceToolsOpen = false },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(uiText("More tools"), style = MaterialTheme.typography.titleLarge)
+            selected?.let { sourceActions(it) }
+            HorizontalDivider()
+            Text(stringResource(R.string.file52_choose_images), style = MaterialTheme.typography.titleSmall)
+imageActions()
+        }
+    }
     Scaffold(containerColor = com.halo.app.ui.theme.haloWorkspaceBackground(), topBar = {
         if (!shellOwnsOrb) TopAppBar(title = { Text(stringResource(R.string.file52_title)) }, navigationIcon = {
             IconButton(onClick = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy) {
@@ -132,7 +238,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
             item {
                 if (shellOwnsOrb) Zone5InstrumentHeading(stringResource(R.string.zone5_tool_notes), "tool_notes", selected?.title,
                     state = if (selected == null) stringResource(R.string.zone5_office_kinds) else stringResource(R.string.file52_local_scope))
-                Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodyMedium)
+                if (!shellOwnsOrb) Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodyMedium)
                 if (!shellOwnsOrb) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { creating = true }, enabled = !busy) { Text(stringResource(R.string.file52_new_document)) }
                     OutlinedButton(onClick = { picker.launch(arrayOf("text/*", "image/*", "application/pdf", "application/octet-stream")) }, enabled = !busy) { Text(stringResource(R.string.file52_open_file)) }
@@ -156,54 +262,26 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
                 TextButton(onClick = model::dismissError, enabled = !busy) { Text(stringResource(R.string.file52_close)) }
             }
             selected?.let { source ->
-                item {
+                if (!shellOwnsOrb) item {
                     if (!shellOwnsOrb) Text(source.title, style = MaterialTheme.typography.headlineSmall)
-                    WorkspaceContinueButton(source.id, if (source.kind == WorkspaceFileToolsKind.FILE) source.version else null, enabled = !busy)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { onAttach(source) }, enabled = !busy) { Text(stringResource(R.string.file52_attach_canvas)) }
-                        if (source.kind != WorkspaceFileToolsKind.BATCH_RECEIPT) TextButton(onClick = {
-                            if (source.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS) state.annotations?.source?.objectId?.let(onStudy) else onStudy(source.id)
-                        }, enabled = !busy && (source.kind != WorkspaceFileToolsKind.PDF_ANNOTATIONS || state.annotations != null)) { Text(stringResource(R.string.file52_attach_study)) }
-                    }
+                    if (!shellOwnsOrb) sourceActions(source)
                 }
                 when (source.kind) {
                     WorkspaceFileToolsKind.TEXT_DOCUMENT -> state.text?.let { document -> item {
                         Text(fileToolFormatName(document.format), style = MaterialTheme.typography.titleMedium)
                         Text(stringResource(if (document.format == WorkspaceTextFormat.CSV) R.string.file52_csv_help else R.string.file52_text_help), style = MaterialTheme.typography.bodySmall)
                         Text(document.text.take(1400), maxLines = 12, overflow = TextOverflow.Ellipsis)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { onOpenNote(document.id) }, enabled = !busy) { Text(stringResource(R.string.file52_edit_text)) }
-                            if (document.format == WorkspaceTextFormat.CSV) OutlinedButton(onClick = { table = true }, enabled = !busy) { Text(stringResource(R.string.file52_edit_table)) }
-                            TextButton(onClick = { model.exportText(source, document.format) }, enabled = !busy) { Text(stringResource(when (document.format) {
-                                WorkspaceTextFormat.TXT -> R.string.file52_export_txt; WorkspaceTextFormat.MARKDOWN -> R.string.file52_export_md; WorkspaceTextFormat.CSV -> R.string.file52_export_csv
-                            })) }
-                            TextButton(onClick = { model.undoText(document) }, enabled = !busy && state.textHistory.canUndo) { Text(stringResource(R.string.file52_undo)) }
-                            TextButton(onClick = { model.redoText(document) }, enabled = !busy && state.textHistory.canRedo) { Text(stringResource(R.string.file52_redo)) }
-                        }
+
                     } }
                     WorkspaceFileToolsKind.NOTE -> item {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { onOpenNote(source.id) }, enabled = !busy) { Text(stringResource(R.string.file52_edit_text)) }
-                            TextButton(onClick = { model.exportText(source, WorkspaceTextFormat.TXT) }, enabled = !busy) { Text(stringResource(R.string.file52_export_txt)) }
-                            TextButton(onClick = { model.exportText(source, WorkspaceTextFormat.MARKDOWN) }, enabled = !busy) { Text(stringResource(R.string.file52_export_md)) }
-                        }
+                        Text(stringResource(R.string.zone5_note_editor_hint), style = MaterialTheme.typography.bodyMedium)
                     }
                     WorkspaceFileToolsKind.FILE -> state.file?.let { file -> item {
                         val available = file.availability in setOf(WorkspaceFileAvailability.AVAILABLE, WorkspaceFileAvailability.OWNED_LOCAL)
                         if (!available) Text(stringResource(R.string.file52_unavailable), color = MaterialTheme.colorScheme.error)
                         if (available && (file.mimeType.startsWith("image/") || file.mimeType == "application/pdf"))
                             CanvasAnnotatedFilePreview(file, file.displayName, Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 400.dp), maxDimension = 640)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { onOpenFile(file.objectId.value) }, enabled = !busy) { Text(stringResource(R.string.file52_open_original)) }
-                            if (WorkspaceTextFormat.fromFile(file.displayName, file.mimeType) != null) Button(onClick = { model.importText(file) }, enabled = !busy && available) { Text(stringResource(R.string.file52_edit_text)) }
-                            else if (file.mimeType.startsWith("image/")) {
-                                Button(onClick = { imageEdit = FileToolImageEdit(listOf(file), false) }, enabled = !busy && available) { Text(stringResource(R.string.file52_convert_image)) }
-                                TextButton(onClick = { onOpenStudio(file.objectId.value) }, enabled = !busy && available) { Text(stringResource(R.string.file52_create_image)) }
-                            } else if (file.mimeType == "application/pdf") {
-                                Button(onClick = { extracting = file }, enabled = !busy && available) { Text(stringResource(R.string.file52_pdf_extract)) }
-                                TextButton(onClick = { model.createAnnotations(file, (file.displayName.take(80) + " · " + annotationTitle).take(120)) }, enabled = !busy && available) { Text(stringResource(R.string.file52_annotate_pdf)) }
-                            } else Text(stringResource(R.string.file52_unsupported), style = MaterialTheme.typography.bodySmall)
-                        }
+
                     } }
                     WorkspaceFileToolsKind.PDF_ANNOTATIONS -> state.annotations?.let { note -> item {
                         Text(stringResource(R.string.file52_annotation_scope), style = MaterialTheme.typography.bodyMedium)
@@ -214,25 +292,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
                         val recovered = state.recovery
                         val stale = recovered != null && recovered.baseRevision != note.revision
                         if (recovered != null) Text(stringResource(if (stale) R.string.file52_stale_drawing else R.string.file52_recovery_kept), style = MaterialTheme.typography.bodySmall)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = {
-                                runCatching {
-                                    val draft = recovered?.takeIf { it.baseRevision == note.revision }?.blocks?.singleOrNull()?.let { block ->
-                                    require(block.id == note.block.id && block.language == WorkspaceFileAnnotations.LANGUAGE)
-                                    val marks = CanvasFileMarkupCodec.decode(block.text)
-                                    require(CanvasFileMarkupCodec.merge(marks.title, marks.pages) == block.text)
-                                    CanvasDrawingDraft(null, "annotation", note.block.text,
-                                        pages = (note.markup.pages.keys + marks.pages.keys).associateWith { marks.pages[it].orEmpty() }, fileVersion = note.source.version)
-                                }
-                                    FileToolInkEdit(note, requireNotNull(file), draft)
-                                }.onSuccess { ink = it }.onFailure { model.reportError() }
-                            }, enabled = !busy && file != null && !stale) { Text(stringResource(R.string.file52_annotate)) }
-                            TextButton(onClick = { onOpenFile(note.source.objectId) }, enabled = !busy) { Text(stringResource(R.string.file52_open_original)) }
-                            if (stale) TextButton(onClick = { onOpenNote(note.id) }, enabled = !busy) { Text(stringResource(R.string.file52_open_editor)) }
-                            for (page in note.markup.pages.keys.sorted().ifEmpty { listOf(1) }) TextButton(onClick = { model.exportAnnotation(note, page) }, enabled = !busy && file != null) {
-                                Text(stringResource(R.string.file52_export_page, page))
-                            }
-                        }
+
                     } }
                     WorkspaceFileToolsKind.BATCH_RECEIPT -> state.receipt?.let { receipt -> item {
                         Text(stringResource(when (receipt.phase) {
@@ -254,12 +314,9 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
                     } }
                 }
             }
-            item {
+            if (!shellOwnsOrb) item {
                 Text(stringResource(R.string.file52_choose_images), style = MaterialTheme.typography.titleMedium)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { choosing = FileToolImageSelection(1, availableImages.toList()) }, enabled = !busy && availableImages.isNotEmpty()) { Text(stringResource(R.string.file52_image_batch)) }
-                    OutlinedButton(onClick = { choosing = FileToolImageSelection(2, availableImages.toList()) }, enabled = !busy && availableImages.size >= 2) { Text(stringResource(R.string.file52_collage)) }
-                }
+                imageActions()
             }
             item { Text(stringResource(R.string.file52_recent), style = MaterialTheme.typography.titleMedium) }
             if (library.objectsLoading && objects.isEmpty()) item { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
@@ -271,7 +328,10 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
             }
             if (!library.objectsLoading && !library.objectsError && objects.isEmpty()) item { Text(stringResource(R.string.file52_empty)) }
             items(objects.take(100), key = { it.id.value }) { item ->
-                TextButton(onClick = { model.open(item.id.value) }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                TextButton(onClick = {
+                    pendingEditor = item.id.value.takeIf { item.type == WorkspaceObjectType.NOTE }
+                    model.open(item.id.value)
+                }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Zone5Icon(if (item.type == WorkspaceObjectType.NOTE) "type_note" else "type_file", HaloGlyph.FILE, Modifier.size(24.dp))
                     Spacer(Modifier.width(12.dp))
                     Text(item.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurface)

@@ -18,12 +18,13 @@ import com.halo.app.ui.icons.HaloIcon
 /** Compact utility band. Editing gestures and durable action owners stay in their page. */
 @Composable
 internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean = true,
-    onTitleClick: (() -> Unit)? = null, trailing: @Composable RowScope.() -> Unit = {}) {
+    onTitleClick: (() -> Unit)? = null, subtitle: String? = null, trailing: @Composable RowScope.() -> Unit = {}) {
     val density = LocalDensity.current
     val keyboard = WindowInsets.ime.getBottom(density) > 0
-    val stacked = density.fontScale >= 1.4f && !keyboard
+    val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val stacked = density.fontScale >= 1.4f && !keyboard && !hosted
     val back: @Composable () -> Unit = {
-        if (!com.halo.app.ui.presence.LocalShellCarouselBackVisible.current) {
+        if (!hosted && !com.halo.app.ui.presence.LocalShellCarouselBackVisible.current) {
             val label = uiText("Back")
             TextButton(onClick = onBack, enabled = enabled,
                 modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = label }) {
@@ -37,8 +38,12 @@ internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean 
             if (onTitleClick != null) Modifier.clickable(enabled = enabled, role = Role.Button,
                 onClickLabel = uiText("Rename"), onClick = onTitleClick)
             else Modifier), contentAlignment = Alignment.CenterStart) {
-            Text(title, style = MaterialTheme.typography.titleSmall,
-                maxLines = if (keyboard) 1 else 2, overflow = TextOverflow.Ellipsis)
+            Column {
+                Text(title, modifier = Modifier.semantics { heading() }, style = MaterialTheme.typography.titleSmall,
+                    maxLines = if (keyboard || hosted) 1 else 2, overflow = TextOverflow.Ellipsis)
+                if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
     if (stacked) Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {

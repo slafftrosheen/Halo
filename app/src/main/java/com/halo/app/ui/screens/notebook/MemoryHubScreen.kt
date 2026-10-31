@@ -82,6 +82,9 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     com.halo.app.ui.presence.BindShellPageActions(pageOwner, listOf(
         com.halo.app.ui.presence.ShellPageAction("page.memory.add", "Remember something", HaloGlyph.MEMORY, !busy) { editor = true },
         com.halo.app.ui.presence.ShellPageAction("page.memory.settings", "Learning settings", HaloGlyph.SETTINGS, !busy, onSettings),
+        com.halo.app.ui.presence.ShellPageAction("page.memory.view-memories", "Memories", HaloGlyph.MEMORY, !busy) { section = "Memories" },
+        com.halo.app.ui.presence.ShellPageAction("page.memory.view-suggestions", "Suggestions", HaloGlyph.MEMORY, !busy) { section = "Suggestions" },
+        com.halo.app.ui.presence.ShellPageAction("page.memory.view-history", "Learning history", HaloGlyph.ACTIVITY, !busy) { section = "Learning history" },
     ))
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         ToolZoneHeader(stringResource(R.string.zone5_tool_memory) + " · " + uiText(section), onBack)
@@ -96,7 +99,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
     if (headingBeforeTabs) Zone5InstrumentHeading(uiText("Memory"), "tool_memory",
         state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
-    Zone5LocalTabs(listOf(Zone5LocalTab("Memories", uiText("Memories"), "tool_memory"),
+    if (!shellOwnsOrb) Zone5LocalTabs(listOf(Zone5LocalTab("Memories", uiText("Memories"), "tool_memory"),
         Zone5LocalTab("Suggestions", uiText("Suggestions"), "memory_suggestions"),
         Zone5LocalTab("Learning history", uiText("Learning history"), "memory_history")), section,
         onSelect = { focus.clearFocus(); section = it })

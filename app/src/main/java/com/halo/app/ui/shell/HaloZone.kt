@@ -1,6 +1,11 @@
 package com.halo.app.ui.shell
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -37,68 +42,73 @@ internal fun HaloZone(
     val singleRow = compact || primaryNavigationRoute(route) == "settings" || availableHeight < 520.dp
     val dividerColor = if (com.halo.app.ui.theme.rememberVisualPreferences().higherContrast)
         MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.primary.copy(alpha = .24f)
-    Surface(color = if (singleRow) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
-        Column {
-        if (!singleRow) HorizontalDivider(color = dividerColor)
-        BoxWithConstraints {
-            val fallback = singleRow || largeText || maxWidth < 360.dp
-            val header = LocalShellUtilityBand.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
-            val contextual = com.halo.app.ui.zone5.zone5InstrumentOrbitActions(actions).filterNot {
-                it.glyph == HaloGlyph.TRASH || it.id in setOf("page-context", "type-message")
+    BoxWithConstraints {
+        val fallback = singleRow || largeText || maxWidth < 360.dp
+        val bounded = !fallback
+        val header = LocalShellUtilityBand.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
+        val workspace = header?.owner?.routeFamily in workspaceMenuFamilies
+        val orbitActions = zone5InstrumentOrbitActions(actions).filterNot {
+            it.glyph == HaloGlyph.TRASH || it.id in setOf("page-context", "type-message") ||
+                it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS
+        }
+        val session = LocalZone5GuideSession.current
+        val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+        val windowFocused = LocalWindowInfo.current.isWindowFocused
+        val visual = com.halo.app.ui.theme.rememberVisualPreferences()
+        var disclosed by remember(entryId) { mutableStateOf(false) }
+        var toolMenuOpen by remember(entryId) { mutableStateOf(false) }
+        var visibleGuide by remember(entryId) { mutableStateOf<String?>(null) }
+        var coachmarkId by remember(entryId) { mutableStateOf<String?>(null) }
+        val candidate = nextStep?.takeIf { guide -> zone5SafeGuideAction(guide.actionId) &&
+            (if (workspace) actions else orbitActions).any { it.enabled && it.id.removePrefix("page:") == guide.actionId } }
+        val allowed = zone5GuideAllowed(guideIdle, lifecycle.isAtLeast(Lifecycle.State.RESUMED), windowFocused,
+            fallback, WindowInsets.ime.getBottom(LocalDensity.current) > 0, disclosed || toolMenuOpen, visual.guideLight,
+            candidate != null && session != null && !session.suppressed(candidate.id))
+        LaunchedEffect(candidate, allowed, session) {
+            if (!allowed) { visibleGuide = null; coachmarkId = null }
+            else if (session != null) {
+                kotlinx.coroutines.delay(1200)
+                visibleGuide = candidate?.id
+                if (!session.shownThisSession) { coachmarkId = candidate?.id; session.shown() }
             }
-            val orbitActions = if (header == null) contextual else contextual.filterNot {
-                it.id.startsWith("page:") && it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS
-            }
-            val session = LocalZone5GuideSession.current
-            val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
-            val windowFocused = LocalWindowInfo.current.isWindowFocused
-            val visual = com.halo.app.ui.theme.rememberVisualPreferences()
-            var disclosed by remember(entryId) { mutableStateOf(false) }
-            var visibleGuide by remember(entryId) { mutableStateOf<String?>(null) }
-            var coachmarkId by remember(entryId) { mutableStateOf<String?>(null) }
-            val candidate = nextStep?.takeIf { guide -> zone5SafeGuideAction(guide.actionId) &&
-                orbitActions.any { it.enabled && it.id.removePrefix("page:") == guide.actionId } }
-            val allowed = zone5GuideAllowed(guideIdle, lifecycle.isAtLeast(Lifecycle.State.RESUMED), windowFocused,
-                fallback, WindowInsets.ime.getBottom(LocalDensity.current) > 0, disclosed, visual.guideLight,
-                candidate != null && session != null && !session.suppressed(candidate.id))
-            LaunchedEffect(candidate, allowed, session) {
-                if (!allowed) { visibleGuide = null; coachmarkId = null }
-                else if (session != null) {
-                    kotlinx.coroutines.delay(1200)
-                    visibleGuide = candidate?.id
-                    if (!session.shownThisSession) { coachmarkId = candidate?.id; session.shown() }
-                }
-            }
-            val guide = candidate?.takeIf { allowed && visibleGuide == it.id && session?.suppressed(it.id) == false }
-            val dispatch: (HaloOrbContextAction) -> Unit = { action ->
-                guide?.takeIf { action.enabled && it.actionId == action.id.removePrefix("page:") }?.let { session?.dismiss(it.id) }
-                onAction(action)
-            }
-            val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
-                entryId, singleRow, onDisclosureChanged = { disclosed = it })
-            backdrop()
-            CompositionLocalProvider(LocalHaloZone5Navigation provides navigation) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (singleRow) 4.dp else 8.dp)) {
-                    // Header Back stays directly reachable. Matching tools remain in the full action list.
-                    CompositionLocalProvider(LocalShellCarouselBackVisible provides false,
-                        LocalShellCarouselActionIds provides (if (fallback) emptySet() else orbitActions
-                            .filter { it.enabled && it.id.startsWith("page:") }.map { it.id.removePrefix("page:") }.toSet())) { utility() }
-                    val size = if (fallback) 48.dp else if (composer) 64.dp else 72.dp
-                    if (singleRow) {
+        }
+        val guide = candidate?.takeIf { allowed && visibleGuide == it.id && session?.suppressed(it.id) == false }
+        val dispatch: (HaloOrbContextAction) -> Unit = { action ->
+            guide?.takeIf { action.enabled && it.actionId == action.id.removePrefix("page:") }?.let { session?.dismiss(it.id) }
+            onAction(action)
+        }
+        val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
+            entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true)
+        val utilityScroll = rememberScrollState()
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * .25f) else Modifier)
+                .semantics { testTagsAsResourceId = true }.testTag("halo-zone5")) {
+            Box {
+                backdrop()
+                CompositionLocalProvider(LocalHaloZone5Navigation provides navigation,
+                    LocalShellCarouselBackVisible provides true, LocalShellCarouselActionIds provides emptySet()) {
+                    Column(Modifier.fillMaxWidth().then(if (bounded) Modifier.fillMaxHeight() else Modifier)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)) {
                         HorizontalDivider(color = dividerColor)
-                        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                            Box(Modifier.fillMaxWidth().padding(vertical = 4.dp)) { orb(size) }
+                        // The utility keeps one composition call site across keyboard transitions.
+                        // Overflow scrolls within the Zone; the working viewport never loses its 3/4 share.
+                        Column((if (bounded) Modifier.weight(1f) else Modifier).fillMaxWidth()
+                            .then(if (bounded) Modifier.verticalScroll(utilityScroll) else Modifier)) {
+                            val callout = guide?.takeIf { coachmarkId == it.id }
+                            Box(Modifier.fillMaxWidth()) {
+                                if (callout != null) Zone5GuideCallout(callout) { session?.dismiss(callout.id); visibleGuide = null }
+                                else if (composer || !singleRow) utility()
+                            }
+                            if (!singleRow && workspace) WorkspaceToolMenus(guide?.actionId) { toolMenuOpen = it }
+                            else if (!fallback && orbitActions.isNotEmpty()) ContextToolOrbit(orbitActions, dispatch, {}, 64.dp,
+                                "$entryId:$route", minimumHeight = 0.dp, guidedActionId = guide?.actionId, dense = true)
                         }
-                    } else if (fallback) orb(size)
-                    else {
-                        guide?.takeIf { coachmarkId == it.id }?.let { Zone5GuideCallout(it) { session?.dismiss(it.id); visibleGuide = null } }
-                        ContextToolOrbit(orbitActions, dispatch, orb, size, "$entryId:$route",
-                            (availableHeight * .25f - 16.dp - if (composer) 48.dp else 0.dp).coerceIn(180.dp, 232.dp),
-                            guidedActionId = guide?.actionId)
+                        Box(Modifier.fillMaxWidth().padding(top = if (singleRow) 2.dp else 4.dp)) {
+                            orb(if (fallback) 48.dp else 64.dp)
+                        }
                     }
                 }
             }
-        }
         }
     }
 }

@@ -28,6 +28,22 @@ internal fun StudioWorkbench(service: StudioService, project: StudioProject, bus
     val document = project.session.current
     val selected = document.layers.firstOrNull { it.id == document.selectedLayerId }
     val checker = MaterialTheme.colorScheme.surfaceContainerHigh
+    if (com.halo.app.ui.presence.LocalShellHaloOrb.current) {
+        BoxWithConstraints(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            val ratio = document.width.toFloat() / document.height
+            val width = minOf(maxWidth, maxHeight * ratio)
+            Surface(Modifier.width(width).height(width / ratio), color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                StudioDocumentPreview(service, document, Modifier.fillMaxSize().drawBehind {
+                    val tile = 14.dp.toPx()
+                    for (row in 0..(size.height / tile).toInt()) for (column in 0..(size.width / tile).toInt()) {
+                        if ((row + column) % 2 == 0) drawRect(checker, Offset(column * tile, row * tile), Size(tile, tile))
+                    }
+                })
+            }
+        }
+        return
+    }
     BoxWithConstraints(modifier) {
     val short = maxHeight < 420.dp || LocalDensity.current.fontScale >= 1.4f
     Column(Modifier.fillMaxSize().then(if (short) Modifier.verticalScroll(rememberScrollState()) else Modifier),

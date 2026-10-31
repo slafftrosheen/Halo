@@ -1,6 +1,7 @@
 package com.halo.app.ui.zone5
 
 import android.app.Application
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
@@ -123,14 +124,22 @@ class Zone5MemoryRecoveryTest {
             detailModel = MemoryDetailViewModel(memoryId, memories, { _, _ -> null }, { false }, { null }); own("detail", detailModel)
         }
         compose.setContent { HostlessHaloTheme(darkTheme = true, palette = com.halo.app.ui.theme.HaloPalette(com.halo.app.ui.theme.HaloAccent.BLUE, com.halo.app.ui.theme.HaloTone.COOL)) {
-            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
+            val utility = remember { mutableStateOf<com.halo.app.ui.presence.ShellUtilityProjection?>(null) }
+            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions,
+                com.halo.app.ui.presence.LocalShellUtilityBand provides utility) {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onSurface) {
                     val nav = rememberNavController()
+                    androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize()) {
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.weight(1f)) {
                     NavHost(nav, "workspace-detail") {
                         composable("workspace-detail") {
                             if (detail) WorkspaceObjectDetailScreen(memoryId, "memory", workspace, memoryDetailModel = detailModel, onBack = {})
                             else MemoryHubScreen(model, notebook, {}, {}, {})
                         }
+                    }
+                    }
+                    utility.value?.let { com.halo.app.ui.presence.RenderShellUtilityBand(it) }
+                    WorkspaceToolMenus()
                     }
                 }
             }
@@ -138,8 +147,9 @@ class Zone5MemoryRecoveryTest {
         await { if (detail) detailModel.state.value.item != null else !model.state.value.loading }
         compose.onRoot().captureRoboImage()
     }
-    @Test fun hostedMemoryTabsAreLocalAndInvalidateThePreviousSectionProjection() {
+    @Test fun hostedMemoryViewMenuInvalidatesThePreviousSectionProjection() {
         renderHub()
+        compose.onNodeWithText("View").performClick()
         compose.onNodeWithText("Memories").assertIsDisplayed()
         val previous = actions.value!!
         compose.onNodeWithText("Suggestions").performClick()
@@ -147,7 +157,9 @@ class Zone5MemoryRecoveryTest {
             assertFalse(previous.invoke("page.memory.add"))
             assertTrue(actions.value!!.actions.none { it.id in setOf("page.memory.saved", "page.memory.suggestions", "page.memory.history") })
         }
+        compose.onNodeWithText("View").performClick()
         compose.onNodeWithText("Learning history").performClick()
+        compose.onNodeWithText("View").performClick()
         compose.onNodeWithText("Memories").performClick()
         compose.onNodeWithText("Basil needs bright light.").performScrollTo().assertIsDisplayed()
     }

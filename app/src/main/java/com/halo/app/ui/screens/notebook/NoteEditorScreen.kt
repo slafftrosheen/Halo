@@ -227,6 +227,7 @@ fun NoteEditorScreen(
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         ToolZoneHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")),
             onBack = { viewModel.flush(); onBack() },
+            subtitle = uiText(noteSaveLabel(state)),
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null) {
             val renameLabel = uiText("Rename")
             IconButton(onClick = { titleDraft = state.title; showRename = true }, enabled = state.isEditable, modifier = Modifier.size(48.dp)) {
@@ -460,8 +461,19 @@ fun NoteEditorScreen(
             ModeToggle(state.mode, viewModel::setMode, allowSource = literalFileFormat == null)
             HorizontalDivider()
             Text(stringResource(R.string.zone5_group_edit), style = MaterialTheme.typography.titleSmall)
-            EditorToolbar(state, { showOutline = true }, { showFindBar = !showFindBar },
+            EditorToolbar(state, { toolsExpanded = false; showOutline = true }, { toolsExpanded = false; showFindBar = !showFindBar },
                 viewModel::undo, viewModel::redo)
+            if (state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
+                onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
+                onHalo = { toolsExpanded = false; showHaloSheet = true },
+                onExport = onOpenOffice?.takeIf { literalFileFormat != null }?.let { open -> ({
+                    if (viewModel.uiState.value.status == SaveStatus.SAVED) open(viewModel.noteId)
+                }) })
+            if (state.mode == EditorMode.EDIT && state.isEditable && state.selection?.let { it.start != it.end } == true)
+                SelectionToolbar(state, viewModel,
+                    onPickReference = { toolsExpanded = false; relinkBlockId = null; showReferencePicker = true },
+                    onAssist = { toolsExpanded = false; showHaloSheet = true }, onStudyPassage = { startStudy(null) },
+                    onAttach = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) })
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -560,7 +572,7 @@ fun NoteEditorScreen(
             )
         }
 
-        if (state.mode == EditorMode.EDIT && state.isEditable && !toolsExpanded &&
+        if (!shellOwnsOrb && state.mode == EditorMode.EDIT && state.isEditable && !toolsExpanded &&
             state.selection?.let { it.start != it.end } == true) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SelectionToolbar(state, viewModel,
@@ -568,13 +580,13 @@ fun NoteEditorScreen(
                 onAssist = { showHaloSheet = true }, onStudyPassage = { startStudy(null) },
                 onAttach = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) })
         }
-        if (state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
+        if (!shellOwnsOrb && state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
             onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
             onHalo = { showHaloSheet = true },
             onExport = onOpenOffice?.takeIf { literalFileFormat != null }?.let { open -> ({
                 if (viewModel.uiState.value.status == SaveStatus.SAVED) open(viewModel.noteId)
             }) })
-        EditorStatusBar(state)
+        if (!shellOwnsOrb || state.status in setOf(SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED)) EditorStatusBar(state)
     }
 }
 
@@ -1734,8 +1746,7 @@ private fun OutlineSheet(
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun EditorStatusBar(state: NoteEditorUiState) {
-    val label = when (state.status) {
+private fun noteSaveLabel(state: NoteEditorUiState): String = when (state.status) {
         SaveStatus.LOADING -> "Loading…"
         SaveStatus.SAVING -> "Saving…"
         SaveStatus.SAVED -> stringResource(R.string.brand_note_saved_on_phone)
@@ -1744,6 +1755,11 @@ private fun EditorStatusBar(state: NoteEditorUiState) {
         SaveStatus.MISSING -> "Unavailable"
         SaveStatus.TRASHED -> "In trash — editing disabled"
     }
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun EditorStatusBar(state: NoteEditorUiState) {
+    val label = noteSaveLabel(state)
     val color = when (state.status) {
         SaveStatus.LOADING -> MaterialTheme.colorScheme.onSurfaceVariant
         SaveStatus.SAVING -> MaterialTheme.colorScheme.primary
