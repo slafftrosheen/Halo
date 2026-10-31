@@ -97,6 +97,20 @@ class Zone5CreativeActionsTest {
         compose.onNodeWithText("Arrange").assertExists()
         assertEquals(original, model.uiState.value.nodes)
     }
+    @Test fun emptyCanvasCreationAndImportRemainInItsScopedAddMenu() {
+        val id = runBlocking { fixture.canvases.create("Empty field board") }
+        lateinit var model: CanvasEditorViewModel
+        compose.runOnUiThread { model = CanvasEditorViewModel(id, fixture.canvases); own(model) }
+        render("notebook/canvas/{canvasId}") { CanvasEditorScreen(model, onBack = {}) }
+        await { !model.uiState.value.loading }
+        compose.onNodeWithText("Add text card").assertDoesNotExist()
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.canvas.add")) }
+        assertTrue(model.uiState.value.nodes.isEmpty())
+        compose.onNodeWithText("Add a file or PDF").assertIsDisplayed()
+        compose.onNodeWithText("Add text card").performClick()
+        await { model.uiState.value.nodes.size == 1 }
+        assertEquals(1, runBlocking { fixture.canvases.observe(id).first()!! }.nodes.size)
+    }
     private val router = object : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(null)
         override val selectedModelId = MutableStateFlow<String?>(null)
@@ -122,6 +136,10 @@ class Zone5CreativeActionsTest {
         compose.runOnUiThread { model = StudioViewModel(service, fixture.files, WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets, project.id); own(model) }
         render("studio?projectId={projectId}") { StudioScreen(model, {}, {}, {}, {}, {}) }
         await { model.state.value.project != null && !model.state.value.loading }
+        compose.runOnIdle {
+            assertTrue(actions.value!!.actions.map { it.id }.containsAll(listOf("page.studio.copy", "page.studio.export-jpeg", "page.studio.discard", "page.studio.new")))
+            assertEquals(context.getString(com.halo.app.R.string.studio_saved), actions.value!!.owner.statusLabel)
+        }
         compose.onRoot().captureRoboImage()
         compose.runOnIdle {
             assertEquals(listOf("page.studio.add-layer", "page.studio.layers", "page.studio.export"), actions.value!!.actions.take(3).map { it.id })

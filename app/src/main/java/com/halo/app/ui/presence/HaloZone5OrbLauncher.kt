@@ -37,6 +37,7 @@ internal class HaloZone5Navigation(
     val compact: Boolean = false,
     val onDisclosureChanged: (Boolean) -> Unit = {},
     val inlineControls: Boolean = false,
+    val compactUtility: @Composable () -> Unit = {},
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -191,6 +192,10 @@ internal fun HaloZone5OrbLauncher(
                 HorizontalDivider()
                 navigation.profileControl()
             } else {
+                navigation.compactUtility()
+                LocalShellPageActions.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
+                    ?.owner?.statusLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 if (listedActions.isEmpty()) Text(stringResource(R.string.zone5_no_actions))
                 listedActions.forEach { action ->
                     Column {

@@ -139,7 +139,7 @@ class NotebookRootReselectionTest {
         renderWorkspace()
         compose.onNodeWithText("Tools").performClick()
         restoration.emulateSavedInstanceStateRestore()
-        compose.runOnIdle { assertEquals("tools", actions.value!!.owner.activeToolId); assertTrue(actions.value!!.actions.isEmpty()) }
+        compose.runOnIdle { assertEquals("tools", actions.value!!.owner.activeToolId); assertTrue(actions.value!!.actions.map { it.id }.toSet() == setOf("page.notebook.view-library", "page.notebook.view-tools")) }
         compose.onNodeWithText("HaloNotes", ignoreCase = true).assertIsDisplayed()
     }
 
@@ -203,7 +203,7 @@ class NotebookRootReselectionTest {
         compose.onNodeWithText("Tools").performClick()
         compose.runOnIdle {
             assertEquals("tools", actions.value!!.owner.activeToolId)
-            assertTrue(actions.value!!.actions.isEmpty())
+            assertTrue(actions.value!!.actions.map { it.id }.toSet() == setOf("page.notebook.view-library", "page.notebook.view-tools"))
             assertNull("Hidden Library cannot remain an assistant target", library.read())
         }
         compose.onNodeWithText("HaloStudy").performClick()

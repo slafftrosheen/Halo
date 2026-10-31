@@ -33,7 +33,7 @@ internal fun BellSubviewControls(route: String?, onNavigate: (String) -> Unit, o
                 }) { Text(uiText(label), maxLines = 1, softWrap = false) }
             }
         }
-        IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
+        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
             Icon(Icons.Default.Close, uiText("Close"), Modifier.size(24.dp))
         }
     }

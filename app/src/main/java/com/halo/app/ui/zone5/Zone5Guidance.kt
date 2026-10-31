@@ -40,13 +40,14 @@ internal fun zone5GuideAllowed(idle: Boolean, foreground: Boolean, focused: Bool
     idle && foreground && focused && !compact && !keyboard && !disclosure && guideLight && eligible
 
 @Composable
-internal fun Zone5GuideCallout(guide: ShellNextStep, dismiss: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.medium) {
-        Row(Modifier.fillMaxWidth().padding(start = 12.dp, top = 4.dp, bottom = 4.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text(guide.message, Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
-                color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodySmall)
-            TextButton(dismiss, Modifier.heightIn(min = 48.dp)) { Text(uiText("Dismiss")) }
-        }
+internal fun Zone5GuideInline(guide: ShellNextStep, dismiss: () -> Unit) {
+    val dismissLabel = uiText("Dismiss")
+    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.small) {
+        Text(guide.message, Modifier.fillMaxWidth().height(24.dp).padding(horizontal = 8.dp, vertical = 2.dp)
+            .semantics {
+                liveRegion = LiveRegionMode.Polite
+                customActions = listOf(CustomAccessibilityAction(dismissLabel) { dismiss(); true })
+            }, color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodySmall,
+            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
     }
 }

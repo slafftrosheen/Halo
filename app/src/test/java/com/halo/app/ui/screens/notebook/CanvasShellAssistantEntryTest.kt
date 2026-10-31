@@ -52,7 +52,7 @@ class CanvasShellAssistantEntryTest {
         assertEquals(1, halo)
     }
 
-    @Test fun shellOwnedEmptyStarterKeepsCreationAndImportWithoutAnotherAssistantEntry() {
+    @Test fun shellOwnedEmptyStarterKeepsWorkAreaFreeOfToolControlsAndAssistantDuplicates() {
         val calls = mutableListOf<String>()
         compose.setContent { HostlessHaloTheme {
             CompositionLocalProvider(LocalShellHaloOrb provides true) {
@@ -61,8 +61,9 @@ class CanvasShellAssistantEntryTest {
         } }
         compose.onAllNodesWithContentDescription("Think with halo", useUnmergedTree = true).assertCountEquals(0)
         compose.onNodeWithText("Think with halo").assertDoesNotExist()
-        compose.onNodeWithText("Add text card").performClick()
-        compose.onNodeWithText("Bring in a note or file").performClick()
-        assertEquals(listOf("text", "import"), calls)
+        compose.onNodeWithText("Add text card").assertDoesNotExist()
+        compose.onNodeWithText("Bring in a note or file").assertDoesNotExist()
+        compose.onNodeWithText("Make room for your ideas").assertIsDisplayed()
+        assertTrue(calls.isEmpty())
     }
 }

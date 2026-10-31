@@ -106,6 +106,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }
     val pageOwner = ShellPageOwner(if (canvasLibrary) "canvases" else "studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection",
         canonicalSourceVersion = project?.revision?.toString(),
+        statusLabel = project?.let { stringResource(if (it.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved) },
         selectionIds = listOfNotNull(project?.session?.current?.selectedLayerId),
         nextStep = if (!busy && !state.loading && !state.error && naming == null && !addingLayer && editing == null &&
             !importing && background == null && transforms == null && !layers && !historyOpen && activeInk == null &&
@@ -147,6 +148,11 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.continue", stringResource(R.string.link53_continue), HaloGlyph.FILE, !busy) {
                 handoff = project.id to project.revision.toString()
             },
+            ShellPageAction("page.studio.new", stringResource(R.string.studio_presets), HaloGlyph.NOTE, !busy) { naming = "new" },
+            ShellPageAction("page.studio.copy", stringResource(R.string.studio_save_as), HaloGlyph.FILE, !busy) { nameProject("copy") },
+            ShellPageAction("page.studio.export-jpeg", stringResource(R.string.studio_export_jpeg), HaloGlyph.FILE, !busy) { viewModel.export(CanvasImageFormat.JPEG) },
+            ShellPageAction("page.studio.discard", stringResource(R.string.studio_discard), HaloGlyph.TRASH,
+                !busy && project.hasUnsavedChanges, viewModel::discardDraft),
         ))
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val targetId = pickerProjectId; val targetRevision = pickerProjectRevision
@@ -174,8 +180,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         com.halo.app.ui.screens.notebook.ToolZoneHeader(project?.title ?: stringResource(if (canvasLibrary) R.string.zone5_tool_canvas else R.string.zone5_tool_studio),
             onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy,
             onTitleClick = if (project != null) ({ nameProject("rename") }) else null,
-            subtitle = project?.let { stringResource(R.string.zone5_graphics_dimensions, it.session.current.width,
-                it.session.current.height, it.session.current.layers.size) }) {
+            subtitle = project?.let { pageOwner.statusLabel + " · " + stringResource(R.string.zone5_graphics_dimensions,
+                it.session.current.width, it.session.current.height, it.session.current.layers.size) }) {
                 if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
                     val saveLabel = stringResource(R.string.studio_save)
                     Box(Modifier.semantics { contentDescription = saveLabel }) { Zone5Icon("action_save", HaloGlyph.NOTE, Modifier.size(24.dp)) }

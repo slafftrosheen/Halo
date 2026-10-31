@@ -201,7 +201,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             "page.notebook.new-note" to uiText("Updating..."), "page.notebook.import" to uiText("Updating..."),
             "page.notebook.organize" to if (mutating) uiText("Updating...") else stringResource(R.string.zone5_refresh_first),
             "page.notebook.select-visible" to uiText(if (mutating) "Updating..." else "Nothing in this view"),
-            "page.notebook.selection-actions" to stringResource(if (state.loadError) R.string.zone5_refresh_first else R.string.zone5_select_first))), libraryActions)
+            "page.notebook.selection-actions" to stringResource(if (state.loadError) R.string.zone5_refresh_first else R.string.zone5_select_first))), libraryActions + listOf(
+                ShellPageAction("page.notebook.view-library", "Library", HaloGlyph.FILE, !showLibrary) { selectView(true) },
+                ShellPageAction("page.notebook.view-tools", "Tools", HaloGlyph.TOOL, showLibrary) { selectView(false) }))
     BackHandler(enabled = !showLibrary) { workspaceView = "library" }
     LaunchedEffect(requestLocalSearch) {
         if (requestLocalSearch) { workspaceView = "library"; showLocalSearch = true; onLocalSearchOpened() }

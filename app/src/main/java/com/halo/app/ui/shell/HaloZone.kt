@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.lifecycle.compose.currentStateAsState
@@ -51,6 +52,11 @@ internal fun HaloZone(
             it.glyph == HaloGlyph.TRASH || it.id in setOf("page-context", "type-message") ||
                 it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS
         }
+        val density = LocalDensity.current
+        var utilityHeight by remember(entryId) { mutableStateOf<Dp?>(null) }
+        var menuHeight by remember(entryId) { mutableStateOf<Dp?>(null) }
+        val spareForHint = bounded && workspace && utilityHeight != null && menuHeight != null &&
+            availableHeight * .25f - 77.dp - (utilityHeight ?: 0.dp) - (menuHeight ?: 0.dp) >= 24.dp
         val session = LocalZone5GuideSession.current
         val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
         val windowFocused = LocalWindowInfo.current.isWindowFocused
@@ -69,16 +75,25 @@ internal fun HaloZone(
             else if (session != null) {
                 kotlinx.coroutines.delay(1200)
                 visibleGuide = candidate?.id
-                if (!session.shownThisSession) { coachmarkId = candidate?.id; session.shown() }
             }
         }
         val guide = candidate?.takeIf { allowed && visibleGuide == it.id && session?.suppressed(it.id) == false }
+        LaunchedEffect(guide?.id, spareForHint, session) {
+            coachmarkId = null
+            if (guide != null && spareForHint && session != null && !session.shownThisSession) {
+                coachmarkId = guide.id
+                session.shown()
+                kotlinx.coroutines.delay(6000)
+                coachmarkId = null
+            }
+        }
         val dispatch: (HaloOrbContextAction) -> Unit = { action ->
             guide?.takeIf { action.enabled && it.actionId == action.id.removePrefix("page:") }?.let { session?.dismiss(it.id) }
             onAction(action)
         }
         val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
-            entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true)
+            entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true,
+            compactUtility = { if (singleRow && !composer && header?.owner?.routeFamily != "notebook") utility() })
         val utilityScroll = rememberScrollState()
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * .25f) else Modifier)
@@ -94,14 +109,17 @@ internal fun HaloZone(
                         // Overflow scrolls within the Zone; the working viewport never loses its 3/4 share.
                         Column((if (bounded) Modifier.weight(1f) else Modifier).fillMaxWidth()
                             .then(if (bounded) Modifier.verticalScroll(utilityScroll) else Modifier)) {
-                            val callout = guide?.takeIf { coachmarkId == it.id }
-                            Box(Modifier.fillMaxWidth()) {
-                                if (callout != null) Zone5GuideCallout(callout) { session?.dismiss(callout.id); visibleGuide = null }
-                                else if (composer || !singleRow) utility()
+                            Column(Modifier.fillMaxWidth().onSizeChanged { utilityHeight = with(density) { it.height.toDp() } }) {
+                                if (composer || !singleRow) utility()
                             }
-                            if (!singleRow && workspace) WorkspaceToolMenus(guide?.actionId) { toolMenuOpen = it }
+                            if (!singleRow && workspace) Box(Modifier.fillMaxWidth().onSizeChanged {
+                                menuHeight = with(density) { it.height.toDp() }
+                            }) { WorkspaceToolMenus(guide?.actionId) { toolMenuOpen = it } }
                             else if (!fallback && orbitActions.isNotEmpty()) ContextToolOrbit(orbitActions, dispatch, {}, 64.dp,
                                 "$entryId:$route", minimumHeight = 0.dp, guidedActionId = guide?.actionId, dense = true)
+                            guide?.takeIf { spareForHint && coachmarkId == it.id }?.let { hint ->
+                                Zone5GuideInline(hint) { session?.dismiss(hint.id); visibleGuide = null }
+                            }
                         }
                         Box(Modifier.fillMaxWidth().padding(top = if (singleRow) 2.dp else 4.dp)) {
                             orb(if (fallback) 48.dp else 64.dp)

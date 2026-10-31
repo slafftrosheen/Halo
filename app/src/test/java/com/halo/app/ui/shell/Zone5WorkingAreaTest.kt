@@ -29,9 +29,11 @@ class Zone5WorkingAreaTest {
     private val calls = mutableListOf<String>()
 
     @Composable
-    private fun face(size: androidx.compose.ui.unit.Dp) {
+    private fun face(size: androidx.compose.ui.unit.Dp, actions: List<HaloOrbContextAction> = emptyList(),
+        onAction: (HaloOrbContextAction) -> Unit = {}) {
         HaloOrbLauncher(HaloSignalPresentation(label = "Ready", reducedMotion = true),
-            HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, {}, {}, {}, size = size)
+            HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, {}, {}, {}, size = size,
+            contextActions = actions, onContextAction = onAction)
     }
 
     @Test fun documentIdentityAndMenusStayInsideTheQuarterHeightZone() {
@@ -88,5 +90,35 @@ class Zone5WorkingAreaTest {
         compose.runOnIdle { compact.value = false }
         compose.onNodeWithTag("composer").assertIsFocused().assertTextEquals("Keep my draft")
         compose.onNodeWithTag("halo-zone5").assertHeightIsEqualTo(200.dp)
+    }
+
+    @Test fun compactWorkspaceKeepsLibraryAndToolsReachableThroughScopedActions() {
+        val library = mutableStateOf(true)
+        compose.setContent { HostlessHaloTheme {
+            val actions = remember { mutableStateOf<ShellPageProjection?>(null) }
+            val band = remember { mutableStateOf<ShellUtilityProjection?>(null) }
+            val owner = ShellPageOwner("notebook", activeToolId = if (library.value) "library" else "tools")
+            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions,
+                LocalShellUtilityBand provides band) {
+                BindShellPageActions(owner, listOf(
+                    ShellPageAction("page.notebook.view-library", "Library", HaloGlyph.FILE, !library.value) { library.value = true },
+                    ShellPageAction("page.notebook.view-tools", "Tools", HaloGlyph.TOOL, library.value) { library.value = false }))
+                BindShellUtilityBand(owner) { com.halo.app.ui.screens.notebook.WorkspaceSectionSwitcher(library.value) { library.value = it } }
+                val contexts = actions.value?.actions.orEmpty().map { HaloOrbContextAction("page:${it.id}", it.title, it.glyph, enabled = it.enabled) }
+                val invoke: (HaloOrbContextAction) -> Unit = { actions.value?.invoke(it.id.removePrefix("page:")) }
+                Column(Modifier.width(393.dp).height(400.dp)) {
+                    Box(Modifier.weight(1f)) { Text(if (library.value) "Saved content" else "Choose a tool") }
+                    HaloZone("notebook", 400.dp, true, contexts, invoke, {}, 0,
+                        utility = { band.value?.let { RenderShellUtilityBand(it) } }, orb = { face(it, contexts, invoke) }, backdrop = {})
+                }
+            }
+        } }
+        compose.onNodeWithText("Tools").assertDoesNotExist()
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNodeWithText("Tools").performClick()
+        compose.onNodeWithText("Choose a tool").assertIsDisplayed()
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNodeWithText("Library").performClick()
+        compose.onNodeWithText("Saved content").assertIsDisplayed()
     }
 }

@@ -27,7 +27,7 @@ internal fun workspaceMenuGroup(id: String): WorkspaceMenuGroup {
     if (action.startsWith("edit-")) return WorkspaceMenuGroup.EDIT
     if (action.startsWith("add-")) return WorkspaceMenuGroup.ADD
     return when (action) {
-        "new", "new-note", "new-canvas", "open", "save", "export", "versions", "close", "copy", "import", "new-image" -> WorkspaceMenuGroup.FILE
+        "new", "new-note", "new-canvas", "open", "save", "export", "versions", "close", "copy", "import", "new-image", "discard" -> WorkspaceMenuGroup.FILE
         "undo", "redo", "rename", "find", "arrange", "edit", "forget", "background", "transform", "tools", "table" -> WorkspaceMenuGroup.EDIT
         "insert", "add", "add-layer", "material", "attach", "text", "shape", "draw", "image", "camera" -> WorkspaceMenuGroup.ADD
         "outline", "fit", "layers", "details", "source", "history", "practice", "read", "stop-reading" -> WorkspaceMenuGroup.VIEW
@@ -41,7 +41,8 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
     val projection = LocalShellPageActions.current?.value ?: return
     if (projection.owner.routeFamily !in workspaceMenuFamilies ||
         !LocalShellPageOwnerFilter.current(projection.owner)) return
-    val actions = projection.actions.filterNot { it.title == "Back" || it.id.endsWith(".back") }
+    val actions = projection.actions.filterNot { it.title == "Back" || it.id.endsWith(".back") ||
+        it.id in setOf("page.notebook.view-library", "page.notebook.view-tools") }
     var opened by remember(projection.owner.routeFamily, projection.owner.objectId) { mutableStateOf<WorkspaceMenuGroup?>(null) }
     val guideSession = LocalZone5GuideSession.current
     LaunchedEffect(projection) { opened = null }

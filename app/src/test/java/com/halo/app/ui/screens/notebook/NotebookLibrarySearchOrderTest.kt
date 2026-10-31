@@ -177,7 +177,7 @@ class NotebookLibrarySearchOrderTest {
         compose.onNodeWithText("Tools").performClick()
         compose.runOnIdle {
             assertFalse(root.invoke("page.notebook.new-note"))
-            assertTrue(actions.value!!.actions.isEmpty())
+            assertTrue(actions.value!!.actions.map { it.id }.toSet() == setOf("page.notebook.view-library", "page.notebook.view-tools"))
             assertFalse("halo_library_set_view" in actions.value!!.owner.canonicalToolIds)
         }
         compose.onNodeWithText("HaloNotes", ignoreCase = true).performClick()
