@@ -174,7 +174,7 @@ class Zone5CreativeActionsTest {
             WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets); own(model) }
         render("canvases") { StudioScreen(model, {}, {}, {}, {}, {}, onOpenCanvas = { opened = it }, canvasLibrary = true) }
         await { !model.libraryStatus.value.canvasesLoading && model.canvases.value.isNotEmpty() }
-        compose.onNodeWithText("HaloCanvas").assertExists()
+        compose.onNode(hasText("HaloCanvas") and hasAnyAncestor(hasScrollToIndexAction())).assertExists()
         compose.onNodeWithText("Connected field idea").performClick()
         assertEquals(id, opened)
         compose.runOnIdle {

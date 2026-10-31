@@ -83,7 +83,7 @@ class HaloZone5InteractionTest {
     @Test fun kidsMenuKeepsTheAllowlistAndIdentifiesTheActiveStudyInstrument() {
         show(route = mutableStateOf("study"), kids = true)
         compose.onNodeWithText("Menu").performClick()
-        compose.onNode(hasText("Study") and hasClickAction()).assertIsSelected()
+        compose.onNode(hasText("HaloStudy") and hasClickAction()).assertIsSelected()
         compose.onNode(hasText("Settings") and hasClickAction() and hasAnyAncestor(isDialog())).assertDoesNotExist()
     }
 

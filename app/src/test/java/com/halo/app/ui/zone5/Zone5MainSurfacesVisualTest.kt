@@ -68,7 +68,7 @@ class Zone5MainSurfacesVisualTest {
         var talk = ""; var menu = ""; var study = ""
         compose.setContent { HostlessHaloTheme(darkTheme = dark, palette = HaloPalette(accent, tone), fontScale = scale) {
             primary = MaterialTheme.colorScheme.primary
-            talk = uiText("Talk"); menu = stringResource(R.string.zone5_menu); study = uiText("Study")
+            talk = uiText("Talk"); menu = stringResource(R.string.zone5_menu); study = stringResource(R.string.zone5_tool_study)
             CompositionLocalProvider(LocalShellHaloOrb provides true) {
                 val actions = when(page) {
                     "home" -> listOf(HaloOrbContextAction("page:attach", "Attach", HaloGlyph.FILE),
@@ -91,7 +91,7 @@ class Zone5MainSurfacesVisualTest {
                             "tools" -> LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
                                 verticalArrangement = Arrangement.spacedBy(20.dp)) {
                                 item { WorkspaceHeadingAndTabs(false, {}) }
-                                item { WorkspaceToolsList({}, {}, {}, {}) }
+                                item { WorkspaceToolsList({}, {}, {}, {}, onCanvas = {}) }
                             }
                             else -> Column(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp)) {
                                 Zone5PageHeading("HaloScreen")
@@ -130,7 +130,7 @@ class Zone5MainSurfacesVisualTest {
         compose.onAllNodesWithContentDescription(talk).assertCountEquals(1)
         compose.onNodeWithText(menu).assertIsDisplayed().assertHeightIsAtLeast(48.dp)
         assertPaint(compose.onNodeWithContentDescription(talk), primary, "orb follows $accent/$tone")
-        if (page == "tools") assertPaint(compose.onNodeWithText(study), primary, "tool glyph follows $accent/$tone")
+        if (page == "tools") assertPaint(compose.onNodeWithText(study).performScrollTo(), primary, "tool glyph follows $accent/$tone")
         compose.onRoot().captureRoboImage()
     }
 
