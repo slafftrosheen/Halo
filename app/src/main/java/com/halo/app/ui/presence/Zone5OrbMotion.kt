@@ -1,16 +1,17 @@
 package com.halo.app.ui.presence
 
-import com.halo.app.R
-
-/** Only ongoing canonical voice/task states migrate here. Result/decision one-shots need IDs. */
-internal fun zone5OrbMotionResource(signal: HaloSignalPresentation, size: Float, dark: Boolean,
-    motionAllowed: Boolean): Int? {
+/** The user's preferred thick-ring family at the authored Zone sizes. Result one-shots still need IDs. */
+internal fun zone5OrbMotionAsset(signal: HaloSignalPresentation, size: Float, dark: Boolean,
+    motionAllowed: Boolean, kids: Boolean = false): String? {
     if (!motionAllowed || size !in setOf(64f, 72f)) return null
-    return when (signal.presenceArtwork()) {
-        PresenceArtwork.CAPTURING_VOICE -> if (dark) R.raw.halo5_motion_orb_listening_dark else R.raw.halo5_motion_orb_listening_light
+    val artwork = when (signal.presenceArtwork()) {
+        PresenceArtwork.IDLE -> PresenceArtwork.IDLE
+        PresenceArtwork.CAPTURING_VOICE -> PresenceArtwork.CAPTURING_VOICE
         PresenceArtwork.THINKING, PresenceArtwork.PLANNING, PresenceArtwork.ACTING ->
-            if (signal.progress != null) null else if (dark) R.raw.halo5_motion_orb_thinking_dark else R.raw.halo5_motion_orb_thinking_light
-        PresenceArtwork.SPEAKING -> if (dark) R.raw.halo5_motion_orb_speaking_dark else R.raw.halo5_motion_orb_speaking_light
+            if (signal.progress != null) null else if (signal.presenceArtwork() == PresenceArtwork.ACTING) PresenceArtwork.ACTING else PresenceArtwork.THINKING
+        PresenceArtwork.SPEAKING -> PresenceArtwork.SPEAKING
         else -> null
-    }
+    } ?: return null
+    val prefix = if (kids) "halo_kids_orb_" else "halo_orb_"
+    return "halo/$prefix${artwork.key}_${if (dark) "dark" else "light"}.json"
 }

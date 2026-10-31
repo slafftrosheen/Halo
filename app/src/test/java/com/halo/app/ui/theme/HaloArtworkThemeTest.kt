@@ -35,7 +35,13 @@ class HaloArtworkThemeTest {
 
     @Test fun legacyGradientAnimationRepaintsWhenThePaletteChanges() = assertMotion(asset = "halo/halo_orb_thinking_dark.json")
 
-    private fun assertMotion(asset: String? = null, rawRes: Int? = null) {
+    @Test fun classicCaptureAtComposerSizeRepaintsItsThickRingAndGlow() =
+        assertMotion(asset = "halo/halo_orb_capturing_voice_dark.json", size = 64)
+
+    @Test fun classicSpeechAtZoneSizeRepaintsItsThickRingAndRipples() =
+        assertMotion(asset = "halo/halo_orb_speaking_dark.json", size = 72)
+
+    private fun assertMotion(asset: String? = null, rawRes: Int? = null, size: Int = 160) {
         val accent = mutableStateOf(HaloAccent.BLUE)
         var expected = Color.Unspecified
         var ready: LottieComposition? = null
@@ -44,7 +50,7 @@ class HaloArtworkThemeTest {
             val composition = rememberHaloThemedLottie(asset, rawRes)
             SideEffect { expected = primary; ready = composition }
             if (composition != null) LottieAnimation(composition, progress = { .5f },
-                modifier = Modifier.size(160.dp).testTag("themed_motion"))
+                modifier = Modifier.size(size.dp).testTag("themed_motion"))
         } }
         var previous: HaloAccent? = null
         for (value in listOf(HaloAccent.BLUE, HaloAccent.ROSE, HaloAccent.SAGE)) {

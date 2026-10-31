@@ -63,19 +63,19 @@ fun HaloSignalFace(
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val artwork = presentation.presenceArtwork()
     val foreground = lifecycleState.isAtLeast(if (zone5) Lifecycle.State.RESUMED else Lifecycle.State.STARTED)
-    val zone5Resource = if (zone5) zone5OrbMotionResource(presentation, size.value, dark, !reduced && foreground) else null
-    val policy = if (zone5) PresenceMotionPolicy(zone5Resource != null, loop = true)
+    val zone5Asset = if (zone5) zone5OrbMotionAsset(presentation, size.value, dark, !reduced, kids) else null
+    val policy = if (zone5) PresenceMotionPolicy(zone5Asset != null && foreground, loop = artwork != PresenceArtwork.IDLE)
         else artwork.motionPolicy(size.value, reduced, foreground)
     // Keep an eligible composition mounted as the Activity pauses. Discarding it on
     // ON_STOP would reset one-shot success/warning motion when Android resumes.
-    val keepComposition = if (zone5) zone5Resource != null else artwork.canKeepLottieComposition(size.value, reduced)
+    val keepComposition = if (zone5) zone5Asset != null else artwork.canKeepLottieComposition(size.value, reduced)
     val prefix = if (kids) "halo_kids_orb_" else "halo_orb_"
-    // Request Lottie only for foreground, standard-sized and motion-enabled faces.
+    // Load only eligible artwork, and pause its playback outside the foreground.
     // Keep a same-state static fallback while composition loads or parsing fails.
     val assetPath = "halo/$prefix" + artwork.key + if (dark) "_dark.json" else "_light.json"
     val composition = if (keepComposition) {
         com.halo.app.ui.theme.rememberHaloThemedLottie(
-            asset = if (zone5Resource == null) assetPath else null, rawRes = zone5Resource,
+            asset = zone5Asset ?: assetPath,
             accent = haloSignalInk(presentation.state, MaterialTheme.colorScheme))
     } else null
     val interactions = remember { MutableInteractionSource() }
@@ -111,11 +111,11 @@ fun HaloSignalFace(
         val progressColor = MaterialTheme.colorScheme.primary
         if (artwork == PresenceArtwork.MODEL_LOADING && presentation.progress != null) {
             androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
-                val inset = this.size.minDimension * .15f
+                val inset = this.size.minDimension * .06f
                 drawArc(progressColor, -90f, presentation.progress.coerceIn(0f, 1f) * 360f, false,
                     topLeft = androidx.compose.ui.geometry.Offset(inset, inset),
                     size = androidx.compose.ui.geometry.Size(this.size.width - inset * 2, this.size.height - inset * 2),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(this.size.minDimension * .075f,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(this.size.minDimension * .035f,
                         cap = androidx.compose.ui.graphics.StrokeCap.Round))
             }
         }
