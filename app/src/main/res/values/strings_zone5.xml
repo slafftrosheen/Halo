@@ -9,7 +9,7 @@
     <string name="zone5_choose_tool">Choose a tool</string>
     <string name="zone5_study_purpose">Guided lessons and practice</string>
     <string name="zone5_memory_purpose">Review what Halo remembers</string>
-    <string name="zone5_studio_purpose">Canvases and image editing</string>
+    <string name="zone5_studio_purpose">Graphics, drawing and image editing</string>
     <string name="zone5_office_purpose">Notes, documents and files</string>
     <string name="zone5_creations_in_library">Your creations stay in Library.</string>
     <string name="zone5_tools_controls">Open a tool to see its controls here.</string>
@@ -67,7 +67,7 @@
     <string name="zone5_graphics_intro">Draw, compose images and edit layers.</string>
     <string name="zone5_canvas_purpose">Connect files and ideas on a visual board</string>
     <string name="zone5_graphics_artboard">Artboard</string>
-    <string name="zone5_graphics_dimensions">%1$d × %2$d px · %3$d layers</string>
+    <string name="zone5_graphics_dimensions">%1$d × %2$d px · Layers: %3$d</string>
     <string name="zone5_graphics_projects">Graphics projects</string>
     <string name="zone5_guide_office">Choose a document to reveal its available file actions.</string>
     <string name="zone5_guide_canvas">Add a card or file to start connecting this idea.</string>
@@ -80,4 +80,6 @@
     <string name="zone5_guide_canvas_new">Create a canvas to bring your files and ideas together.</string>
     <string name="zone5_note_editor_hint">Open the text editor from Edit, or save a copy from File.</string>
     <string name="zone5_guide_library">Create a note, or import a file into your Library.</string>
+    <string name="zone5_saved_state">Saved</string>
+    <string name="zone5_draft_state">Local draft</string>
 </resources>

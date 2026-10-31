@@ -138,7 +138,7 @@ class Zone5CreativeActionsTest {
         await { model.state.value.project != null && !model.state.value.loading }
         compose.runOnIdle {
             assertTrue(actions.value!!.actions.map { it.id }.containsAll(listOf("page.studio.copy", "page.studio.export-jpeg", "page.studio.discard", "page.studio.new")))
-            assertEquals(context.getString(com.halo.app.R.string.studio_saved), actions.value!!.owner.statusLabel)
+            assertEquals(context.getString(com.halo.app.R.string.zone5_saved_state), actions.value!!.owner.statusLabel)
         }
         compose.onRoot().captureRoboImage()
         compose.runOnIdle {

@@ -9,7 +9,7 @@
     <string name="zone5_choose_tool">Выберите инструмент</string>
     <string name="zone5_study_purpose">Уроки и практика</string>
     <string name="zone5_memory_purpose">Что помнит Halo</string>
-    <string name="zone5_studio_purpose">Холсты и работа с изображениями</string>
+    <string name="zone5_studio_purpose">Графика, рисование и работа с изображениями</string>
     <string name="zone5_office_purpose">Заметки, документы и файлы</string>
     <string name="zone5_creations_in_library">Созданные материалы остаются в библиотеке.</string>
     <string name="zone5_tools_controls">Откройте инструмент, чтобы увидеть его действия.</string>
@@ -67,7 +67,7 @@
     <string name="zone5_graphics_intro">Рисуйте, создавайте композиции и редактируйте слои.</string>
     <string name="zone5_canvas_purpose">Объединяйте файлы и идеи на доске</string>
     <string name="zone5_graphics_artboard">Холст изображения</string>
-    <string name="zone5_graphics_dimensions">%1$d × %2$d пикс. · слоёв: %3$d</string>
+    <string name="zone5_graphics_dimensions">%1$d × %2$d пикс. · Слои: %3$d</string>
     <string name="zone5_graphics_projects">Графические проекты</string>
     <string name="zone5_guide_office">Выберите документ, чтобы увидеть доступные действия с файлом.</string>
     <string name="zone5_guide_canvas">Добавьте карточку или файл, чтобы начать собирать идею.</string>
@@ -80,4 +80,6 @@
     <string name="zone5_guide_canvas_new">Создайте холст, чтобы объединить файлы и идеи.</string>
     <string name="zone5_note_editor_hint">Откройте текстовый редактор в меню «Правка» или сохраните копию в меню «Файл».</string>
     <string name="zone5_guide_library">Создайте заметку или импортируйте файл в библиотеку.</string>
+    <string name="zone5_saved_state">Сохранено</string>
+    <string name="zone5_draft_state">Локальный черновик</string>
 </resources>

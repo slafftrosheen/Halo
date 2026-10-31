@@ -106,7 +106,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }
     val pageOwner = ShellPageOwner(if (canvasLibrary) "canvases" else "studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection",
         canonicalSourceVersion = project?.revision?.toString(),
-        statusLabel = project?.let { stringResource(if (it.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved) },
+        statusLabel = project?.let { stringResource(if (it.hasUnsavedChanges) R.string.zone5_draft_state else R.string.zone5_saved_state) },
         selectionIds = listOfNotNull(project?.session?.current?.selectedLayerId),
         nextStep = if (!busy && !state.loading && !state.error && naming == null && !addingLayer && editing == null &&
             !importing && background == null && transforms == null && !layers && !historyOpen && activeInk == null &&

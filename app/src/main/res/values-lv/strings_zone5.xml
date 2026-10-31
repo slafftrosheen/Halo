@@ -9,7 +9,7 @@
     <string name="zone5_choose_tool">Izvēlieties rīku</string>
     <string name="zone5_study_purpose">Vadītas nodarbības un vingrinājumi</string>
     <string name="zone5_memory_purpose">Pārskatiet, ko Halo atceras</string>
-    <string name="zone5_studio_purpose">Audekli un attēlu rediģēšana</string>
+    <string name="zone5_studio_purpose">Grafika, zīmēšana un attēlu rediģēšana</string>
     <string name="zone5_office_purpose">Piezīmes, dokumenti un faili</string>
     <string name="zone5_creations_in_library">Izveidotie materiāli paliek bibliotēkā.</string>
     <string name="zone5_tools_controls">Atveriet rīku, lai šeit redzētu tā darbības.</string>
@@ -67,7 +67,7 @@
     <string name="zone5_graphics_intro">Zīmējiet, veidojiet attēlu kompozīcijas un rediģējiet slāņus.</string>
     <string name="zone5_canvas_purpose">Apvienojiet failus un idejas vizuālā tāfelē</string>
     <string name="zone5_graphics_artboard">Attēla laukums</string>
-    <string name="zone5_graphics_dimensions">%1$d × %2$d px · slāņi: %3$d</string>
+    <string name="zone5_graphics_dimensions">%1$d × %2$d px · Slāņi: %3$d</string>
     <string name="zone5_graphics_projects">Grafikas projekti</string>
     <string name="zone5_guide_office">Izvēlieties dokumentu, lai redzētu pieejamās darbības ar failu.</string>
     <string name="zone5_guide_canvas">Pievienojiet kartīti vai failu, lai sāktu savienot ideju.</string>
@@ -80,4 +80,6 @@
     <string name="zone5_guide_canvas_new">Izveidojiet audeklu, lai apvienotu failus un idejas.</string>
     <string name="zone5_note_editor_hint">Atveriet teksta redaktoru izvēlnē Rediģēt vai saglabājiet kopiju izvēlnē Fails.</string>
     <string name="zone5_guide_library">Izveidojiet piezīmi vai importējiet failu bibliotēkā.</string>
+    <string name="zone5_saved_state">Saglabāts</string>
+    <string name="zone5_draft_state">Vietējais melnraksts</string>
 </resources>
