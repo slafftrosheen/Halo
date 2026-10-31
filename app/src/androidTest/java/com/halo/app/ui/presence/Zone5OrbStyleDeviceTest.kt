@@ -38,7 +38,8 @@ class Zone5OrbStyleDeviceTest {
         compose.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 HaloTheme(darkTheme = dark.value, palette = HaloPalette(accent.value)) {
-                    SideEffect { ink = MaterialTheme.colorScheme.primary }
+                    val currentInk = MaterialTheme.colorScheme.primary
+                    SideEffect { ink = currentInk }
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Classic Halo orb", style = MaterialTheme.typography.headlineMedium)
