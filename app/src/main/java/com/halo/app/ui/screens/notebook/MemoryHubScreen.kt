@@ -88,8 +88,11 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     val historyScroll = rememberLazyListState()
     val focus = LocalFocusManager.current
     var showUsage by rememberSaveable { mutableStateOf(false) }
+    val headingBeforeTabs = shellOwnsOrb && androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.4f
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
+    if (headingBeforeTabs) Zone5InstrumentHeading(uiText("Memory"), "tool_memory",
+        state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
     Zone5LocalTabs(listOf(Zone5LocalTab("Memories", uiText("Memories"), "tool_memory"),
         Zone5LocalTab("Suggestions", uiText("Suggestions"), "memory_suggestions"),
         Zone5LocalTab("Learning history", uiText("Learning history"), "memory_history")), section,
@@ -97,7 +100,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = when (section) { "Suggestions" -> suggestionsScroll; "Learning history" -> historyScroll; else -> memoryScroll },
         contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!shellOwnsOrb) item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
-        else item { Zone5InstrumentHeading(uiText("Memory"), "tool_memory", state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size)) }
+        else if (!headingBeforeTabs) item { Zone5InstrumentHeading(uiText("Memory"), "tool_memory", state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size)) }
         item {
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
             TextButton({ showUsage = !showUsage }) { Text(stringResource(R.string.zone5_memory_usage_details)) }

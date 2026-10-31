@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -918,17 +919,19 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
     val reduced by com.halo.app.ui.theme.rememberReducedMotion()
     val highContrast = com.halo.app.ui.theme.rememberVisualPreferences().higherContrast
     val colors = MaterialTheme.colorScheme
+    val flat = com.halo.app.ui.presence.LocalShellHaloOrb.current && !editing && !fullScreen && !masked && !appearance.translucent
     val cardColor by animateColorAsState(
         if (update && !masked && !fullScreen && !reduced) androidx.compose.ui.graphics.lerp(colors.surfaceContainerLow, colors.primaryContainer, .12f)
         else colors.surfaceContainerLow,
         animationSpec = tween(if (reduced) 0 else com.halo.app.ui.design.HaloMotion.standardMs), label = "screen-card-freshness")
     Surface(onClick = onOpen, enabled = enabled, modifier = Modifier.fillMaxWidth(), shape = HaloShapes.card,
-        color = cardColor.copy(alpha = if (appearance.translucent && !masked && !highContrast) .88f else 1f),
+        color = if (flat) Color.Transparent else cardColor.copy(alpha = if (appearance.translucent && !masked && !highContrast) .88f else 1f),
         contentColor = colors.onSurface,
-        border = BorderStroke(if (editing) 2.dp else 1.dp,
+        border = if (flat) null else BorderStroke(if (editing) 2.dp else 1.dp,
             if (editing) colors.primary else if (highContrast) colors.outline else colors.outlineVariant),
-        tonalElevation = if (appearance.translucent && !highContrast) 1.dp else 0.dp) {
-        Column(Modifier.fillMaxWidth().padding(if (fullScreen) 24.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        tonalElevation = if (!flat && appearance.translucent && !highContrast) 1.dp else 0.dp) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = if (flat) 0.dp else if (fullScreen) 24.dp else 16.dp,
+            vertical = if (fullScreen) 24.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (masked) {
                 HaloIcon(HaloGlyph.SECURITY, null)
                 Text(uiText("Private card"), style = MaterialTheme.typography.titleMedium)
@@ -936,7 +939,10 @@ internal fun ScreenWidgetCard(data: ScreenDisplay, card: ScreenCard, masked: Boo
             } else {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(if (data.sourceTitle) data.title else uiText(data.title), Modifier.weight(1f), style =
-                        screenTextStyle(if (card.widgetType == "clock") { if (fullScreen) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge } else MaterialTheme.typography.titleMedium,
+                        screenTextStyle(if (card.widgetType == "clock") {
+                            if (flat) MaterialTheme.typography.displayLarge.copy(fontSize = 52.sp, lineHeight = 60.sp)
+                            else if (fullScreen) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge
+                        } else MaterialTheme.typography.titleMedium,
                             appearance, if (card.widgetType == "clock") card.typography.clockPercent else card.typography.titlePercent))
                     if (update && !fullScreen && !reduced) HaloPackageFx(HaloPackageMoment.CARD_UPDATE, Modifier.size(40.dp))
                     else if (card.pinned) HaloIcon(HaloGlyph.NOTE, uiText("Pinned"), Modifier.size(16.dp))

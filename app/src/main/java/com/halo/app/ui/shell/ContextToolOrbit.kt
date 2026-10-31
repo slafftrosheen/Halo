@@ -7,6 +7,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -30,8 +34,18 @@ internal fun ContextToolOrbit(
         if (actions.isNotEmpty()) BoxWithConstraints(Modifier.widthIn(max = 520.dp).fillMaxWidth()) {
             val slotWidth = (maxWidth - 16.dp) / 3
             val inset = if (actions.size < 3) (slotWidth + 8.dp) * (3 - actions.size) / 2 else 0.dp
+            val rail = MaterialTheme.colorScheme.primary.copy(alpha = .28f)
             LazyRow(state = state, flingBehavior = rememberSnapFlingBehavior(state),
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().drawBehind {
+                    // Decoration only; the native scroll and merged action targets own all input.
+                    if (actions.size >= 2) {
+                        val arc = Path().apply {
+                            moveTo(0f, 60.dp.toPx())
+                            quadraticTo(size.width / 2f, (-4).dp.toPx(), size.width, 60.dp.toPx())
+                        }
+                        drawPath(arc, rail, style = Stroke(1.dp.toPx()))
+                    }
+                }, horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(horizontal = inset)) {
                 itemsIndexed(actions, key = { _, action -> action.id }) { index, action ->
                     LabelledSatellite5(action, { onAction(action) },

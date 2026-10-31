@@ -172,7 +172,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         if (!hostedUtility) {
             HaloScreenHeader(uiText("Activity"), trailing = { ActivityOverflowMenu { showActivityDetails = true } })
             activityUtility()
-        }
+        } else com.halo.app.ui.zone5.Zone5PageHeading(uiText("Activities"))
 
         if (filtered.isEmpty() && !hasSupplementaryReview) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

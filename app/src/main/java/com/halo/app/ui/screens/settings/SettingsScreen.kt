@@ -230,6 +230,7 @@ internal fun SettingsContent(
         else Column(Modifier.fillMaxSize().imePadding().verticalScroll(androidx.compose.foundation.rememberScrollState())
             .padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (!shellHosted) HaloScreenHeader(uiText(page!!), navigation = { page = null })
+            else com.halo.app.ui.zone5.Zone5PageHeading(uiText(page!!))
                 when (page) {
                     "Vision" -> {
                         SettingsGroup("Vision", compactRows = true) {
@@ -283,7 +284,9 @@ internal fun SettingsContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (!shellHosted) item(key = "header") {
+        item(key = "header") {
+            if (shellHosted) com.halo.app.ui.zone5.Zone5PageHeading(uiText(if (advanced) "Advanced" else "Settings"))
+            else
             HaloScreenHeader(uiText(if (advanced) "Advanced" else "Settings"),
                 navigation = if (advanced) onBack ?: ({ advanced = false; searchQuery = "" }) else null, trailing = {
                 if (!advanced) IconButton(onClick = { searchOpen = !searchOpen; if (!searchOpen) searchQuery = "" }, modifier = Modifier.size(48.dp)) {
@@ -427,14 +430,14 @@ internal fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onC
             Column(Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(uiText(title), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f, fill = false))
+                    Text(uiText(title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f, fill = false))
                     if (laboratory) Surface(shape = com.halo.app.ui.design.HaloShapes.pill,
                         color = MaterialTheme.colorScheme.primaryContainer) {
                         Text(uiText("Lab"), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
-                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                Text(uiText(subtitle), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(androidx.compose.material.icons.Icons.Default.ChevronRight,

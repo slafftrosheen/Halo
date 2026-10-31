@@ -20,6 +20,19 @@ import org.robolectric.annotation.Config
 class SettingsPageActionsTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun shellHostedSettingsKeepsItsPageIdentityAndNavigation() {
+        val holder = mutableStateOf<ShellPageProjection?>(null)
+        compose.setContent { HostlessHaloTheme {
+            CompositionLocalProvider(LocalShellPageActions provides holder, LocalShellHaloOrb provides true) {
+                SettingsContent(SettingsUiState(), AppLanguage.ENGLISH, {}, {}, {})
+            }
+        } }
+        compose.onNodeWithText("Settings").assertIsDisplayed()
+        compose.onNodeWithText("Appearance").performClick()
+        compose.runOnIdle { assertTrue(holder.value!!.invoke("page.settings.back")) }
+        compose.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
     @Test fun orbPageCallbacksOperateCurrentSettingsAndRejectStaleModalOwner() {
         val holder = mutableStateOf<ShellPageProjection?>(null)
         var setup = 0

@@ -590,7 +590,9 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     LazyColumn(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        if (!shellHosted) item {
+        item {
+            if (shellHosted) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Devices"))
+            else
             HaloScreenHeader(uiText("Devices"), trailing = {
                 DevicesOverflowMenu(visibleAccessories.isNotEmpty(), { phoneDetails = true }, onTestAudio)
                 if (!noDevices) {

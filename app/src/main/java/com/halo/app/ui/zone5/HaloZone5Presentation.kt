@@ -1,6 +1,7 @@
 package com.halo.app.ui.zone5
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -103,7 +104,8 @@ internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Uni
                 reason?.let { stateDescription = it }
             }.padding(horizontal = 4.dp, vertical = 4.dp).heightIn(min = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = if (action.enabled) .24f else .12f), CircleShape),
                 contentAlignment = Alignment.Center) { Zone5Icon(zone5ActionIconId(action), action.glyph, Modifier.size(24.dp)) }
             Spacer(Modifier.height(4.dp))
             Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, lineHeight = 20.sp),

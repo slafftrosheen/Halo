@@ -83,6 +83,7 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             if (!shellHosted) HaloScreenHeader(uiText("Notifications"), uiText("Private · last 24 hours"), navigation = onBack, glyph = HaloGlyph.CONVERSATION)
+            else com.halo.app.ui.zone5.Zone5PageHeading(uiText("Notifications"))
             HaloStatusPresentation(if (state.connected) HaloStatus.READY else HaloStatus.UNAVAILABLE,
                 label = uiText(if (state.connected) "Connected" else "Not connected"))
             Text(uiText("%1\$d notifications · %2\$d available replies", state.items.size, state.items.count { it.reply is ReplyCapability.Available }),

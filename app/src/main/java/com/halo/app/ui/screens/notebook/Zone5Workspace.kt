@@ -51,7 +51,7 @@ internal fun WorkspaceToolsList(onStudy: () -> Unit, onMemory: () -> Unit,
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(R.string.zone5_choose_tool), style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() })
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.medium) {
+        Surface(color = Color.Transparent) {
             Column {
                 WorkspaceInstrumentRow("Study", stringResource(R.string.zone5_study_purpose), "tool_study", onStudy)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))

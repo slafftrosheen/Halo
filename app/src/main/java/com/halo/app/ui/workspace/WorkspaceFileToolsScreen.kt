@@ -99,7 +99,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         }
     })
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
-        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: stringResource(R.string.file52_title),
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: uiText("Office Tools"),
             onBack = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy)
     }
     BackHandler(enabled = busy) { }

@@ -28,6 +28,8 @@ internal fun HaloZone(
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
+        Column {
+        HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = .24f))
         BoxWithConstraints {
             val fallback = compact || largeText || maxWidth < 360.dp || availableHeight < 520.dp
             val header = LocalShellUtilityBand.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
@@ -51,6 +53,7 @@ internal fun HaloZone(
                         (availableHeight * .25f - 16.dp - if (composer) 48.dp else 0.dp).coerceIn(180.dp, 232.dp))
                 }
             }
+        }
         }
     }
 }
