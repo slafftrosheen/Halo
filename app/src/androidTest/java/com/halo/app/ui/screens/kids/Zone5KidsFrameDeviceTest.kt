@@ -70,7 +70,7 @@ class Zone5KidsFrameDeviceTest {
                             HaloOrbContextAction("page:${it.id}", it.title, it.glyph, enabled = it.enabled)
                         }
                         val invoke: (HaloOrbContextAction) -> Unit = { page.value?.invoke(it.id.removePrefix("page:")) }
-                        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        Surface(Modifier.fillMaxSize().safeDrawingPadding(), color = MaterialTheme.colorScheme.background) {
                             BoxWithConstraints {
                                 val keyboard = WindowInsets.ime.getBottom(LocalDensity.current) > 0
                                 SideEffect { imeVisible = keyboard }
@@ -151,7 +151,10 @@ class Zone5KidsFrameDeviceTest {
     private fun save(name: String) {
         val output = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "zone5-kids-polish").apply { mkdirs() }
         File(output, "$name.png").outputStream().use {
-            (if (name == "kids-parent-boundary") compose.onNode(isRoot() and hasAnyDescendant(hasText("Ask a grown-up"))) else compose.onRoot()).captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+            if (name == "kids-keyboard") {
+                InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it)
+            } else (if (name == "kids-parent-boundary") compose.onNode(isRoot() and hasAnyDescendant(hasText("Ask a grown-up"))) else compose.onRoot())
+                .captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
         }
     }
 }
