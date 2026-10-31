@@ -134,6 +134,7 @@ internal fun KidsActivityHeader(
     onBack: () -> Unit,
     onStop: () -> Unit,
 ) {
+    if (com.halo.app.ui.presence.LocalShellHaloOrb.current) return
     val title = lessonTitle?.takeIf { it.isNotBlank() } ?: when (destination) {
         KidsDestination.ASK -> "Ask a question"
         KidsDestination.LEARN -> "Learn something"

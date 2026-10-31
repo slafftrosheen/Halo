@@ -21,6 +21,7 @@ import com.halo.app.ui.zone5.Zone5ActionButton
 @Composable
 internal fun KidsHomeHero(signal: HaloSignalPresentation, onListen: () -> Unit,
     onGrownUp: () -> Unit, onStop: () -> Unit, showStop: Boolean) {
+    if (com.halo.app.ui.presence.LocalShellHaloOrb.current) return
     val enlarged = LocalDensity.current.fontScale >= 1.5f
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)) {

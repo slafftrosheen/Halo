@@ -38,6 +38,7 @@ internal class HaloZone5Navigation(
     val onDisclosureChanged: (Boolean) -> Unit = {},
     val inlineControls: Boolean = false,
     val compactUtility: @Composable () -> Unit = {},
+    val kids: Boolean = false,
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -49,6 +50,7 @@ internal fun HaloZone5OrbLauncher(
     actions: List<HaloOrbContextAction>, onAction: (HaloOrbContextAction) -> Unit,
     size: Dp, orbModifier: Modifier, navigation: HaloZone5Navigation,
 ) {
+    val targetSize = if (navigation.kids) 56.dp else 48.dp
     val listedActions = actions.filterNot { it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS }
     // One disclosure owner, two intentionally separate lists.
     var disclosure by rememberSaveable { mutableStateOf<String?>(null) }
@@ -103,22 +105,22 @@ internal fun HaloZone5OrbLauncher(
     val actionListControl: @Composable (Modifier) -> Unit = { modifier ->
         TextButton(onClick = { open("actions", "actions") },
             contentPadding = if (size <= 48.dp) PaddingValues(horizontal = 4.dp, vertical = 8.dp) else ButtonDefaults.TextButtonContentPadding,
-            modifier = modifier.focusRequester(actionsFocus).heightIn(min = 48.dp)) {
+            modifier = modifier.focusRequester(actionsFocus).heightIn(min = targetSize)) {
             Text(actionsLabel, textAlign = TextAlign.Center)
         }
     }
     if (navigation.compact || navigation.inlineControls) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { isTraversalGroup = true },
+        Row(Modifier.fillMaxWidth().heightIn(min = targetSize).semantics { isTraversalGroup = true },
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (listedActions.isNotEmpty()) actionListControl(Modifier)
             }
-            HaloSignalFace(signal, gesture, size = if (navigation.compact) 48.dp else size, contentDescription = primary,
+            HaloSignalFace(signal, gesture, size = if (navigation.compact) targetSize else size, contentDescription = primary,
                 onClick = { act { onPrimary(interaction.primary) } }, onClickLabel = primary,
-                onLongClick = { open("menu", "orb") }, zone5 = true)
+                onLongClick = { open("menu", "orb") }, zone5 = true, kids = navigation.kids)
             Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                 TextButton(onClick = { open("menu", "menu") }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                    modifier = Modifier.focusRequester(menuFocus).heightIn(min = 48.dp)) {
+                    modifier = Modifier.focusRequester(menuFocus).heightIn(min = targetSize)) {
                     BadgedBox(badge = { if (navigation.hasUpdates) Badge() }) {
                         Zone5Icon("action_up", HaloGlyph.NEXT, Modifier.size(24.dp))
                     }
@@ -141,7 +143,7 @@ internal fun HaloZone5OrbLauncher(
         Column(Modifier.width(if (size <= 48.dp) 64.dp else 112.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             HaloSignalFace(signal, gesture, size = size, contentDescription = primary,
                 onClick = { act { onPrimary(interaction.primary) } }, onClickLabel = primary,
-                onLongClick = { open("menu", "orb") }, zone5 = true)
+                onLongClick = { open("menu", "orb") }, zone5 = true, kids = navigation.kids)
             if (size > 48.dp) {
             Spacer(Modifier.height(4.dp))
             Text(if (interaction.primary == HaloOrbPrimary.TALK) stringResource(R.string.zone5_tap_to_talk) else primary,
@@ -150,7 +152,7 @@ internal fun HaloZone5OrbLauncher(
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.BottomEnd) {
             TextButton(onClick = { open("menu", "menu") },
-                modifier = Modifier.focusRequester(menuFocus).heightIn(min = 48.dp)) {
+                modifier = Modifier.focusRequester(menuFocus).heightIn(min = targetSize)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     BadgedBox(badge = { if (navigation.hasUpdates) Badge() }) {
                         Zone5Icon("action_up", HaloGlyph.NEXT, Modifier.size(24.dp))
@@ -179,7 +181,7 @@ internal fun HaloZone5OrbLauncher(
                 }
                 navigation.destinations.forEach { destination ->
                     TextButton(onClick = { act { navigation.onNavigate(destination.route) } },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { this.selected = destination.route == selected }) {
+                        modifier = Modifier.fillMaxWidth().heightIn(min = targetSize).semantics { this.selected = destination.route == selected }) {
                         Zone5Icon(when (destination.route) {
                             "screen" -> "nav_screen"; "home" -> "nav_home"; "notebook" -> "nav_workspace"
                             "devices" -> "nav_devices"; "activity" -> "nav_activity"; "study" -> "tool_study"; else -> "nav_settings"
@@ -200,7 +202,7 @@ internal fun HaloZone5OrbLauncher(
                 listedActions.forEach { action ->
                     Column {
                         TextButton(onClick = { if (action.enabled) act { onAction(action) } }, enabled = action.enabled,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                            modifier = Modifier.fillMaxWidth().heightIn(min = targetSize)) {
                             Zone5Icon(zone5ActionIconId(action), action.glyph, Modifier.size(24.dp))
                             Spacer(Modifier.width(12.dp)); Text(uiText(action.title), Modifier.weight(1f))
                         }
@@ -210,8 +212,8 @@ internal fun HaloZone5OrbLauncher(
                     }
                 }
             }
-            if (interaction.canStop) OutlinedButton(onClick = { act(onStop) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Stop")) }
-            TextButton(onClick = { close() }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Close")) }
+            if (interaction.canStop) OutlinedButton(onClick = { act(onStop) }, modifier = Modifier.fillMaxWidth().heightIn(min = targetSize)) { Text(uiText("Stop")) }
+            TextButton(onClick = { close() }, modifier = Modifier.heightIn(min = targetSize)) { Text(uiText("Close")) }
         }
     }
 }

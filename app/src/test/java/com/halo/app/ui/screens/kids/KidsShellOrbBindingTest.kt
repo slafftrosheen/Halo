@@ -47,20 +47,44 @@ class KidsShellOrbBindingTest {
         assertEquals(listOf("TOPIC", "ANSWER", "stop", "stop"), called)
     }
 
-    @Test fun shellOwnedDockKeepsTypedAndHelpActionsWithoutAnotherMicrophone() {
-        var typed = 0
-        var helped = 0
-        var voice = 0
+    @Test fun childPageLeaseUsesLatestCallbackAndRejectsOldDestinationOrDisabledTyping() {
+        val page = mutableStateOf<ShellPageProjection?>(null)
+        val destination = mutableStateOf(KidsDestination.HOME)
+        val saving = mutableStateOf(false)
+        val callbacks = mutableListOf<KidsDestination>()
         compose.setContent { HostlessHaloTheme {
-            CompositionLocalProvider(LocalShellHaloOrb provides true) {
-                KidsVoiceDock("Talk or type", false, false, { voice++ }, { typed++ }, {}, { helped++ })
+            CompositionLocalProvider(LocalShellPageActions provides page) {
+                val target = destination.value
+                KidsZoneBinding(target, null, "Talk or type", saving.value, saving.value,
+                    { callbacks += target }, {}, {}, {})
             }
         } }
-        compose.onNodeWithContentDescription("Talk to halo").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Type instead").assertIsDisplayed().performClick()
-        compose.onNodeWithContentDescription("What can I say?").assertIsDisplayed().performClick()
-        assertEquals(1, typed)
-        assertEquals(1, helped)
-        assertEquals(0, voice)
+        lateinit var old: ShellPageProjection
+        compose.runOnIdle { old = page.value!!; assertTrue(old.invoke("page.kids.type")); destination.value = KidsDestination.LEARN }
+        compose.runOnIdle {
+            assertFalse(old.invoke("page.kids.type"))
+            assertTrue(page.value!!.invoke("page.kids.type"))
+            saving.value = true
+        }
+        compose.runOnIdle {
+            assertFalse(page.value!!.invoke("page.kids.type"))
+            assertNull(page.value!!.owner.nextStep)
+            assertEquals(listOf(KidsDestination.HOME, KidsDestination.LEARN), callbacks)
+        }
+    }
+
+    @Test fun systemBackClosesInputThenReturnsToChoicesThroughStopOwner() {
+        val input = mutableStateOf(true)
+        val destination = mutableStateOf(KidsDestination.LEARN)
+        var stopped = 0
+        lateinit var host: androidx.activity.ComponentActivity
+        compose.setContent { HostlessHaloTheme {
+            host = androidx.compose.ui.platform.LocalContext.current as androidx.activity.ComponentActivity
+            KidsSystemBack(destination.value, input.value, { stopped++ }, { input.value = false }, { destination.value = KidsDestination.HOME })
+        } }
+        compose.runOnIdle { host.onBackPressedDispatcher.onBackPressed() }
+        compose.runOnIdle { assertFalse(input.value); assertEquals(KidsDestination.LEARN, destination.value) }
+        compose.runOnIdle { host.onBackPressedDispatcher.onBackPressed() }
+        compose.runOnIdle { assertEquals(KidsDestination.HOME, destination.value); assertEquals(2, stopped) }
     }
 }

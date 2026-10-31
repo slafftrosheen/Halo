@@ -33,7 +33,7 @@ internal val LocalZone5GuideSession = staticCompositionLocalOf<Zone5GuideSession
 
 internal fun zone5SafeGuideAction(id: String) = id in setOf("page.office.open", "page.canvas.add", "page.note.insert",
     "page.study.new", "page.study.material", "page.memory.add", "page.studio.new", "page.studio.new-canvas",
-    "page.studio.add-layer", "page.notebook.new-note")
+    "page.studio.add-layer", "page.notebook.new-note", "page.kids.type")
 
 internal fun zone5GuideAllowed(idle: Boolean, foreground: Boolean, focused: Boolean, compact: Boolean,
     keyboard: Boolean, disclosure: Boolean, guideLight: Boolean, eligible: Boolean) =

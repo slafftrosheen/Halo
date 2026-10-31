@@ -18,14 +18,14 @@ internal object ShellOrbCatalog {
     )
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =
-        !kids || owner.routeFamily in setOf("note", "canvas", "study")
+        !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study")
 
     /** Kids Home does not host the adult catalogue; use its already allowed exact Study route. */
     fun directContextRoute(action: HaloOrbContextAction, kids: Boolean): String? =
         if (kids && action.enabled && action.id == "study" && action.catalog == null) "study" else null
 
     fun pageOwnerMatches(owner: ShellPageOwner, route: String?, objectId: String?): Boolean = when (owner.routeFamily) {
-        "home" -> route == "home"
+        "home", "kids" -> route == "home"
         "screen" -> route == "screen"
         "notebook" -> route == "notebook"
         "canvas" -> route?.startsWith("notebook/canvas/") == true && owner.objectId == objectId

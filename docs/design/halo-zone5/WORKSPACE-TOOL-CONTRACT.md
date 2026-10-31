@@ -21,6 +21,12 @@ Library contains saved objects. Tools opens the five instruments directly. A too
 5. Settings, keyboard-visible and short windows use a single compact navigation row. All actions retains Library/Tools switching and every Studio overflow operation; compact utility controls remain available inside that sheet. Home retains the focused composer at one composition call site. Large text uses an accessible, content-sized fallback; normal utility overflow scrolls inside the quarter-height Zone while the orb/Menu row stays reachable.
 6. Workspace Library/Tools switching belongs to the Zone. Tool/file choices, document text, graphics, lesson interactions and form fields remain working content. Supported formats and operations stay truthful; the interface claims no new round-trip format support.
 
+## Kids parity
+
+The same quarter-height Zone, compact keyboard row, active palette, classic thick orb, wallpaper and safe guidance apply in Kids mode and permitted child editors. Child choices, learning answers and manual creation remain working content. Page identity, status, Type, Help, Stop and parent options use a narrow Kids Home projection; system Back closes input and returns to the existing choices. Hosted typing uses the working area so the Zone stays above the keyboard. Child footer and action targets retain at least 56dp.
+
+Presentation parity does not widen child access. The Kids menu retains only Home and Study; adult privacy/mode controls are omitted. Parent options still open the original Android device-credential gate, and no parent or destructive action receives a next-step hint. Hints pause during child activity, input, help and parent disclosure. Sharing, source restrictions, pre-reader/TalkBack behavior and Keep/Discard ownership remain unchanged.
+
 ## HaloStudio workbench
 
 The fitted artboard owns the full upper working area of the graphics editor. File names, dimensions and menu controls live in the Halo Zone. Manual image import, drawing, text, shapes, layers and transforms take precedence. File/save/export and history are grouped in the shared menus. The layer inspector identifies selection, visibility, locking and editable properties. AI work remains an explicitly selected secondary action with the existing review/consent boundary. It is not the default graphics workflow.

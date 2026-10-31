@@ -19,7 +19,8 @@ import com.halo.app.ui.fx.HaloPackageMoment
 
 /** The brand gate explains the boundary; Android's credential prompt grants access. */
 @Composable
-internal fun rememberKidsGrownUpGate(onVerified: () -> Unit, onUnavailable: () -> Unit): () -> Unit {
+internal fun rememberKidsGrownUpGate(onVerified: () -> Unit, onUnavailable: () -> Unit,
+    onDisclosureChanged: (Boolean) -> Unit = {}): () -> Unit {
     val context = LocalContext.current
     val title = uiText("Grown-up space")
     val description = uiText("Confirm your device PIN or password")
@@ -28,6 +29,9 @@ internal fun rememberKidsGrownUpGate(onVerified: () -> Unit, onUnavailable: () -
     var open by remember { mutableStateOf(false) }
     var unlocked by remember { mutableStateOf(false) }
     var credentialPending by remember { mutableStateOf(false) }
+    val disclosure by rememberUpdatedState(onDisclosureChanged)
+    SideEffect { disclosure(open || credentialPending || unlocked) }
+    DisposableEffect(Unit) { onDispose { disclosure(false) } }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         credentialPending = false
         if (result.resultCode == Activity.RESULT_OK) unlocked = true

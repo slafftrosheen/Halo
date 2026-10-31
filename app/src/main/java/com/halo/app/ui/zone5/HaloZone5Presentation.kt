@@ -31,6 +31,10 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
     "clear-chat" -> "chat_clear"
     "attach" -> "action_attach"
     "page-context", "page.notebook.context" -> "action_add_context"
+    "page.kids.type" -> "office_edit_text"
+    "page.kids.help" -> "action_help"
+    "page.kids.stop" -> "media_stop"
+    "page.kids.grown-up" -> "action_lock"
     "type-message" -> "office_edit_text"
     "new-note", "page.notebook.new-note", "page.screen.note" -> "office_new_note"
     "page.notebook.import" -> "action_import"
@@ -111,7 +115,7 @@ internal fun Zone5Icon(iconId: String, fallback: HaloGlyph, modifier: Modifier =
 /** One merged, wrapping target; no independent icon click or decorative action. */
 @Composable
 internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Unit, modifier: Modifier = Modifier, guided: Boolean = false,
-    dense: Boolean = false) {
+    dense: Boolean = false, minimumTarget: androidx.compose.ui.unit.Dp = 48.dp) {
     val label = uiText(action.title)
     val reason = if (action.enabled) null else action.disabledReason?.let { uiText(it) }
     val ink = if (action.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = .6f)
@@ -124,7 +128,7 @@ internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Uni
             .semantics(mergeDescendants = true) {
                 contentDescription = label
                 reason?.let { stateDescription = it }
-            }.padding(horizontal = 4.dp, vertical = 4.dp).heightIn(min = 48.dp),
+            }.padding(horizontal = 4.dp, vertical = 4.dp).heightIn(min = minimumTarget),
             horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(if (dense) 32.dp else 48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .border(1.dp, border, CircleShape),

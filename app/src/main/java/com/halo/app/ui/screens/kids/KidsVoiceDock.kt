@@ -20,6 +20,7 @@ import com.halo.app.ui.icons.HaloIcon
 internal fun KidsVoiceDock(status: String, busy: Boolean, saving: Boolean,
     onSpeak: () -> Unit, onType: () -> Unit, onStop: () -> Unit, onHelp: () -> Unit) {
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    if (shellOwnsOrb) return
     Column(Modifier.fillMaxWidth().navigationBarsPadding().imePadding()
         .padding(start = 12.dp, end = 12.dp, bottom = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {

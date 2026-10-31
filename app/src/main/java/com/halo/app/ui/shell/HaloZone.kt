@@ -38,6 +38,7 @@ internal fun HaloZone(
     entryId: String? = null,
     nextStep: ShellNextStep? = null,
     guideIdle: Boolean = false,
+    kids: Boolean = false,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     val singleRow = compact || primaryNavigationRoute(route) == "settings" || availableHeight < 520.dp
@@ -50,6 +51,7 @@ internal fun HaloZone(
         val workspace = header?.owner?.routeFamily in workspaceMenuFamilies
         val orbitActions = zone5InstrumentOrbitActions(actions).filterNot {
             it.glyph == HaloGlyph.TRASH || it.id in setOf("page-context", "type-message") ||
+                (header?.owner?.routeFamily == "kids" && it.id.removePrefix("page:") !in setOf("page.kids.type", "page.kids.help")) ||
                 it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS
         }
         val density = LocalDensity.current
@@ -93,7 +95,7 @@ internal fun HaloZone(
         }
         val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
             entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true,
-            compactUtility = { if (singleRow && !composer && header?.owner?.routeFamily != "notebook") utility() })
+            compactUtility = { if (singleRow && !composer && header?.owner?.routeFamily != "notebook") utility() }, kids = kids)
         val utilityScroll = rememberScrollState()
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * .25f) else Modifier)
@@ -116,13 +118,13 @@ internal fun HaloZone(
                                 menuHeight = with(density) { it.height.toDp() }
                             }) { WorkspaceToolMenus(guide?.actionId) { toolMenuOpen = it } }
                             else if (!fallback && orbitActions.isNotEmpty()) ContextToolOrbit(orbitActions, dispatch, {}, 64.dp,
-                                "$entryId:$route", minimumHeight = 0.dp, guidedActionId = guide?.actionId, dense = true)
+                                "$entryId:$route", minimumHeight = 0.dp, guidedActionId = guide?.actionId, dense = true, minimumTarget = if (kids) 56.dp else 48.dp)
                             guide?.takeIf { spareForHint && coachmarkId == it.id }?.let { hint ->
                                 Zone5GuideInline(hint) { session?.dismiss(hint.id); visibleGuide = null }
                             }
                         }
                         Box(Modifier.fillMaxWidth().padding(top = if (singleRow) 2.dp else 4.dp)) {
-                            orb(if (fallback) 48.dp else 64.dp)
+                            orb(if (fallback) { if (kids) 56.dp else 48.dp } else 64.dp)
                         }
                     }
                 }

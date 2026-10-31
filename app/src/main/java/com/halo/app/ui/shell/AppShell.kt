@@ -417,6 +417,7 @@ fun AppShell(
                 val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
                 val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
+                val voiceFields by com.halo.app.ui.components.VoiceFieldCancellation.activeFields.collectAsStateWithLifecycle()
                 val dispatchContext: (com.halo.app.ui.presence.HaloOrbContextAction) -> Unit = { action ->
                         if (!action.enabled) Unit
                         else if (action.id.startsWith("page:")) {
@@ -470,7 +471,9 @@ fun AppShell(
                 }, destinations = orbDestinations,
                     entryId = backStackEntry?.id,
                     nextStep = livePageActions?.owner?.nextStep,
-                    guideIdle = !kidsMode && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
+                    kids = kidsMode,
+                    profile = { if (!kidsMode) com.halo.app.ui.components.PrivacyModeControl(detail = true) },
+                    guideIdle = voiceFields.isEmpty() && (!kidsMode || orbOverride.value?.interaction?.canStop != true) && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
                         !liveHome.speechActive && !liveHome.speechProcessing &&
                         liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle &&
                         (liveHome.sessionState == com.halo.sdk.provider.CognitiveSessionState.Idle ||
@@ -486,8 +489,6 @@ fun AppShell(
             .semantics { testTagsAsResourceId = true }.testTag("halo-working-area")) {
         Column(Modifier.weight(1f).fillMaxSize()) {
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
-        if (kidsMode && backStackEntry?.destination?.route != "home" && backStackEntry?.destination?.route != "guided_setup")
-            TextButton(onClick = { navigateSafely("home") }) { Text(uiText("Back to my learning space")) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             if (contextualRoute != "screen") com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize())

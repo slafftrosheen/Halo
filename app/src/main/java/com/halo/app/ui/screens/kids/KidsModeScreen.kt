@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable private fun KidsModeContent(home: HomeViewModel, onMicrophone: () -> Unit, onOpenCanvas: ((String) -> Unit)?) {
     val scope = rememberCoroutineScope()
+    val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val project: KidsProjectViewModel = viewModel()
     val projectState by project.state.collectAsStateWithLifecycle()
     val cloudGrant by ManualDependencyGraph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
@@ -74,6 +75,7 @@ import kotlinx.coroutines.launch
     var activeLesson by rememberSaveable { mutableStateOf<String?>(null) }
     var allowStartedLesson by remember { mutableStateOf(false) }
     var startTutor by remember { mutableStateOf(false) }
+    var optionsOpen by remember { mutableStateOf(false) }
     var colours by rememberSaveable { mutableStateOf(false) }
     var saveError by remember { mutableStateOf(false) }
     val starter: StudyHomeViewModel = viewModel(key = "kids-study-home", factory = StudyHomeViewModel.Factory(
@@ -212,7 +214,7 @@ import kotlinx.coroutines.launch
             else -> voiceNotice = "Try: hint, repeat, next step, simpler, more detail, or stop."
         }
     }
-    if (voiceSheet) ModalBottomSheet(onDismissRequest = { voiceSheet = false; voiceRequest = 0 }) {
+    val voiceEditor: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth().heightIn(max = 600.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             val value = when (voiceTarget) { "IDEA" -> projectState.idea; "DRAFT" -> projectState.draft; "ANSWER" -> learningState?.draft.orEmpty(); else -> topic }
@@ -226,6 +228,7 @@ import kotlinx.coroutines.launch
             KidsPrimaryButton(onClick = { voiceSheet = false; voiceRequest = 0 }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Done")) }
         }
     }
+    if (voiceSheet && !hosted) ModalBottomSheet(onDismissRequest = { voiceSheet = false; voiceRequest = 0 }) { voiceEditor() }
     if (helpSheet) ModalBottomSheet(onDismissRequest = { helpSheet = false }) {
         Column(Modifier.fillMaxWidth().heightIn(max = 600.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -260,12 +263,35 @@ import kotlinx.coroutines.launch
         busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true ||
             learningState?.isGenerating == true || projectState.busy || busy || intakeBusy,
         onTalk = { openVoice(true) }, onStop = stopActions)
+    val openOptions = rememberKidsOptionsAction({ colours = true }, onDisclosureChanged = { optionsOpen = it }) {
+        stopActions()
+        scope.launch {
+            try { ManualDependencyGraph.kidsPreferences.setEnabled(false) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { saveError = true }
+        }
+    }
+    KidsSystemBack(destination, voiceSheet, onStop = stopActions,
+        onCloseInput = { voiceSheet = false; voiceRequest = 0 }, onHome = { destination = KidsDestination.HOME })
+    val status = when {
+        learningState?.reader?.speaking == true -> "Reading aloud"
+        fieldActivity.isNotEmpty() -> "Voice input"
+        projectState.operation == "SAVING" -> "Saving…"
+        learningState?.isGenerating == true || projectState.operation == "GENERATING" -> "Preparing the next step"
+        else -> "Talk or type"
+    }
+    KidsZoneBinding(destination, learningState?.session?.goal, status,
+        saving = projectState.operation == "SAVING",
+        busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true ||
+            learningState?.isGenerating == true || projectState.busy || busy || intakeBusy || voiceSheet || helpSheet || colours || optionsOpen,
+        onType = { openVoice(false) }, onHelp = { voiceNotice = null; helpSheet = true },
+        onStop = stopActions, onGrownUp = openOptions)
     val lightState = when {
         fieldActivity.isNotEmpty() -> HaloSignalState.LISTENING
         learningState?.isGenerating == true || projectState.operation == "GENERATING" -> HaloSignalState.THINKING
         else -> HaloSignalState.IDLE
     }
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+    Column(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground())
         .haloStateAura(lightState.light(), MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error),
         horizontalAlignment = Alignment.CenterHorizontally) {
@@ -273,21 +299,17 @@ import kotlinx.coroutines.launch
         LazyColumn(Modifier.weight(1f).widthIn(max = 720.dp).fillMaxWidth(), state = listState,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            item(key = "header") {
-                if (destination == KidsDestination.HOME) {
-                    KidsModeHeader(signal, { openVoice(true) },
-                        { colours = true },
-                        { stopActions(); scope.launch {
-                            try { ManualDependencyGraph.kidsPreferences.setEnabled(false) }
-                            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                            catch (_: Exception) { saveError = true }
-                        } },
-                        stopActions, saveError)
-                } else {
-                    KidsActivityHeader(destination, signal, lessonTitle = learningState?.session?.goal,
-                        onBack = { stopActions(); destination = KidsDestination.HOME },
-                        onStop = stopActions)
-                }
+            if (voiceSheet && hosted) item(key = "voice-editor") { voiceEditor() }
+            else {
+            if (!hosted) item(key = "header") {
+                if (destination == KidsDestination.HOME)
+                    KidsHomeHero(signal, { openVoice(true) }, openOptions, stopActions,
+                        showStop = signal.state in setOf(HaloSignalState.THINKING, HaloSignalState.SPEAKING, HaloSignalState.WAITING))
+                else KidsActivityHeader(destination, signal, lessonTitle = learningState?.session?.goal,
+                    onBack = { stopActions(); destination = KidsDestination.HOME }, onStop = stopActions)
+            }
+            if (saveError) item(key = "save-error") {
+                Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
             }
             if (destination == KidsDestination.HOME) item(key = "choices") {
                 val recent = sessions.filter {
@@ -336,14 +358,9 @@ import kotlinx.coroutines.launch
             if (destination == KidsDestination.CREATE) item(key = "create") {
                 KidsCard { KidsCreateFlow(project, onOpenCanvas) }
             }
+            }
         }
-        KidsVoiceDock(status = when {
-            learningState?.reader?.speaking == true -> "Reading aloud"
-            fieldActivity.isNotEmpty() -> "Voice input"
-            projectState.operation == "SAVING" -> "Saving…"
-            learningState?.isGenerating == true || projectState.operation == "GENERATING" -> "Preparing the next step"
-            else -> "Talk or type"
-        }, busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true || learningState?.isGenerating == true || projectState.busy,
+        KidsVoiceDock(status = status, busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true || learningState?.isGenerating == true || projectState.busy,
             saving = projectState.operation == "SAVING", onSpeak = { openVoice(true) }, onType = { openVoice(false) },
             onStop = stopActions, onHelp = { voiceNotice = null; helpSheet = true })
     }
@@ -361,10 +378,24 @@ import kotlinx.coroutines.launch
 @Composable internal fun KidsModeHeader(signal: com.halo.app.ui.presence.HaloSignalPresentation,
     onListen: () -> Unit, onColours: () -> Unit, onExit: () -> Unit, onStop: () -> Unit,
     saveError: Boolean = false) {
+    val openOptions = rememberKidsOptionsAction(onColours, onExit = onExit)
+    KidsHomeHero(signal, onListen, openOptions, onStop,
+        showStop = signal.state in setOf(HaloSignalState.THINKING, HaloSignalState.SPEAKING, HaloSignalState.WAITING))
+    if (saveError) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+}
+
+/** Presentation can move; the original Android credential owner still grants parent access. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun rememberKidsOptionsAction(onColours: () -> Unit,
+    onDisclosureChanged: (Boolean) -> Unit = {}, onExit: () -> Unit): () -> Unit {
     var options by remember { mutableStateOf(false) }
     var gateNotice by remember { mutableStateOf(false) }
     var optionSaveNotice by remember { mutableStateOf<String?>(null) }
-    val openOptions = rememberKidsGrownUpGate({ options = true }, { gateNotice = true })
+    var credentialOpen by remember { mutableStateOf(false) }
+    val disclosure by rememberUpdatedState(onDisclosureChanged)
+    SideEffect { disclosure(options || gateNotice || credentialOpen) }
+    DisposableEffect(Unit) { onDispose { disclosure(false) } }
+    val openOptions = rememberKidsGrownUpGate({ options = true }, { gateNotice = true }, { credentialOpen = it })
     if (gateNotice) AlertDialog(onDismissRequest = { gateNotice = false },
         title = { Text(uiText("Grown-up space")) },
         text = { Text(uiText("Ask a grown-up to set a device PIN or password in Android settings first.")) },
@@ -408,9 +439,7 @@ import kotlinx.coroutines.launch
             Spacer(Modifier.height(20.dp))
         }
     }
-    KidsHomeHero(signal, onListen, openOptions, onStop,
-        showStop = signal.state in setOf(HaloSignalState.THINKING, HaloSignalState.SPEAKING, HaloSignalState.WAITING))
-    if (saveError) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+    return openOptions
 }
 
 @OptIn(ExperimentalLayoutApi::class)

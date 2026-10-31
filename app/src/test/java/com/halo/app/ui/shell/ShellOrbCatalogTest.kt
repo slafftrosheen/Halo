@@ -39,7 +39,7 @@ class ShellOrbCatalogTest {
         assertEquals("study", ShellOrbCatalog.context("notebook/study/{sessionId}", false).first().id)
     }
     @Test fun kidsKeepsOnlyAlreadyAllowedChildPageProjections() {
-        listOf("note", "canvas", "study").forEach { family ->
+        listOf("kids", "note", "canvas", "study").forEach { family ->
             assertTrue(ShellOrbCatalog.allowsPageProjection(com.halo.app.ui.presence.ShellPageOwner(family, "child-object"), true))
         }
         listOf("home", "screen", "notebook", "settings", "advanced_settings", "devices", "activity", "notifications", "memory", "studio", "file_tools").forEach { family ->
@@ -47,6 +47,9 @@ class ShellOrbCatalogTest {
             assertFalse(family, ShellOrbCatalog.allowsPageProjection(owner, true))
             assertTrue(family, ShellOrbCatalog.allowsPageProjection(owner, false))
         }
+        val kids = com.halo.app.ui.presence.ShellPageOwner("kids")
+        assertTrue(ShellOrbCatalog.pageOwnerMatches(kids, "home", null))
+        assertFalse(ShellOrbCatalog.pageOwnerMatches(kids, "notebook", null))
         val note = com.halo.app.ui.presence.ShellPageOwner("note", "child-object")
         assertTrue(ShellOrbCatalog.allowsPageProjection(note, true) && ShellOrbCatalog.pageOwnerMatches(note, "notebook/note/{noteId}", "child-object"))
         assertFalse(ShellOrbCatalog.allowsPageProjection(note, true) && ShellOrbCatalog.pageOwnerMatches(note, "notebook/note/{noteId}", "different-object"))
