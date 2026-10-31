@@ -254,7 +254,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 Zone5Icon("type_image", HaloGlyph.FILE, Modifier.size(32.dp))
                                 Text(item.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                Zone5Icon("action_next", HaloGlyph.NEXT, Modifier.size(20.dp))
+                                Zone5Icon("action_forward", HaloGlyph.NEXT, Modifier.size(20.dp))
                             }
                         }
                     }
