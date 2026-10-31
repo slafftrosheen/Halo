@@ -26,7 +26,7 @@ internal fun Zone5InstrumentHeading(tool: String, icon: String, document: String
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
                 Zone5Icon(icon, HaloGlyph.TOOL, Modifier.size(if (document == null) 32.dp else 24.dp))
             }
-            Text(tool,
+            Text(workspaceInstrumentName(icon, tool),
                 style = if (document == null) MaterialTheme.typography.headlineMedium.copy(fontSize = 26.sp, lineHeight = 34.sp)
                     else MaterialTheme.typography.labelLarge,
                 color = if (document == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
@@ -36,6 +36,7 @@ internal fun Zone5InstrumentHeading(tool: String, icon: String, document: String
             maxLines = 2, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.semantics { heading() }) }
         state?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        WorkspaceToolMenus()
     }
 }
 

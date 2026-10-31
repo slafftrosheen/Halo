@@ -125,7 +125,7 @@ class NotebookLibrarySearchOrderTest {
             .assertTextContains(QUERY)
         compose.runOnIdle { model.toggleSelection(resultIds.getValue(NOTE_TITLE)) }
         compose.onNodeWithText("Tools").assertIsDisplayed()
-        listOf("Study", "Memory", "Halo Studio", "Office Tools").forEach {
+        listOf("HaloStudy", "HaloMemory", "HaloStudio", "HaloNotes", "HaloCanvas").forEach {
             compose.onNodeWithText(it, ignoreCase = true).assertDoesNotExist()
         }
         resultIds.keys.forEach { title ->
@@ -146,11 +146,11 @@ class NotebookLibrarySearchOrderTest {
         enterSearch()
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Tools"))
         compose.onNodeWithText("Tools").performClick()
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Study"))
-        compose.onNodeWithText("Study").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("HaloStudy"))
+        compose.onNodeWithText("HaloStudy").performClick()
         assertEquals(1, studyOpens)
-        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Memory"))
-        compose.onNodeWithText("Memory").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("HaloMemory"))
+        compose.onNodeWithText("HaloMemory").performClick()
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.size == 1 }
         assertEquals(NotebookNavigation.OpenMemoryHub(), navigation.single())
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Library"))
@@ -180,8 +180,8 @@ class NotebookLibrarySearchOrderTest {
             assertTrue(actions.value!!.actions.isEmpty())
             assertFalse("halo_library_set_view" in actions.value!!.owner.canonicalToolIds)
         }
-        compose.onNodeWithText("Office Tools", ignoreCase = true).performClick()
-        compose.onNodeWithText("Halo Studio", ignoreCase = true).performClick()
+        compose.onNodeWithText("HaloNotes", ignoreCase = true).performClick()
+        compose.onNodeWithText("HaloStudio", ignoreCase = true).performClick()
         assertEquals(1, officeOpens); assertEquals(1, studioOpens)
         compose.onNodeWithText("Library").performClick()
         compose.runOnIdle {

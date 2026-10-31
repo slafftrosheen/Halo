@@ -222,6 +222,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     val pageOwner = ShellPageOwner("canvas", viewModel.canvasId,
         "${state.nodes.hashCode()}:${state.edges.hashCode()}:${state.selectedNodeIds.sorted()}:${state.selectedNodeId}",
         selectionIds = state.selectedNodeIds.ifEmpty { setOfNotNull(state.selectedNodeId) }.sorted(),
+        nextStep = if (boardEditingEnabled && state.nodes.isEmpty() && !insertMenu && !picker && !showAi && state.aiDraft == null &&
+            !menu && !toolsExpanded && !searchOpen && !sketchOpen && !showImageStudio)
+            com.halo.app.ui.presence.ShellNextStep("canvas-add.v1", "page.canvas.add", stringResource(com.halo.app.R.string.zone5_guide_canvas)) else null,
         canonicalToolIds = listOf("halo_canvas_current", "halo_canvas_get", "halo_canvas_add_text", "halo_canvas_arrange",
             "halo_canvas_edit_text", "halo_canvas_export_note"),
         disabledActionReasons = mapOf("page.canvas.add" to uiText("Updating..."),
@@ -239,6 +242,9 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         ShellPageAction("page.canvas.options", "Tools", HaloGlyph.ACTION, !state.loading && !state.missing) { menu = true },
         ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true },
         ShellPageAction("page.canvas.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = !toolsExpanded },
+        ShellPageAction("page.canvas.undo", "Undo", HaloGlyph.PREVIOUS, boardEditingEnabled && state.undoAvailable) { viewModel.undo() },
+        ShellPageAction("page.canvas.export", "Export to note", HaloGlyph.FILE, boardEditingEnabled && state.nodes.isNotEmpty()) { viewModel.exportToNote() },
+        ShellPageAction("page.canvas.rename", "Rename", HaloGlyph.NOTE, boardEditingEnabled) { title = state.title; rename = true },
     ))
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         ToolZoneHeader(state.title, onBack = { viewModel.leave(onBack) }) {
@@ -606,20 +612,14 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(uiText("More tools"), style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 8.dp))
-                CanvasSheetAction("Think with halo", com.halo.app.R.drawable.ic_halo_cognition_think,
-                    enabled = boardEditingEnabled, accent = true) {
-                    menu = false; showAi = true
-                }
+                Text(stringResource(com.halo.app.R.string.zone5_group_edit), style = MaterialTheme.typography.titleSmall)
                 CanvasSheetAction("Organize whole board", com.halo.app.R.drawable.ic_halo_action_organize,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.organize(wholeBoard = true)
                 }
-                CanvasSheetAction("Study this canvas", com.halo.app.R.drawable.ic_halo_tool_study,
-                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
-                    menu = false; viewModel.exportToNote(startStudy = true)
-                }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.padding(vertical = 4.dp))
+                Text(stringResource(com.halo.app.R.string.zone5_group_view), style = MaterialTheme.typography.titleSmall)
                 CanvasSheetAction("Find on canvas", com.halo.app.R.drawable.ic_halo_action_search) {
                     menu = false; searchOpen = true
                 }
@@ -627,6 +627,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     enabled = state.nodes.isNotEmpty() && !state.loading && !state.missing) {
                     menu = false; viewModel.fitToContent()
                 }
+                HorizontalDivider()
+                Text(stringResource(com.halo.app.R.string.zone5_group_file), style = MaterialTheme.typography.titleSmall)
                 CanvasSheetAction("Export to note", com.halo.app.R.drawable.ic_halo_action_export,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.exportToNote()
@@ -637,6 +639,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.padding(vertical = 4.dp))
+                Text(stringResource(com.halo.app.R.string.zone5_group_more), style = MaterialTheme.typography.titleSmall)
+                CanvasSheetAction("Study this canvas", com.halo.app.R.drawable.ic_halo_tool_study,
+                    enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
+                    menu = false; viewModel.exportToNote(startStudy = true)
+                }
+                CanvasSheetAction("Think with halo", com.halo.app.R.drawable.ic_halo_cognition_think,
+                    enabled = boardEditingEnabled) { menu = false; showAi = true }
                 CanvasSheetAction("Ask halo to organize", com.halo.app.R.drawable.halo_ic_ai_organize,
                     enabled = boardEditingEnabled && state.nodes.isNotEmpty()) {
                     menu = false; viewModel.organize(wholeBoard = state.selectedNodeIds.isEmpty(), ai = true)
@@ -662,8 +671,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
-        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Canvas"), "type_canvas", state.title,
+    Column(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Canvas"), "tool_canvas", state.title,
             modifier = Modifier.padding(horizontal = 20.dp))
         if (!shellOwnsOrb) EditorWorkspaceHeader(state.title, menu,
             onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },

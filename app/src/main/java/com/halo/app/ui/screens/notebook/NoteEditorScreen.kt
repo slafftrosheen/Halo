@@ -194,6 +194,9 @@ fun NoteEditorScreen(
     val pageOwner = ShellPageOwner("note", viewModel.noteId, "${state.revision}:${state.status}:${state.blocks.hashCode()}:${state.mode}:${state.selection}",
         canonicalSourceVersion = state.revision.toString().takeIf { state.status == SaveStatus.SAVED },
         selectionIds = listOfNotNull(state.selection?.blockId),
+        nextStep = if (insertEnabled && state.displayBody.isBlank() && insertTarget == null && !showRename && !toolsExpanded &&
+            !showHaloSheet && !showAssistMenu && !showReferencePicker && !showFindBar && !showImageStudio)
+            com.halo.app.ui.presence.ShellNextStep("note-insert.v1", "page.note.insert", stringResource(R.string.zone5_guide_note)) else null,
         canonicalToolIds = listOf("halo_note_get", "halo_note_read_block", "halo_note_insert_block", "halo_note_edit_block",
             "halo_note_replace_content", "halo_note_rename"),
         disabledActionReasons = mapOf("page.note.insert" to if (literalFileFormat != null) stringResource(R.string.zone5_literal_format)
@@ -215,6 +218,10 @@ fun NoteEditorScreen(
             if (current.status == SaveStatus.SAVED && current.mode != EditorMode.SOURCE && !current.isGenerating) onOpenOffice?.invoke(viewModel.noteId)
         },
         ShellPageAction("page.note.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = true },
+        ShellPageAction("page.note.undo", "Undo", HaloGlyph.PREVIOUS, state.canUndo && !state.isGenerating, viewModel::undo),
+        ShellPageAction("page.note.redo", "Redo", HaloGlyph.NEXT, state.canRedo && !state.isGenerating, viewModel::redo),
+        ShellPageAction("page.note.view-read", "Read", HaloGlyph.READ_MODE, state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING)) { viewModel.setMode(EditorMode.READ) },
+        ShellPageAction("page.note.view-edit", "Edit", HaloGlyph.NOTE, state.isEditable) { viewModel.setMode(EditorMode.EDIT) },
     ))
 
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
@@ -449,7 +456,10 @@ fun NoteEditorScreen(
     if (toolsExpanded) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { toolsExpanded = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.zone5_group_view), style = MaterialTheme.typography.titleSmall)
             ModeToggle(state.mode, viewModel::setMode, allowSource = literalFileFormat == null)
+            HorizontalDivider()
+            Text(stringResource(R.string.zone5_group_edit), style = MaterialTheme.typography.titleSmall)
             EditorToolbar(state, { showOutline = true }, { showFindBar = !showFindBar },
                 viewModel::undo, viewModel::redo)
             Spacer(Modifier.height(24.dp))
@@ -466,7 +476,7 @@ fun NoteEditorScreen(
     ) {
         if (shellOwnsOrb) Zone5InstrumentHeading(
             if (literalFileFormat == null) uiText("Notes") else stringResource(R.string.file52_title),
-            if (literalFileFormat == null) "type_note" else "office_document",
+            "tool_notes",
             workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")),
             state = literalFileFormat?.let { stringResource(R.string.zone5_literal_format) })
         if (!shellOwnsOrb) EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")), toolsExpanded,

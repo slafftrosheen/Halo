@@ -141,7 +141,12 @@ fun StudyHomeScreen(
     BackHandler(enabled = setupActive, onBack = returnFromSetup)
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}:${previews.hashCode()}:$busy",
-        canonicalToolIds = listOf("halo_study_sessions"))
+        canonicalToolIds = listOf("halo_study_sessions"),
+        nextStep = when {
+            !setupActive && !busy && sessions.isEmpty() -> com.halo.app.ui.presence.ShellNextStep("study-new.v1", "page.study.new", stringResource(R.string.zone5_guide_study))
+            setupActive && setupStep == 1 && selected.isEmpty() && !busy && !picker -> com.halo.app.ui.presence.ShellNextStep("study-material.v1", "page.study.material", stringResource(R.string.zone5_guide_material))
+            else -> null
+        })
     BindShellPageActions(pageOwner, buildList {
         if (!setupActive) add(ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy) { startNewLesson() })
         if (setupActive && setupStep == 1) add(ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, !busy) { picker = true })
@@ -151,7 +156,7 @@ fun StudyHomeScreen(
 
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         com.halo.app.ui.screens.notebook.ToolZoneHeader(
-            uiText(if (setupActive) "New lesson" else "Study"),
+            if (setupActive) uiText("New lesson") else stringResource(R.string.zone5_tool_study),
             onBack = if (setupActive) returnFromSetup else onNotebook) {
             if (setupActive) Text(uiText("Step %1\$d of 4 · %2\$s", setupStep + 1,
                 uiText(setupLabels[setupStep.coerceIn(0, 3)])),

@@ -350,6 +350,10 @@ fun AppShell(
     var hintDismissed by androidx.compose.runtime.saveable.rememberSaveable {
         androidx.compose.runtime.mutableStateOf(ManualDependencyGraph.storage.getBoolean("interface4_orb_hint_seen", false))
     }
+    val zone5GuideSession = androidx.compose.runtime.saveable.rememberSaveable(
+        saver = com.halo.app.ui.zone5.Zone5GuideSession.saver(ManualDependencyGraph.storage)) {
+        com.halo.app.ui.zone5.Zone5GuideSession(ManualDependencyGraph.storage)
+    }
     fun dismissOrbHint() {
         hintDismissed = true
         ManualDependencyGraph.storage.putBoolean("interface4_orb_hint_seen", true)
@@ -396,6 +400,7 @@ fun AppShell(
         com.halo.app.ui.presence.LocalShellHaloOrb provides shellOrbVisible,
         com.halo.app.ui.presence.LocalShellOrbOverride provides orbOverride,
         com.halo.app.ui.presence.LocalShellPageActions provides pageActions,
+        com.halo.app.ui.zone5.LocalZone5GuideSession provides zone5GuideSession,
         com.halo.app.ui.presence.LocalShellUtilityBand provides utilityBand,
         com.halo.app.ui.presence.LocalShellPageOwnerFilter provides pageOwnerFilter) {
     ShellTypedMessageSheet(homeViewModel, showTypedMessage && shellOrbVisible && !kidsMode) { showTypedMessage = false }
@@ -406,6 +411,8 @@ fun AppShell(
             if (shellOrbVisible) ShellFooterViewport(
                 Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
                 val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
+                val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
+                val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
                 com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
                     onVoiceSettings = { navigateSafely("settings/voice/output") })
                 contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
@@ -456,6 +463,13 @@ fun AppShell(
                     contextActions = orbContext, onContextAction = dispatchContext, hint = null, onDismissHint = ::dismissOrbHint)
                 }, destinations = orbDestinations,
                     entryId = backStackEntry?.id,
+                    nextStep = livePageActions?.owner?.nextStep,
+                    guideIdle = !kidsMode && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
+                        !liveHome.speechActive && !liveHome.speechProcessing &&
+                        liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle &&
+                        (liveHome.sessionState == com.halo.sdk.provider.CognitiveSessionState.Idle ||
+                            liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
+                            liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed),
                     composer = contextualRoute == "home" && !kidsMode,
                     profileStatus = { com.halo.app.ui.components.PrivacyModeStatus() })
             }
@@ -656,6 +670,7 @@ fun AppShell(
                         onOpenModels = { navigateSafely("settings/intelligence/on-device") },
                         onOpenStudio = { navigateSafely("studio") },
                         onOpenFileTools = { navigateSafely("file_tools") },
+                        onOpenCanvasLibrary = { navigateSafely("canvases") },
                         onStartVoiceMode = requestVoiceModeFromSurface)
                 }
 
@@ -876,6 +891,12 @@ fun AppShell(
                         onOpenStudio = { id -> navigateSafely(if (id == null) "studio" else "studio?sourceId=${android.net.Uri.encode(id)}") },
                         onStudy = { id -> navigateSafely("study?captureSource=${android.net.Uri.encode(id)}") },
                         onOpenCanvas = { id, node -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}?nodeId=${android.net.Uri.encode(node)}") })
+                }
+                composable("canvases") { entry ->
+                    com.halo.app.ui.workspace.StudioRoute(null, null, null, null, entry.savedStateHandle,
+                        onBack = { navController.popBackStack() }, onOpenFile = {},
+                        onOpenCanvas = { id, node -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}" +
+                            (node?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: "")) }, canvasLibrary = true)
                 }
                 composable("studio?projectId={projectId}&sourceId={sourceId}&attachmentId={attachmentId}&canvasId={canvasId}&sourceVersion={sourceVersion}&handoffId={handoffId}",
                     arguments = listOf("projectId", "sourceId", "attachmentId", "canvasId", "sourceVersion", "handoffId").map {

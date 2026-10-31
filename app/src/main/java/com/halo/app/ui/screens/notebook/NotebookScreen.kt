@@ -114,7 +114,8 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
-    onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L) {
+    onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L,
+    onOpenCanvasLibrary: (() -> Unit)? = null) {
     LifecycleResumeEffect(viewModel) {
         viewModel.refreshContextPolicy()
         onPauseOrDispose {}
@@ -189,6 +190,9 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         )
     }
     BindShellPageActions(ShellPageOwner("notebook", sourceIdentity = "${state.filter}:${state.selectedCollectionId}:$queryText:${state.resolvedQuery}:${state.sort}:$workspaceView:$selecting:${selectedIds.sorted()}",
+        nextStep = if (showLibrary && state.isLoaded && !state.loadError && !mutating && state.items.isEmpty() &&
+            queryText.isBlank() && state.filter == NotebookFilter.ALL && !selecting && !showInboxCapture && !showLocalSearch)
+            com.halo.app.ui.presence.ShellNextStep("library-new.v1", "page.notebook.new-note", stringResource(R.string.zone5_guide_library)) else null,
         selectionIds = if (showLibrary) selectedIds.sorted() else emptyList(), activeToolId = workspaceView,
         canonicalToolIds = if (!showLibrary) listOf("halo_list_screens", "halo_open_screen") else listOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize",
             "halo_library_batch", "halo_library_apply_batch", "halo_note_get", "halo_note_purge_status",
@@ -214,7 +218,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             .background(com.halo.app.ui.theme.haloWorkspaceBackground()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
             item("workspace-heading") { WorkspaceHeadingAndTabs(false, selectView) }
-            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools) }
+            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools, onOpenCanvasLibrary) }
             item("workspace-bottom") { Spacer(Modifier.height(12.dp)) }
         }
         return
@@ -717,7 +721,8 @@ internal fun WorkspaceObjectRow(
         ) {
             Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(38.dp)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(androidx.compose.ui.res.painterResource(workspaceIconResource(row)), null, Modifier.size(23.dp), MaterialTheme.colorScheme.onSecondaryContainer)
+                    Icon(androidx.compose.ui.res.painterResource(workspaceIconResource(row)), null, Modifier.size(23.dp),
+                        com.halo.app.ui.zone5.zone5FileInk(MaterialTheme.colorScheme))
                 }
             }
             Spacer(Modifier.width(12.dp))
@@ -956,5 +961,5 @@ private fun workspaceIconResource(row: WorkspaceObject): Int = when (row.type) {
     WorkspaceObjectType.MEMORY -> R.drawable.ic_halo_tool_memory
     WorkspaceObjectType.FILE -> R.drawable.ic_halo_type_file
     WorkspaceObjectType.MEDIA -> R.drawable.ic_halo_type_file
-    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("studio:")) R.drawable.ic_halo_tool_studio else if (row.contentRef.startsWith("canvas:")) R.drawable.ic_halo_type_canvas else R.drawable.ic_halo_type_file
+    WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("studio:")) R.drawable.ic_halo_type_image else if (row.contentRef.startsWith("canvas:")) R.drawable.ic_halo_type_canvas else R.drawable.ic_halo_type_file
 }

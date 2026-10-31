@@ -234,10 +234,11 @@ fun Modifier.haloTrace(
     corner: Dp = 32.dp,
     lapOnAppear: Boolean = false,
 ): Modifier = composed {
-    if (!com.halo.app.ui.theme.rememberVisualPreferences().guideLight) return@composed this
-    val reduced = rememberHaloReducedMotion()
+    val preferences = com.halo.app.ui.theme.rememberVisualPreferences()
+    if (!preferences.guideLight) return@composed this
+    val reduced = rememberHaloReducedMotion() || preferences.higherContrast
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
-    val foreground = lifecycle.isAtLeast(Lifecycle.State.STARTED)
+    val foreground = lifecycle.isAtLeast(Lifecycle.State.RESUMED)
     val lap = remember { Animatable(if (lapOnAppear && !reduced) 0f else 1f) }
     var lapPlayed by remember { mutableStateOf(false) }
     LaunchedEffect(enabled, reduced, foreground, lapOnAppear) {
@@ -263,7 +264,7 @@ fun Modifier.haloTrace(
     drawWithContent {
         drawContent()
         val outline = RoundedCornerShape(corner).createOutline(size, layoutDirection, this)
-        drawOutline(outline, accent, alpha = 0.12f + 0.20f * pulse,
+        if (!preferences.higherContrast) drawOutline(outline, accent, alpha = 0.12f + 0.20f * pulse,
             style = Stroke((9f + 5f * pulse).dp.toPx()))
         // A single lap of the 316-degree open ring over the focus rectangle.
         val full = Path().apply {

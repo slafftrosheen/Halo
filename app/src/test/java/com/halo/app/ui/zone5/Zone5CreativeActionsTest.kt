@@ -159,6 +159,31 @@ class Zone5CreativeActionsTest {
         assertEquals(original, runBlocking { repository.getSession(session.id) })
         assertTrue(runBlocking { repository.getReviewEvents(card.id) }.isEmpty())
     }
+
+    @Test fun canvasFamilyOpensTheExistingCanonicalBoardWithoutGraphicsProjectActions() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val projects = StudioProjectRepository(fixture.database)
+        val assets = NotebookAssetRepository(context, fixture.database)
+        val service = StudioService(context, projects, fixture.files, fixture.workspace,
+            StudioRenderer(context, fixture.files, fixture.workspace), assets, fixture.canvases,
+            fixture.database.workspaceContextDao(), StudioUiRequests(fixture.scope, {}))
+        val id = runBlocking { fixture.canvases.create("Connected field idea") }
+        lateinit var model: StudioViewModel
+        var opened: String? = null
+        compose.runOnUiThread { model = StudioViewModel(service, fixture.files,
+            WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets); own(model) }
+        render("canvases") { StudioScreen(model, {}, {}, {}, {}, {}, onOpenCanvas = { opened = it }, canvasLibrary = true) }
+        await { !model.libraryStatus.value.canvasesLoading && model.canvases.value.isNotEmpty() }
+        compose.onNodeWithText("HaloCanvas").assertExists()
+        compose.onNodeWithText("Connected field idea").performClick()
+        assertEquals(id, opened)
+        compose.runOnIdle {
+            assertEquals("canvases", actions.value!!.owner.routeFamily)
+            assertEquals(listOf("page.studio.new-canvas"), actions.value!!.actions.map { it.id })
+            assertFalse(actions.value!!.invoke("page.studio.new"))
+        }
+        assertTrue(model.projects.value.isEmpty())
+    }
     private data class SelectedBoard(val id: String, val selected: Set<String>, val other: String, val model: CanvasEditorViewModel)
     private fun reviewSelectedGroup(): SelectedBoard {
         val id = runBlocking { fixture.canvases.create("Selection board") }

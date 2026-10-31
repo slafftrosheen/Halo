@@ -2,6 +2,8 @@
 
 Version 5.0.0 · 30 October 2026 · Android first · approved visual direction, implementation proposed.
 
+The [workspace tool contract](WORKSPACE-TOOL-CONTRACT.md) records the user's 31 October updates: the five Halo families, shared instrument menus, classic thick orb, compact keyboard/Settings state and Screen roadmap. Those decisions supersede the original four-tool list and thin orb artwork below. The remaining asset-pack material is preserved for provenance.
+
 ## Product and user outcome
 
 Halo is a local-first cognitive runtime with an Android host. Its interface helps a person speak, understand the current work, open an instrument, and finish a task without learning the internal architecture. Preserve existing domain owners, object IDs, permissions and runtime boundaries. The visual language is the three user-approved mockups in `reference/mockups/`.

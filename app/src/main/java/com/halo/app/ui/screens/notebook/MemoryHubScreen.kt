@@ -75,13 +75,16 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     LaunchedEffect(search, viewModel) { viewModel.search(search) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("memory", sourceIdentity = "$savedRevision:$section:${state.group}:${state.scope}:${state.sort}:${search.hashCode()}:${state.query.hashCode()}:$editor:${review.hashCode()}:$busy",
-        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory", "halo_remember", "halo_propose_memory"))
+        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory", "halo_remember", "halo_propose_memory"),
+        nextStep = if (state.count == 0 && !state.loading && state.error == null && !busy && !editor && review == null &&
+            section == "Memories" && search.isBlank()) com.halo.app.ui.presence.ShellNextStep("memory-add.v1", "page.memory.add",
+                stringResource(R.string.zone5_guide_memory)) else null)
     com.halo.app.ui.presence.BindShellPageActions(pageOwner, listOf(
         com.halo.app.ui.presence.ShellPageAction("page.memory.add", "Remember something", HaloGlyph.MEMORY, !busy) { editor = true },
         com.halo.app.ui.presence.ShellPageAction("page.memory.settings", "Learning settings", HaloGlyph.SETTINGS, !busy, onSettings),
     ))
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
-        ToolZoneHeader(uiText("Memory") + " · " + uiText(section), onBack)
+        ToolZoneHeader(stringResource(R.string.zone5_tool_memory) + " · " + uiText(section), onBack)
     }
     val memoryScroll = rememberLazyListState()
     val suggestionsScroll = rememberLazyListState()

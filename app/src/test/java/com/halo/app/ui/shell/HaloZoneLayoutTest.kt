@@ -32,7 +32,7 @@ class HaloZoneLayoutTest {
 
     private fun show(compact: Boolean = false, scale: Float = 1f, childHeader: Boolean = false,
         mode: com.halo.app.ai.PrivacyMode = com.halo.app.ai.PrivacyMode.PRIVATE, headerTool: Boolean = false,
-        actionCount: Int = actions.size) {
+        actionCount: Int = actions.size, route: String = "notebook") {
         val extraActions = if (headerTool) listOf(HaloOrbContextAction("page:page.note.tools", "More tools", HaloGlyph.TOOL)) else emptyList()
         val displayedActions = actions.take(actionCount)
         val shownActions = extraActions + if (childHeader) listOf(HaloOrbContextAction("page:test.back", "Back", HaloGlyph.PREVIOUS)) + displayedActions else displayedActions
@@ -53,7 +53,7 @@ class HaloZoneLayoutTest {
                 }
                 Column(Modifier.fillMaxSize()) {
                     Box(Modifier.weight(1f).testTag("zone5-working")) { Text("Working document") }
-                    HaloZone("notebook", 800.dp, compact, shownActions, { invoked += it.id }, { invoked += it }, 2,
+                    HaloZone(route, 800.dp, compact, shownActions, { invoked += it.id }, { invoked += it }, 2,
                         utility = {
                             if (childHeader) band.value?.let { RenderShellUtilityBand(it) }
                             else TextField("", {}, modifier = Modifier.fillMaxWidth(), label = { Text("Message") })
@@ -125,6 +125,20 @@ class HaloZoneLayoutTest {
         assertTrue(face.width >= 48 && face.height >= 48)
         compose.onNodeWithText("All actions").performClick()
         compose.onNode(hasText("Action 1") and hasClickAction()).assertIsDisplayed()
+    }
+
+    @Test fun settingsUsesOneNavigationRowWithTheSameCompleteActionList() {
+        show(route = "settings")
+        compose.onNodeWithText("Action 1").assertDoesNotExist()
+        val voice = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
+        val menu = compose.onNodeWithText("Menu").fetchSemanticsNode().boundsInRoot
+        val all = compose.onNodeWithText("All actions").fetchSemanticsNode().boundsInRoot
+        assertEquals(voice.center.y, menu.center.y, 4f)
+        assertEquals(voice.center.y, all.center.y, 4f)
+        assertFalse(voice.overlaps(menu)); assertFalse(voice.overlaps(all))
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNode(hasText("Action 9") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(listOf("tool-9"), invoked)
     }
 
     @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp")

@@ -27,6 +27,7 @@ internal fun ContextToolOrbit(
     orb: @Composable (Dp) -> Unit, orbSize: Dp = 72.dp,
     ownerKey: String? = null,
     minimumHeight: Dp = 180.dp,
+    guidedActionId: String? = null,
 ) {
     val state = rememberSaveable(ownerKey, saver = LazyListState.Saver) { LazyListState() }
     Column(Modifier.fillMaxWidth().heightIn(min = minimumHeight), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
@@ -50,7 +51,8 @@ internal fun ContextToolOrbit(
                 contentPadding = PaddingValues(horizontal = inset)) {
                 itemsIndexed(actions, key = { _, action -> action.id }) { index, action ->
                     LabelledSatellite5(action, { onAction(action) },
-                        Modifier.width(slotWidth).padding(top = if (index % 3 == 1) 0.dp else 12.dp))
+                        Modifier.width(slotWidth).padding(top = if (index % 3 == 1) 0.dp else 12.dp),
+                        guided = !state.isScrollInProgress && action.id.removePrefix("page:") == guidedActionId)
                 }
             }
         }

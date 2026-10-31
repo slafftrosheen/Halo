@@ -45,7 +45,7 @@ private data class StudioVersionPreview(val baseRevision: Long, val version: Stu
 fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (WorkspaceFile) -> Unit,
     onInsertOutput: (WorkspaceFile) -> Unit, onCamera: (StudioProject) -> Unit, onAiDraft: (StudioProject) -> Unit,
     onRecoverCamera: ((StudioProject) -> Unit)? = null, externalBusy: Boolean = false,
-    onOpenCanvas: ((String) -> Unit)? = null) {
+    onOpenCanvas: ((String) -> Unit)? = null, canvasLibrary: Boolean = false) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val projects by viewModel.projects.collectAsStateWithLifecycle()
     val canvases by viewModel.canvases.collectAsStateWithLifecycle()
@@ -71,7 +71,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var transforms by remember(project?.id) { mutableStateOf<StudioProject?>(null) }
     var layers by remember(project?.id) { mutableStateOf(false) }
     var addingLayer by remember(project?.id) { mutableStateOf(false) }
-    var librarySection by rememberSaveable { mutableStateOf("projects") }
+    var librarySection by rememberSaveable(canvasLibrary) { mutableStateOf(if (canvasLibrary) "canvases" else "projects") }
     var historyOpen by remember(project?.id) { mutableStateOf(false) }
     var versionPreview by remember(project?.id) { mutableStateOf<StudioVersionPreview?>(null) }
     var restoring by remember(project?.id) { mutableStateOf(false) }
@@ -83,9 +83,37 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var importBaseRevision by remember(project?.id) { mutableStateOf<Long?>(null) }
     val showVersions: () -> Unit = { historyOpen = true; viewModel.versions() }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
-    val pageOwner = ShellPageOwner("studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection",
+    val drawName = stringResource(R.string.studio_draw)
+    val textName = stringResource(R.string.studio_text)
+    val rectangleName = stringResource(R.string.studio_rectangle)
+    fun draw() {
+        val current = viewModel.state.value.project ?: return
+        if (busy) return
+        val selected = current.session.current.layers.find { it.id == current.session.current.selectedLayerId && it.kind == StudioLayerKind.INK && !it.locked }
+        if (selected != null) activeInk = viewModel.startInk(current.revision, selected.id)
+        else {
+            val ratio = current.session.current.width * 1000 / current.session.current.height
+            val layer = StudioLayer(name = drawName, kind = StudioLayerKind.INK,
+                ink = InkCodec.encode(InkDocument(aspectMilli = ratio.takeIf { it in 125..8000 } ?: 0)))
+            viewModel.command(current.revision, StudioCommand.Add(layer)); pendingInk = layer.id
+        }
+    }
+    fun add(kind: StudioLayerKind, name: String) {
+        val current = viewModel.state.value.project ?: return
+        if (!busy) editing = StudioLayerEdit(current.revision, StudioLayer(name = name, kind = kind,
+            bounds = StudioRect(100, 100, 800, 300)), true)
+    }
+    val pageOwner = ShellPageOwner(if (canvasLibrary) "canvases" else "studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection",
         canonicalSourceVersion = project?.revision?.toString(),
         selectionIds = listOfNotNull(project?.session?.current?.selectedLayerId),
+        nextStep = if (!busy && !state.loading && !state.error && naming == null && !addingLayer && editing == null &&
+            !importing && background == null && transforms == null && !layers && !historyOpen && activeInk == null &&
+            (project?.session?.current?.layers?.isEmpty() == true || project == null &&
+                (if (canvasLibrary) !library.canvasesLoading && !library.canvasesError && canvases.isEmpty()
+                 else !library.projectsLoading && !library.projectsError && projects.isEmpty())))
+            com.halo.app.ui.presence.ShellNextStep(if (project != null) "studio-layer.v1" else if (canvasLibrary) "canvas-new.v1" else "studio-new.v1",
+                if (project != null) "page.studio.add-layer" else if (canvasLibrary) "page.studio.new-canvas" else "page.studio.new",
+                stringResource(if (project != null) R.string.zone5_guide_studio_layer else if (canvasLibrary) R.string.zone5_guide_canvas_new else R.string.zone5_guide_studio)) else null,
         canonicalToolIds = if (project == null && librarySection == "canvases") listOf("halo_canvas_create", "halo_canvas_get")
             else listOf("halo_studio_current", "halo_studio_get", "halo_studio_list", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export"),
         activeToolId = if (project == null) librarySection else "project",
@@ -103,6 +131,18 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.versions", stringResource(R.string.studio_versions), HaloGlyph.ACTIVITY, !busy, showVersions),
             ShellPageAction("page.studio.rename", uiText("Rename"), HaloGlyph.NOTE, !busy) { nameProject("rename") },
             ShellPageAction("page.studio.save", stringResource(R.string.studio_save), HaloGlyph.NOTE, !busy && project.hasUnsavedChanges) { viewModel.save() },
+            ShellPageAction("page.studio.undo", uiText("Undo"), HaloGlyph.PREVIOUS, !busy && project.session.undo.isNotEmpty()) { viewModel.edit(project.revision, "undo") },
+            ShellPageAction("page.studio.redo", uiText("Redo"), HaloGlyph.NEXT, !busy && project.session.redo.isNotEmpty()) { viewModel.edit(project.revision, "redo") },
+            ShellPageAction("page.studio.image", stringResource(R.string.studio_import_image), HaloGlyph.FILE, !busy) { importBaseRevision = project.revision; importing = true },
+            ShellPageAction("page.studio.camera", stringResource(if (onRecoverCamera == null) R.string.studio_camera else R.string.studio_recover_photo), HaloGlyph.SEE, !busy) {
+                if (onRecoverCamera == null) onCamera(project) else onRecoverCamera(project)
+            },
+            ShellPageAction("page.studio.draw", drawName, HaloGlyph.NOTE, !busy, ::draw),
+            ShellPageAction("page.studio.text", textName, HaloGlyph.NOTE, !busy) { add(StudioLayerKind.TEXT, textName) },
+            ShellPageAction("page.studio.shape", rectangleName, HaloGlyph.TOOL, !busy) { addingLayer = true },
+            ShellPageAction("page.studio.transform", stringResource(R.string.studio_transforms), HaloGlyph.TOOL, !busy) { transforms = project },
+            ShellPageAction("page.studio.background", stringResource(R.string.studio_background), HaloGlyph.APPEARANCE, !busy) { background = project },
+            ShellPageAction("page.studio.ai", stringResource(R.string.studio_ai), HaloGlyph.THINK, !busy) { onAiDraft(project) },
         ))
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val targetId = pickerProjectId; val targetRevision = pickerProjectRevision
@@ -127,7 +167,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         }
     }
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
-        com.halo.app.ui.screens.notebook.ToolZoneHeader(project?.title ?: stringResource(R.string.studio_title),
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(project?.title ?: stringResource(if (canvasLibrary) R.string.zone5_tool_canvas else R.string.zone5_tool_studio),
             onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy,
             onTitleClick = if (project != null) ({ nameProject("rename") }) else null) {
                 if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
@@ -143,7 +183,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         }
     }
     Scaffold(containerColor = com.halo.app.ui.theme.haloWorkspaceBackground(), topBar = {
-        if (!shellOwnsOrb) TopAppBar(title = { Text(project?.title ?: stringResource(R.string.studio_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        if (!shellOwnsOrb) TopAppBar(title = { Text(project?.title ?: stringResource(if (canvasLibrary) R.string.zone5_tool_canvas else R.string.zone5_tool_studio), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             navigationIcon = { IconButton(onClick = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy) {
                 Icon(Icons.Default.ArrowBack, stringResource(R.string.studio_close))
             } }, actions = {
@@ -159,16 +199,21 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             })
     }) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
-            val previewHeight = (maxWidth * .9f).coerceIn(200.dp, 480.dp)
-            LazyColumn(Modifier.fillMaxSize().testTag("studio-content"), contentPadding = PaddingValues(16.dp),
+            if (project != null) Column(Modifier.fillMaxSize().padding(16.dp).testTag("studio-content")) {
+                if (shellOwnsOrb) Zone5InstrumentHeading(stringResource(R.string.zone5_tool_studio), "tool_studio", project.title,
+                    state = stringResource(if (project.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved))
+                if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (state.error) Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
+                StudioWorkbench(viewModel.service, project, busy, ::draw, { add(StudioLayerKind.TEXT, textName) },
+                    { addingLayer = true }, { importBaseRevision = project.revision; importing = true },
+                    { layers = true }, { transforms = project },
+                    { id -> viewModel.command(project.revision, StudioCommand.Select(id)) },
+                    { layer -> editing = StudioLayerEdit(project.revision, layer) }, Modifier.weight(1f))
+            } else LazyColumn(Modifier.fillMaxSize().testTag("studio-content"), contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (shellOwnsOrb) item("studio-heading") { Zone5InstrumentHeading(stringResource(R.string.studio_title), "tool_studio", project?.title,
-                    state = if (project == null) stringResource(R.string.zone5_projects_canvases) else stringResource(
+                if (shellOwnsOrb) item("studio-heading") { Zone5InstrumentHeading(stringResource(R.string.studio_title), if (canvasLibrary) "tool_canvas" else "tool_studio", project?.title,
+                    state = if (project == null) stringResource(if (canvasLibrary) R.string.zone5_canvas_purpose else R.string.zone5_graphics_intro) else stringResource(
                         if (project.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved)) }
-                if (project == null) item("studio-tabs") {
-                    Zone5LocalTabs(listOf(Zone5LocalTab("projects", uiText("Projects"), "tool_studio"),
-                        Zone5LocalTab("canvases", uiText("Canvases"), "type_canvas")), librarySection, { librarySection = it })
-                }
                 if (state.loading) item { CircularProgressIndicator(); Text(stringResource(R.string.studio_loading)) }
                 if (state.error) item {
                     Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
@@ -205,56 +250,12 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     }
                     items(projects, key = { it.id }) { item ->
                         OutlinedCard(onClick = { viewModel.open(item.id) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                            Text(item.title, Modifier.padding(16.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                } else if (project != null) {
-                    item { StudioDocumentPreview(viewModel.service, project.session.current, Modifier.fillMaxWidth().height(previewHeight)) }
-                    item {
-                        Text(stringResource(if (project.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved),
-                            style = MaterialTheme.typography.bodySmall)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { viewModel.edit(project.revision, "undo") }, enabled = !busy && project.session.undo.isNotEmpty()) {
-                                Text(stringResource(R.string.studio_undo))
+                            Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Zone5Icon("type_image", HaloGlyph.FILE, Modifier.size(32.dp))
+                                Text(item.title, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Zone5Icon("action_next", HaloGlyph.NEXT, Modifier.size(20.dp))
                             }
-                            TextButton(onClick = { viewModel.edit(project.revision, "redo") }, enabled = !busy && project.session.redo.isNotEmpty()) {
-                                Text(stringResource(R.string.studio_redo))
-                            }
-                            WorkspaceContinueButton(project.id, project.revision.toString(), enabled = !busy)
-                            TextButton(onClick = { layers = true }, enabled = !busy) { Text(stringResource(R.string.studio_layers)) }
-                            TextButton(onClick = { transforms = project }, enabled = !busy) { Text(stringResource(R.string.studio_transforms)) }
-                        }
-                    }
-                    item {
-                        val textName = stringResource(R.string.studio_text)
-                        val rectangleName = stringResource(R.string.studio_rectangle)
-                        val ellipseName = stringResource(R.string.studio_ellipse)
-                        val inkName = stringResource(R.string.studio_draw)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = { importBaseRevision = project.revision; importing = true }, enabled = !busy) { Text(stringResource(R.string.studio_import_image)) }
-                            OutlinedButton(onClick = { onCamera(project) }, enabled = !busy && onRecoverCamera == null) { Text(stringResource(R.string.studio_camera)) }
-                            onRecoverCamera?.let { recover -> OutlinedButton(onClick = { recover(project) }, enabled = !busy) {
-                                Text(stringResource(R.string.studio_recover_photo))
-                            } }
-                            OutlinedButton(onClick = {
-                                val selected = project.session.current.layers.find { it.id == project.session.current.selectedLayerId && it.kind == StudioLayerKind.INK && !it.locked }
-                                if (selected != null) activeInk = viewModel.startInk(project.revision, selected.id)
-                                else {
-                                    val ratio = project.session.current.width * 1000 / project.session.current.height
-                                    val layer = StudioLayer(name = inkName, kind = StudioLayerKind.INK,
-                                        ink = InkCodec.encode(InkDocument(aspectMilli = ratio.takeIf { it in 125..8000 } ?: 0)))
-                                    viewModel.command(project.revision, StudioCommand.Add(layer)); pendingInk = layer.id
-                                }
-                            }, enabled = !busy) { Text(inkName) }
-                            listOf(StudioLayerKind.TEXT to textName, StudioLayerKind.RECTANGLE to rectangleName, StudioLayerKind.ELLIPSE to ellipseName).forEach { (kind, name) ->
-                                OutlinedButton(onClick = { editing = StudioLayerEdit(project.revision,
-                                    StudioLayer(name = name, kind = kind, bounds = StudioRect(100, 100, 800, 300)), true) }, enabled = !busy) { Text(name) }
-                            }
-                        }
-                    }
-                    item {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { onAiDraft(project) }, enabled = !busy) { Text(stringResource(R.string.studio_ai)) }
                         }
                     }
                 }

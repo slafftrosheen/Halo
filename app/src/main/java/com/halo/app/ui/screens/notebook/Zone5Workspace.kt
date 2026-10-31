@@ -47,19 +47,21 @@ internal fun WorkspaceHeadingAndTabs(library: Boolean, onSelect: (Boolean) -> Un
 /** Rows navigate straight to existing owners. No suite state or operation lives here. */
 @Composable
 internal fun WorkspaceToolsList(onStudy: () -> Unit, onMemory: () -> Unit,
-    onStudio: (() -> Unit)?, onOffice: (() -> Unit)?) {
+    onStudio: (() -> Unit)?, onOffice: (() -> Unit)?, onCanvas: (() -> Unit)? = null) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(R.string.zone5_choose_tool), style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() })
         Surface(color = Color.Transparent) {
             Column {
-                WorkspaceInstrumentRow("Study", stringResource(R.string.zone5_study_purpose), "tool_study", onStudy)
+                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_studio), stringResource(R.string.zone5_studio_purpose), "tool_studio", onStudio)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow("Memory", stringResource(R.string.zone5_memory_purpose), "tool_memory", onMemory)
+                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_notes), stringResource(R.string.zone5_office_purpose), "tool_notes", onOffice)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow("Halo Studio", stringResource(R.string.zone5_studio_purpose), "tool_studio", onStudio)
+                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_study), stringResource(R.string.zone5_study_purpose), "tool_study", onStudy)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow("Office Tools", stringResource(R.string.zone5_office_purpose), "tool_office", onOffice)
+                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_memory), stringResource(R.string.zone5_memory_purpose), "tool_memory", onMemory)
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_canvas), stringResource(R.string.zone5_canvas_purpose), "tool_canvas", onCanvas)
             }
         }
         Text(stringResource(R.string.zone5_creations_in_library), style = MaterialTheme.typography.bodyMedium,
@@ -77,7 +79,7 @@ private fun WorkspaceInstrumentRow(title: String, purpose: String, icon: String,
                 Zone5Icon(icon, HaloGlyph.TOOL, Modifier.size(40.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText(title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(if (open == null) stringResource(R.string.zone5_host_unavailable) else purpose,
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

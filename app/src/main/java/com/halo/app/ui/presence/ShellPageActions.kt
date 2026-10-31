@@ -11,7 +11,11 @@ data class ShellPageOwner(val routeFamily: String, val objectId: String? = null,
     val canonicalToolIds: List<String> = emptyList(),
     val activeToolId: String? = null,
     /** Localized presentation only; no new callable action or authority. */
-    val disabledActionReasons: Map<String, String> = emptyMap())
+    val disabledActionReasons: Map<String, String> = emptyMap(),
+    val nextStep: ShellNextStep? = null)
+
+/** Presentation only. Refers to an existing enabled action, never grants authority. */
+data class ShellNextStep(val id: String, val actionId: String, val message: String)
 data class ShellPageActionMetadata(val id: String, val title: String, val glyph: HaloGlyph, val enabled: Boolean)
 data class ShellPageAction(val id: String, val title: String, val glyph: HaloGlyph,
     val enabled: Boolean = true, val onInvoke: () -> Unit)

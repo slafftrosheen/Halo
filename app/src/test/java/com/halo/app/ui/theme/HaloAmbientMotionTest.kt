@@ -76,20 +76,20 @@ class HaloAmbientMotionTest {
         }
     }
 
-    @Test fun oneSecondOfMotionPreservesBothMotifsDisplacementFromAnExistingPosition() = runTest {
+    @Test fun crossingAFullTurnNeverRewindsTheSmoothedWallpaperTarget() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val owner = object : LifecycleOwner {
             val registry = LifecycleRegistry.createUnsafe(this)
             override val lifecycle: Lifecycle get() = registry
         }
-        val phase = mutableFloatStateOf(.7f)
+        val phase = mutableFloatStateOf(6.27f)
         val job = launch { advanceHaloAmbientPhase(owner.lifecycle, true, phase) }
         try {
             owner.registry.currentState = Lifecycle.State.RESUMED
             runCurrent(); advanceTimeBy(1_000); runCurrent()
-            // Expected position comes from the unchanged .03rad/sec motion contract.
+            assertTrue("The interpolation target must not wrap backwards", phase.floatValue > 2f * Math.PI.toFloat())
             for (motif in 0..1) {
-                val expected = haloAmbientDrift(.73f, 1080f, 2400f, motif)
+                val expected = haloAmbientDrift(6.30f, 1080f, 2400f, motif)
                 val actual = haloAmbientDrift(phase.floatValue, 1080f, 2400f, motif)
                 assertEquals(expected.x, actual.x, .0001f)
                 assertEquals(expected.y, actual.y, .0001f)

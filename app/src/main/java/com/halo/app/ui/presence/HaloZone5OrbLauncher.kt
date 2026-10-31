@@ -13,7 +13,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +35,7 @@ internal class HaloZone5Navigation(
     val profileStatus: @Composable () -> Unit,
     val entryId: String? = null,
     val compact: Boolean = false,
+    val onDisclosureChanged: (Boolean) -> Unit = {},
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -55,9 +55,9 @@ internal fun HaloZone5OrbLauncher(
     val orbFocus = remember { FocusRequester() }
     val actionsFocus = remember { FocusRequester() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    fun close(restore: Boolean = true) { disclosure = null; restoreFocus = if (restore) opener else null }
+    fun close(restore: Boolean = true) { disclosure = null; navigation.onDisclosureChanged(false); restoreFocus = if (restore) opener else null }
     val open: (String, String) -> Unit = { list, source ->
-        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) { opener = source; disclosure = list }
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) { opener = source; disclosure = list; navigation.onDisclosureChanged(true) }
     }
     val latestOpen by rememberUpdatedState(open)
     fun act(effect: () -> Unit) {
@@ -87,8 +87,7 @@ internal fun HaloZone5OrbLauncher(
         HaloOrbPrimary.REVIEW -> "Review"
     })
     val menuAction = stringResource(R.string.zone5_open_menu)
-    val horizontalCompact = size <= 48.dp && navigation.compact && LocalConfiguration.current.screenWidthDp >= 600
-    val flatLabels = LocalDensity.current.fontScale >= 1.4f && !horizontalCompact
+    val flatLabels = LocalDensity.current.fontScale >= 1.4f
     val gesture = orbModifier.focusRequester(orbFocus).pointerInput(Unit) {
         var drag = 0f
         detectVerticalDragGestures(onDragStart = { drag = 0f }, onDragCancel = { drag = 0f },
@@ -105,6 +104,26 @@ internal fun HaloZone5OrbLauncher(
             Text(actionsLabel, textAlign = TextAlign.Center)
         }
     }
+    if (navigation.compact) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { isTraversalGroup = true },
+            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (actions.isNotEmpty()) actionListControl(Modifier)
+            }
+            HaloSignalFace(signal, gesture, size = 48.dp, contentDescription = primary,
+                onClick = { act { onPrimary(interaction.primary) } }, onClickLabel = primary,
+                onLongClick = { open("menu", "orb") }, zone5 = true)
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                TextButton(onClick = { open("menu", "menu") }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                    modifier = Modifier.focusRequester(menuFocus).heightIn(min = 48.dp)) {
+                    BadgedBox(badge = { if (navigation.hasUpdates) Badge() }) {
+                        Zone5Icon("action_up", HaloGlyph.NEXT, Modifier.size(24.dp))
+                    }
+                    Spacer(Modifier.width(6.dp)); Text(menuLabel)
+                }
+            }
+        }
+    } else {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
     if (flatLabels && actions.isNotEmpty()) {
         actionListControl(Modifier.fillMaxWidth())
@@ -116,13 +135,13 @@ internal fun HaloZone5OrbLauncher(
             if (!flatLabels && actions.isNotEmpty()) actionListControl(Modifier)
             if (!flatLabels) navigation.profileStatus()
         }
-        Column(Modifier.width(if (horizontalCompact) 128.dp else if (size <= 48.dp) 64.dp else 112.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier.width(if (size <= 48.dp) 64.dp else 112.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             HaloSignalFace(signal, gesture, size = size, contentDescription = primary,
                 onClick = { act { onPrimary(interaction.primary) } }, onClickLabel = primary,
                 onLongClick = { open("menu", "orb") }, zone5 = true)
-            if (size > 48.dp || horizontalCompact) {
+            if (size > 48.dp) {
             Spacer(Modifier.height(4.dp))
-            Text(if (interaction.primary == HaloOrbPrimary.TALK && !horizontalCompact) stringResource(R.string.zone5_tap_to_talk) else primary,
+            Text(if (interaction.primary == HaloOrbPrimary.TALK) stringResource(R.string.zone5_tap_to_talk) else primary,
                 style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
             }
         }
@@ -138,7 +157,8 @@ internal fun HaloZone5OrbLauncher(
             }
         }
     }
-    if (size <= 48.dp && !horizontalCompact) Text(primary, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+    if (size <= 48.dp) Text(primary, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+    }
     }
     if (disclosure != null) LocalizedMaterialBottomSheet(onDismissRequest = { close() },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {

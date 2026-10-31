@@ -24,9 +24,15 @@ import kotlinx.coroutines.flow.map
 @Composable
 fun StudioRoute(projectId: String?, sourceId: String?, attachmentId: String?, returnCanvasId: String?,
     savedState: SavedStateHandle, onBack: () -> Unit, onOpenFile: (String) -> Unit,
-    onOpenCanvas: (String, String?) -> Unit, sourceVersion: String? = null, handoffId: String? = null) {
+    onOpenCanvas: (String, String?) -> Unit, sourceVersion: String? = null, handoffId: String? = null, canvasLibrary: Boolean = false) {
     val model: StudioViewModel = viewModel(key = "studio", factory = StudioViewModel.Factory(Graph.studioService,
         Graph.workspaceFileRepository, Graph.workspaceImageService, Graph.notebookAssetRepository, projectId, savedState))
+    if (canvasLibrary) {
+        LaunchedEffect(model) { model.openedCanvases.collect { id -> onOpenCanvas(id, null) } }
+        StudioScreen(model, onBack, {}, {}, {}, {}, canvasLibrary = true,
+            onOpenCanvas = { id -> onOpenCanvas(id, null) })
+        return
+    }
     val state by model.state.collectAsStateWithLifecycle()
     val camera = rememberStudioCamera(model, Graph.captures, Graph.notebookAssetRepository)
     var pendingOutputId by rememberSaveable { mutableStateOf<String?>(null) }

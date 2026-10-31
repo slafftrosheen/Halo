@@ -78,6 +78,8 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("file_tools", selected?.id,
         "${selected?.version}:${state.file?.version}:${state.text?.revision}:${state.annotations?.revision}",
         canonicalSourceVersion = selected?.takeIf { it.kind == WorkspaceFileToolsKind.FILE }?.version,
+        nextStep = if (selected == null && !busy && !state.loading && !state.error && !creating)
+            com.halo.app.ui.presence.ShellNextStep("notes-open.v1", "page.office.open", stringResource(R.string.zone5_guide_office)) else null,
         canonicalToolIds = listOf("halo_file_tool_capabilities", "halo_get_file_metadata", "halo_text_get", "halo_text_export", "halo_pdf_annotation_get"),
         disabledActionReasons = mapOf("page.office.export" to if (busy) uiText("Updating...")
             else if (selected?.kind == WorkspaceFileToolsKind.FILE && state.file?.mimeType?.startsWith("text/") == true) stringResource(R.string.zone5_edit_text_first)
@@ -99,7 +101,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
         }
     })
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
-        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: uiText("Office Tools"),
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: stringResource(R.string.zone5_tool_notes),
             onBack = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy)
     }
     BackHandler(enabled = busy) { }
@@ -128,7 +130,7 @@ internal fun WorkspaceFileToolsScreen(model: WorkspaceFileToolsViewModel, onBack
     }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("file-tools-content"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
-                if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Office Tools"), "tool_office", selected?.title,
+                if (shellOwnsOrb) Zone5InstrumentHeading(stringResource(R.string.zone5_tool_notes), "tool_notes", selected?.title,
                     state = if (selected == null) stringResource(R.string.zone5_office_kinds) else stringResource(R.string.file52_local_scope))
                 Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodyMedium)
                 if (!shellOwnsOrb) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

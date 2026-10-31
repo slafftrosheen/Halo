@@ -21,6 +21,7 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.presence.HaloOrbContextAction
+import com.halo.app.ui.fx.haloTrace
 
 /** Call-site meaning wins over the legacy enum. This is presentation, never dispatch. */
 internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (action.id.removePrefix("page:")) {
@@ -48,9 +49,9 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
     "page.screen.add" -> "screen_widgets"
     "page.screen.appearance" -> "setting_appearance"
     "page.screen.ambient" -> "screen_display_mode"
-    "page.note.rename", "page.studio.rename" -> "action_rename"
+    "page.note.rename", "page.studio.rename", "page.canvas.rename" -> "action_rename"
     "page.note.insert" -> "action_add"
-    "page.note.export", "page.office.export", "page.studio.export" -> "action_export"
+    "page.note.export", "page.office.export", "page.studio.export", "page.canvas.export" -> "action_export"
     "page.office.new" -> "office_document"
     "page.office.open" -> "library_open"
     "page.office.graphics" -> "tool_studio"
@@ -59,6 +60,12 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
     "page.studio.new" -> "studio_shapes"
     "page.studio.new-canvas" -> "type_canvas"
     "page.studio.save" -> "action_save"
+    "page.studio.draw" -> "studio_draw"
+    "page.studio.text" -> "studio_text"
+    "page.studio.shape" -> "studio_shapes"
+    "page.studio.transform" -> "studio_transform"
+    "page.studio.background" -> "setting_appearance"
+    "page.studio.image" -> "action_import"
     "page.note.outline" -> "office_outline"
     "page.note.find" -> "office_find_replace"
     "page.canvas.fit" -> "canvas_fit"
@@ -85,21 +92,33 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
 
 @Composable
 internal fun Zone5Icon(iconId: String, fallback: HaloGlyph, modifier: Modifier = Modifier) {
-    val resource = HaloZone5Icons.resource(iconId)
-    if (resource == null) HaloIcon(fallback, null, modifier)
-    else Icon(painterResource(resource), contentDescription = null, modifier = modifier)
+    val resource = HaloZone5Icons.resource(when (iconId) {
+        "tool_canvas" -> "screen_arrange"
+        "tool_notes" -> "office_edit_text"
+        else -> iconId
+    })
+    val colors = MaterialTheme.colorScheme
+    val ink = when (zone5IconRole(iconId)) {
+        Zone5IconRole.FILE -> if (com.halo.app.ui.theme.rememberVisualPreferences().higherContrast) colors.onSurface else zone5FileInk(colors)
+        Zone5IconRole.TOOL -> colors.primary
+        Zone5IconRole.DEFAULT -> LocalContentColor.current
+    }
+    val renderedInk = ink.copy(alpha = ink.alpha * LocalContentColor.current.alpha)
+    if (resource == null) HaloIcon(fallback, null, modifier, tint = renderedInk)
+    else Icon(painterResource(resource), contentDescription = null, modifier = modifier, tint = renderedInk)
 }
 
 /** One merged, wrapping target; no independent icon click or decorative action. */
 @Composable
-internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Unit, modifier: Modifier = Modifier, guided: Boolean = false) {
     val label = uiText(action.title)
     val reason = if (action.enabled) null else action.disabledReason?.let { uiText(it) }
     val ink = if (action.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = .6f)
     val border = if (com.halo.app.ui.theme.rememberVisualPreferences().higherContrast) MaterialTheme.colorScheme.outline
         else MaterialTheme.colorScheme.primary.copy(alpha = if (action.enabled) .24f else .12f)
     CompositionLocalProvider(LocalContentColor provides ink) {
-        Column(modifier.clip(RoundedCornerShape(16.dp))
+        Column(modifier.haloTrace(guided && action.enabled, MaterialTheme.colorScheme.primary, 16.dp, lapOnAppear = true)
+            .clip(RoundedCornerShape(16.dp))
             .clickable(enabled = action.enabled, role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics(mergeDescendants = true) {
                 contentDescription = label

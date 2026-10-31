@@ -6,6 +6,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.PowerManager
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,6 +25,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlin.math.cos
@@ -29,7 +33,7 @@ import kotlin.math.sin
 
 /** Decorative, non-interactive Open Ring fragments. No session state or input handling.
  * Only retained motif-layer translations read phase; motif drawing and base stay static.
- * One tiny position update/second, paused outside RESUMED or under power/thermal limits.
+ * One target update/second with smooth retained-layer interpolation, paused outside RESUMED.
  */
 @Composable
 fun HaloAmbientBackdrop(modifier: Modifier = Modifier, palette: HaloPalette = LocalHaloPalette.current,
@@ -65,9 +69,12 @@ fun HaloAmbientBackdrop(modifier: Modifier = Modifier, palette: HaloPalette = Lo
     val phase = remember { mutableFloatStateOf(0f) }
     val moving = haloAmbientMotionAllowed(animate, reduced, contrast, powerAllowed, palette.background)
     LaunchedEffect(lifecycle, moving) { advanceHaloAmbientPhase(lifecycle, moving, phase) }
+    val lifecycleState by lifecycle.currentStateAsState()
+    val smoothPhase = if (moving && lifecycleState.isAtLeast(Lifecycle.State.RESUMED))
+        animateFloatAsState(phase.floatValue, tween(1_000, easing = LinearEasing), label = "wallpaper-drift") else phase
     val base = baseColor ?: MaterialTheme.colorScheme.background
     val accent = MaterialTheme.colorScheme.primary
-    HaloAmbientBackdropLayers(modifier, palette.background, base, accent, phase, contrast)
+    HaloAmbientBackdropLayers(modifier, palette.background, base, accent, smoothPhase, contrast)
 }
 
 /** Static motif recording; phase is observed only by retained layer-property blocks. */
@@ -77,7 +84,7 @@ internal fun HaloAmbientBackdropLayers(
     style: HaloBackgroundStyle,
     base: Color,
     accent: Color,
-    phase: FloatState,
+    phase: State<Float>,
     contrast: Boolean,
 ) {
     // Clip once at the viewport, never within a moving motif. Oversized fragments
@@ -86,7 +93,7 @@ internal fun HaloAmbientBackdropLayers(
         if (!contrast && style != HaloBackgroundStyle.STILL) {
             repeat(2) { index ->
                 Canvas(Modifier.matchParentSize().graphicsLayer {
-                    val drift = haloAmbientDrift(phase.floatValue, size.width, size.height, index)
+                    val drift = haloAmbientDrift(phase.value, size.width, size.height, index)
                     translationX = drift.x
                     translationY = drift.y
                     clip = false
@@ -96,16 +103,16 @@ internal fun HaloAmbientBackdropLayers(
                         val center = if (index == 0) Offset(size.width * .96f, size.height * .22f)
                             else Offset(-size.width * .14f, size.height * .88f)
                         val r = if (index == 0) radius else radius * .8f
-                        drawCircle(Brush.radialGradient(listOf(accent.copy(alpha = if (index == 0) .055f else .035f), Color.Transparent),
+                        drawCircle(Brush.radialGradient(listOf(accent.copy(alpha = if (index == 0) .13f else .075f), Color.Transparent),
                             center = center, radius = r), r, center)
                     } else if (index == 0) {
                         val center = Offset(size.width * .96f, size.height * .22f)
-                        drawArc(accent.copy(alpha = .035f), 32f, 272f, false,
+                        drawArc(accent.copy(alpha = .065f), 32f, 272f, false,
                             topLeft = center - Offset(radius, radius), size = Size(radius * 2, radius * 2),
                             style = Stroke(size.width * .07f))
                     } else {
                         val r = radius * .63f
-                        drawArc(accent.copy(alpha = .025f), 210f, 235f, false,
+                        drawArc(accent.copy(alpha = .045f), 210f, 235f, false,
                             topLeft = Offset(-r * 1.4f, size.height * .72f), size = Size(r * 2, r * 2),
                             style = Stroke(size.width * .04f))
                     }
@@ -128,7 +135,8 @@ internal suspend fun advanceHaloAmbientPhase(lifecycle: Lifecycle, moving: Boole
     if (moving) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
         while (true) {
             delay(1_000)
-            phase.floatValue = (phase.floatValue + .03f) % (2f * Math.PI.toFloat())
+            // Keep the target continuous across a full turn; interpolation must never rewind.
+            phase.floatValue += .03f
         }
     }
 }

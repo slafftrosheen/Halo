@@ -140,7 +140,7 @@ class NotebookRootReselectionTest {
         compose.onNodeWithText("Tools").performClick()
         restoration.emulateSavedInstanceStateRestore()
         compose.runOnIdle { assertEquals("tools", actions.value!!.owner.activeToolId); assertTrue(actions.value!!.actions.isEmpty()) }
-        compose.onNodeWithText("Office Tools", ignoreCase = true).assertIsDisplayed()
+        compose.onNodeWithText("HaloNotes", ignoreCase = true).assertIsDisplayed()
     }
 
     @Test fun failedLibrarySearchKeepsNavigationUsableAndCanRetry() {
@@ -151,7 +151,7 @@ class NotebookRootReselectionTest {
             compose.onAllNodesWithText("Library unavailable").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithText("Tools").performClick()
-        compose.onNodeWithText("Study").assertIsDisplayed()
+        compose.onNodeWithText("HaloStudy").assertIsDisplayed()
         compose.onNodeWithText("Library").performClick()
         compose.runOnIdle { NoDerivedSearchHits.unavailable = false }
         compose.onNodeWithText("Try again").performClick()
@@ -197,8 +197,8 @@ class NotebookRootReselectionTest {
 
     @Test fun toolsHaveNoLibraryLeaseAndOpenEachActualInstrumentInOneClick() {
         val library = NotebookLibrarySession { true }
-        var study = 0; var studio = 0; var office = 0
-        renderWorkspace(library, { study++ }, { studio++ }, { office++ })
+        var study = 0; var studio = 0; var office = 0; var canvas = 0
+        renderWorkspace(library, { study++ }, { studio++ }, { office++ }, { canvas++ })
         compose.waitUntil(5_000) { scheduler.runCurrent(); library.read() != null }
         compose.onNodeWithText("Tools").performClick()
         compose.runOnIdle {
@@ -206,12 +206,14 @@ class NotebookRootReselectionTest {
             assertTrue(actions.value!!.actions.isEmpty())
             assertNull("Hidden Library cannot remain an assistant target", library.read())
         }
-        compose.onNodeWithText("Study").performClick()
-        compose.onNodeWithText("Halo Studio", ignoreCase = true).performClick()
-        compose.onNodeWithText("Office Tools", ignoreCase = true).performClick()
-        compose.onNodeWithText("Memory").performClick()
+        compose.onNodeWithText("HaloStudy").performClick()
+        compose.onNodeWithText("HaloStudio", ignoreCase = true).performClick()
+        compose.onNodeWithText("HaloNotes", ignoreCase = true).performClick()
+        compose.onNodeWithText("HaloMemory").performClick()
+        compose.onNodeWithText("HaloCanvas").performClick()
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.any { it is NotebookNavigation.OpenMemoryHub } }
         assertEquals(1, study); assertEquals(1, studio); assertEquals(1, office)
+        assertEquals(1, canvas)
     }
 
     @Test fun rootReselectionReturnsToolsToLibraryWithoutDiscardingQueryOrSelection() {
@@ -233,7 +235,7 @@ class NotebookRootReselectionTest {
     }
 
     private fun renderWorkspace(library: NotebookLibrarySession? = null,
-        study: () -> Unit = {}, studio: () -> Unit = {}, office: () -> Unit = {}) {
+        study: () -> Unit = {}, studio: () -> Unit = {}, office: () -> Unit = {}, canvas: () -> Unit = {}) {
         restoration.setContent { HostlessHaloTheme {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                 Box(Modifier.width(900.dp).height(1800.dp)) {
@@ -241,6 +243,7 @@ class NotebookRootReselectionTest {
                     androidx.navigation.compose.NavHost(nav, startDestination = "notebook") {
                         composable("notebook") {
                             NotebookScreen(model, onOpenStudy = study, onOpenStudio = studio, onOpenFileTools = office,
+                                onOpenCanvasLibrary = canvas,
                                 rootRequest = rootRequest.value, librarySession = library)
                         }
                     }
