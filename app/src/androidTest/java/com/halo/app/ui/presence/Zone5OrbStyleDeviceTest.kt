@@ -32,6 +32,8 @@ class Zone5OrbStyleDeviceTest {
     @Test fun classicOrbFramesFollowTheThemeAtBothZoneSizes() {
         val accent = mutableStateOf(HaloAccent.BLUE)
         val dark = mutableStateOf(true)
+        val child = mutableStateOf(false)
+        var density = 1f
         val ready = mutableStateMapOf<String, LottieComposition?>()
         var ink = Color.Unspecified
         val states = listOf(HaloSignalState.IDLE, HaloSignalState.CAPTURING, HaloSignalState.THINKING, HaloSignalState.SPEAKING)
@@ -39,7 +41,8 @@ class Zone5OrbStyleDeviceTest {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 HaloTheme(darkTheme = dark.value, palette = HaloPalette(accent.value)) {
                     val currentInk = MaterialTheme.colorScheme.primary
-                    SideEffect { ink = currentInk }
+                    val currentDensity = androidx.compose.ui.platform.LocalDensity.current.density
+                    SideEffect { ink = currentInk; density = currentDensity }
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Classic Halo orb", style = MaterialTheme.typography.headlineMedium)
@@ -48,9 +51,9 @@ class Zone5OrbStyleDeviceTest {
                                 val signal = HaloSignalPresentation(state = state, label = state.name)
                                 Text(state.name, style = MaterialTheme.typography.labelLarge)
                                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                                    HaloSignalFace(signal.copy(reducedMotion = true), size = 48.dp, zone5 = true)
+                                    HaloSignalFace(signal.copy(reducedMotion = true), size = 48.dp, zone5 = true, kids = child.value)
                                     for (size in listOf(64, 72)) {
-                                        val path = requireNotNull(zone5OrbMotionAsset(signal, size.toFloat(), dark.value, true))
+                                        val path = requireNotNull(zone5OrbMotionAsset(signal, size.toFloat(), dark.value, true, kids = child.value))
                                         val composition = rememberHaloThemedLottie(asset = path)
                                         val key = "${state.name}-$size"
                                         SideEffect { ready[key] = composition }
@@ -65,9 +68,11 @@ class Zone5OrbStyleDeviceTest {
             }
         }
         var first = true
-        for ((value, night) in listOf(HaloAccent.BLUE to true, HaloAccent.MINT to true, HaloAccent.ROSE to false)) {
+        for ((isChild, value, night) in listOf(
+            Triple(false, HaloAccent.BLUE, true), Triple(false, HaloAccent.MINT, true), Triple(false, HaloAccent.ROSE, false),
+            Triple(true, HaloAccent.BLUE, true), Triple(true, HaloAccent.MINT, true), Triple(true, HaloAccent.ROSE, false))) {
             val old = ready.toMap()
-            compose.runOnIdle { accent.value = value; dark.value = night }
+            compose.runOnIdle { accent.value = value; dark.value = night; child.value = isChild }
             compose.waitUntil(15_000) {
                 ready.size == 8 && ready.values.all { it != null } &&
                     (first || ready.all { (key, composition) -> composition !== old[key] })
@@ -83,12 +88,12 @@ class Zone5OrbStyleDeviceTest {
                 }
                 assertTrue("$value/$state/$size must paint its themed thick ring", painted > 40)
                 val composition = ready["${state.name}-$size"]!!
-                assertEquals(240, composition.bounds.width())
+                assertEquals("Lottie scales authored bounds by Android density", (240 * density).toInt(), composition.bounds.width())
                 assertTrue("The classic halo glow must be present", composition.layers.any { it.name == "glow" })
                 assertTrue("The thick ring must remain present", composition.layers.any { it.name == "ring" })
             }
             val output = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "zone5-orb-polish").apply { mkdirs() }
-            File(output, "classic-${value.name.lowercase()}.png").outputStream().use {
+            File(output, "classic-${if (isChild) "kids-" else ""}${value.name.lowercase()}.png").outputStream().use {
                 compose.onNode(isRoot()).captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
             }
         }
