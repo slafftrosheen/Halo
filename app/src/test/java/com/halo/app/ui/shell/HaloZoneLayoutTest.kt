@@ -151,4 +151,18 @@ class HaloZoneLayoutTest {
         compose.onNodeWithText("Visas darbības").assertIsDisplayed()
         compose.onNode(isRoot()).captureRoboImage()
     }
+
+    @Test @Config(qualifiers = "ru-rRU-w844dp-h393dp")
+    fun shortWide200PercentKeepsAUsableWorkAreaAboveTheDock() {
+        show(compact = true, scale = 2f)
+        val voice = compose.onNodeWithContentDescription("Говорить").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val menu = compose.onNodeWithText("Меню").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val all = compose.onNodeWithText("Все действия").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val work = compose.onNodeWithText("Working document").fetchSemanticsNode().parent!!.boundsInRoot
+        assertTrue("The footer must leave at least 120dp for the working viewport: $work", work.height >= 120 * compose.density.density)
+        assertFalse(voice.overlaps(menu)); assertFalse(voice.overlaps(all)); assertFalse(menu.overlaps(all))
+        compose.onNodeWithText("Меню").performClick()
+        compose.onNode(hasText("Настройки") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(listOf("settings"), invoked)
+    }
 }

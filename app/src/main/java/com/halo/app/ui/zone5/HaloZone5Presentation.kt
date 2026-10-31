@@ -96,6 +96,8 @@ internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Uni
     val label = uiText(action.title)
     val reason = if (action.enabled) null else action.disabledReason?.let { uiText(it) }
     val ink = if (action.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = .6f)
+    val border = if (com.halo.app.ui.theme.rememberVisualPreferences().higherContrast) MaterialTheme.colorScheme.outline
+        else MaterialTheme.colorScheme.primary.copy(alpha = if (action.enabled) .24f else .12f)
     CompositionLocalProvider(LocalContentColor provides ink) {
         Column(modifier.clip(RoundedCornerShape(16.dp))
             .clickable(enabled = action.enabled, role = Role.Button, onClickLabel = label, onClick = onClick)
@@ -105,7 +107,7 @@ internal fun LabelledSatellite5(action: HaloOrbContextAction, onClick: () -> Uni
             }.padding(horizontal = 4.dp, vertical = 4.dp).heightIn(min = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = if (action.enabled) .24f else .12f), CircleShape),
+                .border(1.dp, border, CircleShape),
                 contentAlignment = Alignment.Center) { Zone5Icon(zone5ActionIconId(action), action.glyph, Modifier.size(24.dp)) }
             Spacer(Modifier.height(4.dp))
             Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp, lineHeight = 20.sp),

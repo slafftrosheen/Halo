@@ -29,7 +29,8 @@ internal fun HaloZone(
     val largeText = LocalDensity.current.fontScale >= 1.4f
     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
         Column {
-        HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = .24f))
+        HorizontalDivider(color = if (com.halo.app.ui.theme.rememberVisualPreferences().higherContrast)
+            MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.primary.copy(alpha = .24f))
         BoxWithConstraints {
             val fallback = compact || largeText || maxWidth < 360.dp || availableHeight < 520.dp
             val header = LocalShellUtilityBand.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
@@ -39,7 +40,7 @@ internal fun HaloZone(
             val orbitActions = if (header == null) contextual else contextual.filterNot {
                 it.id.startsWith("page:") && it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS
             }
-            val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus, entryId)
+            val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus, entryId, compact)
             backdrop()
             CompositionLocalProvider(LocalHaloZone5Navigation provides navigation) {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {

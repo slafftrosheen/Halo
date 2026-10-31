@@ -35,10 +35,11 @@ internal fun ContextToolOrbit(
             val slotWidth = (maxWidth - 16.dp) / 3
             val inset = if (actions.size < 3) (slotWidth + 8.dp) * (3 - actions.size) / 2 else 0.dp
             val rail = MaterialTheme.colorScheme.primary.copy(alpha = .28f)
+            val showRail = !com.halo.app.ui.theme.rememberVisualPreferences().higherContrast
             LazyRow(state = state, flingBehavior = rememberSnapFlingBehavior(state),
                 modifier = Modifier.fillMaxWidth().drawBehind {
                     // Decoration only; the native scroll and merged action targets own all input.
-                    if (actions.size >= 2) {
+                    if (showRail && actions.size >= 2) {
                         val arc = Path().apply {
                             moveTo(0f, 60.dp.toPx())
                             quadraticTo(size.width / 2f, (-4).dp.toPx(), size.width, 60.dp.toPx())

@@ -204,6 +204,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     }
     if (!showLibrary) {
         com.halo.app.ui.presence.BindShellUtilityBand(ShellPageOwner("notebook", activeToolId = "tools")) {
+            if (com.halo.app.ui.presence.LocalHaloZone5Navigation.current?.compact != true &&
+                androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.4f)
             Text(stringResource(R.string.zone5_tools_controls), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp))
