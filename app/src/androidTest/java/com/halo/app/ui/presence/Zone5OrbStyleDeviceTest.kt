@@ -32,7 +32,7 @@ class Zone5OrbStyleDeviceTest {
     @Test fun classicOrbFramesFollowTheThemeAtBothZoneSizes() {
         val accent = mutableStateOf(HaloAccent.BLUE)
         val dark = mutableStateOf(true)
-        val ready = mutableMapOf<String, LottieComposition?>()
+        val ready = mutableStateMapOf<String, LottieComposition?>()
         var ink = Color.Unspecified
         val states = listOf(HaloSignalState.IDLE, HaloSignalState.CAPTURING, HaloSignalState.THINKING, HaloSignalState.SPEAKING)
         compose.setContent {
@@ -63,13 +63,15 @@ class Zone5OrbStyleDeviceTest {
                 }
             }
         }
+        var first = true
         for ((value, night) in listOf(HaloAccent.BLUE to true, HaloAccent.MINT to true, HaloAccent.ROSE to false)) {
             val old = ready.toMap()
             compose.runOnIdle { accent.value = value; dark.value = night }
             compose.waitUntil(15_000) {
                 ready.size == 8 && ready.values.all { it != null } &&
-                    (old.isEmpty() || ready.all { (key, composition) -> composition !== old[key] })
+                    (first || ready.all { (key, composition) -> composition !== old[key] })
             }
+            first = false
             for (state in states) for (size in listOf(64, 72)) {
                 val pixels = compose.onNodeWithTag("${state.name}-$size").assertIsDisplayed().captureToImage().toPixelMap()
                 var painted = 0
