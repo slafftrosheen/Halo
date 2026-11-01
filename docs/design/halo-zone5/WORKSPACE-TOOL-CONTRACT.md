@@ -48,3 +48,7 @@ Screen owns the planned Halo calendar, plans/time management and notifications, 
 ## Acceptance evidence
 
 Measure the 75/25 working/Zone split on the phone and verify no persistent file/menu chrome in the upper editor. Verify the five launchers and system-Back return paths, shared menu groups and scoped commands, manual Studio editing and export, file/tool distinction in light/dark accents, focused keyboard transition, compact Settings, large text/landscape, persisted guidance dismissal and suppression, and classic orb rendering. Host, synthetic native-renderer fixtures, actual phone navigation, real speech/provider and hardware evidence must be reported separately.
+
+## Planned usability and clarity work
+
+The [roadmap to 10/10](ROADMAP-TO-10-2026-11-01.md) defines proposed improvements, delivery batches and acceptance evidence. It is a planning document; implemented behaviour continues to follow this contract until reviewed changes are delivered.
