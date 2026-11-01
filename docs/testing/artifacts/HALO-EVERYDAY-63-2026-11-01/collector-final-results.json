@@ -1,0 +1,34 @@
+{
+  "outcome": "BUILD SUCCESSFUL in 6m57s",
+  "sourceFilesMatched": 29,
+  "suites": [
+    {
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.everyday.CollectorIntegrationTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.everyday.collectors.CollectorParsingTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 28,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "scope": "All20 annotated collector integration cases ran, plus5parser and3migration cases. HTTP uses synthetic interceptors; live-source and SDK DNS/socket evidence are separate. No device/UI acceptance."
+}

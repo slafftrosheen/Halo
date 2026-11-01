@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotebookDao {
+    @Query("SELECT w.* FROM workspace_objects w WHERE w.type = 'NOTE' AND w.lifecycle = 'ACTIVE' ORDER BY w.updatedAt DESC, w.id LIMIT :limit")
+    suspend fun recentNoteObjects(limit: Int): List<WorkspaceObjectEntity>
     @Query("""SELECT w.id, w.type, w.title, COALESCE(n.body, m.content, t.userText || ' ' || t.assistantText, w.title) AS snippet
         FROM workspace_objects w LEFT JOIN notes n ON n.objectId = w.id
         LEFT JOIN memory_records m ON m.id = w.id LEFT JOIN conversation_turns t ON t.conversationId = w.id

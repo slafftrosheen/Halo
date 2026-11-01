@@ -1,0 +1,38 @@
+{
+  "outcome": "BUILD FAILED in 8m10s",
+  "sourceFilesMatched": 28,
+  "generatedSchema": {
+    "path": "app/schemas/com.halo.app.data.AppDatabase/33.json",
+    "sha256": "2189cb6a7272a2f03db74fce650cf507fa1fa93bbd6e87be23fbf50f27ad37e9"
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.data.everyday.CollectorIntegrationTest",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.app.everyday.collectors.CollectorParsingTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 9,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "scope": "App production source compiled. Migration/parser passed; CollectorIntegrationTest class did not initialize, so its19 cases did not run."
+}

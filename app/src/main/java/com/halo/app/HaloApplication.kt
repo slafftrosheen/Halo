@@ -250,6 +250,15 @@ class HaloApplication :
             }
         }
 
+        resourceScope.launch {
+            try {
+                awaitOrganizerBootstrap()
+                ManualDependencyGraph.collectorBootstrap.ensureInitialized()
+                com.halo.app.everyday.collectors.android.CollectorRefreshWorker.maintain(this@HaloApplication)
+                com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(this@HaloApplication)
+            } catch (cancelled: CancellationException) { throw cancelled }
+              catch (error: Exception) { Log.e("CollectorRecovery", "Source setup needs retry", error) }
+        }
         automationBootstrap = resourceScope.async {
             storageBootstrap.await()
             awaitOrganizerBootstrap()

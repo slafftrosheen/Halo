@@ -1,0 +1,6 @@
+{
+  "outcome": "BUILD FAILED in 2m32s",
+  "failure": "ManualDependencyGraph collector lazy declarations require explicit types to resolve cyclic type inference",
+  "testsRun": false,
+  "sourceFilesMatched": 26
+}

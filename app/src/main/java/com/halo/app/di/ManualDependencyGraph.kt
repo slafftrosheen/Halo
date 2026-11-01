@@ -145,8 +145,36 @@ object ManualDependencyGraph {
         }
     }
     val engineGraph: EngineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
-    val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
+    private val observerGraphOwner = lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
+    val observerGraph get() = observerGraphOwner.value
+    fun currentTimelineEvents(): List<com.halo.sdk.runtime.TimelineEvent> =
+        if (observerGraphOwner.isInitialized()) observerGraphOwner.value.timelineRecorder.timelineFlow.value else emptyList()
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
+    val collectorRepository: com.halo.app.data.everyday.RoomCollectorRepository by lazy {
+        com.halo.app.data.everyday.RoomCollectorRepository(appDatabase,
+            sourceChanging = { id -> if (collectorCoordinatorOwner.isInitialized()) collectorCoordinatorOwner.value.cancel(id) },
+            scheduleChanged = { com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(applicationContext) })
+    }
+    val collectorRegistry: com.halo.app.everyday.collectors.CollectorRegistry by lazy {
+        val local = com.halo.app.everyday.collectors.android.AndroidLocalCollectors(applicationContext, appDatabase, organizerRepository,
+            timeline = ::currentTimelineEvents, runtimeStarted = ::runtimeIsStarted, modelFacts = {
+                localInferenceRuntimeHealthTracker.snapshots.value.map { health ->
+                    com.halo.app.everyday.collectors.LocalFact("model:${health.providerId}:${health.modelId}:${health.backend}", "LOCAL_MODEL",
+                        health.modelId, if (health.recentFailureStreak > 0) "RECENT_FAILURE" else "OBSERVED",
+                        "halo://settings/models", "${health.successfulWarmSamples}:${health.coldSamples}:${health.recentFailureStreak}", null)
+                }
+            }).adapters()
+        com.halo.app.everyday.collectors.CollectorRegistry(local + listOf(
+            com.halo.app.everyday.collectors.CollectorKind.FEED, com.halo.app.everyday.collectors.CollectorKind.WEATHER,
+            com.halo.app.everyday.collectors.CollectorKind.ALERTS, com.halo.app.everyday.collectors.CollectorKind.PUBLIC_CALENDAR
+        ).map { kind -> com.halo.app.everyday.collectors.PublicHttpCollector(kind, remoteDispatchPolicy) })
+    }
+    private val collectorCoordinatorOwner: Lazy<com.halo.app.everyday.collectors.CollectorCoordinator> = lazy {
+        com.halo.app.everyday.collectors.CollectorCoordinator(collectorRepository, collectorRegistry, remoteDispatchPolicy)
+    }
+    val collectorCoordinator: com.halo.app.everyday.collectors.CollectorCoordinator get() = collectorCoordinatorOwner.value
+    val collectorBootstrap by lazy { com.halo.app.everyday.collectors.android.CollectorBootstrap(applicationContext, collectorRepository) }
+    val collectorPreview by lazy { com.halo.app.everyday.collectors.CollectorPreview(collectorRepository, collectorRegistry, remoteDispatchPolicy) }
     val organizerBootStore by lazy { com.halo.app.everyday.organizer.android.OrganizerDirectBootStore(applicationContext) }
     val organizerRepository by lazy {
         com.halo.app.data.everyday.RoomOrganizerRepository(appDatabase,
@@ -389,7 +417,7 @@ object ManualDependencyGraph {
     val requestedHaloScreen = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
     /** One runtime instance per Android process; Activities are only views over it. */
-    val runtime by lazy {
+    private val runtimeOwner = lazy {
         RuntimeStartupTrace.measure("graph.runtime") {
             sharedAnswerHistory // Start local sharing receipts before requests.
             inferenceLedger // Start content-free inference observation with the process runtime.
@@ -397,6 +425,8 @@ object ManualDependencyGraph {
             HaloRuntime(ManualDependencyGraph)
         }
     }
+    val runtime get() = runtimeOwner.value
+    fun runtimeIsStarted(): Boolean = runtimeOwner.isInitialized() && runtimeOwner.value.isStarted()
 
     val eventBus get() = infra.eventBus
     val commandBus get() = infra.commandBus

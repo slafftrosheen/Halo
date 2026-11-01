@@ -10,6 +10,8 @@ data class AgentRunWithSteps(
 
 @Dao
 interface AgentRunDao {
+    @Query("SELECT * FROM agent_runs WHERE parentRunId IS NULL ORDER BY updatedAt DESC, id LIMIT :limit")
+    suspend fun recentRoots(limit: Int): List<AgentRunEntity>
     @Transaction
     @Query("SELECT * FROM agent_runs WHERE parentRunId = :parent ORDER BY startedAt")
     suspend fun children(parent: String): List<AgentRunWithSteps>

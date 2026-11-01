@@ -1,0 +1,122 @@
+{
+  "capturedUtc": "2026-11-01T20:19:38.360643+00:00",
+  "boundary": "Explicit DI types, bounded payload recovery, endpoint budgets and preview backoff, fair policy-denied scan and deferred refresh receipts",
+  "files": [
+    {
+      "path": "app/schemas/com.halo.app.data.AppDatabase/32.json",
+      "sha256": "fd1a0f0e448736fd37e538844cdcde7cf5de253d9fb15832a37831d41c07b4fc"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/HaloApplication.kt",
+      "sha256": "e53844da552288676c3d9f5ba4519af972a42d9601b1478bdf1db33a680c888f"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "e3e48acb294191ebcb4924c9c552538a666731c61c7f0e67dfc58ed48a6ec068"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/agent/AgentRunDao.kt",
+      "sha256": "df2e8eb4a13cdd41b8320f6439ad515e4f21696ee2e164436d1981a6a3694937"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/CollectorCodec.kt",
+      "sha256": "17ebff2e9f070007d7356c73594c182125b8ea03fffe065a66fe2a3f433bbe41"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/CollectorEntities.kt",
+      "sha256": "0c05e3ec6cb239af49c1d902e31c16e029334ee1b4220b22db407504e0a47dc8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomCollectorRepository.kt",
+      "sha256": "afe5b7a5d6198c91a83efd31bdf1b0be2724bdc47b1a1887ca397d154f6683e2"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/notebook/NotebookDao.kt",
+      "sha256": "bd427731c0009faf5e5d4c48bbbd6ef64c29f894e9bffe0304252d54e610d730"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+      "sha256": "0b0b0beba5a08cbc523827315b56d8edde4f784c760ddd341dd866ada6527c42"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorCoordinator.kt",
+      "sha256": "5b4a0a1b8b519f80cbe543a272e35b18d4ecab719f75dbdee3a99027a6e0d67f"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorEndpointIdentity.kt",
+      "sha256": "0aac90c6d44b090ab37b05be3e35e2410b02e805fbef3eacddb4606fc37cb881"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorModels.kt",
+      "sha256": "8aaf64edb7ac9aa265e817c606afea5f9ac7c1e152b38e6195d8cfdcffebc349"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorPayloadLimits.kt",
+      "sha256": "99e7b83cc816bbc8927f292d8e9b419fc2cfc0292f5dae9a9cf8de5035dc5060"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorPreview.kt",
+      "sha256": "db408c343d77c6cad71d1ae3557b0eb8f0a3461ca04a6ccd881d9d2c7f30809b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorRepository.kt",
+      "sha256": "5f048bb9590a7c19781a12e82373266d3d29548f7c3294187cf3f1bf6915eed0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorUrlPolicy.kt",
+      "sha256": "7c4f6869ccc030f49b0df0134281bf87eb51a101eb7f01c70fbb68df3ff909e1"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/FeedParser.kt",
+      "sha256": "afc5e9766bbf490c51b6a76e9f24333b7e911ae4da7366ac05b3221e2e5fe77e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/LocalStateCollector.kt",
+      "sha256": "c26b014bdcdb5007474d2b5add1569a681d13e24544a3a949758641e43e64d26"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/OpenMeteoParser.kt",
+      "sha256": "e9ed105d747223d335ff232ceb82cca3ca4bbe271e4c72611258a3bc77c72451"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/PublicHttpCollector.kt",
+      "sha256": "4b6860cb3fee07a49b60853aa2d7d9d5da5bc5a4f028b80dfba0577526544885"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/SafeCollectorJson.kt",
+      "sha256": "58c4b2c35b7d87126b7be0e71a2d8f6bf08c7561afd90f186407a3307a749db5"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/StarterSourceCatalogue.kt",
+      "sha256": "e289bf1dcecc51edadcda25e83b29f4b0a56e7315459066675fa770b951b280c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/android/AndroidLocalCollectors.kt",
+      "sha256": "8a34c1285c38eaae5465a995aa74349ad989f4469d85ea362392a2aa47f3483d"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/android/CollectorBootstrap.kt",
+      "sha256": "b516e50fb33a62435fb22c14a55c07cc2fa9c6017ef1cf63e8c677cfd0d6ebcf"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/android/CollectorRefreshWorker.kt",
+      "sha256": "2358fad1bb25ea601bfcd5b355d052a3c6937490ff61e656c807b93204105c41"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/CognitionMigrationTest.kt",
+      "sha256": "c320e045e7a224d92dd2d94d5da42b1055bd4dab24036dde28e3b5d258703ee4"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/CollectorIntegrationTest.kt",
+      "sha256": "68459528bfbabdb52d0c37a69bdaf1d6555b3f1f48e2ffd6dfede028f5cea5b3"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/collectors/CollectorParsingTest.kt",
+      "sha256": "303bd9a44e3ac9aa1006e6e6720b2f0f9bc571b2a9f151cd76627ac77e15dbcc"
+    }
+  ],
+  "generatedSchema": {
+    "path": "app/schemas/com.halo.app.data.AppDatabase/33.json",
+    "sha256": "2189cb6a7272a2f03db74fce650cf507fa1fa93bbd6e87be23fbf50f27ad37e9"
+  }
+}

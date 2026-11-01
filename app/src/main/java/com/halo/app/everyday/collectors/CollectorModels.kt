@@ -5,7 +5,7 @@ import java.time.Instant
 
 enum class CollectorKind { LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR }
 enum class SourceCategory { PERSONAL, LATVIA, WORLD, SCIENCE, TECHNOLOGY, WEATHER, OFFICIAL, CALENDAR, CUSTOM }
-enum class CollectorAttemptState { NEVER, FETCHING, CURRENT, NOT_MODIFIED, LOCAL_ONLY, OFFLINE, DISABLED, BACKOFF, QUOTA, FAILED }
+enum class CollectorAttemptState { NEVER, FETCHING, CURRENT, NOT_MODIFIED, LOCAL_ONLY, OFFLINE, DISABLED, BACKOFF, QUOTA, FAILED, CANCELLED }
 
 data class WeatherPlace(val name: String, val latitude: Double, val longitude: Double, val zoneId: String) {
     init {
@@ -77,7 +77,7 @@ data class CollectorSnapshot(
     val lastModified: String? = null,
     val effectiveUrl: String? = null,
 ) {
-    fun stale(now: Instant, external: Boolean, power: Boolean) = external && (!power || now >= expiresAt)
+    fun stale(now: Instant, external: Boolean, power: Boolean) = now >= expiresAt || external && !power
 }
 data class CollectorAttempt(val sourceId: String, val at: Instant?, val state: CollectorAttemptState,
     val consecutiveFailures: Int = 0, val nextAllowedAt: Instant? = null, val message: String? = null)
