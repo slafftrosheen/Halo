@@ -16,9 +16,13 @@ data class ReminderRecord(
 )
 
 /** Portable reminder records; PendingIntent and alarm state are derived, never serialized. */
-enum class ReminderStatus { Scheduled, Blocked, Expired, Cancelled, Fired, Failed, DeliveryBlocked }
+enum class ReminderStatus { Scheduled, Blocked, Expired, Cancelled, Fired, Failed, DeliveryBlocked, Migrated }
 class ReminderRecordStore(private val context: Context) {
     private val receipts = context.getSharedPreferences("halo_reminder_receipts", Context.MODE_PRIVATE)
+    private val migration = context.getSharedPreferences("halo_reminder_migration", Context.MODE_PRIVATE)
+    private val migrationIssues = context.getSharedPreferences("halo_reminder_migration_issues", Context.MODE_PRIVATE)
+    fun migrationFailures(): Set<String> = migrationIssues.all.keys
+    fun markMigrationFailure(id: String) { check(migrationIssues.edit().putLong(id, System.currentTimeMillis()).commit()) }
     fun status(id: String): ReminderStatus? = receipts.getString(id, null)?.let { runCatching { ReminderStatus.valueOf(it) }.getOrNull() }
     fun statuses(): Map<String, String> = receipts.all.mapValues { it.value.toString() }
     fun mark(id: String, status: ReminderStatus) {
@@ -37,6 +41,30 @@ class ReminderRecordStore(private val context: Context) {
             val json = JSONObject(encoded as String)
             ReminderRecord(json.getString("id"), json.getString("message"), json.getLong("triggerAtEpochMs"), json.getString("precision"))
         }.getOrNull()
+    }
+
+    /** Journal first, then revoke the old receiver. A crash cannot erase the only copy. */
+    fun claimMigration(id: String): ReminderRecord? = synchronized(migrationLock) {
+        val encoded = migration.getString(id, null) ?: preferences.getString(id, null) ?: return@synchronized null
+        val json = JSONObject(encoded)
+        val record = ReminderRecord(json.getString("id"), json.getString("message"), json.getLong("triggerAtEpochMs"), json.getString("precision"))
+        check(migration.edit().putString(id, encoded).commit())
+        check(preferences.edit().remove(id).commit())
+        record
+    }
+    fun migrationIds(): Set<String> = synchronized(migrationLock) { preferences.all.keys + migration.all.keys }
+    fun acknowledgeMigration(id: String) = synchronized(migrationLock) {
+        cancel(id)
+        mark(id, ReminderStatus.Migrated)
+        check(migration.edit().remove(id).commit())
+        check(migrationIssues.edit().remove(id).commit())
+    }
+    fun consumeForDelivery(id: String): ReminderRecord? = synchronized(migrationLock) {
+        if (migration.contains(id)) return@synchronized null
+        val value = all().find { it.id == id } ?: return@synchronized null
+        remove(id)
+        mark(id, ReminderStatus.Fired)
+        value
     }
 
     fun save(record: ReminderRecord) {
@@ -65,6 +93,7 @@ class ReminderRecordStore(private val context: Context) {
     fun reconcile(now: Long = System.currentTimeMillis()) {
         val alarms = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         all().forEach { record ->
+            if (migration.contains(record.id)) return@forEach
             // Retire the pre-AUT-011 identity before using collision-free intent data.
             PendingIntent.getBroadcast(context, record.id.hashCode(), Intent(context, HaloReminderReceiver::class.java),
                 PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)?.let { legacy ->
@@ -92,4 +121,5 @@ class ReminderRecordStore(private val context: Context) {
             }.onFailure { mark(record.id, if (it is SecurityException) ReminderStatus.Blocked else ReminderStatus.Failed) }
         }
     }
+    private companion object { val migrationLock = Any() }
 }

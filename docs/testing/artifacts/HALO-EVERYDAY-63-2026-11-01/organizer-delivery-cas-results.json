@@ -1,0 +1,29 @@
+{
+  "outcome": "BUILD SUCCESSFUL in 8m 2s",
+  "sourceFilesMatched": 31,
+  "suites": [
+    {
+      "module": "app",
+      "name": "com.halo.app.data.everyday.OrganizerDeliveryTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "scope": "Focused receipt CAS correction and organizer delivery/persistence. No device or rendered UI acceptance."
+}

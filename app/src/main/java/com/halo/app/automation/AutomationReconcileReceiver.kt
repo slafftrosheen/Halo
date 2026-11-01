@@ -13,7 +13,7 @@ class AutomationReconcileReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 (context.applicationContext as HaloApplication).awaitAutomationBootstrap()
-                com.halo.host.android.reminder.ReminderRecordStore(context).reconcile()
+                com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.enqueue(context, full = true)
                 // WorkManager owns reboot persistence. Only wall-clock changes replace time work here.
                 if (intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
                     ManualDependencyGraph.routineRepository.all().filter { it.enabled }.forEach {

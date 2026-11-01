@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.map
 /** One transaction owns record, revision, change history and the intent to update OS delivery. */
 class RoomOrganizerRepository(private val database: AppDatabase, private val clock: Clock = Clock.systemUTC(),
     private val deviceZone: () -> ZoneId = { ZoneId.systemDefault() },
-    private val schedulesChanged: () -> Unit = {}) : OrganizerRepository {
+    private val schedulesChanged: () -> Unit = {},
+    private val beforeRecordChange: (String) -> Unit = {}) : OrganizerRepository {
     private val dao get() = database.organizerDao()
     override fun observe() = dao.observe().map { rows -> rows.map { OrganizerCodec.decode(it.body) } }
     override suspend fun records(includeDeleted: Boolean) = dao.records(includeDeleted).map { OrganizerCodec.decode(it.body) }
@@ -34,10 +35,11 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
                 if ((previous.time != record.time || previous.repeat != record.repeat) && dao.overrides(record.id).isNotEmpty() && !resetOccurrences)
                     throw OrganizerConflict("This series has occurrence changes. Review them and explicitly choose whether to reset them")
             }
-            if (resetOccurrences) dao.clearOverrides(record.id)
             validateParent(record)
             if (record.status == OrganizerStatus.COMPLETED && records().any { it.parentId == record.id && it.status == OrganizerStatus.ACTIVE })
                 throw OrganizerConflict("Complete the remaining subtasks first")
+            beforeRecordChange(record.id)
+            if (resetOccurrences) dao.clearOverrides(record.id)
             val now = Instant.ofEpochMilli(clock.millis())
             val next = OrganizerCodec.decode(OrganizerCodec.encode(record.copy(version = (previous?.version ?: 0) + 1,
                 createdAt = previous?.createdAt ?: now, updatedAt = now)))
@@ -70,6 +72,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             if (old.version != expectedVersion || old.deletedAt != null) throw OrganizerConflict("Record changed; reopen before deleting")
             if (records().any { it.parentId == id }) throw OrganizerConflict("Delete or move the subtasks first")
             val now = Instant.ofEpochMilli(clock.millis())
+            beforeRecordChange(id)
             old.copy(version = old.version + 1, updatedAt = now, deletedAt = now).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "deleted")
             }
@@ -81,6 +84,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             val old = get(id) ?: throw OrganizerConflict("Record no longer exists")
             if (old.version != deletedVersion || old.deletedAt == null) throw OrganizerConflict("This deletion can no longer be undone")
             validateParent(old)
+            beforeRecordChange(id)
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis()), deletedAt = null).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "restored")
             }
@@ -92,6 +96,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
         if (old.version != deletedVersion || old.deletedAt == null) throw OrganizerConflict("Only the reviewed item in trash can be permanently removed")
         check(id !in dao.pending()) { "Wait for schedule cancellation before permanently removing this item" }
         if (records(includeDeleted = true).any { it.parentId == id }) throw OrganizerConflict("Move or permanently remove the subtasks first")
+        beforeRecordChange(id)
         check(dao.purgeDeleted(id, deletedVersion) == 1)
         dao.change(OrganizerChangeEntity(recordId = id, version = deletedVersion + 1, action = "purged", at = clock.millis()))
     }
@@ -108,6 +113,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             require(old.kind != OrganizerKind.EVENT || exception.replacementTime == null || exception.replacementTime.end != null)
             val previous = overrides(old.id).find { it.originalStart == exception.originalStart }
             val value = exception.copy(version = (previous?.version ?: 0) + 1)
+            beforeRecordChange(old.id)
             dao.putOverride(OrganizerOccurrenceEntity(value.recordId, value.originalStart.toEpochMilli(), OrganizerCodec.encode(value)))
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis())).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "occurrence_${exception.disposition.name.lowercase(java.util.Locale.ROOT)}")
@@ -134,6 +140,8 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             val old = get(recordId) ?: throw OrganizerConflict("Record no longer exists")
             if (old.version != expectedRecordVersion || old.deletedAt != null || old.status != OrganizerStatus.ACTIVE)
                 throw OrganizerConflict("Record changed; reopen this occurrence")
+            check(overrides(recordId).any { it.originalStart == originalStart }) { "Occurrence has no change to remove" }
+            beforeRecordChange(recordId)
             check(dao.removeOverride(recordId, originalStart.toEpochMilli()) == 1) { "Occurrence has no change to remove" }
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis())).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "occurrence_restored")
@@ -142,17 +150,98 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
         runCatching(schedulesChanged); return next
     }
     override suspend fun receipts(recordId: String) = dao.receipts(recordId).map(OrganizerCodec::receipt)
-    override suspend fun putReceipt(receipt: DeliveryReceipt): Boolean = database.withTransaction {
+    override suspend fun putReceipt(receipt: DeliveryReceipt, expected: DeliveryReceipt?): Boolean = database.withTransaction {
         val record = get(receipt.recordId) ?: return@withTransaction false
         if (record.version != receipt.recordVersion || record.deletedAt != null && receipt.state != DeliveryState.CANCELLED) return@withTransaction false
         require(receipt.occurrenceKey.startsWith("${record.id}@") && receipt.detail.orEmpty().length <= 1000)
         val previous = dao.receipt(receipt.occurrenceKey)
+        if (expected != null && previous?.let(OrganizerCodec::receipt) != expected) return@withTransaction false
         if (previous != null && previous.recordVersion == receipt.recordVersion) {
-            if (receipt.updatedAt.toEpochMilli() < previous.updatedAt) return@withTransaction false
-            if (previous.state in setOf(DeliveryState.FIRED.name, DeliveryState.MISSED.name, DeliveryState.CANCELLED.name)) return@withTransaction false
+            if (expected == null && receipt.updatedAt.toEpochMilli() < previous.updatedAt) return@withTransaction false
+            if (previous.state in setOf(DeliveryState.FIRED.name, DeliveryState.DISMISSED.name, DeliveryState.MISSED.name, DeliveryState.CANCELLED.name)) return@withTransaction false
         }
+        if (previous?.state == DeliveryState.DELIVERING.name && previous.recordVersion == receipt.recordVersion &&
+            receipt.state in setOf(DeliveryState.PENDING, DeliveryState.EXACT, DeliveryState.APPROXIMATE)) return@withTransaction false
         dao.putReceipt(OrganizerCodec.entity(receipt)); true
     }
+    override suspend fun claimDelivery(key: String, version: Long, triggerAt: Instant, now: Instant): Boolean = database.withTransaction {
+        val previous = dao.receipt(key)?.let(OrganizerCodec::receipt) ?: return@withTransaction false
+        val record = get(previous.recordId) ?: return@withTransaction false
+        if (record.version != version || record.deletedAt != null || record.status != OrganizerStatus.ACTIVE ||
+            previous.recordVersion != version || previous.triggerAt != triggerAt ||
+            previous.state !in setOf(DeliveryState.PENDING, DeliveryState.EXACT, DeliveryState.APPROXIMATE,
+                DeliveryState.NOTIFICATIONS_BLOCKED, DeliveryState.FAILED)) return@withTransaction false
+        dao.putReceipt(OrganizerCodec.entity(previous.copy(state = DeliveryState.DELIVERING, updatedAt = now)))
+        true
+    }
+
+    override suspend fun snoozeDelivery(key: String, version: Long, duration: java.time.Duration,
+        elapsedMs: Long, bootId: String): OrganizerRecord {
+        require(duration.toMillis() in 60_000..86_400_000 && elapsedMs >= 0 && bootId.isNotBlank())
+        val result = database.withTransaction {
+            val receipt = dao.receipt(key)?.let(OrganizerCodec::receipt) ?: throw OrganizerConflict("Delivery no longer exists")
+            val old = get(receipt.recordId) ?: throw OrganizerConflict("Record no longer exists")
+            if (old.version != version || old.deletedAt != null || old.status != OrganizerStatus.ACTIVE ||
+                receipt.recordVersion != version || receipt.state !in setOf(DeliveryState.FIRED, DeliveryState.DELIVERING))
+                throw OrganizerConflict("This alert changed or is no longer ringing; reopen it")
+            beforeRecordChange(old.id)
+            val now = Instant.ofEpochMilli(clock.millis())
+            val next = old.copy(version = old.version + 1, updatedAt = now)
+            check(dao.update(OrganizerCodec.entity(next)) == 1)
+            dao.putReceipt(OrganizerCodec.entity(receipt.copy(recordVersion = next.version,
+                triggerAt = now.plus(duration), state = DeliveryState.PENDING, updatedAt = now, detail = null,
+                snoozedUntil = now.plus(duration), snoozeElapsedDeadlineMs = Math.addExact(elapsedMs, duration.toMillis()), snoozeBootId = bootId)))
+            changed(next, "snoozed")
+            next
+        }
+        runCatching(schedulesChanged)
+        return result
+    }
+
+    override suspend fun dismissDelivery(key: String, version: Long): Boolean {
+        val result = database.withTransaction {
+            val receipt = dao.receipt(key)?.let(OrganizerCodec::receipt) ?: return@withTransaction false
+            val record = get(receipt.recordId) ?: return@withTransaction false
+            if (record.version != version || receipt.recordVersion != version || record.deletedAt != null ||
+                receipt.state !in setOf(DeliveryState.FIRED, DeliveryState.DELIVERING)) return@withTransaction false
+            beforeRecordChange(record.id)
+            val now = Instant.ofEpochMilli(clock.millis())
+            dao.putReceipt(OrganizerCodec.entity(receipt.copy(state = DeliveryState.DISMISSED, updatedAt = now)))
+            if (record.kind == OrganizerKind.TIMER || record.repeat == null && record.kind in setOf(OrganizerKind.ALARM, OrganizerKind.REMINDER)) {
+                val next = record.copy(version = record.version + 1, updatedAt = now, status = OrganizerStatus.COMPLETED,
+                    timer = record.timer?.copy(remainingMs = 0, startedAt = null, elapsedStartMs = null, bootId = null))
+                check(dao.update(OrganizerCodec.entity(next)) == 1)
+                changed(next, "dismissed")
+            } else dao.enqueue(OrganizerScheduleEntity(record.id, record.version))
+            true
+        }
+        if (result) runCatching(schedulesChanged)
+        return result
+    }
+
+    /** Import only outcomes recorded before unlock for the still-current, previously mirrored version. */
+    override suspend fun importLockedDeliveries(recordId: String, version: Long, receipts: List<DeliveryReceipt>): Boolean {
+        val result = database.withTransaction {
+            val record = get(recordId) ?: return@withTransaction false
+            if (record.version != version || record.deletedAt != null || record.status != OrganizerStatus.ACTIVE) return@withTransaction false
+            for (receipt in receipts.filter { it.recordVersion == version }) {
+                require(receipt.recordId == recordId && receipt.recordVersion == version && receipt.occurrenceKey.startsWith("$recordId@"))
+                dao.putReceipt(OrganizerCodec.entity(receipt))
+            }
+            if (receipts.any { it.recordVersion == version && it.state == DeliveryState.DISMISSED } &&
+                (record.kind == OrganizerKind.TIMER || record.repeat == null && record.kind in setOf(OrganizerKind.ALARM, OrganizerKind.REMINDER))) {
+                beforeRecordChange(record.id)
+                val next = record.copy(version = version + 1, updatedAt = Instant.ofEpochMilli(clock.millis()), status = OrganizerStatus.COMPLETED,
+                    timer = record.timer?.copy(remainingMs = 0, startedAt = null, elapsedStartMs = null, bootId = null))
+                check(dao.update(OrganizerCodec.entity(next)) == 1)
+                changed(next, "dismissed_after_unlock")
+            } else dao.enqueue(OrganizerScheduleEntity(recordId, version))
+            true
+        }
+        if (result) runCatching(schedulesChanged)
+        return result
+    }
+
     override suspend fun pendingScheduleIds() = dao.pending()
     override suspend fun acknowledgeSchedule(id: String, version: Long) = dao.acknowledge(id, version) == 1
     override suspend fun changes(since: Instant) = dao.changes(since.toEpochMilli()).map { OrganizerChange(it.recordId, it.version, it.action, Instant.ofEpochMilli(it.at)) }

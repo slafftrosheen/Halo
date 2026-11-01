@@ -60,7 +60,7 @@ internal object OrganizerCodec {
         record.updatedAt.toEpochMilli(), record.deletedAt?.toEpochMilli(), encode(record))
     fun receipt(value: OrganizerDeliveryEntity) = DeliveryReceipt(value.occurrenceKey, value.recordId, value.recordVersion,
         Instant.ofEpochMilli(value.triggerAt), DeliveryState.valueOf(value.state), Instant.ofEpochMilli(value.updatedAt), value.detail,
-        value.snoozedUntil?.let(Instant::ofEpochMilli))
+        value.snoozedUntil?.let(Instant::ofEpochMilli), value.snoozeElapsedDeadlineMs, value.snoozeBootId)
     fun entity(value: DeliveryReceipt) = OrganizerDeliveryEntity(value.occurrenceKey, value.recordId, value.recordVersion,
-        value.triggerAt.toEpochMilli(), value.state.name, value.updatedAt.toEpochMilli(), value.detail, value.snoozedUntil?.toEpochMilli())
+        value.triggerAt.toEpochMilli(), value.state.name, value.updatedAt.toEpochMilli(), value.detail, value.snoozedUntil?.toEpochMilli(), value.snoozeElapsedDeadlineMs, value.snoozeBootId)
 }

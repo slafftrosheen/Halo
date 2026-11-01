@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="organizer_alarm_private_title">Halo alert</string>
+    <string name="organizer_alarm_active">Alarm or timer is ringing</string>
+    <string name="organizer_reminder_due">Your reminder is due</string>
+    <string name="organizer_delivery_stop">Stop</string>
+    <string name="organizer_delivery_snooze">Snooze 5 minutes</string>
+    <string name="organizer_reminder_channel">Organizer reminders</string>
+    <string name="organizer_alarm_channel">Alarms and timers</string>
+    <string name="organizer_open_halo">Open Halo</string>
+    <string name="organizer_delivery_finished">This alert is no longer active</string>
+    <string name="organizer_delivery_scheduled">Scheduled; it has not rung yet</string>
+    <string name="organizer_delivery_retry">Unable to update this alert. Try again.</string>
+    <string name="organizer_retry">Retry</string>
+    <string name="organizer_delivery_unknown">Alert status is unavailable</string>
+</resources>

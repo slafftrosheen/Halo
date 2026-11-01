@@ -10,7 +10,7 @@ enum class OrganizerStatus { ACTIVE, COMPLETED, CANCELLED }
 enum class TaskPriority { LOW, NORMAL, HIGH, URGENT }
 enum class RepeatFrequency { DAILY, WEEKLY, MONTHLY, YEARLY }
 enum class OccurrenceDisposition { CANCELLED, COMPLETED, REPLACED }
-enum class DeliveryState { PENDING, EXACT, APPROXIMATE, NOTIFICATIONS_BLOCKED, FIRED, MISSED, CANCELLED, FAILED }
+enum class DeliveryState { PENDING, EXACT, APPROXIMATE, NOTIFICATIONS_BLOCKED, DELIVERING, FIRED, DISMISSED, MISSED, CANCELLED, FAILED }
 
 /** Wall-clock recurrence retains the chosen zone across DST. Floating alarms follow the device zone. */
 data class OrganizerTime(
@@ -172,6 +172,8 @@ data class DeliveryReceipt(
     val updatedAt: Instant,
     val detail: String? = null,
     val snoozedUntil: Instant? = null,
+    val snoozeElapsedDeadlineMs: Long? = null,
+    val snoozeBootId: String? = null,
 )
 
 data class OrganizerChange(val recordId: String, val version: Long, val action: String, val at: Instant)
@@ -189,7 +191,12 @@ interface OrganizerRepository {
     suspend fun saveOverride(exception: OccurrenceOverride, expectedRecordVersion: Long): OrganizerRecord
     suspend fun removeOverride(recordId: String, originalStart: Instant, expectedRecordVersion: Long): OrganizerRecord
     suspend fun receipts(recordId: String): List<DeliveryReceipt>
-    suspend fun putReceipt(receipt: DeliveryReceipt): Boolean
+    /** Clock rollback requires an explicit comparison with the exact currently stored receipt. */
+    suspend fun putReceipt(receipt: DeliveryReceipt, expected: DeliveryReceipt? = null): Boolean
+    suspend fun claimDelivery(key: String, version: Long, triggerAt: Instant, now: Instant): Boolean
+    suspend fun snoozeDelivery(key: String, version: Long, duration: Duration, elapsedMs: Long, bootId: String): OrganizerRecord
+    suspend fun dismissDelivery(key: String, version: Long): Boolean
+    suspend fun importLockedDeliveries(recordId: String, version: Long, receipts: List<DeliveryReceipt>): Boolean
     suspend fun pendingScheduleIds(): List<String>
     suspend fun acknowledgeSchedule(id: String, version: Long): Boolean
     suspend fun changes(since: Instant): List<OrganizerChange>

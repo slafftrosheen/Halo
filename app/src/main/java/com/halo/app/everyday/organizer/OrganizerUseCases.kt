@@ -97,17 +97,21 @@ data class PlannedDelivery(val occurrenceKey: String, val recordId: String, val 
 
 /** Plans one next alarm per record. Android callbacks schedule the following occurrence after delivery. */
 object OrganizerSchedulePlanner {
-    private val terminal = setOf(DeliveryState.FIRED, DeliveryState.MISSED, DeliveryState.CANCELLED)
+    private val terminal = setOf(DeliveryState.FIRED, DeliveryState.DISMISSED, DeliveryState.MISSED, DeliveryState.CANCELLED)
     fun next(record: OrganizerRecord, exceptions: List<OccurrenceOverride>, receipts: List<DeliveryReceipt>,
         now: Instant, zone: ZoneId, elapsedMs: Long, bootId: String): PlannedDelivery? {
         if (record.deletedAt != null || record.status != OrganizerStatus.ACTIVE) return null
+        val snoozes = receipts.mapNotNull { OrganizerDeliveryTiming.snoozedPlan(record, it, now, elapsedMs, bootId) }
         if (record.kind == OrganizerKind.TIMER) {
+            if (snoozes.isNotEmpty()) return snoozes.minBy { it.triggerAt }
             val timer = requireNotNull(record.timer)
             if (timer.startedAt == null) return null
             val key = "${record.id}@timer:${timer.runId}"
-            if (receipts.any { it.occurrenceKey == key && (it.state in setOf(DeliveryState.FIRED, DeliveryState.MISSED) ||
+            if (receipts.any { it.occurrenceKey == key && (it.state in setOf(DeliveryState.FIRED, DeliveryState.DISMISSED, DeliveryState.MISSED) ||
                     it.state == DeliveryState.CANCELLED && it.recordVersion == record.version) }) return null
             val remaining = timer.remaining(now, elapsedMs, bootId)
+            if (remaining == 0L && receipts.any { it.occurrenceKey == key && it.recordVersion == record.version &&
+                    it.state in setOf(DeliveryState.NOTIFICATIONS_BLOCKED, DeliveryState.FAILED) }) return null
             return PlannedDelivery(key, record.id, record.version, now.plusMillis(remaining), true, false,
                 if (timer.bootId == bootId) elapsedMs + remaining else null)
         }
@@ -115,14 +119,14 @@ object OrganizerSchedulePlanner {
         if (record.kind in setOf(OrganizerKind.EVENT, OrganizerKind.TASK) && record.notifyBeforeMinutes == null) return null
         val lead = (record.notifyBeforeMinutes ?: 0).toLong() * 60
         val overrides = exceptions.associateBy { it.originalStart }
-        val candidates = mutableListOf<PlannedDelivery>()
+        val candidates = snoozes.toMutableList()
         fun add(original: Instant, start: Instant) {
             val key = "${record.id}@${original.toEpochMilli()}"
             val receipt = receipts.find { it.occurrenceKey == key }
-            val snoozed = receipt?.snoozedUntil?.takeIf { receipt.recordVersion == record.version && it >= now && receipt.state !in terminal }
-            if (snoozed == null && receipt != null && (receipt.state in setOf(DeliveryState.FIRED, DeliveryState.MISSED) ||
+            if (snoozes.any { it.occurrenceKey == key }) return
+            if (receipt != null && (receipt.state in setOf(DeliveryState.FIRED, DeliveryState.DISMISSED, DeliveryState.MISSED) ||
                 receipt.state == DeliveryState.CANCELLED && receipt.recordVersion == record.version)) return
-            val trigger = snoozed ?: start.minusSeconds(lead)
+            val trigger = start.minusSeconds(lead)
             if (trigger < now) return
             candidates += PlannedDelivery(key, record.id, record.version, trigger,
                 record.kind in setOf(OrganizerKind.ALARM, OrganizerKind.REMINDER), record.kind == OrganizerKind.ALARM)

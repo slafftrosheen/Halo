@@ -147,6 +147,24 @@ object ManualDependencyGraph {
     val engineGraph: EngineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
+    val organizerBootStore by lazy { com.halo.app.everyday.organizer.android.OrganizerDirectBootStore(applicationContext) }
+    val organizerRepository by lazy {
+        com.halo.app.data.everyday.RoomOrganizerRepository(appDatabase,
+            schedulesChanged = { com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.enqueue(applicationContext) },
+            beforeRecordChange = organizerBootStore::invalidate)
+    }
+    val organizerUseCases by lazy {
+        com.halo.app.everyday.organizer.OrganizerUseCases(organizerRepository,
+            elapsedMs = com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
+            bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) })
+    }
+    val organizerDelivery by lazy {
+        com.halo.app.everyday.organizer.OrganizerDeliveryCoordinator(organizerRepository,
+            com.halo.app.everyday.organizer.android.MirroredOrganizerDelivery(
+                com.halo.app.everyday.organizer.android.AndroidOrganizerDelivery(applicationContext), organizerRepository, organizerBootStore),
+            elapsedMs = com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
+            bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) })
+    }
     val notebookPurgeOwner by lazy {
         com.halo.app.data.notebook.NotebookPurgeOwner(appDatabase, com.halo.app.storage.haloStorageLayout(applicationContext).managedWorkspaceFiles,
             schedule = { com.halo.app.notebook.NotebookPurgeCleanupWorker.enqueue(applicationContext) }).also {

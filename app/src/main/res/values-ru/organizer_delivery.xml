@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="organizer_alarm_private_title">Уведомление Halo</string>
+    <string name="organizer_alarm_active">Звонит будильник или таймер</string>
+    <string name="organizer_reminder_due">Пора выполнить напоминание</string>
+    <string name="organizer_delivery_stop">Остановить</string>
+    <string name="organizer_delivery_snooze">Отложить на 5 минут</string>
+    <string name="organizer_reminder_channel">Напоминания органайзера</string>
+    <string name="organizer_alarm_channel">Будильники и таймеры</string>
+    <string name="organizer_open_halo">Открыть Halo</string>
+    <string name="organizer_delivery_finished">Это уведомление больше не активно</string>
+    <string name="organizer_delivery_scheduled">Запланировано; сигнал ещё не прозвучал</string>
+    <string name="organizer_delivery_retry">Не удалось обновить уведомление. Повторите попытку.</string>
+    <string name="organizer_retry">Повторить</string>
+    <string name="organizer_delivery_unknown">Статус уведомления недоступен</string>
+</resources>

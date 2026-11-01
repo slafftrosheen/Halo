@@ -45,11 +45,28 @@ class HaloApplication :
     private var backgroundRelease: Job? = null
     private lateinit var storageBootstrap: Deferred<Unit>
     private lateinit var automationBootstrap: Deferred<Unit>
+    private val organizerGraphReady = kotlinx.coroutines.CompletableDeferred<Unit>()
+    private val organizerRecovery = kotlinx.coroutines.sync.Mutex()
+    @Volatile private var organizerRecovered = false
+    private val normalStartupStarted = java.util.concurrent.atomic.AtomicBoolean(false)
+    suspend fun awaitOrganizerBootstrap() {
+        organizerGraphReady.await()
+        organizerRecovery.lock()
+        try {
+            if (organizerRecovered) return
+            val repository = ManualDependencyGraph.organizerRepository
+            com.halo.app.everyday.organizer.android.OrganizerLockedDelivery.importAfterUnlock(this, repository)
+            com.halo.app.everyday.organizer.android.LegacyOrganizerReminders(this, repository).migrate()
+            ManualDependencyGraph.organizerDelivery.reconcileAll()
+            com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.maintain(this)
+            organizerRecovered = true
+        } finally { organizerRecovery.unlock() }
+    }
     override val notificationBridge get() = ManualDependencyGraph.notificationBridge
-    override val remoteDispatchPolicy get() = if (isModelBenchProcess()) com.halo.sdk.provider.DenyRemoteDispatchPolicy
+    override val remoteDispatchPolicy get() = if (isModelBenchProcess() || !getSystemService(android.os.UserManager::class.java).isUserUnlocked) com.halo.sdk.provider.DenyRemoteDispatchPolicy
         else ManualDependencyGraph.remoteDispatchPolicy
     override suspend fun awaitRemoteDispatchPolicy(): com.halo.sdk.provider.RemoteDispatchPolicy {
-        if (isModelBenchProcess()) return com.halo.sdk.provider.DenyRemoteDispatchPolicy
+        if (isModelBenchProcess() || !getSystemService(android.os.UserManager::class.java).isUserUnlocked) return com.halo.sdk.provider.DenyRemoteDispatchPolicy
         storageBootstrap.await()
         val kids = ManualDependencyGraph.kidsPreferences
         kids.getEnabled()
@@ -73,6 +90,31 @@ class HaloApplication :
         // Native benchmark workers must not bootstrap Halo's normal application graph,
         // migrations, observers, providers or user-facing background jobs.
         if (isModelBenchProcess()) return
+
+        if (!getSystemService(android.os.UserManager::class.java).isUserUnlocked) {
+            val receiver = object : android.content.BroadcastReceiver() {
+                override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                    if (intent.action == android.content.Intent.ACTION_USER_UNLOCKED) {
+                        unregisterReceiver(this)
+                        initializeUnlocked()
+                    }
+                }
+            }
+            val filter = android.content.IntentFilter(android.content.Intent.ACTION_USER_UNLOCKED)
+            if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+            else registerReceiver(receiver, filter)
+            // Close the unlock-between-check-and-registration race.
+            if (getSystemService(android.os.UserManager::class.java).isUserUnlocked) {
+                runCatching { unregisterReceiver(receiver) }
+                initializeUnlocked()
+            }
+            return
+        }
+        initializeUnlocked()
+    }
+
+    private fun initializeUnlocked() {
+        if (!normalStartupStarted.compareAndSet(false, true)) return
 
         val gitCommit = runCatching { BuildConfig::class.java.getField("HALO_GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
         val gitDirty = runCatching { BuildConfig::class.java.getField("HALO_GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
@@ -101,6 +143,16 @@ class HaloApplication :
         }
 
         ManualDependencyGraph.init(this)
+        organizerGraphReady.complete(Unit)
+        // Organizer recovery is local and does not wait for model/provider or secret-store bootstrap.
+        resourceScope.launch {
+            try {
+                awaitOrganizerBootstrap()
+            } catch (cancelled: CancellationException) { throw cancelled }
+              catch (error: Exception) {
+                Log.e("OrganizerRecovery", "Organizer recovery needs retry", error)
+            }
+        }
         storageBootstrap = resourceScope.async {
             val startedAt = android.os.SystemClock.elapsedRealtime()
             RuntimeStartupTrace.mark("application.storageBootstrap.begin", startedAt)
@@ -200,10 +252,10 @@ class HaloApplication :
 
         automationBootstrap = resourceScope.async {
             storageBootstrap.await()
+            awaitOrganizerBootstrap()
             ManualDependencyGraph.agentRunCoordinator.prepareOutstandingRunsForRecovery()
             ManualDependencyGraph.routineRepository.dao.interruptUnfinished()
             ManualDependencyGraph.notificationRepository.reconcilePolicies()
-            com.halo.host.android.reminder.ReminderRecordStore(this@HaloApplication).reconcile()
         }
         resourceScope.launch {
             try {
@@ -322,7 +374,9 @@ class HaloApplication :
     override fun onActivityResumed(activity: Activity) {
         resourceScope.launch {
             notificationBridge.refresh()
-            com.halo.host.android.reminder.ReminderRecordStore(this@HaloApplication).reconcile()
+            awaitOrganizerBootstrap()
+            com.halo.app.everyday.organizer.android.LegacyOrganizerReminders(this@HaloApplication, ManualDependencyGraph.organizerRepository).migrate()
+            com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.enqueue(this@HaloApplication, full = true)
         }
     }
     override fun onActivityPaused(activity: Activity) = Unit

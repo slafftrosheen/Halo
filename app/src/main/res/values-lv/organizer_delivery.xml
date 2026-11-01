@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="organizer_alarm_private_title">Halo paziņojums</string>
+    <string name="organizer_alarm_active">Skan modinātājs vai taimeris</string>
+    <string name="organizer_reminder_due">Pienācis atgādinājuma laiks</string>
+    <string name="organizer_delivery_stop">Apturēt</string>
+    <string name="organizer_delivery_snooze">Atlikt uz 5 minūtēm</string>
+    <string name="organizer_reminder_channel">Plānotāja atgādinājumi</string>
+    <string name="organizer_alarm_channel">Modinātāji un taimeri</string>
+    <string name="organizer_open_halo">Atvērt Halo</string>
+    <string name="organizer_delivery_finished">Šis paziņojums vairs nav aktīvs</string>
+    <string name="organizer_delivery_scheduled">Ieplānots; signāls vēl nav atskanējis</string>
+    <string name="organizer_delivery_retry">Neizdevās atjaunināt paziņojumu. Mēģiniet vēlreiz.</string>
+    <string name="organizer_retry">Mēģināt vēlreiz</string>
+    <string name="organizer_delivery_unknown">Paziņojuma statuss nav pieejams</string>
+</resources>

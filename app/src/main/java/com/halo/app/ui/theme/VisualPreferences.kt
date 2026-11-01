@@ -54,6 +54,9 @@ class VisualPreferences internal constructor(context: Context) {
 
 @Composable fun rememberVisualPreferences(): HaloVisualOptions {
     val context = LocalContext.current
+    // Alarm UI is available before first unlock; private preference storage is not.
+    if (!context.getSystemService(android.os.UserManager::class.java).isUserUnlocked)
+        return HaloVisualOptions(lessMotion = true, guideLight = false)
     val preferences = remember(context.applicationContext) { VisualPreferences.get(context) }
     return preferences.state.collectAsStateWithLifecycle().value
 }

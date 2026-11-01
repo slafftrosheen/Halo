@@ -23,7 +23,7 @@ data class OrganizerOccurrenceEntity(val recordId: String, val originalStart: Lo
     foreignKeys = [ForeignKey(entity = OrganizerEntity::class, parentColumns = ["id"], childColumns = ["recordId"], onDelete = ForeignKey.CASCADE)])
 data class OrganizerDeliveryEntity(@PrimaryKey val occurrenceKey: String, val recordId: String,
     val recordVersion: Long, val triggerAt: Long, val state: String, val updatedAt: Long,
-    val detail: String?, val snoozedUntil: Long?)
+    val detail: String?, val snoozedUntil: Long?, val snoozeElapsedDeadlineMs: Long?, val snoozeBootId: String?)
 
 /** Transactional intent to reconcile OS schedules. Removed only after reconciling that exact version. */
 @Entity(tableName = "organizer_schedule_outbox",

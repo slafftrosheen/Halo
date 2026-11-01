@@ -12,10 +12,8 @@ class HaloReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val store = ReminderRecordStore(context)
         val id = intent.getStringExtra("reminder_id") ?: return
-        if (store.all().none { it.id == id }) return
-        // Consume before delivery; a duplicate broadcast must not post a second reminder.
-        store.remove(id)
-        store.mark(id, ReminderStatus.Fired)
+        // A migration claim and delivery cannot both consume this legacy record.
+        store.consumeForDelivery(id) ?: return
         val title = intent.getStringExtra("title") ?: "Halo Reminder"
         val text = intent.getStringExtra("text") ?: "You have a reminder."
 

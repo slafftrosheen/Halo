@@ -1,0 +1,126 @@
+{
+  "capturedUtc": "2026-11-01T19:29:43.422099+00:00",
+  "boundary": "Organizer delivery batch after OD01-07 source corrections; before host verification",
+  "files": [
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "sha256": "f90f29de73716cb8bc682ab2f1ef1c941b068e79ac8e7f9c531ec31e6736c8a0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/HaloApplication.kt",
+      "sha256": "e14bbdfe97e640434f7985afa2e0ab1b492e0366daf633af44e6399d0e0f8db3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/automation/AutomationReconcileReceiver.kt",
+      "sha256": "bd6d415e5712b5b4e29f9a55e6ed2e5599a3d360c9547feace67571f5f967da2"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "221333be0034e81d850efc11c51cc7d4e3b079246e44626d839dc17ea40d5fac"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/OrganizerCodec.kt",
+      "sha256": "8ceb69ddab183e0fb6df5e908f5dfe574705351b8b75c7375a2a1a63006995c7"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/OrganizerEntities.kt",
+      "sha256": "c4c355b2ef2bab1c326638d977ea890ea22541709b973c38e19226df3362ff18"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomOrganizerRepository.kt",
+      "sha256": "582c375a3d9694b4569b44b7c5b1f4e1e35ce9306171fcd301dabdc42b640673"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+      "sha256": "6e84134ea7b6cf5ecce24756a72974f00ad82cf7988efd53a6bc3a7f09c5aaab"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerDeliveryCoordinator.kt",
+      "sha256": "e4b4bcfb20c779ec460f4726184b597a18b7353333418ec02608eba678185aba"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerDeliveryPresentation.kt",
+      "sha256": "1b029073f4ec132067fa900d24dfbb12b979ca91be5a88853d0528c21e3b9304"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerDeliveryTiming.kt",
+      "sha256": "6277d27251f300f5d98d70ae5ab10d3393367dac2dc99f9492b90681303f22e0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerInitialDelivery.kt",
+      "sha256": "cd913f00faec2271af9ab86e9d59dc0cf31dadd2a41277060fc18505e32d4f30"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerModels.kt",
+      "sha256": "36d2392cd03043b498776ae0c76a5a9692a8ee5a122f01b96d93950a724e3f74"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerUseCases.kt",
+      "sha256": "ccc0ba98263e2e43f4fad3061a77efb61e7a89764f64db286af4432a30e409f3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/AndroidOrganizerDelivery.kt",
+      "sha256": "692f049267b063357ddee0412dd90ee183ef1d05018dfbd3470c00c141245733"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/LegacyOrganizerReminders.kt",
+      "sha256": "23fcb87e14ff00baaa5c88ad77b0ff1be1f026b2a9693a7dd5b0285e8eb5439c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerAlarmActivity.kt",
+      "sha256": "6db0c63797103f9c41826655265a6f2bf7de97910c771d4a8a7c5b3ef7be2941"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerAlarmQueue.kt",
+      "sha256": "f60be83e1308b688fe6043bfbf53cf7315b57ace1274cfe0ce0258ad4ee77981"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerAlarmReceiver.kt",
+      "sha256": "154ea57515d5f3562609726e496a8f0773d2c8601a098d579dba04ec22be82aa"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerDirectBootStore.kt",
+      "sha256": "7bc6554845748d8880858d7940f6c74ae4d563555b9c67e0a8d9586ed460f3c8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerLockedDelivery.kt",
+      "sha256": "81269ca7c014de9af8089f4fa0ec5fa6077be98073571169e8bbea3bd4a9a7fa"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerScheduleWorker.kt",
+      "sha256": "a0998d51c2a9a067b10934de48b598a19a697a39a8f49e4c3d9db40175ebc57b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/theme/VisualPreferences.kt",
+      "sha256": "28a79bafac3e0267855a8de1acf9a1175c25e0e8dd399fe676b03acc961e01b9"
+    },
+    {
+      "path": "app/src/main/res/values-lv/organizer_delivery.xml",
+      "sha256": "98310e00ef1c782064965621fee57e3859f1b5ee76efcbff776e7cd54ef3b1b1"
+    },
+    {
+      "path": "app/src/main/res/values-pl/organizer_delivery.xml",
+      "sha256": "322ef0b86722ab4ac78c7b56945f30d5e5bb50f42d9a98c4e9064b56e9b602c5"
+    },
+    {
+      "path": "app/src/main/res/values-ru/organizer_delivery.xml",
+      "sha256": "b33b82355a57c2cc9985de96fcffee8da39d70d29ec38d515d423e685da7acb8"
+    },
+    {
+      "path": "app/src/main/res/values/organizer_delivery.xml",
+      "sha256": "1fec3b8f66d8ff3434cf035a8eeb088b0b1ff2a78747f47cab5bf87dc498ed7f"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/OrganizerDeliveryTest.kt",
+      "sha256": "aec88207de1d42e179b35aa3c38734c9938a2a0c8bae930f46a4a98a0655a444"
+    },
+    {
+      "path": "host-android/src/main/java/com/halo/host/android/reminder/HaloReminderReceiver.kt",
+      "sha256": "189978e690647dc7d3ede0604666b0222b21bf1b644b47219bea7f96420c66c3"
+    },
+    {
+      "path": "host-android/src/main/java/com/halo/host/android/reminder/ReminderRecordStore.kt",
+      "sha256": "b87ea0a090761397ee7adc9d0e3c3f25e45ded65e89326f68675145badc1f598"
+    }
+  ]
+}

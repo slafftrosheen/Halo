@@ -1,0 +1,55 @@
+{
+  "outcome": "BUILD FAILED in 4m26s",
+  "failure": "Compose implicit maxHeight receiver in OrganizerAlarmActivity; app test task did not run",
+  "sourceFilesMatched": 30,
+  "suites": [
+    {
+      "name": "com.halo.host.android.accessibility.AccessibilityProjectionRulesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.host.android.appfunctions.AppFunctionErrorMappingTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.host.android.appfunctions.AppFunctionOldAndroidTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.host.android.assistant.AssistantEligibilityInspectorTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.host.android.capability.AlarmCommandResolverTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.halo.host.android.system.AndroidPlatformStateMonitorTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 20,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

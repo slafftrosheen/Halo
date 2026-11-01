@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="organizer_alarm_private_title">Powiadomienie Halo</string>
+    <string name="organizer_alarm_active">Dzwoni budzik lub minutnik</string>
+    <string name="organizer_reminder_due">Nadszedł czas przypomnienia</string>
+    <string name="organizer_delivery_stop">Zatrzymaj</string>
+    <string name="organizer_delivery_snooze">Drzemka 5 minut</string>
+    <string name="organizer_reminder_channel">Przypomnienia organizera</string>
+    <string name="organizer_alarm_channel">Budziki i minutniki</string>
+    <string name="organizer_open_halo">Otwórz Halo</string>
+    <string name="organizer_delivery_finished">To powiadomienie nie jest już aktywne</string>
+    <string name="organizer_delivery_scheduled">Zaplanowano; alarm jeszcze nie zadzwonił</string>
+    <string name="organizer_delivery_retry">Nie udało się zaktualizować powiadomienia. Spróbuj ponownie.</string>
+    <string name="organizer_retry">Spróbuj ponownie</string>
+    <string name="organizer_delivery_unknown">Status powiadomienia jest niedostępny</string>
+</resources>

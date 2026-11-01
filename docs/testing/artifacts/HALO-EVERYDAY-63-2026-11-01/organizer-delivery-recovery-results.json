@@ -1,0 +1,109 @@
+{
+  "outcome": "BUILD FAILED in 8m12s",
+  "failure": "OrganizerPersistenceTest rejects older progress; removing wall-clock ordering without explicit CAS weakened this invariant. New delivery cases passed.",
+  "sourceFilesMatched": 31,
+  "suites": [
+    {
+      "module": "host-android",
+      "name": "com.halo.host.android.accessibility.AccessibilityProjectionRulesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "host-android",
+      "name": "com.halo.host.android.appfunctions.AppFunctionErrorMappingTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "host-android",
+      "name": "com.halo.host.android.appfunctions.AppFunctionOldAndroidTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "host-android",
+      "name": "com.halo.host.android.assistant.AssistantEligibilityInspectorTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "host-android",
+      "name": "com.halo.host.android.capability.AlarmCommandResolverTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "host-android",
+      "name": "com.halo.host.android.system.AndroidPlatformStateMonitorTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.data.everyday.OrganizerDeliveryTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "tests": 12,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.everyday.collectors.CollectorParsingTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.everyday.organizer.OrganizerRecurrenceTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 87,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  }
+}
