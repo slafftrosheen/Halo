@@ -94,7 +94,9 @@ class Zone5OrbStyleDeviceTest {
             }
             val output = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "zone5-orb-polish").apply { mkdirs() }
             File(output, "classic-${if (isChild) "kids-" else ""}${value.name.lowercase()}.png").outputStream().use {
-                compose.onNode(isRoot()).captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                Thread.sleep(150)
+                InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it)
             }
         }
     }

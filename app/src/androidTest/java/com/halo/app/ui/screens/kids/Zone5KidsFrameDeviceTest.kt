@@ -151,10 +151,9 @@ class Zone5KidsFrameDeviceTest {
     private fun save(name: String) {
         val output = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "zone5-kids-polish").apply { mkdirs() }
         File(output, "$name.png").outputStream().use {
-            if (name == "kids-keyboard") {
-                InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it)
-            } else (if (name == "kids-parent-boundary") compose.onNode(isRoot() and hasAnyDescendant(hasText("Ask a grown-up"))) else compose.onRoot())
-                .captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            Thread.sleep(150)
+            InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it)
         }
     }
 }
