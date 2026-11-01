@@ -1,0 +1,9 @@
+{
+  "scope": "Five AppLanguageTest cases after changing only the stale file52_title expectation to HaloNotes. The full run remains archived as 2441 tests, one failure; no broad rerun claimed.",
+  "tests": 5,
+  "failures": 0,
+  "errors": 0,
+  "test_sha256": "a35b5f2a113b153ffe2794bbf3e3d258b18f4fc7536ad1caa3a07d6c541b0ee0",
+  "production_changes_for_correction": false,
+  "gradle": "BUILD SUCCESSFUL in 2m 33s"
+}

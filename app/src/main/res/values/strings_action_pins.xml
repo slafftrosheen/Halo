@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_pins_title">Pinned actions</string>
+    <string name="zone5_pins_choose">Choose pinned actions</string>
+    <string name="zone5_pins_explain">Choose up to %1$d actions for this page. They always use the current file or task.</string>
+    <string name="zone5_pins_unreadable">Saved pins could not be read. Choose them again.</string>
+    <string name="zone5_pins_unavailable">Some pinned actions are unavailable in this view. You can clear the pins and choose again.</string>
+    <string name="zone5_pins_save_failed">Could not save the pins. Try the change again.</string>
+    <string name="zone5_pins_clear">Clear pins</string>
+    <string name="zone5_pins_done">Back to actions</string>
+    <string name="zone5_search_keep">save keep checkpoint draft</string>
+    <string name="zone5_search_export">export download output copy</string>
+    <string name="zone5_search_insert">add insert new</string>
+    <string name="zone5_search_undo">undo revert previous</string>
+    <string name="zone5_search_redo">redo repeat restore</string>
+    <string name="zone5_search_name">rename name title</string>
+    <string name="zone5_search_find">find search lookup</string>
+    <string name="zone5_search_properties">properties adjust format settings style</string>
+    <string name="zone5_search_layers">layers objects stack</string>
+    <string name="zone5_search_draw">draw sketch ink pen brush</string>
+</resources>

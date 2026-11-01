@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_recovery_open">Could not open this file.</string>
+    <string name="file_recovery_create">Could not create the document.</string>
+    <string name="file_recovery_import">Could not import this file.</string>
+    <string name="file_recovery_edit">Could not save this change.</string>
+    <string name="file_recovery_export">Could not create the exported copy.</string>
+    <string name="file_recovery_transform">Could not create the edited image.</string>
+    <string name="file_recovery_batch">Could not complete all images. Check the results below before repeating the operation.</string>
+    <string name="file_recovery_annotate">Could not keep these annotations.</string>
+    <string name="file_recovery_insert">Could not add this item to the canvas.</string>
+    <string name="file_recovery_preview">Could not open the image preview.</string>
+    <string name="file_recovery_cancelled">Operation stopped. Some outputs may already exist. Check the results and Library before trying again.</string>
+    <string name="file_recovery_interrupted">The previous operation was interrupted; its result is unconfirmed. Check this file and Library before repeating it.</string>
+    <string name="file_recovery_access">Access is unavailable. Choose an accessible file or folder.</string>
+    <string name="file_recovery_retry">Check the current file, then choose the action again.</string>
+</resources>

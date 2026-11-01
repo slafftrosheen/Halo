@@ -21,8 +21,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], application = Application::class, qualifiers = "en-rUS-w393dp-h873dp")
 class Zone5WorkingAreaTest {
     @get:Rule val compose = createComposeRule()
@@ -85,7 +87,8 @@ class Zone5WorkingAreaTest {
         val regularHeight = compose.onNodeWithTag("halo-zone5").fetchSemanticsNode().boundsInRoot.height
         compose.runOnIdle { compact.value = true }
         compose.onNodeWithTag("composer").assertIsFocused().assertTextEquals("Keep my draft")
-        assertTrue(compose.onNodeWithTag("halo-zone5").fetchSemanticsNode().boundsInRoot.height <= regularHeight * .65f)
+        // Caption adds a measured text line. The composer remains focused at its single call site.
+        assertTrue(compose.onNodeWithTag("halo-zone5").fetchSemanticsNode().boundsInRoot.height <= regularHeight * .75f)
         compose.onAllNodesWithContentDescription("Talk").assertCountEquals(1)
         compose.runOnIdle { compact.value = false }
         compose.onNodeWithTag("composer").assertIsFocused().assertTextEquals("Keep my draft")

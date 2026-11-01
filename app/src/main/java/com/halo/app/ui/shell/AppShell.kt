@@ -2,6 +2,8 @@
 
 package com.halo.app.ui.shell
 
+import com.halo.app.ui.presence.invokePageAction
+
 import com.halo.app.language.uiText
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -149,6 +152,8 @@ fun AppShell(
     LaunchedEffect(kidsMode) { if (kidsMode) navController.navigateToPrimary("home") }
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
+    val exportOwner = ManualDependencyGraph.workspaceExternalExport
+    com.halo.app.ui.workspace.WorkspaceExternalExportHost(exportOwner, permitted = !kidsMode)
 
     /*
      * RUNTIME-019: the global interaction renderer lives OUTSIDE screen
@@ -221,6 +226,14 @@ fun AppShell(
             route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
         else performNavigation(route)
+    }
+    suspend fun openWorkspaceFile(id: String) {
+        val route = try {
+            val item = ManualDependencyGraph.workspaceContinuity.describe(id)
+            ManualDependencyGraph.workspaceContinuity.route(id, item.version, com.halo.app.data.workspace.WorkspaceDestination.OPEN)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { "notebook/file/${android.net.Uri.encode(id)}" }
+        navigateSafely(route)
     }
     val requestVoiceModeFromSurface: () -> Unit = {
         val current = homeViewModel.uiState.value
@@ -394,13 +407,30 @@ fun AppShell(
         val page = if (!kidsMode && currentContextObjectId != null)
             listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
         val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph,
-            enabled = it.enabled, disabledReason = if (it.enabled) null else livePageActions.owner.disabledActionReasons[it.id]) }
+            enabled = it.enabled, disabledReason = if (it.enabled) null else livePageActions.owner.disabledReasonFor(it.id), pageLease = livePageActions) }
             ?: if (kidsMode && contextualRoute != "home") ShellOrbCatalog.context(contextualRoute, true) else emptyList()
         actions.filterNot { it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS } + page +
             if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
     }
     val orbOverride = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellOrbOverride?>(null) }
+                val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
+                val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
+                val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
+                val voiceFields by com.halo.app.ui.components.VoiceFieldCancellation.activeFields.collectAsStateWithLifecycle()
+    val shellGuideIdle = voiceFields.isEmpty() && (!kidsMode || orbOverride.value?.interaction?.canStop != true) && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
+                        !liveHome.speechActive && !liveHome.speechProcessing &&
+                        liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle &&
+                        (liveHome.sessionState == com.halo.sdk.provider.CognitiveSessionState.Idle ||
+                            liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
+                            liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed)
     androidx.compose.runtime.CompositionLocalProvider(
+        com.halo.app.ui.theme.LocalHaloDecorationPaused provides (!shellGuideIdle || zone5GuideSession.presentationActive ||
+            livePageActions?.owner?.guidanceBlocked == true || showTypedMessage ||
+            WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0),
+        com.halo.app.ui.zone5.LocalZone5HelpReadAloud provides { text ->
+            com.halo.app.ui.components.HaloVoiceTextActions(text, onText = {}, allowDictation = false, readText = text)
+        },
+        com.halo.app.ui.workspace.LocalWorkspaceExport provides if (kidsMode) null else exportOwner::request,
         com.halo.app.ui.presence.LocalShellHaloOrb provides shellOrbVisible,
         com.halo.app.ui.presence.LocalShellOrbOverride provides orbOverride,
         com.halo.app.ui.presence.LocalShellPageActions provides pageActions,
@@ -414,17 +444,10 @@ fun AppShell(
         bottomBar = {
             if (shellOrbVisible) ShellFooterViewport(
                 Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
-                val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
-                val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
-                val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
-                val voiceFields by com.halo.app.ui.components.VoiceFieldCancellation.activeFields.collectAsStateWithLifecycle()
                 val dispatchContext: (com.halo.app.ui.presence.HaloOrbContextAction) -> Unit = { action ->
                         if (!action.enabled) Unit
                         else if (action.id.startsWith("page:")) {
-                            val projection = pageActions.value
-                            if (projection != null && pageOwnerFilter(projection.owner) &&
-                                projection.actions.any { "page:${it.id}" == action.id && it.title == action.title && it.glyph == action.glyph && it.enabled })
-                                projection.invoke(action.id.removePrefix("page:"))
+                            action.invokePageAction(pageActions.value, pageOwnerFilter)
                         }
                         else if (kidsMode && action.id == "study") ShellOrbCatalog.directContextRoute(action, kidsMode)?.let(::navigateSafely)
                         else if (action.id == "type-message") showTypedMessage = true
@@ -473,12 +496,7 @@ fun AppShell(
                     nextStep = livePageActions?.owner?.nextStep,
                     kids = kidsMode,
                     profile = { if (!kidsMode) com.halo.app.ui.components.PrivacyModeControl(detail = true) },
-                    guideIdle = voiceFields.isEmpty() && (!kidsMode || orbOverride.value?.interaction?.canStop != true) && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
-                        !liveHome.speechActive && !liveHome.speechProcessing &&
-                        liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle &&
-                        (liveHome.sessionState == com.halo.sdk.provider.CognitiveSessionState.Idle ||
-                            liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
-                            liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed),
+                    guideIdle = shellGuideIdle,
                     composer = contextualRoute == "home" && !kidsMode,
                     profileStatus = { com.halo.app.ui.components.PrivacyModeStatus() })
             }
@@ -609,10 +627,10 @@ fun AppShell(
                         entry.arguments?.getString("captureSource")?.let { id ->
                             val encoded = entry.arguments?.getString("sourceReference")
                             // A malformed exact reference must never become a whole-note fallback.
-                            if (encoded == null) model.select(id, entry.arguments?.getString("sourceVersion"))
-                            else runCatching { com.halo.app.data.study.StudyJson.decodeSources(encoded, emptyList(), null).singleOrNull() }.getOrNull()?.let {
-                                model.select(id, entry.arguments?.getString("sourceVersion"), it)
-                            }
+                            model.selectInitialSource(id, entry.arguments?.getString("sourceVersion"),
+                                sourceReference = encoded?.let { payload -> runCatching {
+                                    com.halo.app.data.study.StudyJson.decodeSources(payload, emptyList(), null).singleOrNull()
+                                }.getOrNull() }, exactReferenceRequired = encoded != null)
                         }
                     }
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
@@ -650,13 +668,17 @@ fun AppShell(
                 composable(Screen.Notebook.route) { notebookEntry ->
                     val requestLocalSearch by notebookEntry.savedStateHandle.getStateFlow("openLocalSearch", false).collectAsStateWithLifecycle()
                     val notebookViewModel = ManualDependencyGraph.notebookViewModel
+                    DisposableEffect(notebookViewModel, notebookEntry) {
+                        notebookViewModel.bindSavedView(notebookEntry.savedStateHandle)
+                        onDispose { }
+                    }
                     LaunchedEffect(notebookViewModel) {
                         notebookViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
                                 is NotebookNavigation.OpenMemoryHub -> navigateSafely("notebook/memory?section=${event.section}" + event.noteId?.let { "&noteId=${android.net.Uri.encode(it)}" }.orEmpty())
                                 is NotebookNavigation.OpenNote -> navigateSafely("notebook/note/${event.id}")
                                 is NotebookNavigation.OpenConversation -> navigateSafely("notebook/conversation/${event.id}")
-                                is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
+                                is NotebookNavigation.OpenFile -> openWorkspaceFile(event.id)
                                 is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
                                 is NotebookNavigation.OpenStudio -> navigateSafely("studio?projectId=${android.net.Uri.encode(event.id)}")
                                 is NotebookNavigation.OpenFileTools -> navigateSafely("file_tools?objectId=${android.net.Uri.encode(event.id)}")
@@ -720,6 +742,10 @@ fun AppShell(
                             onReviewMemory = { id -> navigateSafely("notebook/memory?noteId=${android.net.Uri.encode(id)}") },
                             onOpenStudio = { id, attachment -> navigateSafely("studio?sourceId=${android.net.Uri.encode(id)}&attachmentId=${android.net.Uri.encode(attachment)}") },
                             onOpenOffice = if (kidsMode) null else { id -> navigateSafely("file_tools?objectId=${android.net.Uri.encode(id)}") },
+                            onExportCopy = if (kidsMode) null else { id, revision, format ->
+                                check(ManualDependencyGraph.kidsPreferences.loadedState.value && !ManualDependencyGraph.kidsPreferences.enabled.value)
+                                ManualDependencyGraph.workspaceTextDocuments.exportNote(id, revision, format)
+                            },
                         )
                     }
                 }
@@ -860,7 +886,7 @@ fun AppShell(
                                 }
                             }
                         }
-                        CanvasEditorScreen(canvasViewModel, focusNodeId = entry.arguments?.getString("nodeId"),
+                        CanvasEditorScreen(canvasViewModel, focusNodeId = entry.arguments?.getString("nodeId"), kidsMode = kidsMode,
                             onOpenStudio = { source, attachment -> navigateSafely("studio?sourceId=${android.net.Uri.encode(source)}&canvasId=${android.net.Uri.encode(canvasId)}" +
                                 (attachment?.let { "&attachmentId=${android.net.Uri.encode(it)}" } ?: "")) }) { navController.popBackStack() }
                     }
@@ -941,7 +967,7 @@ fun AppShell(
                             NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
                             is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
                             is NotebookNavigation.OpenNote -> navigateSafely("notebook/note/${event.id}")
-                            is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
+                            is NotebookNavigation.OpenFile -> openWorkspaceFile(event.id)
                             else -> Unit
                         }
                     } }

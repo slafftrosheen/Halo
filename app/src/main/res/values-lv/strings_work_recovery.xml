@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="studio_failed_open">Neizdevās atvērt projektu.</string>
+    <string name="studio_failed_create">Neizdevās izveidot projektu.</string>
+    <string name="studio_failed_edit">Neizdevās saglabāt pēdējās izmaiņas.</string>
+    <string name="studio_failed_save">Neizdevās saglabāt šo projekta versiju.</string>
+    <string name="studio_failed_copy">Neizdevās saglabāt projekta kopiju.</string>
+    <string name="studio_failed_rename">Neizdevās pārdēvēt projektu.</string>
+    <string name="studio_failed_history">Neizdevās ielādēt saglabātās versijas.</string>
+    <string name="studio_failed_restore">Neizdevās atjaunot šo versiju.</string>
+    <string name="studio_failed_import">Neizdevās pievienot šo attēlu.</string>
+    <string name="studio_failed_export">Neizdevās izveidot eksportēto kopiju.</string>
+    <string name="studio_failed_insert">Neizdevās pievienot rezultātu kanvai.</string>
+    <string name="studio_failed_camera">Neizdevās pievienot fotoattēlu.</string>
+    <string name="studio_failed_ai">Neizdevās sagatavot MI pārskatīšanu.</string>
+    <string name="studio_failed_discard">Neizdevās atmest melnrakstu.</string>
+    <string name="studio_recovery_changed">Projekts ir mainījies. Pārskatiet to pirms darbības atkārtošanas.</string>
+    <string name="studio_recovery_access">Piekļuve nav pieejama. Izvēlieties pieejamu avotu vai galamērķi.</string>
+    <string name="studio_recovery_interrupted">Darbība tika pārtraukta; rezultāts nav apstiprināts. Pirms atkārtošanas pārbaudiet projektu un bibliotēku.</string>
+    <string name="studio_recovery_failed">Mēģiniet vēlreiz, kad krātuve un avots ir pieejami.</string>
+    <string name="studio_recovery_draft">Pēdējais saglabātais melnraksts ir pieejams šajā tālrunī.</string>
+    <string name="studio_recovery_saved">Pēdējā saglabātā projekta versija ir pieejama šajā tālrunī.</string>
+    <string name="studio_recovery_unknown">Halo nevarēja pārbaudīt saglabāto darbu.</string>
+    <string name="studio_recovery_dismiss">Aizvērt ziņojumu</string>
+    <string name="work_keeping">Saglabā melnrakstu…</string>
+    <string name="work_saving">Saglabā versiju…</string>
+    <string name="work_exporting">Eksportē kopiju…</string>
+    <string name="work_draft_kept">Melnraksts saglabāts šajā tālrunī</string>
+    <string name="work_editing">Rediģē · vēl nav saglabāts</string>
+    <string name="note_save_failed_kept">Neizdevās saglabāt piezīmi. Jaunākais melnraksts ir saglabāts šajā tālrunī. Mēģiniet vēlreiz.</string>
+    <string name="note_save_failed_unkept">Neizdevās saglabāt pēdējās izmaiņas. Atstājiet piezīmi atvērtu un mēģiniet vēlreiz.</string>
+    <string name="studio_failed_ink">Neizdevās saglabāt pēdējo zīmējumu. Pirms aizvēršanas saglabājiet kopiju.</string>
+    <string name="zone5_find_action">Meklēt darbību</string>
+    <string name="zone5_no_matching_action">Atbilstošas darbības nav atrastas. Izmēģiniet citu vārdu.</string>
+    <string name="zone5_group_task">Pašreizējais uzdevums</string>
+    <string name="zone5_group_conversation">Saruna</string>
+    <string name="zone5_group_day">Jūsu diena</string>
+    <string name="zone5_group_preferences">Iestatījumi</string>
+    <string name="zone5_group_connections">Savienojumi</string>
+    <string name="zone5_group_activity">Pārskats un vēsture</string>
+</resources>

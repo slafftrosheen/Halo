@@ -548,7 +548,8 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val phoneAbilities = groupPhoneCapabilities(uiState.hostCapabilities)
     val reportedPhoneAbilities = phoneAbilities.count { it.hasAvailableCapability }
     val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
-    BindShellPageActions(ShellPageOwner("devices"), listOf(
+    BindShellPageActions(ShellPageOwner("devices", helpDescription = stringResource(R.string.zone5_help_devices),
+        disabledActionReasons = mapOf("page.devices.audio" to stringResource(R.string.action_no_audio))), listOf(
         ShellPageAction("page.devices.phone", "This phone", HaloGlyph.PHONE) { phoneDetails = true },
         ShellPageAction("page.devices.audio", "Test audio output", HaloGlyph.SPEAK, visibleAccessories.isNotEmpty()) { onTestAudio() },
         ShellPageAction("page.devices.add", "Add device", HaloGlyph.ADD_DEVICE) { viewModel.navigateTo("discovery") },

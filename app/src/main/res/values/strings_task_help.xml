@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_help_title">Help with this task</string>
+    <string name="zone5_help_amount">Amount of guidance</string>
+    <string name="zone5_help_off">On request only</string>
+    <string name="zone5_help_cues">Quiet cues</string>
+    <string name="zone5_help_explanations">Cues and explanations</string>
+    <string name="zone5_help_steps">Steps for this task</string>
+    <string name="zone5_help_done">These steps are complete</string>
+    <string name="zone5_help_continue">Continue in the current view. The next command appears when it is available.</string>
+    <string name="zone5_help_guide">Guide me one step at a time</string>
+    <string name="zone5_help_pause">Pause guidance</string>
+    <string name="zone5_help_paused">Guidance paused</string>
+    <string name="zone5_help_exit">Exit guidance</string>
+    <string name="zone5_help_dismiss">Dismiss this tip</string>
+    <string name="zone5_help_preference_failed">This choice could not be saved for next time.</string>
+    <string name="zone5_help_create">Create a project</string>
+    <string name="zone5_help_save_version">Save a named project version</string>
+    <string name="zone5_help_make_copy">Create a separate output copy</string>
+    <string name="zone5_help_studio">Build an image from layers. For example, add a text layer, enter a title and choose Apply. Changes are kept as a local draft; Save commits a project version. Export makes a separate image. Choose location on the result to copy it outside Halo.</string>
+    <string name="zone5_help_note">Write in the note or use Add for a heading, checklist or image. For example, make a shopping list and check off an item. Watch the saved or draft status before leaving. Apply Markdown source changes explicitly. Export creates a separate text file; it does not replace the note.</string>
+    <string name="zone5_help_canvas">Arrange text and source cards on a board. Use Add, then choose the kind of card. For example, place a note beside a photo. A linked card refers to its original; a copy is a separate object. Select a card to inspect it. Fit all cards brings the whole board into view.</string>
+    <string name="zone5_help_memory">Review information Halo may use later. Open a memory to correct it or deliberately forget it. For example, correct an outdated preference. Forgetting a memory does not delete its source file. Suggestions need your review before they become remembered context.</string>
+    <string name="zone5_help_study">Start with a goal and optional source material. For example, choose a note and ask to practise its main ideas. Review the source and model availability before starting. A saved lesson can be reopened. Type an answer, ask for help or use practice cards; Back returns without submitting an answer.</string>
+    <string name="zone5_help_library">Library holds your saved work. Search, filter or sort to find an item, then open it. Returning keeps your current view and reveals the item if it still matches. Tools opens the five instrument families. Import keeps a local copy of a file you choose.</string>
+    <string name="zone5_help_kids">You can type instead of talking. Choose Help for ideas about what to say. Stop ends the current voice action. A grown-up handles protected settings. Asking for help does not send your work or turn on the microphone.</string>
+    <string name="zone5_help_study_goal">Choose a learning goal, then continue to material.</string>
+    <string name="zone5_help_study_material">Choose source material, or enter a topic before continuing.</string>
+    <string name="zone5_help_study_style">Choose the learning style and continue to review the options.</string>
+    <string name="zone5_help_study_start">Review the source and choose an available model, then start the lesson.</string>
+    <string name="zone5_help_active">Guidance is active</string>
+    <string name="zone5_help_resume">Resume guidance</string>
+</resources>

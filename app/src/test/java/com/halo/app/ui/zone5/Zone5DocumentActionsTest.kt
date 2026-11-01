@@ -64,8 +64,8 @@ class Zone5DocumentActionsTest {
             runBlocking { withTimeout(10_000) { jobs.forEach { it.join() }; fixture.scope.coroutineContext[Job]?.cancelAndJoin() } }
         } finally { try { fixture.close() } finally { Dispatchers.resetMain() } }
     }
-    private fun render(route: String, content: @Composable () -> Unit) {
-        compose.setContent { HostlessHaloTheme(darkTheme = true, palette = HaloPalette(HaloAccent.BLUE, HaloTone.COOL)) {
+    private fun render(route: String, scale: Float = 0f, content: @Composable () -> Unit) {
+        compose.setContent { HostlessHaloTheme(darkTheme = true, fontScale = scale, palette = HaloPalette(HaloAccent.BLUE, HaloTone.COOL)) {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onSurface) {
                     val nav = rememberNavController()
@@ -88,6 +88,38 @@ class Zone5DocumentActionsTest {
             assertEquals(listOf("page.note.insert", "page.note.outline", "page.note.find"), actions.value!!.actions.take(3).map { it.id })
         }
     }
+    @Test fun readEditNavigationRetainsEachScrollAndDirtySourceNeedsExplicitDiscard() {
+        val note = runBlocking { fixture.notes.createNote((1..100).joinToString("\n\n") { "Paragraph $it: retained reading and editing position." }, title = "Long fixture") }
+        lateinit var model: NoteEditorViewModel
+        compose.runOnUiThread { model = NoteEditorViewModel(note.id, NotebookUseCases(fixture.notes), document = fixture.documents); own(model) }
+        render("notebook/note/{noteId}") { NoteEditorScreen(model, {}) }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.status == SaveStatus.SAVED }
+        val editing = compose.onNode(hasScrollToIndexAction())
+        editing.performScrollToIndex(40)
+        val editPosition = editing.fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange].value()
+        assertTrue(editPosition > 1f)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.view-read")) }
+        compose.onNode(hasScrollAction()).performTouchInput { swipeUp() }
+        val reading = compose.onNode(hasScrollAction())
+        val readPosition = reading.fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange].value()
+        assertTrue(readPosition > 0f)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.view-edit")) }
+        assertEquals(editPosition, compose.onNode(hasScrollToIndexAction()).fetchSemanticsNode().config[
+            androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange].value(), .1f)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.view-read")) }
+        assertEquals(readPosition, compose.onNode(hasScrollAction()).fetchSemanticsNode().config[
+            androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange].value(), .1f)
+        compose.runOnIdle { model.setMode(EditorMode.SOURCE); model.updateSourceDraft("Unapplied source that must survive") }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.view-read")) }
+        compose.onNodeWithText("Discard the unapplied source edit?").assertIsDisplayed()
+        compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
+        assertEquals(EditorMode.SOURCE, model.uiState.value.mode)
+        assertEquals("Unapplied source that must survive", model.uiState.value.sourceDraft)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.view-edit")) }
+        compose.onNodeWithText("Discard").performClick()
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.mode == EditorMode.EDIT }
+        assertTrue(model.uiState.value.displayBody.contains("Paragraph 40"))
+    }
     @Test fun officeLandingHasCreationOpenAndTruthfullyDisabledExport() {
         lateinit var model: WorkspaceFileToolsViewModel
         compose.runOnUiThread { model = WorkspaceFileToolsViewModel(fixture.tools); own(model) }
@@ -98,6 +130,42 @@ class Zone5DocumentActionsTest {
             assertFalse(actions.value!!.actions.single { it.id == "page.office.export" }.enabled)
             assertFalse(actions.value!!.invoke("page.office.export"))
         }
+    }
+    @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp")
+    fun noteExportChoiceKeepsReadingScaleAt200Percent() = checkNoteExport(false)
+
+    @Test @Config(qualifiers = "pl-rPL-w360dp-h800dp")
+    fun noteExportReceiptKeepsReadingScaleAt200Percent() = checkNoteExport(true)
+
+    private fun checkNoteExport(finish: Boolean) {
+        val note = runBlocking { fixture.notes.createNote("A durable local note.", title = "Field notes") }
+        lateinit var model: NoteEditorViewModel
+        var output: com.halo.app.data.workspace.WorkspaceFile? = null
+        var cancel = ""
+        compose.runOnUiThread { model = NoteEditorViewModel(note.id, NotebookUseCases(fixture.notes), document = fixture.documents); own(model) }
+        render("notebook/note/{noteId}", scale = 2f) {
+            cancel = com.halo.app.language.uiText("Cancel")
+            NoteEditorScreen(model, {}, onExportCopy = { id, revision, format ->
+                fixture.text.exportNote(id, revision, format).also { output = it }
+            })
+        }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.status == SaveStatus.SAVED }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.export")) }
+        if (finish) {
+            compose.onNodeWithText("TXT").performScrollTo().performClick()
+            compose.waitUntil(5_000) { scheduler.runCurrent(); output != null }
+            assertTrue(runBlocking { fixture.bytes(requireNotNull(output)).decodeToString() }.contains("A durable local note."))
+        }
+        val title = fixture.context.getString(if (finish) com.halo.app.R.string.file52_output_saved else com.halo.app.R.string.note_export_copy)
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNode(hasText(title) and hasAnyAncestor(isDialog()))
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertEquals(2f, layouts.single().layoutInput.density.fontScale, 0.001f)
+        compose.onNode(isDialog()).captureRoboImage()
+        compose.onNodeWithText(if (finish) fixture.context.getString(com.halo.app.R.string.file52_done)
+            else cancel).assertIsDisplayed().performClick()
+        compose.onNode(isDialog()).assertDoesNotExist()
+        if (!finish) assertNull(output)
     }
     @Test fun insertingABlockUsesTheExistingDocumentOwnerAndAChangedSourceDisablesTheSheet() {
         val note = runBlocking { fixture.notes.createNote("Original paragraph.", title = "Field notes") }

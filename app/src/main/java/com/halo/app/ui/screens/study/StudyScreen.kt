@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import kotlinx.coroutines.launch
+
 import kotlin.math.roundToInt
 
 import com.halo.app.ui.presence.BindShellPageActions
@@ -84,6 +86,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -146,6 +149,17 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var practiceOpen by rememberSaveable { mutableStateOf(false) }
     val pageActionsReady = state.session != null && !state.loading && state.unavailable == null &&
         !state.isGenerating && !state.isSubmitting && state.comparingCards.isEmpty()
+    val exitScope = rememberCoroutineScope()
+    var leaving by remember(viewModel) { mutableStateOf(false) }
+    val leaveSafely: () -> Unit = {
+        if (!leaving) {
+            leaving = true
+            exitScope.launch {
+                try { if (viewModel.keepBeforeLeaving()) { viewModel.stopReading("Left the Study screen"); onBack() } }
+                finally { leaving = false }
+            }
+        }
+    }
     val backFromLesson: () -> Unit = {
         when {
             showComposer -> showComposer = false
@@ -153,7 +167,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             showMenu -> showMenu = false
             practiceOpen -> { practiceOpen = false; viewModel.stopReading("Left practice") }
             focusedReview -> { focusedReview = false; skippedReviewIds = emptyList(); viewModel.stopReading("Left review") }
-            else -> { viewModel.stopReading("Left the Study screen"); onBack() }
+            else -> leaveSafely()
         }
     }
     val currentTurn = state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId && it.failure == null && it.text.isNotBlank() }
@@ -162,9 +176,21 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     val pageOwner = ShellPageOwner("study", state.session?.id,
         "${state.session?.updatedAtEpochMs}:${state.session?.currentExerciseId}:${state.sources.hashCode()}:$practiceOpen:$focusedReview:${state.reader?.speaking}",
         selectionIds = listOfNotNull(state.session?.currentExerciseId),
+        helpDescription = stringResource(com.halo.app.R.string.zone5_help_study),
+        helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("study-new.v1", "page.study.practice",
+            stringResource(com.halo.app.R.string.zone5_guide_study), state.session != null && !state.loading)),
+        completedGuideIds = if (state.session != null && !state.loading) setOf("study-new.v1", "study-material.v1") else emptySet(),
+        guidanceBlocked = !pageActionsReady || showComposer || showDetails || showMenu || confirmDelete || state.reader?.speaking == true,
         canonicalToolIds = listOf("halo_study_current", "halo_study_state", "halo_study_session_action"),
-        disabledActionReasons = mapOf("page.study.read" to stringResource(com.halo.app.R.string.zone5_nothing_to_read),
-            "page.study.practice" to stringResource(com.halo.app.R.string.zone5_open_lesson_first)))
+        defaultDisabledActionReason = stringResource(when {
+            state.loading -> com.halo.app.R.string.action_loading
+            state.session == null || state.unavailable != null -> com.halo.app.R.string.zone5_open_lesson_first
+            else -> com.halo.app.R.string.action_wait
+        }),
+        disabledActionReasons = if (!pageActionsReady) emptyMap() else mapOf(
+            "page.study.read" to stringResource(com.halo.app.R.string.zone5_nothing_to_read),
+            "page.study.listen" to stringResource(com.halo.app.R.string.zone5_nothing_to_read),
+            "page.study.finish" to stringResource(com.halo.app.R.string.action_finished)))
     BindShellPageActions(pageOwner, buildList {
         if (!practiceOpen && !focusedReview) {
             add(ShellPageAction("page.study.details", "Sources", HaloGlyph.FILE, pageActionsReady) { detailsTab = "Material"; showDetails = true })
@@ -387,10 +413,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         if (!shellOwnsOrb) HaloScreenHeader(
             title = state.session?.goal?.takeIf { it.isNotBlank() } ?: uiText("Study"),
             subtitle = uiText(if (focusedReview) "Focused review" else "One step at a time."),
-            navigation = {
-                viewModel.stopReading("Left the Study screen")
-                onBack()
-            },
+            navigation = backFromLesson,
             primaryAction = if (!com.halo.app.ui.presence.LocalShellHaloOrb.current)
                 com.halo.app.ui.design.HaloHeaderAction(uiText("Start Voice Mode"), onStartVoiceMode) else null,
             glyph = HaloGlyph.QUESTION,

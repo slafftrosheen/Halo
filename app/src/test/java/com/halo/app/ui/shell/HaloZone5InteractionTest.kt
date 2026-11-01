@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
+import com.github.takahirom.roborazzi.captureRoboImage
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.presence.*
 import com.halo.app.ui.theme.HostlessHaloTheme
@@ -27,16 +28,18 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [33], application = Application::class, qualifiers = "w390dp-h844dp")
 class HaloZone5InteractionTest {
     @get:Rule val compose = createComposeRule()
+    private lateinit var lifecycle: androidx.lifecycle.Lifecycle
     private val invoked = mutableListOf<String>()
     private val actions = (1..7).map { HaloOrbContextAction("edit-$it", "Edit $it", HaloGlyph.TOOL) }
 
     private fun show(compact: Boolean = false, scale: Float = 1f,
         route: State<String> = mutableStateOf("notebook/note/source"), count: State<Int> = mutableStateOf(7),
-        kids: Boolean = false, destructive: Boolean = false,
-        entryId: State<String?> = mutableStateOf(null)) {
+        kids: Boolean = false, destructive: Boolean = false, active: Boolean = false,
+        entryId: State<String?> = mutableStateOf(null), guideSession: com.halo.app.ui.zone5.Zone5GuideSession? = null) {
         compose.setContent { HostlessHaloTheme(fontScale = scale) {
+            lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
             val band = remember { mutableStateOf<ShellUtilityProjection?>(null) }
-            CompositionLocalProvider(LocalShellUtilityBand provides band) {
+            CompositionLocalProvider(LocalShellUtilityBand provides band, com.halo.app.ui.zone5.LocalZone5GuideSession provides guideSession) {
                 val currentActions = if (route.value.startsWith("notebook/canvas")) actions.take(count.value).map {
                     it.copy(id = it.id.replace("edit", "draw"), title = it.title.replace("Edit", "Draw"))
                 } else actions.take(count.value).mapIndexed { index, action ->
@@ -48,14 +51,45 @@ class HaloZone5InteractionTest {
                         { invoked += it.id }, { invoked += it }, 2,
                         utility = { Text("Document tools") }, profile = { Text("Local profile control") },
                         backdrop = {}, orb = { size ->
-                            HaloOrbLauncher(HaloSignalPresentation(state = HaloSignalState.IDLE, label = "Ready", reducedMotion = true),
-                                HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {},
+                            HaloOrbLauncher(HaloSignalPresentation(state = if (active) HaloSignalState.LISTENING else HaloSignalState.IDLE, label = if (active) "Listening" else "Ready", reducedMotion = true),
+                                HaloOrbInteraction(if (active) HaloOrbPrimary.FINISH else HaloOrbPrimary.TALK, false), emptySet(), {},
                                 { invoked += "voice" }, {}, {}, size = size,
                                 contextActions = currentActions, onContextAction = { invoked += it.id })
-                        }, destinations = ShellOrbCatalog.globalDestinations(kids), entryId = entryId.value)
+                        }, destinations = ShellOrbCatalog.globalDestinations(kids), entryId = entryId.value, kids = kids)
                 }
             }
         } }
+    }
+
+    @Test fun backgroundingAfterEntryReplacementClearsTheCurrentDisclosureOwner() {
+        val entry = mutableStateOf<String?>("first")
+        val session = com.halo.app.ui.zone5.Zone5GuideSession()
+        show(entryId = entry, guideSession = session)
+        compose.runOnIdle { entry.value = "second" }
+        compose.onNodeWithText("All actions").performClick()
+        compose.runOnIdle { assertTrue(session.presentationActive) }
+        compose.runOnIdle { (lifecycle as androidx.lifecycle.LifecycleRegistry).currentState = androidx.lifecycle.Lifecycle.State.CREATED }
+        compose.runOnIdle { (lifecycle as androidx.lifecycle.LifecycleRegistry).currentState = androidx.lifecycle.Lifecycle.State.RESUMED }
+        compose.runOnIdle { assertFalse(session.presentationActive) }
+        compose.onNode(hasText("Edit 1") and hasAnyAncestor(isDialog())).assertDoesNotExist()
+    }
+
+    @Test fun activeCaptionIsPartOfTheSingleTapTargetAtLargeText() {
+        show(compact = true, scale = 2f, active = true)
+        compose.onNodeWithContentDescription("Send voice").assertIsDisplayed()
+        compose.onRoot().captureRoboImage()
+        // The visible caption is part of the same pointer/focus target as the ring.
+        val target = compose.onNodeWithTag("zone5-orb-action")
+        target.performTouchInput { click(androidx.compose.ui.geometry.Offset(width / 2f, height - 6f)) }
+        assertEquals(listOf("voice"), invoked)
+    }
+
+    @Test fun workspaceInstrumentsOpenExistingAdultRoutesWithoutExecutingCommands() {
+        show()
+        compose.onNodeWithText("Menu").performClick()
+        compose.onNodeWithText("Workspace instruments").performScrollTo().performClick()
+        compose.onNode(hasText("HaloNotes") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(listOf("file_tools"), invoked)
     }
 
     @Test fun lightStaticOrbRetainsNonTextContrast() {

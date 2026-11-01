@@ -455,6 +455,12 @@ object ManualDependencyGraph {
     }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
     val workspaceFileVersions by lazy { com.halo.app.data.workspace.WorkspaceFileVersions(workspaceFileRepository, workspaceRepository) }
+    val workspaceExternalExport by lazy {
+        val permitted = { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }
+        com.halo.app.data.workspace.WorkspaceExternalExportSession(storage,
+            com.halo.app.data.workspace.WorkspaceExternalExport(workspaceFileVersions, applicationContext.contentResolver, permitted),
+            infra.scope, permitted)
+    }
     val workspaceTextDocuments by lazy { com.halo.app.data.workspace.WorkspaceTextDocuments(applicationContext, appDatabase,
         notebookRepository, notebookDocumentRepository, workspaceFileRepository, workspaceRepository) }
     val workspaceFileReceipts by lazy { com.halo.app.data.workspace.WorkspaceFileReceipts(appDatabase, notebookRepository, notebookDocumentRepository) }

@@ -1,0 +1,17 @@
+<resources>
+    <string name="zone5_home_purpose">Porozmawiaj z Halo</string>
+    <string name="zone5_screen_purpose">Twój dzień</string>
+    <string name="zone5_workspace_group">Narzędzia Workspace</string>
+    <string name="zone5_group_attachments">Załączniki</string>
+    <string name="zone5_group_history">Historia</string>
+    <string name="zone5_group_layout">Układ</string>
+    <string name="zone5_group_cards">Karty</string>
+    <string name="zone5_group_search">Szukaj ustawień</string>
+    <string name="zone5_group_sections">Sekcje ustawień</string>
+    <string name="zone5_group_help">Pomoc</string>
+    <string name="zone5_group_management">Zarządzanie</string>
+    <string name="zone5_group_review">Przegląd</string>
+    <string name="zone5_help_files_description">Otwórz obsługiwany plik, aby go obejrzeć. Tekst możesz otworzyć jako edytowalną kopię; eksport nie zmienia źródła.</string>
+    <string name="zone5_expanded">Rozwinięte</string>
+    <string name="zone5_collapsed">Zwinięte</string>
+</resources>

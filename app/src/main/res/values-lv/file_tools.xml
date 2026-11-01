@@ -1,5 +1,5 @@
 <resources>
-    <string name="file52_title">Failu rīki</string>
+    <string name="file52_title">HaloNotes</string>
     <string name="file52_local_scope">Veidojiet un rediģējiet lokāli. Oriģināli tiek saglabāti.</string>
     <string name="file52_new_document">Jauns dokuments</string>
     <string name="file52_open_file">Importēt failu</string>
@@ -16,7 +16,7 @@
     <string name="file52_convert_image">Attēla rīki</string>
     <string name="file52_image_batch">Apstrādāt attēlus</string>
     <string name="file52_collage">Apvienot attēlus</string>
-    <string name="file52_create_image">Veidot Studio</string>
+    <string name="file52_create_image">Veidot HaloStudio</string>
     <string name="file52_recent">Nesenie dokumenti un faili</string>
     <string name="file52_choose_images">Izvēlieties attēlus</string>
     <string name="file52_selected_count">Atlasīti: %1$d</string>
@@ -77,7 +77,7 @@
     <string name="file52_receipt_help">Šajā ierakstā ir saites uz saglabātajiem rezultātiem. Pirms nepabeigta darba atkārtošanas atveriet rezultātu.</string>
     <string name="file52_batch_receipt">Attēlu apstrādes rezultāti</string>
     <string name="file52_choose_source">Izvēlieties dokumentu vai failu</string>
-    <string name="file52_empty">Importējiet failu vai izveidojiet savu pirmo dokumentu.</string>
+    <string name="file52_empty">Atveriet «Visas darbības» un izvēlieties «Jauns dokuments» vai «Importēt failu».</string>
     <string name="file52_open_editor">Atvērt piezīmju redaktoru</string>
     <string name="file52_pdf_annotations">PDF atzīmes</string>
     <string name="file52_native_pdf_future">PDF tiešā rediģēšana tiek izstrādāta. Jau pieejami lapu attēli un saistītas atzīmju piezīmes.</string>

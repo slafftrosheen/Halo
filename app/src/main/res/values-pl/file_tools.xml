@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="file52_title">"Narzędzia plików"</string>
+    <string name="file52_title">HaloNotes</string>
     <string name="file52_local_scope">"Twórz i edytuj lokalnie. Oryginały pozostają bezpieczne."</string>
     <string name="file52_new_document">"Nowy dokument"</string>
     <string name="file52_open_file">"Importuj plik"</string>
@@ -17,7 +17,7 @@
     <string name="file52_convert_image">"Narzędzia obrazów"</string>
     <string name="file52_image_batch">"Przetwarzaj obrazy"</string>
     <string name="file52_collage">"Połącz obrazy"</string>
-    <string name="file52_create_image">"Utwórz w Studio"</string>
+    <string name="file52_create_image">"Utwórz w HaloStudio"</string>
     <string name="file52_recent">"Ostatnie dokumenty i pliki"</string>
     <string name="file52_choose_images">"Wybierz obrazy"</string>
     <string name="file52_selected_count">"Wybrano: %1$d"</string>
@@ -78,7 +78,7 @@
     <string name="file52_receipt_help">"Ten zapis zachowuje odwołania do zapisanych wyników. Otwórz wynik, zanim zdecydujesz się ponowić niedokończoną operację."</string>
     <string name="file52_batch_receipt">"Wyniki przetwarzania obrazów"</string>
     <string name="file52_choose_source">"Wybierz dokument lub plik"</string>
-    <string name="file52_empty">"Importuj plik lub utwórz pierwszy dokument."</string>
+    <string name="file52_empty">Otwórz «Wszystkie działania», a następnie wybierz «Nowy dokument» lub «Importuj plik».</string>
     <string name="file52_open_editor">"Otwórz edytor notatek"</string>
     <string name="file52_pdf_annotations">"Adnotacje PDF"</string>
     <string name="file52_native_pdf_future">"Natywna edycja PDF jest w przygotowaniu. Obrazy stron i powiązane notatki z adnotacjami są już dostępne."</string>

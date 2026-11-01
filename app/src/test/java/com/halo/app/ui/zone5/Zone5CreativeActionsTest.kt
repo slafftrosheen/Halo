@@ -97,6 +97,35 @@ class Zone5CreativeActionsTest {
         compose.onNodeWithText("Arrange").assertExists()
         assertEquals(original, model.uiState.value.nodes)
     }
+    @Test fun childCanvasWorkingSubtreePassesItsLiveProfileToNavigationDialog() {
+        val id = runBlocking { fixture.canvases.create("Child board") }
+        lateinit var model: CanvasEditorViewModel
+        compose.runOnUiThread { model = CanvasEditorViewModel(id, fixture.canvases); own(model) }
+        render("notebook/canvas/{canvasId}", scale = 2f) {
+            // Like AppShell's NavHost, this working subtree has no bottom-Zone navigation local.
+            assertNull(LocalHaloZone5Navigation.current)
+            CanvasEditorScreen(model, kidsMode = true, onBack = {})
+        }
+        await { !model.uiState.value.loading }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.canvas.view-navigation")) }
+        compose.onAllNodesWithText("Left").onFirst().performScrollTo().assertHeightIsAtLeast(androidx.compose.ui.unit.Dp(56f))
+        compose.onNodeWithText("Zoom in").performScrollTo().assertHeightIsAtLeast(androidx.compose.ui.unit.Dp(56f))
+        compose.onNodeWithText("Small steps").performScrollTo().assertHeightIsAtLeast(androidx.compose.ui.unit.Dp(56f))
+        compose.onNodeWithText("Done").assertHeightIsAtLeast(androidx.compose.ui.unit.Dp(56f))
+        compose.onNode(isDialog()).captureRoboImage()
+    }
+    @Test fun childPageIdentityWrapsCompletelyAt200Percent() {
+        val title = "A complete saved field observation with a long identifying title and its final distinguishing words"
+        render("notebook/file/{objectId}", scale = 2f) {
+            BindShellChildPage(title, {}, objectId = "fixture", titleIsSource = true)
+        }
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNodeWithText(title).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertTrue(layouts.single().lineCount > 2)
+        assertFalse(layouts.single().hasVisualOverflow)
+        compose.onNodeWithText(title).assertIsDisplayed()
+        compose.onRoot().captureRoboImage()
+    }
     @Test fun emptyCanvasCreationAndImportRemainInItsScopedAddMenu() {
         val id = runBlocking { fixture.canvases.create("Empty field board") }
         lateinit var model: CanvasEditorViewModel
@@ -151,7 +180,128 @@ class Zone5CreativeActionsTest {
         await { model.state.value.project?.revision == external.revision }
         compose.runOnIdle { assertFalse(model.restore(1, project.revision, project.id)) }
         assertEquals(1, runBlocking { projects.get(project.id)!! }.session.current.layers.size)
+        compose.runOnIdle { model.export(com.halo.app.data.workspace.CanvasImageFormat.PNG) }
+        await { model.state.value.output != null }
+        val receipt = model.state.value.exportedSource
+        assertEquals("${external.id}:${external.revision}", receipt)
+        compose.runOnIdle { model.dismissOutput() }
+        await { model.state.value.output == null }
+        assertEquals(receipt, model.state.value.exportedSource)
+        compose.runOnIdle { assertTrue(actions.value!!.owner.helpSteps.last().complete) }
     }
+    @Test fun studioDiscardRequiresCurrentRevisionConfirmationAndCancelKeepsDraft() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val projects = StudioProjectRepository(fixture.database)
+        val assets = NotebookAssetRepository(context, fixture.database)
+        val service = StudioService(context, projects, fixture.files, fixture.workspace,
+            StudioRenderer(context, fixture.files, fixture.workspace), assets, fixture.canvases,
+            fixture.database.workspaceContextDao(), StudioUiRequests(fixture.scope, {}))
+        val initial = runBlocking { projects.create("Discard review fixture") }
+        val draft = runBlocking { projects.apply(initial.id, initial.revision, StudioCommand.Add(StudioLayer(name = "Keep until confirmed", kind = StudioLayerKind.TEXT))) }
+        lateinit var model: StudioViewModel
+        compose.runOnUiThread { model = StudioViewModel(service, fixture.files,
+            WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets, draft.id); own(model) }
+        render("studio?projectId={projectId}", 2f) { StudioScreen(model, {}, {}, {}, {}, {}) }
+        await { model.state.value.project?.revision == draft.revision && !model.state.value.loading }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.studio.discard")) }
+        assertEquals(draft, runBlocking { projects.get(draft.id) })
+        compose.onNodeWithText("Cancel").performClick()
+        assertEquals(draft, runBlocking { projects.get(draft.id) })
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.studio.discard")) }
+        val newer = runBlocking { projects.apply(draft.id, draft.revision, StudioCommand.Add(StudioLayer(name = "Newer edit", kind = StudioLayerKind.TEXT))) }
+        await { model.state.value.project?.revision == newer.revision }
+        compose.onNodeWithText(context.getString(com.halo.app.R.string.studio_discard)).assertIsNotEnabled()
+        compose.runOnIdle { model.discardDraft(draft.id, draft.revision) }
+        assertEquals(newer, runBlocking { projects.get(newer.id) })
+        compose.onNodeWithText("Cancel").performClick()
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.studio.discard")) }
+        compose.onNode(isDialog()).captureRoboImage()
+        compose.onNodeWithText(context.getString(com.halo.app.R.string.studio_discard)).performClick()
+        await { model.state.value.project?.hasUnsavedChanges == false && !model.state.value.busy }
+        assertEquals(initial.committed, runBlocking { projects.get(initial.id)!! }.session.current)
+    }
+    @Test fun canvasButtonsPanZoomAndMoveOnlyTheRemainingSelection() {
+        val id = runBlocking { fixture.canvases.create("Accessible positioning") }
+        val a = runBlocking { fixture.canvases.addTextNode(id, 0f, 0f, "Move me") }
+        val b = runBlocking { fixture.canvases.addTextNode(id, 200f, 0f, "Keep me") }
+        lateinit var model: CanvasEditorViewModel
+        compose.runOnUiThread { model = CanvasEditorViewModel(id, fixture.canvases); own(model) }
+        render("notebook/canvas/{canvasId}", 2f) { CanvasEditorScreen(model, onBack = {}) }
+        await { !model.uiState.value.loading && model.uiState.value.nodes.size == 2 }
+        compose.runOnIdle { model.toggleSelectionMode(); model.selectNode(a); model.selectNode(b); model.selectNode(b) }
+        compose.runOnIdle {
+            assertEquals(setOf(a), model.uiState.value.selectedNodeIds)
+            assertTrue(actions.value!!.invoke("page.canvas.view-navigation"))
+        }
+        compose.onAllNodesWithText("Left").onFirst().performScrollTo().performClick()
+        compose.onNodeWithText("Zoom in").performScrollTo().performClick()
+        compose.onAllNodesWithText("Right").onLast().performScrollTo().performClick()
+        compose.onNode(isDialog()).captureRoboImage()
+        compose.onNodeWithText("Done").performClick()
+        lateinit var save: Job
+        compose.runOnIdle { save = model.persistPending() }
+        await { save.isCompleted && model.uiState.value.saveState == CanvasSaveState.SAVED }
+        val stored = runBlocking { fixture.canvases.observe(id).first()!! }
+        assertEquals(12f, stored.nodes.single { it.id == a }.x, .001f)
+        assertEquals(200f, stored.nodes.single { it.id == b }.x, .001f)
+        assertEquals(1.1f, stored.viewportScale, .001f)
+        // Ordinary selection also survives viewport changes before a later move.
+        compose.runOnIdle { model.toggleSelectionMode(); model.selectNode(a); model.transform(5f, 0f, 1f) }
+        assertEquals(a, model.uiState.value.selectedNodeId)
+    }
+    @Test fun studioFailuresNameTheOperationAndVerifyTheRetainedProject() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val projects = StudioProjectRepository(fixture.database)
+        val assets = NotebookAssetRepository(context, fixture.database)
+        val service = StudioService(context, projects, fixture.files, fixture.workspace,
+            StudioRenderer(context, fixture.files, fixture.workspace), assets, fixture.canvases,
+            fixture.database.workspaceContextDao(), StudioUiRequests(fixture.scope, {}))
+        val project = runBlocking { projects.create("Recovery fixture") }
+        lateinit var model: StudioViewModel
+        compose.runOnUiThread { model = StudioViewModel(service, fixture.files,
+            WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets, project.id); own(model) }
+        render("studio?projectId={projectId}") { StudioScreen(model, {}, {}, {}, {}, {}) }
+        await { model.state.value.project != null && !model.state.value.loading }
+        compose.runOnIdle { model.restore(999, project.revision, project.id) }
+        await { model.state.value.failure != null && !model.state.value.busy }
+        assertEquals(com.halo.app.ui.workspace.StudioOperation.RESTORE, model.state.value.failure?.operation)
+        assertEquals(com.halo.app.ui.workspace.StudioRetainedWork.SAVED, model.state.value.failure?.retained)
+        assertTrue(model.state.value.failure?.canRetry == true)
+        assertEquals(project, runBlocking { projects.get(project.id) })
+        compose.onNodeWithText("Could not restore that version.", substring = true).assertExists()
+        val newer = runBlocking { projects.rename(project.id, project.revision, "Other writer") }
+        await { model.state.value.project?.revision == newer.revision }
+        compose.runOnIdle { model.retry() }
+        await { model.state.value.failure?.reason == com.halo.app.ui.workspace.StudioFailureReason.CHANGED && !model.state.value.busy }
+        assertFalse(model.state.value.failure?.canRetry == true)
+        assertEquals(newer, runBlocking { projects.get(project.id) })
+        compose.runOnIdle { model.dismissError(); model.create("") }
+        await { model.state.value.failure != null && !model.state.value.busy }
+        assertEquals(com.halo.app.ui.workspace.StudioOperation.CREATE, model.state.value.failure?.operation)
+        assertFalse(model.state.value.failure?.canRetry == true)
+        assertEquals(newer, runBlocking { projects.get(project.id) })
+    }
+
+    @Test fun studioInterruptedExportIsUnknownAndNeverAutomaticallyReplayed() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val projects = StudioProjectRepository(fixture.database)
+        val assets = NotebookAssetRepository(context, fixture.database)
+        val service = StudioService(context, projects, fixture.files, fixture.workspace,
+            StudioRenderer(context, fixture.files, fixture.workspace), assets, fixture.canvases,
+            fixture.database.workspaceContextDao(), StudioUiRequests(fixture.scope, {}))
+        val project = runBlocking { projects.create("Interrupted fixture") }
+        val saved = androidx.lifecycle.SavedStateHandle(mapOf("studioProject" to project.id, "studioPendingOperation" to "EXPORT"))
+        lateinit var model: StudioViewModel
+        compose.runOnUiThread { model = StudioViewModel(service, fixture.files,
+            WorkspaceImageService(router, IntentQualificationFixture.MemoryStorage()), assets, savedState = saved); own(model) }
+        render("studio?projectId={projectId}") { StudioScreen(model, {}, {}, {}, {}, {}) }
+        await { model.state.value.project != null && !model.state.value.loading }
+        assertEquals(com.halo.app.ui.workspace.StudioFailureReason.INTERRUPTED, model.state.value.failure?.reason)
+        assertFalse(model.state.value.failure?.canRetry == true)
+        assertNull(model.state.value.output)
+        assertEquals(project, runBlocking { projects.get(project.id) })
+    }
+
     @Test fun studyPracticeReviewAndBackUseExclusiveViews() {
         val repository = StudyRepository(fixture.database, fixture.database.studyDao())
         val session = runBlocking { repository.createSession(listOf("source"), 7, StudyLanguagePreferences(), "Light and sound") }
@@ -247,14 +397,63 @@ class Zone5CreativeActionsTest {
         val board = reviewSelectedGroup()
         runBlocking { fixture.canvases.updateText(board.id, board.selected.first(), "Changed outside the preview") }
         await { board.model.uiState.value.nodes.any { it.text == "Changed outside the preview" } }
-        compose.onNodeWithText("Approve organization").performClick()
-        await { board.model.uiState.value.notice == "Source changed. Review it again." }
-        compose.onNode(hasText("Source changed. Review it again.") and hasAnyAncestor(isDialog())).assertIsDisplayed()
+        compose.onNodeWithText("Approve organization").assertIsNotEnabled()
+        compose.onNode(hasText("The source changed. Choose Cancel", substring = true) and hasAnyAncestor(isDialog())).assertIsDisplayed()
+        // An alternate caller cannot bypass the same source-version guard.
+        compose.runOnIdle { board.model.approveOrganization() }
+        await { board.model.uiState.value.organizationRequiresRefresh }
         compose.onNode(isDialog()).captureRoboImage()
         val stored = runBlocking { fixture.canvases.observe(board.id).first()!! }
         assertTrue(stored.nodes.none { it.type == com.halo.app.data.notebook.CanvasNodeType.GROUP })
         assertTrue(stored.edges.isEmpty())
         assertEquals(0L, board.model.uiState.value.organizationCommitRevision)
+        compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
+        await { board.model.uiState.value.organization == null }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.canvas.arrange")) }
+        compose.mainClock.advanceTimeBy(300)
+        compose.onNodeWithText("Create group").performScrollTo().performClick()
+        await { board.model.uiState.value.organization != null && !board.model.uiState.value.organizationRequiresRefresh }
+        compose.onNodeWithText("Approve organization").assertIsEnabled()
+        compose.onNode(hasSetTextAction() and hasText("Group title")).performSemanticsAction(SemanticsActions.SetText) { assertTrue(it(AnnotatedString("Reviewed current cards"))) }
+        compose.onNodeWithText("Approve organization").performClick()
+        await { board.model.uiState.value.organizationCommitRevision > 0 }
+        val recovered = runBlocking { fixture.canvases.observe(board.id).first()!! }
+        val group = recovered.nodes.single { it.type == com.halo.app.data.notebook.CanvasNodeType.GROUP }
+        assertEquals("Reviewed current cards", group.text)
+        assertEquals(board.selected, recovered.edges.filter { it.fromNodeId == group.id }.map { it.toNodeId }.toSet())
+        assertTrue(recovered.nodes.any { it.text == "Changed outside the preview" })
+    }
+
+    @Test fun staleWholeBoardPreviewRecoversWithoutASelection() {
+        val id = runBlocking { fixture.canvases.create("Whole board") }
+        val source = runBlocking { fixture.canvases.addTextNode(id, 0f, 0f, "Original whole-board source") }
+        lateinit var model: CanvasEditorViewModel
+        compose.runOnUiThread { model = CanvasEditorViewModel(id, fixture.canvases); own(model) }
+        render("notebook/canvas/{canvasId}") { CanvasEditorScreen(model, onBack = {}) }
+        await { !model.uiState.value.loading && model.uiState.value.nodes.size == 1 }
+        fun openWholeBoard() {
+            compose.runOnIdle { assertTrue(actions.value!!.invoke("page.canvas.arrange")) }
+            compose.mainClock.advanceTimeBy(300)
+            compose.onNodeWithText("Organize whole board").performScrollTo().performClick()
+            await { model.uiState.value.organization != null }
+        }
+        openWholeBoard()
+        assertTrue(model.uiState.value.selectedNodeIds.isEmpty())
+        assertNull(model.uiState.value.selectedNodeId)
+        runBlocking { fixture.canvases.updateText(id, source, "Current whole-board source") }
+        await { model.uiState.value.nodes.any { it.text == "Current whole-board source" } }
+        compose.onNodeWithText("Approve organization").assertIsNotEnabled()
+        compose.onNode(hasText("Organize whole board for all cards", substring = true) and hasAnyAncestor(isDialog())).assertIsDisplayed()
+        compose.onNode(isDialog()).captureRoboImage()
+        compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
+        await { model.uiState.value.organization == null }
+        openWholeBoard()
+        compose.onNodeWithText("Approve organization").assertIsEnabled().performClick()
+        await { model.uiState.value.organizationCommitRevision > 0 }
+        val saved = runBlocking { fixture.canvases.observe(id).first()!! }
+        val group = saved.nodes.single { it.type == com.halo.app.data.notebook.CanvasNodeType.GROUP }
+        assertEquals(listOf(source), saved.edges.filter { it.fromNodeId == group.id }.map { it.toNodeId })
+        assertTrue(saved.nodes.any { it.id == source && it.text == "Current whole-board source" })
     }
 
 }

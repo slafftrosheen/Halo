@@ -1,0 +1,26 @@
+{
+  "recorded_utc": "2026-11-01T17:37:21.451841+00:00",
+  "scope": "All app debug unit tests; not all repository modules or physical/participant qualification.",
+  "results": {
+    "suites": 508,
+    "tests": 2441,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failed_cases": [
+    {
+      "class": "com.halo.app.language.AppLanguageTest",
+      "test": "compiledPolishResourcesCoverSharedTextAndNativeFeatureControls",
+      "kind": "failure",
+      "message": "org.junit.ComparisonFailure: expected:<[Narz\u0119dzia plik\u00f3w]> but was:<[HaloNotes]>"
+    }
+  ],
+  "gradle_build_successful": false,
+  "source_manifest": "phone-final-capture-manifest.json",
+  "source_drift": [],
+  "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673",
+  "apk_matches_focused_and_installed": true,
+  "debug_assembly": false,
+  "android_test_kotlin_compilation": false
+}

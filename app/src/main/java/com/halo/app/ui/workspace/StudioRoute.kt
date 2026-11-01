@@ -48,7 +48,7 @@ fun StudioRoute(projectId: String?, sourceId: String?, attachmentId: String?, re
     LaunchedEffect(model, sourceId, attachmentId, sourceVersion, handoffId) {
         sourceId?.let { id ->
             val source = Graph.workspaceRepository.get(WorkspaceObjectId(id))
-            if (source == null) model.reportError()
+            if (source == null) model.reportError(StudioOperation.IMPORT)
             else model.openSource(id, attachmentId, source.title.take(120).ifBlank { defaultName }, sourceVersion, handoffId)
         }
     }
@@ -72,7 +72,7 @@ fun StudioRoute(projectId: String?, sourceId: String?, attachmentId: String?, re
         ModalBottomSheet(onDismissRequest = { if (!state.busy) pendingOutputId = null }) {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(stringResource(R.string.studio_insert_canvas), style = MaterialTheme.typography.titleMedium)
-                if (state.error) Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
+                StudioRecoveryNotice(state, model::retry, model::dismissError)
                 if (canvases.isEmpty()) Text(stringResource(R.string.studio_no_canvas))
                 LazyColumn(Modifier.heightIn(max = 480.dp)) {
                     items(canvases, key = { it.id.value }) { canvas ->

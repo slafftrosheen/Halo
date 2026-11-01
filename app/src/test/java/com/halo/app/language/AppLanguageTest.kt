@@ -53,7 +53,7 @@ class AppLanguageTest {
             setLocale(Locale.forLanguageTag("pl-PL"))
         }).resources
         assertEquals("Przestrzeń robocza", resources.getString(uiCatalogue.getValue("Workspace")))
-        assertEquals("Narzędzia plików", resources.getString(R.string.file52_title))
+        assertEquals("HaloNotes", resources.getString(R.string.file52_title))
         assertEquals("Profile trybów", resources.getString(R.string.mode47_profiles))
         assertEquals("Zapisz i włącz", resources.getString(uiCatalogue.getValue("Save & turn on")))
         assertEquals("Źródła: 2 · fiszki: 3 · zapisane odpowiedzi: 4", resources.getString(

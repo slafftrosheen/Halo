@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="studio_failed_open">Nie udało się otworzyć projektu.</string>
+    <string name="studio_failed_create">Nie udało się utworzyć projektu.</string>
+    <string name="studio_failed_edit">Nie udało się zachować ostatniej zmiany.</string>
+    <string name="studio_failed_save">Nie udało się zapisać tej wersji projektu.</string>
+    <string name="studio_failed_copy">Nie udało się zapisać kopii projektu.</string>
+    <string name="studio_failed_rename">Nie udało się zmienić nazwy projektu.</string>
+    <string name="studio_failed_history">Nie udało się wczytać zapisanych wersji.</string>
+    <string name="studio_failed_restore">Nie udało się przywrócić tej wersji.</string>
+    <string name="studio_failed_import">Nie udało się dodać tego obrazu.</string>
+    <string name="studio_failed_export">Nie udało się utworzyć eksportowanej kopii.</string>
+    <string name="studio_failed_insert">Nie udało się dodać wyniku do kanwy.</string>
+    <string name="studio_failed_camera">Nie udało się dodać zdjęcia.</string>
+    <string name="studio_failed_ai">Nie udało się przygotować podglądu AI.</string>
+    <string name="studio_failed_discard">Nie udało się odrzucić wersji roboczej.</string>
+    <string name="studio_recovery_changed">Projekt się zmienił. Sprawdź go przed ponowieniem działania.</string>
+    <string name="studio_recovery_access">Brak dostępu. Wybierz dostępne źródło lub miejsce docelowe.</string>
+    <string name="studio_recovery_interrupted">Operacja została przerwana; wynik nie jest potwierdzony. Przed ponowieniem sprawdź projekt i bibliotekę.</string>
+    <string name="studio_recovery_failed">Spróbuj ponownie, gdy pamięć i źródło będą dostępne.</string>
+    <string name="studio_recovery_draft">Ostatnia zachowana wersja robocza jest dostępna na tym telefonie.</string>
+    <string name="studio_recovery_saved">Ostatnia zapisana wersja projektu jest dostępna na tym telefonie.</string>
+    <string name="studio_recovery_unknown">Halo nie może potwierdzić zachowania pracy.</string>
+    <string name="studio_recovery_dismiss">Zamknij komunikat</string>
+    <string name="work_keeping">Zachowywanie wersji roboczej…</string>
+    <string name="work_saving">Zapisywanie wersji…</string>
+    <string name="work_exporting">Eksportowanie kopii…</string>
+    <string name="work_draft_kept">Wersja robocza zachowana na tym telefonie</string>
+    <string name="work_editing">Edycja · jeszcze nie zachowano</string>
+    <string name="note_save_failed_kept">Nie udało się zapisać notatki. Najnowsza wersja robocza jest zachowana na tym telefonie. Spróbuj ponownie.</string>
+    <string name="note_save_failed_unkept">Nie udało się zachować ostatnich zmian. Pozostaw notatkę otwartą i spróbuj ponownie.</string>
+    <string name="studio_failed_ink">Nie udało się zachować ostatniego rysunku. Zapisz kopię przed zamknięciem.</string>
+    <string name="zone5_find_action">Znajdź działanie</string>
+    <string name="zone5_no_matching_action">Brak pasujących działań. Spróbuj innego słowa.</string>
+    <string name="zone5_group_task">Bieżące zadanie</string>
+    <string name="zone5_group_conversation">Rozmowa</string>
+    <string name="zone5_group_day">Twój dzień</string>
+    <string name="zone5_group_preferences">Preferencje</string>
+    <string name="zone5_group_connections">Połączenia</string>
+    <string name="zone5_group_activity">Przegląd i historia</string>
+</resources>

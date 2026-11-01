@@ -5,7 +5,7 @@
     <string name="link53_unavailable">"Ten materiał zmienił się lub jest już niedostępny. Otwórz Przestrzeń roboczą i wybierz go ponownie."</string>
     <string name="link53_workspace">"Otwórz Przestrzeń roboczą"</string>
     <string name="link53_open">"Otwórz oryginalny materiał"</string>
-    <string name="link53_files">"Edytuj w Narzędziach plików"</string>
+    <string name="link53_files">Edytuj w HaloNotes</string>
     <string name="link53_studio">"Kontynuuj w Studio"</string>
     <string name="link53_study">"Ucz się z halo"</string>
     <string name="link53_chat">"Użyj w czacie"</string>

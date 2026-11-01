@@ -186,6 +186,18 @@ import kotlinx.coroutines.launch
                     options.guideLight, { value -> scope.launch { save { visual.update { it.copy(guideLight = value) } } } })
             }
         }
+        Text(stringResource(R.string.zone5_help_amount), style = MaterialTheme.typography.titleSmall)
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            com.halo.app.ui.theme.HaloGuidanceAmount.entries.forEach { amount ->
+                FilterChip(options.guidanceAmount == amount,
+                    { scope.launch { save { visual.update { it.copy(guidanceAmount = amount) } } } },
+                    label = { Text(stringResource(when (amount) {
+                        com.halo.app.ui.theme.HaloGuidanceAmount.OFF -> R.string.zone5_help_off
+                        com.halo.app.ui.theme.HaloGuidanceAmount.CUES -> R.string.zone5_help_cues
+                        com.halo.app.ui.theme.HaloGuidanceAmount.EXPLANATIONS -> R.string.zone5_help_explanations
+                    })) }, enabled = !saving, modifier = Modifier.heightIn(min = 48.dp))
+            }
+        }
         if (failure) Text(if (rollbackUncertain) stringResource(R.string.interface4_appearance_rollback_unknown)
             else uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
     }

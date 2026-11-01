@@ -30,6 +30,7 @@ internal fun routineSuggestion(row: PersonalSuggestionEntity): RoutineSuggestion
 internal fun RoutineSuggestionReview(suggestion: RoutineSuggestion?, routine: Routine?, readiness: AutomationReadiness,
     onBack: () -> Unit, onTurnOn: () -> Unit, onEdit: () -> Unit, onDismiss: () -> Unit) {
     AutomationPage("Suggested routine", onBack, objectId = routine?.id?.value, sourceIdentity = "${suggestion?.id}:${routine?.id?.value}",
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_item_unavailable),
         actions = listOf(ShellPageAction("routine.suggestion.edit", "Edit", HaloGlyph.NOTE,
             suggestion != null && routine != null, onEdit))) {
         if (suggestion == null) {

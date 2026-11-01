@@ -125,6 +125,8 @@ data class StudyUiState(
     val savingSummary: Boolean = false,
     val turns: List<StudyTurn> = emptyList(),
     val draft: String = "",
+    val draftKept: Boolean = false,
+    val cardAnswersKept: Boolean = false,
     val notice: String? = null,
     val isSubmitting: Boolean = false,
     val isGenerating: Boolean = false,
@@ -423,7 +425,10 @@ class StudyViewModel(
                 visualSourceVersion = if (current.activeVisualId == null) restoredFocus?.version else current.visualSourceVersion,
                 pdfPages = if (current.activeVisualId == null && restoredFocus?.page != null)
                     current.pdfPages + (restoredFocus.objectId to restoredFocus.page) else current.pdfPages,
-                draft = mutableUiState.value.draft.ifBlank { recovery?.draft.orEmpty() },
+                draft = current.draft.ifBlank { recovery?.draft.orEmpty() },
+                draftKept = recovery != null && (current.draft.isBlank() || current.draft == recovery.draft),
+                cardAnswers = recovery?.cardAnswers.orEmpty() + current.cardAnswers,
+                cardAnswersKept = recovery != null && (current.cardAnswers.isEmpty() || current.cardAnswers == recovery.cardAnswers),
                 notice = if (recovery?.pendingRequestId != null && history.none { it.id == recovery.pendingRequestId })
                     "The previous reply was interrupted. Your saved work is kept; ask again when you are ready."
                     else if (materialUnavailable) "Some material could not be opened. Your lesson and draft are restored; relink the material and retry."
@@ -432,7 +437,7 @@ class StudyViewModel(
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) {
                 mutableUiState.value = mutableUiState.value.copy(loading = false,
-                    notice = "Could not restore all lesson material. Your saved work is kept; try opening the material again.")
+                    notice = "Could not restore all lesson material. Try opening the material again.")
             }
         }
         viewModelScope.launch {
@@ -497,16 +502,49 @@ class StudyViewModel(
     )
 
     fun setDraft(value: String) {
-        mutableUiState.value = mutableUiState.value.copy(awaitingAnswerSince = null, draft = value.take(4000))
+        mutableUiState.value = mutableUiState.value.copy(awaitingAnswerSince = null, draft = value.take(4000), draftKept = false)
         persistDraft()
     }
+    private var draftSaveJob: kotlinx.coroutines.Job? = null
+    private var cardSaveJob: kotlinx.coroutines.Job? = null
     private fun persistDraft() {
         val draft = mutableUiState.value.draft
-        viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
-            try { lessons?.saveDraft(sessionId, draft) }
-            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save this draft. Keep this lesson open and try again.") }
+        draftSaveJob = viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+            try {
+                lessons?.saveDraft(sessionId, draft)
+                val verified = lessons?.loadRecovery(sessionId)?.draft == draft
+                if (mutableUiState.value.draft == draft) mutableUiState.value = mutableUiState.value.copy(draftKept = verified)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (mutableUiState.value.draft == draft) mutableUiState.value = mutableUiState.value.copy(draftKept = false,
+                    notice = "Could not save this draft. Keep this lesson open and try again.")
+            }
         }
+    }
+    private fun persistCardAnswers() {
+        val answers = mutableUiState.value.cardAnswers.toMap()
+        cardSaveJob = viewModelScope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+            try {
+                lessons?.saveCardAnswers(sessionId, answers)
+                val verified = lessons?.loadRecovery(sessionId)?.cardAnswers == answers
+                if (mutableUiState.value.cardAnswers == answers) mutableUiState.value = mutableUiState.value.copy(cardAnswersKept = verified)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (mutableUiState.value.cardAnswers == answers) mutableUiState.value = mutableUiState.value.copy(cardAnswersKept = false,
+                    notice = "Could not save this draft. Keep this lesson open and try again.")
+            }
+        }
+    }
+    suspend fun keepBeforeLeaving(): Boolean {
+        val current = mutableUiState.value
+        if (current.draft.isNotBlank() && !current.draftKept) persistDraft()
+        if (current.cardAnswers.isNotEmpty() && !current.cardAnswersKept) persistCardAnswers()
+        draftSaveJob?.join()
+        cardSaveJob?.join()
+        val kept = mutableUiState.value
+        val safe = (kept.draft.isBlank() || kept.draftKept) && (kept.cardAnswers.isEmpty() || kept.cardAnswersKept)
+        if (!safe) mutableUiState.value = kept.copy(notice = "Could not save this draft. Keep this lesson open and try again.")
+        return safe
     }
 
     /**
@@ -687,7 +725,8 @@ class StudyViewModel(
                     mutableUiState.value = mutableUiState.value.copy(isSubmitting = false, notice = result.message)
             }
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save your attempt. Your draft is kept; try again.") }
+            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = if (mutableUiState.value.draftKept) "Could not save your attempt. Your draft is kept; try again."
+                        else "Could not save this draft. Keep this lesson open and try again.") }
             finally { mutableUiState.value = mutableUiState.value.copy(isSubmitting = false) }
         }
     }
@@ -927,7 +966,8 @@ class StudyViewModel(
         val gateway = gateway
         if (gateway == null || !gateway.available) {
             mutableUiState.value = mutableUiState.value.copy(
-                notice = "No AI provider is available. Your work is saved and Study will resume here.",
+                notice = if (mutableUiState.value.draftKept) "No AI provider is available. Your draft is kept on this phone."
+                    else "No AI provider is available. You can continue with the lesson material.",
                 isGenerating = false,
             )
             return
@@ -1370,7 +1410,8 @@ class StudyViewModel(
 
     fun setCardAnswer(itemId: String, answer: String) {
         val state = mutableUiState.value
-        mutableUiState.value = state.copy(cardAnswers = state.cardAnswers + (itemId to answer.take(1500)))
+        mutableUiState.value = state.copy(cardAnswers = state.cardAnswers + (itemId to answer.take(1500)), cardAnswersKept = false)
+        persistCardAnswers()
     }
 
     /**
@@ -1419,12 +1460,15 @@ class StudyViewModel(
                         outcome.decision.intervalDays else null,
                 )),
                 revealedAnswers = mutableUiState.value.revealedAnswers + itemId,
-                cardAnswers = mutableUiState.value.cardAnswers - itemId,
+                cardAnswers = if (outcome != null) mutableUiState.value.cardAnswers - itemId else mutableUiState.value.cardAnswers,
+                cardAnswersKept = false,
             )
+            persistCardAnswers()
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) {
                 mutableUiState.value = mutableUiState.value.copy(
-                    notice = "Could not check this answer. Your text is still saved.",
+                    notice = if (mutableUiState.value.cardAnswersKept) "Could not check this answer. Your draft is kept on this phone."
+                        else "Could not check this answer. Keep this lesson open and try again.",
                 )
             } finally {
                 mutableUiState.value = mutableUiState.value.copy(

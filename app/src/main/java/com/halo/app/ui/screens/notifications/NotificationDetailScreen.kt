@@ -32,6 +32,9 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
     var dismissConfirmation by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val shellHosted = BindShellChildPage("Notification", onBack,
         sourceIdentity = "${item?.key}:${item?.postedAt}:${item?.active}:${item?.dismissible}:$busy:$composing",
+        disabledActionReasons = mapOf(
+            "notification.reply" to androidx.compose.ui.res.stringResource(if (busy) com.halo.app.R.string.action_wait else com.halo.app.R.string.action_no_reply),
+            "notification.dismiss" to androidx.compose.ui.res.stringResource(if (busy) com.halo.app.R.string.action_wait else com.halo.app.R.string.action_not_dismissible)),
         actions = listOf(
             ShellPageAction("notification.privacy", "Manage app notification privacy", HaloGlyph.SECURITY, onInvoke = onPrivacy),
             ShellPageAction("notification.reply", "Reply", HaloGlyph.CONVERSATION,

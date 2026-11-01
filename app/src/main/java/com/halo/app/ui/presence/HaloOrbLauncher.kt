@@ -50,10 +50,12 @@ fun HaloOrbLauncher(signal: HaloSignalPresentation, interaction: HaloOrbInteract
     contextActions: List<HaloOrbContextAction> = emptyList(),
     onContextAction: (HaloOrbContextAction) -> Unit = {},
     hint: String? = null, onDismissHint: () -> Unit = {}, leading: (@Composable () -> Unit)? = null,
-    showToolCatalog: Boolean = true) {
+    showToolCatalog: Boolean = true,
+    actionPins: com.halo.app.ui.theme.ActionPinSettings = com.halo.app.ui.theme.ActionPinSettings(),
+    onActionPins: (suspend (String, List<String>, List<String>) -> Unit)? = null) {
     LocalHaloZone5Navigation.current?.let { navigation ->
         HaloZone5OrbLauncher(signal, interaction, onPrimary, onStop, contextActions, onContextAction,
-            size, orbModifier, navigation)
+            size, orbModifier, navigation, actionPins, onActionPins)
         return
     }
     var expanded by rememberSaveable { mutableStateOf(false) }

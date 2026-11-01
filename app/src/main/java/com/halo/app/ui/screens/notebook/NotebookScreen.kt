@@ -116,8 +116,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
     onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L,
     onOpenCanvasLibrary: (() -> Unit)? = null) {
-    LifecycleResumeEffect(viewModel) {
+    var returnItem by remember { mutableStateOf<String?>(null) }
+    val viewBinding by viewModel.viewBinding.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(viewModel to viewBinding) {
         viewModel.refreshContextPolicy()
+        returnItem = viewModel.pendingReturnItem()
         onPauseOrDispose {}
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -153,6 +156,19 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var confirmTrash by remember { mutableStateOf(false) }
     val visibleItems = remember(state.items, state.filter) {
         state.items.filterNot { it.objectRef.id.value.startsWith("learning:") || state.filter == NotebookFilter.MEMORY }
+    }
+    LaunchedEffect(returnItem, state, visibleItems, showLibrary) {
+        val target = returnItem ?: return@LaunchedEffect
+        if (!showLibrary || !state.isLoaded || state.loadError || !viewModel.isCurrentView(state)) return@LaunchedEffect
+        val index = visibleItems.indexOfFirst { it.objectRef.id.value == target }
+        if (index >= 0) {
+            androidx.compose.runtime.withFrameNanos { }
+            // Header rows vary with Inbox/standalone/Undo. Actual item count locates the keyed result block.
+            val prefix = (libraryList.layoutInfo.totalItemsCount - visibleItems.size - 1).coerceAtLeast(0)
+            libraryList.scrollToItem(prefix + index)
+        }
+        viewModel.consumedReturnItem(target)
+        returnItem = null
     }
     val collectionChoices = remember(state.collections) { state.collections.map { it.id to it.name } }
     var showWorkingSet by rememberSaveable { mutableStateOf(false) }
@@ -190,6 +206,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         )
     }
     BindShellPageActions(ShellPageOwner("notebook", sourceIdentity = "${state.filter}:${state.selectedCollectionId}:$queryText:${state.resolvedQuery}:${state.sort}:$workspaceView:$selecting:${selectedIds.sorted()}",
+        helpDescription = stringResource(R.string.zone5_help_library),
+        guidanceBlocked = mutating || state.loadError || sortMenu || batchMenu || showInboxCapture || showLocalSearch || selecting,
+        completedGuideIds = if (state.isLoaded && !state.loadError && state.items.any { it.objectRef.type == WorkspaceObjectType.NOTE }) setOf("library-new.v1") else emptySet(),
+        helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("library-new.v1", "page.notebook.new-note", stringResource(R.string.zone5_guide_library),
+            state.isLoaded && !state.loadError && state.items.any { it.objectRef.type == WorkspaceObjectType.NOTE })),
         nextStep = if (showLibrary && state.isLoaded && !state.loadError && !mutating && state.items.isEmpty() &&
             queryText.isBlank() && state.filter == NotebookFilter.ALL && !selecting && !showInboxCapture && !showLocalSearch)
             com.halo.app.ui.presence.ShellNextStep("library-new.v1", "page.notebook.new-note", stringResource(R.string.zone5_guide_library)) else null,
@@ -197,11 +218,19 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         canonicalToolIds = if (!showLibrary) listOf("halo_list_screens", "halo_open_screen") else listOf("halo_library_view", "halo_library_set_view", "halo_library_organization", "halo_library_organize",
             "halo_library_batch", "halo_library_apply_batch", "halo_note_get", "halo_note_purge_status",
             "halo_note_purge", "halo_note_purge_retry"),
-        disabledActionReasons = mapOf(
-            "page.notebook.new-note" to uiText("Updating..."), "page.notebook.import" to uiText("Updating..."),
-            "page.notebook.organize" to if (mutating) uiText("Updating...") else stringResource(R.string.zone5_refresh_first),
-            "page.notebook.select-visible" to uiText(if (mutating) "Updating..." else "Nothing in this view"),
-            "page.notebook.selection-actions" to stringResource(if (state.loadError) R.string.zone5_refresh_first else R.string.zone5_select_first))), libraryActions + listOf(
+        defaultDisabledActionReason = stringResource(when {
+            mutating -> R.string.action_wait
+            !state.isLoaded -> R.string.action_loading
+            else -> R.string.zone5_refresh_first
+        }),
+        disabledActionReasons = buildMap {
+            put("page.notebook.view-library", stringResource(R.string.action_current_view))
+            put("page.notebook.view-tools", stringResource(R.string.action_current_view))
+            if (canUseSelection) {
+                put("page.notebook.select-visible", uiText("Nothing in this view"))
+                put("page.notebook.selection-actions", stringResource(R.string.zone5_select_first))
+            }
+        }), libraryActions + listOf(
                 ShellPageAction("page.notebook.view-library", "Library", HaloGlyph.FILE, !showLibrary) { selectView(true) },
                 ShellPageAction("page.notebook.view-tools", "Tools", HaloGlyph.TOOL, showLibrary) { selectView(false) }))
     BackHandler(enabled = !showLibrary) { workspaceView = "library" }
@@ -735,8 +764,7 @@ internal fun WorkspaceObjectRow(
                     ?: if (row.inInbox) uiText("Inbox") else null
                 Text(listOfNotNull(typeLabel, collectionLabel, dateLabel).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
-                    overflow = TextOverflow.Ellipsis)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, softWrap = true)
                 item.snippet?.trim()?.takeIf {
                     it.isNotBlank() && it != row.title
                 }?.let { excerpt ->

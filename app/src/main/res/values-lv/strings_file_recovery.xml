@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_recovery_open">Neizdevās atvērt failu.</string>
+    <string name="file_recovery_create">Neizdevās izveidot dokumentu.</string>
+    <string name="file_recovery_import">Neizdevās importēt failu.</string>
+    <string name="file_recovery_edit">Neizdevās saglabāt izmaiņu.</string>
+    <string name="file_recovery_export">Neizdevās izveidot eksportēto kopiju.</string>
+    <string name="file_recovery_transform">Neizdevās izveidot rediģēto attēlu.</string>
+    <string name="file_recovery_batch">Neizdevās apstrādāt visus attēlus. Pirms atkārtošanas pārbaudiet tālāk redzamos rezultātus.</string>
+    <string name="file_recovery_annotate">Neizdevās saglabāt šīs piezīmes.</string>
+    <string name="file_recovery_insert">Neizdevās pievienot vienumu kanvai.</string>
+    <string name="file_recovery_preview">Neizdevās atvērt attēla priekšskatījumu.</string>
+    <string name="file_recovery_cancelled">Darbība apturēta. Daži rezultāti jau var būt izveidoti. Pirms atkārtošanas pārbaudiet rezultātus un bibliotēku.</string>
+    <string name="file_recovery_interrupted">Iepriekšējā darbība tika pārtraukta; rezultāts nav apstiprināts. Pirms atkārtošanas pārbaudiet failu un bibliotēku.</string>
+    <string name="file_recovery_access">Piekļuve nav pieejama. Izvēlieties pieejamu failu vai mapi.</string>
+    <string name="file_recovery_retry">Pārbaudiet pašreizējo failu, pēc tam izvēlieties darbību vēlreiz.</string>
+</resources>

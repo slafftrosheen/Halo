@@ -158,12 +158,28 @@ FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("file_tools", selected?.id,
         "${selected?.version}:${state.file?.version}:${state.text?.revision}:${state.annotations?.revision}",
         canonicalSourceVersion = selected?.takeIf { it.kind == WorkspaceFileToolsKind.FILE }?.version,
+        helpDescription = stringResource(R.string.zone5_help_files_description),
+        guidanceBlocked = busy || state.loading || state.error || creating || sourceToolsOpen || choosing != null || imageEdit != null ||
+            collage != null || extracting != null || table || ink != null || exportSource != null,
+        completedGuideIds = if (selected != null && !state.loading && !state.error) setOf("notes-open.v1") else emptySet(),
+        helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("notes-open.v1", "page.office.open", stringResource(R.string.zone5_guide_office), selected != null && !state.loading && !state.error)),
         nextStep = if (selected == null && !busy && !state.loading && !state.error && !creating && !sourceToolsOpen)
             com.halo.app.ui.presence.ShellNextStep("notes-open.v1", "page.office.open", stringResource(R.string.zone5_guide_office)) else null,
         canonicalToolIds = listOf("halo_file_tool_capabilities", "halo_get_file_metadata", "halo_text_get", "halo_text_export", "halo_pdf_annotation_get"),
-        disabledActionReasons = mapOf("page.office.export" to if (busy) uiText("Updating...")
-            else if (selected?.kind == WorkspaceFileToolsKind.FILE && state.file?.mimeType?.startsWith("text/") == true) stringResource(R.string.zone5_edit_text_first)
-            else stringResource(R.string.zone5_select_export)))
+        defaultDisabledActionReason = stringResource(R.string.action_wait),
+        disabledActionReasons = mapOf(
+            "page.office.study" to stringResource(if (busy) R.string.action_wait else R.string.action_source_unavailable),
+            "page.office.export" to stringResource(when {
+                busy -> R.string.action_wait
+                state.loading -> R.string.action_loading
+                selected == null -> R.string.zone5_select_export
+                selected.kind in setOf(WorkspaceFileToolsKind.FILE, WorkspaceFileToolsKind.PDF_ANNOTATIONS) && !sourceAvailable -> R.string.action_source_unavailable
+                selected.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS && state.annotations == null -> R.string.action_source_unavailable
+                selected.kind == WorkspaceFileToolsKind.PDF_ANNOTATIONS && state.file?.version != state.annotations?.source?.version -> R.string.action_source_changed
+                selected.kind == WorkspaceFileToolsKind.TEXT_DOCUMENT && state.text == null -> R.string.action_source_unavailable
+                selected.kind == WorkspaceFileToolsKind.FILE && state.file?.mimeType?.startsWith("text/") == true -> R.string.zone5_edit_text_first
+                else -> R.string.zone5_select_export
+            })))
     com.halo.app.ui.presence.BindShellPageActions(pageOwner, buildList {
         add(com.halo.app.ui.presence.ShellPageAction("page.office.new", stringResource(R.string.file52_new_document), com.halo.app.ui.icons.HaloGlyph.NOTE, !busy) { creating = true })
         add(com.halo.app.ui.presence.ShellPageAction("page.office.open", stringResource(R.string.file52_open_file), com.halo.app.ui.icons.HaloGlyph.FILE, !busy) {
@@ -252,7 +268,7 @@ imageActions()
             }
             if (state.loading) item { CircularProgressIndicator() }
             if (state.error || state.cancelled) item {
-                Text(stringResource(if (state.cancelled) R.string.file52_cancelled else R.string.file52_error), color = MaterialTheme.colorScheme.error)
+                Text(fileToolFailureText(state), color = MaterialTheme.colorScheme.error)
                 model.selectedObjectId?.takeIf { id -> objects.any { it.id.value == id && it.type == WorkspaceObjectType.NOTE } }?.let { id ->
                     TextButton(onClick = { onOpenNote(id) }, enabled = !busy) { Text(stringResource(R.string.file52_open_editor)) }
                 }

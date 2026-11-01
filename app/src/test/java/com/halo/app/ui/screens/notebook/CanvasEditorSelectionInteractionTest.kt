@@ -126,6 +126,14 @@ class CanvasEditorSelectionInteractionTest {
     @Test fun groupTitleTapTogglesCanonicalSelectionWithoutTextWriteOrEditableFocus() = assertBodySelectsWithoutEditor(CanvasNodeType.GROUP)
     @Test fun tagTitleTapTogglesCanonicalSelectionWithoutTextWriteOrEditableFocus() = assertBodySelectsWithoutEditor(CanvasNodeType.TAG)
 
+    @Test fun semanticSelectionExposesAndTogglesActualSelectedState() {
+        val board = render(CanvasNodeType.TEXT, selecting = true)
+        val card = compose.onNode(hasText(board.body) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))
+        card.assertIsNotSelected().performClick().assertIsSelected()
+        compose.runOnIdle { assertEquals(setOf(board.card), board.vm.uiState.value.selectedNodeIds) }
+        card.performClick().assertIsNotSelected()
+        compose.runOnIdle { assertTrue(board.vm.uiState.value.selectedNodeIds.isEmpty()) }
+    }
     @Test fun ordinaryTextEditingStillFocusesAndPersistsThroughTheSameOwner() {
         val board = render(CanvasNodeType.TEXT, selecting = false)
         compose.onNode(hasText(board.body) and hasSetTextAction(), useUnmergedTree = true)

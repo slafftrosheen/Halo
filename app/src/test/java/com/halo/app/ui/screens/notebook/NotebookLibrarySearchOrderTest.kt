@@ -114,6 +114,47 @@ class NotebookLibrarySearchOrderTest {
         }
     }
 
+    @Test fun libraryViewRestoresFromTheEntryWithoutDispatchingAnyAction() {
+        val first = androidx.lifecycle.SavedStateHandle()
+        compose.runOnUiThread {
+            model.bindSavedView(first)
+            model.setQuery("Field")
+            model.setFilter(NotebookFilter.NOTES)
+            model.setSort(NotebookSort.TITLE)
+            model.selectCollection("collection-fixture")
+            model.toggleSelection(resultIds.getValue(NOTE_TITLE))
+        }
+        val restored = androidx.lifecycle.SavedStateHandle(first.keys().associateWith { first.get<Any?>(it) })
+        compose.runOnUiThread {
+            model.setQuery("Changed later")
+            model.setFilter(NotebookFilter.ALL)
+            model.bindSavedView(restored)
+            val view = model.libraryView()
+            assertEquals("Field", view.query)
+            assertEquals(NotebookFilter.NOTES, view.filter)
+            assertEquals(NotebookSort.TITLE, view.sort)
+            assertEquals("collection-fixture", view.collectionId)
+            assertEquals(setOf(resultIds.getValue(NOTE_TITLE)), view.selection)
+        }
+        assertTrue(navigation.isEmpty())
+    }
+
+    @Test fun lateRestoredBindingRevealsRenamedItemOnlyAfterTheRetainedQuerySettles() {
+        runBlocking { repeat(25) { fixture.notes.createNote("Synthetic", title = "$QUERY middle $it") } }
+        render(height = 600)
+        val id = resultIds.getValue(NOTE_TITLE)
+        runBlocking { fixture.notes.renameNote(id, "$QUERY zzz returned item") }
+        val restored = androidx.lifecycle.SavedStateHandle(mapOf("library.query" to QUERY,
+            "library.sort" to NotebookSort.TITLE.name, "library.filter" to NotebookFilter.NOTES.name,
+            "library.lastOpened" to id))
+        compose.runOnIdle { model.bindSavedView(restored) }
+        compose.waitUntil(10_000) { scheduler.runCurrent(); model.isCurrentView(model.uiState.value) && model.pendingReturnItem() == null }
+        compose.onNodeWithText("$QUERY zzz returned item").assertIsDisplayed()
+        assertEquals(QUERY, model.libraryView().query)
+        assertEquals(NotebookFilter.NOTES, model.libraryView().filter)
+        assertTrue(navigation.isEmpty())
+    }
+
     @Test fun librarySearchKeepsAllMatchingResultsWithoutInstrumentRows() {
         // A tall inspection viewport makes all three real result rows measurable.
         // This proves rendered order, not a phone first-screen/scroll-count claim.

@@ -116,6 +116,8 @@ internal fun SettingsContent(
     val savedPalettes = palettePreferences?.state?.collectAsStateWithLifecycle()?.value
     val settingsOwner = ShellPageOwner(if (initialAdvanced) "advanced_settings" else "settings",
         sourceIdentity = "$advanced:$page:$expandedGroup:${state.appearanceMode}:$savedPalettes",
+        helpDescription = if (page == null) androidx.compose.ui.res.stringResource(R.string.zone5_help_settings)
+            else androidx.compose.ui.res.stringResource(R.string.zone5_help_settings_page, uiText(page!!)),
         activeToolId = page?.let { "settings." + it.lowercase().replace(Regex("[^a-z0-9]+"), "_") },
         canonicalToolIds = if (page == "Appearance" || page == "Language") listOf("halo_get_preferences", "halo_set_preferences") else emptyList())
     val searchContent: @Composable () -> Unit = {
@@ -126,7 +128,7 @@ internal fun SettingsContent(
             placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.brand_settings_search)) },
             leadingIcon = { HaloIcon(HaloGlyph.SEARCH, null, Modifier.size(22.dp)) })
     }
-    val searchInZone = com.halo.app.ui.presence.BindShellUtilityBand(settingsOwner, searchContent)
+    val searchInZone = com.halo.app.ui.presence.BindShellUtilityBand(settingsOwner, content = searchContent)
     androidx.activity.compose.BackHandler(page != null || expandedGroup != null || searchOpen) {
         when { page != null -> page = null; searchOpen -> { searchOpen = false; searchQuery = "" }; else -> expandedGroup = null }
     }

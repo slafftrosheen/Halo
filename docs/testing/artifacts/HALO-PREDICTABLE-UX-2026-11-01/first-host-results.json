@@ -1,0 +1,66 @@
+[
+  {
+    "name": "com.halo.app.data.notebook.NotebookDocumentRepositoryTest",
+    "tests": "8",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:29:48.404Z"
+  },
+  {
+    "name": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+    "tests": "9",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:29:58.881Z"
+  },
+  {
+    "name": "com.halo.app.ui.screens.notebook.NoteEditorViewModelTest",
+    "tests": "6",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:30:11.218Z"
+  },
+  {
+    "name": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+    "tests": "11",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:30:11.549Z"
+  },
+  {
+    "name": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+    "tests": "9",
+    "failures": "5",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:30:17.320Z"
+  },
+  {
+    "name": "com.halo.app.ui.shell.Zone5WorkingAreaTest",
+    "tests": "3",
+    "failures": "3",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:30:20.388Z"
+  },
+  {
+    "name": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+    "tests": "9",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:30:24.106Z"
+  },
+  {
+    "name": "com.halo.app.ui.zone5.Zone5WorkspaceMenusTest",
+    "tests": "1",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "timestamp": "2026-11-01T12:30:39.705Z"
+  }
+]

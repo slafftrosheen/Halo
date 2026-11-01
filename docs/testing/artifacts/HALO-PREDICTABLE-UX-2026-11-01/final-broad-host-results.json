@@ -1,0 +1,11 @@
+{
+  "suites": 505,
+  "tests": 2408,
+  "failures": 1,
+  "errors": 0,
+  "skipped": 0,
+  "failed_cases": [
+    "com.halo.app.ui.screens.kids.KidsShellOrbBindingTest.returningHomeOrCreatingDoesNotKeepAnOldLessonIdentity"
+  ],
+  "source_scope": "Final production source; before updating the old standalone Kids title assertion to the complete title/status summary."
+}

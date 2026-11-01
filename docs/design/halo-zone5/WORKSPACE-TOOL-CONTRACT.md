@@ -1,5 +1,7 @@
 # Halo Workspace tool contract
 
+Status: Implemented source contract; physical and participant acceptance remains separate.
+
 Updated 31 October 2026 from the user's workspace and orb direction. This extends Zone 5; the user's choices override the asset pack's thin orb artwork and fixed instrument colours.
 
 | Instrument | Purpose | Canonical content |
@@ -18,7 +20,7 @@ Library contains saved objects. Tools opens the five instruments directly. A too
 2. File/document identity and truthful state live in the Zone utility row. File, Edit, Add, View and More follow, using the same current-entry action lease. Menus and temporary inspectors open from the Zone. Opening them never edits content.
 3. Studio's upper area contains only its fitted artboard. Drawing, text, shapes, image import, layers, transforms, undo/redo, save, export and continuity use the Zone menus. Notes and Canvas open their existing editing panels from those same menu positions; their permanent body docks are removed in the shared shell.
 4. System Back owns return navigation. Duplicate Back buttons and Back entries do not occupy the Zone. Existing page BackHandlers still flush notes, leave canvases and close Studio/Study subviews through their canonical owners.
-5. Settings, keyboard-visible and short windows use a single compact navigation row. All actions retains Library/Tools switching and every Studio overflow operation; compact utility controls remain available inside that sheet. Home retains the focused composer at one composition call site. Large text uses an accessible, content-sized fallback; normal utility overflow scrolls inside the quarter-height Zone while the orb/Menu row stays reachable.
+5. Settings, keyboard-visible and short windows use a single compact navigation row. All actions retains Library/Tools switching and every Studio overflow operation; compact utility controls remain available inside that sheet. Home retains the focused composer at one composition call site. Large text uses an accessible, content-sized fallback. Normal layouts measure identity, menus and navigation: menus move into grouped Actions first, then identity/secondary controls if necessary. Full identity and state remain readable in Actions without essential ellipsis; the normal whole Zone stays one quarter.
 6. Workspace Library/Tools switching belongs to the Zone. Tool/file choices, document text, graphics, lesson interactions and form fields remain working content. Supported formats and operations stay truthful; the interface claims no new round-trip format support.
 
 ## Kids parity
@@ -33,7 +35,11 @@ The fitted artboard owns the full upper working area of the graphics editor. Fil
 
 ## Guidance and effects
 
-A next-step hint must identify a currently available, non-destructive action. One quiet, single-line hint may appear after idle only when measured spare Zone space permits it; it settles after six seconds and never replaces utility content or navigation. its halo trace surrounds the relevant labelled satellite or menu group. It appears only after idle and never increases the normal quarter-height budget. Using that control or the accessibility Dismiss action suppresses that hint/version. No coaching during typing, voice activity, menus, modal review or recovery. Guide light, reduced motion, high contrast, lifecycle and power restrictions remain authoritative. An effect never executes a command or proves a result.
+A next-step hint identifies a currently enabled non-destructive action through the current entry lease. The cue requires a visible target. Its optional explanation appears only when the measured spare Zone budget fits the complete text and a real Dismiss control; accessibility timeout policy applies. Guidance never grows the normal quarter-height Zone. A single halo lap settles into a static cue. Invoking a command is not completion: actual owner receipts suppress completed hint versions. Explicit dismissal persists separately.
+
+Actions offers contextual Help and requested step-by-step tasks. Help explains purpose, examples, current steps and unavailable reasons. It never starts a microphone or invokes a task automatically. Optional reading uses the existing speech owner and is omitted when TalkBack touch exploration is active. Requested guidance stays usable in compact layouts or with Guide light off; real inspectors temporarily own input, and guided Help can resume after they close. Pause, Exit and explicit Close stop that continuation. Entry/object changes fence the presentation. Guidance amount, Guide light, font, contrast and motion remain independent preferences.
+
+Proactive hints are suppressed during typing, voice, task/recovery, menus, inspectors, review and parent disclosure. Real feedback and user interaction take priority over guidance, and both pause ambient decoration. No effect changes storage, permission, completion or child authority.
 
 Orb animations use the older thick rounded ring, layered glow and state effects at both Zone and larger sizes. Static/reduced-motion paint matches that geometry. Idle settles; active motion comes from the actual state. All paint follows the selected theme's semantic roles.
 
@@ -51,4 +57,4 @@ Measure the 75/25 working/Zone split on the phone and verify no persistent file/
 
 ## Planned usability and clarity work
 
-The [roadmap to 10/10](ROADMAP-TO-10-2026-11-01.md) defines proposed improvements, delivery batches and acceptance evidence. It is a planning document; implemented behaviour continues to follow this contract until reviewed changes are delivered.
+The [roadmap to 10/10](ROADMAP-TO-10-2026-11-01.md) defines proposed improvements, delivery batches and acceptance evidence. Implementation and current verification are recorded in [the implementation register](PREDICTABLE-UX-IMPLEMENTATION.md). Physical, assistive and participant acceptance remain separately recorded.

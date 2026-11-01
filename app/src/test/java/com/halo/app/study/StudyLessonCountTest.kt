@@ -15,6 +15,17 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],manifest=Config.NONE)
 class StudyLessonCountTest {
+    @Test fun escapedAnswerOverflowPreservesThePreviousReadableRecord() = runBlocking {
+        val storage = MemoryStorage()
+        val store = StudyLessonStore(storage)
+        store.saveDraft("lesson", "Kept attempt")
+        store.saveCardAnswers("lesson", mapOf("first" to "Kept answer"))
+        val previous = store.loadRecovery("lesson")
+        assertTrue(runCatching { store.saveCardAnswers("lesson", (1..70).associate { "card-$it" to "\"".repeat(1500) }) }.isFailure)
+        assertEquals(previous, StudyLessonStore(storage).loadRecovery("lesson"))
+        store.saveDraft("lesson", "Next attempt")
+        assertEquals("Next attempt", store.loadRecovery("lesson").draft)
+    }
     @Test fun interruptedAttemptKeepsDraftAndSubmissionIdentityAcrossStoreRecreation() = runBlocking {
         val storage = MemoryStorage()
         val first = StudyLessonStore(storage)
@@ -35,6 +46,32 @@ class StudyLessonCountTest {
         assertEquals("", restored.loadRecovery("lesson").draft)
         assertNull(restored.loadRecovery("lesson").pendingRequestId)
     }
+    @Test fun practiceAnswersSurviveStoreRecreationWithoutChangingTheAttemptDraft() = runBlocking {
+        val storage = MemoryStorage()
+        val store = StudyLessonStore(storage)
+        store.saveDraft("lesson", "Question for Halo")
+        store.saveCardAnswers("lesson", mapOf("card-a" to "My answer", "card-b" to "Another answer"))
+        val restored = StudyLessonStore(storage).loadRecovery("lesson")
+        assertEquals("Question for Halo", restored.draft)
+        assertEquals(mapOf("card-a" to "My answer", "card-b" to "Another answer"), restored.cardAnswers)
+        store.saveCardAnswers("lesson", mapOf("card-b" to "Another answer"))
+        assertFalse(StudyLessonStore(storage).loadRecovery("lesson").cardAnswers.containsKey("card-a"))
+        store.delete("lesson")
+        assertTrue(StudyLessonStore(storage).loadRecovery("lesson").cardAnswers.isEmpty())
+    }
+    @Test fun failedOrUnconfirmedWritesCannotReturnSuccessfulRecoveryAndCorruptionIsNotOverwritten() = runBlocking {
+        val storage = MemoryStorage()
+        val store = StudyLessonStore(storage)
+        store.saveDraft("lesson", "Kept")
+        storage.dropWrites = true
+        assertTrue(runCatching { store.saveDraft("lesson", "Not kept") }.isFailure)
+        assertEquals("Kept", store.loadRecovery("lesson").draft)
+        assertTrue(runCatching { store.saveCardAnswers("lesson", mapOf("card" to "Not kept")) }.isFailure)
+        storage.dropWrites = false
+        storage.putString("study_recovery_v1_lesson", "{broken")
+        assertTrue(runCatching { store.saveDraft("lesson", "Replacement") }.isFailure)
+        assertEquals("{broken", storage.getString("study_recovery_v1_lesson"))
+    }
     @Test fun repliesCountWithoutGradingAndStayCorrectAcrossRestoreAndDeletion() = runBlocking {
         val storage = MemoryStorage()
         val store = StudyLessonStore(storage)
@@ -53,9 +90,10 @@ class StudyLessonCountTest {
         } finally { observer.cancelAndJoin() }
     }
     private class MemoryStorage : Storage {
+        var dropWrites = false
         private val values = java.util.concurrent.ConcurrentHashMap<String, Any>()
         override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
-        override fun putString(key: String, value: String?) { if(value == null) values.remove(key) else values[key] = value }
+        override fun putString(key: String, value: String?) { if (dropWrites) return; if(value == null) values.remove(key) else values[key] = value }
         override fun getInt(key: String, defaultValue: Int) = values[key] as? Int ?: defaultValue
         override fun putInt(key: String, value: Int) { values[key] = value }
         override fun getBoolean(key: String, defaultValue: Boolean) = values[key] as? Boolean ?: defaultValue

@@ -96,13 +96,14 @@ class KidsShellOrbBindingTest {
                 band.value?.let { RenderShellUtilityBand(it) }
             }
         } }
-        compose.onNodeWithText("Volcano lesson").assertIsDisplayed()
+        compose.onNodeWithText("Volcano lesson · Talk or type").assertIsDisplayed()
         compose.runOnIdle { destination.value = KidsDestination.HOME }
-        compose.onNodeWithText("Kids").assertIsDisplayed()
-        compose.onNodeWithText("Volcano lesson").assertDoesNotExist()
+        compose.onNodeWithText("Kids · Talk or type").assertIsDisplayed()
+        compose.onNodeWithText("Volcano lesson", substring = true).assertDoesNotExist()
         compose.runOnIdle { destination.value = KidsDestination.CREATE }
-        compose.onNodeWithText("My project").assertIsDisplayed()
-        compose.onNodeWithText("Volcano lesson").assertDoesNotExist()
+        compose.onNodeWithText("My project · Talk or type").assertIsDisplayed()
+        compose.onNodeWithText("Volcano lesson", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Kids · Talk or type").assertDoesNotExist()
     }
 
 }

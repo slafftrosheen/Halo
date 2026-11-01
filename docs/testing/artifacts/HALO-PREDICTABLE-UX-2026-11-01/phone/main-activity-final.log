@@ -1,0 +1,70 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityComposerPhysicalTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.shell.MainActivityComposerPhysicalTest:
+INSTRUMENTATION_STATUS: test=canonicalClearUpdatesTheRealComposerAndCannotReplaceANewerEdit
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityComposerPhysicalTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=canonicalClearUpdatesTheRealComposerAndCannotReplaceANewerEdit
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityComposerPhysicalTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=freshHardwareKeysPreserveTheWholeLiteralInTheRealShell
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityComposerPhysicalTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=freshHardwareKeysPreserveTheWholeLiteralInTheRealShell
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest:
+INSTRUMENTATION_STATUS: test=newProjectPreviewSurvivesTypingCancellationAndWarmNavigation
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Studio entry did not render
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest.newProjectPreviewSurvivesTypingCancellationAndWarmNavigation(MainActivityStudioPreviewPhysicalTest.kt:45)
+
+INSTRUMENTATION_STATUS: stream=
+Error in newProjectPreviewSurvivesTypingCancellationAndWarmNavigation(com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest):
+java.lang.AssertionError: Studio entry did not render
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest.newProjectPreviewSurvivesTypingCancellationAndWarmNavigation(MainActivityStudioPreviewPhysicalTest.kt:45)
+
+INSTRUMENTATION_STATUS: test=newProjectPreviewSurvivesTypingCancellationAndWarmNavigation
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 96,541
+There was 1 failure:
+1) newProjectPreviewSurvivesTypingCancellationAndWarmNavigation(com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest)
+java.lang.AssertionError: Studio entry did not render
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.halo.app.ui.shell.MainActivityStudioPreviewPhysicalTest.newProjectPreviewSurvivesTypingCancellationAndWarmNavigation(MainActivityStudioPreviewPhysicalTest.kt:45)
+
+FAILURES!!!
+Tests run: 3,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

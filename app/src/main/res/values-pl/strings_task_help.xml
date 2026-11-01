@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_help_title">Pomoc w tym zadaniu</string>
+    <string name="zone5_help_amount">Ilość wskazówek</string>
+    <string name="zone5_help_off">Tylko na żądanie</string>
+    <string name="zone5_help_cues">Dyskretne wskazówki</string>
+    <string name="zone5_help_explanations">Wskazówki i wyjaśnienia</string>
+    <string name="zone5_help_steps">Kroki zadania</string>
+    <string name="zone5_help_done">Te kroki są ukończone</string>
+    <string name="zone5_help_continue">Kontynuuj w bieżącym widoku. Następne polecenie pojawi się, gdy będzie dostępne.</string>
+    <string name="zone5_help_guide">Prowadź mnie krok po kroku</string>
+    <string name="zone5_help_pause">Wstrzymaj prowadzenie</string>
+    <string name="zone5_help_paused">Prowadzenie wstrzymane</string>
+    <string name="zone5_help_exit">Zakończ prowadzenie</string>
+    <string name="zone5_help_dismiss">Ukryj tę wskazówkę</string>
+    <string name="zone5_help_preference_failed">Nie udało się zapisać wyboru na następny raz.</string>
+    <string name="zone5_help_create">Utwórz projekt</string>
+    <string name="zone5_help_save_version">Zapisz wersję projektu</string>
+    <string name="zone5_help_make_copy">Utwórz osobną kopię</string>
+    <string name="zone5_help_studio">Zbuduj obraz z warstw. Na przykład dodaj warstwę tekstu, wpisz tytuł i wybierz Zastosuj. Zmiany są przechowywane jako lokalny szkic; Zapisz zatwierdza wersję projektu. Eksport tworzy osobny obraz. W wyniku wybierz lokalizację poza Halo.</string>
+    <string name="zone5_help_note">Pisz w notatce lub dodaj nagłówek, listę zadań albo obraz. Na przykład utwórz listę zakupów i zaznacz pozycję. Przed wyjściem sprawdź stan zapisu lub szkicu. Zmiany źródła Markdown zastosuj jawnie. Eksport tworzy osobny plik tekstowy i nie zastępuje notatki.</string>
+    <string name="zone5_help_canvas">Rozmieść tekst i karty źródeł na tablicy. Wybierz Dodaj, a potem rodzaj karty. Na przykład umieść notatkę obok zdjęcia. Karta z łączem odwołuje się do oryginału; kopia jest osobnym obiektem. Wybierz kartę, aby ją sprawdzić. Dopasuj wszystkie karty pokazuje całą tablicę.</string>
+    <string name="zone5_help_memory">Przejrzyj informacje, których Halo może użyć później. Otwórz wspomnienie, aby je poprawić lub świadomie zapomnieć. Na przykład popraw nieaktualną preferencję. Zapomnienie nie usuwa pliku źródłowego. Sugestie wymagają przeglądu, zanim staną się zapamiętanym kontekstem.</string>
+    <string name="zone5_help_study">Zacznij od celu i opcjonalnego materiału źródłowego. Na przykład wybierz notatkę i przećwicz jej główne idee. Przed rozpoczęciem sprawdź źródło i dostępność modelu. Zapisaną lekcję można otworzyć ponownie. Wpisz odpowiedź, poproś o pomoc lub użyj fiszek; Wstecz nie wysyła odpowiedzi.</string>
+    <string name="zone5_help_library">Biblioteka przechowuje Twoje prace. Znajdź element przez wyszukiwanie, filtr lub sortowanie i otwórz go. Powrót zachowuje widok i pokazuje element, jeśli nadal pasuje. Narzędzia otwierają pięć rodzin instrumentów. Import zachowuje lokalną kopię wybranego pliku.</string>
+    <string name="zone5_help_kids">Możesz pisać zamiast mówić. Wybierz Pomoc, aby dowiedzieć się, co powiedzieć. Stop kończy bieżące działanie głosowe. Chronionymi ustawieniami zajmuje się dorosły. Pomoc nie wysyła Twojej pracy i nie włącza mikrofonu.</string>
+    <string name="zone5_help_study_goal">Wybierz cel nauki, a następnie przejdź do materiałów.</string>
+    <string name="zone5_help_study_material">Wybierz materiał źródłowy lub wpisz temat przed kontynuowaniem.</string>
+    <string name="zone5_help_study_style">Wybierz styl nauki i przejdź do przeglądu opcji.</string>
+    <string name="zone5_help_study_start">Sprawdź źródło i wybierz dostępny model, a następnie rozpocznij lekcję.</string>
+    <string name="zone5_help_active">Prowadzenie jest aktywne</string>
+    <string name="zone5_help_resume">Wznów prowadzenie</string>
+</resources>

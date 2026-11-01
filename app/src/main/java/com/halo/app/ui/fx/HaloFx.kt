@@ -226,7 +226,7 @@ private val breathEase = CubicBezierEasing(0.45f, 0f, 0.55f, 1f)
 
 /** Guide: one best next step, never permission/cloud/payment/destructive opt-ins.
  * The optional first appearance traces the outline ONCE; subsequent attention
- * is only a pulse. Reduced motion always uses a fully drawn static outline.
+ * stays static. Reduced motion always uses a fully drawn static outline.
  */
 fun Modifier.haloTrace(
     enabled: Boolean,
@@ -248,19 +248,13 @@ fun Modifier.haloTrace(
             !lapPlayed -> {
                 lapPlayed = true
                 lap.snapTo(0f)
-                lap.animateTo(1f, tween(850, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)))
+                lap.animateTo(1f, tween(com.halo.app.ui.design.HaloMotion.guideLapMs, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)))
             }
             else -> lap.snapTo(1f)
         }
     }
     if (!enabled) return@composed this
-    val pulse = if (reduced || !foreground) 0.5f else {
-        val transition = rememberInfiniteTransition(label = "halo-guide-pulse")
-        val value by transition.animateFloat(0f, 1f,
-            infiniteRepeatable(tween(1200, easing = breathEase), RepeatMode.Reverse),
-            label = "guide")
-        value
-    }
+    val pulse = 0.5f // One arrival lap, then quiet; no continuing animation clock.
     drawWithContent {
         drawContent()
         val outline = RoundedCornerShape(corner).createOutline(size, layoutDirection, this)
@@ -308,7 +302,7 @@ fun Modifier.haloEdgeGlow(active: Boolean, accent: Color, corner: Dp = 44.dp): M
 /** Aura is for a hero/presence area; never combine with a simultaneous Guide trace. */
 fun Modifier.haloAura(accent: Color, warm: Color = Color.Unspecified): Modifier = composed {
     val secondary = if (warm == Color.Unspecified) MaterialTheme.colorScheme.tertiary else warm
-    val reduced = rememberHaloReducedMotion()
+    val reduced = rememberHaloReducedMotion() || com.halo.app.ui.theme.LocalHaloDecorationPaused.current
     val foreground = rememberHaloMotionForeground()
     val pulse = if (reduced || !foreground) 0.5f else {
         val transition = rememberInfiniteTransition(label = "halo-aura")

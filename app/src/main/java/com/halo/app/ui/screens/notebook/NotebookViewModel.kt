@@ -293,14 +293,48 @@ class NotebookViewModel(
             filter = requested.filter, selectedCollectionId = requested.collectionId, loadError = true)
     }
 
+    private val mutableViewBinding = MutableStateFlow(0L)
+    val viewBinding = mutableViewBinding.asStateFlow()
+    private var viewState: androidx.lifecycle.SavedStateHandle? = null
+    fun isCurrentView(state: NotebookUiState): Boolean = state.query == query.value && state.resolvedQuery == query.value.trim() &&
+        state.sort == sort.value && state.filter == filter.value && state.selectedCollectionId == selectedCollection.value
+    fun pendingReturnItem(): String? = viewState?.get<String>("library.lastOpened")
+    fun consumedReturnItem(id: String) {
+        if (pendingReturnItem() == id) viewState?.set<String?>("library.lastOpened", null)
+    }
+    /** Reattach the real Library entry after recreation; no command or selection is executed. */
+    fun bindSavedView(handle: androidx.lifecycle.SavedStateHandle) {
+        if (viewState === handle) return
+        viewState = handle
+        if (handle.contains("library.query")) {
+            query.value = handle.get<String>("library.query").orEmpty().take(500)
+            sort.value = NotebookSort.entries.find { it.name == handle.get<String>("library.sort") } ?: NotebookSort.UPDATED
+            filter.value = NotebookFilter.entries.find { it.name == handle.get<String>("library.filter") && it != NotebookFilter.MEMORY } ?: NotebookFilter.ALL
+            selectedCollection.value = handle.get<String>("library.collection")
+            selection.value = handle.get<ArrayList<String>>("library.selection").orEmpty().take(100).toSet()
+            libraryRevision++
+        }
+        keepView()
+        mutableViewBinding.value += 1
+    }
+    private fun keepView() {
+        viewState?.let { handle ->
+            handle["library.query"] = query.value
+            handle["library.sort"] = sort.value.name
+            handle["library.filter"] = filter.value.name
+            handle["library.collection"] = selectedCollection.value
+            handle["library.selection"] = ArrayList(selection.value)
+        }
+    }
+
     fun retryLibraryLoad() { libraryRevision++; refreshRevision.value += 1 }
 
     private var libraryRevision = 0L
-    fun setQuery(value: String) { libraryRevision++; query.value = value; selection.value = emptySet() }
-    fun setFilter(value: NotebookFilter) { libraryRevision++; if (value == NotebookFilter.MEMORY) { openMemoryHub(); return }; filter.value = value; selection.value = emptySet() }
-    fun selectCollection(id: String?) { libraryRevision++; selectedCollection.value = id; selection.value = emptySet() }
-    fun setSort(value: NotebookSort) { libraryRevision++; sort.value = value }
-    fun clearSelection() { libraryRevision++; selection.value = emptySet() }
+    fun setQuery(value: String) { libraryRevision++; query.value = value; selection.value = emptySet(); keepView() }
+    fun setFilter(value: NotebookFilter) { libraryRevision++; if (value == NotebookFilter.MEMORY) { openMemoryHub(); return }; filter.value = value; selection.value = emptySet(); keepView() }
+    fun selectCollection(id: String?) { libraryRevision++; selectedCollection.value = id; selection.value = emptySet(); keepView() }
+    fun setSort(value: NotebookSort) { libraryRevision++; sort.value = value; keepView() }
+    fun clearSelection() { libraryRevision++; selection.value = emptySet(); keepView() }
     internal suspend fun libraryOrganizationSnapshot(objectId: String?, collectionId: String?) =
         organization.captureGuarded(objectId, collectionId)
     internal suspend fun applyLibraryOrganization(expected: com.halo.app.data.notebook.NotebookOrganizationSnapshot,
@@ -324,7 +358,7 @@ class NotebookViewModel(
             is NotebookLibraryChange.Selection -> {
                 val visible = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.toSet()
                 if (change.ids.size > 100 || !visible.containsAll(change.ids)) return false
-                libraryRevision++; selection.value = change.ids.toSet()
+                libraryRevision++; selection.value = change.ids.toSet(); keepView()
             }
         }
         return true
@@ -338,9 +372,11 @@ class NotebookViewModel(
         if (id in selection.value) selection.value = selection.value - id
         else if (selection.value.size < 100) selection.value = selection.value + id
         else postNotice("Select up to 100 items at a time.")
+        keepView()
     }
     fun selectVisible() { libraryRevision++;
         selection.value = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.take(100).toSet()
+        keepView()
     }
     private var lastTrashSources = emptyList<NotebookBatchSource>()
 
@@ -418,6 +454,7 @@ class NotebookViewModel(
             // A newer explicit user selection remains authoritative if the lease was changed.
             if (!admission.undo && selection.value == selectionAtAdmission)
                 selection.value = admission.sources.map { it.objectId }.toSet() + admission.unavailableIds - successful
+            keepView()
             mutating.value = false
         }
     }
@@ -492,6 +529,8 @@ class NotebookViewModel(
     }
     fun openObject(item: WorkspaceObject) {
         val id = item.id.value
+        viewState?.set("library.lastOpened", id)
+        keepView()
         navigationChannel.trySend(when (item.type) {
             WorkspaceObjectType.NOTE -> if (item.contentRef == "file-tools:$id") NotebookNavigation.OpenFileTools(id) else NotebookNavigation.OpenNote(id)
             WorkspaceObjectType.CONVERSATION -> NotebookNavigation.OpenConversation(id)

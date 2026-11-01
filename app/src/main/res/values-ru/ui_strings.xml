@@ -4149,7 +4149,7 @@
     <string name="ui_66cd74a43e4c" formatted="false">"Во время урока: «подсказка», «повтори», «следующий шаг», «проще», «подробнее» или «стоп». Эти же действия есть ниже."</string>
     <string name="ui_d61a54f7137c" formatted="false">"Попробуй: «подсказка», «повтори», «следующий шаг», «проще», «подробнее» или «стоп»."</string>
     <string name="ui_7d72ddf69768" formatted="false">"Стартовый набор недоступен."</string>
-    <string name="ui_0a9d8afb0161" formatted="false">"Офисные инструменты"</string>
+    <string name="ui_0a9d8afb0161" formatted="false">"HaloNotes"</string>
     <string name="ui_2d43037f47e4" formatted="false">"halo Studio"</string>
     <string name="ui_dce612cabb53" formatted="false">"Графический редактор"</string>
     <string name="ui_7e4d5c460c04" formatted="false">"Мышление"</string>
@@ -4216,4 +4216,12 @@
     <string name="ui_1455ebb3baa9" formatted="false">"Действие не разрешено. Ничего не изменено."</string>
     <string name="ui_b57a8874efe5" formatted="false">"Не удалось завершить действие. Проверьте его перед повторной попыткой."</string>
     <string name="ui_813aeb18abd0" formatted="false">"Остановлено, чтобы не выйти за ограничения запроса"</string>
+    <string name="ui_0a4e0b71b7f3" formatted="false">"Обновление…"</string>
+    <string name="ui_3824a9f4dafe" formatted="false">"Холст"</string>
+    <string name="ui_849cd1fb5ad5" formatted="false">"Временный контекст разговора"</string>
+    <string name="ui_014659ab9d98" formatted="false">"Конфликт изменений"</string>
+    <string name="ui_3664895579f0" formatted="false">"Экспорт"</string>
+    <string name="ui_07fb0c16abc7" formatted="false">"Что halo может запомнить"</string>
+    <string name="ui_f32b0d69f95f" formatted="false">"Новый холст"</string>
+    <string name="ui_a424e33d9093" formatted="false">"Заблокировано"</string>
 </resources>

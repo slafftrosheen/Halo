@@ -70,12 +70,16 @@ internal fun CanvasNode.inkSelectionIsCurrent(source: CanvasNode?, canvasId: Str
     InkSelectionBookmarkCodec.resolve(context, canvasId, source.type, source.id, source.refObjectId, source.text, sourceVersion) != null
 }.getOrDefault(false)
 
+enum class CanvasSaveState { SAVED, EDITING, SAVING, FAILED }
+
 data class CanvasEditorUiState(
     val title: String = "Canvas",
     val nodes: List<CanvasNode> = emptyList(),
     val edges: List<CanvasEdge> = emptyList(),
     val references: List<WorkspaceObject> = emptyList(),
     val exporting: Boolean = false,
+    /** Acknowledged persistence of the visible text, positions and viewport. */
+    val saveState: CanvasSaveState = CanvasSaveState.SAVED,
     val viewportX: Float = 0f,
     val viewportY: Float = 0f,
     val viewportScale: Float = 1f,
@@ -83,6 +87,7 @@ data class CanvasEditorUiState(
     val selectedNodeIds: Set<String> = emptySet(),
     val selectionMode: Boolean = false,
     val organization: com.halo.app.data.notebook.CanvasOrganizationProposal? = null,
+    val organizationRequiresRefresh: Boolean = false,
     /** UI-only receipt, raised only when a new organization commit is written. */
     val organizationCommitRevision: Long = 0L,
     /** Ephemeral ids of cards moved by a newly committed organization. */
@@ -106,6 +111,14 @@ data class CanvasEditorUiState(
     val drawingDraft: com.halo.app.data.notebook.CanvasDrawingDraft? = null,
     val inkSelection: com.halo.sdk.runtime.ink.InkSelectionContext? = null,
 )
+
+/** A preview remains bound to the source versions reviewed when it was opened. */
+internal fun CanvasEditorUiState.organizationIsStale(): Boolean {
+    val proposal = organization ?: return false
+    return organizationRequiresRefresh || proposal.sourceFingerprints.any { (id, fingerprint) ->
+        nodes.firstOrNull { it.id == id }?.let { com.halo.app.data.notebook.canvasNodeFingerprint(it) } != fingerprint
+    }
+}
 
 internal fun CanvasEditorUiState.toCurrentCanvasContext(canvasId: String, hasPendingEdits: Boolean): com.halo.app.context.CanvasContextProjection? {
     if (!canEditBoard() || transcribing || aiDraft != null || textDraft != null || drawingDraft != null || hasPendingEdits) return null
@@ -305,6 +318,18 @@ class CanvasEditorViewModel(
     private val pendingNodeText = mutableMapOf<String, String>()
     private var pendingViewport: Triple<Float, Float, Float>? = null
     private var flushing = false
+    private var activePendingWrites = 0
+    private var pendingSaveFailed = false
+    private fun publishSaveState() {
+        val pending = pendingNodeText.isNotEmpty() || pendingNodePositions.isNotEmpty() || pendingViewport != null
+        if (!pending && activePendingWrites == 0 && !flushing) pendingSaveFailed = false
+        mutableState.value = mutableState.value.copy(saveState = when {
+            activePendingWrites > 0 || flushing -> CanvasSaveState.SAVING
+            pendingSaveFailed && pending -> CanvasSaveState.FAILED
+            pending -> CanvasSaveState.EDITING
+            else -> CanvasSaveState.SAVED
+        })
+    }
     private val commandMutex = Mutex()
 
     private val imageObservers = mutableMapOf<String, Job>()
@@ -402,7 +427,7 @@ class CanvasEditorViewModel(
         val ids = if (state.selectionMode && nodeId != null) {
             if (nodeId in state.selectedNodeIds) state.selectedNodeIds - nodeId else state.selectedNodeIds + nodeId
         } else setOfNotNull(nodeId)
-        mutableState.value = state.copy(selectedNodeId = nodeId, selectedNodeIds = ids)
+        mutableState.value = state.copy(selectedNodeId = if (state.selectionMode) nodeId?.takeIf { it in ids } ?: ids.firstOrNull() else nodeId, selectedNodeIds = ids)
     }
     fun toggleSelectionMode() {
         val state = mutableState.value
@@ -428,7 +453,7 @@ class CanvasEditorViewModel(
             sourceEdgesFingerprint = com.halo.app.data.notebook.canvasEdgesFingerprint(repository.snapshot(canvasId).second.filter { edge ->
                 scope.any { it.id == edge.fromNodeId || it.id == edge.toNodeId }
             }))
-        mutableState.value = mutableState.value.copy(organization = proposal, notice = null)
+        mutableState.value = mutableState.value.copy(organization = proposal, organizationRequiresRefresh = false, notice = null)
         if (!ai) return@command
         val engine = router ?: run { mutableState.value = mutableState.value.copy(notice = "No AI provider is ready. You can organize these cards manually."); return@command }
         mutableState.value = mutableState.value.copy(aiBusy = true)
@@ -457,6 +482,7 @@ class CanvasEditorViewModel(
         }
     }
     fun beginDrag(id: String) {
+        if (!mutableState.value.canEditBoard()) return
         // Direct manipulation always takes precedence over the completion glide.
         organizationMotionJob?.cancel()
         val state = mutableState.value
@@ -492,9 +518,10 @@ class CanvasEditorViewModel(
         mutableState.value = mutableState.value.copy(organization = proposal.copy(nextSteps = text.lines().map { it.trim().take(300) }.filter { it.isNotEmpty() }.take(20)))
     } }
     fun setOrganizationNote(enabled: Boolean) { mutableState.value.organization?.let { mutableState.value = mutableState.value.copy(organization = it.copy(createLinkedNote = enabled)) } }
-    fun cancelOrganization() { organizationGeneration++; organizationJob?.cancel(); mutableState.value = mutableState.value.copy(organization = null, aiBusy = false) }
+    fun cancelOrganization() { organizationGeneration++; organizationJob?.cancel(); mutableState.value = mutableState.value.copy(organization = null, organizationRequiresRefresh = false, aiBusy = false, notice = null) }
     fun approveOrganization() = command {
         val proposal = mutableState.value.organization ?: return@command
+        check(!mutableState.value.organizationIsStale()) { "Source cards changed. Create a new preview." }
         flushPendingEdits()
         undoSnapshot = repository.applyOrganization(proposal)
         val saved = undoSnapshot != null
@@ -549,10 +576,12 @@ class CanvasEditorViewModel(
     }
 
     fun updateNodeText(nodeId: String, text: String) {
+        if (!mutableState.value.canEditBoard()) return
         pendingNodeText[nodeId] = text
         mutableState.value = mutableState.value.copy(
             nodes = mutableState.value.nodes.map { if (it.id == nodeId) it.copy(text = text) else it }
         )
+        publishSaveState()
         if (flushing || nodeTextSaves[nodeId]?.isActive == true) return
         nodeTextSaves[nodeId] = viewModelScope.launch {
             while (true) {
@@ -565,6 +594,7 @@ class CanvasEditorViewModel(
                 }
                 if (pendingNodeText[nodeId] == latestText) {
                     pendingNodeText.remove(nodeId)
+                    publishSaveState()
                     break
                 }
             }
@@ -573,6 +603,7 @@ class CanvasEditorViewModel(
     }
 
     fun moveNode(nodeId: String, dx: Float, dy: Float) {
+        if (!mutableState.value.canEditBoard()) return
         val state = mutableState.value
         val root = state.nodes.firstOrNull { it.id == nodeId } ?: return
         val selectedIds = if (nodeId in state.selectedNodeIds) state.selectedNodeIds else setOf(nodeId)
@@ -581,6 +612,7 @@ class CanvasEditorViewModel(
         val updated = state.nodes.map { if (it.id in targets) it.copy(x = it.x + dx / scale, y = it.y + dy / scale) else it }
         mutableState.value = state.copy(nodes = updated, selectedNodeId = root.id)
         updated.filter { it.id in targets }.forEach { node -> pendingNodePositions[node.id] = node.x to node.y }
+        publishSaveState()
         if (!flushing && nodePositionSaves["batch"]?.isActive != true) nodePositionSaves["batch"] = viewModelScope.launch {
             try {
                 while (pendingNodePositions.isNotEmpty()) {
@@ -590,6 +622,7 @@ class CanvasEditorViewModel(
                         mutableState.value = mutableState.value.copy(notice = "This card position could not be saved yet."); break
                     }
                     latest.forEach { (id, point) -> if (pendingNodePositions[id] == point) pendingNodePositions.remove(id) }
+                    publishSaveState()
                 }
             } finally { nodePositionSaves.remove("batch") }
         }
@@ -604,6 +637,7 @@ class CanvasEditorViewModel(
             if (runCatching { repository.deleteNode(canvasId, id) }.getOrDefault(false)) {
                 pendingNodePositions.remove(id)
                 pendingNodeText.remove(id)
+                publishSaveState()
                 mutableState.value = mutableState.value.copy(selectedNodeId = null)
             } else {
                 mutableState.value = mutableState.value.copy(notice = "Could not delete this card.")
@@ -628,7 +662,6 @@ class CanvasEditorViewModel(
             viewportX = target.first,
             viewportY = target.second,
             viewportScale = scale,
-            selectedNodeId = null,
         )
         savePendingViewport()
     }
@@ -640,6 +673,7 @@ class CanvasEditorViewModel(
     }
 
     private fun savePendingViewport() {
+        publishSaveState()
         if (flushing || viewportSave?.isActive == true) return
         viewportSave = viewModelScope.launch {
             while (true) {
@@ -654,39 +688,53 @@ class CanvasEditorViewModel(
                 }
                 if (pendingViewport == latest) {
                     pendingViewport = null
+                    publishSaveState()
                     break
                 }
             }
         }
     }
 
-    private suspend fun saveSafely(block: suspend () -> Boolean): Boolean = try { block() }
-        catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { false }
+    private suspend fun saveSafely(block: suspend () -> Boolean): Boolean {
+        activePendingWrites++
+        publishSaveState()
+        return try {
+            block().also { if (!it) pendingSaveFailed = true }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { pendingSaveFailed = true; false }
+        finally { activePendingWrites--; publishSaveState() }
+    }
 
     private val flushMutex = Mutex()
 
     private suspend fun flushPendingEdits() = flushMutex.withLock {
         flushing = true
+        publishSaveState()
         try {
-        nodeTextSaves.values.toList().forEach { it.cancelAndJoin() }
-        nodePositionSaves.values.toList().forEach { it.cancelAndJoin() }
-        viewportSave?.cancelAndJoin()
-        nodeTextSaves.clear(); nodePositionSaves.clear()
-        while (pendingNodeText.isNotEmpty()) for ((id, text) in pendingNodeText.toMap()) {
-            check(repository.updateText(canvasId, id, text))
-            if (pendingNodeText[id] == text) pendingNodeText.remove(id)
-        }
-        while (pendingNodePositions.isNotEmpty()) {
-            val points = pendingNodePositions.toMap()
-            check(repository.moveNodes(canvasId, points))
-            points.forEach { (id, point) -> if (pendingNodePositions[id] == point) pendingNodePositions.remove(id) }
-        }
-        while (pendingViewport != null) pendingViewport?.let { target ->
-            check(repository.saveViewport(canvasId, target.first, target.second, target.third))
-            if (pendingViewport == target) pendingViewport = null
-        }
-        } finally { flushing = false }
+            nodeTextSaves.values.toList().forEach { it.cancelAndJoin() }
+            nodePositionSaves.values.toList().forEach { it.cancelAndJoin() }
+            viewportSave?.cancelAndJoin()
+            nodeTextSaves.clear(); nodePositionSaves.clear()
+            // Edits can arrive during any suspended write. Revisit every kind before
+            // acknowledging Back/background persistence, including text typed during a viewport write.
+            while (pendingNodeText.isNotEmpty() || pendingNodePositions.isNotEmpty() || pendingViewport != null) {
+                for ((id, text) in pendingNodeText.toMap()) {
+                    check(repository.updateText(canvasId, id, text))
+                    if (pendingNodeText[id] == text) pendingNodeText.remove(id)
+                }
+                if (pendingNodePositions.isNotEmpty()) {
+                    val points = pendingNodePositions.toMap()
+                    check(repository.moveNodes(canvasId, points))
+                    points.forEach { (id, point) -> if (pendingNodePositions[id] == point) pendingNodePositions.remove(id) }
+                }
+                pendingViewport?.let { target ->
+                    check(repository.saveViewport(canvasId, target.first, target.second, target.third))
+                    if (pendingViewport == target) pendingViewport = null
+                }
+            }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (failure: Exception) { pendingSaveFailed = true; throw failure }
+        finally { flushing = false; publishSaveState() }
     }
 
     override fun onCleared() {
@@ -856,7 +904,10 @@ class CanvasEditorViewModel(
         try { commandMutex.withLock { block() } } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
             val conflict = error.message.orEmpty().let { it.startsWith("Source") || it.startsWith("Annotations changed") || it.startsWith("Canvas changed") || it == "Sketch changed" }
-            mutableState.value = mutableState.value.copy(notice = if (conflict) "Source changed. Review it again." else "Could not save that change. Try again.")
+            mutableState.value = mutableState.value.copy(
+                organizationRequiresRefresh = mutableState.value.organizationRequiresRefresh || (conflict && mutableState.value.organization != null),
+                notice = if (conflict) "Source changed. Review it again." else "Could not save that change. Try again.",
+            )
         }
     }
 

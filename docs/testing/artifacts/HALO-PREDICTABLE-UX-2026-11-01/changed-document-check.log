@@ -1,0 +1,5 @@
+Scope: modified contract, implementation register and current evidence Markdown only.
+Documents: 9 managed, 0 preserved evidence/vendor files
+Result: 0 errors; 0 historical unresolved links
+Scope: status labels, inline local links, duplicate documents, and canonical paths.
+Repository-wide canonical-document gate separately references an absent PROJECT-DIRECTION.md; this check does not certify that unrelated baseline requirement.

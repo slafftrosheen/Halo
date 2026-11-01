@@ -29,6 +29,7 @@ class HaloAmbientMotionTest {
     @Test fun everyExistingMotionGateCanIndependentlyStopDrift() {
         for (style in listOf(HaloBackgroundStyle.HALO, HaloBackgroundStyle.MIST)) {
             assertTrue(haloAmbientMotionAllowed(true, false, false, true, style))
+            assertFalse(haloAmbientMotionAllowed(true, false, false, true, style, attentionActive = true))
             assertFalse(haloAmbientMotionAllowed(false, false, false, true, style))
             assertFalse(haloAmbientMotionAllowed(true, true, false, true, style))
             assertFalse(haloAmbientMotionAllowed(true, false, true, true, style))

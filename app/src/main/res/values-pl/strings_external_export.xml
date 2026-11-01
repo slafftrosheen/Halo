@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_export_title">Eksportuj kopię</string>
+    <string name="external_export_choose">Wybierz lokalizację</string>
+    <string name="external_export_explain">Wybierz w Plikach Androida miejsce na osobną kopię. Oryginał nie zostanie zastąpiony.</string>
+    <string name="external_export_writing">Zapisywanie wybranej kopii…</string>
+    <string name="external_export_verifying">Sprawdzanie zapisanego pliku…</string>
+    <string name="external_export_verified">Wyeksportowana kopia została sprawdzona w wybranej lokalizacji. Otwórz ją poza Halo.</string>
+    <string name="external_export_cancelled">Anulowano wybór lokalizacji. Nie zapisano nowej kopii.</string>
+    <string name="external_export_unknown">Wynik eksportu nie jest potwierdzony. Sprawdź wybrany plik przed utworzeniem kolejnej kopii.</string>
+    <string name="external_export_failed">Nie udało się ukończyć kopii. Wybrany plik może być pusty lub niepełny. Sprawdź go lub wybierz inne miejsce.</string>
+    <string name="external_export_source">Kopia źródłowa tej wersji jest niedostępna. Otwórz dokument i ponów eksport.</string>
+    <string name="external_export_access">Halo nie ma dostępu do wybranej lokalizacji. Wybierz miejsce z prawem zapisu.</string>
+    <string name="external_export_open">Otwórz wyeksportowaną kopię</string>
+    <string name="external_export_inspect">Obejrzyj wybrany plik</string>
+    <string name="external_export_check">Sprawdź kopię ponownie</string>
+    <string name="external_export_close">Zamknij</string>
+    <string name="external_export_open_failed">Nie udało się ukończyć działania. Sprawdź dostęp do Plików i spróbuj ponownie.</string>
+    <string name="external_export_start_failed">Nie udało się rozpocząć eksportu. Zakończ inny eksport i spróbuj ponownie. Zapisany wynik lokalny jest dostępny w Bibliotece.</string>
+    <string name="note_export_copy">Eksportuj kopię</string>
+    <string name="note_export_format">Wybierz format tekstowy. Halo zapisze wynik lokalnie, a potem możesz wybrać lokalizację zewnętrzną.</string>
+    <string name="note_export_failed">Nie udało się utworzyć wyniku. Notatka pozostaje otwarta. Przed ponowieniem sprawdź Bibliotekę.</string>
+    <string name="external_open_kept">Lokalna kopia zachowana w Bibliotece. Otwieranie…</string>
+    <string name="external_open_parent">Poproś dorosłego o otwarcie pliku zewnętrznego w przestrzeni dla dorosłych.</string>
+    <string name="external_open_failed">Nie udało się ukończyć otwierania pliku. Sprawdź kopię w Bibliotece lub wybierz plik ponownie w Plikach Androida.</string>
+    <string name="external_export_prior">Sprawdź wcześniej wybrany plik</string>
+</resources>

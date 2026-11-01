@@ -50,6 +50,11 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
     val scopedMedia = media.takeIf { it.deviceId == deviceId } ?: WearableCaptureStatus()
     val shellHosted = BindShellChildPage(device?.name ?: uiText("My glasses"), onBack, objectId = deviceId.takeIf { it.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")) }, titleIsSource = true,
         sourceIdentity = "$deviceId:${device?.sessionState}:$reviewing:${scopedMedia.busy}",
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(when {
+            !captureReady -> com.halo.app.R.string.action_connect_first
+            scopedMedia.busy -> com.halo.app.R.string.action_wait
+            else -> com.halo.app.R.string.action_close_review
+        }),
         actions = listOf(ShellPageAction("glasses.refresh", "Check for photos", HaloGlyph.CAMERA,
             captureReady && !scopedMedia.busy && !reviewing) { viewModel.refreshMedia(deviceId) }))
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)

@@ -11,32 +11,36 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-data class HaloVisualOptions(val higherContrast: Boolean = false, val lessMotion: Boolean = false, val guideLight: Boolean = true)
+enum class HaloGuidanceAmount { OFF, CUES, EXPLANATIONS }
+data class HaloVisualOptions(val higherContrast: Boolean = false, val lessMotion: Boolean = false, val guideLight: Boolean = true,
+    val guidanceAmount: HaloGuidanceAmount = HaloGuidanceAmount.EXPLANATIONS)
 val LocalHaloAccentInk = staticCompositionLocalOf { Color(0xFF047A5E) }
 
 /** App-wide options are restored on IO; writes cannot race the initial restore. */
-class VisualPreferences private constructor(context: Context) {
+class VisualPreferences internal constructor(context: Context) {
     private val disk = context.applicationContext.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
     private val mutable = MutableStateFlow(HaloVisualOptions())
     val state = mutable.asStateFlow()
     private val loaded = scope.async {
-        mutable.value = HaloVisualOptions(disk.getBoolean("contrast", false), disk.getBoolean("motion", false), disk.getBoolean("guide", true))
+        mutable.value = readOptions()
     }
     /** Read the same persisted namespace as update, after restore and any owned write. */
     suspend fun persistedSnapshot(): HaloVisualOptions = withContext(Dispatchers.IO) {
         loaded.await()
         mutex.withLock {
-            HaloVisualOptions(disk.getBoolean("contrast", false), disk.getBoolean("motion", false), disk.getBoolean("guide", true))
+            readOptions()
         }
     }
+    private fun readOptions() = HaloVisualOptions(disk.getBoolean("contrast", false), disk.getBoolean("motion", false), disk.getBoolean("guide", true),
+        HaloGuidanceAmount.entries.find { it.name == disk.getString("guidanceAmount", null) } ?: HaloGuidanceAmount.EXPLANATIONS)
     suspend fun update(transform: (HaloVisualOptions) -> HaloVisualOptions) = withContext(Dispatchers.IO) {
         loaded.await()
         mutex.withLock {
             val next = transform(mutable.value)
             check(disk.edit().putBoolean("contrast", next.higherContrast).putBoolean("motion", next.lessMotion)
-                .putBoolean("guide", next.guideLight).commit()) { "Unable to save visual preferences" }
+                .putBoolean("guide", next.guideLight).putString("guidanceAmount", next.guidanceAmount.name).commit()) { "Unable to save visual preferences" }
             mutable.value = next
         }
     }

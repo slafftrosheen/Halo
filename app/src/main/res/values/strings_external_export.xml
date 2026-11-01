@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_export_title">Export a copy</string>
+    <string name="external_export_choose">Choose location</string>
+    <string name="external_export_explain">Choose where Android Files should create a separate copy. Your original is not replaced.</string>
+    <string name="external_export_writing">Writing the chosen copy…</string>
+    <string name="external_export_verifying">Checking the written file…</string>
+    <string name="external_export_verified">Exported copy verified at your chosen location. Open it to find it outside Halo.</string>
+    <string name="external_export_cancelled">Location selection was cancelled. No new copy was written.</string>
+    <string name="external_export_unknown">The export result is unconfirmed. Check the chosen file before creating another copy.</string>
+    <string name="external_export_failed">The copy could not be completed. The chosen file may be empty or incomplete. Choose another location or inspect it.</string>
+    <string name="external_export_source">The source copy is no longer available at this version. Reopen the document and export again.</string>
+    <string name="external_export_access">Halo could not access the chosen location. Choose a location you can write to.</string>
+    <string name="external_export_open">Open exported copy</string>
+    <string name="external_export_inspect">Inspect chosen file</string>
+    <string name="external_export_check">Check copy again</string>
+    <string name="external_export_close">Close</string>
+    <string name="external_export_open_failed">This action could not finish. Check access to Files and try again.</string>
+    <string name="external_export_start_failed">Could not start this export. Finish any other export, then try again. The local output remains available in Library if it was saved.</string>
+    <string name="note_export_copy">Export a copy</string>
+    <string name="note_export_format">Choose a text format. Halo will save a local output, then you can choose an external location.</string>
+    <string name="note_export_failed">Could not create the output. Your note remains open. Check Library before trying again.</string>
+    <string name="external_open_kept">Local copy kept in Library. Opening…</string>
+    <string name="external_open_parent">Ask a grown-up to open external files from the adult workspace.</string>
+    <string name="external_open_failed">Could not finish opening this file. Check Library for a kept copy, or choose the file again in Android Files.</string>
+    <string name="external_export_prior">Inspect an earlier chosen file</string>
+</resources>

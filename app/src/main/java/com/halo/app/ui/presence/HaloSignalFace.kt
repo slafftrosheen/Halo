@@ -54,6 +54,7 @@ fun HaloSignalFace(
     kids: Boolean = false,
     onClickLabel: String? = null,
     zone5: Boolean = false,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     val localizedLabel = uiText(presentation.label)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
@@ -78,10 +79,11 @@ fun HaloSignalFace(
             asset = zone5Asset ?: assetPath,
             accent = haloSignalInk(presentation.state, MaterialTheme.colorScheme))
     } else null
-    val interactions = remember { MutableInteractionSource() }
+    val localInteractions = remember { MutableInteractionSource() }
+    val interactions = interactionSource ?: localInteractions
     val pressed by interactions.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) .96f else 1f,
-        tween(if (reduced) 0 else 90), label = "halo_touch")
+        tween(if (reduced) 0 else com.halo.app.ui.design.HaloMotion.pressMs), label = "halo_touch")
     Box(modifier.size(size).graphicsLayer { scaleX = scale; scaleY = scale }
         .semantics {
             this.contentDescription = contentDescription

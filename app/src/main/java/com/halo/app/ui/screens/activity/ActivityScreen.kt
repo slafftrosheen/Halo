@@ -141,7 +141,11 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         }
     }
     var showActivityDetails by rememberSaveable { mutableStateOf(false) }
-    BindShellPageActions(ShellPageOwner("activity", sourceIdentity = "${filter.name}:$focusRunId"), listOf(
+    val activityHelp = uiText("Everything halo did, in plain words.") + "\n" +
+        uiText("Approvals and answers wait here until you choose what happens next.")
+    BindShellPageActions(ShellPageOwner("activity", sourceIdentity = "${filter.name}:$focusRunId",
+        helpDescription = activityHelp,
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_current_view)), listOf(
         ShellPageAction("page.activity.details", "Details", HaloGlyph.QUESTION) { showActivityDetails = true },
         ShellPageAction("page.activity.review", "Show requests", HaloGlyph.APPROVAL, filter != ActivityFilter.REVIEW) { selectedFilter = ActivityFilter.REVIEW },
         ShellPageAction("page.activity.history", "Show completed", HaloGlyph.ACTIVITY, filter != ActivityFilter.HISTORY) { selectedFilter = ActivityFilter.HISTORY },
@@ -150,8 +154,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         onDismissRequest = { showActivityDetails = false },
         title = { Text(uiText("Activity")) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(uiText("Everything halo did, in plain words."))
-            Text(uiText("Approvals and answers wait here until you choose what happens next."))
+            Text(activityHelp)
         } },
         confirmButton = { TextButton(onClick = { showActivityDetails = false }) { Text(uiText("Done")) } },
     )
@@ -161,7 +164,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
             counts = mapOf(ActivityFilter.REVIEW to reviewCount, ActivityFilter.RUNNING to runningCount, ActivityFilter.HISTORY to doneCount),
             onSelect = { selectedFilter = it })
     }
-    val hostedUtility = com.halo.app.ui.presence.BindShellUtilityBand(ShellPageOwner("activity"), activityUtility)
+    val hostedUtility = com.halo.app.ui.presence.BindShellUtilityBand(ShellPageOwner("activity"), content = activityUtility)
 
     Column(
         modifier = Modifier

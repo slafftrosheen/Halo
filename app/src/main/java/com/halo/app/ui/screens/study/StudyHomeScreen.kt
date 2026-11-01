@@ -63,6 +63,7 @@ fun StudyHomeScreen(
     val selected by model.selectedIds.collectAsStateWithLifecycle()
     val candidates by model.candidates.collectAsStateWithLifecycle()
     val previews by model.previews.collectAsStateWithLifecycle()
+    val reads by model.reads.collectAsStateWithLifecycle()
 
     var picker by remember { mutableStateOf(false) }
     var executionChoice by rememberSaveable { mutableStateOf<String?>(null) }
@@ -99,7 +100,13 @@ fun StudyHomeScreen(
     val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
         uri -> uri?.let(model::importMaterial)
     }
-    if (picker) {
+    if (picker && ("candidates" in reads.loading || "candidates" in reads.failed)) {
+        com.halo.app.ui.components.HaloAlertDialog(onDismissRequest = { picker = false },
+            title = { Text(uiText("Material")) },
+            text = { Text(stringResource(if ("candidates" in reads.failed) R.string.study_read_failed else R.string.study_read_loading)) },
+            confirmButton = { TextButton(onClick = { model.retryReads() }, enabled = "candidates" !in reads.loading) { Text(uiText("Retry")) } },
+            dismissButton = { TextButton(onClick = { picker = false }) { Text(uiText("Close")) } })
+    } else if (picker) {
         com.halo.app.ui.workspace.WorkspaceObjectPicker(
             candidates.filter { it.id.value !in selected },
             onPick = { model.select(it.id.value); picker = false },
@@ -140,15 +147,38 @@ fun StudyHomeScreen(
     // first step cancels only unfinished setup; a saved lesson is untouched.
     BackHandler(enabled = setupActive, onBack = returnFromSetup)
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val setupHelp = stringResource(when (setupStep) {
+        0 -> R.string.zone5_help_study_goal; 1 -> R.string.zone5_help_study_material
+        2 -> R.string.zone5_help_study_style; else -> R.string.zone5_help_study_start
+    })
+    val materialReady = reads.materialReady && selected.all { id -> previews.any {
+        it.objectId == id && it !is ResolvedStudySource.Unsupported && it.revision != null
+    } }
+    val canContinueSetup = studySetupCanContinue(setupStep, hasLearningInput, busy) &&
+        (setupStep < 3 || executionChoice != null && materialReady)
+    val continueSetup: () -> Unit = { if (setupStep < 3) setupStep++ else startLesson() }
     val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}:${previews.hashCode()}:$busy",
         canonicalToolIds = listOf("halo_study_sessions"),
+        helpDescription = stringResource(R.string.zone5_help_study),
+        guidanceBlocked = busy || picker || optionsExpanded,
+        completedGuideIds = if (sessions.isNotEmpty()) setOf("study-new.v1", "study-material.v1") else emptySet(),
+        defaultDisabledActionReason = stringResource(R.string.action_wait),
+        disabledActionReasons = mapOf("page.study.next" to when {
+            busy -> stringResource(R.string.action_wait)
+            setupStep == 3 && !materialReady -> stringResource(studyMaterialUnavailableMessage(reads))
+            setupStep == 3 && executionChoice == null -> stringResource(R.string.action_choose_execution)
+            else -> setupHelp
+        }),
+        helpSteps = if (setupActive) listOf(com.halo.app.ui.presence.ShellGuideStep("study-setup-$setupStep.v1", "page.study.next", setupHelp))
+            else listOf(com.halo.app.ui.presence.ShellGuideStep("study-new.v1", "page.study.new", stringResource(R.string.zone5_guide_study), sessions.isNotEmpty())),
         nextStep = when {
-            !setupActive && !busy && sessions.isEmpty() -> com.halo.app.ui.presence.ShellNextStep("study-new.v1", "page.study.new", stringResource(R.string.zone5_guide_study))
+            !setupActive && !busy && reads.libraryReady && sessions.isEmpty() -> com.halo.app.ui.presence.ShellNextStep("study-new.v1", "page.study.new", stringResource(R.string.zone5_guide_study))
             setupActive && setupStep == 1 && selected.isEmpty() && !busy && !picker -> com.halo.app.ui.presence.ShellNextStep("study-material.v1", "page.study.material", stringResource(R.string.zone5_guide_material))
             else -> null
         })
     BindShellPageActions(pageOwner, buildList {
         if (!setupActive) add(ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy) { startNewLesson() })
+        if (setupActive) add(ShellPageAction("page.study.next", if (setupStep < 3) "Continue" else "Start lesson", HaloGlyph.NEXT, canContinueSetup, continueSetup))
         if (setupActive && setupStep == 1) add(ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, !busy) { picker = true })
         if (setupActive && setupStep == 3) add(ShellPageAction("page.study.options", "Age, language & learning options", HaloGlyph.SETTINGS,
             !busy) { optionsExpanded = !optionsExpanded })
@@ -198,7 +228,18 @@ fun StudyHomeScreen(
                 )
             }
 
-            if (sessions.isEmpty() && !setupActive) item(key = "empty") {
+            val relevantReads = if (setupActive) setOf("preview", "candidates") else setOf("sessions", "summaries", "due")
+            if (reads.loading.any { it in relevantReads }) item("study-loading") {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                Text(stringResource(R.string.study_read_loading))
+            }
+            if (reads.failed.any { it in relevantReads } || reads.selectionRestoreFailed) item("study-read-error") {
+                Text(stringResource(if (reads.selectionRestoreFailed) R.string.study_selection_restore_failed else R.string.study_read_failed),
+                    color = MaterialTheme.colorScheme.error)
+                if (reads.selectionRestoreFailed) TextButton(onClick = startNewLesson, enabled = !busy) { Text(uiText("New lesson")) }
+                else TextButton(onClick = model::retryReads, enabled = !busy) { Text(uiText("Retry")) }
+            }
+            if (sessions.isEmpty() && !setupActive && reads.libraryReady) item(key = "empty") {
                 StudyEmptyHome(startNewLesson)
             }
             if (due.isNotEmpty() && !newLesson) item(key = "review_due") {
@@ -362,7 +403,7 @@ fun StudyHomeScreen(
                             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(source?.title ?: uiText("Loading material…"), style = MaterialTheme.typography.titleSmall)
+                                    Text(source?.title ?: if ("preview" in reads.failed) stringResource(R.string.study_read_failed) else uiText("Loading material…"), style = MaterialTheme.typography.titleSmall)
                                     Text(when (source) {
                                         is ResolvedStudySource.Text -> if (source.coverage == SourceCoverage.FULL) uiText("Text ready") else uiText("Part of the text is ready")
                                         is ResolvedStudySource.Pdf -> stringResource(R.string.link53_pdf_selected)
@@ -372,7 +413,7 @@ fun StudyHomeScreen(
                                             "Keep a local copy in Workspace before attaching this image" -> stringResource(R.string.link53_keep_copy)
                                             else -> uiText(source.reason)
                                         }
-                                        null -> uiText("Checking access")
+                                        null -> if ("preview" in reads.failed) stringResource(R.string.study_read_retry_material) else uiText("Checking access")
                                     }, style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
@@ -441,7 +482,12 @@ fun StudyHomeScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    notice?.let { Text(if (it == com.halo.app.study.StudyUnavailableReason.SOURCE_CHANGED.explanation) stringResource(R.string.link53_source_changed) else uiText(it), color = MaterialTheme.colorScheme.error) }
+                    notice?.let { Text(when (it) {
+                        StudyHomeViewModel.MATERIAL_LOADING -> stringResource(R.string.action_loading)
+                        StudyHomeViewModel.MATERIAL_NOT_READY -> stringResource(R.string.study_read_retry_material)
+                        com.halo.app.study.StudyUnavailableReason.SOURCE_CHANGED.explanation -> stringResource(R.string.link53_source_changed)
+                        else -> uiText(it)
+                    }, color = MaterialTheme.colorScheme.error) }
                 }
             }
 
@@ -466,10 +512,10 @@ fun StudyHomeScreen(
             StudyFocusAction(
                 text = if (setupStep < 3) "Continue" else if (busy) "Starting..." else "Start lesson",
                 glyph = HaloGlyph.PLAY,
-                enabled = studySetupCanContinue(setupStep, hasLearningInput, busy) && (setupStep < 3 || executionChoice != null),
-                onClick = { if (setupStep < 3) setupStep++ else startLesson() },
+                enabled = canContinueSetup,
+                onClick = continueSetup,
                 modifier = Modifier.fillMaxWidth(),
-                active = studySetupCanContinue(setupStep, hasLearningInput, busy) && (setupStep < 3 || executionChoice != null),
+                active = canContinueSetup,
                 guide = due.isEmpty() || newLesson,
             )
             if (setupStep == 1 && topic.isNotBlank() && selected.isEmpty()) {
@@ -676,4 +722,12 @@ internal fun StudySupportOption(
             }
         }
     }
+}
+
+/** Shared unavailable explanation follows the recovery actually offered by the setup owner. */
+internal fun studyMaterialUnavailableMessage(reads: StudyHomeReadState): Int = when {
+    reads.selectionRestoreFailed -> R.string.study_selection_restore_failed
+    "preview" in reads.loading -> R.string.study_read_loading
+    "preview" in reads.failed -> R.string.study_read_retry_material
+    else -> R.string.study_material_changed
 }

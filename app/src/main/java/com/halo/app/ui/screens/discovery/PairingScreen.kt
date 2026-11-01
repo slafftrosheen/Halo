@@ -313,6 +313,8 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
     var showTechnicalNames by rememberSaveable { mutableStateOf(false) }
     val shellHosted = BindShellChildPage("Add glasses", viewModel::navigateBack,
         objectId = state.selectedAddress?.takeIf { it.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")) }, sourceIdentity = "${state.selectedAddress}:${state.bluetoothPrerequisite}:${pairingNextAction(state)}",
+        disabledActionReasons = mapOf("pairing.others" to androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_no_discovered),
+            "pairing.stop" to androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_nothing_active)),
         actions = listOf(
             ShellPageAction("pairing.others", "Nearby devices", HaloGlyph.DEVICE,
                 state.devices.any { it.advertisement.name.isNullOrBlank() }) { showOtherDevices = !showOtherDevices },

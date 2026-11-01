@@ -44,6 +44,7 @@ fun McpServerScreen(model: McpServerViewModel, onBack: () -> Unit) {
     var query by rememberSaveable(model.id) { mutableStateOf("") }
     val shellHosted = BindShellChildPage(server?.displayName ?: uiText("Integration"), onBack,
         objectId = model.id.takeIf { it.matches(Regex("[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")) }, titleIsSource = true, sourceIdentity = "${model.id}:$operation:${server?.state}:$details",
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(if (server == null) com.halo.app.R.string.action_item_unavailable else com.halo.app.R.string.action_wait),
         actions = listOf(
             ShellPageAction("server.details", "Connection details", HaloGlyph.DEVICE, server != null) { details = !details },
             ShellPageAction("server.edit", "Edit MCP server", HaloGlyph.SETTINGS, server != null && operation == null, model::edit),

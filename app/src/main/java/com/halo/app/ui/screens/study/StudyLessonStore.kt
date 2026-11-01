@@ -21,7 +21,8 @@ data class StudyMaterialFocus(val objectId: String, val version: String, val pag
 
 data class StudyRecoveryState(val draft: String = "", val submissionKey: String? = null,
     val submittedDraft: String? = null, val pendingRequestId: String? = null,
-    val materialFocus: StudyMaterialFocus? = null)
+    val materialFocus: StudyMaterialFocus? = null,
+    val cardAnswers: Map<String, String> = emptyMap())
 
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
 class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
@@ -29,18 +30,24 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     private fun deletedKey(id: String) = "study_deleted_v1_$id"
     private fun requireWritable(id: String) { check(!storage.getBoolean(deletedKey(id), false)) { "Study session was deleted" } }
     private fun recoveryKey(id: String) = "study_recovery_v1_$id"
-    private fun readRecovery(id: String): StudyRecoveryState = try {
+    private fun readRecovery(id: String): StudyRecoveryState {
         val raw = storage.getString(recoveryKey(id))
-        if (raw == null || raw.length > 12_000) StudyRecoveryState() else JSONObject(raw).let {
+        if (raw == null) return StudyRecoveryState()
+        check(raw.length <= 200_000) { "Study recovery exceeds the supported size" }
+        return JSONObject(raw).let {
             StudyRecoveryState(it.optString("draft").take(4000),
                 it.optString("submission").takeIf(String::isNotBlank),
                 it.optString("submitted").takeIf(String::isNotBlank),
                 it.optString("pending").takeIf(String::isNotBlank),
                 it.optJSONObject("focus")?.let { focus -> StudyMaterialFocus(
                     focus.getString("object"), focus.getString("version"),
-                    if (focus.isNull("page")) null else focus.getInt("page")) })
+                    if (focus.isNull("page")) null else focus.getInt("page")) },
+                it.optJSONObject("answers")?.let { answers ->
+                    check(answers.length() <= 100)
+                    answers.keys().asSequence().associateWith { key -> answers.getString(key).also { answer -> check(answer.length <= 1500) } }
+                }.orEmpty())
         }
-    } catch (_: Exception) { StudyRecoveryState() }
+    }
     suspend fun loadRecovery(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) { readRecovery(id) } }
     private suspend fun updateRecovery(id: String, allowDeletedCleanup: Boolean = false, update: (StudyRecoveryState) -> StudyRecoveryState): StudyRecoveryState =
         recoveryMutex.withLock { withContext(Dispatchers.IO) {
@@ -49,17 +56,26 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             val previous = readRecovery(id)
             val next = update(previous)
             if (next == previous) return@withContext next
-            storage.putString(recoveryKey(id), JSONObject().put("draft", next.draft.take(4000))
+            val encoded = JSONObject().put("draft", next.draft.take(4000))
                 .put("submission", next.submissionKey.orEmpty()).put("submitted", next.submittedDraft.orEmpty().take(4000))
                 .put("pending", next.pendingRequestId.orEmpty())
+                .put("answers", JSONObject(next.cardAnswers))
                 .put("focus", next.materialFocus?.let { focus -> JSONObject().put("object", focus.objectId)
-                    .put("version", focus.version).put("page", focus.page ?: JSONObject.NULL) } ?: JSONObject.NULL).toString())
+                    .put("version", focus.version).put("page", focus.page ?: JSONObject.NULL) } ?: JSONObject.NULL).toString()
+            // JSON escaping can expand otherwise bounded answers. Never replace a readable record with an unreadable one.
+            require(encoded.length <= 200_000) { "Study recovery exceeds the supported size" }
+            storage.putString(recoveryKey(id), encoded)
+            check(readRecovery(id) == next) { "Study recovery write was not confirmed" }
             next
         } }
     suspend fun saveDraft(id: String, draft: String) { updateRecovery(id) { state ->
         if (state.submittedDraft == draft.trim()) state.copy(draft = draft.take(4000))
         else state.copy(draft = draft.take(4000), submissionKey = null, submittedDraft = null)
     } }
+    suspend fun saveCardAnswers(id: String, answers: Map<String, String>) {
+        require(answers.size <= 100 && answers.all { it.key.length in 1..200 && it.value.length <= 1500 })
+        updateRecovery(id) { it.copy(cardAnswers = answers.toMap()) }
+    }
     suspend fun prepareAttempt(id: String, text: String, candidateKey: String): String = requireNotNull(updateRecovery(id) {
         if (it.submittedDraft == text && it.submissionKey != null) it
         else it.copy(draft = text.take(4000), submissionKey = candidateKey, submittedDraft = text.take(4000))

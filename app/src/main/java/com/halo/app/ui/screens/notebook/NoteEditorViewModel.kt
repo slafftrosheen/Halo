@@ -90,6 +90,8 @@ data class NoteEditorUiState(
     val isGenerating: Boolean = false,
     val proposalError: String? = null,
     val recoveryPending: Boolean = false,
+    /** True only for the latest local edit after a successful recovery readback. */
+    val draftKept: Boolean = false,
     val recoveryCandidate: String? = null,
     val conflict: DocumentConflict? = null,
     val notice: String? = null,
@@ -106,6 +108,7 @@ data class NoteEditorUiState(
      */
     val structuredResult: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
 ) {
+    val sourceDirty: Boolean get() = mode == EditorMode.SOURCE && sourceDraft != NotebookDocumentCodec.serialize(blocks)
     val isEditable: Boolean
         get() = status != SaveStatus.LOADING && status != SaveStatus.MISSING &&
             status != SaveStatus.TRASHED && mode == EditorMode.EDIT
@@ -187,7 +190,7 @@ class NoteEditorViewModel(
                 throw cancelled
             } catch (error: Exception) {
                 mutableUiState.value = mutableUiState.value.copy(
-                    notice = error.message ?: "Could not create Canvas from this section."
+                    notice = "Could not create Canvas from this section."
                 )
             }
         }
@@ -202,7 +205,7 @@ class NoteEditorViewModel(
             context.selectWorkspace(noteId)
             context.navigate(com.halo.runtime.cognition.context.ContextualNextActionTarget.FollowUp(
                 requireNotNull(com.halo.app.di.ManualDependencyGraph.conversationStore.activeConversationId())))
-        } catch(error: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = error.message ?: "Source unavailable") }
+        } catch(error: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Source unavailable") }
     }
 
     fun editProposal(text: String) {
@@ -232,6 +235,7 @@ class NoteEditorViewModel(
      * which is how an edit that landed mid-transaction is detected instead of being reported saved.
      */
     private var localEditSequence: Long = 0
+    private var committedEditSequence: Long = 0
 
     /** True while a commit holds [commitMutex]; a new request then waits instead of cancelling it. */
     private var commitInFlight = false
@@ -287,7 +291,8 @@ class NoteEditorViewModel(
                     if (snapshot == null || !loaded) return@collect
                     val current = mutableUiState.value
                     // External writers (tools, restore) update the header; local unsaved blocks win.
-                    if (current.status == SaveStatus.SAVING || current.status == SaveStatus.CONFLICT) return@collect
+                    if (localEditSequence != committedEditSequence || current.sourceDirty ||
+                        current.status in setOf(SaveStatus.SAVING, SaveStatus.CONFLICT, SaveStatus.FAILED)) return@collect
                     revision = snapshot.revision
                     publishBlocks(
                         blocks = snapshot.blocks,
@@ -357,18 +362,26 @@ class NoteEditorViewModel(
                 publishBlocks(stored.blocks, stored.title, stored.lifecycle, stored.revision, SaveStatus.TRASHED)
             }
 
-            recovery != null && recovery.baseRevision > stored.revision -> {
-                // The committed document moved backwards (restore/import). Keep both sides.
-                publishBlocks(stored.blocks, stored.title, stored.lifecycle, stored.revision, SaveStatus.CONFLICT)
+            recovery != null && recovery.baseRevision != stored.revision -> {
+                // A writer/restore changed the base. The exact kept draft remains the local side of review.
+                draftSequence = recovery.sequence
+                explicitTitle = recovery.title
+                revision = recovery.baseRevision
+                localEditSequence++
+                publishBlocks(recovery.blocks, recovery.title ?: stored.title, stored.lifecycle, recovery.baseRevision, SaveStatus.CONFLICT)
                 mutableUiState.value = mutableUiState.value.copy(
                     conflict = DocumentConflict(stored.revision, stored.blocks, System.currentTimeMillis()),
-                    notice = "A newer local draft exists for an older revision",
+                    recoveryPending = true, draftKept = true,
+                    mode = if (recovery.sourceDraft != null) EditorMode.SOURCE else EditorMode.EDIT,
+                    sourceDraft = recovery.sourceDraft.orEmpty(),
+                    notice = "Another writer saved this note first. Review both versions before continuing.",
                 )
             }
 
             recovery != null && recovery.supersedes(stored.revision, stored.updatedAt) -> {
                 draftSequence = recovery.sequence
                 explicitTitle = recovery.title
+                localEditSequence++
                 publishBlocks(
                     blocks = recovery.blocks,
                     title = recovery.title ?: stored.title,
@@ -378,6 +391,8 @@ class NoteEditorViewModel(
                 )
                 mutableUiState.value = mutableUiState.value.copy(
                     recoveryPending = true,
+                    mode = if (recovery.sourceDraft != null) EditorMode.SOURCE else EditorMode.EDIT,
+                    sourceDraft = recovery.sourceDraft.orEmpty(),
                     notice = "Recovered unsaved changes",
                 )
                 scheduleDraft(mutableUiState.value.blocks, stored.revision)
@@ -654,14 +669,19 @@ class NoteEditorViewModel(
         }
         if (state.mode == EditorMode.SOURCE) {
             // Leaving the source view discards unapplied text: never convert silently.
-            mutableUiState.value = state.copy(mode = mode, sourceDraft = "", sourceLossy = false)
+            localEditSequence++
+            mutableUiState.value = state.copy(mode = mode, sourceDraft = "", sourceLossy = false, draftKept = false, status = SaveStatus.SAVING)
+            scheduleDraft(state.blocks, revision)
+            scheduleCommit()
             return
         }
         mutableUiState.value = state.copy(mode = mode)
     }
 
     fun updateSourceDraft(value: String) {
-        mutableUiState.value = mutableUiState.value.copy(sourceDraft = value, sourceLossy = false)
+        localEditSequence++
+        mutableUiState.value = mutableUiState.value.copy(sourceDraft = value, sourceLossy = false, draftKept = false, status = SaveStatus.SAVING)
+        scheduleDraft(mutableUiState.value.blocks, revision)
     }
 
     /**
@@ -688,6 +708,9 @@ class NoteEditorViewModel(
             sourcePreservedLines = emptyList(),
             notice = if (parsed.lossy) "Source applied with simplified formatting" else "Source applied",
         )
+        // Supersede recovery of the raw source only after the explicit Apply has succeeded locally.
+        scheduleDraft(mutableUiState.value.blocks, revision)
+        scheduleCommit()
         return parsed
     }
 
@@ -785,14 +808,23 @@ class NoteEditorViewModel(
             undoStack.clear()
             redoStack.clear()
             revision = stored.revision
+            committedEditSequence = localEditSequence
+            explicitTitle = null
             publishBlocks(stored.blocks, stored.title, stored.lifecycle, stored.revision, SaveStatus.SAVED)
-            mutableUiState.value = mutableUiState.value.copy(conflict = null, recoveryPending = false, notice = "Loaded the stored version")
+            mutableUiState.value = mutableUiState.value.copy(conflict = null, recoveryPending = false, draftKept = false,
+                mode = EditorMode.EDIT, sourceDraft = "", notice = "Loaded the stored version")
         }
     }
 
     fun retrySave() {
         mutableUiState.value = mutableUiState.value.copy(status = SaveStatus.SAVING)
-        scheduleCommit()
+        if (document != null) {
+            scheduleDraft(mutableUiState.value.blocks, revision)
+            scheduleCommit()
+        } else {
+            scheduleBodyDraft(mutableUiState.value.body)
+            scheduleCommit(mutableUiState.value.body)
+        }
     }
 
     fun clearNotice() {
@@ -808,8 +840,9 @@ class NoteEditorViewModel(
             mutableUiState.value = mutableUiState.value.copy(isAddingAttachment = true, attachmentError = null)
             runCatching { repository.addFromPicker(noteId, uri) }
                 .onFailure { error ->
+                    if (error is kotlinx.coroutines.CancellationException) throw error
                     mutableUiState.value = mutableUiState.value.copy(
-                        attachmentError = error.message ?: "Could not add this file",
+                        attachmentError = "Could not add this file",
                     )
                 }
             mutableUiState.value = mutableUiState.value.copy(isAddingAttachment = false)
@@ -910,7 +943,7 @@ class NoteEditorViewModel(
             } catch (error: Exception) {
                 mutableUiState.value = mutableUiState.value.copy(
                     isGenerating = false,
-                    proposalError = error.message ?: "Assistance failed",
+                    proposalError = "Assistance failed",
                 )
             }
         }
@@ -1064,14 +1097,47 @@ class NoteEditorViewModel(
 
     private fun scheduleDraft(blocks: List<NoteBlock>, baseRevision: Long) {
         val documents = document
+        val title = explicitTitle
+        val source = mutableUiState.value.takeIf { it.sourceDirty }?.sourceDraft
         draftSequence += 1
         val sequence = draftSequence
+        val editSequence = localEditSequence
+        mutableUiState.value = mutableUiState.value.copy(draftKept = false)
         draftJob?.cancel()
         draftJob = viewModelScope.launch {
-            if (documents != null) {
-                documents.saveRecovery(noteId, blocks, baseRevision, sequence, explicitTitle)
-            } else {
-                useCases.saveDraft(noteId, NotebookDocumentCodec.serialize(blocks))
+            try {
+                val verified = if (documents != null) {
+                    documents.saveRecovery(noteId, blocks, baseRevision, sequence, title, source)
+                    documents.loadRecovery(noteId)?.let {
+                        it.sequence == sequence && it.baseRevision == baseRevision && it.blocks == blocks && it.title == title && it.sourceDraft == source
+                    } == true
+                } else {
+                    val body = NotebookDocumentCodec.serialize(blocks)
+                    useCases.saveDraft(noteId, body)
+                    useCases.getDraft(noteId)?.body == body
+                }
+                if (editSequence == localEditSequence) mutableUiState.value = mutableUiState.value.copy(draftKept = verified)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (editSequence == localEditSequence) mutableUiState.value = mutableUiState.value.copy(
+                    draftKept = false, status = SaveStatus.FAILED)
+            }
+        }
+    }
+
+    private fun scheduleBodyDraft(body: String) {
+        val sequence = localEditSequence
+        mutableUiState.value = mutableUiState.value.copy(draftKept = false)
+        draftJob?.cancel()
+        draftJob = viewModelScope.launch {
+            try {
+                useCases.saveDraft(noteId, body)
+                val kept = useCases.getDraft(noteId)?.body == body
+                if (sequence == localEditSequence) mutableUiState.value = mutableUiState.value.copy(draftKept = kept)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (sequence == localEditSequence) mutableUiState.value = mutableUiState.value.copy(
+                    draftKept = false, status = SaveStatus.FAILED)
             }
         }
     }
@@ -1081,9 +1147,8 @@ class NoteEditorViewModel(
         val current = mutableUiState.value
         if (current.status == SaveStatus.MISSING || body == current.body) return
         localEditSequence += 1
-        mutableUiState.value = current.copy(body = body, status = SaveStatus.SAVING)
-        draftJob?.cancel()
-        draftJob = viewModelScope.launch { useCases.saveDraft(noteId, body) }
+        mutableUiState.value = current.copy(body = body, status = SaveStatus.SAVING, draftKept = false)
+        scheduleBodyDraft(body)
         scheduleCommit(body)
     }
 
@@ -1129,7 +1194,7 @@ class NoteEditorViewModel(
         // sequence and is therefore never acknowledged by this commit.
         draftJob?.join()
         val snapshot = mutableUiState.value
-        if (snapshot.status == SaveStatus.MISSING || snapshot.status == SaveStatus.TRASHED) return false
+        if (snapshot.status == SaveStatus.MISSING || snapshot.status == SaveStatus.TRASHED || snapshot.sourceDirty) return false
         val acknowledged = draftSequence
         val sequenceAtCommit = localEditSequence
         when (
@@ -1143,6 +1208,7 @@ class NoteEditorViewModel(
         ) {
             is CommitOutcome.Committed -> {
                 revision = outcome.revision
+                committedEditSequence = sequenceAtCommit
                 val editedDuringCommit = localEditSequence != sequenceAtCommit || commitAgainRequested
                 mutableUiState.value = mutableUiState.value.copy(
                     status = if (editedDuringCommit) SaveStatus.SAVING else SaveStatus.SAVED,
@@ -1160,7 +1226,7 @@ class NoteEditorViewModel(
                         storedBlocks = stored?.blocks.orEmpty(),
                         detectedAtEpochMs = System.currentTimeMillis(),
                     ),
-                    notice = "Another writer saved this note first. Your changes are kept here.",
+                    notice = "Another writer saved this note first. Review both versions before continuing.",
                 )
             }
             is CommitOutcome.Rejected -> {
@@ -1175,7 +1241,7 @@ class NoteEditorViewModel(
             is CommitOutcome.Failed -> {
                 mutableUiState.value = mutableUiState.value.copy(
                     status = SaveStatus.FAILED,
-                    notice = "Could not save: ${outcome.message}. Your draft is kept locally.",
+                    notice = null, // The UI selects receipt-backed recovery copy; exceptions stay internal.
                 )
             }
         }
@@ -1184,7 +1250,9 @@ class NoteEditorViewModel(
 
     private suspend fun persistBody(body: String) {
         draftJob?.join()
-        val saved = useCases.saveNote(noteId, body)
+        val saved = try { useCases.saveNote(noteId, body) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { false }
         val current = mutableUiState.value
         if (current.body == body) {
             mutableUiState.value = current.copy(status = if (saved) SaveStatus.SAVED else SaveStatus.FAILED)
@@ -1204,6 +1272,22 @@ class NoteEditorViewModel(
         return mutableUiState.value.status == SaveStatus.SAVED
     }
 
+    suspend fun keepBeforeLeaving(): Boolean {
+        val current = mutableUiState.value
+        if (current.sourceDirty) {
+            if (!current.draftKept) scheduleDraft(current.blocks, revision)
+            draftJob?.join()
+            return mutableUiState.value.draftKept
+        }
+        if (current.status in setOf(SaveStatus.SAVED, SaveStatus.MISSING, SaveStatus.TRASHED)) return true
+        if (current.status == SaveStatus.LOADING) return false
+        saveJob?.cancel()
+        if (current.status != SaveStatus.CONFLICT) {
+            if (document != null) commitNow() else persistBody(mutableUiState.value.body)
+        } else draftJob?.join()
+        return mutableUiState.value.status == SaveStatus.SAVED || mutableUiState.value.draftKept
+    }
+
     fun flush() {
         val current = mutableUiState.value
         if (current.status != SaveStatus.SAVING) return
@@ -1212,7 +1296,9 @@ class NoteEditorViewModel(
             return
         }
         saveJob?.cancel()
-        saveJob = viewModelScope.launch { commitNow() }
+        saveJob = viewModelScope.launch {
+            if (document != null) commitNow() else persistBody(mutableUiState.value.body)
+        }
     }
 
     // ---- lifecycle -----------------------------------------------------------------------------

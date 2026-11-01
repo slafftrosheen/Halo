@@ -351,7 +351,9 @@ class NotebookDocumentRepository(
         baseRevision: Long,
         sequence: Long,
         title: String? = null,
+        sourceDraft: String? = null,
     ) {
+        require(sourceDraft == null || sourceDraft.length <= 1_000_000)
         val timestamp = now()
         dao.upsertRecovery(
             NoteDraftEntity(
@@ -360,7 +362,7 @@ class NotebookDocumentRepository(
                 updatedAt = timestamp,
                 baseRevision = baseRevision,
                 sequence = sequence,
-                structureJson = RecoveryJson.encode(blocks, title),
+                structureJson = RecoveryJson.encode(blocks, title, sourceDraft),
             )
         )
     }
@@ -380,6 +382,7 @@ class NotebookDocumentRepository(
             baseRevision = entity.baseRevision,
             sequence = sequence,
             updatedAt = entity.updatedAt,
+            sourceDraft = restored.sourceDraft,
         )
     }
 
@@ -440,9 +443,9 @@ internal fun NoteDocumentRow.toDocument(blocks: List<NoteBlock>): NotebookDocume
 
 /** Minimal structural encoding for recovery drafts; no reflection and no schema negotiation. */
 internal object RecoveryJson {
-    data class Decoded(val blocks: List<NoteBlock>, val title: String?)
+    data class Decoded(val blocks: List<NoteBlock>, val title: String?, val sourceDraft: String? = null)
 
-    fun encode(blocks: List<NoteBlock>, title: String?): String {
+    fun encode(blocks: List<NoteBlock>, title: String?, sourceDraft: String? = null): String {
         val array = JSONArray()
         blocks.forEach { block ->
             array.put(
@@ -459,6 +462,7 @@ internal object RecoveryJson {
         return JSONObject()
             .put("schemaVersion", 2)
             .put("title", title ?: JSONObject.NULL)
+            .put("sourceDraft", sourceDraft ?: JSONObject.NULL)
             .put("blocks", array)
             .toString()
     }
@@ -488,6 +492,7 @@ internal object RecoveryJson {
                 blocks = blocks,
                 title = objectRoot?.optString("title")
                     ?.takeIf { !objectRoot.isNull("title") && it.isNotBlank() },
+                sourceDraft = objectRoot?.optString("sourceDraft")?.takeIf { !objectRoot.isNull("sourceDraft") },
             )
         }.getOrDefault(Decoded(emptyList(), null))
     }

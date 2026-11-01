@@ -79,6 +79,22 @@ class NotebookDocumentRepositoryTest {
         return requireNotNull(documents.load(note.id))
     }
 
+    @Test fun unappliedSourceIsRecoveredExactlyWithoutChangingTheCommittedBlocks() = runTest {
+        val note = createNote("Original")
+        val opened = openDocument(note)
+        val source = "<custom>Unapplied source</custom>\n# Draft"
+        documents.saveRecovery(note.id, opened.blocks, opened.revision, 1, sourceDraft = source)
+        val restored = NotebookDocumentRepository(database.notebookDocumentDao(), database).loadRecovery(note.id)!!
+        assertEquals(source, restored.sourceDraft)
+        assertEquals(opened.blocks, restored.blocks)
+        assertEquals(opened.blocks, documents.load(note.id)!!.blocks)
+        // An empty raw source is valid unsaved work, not an absent draft.
+        documents.saveRecovery(note.id, opened.blocks, opened.revision, 2, sourceDraft = "")
+        assertEquals("", documents.loadRecovery(note.id)?.sourceDraft)
+        documents.saveRecovery(note.id, opened.blocks, opened.revision, 3)
+        assertNull(documents.loadRecovery(note.id)?.sourceDraft)
+    }
+
     @Test
     fun `a stale commit is refused instead of overwriting`() = runTest {
         val note = createNote("# Title\nFirst")

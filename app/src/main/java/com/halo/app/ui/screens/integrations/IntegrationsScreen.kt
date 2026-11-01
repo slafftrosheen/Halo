@@ -35,6 +35,7 @@ fun IntegrationsScreen(model: McpServersViewModel, onBack: () -> Unit, onServer:
     var adding by rememberSaveable { mutableStateOf(false) }
     var help by rememberSaveable { mutableStateOf(false) }
     val shellHosted = BindShellChildPage("Custom servers (MCP)", onBack, sourceIdentity = "$operation:$adding:$help",
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_wait),
         actions = listOf(
             ShellPageAction("servers.add", "Add MCP server", HaloGlyph.ADD_DEVICE, operation == null) { model.error.value = null; adding = true },
             ShellPageAction("servers.help", "What is MCP?", HaloGlyph.QUESTION) { help = !help },

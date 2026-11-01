@@ -44,7 +44,7 @@ internal fun rememberStudioCamera(viewModel: StudioViewModel, captures: LocalCap
                 // The capture owner retains the original in Inbox; only pending intent metadata is cleared.
                 path = null; recovery = false
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { recovery = true; viewModel.reportError() }
+            catch (_: Exception) { recovery = true; viewModel.reportError(StudioOperation.CAMERA) }
             finally { busy = false }
         }
     }
@@ -68,12 +68,12 @@ internal fun rememberStudioCamera(viewModel: StudioViewModel, captures: LocalCap
             catch (_: Exception) {
                 val pending = path
                 path = null; pending?.let { captures.discardPendingCapture(File(it)) }
-                busy = false; viewModel.reportError()
+                busy = false; viewModel.reportError(StudioOperation.CAMERA)
             }
         }
     }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) launch() else { busy = false; viewModel.reportError() }
+        if (granted) launch() else { busy = false; viewModel.reportError(StudioOperation.CAMERA, StudioFailureReason.ACCESS) }
     }
     return StudioCameraActions(take = { project ->
         if (!busy && path == null) {

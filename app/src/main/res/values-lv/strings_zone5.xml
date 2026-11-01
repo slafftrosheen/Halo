@@ -34,7 +34,7 @@
     <string name="zone5_select_export">Lai eksportētu, atveriet atbalstītu dokumentu.</string>
     <string name="zone5_office_kinds">Teksts, tabulas, attēli un PDF lapas</string>
     <string name="zone5_document_changed">Dokuments ir mainīts. Aizveriet logu un pārskatiet to, pirms mēģināt vēlreiz.</string>
-    <string name="zone5_literal_format">Šajā failā ir vienkāršs teksts. Rediģējiet to šeit vai atgriezieties Office Tools, lai izvēlētos formātu.</string>
+    <string name="zone5_literal_format">Šajā failā ir vienkāršs teksts. Rediģējiet to šeit vai atgriezieties HaloNotes, lai izvēlētos formātu.</string>
     <string name="zone5_choose_layer">Izvēlieties slāņa veidu</string>
     <string name="zone5_nothing_to_read">Pašlaik nav teksta, ko nolasīt.</string>
     <string name="zone5_open_lesson_first">Lai izmantotu šo darbību, atveriet nodarbību.</string>
@@ -48,7 +48,7 @@
     <string name="zone5_projects_canvases">Projekti un audekli</string>
     <string name="zone5_no_canvases">Vēl nav audeklu. Izveidojiet jaunu vai atveriet saglabātu audeklu bibliotēkā.</string>
     <string name="zone5_memory_usage_details">Kā tiek izmantota atmiņa</string>
-    <string name="zone5_export_from_office">Eksportēt no Office Tools</string>
+    <string name="zone5_export_from_office">Eksportēt no HaloNotes</string>
     <string name="zone5_edit_first">Lai ievietotu saturu, pārslēdzieties uz rediģēšanu.</string>
     <string name="zone5_save_first">Pirms turpināt, saglabājiet izmaiņas.</string>
     <string name="zone5_no_versions">Vēl nav saglabātu versiju.</string>

@@ -42,6 +42,7 @@ fun HomeOrbControl(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     val starting by home.listeningRequested.collectAsStateWithLifecycle()
     val preferences = ManualDependencyGraph.appearancePreferences
     val shortcuts by preferences.orbShortcuts.collectAsStateWithLifecycle()
+    val actionPins by preferences.actionPins.collectAsStateWithLifecycle()
     val review = forceReview || ui.runtimeWaitingState in setOf(AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION)
     val busy = submission.busy || ui.sessionState !is CognitiveSessionState.Completed &&
         ui.sessionState !is CognitiveSessionState.Failed && ui.sessionState != CognitiveSessionState.Idle
@@ -71,5 +72,6 @@ fun HomeOrbControl(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
         onTools = { request -> home.requestOrbCatalog(request); onOpen("home") },
         size = face?.size ?: size, face = face?.content, orbModifier = orbModifier,
         destinations = destinations, onNavigate = onNavigate, contextActions = contextActions,
-        onContextAction = onContextAction, hint = hint, onDismissHint = onDismissHint, leading = leading)
+        onContextAction = onContextAction, hint = hint, onDismissHint = onDismissHint, leading = leading,
+        actionPins = actionPins, onActionPins = preferences::setActionPinsPersisted)
 }

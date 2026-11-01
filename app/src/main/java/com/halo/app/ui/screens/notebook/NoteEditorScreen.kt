@@ -80,7 +80,7 @@ import androidx.compose.material.icons.rounded.FormatItalic
 import androidx.compose.material.icons.rounded.FormatStrikethrough
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AlertDialog
+import com.halo.app.ui.components.HaloAlertDialog as AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -165,12 +165,36 @@ fun NoteEditorScreen(
     onReviewMemory: (String) -> Unit = {},
     onOpenStudio: ((String, String) -> Unit)? = null,
     onOpenOffice: ((String) -> Unit)? = null,
+    onExportCopy: (suspend (String, Long, com.halo.app.data.workspace.WorkspaceTextFormat) -> com.halo.app.data.workspace.WorkspaceFile)? = null,
 ) {
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     var toolsExpanded by androidx.compose.runtime.saveable.rememberSaveable(viewModel) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val editScroll = rememberSaveable(viewModel.noteId, saver = androidx.compose.foundation.lazy.LazyListState.Saver) {
+        androidx.compose.foundation.lazy.LazyListState()
+    }
+    val readScroll = rememberSaveable(viewModel.noteId, saver = androidx.compose.foundation.ScrollState.Saver) {
+        androidx.compose.foundation.ScrollState(0)
+    }
+    var exportDialog by rememberSaveable(viewModel.noteId) { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
+    var exportFailed by remember { mutableStateOf(false) }
+    var exportedRevision by rememberSaveable(viewModel.noteId) { mutableStateOf<Long?>(null) }
+    var exported by remember { mutableStateOf<com.halo.app.data.workspace.WorkspaceFile?>(null) }
+    val exitScope = rememberCoroutineScope()
+    var leaving by remember(viewModel) { mutableStateOf(false) }
+    val leaveSafely: () -> Unit = {
+        if (!leaving) {
+            leaving = true
+            exitScope.launch {
+                try { if (viewModel.keepBeforeLeaving()) onBack() }
+                finally { leaving = false }
+            }
+        }
+    }
+
     val literalFileFormat = state.blocks.singleOrNull()?.takeIf { it.type == NoteBlockType.CODE }
         ?.let { com.halo.app.data.workspace.WorkspaceTextFormat.fromLanguage(it.language) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -190,18 +214,55 @@ fun NoteEditorScreen(
     var confirmTrash by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    var pendingMode by remember(viewModel.noteId) { mutableStateOf<Triple<EditorMode, String, Long>?>(null) }
+    val requestMode: (EditorMode) -> Unit = { mode ->
+        val current = viewModel.uiState.value
+        if (current.sourceDirty && mode != EditorMode.SOURCE) pendingMode = Triple(mode, current.sourceDraft, current.revision)
+        else viewModel.setMode(mode)
+    }
     val insertEnabled = state.isEditable && state.mode == EditorMode.EDIT && literalFileFormat == null && !state.isGenerating
     val pageOwner = ShellPageOwner("note", viewModel.noteId, "${state.revision}:${state.status}:${state.blocks.hashCode()}:${state.mode}:${state.selection}",
         canonicalSourceVersion = state.revision.toString().takeIf { state.status == SaveStatus.SAVED },
         selectionIds = listOfNotNull(state.selection?.blockId),
+        helpDescription = stringResource(R.string.zone5_help_note),
+        guidanceBlocked = pendingMode != null || state.isGenerating || exporting || exportDialog || exported != null || state.status in setOf(SaveStatus.LOADING, SaveStatus.FAILED, SaveStatus.CONFLICT, SaveStatus.MISSING, SaveStatus.TRASHED) ||
+            insertTarget != null || showRename || toolsExpanded || showHaloSheet || showAssistMenu || showReferencePicker || showFindBar || showImageStudio,
+        completedGuideIds = if (state.displayBody.isNotBlank() && (state.draftKept || state.status == SaveStatus.SAVED)) setOf("note-insert.v1", "library-new.v1") else emptySet(),
+        helpSteps = listOf(
+            com.halo.app.ui.presence.ShellGuideStep("note-insert.v1", "page.note.insert", stringResource(R.string.zone5_guide_note), state.displayBody.isNotBlank() && (state.draftKept || state.status == SaveStatus.SAVED)),
+            com.halo.app.ui.presence.ShellGuideStep("note-read.v1", "page.note.view-read", uiText("Read"), state.mode == EditorMode.READ),
+            com.halo.app.ui.presence.ShellGuideStep("note-export.v1", "page.note.export", stringResource(R.string.zone5_help_make_copy), exportedRevision == state.revision && state.status == SaveStatus.SAVED)),
         nextStep = if (insertEnabled && state.displayBody.isBlank() && insertTarget == null && !showRename && !toolsExpanded &&
             !showHaloSheet && !showAssistMenu && !showReferencePicker && !showFindBar && !showImageStudio)
             com.halo.app.ui.presence.ShellNextStep("note-insert.v1", "page.note.insert", stringResource(R.string.zone5_guide_note)) else null,
         canonicalToolIds = listOf("halo_note_get", "halo_note_read_block", "halo_note_insert_block", "halo_note_edit_block",
             "halo_note_replace_content", "halo_note_rename"),
-        disabledActionReasons = mapOf("page.note.insert" to if (literalFileFormat != null) stringResource(R.string.zone5_literal_format)
-            else if (state.isGenerating) uiText("Updating...") else stringResource(R.string.zone5_edit_first),
-            "page.note.export" to stringResource(if (onOpenOffice == null) R.string.zone5_host_unavailable else R.string.zone5_save_first)))
+        defaultDisabledActionReason = stringResource(when {
+            state.status == SaveStatus.LOADING -> R.string.action_loading
+            state.status == SaveStatus.MISSING -> R.string.action_missing
+            state.status == SaveStatus.CONFLICT -> R.string.action_conflict
+            state.status == SaveStatus.TRASHED -> R.string.action_readonly
+            state.mode == EditorMode.SOURCE -> R.string.action_source_mode
+            state.mode == EditorMode.READ -> R.string.zone5_edit_first
+            else -> R.string.action_wait
+        }),
+        disabledActionReasons = buildMap {
+            if (state.isEditable) put("page.note.insert", stringResource(when {
+                literalFileFormat != null -> R.string.zone5_literal_format
+                state.isGenerating -> R.string.action_wait
+                else -> R.string.zone5_edit_first
+            }))
+            put("page.note.export", stringResource(when {
+                onExportCopy == null -> R.string.zone5_host_unavailable
+                state.status == SaveStatus.LOADING -> R.string.action_loading
+                state.status == SaveStatus.MISSING -> R.string.action_missing
+                exporting || state.isGenerating -> R.string.action_wait
+                state.mode == EditorMode.SOURCE -> R.string.action_source_mode
+                else -> R.string.zone5_save_first
+            }))
+            put("page.note.undo", stringResource(if (state.isGenerating) R.string.action_wait else R.string.action_no_undo))
+            put("page.note.redo", stringResource(if (state.isGenerating) R.string.action_wait else R.string.action_no_redo))
+        })
     BindShellPageActions(pageOwner, listOf(
         ShellPageAction("page.note.insert", stringResource(R.string.zone5_insert), HaloGlyph.NOTE, insertEnabled) {
             val current = viewModel.uiState.value
@@ -212,21 +273,34 @@ fun NoteEditorScreen(
         ShellPageAction("page.note.find", "Find and replace", HaloGlyph.SEARCH, state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING)) { showFindBar = !showFindBar },
         ShellPageAction("page.note.rename", "Rename", HaloGlyph.NOTE, state.isEditable) { titleDraft = state.title; showRename = true },
         ShellPageAction("page.note.assist", "Think with halo", HaloGlyph.TOOL, state.isEditable) { showHaloSheet = true },
-        ShellPageAction("page.note.export", stringResource(R.string.zone5_export_from_office), HaloGlyph.FILE,
-            onOpenOffice != null && state.status == SaveStatus.SAVED && state.mode != EditorMode.SOURCE && !state.isGenerating) {
+        ShellPageAction("page.note.export", stringResource(R.string.note_export_copy), HaloGlyph.FILE,
+            onExportCopy != null && state.status == SaveStatus.SAVED && state.mode != EditorMode.SOURCE && !state.isGenerating && !exporting) {
             val current = viewModel.uiState.value
-            if (current.status == SaveStatus.SAVED && current.mode != EditorMode.SOURCE && !current.isGenerating) onOpenOffice?.invoke(viewModel.noteId)
+            if (current.status == SaveStatus.SAVED && current.mode != EditorMode.SOURCE && !current.isGenerating) exportDialog = true
         },
         ShellPageAction("page.note.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = true },
         ShellPageAction("page.note.undo", "Undo", HaloGlyph.PREVIOUS, state.canUndo && !state.isGenerating, viewModel::undo),
         ShellPageAction("page.note.redo", "Redo", HaloGlyph.NEXT, state.canRedo && !state.isGenerating, viewModel::redo),
-        ShellPageAction("page.note.view-read", "Read", HaloGlyph.READ_MODE, state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING)) { viewModel.setMode(EditorMode.READ) },
-        ShellPageAction("page.note.view-edit", "Edit", HaloGlyph.NOTE, state.isEditable) { viewModel.setMode(EditorMode.EDIT) },
+        ShellPageAction("page.note.view-read", "Read", HaloGlyph.READ_MODE, state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING)) { requestMode(EditorMode.READ) },
+        ShellPageAction("page.note.view-edit", "Edit", HaloGlyph.NOTE,
+            state.status !in setOf(SaveStatus.LOADING, SaveStatus.MISSING, SaveStatus.TRASHED) && !state.isGenerating) { requestMode(EditorMode.EDIT) },
     ))
 
+    pendingMode?.let { target ->
+        val current = state.mode == EditorMode.SOURCE && state.sourceDraft == target.second && state.revision == target.third
+        AlertDialog(onDismissRequest = { pendingMode = null },
+            title = { Text(stringResource(R.string.note_discard_source_title)) },
+            text = { Text(stringResource(if (current) R.string.note_discard_source_effect else R.string.action_source_changed)) },
+            confirmButton = { TextButton(onClick = {
+                if (viewModel.uiState.value.let { it.mode == EditorMode.SOURCE && it.sourceDraft == target.second && it.revision == target.third })
+                    viewModel.setMode(target.first)
+                pendingMode = null
+            }, enabled = current) { Text(uiText("Discard")) } },
+            dismissButton = { TextButton(onClick = { pendingMode = null }) { Text(uiText("Cancel")) } })
+    }
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
         ToolZoneHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")),
-            onBack = { viewModel.flush(); onBack() },
+            onBack = leaveSafely,
             subtitle = uiText(noteSaveLabel(state)),
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null) {
             val renameLabel = uiText("Rename")
@@ -282,10 +356,7 @@ fun NoteEditorScreen(
     }
 
     // Predicted-back and system back go through the same durable flush before leaving the note.
-    BackHandler(enabled = true) {
-        viewModel.flush()
-        onBack()
-    }
+    BackHandler(enabled = true, onBack = leaveSafely)
 
     val startStudy: (String?) -> Unit = remember(viewModel, onOpenStudy, onStartStudySetup) {
         { passage ->
@@ -458,7 +529,7 @@ fun NoteEditorScreen(
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.zone5_group_view), style = MaterialTheme.typography.titleSmall)
-            ModeToggle(state.mode, viewModel::setMode, allowSource = literalFileFormat == null)
+            ModeToggle(state.mode, requestMode, allowSource = literalFileFormat == null)
             HorizontalDivider()
             Text(stringResource(R.string.zone5_group_edit), style = MaterialTheme.typography.titleSmall)
             EditorToolbar(state, { toolsExpanded = false; showOutline = true }, { toolsExpanded = false; showFindBar = !showFindBar },
@@ -466,8 +537,8 @@ fun NoteEditorScreen(
             if (state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
                 onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
                 onHalo = { toolsExpanded = false; showHaloSheet = true },
-                onExport = onOpenOffice?.takeIf { literalFileFormat != null }?.let { open -> ({
-                    if (viewModel.uiState.value.status == SaveStatus.SAVED) open(viewModel.noteId)
+                onExport = onExportCopy?.let { ({
+                    if (viewModel.uiState.value.status == SaveStatus.SAVED) { toolsExpanded = false; exportDialog = true }
                 }) })
             if (state.mode == EditorMode.EDIT && state.isEditable && state.selection?.let { it.start != it.end } == true)
                 SelectionToolbar(state, viewModel,
@@ -493,7 +564,7 @@ fun NoteEditorScreen(
             state = literalFileFormat?.let { stringResource(R.string.zone5_literal_format) })
         if (!shellOwnsOrb) EditorWorkspaceHeader(workspaceDisplayTitle(state.title, state.displayBody, uiText("Untitled note")), toolsExpanded,
             onToggle = { toolsExpanded = !toolsExpanded },
-            onBack = { viewModel.flush(); onBack() }, onHalo = { showHaloSheet = true },
+            onBack = leaveSafely, onHalo = { showHaloSheet = true },
             subtitle = when (literalFileFormat) {
                 com.halo.app.data.workspace.WorkspaceTextFormat.TXT -> stringResource(R.string.file52_text)
                 com.halo.app.data.workspace.WorkspaceTextFormat.MARKDOWN -> stringResource(R.string.file52_markdown)
@@ -535,7 +606,7 @@ fun NoteEditorScreen(
             )
         }
         if (state.status == SaveStatus.FAILED) {
-            StatusBanner("Your draft is kept locally. Retry when storage is available.", MaterialTheme.colorScheme.errorContainer, onRetry = viewModel::retrySave)
+            StatusBanner(stringResource(if (state.draftKept) R.string.note_save_failed_kept else R.string.note_save_failed_unkept), MaterialTheme.colorScheme.errorContainer, onRetry = viewModel::retrySave)
         }
         state.proposalError?.let { error ->
             StatusBanner(error, MaterialTheme.colorScheme.errorContainer) { viewModel.clearNotice() }
@@ -546,10 +617,11 @@ fun NoteEditorScreen(
         }
 
         when (state.mode) {
-            EditorMode.SOURCE -> SourceModeEditor(state, viewModel)
-            EditorMode.READ -> ReadModeView(state, Modifier.weight(1f))
+            EditorMode.SOURCE -> SourceModeEditor(state, viewModel) { requestMode(EditorMode.EDIT) }
+            EditorMode.READ -> ReadModeView(state, readScroll, Modifier.weight(1f))
             EditorMode.EDIT -> EditModeView(
                 state = state,
+                listState = editScroll,
                 viewModel = viewModel,
                 showTools = toolsExpanded && literalFileFormat == null,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
@@ -583,11 +655,40 @@ fun NoteEditorScreen(
         if (!shellOwnsOrb && state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
             onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
             onHalo = { showHaloSheet = true },
-            onExport = onOpenOffice?.takeIf { literalFileFormat != null }?.let { open -> ({
-                if (viewModel.uiState.value.status == SaveStatus.SAVED) open(viewModel.noteId)
+            onExport = onExportCopy?.let { ({
+                if (viewModel.uiState.value.status == SaveStatus.SAVED) exportDialog = true
             }) })
         if (!shellOwnsOrb || state.status in setOf(SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED)) EditorStatusBar(state)
     }
+    if (exportDialog && onExportCopy != null) AlertDialog(onDismissRequest = { if (!exporting) exportDialog = false },
+        title = { Text(stringResource(R.string.note_export_copy)) }, text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.note_export_format))
+                if (exporting) CircularProgressIndicator()
+                if (exportFailed) Text(stringResource(R.string.note_export_failed), color = MaterialTheme.colorScheme.error)
+                val formats = literalFileFormat?.let(::listOf) ?: listOf(
+                    com.halo.app.data.workspace.WorkspaceTextFormat.MARKDOWN, com.halo.app.data.workspace.WorkspaceTextFormat.TXT)
+                formats.forEach { format -> TextButton(onClick = {
+                    exporting = true; exportFailed = false
+                    scope.launch {
+                        try {
+                            check(viewModel.flushBeforeStudy())
+                            val sourceRevision = viewModel.uiState.value.revision
+                            exported = onExportCopy(viewModel.noteId, sourceRevision, format)
+                            exportedRevision = sourceRevision
+                            exportDialog = false
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) { exportFailed = true }
+                        finally { exporting = false }
+                    }
+                }, enabled = !exporting, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(format.extension.uppercase()) } }
+            }
+        }, confirmButton = { TextButton(onClick = { exportDialog = false }, enabled = !exporting) { Text(uiText("Cancel")) } })
+    exported?.let { file -> AlertDialog(onDismissRequest = { exported = null },
+        title = { Text(stringResource(R.string.file52_output_saved)) },
+        text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(file.displayName); com.halo.app.ui.workspace.WorkspaceExportButton(file)
+            com.halo.app.ui.workspace.WorkspaceContinueButton(file.objectId.value, file.version) } },
+        confirmButton = { TextButton(onClick = { exported = null }) { Text(stringResource(R.string.file52_done)) } }) }
 }
 
 /** A single discoverable Halo action surface; destructive actions remain explicit. */
@@ -772,6 +873,7 @@ private fun ConflictBanner(
 @Composable
 private fun ColumnScope.EditModeView(
     state: NoteEditorUiState,
+    listState: androidx.compose.foundation.lazy.LazyListState,
     showTools: Boolean,
     viewModel: NoteEditorViewModel,
     onAddAttachment: () -> Unit,
@@ -786,7 +888,6 @@ private fun ColumnScope.EditModeView(
     context: android.content.Context,
     onOpenCanvas: (String, String) -> Unit,
 ) {
-    val listState = rememberLazyListState()
     val enabled = state.isEditable
     val inkCanvasTarget = remember(state.body) { com.halo.app.data.notebook.InkSelectionStudyMaterial.canvasTarget(state.body) }
 
@@ -1238,7 +1339,7 @@ private fun FindReplaceBar(state: NoteEditorUiState, viewModel: NoteEditorViewMo
 }
 
 @Composable
-private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: NoteEditorViewModel) {
+private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: NoteEditorViewModel, onCancel: () -> Unit) {
     Column(Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.background)) {
         Text(
             uiText("Markdown source. Applying converts it back into blocks."),
@@ -1278,14 +1379,14 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { viewModel.applySource(force = false) }) { Text(uiText("Apply to note")) }
             TextButton(onClick = { viewModel.applySource(force = true) }) { Text(uiText("Apply anyway")) }
-            TextButton(onClick = { viewModel.setMode(EditorMode.EDIT) }) { Text(uiText("Cancel")) }
+            TextButton(onClick = onCancel) { Text(uiText("Cancel")) }
         }
     }
 }
 
 @Composable
-private fun ReadModeView(state: NoteEditorUiState, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(bottom = 20.dp)) {
+private fun ReadModeView(state: NoteEditorUiState, scrollState: androidx.compose.foundation.ScrollState, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).verticalScroll(scrollState).padding(bottom = 20.dp)) {
         /*
          * MINING-P2-001 Part O: when this object was saved from a structured assistant answer, show
          * how it looked at capture time. It is a read-only view of the original presentation; the note
@@ -1748,9 +1849,9 @@ private fun OutlineSheet(
 @Composable
 private fun noteSaveLabel(state: NoteEditorUiState): String = when (state.status) {
         SaveStatus.LOADING -> "Loading…"
-        SaveStatus.SAVING -> "Saving…"
+        SaveStatus.SAVING -> stringResource(if (state.draftKept) R.string.work_draft_kept else R.string.work_editing)
         SaveStatus.SAVED -> stringResource(R.string.brand_note_saved_on_phone)
-        SaveStatus.CONFLICT -> "Conflict — your edits are kept"
+        SaveStatus.CONFLICT -> uiText("Conflict")
         SaveStatus.FAILED -> "Could not save"
         SaveStatus.MISSING -> "Unavailable"
         SaveStatus.TRASHED -> "In trash — editing disabled"

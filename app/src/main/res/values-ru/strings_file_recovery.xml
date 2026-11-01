@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_recovery_open">Не удалось открыть файл.</string>
+    <string name="file_recovery_create">Не удалось создать документ.</string>
+    <string name="file_recovery_import">Не удалось импортировать файл.</string>
+    <string name="file_recovery_edit">Не удалось сохранить изменение.</string>
+    <string name="file_recovery_export">Не удалось создать экспортированную копию.</string>
+    <string name="file_recovery_transform">Не удалось создать отредактированное изображение.</string>
+    <string name="file_recovery_batch">Не удалось обработать все изображения. Перед повтором проверьте результаты ниже.</string>
+    <string name="file_recovery_annotate">Не удалось сохранить пометки.</string>
+    <string name="file_recovery_insert">Не удалось добавить объект на холст.</string>
+    <string name="file_recovery_preview">Не удалось открыть просмотр изображения.</string>
+    <string name="file_recovery_cancelled">Операция остановлена. Часть результатов уже могла сохраниться. Перед повтором проверьте результаты и библиотеку.</string>
+    <string name="file_recovery_interrupted">Предыдущая операция прервана; результат не подтверждён. Перед повтором проверьте файл и библиотеку.</string>
+    <string name="file_recovery_access">Нет доступа. Выберите доступный файл или папку.</string>
+    <string name="file_recovery_retry">Проверьте текущий файл, затем выберите действие снова.</string>
+</resources>

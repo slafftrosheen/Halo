@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_export_title">Экспорт копии</string>
+    <string name="external_export_choose">Выбрать место</string>
+    <string name="external_export_explain">Выберите в Android Files место для отдельной копии. Исходный файл не будет заменён.</string>
+    <string name="external_export_writing">Запись выбранной копии…</string>
+    <string name="external_export_verifying">Проверка записанного файла…</string>
+    <string name="external_export_verified">Копия проверена в выбранном месте. Откройте её вне Halo.</string>
+    <string name="external_export_cancelled">Выбор места отменён. Новая копия не записана.</string>
+    <string name="external_export_unknown">Результат экспорта не подтверждён. Проверьте выбранный файл перед созданием новой копии.</string>
+    <string name="external_export_failed">Не удалось завершить копирование. Выбранный файл может быть пустым или неполным. Проверьте его или выберите другое место.</string>
+    <string name="external_export_source">Исходная копия этой версии недоступна. Откройте документ и экспортируйте заново.</string>
+    <string name="external_export_access">Halo не получил доступ к выбранному месту. Выберите место с доступом для записи.</string>
+    <string name="external_export_open">Открыть копию</string>
+    <string name="external_export_inspect">Проверить выбранный файл</string>
+    <string name="external_export_check">Проверить копию снова</string>
+    <string name="external_export_close">Закрыть</string>
+    <string name="external_export_open_failed">Не удалось завершить действие. Проверьте доступ к файлам и повторите.</string>
+    <string name="external_export_start_failed">Не удалось начать экспорт. Завершите другой экспорт и повторите. Сохранённый локальный результат доступен в Библиотеке.</string>
+    <string name="note_export_copy">Экспорт копии</string>
+    <string name="note_export_format">Выберите текстовый формат. Halo сохранит локальную копию, затем можно выбрать внешнее место.</string>
+    <string name="note_export_failed">Не удалось создать результат. Заметка остаётся открытой. Проверьте Библиотеку перед повтором.</string>
+    <string name="external_open_kept">Локальная копия сохранена в Библиотеке. Открытие…</string>
+    <string name="external_open_parent">Попросите взрослого открыть внешний файл во взрослом пространстве.</string>
+    <string name="external_open_failed">Не удалось завершить открытие файла. Проверьте копию в Библиотеке или снова выберите файл в Android Files.</string>
+    <string name="external_export_prior">Проверить ранее выбранный файл</string>
+</resources>

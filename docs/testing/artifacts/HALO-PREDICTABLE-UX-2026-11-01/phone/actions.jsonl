@@ -1,0 +1,169 @@
+{"utc": "2026-11-01T16:06:00.712885+00:00", "command": "snapshot", "name": "01-launch", "value": null, "index": 0}
+{"utc": "2026-11-01T16:06:11.349677+00:00", "command": "tap", "name": "02-menu", "value": "Меню", "index": 0}
+{"utc": "2026-11-01T16:06:15.559705+00:00", "command": "snapshot", "name": "02-menu", "value": null, "index": 0}
+{"utc": "2026-11-01T16:06:33.211425+00:00", "command": "tap", "name": "03-library", "value": "Рабочее пространство", "index": 0}
+{"utc": "2026-11-01T16:06:37.797392+00:00", "command": "snapshot", "name": "03-library", "value": null, "index": 0}
+{"utc": "2026-11-01T16:06:48.098064+00:00", "command": "tap", "name": "04-tools", "value": "Инструменты", "index": 0}
+{"utc": "2026-11-01T16:06:52.332522+00:00", "command": "snapshot", "name": "04-tools", "value": null, "index": 0}
+{"utc": "2026-11-01T16:08:37.584368+00:00", "command": "snapshot", "name": "05-return", "value": null, "index": 0}
+{"utc": "2026-11-01T16:08:52.608747+00:00", "command": "snapshot", "name": "06-ready", "value": null, "index": 0}
+{"utc": "2026-11-01T16:09:05.507955+00:00", "command": "snapshot", "name": "07-halonotes", "value": null, "index": 0}
+{"utc": "2026-11-01T16:09:19.900724+00:00", "command": "tap", "name": "08-menu", "value": "Меню", "index": 0}
+{"utc": "2026-11-01T16:09:23.834887+00:00", "command": "tap", "name": "09-workspace", "value": "Рабочее пространство", "index": 0}
+{"utc": "2026-11-01T16:09:28.096949+00:00", "command": "tap", "name": "10-tools", "value": "Инструменты", "index": 0}
+{"utc": "2026-11-01T16:09:32.080913+00:00", "command": "tap", "name": "11-notes", "value": "HaloNotes", "index": 0}
+{"utc": "2026-11-01T16:09:36.193313+00:00", "command": "snapshot", "name": "11-notes", "value": null, "index": 0}
+{"utc": "2026-11-01T16:10:07.228462+00:00", "command": "tap", "name": "12-notes-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:10:11.460073+00:00", "command": "snapshot", "name": "12-notes-actions", "value": null, "index": 0}
+{"utc": "2026-11-01T16:10:20.316969+00:00", "command": "tap", "name": "13-new-note", "value": "Новый документ", "index": 0}
+{"utc": "2026-11-01T16:10:24.518931+00:00", "command": "snapshot", "name": "13-new-note", "value": null, "index": 0}
+{"utc": "2026-11-01T16:10:38.129114+00:00", "command": "tap", "name": "14-title", "value": "Название документа", "index": 0}
+{"utc": "2026-11-01T16:10:40.594292+00:00", "command": "text", "name": "14-title", "value": "HALO-QA-Predictable-20261101", "index": 0}
+{"utc": "2026-11-01T16:10:42.283893+00:00", "command": "back", "name": "14-keyboard-close", "value": null, "index": 0}
+{"utc": "2026-11-01T16:10:46.103569+00:00", "command": "tap", "name": "15-create", "value": "Новый документ", "index": 1}
+{"utc": "2026-11-01T16:10:50.213333+00:00", "command": "snapshot", "name": "15-created", "value": null, "index": 0}
+{"utc": "2026-11-01T16:11:18.458219+00:00", "command": "tap", "name": "16-document-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:11:22.665807+00:00", "command": "snapshot", "name": "16-document-actions", "value": null, "index": 0}
+{"utc": "2026-11-01T16:11:35.828813+00:00", "command": "tap", "name": "17-edit", "value": "Редактировать текст", "index": 0}
+{"utc": "2026-11-01T16:11:39.973825+00:00", "command": "snapshot", "name": "17-edit", "value": null, "index": 0}
+{"utc": "2026-11-01T16:11:51.419878+00:00", "command": "tap", "name": "18-body", "value": "Текст документа", "index": 0}
+{"utc": "2026-11-01T16:11:55.669177+00:00", "command": "text", "name": "18-body", "value": "HALO-QA saved locally and reopened on the Samsung phone.", "index": 0}
+{"utc": "2026-11-01T16:11:56.094771+00:00", "command": "back", "name": "18-keyboard-close", "value": null, "index": 0}
+{"utc": "2026-11-01T16:11:58.902713+00:00", "command": "snapshot", "name": "18-saved", "value": null, "index": 0}
+{"utc": "2026-11-01T16:12:24.061993+00:00", "command": "back", "name": "19-leave-note", "value": null, "index": 0}
+{"utc": "2026-11-01T16:12:26.919094+00:00", "command": "snapshot", "name": "19-note-reopened", "value": null, "index": 0}
+{"utc": "2026-11-01T16:12:46.785284+00:00", "command": "tap", "name": "20-export-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:12:49.357856+00:00", "command": "tap", "name": "21-export", "value": "Экспорт", "index": 0}
+{"utc": "2026-11-01T16:12:52.167210+00:00", "command": "snapshot", "name": "21-export", "value": null, "index": 0}
+{"utc": "2026-11-01T16:13:02.340773+00:00", "command": "tap", "name": "22-export-txt", "value": "Экспортировать TXT", "index": 0}
+{"utc": "2026-11-01T16:13:05.102474+00:00", "command": "snapshot", "name": "22-export-result", "value": null, "index": 0}
+{"utc": "2026-11-01T16:13:31.164310+00:00", "command": "tap", "name": "23-location", "value": "Выбрать место", "index": 0}
+{"utc": "2026-11-01T16:13:33.908036+00:00", "command": "snapshot", "name": "23-location", "value": null, "index": 0}
+{"utc": "2026-11-01T16:13:45.986024+00:00", "command": "tap", "name": "24-picker", "value": "Выбрать место", "index": 0}
+{"utc": "2026-11-01T16:13:49.299688+00:00", "command": "snapshot", "name": "24-picker", "value": null, "index": 0}
+{"utc": "2026-11-01T16:13:58.946146+00:00", "command": "back", "name": "25-picker-cancel", "value": null, "index": 0}
+{"utc": "2026-11-01T16:14:02.118318+00:00", "command": "snapshot", "name": "25-cancel-return", "value": null, "index": 0}
+{"utc": "2026-11-01T16:14:15.272603+00:00", "command": "back", "name": "26-picker-cancel", "value": null, "index": 0}
+{"utc": "2026-11-01T16:14:17.979794+00:00", "command": "snapshot", "name": "26-cancel-return", "value": null, "index": 0}
+{"utc": "2026-11-01T16:14:35.039843+00:00", "command": "tap", "name": "27-picker-retry", "value": "Выбрать место", "index": 0}
+{"utc": "2026-11-01T16:14:37.845608+00:00", "command": "snapshot", "name": "27-picker-retry", "value": null, "index": 0}
+{"utc": "2026-11-01T16:15:11.647278+00:00", "command": "tap", "name": "28-save-copy", "value": "СОХРАНИТЬ", "index": 0}
+{"utc": "2026-11-01T16:15:14.433224+00:00", "command": "snapshot", "name": "28-verified-copy", "value": null, "index": 0}
+{"utc": "2026-11-01T16:15:41.463448+00:00", "command": "tap", "name": "29-open-copy", "value": "Открыть копию", "index": 0}
+{"utc": "2026-11-01T16:15:44.629104+00:00", "command": "snapshot", "name": "29-outside-halo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:15:53.706788+00:00", "command": "tap", "name": "30-external-viewer", "value": "Средство просмотра HTML", "index": 0}
+{"utc": "2026-11-01T16:15:56.604735+00:00", "command": "snapshot", "name": "30-external-viewer", "value": null, "index": 0}
+{"utc": "2026-11-01T16:15:57.032424+00:00", "command": "back", "name": "31-return-halo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:15:59.863117+00:00", "command": "snapshot", "name": "31-return-halo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:16:12.323842+00:00", "command": "tap", "name": "32-close-export", "value": "Закрыть", "index": 0}
+{"utc": "2026-11-01T16:16:15.154788+00:00", "command": "snapshot", "name": "32-return-context", "value": null, "index": 0}
+{"utc": "2026-11-01T16:16:40.857208+00:00", "command": "tap", "name": "33-study-source", "value": "Изучить этот материал", "index": 0}
+{"utc": "2026-11-01T16:16:43.782952+00:00", "command": "snapshot", "name": "33-study-source", "value": null, "index": 0}
+{"utc": "2026-11-01T16:16:52.104030+00:00", "command": "tap", "name": "34-material", "value": "Продолжить", "index": 0}
+{"utc": "2026-11-01T16:16:55.062828+00:00", "command": "snapshot", "name": "34-material", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:04.949216+00:00", "command": "scroll", "name": "35-material-scroll", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:07.791625+00:00", "command": "snapshot", "name": "35-material-source", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:10.802859+00:00", "command": "snapshot", "name": "36-study-resumed", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:23.106337+00:00", "command": "scroll", "name": "37-material-bottom", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:25.974188+00:00", "command": "snapshot", "name": "37-source-ready", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:29.393743+00:00", "command": "snapshot", "name": "38-study-system200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:48.672621+00:00", "command": "scroll", "name": "39-material200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:51.771198+00:00", "command": "scroll", "name": "39-material200b", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:54.856937+00:00", "command": "scroll", "name": "39-material200c", "value": null, "index": 0}
+{"utc": "2026-11-01T16:17:57.838916+00:00", "command": "snapshot", "name": "39-study200-restored", "value": null, "index": 0}
+{"utc": "2026-11-01T16:18:41.015383+00:00", "command": "scroll", "name": "40-source200-1", "value": null, "index": 0}
+{"utc": "2026-11-01T16:18:44.091922+00:00", "command": "scroll", "name": "40-source200-2", "value": null, "index": 0}
+{"utc": "2026-11-01T16:18:47.202552+00:00", "command": "scroll", "name": "40-source200-3", "value": null, "index": 0}
+{"utc": "2026-11-01T16:18:50.275011+00:00", "command": "scroll", "name": "40-source200-4", "value": null, "index": 0}
+{"utc": "2026-11-01T16:18:53.339256+00:00", "command": "scroll", "name": "40-source200-5", "value": null, "index": 0}
+{"utc": "2026-11-01T16:18:56.219547+00:00", "command": "snapshot", "name": "40-source200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:20:04.218796+00:00", "command": "tap", "name": "41-study-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:20:06.785492+00:00", "command": "tap", "name": "42-pins", "value": "Выбрать закреплённые действия", "index": 0}
+{"utc": "2026-11-01T16:20:09.652778+00:00", "command": "snapshot", "name": "42-pins", "value": null, "index": 0}
+{"utc": "2026-11-01T16:20:21.261364+00:00", "command": "tap", "name": "43-pin-material", "value": "Материал", "index": 0}
+{"utc": "2026-11-01T16:20:23.805613+00:00", "command": "tap", "name": "43-pins-done", "value": "К действиям", "index": 0}
+{"utc": "2026-11-01T16:20:26.631156+00:00", "command": "snapshot", "name": "43-pinned-actions", "value": null, "index": 0}
+{"utc": "2026-11-01T16:20:29.654666+00:00", "command": "snapshot", "name": "44-pins-system200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:20:45.266454+00:00", "command": "tap", "name": "45-restored-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:20:48.074473+00:00", "command": "snapshot", "name": "45-pins-restored200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:20:50.615721+00:00", "command": "tap", "name": "46-pin-invoke", "value": "Материал", "index": 0}
+{"utc": "2026-11-01T16:20:53.376778+00:00", "command": "snapshot", "name": "46-pin-current-material", "value": null, "index": 0}
+{"utc": "2026-11-01T16:21:07.186451+00:00", "command": "snapshot", "name": "47-restored-system", "value": null, "index": 0}
+{"utc": "2026-11-01T16:21:22.825378+00:00", "command": "tap", "name": "48-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:21:25.342646+00:00", "command": "tap", "name": "48-customize", "value": "Выбрать закреплённые действия", "index": 0}
+{"utc": "2026-11-01T16:21:27.910119+00:00", "command": "tap", "name": "48-restore-pins", "value": "Материал", "index": 0}
+{"utc": "2026-11-01T16:21:30.463844+00:00", "command": "tap", "name": "48-done", "value": "К действиям", "index": 0}
+{"utc": "2026-11-01T16:21:33.283635+00:00", "command": "snapshot", "name": "48-original-pins-restored", "value": null, "index": 0}
+{"utc": "2026-11-01T16:22:10.605965+00:00", "command": "snapshot", "name": "49-final-library", "value": null, "index": 0}
+{"utc": "2026-11-01T16:22:38.627880+00:00", "command": "scroll", "name": "50-library-metadata", "value": null, "index": 0}
+{"utc": "2026-11-01T16:22:41.671906+00:00", "command": "snapshot", "name": "50-library-dates", "value": null, "index": 0}
+{"utc": "2026-11-01T16:22:44.551631+00:00", "command": "tap", "name": "51-final-menu", "value": "Меню", "index": 0}
+{"utc": "2026-11-01T16:22:47.499610+00:00", "command": "snapshot", "name": "51-localized-workspace-menu", "value": null, "index": 0}
+{"utc": "2026-11-01T16:25:31.343561+00:00", "command": "snapshot", "name": "52-final-cold-library", "value": null, "index": 0}
+{"utc": "2026-11-01T16:25:34.342550+00:00", "command": "tap", "name": "53-final-note-open", "value": "HALO-QA-Predictable-20261101", "index": 0}
+{"utc": "2026-11-01T16:25:37.442646+00:00", "command": "snapshot", "name": "53-final-note-reopened", "value": null, "index": 0}
+{"utc": "2026-11-01T16:28:14.377148+00:00", "command": "snapshot", "name": "54-studio-live", "value": null, "index": 0}
+{"utc": "2026-11-01T16:49:39.203810+00:00", "command": "snapshot", "name": "55-final-studio-empty", "value": null, "index": 0}
+{"utc": "2026-11-01T16:49:51.524747+00:00", "command": "snapshot", "name": "56-final-studio-empty-200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:49:54.431766+00:00", "command": "tap", "name": "57-new-preview-200", "value": "Новый проект", "index": 0}
+{"utc": "2026-11-01T16:49:57.488038+00:00", "command": "snapshot", "name": "57-final-studio-preview-200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:50:09.529485+00:00", "command": "snapshot", "name": "58-final-studio-preview-200-settled", "value": null, "index": 0}
+{"utc": "2026-11-01T16:50:30.805702+00:00", "command": "tap", "name": "59-preview-name-200", "value": "Новый проект", "index": 1}
+{"utc": "2026-11-01T16:50:31.646177+00:00", "command": "text", "name": "59-preview-typed-200", "value": "HALO-QA-200", "index": 0}
+{"utc": "2026-11-01T16:50:34.564788+00:00", "command": "snapshot", "name": "59-final-preview-keyboard-200", "value": null, "index": 0}
+{"utc": "2026-11-01T16:50:43.321014+00:00", "command": "tap", "name": "60-cancel-preview-200", "value": "Отмена", "index": 0}
+{"utc": "2026-11-01T16:50:46.369450+00:00", "command": "snapshot", "name": "60-final-preview-cancel-restored", "value": null, "index": 0}
+{"utc": "2026-11-01T16:53:17.299147+00:00", "command": "snapshot", "name": "61-final-studio-after-regression", "value": null, "index": 0}
+{"utc": "2026-11-01T16:53:31.900699+00:00", "command": "tap", "name": "62-studio-new", "value": "Новый проект", "index": 0}
+{"utc": "2026-11-01T16:53:35.002424+00:00", "command": "snapshot", "name": "62-studio-create-dialog", "value": null, "index": 0}
+{"utc": "2026-11-01T16:53:44.771320+00:00", "command": "tap", "name": "63-studio-name", "value": "Новый проект", "index": 1}
+{"utc": "2026-11-01T16:53:45.823221+00:00", "command": "text", "name": "63-studio-named", "value": "HALO-QA-Studio-20261101", "index": 0}
+{"utc": "2026-11-01T16:53:46.240092+00:00", "command": "back", "name": "63-hide-keyboard", "value": null, "index": 0}
+{"utc": "2026-11-01T16:53:49.035884+00:00", "command": "tap", "name": "63-studio-postcard", "value": "Открытка", "index": 0}
+{"utc": "2026-11-01T16:53:52.291757+00:00", "command": "snapshot", "name": "63-studio-reviewed", "value": null, "index": 0}
+{"utc": "2026-11-01T16:54:16.761044+00:00", "command": "tap", "name": "64-create-owned-studio", "value": "Новый проект", "index": 1}
+{"utc": "2026-11-01T16:54:19.953928+00:00", "command": "snapshot", "name": "64-studio-created", "value": null, "index": 0}
+{"utc": "2026-11-01T16:54:28.272919+00:00", "command": "tap", "name": "65-studio-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:54:31.594924+00:00", "command": "snapshot", "name": "65-studio-actions", "value": null, "index": 0}
+{"utc": "2026-11-01T16:54:42.253445+00:00", "command": "scroll", "name": "66-studio-actions-scroll", "value": null, "index": 0}
+{"utc": "2026-11-01T16:54:45.438305+00:00", "command": "snapshot", "name": "66-studio-edit-actions", "value": null, "index": 0}
+{"utc": "2026-11-01T16:54:53.853512+00:00", "command": "scroll", "name": "67-studio-action-scroll", "value": null, "index": 0}
+{"utc": "2026-11-01T16:54:56.936486+00:00", "command": "snapshot", "name": "67-studio-layers-actions", "value": null, "index": 0}
+{"utc": "2026-11-01T16:55:20.876357+00:00", "command": "tap", "name": "68-studio-add-text", "value": "Текст", "index": 0}
+{"utc": "2026-11-01T16:55:24.080494+00:00", "command": "snapshot", "name": "68-studio-draft-layer", "value": null, "index": 0}
+{"utc": "2026-11-01T16:55:30.015504+00:00", "command": "scroll", "name": "69-studio-find-undo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:55:33.230605+00:00", "command": "snapshot", "name": "69-studio-undo-offered", "value": null, "index": 0}
+{"utc": "2026-11-01T16:55:57.020630+00:00", "command": "tap", "name": "70-studio-layer-text", "value": "Текст", "index": 1}
+{"utc": "2026-11-01T16:55:57.926200+00:00", "command": "text", "name": "70-studio-layer-literal", "value": "HALO QA saved locally", "index": 0}
+{"utc": "2026-11-01T16:55:58.291895+00:00", "command": "back", "name": "70-studio-layer-keyboard-close", "value": null, "index": 0}
+{"utc": "2026-11-01T16:56:00.926682+00:00", "command": "tap", "name": "70-studio-apply-layer", "value": "Применить", "index": 0}
+{"utc": "2026-11-01T16:56:03.802392+00:00", "command": "snapshot", "name": "70-studio-layer-applied", "value": null, "index": 0}
+{"utc": "2026-11-01T16:56:29.545610+00:00", "command": "tap", "name": "71-studio-actions-for-undo", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:56:32.630027+00:00", "command": "scroll", "name": "71-studio-scroll-undo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:56:35.590171+00:00", "command": "snapshot", "name": "71-studio-undo-current", "value": null, "index": 0}
+{"utc": "2026-11-01T16:56:45.376781+00:00", "command": "tap", "name": "72-studio-undo", "value": "Отменить", "index": 0}
+{"utc": "2026-11-01T16:56:48.217714+00:00", "command": "snapshot", "name": "72-studio-after-undo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:56:50.786430+00:00", "command": "tap", "name": "73-studio-actions-redo", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:56:53.801422+00:00", "command": "scroll", "name": "73-studio-find-redo", "value": null, "index": 0}
+{"utc": "2026-11-01T16:56:56.682269+00:00", "command": "snapshot", "name": "73-studio-redo-offered", "value": null, "index": 0}
+{"utc": "2026-11-01T16:57:09.558765+00:00", "command": "tap", "name": "74-studio-redo", "value": "Повторить действие", "index": 0}
+{"utc": "2026-11-01T16:57:12.345202+00:00", "command": "snapshot", "name": "74-studio-redo-draft", "value": null, "index": 0}
+{"utc": "2026-11-01T16:57:14.859227+00:00", "command": "tap", "name": "75-studio-save", "value": "Сохранить", "index": 0}
+{"utc": "2026-11-01T16:57:17.672540+00:00", "command": "snapshot", "name": "75-studio-saved", "value": null, "index": 0}
+{"utc": "2026-11-01T16:57:39.764909+00:00", "command": "tap", "name": "76-studio-export-actions", "value": "Все действия", "index": 0}
+{"utc": "2026-11-01T16:57:42.311051+00:00", "command": "tap", "name": "76-studio-export-png", "value": "Экспорт PNG", "index": 0}
+{"utc": "2026-11-01T16:57:45.114781+00:00", "command": "snapshot", "name": "76-studio-export-receipt", "value": null, "index": 0}
+{"utc": "2026-11-01T16:57:52.354779+00:00", "command": "tap", "name": "77-studio-open-export", "value": "Открыть сохранённое изображение", "index": 0}
+{"utc": "2026-11-01T16:57:55.116687+00:00", "command": "snapshot", "name": "77-studio-png-opened", "value": null, "index": 0}
+{"utc": "2026-11-01T16:58:07.322841+00:00", "command": "tap", "name": "78-open-png-file", "value": "Открыть файл", "index": 0}
+{"utc": "2026-11-01T16:58:10.254387+00:00", "command": "snapshot", "name": "78-png-open-result", "value": null, "index": 0}
+{"utc": "2026-11-01T16:58:22.735981+00:00", "command": "tap", "name": "79-choose-gallery", "value": "Галерея", "index": 0}
+{"utc": "2026-11-01T16:58:25.245622+00:00", "command": "tap", "name": "79-gallery-once", "value": "Только сейчас", "index": 0}
+{"utc": "2026-11-01T16:58:28.460784+00:00", "command": "snapshot", "name": "79-png-external-gallery", "value": null, "index": 0}
+{"utc": "2026-11-01T16:58:34.073789+00:00", "command": "back", "name": "80-return-from-gallery", "value": null, "index": 0}
+{"utc": "2026-11-01T16:58:34.521083+00:00", "command": "back", "name": "80-return-to-studio", "value": null, "index": 0}
+{"utc": "2026-11-01T16:58:37.306968+00:00", "command": "snapshot", "name": "80-studio-returned", "value": null, "index": 0}
+{"utc": "2026-11-01T16:59:56.748611+00:00", "command": "snapshot", "name": "81-studio-cold-reopened", "value": null, "index": 0}
+{"utc": "2026-11-01T17:00:38.018656+00:00", "command": "snapshot", "name": "82-studio-cold-library", "value": null, "index": 0}
+{"utc": "2026-11-01T17:00:58.182150+00:00", "command": "tap", "name": "83-studio-cold-reopen-project", "value": "HALO-QA-Studio-20261101", "index": 0}
+{"utc": "2026-11-01T17:01:01.092407+00:00", "command": "snapshot", "name": "83-studio-cold-saved-project", "value": null, "index": 0}

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="studio_failed_open">Could not open this project.</string>
+    <string name="studio_failed_create">Could not create the project.</string>
+    <string name="studio_failed_edit">Could not keep the latest edit.</string>
+    <string name="studio_failed_save">Could not save this project version.</string>
+    <string name="studio_failed_copy">Could not save a project copy.</string>
+    <string name="studio_failed_rename">Could not rename the project.</string>
+    <string name="studio_failed_history">Could not load saved versions.</string>
+    <string name="studio_failed_restore">Could not restore that version.</string>
+    <string name="studio_failed_import">Could not add that image.</string>
+    <string name="studio_failed_export">Could not create the exported copy.</string>
+    <string name="studio_failed_insert">Could not add the output to the canvas.</string>
+    <string name="studio_failed_camera">Could not add the photo.</string>
+    <string name="studio_failed_ai">Could not prepare the AI review.</string>
+    <string name="studio_failed_discard">Could not discard the draft.</string>
+    <string name="studio_recovery_changed">The project changed. Review it before trying the action again.</string>
+    <string name="studio_recovery_access">Access is unavailable. Choose an accessible source or destination.</string>
+    <string name="studio_recovery_interrupted">The operation was interrupted; its result is unconfirmed. Check the project and Library before repeating it.</string>
+    <string name="studio_recovery_failed">Try again when storage and the source are available.</string>
+    <string name="studio_recovery_draft">The last kept draft is available on this phone.</string>
+    <string name="studio_recovery_saved">The last saved project version is available on this phone.</string>
+    <string name="studio_recovery_unknown">Halo could not verify the kept work.</string>
+    <string name="studio_recovery_dismiss">Dismiss message</string>
+    <string name="work_keeping">Keeping draft…</string>
+    <string name="work_saving">Saving version…</string>
+    <string name="work_exporting">Exporting copy…</string>
+    <string name="work_draft_kept">Draft kept on this phone</string>
+    <string name="work_editing">Editing · not yet kept</string>
+    <string name="note_save_failed_kept">Could not save the note. Your latest draft is kept on this phone. Try again.</string>
+    <string name="note_save_failed_unkept">Could not keep your latest changes. Keep this note open and try again.</string>
+    <string name="studio_failed_ink">Could not keep the latest drawing. Save a copy before closing.</string>
+    <string name="zone5_find_action">Find an action</string>
+    <string name="zone5_no_matching_action">No matching actions. Try another word.</string>
+    <string name="zone5_group_task">Current task</string>
+    <string name="zone5_group_conversation">Conversation</string>
+    <string name="zone5_group_day">Your day</string>
+    <string name="zone5_group_preferences">Preferences</string>
+    <string name="zone5_group_connections">Connections</string>
+    <string name="zone5_group_activity">Review and history</string>
+</resources>

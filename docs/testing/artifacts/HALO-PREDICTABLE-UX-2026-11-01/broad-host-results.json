@@ -1,0 +1,9 @@
+{
+  "suites": 501,
+  "tests": 2388,
+  "failures": 1,
+  "errors": 0,
+  "failingCases": [
+    "com.halo.app.ui.zone5.Zone5KidsControlsTest.hostedChildControlsLiveInTheZoneWithOneOrbAndQuarterHeight"
+  ]
+}

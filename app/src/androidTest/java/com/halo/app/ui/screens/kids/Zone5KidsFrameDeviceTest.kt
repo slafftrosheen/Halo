@@ -108,7 +108,6 @@ class Zone5KidsFrameDeviceTest {
             compose.onNode(hasText("Type instead") and hasAnyAncestor(hasTestTag("kids-work"))).assertDoesNotExist()
             compose.onAllNodesWithContentDescription("Talk").assertCountEquals(1)
             compose.onNodeWithContentDescription("Talk").assertHeightIsAtLeast(56.dp)
-            compose.onNodeWithText("What can I say?").assertHeightIsAtLeast(56.dp)
             val pixels = compose.onNodeWithContentDescription("Talk").captureToImage().toPixelMap()
             var painted = 0
             for (y in 0 until pixels.height) for (x in 0 until pixels.width) {
@@ -117,7 +116,15 @@ class Zone5KidsFrameDeviceTest {
             }
             assertTrue("Child orb must repaint with $value", painted > 40)
             save("kids-${value.name.lowercase()}")
+            // The measured quarter-height layout may relocate secondary commands into Actions.
+            val help = hasText("What can I say?") and hasClickAction()
+            val relocated = compose.onAllNodes(help).fetchSemanticsNodes().isEmpty()
+            if (relocated) compose.onNodeWithText("All actions").performClick()
+            compose.onNode(help).performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(56.dp)
+            if (relocated) compose.onNodeWithText("Close").performScrollTo().performClick()
         }
+        if (compose.onAllNodes(hasText("Type instead") and hasClickAction()).fetchSemanticsNodes().isEmpty())
+            compose.onNodeWithText("All actions").performClick()
         compose.onNodeWithText("Type instead").performClick()
         compose.onNodeWithTag("child-input").assertExists()
         compose.runOnIdle { host.onBackPressedDispatcher.onBackPressed() }

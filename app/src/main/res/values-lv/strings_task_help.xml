@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_help_title">Palīdzība šajā uzdevumā</string>
+    <string name="zone5_help_amount">Norāžu apjoms</string>
+    <string name="zone5_help_off">Tikai pēc pieprasījuma</string>
+    <string name="zone5_help_cues">Klusas norādes</string>
+    <string name="zone5_help_explanations">Norādes un skaidrojumi</string>
+    <string name="zone5_help_steps">Uzdevuma soļi</string>
+    <string name="zone5_help_done">Šie soļi ir pabeigti</string>
+    <string name="zone5_help_continue">Turpiniet pašreizējā skatā. Nākamā komanda parādīsies, kad būs pieejama.</string>
+    <string name="zone5_help_guide">Vadīt mani soli pa solim</string>
+    <string name="zone5_help_pause">Apturēt norādes</string>
+    <string name="zone5_help_paused">Norādes apturētas</string>
+    <string name="zone5_help_exit">Beigt norādes</string>
+    <string name="zone5_help_dismiss">Nerādīt šo padomu</string>
+    <string name="zone5_help_preference_failed">Šo izvēli neizdevās saglabāt nākamajai reizei.</string>
+    <string name="zone5_help_create">Izveidojiet projektu</string>
+    <string name="zone5_help_save_version">Saglabājiet projekta versiju</string>
+    <string name="zone5_help_make_copy">Izveidojiet atsevišķu kopiju</string>
+    <string name="zone5_help_studio">Veidojiet attēlu no slāņiem. Piemēram, pievienojiet teksta slāni, ievadiet virsrakstu un izvēlieties Lietot. Izmaiņas tiek glabātas vietējā melnrakstā; Saglabāt apstiprina projekta versiju. Eksports izveido atsevišķu attēlu. Rezultātam izvēlieties vietu ārpus Halo.</string>
+    <string name="zone5_help_note">Rakstiet piezīmē vai pievienojiet virsrakstu, kontrolsarakstu vai attēlu. Piemēram, izveidojiet iepirkumu sarakstu un atzīmējiet vienu lietu. Pirms iziešanas pārbaudiet saglabāšanas statusu. Markdown avota izmaiņas lietojiet atsevišķi. Eksports izveido atsevišķu teksta failu un neaizstāj piezīmi.</string>
+    <string name="zone5_help_canvas">Izkārtojiet tekstu un avotu kartītes uz tāfeles. Izvēlieties Pievienot un kartītes veidu. Piemēram, novietojiet piezīmi blakus fotoattēlam. Saistīta kartīte atsaucas uz oriģinālu; kopija ir atsevišķs objekts. Atlasiet kartīti, lai to apskatītu. Visu kartīšu ietilpināšana parāda visu tāfeli.</string>
+    <string name="zone5_help_memory">Pārskatiet informāciju, ko Halo var izmantot vēlāk. Atveriet atmiņu, lai to labotu vai apzināti aizmirstu. Piemēram, labojiet novecojušu izvēli. Atmiņas aizmiršana neizdzēš avota failu. Ieteikumi jāpārskata, pirms tie kļūst par atmiņu.</string>
+    <string name="zone5_help_study">Sāciet ar mērķi un, ja vēlaties, avota materiālu. Piemēram, izvēlieties piezīmi un vingriniet tās galvenās idejas. Pirms sākšanas pārbaudiet avotu un modeļa pieejamību. Saglabātu nodarbību var atvērt vēlreiz. Rakstiet atbildi, lūdziet palīdzību vai izmantojiet kartītes; Atpakaļ neatbild jūsu vietā.</string>
+    <string name="zone5_help_library">Bibliotēkā glabājas jūsu darbi. Atrodiet vienumu ar meklēšanu, filtru vai kārtošanu un atveriet to. Atgriežoties saglabājas skats un tiek parādīts vienums, ja tas atbilst filtram. Rīki atver piecas rīku saimes. Imports saglabā izvēlētā faila vietēju kopiju.</string>
+    <string name="zone5_help_kids">Tu vari rakstīt, nevis runāt. Izvēlies Palīdzība, lai uzzinātu, ko teikt. Apturēt beidz pašreizējo balss darbību. Aizsargātos iestatījumus pārvalda pieaugušais. Palīdzība nesūta tavu darbu un neieslēdz mikrofonu.</string>
+    <string name="zone5_help_study_goal">Izvēlieties mācību mērķi, tad turpiniet ar materiālu.</string>
+    <string name="zone5_help_study_material">Izvēlieties avota materiālu vai ievadiet tēmu pirms turpināšanas.</string>
+    <string name="zone5_help_study_style">Izvēlieties mācību stilu un turpiniet pārskatīt opcijas.</string>
+    <string name="zone5_help_study_start">Pārskatiet avotu un izvēlieties pieejamu modeli, tad sāciet nodarbību.</string>
+    <string name="zone5_help_active">Norādes ir ieslēgtas</string>
+    <string name="zone5_help_resume">Turpināt norādes</string>
+</resources>

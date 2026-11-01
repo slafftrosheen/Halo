@@ -22,6 +22,7 @@ enum class AppLanguage(val tag: String, val nativeName: String) {
 class AppLanguagePreferences(private val storage: Storage, deviceLanguage: String = Locale.getDefault().language) {
     private val selected = MutableStateFlow(AppLanguage.fromTag(storage.getString(KEY) ?: deviceLanguage))
     val language = selected.asStateFlow()
+    internal fun restoreAfterStorageReady() { selected.value = AppLanguage.fromTag(storage.getString(KEY) ?: selected.value.tag) }
     fun select(language: AppLanguage) {
         storage.putString(KEY, language.tag)
         selected.value = language

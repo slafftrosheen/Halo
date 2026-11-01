@@ -20,9 +20,9 @@ import com.halo.app.ui.icons.HaloIcon
 internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean = true,
     onTitleClick: (() -> Unit)? = null, subtitle: String? = null, trailing: @Composable RowScope.() -> Unit = {}) {
     val density = LocalDensity.current
-    val keyboard = WindowInsets.ime.getBottom(density) > 0
+    val identityTarget = if (onTitleClick != null && com.halo.app.ui.presence.LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
     val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
-    val stacked = density.fontScale >= 1.4f && !keyboard && !hosted
+    val stacked = density.fontScale >= 1.4f
     val back: @Composable () -> Unit = {
         if (!hosted && !com.halo.app.ui.presence.LocalShellCarouselBackVisible.current) {
             val label = uiText("Back")
@@ -34,15 +34,15 @@ internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean 
         }
     }
     val identity: @Composable (Modifier) -> Unit = { modifier ->
-        Box(modifier.heightIn(min = 48.dp).then(
+        Box(modifier.heightIn(min = identityTarget).then(
             if (onTitleClick != null) Modifier.clickable(enabled = enabled, role = Role.Button,
                 onClickLabel = uiText("Rename"), onClick = onTitleClick)
             else Modifier), contentAlignment = Alignment.CenterStart) {
             Column {
                 Text(title, modifier = Modifier.semantics { heading() }, style = MaterialTheme.typography.titleSmall,
-                    maxLines = if (keyboard || hosted) 1 else 2, overflow = TextOverflow.Ellipsis)
+                    softWrap = true)
                 if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, softWrap = true)
             }
         }
     }

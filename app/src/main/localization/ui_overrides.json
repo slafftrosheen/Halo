@@ -274,7 +274,7 @@
       "en": "From your Workspace",
       "ru": "Из вашего рабочего пространства",
       "lv": "No tavas darbvietas",
-      "pl": "Z Twojego przestrzeni roboczej"
+      "pl": "Z Twojej przestrzeni roboczej"
     },
     "ui_0e52f12e6f1c": {
       "en": "Could not restore the project. Your saved notes are still in Workspace.",
@@ -387,6 +387,12 @@
       "ru": "Полная мощность",
       "lv": "Pilna jauda",
       "pl": "Full Power"
+    },
+    "ui_0a9d8afb0161": {
+      "en": "HaloNotes",
+      "ru": "HaloNotes",
+      "lv": "HaloNotes",
+      "pl": "HaloNotes"
     }
   },
   "aliases": {

@@ -1,0 +1,143 @@
+{
+  "started_utc": "2026-11-01T17:10:06.800439+00:00",
+  "finished_utc": "2026-11-01T17:11:43.397389+00:00",
+  "pid": "26605",
+  "cycles": [
+    {
+      "cycle": 1,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 2,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 3,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 4,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 5,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 6,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 7,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 8,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 9,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 10,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 11,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 12,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 13,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 14,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 15,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 16,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 17,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 18,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 19,
+      "actions_opened": true,
+      "back_sent": true
+    },
+    {
+      "cycle": 20,
+      "actions_opened": true,
+      "back_sent": true
+    }
+  ],
+  "returned_to_saved_project": true,
+  "android_reported_summary": [
+    "Total frames rendered: 5580",
+    "Janky frames: 246 (4.41%)",
+    "50th percentile: 7ms",
+    "90th percentile: 9ms",
+    "95th percentile: 12ms",
+    "99th percentile: 125ms",
+    "Number Missed Vsync: 114",
+    "Number High input latency: 7982",
+    "Number Slow UI thread: 213",
+    "Number Slow bitmap uploads: 0",
+    "Number Slow issue draw commands: 53",
+    "Number Frame deadline missed: 246",
+    "50th gpu percentile: 2ms",
+    "90th gpu percentile: 4ms",
+    "95th gpu percentile: 5ms",
+    "99th gpu percentile: 6ms",
+    "Total frames rendered: 3603",
+    "Janky frames: 120 (3.33%)",
+    "50th percentile: 6ms",
+    "90th percentile: 7ms",
+    "95th percentile: 7ms",
+    "99th percentile: 73ms",
+    "Number Missed Vsync: 64",
+    "Number High input latency: 4532",
+    "Number Slow UI thread: 102",
+    "Number Slow bitmap uploads: 0",
+    "Number Slow issue draw commands: 19",
+    "Number Frame deadline missed: 120",
+    "50th gpu percentile: 2ms",
+    "90th gpu percentile: 4ms",
+    "95th gpu percentile: 4ms",
+    "99th gpu percentile: 6ms"
+  ],
+  "scope": "One Samsung phone, Russian UI, saved QA Studio project; 20 Actions/Back cycles. UIAutomator observation/ADB overhead and idle animation are included. Not touch-to-acknowledgement latency, a user study, or whole-app performance qualification."
+}

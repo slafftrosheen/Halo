@@ -185,6 +185,8 @@ data class RecoveryDraft(
     val baseRevision: Long,
     val sequence: Long,
     val updatedAt: Long,
+    /** Unapplied source-editor text; never silently converted to document blocks. */
+    val sourceDraft: String? = null,
 ) {
     /** Only true when the draft is a *newer* unsaved state than the committed document. */
     fun supersedes(committedRevision: Long, committedUpdatedAt: Long): Boolean =

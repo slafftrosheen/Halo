@@ -138,11 +138,13 @@ open class MainActivity : ComponentActivity() {
         }
     }
 
+    private var incomingViewHandled = false
     override fun onCreate(savedInstanceState: Bundle?) {
         val startedAt = android.os.SystemClock.elapsedRealtime()
         RuntimeStartupTrace.mark("activity.onCreate.begin", startedAt)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        incomingViewHandled = savedInstanceState?.getBoolean("incomingViewHandled") == true
         if (this !is com.halo.app.ui.mini.MiniHaloActivity) com.halo.app.ui.mini.MiniHaloHandoff.adopt(
             intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN))
 
@@ -243,7 +245,7 @@ open class MainActivity : ComponentActivity() {
                                     // Startup animation belongs ONLY to the real Android
                                     // bootstrap interval. It must not replay when a user
                                     // navigates to Home or resumes a completed runtime.
-                                    if (!compactWindow) {
+                                    if (!compactWindow && uiGraphReady) {
                                         HaloFxAnimation(
                                             moment = HaloFxMoment.SPLASH,
                                             modifier = Modifier.size(120.dp),
@@ -252,7 +254,7 @@ open class MainActivity : ComponentActivity() {
                                         HaloSignalFace(
                                             presentation = HaloSignalPresentation(
                                                 state = HaloSignalState.IDLE,
-                                                label = "Getting ready…",
+                                                label = "Getting ready…", reducedMotion = !uiGraphReady,
                                             ),
                                             size = 120.dp,
                                             contentDescription = uiText("Getting ready…"),
@@ -299,6 +301,7 @@ open class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        incomingViewHandled = false
         if (this !is com.halo.app.ui.mini.MiniHaloActivity) com.halo.app.ui.mini.MiniHaloHandoff.adopt(
             intent.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN))
         setIntent(intent)
@@ -373,6 +376,33 @@ open class MainActivity : ComponentActivity() {
 
     private fun handleIncomingShareIntent(intent: Intent?) {
         if (intent == null) return
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent.data
+            intent.action = null
+            if (incomingViewHandled || uri?.scheme != "content") return
+            incomingViewHandled = true
+            val graph = ManualDependencyGraph
+            graph.infra.scope.launch(Dispatchers.IO) {
+                val message = try {
+                    check(!graph.kidsPreferences.getEnabled())
+                    val file = graph.workspaceUseCases.importForCanvas(uri)
+                    check(graph.kidsPreferences.loadedState.value && !graph.kidsPreferences.enabled.value)
+                    val source = graph.workspaceContinuity.describe(file.objectId.value)
+                    graph.workspaceContinuity.requestOpen(source.objectId, source.version,
+                        com.halo.app.data.workspace.WorkspaceDestination.OPEN)
+                    R.string.external_open_kept
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    if (graph.kidsPreferences.enabled.value) R.string.external_open_parent else R.string.external_open_failed
+                }
+                withContext(Dispatchers.Main.immediate) {
+                    val locale = java.util.Locale.forLanguageTag(graph.appLanguagePreferences.language.value.tag)
+                    val localized = applicationContext.createConfigurationContext(android.content.res.Configuration(resources.configuration).apply { setLocale(locale) })
+                    android.widget.Toast.makeText(applicationContext, localized.getString(message), android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+            return
+        }
         if (intent.action == Intent.ACTION_PROCESS_TEXT) {
             val selected = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()?.take(12_000)
             intent.action = Intent.ACTION_SEND
@@ -454,6 +484,13 @@ open class MainActivity : ComponentActivity() {
             RuntimeStartupTrace.mark("activity.uiBootstrap.begin", startedAt)
             try {
                 (application as? HaloApplication)?.awaitStorageBootstrap()
+                val graph = ManualDependencyGraph
+                graph.appLanguagePreferences.restoreAfterStorageReady()
+                val appearance = graph.appearancePreferences
+                val palettes = graph.palettePreferences
+                val assistant = graph.assistantPreferences
+                val visual = com.halo.app.ui.theme.VisualPreferences.get(applicationContext)
+                appearance.awaitLoaded(); palettes.awaitReady(); assistant.get(); visual.persistedSnapshot()
                 ManualDependencyGraph.homeViewModel
                 RuntimeStartupTrace.mark("activity.uiBootstrap.graphReady", startedAt)
                 withContext(Dispatchers.Main.immediate) { uiGraphReady = true }
@@ -597,6 +634,11 @@ open class MainActivity : ComponentActivity() {
         ManualDependencyGraph.stopRemoteInkOnBackground()
         com.halo.app.ui.mini.HaloHostVisibility.hidden(this)
         super.onPause()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("incomingViewHandled", incomingViewHandled)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {

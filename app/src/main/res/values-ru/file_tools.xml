@@ -1,5 +1,5 @@
 <resources>
-    <string name="file52_title">Инструменты файлов</string>
+    <string name="file52_title">HaloNotes</string>
     <string name="file52_local_scope">Создавайте и редактируйте локально. Оригиналы сохраняются.</string>
     <string name="file52_new_document">Новый документ</string>
     <string name="file52_open_file">Импортировать файл</string>
@@ -16,7 +16,7 @@
     <string name="file52_convert_image">Инструменты изображения</string>
     <string name="file52_image_batch">Обработать изображения</string>
     <string name="file52_collage">Объединить изображения</string>
-    <string name="file52_create_image">Создать в Studio</string>
+    <string name="file52_create_image">Создать в HaloStudio</string>
     <string name="file52_recent">Недавние документы и файлы</string>
     <string name="file52_choose_images">Выберите изображения</string>
     <string name="file52_selected_count">Выбрано: %1$d</string>
@@ -77,7 +77,7 @@
     <string name="file52_receipt_help">Эта запись содержит ссылки на сохранённые результаты. Откройте результат, прежде чем решать, повторять ли незавершённую обработку.</string>
     <string name="file52_batch_receipt">Результаты обработки изображений</string>
     <string name="file52_choose_source">Выберите документ или файл</string>
-    <string name="file52_empty">Импортируйте файл или создайте первый документ.</string>
+    <string name="file52_empty">Откройте «Все действия» и выберите «Новый документ» или «Импортировать файл».</string>
     <string name="file52_open_editor">Открыть редактор заметки</string>
     <string name="file52_pdf_annotations">Пометки к PDF</string>
     <string name="file52_native_pdf_future">Редактирование самого PDF находится в разработке. Уже доступны изображения страниц и связанные заметки с пометками.</string>

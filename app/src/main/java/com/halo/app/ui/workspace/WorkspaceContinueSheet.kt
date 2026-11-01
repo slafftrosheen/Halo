@@ -78,11 +78,23 @@ internal fun WorkspaceContinueDialog(item: WorkspaceContinuityItem?, canvases: L
                 if (saved) Text(stringResource(R.string.link53_saved), color = MaterialTheme.colorScheme.primary)
                 if (choosingCanvas) {
                     Text(stringResource(R.string.link53_canvas), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.link53_canvas_effect), style = MaterialTheme.typography.bodyMedium)
                     if (canvases.isEmpty()) Text(stringResource(R.string.link53_no_canvas))
                     canvases.forEach { canvas -> TextButton(onClick = { onCanvas(canvas) }, enabled = !busy,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(canvas.title) } }
                 } else {
-                    item.destinations.forEach { destination -> TextButton(onClick = { onDestination(destination) }, enabled = !busy,
+                    item.destinations.forEach { destination ->
+                        val studioEffect = when (destination) {
+                            WorkspaceDestination.STUDIO -> item.studioEffect
+                            WorkspaceDestination.OPEN -> item.openStudioEffect
+                            else -> null
+                        }
+                        if (studioEffect != null) {
+                            Text(stringResource(if (studioEffect == WorkspaceStudioEffect.OPEN_PROJECT)
+                                R.string.link53_studio_open_effect else R.string.link53_studio_new_effect),
+                                style = MaterialTheme.typography.bodyMedium)
+                        }
+                        TextButton(onClick = { onDestination(destination) }, enabled = !busy,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(when (destination) {
                             WorkspaceDestination.OPEN -> R.string.link53_open
                             WorkspaceDestination.FILE_TOOLS -> R.string.link53_files
@@ -90,8 +102,10 @@ internal fun WorkspaceContinueDialog(item: WorkspaceContinuityItem?, canvases: L
                             WorkspaceDestination.STUDY -> R.string.link53_study
                             WorkspaceDestination.CHAT -> R.string.link53_chat
                         })) } }
-                    if (item.type in setOf(WorkspaceObjectType.NOTE, WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA))
+                    if (item.type in setOf(WorkspaceObjectType.NOTE, WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA)) {
+                        Text(stringResource(R.string.link53_canvas_effect), style = MaterialTheme.typography.bodyMedium)
                         TextButton(onClick = onChooseCanvas, enabled = !busy) { Text(stringResource(R.string.link53_canvas)) }
+                    }
                     TextButton(onClick = onWorkingSet, enabled = !busy) { Text(stringResource(R.string.link53_context)) }
                     if (item.sources.isNotEmpty()) {
                         HorizontalDivider()

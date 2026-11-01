@@ -1,0 +1,17 @@
+<resources>
+    <string name="zone5_home_purpose">Runājiet ar Halo</string>
+    <string name="zone5_screen_purpose">Jūsu diena</string>
+    <string name="zone5_workspace_group">Workspace rīki</string>
+    <string name="zone5_group_attachments">Pielikumi</string>
+    <string name="zone5_group_history">Vēsture</string>
+    <string name="zone5_group_layout">Izkārtojums</string>
+    <string name="zone5_group_cards">Kartītes</string>
+    <string name="zone5_group_search">Meklēt iestatījumus</string>
+    <string name="zone5_group_sections">Iestatījumu sadaļas</string>
+    <string name="zone5_group_help">Palīdzība</string>
+    <string name="zone5_group_management">Pārvaldība</string>
+    <string name="zone5_group_review">Pārskatīšana</string>
+    <string name="zone5_help_files_description">Atveriet atbalstītu failu, lai to apskatītu. Tekstu var atvērt kā rediģējamu kopiju; eksports nemaina avotu.</string>
+    <string name="zone5_expanded">Izvērsts</string>
+    <string name="zone5_collapsed">Sakļauts</string>
+</resources>

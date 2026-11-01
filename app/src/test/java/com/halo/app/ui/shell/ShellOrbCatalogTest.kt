@@ -5,6 +5,12 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ShellOrbCatalogTest {
+    @Test fun directWorkspaceGroupHasOnlyExistingAdultInstruments() {
+        assertEquals(listOf("studio", "file_tools", "study", "notebook/memory", "canvases"),
+            ShellOrbCatalog.workspaceDestinations(false).map { it.route })
+        assertTrue(ShellOrbCatalog.workspaceDestinations(true).isEmpty())
+    }
+
     @Test fun activePageActionsRequireTheExactObjectAndPageFamily() {
         val canvas = com.halo.app.ui.presence.ShellPageOwner("canvas", "board-A")
         assertTrue(ShellOrbCatalog.pageOwnerMatches(canvas, "notebook/canvas/{canvasId}?nodeId={nodeId}", "board-A"))

@@ -76,6 +76,11 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("memory", sourceIdentity = "$savedRevision:$section:${state.group}:${state.scope}:${state.sort}:${search.hashCode()}:${state.query.hashCode()}:$editor:${review.hashCode()}:$busy",
         canonicalToolIds = listOf("halo_search_memory", "halo_read_memory", "halo_remember", "halo_propose_memory"),
+        helpDescription = stringResource(R.string.zone5_help_memory),
+        defaultDisabledActionReason = stringResource(R.string.action_wait),
+        guidanceBlocked = busy || editor || review != null || state.loading || state.error != null,
+        completedGuideIds = if (state.count > 0 && !state.loading && state.error == null) setOf("memory-add.v1") else emptySet(),
+        helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("memory-add.v1", "page.memory.add", stringResource(R.string.zone5_guide_memory), state.count > 0 && !state.loading && state.error == null)),
         nextStep = if (state.count == 0 && !state.loading && state.error == null && !busy && !editor && review == null &&
             section == "Memories" && search.isBlank()) com.halo.app.ui.presence.ShellNextStep("memory-add.v1", "page.memory.add",
                 stringResource(R.string.zone5_guide_memory)) else null)

@@ -57,8 +57,14 @@ internal fun HaloZone(
         val density = LocalDensity.current
         var utilityHeight by remember(entryId) { mutableStateOf<Dp?>(null) }
         var menuHeight by remember(entryId) { mutableStateOf<Dp?>(null) }
+        var navigationHeight by remember(entryId, fallback, kids, density.fontScale) { mutableStateOf(if (fallback) 68.dp else 84.dp) }
+        var hintHeight by remember(entryId) { mutableStateOf(64.dp) }
+        val placement = zone5SecondaryPlacement(availableHeight * .25f, navigationHeight,
+            utilityHeight ?: 0.dp, menuHeight ?: if (workspace) 48.dp else if (kids) 56.dp else 64.dp)
+        val utilityInSheet = !composer && (singleRow || bounded && placement.utilityInActions)
+        val menusInSheet = singleRow || bounded && placement.menusInActions
         val spareForHint = bounded && workspace && utilityHeight != null && menuHeight != null &&
-            availableHeight * .25f - 77.dp - (utilityHeight ?: 0.dp) - (menuHeight ?: 0.dp) >= 24.dp
+            !utilityInSheet && !menusInSheet && availableHeight * .25f - navigationHeight - 9.dp - (utilityHeight ?: 0.dp) - (menuHeight ?: 0.dp) >= hintHeight
         val session = LocalZone5GuideSession.current
         val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
         val windowFocused = LocalWindowInfo.current.isWindowFocused
@@ -67,11 +73,16 @@ internal fun HaloZone(
         var toolMenuOpen by remember(entryId) { mutableStateOf(false) }
         var visibleGuide by remember(entryId) { mutableStateOf<String?>(null) }
         var coachmarkId by remember(entryId) { mutableStateOf<String?>(null) }
-        val candidate = nextStep?.takeIf { guide -> zone5SafeGuideAction(guide.actionId) &&
+        val owner = LocalShellPageActions.current?.value?.owner?.takeIf { LocalShellPageOwnerFilter.current(it) }
+        SideEffect { owner?.let { session?.observe(it) } }
+        val guided = owner?.takeIf { session?.applies(it) == true }?.helpSteps?.firstOrNull { !it.complete }
+        val candidate = (guided?.let { ShellNextStep(it.id, it.actionId, it.message) } ?: nextStep)?.takeIf { guide ->
+            (if (guided != null) zone5RequestedGuideAction(guide.actionId) else zone5SafeGuideAction(guide.actionId)) &&
             (if (workspace) actions else orbitActions).any { it.enabled && it.id.removePrefix("page:") == guide.actionId } }
-        val allowed = zone5GuideAllowed(guideIdle, lifecycle.isAtLeast(Lifecycle.State.RESUMED), windowFocused,
-            fallback, WindowInsets.ime.getBottom(LocalDensity.current) > 0, disclosed || toolMenuOpen, visual.guideLight,
-            candidate != null && session != null && !session.suppressed(candidate.id))
+        val allowed = zone5GuideAllowed(guideIdle && owner?.guidanceBlocked != true, lifecycle.isAtLeast(Lifecycle.State.RESUMED), windowFocused,
+            fallback, WindowInsets.ime.getBottom(LocalDensity.current) > 0, disclosed || toolMenuOpen,
+            visual.guideLight && (visual.guidanceAmount != com.halo.app.ui.theme.HaloGuidanceAmount.OFF || guided != null),
+            candidate != null && !menusInSheet && session != null && (guided != null || !session.suppressed(candidate.id)))
         LaunchedEffect(candidate, allowed, session) {
             if (!allowed) { visibleGuide = null; coachmarkId = null }
             else if (session != null) {
@@ -79,23 +90,26 @@ internal fun HaloZone(
                 visibleGuide = candidate?.id
             }
         }
-        val guide = candidate?.takeIf { allowed && visibleGuide == it.id && session?.suppressed(it.id) == false }
+        val guide = candidate?.takeIf { allowed && visibleGuide == it.id && (guided != null || session?.suppressed(it.id) == false) }
+        SideEffect { session?.presentationActive = guide != null || disclosed || toolMenuOpen }
+        DisposableEffect(session) { onDispose { session?.presentationActive = false } }
+        val accessibility = androidx.compose.ui.platform.LocalAccessibilityManager.current
         LaunchedEffect(guide?.id, spareForHint, session) {
             coachmarkId = null
-            if (guide != null && spareForHint && session != null && !session.shownThisSession) {
+            if (guide != null && spareForHint && visual.guidanceAmount == com.halo.app.ui.theme.HaloGuidanceAmount.EXPLANATIONS && session != null && !session.shownThisSession) {
                 coachmarkId = guide.id
                 session.shown()
-                kotlinx.coroutines.delay(6000)
+                kotlinx.coroutines.delay(accessibility?.calculateRecommendedTimeoutMillis(6000, containsText = true, containsControls = true) ?: 6000)
                 coachmarkId = null
             }
         }
         val dispatch: (HaloOrbContextAction) -> Unit = { action ->
-            guide?.takeIf { action.enabled && it.actionId == action.id.removePrefix("page:") }?.let { session?.dismiss(it.id) }
             onAction(action)
         }
         val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
             entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true,
-            compactUtility = { if (singleRow && !composer && header?.owner?.routeFamily != "notebook") utility() }, kids = kids)
+            compactUtility = { if (utilityInSheet && header?.owner?.routeFamily != "notebook") utility() }, kids = kids, guidanceTargetVisible = !fallback && !menusInSheet,
+            compactUtilityIncludesStatus = utilityInSheet && header?.owner?.routeFamily != "notebook" && header?.includesStatus == true)
         val utilityScroll = rememberScrollState()
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * .25f) else Modifier)
@@ -111,19 +125,31 @@ internal fun HaloZone(
                         // Overflow scrolls within the Zone; the working viewport never loses its 3/4 share.
                         Column((if (bounded) Modifier.weight(1f) else Modifier).fillMaxWidth()
                             .then(if (bounded) Modifier.verticalScroll(utilityScroll) else Modifier)) {
-                            Column(Modifier.fillMaxWidth().onSizeChanged { utilityHeight = with(density) { it.height.toDp() } }) {
-                                if (composer || !singleRow) utility()
+                            if (!utilityInSheet) Column(Modifier.fillMaxWidth().testTag("zone5-utility").onSizeChanged { utilityHeight = with(density) { it.height.toDp() } }) {
+                                utility()
                             }
-                            if (!singleRow && workspace) Box(Modifier.fillMaxWidth().onSizeChanged {
+                            if (utilityInSheet && bounded) header?.owner?.statusLabel?.let {
+                                Text(it, style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.fillMaxWidth())
+                            }
+                            if (!menusInSheet && workspace) Box(Modifier.fillMaxWidth().testTag("zone5-command-groups").onSizeChanged {
                                 menuHeight = with(density) { it.height.toDp() }
                             }) { WorkspaceToolMenus(guide?.actionId) { toolMenuOpen = it } }
-                            else if (!fallback && orbitActions.isNotEmpty()) ContextToolOrbit(orbitActions, dispatch, {}, 64.dp,
-                                "$entryId:$route", minimumHeight = 0.dp, guidedActionId = guide?.actionId, dense = true, minimumTarget = if (kids) 56.dp else 48.dp)
+                            else if (!fallback && !menusInSheet && orbitActions.isNotEmpty()) Box(Modifier.fillMaxWidth().onSizeChanged {
+                                menuHeight = with(density) { it.height.toDp() }
+                            }) {
+                                if (kids) KidsZoneActionStrip(orbitActions, dispatch, guide?.actionId)
+                                else ContextToolOrbit(orbitActions, dispatch, {}, 64.dp,
+                                    "$entryId:$route", minimumHeight = 0.dp, guidedActionId = guide?.actionId, dense = true, minimumTarget = 48.dp)
+                            }
                             guide?.takeIf { spareForHint && coachmarkId == it.id }?.let { hint ->
-                                Zone5GuideInline(hint) { session?.dismiss(hint.id); visibleGuide = null }
+                                Box(Modifier.onSizeChanged { hintHeight = with(density) { it.height.toDp() } }) {
+                                    Zone5GuideInline(hint) { session?.dismiss(hint.id); session?.pause(); visibleGuide = null }
+                                }
                             }
                         }
-                        Box(Modifier.fillMaxWidth().padding(top = if (singleRow) 2.dp else 4.dp)) {
+                        Box(Modifier.fillMaxWidth().onSizeChanged { navigationHeight = with(density) { it.height.toDp() } }
+                            .padding(top = if (singleRow) 2.dp else 0.dp)) {
                             orb(if (fallback) { if (kids) 56.dp else 48.dp } else 64.dp)
                         }
                     }
@@ -131,4 +157,12 @@ internal fun HaloZone(
             }
         }
     }
+}
+
+/** Fit secondary controls before any scrolling is necessary; the primary row never shrinks. */
+internal data class Zone5SecondaryPlacement(val menusInActions: Boolean, val utilityInActions: Boolean)
+internal fun zone5SecondaryPlacement(zone: Dp, navigation: Dp, utility: Dp, menus: Dp): Zone5SecondaryPlacement {
+    val available = zone - navigation - 9.dp // divider and vertical padding
+    val moveMenus = utility + menus > available
+    return Zone5SecondaryPlacement(moveMenus, utility > available)
 }

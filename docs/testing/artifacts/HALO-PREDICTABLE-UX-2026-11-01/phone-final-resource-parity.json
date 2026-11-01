@@ -1,0 +1,74 @@
+[
+  {
+    "file": "strings_predictable_completion.xml",
+    "locale": "ru",
+    "keys": 63,
+    "passed": true
+  },
+  {
+    "file": "strings_predictable_completion.xml",
+    "locale": "lv",
+    "keys": 63,
+    "passed": true
+  },
+  {
+    "file": "strings_predictable_completion.xml",
+    "locale": "pl",
+    "keys": 63,
+    "passed": true
+  },
+  {
+    "file": "strings_predictable_navigation.xml",
+    "locale": "ru",
+    "keys": 15,
+    "passed": true
+  },
+  {
+    "file": "strings_predictable_navigation.xml",
+    "locale": "lv",
+    "keys": 15,
+    "passed": true
+  },
+  {
+    "file": "strings_predictable_navigation.xml",
+    "locale": "pl",
+    "keys": 15,
+    "passed": true
+  },
+  {
+    "file": "strings_zone5.xml",
+    "locale": "ru",
+    "keys": 83,
+    "passed": true
+  },
+  {
+    "file": "strings_zone5.xml",
+    "locale": "lv",
+    "keys": 83,
+    "passed": true
+  },
+  {
+    "file": "strings_zone5.xml",
+    "locale": "pl",
+    "keys": 83,
+    "passed": true
+  },
+  {
+    "file": "file_tools.xml",
+    "locale": "ru",
+    "keys": 93,
+    "passed": true
+  },
+  {
+    "file": "file_tools.xml",
+    "locale": "lv",
+    "keys": 93,
+    "passed": true
+  },
+  {
+    "file": "file_tools.xml",
+    "locale": "pl",
+    "keys": 93,
+    "passed": true
+  }
+]

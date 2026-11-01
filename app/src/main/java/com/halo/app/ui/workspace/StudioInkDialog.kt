@@ -40,7 +40,7 @@ internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
         Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.studio_ink_help), style = MaterialTheme.typography.bodySmall)
             when {
-                failed -> Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
+                failed -> Text(stringResource(R.string.studio_failed_ink), color = MaterialTheme.colorScheme.error)
                 previewFailed -> Text(stringResource(R.string.studio_preview_error), color = MaterialTheme.colorScheme.error)
                 background == null -> CircularProgressIndicator()
                 else -> CanvasInkSurface(initial = layer.ink, onChanged = session::submit, background = background?.asImageBitmap(),

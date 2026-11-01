@@ -1,0 +1,13 @@
+{
+  "suites": 1,
+  "tests": 4,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "test_source": {
+    "file": "app/src/test/java/com/halo/app/ui/screens/kids/KidsShellOrbBindingTest.kt",
+    "sha256": "ac5180c712ccdb9e9bf1831639fb0464851861cc512cbe68e3ed0365a24f1e89"
+  },
+  "scope": "Only the existing Kids summary assertion changed after the broad run; no production source changed. All four binding tests pass, including current page identity and rejection of the prior lesson name.",
+  "apk_sha256": "6989493e6b873afae13699a87f0368dd05d3b9b87cf9ac17d306b712568eccf5"
+}

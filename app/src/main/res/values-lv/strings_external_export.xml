@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_export_title">Eksportēt kopiju</string>
+    <string name="external_export_choose">Izvēlēties vietu</string>
+    <string name="external_export_explain">Izvēlieties atsevišķas kopijas vietu Android lietotnē Faili. Oriģināls netiks aizstāts.</string>
+    <string name="external_export_writing">Izvēlētās kopijas rakstīšana…</string>
+    <string name="external_export_verifying">Ierakstītā faila pārbaude…</string>
+    <string name="external_export_verified">Eksportētā kopija pārbaudīta izvēlētajā vietā. Atveriet to ārpus Halo.</string>
+    <string name="external_export_cancelled">Vietas izvēle atcelta. Jauna kopija netika ierakstīta.</string>
+    <string name="external_export_unknown">Eksporta rezultāts nav apstiprināts. Pirms citas kopijas izveides pārbaudiet izvēlēto failu.</string>
+    <string name="external_export_failed">Kopiju neizdevās pabeigt. Izvēlētais fails var būt tukšs vai nepilnīgs. Pārbaudiet to vai izvēlieties citu vietu.</string>
+    <string name="external_export_source">Šīs versijas avota kopija vairs nav pieejama. Atveriet dokumentu un eksportējiet vēlreiz.</string>
+    <string name="external_export_access">Halo nevarēja piekļūt izvēlētajai vietai. Izvēlieties vietu ar rakstīšanas piekļuvi.</string>
+    <string name="external_export_open">Atvērt eksportēto kopiju</string>
+    <string name="external_export_inspect">Apskatīt izvēlēto failu</string>
+    <string name="external_export_check">Pārbaudīt kopiju vēlreiz</string>
+    <string name="external_export_close">Aizvērt</string>
+    <string name="external_export_open_failed">Darbību neizdevās pabeigt. Pārbaudiet piekļuvi failiem un mēģiniet vēlreiz.</string>
+    <string name="external_export_start_failed">Eksportu neizdevās sākt. Pabeidziet citu eksportu un mēģiniet vēlreiz. Saglabātais vietējais rezultāts ir pieejams Bibliotēkā.</string>
+    <string name="note_export_copy">Eksportēt kopiju</string>
+    <string name="note_export_format">Izvēlieties teksta formātu. Halo saglabās vietējo rezultātu, pēc tam varēsiet izvēlēties ārēju vietu.</string>
+    <string name="note_export_failed">Rezultātu neizdevās izveidot. Piezīme paliek atvērta. Pirms atkārtošanas pārbaudiet Bibliotēku.</string>
+    <string name="external_open_kept">Vietējā kopija saglabāta Bibliotēkā. Atver…</string>
+    <string name="external_open_parent">Lūdziet pieaugušajam atvērt ārēju failu pieaugušo darbvietā.</string>
+    <string name="external_open_failed">Faila atvēršanu neizdevās pabeigt. Pārbaudiet kopiju Bibliotēkā vai izvēlieties failu vēlreiz Android lietotnē Faili.</string>
+    <string name="external_export_prior">Apskatīt iepriekš izvēlēto failu</string>
+</resources>

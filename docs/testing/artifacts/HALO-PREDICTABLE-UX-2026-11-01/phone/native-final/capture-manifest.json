@@ -1,0 +1,62 @@
+[
+  {
+    "file": "zone5-orb-polish-classic-blue.png",
+    "sha256": "6e32cfc5ef98b9e3ad774fab5b7338a10220b11b951d6b76c5c10c2f2ab2db9f",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-orb-polish-classic-kids-blue.png",
+    "sha256": "b793afe2ec9c90c8bfe6c2f408f6a0b014412ea2ce9271a2d00b3abbaf53545c",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-orb-polish-classic-kids-mint.png",
+    "sha256": "9b497129c972fadbb50d5fd9f930ccb7a90cfb5ec133a455bb636fa30c170435",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-orb-polish-classic-kids-rose.png",
+    "sha256": "c75a5ed5683dee609a39f20a505080a95a4e9ed88caeca2687c43fc4d7bd6a14",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-orb-polish-classic-mint.png",
+    "sha256": "c68dd75c5bca4f5821257759893dea04b6a61d245ea5a9903c2a83825a5bfeeb",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-orb-polish-classic-rose.png",
+    "sha256": "8d1ceca49d529853f4e0ba754aa1c85cc80f106eb310e8ce00f0e66996885880",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-kids-polish-kids-blue.png",
+    "sha256": "43a7b7cd0705117bf8b98eaf7fc90799bc7d728f4529ec5e46feb78dbbc45146",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-kids-polish-kids-compact-200.png",
+    "sha256": "de7b2bcccf7af7d781f9c84d63e4f63d72a92d97dd83b7d857c844afc5b34ff1",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-kids-polish-kids-keyboard.png",
+    "sha256": "c4f68066bff0f73d80e6fba12fa0acec6c2362ed0e7abc8499400e76de10ef43",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-kids-polish-kids-mint.png",
+    "sha256": "cf4ef97cd486fd0d0339f7d75a8135f649a88ce5f554b2c6e2b5228ac3ddeeb4",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-kids-polish-kids-parent-boundary.png",
+    "sha256": "39d7ba273e4030b07cc22252654012a1ff1be3998fb743ab37f5fa40f21d01b1",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  },
+  {
+    "file": "zone5-kids-polish-kids-rose.png",
+    "sha256": "337714aaf4a69200b572d30e42f6df14a2ba4eb0a9e2acbee1f8b61d23dcec2b",
+    "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+  }
+]

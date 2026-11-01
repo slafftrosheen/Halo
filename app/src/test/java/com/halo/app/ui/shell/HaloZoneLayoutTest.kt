@@ -53,7 +53,7 @@ class HaloZoneLayoutTest {
                 }
                 Column(Modifier.fillMaxSize()) {
                     Box(Modifier.weight(1f).testTag("zone5-working")) { Text("Working document") }
-                    HaloZone(route, 800.dp, compact, shownActions, { invoked += it.id }, { invoked += it }, 2,
+                    HaloZone(route, androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp, compact, shownActions, { invoked += it.id }, { invoked += it }, 2,
                         utility = {
                             if (childHeader) band.value?.let { RenderShellUtilityBand(it) }
                             else TextField("", {}, modifier = Modifier.fillMaxWidth(), label = { Text("Message") })
@@ -69,20 +69,51 @@ class HaloZoneLayoutTest {
     }
 
 
-    @Test fun normalFooterShowsThreeLabelledActionsWithDisjointVoiceAndMenuBounds() {
+    @Test fun normalFooterMovesSecondaryActionsIntoTheSheetBeforeTheyNeedScrolling() {
         show()
-        val voice = compose.onNodeWithContentDescription("Talk").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        val menu = compose.onNodeWithText("Menu").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-        for (label in listOf("Action 1", "Action 2", "Action 3")) {
-            val action = compose.onNodeWithText(label).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
-            assertFalse(action.overlaps(voice)); assertFalse(action.overlaps(menu))
-            assertTrue(action.width >= 48); assertTrue(action.height >= 48)
-        }
-        compose.onNodeWithText("Action 4").assertIsNotDisplayed()
-        compose.onNode(isRoot()).captureRoboImage()
+        compose.onNodeWithTag("halo-zone5").assertHeightIsEqualTo(200.dp)
+        compose.onNodeWithTag("zone5-working").assertHeightIsEqualTo(600.dp)
+        compose.onNodeWithText("Action 1").assertDoesNotExist()
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNode(hasText("Action 1") and hasClickAction()).assertIsDisplayed().performClick()
+        assertEquals(listOf("tool-1"), invoked)
+    }
+    @Test fun compactStudioActionsShowTheRelocatedSaveStatusOnce() {
+        compose.setContent { HostlessHaloTheme {
+            val page = remember { mutableStateOf<ShellPageProjection?>(null) }
+            val utility = remember { mutableStateOf<ShellUtilityProjection?>(null) }
+            CompositionLocalProvider(LocalShellPageActions provides page, LocalShellUtilityBand provides utility) {
+                val owner = ShellPageOwner("studio", "artwork", statusLabel = "Draft kept on this phone")
+                BindShellPageActions(owner, listOf(ShellPageAction("page.studio.layers", "Layers", HaloGlyph.NOTE) {}))
+                BindShellUtilityBand(owner, includesStatus = true) {
+                    com.halo.app.ui.screens.notebook.ToolZoneHeader("Artwork", {}, subtitle = "Draft kept on this phone") {}
+                }
+                val offered = listOf(HaloOrbContextAction("page:page.studio.layers", "Layers", HaloGlyph.NOTE))
+                HaloZone("studio", 800.dp, true, offered, {}, {}, 0,
+                    utility = { utility.value?.let { RenderShellUtilityBand(it) } },
+                    orb = { size -> HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true),
+                        HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, {}, {}, {},
+                        size = size, contextActions = offered) }, profile = {}, backdrop = {})
+            }
+        } }
+        compose.onNodeWithText("All actions").performClick()
+        compose.onAllNodesWithText("Draft kept on this phone").assertCountEquals(1)
+        compose.onNode(isDialog()).captureRoboImage()
     }
 
-    @Test fun manualOrbitDragKeepsTheOrbAnchoredAndNeverExecutes() {
+    @Test @Config(qualifiers = "w360dp-h520dp")
+    fun smallestNormalWindowKeepsExactQuarterAndCompleteCommands() {
+        show()
+        compose.onNodeWithTag("halo-zone5").assertHeightIsEqualTo(130.dp)
+        compose.onNodeWithTag("zone5-working").assertHeightIsEqualTo(390.dp)
+        compose.onNodeWithText("Action 1").assertDoesNotExist()
+        compose.onNodeWithText("All actions").performClick()
+        compose.onNode(hasText("Action 9") and hasClickAction()).performScrollTo().performClick()
+        assertEquals(listOf("tool-9"), invoked)
+    }
+
+    @Test @Config(qualifiers = "w360dp-h960dp")
+    fun manualOrbitDragKeepsTheOrbAnchoredAndNeverExecutes() {
         show()
         val before = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
         compose.onNodeWithText("Action 2").performTouchInput { swipeLeft() }
@@ -105,7 +136,8 @@ class HaloZoneLayoutTest {
         assertEquals(listOf("tool-9"), invoked)
     }
 
-    @Test fun sparseActionsRemainLabelledAndDoNotCoverVoice() {
+    @Test @Config(qualifiers = "w360dp-h960dp")
+    fun sparseActionsRemainLabelledAndDoNotCoverVoice() {
         show(actionCount = 1)
         val action = compose.onNodeWithText("Action 1").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
         val voice = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
@@ -129,7 +161,7 @@ class HaloZoneLayoutTest {
     @Test fun settingsUsesOneNavigationRowWithTheSameCompleteActionList() {
         show(route = "settings")
         compose.onNodeWithText("Action 1").assertDoesNotExist()
-        val voice = compose.onNodeWithContentDescription("Talk").fetchSemanticsNode().boundsInRoot
+        val voice = compose.onNodeWithTag("zone5-orb-action").fetchSemanticsNode().boundsInRoot
         val menu = compose.onNodeWithText("Menu").fetchSemanticsNode().boundsInRoot
         val all = compose.onNodeWithText("All actions").fetchSemanticsNode().boundsInRoot
         assertEquals(voice.center.y, menu.center.y, 4f)

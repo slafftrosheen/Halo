@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_recovery_open">Nie udało się otworzyć pliku.</string>
+    <string name="file_recovery_create">Nie udało się utworzyć dokumentu.</string>
+    <string name="file_recovery_import">Nie udało się zaimportować pliku.</string>
+    <string name="file_recovery_edit">Nie udało się zapisać zmiany.</string>
+    <string name="file_recovery_export">Nie udało się utworzyć eksportowanej kopii.</string>
+    <string name="file_recovery_transform">Nie udało się utworzyć edytowanego obrazu.</string>
+    <string name="file_recovery_batch">Nie udało się przetworzyć wszystkich obrazów. Przed ponowieniem sprawdź wyniki poniżej.</string>
+    <string name="file_recovery_annotate">Nie udało się zachować tych adnotacji.</string>
+    <string name="file_recovery_insert">Nie udało się dodać elementu do kanwy.</string>
+    <string name="file_recovery_preview">Nie udało się otworzyć podglądu obrazu.</string>
+    <string name="file_recovery_cancelled">Operacja zatrzymana. Niektóre wyniki mogą już istnieć. Przed ponowieniem sprawdź wyniki i bibliotekę.</string>
+    <string name="file_recovery_interrupted">Poprzednia operacja została przerwana; wynik nie jest potwierdzony. Przed ponowieniem sprawdź plik i bibliotekę.</string>
+    <string name="file_recovery_access">Brak dostępu. Wybierz dostępny plik lub folder.</string>
+    <string name="file_recovery_retry">Sprawdź bieżący plik, a następnie wybierz działanie ponownie.</string>
+</resources>

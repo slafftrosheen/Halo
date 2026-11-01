@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="studio_failed_open">Не удалось открыть проект.</string>
+    <string name="studio_failed_create">Не удалось создать проект.</string>
+    <string name="studio_failed_edit">Не удалось сохранить последнее изменение.</string>
+    <string name="studio_failed_save">Не удалось сохранить версию проекта.</string>
+    <string name="studio_failed_copy">Не удалось сохранить копию проекта.</string>
+    <string name="studio_failed_rename">Не удалось переименовать проект.</string>
+    <string name="studio_failed_history">Не удалось загрузить сохранённые версии.</string>
+    <string name="studio_failed_restore">Не удалось восстановить эту версию.</string>
+    <string name="studio_failed_import">Не удалось добавить изображение.</string>
+    <string name="studio_failed_export">Не удалось создать экспортированную копию.</string>
+    <string name="studio_failed_insert">Не удалось добавить результат на холст.</string>
+    <string name="studio_failed_camera">Не удалось добавить фото.</string>
+    <string name="studio_failed_ai">Не удалось подготовить просмотр ИИ.</string>
+    <string name="studio_failed_discard">Не удалось удалить черновик.</string>
+    <string name="studio_recovery_changed">Проект изменился. Проверьте его перед повтором действия.</string>
+    <string name="studio_recovery_access">Нет доступа. Выберите доступный источник или папку назначения.</string>
+    <string name="studio_recovery_interrupted">Операция прервана; результат не подтверждён. Перед повтором проверьте проект и библиотеку.</string>
+    <string name="studio_recovery_failed">Повторите, когда хранилище и источник будут доступны.</string>
+    <string name="studio_recovery_draft">Последний сохранённый черновик доступен на этом телефоне.</string>
+    <string name="studio_recovery_saved">Последняя сохранённая версия проекта доступна на этом телефоне.</string>
+    <string name="studio_recovery_unknown">Halo не удалось проверить сохранность работы.</string>
+    <string name="studio_recovery_dismiss">Скрыть сообщение</string>
+    <string name="work_keeping">Сохранение черновика…</string>
+    <string name="work_saving">Сохранение версии…</string>
+    <string name="work_exporting">Экспорт копии…</string>
+    <string name="work_draft_kept">Черновик сохранён на этом телефоне</string>
+    <string name="work_editing">Редактирование · ещё не сохранено</string>
+    <string name="note_save_failed_kept">Не удалось сохранить заметку. Последний черновик сохранён на этом телефоне. Повторите попытку.</string>
+    <string name="note_save_failed_unkept">Не удалось сохранить последние изменения. Оставьте заметку открытой и повторите попытку.</string>
+    <string name="studio_failed_ink">Не удалось сохранить последний рисунок. Сохраните копию перед закрытием.</string>
+    <string name="zone5_find_action">Найти действие</string>
+    <string name="zone5_no_matching_action">Действия не найдены. Попробуйте другое слово.</string>
+    <string name="zone5_group_task">Текущая задача</string>
+    <string name="zone5_group_conversation">Разговор</string>
+    <string name="zone5_group_day">Ваш день</string>
+    <string name="zone5_group_preferences">Настройки</string>
+    <string name="zone5_group_connections">Подключения</string>
+    <string name="zone5_group_activity">Обзор и история</string>
+</resources>

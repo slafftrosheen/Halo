@@ -16,6 +16,11 @@ internal object ShellOrbCatalog {
         HaloOrbDestination("activity", "Activities & notifications", HaloGlyph.ACTIVITY),
         HaloOrbDestination("settings", "Settings", HaloGlyph.SETTINGS),
     )
+    /** Direct instrument destinations are a presentation subset of the canonical catalogue. */
+    fun workspaceDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) emptyList() else
+        listOf("studio", "file_tools", "study", "notebook/memory", "canvases").mapNotNull { route ->
+            destinations(false).firstOrNull { it.route == route }
+        }
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =
         !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study")

@@ -44,7 +44,7 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
     val actions = projection.actions.filterNot { it.title == "Back" || it.id.endsWith(".back") ||
         it.id in setOf("page.notebook.view-library", "page.notebook.view-tools") }
     var opened by remember(projection.owner.routeFamily, projection.owner.objectId) { mutableStateOf<WorkspaceMenuGroup?>(null) }
-    val guideSession = LocalZone5GuideSession.current
+    val target = if (LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
     LaunchedEffect(projection) { opened = null }
     val disclosure by rememberUpdatedState(onDisclosureChanged)
     LaunchedEffect(opened) { disclosure(opened != null) }
@@ -53,24 +53,23 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
         WorkspaceMenuGroup.entries.forEach { group ->
             val entries = actions.filter { workspaceMenuGroup(it.id) == group }
             if (entries.isNotEmpty()) Box {
-                TextButton(onClick = { opened = group }, modifier = Modifier.heightIn(min = 48.dp)
+                TextButton(onClick = { opened = group }, modifier = Modifier.heightIn(min = target)
                     .haloTrace(entries.any { it.id == guidedActionId }, MaterialTheme.colorScheme.primary, 12.dp, lapOnAppear = true),
                     contentPadding = PaddingValues(horizontal = 12.dp)) { Text(stringResource(group.label)) }
                 DropdownMenu(expanded = opened == group, onDismissRequest = { opened = null }) {
                     entries.forEach { action ->
                         DropdownMenuItem(enabled = action.enabled,
-                            modifier = Modifier.haloTrace(action.id == guidedActionId, MaterialTheme.colorScheme.primary, 12.dp),
+                            modifier = Modifier.heightIn(min = target).haloTrace(action.id == guidedActionId, MaterialTheme.colorScheme.primary, 12.dp),
                             text = { Column {
                                 Text(uiText(action.title))
-                                if (!action.enabled) projection.owner.disabledActionReasons[action.id]?.let {
+                                if (!action.enabled) projection.owner.disabledReasonFor(action.id)?.let {
                                     Text(uiText(it), style = MaterialTheme.typography.bodySmall)
                                 }
                             } },
                             leadingIcon = { Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:${action.id}", action.title, action.glyph)), action.glyph, Modifier.size(24.dp)) },
                             onClick = {
                                 opened = null
-                                if (projection.invoke(action.id)) projection.owner.nextStep?.takeIf { it.actionId == action.id }
-                                    ?.let { guideSession?.dismiss(it.id) }
+                                projection.invoke(action.id)
                             })
                     }
                 }

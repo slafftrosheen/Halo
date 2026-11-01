@@ -80,6 +80,7 @@ fun ConversationsListScreen(
     val failedLabel = uiText("This chat could not be changed. Try again.")
     val undoLabel = uiText("Undo")
     val shellHosted = BindShellChildPage("Saved chats", onBack, sourceIdentity = "$loaded:$deleting:$query",
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_search_empty),
         actions = listOf(ShellPageAction("chats.clear-search", "Clear search", HaloGlyph.SEARCH, query.isNotBlank()) { query = "" }))
     val conversations = remember(history, summaries, query) {
         // The Room conversations projection is filtered by the Workspace
@@ -309,6 +310,7 @@ fun ConversationDetailScreen(
         ?: "Saved chat"
     val shellHosted = BindShellChildPage(title, onBack, objectId = conversationId, titleIsSource = true,
         sourceIdentity = "$conversationId:${orderedTurns.lastOrNull()?.id}:${orderedTurns.size}",
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_no_messages),
         actions = listOf(ShellPageAction("chat.continue", "Continue", HaloGlyph.CONVERSATION,
             orderedTurns.isNotEmpty(), onContinue)))
 

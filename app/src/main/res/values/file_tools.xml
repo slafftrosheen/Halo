@@ -1,5 +1,5 @@
 <resources>
-    <string name="file52_title">File tools</string>
+    <string name="file52_title">HaloNotes</string>
     <string name="file52_local_scope">Create and edit locally. Originals stay safe.</string>
     <string name="file52_new_document">New document</string>
     <string name="file52_open_file">Import file</string>
@@ -16,7 +16,7 @@
     <string name="file52_convert_image">Image tools</string>
     <string name="file52_image_batch">Process images</string>
     <string name="file52_collage">Combine images</string>
-    <string name="file52_create_image">Create in Studio</string>
+    <string name="file52_create_image">Create in HaloStudio</string>
     <string name="file52_recent">Recent documents and files</string>
     <string name="file52_choose_images">Choose images</string>
     <string name="file52_selected_count">%1$d selected</string>
@@ -77,7 +77,7 @@
     <string name="file52_receipt_help">This record keeps saved output links. Open a result before deciding whether to repeat an unfinished item.</string>
     <string name="file52_batch_receipt">Image batch results</string>
     <string name="file52_choose_source">Choose a document or file</string>
-    <string name="file52_empty">Import a file or create your first document.</string>
+    <string name="file52_empty">Open All actions, then choose New document or Import file.</string>
     <string name="file52_open_editor">Open note editor</string>
     <string name="file52_pdf_annotations">PDF annotations</string>
     <string name="file52_native_pdf_future">Native PDF editing is in development. Page images and linked annotation notes are available now.</string>

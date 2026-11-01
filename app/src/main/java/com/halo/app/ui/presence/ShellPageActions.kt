@@ -13,7 +13,18 @@ data class ShellPageOwner(val routeFamily: String, val objectId: String? = null,
     /** Localized presentation only; no new callable action or authority. */
     val disabledActionReasons: Map<String, String> = emptyMap(),
     val nextStep: ShellNextStep? = null,
-    val statusLabel: String? = null)
+    val statusLabel: String? = null,
+    /** Confirmed by the page's actual owner, never by a menu callback. */
+    val completedGuideIds: Set<String> = emptySet(),
+    val helpDescription: String? = null,
+    val helpSteps: List<ShellGuideStep> = emptyList(),
+    val guidanceBlocked: Boolean = false,
+    /** Common disabled cause for this live owner; specific predicates override it above. */
+    val defaultDisabledActionReason: String? = null) {
+    fun disabledReasonFor(id: String): String? = disabledActionReasons[id] ?: defaultDisabledActionReason
+}
+
+data class ShellGuideStep(val id: String, val actionId: String, val message: String, val complete: Boolean = false)
 
 /** Presentation only. Refers to an existing enabled action, never grants authority. */
 data class ShellNextStep(val id: String, val actionId: String, val message: String)
@@ -37,6 +48,7 @@ private class PageActionsLease { var active = true; var projection: ShellPagePro
 fun BindShellPageActions(owner: ShellPageOwner, actions: List<ShellPageAction>) {
     require(actions.map { it.id }.distinct().size == actions.size) { "Page action IDs must be unique" }
     val holder = LocalShellPageActions.current
+    val guideSession = com.halo.app.ui.zone5.LocalZone5GuideSession.current
     val navigationEntry = androidx.lifecycle.compose.LocalLifecycleOwner.current as? androidx.navigation.NavBackStackEntry
     val effectiveOwner = if (owner.navigationEntryId == null && navigationEntry != null)
         owner.copy(navigationEntryId = navigationEntry.id) else owner
@@ -58,6 +70,11 @@ fun BindShellPageActions(owner: ShellPageOwner, actions: List<ShellPageAction>) 
         created
     }
     SideEffect {
+        // Evaluate real receipts before replacing the prior presentation/lease.
+        if (eligible) {
+            guideSession?.confirmed(effectiveOwner.completedGuideIds)
+            if (guideSession?.applies(effectiveOwner) == true && effectiveOwner.helpSteps.isNotEmpty() && effectiveOwner.helpSteps.all { it.complete }) guideSession.exit()
+        }
         val previous = lease.projection
         lease.projection = projection
         if (eligible) {

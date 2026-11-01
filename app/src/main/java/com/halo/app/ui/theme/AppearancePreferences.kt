@@ -52,6 +52,8 @@ class AppearancePreferences(
     private val shortcutGeneration = AtomicLong(0L)
     private val mutableOrbShortcuts = MutableStateFlow(com.halo.app.ui.presence.HaloOrbShortcut.defaults)
     val orbShortcuts: StateFlow<Set<com.halo.app.ui.presence.HaloOrbShortcut>> = mutableOrbShortcuts.asStateFlow()
+    private val mutableActionPins = MutableStateFlow(ActionPinSettings())
+    val actionPins: StateFlow<ActionPinSettings> = mutableActionPins.asStateFlow()
     private val initialShortcutGeneration = shortcutGeneration.get()
 
     private val initialGeneration = mutationGeneration.get()
@@ -62,11 +64,36 @@ class AppearancePreferences(
         }
         val restoredShortcuts = com.halo.app.ui.presence.HaloOrbShortcut.decode(preferences().getStringSet(KEY_ORB_SHORTCUTS, null))
         if (shortcutGeneration.get() == initialShortcutGeneration) mutableOrbShortcuts.value = restoredShortcuts
+        mutableActionPins.value = readActionPins()
     }
 
     @Volatile
     private var persistenceJob: Job? = null
     @Volatile private var shortcutPersistenceJob: Job? = null
+
+    /** Serialized, acknowledged preference write; the live page still owns every execution. */
+    suspend fun setActionPinsPersisted(family: String, expected: List<String>, ids: List<String>) = withContext(ioDispatcher) {
+        initialLoad.await()
+        writes.withLock {
+            check(mutableActionPins.value.families[family].orEmpty() == expected) { "Action pins changed" }
+            val next = mutableActionPins.value.families.toMutableMap().apply {
+                if (ids.isEmpty()) remove(family) else put(family, ids.toList())
+            }
+            // Validate an empty selection's family too, rather than accepting arbitrary keys.
+            ActionPinCodec.encode(mapOf(family to ids))
+            val encoded = ActionPinCodec.encode(next)
+            check(preferences().edit().putString(KEY_ACTION_PINS, encoded).commit()) { "Unable to save action pins" }
+            mutableActionPins.value = ActionPinSettings(next.toMap())
+        }
+    }
+
+    private fun readActionPins(): ActionPinSettings = try {
+        ActionPinCodec.decode(preferences().getString(KEY_ACTION_PINS, null))
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        ActionPinSettings(unreadable = true)
+    }
 
     fun setOrbShortcuts(shortcuts: Set<com.halo.app.ui.presence.HaloOrbShortcut>) {
         val bounded = shortcuts.toSet()
@@ -185,6 +212,8 @@ class AppearancePreferences(
             com.halo.app.ui.presence.HaloOrbShortcut.decode(preferences().getStringSet(KEY_ORB_SHORTCUTS, null))
         }
         if (shortcutGeneration.get() == shortcutReload) mutableOrbShortcuts.value = restoredShortcuts
+        initialLoad.await()
+        withContext(ioDispatcher) { writes.withLock { mutableActionPins.value = readActionPins() } }
     }
 
     internal suspend fun awaitLoaded() {
@@ -211,5 +240,6 @@ class AppearancePreferences(
         const val PREFERENCES_NAME = "halo_appearance"
         const val KEY_MODE = "mode"
         const val KEY_ORB_SHORTCUTS = "orb_shortcuts"
+        const val KEY_ACTION_PINS = "zone5_action_pins"
     }
 }

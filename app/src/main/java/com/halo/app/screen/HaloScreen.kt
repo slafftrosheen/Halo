@@ -175,10 +175,12 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var canUndo by remember { mutableStateOf(store.hasUndo()) }
     val editUnavailable = stringResource(if (layout == null) R.string.zone5_choose_layout else R.string.zone5_screen_busy)
     val screenOwner = ShellPageOwner("screen", sourceIdentity = "${layout.hashCode()}:${editDraftJson.hashCode()}:$fullScreen",
+        helpDescription = stringResource(R.string.zone5_help_screen),
         activeToolId = "screen", canonicalToolIds = (com.halo.app.di.tools.ScreenOperabilityContracts.readTools +
             com.halo.app.di.tools.ScreenOperabilityContracts.mutationTools).toList(),
+        defaultDisabledActionReason = stringResource(R.string.zone5_screen_busy),
         disabledActionReasons = listOf("page.screen.add", "page.screen.customize", "page.screen.appearance")
-            .associateWith { if (customizing && canInteract) uiText("Preview") else editUnavailable })
+            .associateWith { if (customizing && canInteract) stringResource(R.string.action_already_arranging) else editUnavailable })
     BindShellPageActions(screenOwner, listOf(
         ShellPageAction("page.screen.add", stringResource(R.string.zone5_widgets), HaloGlyph.NOTE, layout != null && canInteract) {
             if (!customizing) setCustomizing(true)
@@ -432,7 +434,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             onTalk = onTalk, orbControl = orbControl, shellZone = shellZone)
     }
     val utilityProjected = com.halo.app.ui.presence.BindShellUtilityBand(
-        screenOwner, screenUtility)
+        screenOwner, content = screenUtility)
     Box(Modifier.fillMaxSize()) {
     com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize(),
         animate = canInteract && !fullScreen,
@@ -444,7 +446,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         }
     }.offset(x = shift.dp, y = shift.dp)
         .padding(horizontal = if (fullScreen) 24.dp else 16.dp)) {
-        if (!fullScreen) com.halo.app.ui.zone5.Zone5PageHeading("HaloScreen")
+        if (!fullScreen) com.halo.app.ui.zone5.Zone5PageHeading("HaloScreen", subtitle = stringResource(R.string.zone5_screen_purpose))
         if (!utilityProjected) screenUtility()
         if (workingLayout == null) {
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(vertical = 16.dp), verticalArrangement = Arrangement.Center,

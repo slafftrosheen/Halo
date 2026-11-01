@@ -31,6 +31,9 @@ import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
 
+/** Task feedback and guidance take priority over decorative movement. */
+internal val LocalHaloDecorationPaused = staticCompositionLocalOf { false }
+
 /** Decorative, non-interactive Open Ring fragments. No session state or input handling.
  * Only retained motif-layer translations read phase; motif drawing and base stay static.
  * One target update/second with smooth retained-layer interpolation, paused outside RESUMED.
@@ -67,11 +70,11 @@ fun HaloAmbientBackdrop(modifier: Modifier = Modifier, palette: HaloPalette = Lo
         }
     }
     val phase = remember { mutableFloatStateOf(0f) }
-    val moving = haloAmbientMotionAllowed(animate, reduced, contrast, powerAllowed, palette.background)
+    val moving = haloAmbientMotionAllowed(animate, reduced, contrast, powerAllowed, palette.background, LocalHaloDecorationPaused.current)
     LaunchedEffect(lifecycle, moving) { advanceHaloAmbientPhase(lifecycle, moving, phase) }
     val lifecycleState by lifecycle.currentStateAsState()
     val smoothPhase = if (moving && lifecycleState.isAtLeast(Lifecycle.State.RESUMED))
-        animateFloatAsState(phase.floatValue, tween(1_000, easing = LinearEasing), label = "wallpaper-drift") else phase
+        animateFloatAsState(phase.floatValue, tween(com.halo.app.ui.design.HaloMotion.wallpaperStepMs, easing = LinearEasing), label = "wallpaper-drift") else phase
     val base = baseColor ?: MaterialTheme.colorScheme.background
     val accent = MaterialTheme.colorScheme.primary
     HaloAmbientBackdropLayers(modifier, palette.background, base, accent, smoothPhase, contrast)
@@ -123,8 +126,8 @@ internal fun HaloAmbientBackdropLayers(
 }
 
 internal fun haloAmbientMotionAllowed(animate: Boolean, reduced: Boolean, contrast: Boolean,
-    powerAllowed: Boolean, style: HaloBackgroundStyle): Boolean =
-    animate && !reduced && !contrast && powerAllowed && style != HaloBackgroundStyle.STILL
+    powerAllowed: Boolean, style: HaloBackgroundStyle, attentionActive: Boolean = false): Boolean =
+    animate && !attentionActive && !reduced && !contrast && powerAllowed && style != HaloBackgroundStyle.STILL
 
 internal fun haloAmbientDrift(phase: Float, width: Float, height: Float, motif: Int): Offset {
     val direction = if (motif == 0) 1f else -1f
@@ -134,7 +137,7 @@ internal fun haloAmbientDrift(phase: Float, width: Float, height: Float, motif: 
 internal suspend fun advanceHaloAmbientPhase(lifecycle: Lifecycle, moving: Boolean, phase: MutableFloatState) {
     if (moving) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
         while (true) {
-            delay(1_000)
+            delay(com.halo.app.ui.design.HaloMotion.wallpaperStepMs.toLong())
             // Keep the target continuous across a full turn; interpolation must never rewind.
             phase.floatValue += .03f
         }

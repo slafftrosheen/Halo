@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.presence.*
@@ -46,4 +47,18 @@ class Zone5WorkspaceMenusTest {
         compose.onNodeWithText("Edit").performClick()
         compose.onNodeWithText("Undo").assertIsNotEnabled()
     }
+    @Test fun childEditorMenuAndItsCommandsRetainThe56dpFloor() {
+        val holder = mutableStateOf<ShellPageProjection?>(null)
+        compose.setContent { HostlessHaloTheme {
+            CompositionLocalProvider(LocalShellPageActions provides holder,
+                LocalHaloZone5Navigation provides HaloZone5Navigation("notebook/note/child", emptyList(), {}, false, {}, {}, kids = true)) {
+                BindShellPageActions(ShellPageOwner("note", "child"), listOf(
+                    ShellPageAction("page.note.insert", "Insert", HaloGlyph.NOTE) { }))
+                WorkspaceToolMenus()
+            }
+        } }
+        compose.onNodeWithText("Add").assertHeightIsAtLeast(56.dp).performClick()
+        compose.onNodeWithText("Insert").assertHeightIsAtLeast(56.dp)
+    }
+
 }

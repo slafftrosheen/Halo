@@ -1,0 +1,32 @@
+{
+  "strings_work_recovery.xml": {
+    "values-ru": [],
+    "values-lv": [],
+    "values-pl": []
+  },
+  "strings_file_recovery.xml": {
+    "values-ru": [],
+    "values-lv": [],
+    "values-pl": []
+  },
+  "strings_external_export.xml": {
+    "values-ru": [],
+    "values-lv": [],
+    "values-pl": []
+  },
+  "strings_task_help.xml": {
+    "values-ru": [],
+    "values-lv": [],
+    "values-pl": []
+  },
+  "strings_predictable_navigation.xml": {
+    "values-ru": [],
+    "values-lv": [],
+    "values-pl": []
+  },
+  "strings_zone5.xml": {
+    "values-ru": [],
+    "values-lv": [],
+    "values-pl": []
+  }
+}

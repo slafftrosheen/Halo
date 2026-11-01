@@ -34,7 +34,7 @@
     <string name="zone5_select_export">Откройте поддерживаемый документ для экспорта.</string>
     <string name="zone5_office_kinds">Текст, таблицы, изображения и страницы PDF</string>
     <string name="zone5_document_changed">Документ изменился. Закройте окно и проверьте его перед повторной попыткой.</string>
-    <string name="zone5_literal_format">Этот файл использует обычный текст. Редактируйте его здесь или вернитесь в Office Tools для выбора формата.</string>
+    <string name="zone5_literal_format">Этот файл использует обычный текст. Редактируйте его здесь или вернитесь в HaloNotes для выбора формата.</string>
     <string name="zone5_choose_layer">Выберите тип слоя</string>
     <string name="zone5_nothing_to_read">Сейчас нет текста для чтения вслух.</string>
     <string name="zone5_open_lesson_first">Откройте урок, чтобы использовать это действие.</string>
@@ -48,7 +48,7 @@
     <string name="zone5_projects_canvases">Проекты и холсты</string>
     <string name="zone5_no_canvases">Холстов пока нет. Создайте новый или откройте сохранённый из библиотеки.</string>
     <string name="zone5_memory_usage_details">Как используется память</string>
-    <string name="zone5_export_from_office">Экспорт из Office Tools</string>
+    <string name="zone5_export_from_office">Экспорт из HaloNotes</string>
     <string name="zone5_edit_first">Для вставки содержимого перейдите в режим редактирования.</string>
     <string name="zone5_save_first">Сохраните изменения, прежде чем продолжить.</string>
     <string name="zone5_no_versions">Сохранённых версий пока нет.</string>

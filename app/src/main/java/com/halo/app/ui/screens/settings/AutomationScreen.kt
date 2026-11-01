@@ -229,6 +229,7 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         return
     }
     AutomationPage("Routines", onBack, "Run useful things when something changes", sourceIdentity = tab.name,
+        defaultDisabledActionReason = androidx.compose.ui.res.stringResource(if (state.loading) com.halo.app.R.string.action_loading else com.halo.app.R.string.action_wait),
         actions = listOf(
             ShellPageAction("routine.new", "New automation", HaloGlyph.AUTOMATION, !state.loading && !state.saving) { creating = true },
             ShellPageAction("routine.routines", "Routines", HaloGlyph.AUTOMATION) { tab = AutomationTab.ROUTINES },
@@ -335,8 +336,8 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
 }
 
 @Composable
-internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, titleIsSource: Boolean = false, sourceIdentity: String? = null, objectId: String? = null, actions: List<ShellPageAction> = emptyList(), content: @Composable ColumnScope.() -> Unit) {
-    val shellHosted = BindShellChildPage(title, onBack, objectId = objectId, sourceIdentity = sourceIdentity ?: title, titleIsSource = titleIsSource, actions = actions)
+internal fun AutomationPage(title: String, onBack: () -> Unit, subtitle: String? = null, titleIsSource: Boolean = false, sourceIdentity: String? = null, objectId: String? = null, actions: List<ShellPageAction> = emptyList(), defaultDisabledActionReason: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    val shellHosted = BindShellChildPage(title, onBack, objectId = objectId, sourceIdentity = sourceIdentity ?: title, titleIsSource = titleIsSource, actions = actions, defaultDisabledActionReason = defaultDisabledActionReason)
     BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (!shellHosted) HaloWorkspaceHeader(if (titleIsSource) title else uiText(title), subtitle?.let { uiText(it) }, onBack = onBack)

@@ -1,0 +1,231 @@
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.StudioDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.workspace.StudioDeviceTest:
+INSTRUMENTATION_STATUS: test=layerReviewKeepsApplyAndCloseReachableInRussianAt200Percent
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.StudioDeviceTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=layerReviewKeepsApplyAndCloseReachableInRussianAt200Percent
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.StudioDeviceTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=localDocumentExportsAndReopensRealPngWithoutChangingItsOriginal
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.StudioDeviceTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=localDocumentExportsAndReopensRealPngWithoutChangingItsOriginal
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest:
+INSTRUMENTATION_STATUS: test=russianTableKeepsCloseReachableAt200Percent
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=russianTableKeepsCloseReachableAt200Percent
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=nativePdfAnnotationsExportPageImagesAndPreserveOriginalBytes
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceFileToolsDeviceTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativePdfAnnotationsExportPageImagesAndPreserveOriginalBytes
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest:
+INSTRUMENTATION_STATUS: test=russianContinueDialogKeepsContextAndCloseReachableAt200Percent
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=russianContinueDialogKeepsContextAndCloseReachableAt200Percent
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=nativePhotoStudioCanvasStudyAndChatReopenTheSameSavedResult
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceContinuityDeviceTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativePhotoStudioCanvasStudyAndChatReopenTheSameSavedResult
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest:
+INSTRUMENTATION_STATUS: test=nativeCanvasAndExactAttachedStudyUseTheRegisteredSemanticOwners
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.workspace.WorkspaceOperabilityDeviceTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=nativeCanvasAndExactAttachedStudyUseTheRegisteredSemanticOwners
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.study.StudyLearnerControlsDeviceTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.study.StudyLearnerControlsDeviceTest:
+INSTRUMENTATION_STATUS: test=learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.study.StudyLearnerControlsDeviceTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stack=java.lang.IllegalArgumentException: Required value was null.
+	at com.halo.app.study.StudyLearnerControlsDeviceTest$learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation$1.invokeSuspend(StudyLearnerControlsDeviceTest.kt:30)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.study.StudyLearnerControlsDeviceTest.learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation(StudyLearnerControlsDeviceTest.kt:26)
+
+INSTRUMENTATION_STATUS: stream=
+Error in learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation(com.halo.app.study.StudyLearnerControlsDeviceTest):
+java.lang.IllegalArgumentException: Required value was null.
+	at com.halo.app.study.StudyLearnerControlsDeviceTest$learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation$1.invokeSuspend(StudyLearnerControlsDeviceTest.kt:30)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.study.StudyLearnerControlsDeviceTest.learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation(StudyLearnerControlsDeviceTest.kt:26)
+
+INSTRUMENTATION_STATUS: test=learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.Zone5OrbStyleDeviceTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.presence.Zone5OrbStyleDeviceTest:
+INSTRUMENTATION_STATUS: test=classicOrbFramesFollowTheThemeAtBothZoneSizes
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.presence.Zone5OrbStyleDeviceTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=classicOrbFramesFollowTheThemeAtBothZoneSizes
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest:
+INSTRUMENTATION_STATUS: test=childFrameThemesCompactActionsBackAndParentBoundary
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Failed to retrieve bounds of the node.
+Reason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'What can I say?' (ignoreCase: false))
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.BoundsAssertionsKt.withUnclippedBoundsInRoot(BoundsAssertions.kt:259)
+	at androidx.compose.ui.test.BoundsAssertionsKt.assertHeightIsAtLeast-3ABfNKs(BoundsAssertions.kt:98)
+	at com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest.childFrameThemesCompactActionsBackAndParentBoundary(Zone5KidsFrameDeviceTest.kt:111)
+
+INSTRUMENTATION_STATUS: stream=
+Error in childFrameThemesCompactActionsBackAndParentBoundary(com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest):
+java.lang.AssertionError: Failed to retrieve bounds of the node.
+Reason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'What can I say?' (ignoreCase: false))
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.BoundsAssertionsKt.withUnclippedBoundsInRoot(BoundsAssertions.kt:259)
+	at androidx.compose.ui.test.BoundsAssertionsKt.assertHeightIsAtLeast-3ABfNKs(BoundsAssertions.kt:98)
+	at com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest.childFrameThemesCompactActionsBackAndParentBoundary(Zone5KidsFrameDeviceTest.kt:111)
+
+INSTRUMENTATION_STATUS: test=childFrameThemesCompactActionsBackAndParentBoundary
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 15,266
+There were 2 failures:
+1) learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation(com.halo.app.study.StudyLearnerControlsDeviceTest)
+java.lang.IllegalArgumentException: Required value was null.
+	at com.halo.app.study.StudyLearnerControlsDeviceTest$learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation$1.invokeSuspend(StudyLearnerControlsDeviceTest.kt:30)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:54)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(dex-id-302e516a139cb3ccd9397c14408dc4e9e0385169:1)
+	at com.halo.app.study.StudyLearnerControlsDeviceTest.learnerAttemptCardReviewAndCompletionSurviveDatabaseRecreation(StudyLearnerControlsDeviceTest.kt:26)
+2) childFrameThemesCompactActionsBackAndParentBoundary(com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest)
+java.lang.AssertionError: Failed to retrieve bounds of the node.
+Reason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'What can I say?' (ignoreCase: false))
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.BoundsAssertionsKt.withUnclippedBoundsInRoot(BoundsAssertions.kt:259)
+	at androidx.compose.ui.test.BoundsAssertionsKt.assertHeightIsAtLeast-3ABfNKs(BoundsAssertions.kt:98)
+	at com.halo.app.ui.screens.kids.Zone5KidsFrameDeviceTest.childFrameThemesCompactActionsBackAndParentBoundary(Zone5KidsFrameDeviceTest.kt:111)
+
+FAILURES!!!
+Tests run: 10,  Failures: 2
+
+
+INSTRUMENTATION_CODE: -1

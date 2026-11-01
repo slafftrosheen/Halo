@@ -58,6 +58,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         onDispose { token?.let(viewModel.service::detachProject) }
     }
     val defaultName = stringResource(R.string.studio_new_project)
+    var discardTarget by remember(project?.id) { mutableStateOf<StudioProject?>(null) }
+    val requestDiscard: () -> Unit = { if (!busy) discardTarget = viewModel.state.value.project }
     var naming by remember(project?.id) { mutableStateOf<String?>(null) }
     var namingTitle by remember(project?.id) { mutableStateOf("") }
     var namingRevision by remember(project?.id) { mutableStateOf<Long?>(null) }
@@ -106,8 +108,27 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }
     val pageOwner = ShellPageOwner(if (canvasLibrary) "canvases" else "studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection",
         canonicalSourceVersion = project?.revision?.toString(),
-        statusLabel = project?.let { stringResource(if (it.hasUnsavedChanges) R.string.zone5_draft_state else R.string.zone5_saved_state) },
+        statusLabel = project?.let { stringResource(when {
+            state.operation == StudioOperation.SAVE -> R.string.work_saving
+            state.operation == StudioOperation.EXPORT -> R.string.work_exporting
+            state.busy -> R.string.work_keeping
+            it.hasUnsavedChanges -> R.string.work_draft_kept
+            else -> R.string.zone5_saved_state
+        }) },
         selectionIds = listOfNotNull(project?.session?.current?.selectedLayerId),
+        helpDescription = stringResource(R.string.zone5_help_studio),
+        guidanceBlocked = discardTarget != null || busy || state.error || state.loading || naming != null || addingLayer || editing != null || importing ||
+            background != null || transforms != null || layers || historyOpen || activeInk != null || state.aiReview || state.output != null,
+        completedGuideIds = buildSet {
+            if (project != null) add("studio-new.v1")
+            if (project?.session?.current?.layers?.isNotEmpty() == true) add("studio-layer.v1")
+            if (canvases.isNotEmpty()) add("canvas-new.v1")
+        },
+        helpSteps = if (canvasLibrary) emptyList() else listOf(
+            com.halo.app.ui.presence.ShellGuideStep("studio-new.v1", "page.studio.new", stringResource(R.string.zone5_help_create), project != null),
+            com.halo.app.ui.presence.ShellGuideStep("studio-layer.v1", "page.studio.add-layer", stringResource(R.string.zone5_guide_studio_layer), project?.session?.current?.layers?.isNotEmpty() == true),
+            com.halo.app.ui.presence.ShellGuideStep("studio-save.v1", "page.studio.save", stringResource(R.string.zone5_help_save_version), project != null && !project.hasUnsavedChanges),
+            com.halo.app.ui.presence.ShellGuideStep("studio-export.v1", "page.studio.export", stringResource(R.string.zone5_help_make_copy), project != null && state.exportedSource == "${project.id}:${project.revision}")),
         nextStep = if (!busy && !state.loading && !state.error && naming == null && !addingLayer && editing == null &&
             !importing && background == null && transforms == null && !layers && !historyOpen && activeInk == null &&
             (project?.session?.current?.layers?.isEmpty() == true || project == null &&
@@ -119,8 +140,13 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         canonicalToolIds = if (project == null && librarySection == "canvases") listOf("halo_canvas_create", "halo_canvas_get")
             else listOf("halo_studio_current", "halo_studio_get", "halo_studio_list", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export"),
         activeToolId = if (project == null) librarySection else "project",
-        disabledActionReasons = mapOf("page.studio.new-canvas" to stringResource(R.string.zone5_host_unavailable),
-            "page.studio.add-layer" to uiText("Updating..."), "page.studio.export" to uiText("Updating...")))
+        defaultDisabledActionReason = stringResource(if (state.loading) R.string.action_loading else R.string.action_wait),
+        disabledActionReasons = mapOf(
+            "page.studio.new-canvas" to stringResource(if (busy) R.string.action_wait else if (state.loading) R.string.action_loading else R.string.zone5_host_unavailable),
+            "page.studio.save" to stringResource(if (busy) R.string.action_wait else R.string.action_no_changes),
+            "page.studio.discard" to stringResource(if (busy) R.string.action_wait else R.string.action_no_changes),
+            "page.studio.undo" to stringResource(if (busy) R.string.action_wait else R.string.action_no_undo),
+            "page.studio.redo" to stringResource(if (busy) R.string.action_wait else R.string.action_no_redo)))
     BindShellPageActions(pageOwner,
         if (project == null) listOf(
             if (librarySection == "canvases") ShellPageAction("page.studio.new-canvas", uiText("New canvas"), HaloGlyph.NOTE,
@@ -152,15 +178,28 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.copy", stringResource(R.string.studio_save_as), HaloGlyph.FILE, !busy) { nameProject("copy") },
             ShellPageAction("page.studio.export-jpeg", stringResource(R.string.studio_export_jpeg), HaloGlyph.FILE, !busy) { viewModel.export(CanvasImageFormat.JPEG) },
             ShellPageAction("page.studio.discard", stringResource(R.string.studio_discard), HaloGlyph.TRASH,
-                !busy && project.hasUnsavedChanges, viewModel::discardDraft),
+                !busy && project.hasUnsavedChanges, requestDiscard),
         ))
+    discardTarget?.let { target ->
+        StudioAlertDialog(onDismissRequest = { discardTarget = null },
+            title = { Text(stringResource(R.string.studio_discard_confirm)) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(target.title)
+                Text(stringResource(R.string.studio_discard_effect))
+                if (project?.revision != target.revision) Text(stringResource(R.string.studio_recovery_changed))
+            } },
+            confirmButton = { TextButton(onClick = {
+                viewModel.discardDraft(target.id, target.revision); discardTarget = null
+            }, enabled = !busy && project?.id == target.id && project.revision == target.revision) { Text(stringResource(R.string.studio_discard)) } },
+            dismissButton = { TextButton(onClick = { discardTarget = null }) { Text(uiText("Cancel")) } })
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val targetId = pickerProjectId; val targetRevision = pickerProjectRevision
         pickerProjectId = null; pickerProjectRevision = null
         if (uri != null) {
             val current = viewModel.state.value.project
             if (current != null && targetId != null && targetRevision != null && current.id == targetId && current.revision == targetRevision) viewModel.importUri(uri)
-            else viewModel.reportError()
+            else viewModel.reportError(StudioOperation.IMPORT, StudioFailureReason.CHANGED)
         }
     }
     BackHandler(project != null) { if (!busy) viewModel.closeProject() }
@@ -176,7 +215,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             if (!state.error) { versionPreview = null; historyOpen = false }
         }
     }
-    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner, includesStatus = project != null) {
         com.halo.app.ui.screens.notebook.ToolZoneHeader(project?.title ?: stringResource(if (canvasLibrary) R.string.zone5_tool_canvas else R.string.zone5_tool_studio),
             onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy,
             onTitleClick = if (project != null) ({ nameProject("rename") }) else null,
@@ -189,7 +228,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 if (project != null) StudioOverflowMenu(busy, project.hasUnsavedChanges,
                     onBackground = { background = project }, onPresets = { naming = "new" },
                     onSaveAs = { nameProject("copy") }, onVersions = showVersions,
-                    onDiscard = viewModel::discardDraft,
+                    onDiscard = requestDiscard,
                     onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
                     onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) })
         }
@@ -205,7 +244,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 if (project != null) StudioOverflowMenu(busy, project.hasUnsavedChanges,
                     onBackground = { background = project }, onPresets = { naming = "new" },
                     onSaveAs = { nameProject("copy") }, onVersions = showVersions,
-                    onDiscard = viewModel::discardDraft,
+                    onDiscard = requestDiscard,
                     onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
                     onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) })
             })
@@ -215,7 +254,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 if (shellOwnsOrb) Zone5InstrumentHeading(stringResource(R.string.zone5_tool_studio), "tool_studio", project.title,
                     state = stringResource(if (project.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved))
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (state.error) Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
+                StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError)
                 StudioWorkbench(viewModel.service, project, busy, ::draw, { add(StudioLayerKind.TEXT, textName) },
                     { addingLayer = true }, { importBaseRevision = project.revision; importing = true },
                     { layers = true }, { transforms = project },
@@ -227,10 +266,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     state = if (project == null) stringResource(if (canvasLibrary) R.string.zone5_canvas_purpose else R.string.zone5_graphics_intro) else stringResource(
                         if (project.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved)) }
                 if (state.loading) item { CircularProgressIndicator(); Text(stringResource(R.string.studio_loading)) }
-                if (state.error) item {
-                    Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = viewModel::retry, enabled = !busy) { Text(stringResource(R.string.studio_retry)) }
-                }
+                if (state.error) item { StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError) }
                 if (project == null && !state.loading && librarySection == "canvases") {
                     item {
                         if (library.canvasesLoading && canvases.isEmpty()) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
@@ -239,7 +275,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                             TextButton(viewModel::retryLibrary) { Text(uiText("Try again")) }
                         }
                         if (!library.canvasesLoading && !library.canvasesError && canvases.isEmpty()) Text(stringResource(R.string.zone5_no_canvases))
-                        if (!shellOwnsOrb) Zone5ActionButton(uiText("New canvas"), "action_add", !busy && onOpenCanvas != null) { naming = "canvas" }
+                        if (!shellOwnsOrb || !library.canvasesLoading && !library.canvasesError && canvases.isEmpty())
+                            Zone5ActionButton(uiText("New canvas"), "action_add", !busy && onOpenCanvas != null) { naming = "canvas" }
                         if (onOpenCanvas == null) Text(stringResource(R.string.zone5_host_unavailable))
                     }
                     items(canvases, key = { it.id.value }) { canvas ->
@@ -258,7 +295,9 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                             Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
                             TextButton(viewModel::retryLibrary) { Text(uiText("Try again")) }
                         }
-                        if (!shellOwnsOrb) Button(onClick = { naming = "new" }, enabled = !busy) { Text(stringResource(R.string.studio_new_project)) }
+                        if (!shellOwnsOrb || !library.projectsLoading && !library.projectsError && projects.isEmpty())
+                            Button(onClick = { naming = "new" }, enabled = !busy,
+                                modifier = Modifier.heightIn(min = 56.dp)) { Text(stringResource(R.string.studio_new_project)) }
                     }
                     items(projects, key = { it.id }) { item ->
                         OutlinedCard(onClick = { viewModel.open(item.id) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
@@ -391,7 +430,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         title = { Text(stringResource(R.string.studio_versions)) }, text = {
             LazyColumn(Modifier.heightIn(max = 480.dp)) {
                 if (!state.versionsLoaded && !state.error) item { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
-                if (state.error) item { Text(stringResource(R.string.studio_error)); TextButton(showVersions, enabled = !busy) { Text(uiText("Try again")) } }
+                if (state.error) item { StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError) }
                 if (state.versionsLoaded && state.versions.isEmpty()) item { Text(stringResource(R.string.zone5_no_versions)) }
                 items(state.versions, key = { it.revision }) { version -> TextButton(onClick = { project?.let { versionPreview = StudioVersionPreview(it.revision, version) } }, enabled = !busy) {
                     Text(java.text.DateFormat.getDateTimeInstance().format(java.util.Date(version.savedAt)))
@@ -407,7 +446,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     Text(java.text.DateFormat.getDateTimeInstance().format(java.util.Date(target.version.savedAt)))
                     document?.let { StudioDocumentPreview(viewModel.service, it, Modifier.fillMaxWidth().heightIn(min = 160.dp, max = 300.dp)) }
                     if (!valid && !busy) Text(stringResource(R.string.zone5_document_changed))
-                    if (state.error) Text(stringResource(R.string.studio_error))
+                    StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError)
                 }
             }, confirmButton = { TextButton(onClick = {
                 restoring = viewModel.restore(target.version.revision, target.baseRevision, target.version.objectId)
@@ -415,7 +454,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             dismissButton = { TextButton(onClick = { versionPreview = null }, enabled = !busy) { Text(stringResource(R.string.studio_cancel)) } })
     }
     state.output?.let { output -> StudioAlertDialog(onDismissRequest = viewModel::dismissOutput,
-        title = { Text(stringResource(R.string.studio_output_saved)) }, text = { Column { Text(output.displayName); WorkspaceContinueButton(output.objectId.value, output.version) } },
+        title = { Text(stringResource(R.string.studio_output_saved)) }, text = { Column { Text(output.displayName); WorkspaceExportButton(output); WorkspaceContinueButton(output.objectId.value, output.version) } },
         confirmButton = { TextButton(onClick = { viewModel.dismissOutput(); onOpenOutput(output) }) { Text(stringResource(R.string.studio_open_output)) } },
         dismissButton = { TextButton(onClick = { viewModel.dismissOutput(); onInsertOutput(output) }) { Text(stringResource(R.string.studio_insert_canvas)) } }) }
     activeInk?.let { session -> StudioInkDialog(viewModel.service, session, {

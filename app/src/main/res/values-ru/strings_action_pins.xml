@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_pins_title">Закреплённые действия</string>
+    <string name="zone5_pins_choose">Выбрать закреплённые действия</string>
+    <string name="zone5_pins_explain">Выберите до %1$d действий для этой страницы. Они всегда относятся к текущему файлу или задаче.</string>
+    <string name="zone5_pins_unreadable">Не удалось прочитать закреплённые действия. Выберите их заново.</string>
+    <string name="zone5_pins_unavailable">Некоторые закреплённые действия недоступны в этом режиме. Можно очистить список и выбрать их заново.</string>
+    <string name="zone5_pins_save_failed">Не удалось сохранить закреплённые действия. Попробуйте ещё раз.</string>
+    <string name="zone5_pins_clear">Очистить закреплённые действия</string>
+    <string name="zone5_pins_done">К действиям</string>
+    <string name="zone5_search_keep">сохранить сохранение черновик версия</string>
+    <string name="zone5_search_export">экспорт скачать выгрузить копия</string>
+    <string name="zone5_search_insert">добавить вставить новый</string>
+    <string name="zone5_search_undo">отменить вернуть предыдущее</string>
+    <string name="zone5_search_redo">повторить вернуть изменение</string>
+    <string name="zone5_search_name">переименовать имя название</string>
+    <string name="zone5_search_find">найти поиск искать</string>
+    <string name="zone5_search_properties">свойства настроить формат оформление</string>
+    <string name="zone5_search_layers">слои объекты порядок</string>
+    <string name="zone5_search_draw">рисовать рисунок перо кисть</string>
+</resources>

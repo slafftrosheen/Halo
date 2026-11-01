@@ -1,0 +1,725 @@
+{
+  "recorded_utc": "2026-11-01T14:36:56.852687+00:00",
+  "scope": "Synthetic host/native evidence only; phone, assistive and participant acceptance pending",
+  "baseline_commit": "261e7d68174758c1708e5f633974903f8bd479a3",
+  "results": {
+    "suites": 25,
+    "tests": 153,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "debug_assembly": "passed",
+    "android_test_kotlin_compilation": "passed"
+  },
+  "captures": [
+    {
+      "file": "renders/com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest.libraryNarrowLatvian200.png",
+      "sha256": "a622224e70bd6e061a8d1e1bc80cdd14ad23dbd0adf55a1769fc458ac916f5f6",
+      "test_class": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test_method": "libraryNarrowLatvian200",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:08.041Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookLibrarySearchOrderTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest.libraryNarrowDarkBlue.png",
+      "sha256": "2c5021fe9eee4128ffe7442ee54117fe4c5de71ef3823812908762b50a0f7933",
+      "test_class": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+      "test_method": "libraryNarrowDarkBlue",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:08.041Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookLibrarySearchOrderTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest.lightAppearance.png",
+      "sha256": "b0cd32b5d2c3787671712b0c16f6fc3f779068e9b9bb40534dc5d221045b756a",
+      "test_class": "com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest",
+      "test_method": "lightAppearance",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:37.457Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/screens/settings/SettingsAppearanceVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest.darkAppearance.png",
+      "sha256": "ebe5354144b0564ed4f815e9955419d91a161b79baaa3ef315ba0381d4222254",
+      "test_class": "com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest",
+      "test_method": "darkAppearance",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:37.457Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/screens/settings/SettingsAppearanceVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest.russianLargeAppearance.png",
+      "sha256": "155b281766eeb1dc6a501df9cab5a2899e3ad6b58fbf2d3ceb0ac0aaf6ff74c5",
+      "test_class": "com.halo.app.ui.screens.settings.SettingsAppearanceVisualTest",
+      "test_method": "russianLargeAppearance",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:37.457Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/screens/settings/SettingsAppearanceVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.shell.HaloZone5InteractionTest.activeCaptionIsPartOfTheSingleTapTargetAtLargeText.png",
+      "sha256": "da6b067f6629d704d105f28bcc83864fd1bfcf8439fc35b6d24a24faf7d2fd25",
+      "test_class": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+      "test_method": "activeCaptionIsPartOfTheSingleTapTargetAtLargeText",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:42.763Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/shell/HaloZone5InteractionTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.shell.HaloZoneLayoutTest.latvianLargeTextRetainsExplicitMenuAndActionList.png",
+      "sha256": "a9a2fb7a30b1f524f74354eb56f869a9008d13f0fc7acc6fbb202f59dc340147",
+      "test_class": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test_method": "latvianLargeTextRetainsExplicitMenuAndActionList",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:49.766Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/shell/HaloZoneLayoutTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.shell.HaloZoneLayoutTest.russianLargeTextKeepsProfileReadOnlyUntilMenuDisclosure.png",
+      "sha256": "75429e6d88ed226c524da53572e2485a314d87836836f1f816c2a0a0e9154d65",
+      "test_class": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test_method": "russianLargeTextKeepsProfileReadOnlyUntilMenuDisclosure",
+      "successful_suite_timestamp_utc": "2026-11-01T14:32:49.766Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/shell/HaloZoneLayoutTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.workspace.WorkspaceExternalExportRenderingTest.verifiedCopyHasAnOutsideOpeningActionAndDurableReceipt.png",
+      "sha256": "2da74c8bc1cae975acef6dc60870e054f827c4d42f693fc5a85e072a504c1c0d",
+      "test_class": "com.halo.app.ui.workspace.WorkspaceExternalExportRenderingTest",
+      "test_method": "verifiedCopyHasAnOutsideOpeningActionAndDurableReceipt",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:08.012Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/workspace/WorkspaceExternalExportRenderingTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.workspace.WorkspaceExternalExportRenderingTest.cancelledPickerCanCloseAt200PercentWithoutWriting.png",
+      "sha256": "5faf809c5dfbc0227c7ccbbc00f38f60976f1f77b08d6fcb24cb0e9a30b8529b",
+      "test_class": "com.halo.app.ui.workspace.WorkspaceExternalExportRenderingTest",
+      "test_method": "cancelledPickerCanCloseAt200PercentWithoutWriting",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:08.012Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/workspace/WorkspaceExternalExportRenderingTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.workspace.WorkspaceExternalExportRenderingTest.unknownCopyExplainsVerificationAt200Percent.png",
+      "sha256": "4544507110318c8b983f041da54c203fe36917278f47e9114a5e1f58c746ef61",
+      "test_class": "com.halo.app.ui.workspace.WorkspaceExternalExportRenderingTest",
+      "test_method": "unknownCopyExplainsVerificationAt200Percent",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:08.012Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/workspace/WorkspaceExternalExportRenderingTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5CreativeActionsTest.canvasArrangeOpensWithoutMutatingTheBoard.png",
+      "sha256": "33b0a04efda62149eb31b1870321e8268a029b2620139f810305f7cb5dcb0423",
+      "test_class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test_method": "canvasArrangeOpensWithoutMutatingTheBoard",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:22.268Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5CreativeActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5CreativeActionsTest.studyPracticeReviewAndBackUseExclusiveViews.png",
+      "sha256": "1a0761295948ec625fe23eb29d2d1ca05cb114720ec5808a213d8bc963ac4b0a",
+      "test_class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test_method": "studyPracticeReviewAndBackUseExclusiveViews",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:22.268Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5CreativeActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5CreativeActionsTest.changingASourceWhileNamingASelectedGroupCannotCommitIt.png",
+      "sha256": "8e3133a19667d4015b5001cbec399f7ba2e4bcd9f91c61e4b413b9438427ac49",
+      "test_class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test_method": "changingASourceWhileNamingASelectedGroupCannotCommitIt",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:22.268Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5CreativeActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5CreativeActionsTest.groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo.png",
+      "sha256": "d041a8b0081684b3e7e0398f568aca100269bdf937db6b958f7fadf863304f33",
+      "test_class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test_method": "groupingOffCenterCardsPreservesTheReviewedSelectionAndUndo",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:22.268Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5CreativeActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5CreativeActionsTest.studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected.png",
+      "sha256": "2c95e42faaa1c0b65f9e653c4da0dd0e7be61679a6d0108548fcbbe6bba30319",
+      "test_class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test_method": "studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:22.268Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5CreativeActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5DocumentActionsTest.officeLandingHasCreationOpenAndTruthfullyDisabledExport.png",
+      "sha256": "02cb397358a558885f08b2e9427f9548de94548d1c948990a0bc3c1b79c3932f",
+      "test_class": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test_method": "officeLandingHasCreationOpenAndTruthfullyDisabledExport",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:32.889Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5DocumentActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5DocumentActionsTest.noteExportReceiptKeepsReadingScaleAt200Percent.png",
+      "sha256": "da61b75d3d792600ba48678abc8e13ded9874980b8affd6b035451afa73a43f5",
+      "test_class": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test_method": "noteExportReceiptKeepsReadingScaleAt200Percent",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:32.889Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5DocumentActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5DocumentActionsTest.noteDefaultActionsBelongToTheCurrentDocument.png",
+      "sha256": "2731617d7a9170b73cf72ff4284f8cddaedb5547a1c23ec4eaa0ae360348b582",
+      "test_class": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test_method": "noteDefaultActionsBelongToTheCurrentDocument",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:32.889Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5DocumentActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5DocumentActionsTest.noteExportChoiceKeepsReadingScaleAt200Percent.png",
+      "sha256": "b4b2016bbd6def121c6d8d508ef91eeadf5745cab2f7eeaf809901d861ef6d10",
+      "test_class": "com.halo.app.ui.zone5.Zone5DocumentActionsTest",
+      "test_method": "noteExportChoiceKeepsReadingScaleAt200Percent",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:32.889Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5DocumentActionsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5KidsControlsTest.compactChildKeepsTypedHelpAndGatedOptionsInAllActions.png",
+      "sha256": "f3f5869248e8f6c7e2335cfc162cfedce76038f4c28468b3e3894e31f525d04c",
+      "test_class": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test_method": "compactChildKeepsTypedHelpAndGatedOptionsInAllActions",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:46.807Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5KidsControlsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5KidsControlsTest.russianLargeHeaderKeepsBackAndStopReachable.png",
+      "sha256": "2d5fd8e4a4f47f8163d2321ed4789900de0feae052d8f47d3230c6f9aae78687",
+      "test_class": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test_method": "russianLargeHeaderKeepsBackAndStopReachable",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:46.807Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5KidsControlsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5KidsControlsTest.hostedChildControlsLiveInTheZoneWithOneOrbAndQuarterHeight.png",
+      "sha256": "31b1990ef3225d6f8ac4564c6163ef857e40f41127cd6e9a3faaf47f49300684",
+      "test_class": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test_method": "hostedChildControlsLiveInTheZoneWithOneOrbAndQuarterHeight",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:46.807Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5KidsControlsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5KidsControlsTest.latvianLargeHeaderKeepsBackAndStopReachable.png",
+      "sha256": "c44c9226b0f5c702f19608e1d32e32d067f5d7e0ddc630d324447ade4eec7aed",
+      "test_class": "com.halo.app.ui.zone5.Zone5KidsControlsTest",
+      "test_method": "latvianLargeHeaderKeepsBackAndStopReachable",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:46.807Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5KidsControlsTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.homeDarkBlue.png",
+      "sha256": "94ca801779aecb9b4f8c638c42e95b459f74d4d3f88531a464cd4e6eaae72181",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "homeDarkBlue",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.homeLightRose.png",
+      "sha256": "b7d21ecef8894bead3aaca85137b4ce9de0e8e8f77b3cfda38fa0095d247c448",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "homeLightRose",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.screenRussian200Preview.png",
+      "sha256": "8a316e8061f4950d6aa3e8b1c15022f249a0b1130a7fc08a993b036bbf248125",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "screenRussian200Preview",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.toolsDarkSage.png",
+      "sha256": "cf2aa8cf13a1929600fe27a58b9de27caa67c98a31354445192a8b512f37e3e3",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "toolsDarkSage",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.toolsLatvian200.png",
+      "sha256": "dfc6447d7bef84ff895c3899242fa57f94f0ec4cc8d3397006154b268dd0a337",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "toolsLatvian200",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.homeRussian200.png",
+      "sha256": "f6d92f82985ac6fe2d0dec9f1e4223c4069b87aaece7fda5a817f294b69468ae",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "homeRussian200",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.screenDarkBlue.png",
+      "sha256": "dff80d941cd5af09e609fb2136e44e9901fac8e5595a0abfd6a8932bcfc38021",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "screenDarkBlue",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest.screenLightRosePreview.png",
+      "sha256": "6fd65a4fdc848641862af42f466673dac773721c77b9853a20095051df1ca07e",
+      "test_class": "com.halo.app.ui.zone5.Zone5MainSurfacesVisualTest",
+      "test_method": "screenLightRosePreview",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:50.124Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5MainSurfacesVisualTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5PredictableHelpTest.russian200.png",
+      "sha256": "31e0e351baf032fcc7bc898fa1fb2f8ec1e0dd617ecbcad6cbda6f88b2049091",
+      "test_class": "com.halo.app.ui.zone5.Zone5PredictableHelpTest",
+      "test_method": "russian200",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:53.280Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5PredictableHelpTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5PredictableHelpTest.compactGuidedContinuationRemainsVisible.png",
+      "sha256": "6669910f6a412df4cc901e7e6d6b769f7ea5756d14a89d0c38cfc0528427f08f",
+      "test_class": "com.halo.app.ui.zone5.Zone5PredictableHelpTest",
+      "test_method": "compactGuidedContinuationRemainsVisible",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:53.280Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5PredictableHelpTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5PredictableHelpTest.polish200.png",
+      "sha256": "c899e8da250b6f61e391b046d556c2feb958387ba6655a818286012a1861ae3e",
+      "test_class": "com.halo.app.ui.zone5.Zone5PredictableHelpTest",
+      "test_method": "polish200",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:53.280Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5PredictableHelpTest.kt"
+    },
+    {
+      "file": "renders/com.halo.app.ui.zone5.Zone5PredictableHelpTest.latvian200.png",
+      "sha256": "326e8b6cbf651089a66f405a832dc705d0b6634c3de7b3d0a97704413a7f98a3",
+      "test_class": "com.halo.app.ui.zone5.Zone5PredictableHelpTest",
+      "test_method": "latvian200",
+      "successful_suite_timestamp_utc": "2026-11-01T14:33:53.280Z",
+      "source_test": "app/src/test/java/com/halo/app/ui/zone5/Zone5PredictableHelpTest.kt"
+    }
+  ],
+  "changed_source_files": [
+    {
+      "file": "app/src/main/AndroidManifest.xml",
+      "sha256": "db0ef4839e887334d867db1ea1661d3b9e9158847c077e08afd049d08a630a3f"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/MainActivity.kt",
+      "sha256": "17cb57cb7fa1bc8a000052d7502b825e8e7be161a0957bb3796e8abcc2fdb47e"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/notebook/NotebookDocument.kt",
+      "sha256": "58ab52e228fca52a45041da39a80515541f210257b95e79921990f86b47bb701"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/notebook/NotebookDocumentModel.kt",
+      "sha256": "87524ea632e42b94ceb802361180e883feac1cc8fb3dbc059139a9b01abb23a8"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/workspace/WorkspaceContinuity.kt",
+      "sha256": "e7b0b6cc233a9f1b1779d6a8c1d39143cd5a0a702cfea49ca9a146c18aace64d"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/workspace/WorkspaceExternalExport.kt",
+      "sha256": "964c605ad3adb7d204568ef32488aaba068975a329f44b60725e63c04b34eddd"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/workspace/WorkspaceExternalExportSession.kt",
+      "sha256": "dd9dcf1fcd03d1466257c01eda23ef1727d8f5c18b8d4f5d7083f59b425f129a"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+      "sha256": "888449b8cf40145af0c8ea3dacf5330dcd340eae0561ea9d37420e72a4054f4c"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/language/AppLanguage.kt",
+      "sha256": "4545c924a8cbe6786534af4632b9ba4977d9b657ee7fa37b764af8248d2dada8"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/language/StudyJourneyCopy.kt",
+      "sha256": "150479e9b710516c3c0a3e560798a6e9b46b9a73cc69363042bb50ac0b5832b6"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+      "sha256": "136aeec4638ef313325a59537d140c9ab39328aac573e70eb3e52d6163e36e2c"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/screen/HaloScreen.kt",
+      "sha256": "61c3a21526e50b72c9b8a8e7d730e0ad89103a2ca98982682bd30b112e218f74"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/components/HaloAlertDialog.kt",
+      "sha256": "56d1a88a869df3d72e399c92b4c47a00151e7fee5e6d86d20cb3b29c997c3c2b"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/design/HaloMotion.kt",
+      "sha256": "3de7587d6ca80619383e47c18753cc85c42aca20c0697a8cc8ea89e68dac5127"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/fx/HaloFx.kt",
+      "sha256": "c4e9ce95e244f7736d98d0972a7ee7bd35f06de7c34ff7748e705f352d9e6065"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/presence/HaloSignalFace.kt",
+      "sha256": "1223f967b6f707b763a6d41a23d05b0771c3e1e8a706980b7c6b95f034219f74"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/presence/HaloZone5OrbLauncher.kt",
+      "sha256": "e21715533ee0ef706d77dcebe0efd17541875f9625136f3c50445ccc0cf3cd8c"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/presence/ShellPageActions.kt",
+      "sha256": "3a86196f7cbb1c7014a688cade1cfb76d153989f3e72e29539c93d91641196f3"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/home/HomeScreen.kt",
+      "sha256": "0e7a212342dddd28740e454d736c1bb52ce0ba79d862a339389e6db8aa1385f1"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/kids/KidsZoneBinding.kt",
+      "sha256": "7cb5856b44758157d73006789098061d924a1267f639d48017117f7a13a579c5"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/CanvasEditorScreen.kt",
+      "sha256": "7679a619d5306e49bc1bab124f8718b5092aafce78e8d6b582a11c6383b7bbaa"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/MemoryHubScreen.kt",
+      "sha256": "50d3b552d57cbba3d831702b6b603afb055b4b5e7bab304c1481ac4b4539a03f"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorScreen.kt",
+      "sha256": "2fd967d8b138b10e9f40cbbb4bf6dcae98d341b37039d0b76f23f61993206e88"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/NoteEditorViewModel.kt",
+      "sha256": "330ec9252fb9d095de223170b6d0a04d88b2ac25b9340f1e23a6aa9206ca8da1"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookScreen.kt",
+      "sha256": "c3ec89b058c7448870155b172f3634ab03c4fb2bdbf4da5f5c2672a1ce9dded7"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/NotebookViewModel.kt",
+      "sha256": "d693f37f24ecb334d56c23eea460fd8dd0167066862519acf01abd4baab65f11"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/ToolZoneHeader.kt",
+      "sha256": "8e3968dee725a215b3077d6e9ddf2494e5aae91984d9ed4430ed24c361a20766"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/notebook/Zone5Workspace.kt",
+      "sha256": "b86a1f894e633dd21d8350916869782af8350020998763b72ade666eff9fd5ed"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/settings/PaletteControls.kt",
+      "sha256": "6746a4acbb86edc3e666ba015ec172fd7b9ed1f169ec64960e3ff1fabd1d7162"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/study/StudyHomeScreen.kt",
+      "sha256": "176a58a08bee703dd3111a2138ea2c11e044a7c3f22402ea8b1960049b7e7c4d"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/study/StudyLessonStore.kt",
+      "sha256": "7d58cc22fad2558811612282616f0a294720b899a24c387faa2b10bee2291c38"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/study/StudyScreen.kt",
+      "sha256": "df43a9dd85b6f37e33979b5abe59b098e00d50034b3b726901ee103db55aba75"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/screens/study/StudyViewModel.kt",
+      "sha256": "3ea759582bd22fb3029fdfdef56676ce9d024ea3398b259f4cce42c0f749c488"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/shell/AppShell.kt",
+      "sha256": "114cdb2a3820c31dcc7f36122d1615d2714a917722a485a0f30ce86f1298f1a7"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/shell/HaloZone.kt",
+      "sha256": "14f016a8674918e03f9d870aa1c69402b31608f2e2549f01e74d0e4347f6384e"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/shell/ShellOrbCatalog.kt",
+      "sha256": "ae46f8ca71d97ef997f82fb148fe78abaf03988437846a4333ebeca34168dfab"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/theme/HaloAmbientBackdrop.kt",
+      "sha256": "9ed6980a1b64fd92f407a200fed0640d570f93ae01579c78ddf69de2bbf820d6"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/theme/VisualPreferences.kt",
+      "sha256": "b8775feaa111101de2e1b2d3d703ab6b5c4b2ee588aa61c3cf58009c52b54478"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/StudioCameraCapture.kt",
+      "sha256": "ab1b76e5636d5503eb62e5b1c63b6e0c13e6e8244562e504ee7626d8b220b065"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/StudioInkDialog.kt",
+      "sha256": "f313c2a0589564e9640dec5c34007d4395b4f0f4322124ace43fef81aacc1640"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/StudioRecovery.kt",
+      "sha256": "c2f913a53501954b24261b420b0582a32e7d5c2c6fe2c8d13db9b856f2435118"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/StudioRoute.kt",
+      "sha256": "f84fa86a8106605419d8246ead158487bece3b04ef9a8ce616cc60cfc01b914e"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/StudioScreen.kt",
+      "sha256": "d0e6543ac6601ca6f7d6c1517acf16814e0e99c29404aa35d5843da7ace8aedc"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/StudioViewModel.kt",
+      "sha256": "8f2e5fee9e3095aafe67e9567537e4175a4ed2330a280775ae6228bccc9ee7fd"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/WorkspaceExternalExportUi.kt",
+      "sha256": "05e7c49ed40f4844ad14b1d408f0d1548e46a748e57bce629e7618a153737423"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/WorkspaceFileRecovery.kt",
+      "sha256": "46556eefaebf8297d7f93b817c5cdebe884048cc942d68b92c7a10e57cbefe52"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/WorkspaceFileToolsRoute.kt",
+      "sha256": "a857452cbd8b19dd1cc85e70879606f65a64980d4938bc9d4bec35962ca6c546"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/WorkspaceFileToolsScreen.kt",
+      "sha256": "c94207d1c7998b3e079c70ce0ce247e6b3770bdbb3dc1c43a19e1d51f97f77d2"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/workspace/WorkspaceFileToolsViewModel.kt",
+      "sha256": "7422064086ed6071a0a6fe4c82d7bbea8dcbfef17ec2aa5a00a08d11869743fb"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/zone5/KidsZoneActionStrip.kt",
+      "sha256": "08fca4c9ad4a2bcdd19a63df011788a04aa35cf506b110cfb03014b9b5f23419"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/zone5/LocalActionGroups.kt",
+      "sha256": "c1a8ad17a9fff7cb16d16ec1c6e0a161ed3704a93a3b35d286b05e7a9b1eefb9"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/zone5/WorkspaceToolMenus.kt",
+      "sha256": "dc19560d35d8003394b869e1952adc6a5aecf4e38a53bb8cfd48af8004f3132a"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/zone5/Zone5Guidance.kt",
+      "sha256": "9885da8530829e9b14b9fbfc3c6e90cf2f7a0930e3193de82db7284d14e78b3d"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/ui/zone5/Zone5TaskHelp.kt",
+      "sha256": "f5ff4fece138d6eb293afcb49547c3f1eda6599ff8fd25cdc016ab2369af5698"
+    },
+    {
+      "file": "app/src/main/localization/ui.tsv",
+      "sha256": "3ab2285f23bdf88cb0eac9afb7ed0cc8cdb8cc766ef4bb3e5403716dc7c093b4"
+    },
+    {
+      "file": "app/src/main/localization/ui_overrides.json",
+      "sha256": "2a3e39f69d744cb7a1490fb7989ec86140e4efa393bf1a0bc1ed561fe783bfa7"
+    },
+    {
+      "file": "app/src/main/res/values-lv/strings_external_export.xml",
+      "sha256": "bdcc1ce23500c3c82cac966038fa135881b8ddad7ca555848e0ffa16398d5726"
+    },
+    {
+      "file": "app/src/main/res/values-lv/strings_file_recovery.xml",
+      "sha256": "95668f07e962fb360dc7828d28b054632055f9fea914f499311067a1d23a71bc"
+    },
+    {
+      "file": "app/src/main/res/values-lv/strings_predictable_navigation.xml",
+      "sha256": "b23c113a2f5c74fee6d24023b2ba1eddc6dadd098a7abd0d11c221dcf754fc39"
+    },
+    {
+      "file": "app/src/main/res/values-lv/strings_task_help.xml",
+      "sha256": "3e39ad402c32330415d806ceea245b722ce5e5f7290e4cda804de6e67db8de5b"
+    },
+    {
+      "file": "app/src/main/res/values-lv/strings_work_recovery.xml",
+      "sha256": "c28d11d8e156ac6e3044f3dad604d6c86386fd0416aed7ba23e20ec33963a98d"
+    },
+    {
+      "file": "app/src/main/res/values-lv/strings_zone5.xml",
+      "sha256": "59e7f4eac59dcca84095f7ff9bf68d39a50df8b21ea93bdcafe4c1ff2bfd5005"
+    },
+    {
+      "file": "app/src/main/res/values-lv/ui_strings.xml",
+      "sha256": "fee40fb263a22917d3926108caefed51a8fa5b8acb2686c2c217cc9dc163940d"
+    },
+    {
+      "file": "app/src/main/res/values-pl/strings_external_export.xml",
+      "sha256": "2bd5f5fe8a2ad4e876c4f9b6191a54afd74d66da5db7be717bc624a2a2affecf"
+    },
+    {
+      "file": "app/src/main/res/values-pl/strings_file_recovery.xml",
+      "sha256": "aff9e8b615d9fbdf727e907b73b3f3c99ac229a61ba664342d68f361386d9ec2"
+    },
+    {
+      "file": "app/src/main/res/values-pl/strings_predictable_navigation.xml",
+      "sha256": "70a02f381096faa0a605a931840b0eef8eae516f62d336d8d889cad99480177c"
+    },
+    {
+      "file": "app/src/main/res/values-pl/strings_task_help.xml",
+      "sha256": "92fe048cbb9284517444b14ec4ef4fd7b9fdc6968b3ea06678a995a039630cff"
+    },
+    {
+      "file": "app/src/main/res/values-pl/strings_work_recovery.xml",
+      "sha256": "a07e79aadb765c820b207a16263543e235b534b582b25f754da7316db111c65c"
+    },
+    {
+      "file": "app/src/main/res/values-pl/strings_zone5.xml",
+      "sha256": "63ab997e2aeb4a39c033457836186dd022d048b1ca0ad9163f9d8643162be62d"
+    },
+    {
+      "file": "app/src/main/res/values-pl/ui_strings.xml",
+      "sha256": "76cca4facb9ee6e3e186836d6b0a4ebb8262eba0c8f1a97a7a00e4a3f7c59b0e"
+    },
+    {
+      "file": "app/src/main/res/values-ru/strings_external_export.xml",
+      "sha256": "eccac0ad06001a101fad5a364f9135f70442421ead78e140dc45652596048ebf"
+    },
+    {
+      "file": "app/src/main/res/values-ru/strings_file_recovery.xml",
+      "sha256": "cf1d9ec86bf4dc96d8edd5dfdacb856108c77d97f3103e05a5a1ba0d068e818a"
+    },
+    {
+      "file": "app/src/main/res/values-ru/strings_predictable_navigation.xml",
+      "sha256": "359d37de9ddc5899f483bafa535c7238262ac4ea33b6ada3466985175bb02ec1"
+    },
+    {
+      "file": "app/src/main/res/values-ru/strings_task_help.xml",
+      "sha256": "71b4e085c26936760c5be71dea7c64fbe695a68af1e23981609f79eedcf03696"
+    },
+    {
+      "file": "app/src/main/res/values-ru/strings_work_recovery.xml",
+      "sha256": "0461b15cead56e256df4aa371c6779a30c05d7bf3b0fb86a2aafc8bc02abd099"
+    },
+    {
+      "file": "app/src/main/res/values-ru/strings_zone5.xml",
+      "sha256": "8b6f01b83b72a20b868250d7dec85f694481ceac0e4c0c75360557fceb8a4250"
+    },
+    {
+      "file": "app/src/main/res/values-ru/ui_strings.xml",
+      "sha256": "ade5453acf5397ffc92bfdc5ccae6b9cbbff49e67b62d686cb6f657ae11de449"
+    },
+    {
+      "file": "app/src/main/res/values/strings_external_export.xml",
+      "sha256": "a8bdc5c5957655bd2e8250f22877e496e56ae8b1e07eca9250d3a731fd0837e9"
+    },
+    {
+      "file": "app/src/main/res/values/strings_file_recovery.xml",
+      "sha256": "5c855d2dce25045e25ec651ef9b53e45a3384406bf7284d2c23ee2707c21b98c"
+    },
+    {
+      "file": "app/src/main/res/values/strings_predictable_navigation.xml",
+      "sha256": "2d0e2ccd9ad6165e48368d2658a0e288534fcc33b9086c46dd04302f706ade3f"
+    },
+    {
+      "file": "app/src/main/res/values/strings_task_help.xml",
+      "sha256": "9b82fac49b5c366d5ba1c05a90a21986bcb59038d5b7abc928d1e975cafaacf1"
+    },
+    {
+      "file": "app/src/main/res/values/strings_work_recovery.xml",
+      "sha256": "acc071693862f3bf8aad438006cfe4dad0ac5e040c8da90f9ad8bbc25aa6c5f6"
+    },
+    {
+      "file": "app/src/main/res/values/strings_zone5.xml",
+      "sha256": "1cedc7fb3709b25b57b446babc4b23503d2d7a7caf5a28922e33e218d4feac16"
+    },
+    {
+      "file": "app/src/main/res/values/ui_strings.xml",
+      "sha256": "d73c12c209aff716ab0627595054c2cc29194771a6446e103c7df6d28d0ed7a1"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/data/notebook/NotebookDocumentRepositoryTest.kt",
+      "sha256": "6195cf316116e0a5f8e8d02f9673ff4d69eb1209f2d037ef4935761fa1a235cb"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/data/workspace/WorkspaceExternalExportTest.kt",
+      "sha256": "b6e3d709f84868813229a1b7af495ffd8c25fb4292e4e78620a988fea9dd0a0e"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/study/StudyLessonCountTest.kt",
+      "sha256": "a6ede2354db7463870444cb1cef5bf4b85e87caa6ddaaf22af96ac546888b582"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/screens/notebook/NoteEditorViewModelTest.kt",
+      "sha256": "2dcb342721b9d7b56077cb93fa6879a55962c890768de42a88b57d2019da846e"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/screens/notebook/NoteStructuredRecoveryTest.kt",
+      "sha256": "313afce3b0dd05739ebb0f2aaedb60c0891123273886729d2e1086e7f0ed74c3"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/screens/notebook/NotebookLibrarySearchOrderTest.kt",
+      "sha256": "3b5b683418f24276c1ff820356afb7641141ddf06f5794a64cf7e7850956ce83"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/shell/HaloZone5InteractionTest.kt",
+      "sha256": "03842f234dc6f8270ba645aaecdc1a6e5877d8ea1c6052cedb27e5eb96fc4077"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/shell/HaloZoneLayoutTest.kt",
+      "sha256": "e961e131958cd6f3732689fdd1630170ada1f7996c25e928fe1797d4a3f3d0e4"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/shell/ShellOrbCatalogTest.kt",
+      "sha256": "a959d678edcc1e24f304c6564574c3c843508f5551d21081122eab24ee9f2178"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/shell/Zone5WorkingAreaTest.kt",
+      "sha256": "2b041cc231b6c68aad1ab3751cdec1463f78079cff92d5bc90c60c8e76a84885"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/theme/HaloAmbientMotionTest.kt",
+      "sha256": "d1f4bbdac729828ea705322555e3d403ade0a036f73aeeaa3048d7fac16478df"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/theme/VisualComfortPreferencesTest.kt",
+      "sha256": "d0edca7acabf185e160702023b35b910f9060b5b92c93d188191aa1ed3ba1306"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/workspace/WorkspaceExternalExportHostTest.kt",
+      "sha256": "b959c6ac7f425009482a96c6ccf6202b4dfcb4a7416fc46c8e28bbb34870d3c2"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/workspace/WorkspaceExternalExportRenderingTest.kt",
+      "sha256": "501e0741ab387867b5ce7796d01d9770520709997ff3a90bee9a7d51f56f746e"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/zone5/Zone5CreativeActionsTest.kt",
+      "sha256": "8e97903cb2163a5ce7ef0ecdffbd9881a5515b0e7b8147b609c82142a3f8e745"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/zone5/Zone5DocumentActionsTest.kt",
+      "sha256": "a1b20e2005d3e8740cf2f6f97bf00120fa3ad1691cdb272e3b995c89dd8ad4fa"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/zone5/Zone5GuideCompletionTest.kt",
+      "sha256": "6154d069c9c6c5cca9223e2aadb8c2daa01c826e25c0deb801a5c0abc6e00d6b"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/zone5/Zone5PredictableHelpTest.kt",
+      "sha256": "873773878325ddeaae2a2eef7580158709e1b5769caa25127ad4b91bcbd5a2f4"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/ui/zone5/Zone5WorkspaceMenusTest.kt",
+      "sha256": "38ac4e502c96ec98ee1d2d9cb1f5f688c8ad0e02c78bb689d83afb7e96db5f7d"
+    }
+  ],
+  "changed_source_manifest_sha256": "70d80410165c2cdbea8c177a71adbccbfe0ef825547b2e1c61d1637e71bbc195",
+  "apk": {
+    "path": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "bytes": 292350404,
+    "sha256": "6989493e6b873afae13699a87f0368dd05d3b9b87cf9ac17d306b712568eccf5",
+    "release_copy_matches": true
+  }
+}

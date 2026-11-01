@@ -469,9 +469,15 @@ fun HomeScreen(
     }
     val changingLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_conversation_changing)
     val homeOwner = com.halo.app.ui.presence.ShellPageOwner("home", objectId = uiState.conversationId,
+        helpDescription = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_help_home),
         canonicalToolIds = listOf(com.halo.app.di.tools.host.SavedChatTools.LIST, com.halo.app.di.tools.host.SavedChatTools.SEARCH,
             com.halo.app.di.tools.host.SavedChatTools.GET, com.halo.app.di.tools.host.SavedChatTools.OPEN),
-        disabledActionReasons = mapOf("attach" to if (importingSource) androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing) else changingLabel,
+        defaultDisabledActionReason = if (changingConversation) changingLabel else androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_wait),
+        disabledActionReasons = mapOf("retry" to androidx.compose.ui.res.stringResource(when {
+            providerNeedsAttention || connectionNeedsAttention -> com.halo.app.R.string.action_retry_answers
+            textInput.isBlank() -> com.halo.app.R.string.action_enter_message
+            else -> com.halo.app.R.string.action_wait
+        }), "attach" to if (importingSource) androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing) else changingLabel,
             "new-chat" to changingLabel, "tools" to changingLabel))
     val homeComposer: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (shellOwnsOrb) 0.dp else 6.dp)
@@ -547,7 +553,7 @@ fun HomeScreen(
         }
     }
     if (shellOwnsOrb) {
-        com.halo.app.ui.presence.BindShellUtilityBand(homeOwner, homeComposer)
+        com.halo.app.ui.presence.BindShellUtilityBand(homeOwner, content = homeComposer)
         val todayLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day)
         com.halo.app.ui.presence.BindShellPageActions(homeOwner, buildList {
             add(com.halo.app.ui.presence.ShellPageAction("attach", "Attach", HaloGlyph.FILE,
@@ -607,6 +613,7 @@ fun HomeScreen(
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
         if (shellOwnsOrb && !keyboardVisible) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Home"),
+            subtitle = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_home_purpose),
             modifier = Modifier.padding(horizontal = 20.dp))
         // Standalone hosts retain local controls; the app shell projects them into Halo Zone.
         if (!shellOwnsOrb && (!shortScreen || !keyboardVisible)) Box(Modifier.fillMaxWidth()

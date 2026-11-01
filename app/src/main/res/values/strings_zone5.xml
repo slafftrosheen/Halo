@@ -34,7 +34,7 @@
     <string name="zone5_select_export">Open a supported document to export.</string>
     <string name="zone5_office_kinds">Text, tables, images and PDF pages</string>
     <string name="zone5_document_changed">This document changed. Close and review it before trying again.</string>
-    <string name="zone5_literal_format">This file uses plain text. Edit it here, or return to Office Tools for format options.</string>
+    <string name="zone5_literal_format">This file uses plain text. Edit it here, or return to HaloNotes for format options.</string>
     <string name="zone5_choose_layer">Choose a layer type</string>
     <string name="zone5_nothing_to_read">There is no current text to read aloud.</string>
     <string name="zone5_open_lesson_first">Open a lesson to use this action.</string>
@@ -48,7 +48,7 @@
     <string name="zone5_projects_canvases">Projects and canvases</string>
     <string name="zone5_no_canvases">No canvases yet. Create one, or open a saved canvas from Library.</string>
     <string name="zone5_memory_usage_details">How memory is used</string>
-    <string name="zone5_export_from_office">Export from Office Tools</string>
+    <string name="zone5_export_from_office">Export from HaloNotes</string>
     <string name="zone5_edit_first">Switch to Edit to insert content.</string>
     <string name="zone5_save_first">Save your changes before continuing.</string>
     <string name="zone5_no_versions">No saved versions yet.</string>

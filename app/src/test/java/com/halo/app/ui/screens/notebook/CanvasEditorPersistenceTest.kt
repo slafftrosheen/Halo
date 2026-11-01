@@ -54,6 +54,104 @@ class CanvasEditorPersistenceTest {
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
+    @Test fun directTextAndDragCannotWriteWhileAddOperationOwnsTheBoard() = onEditorMain {
+        val board = repository.create(); val card = repository.addTextNode(board, 2f, 3f, "keep original")
+        val started = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val real = db.notebookCanvasDao()
+        val delayed = object : com.halo.app.data.notebook.NotebookCanvasDao by real {
+            override suspend fun insertNode(entity: com.halo.app.data.notebook.CanvasNodeEntity) {
+                started.complete(Unit); release.await(); real.insertNode(entity)
+            }
+        }
+        repository = NotebookCanvasRepository(db, delayed, db.notebookDao())
+        val vm = editor(board); vm.beginDrag(card)
+        val adding = vm.addTextNode()
+        withTimeout(5_000) { started.await() }
+        assertTrue(vm.uiState.value.addingNode)
+        vm.updateNodeText(card, "must not write")
+        vm.moveNode(card, 100f, 100f)
+        assertEquals("keep original", vm.uiState.value.nodes.single().text)
+        assertEquals(2f, vm.uiState.value.nodes.single().x)
+        release.complete(Unit); adding.join(); vm.persistPending().join()
+        val stored = repository.observe(board).first()!!.nodes.single { it.id == card }
+        assertEquals("keep original", stored.text); assertEquals(2f, stored.x); assertEquals(3f, stored.y)
+    }
+    @Test fun pendingSaveFailureRetainsVisibleEditsAndRetrySurvivesReopen() = onEditorMain {
+        val board = repository.create()
+        val card = repository.addTextNode(board, 0f, 0f, "saved text")
+        var reject = true
+        val real = db.notebookCanvasDao()
+        val unreliable = object : com.halo.app.data.notebook.NotebookCanvasDao by real {
+            override suspend fun updateNodeText(canvasId: String, nodeId: String, text: String, updatedAt: Long): Int {
+                if (reject) throw java.io.IOException("Synthetic unavailable storage")
+                return real.updateNodeText(canvasId, nodeId, text, updatedAt)
+            }
+        }
+        repository = NotebookCanvasRepository(db, unreliable, db.notebookDao())
+        val vm = editor(board)
+        vm.updateNodeText(card, "latest retained edit")
+        assertEquals(CanvasSaveState.EDITING, vm.uiState.value.saveState)
+        withTimeout(5_000) { vm.uiState.first { it.saveState == CanvasSaveState.FAILED } }
+        assertEquals("latest retained edit", vm.uiState.value.nodes.single().text)
+        assertEquals("saved text", repository.observe(board).first()!!.nodes.single().text)
+        vm.clearNotice()
+        assertEquals(CanvasSaveState.FAILED, vm.uiState.value.saveState)
+        var left = false
+        vm.leave { left = true }
+        withTimeout(5_000) { vm.uiState.first { it.notice != null } }
+        assertFalse(left)
+        reject = false
+        vm.persistPending().join()
+        assertEquals(CanvasSaveState.SAVED, vm.uiState.value.saveState)
+        val reopened = editor(board)
+        assertEquals("latest retained edit", reopened.uiState.value.nodes.single().text)
+        assertEquals(CanvasSaveState.SAVED, reopened.uiState.value.saveState)
+    }
+    @Test fun textTypedDuringViewportFlushIsSavedBeforeLeaving() = onEditorMain {
+        val board = repository.create()
+        val card = repository.addTextNode(board, 0f, 0f, "original")
+        val started = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val real = db.notebookCanvasDao()
+        val slow = object : com.halo.app.data.notebook.NotebookCanvasDao by real {
+            override suspend fun updateViewport(canvasId: String, x: Float, y: Float, scale: Float): Int {
+                started.complete(Unit); release.await()
+                return real.updateViewport(canvasId, x, y, scale)
+            }
+        }
+        repository = NotebookCanvasRepository(db, slow, db.notebookDao())
+        val vm = editor(board)
+        vm.transform(5f, 8f, 1.25f)
+        val left = CompletableDeferred<Unit>()
+        vm.leave { left.complete(Unit) }
+        withTimeout(5_000) { started.await() }
+        assertEquals(CanvasSaveState.SAVING, vm.uiState.value.saveState)
+        vm.updateNodeText(card, "typed during viewport write")
+        assertNotEquals(CanvasSaveState.SAVED, vm.uiState.value.saveState)
+        release.complete(Unit)
+        withTimeout(5_000) { left.await() }
+        assertEquals(CanvasSaveState.SAVED, vm.uiState.value.saveState)
+        val stored = repository.observe(board).first()!!
+        assertEquals("typed during viewport write", stored.nodes.single().text)
+        assertEquals(1.25f, stored.viewportScale)
+    }
+    @Test fun olderTextWriteCannotAcknowledgeNewerEdit() = onEditorMain {
+        val board = repository.create(); val card = repository.addTextNode(board, 0f, 0f, "original")
+        val started = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val real = db.notebookCanvasDao()
+        val slow = object : com.halo.app.data.notebook.NotebookCanvasDao by real {
+            override suspend fun updateNodeText(canvasId: String, nodeId: String, text: String, updatedAt: Long): Int {
+                if (text == "first") { started.complete(Unit); release.await() }
+                return real.updateNodeText(canvasId, nodeId, text, updatedAt)
+            }
+        }
+        repository = NotebookCanvasRepository(db, slow, db.notebookDao())
+        val vm = editor(board); vm.updateNodeText(card, "first")
+        withTimeout(5_000) { started.await() }
+        assertEquals(CanvasSaveState.SAVING, vm.uiState.value.saveState)
+        vm.updateNodeText(card, "newest"); release.complete(Unit)
+        withTimeout(5_000) { vm.uiState.first { it.saveState == CanvasSaveState.SAVED } }
+        assertEquals("newest", repository.observe(board).first()!!.nodes.single().text)
+    }
     @Test fun editorAndAssistantGroupMovesPersistTheSameMemberPositions() = onEditorMain {
         for (explicit in listOf(false, true)) {
             val results = mutableListOf<List<Triple<String, Float, Float>>>()

@@ -153,7 +153,12 @@ fun WorkspaceObjectDetailScreen(
         ?: uiText(if (type == "memory") "Memory" else "File"), onBack, objectId = id, titleIsSource = true,
         instrumentHeader = type == "memory",
         canonicalToolIds = if (type == "memory") listOf("halo_read_memory", "halo_update_memory", "halo_forget_memory") else null,
-        disabledActionReasons = if (type == "memory") mapOf("object.memory.source" to stringResource(R.string.zone5_no_memory_source)) else emptyMap(),
+        defaultDisabledActionReason = stringResource(when {
+            detailBusy -> R.string.action_wait
+            detailState is WorkspaceDetailState.Loading -> R.string.action_loading
+            else -> R.string.action_item_unavailable
+        }),
+        disabledActionReasons = if (type == "memory" && !detailBusy) mapOf("object.memory.source" to stringResource(R.string.zone5_no_memory_source)) else emptyMap(),
         sourceIdentity = "$id:$type:$revision:${currentDetail?.file?.version}:$memoryIdentity:$detailBusy:$editingMemory:$confirmForget:$showSources:${memoryState?.failed}",
         actions = buildList {
             if (type == "memory") {

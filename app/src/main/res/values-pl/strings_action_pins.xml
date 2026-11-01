@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_pins_title">Przypięte działania</string>
+    <string name="zone5_pins_choose">Wybierz przypięte działania</string>
+    <string name="zone5_pins_explain">Wybierz maksymalnie %1$d działania dla tej strony. Zawsze dotyczą bieżącego pliku lub zadania.</string>
+    <string name="zone5_pins_unreadable">Nie udało się odczytać zapisanych przypięć. Wybierz je ponownie.</string>
+    <string name="zone5_pins_unavailable">Niektóre przypięte działania są niedostępne w tym widoku. Możesz wyczyścić przypięcia i wybrać ponownie.</string>
+    <string name="zone5_pins_save_failed">Nie udało się zapisać przypięć. Spróbuj ponownie.</string>
+    <string name="zone5_pins_clear">Wyczyść przypięcia</string>
+    <string name="zone5_pins_done">Wróć do działań</string>
+    <string name="zone5_search_keep">zapisz zachowaj wersja szkic</string>
+    <string name="zone5_search_export">eksportuj pobierz plik wyjściowy kopia</string>
+    <string name="zone5_search_insert">dodaj wstaw nowy</string>
+    <string name="zone5_search_undo">cofnij przywróć poprzedni</string>
+    <string name="zone5_search_redo">ponów powtórz zmianę</string>
+    <string name="zone5_search_name">zmień nazwę nazwa tytuł</string>
+    <string name="zone5_search_find">znajdź szukaj wyszukaj</string>
+    <string name="zone5_search_properties">właściwości dostosuj format ustawienia styl</string>
+    <string name="zone5_search_layers">warstwy obiekty kolejność</string>
+    <string name="zone5_search_draw">rysuj szkic tusz pióro pędzel</string>
+</resources>

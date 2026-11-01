@@ -15,6 +15,7 @@ internal data class WorkspaceFileToolsState(val selected: WorkspaceFileToolsObje
     val text: WorkspaceTextDocument? = null, val annotations: WorkspacePdfAnnotations? = null,
     val receipt: WorkspaceBatchReceipt? = null, val recovery: RecoveryDraft? = null,
     val loading: Boolean = false, val busy: Boolean = false, val error: Boolean = false, val cancelled: Boolean = false,
+    val failure: FileToolFailure? = null, val operation: FileToolOperation? = null,
     val output: WorkspaceFile? = null, val textHistory: WorkspaceTextDocuments.HistoryStatus = WorkspaceTextDocuments.HistoryStatus())
 
 internal data class OfficeLibraryStatus(val objectsLoading: Boolean = true, val filesLoading: Boolean = true,
@@ -52,7 +53,13 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
     private data class DrawingRecovery(val id: String, val revision: Long, val pages: Map<Int, String>, val sequence: Long)
     private val recoveryWrites = Channel<DrawingRecovery>(Channel.CONFLATED)
     init {
+        val interrupted = FileToolOperation.entries.find { it.name == savedState.get<String>("fileToolsPending") }
         (savedState.get<String>("fileToolsObject") ?: initialId)?.let(::open)
+        if (interrupted != null) viewModelScope.launch {
+            operationJob?.join()
+            if (!mutable.value.error) mutable.value = mutable.value.copy(error = true,
+                failure = FileToolFailure(interrupted, interrupted = true))
+        }
         viewModelScope.launch {
             for (draft in recoveryWrites) {
                 try { tools.annotations.saveRecovery(draft.id, draft.revision, draft.pages, draft.sequence) }
@@ -60,18 +67,18 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
                 catch (_: Exception) {
                     // A completed save can legitimately win a queued recovery write. Never recreate its stale draft.
                     if (runCatching { tools.annotations.get(draft.id)?.revision == draft.revision }.getOrDefault(false) && selectedId == draft.id)
-                        mutable.value = mutable.value.copy(error = true)
+                        mutable.value = mutable.value.copy(error = true, failure = FileToolFailure(FileToolOperation.ANNOTATE))
                 }
             }
         }
     }
-    fun open(id: String) = operation {
+    fun open(id: String) = operation(FileToolOperation.OPEN) {
         observation?.cancel(); selectedId = id; savedState["fileToolsObject"] = id
         mutable.value = WorkspaceFileToolsState(loading = true, busy = true)
         tools.prepareForEditing(id)
         observe(id, true)
     }
-    fun prepareImages(files: List<WorkspaceFile>, onReady: (List<WorkspaceFile>) -> Unit) = operation {
+    fun prepareImages(files: List<WorkspaceFile>, onReady: (List<WorkspaceFile>) -> Unit) = operation(FileToolOperation.PREVIEW) {
         require(files.size in 1..6)
         val pinned = files.map { tools.versions.pin(reference(it)) }
         onReady(pinned)
@@ -85,7 +92,7 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
                     .collect { refresh(id) }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { mutable.value = mutable.value.copy(selected = null, file = null, text = null, annotations = null,
-                receipt = null, recovery = null, loading = false, error = true) }
+                receipt = null, recovery = null, loading = false, error = true, failure = FileToolFailure(FileToolOperation.OPEN)) }
         }
     }
     private suspend fun refresh(id: String) {
@@ -102,39 +109,39 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
         observation?.cancel(); selectedId = null; savedState["fileToolsObject"] = null
         mutable.value = WorkspaceFileToolsState()
     }
-    fun create(title: String, format: WorkspaceTextFormat) = operation { observe(tools.text.create(title, format).id, true) }
-    fun importFile(uri: Uri) = operation { observe(tools.files.importFile(uri).objectId.value, true) }
-    fun importText(file: WorkspaceFile) = operation {
+    fun create(title: String, format: WorkspaceTextFormat) = operation(FileToolOperation.CREATE) { observe(tools.text.create(title, format).id, true) }
+    fun importFile(uri: Uri) = operation(FileToolOperation.IMPORT) { observe(tools.files.importFile(uri).objectId.value, true) }
+    fun importText(file: WorkspaceFile) = operation(FileToolOperation.IMPORT) {
         observe(tools.text.import(file.objectId.value, requireNotNull(file.version)).id, true)
     }
-    fun editCsv(id: String, revision: Long, command: WorkspaceCsvCommand, onSaved: () -> Unit = {}) = operation {
+    fun editCsv(id: String, revision: Long, command: WorkspaceCsvCommand, onSaved: () -> Unit = {}) = operation(FileToolOperation.EDIT) {
         tools.text.editCsv(id, revision, command); refresh(id); onSaved()
     }
-    fun undoText(document: WorkspaceTextDocument) = operation { tools.text.undo(document.id, document.revision); refresh(document.id) }
-    fun redoText(document: WorkspaceTextDocument) = operation { tools.text.redo(document.id, document.revision); refresh(document.id) }
-    fun exportText(selected: WorkspaceFileToolsObject, format: WorkspaceTextFormat) = operation {
+    fun undoText(document: WorkspaceTextDocument) = operation(FileToolOperation.EDIT) { tools.text.undo(document.id, document.revision); refresh(document.id) }
+    fun redoText(document: WorkspaceTextDocument) = operation(FileToolOperation.EDIT) { tools.text.redo(document.id, document.revision); refresh(document.id) }
+    fun exportText(selected: WorkspaceFileToolsObject, format: WorkspaceTextFormat) = operation(FileToolOperation.EXPORT) {
         mutable.value = mutable.value.copy(output = tools.text.exportNote(selected.id, selected.version.toLong(), format))
     }
-    fun transform(file: WorkspaceFile, recipe: CanvasImageRecipe) = operation {
+    fun transform(file: WorkspaceFile, recipe: CanvasImageRecipe) = operation(FileToolOperation.TRANSFORM) {
         mutable.value = mutable.value.copy(output = tools.media.transform(reference(file), recipe))
     }
-    fun batch(title: String, files: List<WorkspaceFile>, recipe: CanvasImageRecipe) = operation {
+    fun batch(title: String, files: List<WorkspaceFile>, recipe: CanvasImageRecipe) = operation(FileToolOperation.BATCH) {
         activeBatchId = null
         val receipt = tools.media.batch(title, files.map(::reference), recipe) { started ->
             activeBatchId = started.id; observe(started.id, true)
         }
         mutable.value = mutable.value.copy(receipt = receipt)
     }
-    fun collage(files: List<WorkspaceFile>, recipe: CanvasStitchRecipe) = operation {
+    fun collage(files: List<WorkspaceFile>, recipe: CanvasStitchRecipe) = operation(FileToolOperation.TRANSFORM) {
         mutable.value = mutable.value.copy(output = tools.media.collage(files.map(::reference), recipe))
     }
-    fun extractPdfPage(file: WorkspaceFile, page: Int) = operation {
+    fun extractPdfPage(file: WorkspaceFile, page: Int) = operation(FileToolOperation.EXPORT) {
         mutable.value = mutable.value.copy(output = tools.media.extractPdfPageImage(reference(file), page))
     }
-    fun createAnnotations(file: WorkspaceFile, title: String) = operation {
+    fun createAnnotations(file: WorkspaceFile, title: String) = operation(FileToolOperation.ANNOTATE) {
         observe(tools.annotations.create(reference(file), title).id, true)
     }
-    fun saveAnnotations(note: WorkspacePdfAnnotations, pages: Map<Int, String>) = operation {
+    fun saveAnnotations(note: WorkspacePdfAnnotations, pages: Map<Int, String>) = operation(FileToolOperation.ANNOTATE) {
         val sequence = recoverySequence
         tools.annotations.setPages(note.id, note.revision, pages, sequence)
         refresh(note.id)
@@ -145,35 +152,41 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
         val sequence = ++recoverySequence
         if (recoveryWrites.trySend(DrawingRecovery(note.id, note.revision, draft.pages.toMap(), sequence)).isFailure) reportError()
     }
-    fun exportAnnotation(note: WorkspacePdfAnnotations, page: Int) = operation {
+    fun exportAnnotation(note: WorkspacePdfAnnotations, page: Int) = operation(FileToolOperation.EXPORT) {
         mutable.value = mutable.value.copy(output = tools.annotations.exportPageImage(note.id, note.revision, page))
     }
-    fun openOutput(source: WorkspaceFileVersion) = operation {
+    fun openOutput(source: WorkspaceFileVersion) = operation(FileToolOperation.OPEN) {
         mutable.value = mutable.value.copy(output = tools.versions.current(source))
     }
-    fun attach(canvasId: String, source: WorkspaceFileToolsObject, onInserted: (String) -> Unit) = operation {
+    fun attach(canvasId: String, source: WorkspaceFileToolsObject, onInserted: (String) -> Unit) = operation(FileToolOperation.INSERT) {
         onInserted(tools.attachToCanvas(canvasId, source.id, source.version))
     }
-    fun attachOutput(canvasId: String, output: WorkspaceFile, onInserted: (String) -> Unit) = operation {
+    fun attachOutput(canvasId: String, output: WorkspaceFile, onInserted: (String) -> Unit) = operation(FileToolOperation.INSERT) {
         onInserted(tools.attachToCanvas(canvasId, output.objectId.value, requireNotNull(output.version)))
     }
     fun dismissOutput() { mutable.value = mutable.value.copy(output = null) }
     fun cancelOperation() { operationJob?.cancel() }
-    fun dismissError() { mutable.value = mutable.value.copy(error = false, cancelled = false) }
-    fun reportError() { mutable.value = mutable.value.copy(error = true) }
+    fun dismissError() { mutable.value = mutable.value.copy(error = false, cancelled = false, failure = null) }
+    fun reportError() { mutable.value = mutable.value.copy(error = true, failure = FileToolFailure(FileToolOperation.EDIT)) }
     private fun reference(file: WorkspaceFile) = WorkspaceFileVersion(file.objectId.value, requireNotNull(file.version))
-    private fun operation(block: suspend () -> Unit) {
+    private fun operation(kind: FileToolOperation, block: suspend () -> Unit) {
         if (mutable.value.busy) return
-        mutable.value = mutable.value.copy(busy = true, error = false, cancelled = false)
+        savedState["fileToolsPending"] = kind.name
+        mutable.value = mutable.value.copy(busy = true, error = false, cancelled = false, failure = null, operation = kind)
         operationJob = viewModelScope.launch {
-            try { block() }
+            try { block(); savedState["fileToolsPending"] = null }
             catch (cancelled: CancellationException) {
                 withContext(NonCancellable) { activeBatchId?.let { id -> runCatching { refresh(id) } } }
-                mutable.value = mutable.value.copy(cancelled = true, loading = false)
+                savedState["fileToolsPending"] = null
+                mutable.value = mutable.value.copy(cancelled = true, loading = false, failure = FileToolFailure(kind, interrupted = true))
                 throw cancelled
             }
-            catch (_: Exception) { mutable.value = mutable.value.copy(error = true, loading = false) }
-            finally { activeBatchId = null; mutable.value = mutable.value.copy(busy = false) }
+            catch (failure: Exception) {
+                savedState["fileToolsPending"] = null
+                mutable.value = mutable.value.copy(error = true, loading = false,
+                    failure = FileToolFailure(kind, accessUnavailable = failure is SecurityException))
+            }
+            finally { activeBatchId = null; mutable.value = mutable.value.copy(busy = false, operation = null) }
         }
     }
     class Factory(private val tools: WorkspaceFileTools, private val initialId: String?, private val savedState: SavedStateHandle) : ViewModelProvider.Factory {

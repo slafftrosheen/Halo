@@ -1,0 +1,50 @@
+[
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-orb-polish-classic-blue.png",
+    "sha256": "06874f1188dd2d267411543d05c29da091d7e9626960427aa83c4df5730a55be"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-orb-polish-classic-kids-blue.png",
+    "sha256": "5197b7ed710c7e4310365f13f7dea673d2757642cd1a38f7c06c9f77a6822d51"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-orb-polish-classic-kids-mint.png",
+    "sha256": "1189036451bf95d82057ceb5cf077047e764743dd89336d4fcd9fb22493114e9"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-orb-polish-classic-kids-rose.png",
+    "sha256": "09f18a205a0f88711739304657a9958d880101f906af1af5f8198f3a4b8c1fee"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-orb-polish-classic-mint.png",
+    "sha256": "768f3f853a20a785eae73a284e14bedb315969fe149d89871d16126d497f9aa2"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-orb-polish-classic-rose.png",
+    "sha256": "f4b189359ad7af5f4f24f158a1e4c2fe880a97ac6c45d3c0af8bfd9f27fb2325"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-kids-polish-kids-blue.png",
+    "sha256": "1096a8edd6fb8cda4789f5a6e670ac68c0c59b4ba19ea79a9c6ab4cd6b1c271b"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-kids-polish-kids-compact-200.png",
+    "sha256": "b765080692c64b0a29b84efe79cd8f828a33fe511a3961e01df877a8666bd536"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-kids-polish-kids-keyboard.png",
+    "sha256": "a16a035a185a874b44f6a6294cac9709958f011f649f2ee329e648d11544ecab"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-kids-polish-kids-mint.png",
+    "sha256": "1add3bcc533e6a641b7c0b6da3e9e35985ab59dab6e15c96c216fceb1f84cc68"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-kids-polish-kids-parent-boundary.png",
+    "sha256": "9fd8ba24203451a5b80e61bd379233c4cd69fe036e76cdcee817b7e871ca4921"
+  },
+  {
+    "file": "docs\\testing\\artifacts\\HALO-PREDICTABLE-UX-2026-11-01\\phone\\native\\zone5-kids-polish-kids-rose.png",
+    "sha256": "0432cacf2991f62ed5ddbd2fdc65a014ddac84d29c255a7caa8d4adcc1abf43f"
+  }
+]

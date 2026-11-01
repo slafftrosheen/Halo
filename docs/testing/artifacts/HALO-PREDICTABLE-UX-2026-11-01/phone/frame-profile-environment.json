@@ -1,0 +1,10 @@
+{
+  "font_scale": "1.0",
+  "window_animation_scale": "1.0",
+  "transition_animation_scale": "1.0",
+  "animator_duration_scale": "null",
+  "low_power": "0",
+  "device": "SM-G990B2",
+  "android": "16",
+  "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673"
+}

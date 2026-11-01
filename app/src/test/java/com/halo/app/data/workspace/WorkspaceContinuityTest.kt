@@ -47,6 +47,27 @@ internal fun noEphemeral() = object : MediaAssetResolver {
 @Config(sdk = [33], application = android.app.Application::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class WorkspaceContinuityTest {
+    @Test fun handoffExplanationMatchesEachActualDestination() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val image = f.png("Handoff source")
+            val continuity = f.continuity()
+            val supported = continuity.describe(image.objectId.value)
+            assertEquals(WorkspaceStudioEffect.NEW_PROJECT_FROM_SOURCE, supported.openStudioEffect)
+            assertTrue(continuity.route(supported.objectId, supported.version, WorkspaceDestination.OPEN).startsWith("studio?sourceId="))
+            val project = f.studio().createFromImage("Existing artwork", image.objectId.value, image.version!!)
+            val existing = continuity.describe(project.id)
+            assertEquals(WorkspaceStudioEffect.OPEN_PROJECT, existing.openStudioEffect)
+            assertEquals(WorkspaceStudioEffect.OPEN_PROJECT, existing.studioEffect)
+            assertTrue(continuity.route(existing.objectId, existing.version, WorkspaceDestination.OPEN).startsWith("studio?projectId="))
+            val row = f.database.workspaceFileDao().getFile(image.objectId.value)!!
+            f.database.workspaceFileDao().insertFile(row.copy(mimeType = "image/gif", displayName = "fallback.gif"))
+            val fallback = continuity.describe(image.objectId.value)
+            assertNull(fallback.openStudioEffect)
+            assertEquals(WorkspaceStudioEffect.NEW_PROJECT_FROM_SOURCE, fallback.studioEffect)
+            assertTrue(continuity.route(fallback.objectId, fallback.version, WorkspaceDestination.OPEN).startsWith("notebook/file/"))
+            assertTrue(continuity.route(fallback.objectId, fallback.version, WorkspaceDestination.STUDIO).startsWith("studio?sourceId="))
+        }
+    }
     @Test fun photoStudioSaveReopenExportCanvasStudyAndChatPreserveIdentityAndOriginal() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val photo = f.png("Synthetic photo")

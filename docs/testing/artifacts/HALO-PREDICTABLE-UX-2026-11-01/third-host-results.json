@@ -1,0 +1,100 @@
+[
+  {
+    "suite": "com.halo.app.data.notebook.NotebookDocumentRepositoryTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:54:51.903Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:54:56.625Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.data.workspace.WorkspaceExternalExportTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:04.685Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.study.StudyLessonCountTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:04.974Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.screens.notebook.NotebookLibrarySearchOrderTest",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:18.102Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.screens.notebook.NoteEditorViewModelTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:07.304Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.screens.notebook.NoteStructuredRecoveryTest",
+    "tests": 2,
+    "failures": 1,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:07.528Z",
+    "failed": [
+      "failedStructuredWritesStayOwnedByEditorAcrossExternalObservation"
+    ]
+  },
+  {
+    "suite": "com.halo.app.ui.shell.HaloZone5InteractionTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:30.795Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:35.678Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.shell.Zone5WorkingAreaTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:54:38.137Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:38.029Z",
+    "failed": []
+  },
+  {
+    "suite": "com.halo.app.ui.zone5.Zone5WorkspaceMenusTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "timestamp": "2026-11-01T12:55:42.181Z",
+    "failed": []
+  }
+]

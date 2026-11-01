@@ -67,6 +67,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -86,7 +88,7 @@ import kotlin.math.roundToInt
     androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = null,
-    onOpenStudio: ((String, String?) -> Unit)? = null, onBack: () -> Unit) {
+    onOpenStudio: ((String, String?) -> Unit)? = null, kidsMode: Boolean = false, onBack: () -> Unit) {
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val remoteInk = com.halo.app.di.ManualDependencyGraph.deviceSessionManager.ink
@@ -218,19 +220,49 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var annotationVersion by rememberSaveable { mutableStateOf<String?>(null) }
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
+    var navigationControls by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = ShellPageOwner("canvas", viewModel.canvasId,
         "${state.nodes.hashCode()}:${state.edges.hashCode()}:${state.selectedNodeIds.sorted()}:${state.selectedNodeId}",
         selectionIds = state.selectedNodeIds.ifEmpty { setOfNotNull(state.selectedNodeId) }.sorted(),
+        statusLabel = when {
+            state.loading -> uiText("Loading…")
+            state.missing -> uiText("Canvas unavailable")
+            state.saveState == CanvasSaveState.FAILED -> stringResource(com.halo.app.R.string.canvas_save_failed)
+            state.saveState == CanvasSaveState.SAVING -> stringResource(com.halo.app.R.string.canvas_save_saving)
+            state.saveState == CanvasSaveState.EDITING -> stringResource(com.halo.app.R.string.canvas_save_editing)
+            !boardEditingEnabled -> uiText("Updating...")
+            state.aiDraft != null || state.textDraft != null || state.drawingDraft != null -> stringResource(com.halo.app.R.string.canvas_review_draft)
+            else -> stringResource(com.halo.app.R.string.zone5_saved_state)
+        },
+        helpDescription = stringResource(com.halo.app.R.string.zone5_help_canvas),
+        guidanceBlocked = navigationControls || !boardEditingEnabled || insertMenu || picker || showAi || state.aiDraft != null || menu || toolsExpanded || searchOpen || sketchOpen || showImageStudio,
+        completedGuideIds = if (!state.loading && !state.missing && state.nodes.isNotEmpty()) setOf("canvas-add.v1", "canvas-new.v1") else emptySet(),
+        helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("canvas-add.v1", "page.canvas.add", stringResource(com.halo.app.R.string.zone5_guide_canvas), !state.loading && !state.missing && state.nodes.isNotEmpty())),
         nextStep = if (boardEditingEnabled && state.nodes.isEmpty() && !insertMenu && !picker && !showAi && state.aiDraft == null &&
             !menu && !toolsExpanded && !searchOpen && !sketchOpen && !showImageStudio)
             com.halo.app.ui.presence.ShellNextStep("canvas-add.v1", "page.canvas.add", stringResource(com.halo.app.R.string.zone5_guide_canvas)) else null,
         canonicalToolIds = listOf("halo_canvas_current", "halo_canvas_get", "halo_canvas_add_text", "halo_canvas_arrange",
             "halo_canvas_edit_text", "halo_canvas_export_note"),
-        disabledActionReasons = mapOf("page.canvas.add" to uiText("Updating..."),
-            "page.canvas.arrange" to uiText(if (state.nodes.isEmpty()) "Nothing in this view" else "Updating..."),
-            "page.canvas.fit" to uiText("Nothing in this view")))
-    BindShellPageActions(pageOwner, listOf(
+        defaultDisabledActionReason = stringResource(when {
+            state.loading -> com.halo.app.R.string.action_loading
+            state.missing -> com.halo.app.R.string.action_missing
+            else -> com.halo.app.R.string.action_wait
+        }),
+        disabledActionReasons = buildMap {
+            if (!state.loading && !state.missing) {
+                if (boardEditingEnabled && state.nodes.isEmpty()) {
+                    put("page.canvas.arrange", uiText("Nothing in this view"))
+                    put("page.canvas.export", uiText("Nothing in this view"))
+                }
+                if (state.nodes.isEmpty()) put("page.canvas.fit", uiText("Nothing in this view"))
+                if (boardEditingEnabled && !state.undoAvailable) put("page.canvas.undo", stringResource(com.halo.app.R.string.action_no_undo))
+            }
+        })
+    BindShellPageActions(pageOwner, (if (state.saveState == CanvasSaveState.FAILED) listOf(
+        ShellPageAction("page.canvas.retry-save", stringResource(com.halo.app.R.string.canvas_save_retry), HaloGlyph.NOTE) {
+            viewModel.persistPending()
+        }) else emptyList()) + listOf(
         ShellPageAction("page.canvas.add", "Add", HaloGlyph.NOTE, boardEditingEnabled) { insertMenu = true },
         ShellPageAction("page.canvas.arrange", stringResource(com.halo.app.R.string.zone5_arrange), HaloGlyph.TOOL,
             boardEditingEnabled && state.nodes.isNotEmpty()) {
@@ -239,6 +271,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         },
         ShellPageAction("page.canvas.fit", "Fit all cards", HaloGlyph.NOTE,
             state.nodes.isNotEmpty() && !state.loading && !state.missing) { viewModel.fitToContent() },
+        ShellPageAction("page.canvas.view-navigation", stringResource(com.halo.app.R.string.canvas_view_controls), HaloGlyph.TOOL,
+            !state.loading && !state.missing) { navigationControls = true },
         ShellPageAction("page.canvas.options", "Tools", HaloGlyph.ACTION, !state.loading && !state.missing) { menu = true },
         ShellPageAction("page.canvas.find", "Find on canvas", HaloGlyph.SEARCH, !state.loading && !state.missing) { searchOpen = true; toolsExpanded = true },
         ShellPageAction("page.canvas.tools", "More tools", HaloGlyph.TOOL) { toolsExpanded = !toolsExpanded },
@@ -248,8 +282,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         ShellPageAction("page.canvas.view-select", if (state.selectionMode) "Done selecting" else "Select cards", HaloGlyph.TOOL,
             boardEditingEnabled, viewModel::toggleSelectionMode),
     ))
-    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
-        ToolZoneHeader(state.title, onBack = { viewModel.leave(onBack) }) {
+    if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner, includesStatus = true) {
+        ToolZoneHeader(state.title, onBack = { viewModel.leave(onBack) }, subtitle = pageOwner.statusLabel) {
             ToolZoneHeaderAction("page.canvas.options") {
                 IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {
                     com.halo.app.ui.icons.HaloIcon(HaloGlyph.TOOL, uiText("Tools"))
@@ -257,6 +291,15 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
         }
     }
+    if (navigationControls) CanvasNavigationDialog(state, onPan = { x, y ->
+        viewModel.transform(x * density.density, y * density.density, 1f)
+    }, onZoom = { factor -> viewModel.transform(0f, 0f, factor, boardWidth / 2f, boardHeight / 2f) },
+        onMove = { x, y -> viewModel.uiState.value.let { current ->
+            (if (current.selectionMode) current.selectedNodeIds.firstOrNull() else current.selectedNodeId)?.let {
+                viewModel.moveNode(it, x * current.viewportScale, y * current.viewportScale)
+            }
+        } }, onFit = viewModel::fitToContent, onReset = viewModel::resetViewport,
+        onDismiss = { navigationControls = false }, kidsMode = kidsMode)
     var boardSearch by rememberSaveable { mutableStateOf("") }
     var searchType by rememberSaveable { mutableStateOf("All") }
     LaunchedEffect(boardSearch, searchType, state.nodes.map { it.text }, state.edges, state.references) {
@@ -1022,17 +1065,22 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     val width = node.width * state.viewportScale
                     val height = node.height * state.viewportScale
                     val visible = x + with(density) { width.dp.toPx() } >= 0 && y + with(density) { height.dp.toPx() } >= 0 && x <= boardWidth && y <= boardHeight
+                    val cardSelected = if (state.selectionMode) node.id in state.selectedNodeIds else node.id == state.selectedNodeId
+                    val selectLabel = stringResource(if (state.selectionMode && cardSelected) com.halo.app.R.string.canvas_deselect_card else com.halo.app.R.string.canvas_select_card)
                     if (visible && !state.loading && !state.missing) CanvasCardFrame(
                         width = node.width, height = node.height, scale = state.viewportScale,
-                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.pointerInput(node.id, state.viewportScale) {
-                                detectDragGesturesAfterLongPress(onDragStart = { viewModel.beginDrag(node.id) }) { change, drag ->
+                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.pointerInput(node.id, state.viewportScale, boardEditingEnabled) {
+                                if (boardEditingEnabled) detectDragGesturesAfterLongPress(onDragStart = { viewModel.beginDrag(node.id) }) { change, drag ->
                                     change.consume()
                                     viewModel.moveNode(node.id, with(density) { drag.x.toDp().value }, with(density) { drag.y.toDp().value })
                                 }
                             },
                     ) {
                     Surface(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().semantics {
+                            this.selected = cardSelected
+                            onClick(label = selectLabel) { viewModel.selectNode(node.id); true }
+                        },
                         onClick = { viewModel.selectNode(node.id) },
                         shape = com.halo.app.ui.design.HaloShapes.card,
                         color = when (node.type) {
@@ -1052,6 +1100,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 style = MaterialTheme.typography.labelSmall)
                             if (state.selectionMode) Text(node.text, style = MaterialTheme.typography.titleMedium)
                             else BasicTextField(node.text, { viewModel.updateNodeText(node.id, it.take(if (node.type == CanvasNodeType.GROUP) 80 else 50)) },
+                                readOnly = !boardEditingEnabled,
                                 textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary))
                             if (node.type == CanvasNodeType.GROUP) Text(
@@ -1124,6 +1173,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         }
                         else if (node.refObjectId == null) BasicTextField(
                             value = node.text,
+                            readOnly = !boardEditingEnabled,
                             onValueChange = { viewModel.updateNodeText(node.id, it) },
                             modifier = Modifier.fillMaxSize().padding(14.dp)
                                 .onFocusChanged { if (it.isFocused && !state.selectionMode) viewModel.selectNode(node.id) },

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zone5_pins_title">Piespraustās darbības</string>
+    <string name="zone5_pins_choose">Izvēlēties piespraustās darbības</string>
+    <string name="zone5_pins_explain">Izvēlies līdz %1$d darbībām šai lapai. Tās vienmēr attiecas uz pašreizējo failu vai uzdevumu.</string>
+    <string name="zone5_pins_unreadable">Saglabātās piespraudes neizdevās nolasīt. Izvēlies tās vēlreiz.</string>
+    <string name="zone5_pins_unavailable">Dažas piespraustās darbības šajā skatā nav pieejamas. Vari notīrīt piespraudes un izvēlēties vēlreiz.</string>
+    <string name="zone5_pins_save_failed">Piespraudes neizdevās saglabāt. Mēģini veikt izmaiņas vēlreiz.</string>
+    <string name="zone5_pins_clear">Notīrīt piespraudes</string>
+    <string name="zone5_pins_done">Atpakaļ pie darbībām</string>
+    <string name="zone5_search_keep">saglabāt versija melnraksts</string>
+    <string name="zone5_search_export">eksportēt lejupielādēt izvade kopija</string>
+    <string name="zone5_search_insert">pievienot ievietot jauns</string>
+    <string name="zone5_search_undo">atsaukt atgriezt iepriekšējais</string>
+    <string name="zone5_search_redo">atkārtot atjaunot izmaiņu</string>
+    <string name="zone5_search_name">pārdēvēt nosaukums virsraksts</string>
+    <string name="zone5_search_find">atrast meklēt meklēšana</string>
+    <string name="zone5_search_properties">īpašības pielāgot formāts iestatījumi stils</string>
+    <string name="zone5_search_layers">slāņi objekti kārtība</string>
+    <string name="zone5_search_draw">zīmēt skice tinte pildspalva ota</string>
+</resources>

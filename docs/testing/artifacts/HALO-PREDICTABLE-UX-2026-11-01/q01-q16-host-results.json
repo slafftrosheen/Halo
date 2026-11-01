@@ -1,0 +1,9 @@
+{
+  "suites": 34,
+  "tests": 216,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "debug_assembly": "passed",
+  "android_test_kotlin_compilation": "passed"
+}

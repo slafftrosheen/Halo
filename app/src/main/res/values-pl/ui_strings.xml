@@ -2587,7 +2587,7 @@
     <string name="ui_e53974be2c9c" formatted="false">"Krok po kroku."</string>
     <string name="ui_2838117f8536" formatted="false">"Otwórz źródło · wskazano %1$s"</string>
     <string name="ui_6d6f77764a96" formatted="false">"Z czego mam się uczyć?"</string>
-    <string name="ui_bdbc7afff3ef" formatted="false">"Z Twojego przestrzeni roboczej"</string>
+    <string name="ui_bdbc7afff3ef" formatted="false">"Z Twojej przestrzeni roboczej"</string>
     <string name="ui_ee69519aac49" formatted="false">"Notatki, tablice Canvas i czaty"</string>
     <string name="ui_7bc3f18cd0a1" formatted="false">"PDF, dokument lub obraz"</string>
     <string name="ui_fdfbb90a31cc" formatted="false">"Zmień wiek, języki i styl nauki"</string>
@@ -4149,7 +4149,7 @@
     <string name="ui_66cd74a43e4c" formatted="false">"Podczas lekcji: „wskazówka”, „powtórz”, „następny krok”, „prościej”, „dokładniej” lub „zatrzymaj”. Te same działania są dostępne poniżej."</string>
     <string name="ui_d61a54f7137c" formatted="false">"Spróbuj: „wskazówka”, „powtórz”, „następny krok”, „prościej”, „dokładniej” lub „zatrzymaj”."</string>
     <string name="ui_7d72ddf69768" formatted="false">"Pakiet startowy jest niedostępny."</string>
-    <string name="ui_0a9d8afb0161" formatted="false">"Narzędzia biurowe"</string>
+    <string name="ui_0a9d8afb0161" formatted="false">"HaloNotes"</string>
     <string name="ui_2d43037f47e4" formatted="false">"halo Studio"</string>
     <string name="ui_dce612cabb53" formatted="false">"Edytor grafiki"</string>
     <string name="ui_7e4d5c460c04" formatted="false">"Myślenie"</string>
@@ -4216,4 +4216,12 @@
     <string name="ui_1455ebb3baa9" formatted="false">"To działanie nie było dozwolone. Nic nie zmieniono."</string>
     <string name="ui_b57a8874efe5" formatted="false">"Nie udało się ukończyć działania. Sprawdź je przed ponowną próbą."</string>
     <string name="ui_813aeb18abd0" formatted="false">"Zatrzymano, aby nie przekroczyć limitów prośby"</string>
+    <string name="ui_0a4e0b71b7f3" formatted="false">"Aktualizowanie…"</string>
+    <string name="ui_3824a9f4dafe" formatted="false">"Tablica"</string>
+    <string name="ui_849cd1fb5ad5" formatted="false">"Tymczasowy kontekst rozmowy"</string>
+    <string name="ui_014659ab9d98" formatted="false">"Konflikt zmian"</string>
+    <string name="ui_3664895579f0" formatted="false">"Eksportuj"</string>
+    <string name="ui_07fb0c16abc7" formatted="false">"Co halo może zapamiętać"</string>
+    <string name="ui_f32b0d69f95f" formatted="false">"Nowa tablica"</string>
+    <string name="ui_a424e33d9093" formatted="false">"Zablokowane"</string>
 </resources>

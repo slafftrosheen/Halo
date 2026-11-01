@@ -1,0 +1,18 @@
+{
+  "utc": "2026-11-01T16:51:33.561009+00:00",
+  "serial": "R5CTA0TKLZZ",
+  "started_device_epoch": 1793551893,
+  "apk_sha256": "01f9d8c407badd602b85399f2ad1bc47bf69aa67ec88e533dd498ca4c42a2673",
+  "test_apk_sha256": "3cd6bdcc363fd49089382f28f2ff53021e2cc444cc8b8f48b429fa8c33866dd5",
+  "data_preserved": true,
+  "system_font_scale_before": "1.0",
+  "native-device-p05-p06": {
+    "passed": true,
+    "log": "native-device-p05-p06.log"
+  },
+  "main-activity-p05-p06": {
+    "passed": true,
+    "log": "main-activity-p05-p06.log"
+  },
+  "system_font_scale_after": "1.0"
+}

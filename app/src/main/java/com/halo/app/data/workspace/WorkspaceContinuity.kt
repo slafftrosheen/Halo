@@ -11,11 +11,14 @@ import kotlinx.coroutines.flow.first
 
 /** Read-only handoff metadata; content and edits remain with their existing canonical owners. */
 enum class WorkspaceDestination { OPEN, FILE_TOOLS, STUDIO, STUDY, CHAT }
+enum class WorkspaceStudioEffect { OPEN_PROJECT, NEW_PROJECT_FROM_SOURCE }
 enum class WorkspaceSourceState { CURRENT, EARLIER_VERSION, UNAVAILABLE, VERSION_UNVERIFIED }
 data class WorkspaceSourceLink(val objectId: String, val version: String, val title: String?, val state: WorkspaceSourceState, val depth: Int, val nodeId: String? = null)
 data class WorkspaceCanvasDestination(val objectId: String, val title: String, val version: String)
 data class WorkspaceContinuityItem(val objectId: String, val version: String, val title: String,
-    val type: WorkspaceObjectType, val destinations: Set<WorkspaceDestination>, val sources: List<WorkspaceSourceLink>)
+    val type: WorkspaceObjectType, val destinations: Set<WorkspaceDestination>, val sources: List<WorkspaceSourceLink>,
+    val studioEffect: WorkspaceStudioEffect? = null,
+    val openStudioEffect: WorkspaceStudioEffect? = null)
 
 class WorkspaceContinuity(private val database: AppDatabase, private val context: WorkspaceContextStore,
     private val files: WorkspaceFileRepository, private val fileTools: WorkspaceFileTools,
@@ -49,7 +52,16 @@ class WorkspaceContinuity(private val database: AppDatabase, private val context
         val image = file?.mimeType in setOf("image/png", "image/jpeg", "image/webp") && file?.sha256 != null
         if (text || image || file?.mimeType == "application/pdf") destinations += WorkspaceDestination.STUDY
         if (text || image) destinations += WorkspaceDestination.CHAT
-        WorkspaceContinuityItem(id, version, item.title, WorkspaceObjectType.valueOf(item.type), destinations, lineage(id))
+        WorkspaceContinuityItem(id, version, item.title, WorkspaceObjectType.valueOf(item.type), destinations, lineage(id),
+            studioEffect = when {
+                item.contentRef.startsWith("studio:") -> WorkspaceStudioEffect.OPEN_PROJECT
+                WorkspaceDestination.STUDIO in destinations -> WorkspaceStudioEffect.NEW_PROJECT_FROM_SOURCE
+                else -> null
+            }, openStudioEffect = when {
+                item.contentRef.startsWith("studio:") -> WorkspaceStudioEffect.OPEN_PROJECT
+                file?.mimeType in setOf("image/png", "image/jpeg", "image/webp") -> WorkspaceStudioEffect.NEW_PROJECT_FROM_SOURCE
+                else -> null
+            })
     }
     suspend fun requestOpen(id: String, expectedVersion: String, destination: WorkspaceDestination): WorkspaceHandoffRequest {
         val item = current(id, expectedVersion)
@@ -73,6 +85,7 @@ class WorkspaceContinuity(private val database: AppDatabase, private val context
         val item = current(id, expectedVersion)
         require(destination in item.destinations)
         val header = requireNotNull(database.notebookDao().getWorkspaceObject(id))
+        val file = if (header.type in setOf("FILE", "MEDIA")) files.getFile(WorkspaceObjectId(id)) else null
         val encoded = android.net.Uri.encode(id)
         return when (destination) {
             WorkspaceDestination.FILE_TOOLS -> "file_tools?objectId=$encoded"
@@ -85,6 +98,11 @@ class WorkspaceContinuity(private val database: AppDatabase, private val context
                 header.type == "CANVAS" || header.contentRef.startsWith("canvas:") -> "notebook/canvas/$encoded"
                 header.type == "NOTE" && header.contentRef == "file-tools:$id" -> "file_tools?objectId=$encoded"
                 header.type == "NOTE" -> "notebook/note/$encoded"
+                file?.mimeType in setOf("image/png", "image/jpeg", "image/webp") ->
+                    "studio?sourceId=$encoded&sourceVersion=${android.net.Uri.encode(item.version)}" +
+                        (handoffId?.let { "&handoffId=${android.net.Uri.encode(it)}" } ?: "")
+                file != null && (WorkspaceTextFormat.fromFile(file.displayName, file.mimeType) != null || file.mimeType == "application/pdf") ->
+                    "file_tools?objectId=$encoded"
                 else -> "notebook/file/$encoded"
             }
         }

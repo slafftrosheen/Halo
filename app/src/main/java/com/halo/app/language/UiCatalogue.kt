@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4233) {
+    buildMap(4241) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4281,6 +4281,14 @@ private fun uiCataloguePart14(): Map<String, Int> = mapOf(
     "This action was not allowed. Nothing was changed." to R.string.ui_1455ebb3baa9,
     "This action could not finish. Review it before trying again." to R.string.ui_b57a8874efe5,
     "Stopped to keep your request within its limits" to R.string.ui_813aeb18abd0,
+    "Updating..." to R.string.ui_0a4e0b71b7f3,
+    "Canvas" to R.string.ui_3824a9f4dafe,
+    "Temporary conversation context" to R.string.ui_849cd1fb5ad5,
+    "Conflict" to R.string.ui_014659ab9d98,
+    "Export" to R.string.ui_3664895579f0,
+    "What Halo can remember" to R.string.ui_07fb0c16abc7,
+    "New canvas" to R.string.ui_f32b0d69f95f,
+    "Locked" to R.string.ui_a424e33d9093,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(
