@@ -44,6 +44,7 @@ import com.halo.runtime.cognition.agent.*
 @Composable
 fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit: () -> Unit) {
     val progress by store.state.collectAsStateWithLifecycle()
+    val downloadsAllowed = com.halo.app.ui.screens.settings.modelDownloadsAllowed()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val owner = LocalLifecycleOwner.current
@@ -175,6 +176,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     if(progress.limited) Copy("Limited mode keeps notes, Canvas and supported phone actions available. AI answers and voice may need setup later.")
                 }
                 SetupStage.SPEECH -> {
+                    com.halo.app.ui.screens.settings.ModelDownloadPolicyNotice(downloadsAllowed)
                     Copy("Choose a language, then say a short phrase. Recognition text is shown here only; it is not included in your setup report.")
                     val rolePack = remember { Graph.localRolePackInstaller }
                     val rolePackState by rolePack.state.collectAsStateWithLifecycle()
@@ -189,7 +191,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                             catch (_: Exception) { null }
                     }
                     Copy(stringResource(R.string.pack39_intro))
-                    com.halo.app.ui.screens.settings.PrivateOfflinePackDetails(packCapacity.totalMem, rolePack)
+                    com.halo.app.ui.screens.settings.PrivateOfflinePackDetails(packCapacity.totalMem, rolePack, downloadsAllowed)
                     packPreview?.let { estimate ->
                         Copy(stringResource(R.string.offline59_download_space,
                             android.text.format.Formatter.formatFileSize(LocalContext.current, estimate.downloadBytes),
@@ -218,7 +220,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                             Secondary(stringResource(R.string.pack39_pause)) { rolePack.pause() }
                         }
                         com.halo.app.ai.LocalRolePackPhase.PAUSED -> Copy(stringResource(R.string.pack39_paused))
-                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy(stringResource(if (rolePackState.message == com.halo.app.ai.LOCAL_ROLE_PACK_REPAIR_REQUIRED)
+                        com.halo.app.ai.LocalRolePackPhase.FAILED -> Copy(if (rolePackState.message == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE)
+                            com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE else stringResource(if (rolePackState.message == com.halo.app.ai.LOCAL_ROLE_PACK_REPAIR_REQUIRED)
                             R.string.offline59_repair else R.string.pack39_failed))
                         com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Copy(if (rolePackState.recoveryRequired)
                             uiText(rolePackState.message.orEmpty()) else stringResource(R.string.pack39_rollback_failed))
@@ -229,7 +232,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         rolePackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
                         OutlinedButton(
-                            enabled = !rolePackState.busy && rolePack.available && packPreview?.hasEnoughStorage == true,
+                            enabled = !rolePackState.busy && rolePack.available && packPreview?.hasEnoughStorage == true &&
+                                (downloadsAllowed || packPreview?.downloadBytes == 0L),
                             onClick = rolePack::startOrResume,
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                         ) { Text(stringResource(if (rolePackState.canResume) R.string.pack39_resume else R.string.pack39_install)) }
@@ -247,13 +251,13 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Copy("Optional local voice files: Whisper Small for speech recognition, Silero VAD for speech activity detection, and Supertonic 3 for speech output. Downloading files does not prove microphone capture, recognition quality or audible output.")
                     if(voice.models["whisper-small"] != true) {
                         Copy("Whisper Small INT8 · about 375 MB · catalog lists EN, LV, RU and PL. Requires more memory and time than Base; test recognition in your language before relying on it.")
-                        OutlinedButton(enabled=!voice.isDownloading && !rolePackState.busy,onClick={Graph.voiceSettingsViewModel.installModel("whisper-small")},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download Whisper Small")) }
+                        OutlinedButton(enabled=downloadsAllowed && !voice.isDownloading && !rolePackState.busy,onClick={Graph.voiceSettingsViewModel.installModel("whisper-small")},modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download Whisper Small")) }
                     } else Secondary("Use Whisper Small", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_small") }
                     if(voice.models["whisper-base"] != true) {
-                        Secondary("Download lighter Whisper Base instead (161 MB)", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.installModel("whisper-base") }
+                        Secondary("Download lighter Whisper Base instead (161 MB)", enabled = downloadsAllowed && !rolePackState.busy) { Graph.voiceSettingsViewModel.installModel("whisper-base") }
                     } else Secondary("Use Whisper Base (lighter)", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.selectModel("speech.sherpa_onnx.whisper_base") }
                     if(!voice.sileroInstalled) {
-                        Secondary("Install Silero VAD (optional, about 0.6 MB)", enabled = !rolePackState.busy) { Graph.voiceSettingsViewModel.installModel("silero-vad") }
+                        Secondary("Install Silero VAD (optional, about 0.6 MB)", enabled = downloadsAllowed && !rolePackState.busy) { Graph.voiceSettingsViewModel.installModel("silero-vad") }
                     } else Copy("Silero VAD is installed; voice activity detection is available.")
                     val supertonic = remember {
                         Graph.speechSynthesisRegistry.providers.filterIsInstance<com.halo.app.audio.SupertonicSpeechProvider>().firstOrNull()
@@ -266,7 +270,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                         Copy("Supertonic 3 INT8 pack selected. It becomes the automatic local voice after you audition and approve a language/voice in Speech output.")
                     } else if(supertonic != null) {
                         Copy("Supertonic 3 INT8 · about 129 MB archive · local speech output. Language labels include EN, LV, RU and PL; audition and confirm each voice on this device.")
-                        OutlinedButton(enabled=!installingVoice && !voice.isDownloading && !rolePackState.busy, onClick={
+                        OutlinedButton(enabled=downloadsAllowed && !installingVoice && !voice.isDownloading && !rolePackState.busy, onClick={
                             scope.launch {
                                 installingVoice = true
                                 voiceInstallError = null
@@ -274,7 +278,9 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                                     val fingerprint = supertonic.packs.downloadOfficial()
                                     supertonic.selectPack(fingerprint)
                                 } catch(cancelled: CancellationException) { throw cancelled }
-                                  catch(error: Exception) { voiceInstallError = "Voice download failed. Check storage and your connection, then try again." }
+                                  catch(error: Exception) { voiceInstallError = if (error is com.halo.sdk.provider.RemoteDispatchBlocked)
+                                      com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE
+                                      else "Voice download failed. Check storage and your connection, then try again." }
                                 finally { installingVoice = false }
                             }
                         },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Download and select Supertonic 3")) }
@@ -289,7 +295,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     voiceInstallError?.let { Copy(it) }
                     Secondary("Audition and approve voices / use Kokoro 1.1", enabled = !rolePackState.busy) { onOpen("settings/voice/output") }
                     if(voice.isDownloading) { LinearProgressIndicator(progress={voice.downloadProgress},modifier=Modifier.fillMaxWidth()); Copy("Downloading listening model…") }
-                    if(voice.downloadError != null) Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")
+                    if(voice.downloadError != null) Copy(if (voice.downloadError == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE)
+                        com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE else "Download did not finish. Check your connection and free space, then retry or choose another option.")
                     Secondary("Choose or download a listening model", enabled = !rolePackState.busy) { onOpen("settings/voice/input") }
                     Copy("Downloads start only when you choose them. Language support depends on the installed model and Android voice.")
                     OutlinedButton(enabled = microphone && speechJob == null, onClick = {
@@ -491,6 +498,8 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
 
 
 @Composable private fun LocalAnswerSetup(advanced: () -> Unit, configureSearch: () -> Unit) {
+    val downloadsAllowed = com.halo.app.ui.screens.settings.modelDownloadsAllowed()
+    com.halo.app.ui.screens.settings.ModelDownloadPolicyNotice(downloadsAllowed)
     val models = Graph.intelligenceViewModel
     val state by models.uiState.collectAsStateWithLifecycle()
     val inventory by (models.localInventoryState ?: remember {
@@ -550,20 +559,21 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     }
                     download is com.halo.providers.litert.models.DownloadState.Paused -> {
                         Copy("Download paused")
-                        Secondary("Resume") { models.resumeCatalogDownload(model) }
+                        Secondary("Resume", enabled = downloadsAllowed) { models.resumeCatalogDownload(model) }
                         Secondary("Discard partial") { models.discardPartialDownload(model.id) }
                     }
                     download is com.halo.providers.litert.models.DownloadState.Failed -> {
                         if (download.resumable) {
-                            Secondary("Resume") { models.resumeCatalogDownload(model) }
+                            Secondary("Resume", enabled = downloadsAllowed) { models.resumeCatalogDownload(model) }
                             Secondary("Discard partial") { models.discardPartialDownload(model.id) }
                         }
-                        Secondary("Re-download") { models.downloadCatalogModel(model) }
+                        Secondary("Re-download", enabled = downloadsAllowed) { models.downloadCatalogModel(model) }
                     }
-                    else -> Secondary("Download") { models.downloadCatalogModel(model) }
+                    else -> Secondary("Download", enabled = downloadsAllowed) { models.downloadCatalogModel(model) }
                 }
                 if (download is com.halo.providers.litert.models.DownloadState.Failed || state.downloadErrors[model.id] != null)
-                    Copy("Download did not finish. Check your connection and free space, then retry or choose another option.")
+                    Copy(if (download is com.halo.providers.litert.models.DownloadState.Failed && download.kind == com.halo.providers.litert.models.ModelDownloadFailure.MODE_BLOCKED)
+                        com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE else "Download did not finish. Check your connection and free space, then retry or choose another option.")
             }
         }
     }

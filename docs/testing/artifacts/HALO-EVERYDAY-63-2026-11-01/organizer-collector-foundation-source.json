@@ -1,0 +1,82 @@
+{
+  "boundary": "After app production classes bundled, before subsequent policy implementation",
+  "files": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "097b0f74af1aae864f5582a917645003414244b6edbb7a0cb19cf45601a20bdc"
+    },
+    {
+      "path": "app/schemas/com.halo.app.data.AppDatabase/31.json",
+      "sha256": "3d26188fdd6f72daa4cb952d79e56175d470fa269c3c9aefc30874ee4b66da5e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "ed4e4bc5a70bc19eb878883aeb7ffbba45e38466200c2701faba1e97888b4df8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday\\OrganizerCodec.kt",
+      "sha256": "8c9aec1d018553926d01137b319c759f04f9b32f998398fc5e1d551ebae70361"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday\\OrganizerEntities.kt",
+      "sha256": "ecdf853a62d67d2acfa78d0f883d72b4c2f86b7089f61fdd3ac43569ad30d71a"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday\\RoomOrganizerRepository.kt",
+      "sha256": "c3cc85cc787b1b121e3f7426ff4db48a38d70f33e0131cb6e9e983d1b5691842"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\collectors\\CollectorModels.kt",
+      "sha256": "c9cef54cf21afe96205f50660f71d57c913a9c93b174469b5f001dd141b2f2fc"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\collectors\\CollectorUrlPolicy.kt",
+      "sha256": "15c15e7355f91104e9a0b30ac79e20aba71f229bb6558977e1d2463898291486"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\collectors\\FeedParser.kt",
+      "sha256": "afc5e9766bbf490c51b6a76e9f24333b7e911ae4da7366ac05b3221e2e5fe77e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\organizer\\IcsTimeZones.kt",
+      "sha256": "b6fda2ffcaa829bc32e2d51daf68472ff1f15da4ddd7a1285c15869b044737ea"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\organizer\\OrganizerIcs.kt",
+      "sha256": "002d0fd082981272bccae1920a99520bc59516807b295ce359f5d4b6110b4bf7"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\organizer\\OrganizerModels.kt",
+      "sha256": "0cb6c98628893bd0efe4c6a3a1b3dc7b95f7be7458fb1faabbdfc4e9b55a5be3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\organizer\\OrganizerRecurrence.kt",
+      "sha256": "b3f2d61f8d4997b9eaca01211e1345de363447af4417febc8f923c0002799457"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday\\organizer\\OrganizerUseCases.kt",
+      "sha256": "7250802562b34382112b185bb2b69f10f7c011e27e9309276ec3a67617572391"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/CognitionMigrationTest.kt",
+      "sha256": "c320e045e7a224d92dd2d94d5da42b1055bd4dab24036dde28e3b5d258703ee4"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday\\OrganizerPersistenceTest.kt",
+      "sha256": "fd7c389ece8649492e92fd46c67408fc9bb76aa6339b47d9643a02a9ad2feeaf"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday\\collectors\\CollectorParsingTest.kt",
+      "sha256": "303bd9a44e3ac9aa1006e6e6720b2f0f9bc571b2a9f151cd76627ac77e15dbcc"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday\\organizer\\OrganizerIcsTest.kt",
+      "sha256": "19358a699dafb7c85390df9b16729fe6c06f35924d1b24c09c3022f3e91502b5"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday\\organizer\\OrganizerRecurrenceTest.kt",
+      "sha256": "3bfbb020daf292683ab5356e3783cb8086915668723e7f081e144b686c85b431"
+    }
+  ],
+  "capturedUtc": "2026-11-01T18:27:36.0503384Z"
+}

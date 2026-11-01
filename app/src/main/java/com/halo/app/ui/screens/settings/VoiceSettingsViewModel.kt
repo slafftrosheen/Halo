@@ -130,7 +130,9 @@ class VoiceSettingsViewModel(
                         currentFileDownloading = progress.currentFile, downloadedBytes = progress.downloadedBytes,
                         expectedBytes = progress.totalBytes, verifying = progress.verifying)
                 }
-                result.exceptionOrNull()?.let { _uiState.value = _uiState.value.copy(downloadError = it.message, failedModelId = modelId) }
+                result.exceptionOrNull()?.let { _uiState.value = _uiState.value.copy(downloadError =
+                    if (it is com.halo.sdk.provider.RemoteDispatchBlocked) com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE
+                    else it.message, failedModelId = modelId) }
                 reloadable()?.refresh()?.join()
                 refreshState()
             } finally { _uiState.value = _uiState.value.copy(isDownloading = false, downloadingModelId = null) }

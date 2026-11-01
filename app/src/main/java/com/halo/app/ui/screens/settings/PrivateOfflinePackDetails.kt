@@ -38,7 +38,7 @@ import kotlinx.coroutines.delay
  * Never selects a role, runs native qualification or confers measured readiness.
  */
 @Composable
-internal fun PrivateOfflinePackDetails(totalMemoryBytes: Long, owner: LocalRolePackControl) {
+internal fun PrivateOfflinePackDetails(totalMemoryBytes: Long, owner: LocalRolePackControl, downloadsAllowed: Boolean) {
     var reviewed by rememberSaveable(PrivateOfflinePack.fingerprint) { mutableStateOf(owner.sourceReviewAcknowledged) }
     var expanded by rememberSaveable(PrivateOfflinePack.fingerprint) { mutableStateOf(false) }
     var refreshRevision by rememberSaveable { mutableStateOf(0) }
@@ -100,14 +100,15 @@ internal fun PrivateOfflinePackDetails(totalMemoryBytes: Long, owner: LocalRoleP
                 style = MaterialTheme.typography.bodySmall)
             if (!chat.hasEnoughStorage) Text(stringResource(R.string.offline59_low_storage),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            if (chat.recoveryRequired || chat.message != null) Text(stringResource(R.string.offline59_chat_recovery),
+            if (chat.recoveryRequired || chat.message != null) Text(if (chat.message == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE)
+                com.halo.app.language.uiText(com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE) else stringResource(R.string.offline59_chat_recovery),
                 style = MaterialTheme.typography.bodySmall)
             if (chat.busy) TextButton(onClick = { extensionRequest(LocalRolePackCommand.PAUSE) },
                 modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.pack39_pause)) }
             else {
                 if (!chat.installedAndIntact && !chat.recoveryRequired) TextButton(
                     onClick = { extensionRequest(LocalRolePackCommand.START_OR_RESUME) },
-                    enabled = reviewed && chat.available && chat.hasEnoughStorage, modifier = Modifier.fillMaxWidth()) {
+                    enabled = reviewed && chat.available && chat.hasEnoughStorage && (downloadsAllowed || chat.remainingDownloadBytes == 0L), modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.offline59_chat_download))
                 }
                 if (chat.transactionId != "NONE" && !chat.recoveryRequired) TextButton(

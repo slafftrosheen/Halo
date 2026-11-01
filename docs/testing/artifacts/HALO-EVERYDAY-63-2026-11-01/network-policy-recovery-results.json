@@ -1,0 +1,62 @@
+{
+  "outcome": "BUILD FAILED in 4m13s; app tasks did not run",
+  "scope": "Intermediate implementation. Later streaming-revocation and queued-pause corrections are excluded; SDK source snapshot archived separately. Not a final source certification.",
+  "suites": [
+    {
+      "module": "sdk",
+      "name": "com.halo.sdk.provider.GuardedRemoteClientTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "module": "sdk",
+      "name": "com.halo.sdk.provider.PublicDownloadPolicyTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "module": "sherpa",
+      "name": "com.halo.providers.sherpa.stt.SpeechDownloadResumeTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest",
+      "tests": "9",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtDownloadPresentationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtDownloadResumeTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtModelDownloaderTest",
+      "tests": "14",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ]
+}

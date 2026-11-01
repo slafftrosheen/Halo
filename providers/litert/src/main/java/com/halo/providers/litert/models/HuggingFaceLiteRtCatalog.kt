@@ -1,6 +1,7 @@
 package com.halo.providers.litert.models
 
 import kotlinx.coroutines.Dispatchers
+import com.halo.sdk.provider.withModelDownloadPolicy
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -13,9 +14,10 @@ import java.util.concurrent.TimeUnit
 
 /** Hub metadata is discovery, never native compatibility or generation evidence. */
 class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.Builder()
-    .callTimeout(30, TimeUnit.SECONDS).build(),
+    .callTimeout(30, TimeUnit.SECONDS).build().withModelDownloadPolicy(com.halo.sdk.provider.DenyRemoteDispatchPolicy),
     private val endpoint: String = "https://huggingface.co",
-    private val authToken: (() -> String?)? = null) {
+    private val authToken: (() -> String?)? = null,
+    private val expectedRevision: Long? = null) {
     suspend fun discover(query: String): List<LiteRtCatalogModel> = withContext(Dispatchers.IO) {
         // Parse the fixed/test base rather than letting search text become a URL.
         val base = endpoint.trimEnd('/')
@@ -37,7 +39,8 @@ class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.B
         models.take(100)
     }
     private suspend fun get(url: String): String {
-        val builder = Request.Builder().url(url)
+        val builder = Request.Builder().url(url).apply { expectedRevision?.let {
+            tag(com.halo.sdk.provider.RemoteRequestRevision::class.java, com.halo.sdk.provider.RemoteRequestRevision(it)) } }
         val parsed = url.toHttpUrlOrNull()
         if (parsed?.scheme == "https" && parsed.host == "huggingface.co")
             authToken?.invoke()?.trim()?.takeIf(::isHuggingFaceReadToken)?.let { builder.header("Authorization", "Bearer $it") }

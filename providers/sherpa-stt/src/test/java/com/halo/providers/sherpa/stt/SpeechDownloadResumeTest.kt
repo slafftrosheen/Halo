@@ -26,7 +26,11 @@ class SpeechDownloadResumeTest {
             val spec=SherpaSpeechModelCatalog.whisperBase.copy(files=listOf(file),repository="",
                 sourceUrl="http://127.0.0.1:${server.address.port}/artifact")
             java.io.File(root,"test.onnx.$hash.download").writeText("abc")
-            assertTrue(SpeechModelInstaller.install(spec,root).isSuccess)
+            val denied = SpeechModelInstaller.install(spec,root)
+            assertTrue(denied.exceptionOrNull() is com.halo.sdk.provider.RemoteDispatchBlocked)
+            assertEquals(0, count)
+            assertEquals("abc", java.io.File(root,"test.onnx.$hash.download").readText())
+            assertTrue(SpeechModelInstaller.install(spec,root,transferClient=okhttp3.OkHttpClient()).isSuccess)
             assertEquals("bytes=3-",requested); assertEquals("abcdef",java.io.File(root,"test.onnx").readText())
             assertTrue(SpeechModelInstaller.install(spec,root).isSuccess); assertEquals(1,count)
         } finally { server.stop(0); root.deleteRecursively() }

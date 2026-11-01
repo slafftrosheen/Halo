@@ -1,0 +1,21 @@
+{
+  "scope": "Compiled source identified in organizer-corrections-ics-source.json. Two failures; persistence suite did not execute because of JUnit method signature. Further production corrections made after main class jars were built are not covered.",
+  "counts": {
+    "tests": 22,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "class": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "name": "initializationError",
+      "message": "org.junit.runners.model.InvalidTestClassError: Invalid test class 'com.halo.app.data.everyday.OrganizerPersistenceTest':\n  1. Method permanentRemovalRequiresCurrentTrashAndAcknowledgedScheduleCancellation() should be void"
+    },
+    {
+      "class": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "name": "allDayAndUnicodeRoundTripRetainDatesTextAndRecurrence",
+      "message": "java.lang.AssertionError: [CalendarImportIssue(item=1, uid=id@halo.local, reason=End must follow start)]"
+    }
+  ]
+}

@@ -83,7 +83,7 @@ class HuggingFaceLiteRtCatalogTest {
         try {
             server.enqueue(okhttp3.mockwebserver.MockResponse().setBody("[{\"id\":\"litert-community/Test\"}]"))
             server.enqueue(okhttp3.mockwebserver.MockResponse().setBody(details().put("pipeline_tag","text-generation").toString()))
-            val models=HuggingFaceLiteRtCatalog(endpoint=server.url("/").toString().trimEnd('/')).discover("Test & model")
+            val models=HuggingFaceLiteRtCatalog(client=okhttp3.OkHttpClient(),endpoint=server.url("/").toString().trimEnd('/')).discover("Test & model")
             assertEquals(1,models.size)
             assertEquals("Test & model",server.takeRequest().requestUrl?.queryParameter("search"))
             assertTrue(server.takeRequest().path!!.endsWith("?blobs=true"))

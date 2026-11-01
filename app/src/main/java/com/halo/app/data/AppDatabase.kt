@@ -100,12 +100,18 @@ import com.halo.app.data.watch.ContinuationWatchEntity
         AttentionReceiptEntity::class,
         ContinuationWatchEntity::class,
         com.halo.app.data.notebook.NotebookPurgeEntity::class,
-        com.halo.app.data.notebook.NotebookPurgeFileEntity::class
+        com.halo.app.data.notebook.NotebookPurgeFileEntity::class,
+        com.halo.app.data.everyday.OrganizerEntity::class,
+        com.halo.app.data.everyday.OrganizerOccurrenceEntity::class,
+        com.halo.app.data.everyday.OrganizerDeliveryEntity::class,
+        com.halo.app.data.everyday.OrganizerScheduleEntity::class,
+        com.halo.app.data.everyday.OrganizerChangeEntity::class
     ],
     version = AppDatabase.VERSION,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun organizerDao(): com.halo.app.data.everyday.OrganizerDao
     abstract fun notebookPurgeDao(): com.halo.app.data.notebook.NotebookPurgeDao
     abstract fun continuationWatchDao(): com.halo.app.data.watch.ContinuationWatchDao
     abstract fun attentionDao(): com.halo.app.data.attention.AttentionDao
@@ -134,7 +140,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mcpDao(): com.halo.app.data.mcp.McpDao
 
     companion object {
-        const val VERSION = 30
+        const val VERSION = 31
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -1028,7 +1034,20 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE local_role_qualifications ADD COLUMN executionBuildIdentity TEXT DEFAULT NULL")
             }
         }
-        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30)
+        val MIGRATION_30_31 = object : Migration(30, 31) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS organizer_records (id TEXT NOT NULL PRIMARY KEY, kind TEXT NOT NULL, title TEXT NOT NULL, parentId TEXT, version INTEGER NOT NULL, updatedAt INTEGER NOT NULL, deletedAt INTEGER, body TEXT NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_organizer_records_kind_deletedAt ON organizer_records(kind, deletedAt)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_organizer_records_parentId ON organizer_records(parentId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS organizer_occurrences (recordId TEXT NOT NULL, originalStart INTEGER NOT NULL, body TEXT NOT NULL, PRIMARY KEY(recordId, originalStart), FOREIGN KEY(recordId) REFERENCES organizer_records(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS organizer_deliveries (occurrenceKey TEXT NOT NULL PRIMARY KEY, recordId TEXT NOT NULL, recordVersion INTEGER NOT NULL, triggerAt INTEGER NOT NULL, state TEXT NOT NULL, updatedAt INTEGER NOT NULL, detail TEXT, snoozedUntil INTEGER, FOREIGN KEY(recordId) REFERENCES organizer_records(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_organizer_deliveries_recordId ON organizer_deliveries(recordId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS organizer_schedule_outbox (recordId TEXT NOT NULL PRIMARY KEY, version INTEGER NOT NULL, FOREIGN KEY(recordId) REFERENCES organizer_records(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS organizer_changes (sequence INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, recordId TEXT NOT NULL, version INTEGER NOT NULL, action TEXT NOT NULL, at INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_organizer_changes_at ON organizer_changes(at)")
+            }
+        }
+        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31)
 
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")

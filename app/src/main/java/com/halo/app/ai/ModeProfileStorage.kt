@@ -61,7 +61,7 @@ fun ModeProfile.enabledRemoteCategories(): Set<com.halo.sdk.provider.RemoteDataC
 }
 
 fun Storage.remoteFeatureEnabled(feature: OnlineFeature): Boolean =
-    (this as? ModeProfileStorage)?.allowsFeature(feature) ?: (savedPrivacyMode() != PrivacyMode.PRIVATE)
+    (this as? ModeProfileStorage)?.allowsFeature(feature) ?: false
 
 internal data class ModeProfiles(
     val active: PrivacyMode,

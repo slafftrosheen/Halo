@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_3a78695388b3" formatted="false">"Home"</string>
+    <string name="ui_70b3f6472ef7" formatted="false">"Download paused by the global mode or family settings. Enable Power with downloads allowed, then start the download again. Installed models and file imports remain available."</string>
+    <string name="ui_a5e3318a5b6d" formatted="false">"Android could not queue the download. Reopen halo and choose Resume."</string>
     <string name="ui_1b07a29c6dc3" formatted="false">"Check your homework photo"</string>
     <string name="ui_cb90ff065653" formatted="false">"Make sure the whole question is clear. Nothing is added to your lesson until you choose Use this."</string>
     <string name="ui_b29199652039" formatted="false">"Use this"</string>

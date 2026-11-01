@@ -9,13 +9,24 @@ import java.nio.file.Files
 import java.security.MessageDigest
 
 class KokoroModelDownloadTest {
+    @Test fun `missing authority sends no request and preserves a resumable partial`() = runBlocking {
+        MockWebServer().use { server ->
+            val root = Files.createTempDirectory("voice-no-authority").toFile()
+            try {
+                val part = java.io.File(root,"voice.part").apply { writeText("abc") }
+                try { KokoroModelDownload.acquire(part, {}, server.url("/model").toString(), 6, hash("abcdef".toByteArray())); fail() }
+                catch (_: com.halo.sdk.provider.RemoteDispatchBlocked) { }
+                assertEquals(0, server.requestCount); assertEquals("abc", part.readText())
+            } finally { root.deleteRecursively() }
+        }
+    }
     private fun hash(bytes: ByteArray)=MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
     @Test fun `interrupted bytes resume and full file is verified`() = runBlocking {
         val server=MockWebServer(); server.start(); val root=Files.createTempDirectory("kokoro-test").toFile()
         try {
             val part=java.io.File(root,"voice.part"); part.writeText("abc")
             server.enqueue(MockResponse().setResponseCode(206).setHeader("Content-Range","bytes 3-5/6").setBody("def"))
-            KokoroModelDownload.acquire(part,{},server.url("/model").toString(),6,hash("abcdef".toByteArray()))
+            KokoroModelDownload.acquire(part,{},server.url("/model").toString(),6,hash("abcdef".toByteArray()),transferClient=okhttp3.OkHttpClient())
             assertEquals("abcdef",part.readText()); assertEquals("bytes=3-",server.takeRequest().getHeader("Range"))
         } finally { server.shutdown(); root.deleteRecursively() }
     }
@@ -24,7 +35,7 @@ class KokoroModelDownloadTest {
         try {
             val part=java.io.File(root,"voice.part")
             server.enqueue(MockResponse().setBody("broken"))
-            try { KokoroModelDownload.acquire(part,{},server.url("/model").toString(),6,hash("abcdef".toByteArray())); fail("must reject") }
+            try { KokoroModelDownload.acquire(part,{},server.url("/model").toString(),6,hash("abcdef".toByteArray()),transferClient=okhttp3.OkHttpClient()); fail("must reject") }
             catch(_: IllegalStateException) { assertFalse(part.exists()) }
         } finally { server.shutdown(); root.deleteRecursively() }
     }
@@ -33,7 +44,7 @@ class KokoroModelDownloadTest {
         try {
             val part=java.io.File(root,"voice.part"); part.writeText("abc")
             server.enqueue(MockResponse().setBody("abcdef"))
-            KokoroModelDownload.acquire(part,{},server.url("/model").toString(),6,hash("abcdef".toByteArray()))
+            KokoroModelDownload.acquire(part,{},server.url("/model").toString(),6,hash("abcdef".toByteArray()),transferClient=okhttp3.OkHttpClient())
             assertEquals("abcdef",part.readText())
         } finally { server.shutdown(); root.deleteRecursively() }
     }

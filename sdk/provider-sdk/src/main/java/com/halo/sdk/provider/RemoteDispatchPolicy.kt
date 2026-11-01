@@ -28,6 +28,8 @@ enum class RemoteDispatchOutcome { STARTED, REPLIED, COMPLETED, FAILED, CANCELLE
 
 interface RemoteDispatchPolicy {
     val revision: Long
+    /** Hosts publish durable authority changes so queued work can be paused before connectivity returns. */
+    val revisions: kotlinx.coroutines.flow.Flow<Long> get() = kotlinx.coroutines.flow.flowOf(revision)
     /** Must validate and register revocation atomically, before any request bytes leave. */
     fun acquire(request: RemoteDispatchRequest, expectedRevision: Long, recordActivity: Boolean = true,
         cancel: () -> Unit): RemoteDispatchLease
@@ -54,7 +56,11 @@ class RemoteCostObservation {
 }
 
 /** Optional capability of the host's existing preference view; credentials remain Storage-owned. */
-interface RemoteDispatchPolicySource { val remoteDispatchPolicy: RemoteDispatchPolicy }
+interface RemoteDispatchPolicySource {
+    val remoteDispatchPolicy: RemoteDispatchPolicy
+    /** Background hosts may need to restore local family/settings authority before admitting work. */
+    suspend fun awaitRemoteDispatchPolicy(): RemoteDispatchPolicy = remoteDispatchPolicy
+}
 
 fun com.halo.sdk.runtime.Storage.remoteAiContext(providerId: String, request: AiRequest, context: AiContext): kotlin.coroutines.CoroutineContext {
     val policy = (this as? RemoteDispatchPolicySource)?.remoteDispatchPolicy ?: return kotlin.coroutines.EmptyCoroutineContext

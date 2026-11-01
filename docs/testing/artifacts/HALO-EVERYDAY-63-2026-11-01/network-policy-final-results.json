@@ -1,0 +1,166 @@
+{
+  "outcome": "BUILD SUCCESSFUL in 16m54s",
+  "capturedUtc": "2026-11-01T19:10:39.109334+00:00",
+  "sourceFilesMatched": 64,
+  "suites": [
+    {
+      "module": "sdk",
+      "name": "com.halo.sdk.provider.GuardedRemoteClientTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "sdk",
+      "name": "com.halo.sdk.provider.PublicDownloadPolicyTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "sherpa",
+      "name": "com.halo.providers.sherpa.stt.SpeechDownloadResumeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.HuggingFaceLiteRtCatalogTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtDownloadPresentationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtDownloadResumeTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtDownloadWorkTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.LiteRtModelDownloaderTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "litert",
+      "name": "com.halo.providers.litert.models.ModelQueueCancellationTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ai.LocalRolePackRecoveryTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ai.ModeProfileRoutingTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ai.ModeProfilesTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ai.PrivacyModeRoutingTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.ai.RuntimeAiPolicyTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.audio.KokoroModelDownloadTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.everyday.collectors.CollectorParsingTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app",
+      "name": "com.halo.app.everyday.organizer.OrganizerRecurrenceTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 165,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "scope": "Focused host organizer, public-network/model-download and mode-routing checks. No issue-63 hardware operations, full transport-matrix acceptance, UI acceptance or remaining feature completion claimed."
+}

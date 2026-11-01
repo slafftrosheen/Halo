@@ -133,6 +133,8 @@ secrets {
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
+  // Parse feed HTML locally; never use jsoup's network-fetch API.
+  implementation("org.jsoup:jsoup:1.23.2")
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
   implementation("com.google.android.gms:play-services-wearable:20.0.1")

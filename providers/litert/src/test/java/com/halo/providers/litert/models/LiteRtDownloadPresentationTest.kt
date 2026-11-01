@@ -49,7 +49,7 @@ class LiteRtDownloadPresentationTest {
             supportsTools = false,
             minLiteRtLmVersion = "0.17.1",
         )
-        val manager = LiteRtModelManager(context, root, downloader, listOf(artifact))
+        val manager = LiteRtModelManager(context, root, downloader, listOf(artifact), dispatchPolicy = TestDownloadPolicy)
         val seen = mutableListOf<DownloadState>()
         val collector = launch(Dispatchers.Unconfined) {
             manager.downloadStates.collect { states -> states[artifact.id]?.let(seen::add) }

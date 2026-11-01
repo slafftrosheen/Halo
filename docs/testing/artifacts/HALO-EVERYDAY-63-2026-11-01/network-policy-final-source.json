@@ -1,0 +1,270 @@
+{
+  "capturedUtc": "2026-11-01T18:52:28.155090+00:00",
+  "boundary": "Before final policy foundation verification; all uncommitted app/SDK/provider inputs",
+  "files": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "097b0f74af1aae864f5582a917645003414244b6edbb7a0cb19cf45601a20bdc"
+    },
+    {
+      "path": "app/schemas/com.halo.app.data.AppDatabase/31.json",
+      "sha256": "3d26188fdd6f72daa4cb952d79e56175d470fa269c3c9aefc30874ee4b66da5e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/HaloApplication.kt",
+      "sha256": "ee3044d4d831d0c99180f471a51bb7d6922d8d90b7afb630d5169f70bb667fb3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ai/LocalRolePackInstaller.kt",
+      "sha256": "e74bfc3384d8f9fad809e736eb77e4392704d6965a223540e9f9930067b33632"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ai/ModeProfileStorage.kt",
+      "sha256": "cb246d62d2a774630e08f634330a3325b208bd141e0a8356d2d2025c87ddf7e7"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ai/PrivacyModeStore.kt",
+      "sha256": "e28acf3a1b30ba059630ef02ee7b23132cb29356708804b21c6e24d65112bc83"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/audio/KokoroModelDownload.kt",
+      "sha256": "e0c37cca2e86d5a0361e27c2a726a0c7da707cff89b09d5348991d391e2a5372"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/audio/KokoroSpeechProvider.kt",
+      "sha256": "3b7f3d7eaa4a8494279cb46ecf0a1a57dfbe365d8f82268b81571dde0c8a7bc1"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/audio/SupertonicPackStore.kt",
+      "sha256": "a52981668dcff9c65e4194ad6e64b6b4977209690ff132d012c9ec084e145bc9"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "ed4e4bc5a70bc19eb878883aeb7ffbba45e38466200c2701faba1e97888b4df8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/OrganizerCodec.kt",
+      "sha256": "8c9aec1d018553926d01137b319c759f04f9b32f998398fc5e1d551ebae70361"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/OrganizerEntities.kt",
+      "sha256": "ecdf853a62d67d2acfa78d0f883d72b4c2f86b7089f61fdd3ac43569ad30d71a"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomOrganizerRepository.kt",
+      "sha256": "c3cc85cc787b1b121e3f7426ff4db48a38d70f33e0131cb6e9e983d1b5691842"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+      "sha256": "262ce9423825748509a814b93e4382a8802690c03adeda07df5bf5553ab53dd9"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/ProviderGraph.kt",
+      "sha256": "30f7b6d4ba85e16ad3c61ee9c4ee418da9bec1debe8b768fcf9cb950a53d6b6e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorModels.kt",
+      "sha256": "c9cef54cf21afe96205f50660f71d57c913a9c93b174469b5f001dd141b2f2fc"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorUrlPolicy.kt",
+      "sha256": "7c4f6869ccc030f49b0df0134281bf87eb51a101eb7f01c70fbb68df3ff909e1"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/FeedParser.kt",
+      "sha256": "afc5e9766bbf490c51b6a76e9f24333b7e911ae4da7366ac05b3221e2e5fe77e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/IcsTimeZones.kt",
+      "sha256": "b6fda2ffcaa829bc32e2d51daf68472ff1f15da4ddd7a1285c15869b044737ea"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerIcs.kt",
+      "sha256": "002d0fd082981272bccae1920a99520bc59516807b295ce359f5d4b6110b4bf7"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerModels.kt",
+      "sha256": "0cb6c98628893bd0efe4c6a3a1b3dc7b95f7be7458fb1faabbdfc4e9b55a5be3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerRecurrence.kt",
+      "sha256": "b3f2d61f8d4997b9eaca01211e1345de363447af4417febc8f923c0002799457"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerUseCases.kt",
+      "sha256": "7250802562b34382112b185bb2b69f10f7c011e27e9309276ec3a67617572391"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/language/UiCatalogue.kt",
+      "sha256": "e977dbb1dc7d4dee2e39cb3f05e0843e5f420c4b19e568206284586f3b58bc73"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/onboarding/HaloSetupScreen.kt",
+      "sha256": "c8a002281c001ba6f4ffb53dad514c598d9a40af5db45aedfbf8b2159df4a995"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/KokoroPackControls.kt",
+      "sha256": "fd84c1589fd820ed25270c7c291926ce04e2f7a33391867f757c6ecedd5092fd"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/ModelDownloadPolicyNotice.kt",
+      "sha256": "eed8ca285d57b7fb8edf8509a95dafb4adefa43eda779d096a41c0a616704a6d"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/OnDeviceModelsScreen.kt",
+      "sha256": "a539550f9b63fd5eb45b5ae0a10fbd4c6ca709de82c195e1e6724745893bcd2c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/PrivateOfflinePackDetails.kt",
+      "sha256": "ec56d124168351e92cd8336925c2ce547656384f36e029c1005c078fa5282812"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/SupertonicPackControls.kt",
+      "sha256": "350261254cf334a43b296a0351f2b1bc0ca1dae1918ae26ad3e6f69d6af42795"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/VoiceSettingsScreen.kt",
+      "sha256": "32fa6cdd6cba543f53038f76abe6a163cca6081687f8579024449a0280ac1203"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/settings/VoiceSettingsViewModel.kt",
+      "sha256": "60cacd5c6e4649ae1826eb7b8877cf92c0036b6b6860a5f41dec8c1422c7aac7"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/web/DynamicPageExtractor.kt",
+      "sha256": "212abaeab68fb63edbac90ecd5399f4ce7419e1312325645945c33660db5d9d2"
+    },
+    {
+      "path": "app/src/main/localization/ui.tsv",
+      "sha256": "d8fe703290e182afff0161db0daed186bd0bccf4a30e2426411ffce6131be573"
+    },
+    {
+      "path": "app/src/main/res/values-lv/ui_strings.xml",
+      "sha256": "9cc2ffbfb49804aa7553ab897235f22b608f124af512ba13956285a79a02baa6"
+    },
+    {
+      "path": "app/src/main/res/values-pl/ui_strings.xml",
+      "sha256": "14c04e58f353aea9b09f13bce606a6e0c30f48b6f055a3dd74170401ce7adbe2"
+    },
+    {
+      "path": "app/src/main/res/values-ru/ui_strings.xml",
+      "sha256": "b2573c7a05519b5e35b0239548de907a6eb241ab048bc8c5739a8c510546a65e"
+    },
+    {
+      "path": "app/src/main/res/values/ui_strings.xml",
+      "sha256": "14b48402676567fc0c8d1b263e50ad5048188c6f098ff0b0ca05e2e7dc5f7501"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ai/ModeProfilesTest.kt",
+      "sha256": "243d63608d21bc97d85bbac102e7bce2af2c5ce2851674b206e45240547407d7"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/audio/KokoroModelDownloadTest.kt",
+      "sha256": "d0172096c30f66b34f4217150122bfdad2a9b2ccb2397de640d481e5326eb547"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/OrganizerPersistenceTest.kt",
+      "sha256": "fd7c389ece8649492e92fd46c67408fc9bb76aa6339b47d9643a02a9ad2feeaf"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/collectors/CollectorParsingTest.kt",
+      "sha256": "303bd9a44e3ac9aa1006e6e6720b2f0f9bc571b2a9f151cd76627ac77e15dbcc"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerIcsTest.kt",
+      "sha256": "19358a699dafb7c85390df9b16729fe6c06f35924d1b24c09c3022f3e91502b5"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerRecurrenceTest.kt",
+      "sha256": "3bfbb020daf292683ab5356e3783cb8086915668723e7f081e144b686c85b431"
+    },
+    {
+      "path": "providers/litert/src/main/java/com/halo/providers/litert/models/HuggingFaceLiteRtCatalog.kt",
+      "sha256": "cacf82a099900b08a18886a10e688963bc3b609d55f9fd9f3ed58732f2dd8f61"
+    },
+    {
+      "path": "providers/litert/src/main/java/com/halo/providers/litert/models/LiteRtDownloadWorker.kt",
+      "sha256": "b12a1a0b7749466a2d9694cd3b5aec9d26ab172ee5889ba9e0490e51328c1ad3"
+    },
+    {
+      "path": "providers/litert/src/main/java/com/halo/providers/litert/models/LiteRtModelDownloader.kt",
+      "sha256": "4b8e0f2705cd6c992a5afe1767eb8927e45d9d0569fd2ee585559e7b2436182b"
+    },
+    {
+      "path": "providers/litert/src/main/java/com/halo/providers/litert/models/LiteRtModelManager.kt",
+      "sha256": "1a8c59bf5e97c823708334bd5e3b0d4f36d9d5bbc438e8d1989f3c2ab3a8180d"
+    },
+    {
+      "path": "providers/litert/src/main/java/com/halo/providers/litert/models/ModelQueueCancellation.kt",
+      "sha256": "b769aed2bbd1ebf310e1a325c16bd4f1d9bf0d3a6e32a1f3b3f07f2788671d16"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/HuggingFaceLiteRtCatalogTest.kt",
+      "sha256": "761b6d0ee874e7ed7219d4a44cd1d55029cfa6d5dd65c0735bb284cac881d788"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/LiteRtDownloadPresentationTest.kt",
+      "sha256": "2bcb9c14b02190385b9b7396c75564af81c2b5c816a916d39d3b6b32a9a2f88a"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/LiteRtDownloadResumeTest.kt",
+      "sha256": "bb39d6481904367daaf7542fc7de4ded69f1c2996acb62128543d98ccc3b2a5d"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/LiteRtDownloadWorkTest.kt",
+      "sha256": "da510385e97289b3af424ca72fb5a839599a77c38764e3d3a9e682e6533fa290"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/LiteRtModelDownloaderTest.kt",
+      "sha256": "f651afcbca1ecaff9a11f4782e31b16b39d184c07ac1a1fc83d86638738b2eec"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/ModelQueueCancellationTest.kt",
+      "sha256": "04dc02e85d8e9fd02939a5358fe2ec686bd7ba69c625594e494278ed99f22543"
+    },
+    {
+      "path": "providers/litert/src/test/java/com/halo/providers/litert/models/TestDownloadPolicy.kt",
+      "sha256": "ecbf56d9fce54c8c940030b25300a343b17fd3e5cf6992b42508015a8dc1ffa9"
+    },
+    {
+      "path": "providers/sherpa-stt/build.gradle.kts",
+      "sha256": "ae12069dddfa7ef3f3b5ea5e58f5968b260c30eb9f2432c8df8b2017b1eb533e"
+    },
+    {
+      "path": "providers/sherpa-stt/src/main/java/com/halo/providers/sherpa/stt/SpeechModelInventoryRepository.kt",
+      "sha256": "ccdf0efc384cc3823f81f4c313d05863d84ce8291a9c4b469c9c4361ec43f402"
+    },
+    {
+      "path": "providers/sherpa-stt/src/main/java/com/halo/providers/sherpa/stt/WhisperModelDownloader.kt",
+      "sha256": "b5f5ccef74e3db46e350155362d2df1bbf6605060b51a2651c2c1688ee4cb644"
+    },
+    {
+      "path": "providers/sherpa-stt/src/test/java/com/halo/providers/sherpa/stt/SpeechDownloadResumeTest.kt",
+      "sha256": "ee94f8fdb781d15588bedf0c304425def34343d44be20d727c85b843e123baf8"
+    },
+    {
+      "path": "sdk/provider-sdk/src/main/java/com/halo/sdk/provider/GuardedRemoteClient.kt",
+      "sha256": "c802198194f247dc6c0d773b5662bf6e3ab927f321e5341f5c87f07a7cb46e0c"
+    },
+    {
+      "path": "sdk/provider-sdk/src/main/java/com/halo/sdk/provider/PublicNetworkPolicy.kt",
+      "sha256": "cfb3be70cbe550bb12e5f3eaf8cdcdc7790944aa1fbcfb15bf626362e1fe5811"
+    },
+    {
+      "path": "sdk/provider-sdk/src/main/java/com/halo/sdk/provider/RemoteDispatchPolicy.kt",
+      "sha256": "3b1a97c77394d9b6edd1f489d0650a8cf02b241ed75300d63d678b307b59ce81"
+    },
+    {
+      "path": "sdk/provider-sdk/src/test/java/com/halo/sdk/provider/PublicDownloadPolicyTest.kt",
+      "sha256": "369705ebebec5a106f67b931c5733bb1d75c6b93f72bb352cac42f0b9fd1be15"
+    }
+  ],
+  "preCompileCorrection": {
+    "atUtc": "2026-11-01T18:54:44.876321+00:00",
+    "reason": "Reviewer found old queue cancellation could overwrite a newer foreground verification receipt. Added still-running foreground-job fence before LiteRT compilation; log was at sherpa-stt resource generation.",
+    "paths": [
+      "providers/litert/src/main/java/com/halo/providers/litert/models/LiteRtModelManager.kt",
+      "providers/litert/src/test/java/com/halo/providers/litert/models/ModelQueueCancellationTest.kt"
+    ]
+  }
+}

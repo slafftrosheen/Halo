@@ -85,6 +85,7 @@ import com.halo.sdk.provider.LocalComputeBackend
 fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onConfigureRoles: () -> Unit = {}, onAudioLab: () -> Unit = {}, onVisionLab: () -> Unit = {}, onLocalSearch: () -> Unit = {}, technical: Boolean = false) {
     SettingsChildZone(if (technical) "Local model lab" else "On-device models", onBack, listOf(settingsChildLink("onConfigureRoles", "Model roles", onConfigureRoles), settingsChildLink("onLocalSearch", "Find related notes", onLocalSearch)))
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
+    val downloadsAllowed = modelDownloadsAllowed()
     val hubStatus by (viewModel.hubSyncState ?: remember { kotlinx.coroutines.flow.MutableStateFlow("Offline catalog") }).collectAsStateWithLifecycle()
     val deviceContext = androidx.compose.ui.platform.LocalContext.current
     var capacityRevision by remember { mutableStateOf(0) }
@@ -196,11 +197,12 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     else "The token is used for this download only and is not saved."))
             }},
             confirmButton={TextButton(onClick={viewModel.downloadLicensedHubModel(model,token);token="";licensedModel=null},
-                enabled=accepted && (com.halo.providers.litert.models.isHuggingFaceReadToken(token) || (token.isBlank() && tokenApplied))) {Text(uiText("Download"))}},
+                enabled=downloadsAllowed && accepted && (com.halo.providers.litert.models.isHuggingFaceReadToken(token) || (token.isBlank() && tokenApplied))) {Text(uiText("Download"))}},
             dismissButton={TextButton(onClick={licensedModel=null}) {Text(uiText("Cancel"))}})
     }
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item(key = "browse_controls") { Column {
+        ModelDownloadPolicyNotice(downloadsAllowed)
         if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText(if (developerToolsEnabled) "Local model lab" else "On-device models"),
             uiText(if (developerToolsEnabled) "Inspect model files and measured results" else "Download models for answers on this phone."), navigation = onBack)
 
@@ -237,7 +239,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 OutlinedButton(onClick = { capacityRevision++; viewModel.refreshLocalInventory() },
                     enabled = importProgress == null) { Text(uiText("Refresh on-device files")) }
                 OutlinedButton(onClick = { viewModel.syncHubModels(query) },
-                    enabled = hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
+                    enabled = downloadsAllowed && hubStatus != "Syncing models…") { Text(uiText("Sync Hugging Face")) }
             }
             Text(uiText("Import a fully downloaded .litertlm file. GGUF and .tflite files are not supported by this runtime."),
                 style = MaterialTheme.typography.bodySmall)
@@ -328,7 +330,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                 Text(uiText("Private voice and intent starter bundle"), style = MaterialTheme.typography.titleSmall)
                 Text(uiText("Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. Halo checks the files but does not select models or claim device quality."),
                     style = MaterialTheme.typography.bodySmall)
-                PrivateOfflinePackDetails(memory.totalMem, starterPack)
+                PrivateOfflinePackDetails(memory.totalMem, starterPack, downloadsAllowed)
                 if (!starterPack.available) Text(uiText("The starter bundle is unavailable."),
                     style = MaterialTheme.typography.bodySmall)
                 starterPreview?.let { preview ->
@@ -357,7 +359,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     }
                     com.halo.app.ai.LocalRolePackPhase.PAUSED -> Text(uiText("Model setup is paused. Resume it or roll back only the files added by this setup."), style = MaterialTheme.typography.bodySmall)
                     com.halo.app.ai.LocalRolePackPhase.FAILED -> Text(if (starterPackState.message == com.halo.app.ai.LOCAL_ROLE_PACK_REPAIR_REQUIRED)
-                        stringResource(R.string.offline59_repair) else uiText("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup."),
+                        stringResource(R.string.offline59_repair) else if (starterPackState.message == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE)
+                        uiText(com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE) else uiText("Model setup did not finish. Check storage or connection, then resume or roll back the files added by this setup."),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                     com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK -> Text(uiText("Removing models added by this setup…"), style = MaterialTheme.typography.bodySmall)
                     com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED -> Text(uiText(starterPackState.message
@@ -370,7 +373,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     if (!starterPackState.recoveryRequired && starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.COMPLETE &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLING_BACK &&
                         starterPackState.phase != com.halo.app.ai.LocalRolePackPhase.ROLLBACK_FAILED) {
-                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy && starterPack.available && starterPreview?.hasEnoughStorage == true,
+                        OutlinedButton(onClick = starterPack::startOrResume, enabled = !starterPackState.busy && starterPack.available && starterPreview?.hasEnoughStorage == true &&
+                            (downloadsAllowed || starterPreview?.downloadBytes == 0L),
                             modifier = Modifier.fillMaxWidth()) {
                             Text(uiText(if (starterPackState.canResume) "Resume private starter bundle" else "Install private starter bundle"))
                         }
@@ -579,6 +583,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, o
                     ).joinToString("\n").takeIf { it.isNotEmpty() },
                     storagePreflightLine = ui.storagePreflightLines[model.id],
                     onDownload = { viewModel.downloadCatalogModel(model) },
+                    downloadsAllowed = downloadsAllowed,
                     onResume = { viewModel.resumeCatalogDownload(model) },
                     onCancel = { viewModel.cancelDownload(model.id) },
                     onDiscardPartial = { viewModel.discardPartialDownload(model.id) },
@@ -716,6 +721,7 @@ private fun ModelCard(
     consumerCatalog: Boolean = false,
     allowImport: Boolean = true,
     deviceFit: LocalModelDeviceFit.Verdict = LocalModelDeviceFit.Verdict.UNKNOWN,
+    downloadsAllowed: Boolean = true,
 ) {
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
     val generationEligible = com.halo.providers.litert.models.LiteRtGenerationAdmission.permitted(
@@ -1015,13 +1021,13 @@ private fun ModelCard(
                         if (descriptor != null) OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
                     }
                     paused -> {
-                        Button(onClick = onResume) { Text(uiText("Resume")) }
+                        Button(onClick = onResume, enabled = downloadsAllowed) { Text(uiText("Resume")) }
                         OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
                     }
                     damaged || downloadFailed -> {
-                        Button(onClick = onDownload) { Text(uiText("Re-download")) }
+                        Button(onClick = onDownload, enabled = downloadsAllowed) { Text(uiText("Re-download")) }
                         if (downloadState is DownloadState.Failed && downloadState.resumable) {
-                            OutlinedButton(onClick = onResume) { Text(uiText("Resume")) }
+                            OutlinedButton(onClick = onResume, enabled = downloadsAllowed) { Text(uiText("Resume")) }
                             OutlinedButton(onClick = onDiscardPartial) { Text(uiText("Discard partial")) }
                         }
                     }
@@ -1030,7 +1036,7 @@ private fun ModelCard(
                         if (resident) OutlinedButton(onClick = onUnload) { Text(uiText("Unload")) }
                         OutlinedButton(onClick = onDelete) { Text(uiText("Delete")) }
                     }
-                    else -> Button(onClick = onDownload) { Text(uiText("Download")) }
+                    else -> Button(onClick = onDownload, enabled = downloadsAllowed) { Text(uiText("Download")) }
                 }
             }
 

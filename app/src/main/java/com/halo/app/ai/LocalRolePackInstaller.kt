@@ -7,6 +7,7 @@ import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import com.halo.providers.sherpa.stt.SpeechModelInventoryRepository
 import com.halo.sdk.runtime.Storage
+import com.halo.sdk.provider.*
 import java.io.File
 import java.security.MessageDigest
 import kotlinx.coroutines.CancellationException
@@ -219,7 +220,8 @@ class LocalRolePackInstaller(
             (models.catalogModel(model.id) != model || !model.directDownloadAllowed)) return@synchronized false
         if (command in setOf(LocalRolePackCommand.ROLLBACK, LocalRolePackCommand.KEEP_FILES) &&
             storage.getString(CONVERSATION_KEY) == null) return@synchronized false
-        conversationJob = scope.launch { conversationMutation.withLock {
+        val policy = (storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy ?: DenyRemoteDispatchPolicy
+        conversationJob = scope.launch(modelAcquisitionContext(policy.modelAcquisitionRevision())) { conversationMutation.withLock {
             var operationOwner: String? = null
             try {
                 val (current, currentRecovery) = conversationReceipt()
@@ -253,7 +255,7 @@ class LocalRolePackInstaller(
                                         installed?.bytes ?: 0L, installed?.verified == true))
                                     break
                                 }
-                                is DownloadState.Failed -> error("Conversation acquisition failed")
+                                is DownloadState.Failed -> error((models.downloadStates.value[model.id] as DownloadState.Failed).userMessage)
                                 is DownloadState.Paused, DownloadState.NotInstalled -> break
                                 else -> delay(300)
                             }
@@ -275,8 +277,9 @@ class LocalRolePackInstaller(
                 operationOwner?.let { runCatching { models.cancelOwnedDownload(model.id, it) } }
                 throw cancelled
             }
-            catch (_: Exception) {
-                conversationMessage = "Conversation setup did not finish. Read file status; repair independent damaged files or retry the exact acquisition. Existing files were retained."
+            catch (error: Exception) {
+                conversationMessage = if (error is RemoteDispatchBlocked || error.message == MODEL_DOWNLOAD_BLOCKED_MESSAGE)
+                    MODEL_DOWNLOAD_BLOCKED_MESSAGE else "Conversation setup did not finish. Read file status; repair independent damaged files or retry the exact acquisition. Existing files were retained."
             }
         } }
         true
@@ -350,7 +353,9 @@ class LocalRolePackInstaller(
                 publish(mutableState.value.copy(message = LOCAL_ROLE_PACK_REVIEW_REQUIRED))
                 return
             }
-            installJob = scope.launch { transaction.withLock {
+            val policy = (storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy ?: DenyRemoteDispatchPolicy
+            val revision = policy.modelAcquisitionRevision()
+            installJob = scope.launch(modelAcquisitionContext(revision)) { transaction.withLock {
                 if (expected != null && expected != (journal?.transactionId ?: "NONE")) return@withLock
                 if (mutableState.value.recoveryRequired || mutableState.value.phase == LocalRolePackPhase.ROLLBACK_FAILED) return@withLock
                 if (!sourceReviewAcknowledged) {
@@ -804,6 +809,7 @@ class LocalRolePackInstaller(
     }
 
     private fun safeMessage(error: Exception): String = when {
+        error is RemoteDispatchBlocked || error.message == MODEL_DOWNLOAD_BLOCKED_MESSAGE -> MODEL_DOWNLOAD_BLOCKED_MESSAGE
         error is LocalRolePackRepairRequired -> LOCAL_ROLE_PACK_REPAIR_REQUIRED
         error.message?.contains("Not enough free space", ignoreCase = true) == true -> error.message.orEmpty()
         error.message?.contains("pinned", ignoreCase = true) == true -> "A required model is not available in the pinned catalog. Update Halo and try again."

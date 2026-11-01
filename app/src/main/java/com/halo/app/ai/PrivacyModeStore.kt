@@ -33,6 +33,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     val mode = current.asStateFlow()
     private val changes = MutableStateFlow(snapshot.revision)
     val profileChanges = changes.asStateFlow()
+    override val revisions: kotlinx.coroutines.flow.Flow<Long> get() = profileChanges
     val storage: Storage = ModeProfileStorage(backing, this)
     val activity = RemoteActivityHistory(backing)
     val error: String? get() = synchronized(lock) { loadError }
@@ -42,6 +43,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     /** Additional existing parental authority, composed once; never persisted as consent. */
     var remoteAllowed: () -> Boolean = { false }
     var configuredProviders: () -> Set<String> = { emptySet() }
+    private fun configured(id: String): Boolean = id in SHIPPED_TRANSPORTS || id in configuredProviders()
 
     init {
         // The old mode setter granted this automatically. Its legacy true value is not
@@ -129,6 +131,19 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
         }
     }
 
+    /** Readiness is transient; restoring identical family settings must not invalidate durable queued work. */
+    fun reconcileFamilyAuthority(ready: Boolean, enabled: Boolean, cloudAllowed: Boolean) = synchronized(lock) {
+        if (!ready) { revoke(); return@synchronized }
+        val value = "$enabled:$cloudAllowed"
+        try {
+            if (backing.getString(FAMILY_AUTHORITY_KEY) != value) {
+                // Persist the new revision first. A crash between writes remains conservative on restart.
+                invalidateAuthority()
+                backing.putString(FAMILY_AUTHORITY_KEY, value)
+            }
+        } catch (_: Exception) { invalidateAuthority() }
+    }
+
     /** Preparation happens behind a closed dispatch gate; publication follows durable success. */
     fun set(mode: PrivacyMode, recoverPrivate: () -> Unit = {}, prepare: () -> Unit = {}) = synchronized(lock) {
         check(mode != PrivacyMode.CLOUD || snapshot.sharingAcknowledged) {
@@ -179,7 +194,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
         // Denial is final. Audit enrichment can initialize providers, whose registry reads the
         // processing profile; holding the authority lock here would invert those two locks.
         if (recordActivity) runCatching { activity.record(request.copy(providerId = request.providerId.takeIf {
-            it in configuredProviders() } ?: "unavailable"), RemoteDispatchOutcome.BLOCKED) }
+            configured(it) } ?: "unavailable"), RemoteDispatchOutcome.BLOCKED) }
         throw RemoteDispatchBlocked()
     }
 
@@ -188,7 +203,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     }
     private fun permitsChecked(request: RemoteDispatchRequest, expectedRevision: Long): Boolean {
         if (activating || snapshot.active != PrivacyMode.CLOUD || !snapshot.sharingAcknowledged ||
-            snapshot.revision != expectedRevision || !remoteAllowed() || request.providerId !in configuredProviders()) return false
+            snapshot.revision != expectedRevision || !remoteAllowed() || !configured(request.providerId)) return false
         val profile = snapshot.powerProfile
         val feature = when (request.operation) {
             RemoteOperation.INFERENCE, RemoteOperation.PROVIDER_CHECK -> OnlineFeature.INFERENCE
@@ -223,11 +238,16 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
             Unit
         }
     }
+    companion object {
+        private const val FAMILY_AUTHORITY_KEY = "remote_family_authority_v1"
+        // These transport owners do not need model/provider construction to decide authority.
+        private val SHIPPED_TRANSPORTS = setOf("web.public", "mcp.configured", "google.mail", MODEL_DOWNLOAD_OWNER, PUBLIC_COLLECTOR_OWNER)
+    }
 }
 
 /** A transition to Private cancels the actual cancellable HTTP operation, not just its preview. */
 suspend fun <T> whileCloudMode(modes: StateFlow<PrivacyMode>?, onPrivate: () -> Unit = {}, block: suspend () -> T): T {
-    if (modes == null) return block()
+    check(modes != null) { "The global mode is unavailable. Reopen Halo and retry." }
     return coroutineScope {
         check(modes.value == PrivacyMode.CLOUD) { "Switch to Full Power mode at the top of Halo." }
         val task = async(start = CoroutineStart.LAZY) { block() }

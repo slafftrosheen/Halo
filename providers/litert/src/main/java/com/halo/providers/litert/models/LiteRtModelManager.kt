@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
 import com.halo.providers.litert.LiteRtFailureStage
+import com.halo.sdk.provider.*
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -58,11 +59,15 @@ data class LiteRtAcquisitionDiagnostics(
 class LiteRtModelManager(
     private val context: Context,
     private val modelRoot: File = File(context.noBackupFilesDir, "models"),
-    private val downloader: LiteRtModelDownloader = OkHttpLiteRtModelDownloader(),
+    private val downloader: LiteRtModelDownloader? = null,
     /** Pinned artifacts this manager treats as authoritative. Injectable for tests. */
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     private val backgroundDownloads: Boolean = false,
+    private val dispatchPolicy: RemoteDispatchPolicy = (context.applicationContext as? RemoteDispatchPolicySource)?.remoteDispatchPolicy
+        ?: DenyRemoteDispatchPolicy,
+    private val expectedDownloadRevision: Long? = null,
 ) : LocalModelInventoryRepository {
+    private fun downloadClient() = OkHttpLiteRtModelDownloader.defaultClient().withModelDownloadPolicy(dispatchPolicy)
     private val hubCatalogFile = File(context.noBackupFilesDir, "litert-hub-catalog.json")
     private val hubModels = runCatching { HuggingFaceLiteRtCatalog.decode(hubCatalogFile.readText()) }.getOrDefault(emptyList())
     private val mutableCatalog = MutableStateFlow((catalog + hubModels).distinctBy { it.sha256 })
@@ -83,10 +88,11 @@ class LiteRtModelManager(
     val importStatus = importing.asStateFlow()
     private val catalogSyncMutex = Mutex()
 
-    suspend fun syncCatalog(query: String = "") = catalogSyncMutex.withLock {
+    suspend fun syncCatalog(query: String = "", revision: Long = dispatchPolicy.modelAcquisitionRevision()) = catalogSyncMutex.withLock {
         catalogSyncState.value = "Syncing models…"
         try {
-            val discovered = HuggingFaceLiteRtCatalog(authToken = { sessionHubToken }).discover(query)
+            val discovered = HuggingFaceLiteRtCatalog(client = downloadClient(), authToken = { sessionHubToken },
+                expectedRevision = revision).discover(query)
             val merged = (mutableCatalog.value + discovered).distinctBy { it.sha256 }.take(1000)
             withContext(Dispatchers.IO) {
                 val temp = File(hubCatalogFile.path + ".part")
@@ -97,6 +103,7 @@ class LiteRtModelManager(
             catalogSyncState.value = "Models updated"
             refresh(ModelInventoryRefreshReason.USER_REQUEST)
         } catch (cancelled: CancellationException) { catalogSyncState.value = "Sync cancelled"; throw cancelled }
+        catch (_: RemoteDispatchBlocked) { catalogSyncState.value = MODEL_DOWNLOAD_BLOCKED_MESSAGE }
         catch (_: Exception) { catalogSyncState.value = "Couldn't sync models. Your saved catalog is available." }
     }
     val modelDir: File get() = modelRoot
@@ -116,6 +123,9 @@ class LiteRtModelManager(
     private val downloadLock = Any()
     private val downloadJobs = mutableMapOf<String, Job>()
     private val downloadOwners = mutableMapOf<String, String?>()
+    private val queueCommands = kotlinx.coroutines.channels.Channel<() -> Unit>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+    private data class PendingQueueIntent(val id: java.util.UUID, val owner: String?, val revision: Long)
+    private val pendingQueueIntents = mutableMapOf<String, PendingQueueIntent>()
 
     /** path|length|modified -> physical SHA-256. Avoids rehashing an unchanged multi-GB artifact. */
     private val physicalFingerprints = ConcurrentHashMap<String, String>()
@@ -135,15 +145,29 @@ class LiteRtModelManager(
     private val inventoryRevision = java.util.concurrent.atomic.AtomicLong()
 
     init {
+        if (backgroundDownloads) scope.launch {
+            for (command in queueCommands) try { command() }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (error: Exception) { Log.w(TAG, "Model queue operation failed", error) }
+        }
         scope.launch { refresh(ModelInventoryRefreshReason.STARTUP) }
         if(backgroundDownloads) scope.launch {
             val seen=mutableSetOf<java.util.UUID>()
-            androidx.work.WorkManager.getInstance(context).getWorkInfosByTagFlow(LiteRtDownloadWorker.TAG).collect { infos ->
+            val work = androidx.work.WorkManager.getInstance(context)
+            kotlinx.coroutines.flow.combine(work.getWorkInfosByTagFlow(LiteRtDownloadWorker.TAG), dispatchPolicy.revisions) { infos, revision -> infos to revision }
+                .collect { (infos, revision) ->
                 infos.groupBy { it.tags.firstOrNull { tag -> tag.startsWith("halo-model:") } }
                     .values.mapNotNull { group -> group.maxByOrNull { info ->
                         info.tags.firstOrNull { it.startsWith("halo-model-time:") }?.removePrefix("halo-model-time:")?.toLongOrNull() ?: 0L
                     } }.forEach { info ->
                     val id=info.tags.firstOrNull { it.startsWith("halo-model:") }?.removePrefix("halo-model:") ?: return@forEach
+                    val admittedRevision = info.tags.firstOrNull { it.startsWith("halo-mode-revision:") }?.substringAfterLast(':')?.toLongOrNull()
+                    if (admittedRevision != dispatchPolicy.revision && info.state != androidx.work.WorkInfo.State.SUCCEEDED && info.state != androidx.work.WorkInfo.State.FAILED) {
+                        if (!info.state.isFinished) work.cancelWorkById(info.id)
+                        setDownloadState(id, DownloadState.Failed(ModelDownloadFailure.MODE_BLOCKED, MODEL_DOWNLOAD_BLOCKED_MESSAGE,
+                            resumable = partialDownloadBytes(id) != null))
+                        return@forEach
+                    }
                     when(info.state) {
                         androidx.work.WorkInfo.State.ENQUEUED, androidx.work.WorkInfo.State.BLOCKED -> setDownloadState(id,DownloadState.Queued)
                         androidx.work.WorkInfo.State.RUNNING -> {
@@ -293,6 +317,18 @@ class LiteRtModelManager(
 
     fun downloadCatalogModel(model: LiteRtCatalogModel, hubToken: String? = null, licenseAcknowledged: Boolean = false, acquisitionOwner: String? = null) {
         acquisitionOwner?.let(::requireModelAcquisitionOwner)
+        val revision = dispatchPolicy.modelAcquisitionRevision()
+        val cachedPart = File(modelRoot, "${model.id}.litertlm.part")
+        val localCandidate = cachedPart.length() == model.expectedBytes &&
+            LiteRtPartialDownloadMetadata.fromFile(LiteRtPartialDownloadMetadata.sidecarFor(cachedPart))?.matches(model) == true
+        try {
+            if (!localCandidate) dispatchPolicy.acquire(RemoteDispatchRequest(MODEL_DOWNLOAD_OWNER, RemoteOperation.CONNECTED_SERVICE,
+                setOf(RemoteDataCategory.ACCOUNT_METADATA)), revision, recordActivity = false) {}.finish(RemoteDispatchOutcome.COMPLETED)
+        } catch (_: RemoteDispatchBlocked) {
+            setDownloadState(model.id, DownloadState.Failed(ModelDownloadFailure.MODE_BLOCKED, MODEL_DOWNLOAD_BLOCKED_MESSAGE,
+                resumable = partialDownloadBytes(model.id) != null))
+            return
+        }
         Log.i(TAG, "$EVENT_REQUESTED id=${model.id}")
         val token = hubToken?.trim()?.takeIf { it.isNotBlank() } ?: sessionHubToken
         val validToken = token?.takeIf(::isHuggingFaceReadToken)
@@ -318,10 +354,34 @@ class LiteRtModelManager(
             )
             return
         }
-        if(backgroundDownloads && validToken == null) {
+        if(backgroundDownloads && validToken == null && !localCandidate) {
             setDownloadState(model.id,DownloadState.Queued)
-            val request=LiteRtDownloadWorker.request(model, acquisitionOwner)
-            androidx.work.WorkManager.getInstance(context).enqueueUniqueWork("halo-model:${model.id}",androidx.work.ExistingWorkPolicy.KEEP,request)
+            val request=LiteRtDownloadWorker.request(model, acquisitionOwner, revision)
+            val intent = synchronized(downloadLock) {
+                if (pendingQueueIntents[model.id]?.revision == revision) return
+                PendingQueueIntent(request.id, acquisitionOwner, revision).also { pendingQueueIntents[model.id] = it }
+            }
+            queueCommands.trySend enqueue@ {
+                val work = androidx.work.WorkManager.getInstance(context)
+                try {
+                    if (synchronized(downloadLock) { pendingQueueIntents[model.id] != intent }) return@enqueue
+                    val existing = work.getWorkInfosForUniqueWork("halo-model:${model.id}").get().filter { !it.state.isFinished }
+                    // A duplicate tap cannot take over a current independent transfer. An explicit
+                    // resume after revocation replaces stale work instead of being swallowed by KEEP.
+                    if (existing.any { "halo-mode-revision:$revision" in it.tags }) return@enqueue
+                    dispatchPolicy.acquire(RemoteDispatchRequest(MODEL_DOWNLOAD_OWNER, RemoteOperation.CONNECTED_SERVICE,
+                        setOf(RemoteDataCategory.ACCOUNT_METADATA)), revision, recordActivity = false) {}.finish(RemoteDispatchOutcome.COMPLETED)
+                    if (synchronized(downloadLock) { pendingQueueIntents[model.id] != intent }) return@enqueue
+                    work.enqueueUniqueWork("halo-model:${model.id}",androidx.work.ExistingWorkPolicy.REPLACE,request).result.get()
+                } catch (_: RemoteDispatchBlocked) {
+                    setDownloadState(model.id, DownloadState.Failed(ModelDownloadFailure.MODE_BLOCKED, MODEL_DOWNLOAD_BLOCKED_MESSAGE,
+                        resumable = partialDownloadBytes(model.id) != null))
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    setDownloadState(model.id, DownloadState.Failed(ModelDownloadFailure.IO_FAILURE,
+                        "Android could not queue the download. Reopen Halo and choose Resume.", resumable = partialDownloadBytes(model.id) != null))
+                } finally { synchronized(downloadLock) { if (pendingQueueIntents[model.id] == intent) pendingQueueIntents.remove(model.id) } }
+            }
             return
         }
         synchronized(downloadLock) {
@@ -333,7 +393,7 @@ class LiteRtModelManager(
             downloadOwners[model.id] = acquisitionOwner
             downloadJobs[model.id] = scope.launch {
                 try {
-                    runDownload(model, validToken, acquisitionOwner)
+                    runDownload(model, validToken, acquisitionOwner, revision)
                 } finally {
                     synchronized(downloadLock) { downloadJobs.remove(model.id); downloadOwners.remove(model.id) }
                 }
@@ -349,7 +409,13 @@ class LiteRtModelManager(
 
     /** Cancels an in-flight download. Never touches an existing verified artifact. */
     fun cancelDownload(modelId: String) {
-        if(backgroundDownloads) androidx.work.WorkManager.getInstance(context).cancelUniqueWork("halo-model:$modelId")
+        if(backgroundDownloads) {
+            synchronized(downloadLock) { pendingQueueIntents.remove(modelId) }
+            queueCommands.trySend {
+                androidx.work.WorkManager.getInstance(context).cancelUniqueWork("halo-model:$modelId").result.get()
+                publishQueueCancellation(modelId)
+            }
+        }
         val job = synchronized(downloadLock) { downloadJobs[modelId] }
         job?.cancel(CancellationException("Model download cancelled by user"))
     }
@@ -357,8 +423,24 @@ class LiteRtModelManager(
     /** Cancel only work explicitly acquired by this setup; an independent download is never cancelled. */
     fun cancelOwnedDownload(modelId: String, owner: String) {
         requireModelAcquisitionOwner(owner)
-        if (backgroundDownloads) androidx.work.WorkManager.getInstance(context).cancelAllWorkByTag("halo-model-owner:$owner:$modelId")
+        if (backgroundDownloads) {
+            synchronized(downloadLock) { if (pendingQueueIntents[modelId]?.owner == owner) pendingQueueIntents.remove(modelId) }
+            queueCommands.trySend {
+                androidx.work.WorkManager.getInstance(context).cancelAllWorkByTag("halo-model-owner:$owner:$modelId").result.get()
+                publishQueueCancellation(modelId)
+            }
+        }
         synchronized(downloadLock) { if (downloadOwners[modelId] == owner) downloadJobs[modelId]?.cancel(CancellationException("Setup paused")) }
+    }
+
+    private fun publishQueueCancellation(modelId: String) {
+        val registered = androidx.work.WorkManager.getInstance(context).getWorkInfosForUniqueWork("halo-model:$modelId")
+            .get().any { !it.state.isFinished }
+        synchronized(downloadLock) {
+            cancelledQueuePresentation(_downloadStates.value[modelId], registered,
+                modelId in pendingQueueIntents || downloadJobs[modelId]?.isCompleted == false,
+                partialDownloadBytes(modelId) ?: 0L, catalogModel(modelId)?.expectedBytes)?.let { setDownloadState(modelId, it) }
+        }
     }
 
     /** Bytes of a stored partial, or null when there is nothing to resume. */
@@ -401,12 +483,13 @@ class LiteRtModelManager(
     fun storagePreflight(model: LiteRtCatalogModel): LiteRtStoragePreflightResult =
         LiteRtStoragePreflight.check(modelRoot, model.expectedBytes)
 
-    internal suspend fun runDownload(model: LiteRtCatalogModel, hubToken: String? = null, acquisitionOwner: String? = null) {
+    internal suspend fun runDownload(model: LiteRtCatalogModel, hubToken: String? = null, acquisitionOwner: String? = null,
+        revision: Long = expectedDownloadRevision ?: dispatchPolicy.revision) {
         acquisitionOwner?.let(::requireModelAcquisitionOwner)
         val key=modelRoot.canonicalPath + "/" + model.id
-        transferMutexes.computeIfAbsent(key) { Mutex() }.withLock { runDownloadLocked(model,hubToken,acquisitionOwner) }
+        transferMutexes.computeIfAbsent(key) { Mutex() }.withLock { runDownloadLocked(model,hubToken,acquisitionOwner,revision) }
     }
-    private suspend fun runDownloadLocked(model: LiteRtCatalogModel, hubToken: String?, acquisitionOwner: String?) {
+    private suspend fun runDownloadLocked(model: LiteRtCatalogModel, hubToken: String?, acquisitionOwner: String?, revision: Long) {
         val partFile = File(modelRoot, "${model.id}.litertlm.part")
         val finalFile = File(modelRoot, "${model.id}.litertlm")
         val sidecarFile = File(modelRoot, "${model.id}.halo-model.json")
@@ -473,7 +556,8 @@ class LiteRtModelManager(
             var lastLoggedBytes = resumeFrom
             var lastMetadataBytes = resumeFrom
             // 5-8. stream, fsync/close, verify byte count, verify SHA (inside the downloader)
-            val transfer = if(hubToken == null) downloader else OkHttpLiteRtModelDownloader(authToken = { hubToken })
+            val transfer = downloader ?: OkHttpLiteRtModelDownloader(client = downloadClient(),
+                authToken = { hubToken }, expectedRevision = revision)
             val result = transfer.download(model, partFile, { progress ->
                 if (progress.downloadedBytes - lastLoggedBytes >= PROGRESS_LOG_INTERVAL_BYTES) {
                     lastLoggedBytes = progress.downloadedBytes

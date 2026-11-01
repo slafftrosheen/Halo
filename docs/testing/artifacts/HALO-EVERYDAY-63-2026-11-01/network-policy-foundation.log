@@ -1,0 +1,53 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:runtime-sdk:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+
+> Task :sdk:provider-sdk:compileKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-main/sdk/provider-sdk/src/main/java/com/halo/sdk/provider/ImageHttp.kt:16:44 The corresponding parameter in the supertype 'Callback' is named 'e'. This may cause problems when calling this function with named arguments.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/sdk/provider-sdk/src/main/java/com/halo/sdk/provider/OpenAiCompatibleTransport.kt:485:28 This extension is shadowed by a member: 'fun toMap(): (Mutable)Map<String!, Any!>!' defined in 'org/json/JSONObject'.
+
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar
+> Task :libraries:common:processResources NO-SOURCE
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar UP-TO-DATE
+
+> Task :sdk:provider-sdk:compileTestKotlin FAILED
+e: file:///C:/Users/slavd/HaloEco/Halo-main/sdk/provider-sdk/src/test/java/com/halo/sdk/provider/PublicDownloadPolicyTest.kt:35:53 Argument type mismatch: actual type is 'Function0<List<InetAddress!>>', but 'Dns' was expected.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/sdk/provider-sdk/src/test/java/com/halo/sdk/provider/PublicDownloadPolicyTest.kt:93:43 Argument type mismatch: actual type is 'Function0<List<InetAddress!>>', but 'Dns' was expected.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':sdk:provider-sdk:compileTestKotlin' (registered by plugin 'org.jetbrains.kotlin.jvm').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 17s
+10 actionable tasks: 3 executed, 7 up-to-date

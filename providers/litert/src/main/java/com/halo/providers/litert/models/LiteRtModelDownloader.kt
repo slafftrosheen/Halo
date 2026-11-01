@@ -1,6 +1,7 @@
 package com.halo.providers.litert.models
 
 import android.util.Log
+import com.halo.sdk.provider.withModelDownloadPolicy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,6 +36,7 @@ enum class ModelDownloadFailure {
     HASH_MISMATCH,
     IO_FAILURE,
     CANCELLED,
+    MODE_BLOCKED,
 }
 
 /** Accept only the ASCII Hub token shape, so invalid header errors cannot expose pasted secrets. */
@@ -46,6 +48,7 @@ val ModelDownloadFailure.isResumable: Boolean
         ModelDownloadFailure.NETWORK,
         ModelDownloadFailure.DISK_FULL,
         ModelDownloadFailure.CANCELLED,
+        ModelDownloadFailure.MODE_BLOCKED,
         ModelDownloadFailure.IO_FAILURE,
         -> true
         ModelDownloadFailure.SIZE_MISMATCH,
@@ -152,7 +155,7 @@ interface LiteRtModelDownloader {
 }
 
 class OkHttpLiteRtModelDownloader(
-    private val client: OkHttpClient = defaultClient(),
+    private val client: OkHttpClient = defaultClient().withModelDownloadPolicy(com.halo.sdk.provider.DenyRemoteDispatchPolicy),
     private val userAgent: String = DEFAULT_USER_AGENT,
     private val authToken: (() -> String?)? = null,
     /**
@@ -160,6 +163,7 @@ class OkHttpLiteRtModelDownloader(
      * Production always uses the pinned [LiteRtCatalogModel.downloadUrl].
      */
     private val resolveUrl: (LiteRtCatalogModel) -> String = { it.downloadUrl },
+    private val expectedRevision: Long? = null,
 ) : LiteRtModelDownloader {
 
     override suspend fun download(
@@ -181,6 +185,8 @@ class OkHttpLiteRtModelDownloader(
         val requestedResume = resumeFrom > 0L && resumeFrom < artifact.expectedBytes
         val builder = Request.Builder()
             .url(url)
+            .apply { expectedRevision?.let { tag(com.halo.sdk.provider.RemoteRequestRevision::class.java,
+                com.halo.sdk.provider.RemoteRequestRevision(it)) } }
             .header("Accept", "application/octet-stream")
             .header("Accept-Encoding", "identity")
             .header("User-Agent", userAgent)
@@ -282,9 +288,12 @@ class OkHttpLiteRtModelDownloader(
                         while (true) {
                             val read = input.read(buffer)
                             if (read < 0) break
+                            downloaded += read
+                            if (downloaded > artifact.expectedBytes) return@withContext failure(
+                                ModelDownloadFailure.SIZE_MISMATCH, INTEGRITY_USER_MESSAGE,
+                                "Model exceeds its pinned size", partialBytes = destinationPart.length())
                             digest.update(buffer, 0, read)
                             stream.write(buffer, 0, read)
-                            downloaded += read
                             onProgress(DownloadProgress.of(downloaded, totalBytes ?: artifact.expectedBytes))
                         }
                         stream.flush()
@@ -344,6 +353,9 @@ class OkHttpLiteRtModelDownloader(
         } catch (io: IOException) {
             val cancelled = call.isCanceled() || io is InterruptedIOException && io.message?.contains("Canceled") == true
             when {
+                io is com.halo.sdk.provider.RemoteDispatchBlocked -> failure(
+                    ModelDownloadFailure.MODE_BLOCKED, com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE, "MODE_BLOCKED",
+                    partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L)
                 cancelled -> failure(
                     ModelDownloadFailure.CANCELLED,
                     "Download cancelled.",

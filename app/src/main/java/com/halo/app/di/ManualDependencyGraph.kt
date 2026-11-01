@@ -104,7 +104,7 @@ object ManualDependencyGraph {
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { privacyModes.storage } }
     val setupProgress by lazy { com.halo.app.ui.onboarding.SetupProgressStore(storage) }
     val appLanguagePreferences by lazy { com.halo.app.language.AppLanguagePreferences(storage) }
-    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository, releaseSileroVad = { hostGraph.releaseSileroVad() }, allowSileroVadReload = { hostGraph.allowSileroVadReload() }) } }
+    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository, releaseSileroVad = { hostGraph.releaseSileroVad() }, allowSileroVadReload = { hostGraph.allowSileroVadReload() }, modelDispatchPolicy = { remoteDispatchPolicy }) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry,
         inkCheckpoints = object : com.halo.sdk.runtime.ink.InkCheckpointStore {
@@ -172,7 +172,7 @@ object ManualDependencyGraph {
         infra.scope.launch {
             kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed) { ready, enabled, cloud ->
                 Triple(ready, enabled, cloud)
-            }.collect { policy.invalidateAuthority() }
+            }.collect { (ready, enabled, cloud) -> policy.reconcileFamilyAuthority(ready, enabled, cloud) }
         }
     } }
     private fun configuredRemoteProviderIds(): Set<String> = buildSet {

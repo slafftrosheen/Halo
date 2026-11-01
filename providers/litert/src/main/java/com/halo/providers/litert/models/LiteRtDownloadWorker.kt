@@ -8,6 +8,7 @@ import androidx.work.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.sample
+import com.halo.sdk.provider.*
 
 /** Persistent public acquisition; input is identity only, never a URL, path, hash or secret. */
 @OptIn(kotlinx.coroutines.FlowPreview::class)
@@ -15,7 +16,11 @@ class LiteRtDownloadWorker(context: Context, params: WorkerParameters): Coroutin
     override suspend fun doWork(): Result = coroutineScope {
         val owner = inputData.getString("acquisitionOwner")
         if (owner != null && runCatching { requireModelAcquisitionOwner(owner) }.isFailure) return@coroutineScope Result.failure()
-        val manager=LiteRtModelManager(applicationContext)
+        val revision = inputData.getLong("dispatchRevision", -1)
+        // Old work has no captured authority. It must be explicitly resumed in the current mode.
+        if (revision < 0) return@coroutineScope Result.failure(workDataOf("message" to "Open Halo and resume this download in Power mode."))
+        val policy = (applicationContext as? RemoteDispatchPolicySource)?.awaitRemoteDispatchPolicy() ?: DenyRemoteDispatchPolicy
+        val manager=LiteRtModelManager(applicationContext, dispatchPolicy = policy, expectedDownloadRevision = revision)
         val model=manager.catalogModel(inputData.getString("modelId").orEmpty())
             ?.takeIf { it.directDownloadAllowed } ?: return@coroutineScope Result.failure()
         try { setForeground(foreground(model.displayName)) }
@@ -49,14 +54,15 @@ class LiteRtDownloadWorker(context: Context, params: WorkerParameters): Coroutin
     companion object {
         const val TAG="halo-litert-download"
         private const val CHANNEL="halo-model-downloads"
-        fun request(model: LiteRtCatalogModel, acquisitionOwner: String? = null): OneTimeWorkRequest {
+        fun request(model: LiteRtCatalogModel, acquisitionOwner: String? = null, dispatchRevision: Long = -1): OneTimeWorkRequest {
             acquisitionOwner?.let(::requireModelAcquisitionOwner)
             require(model.directDownloadAllowed) { "Gated credentials must not be persisted in background work" }
             return OneTimeWorkRequestBuilder<LiteRtDownloadWorker>()
-                .setInputData(Data.Builder().putString("modelId", model.id)
+                .setInputData(Data.Builder().putString("modelId", model.id).putLong("dispatchRevision", dispatchRevision)
                     .apply { acquisitionOwner?.let { putString("acquisitionOwner", it) } }.build())
                 .apply { acquisitionOwner?.let { addTag("halo-model-owner:$it:${model.id}") } }
                 .addTag(TAG).addTag("halo-model:${model.id}").addTag("halo-model-time:${System.currentTimeMillis()}")
+                .addTag("halo-mode-revision:$dispatchRevision")
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
         }

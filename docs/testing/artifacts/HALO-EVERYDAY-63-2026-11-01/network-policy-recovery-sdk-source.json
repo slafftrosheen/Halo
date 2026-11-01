@@ -1,0 +1,258 @@
+{
+  "files": [
+    {
+      "sha256": "65f444b11d9bb60b0b788259c8f0e200e8891d682dfb7bfa5cb522357623fac3",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\ResponseLanguageTest.kt"
+    },
+    {
+      "sha256": "7d0a510c8cc7f7c3409cfd6b4acd4cb5fa50562c36561a4ce6714398b4742b32",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\PublicDownloadPolicyTest.kt"
+    },
+    {
+      "sha256": "0a09a350732ff62da44773152412981060a7f49373e31a7e7b1938d346f0eb3d",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\ProviderHttpDiagnosticsTest.kt"
+    },
+    {
+      "sha256": "2536f91aacddcc68668fdacb95ddb0c8e0050e3ae2c08f0159f1332724c4bf07",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\PaidMediaPolicyTest.kt"
+    },
+    {
+      "sha256": "09fc82afa34f8fa6ff6f41b16e3af22143772c192e907392bbe26d08d2d35a34",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\OpenAiCompatibleTransportTest.kt"
+    },
+    {
+      "sha256": "505fe3e3f4f3125aa857f940b6630c2fd3fe4fde5adf1db458e1ea7925063770",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\LocalRoleRecommendationTest.kt"
+    },
+    {
+      "sha256": "2510b3bb6823f8643bc93b4c8b654c9ad90d03d008bbaeec1b6a33bef20d339c",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\GuardedRemoteClientTest.kt"
+    },
+    {
+      "sha256": "bb977ab06190735f6dfce2a338174bf389638eb0eecc8168283d6e58990b99cc",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\EmbeddingProviderTest.kt"
+    },
+    {
+      "sha256": "fa86efe44c2b8d2b5849bbc1e1f6e84aa929e999d32bef69210e308873208af8",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\CredentialTransportPolicyTest.kt"
+    },
+    {
+      "sha256": "f2115695a1b883fc6b62780cdfd4517ae58cedc7911d98d1976834cb4522948c",
+      "path": "sdk/provider-sdk/src/test\\java\\com\\halo\\sdk\\provider\\AiRequestCapabilityValidationTest.kt"
+    },
+    {
+      "sha256": "f5e8237128f8feee047d9113d563c6d3b367c230018208d88c5739cc829e81db",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\WorkloadPreparationPolicy.kt"
+    },
+    {
+      "sha256": "090a49b39d4ed19662bf8c09d5d2c9cd23cf15265657d158724094260124b91c",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\WorkloadAdaptivePolicy.kt"
+    },
+    {
+      "sha256": "26f721053686611f2964099d223de22f4140bf6a0da8c5b62a52a35e996290e1",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\WakeWordDetector.kt"
+    },
+    {
+      "sha256": "ed2ec52fc4ff92436a4df7a70b05c6e6a5602992cf7fd1413f092145055bd94c",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\UnavailableSpeechRecognitionProvider.kt"
+    },
+    {
+      "sha256": "7881a450451e2de569233f29c320ee2efbd5d6806173e9c2c6590fb6107a068d",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ToolCallProtocol.kt"
+    },
+    {
+      "sha256": "60957a9d9441d28b533ee8c6c821556b06117a0de5c7aa4513b4ff47b4d6b312",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\StreamingToolCallAssembler.kt"
+    },
+    {
+      "sha256": "41972e9258b86380aa6549c2e8614b3a28fa25267410e664d358041c001412c2",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\SpeechSynthesisProvider.kt"
+    },
+    {
+      "sha256": "4bc2656c2d2d689fa61193f8ff02cc7308ac3f4155cf2549b322f0748f889735",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\SpeechRecognitionProvider.kt"
+    },
+    {
+      "sha256": "6545b5561a1420266cd008f6b3402ba0f4d1f9ec712cf328fa68c8ff768d4ebc",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\SpeechProviderSelector.kt"
+    },
+    {
+      "sha256": "fc814f5c0391f30c706b07582a6d0fc41b95ab1a4ba3782a36564e55d53dc856",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\SpeechModelPack.kt"
+    },
+    {
+      "sha256": "06a589ce3d0f53c9c4296ddd35379ad640ed21483bbfcce03d5f91bb35702555",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ResponseLanguage.kt"
+    },
+    {
+      "sha256": "59ff35b5cdaae5f1833fba9192ec75e4914186e4c5ce6485e5cedcdab844b7cc",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\RemoteProviderPresence.kt"
+    },
+    {
+      "sha256": "3b1a97c77394d9b6edd1f489d0650a8cf02b241ed75300d63d678b307b59ce81",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\RemoteDispatchPolicy.kt"
+    },
+    {
+      "sha256": "de03d01cacbdc0218a8121e4321cc19e96375e3e02da0f96c758e9f36f562930",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\PublicNetworkPolicy.kt"
+    },
+    {
+      "sha256": "a75caa2cc14969d53f3741c1f80e7a7e488380611df85cea75a6d025bceafdc0",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ProviderSecretStore.kt"
+    },
+    {
+      "sha256": "d16cc9cae02deed1d140d4675b674049844010e675da1cb4e3cdb2a17d7684e6",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ProviderHttpDiagnostics.kt"
+    },
+    {
+      "sha256": "7ca139cf8bd1276a01e63a87fc96d755695957dde0d9a62e31e1348d2028630e",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ProviderConfigurationDescriptor.kt"
+    },
+    {
+      "sha256": "827618488d070329a6dbf5363e68475d90ac148fc8f9d1523cb682bb3cdeb1eb",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\PcmSpeechSynthesisProvider.kt"
+    },
+    {
+      "sha256": "308d18cee87467b417ce9cd37fe31fe803c46550a6acfec3c3f6b5b54050f5cb",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\PaidMediaPolicy.kt"
+    },
+    {
+      "sha256": "9efe56fd0e7ec228a3f7f8bae6046e950187636e52503107671255082597d90f",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\OpenAiCompatibleTransport.kt"
+    },
+    {
+      "sha256": "499a308df3a7649a2f14cdf0d156d16a20c92ab84aa9699d12534b30cfe42b33",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ModelReadinessReporting.kt"
+    },
+    {
+      "sha256": "747f7655d8c264275ae7e2469a2cd888909892c92f90540d954f626874d6bc0a",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ModelInputCapabilityReporting.kt"
+    },
+    {
+      "sha256": "9fab16d08812fbda431413e04bd71e7e6df5726e28e683c3576a8d33026d4777",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ModelCapabilityEvidence.kt"
+    },
+    {
+      "sha256": "a18253bcde97ec5cd1d31435fd1bb2d492ef2a8c6547261c014bf6da7eb0567a",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\LocalWorkload.kt"
+    },
+    {
+      "sha256": "e8d10d4cf6a284c1315250daef256754f7edb9b01481d8c218348000305a046e",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\LocalRoleRecommendation.kt"
+    },
+    {
+      "sha256": "bb56fdb1bcecccf1f334bbae1fdca31353cb9ea8d1bb119b0aa0bbc262199435",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\LocalInferenceRuntime.kt"
+    },
+    {
+      "sha256": "0a7816896f541dab0b92669f0f5fdef0e7588aa445c627f44decbe2ef86953b2",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\LocalInferenceExecutionReporting.kt"
+    },
+    {
+      "sha256": "69936aec96103bb54a11a1a97dd005ed7155afb37ef759acfad95d57e58c4f31",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\InferenceProvider.kt"
+    },
+    {
+      "sha256": "f3237524ef779a074c14cf52c83bbb5139857df2614440bf5daeddda15294d2a",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ImageHttp.kt"
+    },
+    {
+      "sha256": "37aa606c649a19ad6c59a1310ab27176ab682d8834f0b30aa0b11d552ab4e0d4",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\GuardedRemoteClient.kt"
+    },
+    {
+      "sha256": "877a3d1f574d8808285546793a7d19d4b4e8dffe1b64030290ca6d32c2969262",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ForwardingRemoteEventListener.kt"
+    },
+    {
+      "sha256": "fc2fe56f94304b574b66a0e3ddcf145cd143b75bcdbb22bb88e38bf34c39524e",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\EmbeddingProvider.kt"
+    },
+    {
+      "sha256": "9ca463698dd57874a043aee10e6a5b219cf1f160a3e8170af9a9e8572880ba03",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\CredentialStorageException.kt"
+    },
+    {
+      "sha256": "fa70aecf39b9d5cc527e6890fd373bb86a44581b84bd21eef11f531ec0350228",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ContextOverflow.kt"
+    },
+    {
+      "sha256": "1fa81a920ad266d332e70ea5f83a13c22e0cabd08fc0346a702b80f0207bac61",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\Context.kt"
+    },
+    {
+      "sha256": "e5035dbe58382fbf9ecfe563de0d6c666932029ebe48386c713c3e7fd965bebc",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\ConfiguredOpenAiCompatibleProvider.kt"
+    },
+    {
+      "sha256": "f32b7f35f4964d0cfb17993e30b40bfa4a544bc5266508db8d4f49f9c38ca698",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiProviderRouter.kt"
+    },
+    {
+      "sha256": "2e6e0a8f9cc6db3de582c3f349343fa86df4c39a2a7749dd07833a45cef52763",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AudioContext.kt"
+    },
+    {
+      "sha256": "e40390f617230b7c5471142494d233775aa931a0ad6719108a55bb2f646da754",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiProviderRegistry.kt"
+    },
+    {
+      "sha256": "27a4257dd98954bbcd9abba3048e7826ff751f64f57ba713c1abd17597fb5342",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AssistantTurn.kt"
+    },
+    {
+      "sha256": "90a744d309a9cf34cf328a53e0d93c79f3526274640e5fef3953d70614557ee8",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiProviderException.kt"
+    },
+    {
+      "sha256": "1cbad9f7bcc6a1f311b6b9ab828b4ad6484e16b62e46b3d3a73473d49c3fa2b4",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiWorkload.kt"
+    },
+    {
+      "sha256": "75132ef6edaed73c5a453fdcfe42aced0f3018c4c74438d4311141758c43d602",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiInferenceProvider.kt"
+    },
+    {
+      "sha256": "067f2249a003adf8596d506677e43a72c10c86bd11afa20ed44b02b70b5feb58",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiRoutingPolicy.kt"
+    },
+    {
+      "sha256": "aaa84fd3f2df983842ae9e0312bcc15573961880790709fe0d59d82875aa06dd",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiImageProvider.kt"
+    },
+    {
+      "sha256": "2fcf000f012b7bb1315a61b23a10d0af40057619c308207e2047325725de0d14",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiRoles.kt"
+    },
+    {
+      "sha256": "2d44a65ed666daa41634f0f40b9492aa4b3a4f68c4e5e6d1bc8c90cd37690238",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiHandoffProvider.kt"
+    },
+    {
+      "sha256": "334ab73f30afd115df2047fbfbfcf57754aefb97efc9f1a3b535d6261ceae430",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiRoleCandidate.kt"
+    },
+    {
+      "sha256": "ebf7480b167f8b7dba294acf97da23a43666f268ab06bc630a339178ea302d2f",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiExecutionOutcome.kt"
+    },
+    {
+      "sha256": "2075f4f064b43af55f335e4551c57b92758a7334700221d81c2d5dcacd8c9093",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AIEvents.kt"
+    },
+    {
+      "sha256": "e92afd0ef43fea5caa7c0b6c84487d76b6e3ef08a2c9714321ecb60b2e78af40",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AiContextPolicy.kt"
+    },
+    {
+      "sha256": "98a4c080ccb94deae907c3e3312cd6c9b0b9d5c5d4e1a55655f7f1ed188139b2",
+      "path": "sdk/provider-sdk/src/main\\java\\com\\halo\\sdk\\provider\\AI.kt"
+    },
+    {
+      "sha256": "348cc26015c3758be0600b7144cb4437c437be1d9e83f2f252facd76471a35c8",
+      "path": "sdk/provider-sdk/build.gradle.kts"
+    }
+  ],
+  "boundary": "SDK tests finished; later streaming-revocation source correction excluded",
+  "capturedUtc": "2026-11-01T18:45:19.1972340Z"
+}

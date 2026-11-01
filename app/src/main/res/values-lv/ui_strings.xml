@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_3a78695388b3" formatted="false">"Sākums"</string>
+    <string name="ui_70b3f6472ef7" formatted="false">"Lejupielāde ir apturēta globālā režīma vai ģimenes iestatījumu dēļ. Ieslēdziet Power, atļaujiet lejupielādes un sāciet lejupielādi vēlreiz. Instalētie modeļi un failu imports joprojām ir pieejami."</string>
+    <string name="ui_a5e3318a5b6d" formatted="false">"Android nevarēja pievienot lejupielādi rindai. Atveriet halo vēlreiz un izvēlieties «Turpināt»."</string>
     <string name="ui_1b07a29c6dc3" formatted="false">"Pārbaudi mājasdarba foto"</string>
     <string name="ui_cb90ff065653" formatted="false">"Pārliecinies, ka viss uzdevums ir skaidri redzams. Foto tiks pievienots stundai tikai pēc pogas «Izmantot» nospiešanas."</string>
     <string name="ui_b29199652039" formatted="false">"Izmantot"</string>

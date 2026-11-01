@@ -11,6 +11,56 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
 class ModeProfilesTest {
+    @Test fun restoringUnchangedFamilyAuthorityKeepsQueuedRevisionButChangedSessionRevokesIt() {
+        val disk = Memory(); val first = owner(disk)
+        first.reconcileFamilyAuthority(true, false, false); power(first)
+        val admitted = first.revision
+        val restored = owner(disk)
+        restored.reconcileFamilyAuthority(false, false, false)
+        restored.reconcileFamilyAuthority(true, false, false)
+        assertEquals(admitted, restored.revision)
+        restored.acquire(textRequest, admitted) {}.close()
+        restored.reconcileFamilyAuthority(true, true, false)
+        assertTrue(restored.revision > admitted)
+        blocked { restored.acquire(textRequest, admitted) {} }
+        // Session-only cloud permission must not survive process death in Kids.
+        restored.reconcileFamilyAuthority(true, true, true)
+        val childSession = restored.revision
+        owner(disk).also { restarted ->
+            restarted.reconcileFamilyAuthority(true, true, false)
+            assertTrue(restarted.revision > childSession)
+        }
+    }
+    @Test fun shippedDownloadsAndCollectorsUseTheSameModeWithoutInitializingModels() {
+        val store = PrivacyModeStore(Memory()).apply {
+            remoteAllowed = { true }
+            configuredProviders = { error("Model construction must not be needed for public transport authority") }
+        }
+        val downloads = RemoteDispatchRequest(MODEL_DOWNLOAD_OWNER, RemoteOperation.CONNECTED_SERVICE, setOf(RemoteDataCategory.ACCOUNT_METADATA))
+        val collectors = RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER, RemoteOperation.WEB, emptySet())
+        for (request in listOf(downloads, collectors)) blocked { store.acquire(request, store.revision) {} }
+        power(store)
+        var cancelled = 0
+        val leases = listOf(downloads, collectors).map { store.acquire(it, store.revision) { cancelled++ } }
+        store.set(PrivacyMode.PRIVATE)
+        assertEquals(2, cancelled)
+        leases.forEach { blocked { it.requireCurrent() } }
+        power(store)
+        store.edit(PrivacyMode.CLOUD) { it.copy(onlineFeatures = it.onlineFeatures - OnlineFeature.WEB) }
+        blocked { store.acquire(collectors, store.revision) {} }
+        store.acquire(downloads, store.revision) {}.close()
+        store.remoteAllowed = { false }
+        blocked { store.acquire(downloads, store.revision) {} }
+    }
+
+    @Test fun missingModeCannotExecuteAnOnlineBlock() = kotlinx.coroutines.runBlocking<Unit> {
+        var called = false
+        try { whileCloudMode(null) { called = true }; fail("Missing authority must be closed") }
+        catch (_: IllegalStateException) { }
+        assertFalse(called)
+        assertFalse(Memory().remoteFeatureEnabled(OnlineFeature.WEB))
+    }
+
     @Test fun firstPowerActivationRequiresTheIndependentSharingAcknowledgment() {
         val store = owner()
         try { store.set(PrivacyMode.CLOUD); fail() } catch (_: IllegalStateException) { }

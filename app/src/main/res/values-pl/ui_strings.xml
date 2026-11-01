@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_3a78695388b3" formatted="false">"Start"</string>
+    <string name="ui_70b3f6472ef7" formatted="false">"Pobieranie wstrzymano z powodu trybu globalnego lub ustawień rodzinnych. Włącz Power, zezwól na pobieranie i ponownie rozpocznij pobieranie. Zainstalowane modele i import plików pozostają dostępne."</string>
+    <string name="ui_a5e3318a5b6d" formatted="false">"Android nie mógł dodać pobierania do kolejki. Otwórz halo ponownie i wybierz „Wznów”."</string>
     <string name="ui_1b07a29c6dc3" formatted="false">"Sprawdź zdjęcie zadania domowego"</string>
     <string name="ui_cb90ff065653" formatted="false">"Upewnij się, że całe zadanie jest czytelne. Nic nie zostanie dodane do lekcji, dopóki nie wybierzesz Użyj tego."</string>
     <string name="ui_b29199652039" formatted="false">"Użyj tego"</string>

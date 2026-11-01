@@ -22,11 +22,17 @@ class ProviderGraph(
     private val speechLanguageSettings: com.halo.app.ui.screens.settings.SpeechLanguageSettingsRepository? = null,
     private val releaseSileroVad: suspend () -> Unit = {},
     private val allowSileroVadReload: () -> Unit = {},
+    private val modelDispatchPolicy: () -> com.halo.sdk.provider.RemoteDispatchPolicy = {
+        (storage as? com.halo.sdk.provider.RemoteDispatchPolicySource)?.remoteDispatchPolicy
+            ?: com.halo.sdk.provider.DenyRemoteDispatchPolicy
+    },
 ) {
 
     private val storageLayout by lazy { haloStorageLayout(applicationContext) }
     val speechModelRoot: java.io.File get() = storageLayout.speechModels
-    val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models, backgroundDownloads = true).apply {
+    private val downloadPolicy get() = modelDispatchPolicy()
+    val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models, backgroundDownloads = true,
+        dispatchPolicy = downloadPolicy).apply {
         observeProtectedModels { com.halo.app.ai.LocalModelAcquisitionProtection.selectedIds(storage) }
     } }
     val nativeResourceCoordinator by lazy { NativeResourceCoordinator(infra?.resourceLeaseManager) }
@@ -40,7 +46,8 @@ class ProviderGraph(
             selectedProviderId = { _providers?.speechSelector?.sttSelection?.value?.id ?: "AUTOMATIC" },
             activeProviderId = { _providers?.speechRecognition?.metadata?.id },
             releaseSileroVad = releaseSileroVad,
-            allowSileroVadReload = allowSileroVadReload
+            allowSileroVadReload = allowSileroVadReload,
+            dispatchPolicy = downloadPolicy
         )
     }
 

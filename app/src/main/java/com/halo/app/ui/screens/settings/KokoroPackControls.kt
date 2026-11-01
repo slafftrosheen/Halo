@@ -16,6 +16,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider, technical: Boole
     val state by provider.state.collectAsState()
     val downloadProgress by provider.downloadProgress.collectAsState()
     val scope=rememberCoroutineScope()
+    val downloadsAllowed = modelDownloadsAllowed()
     var packs by remember { mutableStateOf(emptyList<InstalledSpeechPack>()) }
     var busy by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
@@ -32,6 +33,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider, technical: Boole
         finally { busy=false }
     } }
     Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        ModelDownloadPolicyNotice(downloadsAllowed)
         Text(uiText("Installed voice versions"),style=MaterialTheme.typography.titleSmall)
         packs.forEach { pack ->
             Text((pack.modelId ?: uiText("Installed pack"))+" · "+pack.fingerprint.take(12))
@@ -49,7 +51,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider, technical: Boole
         // Installing a version never changes which pack is currently selected.
         SpeechPackRegistry.candidates.filter { !it.experimental && it.providerId==KokoroSpeechProvider.ID }.forEach { pack ->
             val installed=packs.any { it.modelId==pack.id && it.complete }
-            TextButton(enabled=!busy && !installed,onClick={action { provider.downloadPack(pack.id) }}) {
+            TextButton(enabled=!busy && !installed && downloadsAllowed,onClick={action { provider.downloadPack(pack.id) }}) {
                 Text(pack.family+" "+pack.version+" · "+pack.languages.sorted().joinToString("/")+
                     " · "+uiText(if(installed) "Installed" else "Download"))
             }
@@ -85,6 +87,7 @@ internal fun KokoroPackControls(provider: KokoroSpeechProvider, technical: Boole
             }
             Text(uiText("Speech is delivered as completed sentences, not native sample streaming."))
         }
-        if(failed) Text(uiText("Voice operation failed. Previous selection is preserved."),color=MaterialTheme.colorScheme.error)
+        if(failed) Text(uiText(if (state.message == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE)
+            state.message else "Voice operation failed. Previous selection is preserved."),color=MaterialTheme.colorScheme.error)
     }
 }

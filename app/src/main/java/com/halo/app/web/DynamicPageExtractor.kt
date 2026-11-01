@@ -125,17 +125,18 @@ class AndroidDynamicPageExtractor(
     private val resolutionAllowed: (String) -> Boolean = PublicPagePolicy::resolvesPublicly,
 ) : DynamicPageExtractor {
 
-    override val available: Boolean get() = enabled()
+    override val available: Boolean get() = enabled() && dispatchPolicy != null
 
     @SuppressLint("SetJavaScriptEnabled")
     override suspend fun extract(url: String, deadlineMs: Long): DynamicExtractionOutcome {
         if (!available) return DynamicExtractionOutcome.Unavailable("Rendered page extraction is disabled")
+        val authority = dispatchPolicy ?: return DynamicExtractionOutcome.Unavailable("The global mode is unavailable")
         if (!urlAllowed(url)) {
             return DynamicExtractionOutcome.Failed("Refused: not a public http or https page")
         }
         val startedAt = System.currentTimeMillis()
         val provenance = com.halo.sdk.provider.RemoteDispatchContext.provenance.get()
-        val dispatchRevision = provenance?.revision ?: dispatchPolicy?.revision
+        val dispatchRevision = provenance?.revision ?: authority.revision
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { continuation ->
                 val handler = Handler(Looper.getMainLooper())
@@ -165,12 +166,11 @@ class AndroidDynamicPageExtractor(
                     if (continuation.isActive) continuation.resume(outcome)
                 }
 
-                if (dispatchPolicy != null) {
-                    lease = try {
-                        dispatchPolicy.acquire(com.halo.sdk.provider.RemoteDispatchRequest("web.public",
+                lease = try {
+                        authority.acquire(com.halo.sdk.provider.RemoteDispatchRequest("web.public",
                             com.halo.sdk.provider.RemoteOperation.WEB,
                             setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT) + provenance?.categories.orEmpty()),
-                            requireNotNull(dispatchRevision)) {
+                            dispatchRevision) {
                             continuation.cancel(CancellationException("Mode profile changed"))
                             handler.post { finish(DynamicExtractionOutcome.Failed("Mode profile changed")) }
                         }
@@ -178,8 +178,6 @@ class AndroidDynamicPageExtractor(
                         finish(DynamicExtractionOutcome.Unavailable("Rendered web reading needs Full Power with web enabled"))
                         return@suspendCancellableCoroutine
                     }
-                }
-
                 if (!continuation.isActive) {
                     finish(DynamicExtractionOutcome.Failed("Cancelled"))
                     return@suspendCancellableCoroutine
@@ -220,7 +218,7 @@ class AndroidDynamicPageExtractor(
                         request: WebResourceRequest?,
                     ): Boolean {
                         val target = request?.url?.toString() ?: return true
-                        if (runCatching { lease?.requireCurrent() }.isFailure) return true
+                        if (runCatching { requireNotNull(lease).requireCurrent() }.isFailure) return true
                         // Every navigation, including in-page redirects, re-passes the public rule.
                         if (!urlAllowed(target)) {
                             finish(DynamicExtractionOutcome.Failed("Refused: navigation left the public network"))
@@ -233,7 +231,7 @@ class AndroidDynamicPageExtractor(
                         request: WebResourceRequest?,
                     ): WebResourceResponse? {
                         val target = request?.url?.toString()
-                        if (runCatching { lease?.requireCurrent() }.isFailure) {
+                        if (runCatching { requireNotNull(lease).requireCurrent() }.isFailure) {
                             return WebResourceResponse("text/plain", "utf-8", java.io.ByteArrayInputStream(ByteArray(0)))
                         }
                         if (target != null && !resolutionAllowed(target)) {
@@ -252,7 +250,7 @@ class AndroidDynamicPageExtractor(
                     handler.post { finish(DynamicExtractionOutcome.Failed("Cancelled")) }
                 }
 
-                runCatching { lease?.requireCurrent(); view.loadUrl(url) }
+                runCatching { requireNotNull(lease).requireCurrent(); view.loadUrl(url) }
                     .onFailure { finish(DynamicExtractionOutcome.Failed("Could not load the page")) }
             }
         }

@@ -1,0 +1,13 @@
+# Active Halo goal scope
+
+Status: Active implementation. Issue #63 was explicitly added by the user on 1 November 2026; it is not implemented by this scope record.
+
+The active thread goal includes both the predictable-Halo roadmap at `docs/design/halo-zone5/ROADMAP-TO-10-2026-11-01.md` and the complete [issue #63](https://github.com/slafftrosheen/Halo/issues/63), snapshotted in [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md). Do not narrow the goal to the already completed predictable-UX fixes, change the independent scoring rubric, or treat implementation plans as finished features.
+
+The user’s latest instruction is: **“Implement 100% of code and only then ask for phone tests.”** This re-establishes a code-first gate for the newly added scope. Previously authorized and completed Samsung evidence remains historical evidence for its exact APK, not authorization or acceptance for new issue #63 code. Participant testing was separately deferred by the user until later.
+
+Issue #63 requires all workstreams: persistent organizer/calendar/tasks/reminders/alarms/timers/world clock; typed safe collector registry and real verified starter feeds; deterministic offline daily briefings; UI 5.0 first-party screens; complete configurable Halo Screen cards; independent Android launcher widget instances; canonical AI/voice tool controllability; migrations, policy enforcement, tests, assets, documentation and commits. Exactly two global execution/privacy modes, Local and Power, govern all foreground and background paths. Local performs no external network requests; switching modes cancels/prevents disallowed work. UI 5.0 supersedes UI 4.0. Reuse current owners and framework boundaries rather than introducing duplicate execution/storage paths.
+
+Current sequencing: finish and archive the already-running frozen predictable-UX full-app test run, correct its independently verified stale localization expectation, then preserve that work in a local checkpoint. Audit existing organizer, Screen, launcher widget, provider/runtime and network owners before substantial coherent implementation batches. Perform meaningful host tests at batch boundaries. Do not start new phone tests or claim the issue’s hardware-dependent acceptance before the new implementation is complete and the user authorizes that phase.
+
+The goal tool’s existing objective text is the earlier predictable-UX objective; its exposed API only changes status, not the objective text. This user-authorized scope supplement and the conversation are the current full requirements. Do not mark that earlier objective complete in order to replace it, because the original 10/10 acceptance has not been proved and issue #63 now remains required work.

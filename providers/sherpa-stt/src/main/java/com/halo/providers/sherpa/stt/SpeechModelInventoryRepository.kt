@@ -1,6 +1,7 @@
 package com.halo.providers.sherpa.stt
 
 import com.halo.sdk.runtime.HaloDispatchers
+import com.halo.sdk.provider.modelAcquisitionRevision
 import com.halo.sdk.runtime.productionHaloDispatchers
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +46,8 @@ class DefaultSpeechModelInventoryRepository(
     private val selectedProviderId: () -> String = { "AUTOMATIC" },
     private val activeProviderId: () -> String? = { null },
     private val releaseSileroVad: suspend () -> Unit = {},
-    private val allowSileroVadReload: () -> Unit = {}
+    private val allowSileroVadReload: () -> Unit = {},
+    private val dispatchPolicy: com.halo.sdk.provider.RemoteDispatchPolicy = com.halo.sdk.provider.DenyRemoteDispatchPolicy,
 ) : SpeechModelInventoryRepository {
     private val _state = MutableStateFlow(SpeechModelInventoryState())
     override val state: StateFlow<SpeechModelInventoryState> = _state
@@ -99,6 +101,7 @@ class DefaultSpeechModelInventoryRepository(
     override suspend fun installOwned(modelId: String, owner: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> =
         installWithOwner(modelId, owner, onProgress)
     private suspend fun installWithOwner(modelId: String, owner: String?, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> {
+        val revision = dispatchPolicy.modelAcquisitionRevision()
         val spec = SherpaSpeechModelCatalog.byId(modelId)
             ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
             ?: return Result.failure(IllegalArgumentException("Unknown speech model"))
@@ -106,7 +109,7 @@ class DefaultSpeechModelInventoryRepository(
             if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot()
             else File(speechRoot(), spec.directoryName)
         }
-        return SpeechModelInstaller.install(spec, destination, owner, onProgress).also {
+        return SpeechModelInstaller.install(spec, destination, owner, dispatchPolicy, revision, onProgress = onProgress).also {
             if (it.isSuccess && modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) allowSileroVadReload()
             refresh()
         }

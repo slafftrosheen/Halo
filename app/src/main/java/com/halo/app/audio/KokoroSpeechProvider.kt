@@ -49,7 +49,9 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
     private var downloadJob: Job? = null
     val downloadProgress=MutableStateFlow<Long?>(null)
     fun cancelDownload() { downloadJob?.cancel() }
-    suspend fun downloadPack(packId: String = SpeechPackRegistry.multilingual.id) = acquisitionLock.withLock {
+    private val downloadPolicy get() = (storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy ?: DenyRemoteDispatchPolicy
+    suspend fun downloadPack(packId: String = SpeechPackRegistry.multilingual.id,
+        dispatchRevision: Long = downloadPolicy.modelAcquisitionRevision()) = acquisitionLock.withLock {
         val pack = SpeechPackRegistry.candidates.single { it.id == packId && !it.experimental }
         downloadJob=currentCoroutineContext()[Job]
         mutable.value=KokoroStatus("Downloading","Downloading selected voice version…",storage.getString(VERSION))
@@ -62,7 +64,8 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             }
             downloadProgress.value=part.length()
             KokoroModelDownload.acquire(part, progress = { downloadProgress.value=it }, url=requireNotNull(pack.archiveUrl),
-                expectedBytes=requireNotNull(pack.archiveBytes), hash=requireNotNull(pack.archiveSha256))
+                expectedBytes=requireNotNull(pack.archiveBytes), hash=requireNotNull(pack.archiveSha256),
+                dispatchPolicy=downloadPolicy, expectedRevision=dispatchRevision)
             mutable.value=KokoroStatus("Loading","Installing voice…",storage.getString(VERSION))
             KokoroModelDownload.toImportZip(part,zip)
             installPack(Uri.fromFile(zip), pack.id, pack.archiveSha256)
@@ -71,7 +74,8 @@ class KokoroSpeechProvider(private val context: Context, private val storage: St
             mutable.value=KokoroStatus(if(directory()!=null) "Installed" else "Missing","Download paused",storage.getString(VERSION))
             throw cancelled
         } catch(error: Exception) {
-            mutable.value=KokoroStatus("Failed","Couldn't download voice. Retry to continue.",storage.getString(VERSION))
+            mutable.value=KokoroStatus("Failed",if (error is RemoteDispatchBlocked) MODEL_DOWNLOAD_BLOCKED_MESSAGE
+                else "Couldn't download voice. Retry to continue.",storage.getString(VERSION))
             throw error
         } finally { zip.delete(); downloadProgress.value=null; downloadJob=null }
     }

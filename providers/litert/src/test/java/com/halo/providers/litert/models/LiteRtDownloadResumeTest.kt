@@ -301,6 +301,7 @@ class LiteRtDownloadResumeTest {
             modelRoot = root,
             downloader = downloader(),
             catalog = listOf(LiteRtModelCatalog.GEMMA3_1B_IT_INT4),
+            dispatchPolicy = TestDownloadPolicy,
         )
 
         manager.downloadCatalogModel(LiteRtModelCatalog.GEMMA3_1B_IT_INT4)
@@ -316,7 +317,7 @@ class LiteRtDownloadResumeTest {
     @Test fun `inventory refresh preserves failures while different gated requests update concurrently`() = runBlocking {
         val models = listOf(LiteRtModelCatalog.GEMMA3_1B_IT_INT4, LiteRtModelCatalog.GEMMA3N_E2B, LiteRtModelCatalog.GEMMA3N_E4B)
         val manager = LiteRtModelManager(context, modelRoot = tempRoot("concurrent-gates"),
-            downloader = downloader(), catalog = models)
+            downloader = downloader(), catalog = models, dispatchPolicy = TestDownloadPolicy)
         val writers = models.map { model -> async(kotlinx.coroutines.Dispatchers.Default) {
             repeat(40) { manager.downloadCatalogModel(model) }
         } }
@@ -339,6 +340,7 @@ class LiteRtDownloadResumeTest {
         modelRoot = root,
         downloader = downloader,
         catalog = listOf(catalogEntry()),
+        dispatchPolicy = TestDownloadPolicy,
     )
 
     private fun writePartial(root: File, bytes: Int) {

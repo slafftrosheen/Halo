@@ -1,0 +1,49 @@
+{
+  "scope": "Source after main Kotlin compile and jar bundling completed, before next corrective edits. Pending test run uses these bundled classes.",
+  "sources": [
+    {
+      "file": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "ed4e4bc5a70bc19eb878883aeb7ffbba45e38466200c2701faba1e97888b4df8"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/OrganizerCodec.kt",
+      "sha256": "ddab94b0ab2bbeb82cc9584811fe884b58b78698cc4a7b2b87ff317785922918"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/OrganizerEntities.kt",
+      "sha256": "ecdf853a62d67d2acfa78d0f883d72b4c2f86b7089f61fdd3ac43569ad30d71a"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/RoomOrganizerRepository.kt",
+      "sha256": "2d19f8b77f917e3f0a2b3dce8a27128e18e719773c96a635ccf79c052969feb2"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerIcs.kt",
+      "sha256": "be2e307678d8c04f8cbf8c489bb2c1725a5984cfc0a99e0b87bb3a12585034ac"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerModels.kt",
+      "sha256": "c25f8d3e4d9b14a45012de7e7254a704bc3f05fb60bdbb7a4cc9e1db8e4411f2"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerRecurrence.kt",
+      "sha256": "39f74c664cd5b52c9ef75bf9be157735e819c67e381c03fc956515a720720df7"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerUseCases.kt",
+      "sha256": "477580d1f764a0a2e73baee4e9cb4891b1bf7b1a6a22c6273736dedff64896f5"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/data/everyday/OrganizerPersistenceTest.kt",
+      "sha256": "19bfe92b886cc8a798b94be27114a2206e2898825be95eeb45393cdaca85f74a"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerIcsTest.kt",
+      "sha256": "bdabcb42ae1d378665d41db4086f0b62bfb23da8a289fcd36499364712317eb9"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerRecurrenceTest.kt",
+      "sha256": "1444c3f7f7dc4fe1a345e3424d2511a9007203a0e3b53d9e56c74189bf3b3cc4"
+    }
+  ]
+}

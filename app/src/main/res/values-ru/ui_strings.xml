@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ui_3a78695388b3" formatted="false">"Главная"</string>
+    <string name="ui_70b3f6472ef7" formatted="false">"Загрузка приостановлена из-за общего режима или семейных настроек. Включите Power, разрешите загрузки и начните загрузку снова. Установленные модели и импорт файлов по-прежнему доступны."</string>
+    <string name="ui_a5e3318a5b6d" formatted="false">"Android не смог поставить загрузку в очередь. Откройте halo снова и выберите «Продолжить»."</string>
     <string name="ui_1b07a29c6dc3" formatted="false">"Проверь фото задания"</string>
     <string name="ui_cb90ff065653" formatted="false">"Убедись, что всё задание хорошо видно. Фото добавится к уроку только после нажатия «Использовать»."</string>
     <string name="ui_b29199652039" formatted="false">"Использовать"</string>

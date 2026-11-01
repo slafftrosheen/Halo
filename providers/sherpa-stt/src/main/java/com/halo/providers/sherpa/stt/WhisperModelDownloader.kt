@@ -2,8 +2,13 @@ package com.halo.providers.sherpa.stt
 
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
+import com.halo.sdk.provider.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
@@ -61,7 +66,10 @@ object SpeechModelInstaller {
         } else SherpaSpeechModelCatalog.validFile(destination, spec, file)
 
     suspend fun install(spec: SherpaSpeechModelCatalog.ModelSpec, destination: File,
-        acquisitionOwner: String? = null, onProgress: (SpeechModelDownloadProgress) -> Unit = {}): Result<Unit> = withContext(Dispatchers.IO) { withTransferMutation(destination) {
+        acquisitionOwner: String? = null, dispatchPolicy: RemoteDispatchPolicy = DenyRemoteDispatchPolicy,
+        expectedRevision: Long = dispatchPolicy.modelAcquisitionRevision(),
+        transferClient: OkHttpClient? = null,
+        onProgress: (SpeechModelDownloadProgress) -> Unit = {}): Result<Unit> = withContext(Dispatchers.IO) { withTransferMutation(destination) {
         try {
             acquisitionOwner?.let { require(java.util.UUID.fromString(it).toString() == it) }
             check(destination.isDirectory || destination.mkdirs()) { "Unable to create model directory" }
@@ -73,6 +81,8 @@ object SpeechModelInstaller {
                 "Not enough storage. Need ${requiredBytes / 1_000_000} MB including publication space and safety reserve; available ${destination.usableSpace / 1_000_000} MB."
             }
             var downloaded = 0L
+            val client = transferClient ?: OkHttpClient.Builder().connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS).build().withModelDownloadPolicy(dispatchPolicy)
             for (file in spec.files) {
                 coroutineContext.ensureActive()
                 if(physicalFileMatches(spec, destination, file) { downloadContext.ensureActive() }) {
@@ -95,21 +105,28 @@ object SpeechModelInstaller {
                 } else partialReceipt.writeText(identity!!)
                 if(file.expectedBytes > 0 && partial.length() > file.expectedBytes) partial.delete()
                 val prefix=partial.length()
-                val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 30_000; readTimeout = 15_000; instanceFollowRedirects = true
-                    setRequestProperty("Accept-Encoding","identity")
-                    if(prefix>0 && prefix<file.expectedBytes) setRequestProperty("Range","bytes=$prefix-")
+                var call: okhttp3.Call? = null
+                var response: okhttp3.Response? = null
+                val watcher = CoroutineScope(downloadContext).launch(start = CoroutineStart.UNDISPATCHED) {
+                    try { awaitCancellation() } finally { call?.cancel() }
                 }
                 try {
                     if(partial.length()!=file.expectedBytes || file.expectedBytes<=0) {
-                        val code=connection.responseCode
+                        downloadContext.ensureActive()
+                        val activeCall = client.newCall(Request.Builder().url(url).header("Accept-Encoding", "identity")
+                            .tag(RemoteRequestRevision::class.java, RemoteRequestRevision(expectedRevision))
+                            .apply { if (prefix > 0 && prefix < file.expectedBytes) header("Range", "bytes=$prefix-") }.build())
+                        call = activeCall
+                        downloadContext.ensureActive()
+                        response = activeCall.execute()
+                        val code=response.code
                         check(code==200 || code==206) { "HTTP $code downloading ${file.name}" }
-                        val append=code==206 && prefix>0 && connection.getHeaderField("Content-Range")
+                        val append=code==206 && prefix>0 && response.header("Content-Range")
                             ?.startsWith("bytes $prefix-")==true
                         check(code!=206 || append) { "Unexpected partial model response" }
                         val completedBeforeFile=downloaded
                         var bytes=if(append) prefix else 0L
-                        connection.inputStream.use { input -> java.io.FileOutputStream(partial,append).use { output ->
+                        requireNotNull(response.body).byteStream().use { input -> java.io.FileOutputStream(partial,append).use { output ->
                             val buffer=ByteArray(65536)
                             while(true) { downloadContext.ensureActive(); val n=input.read(buffer); if(n<0) break
                                 bytes+=n; check(file.expectedBytes<=0 || bytes<=file.expectedBytes) { "Model exceeds expected size" }
@@ -126,7 +143,7 @@ object SpeechModelInstaller {
                         is SherpaModelInstaller.Result.Rejected -> { if (acquisitionOwner == null || publicationOwner != null) { partial.delete(); partialReceipt.delete() }; throw IOException(result.reason) }
                         is SherpaModelInstaller.Result.Installed -> { downloaded+=result.file.length(); partial.delete(); partialReceipt.delete() }
                     }
-                } finally { connection.disconnect() }
+                } finally { response?.close(); call?.cancel(); watcher.cancel() }
             }
             check(SherpaSpeechModelCatalog.isInstalled(destination, spec)) { "Model installation incomplete" }
             onProgress(SpeechModelDownloadProgress(spec.expectedBytes, spec.expectedBytes, "Complete"))

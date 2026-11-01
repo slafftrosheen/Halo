@@ -37,7 +37,8 @@ class HaloApplication :
     Application.ActivityLifecycleCallbacks,
     Configuration.Provider,
     com.halo.host.android.device.CompanionPresenceOwner,
-    com.halo.app.notification.NotificationBridgeOwner {
+    com.halo.app.notification.NotificationBridgeOwner,
+    com.halo.sdk.provider.RemoteDispatchPolicySource {
 
     private val resourceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var visibleActivities = 0
@@ -45,6 +46,17 @@ class HaloApplication :
     private lateinit var storageBootstrap: Deferred<Unit>
     private lateinit var automationBootstrap: Deferred<Unit>
     override val notificationBridge get() = ManualDependencyGraph.notificationBridge
+    override val remoteDispatchPolicy get() = if (isModelBenchProcess()) com.halo.sdk.provider.DenyRemoteDispatchPolicy
+        else ManualDependencyGraph.remoteDispatchPolicy
+    override suspend fun awaitRemoteDispatchPolicy(): com.halo.sdk.provider.RemoteDispatchPolicy {
+        if (isModelBenchProcess()) return com.halo.sdk.provider.DenyRemoteDispatchPolicy
+        storageBootstrap.await()
+        val kids = ManualDependencyGraph.kidsPreferences
+        kids.getEnabled()
+        return ManualDependencyGraph.remoteDispatchPolicy.also {
+            it.reconcileFamilyAuthority(kids.loadedState.value, kids.enabled.value, kids.cloudAllowed.value)
+        }
+    }
     suspend fun awaitAutomationBootstrap() { automationBootstrap.await() }
 
     private val governor

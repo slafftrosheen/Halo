@@ -31,6 +31,13 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class LiteRtModelDownloaderTest {
+    @Test fun `missing download authority sends no bytes`() = runBlocking {
+        val result = OkHttpLiteRtModelDownloader(resolveUrl = { server.url("/model").toString() })
+            .download(artifact(), partFile(), {})
+        assertTrue(result is DownloadResult.Failure)
+        assertEquals(ModelDownloadFailure.MODE_BLOCKED, (result as DownloadResult.Failure).kind)
+        assertEquals(0, server.requestCount)
+    }
 
     private lateinit var server: MockWebServer
     private lateinit var client: OkHttpClient
@@ -272,6 +279,7 @@ class LiteRtModelDownloaderTest {
             modelRoot = root,
             downloader = downloader(),
             catalog = entries,
+            dispatchPolicy = TestDownloadPolicy,
         )
 
     private fun downloader() = OkHttpLiteRtModelDownloader(

@@ -74,6 +74,7 @@ fun SpeechRecognitionSettingsScreen(
 ) {
     SettingsChildZone("Listening", onBack)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val downloadsAllowed = modelDownloadsAllowed()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = androidx.compose.ui.platform.LocalContext.current
     val microphonePermission = androidx.activity.compose.rememberLauncherForActivityResult(
@@ -179,7 +180,7 @@ fun SpeechRecognitionSettingsScreen(
                     }
                     HaloWorkspaceButton(text = uiText(if (installed) "Select" else "Download"), onClick = {
                         if (installed) viewModel.selectModel(spec.providerId) else viewModel.installModel(spec.id)
-                    }, enabled = compatible && !selected && !uiState.isDownloading && !uiState.isTesting)
+                    }, enabled = compatible && !selected && !uiState.isDownloading && !uiState.isTesting && (installed || downloadsAllowed))
                     if (installed) TextButton(onClick = { removeDownload = spec.id },
                         enabled = !selected && uiState.selectedModelName != spec.displayName && !uiState.isTesting && !uiState.isDownloading) { Text(uiText("Remove download")) }
                 }
@@ -188,11 +189,14 @@ fun SpeechRecognitionSettingsScreen(
         HaloSettingsSection(title = uiText("Hands-free listening")) {
             Text(uiText(if (uiState.sileroInstalled) "Hands-free support downloaded" else "Basic listening available"))
             if (!uiState.sileroInstalled) HaloWorkspaceButton(text = uiText("Download hands-free support"),
-                onClick = { viewModel.installModel("silero-vad") }, enabled = !uiState.isDownloading && !uiState.isTesting)
+                onClick = { viewModel.installModel("silero-vad") }, enabled = !uiState.isDownloading && !uiState.isTesting && downloadsAllowed)
             else TextButton(onClick = { removeVad = true }, enabled = !uiState.isDownloading && !uiState.isTesting) { Text(uiText("Remove hands-free support")) }
             if (uiState.downloadingModelId == "silero-vad") HaloProgressPresentation(uiText(if (uiState.verifying) "Verifying" else "Downloading"), completed = if (uiState.verifying) null else uiState.downloadedBytes, total = uiState.expectedBytes)
         }
-        uiState.downloadError?.let { HaloFeedbackSurface(uiText("Download or removal did not finish"), uiText("Check storage and your connection, then retry. The selected model is shown above."), kind = HaloFeedbackKind.FAILURE) }
+        ModelDownloadPolicyNotice(downloadsAllowed)
+        uiState.downloadError?.let { HaloFeedbackSurface(uiText("Download or removal did not finish"),
+            uiText(if (it == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE) it
+                else "Check storage and your connection, then retry. The selected model is shown above."), kind = HaloFeedbackKind.FAILURE) }
         HaloSettingsSection(title = uiText("Try listening")) {
             Text(uiText("Say a short sentence. It stays on this phone and does not start an action."))
             HaloFocusAction(text = uiText(if (uiState.testRecording) "Finish capture" else if (uiState.isTesting) "Recognizing…" else "Try listening"), glyph = HaloGlyph.SPEAK,

@@ -3,6 +3,7 @@ package com.halo.app.audio
 import android.content.Context
 import android.net.Uri
 import com.halo.sdk.runtime.Storage
+import com.halo.sdk.provider.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -153,7 +154,9 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
     /** The official publisher archive is pinned to its published bytes and SHA-256.
      * A successful download installs, but never selects or qualifies a voice.
      */
-    suspend fun downloadOfficial(acquisitionOwner: String? = null): String = acquisitionLock.withLock {
+    private val downloadPolicy get() = (storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy ?: DenyRemoteDispatchPolicy
+    suspend fun downloadOfficial(acquisitionOwner: String? = null,
+        dispatchRevision: Long = downloadPolicy.modelAcquisitionRevision()): String = acquisitionLock.withLock {
         acquisitionOwner?.let(::requireOwner)
         downloadJob=currentCoroutineContext()[Job]
         val part=File(root,"official-"+OFFICIAL_SHA256+".tar.bz2.part")
@@ -170,7 +173,8 @@ class SupertonicPackStore(private val context: Context, private val storage: Sto
                 downloadMutable.value=part.length()
             }
             KokoroModelDownload.acquire(part,progress={ downloadMutable.value=it },
-                url=OFFICIAL_URL,expectedBytes=OFFICIAL_BYTES,hash=OFFICIAL_SHA256)
+                url=OFFICIAL_URL,expectedBytes=OFFICIAL_BYTES,hash=OFFICIAL_SHA256,
+                dispatchPolicy=downloadPolicy,expectedRevision=dispatchRevision)
             val selected=importArchiveVerified(Uri.fromFile(part), publicationOwner, officialArchiveVerified = true)
             withContext(Dispatchers.IO) { part.delete(); ownership.delete() }
             selected

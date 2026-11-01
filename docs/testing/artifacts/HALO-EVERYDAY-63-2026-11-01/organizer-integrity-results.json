@@ -1,0 +1,11 @@
+{
+  "scope": "Organizer source in organizer-integrity-source.json. Latest fixed-offset/reference/duplicate ICS corrections and collector files were authored after main compilation and are excluded. No UI/OS/phone acceptance.",
+  "counts": {
+    "tests": 40,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": 4,
+  "gradle": "BUILD SUCCESSFUL in 8m 6s"
+}

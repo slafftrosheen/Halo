@@ -1,6 +1,7 @@
 package com.halo.app.audio
 
 import kotlinx.coroutines.*
+import com.halo.sdk.provider.*
 import okhttp3.*
 import java.io.File
 import java.security.MessageDigest
@@ -23,7 +24,10 @@ object KokoroModelDownload {
     const val URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-en-v0_19.tar.bz2"
     private val client = OkHttpClient.Builder().connectTimeout(30,TimeUnit.SECONDS).readTimeout(60,TimeUnit.SECONDS).build()
     suspend fun acquire(part: File, progress: (Long) -> Unit, url: String = URL,
-        expectedBytes: Long = BYTES, hash: String = HASH): File = withContext(Dispatchers.IO) {
+        expectedBytes: Long = BYTES, hash: String = HASH,
+        dispatchPolicy: RemoteDispatchPolicy = DenyRemoteDispatchPolicy,
+        expectedRevision: Long = dispatchPolicy.modelAcquisitionRevision(),
+        transferClient: OkHttpClient? = null): File = withContext(Dispatchers.IO) {
         part.parentFile?.mkdirs()
         if (part.length() > expectedBytes) part.delete()
         if(part.length()==expectedBytes) {
@@ -33,7 +37,8 @@ object KokoroModelDownload {
             part.delete()
         }
         var offset = part.length()
-        val call = client.newCall(Request.Builder().url(url).header("Accept-Encoding","identity")
+        val call = (transferClient ?: client.withModelDownloadPolicy(dispatchPolicy)).newCall(Request.Builder().url(url).header("Accept-Encoding","identity")
+            .tag(RemoteRequestRevision::class.java, RemoteRequestRevision(expectedRevision))
             .apply { if(offset > 0) header("Range","bytes=$offset-") }.build())
         val response = suspendCancellableCoroutine<Response> { continuation ->
             continuation.invokeOnCancellation { call.cancel() }

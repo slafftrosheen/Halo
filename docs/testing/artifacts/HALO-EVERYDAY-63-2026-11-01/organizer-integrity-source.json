@@ -1,0 +1,53 @@
+{
+  "scope": "Organizer source after main Kotlin compile/jar bundling before additional ICS corrections. Collector files added while this run was active are excluded.",
+  "sources": [
+    {
+      "file": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "ed4e4bc5a70bc19eb878883aeb7ffbba45e38466200c2701faba1e97888b4df8"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/OrganizerCodec.kt",
+      "sha256": "c8277d3e57a252f9e6a08f73d11f0674b4ddec8374930dfe11e19f26bdf076c9"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/OrganizerEntities.kt",
+      "sha256": "ecdf853a62d67d2acfa78d0f883d72b4c2f86b7089f61fdd3ac43569ad30d71a"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/RoomOrganizerRepository.kt",
+      "sha256": "c3cc85cc787b1b121e3f7426ff4db48a38d70f33e0131cb6e9e983d1b5691842"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/IcsTimeZones.kt",
+      "sha256": "b6fda2ffcaa829bc32e2d51daf68472ff1f15da4ddd7a1285c15869b044737ea"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerIcs.kt",
+      "sha256": "c68e47e2b887d16c37a6ca622dd9eeb30e988ee76d1825f0ad65b8e3efdb7163"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerModels.kt",
+      "sha256": "898a4faea735f1de6eec72a0fb73915a9fb21e6f07e96e40c773100cf75f6fa7"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerRecurrence.kt",
+      "sha256": "b3f2d61f8d4997b9eaca01211e1345de363447af4417febc8f923c0002799457"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerUseCases.kt",
+      "sha256": "7250802562b34382112b185bb2b69f10f7c011e27e9309276ec3a67617572391"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/data/everyday/OrganizerPersistenceTest.kt",
+      "sha256": "fd7c389ece8649492e92fd46c67408fc9bb76aa6339b47d9643a02a9ad2feeaf"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerIcsTest.kt",
+      "sha256": "353badce236375625eff1ff904046172eaf3e104d34000c0665529912f341e28"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerRecurrenceTest.kt",
+      "sha256": "3bfbb020daf292683ab5356e3783cb8086915668723e7f081e144b686c85b431"
+    }
+  ]
+}

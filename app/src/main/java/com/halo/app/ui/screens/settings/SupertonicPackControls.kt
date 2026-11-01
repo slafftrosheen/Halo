@@ -33,6 +33,7 @@ internal fun SupertonicPackControls(
     val progress by provider.packs.downloadProgress.collectAsState()
     val test by output.outputTest.collectAsState()
     val scope=rememberCoroutineScope()
+    val downloadsAllowed = modelDownloadsAllowed()
     var installed by remember { mutableStateOf(emptyList<SupertonicInstalledPack>()) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -49,7 +50,8 @@ internal fun SupertonicPackControls(
             busy=true; error=null
             try { task(); installed=provider.installedPacks() }
             catch(cancelled: CancellationException) { throw cancelled }
-            catch(e: Exception) { error=e.message ?: "Supertonic operation failed" }
+            catch(e: Exception) { error=if (e is com.halo.sdk.provider.RemoteDispatchBlocked)
+                com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE else e.message ?: "Supertonic operation failed" }
             finally { busy=false }
         }
     }
@@ -57,9 +59,10 @@ internal fun SupertonicPackControls(
         if(uri!=null) action { provider.importPack(uri) }
     }
     Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        ModelDownloadPolicyNotice(downloadsAllowed)
         Text(uiText("Download natural voices, then listen to a preview before using them."),
             style=MaterialTheme.typography.bodySmall)
-        Button(enabled=!busy && !testBusy,onClick={action { provider.packs.downloadOfficial() }}) {
+        Button(enabled=!busy && !testBusy && downloadsAllowed,onClick={action { provider.packs.downloadOfficial() }}) {
             Text(uiText("Download natural voices"))
         }
         progress?.let { bytes ->
@@ -198,6 +201,7 @@ internal fun SupertonicPackControls(
             }
         }
         state.message?.let { Text(uiText(it),style=MaterialTheme.typography.bodySmall) }
-        error?.let { Text(if (technical) it else uiText("Voice operation failed. Previous selection is preserved."),color=MaterialTheme.colorScheme.error) }
+        error?.let { Text(if (it == com.halo.sdk.provider.MODEL_DOWNLOAD_BLOCKED_MESSAGE) uiText(it)
+            else if (technical) it else uiText("Voice operation failed. Previous selection is preserved."),color=MaterialTheme.colorScheme.error) }
     }
 }

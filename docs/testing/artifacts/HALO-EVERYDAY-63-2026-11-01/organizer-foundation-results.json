@@ -1,0 +1,48 @@
+{
+  "scope": "Initial organizer foundation, 16 domain/persistence cases and 3 current-schema migration cases. ICS was authored after compilation began and is excluded. New independent findings are pending correction; this is not feature completion.",
+  "counts": {
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": 3,
+  "sources": [
+    {
+      "file": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "ed4e4bc5a70bc19eb878883aeb7ffbba45e38466200c2701faba1e97888b4df8"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/OrganizerCodec.kt",
+      "sha256": "ddab94b0ab2bbeb82cc9584811fe884b58b78698cc4a7b2b87ff317785922918"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/OrganizerEntities.kt",
+      "sha256": "21bc149b2eb9fda297675ece89ac2baeb77071f8ac1327f5a3925a5f7f63ed9d"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/data/everyday/RoomOrganizerRepository.kt",
+      "sha256": "ecc45a668dccae4c824256104e6738ffe928fd87cc0047007582bbd063045898"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerModels.kt",
+      "sha256": "f48d8fed760ad8547349e450a981021da15484c835951e0606fb2f196999ff1b"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerRecurrence.kt",
+      "sha256": "5e24911f3f8d2a8fb6777e4d00872e6d50092aab01ebe49c8633ad6e5ae43b00"
+    },
+    {
+      "file": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerUseCases.kt",
+      "sha256": "e63882c1bca5398e3f7ed33c4c2e682cee627eed3e9dc6388b23783e36665c45"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/data/everyday/OrganizerPersistenceTest.kt",
+      "sha256": "38fbaeabf1f412e82494053e009a7471e884f052a8af87a4b31f1453c0a91965"
+    },
+    {
+      "file": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerRecurrenceTest.kt",
+      "sha256": "266190ff3bdad009fab3f61100d4961704b0a827719c5f440cbcf69718f1d29d"
+    }
+  ]
+}

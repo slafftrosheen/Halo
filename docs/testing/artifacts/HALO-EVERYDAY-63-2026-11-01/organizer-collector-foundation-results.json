@@ -1,0 +1,57 @@
+{
+  "completedUtc": "2026-11-01T18:34:42.518866+00:00",
+  "outcome": "BUILD SUCCESSFUL",
+  "duration": "13m 53s",
+  "tests": 50,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "10.807",
+      "timestamp": "2026-11-01T18:34:00.350Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "9.351",
+      "timestamp": "2026-11-01T18:34:11.340Z"
+    },
+    {
+      "name": "com.halo.app.everyday.collectors.CollectorParsingTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.436",
+      "timestamp": "2026-11-01T18:34:20.704Z"
+    },
+    {
+      "name": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.523",
+      "timestamp": "2026-11-01T18:34:21.155Z"
+    },
+    {
+      "name": "com.halo.app.everyday.organizer.OrganizerRecurrenceTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.049",
+      "timestamp": "2026-11-01T18:34:21.692Z"
+    }
+  ],
+  "scope": "Organizer recurrence, persistence, ICS, collector parsing and migration only. Source manifest is the pre-network-policy production snapshot; subsequent policy/URL delegation changes are not verified by this run."
+}
