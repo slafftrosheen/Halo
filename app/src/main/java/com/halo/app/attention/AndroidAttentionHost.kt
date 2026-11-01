@@ -65,6 +65,7 @@ class AndroidAttentionHost(
         channel == DeliveryChannel.AndroidNotification || channel == DeliveryChannel.PhoneSpeech || channel is DeliveryChannel.WearableSpeech
 
     override suspend fun deliver(request: AttentionRequest, channel: DeliveryChannel): AttentionSinkResult {
+        if (!briefStillAllowed(request)) return AttentionSinkResult(false, "Brief settings or availability changed")
         val text = request.text()
         return when (channel) {
             DeliveryChannel.InApp -> {
@@ -81,7 +82,13 @@ class AndroidAttentionHost(
                     return AttentionSinkResult(false, "Notification channel disabled")
                 val notification = android.app.Notification.Builder(context, "halo_attention")
                     .setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("Halo")
-                    .setContentText(text).setStyle(android.app.Notification.BigTextStyle().bigText(text)).setAutoCancel(true).build()
+                    .setContentText(text).setStyle(android.app.Notification.BigTextStyle().bigText(text)).setAutoCancel(true)
+                    .apply {
+                        if (request.source == AttentionSource.Routine && request.id.value.matches(Regex("everyday-brief:[a-f0-9]{64}"))) {
+                            setContentIntent(com.halo.app.ui.mini.MiniHaloEntry.pending(context, 8110, "everyday_brief"))
+                            setVisibility(android.app.Notification.VISIBILITY_PRIVATE)
+                        }
+                    }.build()
                 notifications.notify(request.id.value, 0, notification)
                 AttentionSinkResult(true, "Accepted by Android NotificationManager")
             }
@@ -111,6 +118,7 @@ class AndroidAttentionHost(
         }
     }
     suspend fun surfaceSilently(request: AttentionRequest, surface: SilentSurface): Boolean {
+        if (!briefStillAllowed(request)) return false
         // Inbox/Home projections already exist durably; do not emit a conversational response or speech.
         if(request.source == AttentionSource.PersonalSuggestion && surface in setOf(SilentSurface.NOTEBOOK_INBOX,SilentSurface.HOME_PENDING)) return true
         if (surface != SilentSurface.ACTIVITY) return false
@@ -120,6 +128,13 @@ class AndroidAttentionHost(
     private suspend fun surface(request: AttentionRequest) {
         eventBus.publish(AssistantResponsePublished(text = request.text(), delivery = ResponseDelivery.VISUAL_ONLY,
             transactionId = request.interactionId?.value ?: "attention:${request.id.value}"))
+    }
+    private suspend fun briefStillAllowed(request: AttentionRequest): Boolean {
+        if (request.source != AttentionSource.Routine || !request.id.value.matches(Regex("everyday-brief:[a-f0-9]{64}"))) return true
+        val graph = com.halo.app.di.ManualDependencyGraph
+        return com.halo.app.everyday.briefing.BriefNoticeAuthority(graph.briefRepository::settings,
+            { id -> graph.briefService.visible(id) != null })
+            .allowed(request.id.value.removePrefix("everyday-brief:"), request.expiresAt)
     }
     private fun AttentionRequest.text(): String = when (val intent = deliveryIntent) {
         is DeliveryIntent.Inform -> "${intent.content.title}: ${intent.content.body}"

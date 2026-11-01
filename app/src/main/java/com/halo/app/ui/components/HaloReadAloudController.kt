@@ -20,6 +20,8 @@ data class ReadAloudState(
     val range: IntRange? = null,
     val notice: String? = null,
     val limited: Boolean = false,
+    val remoteProvenance: com.halo.sdk.provider.RemoteDispatchProvenance? = null,
+    val sessionToken: String = UUID.randomUUID().toString(),
 ) {
     val current: String get() = sentences.getOrNull(index).orEmpty()
 }
@@ -36,6 +38,7 @@ class HaloReadAloudController(
     private val storage: Storage,
 ) {
     private val mutable = MutableStateFlow<ReadAloudState?>(null)
+    private var sentenceAllowed: suspend () -> Boolean = { true }
     val state = mutable.asStateFlow()
     private val rate = MutableStateFlow(storage.getString("read_aloud_speed")?.toDoubleOrNull()
         ?.takeIf { it in listOf(.75, 1.0, 1.25, 1.5) } ?: 1.0)
@@ -147,19 +150,28 @@ class HaloReadAloudController(
         } }
     }
 
-    fun start(id: String, text: String, providerId: String, cloudApproved: Boolean, language: String?) {
+    fun start(id: String, text: String, providerId: String, cloudApproved: Boolean, language: String?,
+        remoteProvenance: com.halo.sdk.provider.RemoteDispatchProvenance? = null,
+        beforeSentence: suspend () -> Boolean = { true }): String {
+        val sessionToken = UUID.randomUUID().toString()
         scope.launch(Dispatchers.Main.immediate) {
             acceptedStop = VoiceFieldCancellation.epoch.value
             cancelAudio()
+            sentenceAllowed = beforeSentence
             val parts = SentenceSegmenter.ranges(text)
             val sentences = parts.map { it.text }
             if (sentences.isEmpty()) return@launch
             mutable.value = ReadAloudState(id, sentences, providerId, cloudApproved, language, speed = rate.value,
-                limited = (parts.lastOrNull()?.end ?: 0) < text.trimEnd().length)
+                limited = (parts.lastOrNull()?.end ?: 0) < text.trimEnd().length, remoteProvenance = remoteProvenance, sessionToken = sessionToken)
             speak()
         }
+        return sessionToken
     }
     fun stop() { scope.launch(Dispatchers.Main.immediate) { cancelAudio(); mutable.value = null } }
+    /** Ownership is checked on the same dispatcher as cancellation, including a replay of the same document. */
+    fun stopSession(expectedToken: String) { scope.launch(Dispatchers.Main.immediate) {
+        if (mutable.value?.sessionToken == expectedToken) { cancelAudio(); mutable.value = null }
+    } }
     fun toggle() { scope.launch(Dispatchers.Main.immediate) {
         val current = state.value ?: return@launch
         if (current.playing || current.preparing) {
@@ -210,13 +222,24 @@ class HaloReadAloudController(
         mutable.value = current.copy(preparing = true, playing = false, range = null, notice = null)
         publishing = scope.launch(Dispatchers.Main.immediate) {
             try {
+                val permitted = withContext(Dispatchers.IO) { sentenceAllowed() }
+                ensureActive()
+                if (transaction != tx || state.value?.id != current.id) return@launch
+                if (!permitted) {
+                    transaction = null
+                    mutable.value = current.copy(preparing = false, playing = false, range = null,
+                        notice = "The available content changed. Choose Read aloud again.")
+                    return@launch
+                }
                 startSpeaker()
                 ensureActive()
                 if (transaction != tx || state.value?.id != current.id) return@launch
                 bus.publish(TtsRequested(text = current.current, transactionId = tx,
                     target = SpeechOutputTarget.HostDefault, fallback = SpeechOutputFallback.DISALLOW_PHONE,
                     language = current.language, speechRate = current.speed,
-                    requiredProviderId = current.providerId, localOnly = !current.cloudApproved))
+                    requiredProviderId = current.providerId, localOnly = !current.cloudApproved,
+                    remoteDataCategories = current.remoteProvenance?.categories?.map { it.name }?.toSet(),
+                    remoteDispatchRevision = current.remoteProvenance?.revision))
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 if (transaction == tx) {

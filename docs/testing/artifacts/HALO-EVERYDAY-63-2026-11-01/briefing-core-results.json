@@ -1,0 +1,10 @@
+{
+  "outcome": "BUILD FAILED in 7m 11s",
+  "sourceFilesMatched": 72,
+  "tests": "NOT_RUN",
+  "scope": "Production Kotlin and Room generation completed; test compilation failed at EverydayBriefTest recursive inferred field type. No JUnit results are attributed to this run.",
+  "generatedSchema": {
+    "path": "app/schemas/com.halo.app.data.AppDatabase/34.json",
+    "sha256": "e5a5d4dece6f2e5cbdca51a1b2e06b49c86fae3cd28a76dbc024fc0bf649c76b"
+  }
+}

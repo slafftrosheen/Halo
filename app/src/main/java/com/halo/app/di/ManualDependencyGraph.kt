@@ -175,6 +175,58 @@ object ManualDependencyGraph {
     val collectorCoordinator: com.halo.app.everyday.collectors.CollectorCoordinator get() = collectorCoordinatorOwner.value
     val collectorBootstrap by lazy { com.halo.app.everyday.collectors.android.CollectorBootstrap(applicationContext, collectorRepository) }
     val collectorPreview by lazy { com.halo.app.everyday.collectors.CollectorPreview(collectorRepository, collectorRegistry, remoteDispatchPolicy) }
+    val offlineCities: com.halo.app.everyday.collectors.OfflineCityCatalogue by lazy {
+        com.halo.app.everyday.collectors.OfflineCityCatalogue { applicationContext.assets.open("everyday/everyday-cities.bin") }
+    }
+    val worldClocks: com.halo.app.data.everyday.RoomWorldClockRepository by lazy {
+        com.halo.app.data.everyday.RoomWorldClockRepository(appDatabase)
+    }
+    val briefRepository: com.halo.app.data.everyday.RoomBriefRepository by lazy {
+        com.halo.app.data.everyday.RoomBriefRepository(appDatabase, settingsChanged = {
+            infra.scope.launch { com.halo.app.everyday.briefing.android.BriefWorker.maintain(applicationContext, briefRepository.settings().proactive) }
+        })
+    }
+    private fun briefAttention(): com.halo.app.daily.DailyAssistantSnapshot =
+        if (dailyAssistantControllerOwner.isInitialized()) dailyAssistantControllerOwner.value.recentBase()
+        else com.halo.app.daily.DailyAssistantSnapshot()
+    private val briefLocalAuthority: com.halo.app.everyday.briefing.BriefLocalAuthority by lazy {
+        com.halo.app.everyday.briefing.BriefLocalAuthority(applicationContext, appDatabase, storage,
+            ::currentTimelineEvents, { briefAttention().items.map { it.id }.toSet() })
+    }
+    val briefService: com.halo.app.everyday.briefing.EverydayBriefService by lazy {
+        com.halo.app.everyday.briefing.EverydayBriefService(briefRepository, collectorRepository, organizerRepository,
+            attention = { briefAttention() }, audience = {
+                if (!kidsPreferences.loadedState.value || kidsPreferences.enabled.value) com.halo.app.everyday.briefing.BriefAudience.KIDS
+                else com.halo.app.everyday.briefing.BriefAudience.EVERYDAY
+            }, childLocalFactIds = briefLocalAuthority::childFactIds, localFactStillExists = briefLocalAuthority::stillExists,
+            contentChanges = kotlinx.coroutines.flow.combine(briefLocalAuthority.changes(), kidsPreferences.enabled,
+                kidsPreferences.loadedState, privacyModes.profileChanges) { _, _, _, _ -> Unit })
+    }
+    val briefReadAloud: com.halo.app.everyday.briefing.BriefReadAloud by lazy {
+        com.halo.app.everyday.briefing.BriefReadAloud(briefService, readAloud, remoteDispatchPolicy,
+            { speechSynthesisRegistry.selector.ttsSelection.value.id }, { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD },
+            { applicationContext.resources.configuration.locales[0] }, infra.scope)
+    }
+    val briefProactive: com.halo.app.everyday.briefing.BriefProactiveCoordinator by lazy {
+        com.halo.app.everyday.briefing.BriefProactiveCoordinator(briefRepository, briefService, deliver = { document ->
+            val language = applicationContext.resources.configuration.locales[0]
+            val presentation = com.halo.app.everyday.briefing.BriefPresentation
+            attentionController.submit(com.halo.runtime.cognition.attention.AttentionRequest(
+                id = com.halo.runtime.cognition.attention.AttentionRequestId("everyday-brief:${document.id}"),
+                source = com.halo.runtime.cognition.attention.AttentionSource.Routine,
+                deliveryIntent = com.halo.runtime.cognition.attention.DeliveryIntent.Inform(
+                    com.halo.runtime.cognition.attention.UserFacingContent(presentation.title(document.period, language),
+                        presentation.text(language, "Open Halo to read your saved brief.", "Откройте Halo, чтобы прочитать сохранённый обзор.",
+                            "Atver Halo, lai lasītu saglabāto pārskatu.", "Otwórz Halo, aby przeczytać zapisane podsumowanie."))),
+                expiresAt = document.generatedAt.plusSeconds(3600), deduplicationKey = "everyday-brief:${document.id}",
+                preferredRoutineChannel = com.halo.runtime.cognition.attention.DeliveryChannel.AndroidNotification,
+            )).outcome.name
+        }, canonicalOutcome = { documentId ->
+            val requestId = "everyday-brief:$documentId"
+            appDatabase.attentionDao().receipt(requestId)?.outcome
+                ?: if (appDatabase.attentionDao().isPending(requestId)) "QUEUED" else null
+        })
+    }
     val organizerBootStore by lazy { com.halo.app.everyday.organizer.android.OrganizerDirectBootStore(applicationContext) }
     val organizerRepository by lazy {
         com.halo.app.data.everyday.RoomOrganizerRepository(appDatabase,
@@ -1828,7 +1880,7 @@ object ManualDependencyGraph {
             )
         }
     }
-    val dailyAssistantController by lazy {
+    private val dailyAssistantControllerOwner: Lazy<com.halo.app.daily.DailyAssistantController> = lazy {
         com.halo.app.daily.DailyAssistantController(attentionQueue.pending, agentRunStore.observeRuns(),
             notificationInboxSource.state, studyUseCases.observeDuePracticeItems(200), studyUseCases.observeActiveSessions(),
             routineRepository.observeRoutinesReadOnly(), routineRepository.observeRecentRuns(),
@@ -1836,8 +1888,9 @@ object ManualDependencyGraph {
             haloSpeechOutputCoordinator.session.affinity, deviceRegistry,
             { com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
                 com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(storage.getString("attention_initiative"))) },
-            infra.scope, log = { android.util.Log.d("HaloDaily", it) })
+            infra.scope, log = { android.util.Log.d("HaloDaily", it) }, briefs = briefService.observeLatestVisible())
     }
+    val dailyAssistantController: com.halo.app.daily.DailyAssistantController get() = dailyAssistantControllerOwner.value
     val settingsRepository by lazy { com.halo.app.data.settings.HaloSettingsRepository(applicationContext) }
     val storageAccessRepository by lazy { com.halo.app.backup.AndroidStorageAccessRepository(applicationContext, settingsRepository) }
     val brainSnapshotSource by lazy { com.halo.app.backup.RoomBrainSnapshotSource(applicationContext, appDatabase, storage) }

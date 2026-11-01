@@ -7,9 +7,10 @@ import com.halo.app.data.study.*
 import com.halo.sdk.runtime.InteractionAudioRouteState
 import java.time.Instant
 
-enum class DailyAssistantKind { APPROVAL, CLARIFICATION, ATTENTION, NOTIFICATIONS, STUDY_REVIEW, STUDY_RESUME, AUTOMATION_FAILURE, AUTOMATION_UPCOMING, LEARNING_REVIEW, DEVICE_ROUTE }
+enum class DailyAssistantKind { APPROVAL, CLARIFICATION, ATTENTION, NOTIFICATIONS, STUDY_REVIEW, STUDY_RESUME, AUTOMATION_FAILURE, AUTOMATION_UPCOMING, LEARNING_REVIEW, DEVICE_ROUTE, BRIEF }
 enum class DailyAssistantPriority { NEEDS_YOU_NOW, DUE, SOON, AVAILABLE }
 sealed interface DailyAssistantAction {
+    data class OpenBrief(val documentId: String? = null) : DailyAssistantAction
     data object OpenInbox : DailyAssistantAction
     data class OpenActivity(val runId: String? = null) : DailyAssistantAction
     data object OpenLearningSuggestions : DailyAssistantAction
@@ -48,6 +49,13 @@ data class DailyAssistantSnapshot(val primary: DailyAssistantItem? = null,
 
 /** Presentation only: no source bodies, writes, inference, schedule calculation or delivery authority. */
 object DailyAssistantProjector {
+    fun withBrief(base: DailyAssistantSnapshot, brief: com.halo.app.everyday.briefing.EverydayBrief?): DailyAssistantSnapshot {
+        val item = DailyAssistantItem("everyday-brief", DailyAssistantKind.BRIEF, DailyAssistantPriority.AVAILABLE,
+            "Your day in Halo", null, DailyAssistantAction.OpenBrief(brief?.id), "everyday-brief", brief?.generatedAt)
+        val items = (base.items.filter { it.kind != DailyAssistantKind.BRIEF } + item).sortedWith(
+            compareBy<DailyAssistantItem> { rank(it) }.thenBy { it.occurredAt ?: Instant.MAX }.thenBy { it.id })
+        return base.copy(primary = items.firstOrNull(), secondary = items.drop(1).take(3), items = items)
+    }
     fun project(input: DailyAssistantInput, now: Instant): DailyAssistantSnapshot {
         val items = mutableListOf<DailyAssistantItem>()
         val resolvedInputs = input.runs.flatMap { run ->
@@ -175,5 +183,6 @@ object DailyAssistantProjector {
         DailyAssistantKind.AUTOMATION_UPCOMING -> 6
         DailyAssistantKind.LEARNING_REVIEW -> 7
         DailyAssistantKind.STUDY_RESUME -> 8
+        DailyAssistantKind.BRIEF -> 6
     }
 }

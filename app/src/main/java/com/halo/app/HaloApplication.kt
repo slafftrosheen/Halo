@@ -256,6 +256,7 @@ class HaloApplication :
                 ManualDependencyGraph.collectorBootstrap.ensureInitialized()
                 com.halo.app.everyday.collectors.android.CollectorRefreshWorker.maintain(this@HaloApplication)
                 com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(this@HaloApplication)
+                com.halo.app.everyday.briefing.android.BriefWorker.maintain(this@HaloApplication, ManualDependencyGraph.briefRepository.settings().proactive)
             } catch (cancelled: CancellationException) { throw cancelled }
               catch (error: Exception) { Log.e("CollectorRecovery", "Source setup needs retry", error) }
         }

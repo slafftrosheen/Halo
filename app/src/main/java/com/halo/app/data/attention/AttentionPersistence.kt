@@ -11,6 +11,7 @@ data class AttentionReceiptEntity(@PrimaryKey val id: String, val outcome: Strin
 @Dao interface AttentionDao {
     @Query("SELECT * FROM attention_pending ORDER BY createdAt LIMIT 50") fun observe(): Flow<List<AttentionPendingEntity>>
     @Query("SELECT COUNT(*) FROM attention_pending") suspend fun count(): Int
+    @Query("SELECT EXISTS(SELECT 1 FROM attention_pending WHERE id=:id)") suspend fun isPending(id: String): Boolean
     @Query("DELETE FROM attention_pending WHERE id = :id OR (:dedup IS NOT NULL AND dedupKey = :dedup)") suspend fun removeDuplicates(id: String, dedup: String?)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun put(item: AttentionPendingEntity)
     @Query("DELETE FROM attention_pending WHERE id = :id") suspend fun remove(id: String)

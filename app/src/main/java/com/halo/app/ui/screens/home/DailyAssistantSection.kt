@@ -87,6 +87,7 @@ private fun DailyItem(item: DailyAssistantItem, snapshot: DailyAssistantSnapshot
 }
 
 fun dailyActionLabel(action: DailyAssistantAction): String = when (action) {
+    is DailyAssistantAction.OpenBrief -> "Open daily brief"
     DailyAssistantAction.OpenInbox -> "Open Inbox"
     is DailyAssistantAction.OpenStudy -> if (action.review) "Review" else "Continue lesson"
     is DailyAssistantAction.OpenAutomation -> "Review automation"

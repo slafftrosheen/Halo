@@ -1,0 +1,27 @@
+{
+  "source": "https://download.geonames.org/export/dump/cities15000.zip",
+  "documentation": "https://download.geonames.org/export/dump/readme.txt",
+  "attribution": "City data: GeoNames, licensed under CC BY 4.0. Halo selects columns, bounds labels/aliases and compresses this extract.",
+  "attributionUrl": "https://www.geonames.org/",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "retrievedUtc": "2026-11-01T20:32:37.204649+00:00",
+  "sourceLastModified": "Sun, 01 Nov 2026 03:40:02 GMT",
+  "sourceZipSha256": "1d1a86cc57a641387453beae0a0f89a59cbea636143fccb17368580df23776eb",
+  "assetSha256": "f9bb8422bebb3e59162ddc266fe1d08c72319c28e7ef68b09d1d0c3d58dec2fa",
+  "rows": 34195,
+  "uncompressedBytes": 7315522,
+  "assetBytes": 3524577,
+  "columns": [
+    "geonameid",
+    "name",
+    "asciiName",
+    "countryCode",
+    "latitude",
+    "longitude",
+    "timeZone",
+    "population",
+    "aliases"
+  ],
+  "assetFile": "everyday-cities.bin",
+  "assetEncoding": "gzip-compressed UTF-8 TSV; .bin prevents Android asset merging from expanding .gz"
+}

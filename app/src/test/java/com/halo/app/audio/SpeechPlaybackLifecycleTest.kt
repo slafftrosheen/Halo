@@ -9,6 +9,7 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +23,31 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SpeechPlaybackLifecycleTest {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test fun staleBriefStopCannotCancelNewReaderOrReplayOfSameDocument() = runTest {
+        val main = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(main)
+        val f = Fixture()
+        val readerScope = CoroutineScope(SupervisorJob() + main)
+        try {
+            val reader = com.halo.app.ui.components.HaloReadAloudController(f.bus, f.owner, {}, { "first" }, flowOf("first"),
+                readerScope, ApplicationProvider.getApplicationContext(), f.storage)
+            fun start(id: String) = reader.start(id, "Synthetic sentence.", "first", false, "en", beforeSentence = { awaitCancellation() })
+            val old = start("brief:one"); runCurrent()
+            val note = start("note:new")
+            reader.stopSession(old)
+            runCurrent()
+            assertEquals(note, reader.state.value!!.sessionToken)
+            val first = start("brief:one"); runCurrent()
+            val replay = start("brief:one")
+            reader.stopSession(first)
+            runCurrent()
+            assertEquals(replay, reader.state.value!!.sessionToken)
+            reader.stopSession(replay); runCurrent()
+            assertNull(reader.state.value)
+            assertTrue(f.bus.published.none { it is TtsRequested })
+        } finally { readerScope.cancel(); runCurrent(); f.close(); Dispatchers.resetMain() }
+    }
     @Test fun streamingSpeechRetainsSourceCategoriesIntoThePinnedSynthesisRequest() = runBlocking {
         val f = Fixture()
         try {

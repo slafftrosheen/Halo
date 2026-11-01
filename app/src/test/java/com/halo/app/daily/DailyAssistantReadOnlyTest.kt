@@ -21,6 +21,25 @@ import java.time.Instant
 @Config(sdk = [34], manifest = Config.NONE, application = Application::class)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class DailyAssistantReadOnlyTest {
+    @Test fun unchangedActiveAttentionDoesNotDisappearAfterSixtySeconds() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        var now = Instant.parse("2026-11-01T08:00:00Z")
+        val evaluated = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+        try {
+            val controller = DailyAssistantController(flowOf(emptyList()), flowOf(emptyList()), flowOf(NotificationInboxState(emptyList(), true)),
+                flowOf(emptyList()), flowOf(emptyList()), flowOf(emptyList()), flowOf(emptyList()), flowOf(2),
+                flowOf(emptyMap()), flowOf(null), InMemoryDeviceRegistry(), { evaluated.send(Unit); true }, scope, { now })
+            val observing = scope.launch { controller.snapshot.collect() }
+            withTimeout(5000) { controller.snapshot.first { it.counts.learningSuggestions == 2 } }
+            evaluated.receive()
+            now = now.plusSeconds(61)
+            controller.refresh()
+            withTimeout(5000) { evaluated.receive() }
+            assertEquals(2, controller.recentBase().counts.learningSuggestions)
+            assertTrue(controller.recentBase().items.none { it.kind == DailyAssistantKind.BRIEF })
+            observing.cancelAndJoin()
+        } finally { scope.coroutineContext[Job]!!.cancelAndJoin(); evaluated.close() }
+    }
     @Test fun malformedRoutineObservationDoesNotDisableOrRewriteStoredSchedule() = runBlocking {
         val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).build()
         try {

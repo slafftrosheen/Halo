@@ -7,6 +7,7 @@ import java.net.URLEncoder
 internal fun dailyOwnerRoute(action: DailyAssistantAction): String {
     fun encode(value: String) = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
     return when (action) {
+        is DailyAssistantAction.OpenBrief -> action.documentId?.let { "everyday/brief?briefId=${encode(it)}" } ?: "everyday/brief"
         DailyAssistantAction.OpenInbox -> "notifications"
         is DailyAssistantAction.OpenActivity -> action.runId?.let { "activity?runId=${encode(it)}" } ?: "activity"
         DailyAssistantAction.OpenLearningSuggestions -> "notebook/memory?section=Suggestions"

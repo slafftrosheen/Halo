@@ -12,6 +12,9 @@ import com.halo.sdk.runtime.InteractionAudioAffinity
 import com.halo.sdk.runtime.embodiment.DeviceRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.*
 import java.time.Instant
 
@@ -25,6 +28,7 @@ class DailyAssistantController(
     private val registry: DeviceRegistry, private val allowLearning: suspend () -> Boolean,
     scope: CoroutineScope, private val now: () -> Instant = Instant::now,
     private val log: (String) -> Unit = {},
+    briefs: Flow<com.halo.app.everyday.briefing.EverydayBrief?> = flowOf(null),
 ) {
     private val refreshes = MutableStateFlow(0L)
     private val work = combine(attention, runs, inbox, due, lessons) { a, r, n, d, s ->
@@ -41,13 +45,24 @@ class DailyAssistantController(
             voice = a?.let { DailyVoiceFact(safeDeviceLabel(it.originLabel), safeDeviceLabel(it.intendedTargetLabel),
                 it.resolvedEndpointLabel?.let(::safeDeviceLabel), it.routeState) })
     }
-    val snapshot: StateFlow<DailyAssistantSnapshot> = combine(work, context, refreshes) { w, c, _ ->
+    @Volatile private var baseUpdatedAt: Instant? = null
+    @Volatile private var baseObserved = false
+    private val clockTicks = flow { while (currentCoroutineContext().isActive) { emit(Unit); delay(30_000) } }
+    private val baseSnapshot: StateFlow<DailyAssistantSnapshot> = combine(work, context, refreshes, clockTicks) { w, c, _, _ ->
         DailyAssistantProjector.project(w.copy(routines = c.routines, routineRuns = c.routineRuns,
             learningCount = c.learningCount, showLearning = allowLearning(), readyDeviceLabels = c.readyDeviceLabels,
             connectedDeviceLabels = c.connectedDeviceLabels, voice = c.voice), now())
-    }.distinctUntilChanged().onEach {
+    }.onStart { baseUpdatedAt = null; baseObserved = true }.onCompletion { baseObserved = false }.onEach { baseUpdatedAt = now() }
+    .distinctUntilChanged().onEach {
         log("HALO_DAILY_ASSISTANT_PROJECT uniqueItemCount=${it.items.size} primaryKind=${it.primary?.kind} needsYouCount=${it.counts.needsYou} dueCount=${it.counts.due}")
     }.flowOn(Dispatchers.IO).stateIn(scope, SharingStarted.WhileSubscribed(5000), DailyAssistantSnapshot())
+    val snapshot: StateFlow<DailyAssistantSnapshot> = combine(baseSnapshot, briefs) { base, brief ->
+        DailyAssistantProjector.withBrief(base, brief)
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), DailyAssistantSnapshot())
+
+    /** A background brief never starts the runtime just to obtain optional attention facts. */
+    fun recentBase(): DailyAssistantSnapshot = if (baseObserved && baseUpdatedAt != null)
+        baseSnapshot.value else DailyAssistantSnapshot()
 
     fun refresh() { refreshes.value += 1 }
     fun recordAction(action: DailyAssistantAction) { log("HALO_DAILY_ASSISTANT_ACTION actionKind=${action.javaClass.simpleName}") }
