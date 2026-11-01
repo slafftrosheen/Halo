@@ -1,0 +1,23 @@
+{
+  "language": "ru",
+  "active_mode": "LIGHT",
+  "active_palette": {
+    "light.accent": "LILAC",
+    "light.tone": "NATURAL",
+    "light.background": "MIST"
+  },
+  "latest_visible_active_appearance_restored": true,
+  "active_baseline_evidence": "Nov1 accepted adaptive captures and the first palette-cycle durable readback, superseding the Oct31 light appearance snapshot",
+  "inactive_dark_palette": {
+    "dark.tone": "COOL",
+    "dark.accent": "BLUE",
+    "dark.background": "MIST"
+  },
+  "inactive_dark_evidence": "Last recorded Blue/Cool/Mist baseline; complete Nov1 pre-QA inactive palette was not retained",
+  "system": {
+    "font_scale": "1.0",
+    "user_rotation": "0",
+    "accelerometer_rotation": "1"
+  },
+  "system_settings_restored": true
+}

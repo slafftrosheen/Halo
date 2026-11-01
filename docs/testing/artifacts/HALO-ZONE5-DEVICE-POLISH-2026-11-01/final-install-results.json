@@ -1,0 +1,12 @@
+{
+  "app_sha256": "7184ec9041f7dd930ce67631ed7a7c7689d43aa96fbfc273116ba4925e920e7e",
+  "test_sha256": "d0d87bb8026766ecc79a1b16731494d029a4f06d7b16e11f4927a7d3d536c8f1",
+  "native_classic_orb_test": "PASS",
+  "native_synthetic_kids_frame_test": "PASS",
+  "runtime_source": "aa53260fb645",
+  "fixture_source": "9dce7a3bced3a51dc4706183d54390e4c39f2793",
+  "git_status": "",
+  "kids_preferences_unchanged": true,
+  "app_install": "PASS",
+  "test_install": "PASS"
+}

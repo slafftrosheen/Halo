@@ -1,0 +1,14 @@
+{
+  "sample_seconds": 6.99,
+  "region": [
+    0,
+    114,
+    20,
+    1706
+  ],
+  "sampled_pixels": 31840,
+  "changed_pixels": 5472,
+  "maximum_channel_change": 1,
+  "scope": "decorative work-area edge on actual Tools page",
+  "qualification": "Static two-frame observation only; no timing, thermal, power-transition or performance certification"
+}

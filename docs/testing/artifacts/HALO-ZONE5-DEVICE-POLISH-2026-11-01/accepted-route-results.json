@@ -1,0 +1,232 @@
+[
+  {
+    "capture": "accepted-settings",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS"
+  },
+  {
+    "capture": "accepted-devices",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25
+  },
+  {
+    "capture": "accepted-activities",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25
+  },
+  {
+    "capture": "accepted-screen",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25
+  },
+  {
+    "capture": "accepted-home",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25
+  },
+  {
+    "capture": "accepted-library",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25
+  },
+  {
+    "capture": "accepted-tools-blue",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25
+  },
+  {
+    "capture": "accepted-studio",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25,
+    "system_back_to_tools": true
+  },
+  {
+    "capture": "accepted-notes",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25,
+    "system_back_to_tools": true
+  },
+  {
+    "capture": "accepted-study",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25,
+    "system_back_to_tools": true
+  },
+  {
+    "capture": "accepted-memory",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25,
+    "system_back_to_tools": true
+  },
+  {
+    "capture": "accepted-canvas",
+    "single_orb": true,
+    "menu": true,
+    "result": "PASS",
+    "zone_bounds": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "work_bounds": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone_share": 0.25,
+    "system_back_to_tools": true
+  },
+  {
+    "gesture": "hold",
+    "result": "PASS",
+    "six_roots": true
+  },
+  {
+    "gesture": "up",
+    "result": "PASS",
+    "six_roots": true
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "capture": "accepted-tools-dark-mint",
+    "result": "PASS",
+    "durable_palette": {
+      "dark.tone": "NATURAL",
+      "light.accent": "LILAC",
+      "light.tone": "NATURAL",
+      "dark.accent": "MINT",
+      "light.background": "MIST",
+      "dark.background": "MIST"
+    }
+  },
+  {
+    "capture": "accepted-tools-light-rose",
+    "result": "PASS",
+    "durable_palette": {
+      "dark.tone": "NATURAL",
+      "light.accent": "ROSE",
+      "light.tone": "WARM",
+      "dark.accent": "MINT",
+      "light.background": "MIST",
+      "dark.background": "MIST"
+    }
+  },
+  {
+    "capture": "accepted-tools-blue-restored",
+    "result": "PASS",
+    "durable_palette": {
+      "dark.tone": "COOL",
+      "light.accent": "CORAL",
+      "light.tone": "COOL",
+      "dark.accent": "BLUE",
+      "light.background": "MIST",
+      "dark.background": "MIST"
+    }
+  }
+]

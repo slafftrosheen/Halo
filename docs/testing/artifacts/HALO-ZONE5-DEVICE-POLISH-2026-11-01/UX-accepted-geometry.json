@@ -1,0 +1,92 @@
+[
+  {
+    "capture": "accepted-tools-blue",
+    "work": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "zone_share": 0.25,
+    "fully_visible_enabled_target_min_px": 132,
+    "clickable_talk_count": 1
+  },
+  {
+    "capture": "accepted-settings",
+    "work": [
+      0,
+      94,
+      1080,
+      2107
+    ],
+    "zone": [
+      0,
+      2107,
+      1080,
+      2270
+    ],
+    "zone_share": 0.07490808823529412,
+    "fully_visible_enabled_target_min_px": 132,
+    "clickable_talk_count": 1
+  },
+  {
+    "capture": "accepted-studio",
+    "work": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "zone_share": 0.25,
+    "fully_visible_enabled_target_min_px": 132,
+    "clickable_talk_count": 1
+  },
+  {
+    "capture": "accepted-notes",
+    "work": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "zone_share": 0.25,
+    "fully_visible_enabled_target_min_px": 132,
+    "clickable_talk_count": 1
+  },
+  {
+    "capture": "accepted-canvas",
+    "work": [
+      0,
+      94,
+      1080,
+      1726
+    ],
+    "zone": [
+      0,
+      1726,
+      1080,
+      2270
+    ],
+    "zone_share": 0.25,
+    "fully_visible_enabled_target_min_px": 132,
+    "clickable_talk_count": 1
+  }
+]
