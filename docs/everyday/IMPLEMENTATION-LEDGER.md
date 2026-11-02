@@ -1,6 +1,6 @@
 # Everyday implementation ledger — issue 63
 
-Status: source implementation and final host checks are complete; APK installation is the current handoff step. No issue-63 acceptance is complete merely because it appears in this plan. The complete source requirements are [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); the UI integration decisions are [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
+Status: source implementation, final host checks and APK build/install are complete. Paused for the user's own phone testing; human/OS acceptance remains separate. No issue-63 acceptance is complete merely because it appears in this plan. The complete source requirements are [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); the UI integration decisions are [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
 
 ## Audited ownership
 
@@ -37,7 +37,7 @@ Status: source implementation and final host checks are complete; APK installati
 | E persistent configurable Screen instances | Implemented | Stable independent IDs, arrangement/size/visibility, per-card configuration, revisioned Apply/Cancel/Undo and portable state. |
 | F launcher variants, configuration, privacy and updates | Implemented; matching render/live-clock checks complete | Eight providers, native/themed responsive layouts, independent atomic settings, live TextClock, privacy filtering and bounded update owner. Real launcher behavior remains phone-dependent. |
 | G typed canonical AI/voice operations | Implemented | Twenty-two strict Everyday commands plus Screen query/configure; central capabilities/descriptors/disclosure and canonical executor checks. Provider wording/recognition remains real-session acceptance. |
-| H policy, docs, compatibility, tests and delivery | Code, documentation and host verification complete; APK handoff in progress | Explicit LOCAL-POWER-MATRIX.md, transport audit, archive/retention/recovery/component map and frozen host evidence. Build/install and review must finish before handoff. |
+| H policy, docs, compatibility, tests and delivery | Code, documentation, host verification and APK handoff complete | Explicit LOCAL-POWER-MATRIX.md, transport audit, archive/retention/recovery/component map and frozen host evidence. Build/install and review must finish before handoff. |
 
 An intermediate commit is a reviewable implementation batch, not a declaration that unfinished workstreams are complete. Hardware-only criteria and participant criteria remain separately identified; neither may be inferred from a host test or screenshot.
 
@@ -75,3 +75,6 @@ The independent visual pass then found two compact-widget/localization issues an
 `release-final-results.json` records **306 tests in 45 suites, zero failures/errors/skips, BUILD SUCCESSFUL in 5m51s**. All **3,745** frozen source hashes match. JUnit, source and 38 rendered fixtures are archived beside the result. This includes the metadata-only coherent disclosure stamp, three held same-profile grant regressions and the file-backed Room WAL writer-start regression; source review found no residual in that ordering. The short test filename fixes the evidenced Windows path limit without changing production or disabling WAL.
 
 The independent final widget review closes WV01/WV02 and finds no remaining concrete widget defect. Original-rubric ratings are expert usability/implementation **8.0/10** and visual clarity **9.2/10**, with physical/assistive/comprehension evidence explicitly separate. The score is not inflated to 10/10. Issue closure, participant acceptance and actual Android delivery/launcher behavior are not claimed. See ISSUE-63-CODE-HANDOFF.md for the source checklist.
+
+
+APK handoff: `:app:assembleDebug` PASS in 6m17s from code commit `f7efa32f76f6c16dee62a3dac5d9cf0c91fb431d`; install-r Success on the connected Xiaomi 23124RA7EO, data retained, MainActivity Status ok, PID 22558. SHA-256 `923d4f040ddfc061ef2cae0df067920a453ca0514bc5ce698ee8b2bccf21e413`, 296021823 bytes. See final-apk-build.log and final-install-result.json. Only installation and launch were performed on this phone in the final handoff; no feature/permission/launcher/audio acceptance is inferred. Work stops for the user's own testing. No push or GitHub issue closure was performed.

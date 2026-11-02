@@ -120,3 +120,8 @@ The new regression `EverydayToolExecutorTest.kt:103–116` uses a file-backed WA
 The confirmation detector ran once on four targets, exit 0 and JSON `[]`. It provides no native file/rule coverage inventory, so this is zero emitted findings rather than Android accessibility certification. A browser overlay does not apply to these native RemoteViews. No reviewer ran an app build, edited implementation/tests or operated the phone.
 
 Questions skipped: zero remaining widget priority issues; the separate privacy verification gate is already assigned to the root agent, with no user design decision needed.
+
+
+## Release validation receipt (root, after independent report)
+
+The reviewer subsequently independently confirmed privacy gate closure against release-final: 306 passed, zero failures/errors/skips, 5m51s and all 3,745 hashes matched. Archived JUnit retains the real file-backed WAL writer-start regression and three held-read revocation cases; six authority/test files were checked against the manifest. No source ordering residual was found. This closes the pending code/privacy verification item without changing the original widget rubrics or claiming physical/human acceptance. APK installation/launch is separately recorded in final-install-result.json; the user now owns testing time.

@@ -1,6 +1,6 @@
 # Active Halo goal scope
 
-Status: Active implementation. Issue #63 was explicitly added by the user on 1 November 2026; it is not implemented by this scope record.
+Status: issue-63 source implementation and matching host/build/install handoff are complete. Waiting for the user's manual phone feedback. Original whole-product 10/10 human acceptance and participant sessions remain open/deferred.
 
 The active thread goal includes both the predictable-Halo roadmap at `docs/design/halo-zone5/ROADMAP-TO-10-2026-11-01.md` and the complete [issue #63](https://github.com/slafftrosheen/Halo/issues/63), snapshotted in [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md). Do not narrow the goal to the already completed predictable-UX fixes, change the independent scoring rubric, or treat implementation plans as finished features.
 

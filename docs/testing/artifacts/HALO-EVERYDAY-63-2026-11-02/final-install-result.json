@@ -1,0 +1,17 @@
+{
+  "codeCommit": "f7efa32f76f6c16dee62a3dac5d9cf0c91fb431d",
+  "package": "com.aistudio.braintool.xkqzps",
+  "device": "23124RA7EO",
+  "serial": "f01fe673",
+  "apk": "C:\\Users\\slavd\\HaloEco\\Halo-main\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+  "apkBytes": 296021823,
+  "sha256": "923d4f040ddfc061ef2cae0df067920a453ca0514bc5ce698ee8b2bccf21e413",
+  "installExitCode": 0,
+  "installOutput": "Performing Streamed Install\nSuccess",
+  "scope": "INSTALL_AND_LAUNCH_ONLY; no automated phone feature tests",
+  "dataPreservedBy": "adb install -r",
+  "installedUtc": "2026-11-02T12:27:46.0243582Z",
+  "launchExitCode": 0,
+  "launchOutput": "Starting: Intent { cmp=com.aistudio.braintool.xkqzps/com.halo.app.MainActivity }\nStatus: ok\nLaunchState: WARM\nActivity: com.aistudio.braintool.xkqzps/com.halo.app.MainActivity\nTotalTime: 4601\nWaitTime: 4605\nComplete",
+  "pid": "22558"
+}
