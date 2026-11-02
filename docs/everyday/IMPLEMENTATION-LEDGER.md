@@ -78,3 +78,6 @@ The independent final widget review closes WV01/WV02 and finds no remaining conc
 
 
 APK handoff: `:app:assembleDebug` PASS in 6m17s from code commit `f7efa32f76f6c16dee62a3dac5d9cf0c91fb431d`; install-r Success on the connected Xiaomi 23124RA7EO, data retained, MainActivity Status ok, PID 22558. SHA-256 `923d4f040ddfc061ef2cae0df067920a453ca0514bc5ce698ee8b2bccf21e413`, 296021823 bytes. See final-apk-build.log and final-install-result.json. Only installation and launch were performed on this phone in the final handoff; no feature/permission/launcher/audio acceptance is inferred. Work stops for the user's own testing. No push or GitHub issue closure was performed.
+
+
+Observed startup recovery supersedes the original ready-for-testing claim: the user showed `Built-in skills missing manifests: halo.everyday`. Code892930a16 adds the required22-tool asset, Screen query parity and a build presence guard. The broken set failed the guard as expected; the corrected build passed18 strict loader/parity/starter/assistant checks and exact APK asset verification. Reinstalled without clearing data; user confirmed “it opens.” See STARTUP-MANIFEST-RECOVERY-2026-11-02.md. The306-case core result remains bounded core evidence, not the missing startup check. Work is being published at the user's request; broader phone/participant acceptance stays separate.

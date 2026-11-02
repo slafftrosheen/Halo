@@ -1,0 +1,46 @@
+[
+  {
+    "path": "app/build.gradle.kts",
+    "sha256": "4e0b9b5c3d8c0cea291e6b6f6bb3c230dda45636abaaa1b3ce2190f3fa7cbe88"
+  },
+  {
+    "path": "app/src/main/assets/skills/halo.everyday.json",
+    "sha256": "19377199ddd18d73a1a717ceb14f80bb2ffd4390041f7e7dedd809134c6dcf12"
+  },
+  {
+    "path": "app/src/main/assets/skills/halo.screen.layout.json",
+    "sha256": "7b4e30be0b63fe2c1ab6ade1c85f7254c51ea8f46f7e4d2e1a0835d39baeefa9"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/BuiltInSkillManifestLoader.kt",
+    "sha256": "0ea2184d42ba831f50c39ae5057c7a1a5b3281b50e82ebaae1e3353067c8d40c"
+  },
+  {
+    "path": "app/src/main/java/com/halo/app/di/BuiltInSkillMerge.kt",
+    "sha256": "0c6b82a307af0b02c693ad6c6cb7f3a55a70aaa133143ed4f017da9b847d7a31"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillRegistry.kt",
+    "sha256": "bd7de4ddbf2e1fa23fef83635a49dc59b7e13dcd7f87b75b608834f2be936bc3"
+  },
+  {
+    "path": "runtime/cognition/src/main/java/com/halo/runtime/cognition/tools/WorkspaceToolAccess.kt",
+    "sha256": "fee3b0d7f5cd474b3a541416f79c22ba6b77d24af37989a4cc5ccd68266a2c50"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/di/ConfigurationSkillManifestParityTest.kt",
+    "sha256": "efdf2b060edb38084ff8532d376aeea14abfee8b71ba63aca82cba9d1c1f18ef"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/di/BuiltInSkillManifestTest.kt",
+    "sha256": "c3fcfd6601b752ff6060f2bfe49726ce7ea600a000e4599a5ac1004575ff8723"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/skills/SkillStarterTest.kt",
+    "sha256": "ce447f5aecf72ced7eb5e1510e3fe28255bf0235789e6521a891be89cb752237"
+  },
+  {
+    "path": "app/src/test/java/com/halo/app/di/tools/AssistantToolsTest.kt",
+    "sha256": "48b9b781c3d8c45ce8d5bf06d5353acaeacc6a5ca205406193e06d3ed833caca"
+  }
+]

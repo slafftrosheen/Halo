@@ -1,0 +1,64 @@
+{
+  "build": "SUCCESSFUL",
+  "duration": "9m37s",
+  "codeCommit": "892930a16b6f76956ddb5b8f12675a13a092668f",
+  "tests": 18,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "com.halo.app.di.BuiltInSkillManifestTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T12:47:37.893Z"
+    },
+    {
+      "name": "com.halo.app.di.ConfigurationSkillManifestParityTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T12:47:43.625Z"
+    },
+    {
+      "name": "com.halo.app.di.tools.AssistantToolsTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T12:47:45.487Z"
+    },
+    {
+      "name": "com.halo.app.skills.SkillStarterTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T12:48:01.719Z"
+    }
+  ],
+  "apkSha256": "840a4a01278bc66bb11b75bbd8c73b5d77fe0b868e86dad0c7a6dc1c30b64015",
+  "apkBytes": 297163653,
+  "packagedSkillManifests": 46,
+  "everydayTools": 22,
+  "screenConfigurationQueryPackaged": true,
+  "packagedAssetsMatchReviewedSources": true,
+  "negativePresenceGuard": "Expected failure for missing halo.everyday before asset correction",
+  "installation": {
+    "device": "23124RA7EO",
+    "serial": "f01fe673",
+    "method": "adb install -r",
+    "result": "Success",
+    "dataRetained": true,
+    "coldLaunchStatus": "ok",
+    "pidObserved": "27476",
+    "appUidFatalDiagnostics": "none",
+    "visibleShellVerification": "USER_CONFIRMED: it opens",
+    "timestampUtc": "2026-11-02T12:56:35.896554+00:00",
+    "userConfirmationUtc": "2026-11-02T13:00:30.403763+00:00",
+    "verificationBoundary": "Startup confirmed by user; no broader feature/assistive/launcher acceptance inferred"
+  }
+}
