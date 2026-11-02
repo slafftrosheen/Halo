@@ -163,6 +163,19 @@ class LocalRolePackInstaller(
                 val saved = sourceReviewAcknowledged == acknowledged
                 if (saved && acknowledged && mutableState.value.message == LOCAL_ROLE_PACK_REVIEW_REQUIRED)
                     publish(mutableState.value.copy(message = null))
+                if (saved && !acknowledged) {
+                    // Withdrawing review stops the *owned* acquisition jobs and transfers,
+                    // rather than letting a previously admitted queue continue in the background.
+                    // Pause retains downloaded bytes; no rollback or unrelated model deletion.
+                    installJob?.cancel()
+                    conversationJob?.cancel()
+                    journal?.transactionId?.let { owner ->
+                        runCatching { models.cancelOwnedDownload(intentId, owner) }
+                    }
+                    runCatching { conversationReceipt().first }.getOrNull()?.let { owner ->
+                        runCatching { models.cancelOwnedDownload(PrivateOfflinePack.conversationCandidate.id, owner) }
+                    }
+                }
                 saved
             }.getOrDefault(false)
         }
@@ -336,7 +349,7 @@ class LocalRolePackInstaller(
     override fun request(command: LocalRolePackCommand, expectedTransactionId: String): Boolean {
         val observed = mutableState.value
         if (expectedTransactionId != (observed.transactionId ?: "NONE")) return false
-        if (command == LocalRolePackCommand.START_OR_RESUME && !sourceReviewAcknowledged) return false
+        if (command == LocalRolePackCommand.START_OR_RESUME && (!sourceReviewAcknowledged || !available)) return false
         when (command) {
             LocalRolePackCommand.START_OR_RESUME -> { if (observed.busy || observed.recoveryRequired || observed.phase == LocalRolePackPhase.ROLLBACK_FAILED) return false; startOrResumeFor(expectedTransactionId) }
             LocalRolePackCommand.PAUSE -> { if (!observed.busy || observed.phase == LocalRolePackPhase.ROLLING_BACK) return false; pauseFor(expectedTransactionId) }
@@ -353,6 +366,7 @@ class LocalRolePackInstaller(
                 publish(mutableState.value.copy(message = LOCAL_ROLE_PACK_REVIEW_REQUIRED))
                 return
             }
+            if (!available) return // UI must not start a bundle without every required component.
             val policy = (storage as? RemoteDispatchPolicySource)?.remoteDispatchPolicy ?: DenyRemoteDispatchPolicy
             val revision = policy.modelAcquisitionRevision()
             installJob = scope.launch(modelAcquisitionContext(revision)) { transaction.withLock {

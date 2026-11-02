@@ -30,6 +30,19 @@ class LocalIntentModelRouterTest {
         assertTrue(LocalIntentModelRouter.shouldDefer(candidate,candidate,true))
     }
 
+    @Test fun standaloneIntentLabelsAreStableUnderTurkishSystemLocale() {
+        val previous = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("tr-TR"))
+            assertEquals(ModelIntentDecision.ACTION, LocalIntentModelRouter.parse("action"))
+            assertEquals(ModelIntentDecision.ANSWER, LocalIntentModelRouter.parse("answer"))
+            assertEquals(ModelIntentDecision.UNCERTAIN, LocalIntentModelRouter.parse("uncertain"))
+            assertNull(LocalIntentModelRouter.parse("action because now"))
+        } finally {
+            java.util.Locale.setDefault(previous)
+        }
+    }
+
     @Test fun onlyStandaloneIntentLabelsAreAccepted() {
         assertEquals(ModelIntentDecision.ACTION, LocalIntentModelRouter.parse(" ACTION\n"))
         assertEquals(ModelIntentDecision.ANSWER, LocalIntentModelRouter.parse("answer"))

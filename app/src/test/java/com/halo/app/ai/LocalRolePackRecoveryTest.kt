@@ -12,6 +12,7 @@ import com.halo.sdk.provider.ToolCall
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.first
@@ -266,6 +267,39 @@ class LocalRolePackRecoveryTest {
         assertTrue(f.owner().sourceReviewAcknowledged)
         assertTrue(owner.acknowledgeSourceReview(PrivateOfflinePack.fingerprint, false))
         assertFalse(f.owner().sourceReviewAcknowledged)
+        assertEquals(0, f.downloads)
+    }
+
+    @Test fun reviewWithdrawalCancelsOwnedJobsWithoutDeletingExistingFiles() = runTest {
+        val f = Fixture(backgroundScope, reviewed = true)
+        val owner = f.owner()
+        val existing = File(f.root, "user-installed-model.bin").apply { writeText("leave intact") }
+        val starterJob = Job()
+        val conversationJob = Job()
+        LocalRolePackInstaller::class.java.getDeclaredField("installJob").apply {
+            isAccessible = true
+            set(owner, starterJob)
+        }
+        LocalRolePackInstaller::class.java.getDeclaredField("conversationJob").apply {
+            isAccessible = true
+            set(owner, conversationJob)
+        }
+        assertTrue(owner.sourceReviewAcknowledged)
+        assertTrue(owner.acknowledgeSourceReview(PrivateOfflinePack.fingerprint, false))
+        assertFalse(owner.sourceReviewAcknowledged)
+        assertTrue(starterJob.isCancelled)
+        assertTrue(conversationJob.isCancelled)
+        assertEquals("leave intact", existing.readText())
+        assertEquals(0, f.downloads)
+    }
+
+    @Test fun unavailableStarterCannotClaimAcceptedDispatchAfterReview() = runTest {
+        val f = Fixture(backgroundScope, reviewed = true)
+        val owner = f.owner() // Missing actual Supertonic provider in fixture.
+        assertTrue(owner.sourceReviewAcknowledged)
+        assertFalse(owner.available)
+        assertFalse(owner.request(LocalRolePackCommand.START_OR_RESUME, "NONE"))
+        assertEquals(LocalRolePackInstallState(), owner.state.value)
         assertEquals(0, f.downloads)
     }
 
