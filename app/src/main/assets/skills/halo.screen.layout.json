@@ -8,6 +8,7 @@
   "requiredPermissions": [],
   "tools": [
     "halo_screen_apply",
+    "halo_screen_card_configuration",
     "halo_screen_preview",
     "halo_screen_remove_preset",
     "halo_screen_save_preset",
@@ -19,6 +20,11 @@
     {
       "toolId": "halo_screen_apply",
       "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_screen_card_configuration",
+      "risk": "READ_ONLY",
       "requiredPermissions": []
     },
     {

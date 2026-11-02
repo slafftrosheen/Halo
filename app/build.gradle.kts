@@ -6,6 +6,28 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+// Catch a missing packaged built-in before creating an APK, including focused test/build runs.
+val verifyBuiltInSkillAssets by tasks.registering {
+    val registryFile = rootProject.layout.projectDirectory.file("runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillRegistry.kt")
+    val manifestDirectory = layout.projectDirectory.dir("src/main/assets/skills")
+    inputs.file(registryFile)
+    inputs.dir(manifestDirectory)
+    doLast {
+        val declared = Regex("(?:SkillId|configurationSkill)\\(\\s*\"(halo\\.[a-z._]+)\"")
+            .findAll(registryFile.asFile.readText()).map { it.groupValues[1] }.toSet()
+        check(declared.isNotEmpty()) { "No built-in skill declarations found" }
+        val bundled = manifestDirectory.asFile.listFiles().orEmpty().filter { it.extension == "json" }.map { file ->
+            val id = Regex("\"id\"\\s*:\\s*\"([^\"]+)\"").find(file.readText())?.groupValues?.get(1)
+            check(id == file.nameWithoutExtension) { "Built-in manifest identity does not match ${file.name}" }
+            requireNotNull(id)
+        }
+        check(bundled.distinct().size == bundled.size) { "Duplicate bundled skill IDs" }
+        val missing = declared - bundled.toSet()
+        check(missing.isEmpty()) { "Built-in skills missing manifests: ${missing.sorted().joinToString()}" }
+    }
+}
+tasks.named("preBuild") { dependsOn(verifyBuiltInSkillAssets) }
+
 fun getGitCommitHash(): String {
   System.getenv("GIT_COMMIT")?.trim()?.takeIf { it.isNotEmpty() }?.let { return it.take(12) }
   return try {

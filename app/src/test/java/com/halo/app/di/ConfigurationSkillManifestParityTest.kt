@@ -21,7 +21,7 @@ class ConfigurationSkillManifestParityTest {
         val loader = BuiltInSkillManifestLoader(ApplicationProvider.getApplicationContext())
         val defaults = DefaultSkillRegistry.defaultBuiltInSkills()
         val bundled = loader.loadBundledManifests()
-        val newSkills = setOf("halo.screen.layout", "halo.saved_devices", "halo.notification_settings",
+        val newSkills = setOf("halo.everyday", "halo.screen.layout", "halo.saved_devices", "halo.notification_settings",
             "halo.voice.configuration", "halo.learning.configuration", "halo.provider.configuration", "halo.speech.inventory")
         newSkills.forEach { id ->
             val expected = defaults.single { it.id.value == id }
@@ -50,6 +50,7 @@ class ConfigurationSkillManifestParityTest {
         val ownership = linkedMapOf(
             "halo.assistant" to PersonalConfigurationToolAccess.preferences,
             "halo.screen.layout" to PersonalConfigurationToolAccess.screenLayout,
+            "halo.everyday" to PersonalConfigurationToolAccess.everyday,
             "halo.saved_devices" to PersonalConfigurationToolAccess.savedDevices,
             "halo.notification_settings" to PersonalConfigurationToolAccess.notificationSettings,
             "halo.voice.configuration" to PersonalConfigurationToolAccess.voice,
@@ -61,16 +62,17 @@ class ConfigurationSkillManifestParityTest {
             "halo.notebook" to WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current",
         )
         val names = ownership.values.flatten()
-        assertEquals("Review the manifest contract when adding configuration operations", 52, names.size)
+        assertEquals("Review the manifest contract when adding configuration operations", 75, names.size)
         assertEquals(names.size, names.toSet().size)
         val readOnly = setOf(
-            "halo_get_preferences", "halo_get_mode_profile", "halo_screen_state", "halo_screen_preview",
+            "halo_get_preferences", "halo_get_mode_profile", "halo_screen_state", "halo_screen_preview", "halo_screen_card_configuration",
             "halo_saved_devices", "halo_saved_device_get", "halo_device_preferences",
             "halo_notification_settings_apps", "halo_notification_policy_get", "halo_digest_delivery_get",
             "halo_get_voice_configuration", "halo_get_learning_configuration", "halo_provider_catalog", "halo_provider_state",
             "halo_routines_list", "halo_routine_get", "halo_routine_run_status", "halo_study_current", "halo_speech_inventory",
             "halo_canvas_current", "halo_canvas_workflow_status",
         )
+        val everydayReads=setOf("halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")
         val reversible = setOf(
             "halo_set_preferences", "halo_screen_apply", "halo_screen_undo", "halo_screen_save_preset", "halo_screen_remove_preset",
             "halo_device_thumbnail_quality", "halo_saved_device_autoconnect",
@@ -95,8 +97,8 @@ class ConfigurationSkillManifestParityTest {
                     }, skill.category)
                     val definition = skill.toolDefinitions.single { it.toolId == name }
                     val risk = when (name) {
-                        in readOnly -> SkillRisk.READ_ONLY
-                        in reversible -> SkillRisk.REVERSIBLE
+                        in readOnly, in everydayReads -> SkillRisk.READ_ONLY
+                        in reversible, in PersonalConfigurationToolAccess.everyday -> SkillRisk.REVERSIBLE
                         in destructive -> SkillRisk.DESTRUCTIVE
                         "halo_routine_run_now" -> SkillRisk.EXTERNAL_SIDE_EFFECT
                         else -> SkillRisk.SENSITIVE
