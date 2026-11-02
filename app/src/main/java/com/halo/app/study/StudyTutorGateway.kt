@@ -115,8 +115,21 @@ class AiRouterTutorGateway(
                 return TutorTurnResponse.Unavailable("Try two small hints first, then ask for the full solution again.")
             // Prior responses can contain material from a removed/local-only source.
             // Unknown legacy provenance is omitted rather than silently uploaded.
+            // A history entry without provenance is not permission to re-send its contents.
+            // The active source set is the only owner of material for this turn; older/removed
+            // objects cannot be smuggled back as previous tutor replies.
+            val suppliedSourceIds = request.sourceExcerpts.filter { excerpt ->
+                (excerpt.coverage != SourceCoverage.MISSING && excerpt.text.isNotBlank()) ||
+                    excerpt.objectId == request.visualSource?.objectId
+            }.map { it.objectId }.toSet()
             val allowedHistory = request.recentLesson.mapIndexedNotNull { index, text ->
                 val origins = request.recentLessonOrigins.getOrNull(index) ?: return@mapIndexedNotNull null
+                if (origins.isEmpty()) return@mapIndexedNotNull null
+                if (origins.any { it !in suppliedSourceIds }) {
+                    return TutorTurnResponse.Unavailable(
+                        "A previous lesson used material outside the currently available sources. Review the Study material before continuing."
+                    )
+                }
                 if (origins.all { permitsText(it, true) }) text to origins else null
             }
             val prompt = buildPrompt(request.copy(recentLesson = allowedHistory.map { it.first }))

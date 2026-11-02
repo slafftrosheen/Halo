@@ -607,6 +607,55 @@ class StudySourcesTest {
         assertFalse(provider.requests.single().text!!.contains("Legacy private source content"))
     }
 
+    @Test fun emptyLegacyHistoryOriginCannotUploadPriorTutorText() = runBlocking {
+        val provider = Provider(isLocal = false)
+        val gateway = AiRouterTutorGateway(router(provider), { true })
+        val privateText = "Locally generated private tutor text from a previous turn"
+        val request = turn().copy(
+            recentLesson = listOf(privateText),
+            recentLessonOrigins = listOf(emptyList())
+        )
+        assertTrue(gateway.respond(request) is TutorTurnResponse.Ready)
+        assertEquals(1, provider.requests.size)
+        assertFalse(provider.requests.single().text!!.contains(privateText))
+    }
+
+    @Test fun historyFromAnUnselectedSourceRefusesBeforeAnyInference() = runBlocking {
+        val provider = Provider(isLocal = false)
+        val gateway = AiRouterTutorGateway(router(provider), { true })
+        val request = turn().copy(
+            recentLesson = listOf("Removed worksheet content"),
+            recentLessonOrigins = listOf(listOf("removed-note"))
+        )
+        assertTrue(gateway.respond(request) is TutorTurnResponse.Unavailable)
+        assertTrue(provider.requests.isEmpty())
+    }
+
+    @Test fun historyFromMissingMaterialCannotBypassCurrentSourceFence() = runBlocking {
+        val provider = Provider(isLocal = false)
+        val gateway = AiRouterTutorGateway(router(provider), { true })
+        val partiallyMissing = sources.mapIndexed { index, source ->
+            if (index == 0) source.copy(text = "", coverage = SourceCoverage.MISSING) else source
+        }
+        val request = turn(excerpts = partiallyMissing).copy(
+            recentLesson = listOf("An older answer used source a"),
+            recentLessonOrigins = listOf(listOf("a"))
+        )
+        assertTrue(gateway.respond(request) is TutorTurnResponse.Unavailable)
+        assertTrue(provider.requests.isEmpty())
+    }
+
+    @Test fun currentSourceHistoryRetainsLessonContinuity() = runBlocking {
+        val provider = Provider()
+        val gateway = AiRouterTutorGateway(router(provider), { false })
+        val request = turn().copy(
+            recentLesson = listOf("A reviewed previous explanation"),
+            recentLessonOrigins = listOf(listOf("a"))
+        )
+        assertTrue(gateway.respond(request) is TutorTurnResponse.Ready)
+        assertTrue(provider.requests.single().text!!.contains("A reviewed previous explanation"))
+    }
+
     @Test fun onlyCanonicalFourSourceKeysCanCreateCitations() {
         val five = sources + sources + sources.take(1)
         assertTrue(StudyCitationMarkers.citations("[S5] [S01]", five).isEmpty())
