@@ -208,6 +208,39 @@ class StudySourcesTest {
         assertTrue(StudyCitationMarkers.citations("[S1]", listOf(absent)).isEmpty())
         assertEquals(1, StudyCitationMarkers.citations("[S1]", listOf(absent.copy(suppliedVisual = true))).size)
     }
+    @Test fun missingOrBlankSourceMarkersNeverBecomeVisibleSourceClaims() {
+        val missing = sources[0].copy(text = "", coverage = SourceCoverage.MISSING)
+        val blank = sources[1].copy(text = "   ", coverage = SourceCoverage.FULL)
+        val supplied = listOf(missing, blank)
+        assertTrue(StudyCitationMarkers.citations("A [S1] B [S2]", supplied).isEmpty())
+        assertEquals(2, StudyCitationMarkers.unknownCount("A [S1] B [S2]", supplied))
+        assertEquals("A  B ", StudyCitationMarkers.displayText("A [S1] B [S2]", supplied))
+    }
+
+    @Test fun onlyActuallySuppliedTextOrSelectedVisualProducesCitation() {
+        val missingVisual = sources[0].copy(text = "", coverage = SourceCoverage.MISSING, locator = "Page 3")
+        val selectedVisual = missingVisual.copy(suppliedVisual = true)
+        assertEquals(1, StudyCitationMarkers.unknownCount("[S1]", listOf(missingVisual)))
+        assertEquals(0, StudyCitationMarkers.unknownCount("[S1]", listOf(selectedVisual)))
+        assertEquals("[source]", StudyCitationMarkers.displayText("[S1]", listOf(selectedVisual)))
+        assertEquals("Page 3", StudyCitationMarkers.citations("[S1]", listOf(selectedVisual)).single().locator)
+        assertEquals(listOf("b"), StudyCitationMarkers.citations("[S2]", sources).map { it.sourceObjectId })
+    }
+
+    @Test fun practiceDraftsCannotPointToMissingOrEmptyText() {
+        val missing = listOf(sources[0].copy(text = "", coverage = SourceCoverage.MISSING))
+        val blank = listOf(sources[0].copy(text = "  ", coverage = SourceCoverage.FULL))
+        val json = """{"cards":[{"question":"What?","answer":"Unknown","source":"S1"}]}"""
+        val oneLine = "S1 | Q: What? | A: Unknown"
+        assertNull(StudyCardDraftParser.parse(json, missing))
+        assertNull(StudyCardDraftParser.parse(oneLine, missing))
+        assertNull(StudyCardDraftParser.parse(json, blank))
+        assertNull(StudyCardDraftParser.parse(oneLine, blank))
+        val selectedVisual = missing.single().copy(suppliedVisual = true)
+        assertNotNull(StudyCardDraftParser.parse(json, listOf(selectedVisual)))
+        assertNotNull(StudyCardDraftParser.parse(oneLine, listOf(selectedVisual)))
+    }
+
     @Test fun legacyMultiSourceRevisionBelongsOnlyToFirstObject() {
         assertEquals(listOf(StudySessionSource("a", "7"), StudySessionSource("b", null)), StudyJson.decodeSources("[]", listOf("a", "b"), 7))
         assertEquals(3, session().toPortable().schemaVersion)
