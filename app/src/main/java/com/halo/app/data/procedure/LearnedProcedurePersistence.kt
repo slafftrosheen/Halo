@@ -45,6 +45,14 @@ class SharedPreferencesLearnedProcedureStore(
         writeAll(current)
     }
 
+    /** New reviews must not overwrite any previously accepted workflow, including a raced ID. */
+    override suspend fun insertIfAbsent(procedure: LearnedProcedure): Boolean = mutex.withLock {
+        val current = readAll()
+        if (current.size >= maxProcedures || current.any { it.id == procedure.id }) return@withLock false
+        writeAll(listOf(procedure) + current)
+        true
+    }
+
     override suspend fun delete(id: String) = mutex.withLock {
         writeAll(readAll().filterNot { it.id == id })
     }

@@ -51,6 +51,27 @@ class ProcedureWorkflowToolsTest {
         }
     }
 
+    @Test fun restoredBindingsCannotOverwriteReviewedLiteralsOrInventInputDeclarations() {
+        val descriptor = descriptor()
+        val original = ProcedureContracts.step(JSONObject()
+            .put("capabilityId", descriptor.name)
+            .put("arguments", JSONObject().put("title", "Reviewed title"))
+            .put("inputBindings", JSONObject().put("noteId", "note")), descriptor)
+        val declarations = listOf(ProcedureInput("note", "Current note"))
+        for (invalid in listOf(
+            original.copy(inputBindings = original.inputBindings + ("title" to "note")),
+            original.copy(inputBindings = mapOf("noteId" to "undeclared"))
+        )) {
+            try {
+                ProcedureContracts.bind(invalid, mapOf("note" to "existing-note", "undeclared" to "other"), descriptor, declarations)
+                fail("Unreviewed saved binding was accepted")
+            } catch (_: IllegalArgumentException) { }
+        }
+        val bound = ProcedureContracts.bind(original, mapOf("note" to "existing-note"), descriptor, declarations)!!
+        assertEquals("Reviewed title", bound["title"])
+        assertEquals("existing-note", bound["noteId"])
+    }
+
     @Test fun typedPreviewRevalidatesAndNeverDispatchesDomainActions() = runBlocking {
         val store = InMemoryLearnedProcedureStore()
         var current = descriptor()

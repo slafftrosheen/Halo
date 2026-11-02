@@ -38,6 +38,56 @@ class ProcedureAdmissionTest {
         assertEquals(1, store.all().size)
     }
 
+    @Test fun generatedIdentityCollisionNeverReplacesExistingReviewedWorkflow() = runBlocking {
+        val original = recipe("fixed-id", "Owner-reviewed original")
+        val store = InMemoryLearnedProcedureStore(listOf(original))
+        val tools = ProcedureToolExecutor(store, { true }, newId = { "fixed-id" }, now = { 100L })
+        assertTrue(tools.execute(ToolCall("p", "halo_propose_procedure", mapOf(
+            "name" to "Replacement attempt",
+            "steps" to listOf(mapOf("capabilityId" to "halo_note_create"))
+        ))) is ToolExecutionResult.Success)
+        assertTrue(tools.execute(ToolCall("s", "halo_save_procedure", mapOf(
+            "proposalId" to "fixed-id"
+        ))) is ToolExecutionResult.Rejected)
+        assertEquals(original, store.get("fixed-id"))
+        assertEquals(1, store.all().size)
+    }
+
+    @Test fun atomicSaveRefusesIdentityThatAppearsBetweenPreflightAndInsert() = runBlocking {
+        val original = recipe("fixed-id", "Owner-reviewed original")
+        val delegate = InMemoryLearnedProcedureStore()
+        val race = object : LearnedProcedureStore by delegate {
+            override suspend fun insertIfAbsent(procedure: LearnedProcedure): Boolean {
+                delegate.insertIfAbsent(original)
+                return delegate.insertIfAbsent(procedure)
+            }
+        }
+        val tools = ProcedureToolExecutor(race, { true }, newId = { "fixed-id" }, now = { 100L })
+        assertTrue(tools.execute(ToolCall("p", "halo_propose_procedure", mapOf(
+            "name" to "New proposal",
+            "steps" to listOf(mapOf("capabilityId" to "halo_note_create"))
+        ))) is ToolExecutionResult.Success)
+        assertTrue(tools.execute(ToolCall("s", "halo_save_procedure", mapOf(
+            "proposalId" to "fixed-id"
+        ))) is ToolExecutionResult.Rejected)
+        assertEquals(original, delegate.get("fixed-id"))
+        assertEquals(1, delegate.all().size)
+    }
+
+    @Test fun collidingPendingProposalCannotReplaceAnEarlierReview() = runBlocking {
+        val store = InMemoryLearnedProcedureStore()
+        val tools = ProcedureToolExecutor(store, { true }, newId = { "same-id" }, now = { 100L })
+        fun propose(name: String) = ToolCall("p", "halo_propose_procedure", mapOf(
+            "name" to name, "steps" to listOf(mapOf("capabilityId" to "halo_note_create"))
+        ))
+        assertTrue(tools.execute(propose("First approved review")) is ToolExecutionResult.Success)
+        assertTrue(tools.execute(propose("Second different review")) is ToolExecutionResult.Rejected)
+        assertTrue(tools.execute(ToolCall("s", "halo_save_procedure", mapOf(
+            "proposalId" to "same-id"
+        ))) is ToolExecutionResult.Success)
+        assertEquals("First approved review", store.get("same-id")!!.name)
+    }
+
     @Test fun actionRemovedAfterProposalCannotBeSavedAsIfStillKnown() = runBlocking {
         val store = InMemoryLearnedProcedureStore()
         var known = true

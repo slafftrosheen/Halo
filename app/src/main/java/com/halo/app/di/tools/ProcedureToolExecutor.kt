@@ -213,6 +213,8 @@ class ProcedureToolExecutor(
         )
         synchronized(pending) {
             pending.entries.removeAll { now() - it.value.createdAt > 10 * 60_000L }
+            if (pending.containsKey(proposal.proposalId))
+                return reject("Proposal identity collision. Try proposing this workflow again.")
             while (pending.size >= 32) pending.remove(pending.keys.first())
             pending[proposal.proposalId] = proposal
         }
@@ -250,7 +252,9 @@ class ProcedureToolExecutor(
                 return reject("An action schema or dependency changed. Review a new proposal.")
         }
         val timestamp = now()
-        if (store.get(proposal.proposalId) == null && store.all().size >= 50) return reject("Workflow storage is full. Review and delete an old workflow first.")
+        if (store.get(proposal.proposalId) != null)
+            return reject("Workflow identity already exists. Create a new proposal; the existing recipe was not changed.")
+        if (store.all().size >= 50) return reject("Workflow storage is full. Review and delete an old workflow first.")
         val procedure = LearnedProcedure(
             id = proposal.proposalId,
             name = proposal.name,
@@ -262,7 +266,9 @@ class ProcedureToolExecutor(
             updatedAt = timestamp,
             inputs = proposal.inputs,
         )
-        store.upsert(procedure)
+        if (!store.insertIfAbsent(procedure))
+            return reject("Workflow identity or storage changed during save. No existing recipe was replaced; propose again.",
+                com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
         synchronized(pending) { pending.remove(proposalId) }
         return ToolExecutionResult.Success(
             toolCall.id,

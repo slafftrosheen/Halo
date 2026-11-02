@@ -63,9 +63,14 @@ object ProcedureContracts {
         }
         require(argumentsJson.length <= MAX_ARGUMENT_CHARS)
         val args = JSONObject(argumentsJson)
+        // Restored templates are data, not authority to replace reviewed literal arguments.
+        require(step.inputBindings.keys.none(args::has)) { "Saved workflow bindings overlap reviewed literals" }
+        require(step.inputBindings.values.all { input -> declarations.count { it.name == input } == 1 }) {
+            "Saved workflow references an undeclared input"
+        }
         step.inputBindings.forEach { (argument, input) ->
             val raw = requireNotNull(inputs[input])
-            val type = declarations.singleOrNull { it.name == input }?.valueType ?: "string"
+            val type = declarations.single { it.name == input }.valueType
             val value: Any = when (type) {
                 "string" -> raw
                 "integer" -> requireNotNull(raw.toLongOrNull()) { "Expected a whole number input" }

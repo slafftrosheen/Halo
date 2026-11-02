@@ -96,6 +96,8 @@ interface LearnedProcedureStore {
     suspend fun all(): List<LearnedProcedure>
     suspend fun get(id: String): LearnedProcedure?
     suspend fun upsert(procedure: LearnedProcedure)
+    /** Atomic first-save fence. Unsupported stores must refuse rather than fall back to overwrite. */
+    suspend fun insertIfAbsent(procedure: LearnedProcedure): Boolean = false
     suspend fun delete(id: String)
     suspend fun recordUsage(id: String, usedAtMs: Long)
     /** Atomic compare/edit/delete. Hosts without transactional support refuse the write. */
@@ -118,6 +120,14 @@ class InMemoryLearnedProcedureStore(
 
     override suspend fun upsert(procedure: LearnedProcedure) {
         procedures[procedure.id] = procedure
+    }
+
+    override suspend fun insertIfAbsent(procedure: LearnedProcedure): Boolean = synchronized(procedures) {
+        if (procedures.containsKey(procedure.id)) false
+        else {
+            procedures[procedure.id] = procedure
+            true
+        }
     }
 
     override suspend fun delete(id: String) {
