@@ -85,7 +85,7 @@ class AndroidAttentionHost(
                     .setContentText(text).setStyle(android.app.Notification.BigTextStyle().bigText(text)).setAutoCancel(true)
                     .apply {
                         if (request.source == AttentionSource.Routine && request.id.value.matches(Regex("everyday-brief:[a-f0-9]{64}"))) {
-                            setContentIntent(com.halo.app.ui.mini.MiniHaloEntry.pending(context, 8110, "everyday_brief"))
+                            setContentIntent(com.halo.app.ui.everyday.EverydayBriefEntry.pending(context, request.id.value.removePrefix("everyday-brief:")))
                             setVisibility(android.app.Notification.VISIBILITY_PRIVATE)
                         }
                     }.build()

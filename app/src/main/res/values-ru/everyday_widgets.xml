@@ -1,0 +1,14 @@
+<resources>
+<string name="everyday_widget_clock">Часы и дата</string>
+<string name="everyday_widget_clock_weather">Часы и погода</string>
+<string name="everyday_widget_upcoming">Ближайшее событие</string>
+<string name="everyday_widget_tasks">Задачи и напоминания</string>
+<string name="everyday_widget_brief">Ваш день с halo</string>
+<string name="everyday_widget_headlines">Заголовки</string>
+<string name="everyday_widget_alarms_timers">Будильники и таймеры</string>
+<string name="everyday_widget_dashboard">Повседневная панель</string>
+<string name="everyday_widget_preview">Откройте halo для сохранённой информации</string>
+<string name="everyday_widget_saved">Сохранено на этом телефоне</string>
+<string name="everyday_widget_configure">Настроить виджет</string>
+<string name="everyday_widget_description">Ваш сохранённый план и выбранная информация halo. Измените размер для большего обзора; личные данные доступны в halo.</string>
+</resources>

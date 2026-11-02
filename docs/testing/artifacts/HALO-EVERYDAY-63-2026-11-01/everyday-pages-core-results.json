@@ -1,0 +1,7 @@
+{
+  "outcome": "BUILD FAILED in 1m 50s",
+  "sourceFilesMatched": 111,
+  "junit": "NOT_RUN",
+  "reason": "Production compilation failed on missing ToolZoneHeader imports in four new page files. No test evidence inferred from older XML files.",
+  "scope": "First page integration snapshot; localization and UX fixes still in progress."
+}

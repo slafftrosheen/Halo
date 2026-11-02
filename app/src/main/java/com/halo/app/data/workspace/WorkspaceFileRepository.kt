@@ -161,11 +161,26 @@ class RoomWorkspaceFileRepository(
     override suspend fun createManagedFile(displayName: String, mimeType: String, bytes: ByteArray,
         sourceObjectId: String, sourceRevision: String, metadata: String,
         published: suspend (WorkspaceFile) -> Unit,
-        validateSource: suspend () -> Unit): WorkspaceFile = withContext(Dispatchers.IO) {
+        validateSource: suspend () -> Unit): WorkspaceFile = createManaged(displayName, mimeType, bytes,
+            sourceObjectId, sourceRevision, metadata, published, validateSource, null)
+
+    /** The manifest and its managed output publish together; a failed owner validation leaves neither row. */
+    suspend fun createManagedFileWithPreparedSource(displayName: String, mimeType: String, bytes: ByteArray,
+        metadata: String, validateSource: suspend () -> Unit, prepareSource: suspend () -> String): WorkspaceFile =
+        createManaged(displayName, mimeType, bytes, "prepared-source", "1", metadata, {}, validateSource, prepareSource)
+
+    private suspend fun createManaged(displayName: String, mimeType: String, bytes: ByteArray,
+        sourceObjectId: String, sourceRevision: String, metadata: String,
+        published: suspend (WorkspaceFile) -> Unit, validateSource: suspend () -> Unit,
+        prepareSource: (suspend () -> String)?): WorkspaceFile = withContext(Dispatchers.IO) {
         require(displayName.isNotBlank() && displayName.length <= 120)
         require(mimeType.length <= 100)
         if (mimeType.startsWith("image/")) require(bytes.size in 1..20_000_000)
-        else {
+        else if (mimeType == "text/calendar") {
+            require(bytes.size in 1..2 * 1024 * 1024)
+            val text = WorkspaceTextEncoding.decode(bytes)
+            require(text.startsWith("BEGIN:VCALENDAR\r\n") && text.endsWith("END:VCALENDAR\r\n")) { "Invalid calendar output" }
+        } else {
             val format = WorkspaceTextFormat.entries.firstOrNull { it.mime == mimeType }
                 ?: error("Unsupported managed output format")
             val text = WorkspaceTextEncoding.decode(bytes)
@@ -185,7 +200,10 @@ class RoomWorkspaceFileRepository(
             val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
             val timestamp = now()
             db.withTransaction {
-                require(db.notebookDao().getWorkspaceObject(sourceObjectId)?.lifecycle == "ACTIVE") { "Source unavailable" }
+                if (prepareSource != null) validateSource()
+                val sourceId = prepareSource?.invoke() ?: sourceObjectId
+                require(WorkspaceActionIds.isValid(sourceId))
+                require(db.notebookDao().getWorkspaceObject(sourceId)?.lifecycle == "ACTIVE") { "Source unavailable" }
                 validateSource() // Local owner revalidation runs in the publication transaction.
                 db.notebookDao().insertWorkspaceObject(WorkspaceObjectEntity(id, "FILE", displayName, timestamp, timestamp,
                     "USER_CREATED", "ACTIVE", true, "READY", "file:$id"))
@@ -194,8 +212,9 @@ class RoomWorkspaceFileRepository(
                     ownedCopyPath = destination.absolutePath, permissionPersisted = false,
                     ownership = ContentOwnership.HALO_OWNED.name, availability = WorkspaceFileAvailability.OWNED_LOCAL.name,
                     sha256 = digest))
-                db.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(id, sourceObjectId, sourceRevision, metadata))
+                db.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(id, sourceId, sourceRevision, metadata))
                 published(requireNotNull(db.workspaceFileDao().getFile(id)).toDomain())
+                if (prepareSource != null) validateSource()
             }
             requireNotNull(getFile(WorkspaceObjectId(id)))
         } catch (failure: Throwable) {

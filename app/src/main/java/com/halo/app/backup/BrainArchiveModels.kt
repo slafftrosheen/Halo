@@ -2,7 +2,7 @@ package com.halo.app.backup
 
 import com.squareup.moshi.JsonClass
 
-object BrainArchiveSchema { const val CURRENT = 4 }
+object BrainArchiveSchema { const val CURRENT = 5 }
 
 enum class BrainExportProfile { BRAIN_ONLY, BRAIN_WITH_FILES, FULL_USER_BACKUP }
 enum class BrainImportMode { MERGE, REPLACE }
@@ -98,3 +98,7 @@ data class ArchiveSecurityLimits(
 )
 
 data class BrainImportResult(val created: Int, val updated: Int, val skipped: Int)
+
+/** Data committed; replaying a duplicate merge is unsafe. Remaining presentation/settings need review. */
+class BrainImportCommittedFailure(cause: Throwable): Exception(
+    "Local data was restored, but Screen or settings could not finish. Do not repeat this restore. Review the restored data and Screen, or use Undo restore.",cause)

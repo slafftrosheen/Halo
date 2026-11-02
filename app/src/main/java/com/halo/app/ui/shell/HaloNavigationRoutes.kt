@@ -18,7 +18,7 @@ fun primaryNavigationRoute(route: String?): String? = when {
     route == "notifications" || route.startsWith("notifications/") -> "home"
     route.substringBefore("?") == "study" -> "notebook"
     route == "workspace_handoff" || route == "canvases" || route.startsWith("notebook/") || route.startsWith("studio") || route.startsWith("file_tools") -> "notebook"
-    route == "screen" -> "home"
+    route == "screen" || route.startsWith("screen/") -> "home"
     route == "discovery" || route.startsWith("device/") -> "devices"
     route == "integrations" || route.startsWith("integrations/") -> "settings"
     route.startsWith("advanced/") || route.startsWith("settings/") || route.startsWith("automation_review/") || route in settingsRoutes -> "settings"
@@ -32,5 +32,14 @@ fun NavHostController.navigateToPrimary(route: String, restoreSavedState: Boolea
         launchSingleTop = true
         // An explicit destination request must not restore a detail above that root.
         restoreState = restoreSavedState
+    }
+}
+
+/** Object-bearing instruments own a fresh entry; Back restores the previous identity and draft. */
+internal fun NavHostController.navigateToInstrument(route: String) {
+    navigate(route) {
+        launchSingleTop = route.substringBefore("?") !in setOf(
+            com.halo.app.ui.everyday.EverydayRoutes.ORGANIZER, com.halo.app.ui.everyday.EverydayRoutes.BRIEF,
+            com.halo.app.ui.everyday.EverydayRoutes.SOURCE,com.halo.app.ui.everyday.EverydayRoutes.CLOCKS,"activity")
     }
 }

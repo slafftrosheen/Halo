@@ -5,6 +5,7 @@ package com.halo.app.ui.shell
 import com.halo.app.ui.presence.invokePageAction
 
 import com.halo.app.language.uiText
+import com.halo.app.ui.everyday.*
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -215,14 +216,25 @@ fun AppShell(
         if (navController.currentDestination?.route != route) {
             if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
             if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route, restoreSavedState = false)
-            else navController.navigate(route) { launchSingleTop = true }
+            else navController.navigateToInstrument(route)
         }
     }
     val parentGate = com.halo.app.ui.screens.kids.rememberKidsGrownUpGate(
         onVerified = { parentRoute?.let(::performNavigation); parentRoute = null },
         onUnavailable = { parentRoute = null; parentUnavailable = true })
+    DisposableEffect(navController) {
+        var previous=navController.currentBackStackEntry?.id
+        val observer=androidx.navigation.NavController.OnDestinationChangedListener {controller,_,_ ->
+            val current=controller.currentBackStackEntry?.id
+            if(previous!=null && current!=previous) ManualDependencyGraph.uiNavigationRevision.value+=1
+            previous=current
+        }
+        navController.addOnDestinationChangedListener(observer)
+        onDispose {navController.removeOnDestinationChangedListener(observer)}
+    }
     fun navigateSafely(route: String) {
         val childSurface = route in setOf("home", "mini_halo", "study", "workspace_handoff") ||
+            route.substringBefore("?") in setOf(EverydayRoutes.BRIEF, EverydayRoutes.CLOCKS, EverydayRoutes.ORGANIZER, EverydayRoutes.SOURCE) ||
             route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
         else performNavigation(route)
@@ -387,7 +399,10 @@ fun AppShell(
         onDispose { contextJob?.cancel(); contextJob = null }
     }
     val pageActions = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellPageProjection?>(null) }
-    val pageObjectId = contextObjectId ?: backStackEntry?.arguments?.getString("sessionId") ?: backStackEntry?.arguments?.getString("projectId")
+    val organizerSelection by remember(backStackEntry?.id) { backStackEntry?.savedStateHandle?.getStateFlow<String?>("organizer.selected",backStackEntry?.arguments?.getString("recordId"))
+        ?: kotlinx.coroutines.flow.MutableStateFlow<String?>(null) }.collectAsStateWithLifecycle()
+    val pageObjectId = if(contextualRoute?.substringBefore("?")==EverydayRoutes.ORGANIZER) organizerSelection else contextObjectId ?: backStackEntry?.arguments?.getString("sessionId") ?: backStackEntry?.arguments?.getString("projectId")
+        ?: backStackEntry?.arguments?.getString("sourceId")
     val pageOwnerFilter: (com.halo.app.ui.presence.ShellPageOwner) -> Boolean = remember(kidsMode, contextualRoute, pageObjectId, backStackEntry?.id) { { owner ->
         ShellOrbCatalog.allowsPageProjection(owner, kidsMode) && owner.navigationEntryId == backStackEntry?.id &&
             ShellOrbCatalog.pageOwnerMatches(owner, contextualRoute, pageObjectId)
@@ -615,6 +630,49 @@ fun AppShell(
                     )
                     }
                 }
+                composable("screen/organizer?recordId={recordId}&createKind={createKind}&occurrenceStart={occurrenceStart}", arguments = listOf(navArgument("recordId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("createKind") { type = NavType.StringType; nullable = true; defaultValue = null },navArgument("occurrenceStart") { type=NavType.StringType;nullable=true;defaultValue=null })) { entry ->
+                    val model: OrganizerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "organizer:${entry.id}", factory = EverydayViewModelFactory {
+                        OrganizerViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle, entry.arguments?.getString("recordId"),
+                            entry.arguments?.getString("createKind")?.let { value -> runCatching { com.halo.app.everyday.organizer.OrganizerKind.valueOf(value) }.getOrNull() },
+                            entry.arguments?.getString("occurrenceStart")?.let { value -> runCatching { java.time.Instant.parse(value) }.getOrNull() })
+                    })
+                    OrganizerScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                        onClocks = { navigateSafely(EverydayRoutes.CLOCKS) }, onBrief = { navigateSafely(EverydayRoutes.BRIEF) },
+                        onOpenRelated = { navigateSafely(it) })
+                }
+                composable("screen/clocks?zoneId={zoneId}&cityLabel={cityLabel}",arguments=listOf(navArgument("zoneId") { type=NavType.StringType;nullable=true;defaultValue=null },
+                    navArgument("cityLabel") { type=NavType.StringType;nullable=true;defaultValue=null })) { entry ->
+                    val model: WorldClockViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "clocks:${entry.id}", factory = EverydayViewModelFactory { WorldClockViewModel(entry.savedStateHandle) })
+                    WorldClockScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },initialZone=entry.arguments?.getString("zoneId"),initialLabel=entry.arguments?.getString("cityLabel"))
+                }
+                composable("screen/brief?briefId={briefId}", arguments = listOf(navArgument("briefId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                    val model: EverydayBriefViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "brief:${entry.id}", factory = EverydayViewModelFactory {
+                        EverydayBriefViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.arguments?.getString("briefId"), entry.savedStateHandle)
+                    })
+                    EverydayBriefScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                        onSources = { navigateSafely(EverydayRoutes.SOURCES) }, onOrganizer = { navigateSafely(EverydayRoutes.ORGANIZER) },
+                        onOpenFact = { model.openFact(it, ::navigateSafely) })
+                }
+                composable(EverydayRoutes.SOURCES) { entry ->
+                    val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "sources:${entry.id}", factory = EverydayViewModelFactory {
+                        SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
+                    })
+                    SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                        onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
+                        onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
+                }
+                composable("screen/source?sourceId={sourceId}&itemId={itemId}", arguments = listOf(
+                    navArgument("sourceId") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("itemId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                    val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "source:${entry.id}", factory = EverydayViewModelFactory {
+                        SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
+                    })
+                    SourcesScreen(model, entry.arguments?.getString("sourceId"), entry.arguments?.getString("itemId"),
+                        onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                        onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
+                        onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
+                }
                 composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}&sourceReference={sourceReference}", arguments = listOf(
                     navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("goal") { type = NavType.StringType; nullable = true; defaultValue = null },
@@ -644,11 +702,19 @@ fun AppShell(
                         initialSourceId = entry.arguments?.getString("captureSource"),
                         initialGoal = entry.arguments?.getString("goal"))
                 }
-                composable("activity?runId={runId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                composable("activity?runId={runId}&objectId={objectId}&eventId={eventId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("objectId") { type=NavType.StringType;nullable=true;defaultValue=null },navArgument("eventId") {type=NavType.StringType;nullable=true;defaultValue=null})) { entry ->
                     ActivityScreen(ManualDependencyGraph.activityViewModel, focusRunId = entry.arguments?.getString("runId"),
+                        focusObjectId=entry.arguments?.getString("objectId"),focusEventId=entry.arguments?.getString("eventId"),onShowAll={navigateSafely("activity")},
                         onHome = { navController.navigateToPrimary("home") },
                         onReviewRun = interactionViewModel::reviewRun, onOpenObject = { id ->
                         shellScope.launch {
+                            if(id.startsWith("organizer:")) {
+                                val recordId=id.removePrefix("organizer:")
+                                if(ManualDependencyGraph.organizerRepository.get(recordId)?.deletedAt==null) navigateSafely(EverydayRoutes.organizer(recordId))
+                                else navigateSafely(EverydayRoutes.ORGANIZER)
+                                return@launch
+                            }
                             val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
                             val route = when (item?.type) {
                                 com.halo.app.data.notebook.WorkspaceObjectType.NOTE -> if (item.contentRef == "file-tools:$id") "file_tools?objectId=${android.net.Uri.encode(id)}" else "notebook/note/$id"
@@ -701,6 +767,7 @@ fun AppShell(
                         onOpenStudio = { navigateSafely("studio") },
                         onOpenFileTools = { navigateSafely("file_tools") },
                         onOpenCanvasLibrary = { navigateSafely("canvases") },
+                        onOpenEveryday = {route -> navigateSafely(route)},
                         onStartVoiceMode = requestVoiceModeFromSurface)
                 }
 

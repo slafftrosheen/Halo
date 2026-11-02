@@ -67,8 +67,8 @@ interface ScreenItemStore {
 /** halo may PROPOSE a change; it is validated against the registry before preview/apply. */
 sealed interface LayoutChange {
     data class Add(val widgetType: String, val config: Map<String, String>) : LayoutChange
-    data class Remove(val widgetType: String) : LayoutChange
-    data class Move(val widgetType: String, val toIndex: Int) : LayoutChange
-    data class Resize(val widgetType: String, val size: CardSize) : LayoutChange
+    data class Remove(val widgetType: String, val cardId: String? = null) : LayoutChange
+    data class Move(val widgetType: String, val toIndex: Int, val cardId: String? = null) : LayoutChange
+    data class Resize(val widgetType: String, val size: CardSize, val cardId: String? = null) : LayoutChange
 }
 data class LayoutProposal(val changes: List<LayoutChange>, val summary: String, val reversible: Boolean, val unsupported: List<String>)

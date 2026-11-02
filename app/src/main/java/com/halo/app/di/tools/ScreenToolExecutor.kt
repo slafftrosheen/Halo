@@ -20,8 +20,9 @@ class ScreenToolExecutor(private val store: LocalScreenStore, private val allowe
         mapOf("type" to "object", "properties" to properties, "required" to required, "additionalProperties" to false)
     private val boolean = mapOf("type" to "boolean")
     private val revision = mapOf("type" to "string", "pattern" to "^[a-f0-9]{64}$")
-    private val operations = listOf("add", "remove", "reorder", "move", "resize", "resize_grid", "flags", "typography", "appearance", "starter", "preset")
+    private val operations = listOf("add", "remove", "reorder", "move", "resize", "resize_grid", "flags", "typography", "appearance", "starter", "preset", "configure")
     private val changeFields: Map<String, Any> = mapOf(
+        "config" to EverydayToolContracts.obj(EverydayToolContracts.cardFields),
         "operation" to choice(operations), "widgetType" to choice(ScreenWidgets.types.sorted()),
         "index" to integer(0, 23), "toIndex" to integer(0, 23), "columns" to integer(1, 4),
         "dx" to integer(-1, 1), "dy" to integer(-1, 1), "dw" to integer(-1, 1), "dh" to integer(-1, 1),
@@ -35,13 +36,15 @@ class ScreenToolExecutor(private val store: LocalScreenStore, private val allowe
         ToolDefinition(name, name, description, schema(properties, required))
 
     override fun definitions() = listOf(
+        definition("halo_screen_card_configuration", "Read one exact Everyday Screen card configuration at the observed layout revision and index. Returns its stable configurationId and typed presentation fields, including a selected city/source/record identity; no source bodies. Use this to distinguish independent clocks/cards before previewing a configuration patch.",
+            mapOf("revision" to revision,"index" to integer(0,23))),
         definition("halo_screen_state", "Read bounded local Screen layout/settings and saved preset metadata. Returns current revision and native widget whitelist. Never returns item bodies, source IDs, citations, arbitrary card config, or grants source/network permissions. Optional widgetType filters cards only.",
             mapOf("widgetType" to choice(ScreenWidgets.types.sorted())), emptyList()),
         definition("halo_screen_preview", "Preview 1–24 native Screen edits without saving. Exact state revision required. Edits use zero-based card indices from that revision; no HTML/JS, generated news, source reads or source changes. Returns a previewToken bound to the exact resulting layout. Starter/preset replaces the layout only in preview. Grid moves/resizes use the same native packing as touch/keyboard.",
             mapOf("revision" to revision, "changes" to changes)),
         definition("halo_screen_apply", "Apply the exact Screen preview using its revision, identical changes and previewToken. Rejects stale/tampered previews. No source content, OS permission, microphone, cloud or display-mode change. Local configuration acceptance does not prove a screen rendered. Never replay uncertain mutations.",
             mapOf("revision" to revision, "changes" to changes, "previewToken" to revision)),
-        definition("halo_screen_settings", "Change existing Screen settings at an exact revision: hidePrivate, keepCharging, dimAtNight, topics. Disabling hidePrivate can show personal/private cards to people nearby and requires the existing runtime's durable settings approval and scoped interaction. These presentation preferences never grant OS, source, provider or Full Power permissions. Topics do not fetch or fabricate articles.",
+        definition("halo_screen_settings", "Change existing Screen settings at an exact revision: hidePrivate, keepCharging, dimAtNight, topics. Disabling hidePrivate can show personal/private cards to people nearby and requires the existing runtime's durable settings approval and scoped interaction. These presentation preferences never grant OS, source, provider or Power permissions. Topics do not fetch or fabricate articles.",
             mapOf("revision" to revision, "settings" to schema(mapOf("hidePrivate" to boolean,
                 "keepCharging" to boolean, "dimAtNight" to boolean, "topics" to text(1000)), emptyList()))),
         definition("halo_screen_undo", "Use Screen's existing local layout Undo at the exact configuration revision. Does not undo settings or source content. Rejects absent history; never replay uncertain Undo.", mapOf("revision" to revision)),
@@ -84,6 +87,21 @@ class ScreenToolExecutor(private val store: LocalScreenStore, private val allowe
                 exact(args, emptySet(), setOf("widgetType"))
                 val filter = if ("widgetType" in args) string(args, "widgetType").also { require(it in ScreenWidgets.types) } else null
                 return store.withToolState { success(summary(it, filter)) }
+            }
+            if(toolCall.functionName=="halo_screen_card_configuration") {
+                exact(args,setOf("revision","index"))
+                val expected=string(args,"revision").also {require(it.matches(Regex("[a-f0-9]{64}")))}
+                return store.withToolState(expected) {state ->
+                    if(!allowed()) return@withToolState reject(ToolRejectionKind.PERMISSION_REQUIRED)
+                    val layout=requireNotNull(state.layout)
+                    val index=number(args,"index",0,23).also {require(it in layout.cards.indices)}
+                    val card=layout.cards[index]
+                    val kind=requireNotNull(com.halo.app.everyday.presentation.EverydayCards.screenKinds[card.widgetType])
+                    val config=com.halo.app.everyday.presentation.EverydayCardConfig.from(card.config,kind).copy(theme="INHERIT")
+                    success(JSONObject().put("revision",expected).put("index",number(args,"index",0,23)).put("configurationId",card.presentationId)
+                        .put("widgetType",card.widgetType).put("config",JSONObject(config.fields()).put("limit",config.limit)
+                            .put("hidePrivate",config.hidePrivate).put("sections",JSONArray(config.sections.map {it.name}))))
+                }
             }
             val required = when (toolCall.functionName) {
                 "halo_screen_preview" -> setOf("revision", "changes")
@@ -203,6 +221,15 @@ class ScreenToolExecutor(private val store: LocalScreenStore, private val allowe
                 val size = CardSize.valueOf(string(values, "size"))
                 replace(card.copy(size = size, placement = card.placement?.let { it.copy(
                     width = if (size == CardSize.COMPACT) 6 else 12, height = if (size == CardSize.EXPANDED) 2 else 1).bounded() }))
+            }
+            "configure" -> {
+                exact(values,setOf("operation","index","config"))
+                val kind=checkNotNull(com.halo.app.everyday.presentation.EverydayCards.screenKinds[card.widgetType])
+                val patch=values["config"] as? Map<String,Any?> ?: throw IllegalArgumentException()
+                EverydayToolContracts.validate(patch,EverydayToolContracts.obj(EverydayToolContracts.cardFields))
+                require(patch["theme"]==null || patch["theme"]=="INHERIT") {"Screen cards follow the Screen theme"}
+                val base=com.halo.app.everyday.presentation.EverydayCardConfig.from(card.config,kind)
+                replace(card.copy(config=com.halo.app.everyday.presentation.EverydayCardSettings.patch(base,patch).fields()))
             }
             "flags" -> {
                 exact(values, setOf("operation", "index"), setOf("pinned", "archived")); require(values.size > 2)

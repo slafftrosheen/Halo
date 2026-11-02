@@ -2,7 +2,7 @@
 <resources>
     <string name="capability_guide_title">Set up Halo capabilities</string>
     <string name="capability_guide_explanation">Start once, then review Android requests in order. Every capability is optional. Android may show separate dialogs; special access opens Settings. Files and photos use system pickers without whole-library access.</string>
-    <string name="capability_guide_privacy">Private and Full Power control processing, not Android grants. Access never authorizes an action, payment or continuous recording. Sensitive setup stays behind the existing grown-up controls.</string>
+    <string name="capability_guide_privacy">Local and Power control processing, not Android grants. Access never authorizes an action, payment or continuous recording. Sensitive setup stays behind the existing grown-up controls.</string>
     <string name="capability_guide_start">Start capability setup</string>
     <string name="capability_guide_continue">Continue setup</string>
     <string name="capability_guide_open_settings">Open Android settings</string>

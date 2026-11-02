@@ -60,6 +60,7 @@ class NotebookPurgeOwner(
                     if (previous == null) dao.insert(record) else { dao.removeFilesForNote(id); dao.update(record) }
                     dao.insertFiles(managed.map { NotebookPurgeFileEntity(it.id, id, NotebookNoteIdentity.asset(it)) })
                     check(notes.permanentlyDeleteTrashed(id) == 1)
+                    com.halo.app.data.everyday.EverydayLocalDataCleanup.notePurged(database,id)
                     assets.filter { it.storageType != "MANAGED_FILE" }.forEach { check(dao.removeAsset(it.id) == 1) }
                     NotebookPurgeResult.Saved(NotebookPurgeReceipt(record, false))
                 }

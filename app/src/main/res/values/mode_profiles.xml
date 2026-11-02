@@ -17,11 +17,11 @@
     <string name="mode47_configured_providers">Configured providers</string>
     <string name="mode47_no_provider">Provider setup needed</string>
     <string name="mode47_other_routes">Web reading uses the requested public website. Connected services use the account or server configured for that action. Hosted speech uses the selected speech provider. Unconfigured routes stay unavailable.</string>
-    <string name="mode47_billing_explanation">Your provider may charge your account. Prices and quotas depend on its model and plan. Halo shows provider-reported costs when available; unreported costs remain unknown. Full Power does not approve spending.</string>
+    <string name="mode47_billing_explanation">Your provider may charge your account. Prices and quotas depend on its model and plan. Halo shows provider-reported costs when available; unreported costs remain unknown. Power does not approve spending.</string>
     <string name="mode47_boundaries">Android grants, Kids restrictions, action confirmations and your spending controls still apply.</string>
-    <string name="mode47_activation_failed">Could not activate the profile. Private mode protects remote processing. Review Mode profiles and try again.</string>
-    <string name="mode47_local_route">Private · processed on this device</string>
-    <string name="mode47_route">Full Power · selected route: %1$s</string>
+    <string name="mode47_activation_failed">Could not activate the profile. Local mode protects remote processing. Review Mode profiles and try again.</string>
+    <string name="mode47_local_route">Local · processed on this device</string>
+    <string name="mode47_route">Power · selected route: %1$s</string>
     <string name="mode47_provider">Provider</string>
     <string name="mode47_model">Model</string>
     <string name="mode47_routing">Routing</string>

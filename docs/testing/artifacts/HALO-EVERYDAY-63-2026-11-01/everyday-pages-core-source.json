@@ -1,0 +1,450 @@
+{
+  "capturedUtc": "2026-11-01T21:38:13.003035+00:00",
+  "boundary": "First organizer, clocks, brief, sources and reader page integration; translations and final UI review still pending. Source frozen through this run.",
+  "files": [
+    {
+      "path": "app/src/main/java/com/halo/app/attention/AndroidAttentionHost.kt",
+      "sha256": "ac9f52cd95326e09d9fd2af4098e32f92254c543937bdf23f40ee624c2a7f2b8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/AppDatabase.kt",
+      "sha256": "f5be447d26c50db7957e864ca223798835be0214ca981e04127aaa2e6abb6a60"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/BriefCodec.kt",
+      "sha256": "5ca8380da5d9074647b761806f9484ef752b7e987785ad0c29cd0b4f1d2c1706"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/BriefEntities.kt",
+      "sha256": "14c32eb099786b953457941743a2ce29e9c6a31021fd570103d7fa7b7c2f80e9"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/CollectorCodec.kt",
+      "sha256": "17ebff2e9f070007d7356c73594c182125b8ea03fffe065a66fe2a3f433bbe41"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/CollectorEntities.kt",
+      "sha256": "0c05e3ec6cb239af49c1d902e31c16e029334ee1b4220b22db407504e0a47dc8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/OrganizerCodec.kt",
+      "sha256": "8ceb69ddab183e0fb6df5e908f5dfe574705351b8b75c7375a2a1a63006995c7"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/OrganizerEntities.kt",
+      "sha256": "badded449233ee0b68c39e0b923f972dfc19f8c0ab5bdbbc2b20445317890e16"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomBriefRepository.kt",
+      "sha256": "2c82fd873288e69159d45747876b71d8add742b0c6c7ee75f9cc4688826f1d68"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomCollectorRepository.kt",
+      "sha256": "1a86bddef6c76d9f144870262ab5d45bf6aa3df8191acf7fa339a354db683237"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomOrganizerRepository.kt",
+      "sha256": "3f5c2889d5e7f63a41e61e722696e80aa099c3fa033a3aa9c159c5ee11bf165b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/RoomWorldClockRepository.kt",
+      "sha256": "0e3d10b9ed46993722578dfd8a07be7023a7e075c3e44d58ef14c407e9aedc6f"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/everyday/WorldClockEntities.kt",
+      "sha256": "642c9fb94c666880ca351b8035a3def3bc6b38b94896368b45b4020e5e3d1eab"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/data/workspace/WorkspaceFileRepository.kt",
+      "sha256": "59ef38925617e1f5919b3ed859d87f164b85fa3c1da4b48d00ea953004edee45"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt",
+      "sha256": "58ab3e2f39dff9be4e6481525b627e0163396c1b6994bf3b1ba594d8617d4fb5"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/EverydayWriteAuthority.kt",
+      "sha256": "eb0fd0cfa86f4588625fa2c375351c38d10a571912d22b2b5a8802412e4ed300"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/BriefLocalAuthority.kt",
+      "sha256": "7877e4d80985f26b0ae577dea225921c85cfc3035f8d142f74f9ec3490a2cd43"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/BriefNoticeAuthority.kt",
+      "sha256": "c7c81f2e063c8cf9302961eee400a9fc4a29f253284144f812f22f08a901d781"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/BriefPresentation.kt",
+      "sha256": "919d41fbeabc8b7636271412ecc2977ab75ea069d3696b8796ebe0f401804014"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/BriefProactiveCoordinator.kt",
+      "sha256": "b11bb78cc3589e71e7ee165d3c16aae5af734a63140db67777d82e6702220f17"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/BriefReadAloud.kt",
+      "sha256": "897c358ce912ae3e0ff581de32fabe19c0ca8256fa5d075086fdcd9039c99f20"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/EverydayBriefEngine.kt",
+      "sha256": "1cfca92ed31d5b084c31dc41bdd04be75790b10f8b167b9268b6c673f2982a0e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/EverydayBriefModels.kt",
+      "sha256": "e9c81d494e69bf77496b168ade1862d08818a40f33636301eaeadfbd87d2b71a"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/EverydayBriefService.kt",
+      "sha256": "4351f4d661305031008738e15b11d871ab3ccf74482c0a7e59e97a0197ad8414"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/briefing/android/BriefWorker.kt",
+      "sha256": "80e4c364ceeb5c7f7a0cead0de22755fbe0023513fadc81fb0211483be597e35"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorCoordinator.kt",
+      "sha256": "147d593cb75d633b02d902fb7538ae04dee1596eaf451fda1525ffc3bcec71cc"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorEndpointIdentity.kt",
+      "sha256": "0aac90c6d44b090ab37b05be3e35e2410b02e805fbef3eacddb4606fc37cb881"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorModels.kt",
+      "sha256": "8aaf64edb7ac9aa265e817c606afea5f9ac7c1e152b38e6195d8cfdcffebc349"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorPayloadLimits.kt",
+      "sha256": "99e7b83cc816bbc8927f292d8e9b419fc2cfc0292f5dae9a9cf8de5035dc5060"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorPreview.kt",
+      "sha256": "db408c343d77c6cad71d1ae3557b0eb8f0a3461ca04a6ccd881d9d2c7f30809b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorRepository.kt",
+      "sha256": "936bcc72af8488b4d0d6f9ec71da52f9fdb9a30fd1b759165791176aef09a095"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/CollectorUrlPolicy.kt",
+      "sha256": "7c4f6869ccc030f49b0df0134281bf87eb51a101eb7f01c70fbb68df3ff909e1"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/FeedParser.kt",
+      "sha256": "afc5e9766bbf490c51b6a76e9f24333b7e911ae4da7366ac05b3221e2e5fe77e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/LocalStateCollector.kt",
+      "sha256": "c26b014bdcdb5007474d2b5add1569a681d13e24544a3a949758641e43e64d26"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/OfflineCityCatalogue.kt",
+      "sha256": "c197b22079bea4ccb73732adc745be97c22e77b63519efdd72f3ae1629aa0c2e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/OpenMeteoParser.kt",
+      "sha256": "e9ed105d747223d335ff232ceb82cca3ca4bbe271e4c72611258a3bc77c72451"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/PublicHttpCollector.kt",
+      "sha256": "4b6860cb3fee07a49b60853aa2d7d9d5da5bc5a4f028b80dfba0577526544885"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/SafeCollectorJson.kt",
+      "sha256": "5c84253c9fcf4cc15fd719042cc34fb54f3891f7c757c27c79d3af93c590cf5b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/StarterSourceCatalogue.kt",
+      "sha256": "e289bf1dcecc51edadcda25e83b29f4b0a56e7315459066675fa770b951b280c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/android/AndroidLocalCollectors.kt",
+      "sha256": "8a34c1285c38eaae5465a995aa74349ad989f4469d85ea362392a2aa47f3483d"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/android/CollectorBootstrap.kt",
+      "sha256": "b516e50fb33a62435fb22c14a55c07cc2fa9c6017ef1cf63e8c677cfd0d6ebcf"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/collectors/android/CollectorRefreshWorker.kt",
+      "sha256": "2358fad1bb25ea601bfcd5b355d052a3c6937490ff61e656c807b93204105c41"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/IcsTimeZones.kt",
+      "sha256": "b6fda2ffcaa829bc32e2d51daf68472ff1f15da4ddd7a1285c15869b044737ea"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerDeliveryCoordinator.kt",
+      "sha256": "5d1dad58626cfebca134c181cb6b4c10bad1af646bb7a476783dbab9e627930f"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerDeliveryPresentation.kt",
+      "sha256": "4f71689cab5f4097cc7e341c3cb2e1056dd48c99d805450d2c6400feceea2be6"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerDeliveryTiming.kt",
+      "sha256": "6277d27251f300f5d98d70ae5ab10d3393367dac2dc99f9492b90681303f22e0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerIcs.kt",
+      "sha256": "6c63755b83d47bc466e025562f91e51f417535e7c4efbf4b3117fc539c6692a3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerInitialDelivery.kt",
+      "sha256": "cd913f00faec2271af9ab86e9d59dc0cf31dadd2a41277060fc18505e32d4f30"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerModels.kt",
+      "sha256": "f0ba79989a75eb27f053bc6d03631ef9ff8136b59900065bb575a0c58c76737e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerRecurrence.kt",
+      "sha256": "b3f2d61f8d4997b9eaca01211e1345de363447af4417febc8f923c0002799457"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/OrganizerUseCases.kt",
+      "sha256": "ccc0ba98263e2e43f4fad3061a77efb61e7a89764f64db286af4432a30e409f3"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/WorldClockModels.kt",
+      "sha256": "e5680ac29ac9735934b62d67baef787c66694aebe5a397e0d66abc04a89a2044"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/AndroidOrganizerDelivery.kt",
+      "sha256": "692f049267b063357ddee0412dd90ee183ef1d05018dfbd3470c00c141245733"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/LegacyOrganizerReminders.kt",
+      "sha256": "23fcb87e14ff00baaa5c88ad77b0ff1be1f026b2a9693a7dd5b0285e8eb5439c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerAlarmActivity.kt",
+      "sha256": "fea615527fc46c16ad0049b79cd73b7b32393863efc17fbc125baadd21788fe0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerAlarmQueue.kt",
+      "sha256": "f60be83e1308b688fe6043bfbf53cf7315b57ace1274cfe0ce0258ad4ee77981"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerAlarmReceiver.kt",
+      "sha256": "154ea57515d5f3562609726e496a8f0773d2c8601a098d579dba04ec22be82aa"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerDirectBootStore.kt",
+      "sha256": "7bc6554845748d8880858d7940f6c74ae4d563555b9c67e0a8d9586ed460f3c8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerLockedDelivery.kt",
+      "sha256": "821704b312fba2dabb0f319fec55273532ec607230d1b21347a7d1edcccf1dae"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/everyday/organizer/android/OrganizerScheduleWorker.kt",
+      "sha256": "a0998d51c2a9a067b10934de48b598a19a697a39a8f49e4c3d9db40175ebc57b"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/screen/HaloScreen.kt",
+      "sha256": "d346cbaa9dca2517b0c87eeaffbe654800c517e7f9d576a243f0e8f6e5f482c5"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/CollectorContent.kt",
+      "sha256": "9c2dd05ad7e8c86749e7371ee7fadf6c1bac39b44bcd4372a524e26a93b6d5e8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/EverydayBriefScreen.kt",
+      "sha256": "c2a53c3abb579f58a2f5373071ff4db51e8c7bd9a7918b30c6d613efa75f27a5"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/EverydayBriefViewModel.kt",
+      "sha256": "e6a62dc99808fb249be2abbd3ecf9f3c1df51f2e837989e5342bda6e3601cc53"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/EverydayComponents.kt",
+      "sha256": "f3bc9bec20ad94cb10f23aab76e143b9d9c460f719fc9a9fbe250ba05366898c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/EverydayRoutes.kt",
+      "sha256": "d66264258396a1d0867e8503b1aabc7c6ce1f01efa9b27a833e0a86d0f4fd25e"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/OfflineCityPicker.kt",
+      "sha256": "31525995de9d69eb12a7fdc426d7b50c6833c1e2614f761e2133e1cf3b2ac028"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/OrganizerDraft.kt",
+      "sha256": "16a49878ef1925fc65c22bf1a4dfd6c523820a7036fce88e4902aa816013dc40"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/OrganizerEditor.kt",
+      "sha256": "23d20ce3b4bfbf5580e6cf6ba2818ed53e5b48ba7dce4907b8671ca5a8e21a1d"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/OrganizerScreen.kt",
+      "sha256": "04722031890aa6ac82484722e84c61534b787556064bb35a949e9009af3e259d"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/OrganizerViewModel.kt",
+      "sha256": "b8c16c995085de944fcded7fc589f4b919ae0fff7a35e83cc54cab883933aaca"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/SourceSettings.kt",
+      "sha256": "8e5cc5c0edfe75bc4495671ee504bc9817c05678e4cfd9ce1b59ee38a211d11c"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/SourcesScreen.kt",
+      "sha256": "605b4b3873077bfc524ad5309703da728c496951d0550dc1aa84362664559eb0"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/SourcesViewModel.kt",
+      "sha256": "331a3187a9ee3a4b45babb18125d1caa58c106acaed117547e21e39597266cc5"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/WorldClockScreen.kt",
+      "sha256": "88a63027f50cc9c40672dedab480519e1590725b0ad6d231ecea38c6bc1bf322"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/everyday/WorldClockViewModel.kt",
+      "sha256": "5410c6f09776fc3fb11ebb6cfef7ed8e7491c35c211a0f3d69e7ff4ee90e54ce"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/screens/kids/KidsPreferences.kt",
+      "sha256": "da4bee992c1d5ed82c8c89c7d872b5bd74e4f1dd045c2f72a596e8965387fa27"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/shell/AppShell.kt",
+      "sha256": "73df99727621a9d36728c7b86cc138e7744eea764b404e3cda4dc4bb23eb43bb"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/shell/DailyOwnerRoutes.kt",
+      "sha256": "c2ec2fc0a3a3158209a7a1dbddf297c8f0c723e8191f86130b734cbe79a9e4c8"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/shell/HaloNavigationRoutes.kt",
+      "sha256": "1b078284312abbff25bf763e0c8e230d88e0f43dba564e23865f1c5ece904343"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/shell/HaloScreenCatalog.kt",
+      "sha256": "d69f7ca5e6582877ce915bb2f23c6c5572ac9a2be4e5a75abd483a89cae1a9f6"
+    },
+    {
+      "path": "app/src/main/java/com/halo/app/ui/shell/ShellOrbCatalog.kt",
+      "sha256": "cd3f49c633d0c87e0752e57e2ea6c7264231416166c4155d7c9fcbfcf37d4004"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/CognitionMigrationTest.kt",
+      "sha256": "c320e045e7a224d92dd2d94d5da42b1055bd4dab24036dde28e3b5d258703ee4"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/BriefPersistenceTest.kt",
+      "sha256": "fbe6e91838d70160051057aa4581f84f7cfaa5a50284775d7b8f679c68db365d"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/CollectorIntegrationTest.kt",
+      "sha256": "748d82a6ac4ee99d68f77f510841617b72a6cba0dfd5b3fec05ff9d3f23971e4"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/EverydayEditingTest.kt",
+      "sha256": "498993c2a988f502ec566dae25714d82fe1ea02b0c441a13816ec706464912a6"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/OrganizerDeliveryTest.kt",
+      "sha256": "1c0088527f5298dc3b4509d9cd3bded6467d086fb3431a3a50e24000f9ab5d6a"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/OrganizerPersistenceTest.kt",
+      "sha256": "fd7c389ece8649492e92fd46c67408fc9bb76aa6339b47d9643a02a9ad2feeaf"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/data/everyday/WorldClockAndCitiesTest.kt",
+      "sha256": "fa68146558becfc594ae26e9d005af103426d35eebcbf0c691cdc80f74025b65"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/briefing/BriefNoticeAuthorityTest.kt",
+      "sha256": "5e270921eb01b8e5719ce3ce74bcee589f91084caf839a93af9fc2f04e6fa32c"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/briefing/EverydayBriefTest.kt",
+      "sha256": "94d8e449a9020c838199a6a7c2786229dc1c59c6d58f738f86e9a6e4c9fe1951"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/collectors/CollectorParsingTest.kt",
+      "sha256": "303bd9a44e3ac9aa1006e6e6720b2f0f9bc571b2a9f151cd76627ac77e15dbcc"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerIcsTest.kt",
+      "sha256": "19358a699dafb7c85390df9b16729fe6c06f35924d1b24c09c3022f3e91502b5"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/everyday/organizer/OrganizerRecurrenceTest.kt",
+      "sha256": "3bfbb020daf292683ab5356e3783cb8086915668723e7f081e144b686c85b431"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/BellActivityLargeTextTest.kt",
+      "sha256": "3009c91331eeae268274613c8b8f48529f490acd3437d86a50c6450fb4bb3a53"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/BrandPermissionAbilitiesTest.kt",
+      "sha256": "ce089e6ff815225d5c070354bfe185f19e824cd742f8bf23737cac9d43f1cf10"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/CapabilitySetupGuideTest.kt",
+      "sha256": "b5eacf61caae3c742255b8ebb271a703705d26edf81183f4c3a166f84b1c5312"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/ExactPrimaryNavigationTest.kt",
+      "sha256": "952e4c0d444794262f8d1e46fa3ae0ee091352ace80037f9b4c22e01acfdb8c7"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/GuidedCapabilitySetupTest.kt",
+      "sha256": "721cf91ce07dd351d956db6e1870c860089b2be673a7a0c126c58abfe73dabad"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/HaloAssistantScreenParityTest.kt",
+      "sha256": "1aaa52c0b4f08a5100f8aa9a1f0ae5948ed0fe9a19434259dce16ccef54fe196"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/HaloScreenCatalogTest.kt",
+      "sha256": "6176b7e6ff65d27d1e941abef085e23425cbf103c3e592b204d174cc3e67debc"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/HaloScreenRequestLifecycleTest.kt",
+      "sha256": "3b3a772cfdaa1e6c9d2715ce02efb8d888a7478b31bdf159fae7f6200db49e71"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/HaloScreenRequestsTest.kt",
+      "sha256": "e4145aa2d170f34dbe3ca8ccfa7ac7b48aa8e20e4e39bfd6d767f78671222a89"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/HaloZone5InteractionTest.kt",
+      "sha256": "03842f234dc6f8270ba645aaecdc1a6e5877d8ea1c6052cedb27e5eb96fc4077"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/HaloZoneLayoutTest.kt",
+      "sha256": "0575307663ddb117271f7121f444b04023b5a9dacdc5b4f748aa8723d70a328c"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/PermissionsScreenTest.kt",
+      "sha256": "5d148641c58d364de96c5000b9675d092971535db2aa0454161822f0c114fea1"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/ShellFooterViewportTest.kt",
+      "sha256": "c07fe1533e82408814b42f741f2375e2ff193d68c07cfb894a049bea0191ad8d"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/ShellInteractionSurfaceTest.kt",
+      "sha256": "8d799a3d8a8c1f96e4ae34ea67f7f53280529bc2dbcdec77ef871f6f9306b3cd"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/ShellOrbCatalogTest.kt",
+      "sha256": "a959d678edcc1e24f304c6564574c3c843508f5551d21081122eab24ee9f2178"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/ShellSpeechLifecycleTest.kt",
+      "sha256": "3d993a372871f0fcefe45b96513ccc300c0e09cfd6a55b3422f30b4decdd5180"
+    },
+    {
+      "path": "app/src/test/java/com/halo/app/ui/shell/Zone5WorkingAreaTest.kt",
+      "sha256": "2b041cc231b6c68aad1ab3751cdec1463f78079cff92d5bc90c60c8e76a84885"
+    }
+  ]
+}

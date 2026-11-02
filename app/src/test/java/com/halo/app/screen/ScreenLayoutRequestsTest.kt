@@ -15,7 +15,9 @@ class ScreenLayoutRequestsTest {
         val changed = ScreenLayoutRequests.apply(original, LayoutChange.Remove("notebook"))!!
         assertTrue(original.cards.any { it.widgetType == "notebook" })
         assertFalse(changed.cards.any { it.widgetType == "notebook" })
-        assertNull(ScreenLayoutRequests.apply(original, LayoutChange.Add("clock", emptyMap())))
+        val duplicate=ScreenLayoutRequests.apply(original, LayoutChange.Add("clock", emptyMap()))!!
+        assertEquals(2,duplicate.cards.count { it.widgetType=="clock" })
+        assertEquals(duplicate.cards.size,duplicate.cards.map { it.presentationId }.distinct().size)
         assertNull(ScreenLayoutRequests.apply(original, LayoutChange.Add("unknown", emptyMap())))
         assertNull(ScreenLayoutRequests.apply(original, LayoutChange.Move("clock", 0)))
     }

@@ -7,7 +7,7 @@ import java.time.*
 import kotlinx.coroutines.flow.map
 
 class RoomBriefRepository(private val db: AppDatabase, private val clock: Clock = Clock.systemUTC(),
-    private val settingsChanged: () -> Unit = {}) : BriefRepository {
+    private val settingsChanged: () -> Unit = {},private val beforePublish: suspend (EverydayBrief)->Unit = {}) : BriefRepository {
     private val dao get() = db.briefDao()
     override fun observe() = dao.observe().map { rows -> rows.map { BriefCodec.document(it.body) } }
     override fun observeSettings() = dao.observeSettings().map { it?.let { row -> BriefCodec.settings(row.body) } ?: BriefSettings() }
@@ -17,6 +17,8 @@ class RoomBriefRepository(private val db: AppDatabase, private val clock: Clock 
     override suspend fun baseline(date: LocalDate, zone: ZoneId, audience: BriefAudience) = dao.baseline(baselineKey(date, zone, audience))?.let { BriefCodec.baseline(it.body) }
     override suspend fun publish(projection: BriefProjection): EverydayBrief = db.withTransaction {
         val document = projection.document
+        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+        beforePublish(document)
         dao.get(document.id)?.let { return@withTransaction BriefCodec.document(it.body) }
         if (document.period == BriefPeriod.MORNING) {
             val baseline = projection.baseline
@@ -30,8 +32,8 @@ class RoomBriefRepository(private val db: AppDatabase, private val clock: Clock 
         dao.prune(before); dao.pruneBaselines(before); dao.pruneDeliveries(before)
         document
     }
-    override suspend fun remove(id: String) { dao.remove(id) }
-    override suspend fun clear() = db.withTransaction { dao.clearBriefs(); dao.clearBaselines(); dao.clearDeliveries() }
+    override suspend fun remove(id: String) = db.withTransaction { com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); com.halo.app.everyday.EverydayReadAuthority.invalidate(); dao.remove(id) }
+    override suspend fun clear() = db.withTransaction { com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); com.halo.app.everyday.EverydayReadAuthority.invalidate(); dao.clearBriefs(); dao.clearBaselines(); dao.clearDeliveries() }
     override suspend fun settings() = dao.settings()?.let { BriefCodec.settings(it.body) } ?: BriefSettings()
     override suspend fun deliveryKeys(since: Instant) = dao.deliveries(since.toEpochMilli())
         .filter { it.state !in setOf("CLAIMED", "RETRYABLE") }.map { it.key }.toSet()
@@ -54,6 +56,8 @@ class RoomBriefRepository(private val db: AppDatabase, private val clock: Clock 
             check(current.version == expectedVersion) { "Brief settings changed; reopen settings" }
             val next = value.copy(version = current.version + 1)
             val encoded = BriefCodec.encode(next); BriefCodec.settings(encoded)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+            com.halo.app.everyday.EverydayReadAuthority.invalidate()
             dao.settings(BriefSettingsEntity(version = next.version, body = encoded))
             next
         }

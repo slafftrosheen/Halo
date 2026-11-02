@@ -38,6 +38,7 @@ class ZipBrainExporter(
         StudioProjectSnapshot::class.java, StudioVersionSnapshot::class.java,
         FileSnapshot::class.java, AgentRunSnapshot::class.java, AgentStepSnapshot::class.java,
         ReminderSnapshot::class.java, DeviceConfigurationSnapshot::class.java,
+        EverydayArchiveEntry::class.java,
     ).associateWith { moshi.adapter(it) }
 
     override suspend fun export(
@@ -50,6 +51,7 @@ class ZipBrainExporter(
         val snapshot = sources.snapshot()
         val includeFiles = request.profile != BrainExportProfile.BRAIN_ONLY
         val sections = buildList {
+            add(BrainArchiveSection("everyday", itemCount=snapshot.everyday.size))
             add(BrainArchiveSection("workspace", itemCount = snapshot.workspace.size))
             add(BrainArchiveSection("studio", itemCount = snapshot.studioProjects.size + snapshot.studioVersions.size))
             add(BrainArchiveSection("notes", itemCount = snapshot.notes.size))
@@ -123,6 +125,9 @@ class ZipBrainExporter(
             writeJsonLines(zip, "workspace/provenance.jsonl", snapshot.provenance, checksums, progress)
             writeBytes(zip, "settings/user-settings.json", settingsAdapter.indent("  ").toJson(snapshot.settings).toByteArray(Charsets.UTF_8), checksums)
             writeJsonLines(zip, "reminders/reminders.jsonl", snapshot.reminders, checksums, progress)
+            snapshot.everyday.chunked(8).forEachIndexed {index,entries ->
+                writeJsonLines(zip,"everyday/entries-${index.toString().padStart(5,'0')}.jsonl",entries,checksums,progress)
+            }
             writeJsonLines(zip, "devices/configuration.jsonl", snapshot.devices, checksums, progress)
 
             val fileIndex = snapshot.files.map { file ->

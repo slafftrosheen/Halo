@@ -95,6 +95,7 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
     val device = state.devices.firstOrNull { it.id == deviceId }
     val fallback = remember { MutableStateFlow(BuddyBotTelemetry()) }
     val telemetry by (buddyBotHost?.telemetry ?: fallback).collectAsStateWithLifecycle()
+    val endpointError by (buddyBotHost?.connectionError ?: remember {MutableStateFlow<String?>(null)}).collectAsStateWithLifecycle()
     val connected = device?.isConnected == true
     val fault = telemetry.safetyState?.uppercase() in setOf("FAULT", "ESTOP") ||
         !telemetry.safetyFault.isNullOrBlank() && !telemetry.safetyFault.equals("none", true)
@@ -106,6 +107,7 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
     var address by remember { mutableStateOf(buddyBotHost?.getTargetUrl().orEmpty()) }
     var code by remember { mutableStateOf("") }
     var connectionError by remember { mutableStateOf(false) }
+    var addressError by remember {mutableStateOf(false)}
     var pairing by remember { mutableStateOf(false) }
     var armPending by remember { mutableStateOf(false) }
     var armUnconfirmed by remember { mutableStateOf(false) }
@@ -198,14 +200,14 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
             if (!shellHosted) HaloWorkspaceButton(uiText(if (connected) "Connection settings" else "Find on Wi-Fi"),
                 { connection = true }, Modifier.fillMaxWidth(), primary = !connected)
             if (connection) HaloWorkspaceCard {
-                HaloTextField(address, { address = it; connectionError = false }, label = { Text(uiText("Wi-Fi address")) },
+                HaloTextField(address, { address = it; addressError = false }, label = { Text(uiText("Wi-Fi address")) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.TEXT)
                 HaloWorkspaceButton(uiText("Save address"), {
-                    val uri = android.net.Uri.parse(address.trim())
-                    if (uri.scheme !in setOf("ws", "wss") || uri.host.isNullOrBlank() || uri.userInfo != null) connectionError = true
-                    else { buddyBotHost?.setTargetUrl(address.trim()); connectionError = false }
+                    if (!com.halo.app.embodiment.BuddyBotLocalEndpoint.acceptsWebSocket(address.trim())) addressError = true
+                    else { buddyBotHost?.setTargetUrl(address.trim()); addressError=false;connectionError = false }
                 }, Modifier.fillMaxWidth(), enabled = buddyBotHost != null && address.isNotBlank())
-                if (connectionError) Text(uiText("Check the address or pairing code and try again."), color = MaterialTheme.colorScheme.error)
+                if (addressError || endpointError!=null) Text(uiText(endpointError ?: com.halo.app.embodiment.BuddyBotLocalEndpoint.MESSAGE), color = MaterialTheme.colorScheme.error)
+                if(connectionError) Text(uiText("Check the address or pairing code and try again."),color=MaterialTheme.colorScheme.error)
                 HaloTextField(code, { code = it.take(9) }, label = { Text(uiText("Pairing code")) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.CODE)
                 HaloWorkspaceButton(uiText("Pair"), {

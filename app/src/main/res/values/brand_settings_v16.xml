@@ -6,7 +6,7 @@
     <string name="brand_intelligence_where">Where Halo thinks</string>
     <string name="brand_intelligence_select_help">Choose where replies can be processed. Opening a choice does not change your active model.</string>
     <string name="brand_intelligence_phone">On this phone</string>
-    <string name="brand_intelligence_phone_summary">Private · can work offline with an installed model</string>
+    <string name="brand_intelligence_phone_summary">Local · can work offline with an installed model</string>
     <string name="brand_intelligence_network">On your network</string>
     <string name="brand_intelligence_network_summary">A computer or server you control</string>
     <string name="brand_intelligence_cloud">In the cloud</string>

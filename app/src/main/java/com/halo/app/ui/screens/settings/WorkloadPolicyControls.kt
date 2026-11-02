@@ -50,7 +50,7 @@ internal fun WorkloadPolicyControls() {
             if(workload.legacyRole!=null) {
                 Row { Switch(profile.inheritRoutingPolicy,{save(profile.copy(inheritRoutingPolicy=it))}); Text(uiText("Inherit existing routing policy")) }
                 if(!profile.inheritRoutingPolicy) {
-                    Text(uiText("Media sharing follows the Private / Full Power switch at the top of Halo."))
+                    Text(uiText("Media sharing follows the Local / Power mode control beside the halo Orb."))
                     Row { Switch(profile.allowFallback,{save(profile.copy(allowFallback=it))}); Text(uiText("Allow configured fallback")) }
                 }
             }

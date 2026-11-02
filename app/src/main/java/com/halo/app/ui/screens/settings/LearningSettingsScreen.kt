@@ -55,7 +55,7 @@ import com.halo.runtime.cognition.memory.*
         }
         HorizontalDivider()
         Text(uiText("Using memory"), style = MaterialTheme.typography.titleLarge)
-        Text(uiText("Memory sharing follows the Private / Full Power switch at the top of Halo."))
+        Text(uiText("Memory sharing follows the Local / Power mode control beside the halo Orb."))
         Text(uiText("Halo may retrieve relevant saved memories within the current scope and context budget."))
         Text(uiText("Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts."))
         Text(uiText("Memory retrieval depends on available search capabilities and your privacy settings."), style = MaterialTheme.typography.bodySmall)

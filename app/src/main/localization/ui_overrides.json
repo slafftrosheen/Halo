@@ -15,103 +15,103 @@
       "pl": "Nie udało się zachować tej wersji roboczej na później. Wybierz Zapisz mój tekst, aby zachować kopię w przestrzeni roboczej."
     },
     "ui_d47b51ac5c4a": {
-      "en": "Full Power mode",
-      "ru": "Режим полной мощности",
+      "en": "Power mode",
+      "ru": "Режим Power",
       "lv": "Pilnas jaudas režīms",
-      "pl": "Tryb Full Power"
+      "pl": "Tryb Power"
     },
     "ui_f7c25d67b4c2": {
-      "en": "Private / Full Power",
-      "ru": "Приватно / Полная мощность",
-      "lv": "Privāts / Pilna jauda",
-      "pl": "Prywatny / Full Power"
+      "en": "Local / Power",
+      "ru": "Локально / Power",
+      "lv": "Local / Power",
+      "pl": "Local / Power"
     },
     "ui_a0f62566edfc": {
-      "en": "Everything stays on this phone. Full Power features are off.",
-      "ru": "Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены.",
+      "en": "Everything stays on this phone. Power features are off.",
+      "ru": "Обработка ИИ остаётся на этом телефоне. Возможности Power выключены.",
       "lv": "MI apstrāde notiek šajā tālrunī. Pilnas jaudas iespējas ir izslēgtas.",
-      "pl": "Przetwarzanie AI pozostaje na tym telefonie. Funkcje Full Power są wyłączone."
+      "pl": "Przetwarzanie AI pozostaje na tym telefonie. Funkcje Power są wyłączone."
     },
     "ui_7be2dcda5a77": {
-      "en": "AI processing stays on this phone. Full Power features are off.",
-      "ru": "Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены.",
+      "en": "AI processing stays on this phone. Power features are off.",
+      "ru": "Обработка ИИ остаётся на этом телефоне. Возможности Power выключены.",
       "lv": "MI apstrāde notiek šajā tālrunī. Pilnas jaudas iespējas ir izslēgtas.",
-      "pl": "Przetwarzanie AI pozostaje na tym telefonie. Funkcje Full Power są wyłączone."
+      "pl": "Przetwarzanie AI pozostaje na tym telefonie. Funkcje Power są wyłączone."
     },
     "ui_f95736e4ba58": {
-      "en": "Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply.",
-      "ru": "В режиме полной мощности переписка, изображения, воспоминания и материалы рабочего пространства могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера.",
+      "en": "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply.",
+      "ru": "В режиме Power переписка, изображения, воспоминания и материалы рабочего пространства могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера.",
       "lv": "Pilnas jaudas režīmā sarunas, attēli, atmiņas un darbvietas materiāli var tikt nosūtīti izvēlētajam pakalpojumam. Pakalpojuma sniedzējs var iekasēt maksu.",
-      "pl": "W trybie Full Power rozmowy, obrazy, wspomnienia i przestrzeń robocza mogą być wysyłane do wybranego dostawcy. Mogą obowiązywać opłaty dostawcy."
+      "pl": "W trybie Power rozmowy, obrazy, wspomnienia i przestrzeń robocza mogą być wysyłane do wybranego dostawcy. Mogą obowiązywać opłaty dostawcy."
     },
     "ui_91d1493a8e85": {
-      "en": "One switch at the top of every screen controls sharing. Mode profiles keep your Private and Full Power choices separate.",
-      "ru": "Переключатель вверху каждого экрана управляет передачей данных. Профили хранят настройки приватного режима и полной мощности раздельно.",
-      "lv": "Slēdzis katra ekrāna augšdaļā nosaka kopīgošanu. Režīmu profilos privātā režīma un pilnas jaudas izvēles tiek glabātas atsevišķi.",
-      "pl": "Jeden przełącznik u góry każdego ekranu steruje udostępnianiem. Profile trybów przechowują osobne ustawienia trybu prywatnego i Full Power."
+      "en": "One switch at the top of every screen controls sharing. Mode profiles keep your Local and Power choices separate.",
+      "ru": "Переключатель вверху каждого экрана управляет передачей данных. Профили хранят настройки режима Local и Power раздельно.",
+      "lv": "Slēdzis katra ekrāna augšdaļā nosaka kopīgošanu. Režīmu profilos privātā režīma un Power izvēles tiek glabātas atsevišķi.",
+      "pl": "Jeden przełącznik u góry każdego ekranu steruje udostępnianiem. Profile trybów przechowują osobne ustawienia trybu Local i Power."
     },
     "ui_91e23dc2c14e": {
-      "en": "This action needs Full Power mode. Use the switch at the top of halo.",
+      "en": "This action needs Power mode. Use the mode control beside the halo Orb.",
       "ru": "Для этого действия нужна полная мощность. Используйте переключатель вверху Halo.",
-      "lv": "Šai darbībai vajadzīgs pilnas jaudas režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā.",
-      "pl": "To działanie wymaga trybu Full Power. Włącz go przełącznikiem u góry Halo."
+      "lv": "Šai darbībai vajadzīgs Power režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā.",
+      "pl": "To działanie wymaga trybu Power. Włącz go przełącznikiem u góry Halo."
     },
     "ui_c3b89f7b634c": {
-      "en": "Switch to Full Power",
+      "en": "Switch to Power",
       "ru": "Включить полную мощность",
       "lv": "Ieslēgt pilnu jaudu",
-      "pl": "Przełącz na Full Power"
+      "pl": "Przełącz na Power"
     },
     "ui_2ff19ca13b1f": {
-      "en": "Full Power mode could not be enabled. Check Kids settings or try again.",
+      "en": "Power mode could not be enabled. Check Kids settings or try again.",
       "ru": "Не удалось включить полную мощность. Проверьте настройки детского режима и повторите попытку.",
       "lv": "Neizdevās ieslēgt pilnu jaudu. Pārbaudiet bērnu režīma iestatījumus un mēģiniet vēlreiz.",
-      "pl": "Nie udało się włączyć trybu Full Power. Sprawdź ustawienia trybu Dzieci lub spróbuj ponownie."
+      "pl": "Nie udało się włączyć trybu Power. Sprawdź ustawienia trybu Dzieci lub spróbuj ponownie."
     },
     "ui_ec07e6b3552b": {
-      "en": "A grown-up must allow Full Power mode in Kids settings.",
+      "en": "A grown-up must allow Power mode in Kids settings.",
       "ru": "Взрослый должен разрешить полную мощность в настройках детского режима.",
-      "lv": "Pieaugušajam jāatļauj pilnas jaudas režīms bērnu režīma iestatījumos.",
-      "pl": "Osoba dorosła musi zezwolić na tryb Full Power w ustawieniach trybu Dzieci."
+      "lv": "Pieaugušajam jāatļauj Power režīms bērnu režīma iestatījumos.",
+      "pl": "Osoba dorosła musi zezwolić na tryb Power w ustawieniach trybu Dzieci."
     },
     "ui_7c81ad053a8f": {
-      "en": "Switch to Full Power mode at the top of halo.",
+      "en": "Switch to Power mode at the top of halo.",
       "ru": "Включите полную мощность в верхней части Halo.",
-      "lv": "Ieslēdziet pilnas jaudas režīmu Halo ekrāna augšdaļā.",
-      "pl": "Włącz tryb Full Power u góry Halo."
+      "lv": "Ieslēdziet Power režīmu Halo ekrāna augšdaļā.",
+      "pl": "Włącz tryb Power u góry Halo."
     },
     "ui_914a820f10fd": {
-      "en": "Cloud voice needs Full Power mode. Use the switch at the top of halo. Kids sessions also need grown-up approval.",
+      "en": "Cloud voice needs Power mode. Use the mode control beside the halo Orb. Kids sessions also need grown-up approval.",
       "ru": "Для онлайн-озвучивания нужна полная мощность. Используйте переключатель вверху Halo. Детским сеансам также требуется разрешение взрослого.",
-      "lv": "Tiešsaistes balsij vajadzīgs pilnas jaudas režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā. Bērnu sesijām vajadzīga arī pieaugušā atļauja.",
-      "pl": "Głos w chmurze wymaga trybu Full Power. Włącz go przełącznikiem u góry Halo. Sesje dzieci wymagają też zgody osoby dorosłej."
+      "lv": "Tiešsaistes balsij vajadzīgs Power režīms. Izmantojiet slēdzi Halo ekrāna augšdaļā. Bērnu sesijām vajadzīga arī pieaugušā atļauja.",
+      "pl": "Głos w chmurze wymaga trybu Power. Włącz go przełącznikiem u góry Halo. Sesje dzieci wymagają też zgody osoby dorosłej."
     },
     "ui_b7b8b4725c30": {
-      "en": "Cloud processing is off. Use the Private / Full Power switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval.",
-      "ru": "Удалённая обработка выключена. Используйте переключатель Приватно / Полная мощность вверху Halo или выберите модель на устройстве. Детским сеансам также требуется разрешение взрослого.",
-      "lv": "Attālinātā apstrāde ir izslēgta. Izmantojiet slēdzi Privāts / Pilna jauda Halo ekrāna augšdaļā vai izvēlieties ierīces modeli. Bērnu sesijām vajadzīga arī pieaugušā atļauja.",
-      "pl": "Przetwarzanie w chmurze jest wyłączone. Włącz tryb Full Power przełącznikiem u góry Halo lub wybierz model na urządzeniu. Sesje dzieci wymagają też zgody osoby dorosłej."
+      "en": "Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model. Kids sessions also need grown-up approval.",
+      "ru": "Удалённая обработка выключена. Используйте переключатель Локально / Power вверху Halo или выберите модель на устройстве. Детским сеансам также требуется разрешение взрослого.",
+      "lv": "Attālinātā apstrāde ir izslēgta. Izmantojiet slēdzi Local / Power Halo ekrāna augšdaļā vai izvēlieties ierīces modeli. Bērnu sesijām vajadzīga arī pieaugušā atļauja.",
+      "pl": "Przetwarzanie w chmurze jest wyłączone. Włącz tryb Power przełącznikiem u góry Halo lub wybierz model na urządzeniu. Sesje dzieci wymagają też zgody osoby dorosłej."
     },
     "ui_80bb16adde05": {
-      "en": "Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of halo.",
+      "en": "Cloud sharing is not allowed for this image. Use the Local / Power mode control beside the halo Orb.",
       "ru": "Передача этого изображения провайдеру запрещена. Проверьте профили режимов и настройки доступа к изображению.",
       "lv": "Šo attēlu nedrīkst kopīgot attālināti. Pārskatiet režīmu profilus un attēla piekļuves iestatījumus.",
       "pl": "Udostępnianie tego obrazu dostawcy jest niedozwolone. Sprawdź profile trybów i ustawienia dostępu do obrazu."
     },
     "ui_a8f9f96f6425": {
-      "en": "Media sharing follows the Private / Full Power switch at the top of halo.",
+      "en": "Media sharing follows the Local / Power mode control beside the halo Orb.",
       "ru": "Передача медиафайлов определяется профилем активного режима.",
       "lv": "Multivides kopīgošanu nosaka aktīvā režīma profils.",
       "pl": "Udostępnianie multimediów zależy od profilu aktywnego trybu."
     },
     "ui_e5a3e94e5574": {
-      "en": "File sharing follows the Private / Full Power switch at the top of halo.",
+      "en": "File sharing follows the Local / Power mode control beside the halo Orb.",
       "ru": "Передача файлов определяется профилем активного режима и настройками доступа к файлу.",
       "lv": "Failu kopīgošanu nosaka aktīvā režīma profils un faila piekļuves iestatījumi.",
       "pl": "Udostępnianie plików zależy od profilu aktywnego trybu i ustawień dostępu do pliku."
     },
     "ui_eede4c33bb88": {
-      "en": "Memory sharing follows the Private / Full Power switch at the top of halo.",
+      "en": "Memory sharing follows the Local / Power mode control beside the halo Orb.",
       "ru": "Передача воспоминаний определяется профилем активного режима.",
       "lv": "Atmiņu kopīgošanu nosaka aktīvā režīma profils.",
       "pl": "Udostępnianie Pamięci zależy od profilu aktywnego trybu."
@@ -384,15 +384,93 @@
       "pl": "EmbeddingGemma 2 tworzy reprezentacje tekstu, obrazów, dźwięku i wideo. Halo może lokalnie wyszukiwać tekst, jawnie wybrane obrazy z przestrzeni roboczej i Canvas, załączone nagrania oraz cztery wybrane klatki z krótkich filmów. Ścieżki dźwiękowe filmów nie są przetwarzane. Do wyszukiwania obrazów używane są pełne pliki PNG/JPEG, a nagrania są konwertowane do mono 16 kHz. Wyszukiwanie multimediów wymaga zgodnych koderów CPU; jakość i wydajność na urządzeniach nie zostały jeszcze zakwalifikowane. Model znajduje podobne treści, ale nie tworzy opisów obrazów."
     },
     "ui_848e96567d6b": {
-      "ru": "Полная мощность",
-      "lv": "Pilna jauda",
-      "pl": "Full Power"
+      "ru": "Power",
+      "lv": "Power",
+      "pl": "Power"
     },
     "ui_0a9d8afb0161": {
       "en": "HaloNotes",
       "ru": "HaloNotes",
       "lv": "HaloNotes",
       "pl": "HaloNotes"
+    },
+    "ui_c63eb6720c6e": {
+      "en": "Local",
+      "ru": "Локально",
+      "lv": "Lokāli",
+      "pl": "Local"
+    },
+    "ui_defb207e462d": {
+      "en": "Local mode",
+      "ru": "режим Local",
+      "lv": "Local režīms",
+      "pl": "Tryb Local"
+    },
+    "ui_c25ce219f913": {
+      "en": "This action needs Cloud mode. Use the mode control beside the halo Orb.",
+      "ru": "Для этого действия нужен облачный режим. Используй переключатель в верхней части halo.",
+      "lv": "Šai darbībai vajadzīgs mākoņa režīms. Izmanto slēdzi halo augšdaļā.",
+      "pl": "To działanie wymaga trybu chmury. Użyj przełącznika u góry halo."
+    },
+    "ui_7e69b2a8e184": {
+      "en": "Memory sharing follows the Private / Cloud mode control beside the halo Orb.",
+      "ru": "Передачей памяти управляет переключатель «Локально / Облако» вверху halo.",
+      "lv": "Atmiņu kopīgošanu pārvalda slēdzis «Lokāli / Mākonis» halo augšdaļā.",
+      "pl": "Udostępnianie Pamięci podlega przełącznikowi Local / Chmura u góry halo."
+    },
+    "ui_e1280ec15f9b": {
+      "en": "File sharing follows the Private / Cloud mode control beside the halo Orb.",
+      "ru": "Передачей файлов управляет переключатель «Локально / Облако» вверху halo.",
+      "lv": "Failu kopīgošanu pārvalda slēdzis «Lokāli / Mākonis» halo augšdaļā.",
+      "pl": "Udostępnianie plików podlega przełącznikowi Local / Chmura u góry halo."
+    },
+    "ui_0592aa13f4c4": {
+      "en": "Media sharing follows the Private / Cloud mode control beside the halo Orb.",
+      "ru": "Передачей медиа управляет переключатель «Локально / Облако» вверху halo.",
+      "lv": "Multivides kopīgošanu pārvalda slēdzis «Lokāli / Mākonis» halo augšdaļā.",
+      "pl": "Udostępnianie multimediów podlega przełącznikowi Local / Chmura u góry halo."
+    },
+    "ui_5b064d896dea": {
+      "en": "Cloud sharing is not allowed for this image. Use the Private / Cloud mode control beside the halo Orb.",
+      "ru": "Облачная передача этого изображения недоступна. Используй переключатель «Локально / Облако» вверху halo.",
+      "lv": "Šī attēla kopīgošana mākonī nav atļauta. Izmanto slēdzi «Lokāli / Mākonis» halo augšdaļā.",
+      "pl": "Udostępnianie tego obrazu w chmurze jest niedozwolone. Użyj przełącznika Local / Chmura u góry halo."
+    },
+    "ui_ecdc23a45a3e": {
+      "en": "Media sharing follows the Local / Power mode control beside the halo Orb.",
+      "ru": "Обмен медиа подчиняется переключателю Local / Power вверху halo.",
+      "lv": "Multivides kopīgošanu nosaka Local / Power slēdzis halo augšpusē.",
+      "pl": "Udostępnianie multimediów podlega przełącznikowi Local / Power u góry halo."
+    },
+    "ui_7b0f33ec7e23": {
+      "en": "File sharing follows the Local / Power mode control beside the halo Orb.",
+      "ru": "Обмен файлами подчиняется переключателю Local / Power вверху halo.",
+      "lv": "Failu kopīgošanu nosaka Local / Power slēdzis halo augšpusē.",
+      "pl": "Udostępnianie plików podlega przełącznikowi Local / Power u góry halo."
+    },
+    "ui_5236256f569d": {
+      "en": "Local / Power",
+      "ru": "Local / Power",
+      "lv": "Local / Power",
+      "pl": "Local / Power"
+    },
+    "ui_47fa02ab7a5d": {
+      "en": "Memory sharing follows the Local / Power mode control beside the halo Orb.",
+      "ru": "Обмен воспоминаниями подчиняется переключателю Local / Power вверху halo.",
+      "lv": "Atmiņu kopīgošanu nosaka Local / Power slēdzis halo augšpusē.",
+      "pl": "Udostępnianie Pamięci podlega przełącznikowi Local / Power u góry halo."
+    },
+    "ui_61d06b0e190e": {
+      "en": "This action needs Power mode. Use the mode control beside the halo Orb.",
+      "ru": "Для этого действия нужен режим Power. Используйте переключатель вверху halo.",
+      "lv": "Šai darbībai vajadzīgs Power režīms. Izmantojiet slēdzi halo augšpusē.",
+      "pl": "To działanie wymaga trybu Power. Użyj przełącznika u góry halo."
+    },
+    "ui_7a637f64d66d": {
+      "en": "This action needs Power mode. Use the control beside the halo Orb.",
+      "ru": "Для этого действия нужен режим Power. Используйте переключатель рядом со сферой halo.",
+      "lv": "Šai darbībai vajadzīgs Power režīms. Izmantojiet vadīklu blakus halo lodei.",
+      "pl": "Ta czynność wymaga trybu Power. Użyj przełącznika obok kuli halo."
     }
   },
   "aliases": {
@@ -417,6 +495,19 @@
     "Media sharing follows the Private / Full Power switch at the top of Halo.": "ui_a8f9f96f6425",
     "File sharing follows the Private / Full Power switch at the top of Halo.": "ui_e5a3e94e5574",
     "Memory sharing follows the Private / Full Power switch at the top of Halo.": "ui_eede4c33bb88",
-    "Quick capture": "workspace49_capture"
+    "Quick capture": "workspace49_capture",
+    "One switch at the top of every screen controls sharing. Mode profiles keep your Local and Power choices separate.": "ui_91d1493a8e85",
+    "This action needs Power mode. Use the mode control beside the halo Orb.": "ui_91e23dc2c14e",
+    "Cloud voice needs Power mode. Use the mode control beside the halo Orb. Kids sessions also need grown-up approval.": "ui_914a820f10fd",
+    "Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model. Kids sessions also need grown-up approval.": "ui_b7b8b4725c30",
+    "Cloud sharing is not allowed for this image. Use the Local / Power mode control beside the halo Orb.": "ui_80bb16adde05",
+    "Media sharing follows the Local / Power mode control beside the halo Orb.": "ui_a8f9f96f6425",
+    "File sharing follows the Local / Power mode control beside the halo Orb.": "ui_e5a3e94e5574",
+    "Memory sharing follows the Local / Power mode control beside the halo Orb.": "ui_eede4c33bb88",
+    "This action needs Cloud mode. Use the mode control beside the halo Orb.": "ui_c25ce219f913",
+    "Memory sharing follows the Private / Cloud mode control beside the halo Orb.": "ui_7e69b2a8e184",
+    "File sharing follows the Private / Cloud mode control beside the halo Orb.": "ui_e1280ec15f9b",
+    "Media sharing follows the Private / Cloud mode control beside the halo Orb.": "ui_0592aa13f4c4",
+    "Cloud sharing is not allowed for this image. Use the Private / Cloud mode control beside the halo Orb.": "ui_5b064d896dea"
   }
 }

@@ -17,7 +17,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         val source = CollectorCodec.source(row.body)
         var attempt = dao.attempt(row.id)?.let(CollectorCodec::attempt) ?: CollectorAttempt(row.id, null, CollectorAttemptState.NEVER)
         val snapshot = dao.snapshot(row.id)?.let { stored ->
-            try { CollectorCodec.snapshot(stored) }
+            try { CollectorCodec.snapshot(stored).also {CollectorPayloadLimits.validateKind(source.kind,it.payload)} }
             catch (_: Exception) {
                 dao.removeSnapshot(row.id)
                 attempt = attempt.copy(state = CollectorAttemptState.FAILED, message = "Stored source data could not be read. Refresh this source to recover")
@@ -26,6 +26,16 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
             }
         }
         return CollectorState(source, snapshot, attempt)
+    }
+
+    /** A restored Add form retries its stable draft ID; it never creates a second UUID after commit. */
+    suspend fun saveDraft(source: CollectorSource): CollectorSource = database.withTransaction {
+        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+        val previous = dao.source(source.id)?.let { CollectorCodec.source(it.body) }
+        if (previous == null) save(source, null) else {
+            if (previous != source.copy(version = previous.version)) throw CollectorConflict("The saved source differs from this draft")
+            previous
+        }
     }
 
     override suspend fun save(source: CollectorSource, expectedVersion: Long?): CollectorSource {
@@ -42,7 +52,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
                 require(previous.kind == source.kind) { "Add a new source to change its collector type" }
             }
             val next = source.copy(endpoint = endpoint, version = (previous?.version ?: 0) + 1)
-            sourceChanging(source.id)
+            com.halo.app.everyday.EverydayReadAuthority.invalidate(); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); sourceChanging(source.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             val row = CollectorSourceEntity(next.id, next.version, CollectorCodec.encode(next))
             if (previous == null) dao.insert(row) else check(dao.update(row) == 1)
             val snapshot = dao.snapshot(next.id)
@@ -63,10 +73,24 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         database.withTransaction {
             val current = dao.source(id) ?: throw CollectorConflict("Source no longer exists")
             if (current.version != expectedVersion) throw CollectorConflict("Source changed; reopen its settings")
-            sourceChanging(id)
+            com.halo.app.everyday.EverydayReadAuthority.invalidate(); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); sourceChanging(id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             check(dao.remove(id, expectedVersion) == 1)
         }
         runCatching(scheduleChanged)
+    }
+    /** Clearing changes the source version and invalidates the active token before dropping cached content. */
+    suspend fun clearSnapshot(id: String, expectedVersion: Long): CollectorSource {
+        val next = database.withTransaction {
+            val row = dao.source(id) ?: throw CollectorConflict("Source no longer exists")
+            if (row.version != expectedVersion) throw CollectorConflict("Source changed; reopen its settings")
+            val source = CollectorCodec.source(row.body).copy(version = row.version + 1)
+            com.halo.app.everyday.EverydayReadAuthority.invalidate(); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); sourceChanging(id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+            check(dao.update(CollectorSourceEntity(id, source.version, CollectorCodec.encode(source))) == 1)
+            dao.removeSnapshot(id)
+            dao.putAttempt(CollectorCodec.entity(source.version, CollectorAttempt(id, null, CollectorAttemptState.NEVER)))
+            source
+        }
+        return next
     }
     override suspend fun recoverInterrupted(now: Instant) = database.withTransaction {
         dao.interrupted().forEach { attempt -> dao.putAttempt(attempt.copy(token = null, state = CollectorAttemptState.CANCELLED.name,
@@ -145,6 +169,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         require(attempt.sourceId == source.id && attempt.state != CollectorAttemptState.FETCHING)
         if (snapshot != null) {
             require(snapshot.sourceId == source.id && snapshot.sourceVersion == source.version)
+            CollectorPayloadLimits.validateKind(reservation.source.kind,snapshot.payload)
             dao.putSnapshot(CollectorCodec.entity(snapshot))
         }
         dao.putAttempt(CollectorCodec.entity(source.version, attempt))

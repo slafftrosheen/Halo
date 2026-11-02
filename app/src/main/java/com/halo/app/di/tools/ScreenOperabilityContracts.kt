@@ -5,7 +5,7 @@ import com.halo.sdk.provider.ToolDefinition
 
 /** Domain metadata for central registration; never grants policy or source access. */
 object ScreenOperabilityContracts {
-    val readTools = setOf("halo_screen_state", "halo_screen_preview")
+    val readTools = setOf("halo_screen_state", "halo_screen_preview","halo_screen_card_configuration")
     val mutationTools = setOf("halo_screen_apply", "halo_screen_settings", "halo_screen_undo",
         "halo_screen_save_preset", "halo_screen_remove_preset")
 
@@ -28,12 +28,17 @@ object ScreenOperabilityContracts {
         "preview" to layout, "layout" to mapOf("anyOf" to listOf(layout, mapOf("type" to "null"))),
         "settings" to record(mapOf("hidePrivate" to boolean, "keepCharging" to boolean, "dimAtNight" to boolean, "topics" to text(1000))),
         "canUndo" to boolean, "applied" to boolean, "persisted" to boolean, "changed" to boolean,
-        "nativeWidgets" to mapOf("type" to "array", "maxItems" to 11, "items" to text(32)),
+        "nativeWidgets" to mapOf("type" to "array", "maxItems" to 40, "items" to text(32)),
         "presets" to mapOf("type" to "array", "maxItems" to 12, "items" to record(mapOf(
             "presetId" to text(100), "name" to text(64), "cardCount" to integer))))
 
     fun forDefinition(definition: ToolDefinition): ToolOperability? {
         if (definition.name !in readTools + mutationTools) return null
+        if(definition.name=="halo_screen_card_configuration") return ToolOperability(capabilityId=CapabilityId("workspace.read"),owner="LocalScreenStore",
+            operation=ToolOperation.QUERY,resultEncoding=ToolResultEncoding.JSON,resultSchema=mapOf("type" to "object","properties" to mapOf(
+                "revision" to mapOf("type" to "string"),"index" to mapOf("type" to "integer"),"configurationId" to mapOf("type" to "string"),
+                "widgetType" to mapOf("type" to "string"),"config" to mapOf("type" to "object"))),sourceVersionArguments=setOf("revision"),
+            resultIdFields=setOf("configurationId"),limitations=setOf("Foreground adult configuration metadata, no source content or permissions.","Screen cards inherit the current Screen theme."))
         val preview = definition.name == "halo_screen_preview"
         val fields = if (preview) mapOf("revision" to "string", "previewToken" to "string", "preview" to "object", "applied" to "boolean")
             else mapOf("revision" to "string", "layout" to listOf("object", "null"), "settings" to "object",
@@ -55,7 +60,7 @@ object ScreenOperabilityContracts {
             limitations = setOf("Configuration only; no source bodies, IDs, citations or arbitrary config returned.",
                 "Typed and STT-final intent use the registered executor; real speech and rendering remain separate acceptance.",
                 "Screen metadata/topics/preset names require the existing personal-source dispatch policy.",
-                "No OS/display/microphone/source/provider permission or Full Power change.",
+                "No OS/display/microphone/source/provider permission or Power change.",
                 "Settings require existing durable runtime approval; privacy weakening also requires runtime-scoped interaction context.",
                 "Mutation descriptors must use NEVER_REPLAY; preview tokens are integrity checks, not authority."),
         )

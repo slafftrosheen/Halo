@@ -1,0 +1,8 @@
+{
+  "build": "FAILED",
+  "stage": "compileDebugKotlin",
+  "tests": "NOT_RUN",
+  "sourceFiles": 3743,
+  "sourceMismatches": [],
+  "reason": "OkHttp Dns is a Kotlin interface, not a SAM constructor."
+}

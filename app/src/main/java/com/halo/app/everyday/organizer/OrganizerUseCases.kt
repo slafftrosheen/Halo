@@ -16,12 +16,12 @@ class OrganizerUseCases(
     suspend fun create(kind: OrganizerKind, title: String, details: String = "", time: OrganizerTime? = null,
         repeat: RepeatRule? = null, priority: TaskPriority = TaskPriority.NORMAL, parentId: String? = null,
         notifyBeforeMinutes: Int? = null, timerDurationMs: Long? = null,
-        links: List<OrganizerLink> = emptyList(), sourceUrl: String? = null, sourceLabel: String? = null): OrganizerRecord {
+        links: List<OrganizerLink> = emptyList(), sourceUrl: String? = null, sourceLabel: String? = null, location: String = ""): OrganizerRecord {
         val now = Instant.ofEpochMilli(clock.millis())
         val timer = timerDurationMs?.let { TimerState(it, it).start(now, elapsedMs(), bootId()) }
         return repository.save(OrganizerRecord(newId(), kind, title.trim(), details, time, repeat, priority,
             parentId = parentId, notifyBeforeMinutes = notifyBeforeMinutes, timer = timer, links = links,
-            sourceUrl = sourceUrl, sourceLabel = sourceLabel, createdAt = now), null)
+            sourceUrl = sourceUrl, sourceLabel = sourceLabel, createdAt = now, location = location), null)
     }
     suspend fun requireCurrent(id: String, version: Long): OrganizerRecord {
         val record = repository.get(id) ?: throw OrganizerConflict("Record no longer exists")

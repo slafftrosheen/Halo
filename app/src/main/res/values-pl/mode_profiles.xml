@@ -18,11 +18,11 @@
     <string name="mode47_configured_providers">"Skonfigurowani dostawcy"</string>
     <string name="mode47_no_provider">"Wymagana konfiguracja dostawcy"</string>
     <string name="mode47_other_routes">"Odczyt stron korzysta z żądanej publicznej witryny. Połączone usługi używają konta lub serwera skonfigurowanego dla danego działania. Zdalna obsługa mowy korzysta z wybranego dostawcy. Nieskonfigurowane sposoby połączenia pozostają niedostępne."</string>
-    <string name="mode47_billing_explanation">"Dostawca może obciążyć Twoje konto. Ceny i limity zależą od jego modelu i planu. halo pokazuje koszty zgłoszone przez dostawcę, gdy są dostępne; pozostałe koszty pozostają nieznane. Full Power nie zatwierdza wydatków."</string>
+    <string name="mode47_billing_explanation">"Dostawca może obciążyć Twoje konto. Ceny i limity zależą od jego modelu i planu. halo pokazuje koszty zgłoszone przez dostawcę, gdy są dostępne; pozostałe koszty pozostają nieznane. Power nie zatwierdza wydatków."</string>
     <string name="mode47_boundaries">"Nadal obowiązują uprawnienia Androida, ograniczenia trybu dziecięcego, potwierdzenia działań i Twoje limity wydatków."</string>
-    <string name="mode47_activation_failed">"Nie udało się aktywować profilu. Tryb prywatny chroni przed zdalnym przetwarzaniem. Sprawdź Profile trybów i spróbuj ponownie."</string>
-    <string name="mode47_local_route">"Tryb prywatny · przetwarzanie na tym urządzeniu"</string>
-    <string name="mode47_route">"Full Power · wybrane połączenie: %1$s"</string>
+    <string name="mode47_activation_failed">"Nie udało się aktywować profilu. Tryb Local chroni przed zdalnym przetwarzaniem. Sprawdź Profile trybów i spróbuj ponownie."</string>
+    <string name="mode47_local_route">"Tryb Local · przetwarzanie na tym urządzeniu"</string>
+    <string name="mode47_route">"Power · wybrane połączenie: %1$s"</string>
     <string name="mode47_provider">"Dostawca"</string>
     <string name="mode47_model">"Model"</string>
     <string name="mode47_routing">"Kierowanie żądań"</string>

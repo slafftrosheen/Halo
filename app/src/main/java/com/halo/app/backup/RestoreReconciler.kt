@@ -20,11 +20,20 @@ class RestoreReconciler(
     private val database: AppDatabase,
     private val settings: HaloSettingsRepository,
 ) {
+    suspend fun <T> withEverydayRestore(action: suspend ()->T): T =
+        com.halo.app.di.ManualDependencyGraph.organizerDelivery.withRestoredState(action)
     suspend fun reconcile() = withContext(Dispatchers.IO) {
         RoomWorkspaceFileRepository(context, database, haloStorageLayout(context).managedWorkspaceFiles).reconcileAvailability()
         ReminderRecordStore(context).reconcile()
         com.halo.app.di.ManualDependencyGraph.notificationRepository.reconcilePolicies()
         com.halo.app.di.ManualDependencyGraph.routineScheduler.reconcile()
+        val graph=com.halo.app.di.ManualDependencyGraph
+        com.halo.app.everyday.collectors.StarterSourceCatalogue.local().forEach {source ->
+            if(graph.collectorRepository.state(source.id)==null) graph.collectorRepository.save(source,null)
+        }
+        graph.collectorCoordinator.refreshDue(maximum=5,external=false)
+        graph.organizerDelivery.reconcileAll()
+        com.halo.app.nativeactions.EverydayWidgetUpdates.enqueue(context)
         val search = AppSearchWorkspaceSearchEngine(context, database.notebookDao())
         runCatching { search.clearDerivedIndex() }
         val bodies = database.brainSnapshotDao().notes().associateBy { it.objectId }
@@ -39,7 +48,7 @@ class RestoreReconciler(
     suspend fun reconcileAfterSystemRestore() = withContext(Dispatchers.IO) {
         val marker = File(context.noBackupFilesDir, "halo.install.marker")
         if (!marker.exists()) {
-            if (database.brainSnapshotDao().workspaceObjects().isNotEmpty()) reconcile()
+            if (database.brainSnapshotDao().workspaceObjects().isNotEmpty() || database.organizerDao().count()>0 || database.collectorDao().sources().isNotEmpty()) reconcile()
             marker.parentFile?.mkdirs()
             marker.writeText("installed")
         }

@@ -1,0 +1,16 @@
+{
+  "installedUtc": "2026-11-02T07:10:01.517911+00:00",
+  "request": "User requested current app build and install for self-testing; no automated phone acceptance performed.",
+  "build": "BUILD SUCCESSFUL in 2m 56s",
+  "package": "com.aistudio.braintool.xkqzps",
+  "deviceSerial": "f01fe673",
+  "deviceModel": "23124RA7EO",
+  "install": "adb install -r: Success; existing data retained",
+  "apkSha256": "eb60ec7c78b247d94dbe45c45f38c5821f60d72dad25ef8d18da481363f42338",
+  "apkBytes": 294742370,
+  "gitHead": "642d88ff84e6d1c0ba70879ad9dbd4e3b886661f",
+  "gitDirty": true,
+  "matchingPriorSourceFiles": 130,
+  "priorSourceFiles": 130,
+  "automatedHostStatus": "Latest 110-case batch: 109 passed, one child date-dialog Compose idling failure remains unresolved. Broader issue63 implementation continues after user testing."
+}

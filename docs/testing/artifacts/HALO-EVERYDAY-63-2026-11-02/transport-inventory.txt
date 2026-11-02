@@ -1,0 +1,29 @@
+providers\sherpa-stt\src\main\java\com\halo\providers\sherpa\stt\WhisperModelDownloader.kt:84:            val client = transferClient ?: OkHttpClient.Builder().connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+providers\gemini\src\main\java\com\halo\providers\gemini\GeminiProvider.kt:31:import java.net.SocketTimeoutException
+providers\gemini\src\main\java\com\halo\providers\gemini\GeminiProvider.kt:481:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+providers\anthropic\src\main\java\com\halo\providers\anthropic\AnthropicProvider.kt:29:import java.net.SocketTimeoutException
+providers\anthropic\src\main\java\com\halo\providers\anthropic\AnthropicProvider.kt:390:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+providers\elevenlabs-tts\src\main\java\com\halo\providers\elevenlabs\tts\ElevenLabsTtsProvider.kt:58:    private val client: OkHttpClient = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+providers\ollama\src\main\java\com\halo\providers\ollama\OllamaProvider.kt:82:        (baseClient ?: OkHttpClient.Builder()
+providers\ollama\src\main\java\com\halo\providers\ollama\OllamaProvider.kt:532:                is java.net.SocketTimeoutException -> AiErrorType.TIMEOUT
+providers\openai\src\main\java\com\halo\providers\openai\OpenAiProvider.kt:30:import java.net.SocketTimeoutException
+providers\openai\src\main\java\com\halo\providers\openai\OpenAiProvider.kt:414:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+providers\openrouter\src\main\java\com\halo\providers\openrouter\OpenRouterProvider.kt:23:import java.net.SocketTimeoutException
+providers\openrouter\src\main\java\com\halo\providers\openrouter\OpenRouterProvider.kt:973:            OkHttpClient.Builder()
+sdk\runtime-sdk\src\main\java\com\halo\sdk\runtime\embodiment\WebSocketEmbodimentTransport.kt:31:            OkHttpClient.Builder()
+providers\litert\src\main\java\com\halo\providers\litert\models\LiteRtModelDownloader.kt:463:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+providers\litert\src\main\java\com\halo\providers\litert\models\HuggingFaceLiteRtCatalog.kt:16:class HuggingFaceLiteRtCatalog(private val client: OkHttpClient = OkHttpClient.Builder()
+app/src/main/java\com\halo\app\ai\ProviderSetupDiagnostics.kt:53:        error is java.net.SocketTimeoutException || failure?.type == AiErrorType.TIMEOUT -> ProviderTestOutcome.TIMEOUT
+sdk\provider-sdk\src\main\java\com\halo\sdk\provider\OpenAiCompatibleTransport.kt:16:import java.net.SocketTimeoutException
+sdk\provider-sdk\src\main\java\com\halo\sdk\provider\OpenAiCompatibleTransport.kt:759:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+app/src/main/java\com\halo\app\audio\KokoroModelDownload.kt:25:    private val client = OkHttpClient.Builder().connectTimeout(30,TimeUnit.SECONDS).readTimeout(60,TimeUnit.SECONDS).build()
+app/src/main/java\com\halo\app\di\ManualDependencyGraph.kt:357:        base: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
+app/src/main/java\com\halo\app\di\AndroidProviderFactory.kt:71:            client = okhttp3.OkHttpClient.Builder().connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+app/src/main/java\com\halo\app\everyday\collectors\PublicHttpCollector.kt:20:    baseClient: OkHttpClient = OkHttpClient.Builder().callTimeout(30, TimeUnit.SECONDS).build(),
+app/src/main/java\com\halo\app\di\tools\host\WebInsightTools.kt:501:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
+app/src/main/java\com\halo\app\online\OpenRouterOnlineClient.kt:26:class OpenRouterOnlineClient(private val client: OkHttpClient = OkHttpClient.Builder()
+app/src/main/java\com\halo\app\ui\fx\HaloPackageFx.kt:13:import coil.compose.rememberAsyncImagePainter
+app/src/main/java\com\halo\app\ui\fx\HaloPackageFx.kt:71:        val painter = rememberAsyncImagePainter(request)
+app/src/main/java\com\halo\app\ui\fx\HaloFx.kt:10:import coil.compose.rememberAsyncImagePainter
+app/src/main/java\com\halo\app\ui\fx\HaloFx.kt:216:    val painter = rememberAsyncImagePainter(model = request)
+app/src/main/java\com\halo\app\mcp\McpTransport.kt:122:        fun defaultClient(): OkHttpClient = OkHttpClient.Builder()

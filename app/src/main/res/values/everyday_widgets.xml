@@ -1,0 +1,14 @@
+<resources>
+<string name="everyday_widget_clock">Clock &amp; date</string>
+<string name="everyday_widget_clock_weather">Clock and weather</string>
+<string name="everyday_widget_upcoming">Upcoming event</string>
+<string name="everyday_widget_tasks">Tasks and reminders</string>
+<string name="everyday_widget_brief">Your day in halo</string>
+<string name="everyday_widget_headlines">Headlines</string>
+<string name="everyday_widget_alarms_timers">Alarms and timers</string>
+<string name="everyday_widget_dashboard">Everyday dashboard</string>
+<string name="everyday_widget_preview">Open halo for your saved information</string>
+<string name="everyday_widget_saved">Saved on this phone</string>
+<string name="everyday_widget_configure">Configure widget</string>
+<string name="everyday_widget_description">Your saved plan and selected information in halo. Resize for more; open halo for private details.</string>
+</resources>

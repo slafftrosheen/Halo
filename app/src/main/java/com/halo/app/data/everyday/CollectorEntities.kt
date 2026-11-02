@@ -26,6 +26,10 @@ data class CollectorEndpointEntity(@PrimaryKey val id: String, val attemptedAt: 
 
 @Dao
 interface CollectorDao {
+    @Query("DELETE FROM collector_sources") suspend fun clearSources()
+    @Query("DELETE FROM collector_requests") suspend fun clearRequests()
+    @Query("DELETE FROM collector_endpoint_state") suspend fun clearEndpointBudgets()
+    suspend fun clearBudgets() {clearRequests();clearEndpointBudgets()}
     @Query("SELECT * FROM collector_endpoint_state WHERE id=:id") suspend fun endpoint(id: String): CollectorEndpointEntity?
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putEndpoint(value: CollectorEndpointEntity)
     @Query("DELETE FROM collector_endpoint_state WHERE attemptedAt<:before AND (blockedUntil IS NULL OR blockedUntil<:before)") suspend fun pruneEndpoints(before: Long)

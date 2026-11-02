@@ -59,7 +59,7 @@ internal fun notebookReviewableMemoryCount(rows: List<PersonalSuggestionEntity>)
     }
 
 enum class NotebookFilter(val label: String) {
-    ALL("All"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
+    ALL("All"), ORGANIZER("Organizer"), BRIEFS("Daily briefs"), SOURCES("Saved sources"), CLOCKS("World clocks"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
     FAVORITES("Favorites"), INBOX("Inbox"), ARCHIVED("Archived"), TRASH("Trash")
 }
 
@@ -84,6 +84,8 @@ data class NotebookUiState(
     /** Accepted practice cards whose review is due now, across every session. */
     val duePractice: List<StudyPracticeItem> = emptyList(),
     val loadError: Boolean = false,
+    val everyday: List<com.halo.app.everyday.presentation.EverydayLibraryEntry> = emptyList(),
+    val everydayError: Boolean = false,
 )
 
 sealed interface NotebookNavigation {
@@ -111,6 +113,8 @@ class NotebookViewModel(
     private val personalLearning: PersonalLearningRepository? = null,
     private val conversationStore: com.halo.app.data.RoomConversationStore? = null,
     private val batchOwner: NotebookLibraryBatchOwner? = null,
+    private val everyday: ()->kotlinx.coroutines.flow.Flow<List<com.halo.app.everyday.presentation.EverydayLibraryEntry>> = {flowOf(emptyList())},
+    private val openEveryday: suspend (com.halo.app.everyday.presentation.EverydayLibraryEntry)->Boolean = {false},
 ) : ViewModel() {
     private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
         study?.observeActiveSessions() ?: flowOf(emptyList())
@@ -234,6 +238,7 @@ class NotebookViewModel(
                 var visible = if (text.isBlank()) rows else rows.filter { row ->
                     row.id.value in matches || row.title.contains(text, ignoreCase = true)
                 }
+                if(selectedFilter in setOf(NotebookFilter.ORGANIZER,NotebookFilter.BRIEFS,NotebookFilter.SOURCES,NotebookFilter.CLOCKS)) visible=emptyList()
                 if (selectedFilter == NotebookFilter.FAVORITES) {
                     visible = visible.filter { it.id.value in organized.favorites }
                 }
@@ -280,6 +285,15 @@ class NotebookViewModel(
                 NotebookSort.TITLE -> state.items.sortedWith(compareBy<NotebookWorkspaceItem> { it.objectRef.title.lowercase() }.thenBy { it.objectRef.id.value })
             }
             state.copy(items = sorted, sort = order)
+        }
+        .combine(refreshRevision.flatMapLatest {everyday().map {it to false}.catch {emit(emptyList<com.halo.app.everyday.presentation.EverydayLibraryEntry>() to true)}}) {state,domain ->
+            val wanted=when(state.filter) {NotebookFilter.ALL -> null;NotebookFilter.ORGANIZER -> "ORGANIZER";NotebookFilter.BRIEFS -> "BRIEF";NotebookFilter.SOURCES -> "SOURCE";NotebookFilter.CLOCKS -> "CLOCK";else -> "NONE"}
+            val rows=if(state.selectedCollectionId!=null || wanted=="NONE") emptyList() else domain.first.filter {entry ->
+                (wanted==null || entry.kind==wanted) && state.resolvedQuery.trim().split(Regex("\\s+")).filter(String::isNotBlank).all {word ->
+                    entry.title.contains(word,true) || entry.detail.contains(word,true) || entry.code.contains(word,true)
+                }
+            }
+            state.copy(everyday=when(state.sort) {NotebookSort.TITLE -> rows.sortedBy {it.title.lowercase()};else -> rows.sortedByDescending {it.updatedAt}},everydayError=domain.second)
         }
         .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
@@ -373,6 +387,13 @@ class NotebookViewModel(
         else if (selection.value.size < 100) selection.value = selection.value + id
         else postNotice("Select up to 100 items at a time.")
         keepView()
+    }
+    fun openEverydayItem(entry: com.halo.app.everyday.presentation.EverydayLibraryEntry) {
+        if(entry !in uiState.value.everyday) {postNotice("This item changed. Open its instrument and review the current information.");return}
+        viewModelScope.launch {
+            val opened=try {openEveryday(entry)} catch(cancelled: kotlinx.coroutines.CancellationException) {throw cancelled} catch(_: Exception) {false}
+            if(!opened) postNotice("This item changed. Open its instrument and review the current information.")
+        }
     }
     fun selectVisible() { libraryRevision++;
         selection.value = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.take(100).toSet()

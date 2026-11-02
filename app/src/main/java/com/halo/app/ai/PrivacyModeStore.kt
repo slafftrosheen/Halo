@@ -24,7 +24,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     private var snapshot: ModeProfiles = try {
         backing.getString(MODE_PROFILES_KEY)?.let(ModeProfiles::decode) ?: ModeProfiles.migrate(backing)
     } catch (_: Exception) {
-        loadError = "Mode profiles could not be restored. Private mode is active. Review Mode profiles."
+        loadError = "Mode profiles could not be restored. Local mode is active. Review Mode profiles."
         ModeProfiles(PrivacyMode.PRIVATE, ModeProfiles.defaults(PrivacyMode.PRIVATE),
             ModeProfiles.defaults(PrivacyMode.CLOUD), false, 0)
     }
@@ -55,7 +55,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
         catch (_: Exception) {
             snapshot = snapshot.copy(active = PrivacyMode.PRIVATE, sharingAcknowledged = false)
             current.value = PrivacyMode.PRIVATE
-            loadError = "Mode profiles could not be saved. Private mode is active. Check available storage and retry."
+            loadError = "Mode profiles could not be saved. Local mode is active. Check available storage and retry."
         }
     }
 
@@ -98,7 +98,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
             if (active) {
                 snapshot = snapshot.copy(active = PrivacyMode.PRIVATE, revision = snapshot.revision + 1)
                 current.value = PrivacyMode.PRIVATE
-                loadError = "Profile could not be applied. Private mode is active. Review Mode profiles."
+                loadError = "Profile could not be applied. Local mode is active. Review Mode profiles."
                 revoke()
                 runCatching { persist(snapshot) }
                 changes.value = snapshot.revision
@@ -116,7 +116,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
         current.value = PrivacyMode.PRIVATE
         changes.value = snapshot.revision
         try { backing.clear(); persist(snapshot); activity.clear(); loadError = null }
-        catch (failure: Exception) { loadError = "Settings could not be cleared completely. Private mode is active."; throw failure }
+        catch (failure: Exception) { loadError = "Settings could not be cleared completely. Local mode is active."; throw failure }
         finally { activating = false }
     }
     fun invalidateAuthority() = synchronized(lock) {
@@ -127,7 +127,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
             snapshot = snapshot.copy(active = PrivacyMode.PRIVATE, revision = snapshot.revision + 1)
             current.value = PrivacyMode.PRIVATE
             changes.value = snapshot.revision
-            loadError = "Policy could not be saved. Private mode is active."
+            loadError = "Policy could not be saved. Local mode is active."
         }
     }
 
@@ -147,7 +147,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     /** Preparation happens behind a closed dispatch gate; publication follows durable success. */
     fun set(mode: PrivacyMode, recoverPrivate: () -> Unit = {}, prepare: () -> Unit = {}) = synchronized(lock) {
         check(mode != PrivacyMode.CLOUD || snapshot.sharingAcknowledged) {
-            "Review the Full Power sharing explanation first."
+            "Review the Power sharing explanation first."
         }
         activating = true
         revoke()
@@ -160,7 +160,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
             // Keep dispatch closed even when persistence itself is unavailable.
             snapshot = snapshot.copy(active = PrivacyMode.PRIVATE, revision = snapshot.revision + 1)
             current.value = PrivacyMode.PRIVATE
-            loadError = "Mode activation failed. Private mode is active. Review Mode profiles."
+            loadError = "Mode activation failed. Local mode is active. Review Mode profiles."
             runCatching { persist(snapshot) }
             changes.value = snapshot.revision
             runCatching(recoverPrivate)
@@ -249,12 +249,12 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
 suspend fun <T> whileCloudMode(modes: StateFlow<PrivacyMode>?, onPrivate: () -> Unit = {}, block: suspend () -> T): T {
     check(modes != null) { "The global mode is unavailable. Reopen Halo and retry." }
     return coroutineScope {
-        check(modes.value == PrivacyMode.CLOUD) { "Switch to Full Power mode at the top of Halo." }
+        check(modes.value == PrivacyMode.CLOUD) { "Switch to Power mode at the top of Halo." }
         val task = async(start = CoroutineStart.LAZY) { block() }
         val watch = launch(start = CoroutineStart.UNDISPATCHED) {
             modes.collect { if (it == PrivacyMode.PRIVATE) {
                 runCatching(onPrivate)
-                task.cancel(CancellationException("Private mode enabled"))
+                task.cancel(CancellationException("Local mode enabled"))
             } }
         }
         try { task.await() } finally { watch.cancel() }

@@ -1,13 +1,13 @@
 # Everyday implementation ledger — issue 63
 
-Status: implementation in progress. No issue-63 feature or acceptance is complete merely because it appears in this plan. The complete source requirements are [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); the UI integration decisions are [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
+Status: source implementation and final host checks are complete; APK installation is the current handoff step. No issue-63 acceptance is complete merely because it appears in this plan. The complete source requirements are [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); the UI integration decisions are [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
 
 ## Audited ownership
 
 | Concern | Existing owner | Extension |
 |---|---|---|
 | Global mode and in-flight cancellation | `ai/PrivacyModeStore`, SDK `RemoteDispatchPolicy`, `ManualDependencyGraph` | Keep the two persisted enum IDs for compatibility; display Local/Power. Add governed public collectors/model downloads, close nullable-policy bypasses, inventory every transport. Preserve parental capability limits without creating a third privacy policy. |
-| Local persistence | `data/AppDatabase` v34 (current uncommitted batch); Workspace/Notes/relation owners | Organizer records, recurrence exceptions, delivery receipts, scheduling outbox and collector state implemented in the same Room database. Notes stay in their existing tables. Migration through v34 passed the bounded host suite. Backup integration remains pending. |
+| Local persistence | `data/AppDatabase` v34; Workspace/Notes/relation owners | Organizer records, recurrence exceptions, delivery receipts, scheduling outbox and collector state implemented in the same Room database. Notes stay in their existing tables. Migration through v34 passed the bounded host suite. Portable archive version 5 integrates these domains; see EVERYDAY-INTEGRATION.md. |
 | Time and delivery | `host-android/reminder/ReminderRecordStore`, `ExactAlarmAccess`, Android alarm actions | Retain legacy receipt/import support, implement owned recurring schedules, occurrence identity, snooze/stop, reconciliation after crash/reboot/time change, notification/exact/full-screen permission receipts. |
 | Tool execution | `ToolExecutor`, descriptor catalogue, Runtime/ReasoningEngine/CommandExecutor | Typed organizer/source/brief/widget commands with version checks and structured outcome truth. No second agent path. |
 | Screen and UI | `HaloScreen`, `LocalScreenStore`, `ShellPageOwner`, UI 5 contracts | Organizer routes are Screen subroutes, model-independent. Stable card instance IDs throughout layout/config/actions. Reuse Apply/Cancel/CAS/Undo, semantic assets and measured Zone. |
@@ -30,14 +30,14 @@ Status: implementation in progress. No issue-63 feature or acceptance is complet
 
 | Scope | Status | Required evidence |
 |---|---|---|
-| A organizer (calendar, tasks/subtasks, reminders, alarms, timers, world time, links, undo, ICS) | Foundation and Android delivery implemented with bounded host verification; full UI/integration pending | Foundation 50-case run and delivery/persistence 30-case correction pass. Alarm lanes, notification precision, snooze/stop, locked boot handoff and legacy migration have host coverage. Real OS acceptance, backup, tools, links and full organizer UI remain pending. |
-| B typed collectors, sources, safety, caching, quotas, cancellation, workers | Registry, real HTTP/local adapters, persistent cache/endpoint budgets, preview and bounded worker implemented; source UI/onboarding integration pending | Collector integration 28-case host pass covers 20 integration, 5 parser and 3 migration cases; earlier shared-policy 165-case run and dated starter-feed validation remain separate. Full consumer/global-mode/device acceptance pending. |
-| C deterministic briefs, changes, quiet hours, spoken/child presentation | Core implemented and verified on host; UI integration pending | Final bounded run passed 51 tests in eight suites with 78 matching frozen source files. BI01–06 source findings addressed, including cross-audience baseline and packaged city asset correction. See BRIEFING.md. |
-| D complete UI 5 screens and states, languages, assets | Pending | Matching source/build/renders and independent review |
-| E persistent configurable Screen instances | Pending | Instance/CAS/migration/route/ambient tests and renders |
-| F launcher variants, configuration, privacy and updates | Pending | Host binding/instance tests/build/assets; launcher and OS acceptance later |
-| G typed canonical AI/voice operations | Pending | Registry/descriptor/capability/result and execution tests |
-| H policy matrix, documentation, compatibility, commits | In progress: audit and plan recorded | Full transport inventory, threat model/retention/Android constraints, checks and final checklist |
+| A organizer (calendar, tasks/subtasks, reminders, alarms, timers, world time, links, undo, ICS) | Implemented | Canonical Room owners, UI5 instruments, delivery/recurrence/ICS, Library and Activity links; current host evidence below. OS delivery/permission acceptance remains phone-dependent. |
+| B typed collectors, sources, safety, caching, quotas, cancellation, workers | Implemented | Passive local readers, real bounded public adapters, source catalogue/reader/onboarding/tools and guarded workers. Dated public endpoint validation remains a reachability snapshot, not uptime. |
+| C deterministic briefs, changes, quiet hours, spoken/child presentation | Implemented | Structured engine, baseline comparison, source/family revalidation, optional speech and quiet-hour owner. Audible completion and actual scheduled notification delivery remain phone-dependent. |
+| D UI5 screens/states, languages and assets | Implemented; matching rendering/review checks complete | First-party instruments, retained editable drafts, loading/error/stale/permission recovery and EN/RU/LV/PL source catalogue generation. |
+| E persistent configurable Screen instances | Implemented | Stable independent IDs, arrangement/size/visibility, per-card configuration, revisioned Apply/Cancel/Undo and portable state. |
+| F launcher variants, configuration, privacy and updates | Implemented; matching render/live-clock checks complete | Eight providers, native/themed responsive layouts, independent atomic settings, live TextClock, privacy filtering and bounded update owner. Real launcher behavior remains phone-dependent. |
+| G typed canonical AI/voice operations | Implemented | Twenty-two strict Everyday commands plus Screen query/configure; central capabilities/descriptors/disclosure and canonical executor checks. Provider wording/recognition remains real-session acceptance. |
+| H policy, docs, compatibility, tests and delivery | Code, documentation and host verification complete; APK handoff in progress | Explicit LOCAL-POWER-MATRIX.md, transport audit, archive/retention/recovery/component map and frozen host evidence. Build/install and review must finish before handoff. |
 
 An intermediate commit is a reviewable implementation batch, not a declaration that unfinished workstreams are complete. Hardware-only criteria and participant criteria remain separately identified; neither may be inferred from a host test or screenshot.
 
@@ -52,3 +52,26 @@ An intermediate commit is a reviewable implementation batch, not a declaration t
 `collector-final-results.json` records 28 tests in three suites, zero failures/errors/skips, BUILD SUCCESSFUL in 6m57s. All 29 source inputs matched the manifest, including schema 33. All 20 annotated integration methods ran, plus five parser and three migration cases. Synthetic HTTP fixtures cover validators/304/size/backoff; existing SDK tests separately cover actual transport cancellation/DNS safeguards. Earlier compile and test-initialization failures remain archived. Collector source review CI01–04 is source-addressed; complete source screens, briefing/cards/widget/tool consumers, full policy matrix and native acceptance remain unfinished.
 
 `briefing-core-results.json` records BUILD FAILED in 7m11s: production Kotlin and Room generation completed, then a recursive inferred fixture type prevented test compilation. JUnit NOT_RUN. All72 frozen source files matched; generated schema34 is separately hashed. The subsequent `briefing-recovery` run ran 51 tests with one failure: Android asset merging expanded the `.gz` filename, breaking the real asset lookup. All 78 hashes matched. The final `briefing-final` run passed all 51 tests in eight suites, with all 78 hashes matched, after correcting the packaged filename and cross-audience baseline handling. Earlier failed evidence is retained; full pages, tools, Screen/launcher widgets and hardware remain pending.
+
+## Integrated source and first final run — 2 November 2026
+
+EVERYDAY-INTEGRATION.md documents actual owners, UI5/native component mapping, disclosure, retention, restore and partial-failure behavior. LOCAL-POWER-MATRIX.md maps each requested surface to the real canonical boundary and its evidence scope. Setup, Library, typed commands and portable restore are no longer pending source placeholders.
+
+`integration-source.json`/ZIP freeze 3,741 inputs. The first integrated run compiled production and test sources and ran 299 tests: 281 passed, 18 failed, zero errors/skips; all 3,741 hashes matched. Native geometry and render checks produced all eight variants in EN light, RU 200% dark, LV high density and minimum RU 200% sizes. The failures were retained rather than reported as final success: narrow date input did not settle; clock broadcast fixtures started unrelated manifest workers; Screen query assertions used escaped JSON and the old seven-tool count; the older online admission fixture omitted the real mode-profile owner.
+
+The corrective source freeze `integration-final-source.json` covers 3,743 inputs, including the final paired-device transport boundary. Its result is pending. Corrections include full-width large-text date entry, actual TextClock receiver testing, typed Screen JSON assertions, real profile-backed online fixtures, restored brief retention, and zero-DNS/public-IP rejection for local BuddyBot transport. Independent source review EUI01–05 and earlier W/WT findings are source-addressed. No human/device score is inferred.
+
+
+`integration-final` was a compile-only failure (explicit OkHttp DNS interface), with JUnit NOT_RUN and all 3,743 hashes matching. The corrected `integration-verified` run passed 302/302 tests with zero failures/errors/skips in 8m58s, all 3,743 hashes matching. This includes real mode-backed online fixtures and the paired-device URL boundary.
+
+The independent visual pass then found two compact-widget/localization issues and a same-profile disclosure race. `handoff` addressed those and passed 305/305 tests in 9m17s, zero failures/errors/skips, all 3,744 hashes matching. Its 32 native frames and six form captures include aligned synthetic clock time, distinguishable minimum-size identities, the real dark Surface and large-text date entry. Held organizer/source/brief reads were revoked without changing Kids experience. `release` adds the coherent canonical stamp and a real Room WAL transaction-start regression; verification is running before APK handoff.
+
+
+`release` compiled the coherent disclosure correction and ran 306 cases: 296 passed and ten failed in the new file-backed tool fixture because Robolectric's method-name temp directory plus the UUID database filename exceeded Windows MAX_PATH. All 3,745 source hashes matched. The failure was isolated to the test path; source and JUnit evidence are retained. `release-final` keeps production identical and uses a short database filename while retaining actual WAL and the new transaction-start regression.
+
+
+## Final source acceptance and installation handoff
+
+`release-final-results.json` records **306 tests in 45 suites, zero failures/errors/skips, BUILD SUCCESSFUL in 5m51s**. All **3,745** frozen source hashes match. JUnit, source and 38 rendered fixtures are archived beside the result. This includes the metadata-only coherent disclosure stamp, three held same-profile grant regressions and the file-backed Room WAL writer-start regression; source review found no residual in that ordering. The short test filename fixes the evidenced Windows path limit without changing production or disabling WAL.
+
+The independent final widget review closes WV01/WV02 and finds no remaining concrete widget defect. Original-rubric ratings are expert usability/implementation **8.0/10** and visual clarity **9.2/10**, with physical/assistive/comprehension evidence explicitly separate. The score is not inflated to 10/10. Issue closure, participant acceptance and actual Android delivery/launcher behavior are not claimed. See ISSUE-63-CODE-HANDOFF.md for the source checklist.

@@ -221,9 +221,16 @@ class StorageBackupViewModel(
                     withContext(Dispatchers.IO) { block() }
                 } catch (error: CancellationException) {
                     throw error
+                } catch (error: BrainImportCommittedFailure) {
+                    // The data phase committed. Discard this apply plan so Retry cannot duplicate it.
+                    stagedImport?.delete();stagedImport=null
+                    operation.value=operation.value.copy(validation=null)
+                    runCatching {usageRepository.refresh()}
+                    BackupFeedback(requireNotNull(error.message),failed=true)
                 } catch (error: Throwable) {
                     BackupFeedback(when (error.message) {
                         "Enter the export password again after the interruption" -> "Enter the export password again after the interruption"
+                        "A restored subtask needs its active parent. Restore that parent too or keep the local plan." -> "A restored subtask needs its active parent. Restore that parent too or keep the local plan."
                         "A local model is active. Stop inference before clearing downloads." -> "A local model is active. Stop inference before clearing downloads."
                         else -> "The operation did not finish. Check access, storage and the password, then try again."
                     }, failed = true)

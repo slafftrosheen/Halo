@@ -21,10 +21,10 @@ class RoomWorldClockRepository(private val database: AppDatabase, private val cl
             if (current == null) {
                 if (expectedVersion != null) throw OrganizerConflict("Clock no longer exists")
                 val rows = dao.all(); require(rows.size < 24) { "Clock limit reached; remove a clock first" }
-                value.copy(version = 1, position = rows.size).also { dao.insert(it.entity()) }
+                value.copy(version = 1, position = rows.size).also { com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); dao.insert(it.entity()) }
             } else {
                 if (expectedVersion != current.version || current.deletedAt != null) throw OrganizerConflict("Clock changed; reopen its settings")
-                value.copy(version = current.version + 1, position = current.position).also { check(dao.update(it.entity()) == 1) }
+                value.copy(version = current.version + 1, position = current.position).also { com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); check(dao.update(it.entity()) == 1) }
             }
         }
         runCatching(changed); return saved
@@ -35,7 +35,7 @@ class RoomWorldClockRepository(private val database: AppDatabase, private val cl
             val current = dao.get(id) ?: throw OrganizerConflict("Clock no longer exists")
             if (current.version != expectedVersion || current.deletedAt != null) throw OrganizerConflict("Clock changed or no longer exists")
             val deleted = current.copy(deletedAt = clock.millis(), version = current.version + 1)
-            check(dao.update(deleted) == 1)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); check(dao.update(deleted) == 1)
             dao.all().forEachIndexed { index, row -> if (row.position != index) dao.update(row.copy(position = index, version = row.version + 1)) }
             deleted.record()
         }
@@ -46,7 +46,7 @@ class RoomWorldClockRepository(private val database: AppDatabase, private val cl
             val current = dao.get(id) ?: throw OrganizerConflict("Clock no longer exists")
             if (current.version != deletedVersion || current.deletedAt == null) throw OrganizerConflict("Clock changed; this Undo has expired")
             val rows = dao.all(); require(rows.size < 24) { "Clock limit reached" }
-            current.copy(deletedAt = null, version = current.version + 1, position = rows.size).also { check(dao.update(it) == 1) }.record()
+            current.copy(deletedAt = null, version = current.version + 1, position = rows.size).also { com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); check(dao.update(it) == 1) }.record()
         }
         runCatching(changed); return restored
     }
@@ -56,7 +56,10 @@ class RoomWorldClockRepository(private val database: AppDatabase, private val cl
             if (ids.size != ids.distinct().size || ids.toSet() != rows.keys || expectedVersions != rows.mapValues { it.value.version })
                 throw OrganizerConflict("Clock list changed; reopen arrangement")
             ids.forEachIndexed { index, id -> val row = rows.getValue(id)
-                if (row.position != index) check(dao.update(row.copy(position = index, version = row.version + 1)) == 1)
+                if (row.position != index) {
+                    com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+                    check(dao.update(row.copy(position = index, version = row.version + 1)) == 1)
+                }
             }
         }
         runCatching(changed)

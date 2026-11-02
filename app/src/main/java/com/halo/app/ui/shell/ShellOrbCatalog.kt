@@ -23,7 +23,7 @@ internal object ShellOrbCatalog {
         }
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =
-        !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study")
+        !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study", "everyday_brief", "everyday_clocks", "everyday_organizer", "everyday_source")
 
     /** Kids Home does not host the adult catalogue; use its already allowed exact Study route. */
     fun directContextRoute(action: HaloOrbContextAction, kids: Boolean): String? =
@@ -32,6 +32,11 @@ internal object ShellOrbCatalog {
     fun pageOwnerMatches(owner: ShellPageOwner, route: String?, objectId: String?): Boolean = when (owner.routeFamily) {
         "home", "kids" -> route == "home"
         "screen" -> route == "screen"
+        "everyday_organizer" -> route?.substringBefore("?") == "screen/organizer" && owner.objectId==objectId
+        "everyday_clocks" -> route?.substringBefore("?") == "screen/clocks"
+        "everyday_brief" -> route?.substringBefore("?") == "screen/brief"
+        "everyday_sources" -> route == "screen/sources"
+        "everyday_source" -> route?.substringBefore("?") == "screen/source" && owner.objectId == objectId
         "notebook" -> route == "notebook"
         "canvas" -> route?.startsWith("notebook/canvas/") == true && owner.objectId == objectId
         "note" -> route?.startsWith("notebook/note/") == true && owner.objectId == objectId
@@ -50,7 +55,7 @@ internal object ShellOrbCatalog {
 
     fun destinations(kids: Boolean): List<HaloOrbDestination> = HaloScreenCatalog.screens
         .filterKeys { !isDeveloperDestination(it) && it !in setOf("mini_halo", "workspace_handoff") &&
-            (!kids || it in setOf("home", "study")) }
+            (!kids || it in setOf("home", "study", "screen/brief", "screen/clocks", "screen/organizer")) }
         .map { (route, title) -> HaloOrbDestination(route, title, when (primaryNavigationRoute(route)) {
             "home", "screen" -> HaloGlyph.HOME
             "notebook", "studio", "file_tools" -> HaloGlyph.NOTE

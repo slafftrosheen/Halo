@@ -6,7 +6,7 @@
     <string name="brand_intelligence_where">Kur Halo domā</string>
     <string name="brand_intelligence_select_help">Izvēlieties, kur apstrādāt atbildes. Izvēles atvēršana nemaina aktīvo modeli.</string>
     <string name="brand_intelligence_phone">Šajā tālrunī</string>
-    <string name="brand_intelligence_phone_summary">Privāti · ar instalētu modeli var darboties bez interneta</string>
+    <string name="brand_intelligence_phone_summary">Lokāli · ar instalētu modeli var darboties bez interneta</string>
     <string name="brand_intelligence_network">Jūsu tīklā</string>
     <string name="brand_intelligence_network_summary">Dators vai serveris jūsu pārvaldībā</string>
     <string name="brand_intelligence_cloud">Mākonī</string>

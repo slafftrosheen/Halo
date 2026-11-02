@@ -113,6 +113,12 @@ class HaloApplication :
         initializeUnlocked()
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if(normalStartupStarted.get() && getSystemService(android.os.UserManager::class.java).isUserUnlocked)
+            com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(this)
+    }
+
     private fun initializeUnlocked() {
         if (!normalStartupStarted.compareAndSet(false, true)) return
 
@@ -144,6 +150,8 @@ class HaloApplication :
 
         ManualDependencyGraph.init(this)
         organizerGraphReady.complete(Unit)
+        resourceScope.launch { runCatching { com.halo.app.nativeactions.EverydayWidgetUpdates.maintain(this@HaloApplication) }
+            .onFailure { Log.w("HaloWidget","Widget update needs retry",it) } }
         // Organizer recovery is local and does not wait for model/provider or secret-store bootstrap.
         resourceScope.launch {
             try {

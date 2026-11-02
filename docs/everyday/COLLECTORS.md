@@ -1,6 +1,6 @@
 # Everyday collectors
 
-Implementation is in progress for issue 63. This describes the current collector owner; the briefing, source screens, cards, widgets and tool entry points have separate integration gates in the implementation ledger.
+Collectors are integrated with source management, setup, deterministic briefs, Screen/native cards, Library references and typed commands. This describes their ownership and limits; final matching evidence is in the implementation ledger.
 
 ## Ownership and useful local state
 
@@ -30,7 +30,7 @@ WorkManager performs a periodic pass no more frequently than its 15-minute inter
 
 External reservations permit at most 500 logical attempts across a rolling 24 hours and 96 for a normalized endpoint. Preview and polling share endpoint identity, a one-minute cooldown, quotas and server retry delays, including after removing/re-adding or duplicating a source. A logical attempt can contain the original request and up to five validated redirect hops; these limits are not a claim of 500 total HTTP hops. Failed and cancelled admitted attempts still consume budget. Clock rollback does not reset a rolling budget. Request records expire after the rolling day; inactive endpoint retry entries are pruned after seven days. Failure lineage belongs to the endpoint: cancellation preserves it, and only an actual success or 304 resets it.
 
-Sources persist until removed. Each source holds at most one bounded typed snapshot and one latest attempt; deleting a source cascades those derived records. Disabled/muted sources retain their cache but are excluded from refresh/briefing according to their separate settings. Request budgets and endpoint retry state deliberately survive source deletion. Backup, global data-clear integration, UI-controlled cache removal and complete retention presentation remain part of the unfinished integration work.
+Sources persist until removed. Each source holds at most one bounded typed snapshot and one latest attempt; deleting a source cascades those derived records. Disabled/muted sources retain their cache but are excluded from refresh/briefing according to their separate settings. Request budgets and endpoint retry state deliberately survive source deletion. Cache clear is exposed through the source UI and typed command. Portable backup/restore, Note purge derived-cache cleanup and retention/recovery are documented in EVERYDAY-INTEGRATION.md.
 
 ## Evidence and remaining acceptance
 

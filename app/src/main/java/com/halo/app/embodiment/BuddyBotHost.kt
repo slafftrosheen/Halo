@@ -60,7 +60,10 @@ class BuddyBotHost(
     private val _telemetry = MutableStateFlow(BuddyBotTelemetry())
     val telemetry: StateFlow<BuddyBotTelemetry> = _telemetry.asStateFlow()
 
-    private var currentTransport: WebSocketEmbodimentTransport? = null
+    private val ownerLock=Any()
+    @Volatile private var currentTransport: WebSocketEmbodimentTransport? = null
+    private val _connectionError=MutableStateFlow<String?>(null)
+    val connectionError=_connectionError.asStateFlow()
     var session: BuddyBotSession? = null
         private set
 
@@ -69,13 +72,15 @@ class BuddyBotHost(
     }
 
     fun setTargetUrl(url: String) {
+        if(!BuddyBotLocalEndpoint.acceptsWebSocket(url)) {_connectionError.value=BuddyBotLocalEndpoint.MESSAGE;return}
+        _connectionError.value=null
         storage.putString(STORAGE_KEY_URL, url)
         scope.launch(Dispatchers.IO) {
             ensureDeviceRegistered(recreate = true)
         }
     }
 
-    fun ensureDeviceRegistered(recreate: Boolean = false) {
+    fun ensureDeviceRegistered(recreate: Boolean = false): Unit = synchronized(ownerLock) {
         if (!recreate && sessionManager.getSession(deviceId) != null) {
             session = sessionManager.getSession(deviceId) as? BuddyBotSession
             return
@@ -83,19 +88,27 @@ class BuddyBotHost(
 
         val url = getTargetUrl()
         val identity = DeviceIdentity(deviceId, "BuddyBot", "BuddyBot")
-        val transport = WebSocketEmbodimentTransport(url)
+        val previous=session
+        val transport = WebSocketEmbodimentTransport(url,BuddyBotLocalEndpoint.client(WebSocketEmbodimentTransport.defaultClient) {
+            if(currentTransport?.url==url) _connectionError.value=BuddyBotLocalEndpoint.MESSAGE
+        })
         currentTransport = transport
-
+        _telemetry.value=BuddyBotTelemetry()
+        previous?.let {scope.launch(Dispatchers.IO) {it.disconnect()}}
+        // Preserve the session's handshake/receipt handler while passively observing current-device telemetry.
+        val observed=object: com.halo.sdk.runtime.embodiment.EmbodimentTransport by transport {
+            override fun onMessageReceived(handler: (String)->Unit) {
+                transport.onMessageReceived {message ->synchronized(ownerLock) {
+                    if(currentTransport===transport) {handler(message);handleIncomingMessage(message)}
+                }}
+            }
+        }
         val newSession = BuddyBotSession(
             identity = identity,
-            transport = transport,
+            transport = observed,
             eventBus = eventBus
         )
         session = newSession
-
-        transport.onMessageReceived { message ->
-            handleIncomingMessage(message)
-        }
 
         sessionManager.registerSession(newSession)
 

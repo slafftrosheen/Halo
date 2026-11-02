@@ -24,10 +24,11 @@ class CollectorCoordinator(
     fun cancel(sourceId: String) { jobs[sourceId]?.cancel(CancellationException("Source refresh cancelled")) }
 
     suspend fun refresh(sourceId: String, manual: Boolean = false): CollectorState? = refreshDetailed(sourceId, manual).state
-    suspend fun refreshDetailed(sourceId: String, manual: Boolean = false): CollectorRefreshReceipt {
+    suspend fun refreshDetailed(sourceId: String, manual: Boolean = false, expectedVersion: Long? = null): CollectorRefreshReceipt {
         val revision = RemoteDispatchContext.provenance.get()?.revision ?: RemoteDispatchContext.intent.get()?.revision ?: policy.revision
         return locks.getOrPut(sourceId) { Mutex() }.withLock {
             val current = repository.state(sourceId) ?: return@withLock CollectorRefreshReceipt(null, false)
+            if(expectedVersion!=null && current.source.version!=expectedVersion) throw CollectorConflict("Source changed before refresh admission")
             if (!current.source.enabled || !current.source.selected) return@withLock CollectorRefreshReceipt(current, false)
             var reservation: CollectorReservation? = null
             var deferred: CollectorAttempt? = null

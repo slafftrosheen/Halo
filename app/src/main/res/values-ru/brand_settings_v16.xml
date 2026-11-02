@@ -6,7 +6,7 @@
     <string name="brand_intelligence_where">Где Halo думает</string>
     <string name="brand_intelligence_select_help">Выберите, где обрабатывать ответы. Открытие варианта не меняет активную модель.</string>
     <string name="brand_intelligence_phone">На этом телефоне</string>
-    <string name="brand_intelligence_phone_summary">Приватно · с установленной моделью работает без интернета</string>
+    <string name="brand_intelligence_phone_summary">Локально · с установленной моделью работает без интернета</string>
     <string name="brand_intelligence_network">В вашей сети</string>
     <string name="brand_intelligence_network_summary">Ваш компьютер или сервер</string>
     <string name="brand_intelligence_cloud">В облаке</string>

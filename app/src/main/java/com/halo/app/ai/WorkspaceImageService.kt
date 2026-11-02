@@ -101,7 +101,7 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
         if (!allowImages()) throw WorkspaceImageUnavailable("Cloud images are off in Kids mode. Ask a grown-up, or draw in Canvas instead.")
         val policy = storage.readRuntimeAiContextPolicy()
         if (storage.savedPrivacyMode() == PrivacyMode.PRIVATE)
-            throw WorkspaceImageUnavailable("This action needs Full Power mode. Use the switch at the top of Halo.")
+            throw WorkspaceImageUnavailable("This action needs Power mode. Use the mode control beside the halo Orb.")
         if (!storage.remoteFeatureEnabled(OnlineFeature.IMAGES))
             throw WorkspaceImageUnavailable("This online feature is off in the active mode profile. Review Mode profiles.")
         if (reference != null && referenceObjectId != null && !policy.allowCloudWorkspace ||
@@ -122,7 +122,7 @@ class WorkspaceImageService(private val router: AiProviderRouter, private val st
         if (reference == null && choice.model.requiresReference)
             throw WorkspaceImageUnavailable("This model needs a reference image. Open an image in Notebook or Canvas to edit it.")
         if (reference != null && referenceObjectId != null && !allowReference(referenceObjectId))
-            throw WorkspaceImageUnavailable("Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of Halo.")
+            throw WorkspaceImageUnavailable("Cloud sharing is not allowed for this image. Use the Local / Power mode control beside the halo Orb.")
         require(reference == null || (reference.size in 1..32_000_000 && mime in setOf("image/png", "image/jpeg", "image/webp")))
         if (reference != null && !choice.model.supportsEditing) throw WorkspaceImageUnavailable("Choose an image model that supports editing.")
         return providers.firstOrNull { it.id == choice.providerId } ?: throw WorkspaceImageUnavailable("Image provider is unavailable")

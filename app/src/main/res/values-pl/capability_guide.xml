@@ -2,7 +2,7 @@
 <resources>
     <string name="capability_guide_title">"Skonfiguruj możliwości halo"</string>
     <string name="capability_guide_explanation">"Rozpocznij raz, a następnie przejrzyj po kolei prośby Androida. Każda funkcja jest opcjonalna. Android może wyświetlać osobne okna, a dostęp specjalny otwiera Ustawienia. Pliki i zdjęcia wybierasz w systemowych oknach bez dostępu do całej biblioteki."</string>
-    <string name="capability_guide_privacy">"Tryb prywatny i Full Power określają sposób przetwarzania, a nie uprawnienia Androida. Sam dostęp nigdy nie zezwala na działanie, płatność ani ciągłe nagrywanie. Wrażliwe ustawienia nadal chronią dotychczasowe zabezpieczenia dla dorosłych."</string>
+    <string name="capability_guide_privacy">"Tryb Local i Power określają sposób przetwarzania, a nie uprawnienia Androida. Sam dostęp nigdy nie zezwala na działanie, płatność ani ciągłe nagrywanie. Wrażliwe ustawienia nadal chronią dotychczasowe zabezpieczenia dla dorosłych."</string>
     <string name="capability_guide_start">"Rozpocznij konfigurację funkcji"</string>
     <string name="capability_guide_continue">"Kontynuuj konfigurację"</string>
     <string name="capability_guide_open_settings">"Otwórz ustawienia Androida"</string>

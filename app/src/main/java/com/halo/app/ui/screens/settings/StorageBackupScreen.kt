@@ -189,7 +189,7 @@ fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
                     Text(title, style = MaterialTheme.typography.titleSmall)
                     Text(uiText("Choose which version to keep"), style = MaterialTheme.typography.bodyMedium)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ImportConflictPolicy.entries.forEach { policy ->
+                        ImportConflictPolicy.entries.filterNot {it==ImportConflictPolicy.DUPLICATE && conflict.type in setOf("EVERYDAY_SCREEN","EVERYDAY_BRIEF_SETTINGS")}.forEach { policy ->
                             FilterChip(
                                 selected = conflictPolicies[conflict.objectId] == policy,
                                 enabled = available,

@@ -1,0 +1,14 @@
+<resources>
+<string name="everyday_widget_clock">Zegar i data</string>
+<string name="everyday_widget_clock_weather">Zegar i pogoda</string>
+<string name="everyday_widget_upcoming">Nadchodzące wydarzenie</string>
+<string name="everyday_widget_tasks">Zadania i przypomnienia</string>
+<string name="everyday_widget_brief">Twój dzień z halo</string>
+<string name="everyday_widget_headlines">Nagłówki</string>
+<string name="everyday_widget_alarms_timers">Budziki i minutniki</string>
+<string name="everyday_widget_dashboard">Panel na co dzień</string>
+<string name="everyday_widget_preview">Otwórz halo, aby zobaczyć zapisane informacje</string>
+<string name="everyday_widget_saved">Zapisane na tym telefonie</string>
+<string name="everyday_widget_configure">Skonfiguruj widżet</string>
+<string name="everyday_widget_description">Twój zapisany plan i wybrane informacje w halo. Zmień rozmiar, aby zobaczyć więcej; prywatne dane otwórz w halo.</string>
+</resources>

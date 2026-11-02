@@ -48,9 +48,9 @@ class SpeechSynthesisRegistry(
         // Private material is never silently handed to a network voice, even if
         // an account's general assistant TTS preference is cloud-based.
         if (explicitPreviewProviderId != null && !allowCloudSpeech() && !configured.metadata.local)
-            error("Cloud voice needs Full Power mode. Use the switch at the top of Halo. Kids sessions also need grown-up approval.")
+            error("Cloud voice needs Power mode. Use the mode control beside the halo Orb. Kids sessions also need grown-up approval.")
         val selected = if (privateOnly && !configured.metadata.local) {
-            if (localOnly || privateMaterial) android else error("The selected speech provider needs Full Power. Choose an on-device voice in Mode profiles.")
+            if (localOnly || privateMaterial) android else error("The selected speech provider needs Power. Choose an on-device voice in Mode profiles.")
         } else configured
         // The only path around audible qualification is an explicit user-initiated
         // provider preview. Normal production turns never receive this flag.

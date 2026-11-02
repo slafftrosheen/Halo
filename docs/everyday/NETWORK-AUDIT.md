@@ -1,6 +1,6 @@
 # Network ownership audit
 
-Status: the initial inventory below is retained as an audit snapshot. The governed-download batch is implemented and host verified as recorded below; the full Local-mode matrix remains open.
+Status: the initial inventory below is retained as a historical audit snapshot, not the final implementation state. The current production-owner matrix is LOCAL-POWER-MATRIX.md. Current transport inventory and final host evidence are in the 2 November integration artifacts; UI/hardware session observation remains separate.
 
 The two serialized `PrivacyMode` values (`PRIVATE`, `CLOUD`) are compatibility identifiers. The issue requires user-facing Local and Power. Keep one durable global choice and revocable revision authority. Source selection, model readiness, OS permissions, account authentication and parental capability restrictions are separate concerns, not extra privacy modes.
 
@@ -28,3 +28,11 @@ SDK public GET transfers now enforce public HTTPS destinations and resolved addr
 Nullable `whileCloudMode` and rendered-page admission now fail closed. Download UI explains mode/family restrictions in EN/RU/LV/PL; installed models and complete local-file verification remain usable. Ordered queue cancellation handles Pause before WorkManager registration and preserves a newer foreground verification. The broad Local/Power display-name pass, remaining transport inventory, rendered UI and full experience matrix are still pending.
 
 Evidence: [focused host results](../testing/artifacts/HALO-EVERYDAY-63-2026-11-01/network-policy-final-results.json), adjacent JUnit/source ZIPs and 64-file SHA-256 manifest. **165 tests in 19 suites passed, zero failures/errors/skips; BUILD SUCCESSFUL in 16m54s.** This includes organizer/collector foundations and focused policy/download/routing cases, not every transport or source endpoint. Public CDN redirect cases use an in-process transport fixture; existing guarded-client cases cover socket cancellation. No issue-63 phone operation or network-provider acceptance is inferred.
+
+## Integrated closure — 2 November 2026
+
+Provider construction, web/search/Gmail/MCP, rendered-page extraction, model/speech acquisition and collector owner paths were reread against the current transport inventory. Production provider defaults are wrapped in AndroidProviderFactory; public collectors and downloads use required revocable policies; nullable online/extractor authority fails closed. Fx Coil requests consume local SVG bytes. Source readers, briefing assembly, Library and all widget projections add no HTTP or image-loading path. User-facing execution mode copy is Local/Power; persisted enum/lookup aliases remain backward compatible.
+
+The paired BuddyBot path is constrained separately: literal private/link-local/loopback IP addresses (including IPv6 ULA), no hostname lookup, proxy or redirects. This restriction applies at the transport boundary to saved/auto-connect paths as well as the address form. Rejected addresses get actionable local-IP guidance. Replacing an address disconnects the old session and fences old message callbacks while retaining the session handshake owner. It cannot act as a general public Internet bypass in Local or Power.
+
+See LOCAL-POWER-MATRIX.md for every requested experience and concrete shared owners/tests. Source paths are audited; checked owner behavior is measured in hermetic tests. No claim is made that a unit test observed every real Home/Kids/Study/voice session or Android worker schedule. Those observations remain available in the user's phone-test phase. The current implementation adds no missing-policy fallback or extra global privacy mode.

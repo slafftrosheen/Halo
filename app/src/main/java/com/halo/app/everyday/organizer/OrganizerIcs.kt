@@ -9,6 +9,8 @@ data class CalendarImportIssue(val item: Int, val uid: String?, val reason: Stri
 data class CalendarImportPreview(val records: List<OrganizerRecord>, val exceptions: List<OccurrenceOverride>,
     val issues: List<CalendarImportIssue>)
 
+data class CalendarImportResult(val added: List<String>, val alreadyPresent: List<String>)
+
 /** Bounded calendar interchange; no remote resource loading, attachment opening or alarm execution. */
 object OrganizerIcs {
     private val date = DateTimeFormatter.BASIC_ISO_DATE
@@ -208,9 +210,7 @@ object OrganizerIcs {
         require(records.size <= 2000)
         val lines = mutableListOf("BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Halo//Everyday Organizer//EN", "CALSCALE:GREGORIAN")
         val active = records.filter { it.kind == OrganizerKind.EVENT && it.deletedAt == null }
-        require(active.map { it.calendarUid ?: "${it.id}@halo.local" }.distinct().size == active.size) {
-            "Selected calendars contain duplicate event UIDs. Export these calendars separately or select one version of each event"
-        }
+        if (active.map { it.calendarUid ?: "${it.id}@halo.local" }.distinct().size != active.size) throw DuplicateCalendarUids()
         val times = active.mapNotNull { it.time } + exceptions.filter { ex -> active.any { it.id == ex.recordId } }.mapNotNull { it.replacementTime }
         times.filter { !it.allDay && !it.followDeviceZone && !isUtcZone(ZoneId.of(it.zoneId)) }.groupBy { it.zoneId }.forEach { (id, values) ->
             lines += IcsTimeZones.export(ZoneId.of(id), values.minOf { it.start.year } - 1, 2199)

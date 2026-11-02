@@ -2,7 +2,7 @@
 <resources>
     <string name="capability_guide_title">Настройка возможностей Halo</string>
     <string name="capability_guide_explanation">Начните один раз и рассмотрите запросы Android по очереди. Все возможности необязательны. Android может показывать отдельные диалоги; специальный доступ открывается в настройках. Файлы и фото выбираются системным средством без доступа ко всей библиотеке.</string>
-    <string name="capability_guide_privacy">Private и Full Power управляют обработкой, а не разрешениями Android. Доступ не разрешает действия, оплату или постоянную запись. Чувствительные настройки защищены существующим контролем взрослых.</string>
+    <string name="capability_guide_privacy">Private и Power управляют обработкой, а не разрешениями Android. Доступ не разрешает действия, оплату или постоянную запись. Чувствительные настройки защищены существующим контролем взрослых.</string>
     <string name="capability_guide_start">Начать настройку возможностей</string>
     <string name="capability_guide_continue">Продолжить настройку</string>
     <string name="capability_guide_open_settings">Открыть настройки Android</string>

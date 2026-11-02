@@ -203,6 +203,7 @@ internal fun SettingsContent(
         )),
         SettingsMenuGroup("setup", "Setup tools", listOf(
             SettingsMenuRow(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) }),
+            SettingsMenuRow(HaloGlyph.TOOL, "Everyday sources and cards", "Choose sources, city and initial Screen cards.", { onSetup(com.halo.app.ui.onboarding.SetupStage.EVERYDAY) }),
             SettingsMenuRow(HaloGlyph.SUCCESS, "Setup readiness", "Check what works and share a safe report", { onSetup(com.halo.app.ui.onboarding.SetupStage.READINESS) }),
         )),
     )
@@ -472,7 +473,7 @@ private fun SettingsIdentity(state: SettingsUiState, onOpen: (SettingsDestinatio
                 Text(uiText(if (state.providerLocation == null) "Choose how halo answers" else "Your halo"), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 18.sp), fontWeight = FontWeight.Bold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (state.privacyMode != null) {
-                    Text(uiText(if (state.privacyMode == com.halo.app.ai.PrivacyMode.PRIVATE) "Private mode" else "Full Power mode"),
+                    Text(uiText(if (state.privacyMode == com.halo.app.ai.PrivacyMode.PRIVATE) "Local mode" else "Power mode"),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("·", style = MaterialTheme.typography.bodySmall)

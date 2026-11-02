@@ -4232,3 +4232,530 @@ Export|||Экспорт|||Eksportēt|||Eksportuj
 What Halo can remember|||Что Halo может запомнить|||Ko Halo var atcerēties|||Co Halo może zapamiętać
 New canvas|||Новый холст|||Jauns dēlis|||Nowa tablica
 Locked|||Заблокировано|||Bloķēts|||Zablokowane
+Your day in Halo|||Ваш день в Halo|||Tava diena ar Halo|||Twój dzień w Halo
+Open daily brief|||Открыть обзор дня|||Atvērt dienas pārskatu|||Otwórz podsumowanie dnia
+Brief history|||История обзоров|||Pārskatu vēsture|||Historia podsumowań
+Brief settings|||Настройки обзора|||Pārskata iestatījumi|||Ustawienia podsumowania
+Update brief|||Обновить обзор|||Atjaunot pārskatu|||Zaktualizuj podsumowanie
+Organizer|||Органайзер|||Plānotājs|||Organizer
+Open organizer|||Открыть органайзер|||Atvērt plānotāju|||Otwórz organizer
+Choose sources|||Выбрать источники|||Izvēlēties avotus|||Wybierz źródła
+Open item|||Открыть элемент|||Atvērt vienumu|||Otwórz element
+Your plan, selected information and what needs your attention.|||Ваш план, выбранная информация и то, что требует внимания.|||Tavs plāns, atlasītā informācija un tas, kam jāpievērš uzmanība.|||Twój plan, wybrane informacje i sprawy wymagające uwagi.
+Build a brief from your saved plan and selected sources. Local mode uses saved information; opening this page never refreshes the internet.|||Создайте обзор из сохранённого плана и выбранных источников. Локальный режим использует сохранённые данные; открытие этой страницы не загружает данные из интернета.|||Veido pārskatu no saglabātā plāna un izvēlētajiem avotiem. Lokālais režīms izmanto saglabāto informāciju; šīs lapas atvēršana neielādē datus no interneta.|||Utwórz podsumowanie z zapisanego planu i wybranych źródeł. Tryb lokalny korzysta z zapisanych informacji; otwarcie tej strony nie pobiera danych z internetu.
+Wait for the current action to finish.|||Дождитесь завершения текущего действия.|||Uzgaidi, līdz pašreizējā darbība ir pabeigta.|||Poczekaj na zakończenie bieżącej czynności.
+Study presentation|||Представление для учёбы|||Mācību skatījums|||Widok do nauki
+Saved at %1$s|||Сохранено: %1$s|||Saglabāts: %1$s|||Zapisano: %1$s
+Selected sources may refresh in Power. This brief keeps its saved facts.|||Выбранные источники могут обновляться в режиме Power. Этот обзор сохраняет факты на момент его создания.|||Režīmā Power izvēlētie avoti var atjaunoties. Šajā pārskatā paliek tā saglabātie fakti.|||W trybie Power wybrane źródła mogą się odświeżać. To podsumowanie zachowuje zapisane fakty.
+Local mode · External information is cached and may be out of date.|||Локальный режим · Внешние данные сохранены в кеше и могут устареть.|||Lokālais režīms · Ārējā informācija ir saglabāta un var būt novecojusi.|||Tryb lokalny · Dane zewnętrzne pochodzą z pamięci i mogą być nieaktualne.
+No selected information is available for this brief.|||Для этого обзора нет доступных выбранных данных.|||Šim pārskatam nav pieejamu atlasīto datu.|||Brak dostępnych wybranych danych do tego podsumowania.
+%1$d items are no longer in the current local plan.|||Элементов, которых больше нет в текущем локальном плане: %1$d.|||Vienumi, kuru vairs nav pašreizējā lokālajā plānā: %1$d.|||Liczba elementów, których nie ma już w bieżącym lokalnym planie: %1$d.
+This brief shows a selection. Open the organizer or a source for the complete available list.|||В обзоре показана подборка. Полный доступный список находится в органайзере или источнике.|||Pārskatā redzama izlase. Pilnu pieejamo sarakstu atver plānotājā vai avotā.|||Podsumowanie zawiera wybrane pozycje. Pełną dostępną listę znajdziesz w organizerze lub źródle.
+Freshness and sources|||Актуальность и источники|||Aktualitāte un avoti|||Aktualność i źródła
+No saved briefs yet.|||Сохранённых обзоров пока нет.|||Vēl nav saglabātu pārskatu.|||Nie ma jeszcze zapisanych podsumowań.
+Up to 60 briefs are kept for 30 days. The first morning comparison remains fixed for its day.|||До 60 обзоров хранятся 30 дней. Первый утренний обзор остаётся основой сравнения на этот день.|||Līdz 60 pārskatiem glabājas 30 dienas. Pirmais rīta pārskats paliek attiecīgās dienas salīdzinājuma pamats.|||Do 60 podsumowań jest przechowywanych przez 30 dni. Pierwsze poranne podsumowanie pozostaje podstawą porównania na dany dzień.
+Morning and evening notices|||Утренние и вечерние уведомления|||Rīta un vakara paziņojumi|||Powiadomienia poranne i wieczorne
+Android may deliver notices late. Quiet hours and system Do Not Disturb still apply. Notices never read your brief aloud.|||Android может задерживать уведомления. Тихие часы и системный режим «Не беспокоить» продолжают действовать. Уведомления не читают обзор вслух.|||Android var piegādāt paziņojumus ar kavēšanos. Klusās stundas un sistēmas režīms Netraucēt joprojām ir spēkā. Paziņojumi nelasa pārskatu skaļi.|||Android może opóźniać powiadomienia. Nadal obowiązują ciche godziny i systemowy tryb Nie przeszkadzać. Powiadomienia nie odczytują podsumowania na głos.
+Morning · HH:mm|||Утро · ЧЧ:мм|||Rīts · SS:mm|||Rano · GG:mm
+Evening · HH:mm|||Вечер · ЧЧ:мм|||Vakars · SS:mm|||Wieczór · GG:mm
+Quiet hours|||Тихие часы|||Klusās stundas|||Ciche godziny
+Quiet from · HH:mm|||Тишина с · ЧЧ:мм|||Klusums no · SS:mm|||Cisza od · GG:mm
+Quiet until · HH:mm|||Тишина до · ЧЧ:мм|||Klusums līdz · SS:mm|||Cisza do · GG:mm
+Matching quiet-hour times mean quiet all day.|||Одинаковое начало и окончание означают тишину весь день.|||Vienāds sākuma un beigu laiks nozīmē klusumu visu dienu.|||Jednakowy czas początku i końca oznacza ciszę przez całą dobę.
+Headlines · 0–10|||Заголовки · 0–10|||Virsraksti · 0–10|||Nagłówki · 0–10
+Tasks · 1–20|||Задачи · 1–20|||Uzdevumi · 1–20|||Zadania · 1–20
+Priorities and Kids sharing|||Приоритеты и доступ в Kids|||Prioritātes un kopīgošana ar Kids|||Priorytety i udostępnianie w Kids
+Only the items you share here may appear in Kids briefs. Sharing a source alone does not share your private plan.|||В обзорах Kids могут появляться только элементы, которыми вы поделитесь здесь. Разрешение источника не открывает доступ к личному плану.|||Kids pārskatos var parādīties tikai šeit kopīgotie vienumi. Avota atļaušana pati par sevi neatklāj tavu privāto plānu.|||W podsumowaniach Kids mogą pojawić się tylko udostępnione tutaj elementy. Samo udostępnienie źródła nie udostępnia prywatnego planu.
+Prioritize in brief|||Повысить приоритет в обзоре|||Piešķirt prioritāti pārskatā|||Nadaj priorytet w podsumowaniu
+Share with Kids|||Поделиться с Kids|||Kopīgot ar Kids|||Udostępnij w Kids
+Use 24-hour HH:mm times and numbers within the displayed limits.|||Укажите время в 24-часовом формате ЧЧ:мм и числа в указанных пределах.|||Ievadi laiku 24 stundu formātā SS:mm un skaitļus norādītajās robežās.|||Wpisz czas w formacie 24-godzinnym GG:mm oraz liczby w podanych granicach.
+The brief could not be opened. Try again.|||Не удалось открыть обзор. Повторите попытку.|||Neizdevās atvērt pārskatu. Mēģini vēlreiz.|||Nie udało się otworzyć podsumowania. Spróbuj ponownie.
+This change could not be saved. Your saved data is kept; reopen and retry.|||Не удалось сохранить изменение. Сохранённые данные не потеряны; откройте заново и повторите попытку.|||Izmaiņu neizdevās saglabāt. Saglabātie dati paliek; atver vēlreiz un mēģini no jauna.|||Nie udało się zapisać zmiany. Zapisane dane zostały zachowane; otwórz ponownie i spróbuj jeszcze raz.
+Brief settings saved.|||Настройки обзора сохранены.|||Pārskata iestatījumi saglabāti.|||Zapisano ustawienia podsumowania.
+This saved brief is no longer available. Build a new brief from your current information.|||Этот сохранённый обзор больше недоступен. Создайте новый из текущих данных.|||Šis saglabātais pārskats vairs nav pieejams. Izveido jaunu no pašreizējās informācijas.|||To zapisane podsumowanie nie jest już dostępne. Utwórz nowe z bieżących informacji.
+A fixed calendar copy and its event list will be saved in Workspace. Then you can copy that file to a destination you choose.|||В Workspace будут сохранены неизменная копия календаря и список событий. Затем файл можно скопировать в выбранное место.|||Darbvietā tiks saglabāta nemainīga kalendāra kopija un notikumu saraksts. Pēc tam failu varēsi kopēt uz izvēlēto vietu.|||W Workspace zostanie zapisana stała kopia kalendarza i lista wydarzeń. Następnie możesz skopiować plik do wybranego miejsca.
+A missing daylight-saving time moves forward by the gap. A repeated time uses the earlier offset.|||Время, пропущенное при переходе на летнее время, сдвигается вперёд на величину перехода. Для повторяющегося времени используется более раннее смещение.|||Pārejā uz vasaras laiku izlaists laiks tiek pārbīdīts uz priekšu par pārejas ilgumu. Atkārtotam laikam izmanto agrāko nobīdi.|||Godzina pominięta przy zmianie czasu przesuwa się do przodu o długość przerwy. Dla powtórzonej godziny używane jest wcześniejsze przesunięcie.
+A parent manages the saved plan.|||Сохранённым планом управляет родитель.|||Saglabāto plānu pārvalda vecāks.|||Zapisanym planem zarządza rodzic.
+A source can be saved in Local without fetching it. Preview checks real feed contents in Power.|||Источник можно сохранить локально без загрузки. Предпросмотр проверяет содержимое ленты в Power.|||Avotu var saglabāt lokāli, to neielādējot. Priekšskatījums pārbauda plūsmas saturu režīmā Power.|||Źródło można zapisać lokalnie bez pobierania. Podgląd sprawdza zawartość kanału w trybie Power.
+Add clock|||Добавить часы|||Pievienot pulksteni|||Dodaj zegar
+Add feed|||Добавить ленту|||Pievienot plūsmu|||Dodaj kanał
+Add item|||Добавить запись|||Pievienot ierakstu|||Dodaj element
+Add subtask|||Добавить подзадачу|||Pievienot apakšuzdevumu|||Dodaj podzadanie
+Add weather city|||Добавить город для погоды|||Pievienot laikapstākļu pilsētu|||Dodaj miasto pogody
+Adult settings required|||Нужны настройки взрослого|||Nepieciešami pieaugušā iestatījumi|||Wymagane ustawienia dorosłego
+Agenda|||Повестка дня|||Dienas plāns|||Plan dnia
+Agenda date|||Дата повестки|||Dienas plāna datums|||Data planu dnia
+Alarms|||Будильники|||Modinātāji|||Budziki
+Alert cancelled|||Оповещение отменено|||Paziņojums atcelts|||Alert anulowany
+Alert dismissed|||Оповещение закрыто|||Paziņojums aizvērts|||Alert odrzucony
+Alert dispatched|||Оповещение отправлено|||Paziņojums nosūtīts|||Alert wysłany
+All day|||Весь день|||Visu dienu|||Cały dzień
+All languages|||Все языки|||Visas valodas|||Wszystkie języki
+Allow exact alarms|||Разрешить точные будильники|||Atļaut precīzus modinātājus|||Zezwól na dokładne alarmy
+Android could not open that settings page. Open Halo permissions in system settings.|||Android не открыл эту страницу настроек. Откройте разрешения Halo в системных настройках.|||Android nevarēja atvērt šo iestatījumu lapu. Atver Halo atļaujas sistēmas iestatījumos.|||Android nie otworzył tej strony ustawień. Otwórz uprawnienia Halo w ustawieniach systemowych.
+Approval covers this public source. It does not share your private tasks, notes or activity.|||Разрешение относится к этому публичному источнику. Личные задачи, заметки и действия не становятся доступными.|||Atļauja attiecas uz šo publisko avotu. Tā nekopīgo tavus privātos uzdevumus, piezīmes vai darbības.|||Zgoda dotyczy tego publicznego źródła. Nie udostępnia prywatnych zadań, notatek ani aktywności.
+Approve this public source for Kids|||Разрешить этот публичный источник в Kids|||Atļaut šo publisko avotu vidē Kids|||Zatwierdź to publiczne źródło dla Kids
+Article changed|||Статья изменилась|||Raksts ir mainījies|||Artykuł się zmienił
+Back to saved source|||К сохранённому источнику|||Atpakaļ uz saglabāto avotu|||Wróć do zapisanego źródła
+CAP alerts|||Оповещения CAP|||CAP brīdinājumi|||Alerty CAP
+Cached source information cleared. Source settings are kept.|||Кеш источника очищен. Настройки сохранены.|||Avota kešatmiņa iztīrīta. Iestatījumi saglabāti.|||Pamięć podręczna źródła wyczyszczona. Ustawienia zachowano.
+Cached · may be out of date|||Из кеша · данные могут устареть|||Saglabāts · dati var būt novecojuši|||Z pamięci · dane mogą być nieaktualne
+Calendar copy saved|||Копия календаря сохранена|||Kalendāra kopija saglabāta|||Kopia kalendarza zapisana
+Calendar copy saved in Workspace. Choose a destination to export this exact copy.|||Копия календаря сохранена в Workspace. Выберите место для экспорта именно этой копии.|||Kalendāra kopija saglabāta darbvietā. Izvēlies vietu tieši šīs kopijas eksportam.|||Kopia kalendarza zapisana w Workspace. Wybierz miejsce eksportu tej dokładnej kopii.
+Calendar import finished. Existing event IDs were kept.|||Импорт календаря завершён. Существующие идентификаторы событий сохранены.|||Kalendāra imports pabeigts. Esošie notikumu identifikatori saglabāti.|||Import kalendarza zakończony. Istniejące identyfikatory wydarzeń zachowano.
+Cancel refresh|||Отменить обновление|||Atcelt atsvaidzināšanu|||Anuluj odświeżanie
+Cancel schedule|||Отменить расписание|||Atcelt grafiku|||Anuluj harmonogram
+Category|||Категория|||Kategorija|||Kategoria
+Changed source|||Источник изменился|||Avots ir mainījies|||Źródło się zmieniło
+Changes affect only the selected occurrence. The remaining series is kept.|||Изменения относятся только к выбранному повторению. Остальная серия сохранится.|||Izmaiņas attiecas tikai uz izvēlēto atkārtojumu. Pārējā sērija saglabāsies.|||Zmiany dotyczą tylko wybranego wystąpienia. Reszta serii pozostaje bez zmian.
+Check scheduling again|||Проверить расписание снова|||Vēlreiz pārbaudīt plānošanu|||Sprawdź harmonogram ponownie
+Check the dates, time zone, duration and recurrence limits. Your saved item has not been replaced.|||Проверьте даты, часовой пояс, длительность и ограничения повторения. Сохранённая запись не заменена.|||Pārbaudi datumus, laika joslu, ilgumu un atkārtojumu ierobežojumus. Saglabātais ieraksts nav aizstāts.|||Sprawdź daty, strefę czasową, czas trwania i limity powtórzeń. Zapisany element nie został zastąpiony.
+Check the source name, public HTTPS address, language and refresh interval.|||Проверьте название источника, публичный HTTPS-адрес, язык и интервал обновления.|||Pārbaudi avota nosaukumu, publisko HTTPS adresi, valodu un atsvaidzināšanas intervālu.|||Sprawdź nazwę źródła, publiczny adres HTTPS, język i odstęp odświeżania.
+Choose a date in Agenda to edit, skip or complete one occurrence.|||Выберите дату в повестке, чтобы изменить, пропустить или завершить одно повторение.|||Izvēlies datumu dienas plānā, lai rediģētu, izlaistu vai pabeigtu vienu atkārtojumu.|||Wybierz datę w planie dnia, aby edytować, pominąć lub ukończyć jedno wystąpienie.
+Choose calendar events to export|||Выберите события для экспорта|||Izvēlies eksportējamos kalendāra notikumus|||Wybierz wydarzenia kalendarza do eksportu
+Choose cities from the offline catalogue. Clock times follow their time zones and daylight-saving rules.|||Выбирайте города из офлайн-каталога. Часы учитывают часовой пояс и переходы на летнее время.|||Izvēlies pilsētas no bezsaistes kataloga. Pulksteņi ievēro laika joslas un vasaras laika pārejas.|||Wybieraj miasta z katalogu offline. Zegary uwzględniają strefy czasowe i zmianę czasu.
+Choose date|||Выбрать дату|||Izvēlēties datumu|||Wybierz datę
+Choose sources on this phone. Only selected, enabled sources refresh in Power. Saved snapshots remain readable in Local.|||Выбирайте источники на телефоне. В Power обновляются только выбранные и включённые источники. Сохранённые данные доступны локально.|||Izvēlies avotus tālrunī. Power atsvaidzina tikai atlasītus un ieslēgtus avotus. Saglabātie dati ir lasāmi lokāli.|||Wybierz źródła na telefonie. W Power odświeżane są tylko wybrane i włączone źródła. Zapisane dane są dostępne lokalnie.
+Choose up to 200 events per file. If duplicate calendar UIDs exist, export one of those events at a time.|||Выбирайте до 200 событий на файл. Если идентификаторы UID повторяются, экспортируйте такие события по одному.|||Izvēlies līdz 200 notikumiem vienā failā. Ja kalendāra UID atkārtojas, eksportē šos notikumus pa vienam.|||Wybierz do 200 wydarzeń na plik. Jeśli identyfikatory UID się powtarzają, eksportuj te wydarzenia pojedynczo.
+Choose weather city|||Выбрать город для погоды|||Izvēlēties laikapstākļu pilsētu|||Wybierz miasto pogody
+City coordinates are sent to Open-Meteo only when this selected source refreshes in Power.|||Координаты города отправляются Open-Meteo только при обновлении этого выбранного источника в Power.|||Pilsētas koordinātas tiek sūtītas Open-Meteo tikai tad, kad atlasītais avots tiek atsvaidzināts režīmā Power.|||Współrzędne miasta są wysyłane do Open-Meteo tylko podczas odświeżania wybranego źródła w Power.
+City or country code|||Город или код страны|||Pilsēta vai valsts kods|||Miasto lub kod kraju
+City search could not be opened. Try again.|||Поиск городов не открылся. Повторите попытку.|||Pilsētu meklēšanu nevarēja atvērt. Mēģini vēlreiz.|||Nie udało się otworzyć wyszukiwania miast. Spróbuj ponownie.
+Clear cached information|||Очистить кеш|||Iztīrīt kešatmiņu|||Wyczyść pamięć podręczną
+Clear cached information?|||Очистить кеш?|||Iztīrīt kešatmiņu?|||Wyczyścić pamięć podręczną?
+Clear sky|||Ясное небо|||Skaidras debesis|||Bezchmurne niebo
+Clock name|||Название часов|||Pulksteņa nosaukums|||Nazwa zegara
+Clock removed. You can undo this change.|||Часы удалены. Это действие можно отменить.|||Pulkstenis noņemts. Šo darbību var atsaukt.|||Zegar usunięty. Możesz cofnąć tę zmianę.
+Complete task|||Завершить задачу|||Pabeigt uzdevumu|||Ukończ zadanie
+Custom sources|||Свои источники|||Pielāgoti avoti|||Własne źródła
+Daily|||Ежедневно|||Katru dienu|||Codziennie
+Delete entire series|||Удалить всю серию|||Dzēst visu sēriju|||Usuń całą serię
+Delete permanently|||Удалить навсегда|||Dzēst neatgriezeniski|||Usuń trwale
+Delete permanently?|||Удалить навсегда?|||Dzēst neatgriezeniski?|||Usunąć trwale?
+Delivering alert|||Доставка оповещения|||Paziņojums tiek piegādāts|||Dostarczanie alertu
+Delivery status|||Статус доставки|||Piegādes statuss|||Stan dostarczenia
+Delivery time missed|||Время доставки пропущено|||Piegādes laiks nokavēts|||Przegapiono czas dostarczenia
+Deselect source|||Убрать из выбранных|||Noņemt no atlasītajiem|||Odznacz źródło
+Discard edits and reload saved settings|||Отбросить изменения и загрузить сохранённые настройки|||Atmest izmaiņas un ielādēt saglabātos iestatījumus|||Odrzuć zmiany i wczytaj zapisane ustawienia
+Discard this edit?|||Отбросить изменения?|||Atmest šīs izmaiņas?|||Odrzucić zmiany?
+Dismiss alert|||Закрыть оповещение|||Aizvērt paziņojumu|||Odrzuć alert
+Does not repeat|||Без повторения|||Neatkārtojas|||Nie powtarza się
+Drizzle|||Морось|||Smidzina|||Mżawka
+Due date|||Срок выполнения|||Izpildes datums|||Termin wykonania
+Duration in seconds · 1–2678400|||Длительность в секундах · 1–2678400|||Ilgums sekundēs · 1–2678400|||Czas trwania w sekundach · 1–2678400
+Earlier item version · %1$d|||Предыдущая версия записи · %1$d|||Iepriekšējā ieraksta versija · %1$d|||Wcześniejsza wersja elementu · %1$d
+Edit entire series|||Изменить всю серию|||Rediģēt visu sēriju|||Edytuj całą serię
+Edit item|||Изменить запись|||Rediģēt ierakstu|||Edytuj element
+Edit this occurrence|||Изменить это повторение|||Rediģēt šo atkārtojumu|||Edytuj to wystąpienie
+Edited occurrence|||Изменённое повторение|||Rediģēts atkārtojums|||Zmienione wystąpienie
+Enable refresh|||Включить обновление|||Ieslēgt atsvaidzināšanu|||Włącz odświeżanie
+End date|||Дата окончания|||Beigu datums|||Data zakończenia
+End date · first day after the event|||Дата окончания · первый день после события|||Beigu datums · pirmā diena pēc notikuma|||Data zakończenia · pierwszy dzień po wydarzeniu
+End time · HH:mm|||Время окончания · ЧЧ:мм|||Beigu laiks · HH:mm|||Godzina zakończenia · GG:mm
+Ends %1$s|||Окончание %1$s|||Beidzas %1$s|||Koniec %1$s
+Exact alarm access is off. Android may deliver this later; allow exact alarms for precise timing|||Точные будильники не разрешены. Android может доставить оповещение позже. Для точного времени разрешите точные будильники.|||Precīzi modinātāji nav atļauti. Android var piegādāt paziņojumu vēlāk. Precīzam laikam atļauj precīzus modinātājus.|||Dokładne alarmy są wyłączone. Android może dostarczyć powiadomienie później. Zezwól na dokładne alarmy, aby zachować precyzję.
+Expires %1$s|||Действует до %1$s|||Derīgs līdz %1$s|||Wygasa %1$s
+Export calendar|||Экспорт календаря|||Eksportēt kalendāru|||Eksportuj kalendarz
+Find a city|||Найти город|||Atrast pilsētu|||Znajdź miasto
+Find a note|||Найти заметку|||Atrast piezīmi|||Znajdź notatkę
+Find a parent task|||Найти родительскую задачу|||Atrast vecākuzdevumu|||Znajdź zadanie nadrzędne
+Find sources|||Найти источники|||Atrast avotus|||Znajdź źródła
+Finished|||Завершено|||Pabeigts|||Zakończono
+Fog|||Туман|||Migla|||Mgła
+Follow the phone time zone when travelling|||Следовать часовому поясу телефона в поездках|||Ceļojot sekot tālruņa laika joslai|||Podążaj za strefą czasową telefonu w podróży
+Follows phone time zone · %1$s|||Часовой пояс телефона · %1$s|||Tālruņa laika josla · %1$s|||Strefa czasowa telefonu · %1$s
+Forecast time %1$s|||Время прогноза %1$s|||Prognozes laiks %1$s|||Czas prognozy %1$s
+Freezing drizzle|||Ледяная морось|||Sasalstoša smidzināšana|||Marznąca mżawka
+Freezing rain|||Ледяной дождь|||Sasalstošs lietus|||Marznący deszcz
+Full-screen alarm settings|||Настройки полноэкранных будильников|||Pilnekrāna modinātāju iestatījumi|||Ustawienia alarmów pełnoekranowych
+Full-screen alarms are unavailable. Android can still show an allowed notification.|||Полноэкранные будильники недоступны. Android всё ещё может показать разрешённое уведомление.|||Pilnekrāna modinātāji nav pieejami. Android joprojām var parādīt atļautu paziņojumu.|||Alarmy pełnoekranowe są niedostępne. Android nadal może wyświetlić dozwolone powiadomienie.
+Halo-calendar.ics|||Halo-calendar.ics|||Halo-calendar.ics|||Halo-calendar.ics
+Heavy rain|||Сильный дождь|||Stiprs lietus|||Ulewny deszcz
+High|||Высокий|||Augsta|||Wysoki
+History is trimmed to 60 briefs and 30 days when a new brief is saved. The first morning comparison remains fixed for its day.|||При сохранении нового обзора история сокращается до 60 обзоров за 30 дней. Первый утренний обзор остаётся основой сравнения на этот день.|||Saglabājot jaunu pārskatu, vēsture tiek ierobežota līdz 60 pārskatiem par 30 dienām. Pirmais rīta pārskats paliek šīs dienas salīdzinājuma pamats.|||Przy zapisie nowego podsumowania historia jest ograniczana do 60 podsumowań z 30 dni. Pierwsze poranne podsumowanie pozostaje punktem odniesienia na dany dzień.
+Import calendar|||Импорт календаря|||Importēt kalendāru|||Importuj kalendarz
+Import supported events|||Импортировать поддерживаемые события|||Importēt atbalstītos notikumus|||Importuj obsługiwane wydarzenia
+Import warning · item %1$d|||Предупреждение импорта · запись %1$d|||Importa brīdinājums · ieraksts %1$d|||Ostrzeżenie importu · element %1$d
+Include in selected sources|||Включить в выбранные источники|||Iekļaut atlasītajos avotos|||Uwzględnij w wybranych źródłach
+Individual occurrence changes|||Изменения отдельных повторений|||Atsevišķu atkārtojumu izmaiņas|||Zmiany pojedynczych wystąpień
+Item %1$d was not imported|||Запись %1$d не импортирована|||Ieraksts %1$d nav importēts|||Element %1$d nie został zaimportowany
+Item moved to trash. You can undo this change.|||Запись перемещена в корзину. Это действие можно отменить.|||Ieraksts pārvietots uz atkritni. Šo darbību var atsaukt.|||Element przeniesiony do kosza. Możesz cofnąć tę zmianę.
+Item saved. Delivery status is shown separately.|||Запись сохранена. Статус доставки показан отдельно.|||Ieraksts saglabāts. Piegādes statuss parādīts atsevišķi.|||Element zapisany. Stan dostarczenia jest pokazany osobno.
+Keep your plan on this phone. Saved items, delivery permissions and actual notification outcomes are shown separately.|||Храните план на телефоне. Сохранённые записи, разрешения и фактические результаты доставки показаны отдельно.|||Glabā plānu tālrunī. Saglabātie ieraksti, piegādes atļaujas un faktiskie paziņojumu rezultāti parādīti atsevišķi.|||Przechowuj plan na telefonie. Zapisane elementy, uprawnienia i rzeczywiste wyniki dostarczenia są pokazane osobno.
+Last refresh succeeded|||Последнее обновление успешно|||Pēdējā atsvaidzināšana izdevās|||Ostatnie odświeżanie powiodło się
+Last verified %1$s|||Последняя проверка %1$s|||Pēdējoreiz pārbaudīts %1$s|||Ostatnio sprawdzono %1$s
+Latest attempt %1$s|||Последняя попытка %1$s|||Pēdējais mēģinājums %1$s|||Ostatnia próba %1$s
+Latvia|||Латвия|||Latvija|||Łotwa
+Leave both end limits empty to keep repeating. Monthly dates absent from a month are skipped.|||Оставьте оба ограничения пустыми для бессрочного повторения. Даты, которых нет в месяце, пропускаются.|||Atstāj abus beigu ierobežojumus tukšus, lai turpinātu atkārtošanu. Datumi, kuru mēnesī nav, tiek izlaisti.|||Pozostaw oba limity końcowe puste, aby powtarzać bez końca. Daty nieistniejące w danym miesiącu są pomijane.
+Linked notes|||Связанные заметки|||Saistītās piezīmes|||Powiązane notatki
+Local keeps saved information without internet requests. Android may delay background refreshes to save battery.|||Локальный режим хранит данные без запросов в интернет. Android может задерживать фоновые обновления для экономии батареи.|||Lokālais režīms glabā datus bez interneta pieprasījumiem. Android var aizkavēt fona atsvaidzināšanu, lai taupītu akumulatoru.|||Tryb lokalny przechowuje dane bez żądań internetowych. Android może opóźniać odświeżanie w tle, aby oszczędzać baterię.
+Local time and the places you choose.|||Местное время и выбранные вами места.|||Vietējais laiks un tavas izvēlētās vietas.|||Czas lokalny i wybrane przez Ciebie miejsca.
+Local · No internet refresh. Saved external information may be out of date.|||Локально · Без обновлений из интернета. Сохранённые внешние данные могут устареть.|||Lokāli · Bez interneta atsvaidzināšanas. Saglabātie ārējie dati var būt novecojuši.|||Lokalnie · Bez odświeżania z internetu. Zapisane dane zewnętrzne mogą być nieaktualne.
+Location|||Место|||Atrašanās vieta|||Miejsce
+Low|||Низкий|||Zema|||Niski
+Low %1$s · High %2$s|||Минимум %1$s · Максимум %2$s|||Zemākā %1$s · Augstākā %2$s|||Minimum %1$s · Maksimum %2$s
+Mainly clear|||Преимущественно ясно|||Pārsvarā skaidrs|||Przeważnie bezchmurnie
+Minutes before · 0–10080|||Минут до начала · 0–10080|||Minūtes pirms sākuma · 0–10080|||Minuty przed · 0–10080
+Missing clock|||Часы не найдены|||Pulkstenis nav atrasts|||Nie znaleziono zegara
+Missing source|||Источник не найден|||Avots nav atrasts|||Nie znaleziono źródła
+Monthly|||Ежемесячно|||Katru mēnesi|||Co miesiąc
+Move to trash?|||Переместить в корзину?|||Pārvietot uz atkritni?|||Przenieść do kosza?
+Mute in briefs and proactive suggestions|||Не показывать в обзорах и инициативных предложениях|||Nerādīt pārskatos un proaktīvajos ieteikumos|||Wycisz w podsumowaniach i proaktywnych sugestiach
+Muted in briefs. Selected sources can still refresh.|||Не показывается в обзорах. Выбранный источник может обновляться.|||Pārskatos izslēgts. Atlasīts avots joprojām var tikt atsvaidzināts.|||Wyciszono w podsumowaniach. Wybrane źródło nadal może się odświeżać.
+Muted sources may still refresh when selected. Disable refresh to stop updates.|||Выбранные заглушённые источники могут обновляться. Отключите обновление, чтобы остановить загрузку.|||Izslēgtie avoti joprojām var tikt atsvaidzināti, ja tie ir atlasīti. Izslēdz atsvaidzināšanu, lai apturētu atjauninājumus.|||Wyciszone źródła nadal mogą się odświeżać, jeśli są wybrane. Wyłącz odświeżanie, aby zatrzymać aktualizacje.
+Network preview needs Power and permitted connected services. You can still save the source locally.|||Для предпросмотра нужны Power и разрешённые подключённые сервисы. Источник можно сохранить локально.|||Tīkla priekšskatījumam vajadzīgs Power un atļauti savienotie pakalpojumi. Avotu joprojām var saglabāt lokāli.|||Podgląd sieciowy wymaga Power i dozwolonych usług połączonych. Nadal możesz zapisać źródło lokalnie.
+New item|||Новая запись|||Jauns ieraksts|||Nowy element
+Next day|||Следующий день|||Nākamā diena|||Następny dzień
+Next eligible refresh %1$s|||Следующее доступное обновление %1$s|||Nākamā iespējamā atsvaidzināšana %1$s|||Następne możliwe odświeżanie %1$s
+No local information is available from this source yet.|||От этого источника пока нет локальных данных.|||No šī avota vēl nav pieejamu lokālu datu.|||Brak jeszcze danych lokalnych z tego źródła.
+No matching city. Try another spelling or a larger nearby city.|||Город не найден. Попробуйте другое написание или крупный город рядом.|||Pilsēta nav atrasta. Izmēģini citu rakstību vai lielāku tuvumā esošu pilsētu.|||Nie znaleziono miasta. Spróbuj innej pisowni lub większego pobliskiego miasta.
+No matching items. Add your first item or change the search.|||Подходящих записей нет. Добавьте первую запись или измените поиск.|||Nav atbilstošu ierakstu. Pievieno pirmo ierakstu vai maini meklējumu.|||Brak pasujących elementów. Dodaj pierwszy element lub zmień wyszukiwanie.
+No matching sources. Change the filters or add a feed.|||Подходящих источников нет. Измените фильтры или добавьте ленту.|||Nav atbilstošu avotu. Maini filtrus vai pievieno plūsmu.|||Brak pasujących źródeł. Zmień filtry lub dodaj kanał.
+No network connection · saved information is kept|||Нет подключения · сохранённые данные доступны|||Nav tīkla savienojuma · saglabātie dati ir pieejami|||Brak połączenia · zapisane dane są zachowane
+No parent task|||Без родительской задачи|||Bez vecākuzdevuma|||Bez zadania nadrzędnego
+No saved information yet. Select this source and refresh it when Power is enabled.|||Сохранённых данных пока нет. Выберите источник и обновите его в Power.|||Vēl nav saglabātu datu. Atlasi avotu un atsvaidzini to režīmā Power.|||Brak zapisanych danych. Wybierz źródło i odśwież je w Power.
+No saved snapshot|||Нет сохранённого снимка|||Nav saglabāta momentuzņēmuma|||Brak zapisanego stanu
+No supported events in this saved calendar.|||В сохранённом календаре нет поддерживаемых событий.|||Saglabātajā kalendārā nav atbalstītu notikumu.|||Brak obsługiwanych wydarzeń w zapisanym kalendarzu.
+No unexpired notices in the saved snapshot. This does not confirm that no warnings exist.|||В сохранённых данных нет действующих оповещений. Это не подтверждает отсутствие предупреждений.|||Saglabātajos datos nav nepabeigtu brīdinājumu. Tas neapstiprina, ka brīdinājumu nav.|||W zapisanych danych nie ma niewygasłych komunikatów. Nie oznacza to, że nie ma ostrzeżeń.
+No usable preview was received. Check the address or try again after the refresh delay.|||Не удалось получить пригодный предпросмотр. Проверьте адрес или попробуйте после паузы обновления.|||Neizdevās iegūt derīgu priekšskatījumu. Pārbaudi adresi vai mēģini vēlreiz pēc atsvaidzināšanas aiztures.|||Nie uzyskano użytecznego podglądu. Sprawdź adres lub spróbuj ponownie po przerwie odświeżania.
+Not selected · this source does not refresh.|||Не выбран · источник не обновляется|||Nav atlasīts · avots netiek atsvaidzināts|||Niewybrane · źródło nie jest odświeżane
+Notes remain in Workspace. Removing a link does not delete the note.|||Заметки остаются в Workspace. Удаление ссылки не удаляет заметку.|||Piezīmes paliek darbvietā. Saites noņemšana nedzēš piezīmi.|||Notatki pozostają w Workspace. Usunięcie powiązania nie usuwa notatki.
+Nothing planned for this day. Add an item or choose another date.|||На этот день ничего не запланировано. Добавьте запись или выберите другую дату.|||Šajā dienā nekas nav plānots. Pievieno ierakstu vai izvēlies citu datumu.|||Na ten dzień nic nie zaplanowano. Dodaj element lub wybierz inną datę.
+Notification permission needed|||Нужно разрешение на уведомления|||Nepieciešama paziņojumu atļauja|||Wymagane uprawnienie do powiadomień
+Notifications are off. The item is saved, but Android cannot alert you|||Уведомления отключены. Запись сохранена, но Android не может оповестить вас.|||Paziņojumi ir izslēgti. Ieraksts ir saglabāts, bet Android nevar tevi brīdināt.|||Powiadomienia są wyłączone. Element zapisano, ale Android nie może Cię powiadomić.
+Notify me|||Уведомить меня|||Paziņot man|||Powiadom mnie
+Number of occurrences · optional, 1–10000|||Число повторений · необязательно, 1–10000|||Atkārtojumu skaits · neobligāti, 1–10000|||Liczba wystąpień · opcjonalnie, 1–10000
+Official notices|||Официальные сообщения|||Oficiālie paziņojumi|||Oficjalne komunikaty
+Only new event IDs are added. Existing items and items in Trash are kept. Embedded alarms and attachments are not imported.|||Добавляются только новые идентификаторы событий. Существующие записи и корзина сохраняются. Встроенные будильники и вложения не импортируются.|||Tiek pievienoti tikai jauni notikumu identifikatori. Esošie ieraksti un atkritnes saturs saglabājas. Iegultie modinātāji un pielikumi netiek importēti.|||Dodawane są tylko nowe identyfikatory wydarzeń. Istniejące elementy i zawartość kosza pozostają. Osadzone alarmy i załączniki nie są importowane.
+Open agenda|||Открыть повестку|||Atvērt dienas plānu|||Otwórz plan dnia
+Open linked note|||Открыть связанную заметку|||Atvērt saistīto piezīmi|||Otwórz powiązaną notatkę
+Open notification settings|||Настройки уведомлений|||Atvērt paziņojumu iestatījumus|||Otwórz ustawienia powiadomień
+Open publisher in browser|||Открыть сайт издателя|||Atvērt izdevēja vietni pārlūkā|||Otwórz wydawcę w przeglądarce
+Open-Meteo|||Open-Meteo|||Open-Meteo|||Open-Meteo
+Opening a publisher website needs Power. The saved article remains available here.|||Для открытия сайта издателя нужен Power. Сохранённая статья остаётся доступной здесь.|||Izdevēja vietnes atvēršanai vajadzīgs Power. Saglabātais raksts joprojām ir pieejams šeit.|||Otwarcie strony wydawcy wymaga Power. Zapisany artykuł pozostaje dostępny tutaj.
+Or repeat until · YYYY-MM-DD|||Или повторять до · ГГГГ-ММ-ДД|||Vai atkārtot līdz · GGGG-MM-DD|||Lub powtarzaj do · RRRR-MM-DD
+Overcast|||Пасмурно|||Apmācies|||Pochmurno
+Overlaps another event|||Пересекается с другим событием|||Pārklājas ar citu notikumu|||Nakłada się na inne wydarzenie
+Parent item|||Запись родителя|||Vecāka ieraksts|||Element rodzica
+Parent task|||Родительская задача|||Vecākuzdevums|||Zadanie nadrzędne
+Partly cloudy|||Переменная облачность|||Daļēji mākoņains|||Częściowe zachmurzenie
+Power · Only selected and enabled sources may refresh.|||Power · Обновляются только выбранные и включённые источники.|||Power · Atsvaidzināt var tikai atlasītus un ieslēgtus avotus.|||Power · Odświeżane są tylko wybrane i włączone źródła.
+Preparing delivery|||Подготовка доставки|||Piegādes sagatavošana|||Przygotowanie dostarczenia
+Preview feed|||Предпросмотр ленты|||Plūsmas priekšskatījums|||Podgląd kanału
+Preview is unavailable in Local. You can save the address now and check it later in Power.|||Предпросмотр недоступен локально. Сохраните адрес сейчас и проверьте его позже в Power.|||Priekšskatījums lokāli nav pieejams. Saglabā adresi tagad un pārbaudi to vēlāk režīmā Power.|||Podgląd jest niedostępny lokalnie. Zapisz adres teraz i sprawdź go później w Power.
+Preview received. It is not saved as a source snapshot.|||Предпросмотр получен. Он не сохранён как снимок источника.|||Priekšskatījums saņemts. Tas nav saglabāts kā avota momentuzņēmums.|||Podgląd otrzymany. Nie zapisano go jako stanu źródła.
+Previous day|||Предыдущий день|||Iepriekšējā diena|||Poprzedni dzień
+Priority|||Приоритет|||Prioritāte|||Priorytet
+Public HTTPS feed address|||Публичный HTTPS-адрес ленты|||Publiska plūsmas HTTPS adrese|||Publiczny adres HTTPS kanału
+Public iCalendar|||Публичный iCalendar|||Publisks iCalendar|||Publiczny iCalendar
+Published %1$s|||Опубликовано %1$s|||Publicēts %1$s|||Opublikowano %1$s
+Publisher|||Издатель|||Izdevējs|||Wydawca
+RSS or Atom feed|||Лента RSS или Atom|||RSS vai Atom plūsma|||Kanał RSS lub Atom
+Rain|||Дождь|||Lietus|||Deszcz
+Rain showers|||Ливни|||Lietusgāzes|||Przelotne opady deszczu
+Read saved article|||Читать сохранённую статью|||Lasīt saglabāto rakstu|||Czytaj zapisany artykuł
+Refresh budget reached|||Лимит обновлений достигнут|||Sasniegts atsvaidzināšanas limits|||Osiągnięto limit odświeżania
+Refresh cancelled|||Обновление отменено|||Atsvaidzināšana atcelta|||Odświeżanie anulowane
+Refresh did not replace the last saved information. Check the source status below.|||Обновление не заменило сохранённые данные. Проверьте статус источника ниже.|||Atsvaidzināšana neaizstāja saglabātos datus. Pārbaudi avota statusu zemāk.|||Odświeżanie nie zastąpiło zapisanych danych. Sprawdź stan źródła poniżej.
+Refresh disabled|||Обновление отключено|||Atsvaidzināšana izslēgta|||Odświeżanie wyłączone
+Refresh disabled · the saved snapshot is kept.|||Обновление отключено · сохранённый снимок доступен.|||Atsvaidzināšana izslēgta · saglabātais momentuzņēmums ir pieejams.|||Odświeżanie wyłączone · zapisany stan zachowano.
+Refresh external sources in Power. Saved information stays available in Local.|||Обновляйте внешние источники в Power. Сохранённые данные доступны локально.|||Atsvaidzini ārējos avotus režīmā Power. Saglabātie dati paliek pieejami lokāli.|||Odświeżaj źródła zewnętrzne w Power. Zapisane dane pozostają dostępne lokalnie.
+Refresh failed · saved information is kept|||Обновление не удалось · сохранённые данные доступны|||Atsvaidzināšana neizdevās · saglabātie dati ir pieejami|||Odświeżanie nieudane · zapisane dane zachowano
+Refresh interval in minutes · 15–1440|||Интервал обновления в минутах · 15–1440|||Atsvaidzināšanas intervāls minūtēs · 15–1440|||Odstęp odświeżania w minutach · 15–1440
+Refresh needs Power and permitted connected services|||Для обновления нужны Power и разрешённые подключённые сервисы|||Atsvaidzināšanai vajadzīgs Power un atļauti savienotie pakalpojumi|||Odświeżanie wymaga Power i dozwolonych usług połączonych
+Refresh source|||Обновить источник|||Atsvaidzināt avotu|||Odśwież źródło
+Refreshing|||Обновление|||Atsvaidzina|||Odświeżanie
+Remind me about this article|||Напомнить об этой статье|||Atgādināt par šo rakstu|||Przypomnij mi o tym artykule
+Reminder date|||Дата напоминания|||Atgādinājuma datums|||Data przypomnienia
+Reminders|||Напоминания|||Atgādinājumi|||Przypomnienia
+Remove a clock before adding another.|||Удалите часы, прежде чем добавить новые.|||Pirms pievieno vēl vienu pulksteni, noņem kādu esošo.|||Usuń zegar przed dodaniem kolejnego.
+Remove source|||Удалить источник|||Noņemt avotu|||Usuń źródło
+Remove this source?|||Удалить этот источник?|||Noņemt šo avotu?|||Usunąć to źródło?
+Remove unavailable note link|||Удалить недоступную ссылку на заметку|||Noņemt nepieejamo piezīmes saiti|||Usuń niedostępne powiązanie z notatką
+Rename clock|||Переименовать часы|||Pārdēvēt pulksteni|||Zmień nazwę zegara
+Reopen task|||Открыть задачу снова|||Atvērt uzdevumu no jauna|||Otwórz zadanie ponownie
+Repeat interval · 1–366|||Интервал повторения · 1–366|||Atkārtošanas intervāls · 1–366|||Odstęp powtórzeń · 1–366
+Repeating series · %1$s|||Повторяющаяся серия · %1$s|||Atkārtota sērija · %1$s|||Seria cykliczna · %1$s
+Reset individual occurrence changes if the series schedule changes|||Сбросить изменения отдельных повторений при изменении расписания серии|||Atiestatīt atsevišķu atkārtojumu izmaiņas, ja mainās sērijas grafiks|||Zresetuj zmiany pojedynczych wystąpień, jeśli zmieni się harmonogram serii
+Restore original occurrence|||Восстановить исходное повторение|||Atjaunot sākotnējo atkārtojumu|||Przywróć pierwotne wystąpienie
+Retrieved %1$s|||Получено %1$s|||Iegūts %1$s|||Pobrano %1$s
+Review calendar import|||Проверить импорт календаря|||Pārskatīt kalendāra importu|||Przejrzyj import kalendarza
+Save calendar copy|||Сохранить копию календаря|||Saglabāt kalendāra kopiju|||Zapisz kopię kalendarza
+Save reminder|||Сохранить напоминание|||Saglabāt atgādinājumu|||Zapisz przypomnienie
+Save source|||Сохранить источник|||Saglabāt avotu|||Zapisz źródło
+Saved clocks could not be opened. Your data is kept; try again.|||Не удалось открыть сохранённые часы. Данные сохранены; повторите попытку.|||Neizdevās atvērt saglabātos pulksteņus. Dati ir saglabāti; mēģini vēlreiz.|||Nie udało się otworzyć zapisanych zegarów. Dane zachowano; spróbuj ponownie.
+Saved information with clear sources and timestamps.|||Сохранённые данные с понятными источниками и отметками времени.|||Saglabāti dati ar skaidriem avotiem un laika atzīmēm.|||Zapisane dane z czytelnymi źródłami i znacznikami czasu.
+Saved snapshot is current|||Сохранённый снимок актуален|||Saglabātais momentuzņēmums ir aktuāls|||Zapisany stan jest aktualny
+Saved. Android scheduling is still being prepared, or no future alert is due.|||Сохранено. Расписание Android ещё готовится или будущих оповещений нет.|||Saglabāts. Android grafiks vēl tiek gatavots, vai nav gaidāmu paziņojumu.|||Zapisano. Harmonogram Androida jest jeszcze przygotowywany albo nie ma przyszłych alertów.
+Scheduled approximately|||Запланировано приблизительно|||Ieplānots aptuveni|||Zaplanowano orientacyjnie
+Scheduled precisely|||Запланировано точно|||Ieplānots precīzi|||Zaplanowano dokładnie
+Science and space|||Наука и космос|||Zinātne un kosmoss|||Nauka i kosmos
+Search a city to see its time. No internet or location permission is needed.|||Найдите город, чтобы узнать время. Интернет и разрешение на местоположение не нужны.|||Atrodi pilsētu, lai redzētu tās laiku. Internets un atrašanās vietas atļauja nav vajadzīgi.|||Znajdź miasto, aby zobaczyć jego czas. Internet i uprawnienie lokalizacji nie są potrzebne.
+Search your plan|||Поиск в плане|||Meklēt plānā|||Szukaj w planie
+Select and enable the source, or wait for the current action to finish.|||Выберите и включите источник или дождитесь завершения текущего действия.|||Atlasi un ieslēdz avotu vai pagaidi, līdz pašreizējā darbība ir pabeigta.|||Wybierz i włącz źródło albo poczekaj na zakończenie bieżącej operacji.
+Select source|||Выбрать источник|||Atlasīt avotu|||Wybierz źródło
+Selected sources|||Выбранные источники|||Atlasītie avoti|||Wybrane źródła
+Skip this occurrence|||Пропустить это повторение|||Izlaist šo atkārtojumu|||Pomiń to wystąpienie
+Snooze %1$d minutes|||Отложить на %1$d мин.|||Atlikt uz %1$d minūtēm|||Odłóż o %1$d min
+Snoozed|||Отложено|||Atlikts|||Odłożono
+Snow|||Снег|||Sniegs|||Śnieg
+Snow showers|||Снежные заряды|||Sniega brāzmas|||Przelotne opady śniegu
+Some calendar entries need review and were omitted. The snapshot does not include unsupported recurrence rules.|||Часть записей календаря требует проверки и пропущена. Снимок не включает неподдерживаемые правила повторения.|||Dažiem kalendāra ierakstiem vajadzīga pārskatīšana, un tie ir izlaisti. Momentuzņēmumā nav neatbalstītu atkārtošanās noteikumu.|||Niektóre wpisy kalendarza wymagają przeglądu i zostały pominięte. Zapisany stan nie zawiera nieobsługiwanych reguł powtarzania.
+Source added. A successful refresh is required before its contents are available.|||Источник добавлен. Содержимое появится после успешного обновления.|||Avots pievienots. Saturs būs pieejams pēc veiksmīgas atsvaidzināšanas.|||Źródło dodane. Zawartość będzie dostępna po udanym odświeżeniu.
+Source and its local snapshot removed. Organizer items and notes are kept.|||Источник и его локальный снимок удалены. Записи органайзера и заметки сохранены.|||Avots un tā lokālais momentuzņēmums noņemti. Organizatora ieraksti un piezīmes saglabāti.|||Źródło i jego lokalny stan usunięto. Elementy organizera i notatki zachowano.
+Source confirmed unchanged|||Источник подтвердил отсутствие изменений|||Avots apstiprināja, ka izmaiņu nav|||Źródło potwierdziło brak zmian
+Source language · en, ru, lv or another code|||Язык источника · en, ru, lv или другой код|||Avota valoda · en, ru, lv vai cits kods|||Język źródła · en, ru, lv lub inny kod
+Source name|||Название источника|||Avota nosaukums|||Nazwa źródła
+Source removed|||Источник удалён|||Avots noņemts|||Źródło usunięte
+Source settings|||Настройки источника|||Avota iestatījumi|||Ustawienia źródła
+Source settings saved. Selection does not fetch in Local.|||Настройки источника сохранены. Выбор не запускает загрузку в локальном режиме.|||Avota iestatījumi saglabāti. Atlasīšana lokālajā režīmā neizraisa ielādi.|||Ustawienia źródła zapisano. Wybór nie uruchamia pobierania w trybie lokalnym.
+Source updated. Retrieval and verification times are shown below.|||Источник обновлён. Время получения и проверки показано ниже.|||Avots atsvaidzināts. Iegūšanas un pārbaudes laiki parādīti zemāk.|||Źródło odświeżone. Czasy pobrania i weryfikacji pokazano poniżej.
+Sources could not be opened. Your saved choices are kept; try again.|||Не удалось открыть источники. Выбор сохранён; повторите попытку.|||Neizdevās atvērt avotus. Izvēles saglabātas; mēģini vēlreiz.|||Nie udało się otworzyć źródeł. Wybory zachowano; spróbuj ponownie.
+Start date|||Дата начала|||Sākuma datums|||Data rozpoczęcia
+Stop timer|||Остановить таймер|||Apturēt taimeri|||Zatrzymaj minutnik
+Tasks|||Задачи|||Uzdevumi|||Zadania
+Tasks without a due date|||Задачи без срока|||Uzdevumi bez izpildes datuma|||Zadania bez terminu
+Technology|||Технологии|||Tehnoloģijas|||Technologia
+Temperature unavailable|||Температура недоступна|||Temperatūra nav pieejama|||Temperatura niedostępna
+The action finished, but the updated view could not be loaded. Retry to view the saved result.|||Действие завершено, но обновлённый вид не загрузился. Повторите загрузку, чтобы увидеть сохранённый результат.|||Darbība pabeigta, bet atjaunināto skatu neizdevās ielādēt. Mēģini vēlreiz, lai redzētu saglabāto rezultātu.|||Operacja zakończona, ale nie udało się wczytać zaktualizowanego widoku. Spróbuj ponownie, aby zobaczyć zapisany wynik.
+The clock changed or could not be saved. Reopen it and try again.|||Часы изменились или не сохранились. Откройте их снова и повторите попытку.|||Pulkstenis ir mainījies vai to nevarēja saglabāt. Atver to no jauna un mēģini vēlreiz.|||Zegar się zmienił lub nie udało się go zapisać. Otwórz go ponownie i spróbuj jeszcze raz.
+The plan shared with you.|||План, которым с вами поделились.|||Ar tevi kopīgotais plāns.|||Plan udostępniony Tobie.
+The publisher supplied a title only. Open the publisher to read more.|||Издатель предоставил только заголовок. Откройте его сайт, чтобы прочитать больше.|||Izdevējs ir sniedzis tikai virsrakstu. Atver izdevēja vietni, lai lasītu vairāk.|||Wydawca udostępnił tylko tytuł. Otwórz jego stronę, aby przeczytać więcej.
+The source action could not finish. Your last saved information is kept.|||Действие с источником не завершилось. Последние сохранённые данные доступны.|||Avota darbību neizdevās pabeigt. Pēdējie saglabātie dati ir pieejami.|||Nie udało się zakończyć operacji źródła. Ostatnie zapisane dane zachowano.
+The timer starts when you save it.|||Таймер запустится после сохранения.|||Taimeris sāksies pēc saglabāšanas.|||Minutnik uruchomi się po zapisaniu.
+This action could not finish. Your saved data is kept; reopen and try again.|||Действие не завершилось. Данные сохранены; откройте запись снова и повторите попытку.|||Darbību neizdevās pabeigt. Dati ir saglabāti; atver ierakstu no jauna un mēģini vēlreiz.|||Nie udało się zakończyć operacji. Dane zachowano; otwórz ponownie i spróbuj jeszcze raz.
+This article is no longer in the saved feed. Open the source for current saved items.|||Этой статьи больше нет в сохранённой ленте. Откройте источник, чтобы увидеть текущие сохранённые записи.|||Šī raksta vairs nav saglabātajā plūsmā. Atver avotu, lai redzētu pašreizējos saglabātos ierakstus.|||Tego artykułu nie ma już w zapisanym kanale. Otwórz źródło, aby zobaczyć aktualnie zapisane wpisy.
+This erases this item and its occurrence history. It cannot be undone. Linked notes are kept.|||Будут удалены запись и история её повторений. Это нельзя отменить. Связанные заметки сохранятся.|||Tiks izdzēsts ieraksts un tā atkārtojumu vēsture. To nevar atsaukt. Saistītās piezīmes saglabāsies.|||Element i historia jego wystąpień zostaną usunięte. Nie można tego cofnąć. Powiązane notatki pozostaną.
+This item changed, has remaining subtasks or needs a recurrence decision. Reopen it and review before trying again.|||Запись изменилась, содержит незавершённые подзадачи или требует решения о повторении. Откройте её снова и проверьте перед повтором.|||Ieraksts ir mainījies, tam ir nepabeigti apakšuzdevumi vai vajadzīgs lēmums par atkārtojumiem. Atver un pārskati to pirms nākamā mēģinājuma.|||Element się zmienił, ma nieukończone podzadania lub wymaga decyzji o powtarzaniu. Otwórz go ponownie i sprawdź przed kolejną próbą.
+This item is no longer available here. It may have been removed or its sharing changed.|||Запись здесь больше недоступна. Возможно, она удалена или изменён доступ.|||Šis ieraksts šeit vairs nav pieejams. Iespējams, tas noņemts vai mainīta kopīgošana.|||Ten element nie jest już tutaj dostępny. Mógł zostać usunięty lub zmieniono jego udostępnianie.
+This linked item changed or is no longer available. Update the brief to see current information.|||Связанная запись изменилась или недоступна. Обновите обзор, чтобы увидеть актуальные данные.|||Saistītais ieraksts ir mainījies vai vairs nav pieejams. Atjaunini pārskatu, lai redzētu pašreizējos datus.|||Powiązany element się zmienił lub jest niedostępny. Zaktualizuj podsumowanie, aby zobaczyć aktualne dane.
+This linked item is no longer available. Refresh the local source to update its list.|||Связанная запись больше недоступна. Обновите локальный источник, чтобы обновить список.|||Saistītais ieraksts vairs nav pieejams. Atsvaidzini lokālo avotu, lai atjauninātu sarakstu.|||Powiązany element nie jest już dostępny. Odśwież źródło lokalne, aby zaktualizować listę.
+This linked note is unavailable. It may have been moved to trash.|||Связанная заметка недоступна. Возможно, она в корзине.|||Saistītā piezīme nav pieejama. Iespējams, tā pārvietota uz atkritni.|||Powiązana notatka jest niedostępna. Mogła trafić do kosza.
+This occurrence|||Это повторение|||Šis atkārtojums|||To wystąpienie
+This permanently removes its settings and cached content from Halo. Organizer items, notes and other sources are kept. Deselect it instead if you want to keep its settings.|||Настройки и кеш этого источника будут удалены из Halo навсегда. Записи органайзера, заметки и другие источники сохранятся. Чтобы сохранить настройки, уберите источник из выбранных.|||Šī avota iestatījumi un kešatmiņa tiks neatgriezeniski noņemti no Halo. Organizatora ieraksti, piezīmes un citi avoti saglabāsies. Lai paturētu iestatījumus, noņem avotu no atlasītajiem.|||Ustawienia i pamięć podręczna tego źródła zostaną trwale usunięte z Halo. Elementy organizera, notatki i inne źródła pozostaną. Aby zachować ustawienia, odznacz źródło.
+This removes the entire series and cancels its scheduled alerts. You can restore it from Trash.|||Будет удалена вся серия и отменены её оповещения. Серию можно восстановить из корзины.|||Tiks noņemta visa sērija un atcelti tās paziņojumi. Sēriju var atjaunot no atkritnes.|||Cała seria zostanie usunięta, a jej alerty anulowane. Możesz przywrócić ją z kosza.
+This removes the item and cancels its scheduled alert. You can restore it from Trash.|||Запись будет удалена, а её оповещение отменено. Запись можно восстановить из корзины.|||Ieraksts tiks noņemts, un tā paziņojums atcelts. Ierakstu var atjaunot no atkritnes.|||Element zostanie usunięty, a jego alert anulowany. Możesz przywrócić go z kosza.
+This removes the saved snapshot and invalidates its old brief links. A selected source can fetch again in Power. Its settings are kept.|||Сохранённый снимок будет удалён, а старые ссылки из обзоров станут недействительными. Выбранный источник сможет загрузить данные снова в Power. Настройки сохранятся.|||Saglabātais momentuzņēmums tiks noņemts, un vecās pārskatu saites vairs nebūs derīgas. Atlasīts avots varēs atkal ielādēt datus režīmā Power. Iestatījumi saglabāsies.|||Zapisany stan zostanie usunięty, a stare powiązania podsumowań unieważnione. Wybrane źródło może pobrać dane ponownie w Power. Ustawienia pozostaną.
+This saved copy has its own version. Later organizer edits will not change the exported bytes.|||У этой копии своя версия. Последующие изменения органайзера не изменят экспортируемые данные.|||Šai kopijai ir sava versija. Vēlākas organizatora izmaiņas nemainīs eksportētos datus.|||Ta kopia ma własną wersję. Późniejsze zmiany organizera nie zmienią eksportowanych danych.
+This source changed. Reopen its settings before saving again.|||Источник изменился. Откройте настройки снова перед сохранением.|||Avots ir mainījies. Pirms saglabāšanas atver tā iestatījumus no jauna.|||Źródło się zmieniło. Otwórz jego ustawienia ponownie przed zapisem.
+This source is unavailable or is no longer shared with this experience.|||Источник недоступен или больше не разрешён в этом режиме.|||Avots nav pieejams vai vairs nav kopīgots ar šo vidi.|||Źródło jest niedostępne lub nie jest już udostępniane w tym trybie.
+This source returned no articles.|||Источник не вернул статей.|||Avots neatgrieza rakstus.|||Źródło nie zwróciło artykułów.
+This website could not be opened. The saved information is kept.|||Сайт не открылся. Сохранённые данные доступны.|||Vietni nevarēja atvērt. Saglabātie dati ir pieejami.|||Nie udało się otworzyć strony. Zapisane dane zachowano.
+Thunderstorm|||Гроза|||Pērkona negaiss|||Burza
+Thunderstorm with hail|||Гроза с градом|||Pērkona negaiss ar krusu|||Burza z gradem
+Time · HH:mm|||Время · ЧЧ:мм|||Laiks · HH:mm|||Godzina · GG:mm
+Timer due · waiting for Android delivery|||Время таймера истекло · ожидание доставки Android|||Taimera laiks beidzies · gaida Android piegādi|||Minutnik zakończony · oczekiwanie na dostarczenie przez Androida
+Timers|||Таймеры|||Taimeri|||Minutniki
+Trash|||Корзина|||Atkritne|||Kosz
+Trash is empty.|||Корзина пуста.|||Atkritne ir tukša.|||Kosz jest pusty.
+Undo removal|||Отменить удаление|||Atsaukt noņemšanu|||Cofnij usunięcie
+Unsupported local item|||Неподдерживаемая локальная запись|||Neatbalstīts lokāls ieraksts|||Nieobsługiwany element lokalny
+Unsupported timer action|||Неподдерживаемое действие таймера|||Neatbalstīta taimera darbība|||Nieobsługiwana operacja minutnika
+Up to 24 saved clocks. City data: GeoNames, CC BY 4.0.|||До 24 сохранённых часов. Данные городов: GeoNames, CC BY 4.0.|||Līdz 24 saglabātiem pulksteņiem. Pilsētu dati: GeoNames, CC BY 4.0.|||Do 24 zapisanych zegarów. Dane miast: GeoNames, CC BY 4.0.
+Urgent|||Срочный|||Steidzama|||Pilny
+Use a valid date and 24-hour HH:mm time.|||Укажите корректную дату и время в формате ЧЧ:мм.|||Ievadi derīgu datumu un laiku 24 stundu formātā HH:mm.|||Podaj poprawną datę i godzinę w formacie 24-godzinnym GG:mm.
+Use phone time zone|||Использовать часовой пояс телефона|||Lietot tālruņa laika joslu|||Użyj strefy czasowej telefonu
+Waiting before the next refresh|||Ожидание следующего обновления|||Gaida nākamo atsvaidzināšanu|||Oczekiwanie na następne odświeżanie
+Weather condition unavailable|||Погодные условия недоступны|||Laikapstākļu apraksts nav pieejams|||Warunki pogodowe niedostępne
+Weekly|||Еженедельно|||Katru nedēļu|||Co tydzień
+World|||Мир|||Pasaule|||Świat
+World clocks|||Мировое время|||Pasaules pulksteņi|||Zegary świata
+Yearly|||Ежегодно|||Katru gadu|||Co rok
+Your calendar, tasks and time, saved on this phone.|||Ваш календарь, задачи и время, сохранённые на телефоне.|||Tavs kalendārs, uzdevumi un laiks, saglabāti tālrunī.|||Twój kalendarz, zadania i czas zapisane na telefonie.
+Your organizer could not be opened. Your saved data is kept; try again.|||Не удалось открыть органайзер. Данные сохранены; повторите попытку.|||Neizdevās atvērt organizatoru. Dati ir saglabāti; mēģini vēlreiz.|||Nie udało się otworzyć organizera. Dane zachowano; spróbuj ponownie.
+Your saved item is kept. The changes in this form will be discarded.|||Сохранённая запись останется. Изменения в этой форме будут отброшены.|||Saglabātais ieraksts paliks. Šīs formas izmaiņas tiks atmestas.|||Zapisany element pozostanie. Zmiany w tym formularzu zostaną odrzucone.
+%1$d events added; %2$d existing event IDs kept.|||Добавлено событий: %1$d; сохранено существующих идентификаторов: %2$d.|||Pievienoti %1$d notikumi; saglabāti %2$d esošie notikumu ID.|||Dodano %1$d wydarzeń; zachowano %2$d istniejących identyfikatorów wydarzeń.
+%1$d items are no longer in the current selected information.|||В текущей выбранной информации больше нет элементов: %1$d.|||Pašreizējā atlasītajā informācijā vairs nav %1$d vienumu.|||W aktualnie wybranych informacjach nie ma już %1$d elementów.
+%1$d supported events are ready to import.|||Поддерживаемых событий, готовых к импорту: %1$d.|||Importēšanai gatavi %1$d atbalstīti notikumi.|||Liczba obsługiwanych wydarzeń gotowych do importu: %1$d.
+%1$d%% chance of precipitation|||Вероятность осадков: %1$d%%|||Nokrišņu varbūtība: %1$d%%|||Prawdopodobieństwo opadów: %1$d%%
+All day · end date is exclusive|||Весь день · дата окончания не включается|||Visa diena · beigu datums nav iekļauts|||Cały dzień · data końcowa nie jest wliczana
+Android schedule cancellation is still pending. The item stays in Trash. Check scheduling again, then retry permanent removal.|||Android ещё отменяет расписание. Элемент остаётся в корзине. Проверьте расписание ещё раз, затем повторите окончательное удаление.|||Android vēl atceļ ieplānoto darbību. Vienums paliek atkritnē. Vēlreiz pārbaudiet plānošanu, tad atkārtojiet neatgriezenisko dzēšanu.|||Android nadal anuluje harmonogram. Element pozostaje w Koszu. Sprawdź harmonogram ponownie, a następnie spróbuj trwale usunąć element.
+Calendar export|||Экспорт календаря|||Kalendāra eksports|||Eksport kalendarza
+Cancelled event|||Отменённое событие|||Atcelts notikums|||Odwołane wydarzenie
+Cancelled occurrence|||Отменённый повтор|||Atcelta reize|||Odwołane wystąpienie
+Changed occurrence|||Изменённый повтор|||Mainīta reize|||Zmienione wystąpienie
+Clear selection|||Сбросить выбор|||Notīrīt atlasi|||Wyczyść wybór
+Find an organizer item|||Найти элемент органайзера|||Atrast plānotāja vienumu|||Znajdź element organizera
+Follows the phone time zone|||Следует часовому поясу телефона|||Seko tālruņa laika joslai|||Dostosowuje się do strefy czasowej telefonu
+No changes found in the sources that could be compared. Some sources are unavailable.|||В доступных для сравнения источниках изменений нет. Некоторые источники недоступны.|||Salīdzināmajos avotos izmaiņas nav atrastas. Daži avoti nav pieejami.|||Nie znaleziono zmian w źródłach, które można było porównać. Niektóre źródła są niedostępne.
+Nothing changed since the saved morning comparison.|||С момента сохранённого утреннего сравнения ничего не изменилось.|||Kopš saglabātā rīta salīdzinājuma nekas nav mainījies.|||Nic się nie zmieniło od zapisanego porannego porównania.
+Occurrences · %1$d|||Число повторов: %1$d|||Reizes: %1$d|||Wystąpienia: %1$d
+Original occurrence %1$s|||Исходный повтор: %1$s|||Sākotnējā reize: %1$s|||Pierwotne wystąpienie: %1$s
+Repeating series · %1$s · interval %2$d|||Повторяющаяся серия · %1$s · интервал %2$d|||Atkārtojumu sērija · %1$s · intervāls %2$d|||Seria cykliczna · %1$s · odstęp %2$d
+Repeats until %1$s|||Повторяется до %1$s|||Atkārtojas līdz %1$s|||Powtarza się do %1$s
+Selected occurrence|||Выбранный повтор|||Atlasītā reize|||Wybrane wystąpienie
+Showing the first 100 matching items. Refine your search to find more.|||Показаны первые 100 подходящих элементов. Уточните поиск, чтобы найти остальные.|||Parādīti pirmie 100 atbilstošie vienumi. Precizējiet meklēšanu, lai atrastu citus.|||Wyświetlono pierwsze 100 pasujących elementów. Zawęź wyszukiwanie, aby znaleźć pozostałe.
+Some selected events changed or were removed. Clear the selection and review the current list.|||Некоторые выбранные события изменены или удалены. Сбросьте выбор и проверьте текущий список.|||Daži atlasītie notikumi ir mainīti vai dzēsti. Notīriet atlasi un pārskatiet pašreizējo sarakstu.|||Niektóre wybrane wydarzenia zostały zmienione lub usunięte. Wyczyść wybór i przejrzyj aktualną listę.
+Stop sharing all organizer items|||Закрыть детям доступ ко всем элементам органайзера|||Pārtraukt visu plānotāja vienumu kopīgošanu|||Przestań udostępniać wszystkie elementy organizera
+The date above is the series start. Saved occurrence changes are listed below.|||Дата выше — начало серии. Сохранённые изменения отдельных повторов указаны ниже.|||Iepriekš norādītais datums ir sērijas sākums. Saglabātās atsevišķu reižu izmaiņas ir norādītas tālāk.|||Powyższa data oznacza początek serii. Zapisane zmiany poszczególnych wystąpień znajdują się poniżej.
+The selection contains multiple versions of the same calendar event. Select one version of each event or export the calendars separately.|||В выборке есть несколько версий одного события. Выберите одну версию каждого события или экспортируйте календари отдельно.|||Atlasē ir vairākas viena kalendāra notikuma versijas. Atlasiet vienu katra notikuma versiju vai eksportējiet kalendārus atsevišķi.|||Wybór zawiera kilka wersji tego samego wydarzenia. Wybierz jedną wersję każdego wydarzenia lub wyeksportuj kalendarze osobno.
+The source has not been added. The details in this form will be discarded.|||Источник ещё не добавлен. Данные в этой форме будут удалены.|||Avots nav pievienots. Šajā veidlapā ievadītā informācija tiks atmesta.|||Źródło nie zostało dodane. Dane w tym formularzu zostaną odrzucone.
+This article or its source changed. Cancel this form and reopen the saved article to review it before creating a reminder.|||Статья или её источник изменились. Закройте форму и снова откройте сохранённую статью, чтобы проверить её перед созданием напоминания.|||Šis raksts vai tā avots ir mainījies. Atceliet šo veidlapu un vēlreiz atveriet saglabāto rakstu, lai to pārskatītu pirms atgādinājuma izveides.|||Ten artykuł lub jego źródło uległy zmianie. Anuluj formularz i ponownie otwórz zapisany artykuł, aby go przejrzeć przed utworzeniem przypomnienia.
+This saved occurrence changed or is no longer available. Open the source to review its current calendar.|||Этот сохранённый повтор изменён или больше недоступен. Откройте источник, чтобы проверить текущий календарь.|||Šī saglabātā reize ir mainījusies vai vairs nav pieejama. Atveriet avotu, lai pārskatītu tā pašreizējo kalendāru.|||To zapisane wystąpienie zmieniło się lub nie jest już dostępne. Otwórz źródło, aby przejrzeć jego aktualny kalendarz.
+Time zone · for example Europe/Riga|||Часовой пояс · например Europe/Riga|||Laika josla · piemēram, Europe/Riga|||Strefa czasowa · na przykład Europe/Riga
+Unavailable saved item · %1$s|||Недоступный сохранённый элемент · %1$s|||Nepieejams saglabātais vienums · %1$s|||Niedostępny zapisany element · %1$s
+Add task|||Добавить задачу|||Pievienot uzdevumu|||Dodaj zadanie
+Add to your plan|||Добавить в план|||Pievienot plānam|||Dodaj do planu
+Alarm controls|||Управление будильником|||Modinātāja vadība|||Sterowanie budzikiem
+Alarms and timers|||Будильники и таймеры|||Modinātāji un taimeri|||Budziki i minutniki
+Alert delivered|||Оповещение доставлено|||Paziņojums piegādāts|||Powiadomienie dostarczone
+All matching items|||Все подходящие элементы|||Visi atbilstošie vienumi|||Wszystkie pasujące elementy
+All priorities|||Все приоритеты|||Visas prioritātes|||Wszystkie priorytety
+All selected feeds|||Все выбранные ленты|||Visas atlasītās plūsmas|||Wszystkie wybrane kanały
+Android controls refresh timing. Clock display is managed by the launcher; other information is a saved snapshot. Resize the widget for more details.|||Время обновления определяет Android. Часы отображает лаунчер; остальная информация — сохранённый снимок. Увеличьте виджет, чтобы видеть больше.|||Atjaunošanas laiku nosaka Android. Pulksteni attēlo palaidējs; pārējā informācija ir saglabāts momentuzņēmums. Palielini logrīku, lai redzētu vairāk.|||Android decyduje o terminie odświeżenia. Zegar wyświetla program uruchamiający; pozostałe informacje pochodzą z zapisanego stanu. Powiększ widżet, aby zobaczyć więcej.
+Apply to this card|||Применить к этой карточке|||Lietot šai kartītei|||Zastosuj do tej karty
+Apply to this widget|||Применить к этому виджету|||Lietot šim logrīkam|||Zastosuj do tego widżetu
+Approximate scheduling|||Приблизительное время запуска|||Aptuvens izpildes laiks|||Przybliżony czas uruchomienia
+Ask a grown-up to configure this widget.|||Попроси взрослого настроить этот виджет.|||Palūdz pieaugušajam iestatīt šo logrīku.|||Poproś dorosłego o skonfigurowanie tego widżetu.
+Battery unavailable|||Данные батареи недоступны|||Akumulatora dati nav pieejami|||Dane baterii są niedostępne
+Build your day from saved information|||Соберите обзор дня из сохранённой информации|||Izveido dienas pārskatu no saglabātās informācijas|||Ułóż swój dzień na podstawie zapisanych informacji
+Choose a saved weather source|||Выберите сохранённый источник погоды|||Izvēlies saglabātu laikapstākļu avotu|||Wybierz zapisane źródło pogody
+Choose clock city|||Выбрать город для часов|||Izvēlēties pulksteņa pilsētu|||Wybierz miasto zegara
+Clock and weather|||Часы и погода|||Pulkstenis un laikapstākļi|||Zegar i pogoda
+Configure this card|||Настроить эту карточку|||Iestatīt šo kartīti|||Skonfiguruj tę kartę
+Configure widget|||Настроить виджет|||Iestatīt logrīku|||Skonfiguruj widżet
+Dashboard sections|||Разделы панели|||Paneļa sadaļas|||Sekcje panelu
+Everyday dashboard|||Повседневная панель|||Ikdienas panelis|||Panel na co dzień
+Exact alarm scheduled|||Точный будильник запланирован|||Precīzs modinātājs ieplānots|||Zaplanowano dokładny alarm
+First selected weather city|||Первый выбранный город погоды|||Pirmā atlasītā laikapstākļu pilsēta|||Pierwsze wybrane miasto pogody
+Follow Halo|||Как в Halo|||Sekot Halo iestatījumiem|||Zgodnie z Halo
+Halo widget|||Виджет Halo|||Halo logrīks|||Widżet Halo
+Headline source|||Источник заголовков|||Virsrakstu avots|||Źródło nagłówków
+Item filter|||Фильтр элементов|||Vienumu filtrs|||Filtr elementów
+Last refresh failed|||Последнее обновление не удалось|||Pēdējā atjaunošana neizdevās|||Ostatnie odświeżenie nie powiodło się
+Manage sources and weather cities|||Источники и города погоды|||Pārvaldīt avotus un laikapstākļu pilsētas|||Zarządzaj źródłami i miastami pogody
+Next seven days|||Следующие семь дней|||Nākamās septiņas dienas|||Najbliższe siedem dni
+No active alarms or timers|||Нет активных будильников или таймеров|||Nav aktīvu modinātāju vai taimeru|||Brak aktywnych budzików i minutników
+No matching active items|||Нет подходящих активных элементов|||Nav atbilstošu aktīvu vienumu|||Brak pasujących aktywnych elementów
+No saved brief yet|||Сохранённого обзора пока нет|||Vēl nav saglabāta pārskata|||Nie ma jeszcze zapisanego podsumowania
+No saved headlines from selected sources|||Нет сохранённых заголовков из выбранных источников|||Nav saglabātu virsrakstu no atlasītajiem avotiem|||Brak zapisanych nagłówków z wybranych źródeł
+No upcoming events in the next seven days|||В следующие семь дней событий нет|||Nākamajās septiņās dienās nav notikumu|||Brak nadchodzących wydarzeń w najbliższych siedmiu dniach
+Notifications blocked|||Уведомления заблокированы|||Paziņojumi bloķēti|||Powiadomienia są zablokowane
+Oldest saved|||Самый ранний сохранённый снимок|||Agrākais saglabātais|||Najstarszy zapis
+Oldest selected snapshot|||Самый ранний выбранный снимок|||Agrākais atlasītais momentuzņēmums|||Najstarszy wybrany zapis stanu
+On battery|||От батареи|||Darbojas no akumulatora|||Zasilanie z baterii
+Open Halo to load this widget|||Откройте Halo, чтобы загрузить виджет|||Atver Halo, lai ielādētu šo logrīku|||Otwórz Halo, aby wczytać ten widżet
+Personal titles and details stay inside Halo. The widget shows safe summaries and opens the original item.|||Личные названия и подробности остаются в Halo. Виджет показывает безопасные сводки и открывает исходный элемент.|||Privātie nosaukumi un detaļas paliek Halo. Logrīks rāda drošus kopsavilkumus un atver sākotnējo vienumu.|||Prywatne tytuły i szczegóły pozostają w Halo. Widżet pokazuje bezpieczne podsumowania i otwiera oryginalny element.
+Phone time zone|||Часовой пояс телефона|||Tālruņa laika josla|||Strefa czasowa telefonu
+Priority filter|||Фильтр приоритета|||Prioritātes filtrs|||Filtr priorytetu
+Private item|||Личный элемент|||Privāts vienums|||Prywatny element
+Refine the search to find more items.|||Уточните поиск, чтобы найти больше элементов.|||Precizē meklēšanu, lai atrastu vairāk vienumu.|||Zawęź wyszukiwanie, aby znaleźć więcej elementów.
+Saved at|||Сохранено|||Saglabāts|||Zapisano
+Saved information is unavailable|||Сохранённая информация недоступна|||Saglabātā informācija nav pieejama|||Zapisane informacje są niedostępne
+Saved snapshots are current|||Сохранённые снимки актуальны|||Saglabātie momentuzņēmumi ir aktuāli|||Zapisane stany są aktualne
+Scheduling failed|||Планирование не удалось|||Plānošana neizdevās|||Nie udało się zaplanować
+Scheduling pending|||Ожидает планирования|||Gaida plānošanu|||Oczekuje na zaplanowanie
+Selected headlines|||Выбранные заголовки|||Atlasītie virsraksti|||Wybrane nagłówki
+Set alarm|||Поставить будильник|||Iestatīt modinātāju|||Ustaw budzik
+Some saved headlines may be out of date|||Часть сохранённых заголовков может быть устаревшей|||Daži saglabātie virsraksti var būt novecojuši|||Niektóre zapisane nagłówki mogą być nieaktualne
+Source selection does not fetch in Local. Selected external sources refresh only in Power.|||Выбор источника не загружает данные в режиме Local. Внешние источники обновляются только в Power.|||Avota atlase neveic lejupielādi Local režīmā. Atlasītie ārējie avoti atjaunojas tikai Power režīmā.|||Wybranie źródła nie pobiera danych w trybie Local. Wybrane źródła zewnętrzne odświeżają się tylko w trybie Power.
+Start timer|||Запустить таймер|||Sākt taimeri|||Uruchom minutnik
+Tasks and reminders|||Задачи и напоминания|||Uzdevumi un atgādinājumi|||Zadania i przypomnienia
+The configured item is unavailable. Choose another item or all matching items.|||Настроенный элемент недоступен. Выберите другой элемент или все подходящие элементы.|||Iestatītais vienums nav pieejams. Izvēlies citu vienumu vai visus atbilstošos vienumus.|||Skonfigurowany element jest niedostępny. Wybierz inny element lub wszystkie pasujące elementy.
+The selected source is unavailable. Choose another source.|||Выбранный источник недоступен. Выберите другой.|||Atlasītais avots nav pieejams. Izvēlies citu avotu.|||Wybrane źródło jest niedostępne. Wybierz inne źródło.
+These card settings apply when you save the Screen layout.|||Эти настройки карточки применятся после сохранения макета Screen.|||Šie kartītes iestatījumi stāsies spēkā, saglabājot Screen izkārtojumu.|||Te ustawienia karty zostaną zastosowane po zapisaniu układu Screen.
+This widget changed or its item is unavailable. Open Halo and review the widget.|||Виджет изменился или его элемент недоступен. Откройте Halo и проверьте виджет.|||Šis logrīks ir mainījies vai tā vienums nav pieejams. Atver Halo un pārskati logrīku.|||Ten widżet zmienił się lub jego element jest niedostępny. Otwórz Halo i sprawdź widżet.
+This widget or its source changed. Cancel and reopen configuration to review current settings.|||Виджет или источник изменился. Отмените и снова откройте настройку, чтобы проверить текущие параметры.|||Logrīks vai tā avots ir mainījies. Atcel un vēlreiz atver iestatīšanu, lai pārskatītu pašreizējos iestatījumus.|||Ten widżet lub jego źródło uległy zmianie. Anuluj i ponownie otwórz konfigurację, aby sprawdzić aktualne ustawienia.
+Timer controls|||Управление таймером|||Taimera vadība|||Sterowanie minutnikiem
+Timer paused|||Таймер приостановлен|||Taimeris apturēts|||Minutnik jest wstrzymany
+Upcoming event|||Ближайшее событие|||Nākamais notikums|||Nadchodzące wydarzenie
+Visible items|||Видимые элементы|||Redzamie vienumi|||Widoczne elementy
+Weather source|||Источник погоды|||Laikapstākļu avots|||Źródło pogody
+Widget settings could not be opened. Your saved settings are kept.|||Не удалось открыть настройки виджета. Сохранённые настройки не изменены.|||Logrīka iestatījumus neizdevās atvērt. Saglabātie iestatījumi ir paturēti.|||Nie udało się otworzyć ustawień widżetu. Zapisane ustawienia zostały zachowane.
+Widget theme|||Тема виджета|||Logrīka motīvs|||Motyw widżetu
+Overdue in the last 30 days|||Просрочено за последние 30 дней|||Nokavēts pēdējās 30 dienās|||Zaległe z ostatnich 30 dni
+Series details|||Данные серии|||Sērijas informācija|||Szczegóły serii
+This occurrence changed or was cancelled. The series details are shown below.|||Этот повтор изменился или отменён. Ниже приведены данные серии.|||Šī reize ir mainīta vai atcelta. Tālāk redzama sērijas informācija.|||To wystąpienie zmieniło się lub zostało odwołane. Szczegóły serii znajdują się poniżej.
+Reload saved data|||Заново открыть сохранённые данные|||Vēlreiz ielādēt saglabātos datus|||Wczytaj zapisane dane ponownie
+Saved information could not be opened. Open Halo and try again.|||Не удалось открыть сохранённую информацию. Откройте Halo и повторите попытку.|||Saglabāto informāciju neizdevās atvērt. Atver Halo un mēģini vēlreiz.|||Nie udało się otworzyć zapisanych informacji. Otwórz Halo i spróbuj ponownie.
+Reconfigure this card to use its current settings.|||Настройте карточку заново, чтобы использовать текущие параметры.|||Iestati šo kartīti vēlreiz, lai izmantotu pašreizējos iestatījumus.|||Skonfiguruj tę kartę ponownie, aby użyć jej aktualnych ustawień.
+Added|||Добавлено|||Pievienots|||Dodano
+Cached|||Сохранено|||Saglabāts|||Zapisane
+Charging|||Заряжается|||Uzlāde|||Ładowanie
+Daily brief|||Обзор дня|||Dienas pārskats|||Przegląd dnia
+Dismissed|||Закрыто|||Aizvērts|||Odrzucono
+Headlines|||Заголовки|||Virsraksti|||Nagłówki
+Last attempt|||Последняя попытка|||Pēdējais mēģinājums|||Ostatnia próba
+Missed|||Пропущено|||Nokavēts|||Pominięte
+Next refresh eligible|||Следующее обновление доступно|||Nākamā atjaunināšana pieejama|||Kolejne odświeżenie dostępne
+No saved weather yet|||Погода ещё не сохранена|||Laikapstākļi vēl nav saglabāti|||Brak zapisanej pogody
+Refresh in progress|||Обновление выполняется|||Notiek atjaunināšana|||Trwa odświeżanie
+Sections appear in this order|||Разделы показаны в этом порядке|||Sadaļas tiek rādītas šādā secībā|||Sekcje są wyświetlane w tej kolejności
+The plan is too large for a card. Open Organizer.|||План слишком велик для карточки. Откройте органайзер.|||Plāns ir pārāk liels kartītei. Atveriet plānotāju.|||Plan jest za duży dla karty. Otwórz planer.
+Applying Screen cards replaces its current layout. You can undo the layout change in Screen. Android launcher placement remains your choice.|||Применение карточек Screen заменит текущую раскладку. Изменение можно отменить в Screen. Размещение виджетов на рабочем столе Android вы выбираете отдельно.|||Screen kartīšu piemērošana aizstāj pašreizējo izkārtojumu. Izmaiņu var atsaukt sadaļā Screen. Android sākuma ekrāna logrīku izvietojumu izvēlaties atsevišķi.|||Zastosowanie kart Screen zastąpi obecny układ. Zmianę można cofnąć w Screen. O rozmieszczeniu widżetów na pulpicie Androida decydujesz osobno.
+Ask a grown-up to choose sources and cards. You can continue setup without changing them.|||Попроси взрослого выбрать источники и карточки. Можно продолжить настройку без изменений.|||Palūdz pieaugušajam izvēlēties avotus un kartītes. Iestatīšanu vari turpināt bez izmaiņām.|||Poproś dorosłego o wybranie źródeł i kart. Możesz kontynuować konfigurację bez zmian.
+Choose a valid date between 1970 and 2199.|||Выберите допустимую дату с 1970 по 2199 год.|||Izvēlieties derīgu datumu no 1970. līdz 2199. gadam.|||Wybierz poprawną datę od 1970 do 2199 roku.
+Choose city offline|||Выбрать город офлайн|||Izvēlēties pilsētu bezsaistē|||Wybierz miasto offline
+Choose initial Screen cards|||Начальные карточки Screen|||Sākotnējās Screen kartītes|||Początkowe karty Screen
+Everyday choices saved. You can change sources and cards later.|||Настройки дня сохранены. Источники и карточки можно изменить позже.|||Ikdienas izvēles saglabātas. Avotus un kartītes vēlāk var mainīt.|||Ustawienia dnia zapisane. Źródła i karty możesz zmienić później.
+Everyday setup could not be opened. Your saved choices are kept.|||Не удалось открыть настройки дня. Сохранённые настройки не потеряны.|||Ikdienas iestatījumus neizdevās atvērt. Saglabātās izvēles ir saglabātas.|||Nie można otworzyć ustawień dnia. Zapisane wybory zostały zachowane.
+Fetch preview in Power|||Загрузить предпросмотр в Power|||Ielādēt priekšskatījumu Power režīmā|||Pobierz podgląd w Power
+Find a related item|||Найти связанный элемент|||Atrast saistītu vienumu|||Znajdź powiązany element
+Manage in its instrument|||Управлять в своём инструменте|||Pārvaldīt tā rīkā|||Zarządzaj w jego narzędziu
+No saved preview|||Нет сохранённого предпросмотра|||Nav saglabāta priekšskatījuma|||Brak zapisanego podglądu
+No weather city selected|||Город для погоды не выбран|||Laikapstākļu pilsēta nav izvēlēta|||Nie wybrano miasta dla pogody
+Open related item|||Открыть связанный элемент|||Atvērt saistīto vienumu|||Otwórz powiązany element
+Preview shows saved source settings. Fetching a preview is optional and requires Power.|||Предпросмотр показывает сохранённые настройки источника. Загрузка предпросмотра необязательна и требует Power.|||Priekšskatījumā redzami avota saglabātie iestatījumi. Priekšskatījuma ielāde ir izvēles darbība Power režīmā.|||Podgląd pokazuje zapisane ustawienia źródła. Pobranie podglądu jest opcjonalne i wymaga Power.
+Preview source|||Предпросмотр источника|||Avota priekšskatījums|||Podgląd źródła
+Refresh interval|||Интервал обновления|||Atjaunināšanas intervāls|||Odstęp odświeżania
+Related items stay in their original instrument. Removing a link does not delete them.|||Связанные элементы остаются в своих инструментах. Удаление ссылки не удаляет их.|||Saistītie vienumi paliek savos rīkos. Saites noņemšana tos neizdzēš.|||Powiązane elementy pozostają w swoich narzędziach. Usunięcie odnośnika ich nie usuwa.
+Related notes, plans and activity|||Связанные заметки, планы и действия|||Saistītās piezīmes, plāni un darbības|||Powiązane notatki, plany i aktywność
+Reload saved choices|||Загрузить сохранённые настройки|||Ielādēt saglabātās izvēles|||Wczytaj zapisane wybory
+Remove link|||Удалить ссылку|||Noņemt saiti|||Usuń odnośnik
+Remove weather city|||Убрать город погоды|||Noņemt laikapstākļu pilsētu|||Usuń miasto pogody
+Save everyday choices|||Сохранить настройки дня|||Saglabāt ikdienas izvēles|||Zapisz ustawienia dnia
+Source category|||Категория источника|||Avota kategorija|||Kategoria źródła
+Source choices were saved. The Screen layout changed or could not be saved. Review saved choices before trying again.|||Источники сохранены. Раскладка Screen изменилась или не сохранилась. Проверьте сохранённые настройки перед повтором.|||Avotu izvēles saglabātas. Screen izkārtojums ir mainījies vai nav saglabāts. Pirms atkārtota mēģinājuma pārskatiet saglabātās izvēles.|||Wybory źródeł zapisano. Układ Screen zmienił się lub nie został zapisany. Przed ponowieniem sprawdź zapisane wybory.
+Source language|||Язык источника|||Avota valoda|||Język źródła
+These choices changed or could not be saved. Reload saved choices, review them and try again.|||Настройки изменились или не сохранились. Загрузите сохранённые настройки, проверьте их и повторите.|||Šīs izvēles mainījās vai netika saglabātas. Ielādējiet saglabātās izvēles, pārskatiet tās un mēģiniet vēlreiz.|||Te wybory zmieniły się lub nie zostały zapisane. Wczytaj zapisane wybory, sprawdź je i spróbuj ponownie.
+This action could not finish. Saved choices are kept; review the current mode and try again.|||Не удалось завершить действие. Настройки сохранены; проверьте текущий режим и повторите.|||Darbību neizdevās pabeigt. Izvēles ir saglabātas; pārbaudiet pašreizējo režīmu un mēģiniet vēlreiz.|||Nie można ukończyć działania. Wybory zachowano; sprawdź obecny tryb i spróbuj ponownie.
+This related item is unavailable. Reopen its instrument to review current information.|||Связанный элемент недоступен. Откройте его инструмент, чтобы проверить актуальные данные.|||Saistītais vienums nav pieejams. Atveriet tā rīku, lai pārskatītu pašreizējo informāciju.|||Powiązany element jest niedostępny. Otwórz jego narzędzie, aby sprawdzić aktualne informacje.
+Use these cards on Screen|||Использовать эти карточки в Screen|||Lietot šīs kartītes Screen|||Użyj tych kart w Screen
+View item activity|||Действия с элементом|||Skatīt vienuma darbības|||Zobacz aktywność elementu
+Weather city|||Город погоды|||Laikapstākļu pilsēta|||Miasto pogody
+World clock|||Мировое время|||Pasaules pulkstenis|||Zegar światowy
+Your clock, organizer and daily brief work in Local. External sources are optional; only selected sources refresh in Power.|||Часы, органайзер и обзор дня работают в Local. Внешние источники необязательны; в Power обновляются только выбранные.|||Pulkstenis, plānotājs un dienas pārskats darbojas Local režīmā. Ārējie avoti nav obligāti; Power režīmā atjauninās tikai izvēlētie avoti.|||Zegar, planer i przegląd dnia działają w Local. Źródła zewnętrzne są opcjonalne; w Power odświeżają się tylko wybrane.
+Your day|||Ваш день|||Jūsu diena|||Twój dzień
+A real source preview was retrieved. Saving your choices is a separate step.|||Предпросмотр загружен из источника. Сохранение настроек выполняется отдельно.|||Priekšskatījums ielādēts no avota. Izvēļu saglabāšana ir atsevišķa darbība.|||Pobrano podgląd ze źródła. Zapisanie wyborów jest osobnym krokiem.
+Your day, your choices|||Ваш день, ваш выбор|||Jūsu diena, jūsu izvēles|||Twój dzień, Twoje wybory
+Everyday sources and cards|||Источники и карточки дня|||Ikdienas avoti un kartītes|||Źródła i karty dnia
+Choose sources, city and initial Screen cards.|||Выберите источники, город и начальные карточки Screen.|||Izvēlieties avotus, pilsētu un sākotnējās Screen kartītes.|||Wybierz źródła, miasto i początkowe karty Screen.
+Daily briefs|||Обзоры дня|||Dienas pārskati|||Przeglądy dnia
+Saved sources|||Сохранённые источники|||Saglabātie avoti|||Zapisane źródła
+Events, tasks, reminders, alarms and timers|||События, задачи, напоминания, будильники и таймеры|||Notikumi, uzdevumi, atgādinājumi, modinātāji un taimeri|||Wydarzenia, zadania, przypomnienia, alarmy i minutniki
+Build and read a brief from saved information|||Создать и прочитать обзор из сохранённых данных|||Izveidot un lasīt pārskatu no saglabātās informācijas|||Utwórz i przeczytaj przegląd z zapisanych informacji
+Time in your saved cities|||Время в сохранённых городах|||Laiks saglabātajās pilsētās|||Czas w zapisanych miastach
+Choose saved weather, news and public calendars|||Выбрать погоду, новости и публичные календари|||Izvēlēties saglabātus laikapstākļus, ziņas un publiskos kalendārus|||Wybierz zapisaną pogodę, wiadomości i publiczne kalendarze
+Everyday items could not be loaded. Your saved information is kept.|||Не удалось загрузить элементы дня. Сохранённые данные не потеряны.|||Ikdienas vienumus neizdevās ielādēt. Saglabātā informācija ir saglabāta.|||Nie można wczytać elementów dnia. Zapisane informacje zachowano.
+This item changed. Open its instrument and review the current information.|||Элемент изменился. Откройте его инструмент и проверьте актуальные данные.|||Vienums mainījās. Atveriet tā rīku un pārskatiet pašreizējo informāciju.|||Element się zmienił. Otwórz jego narzędzie i sprawdź aktualne informacje.
+Organizer item saved|||Элемент органайзера сохранён|||Plānotāja vienums saglabāts|||Element planera zapisany
+Local record changed. Delivery status is shown in Organizer.|||Локальная запись изменена. Статус уведомления указан в органайзере.|||Vietējais ieraksts mainījās. Paziņojuma statuss redzams plānotājā.|||Lokalny wpis zmieniono. Status powiadomienia jest widoczny w planerze.
+A restored subtask needs its active parent. Restore that parent too or keep the local plan.|||Восстановленной подзадаче нужна активная родительская задача. Восстановите её или оставьте локальный план.|||Atjaunotam apakšuzdevumam vajadzīgs aktīvs vecākuzdevums. Atjaunojiet arī to vai paturiet vietējo plānu.|||Przywrócone podzadanie wymaga aktywnego zadania nadrzędnego. Przywróć je także lub zachowaj lokalny plan.
+Read this Screen card configuration|||Прочитать настройки карточки Screen|||Lasīt šīs Screen kartītes iestatījumus|||Odczytaj ustawienia tej karty Screen
+Find organizer items|||Найти элементы органайзера|||Atrast plānotāja vienumus|||Znajdź elementy planera
+Read organizer item|||Прочитать элемент органайзера|||Lasīt plānotāja vienumu|||Odczytaj element planera
+Create organizer item|||Создать элемент органайзера|||Izveidot plānotāja vienumu|||Utwórz element planera
+Edit organizer item|||Изменить элемент органайзера|||Rediģēt plānotāja vienumu|||Edytuj element planera
+Update organizer item|||Обновить элемент органайзера|||Atjaunināt plānotāja vienumu|||Zaktualizuj element planera
+Update one occurrence|||Изменить одно повторение|||Atjaunināt vienu atkārtojumu|||Zaktualizuj jedno wystąpienie
+Manage alert delivery|||Управлять уведомлением|||Pārvaldīt paziņojumu|||Zarządzaj powiadomieniem
+Read world clocks|||Прочитать мировое время|||Lasīt pasaules pulksteņus|||Odczytaj zegary światowe
+Save world clock|||Сохранить мировое время|||Saglabāt pasaules pulksteni|||Zapisz zegar światowy
+Arrange world clocks|||Упорядочить мировые часы|||Sakārtot pasaules pulksteņus|||Uporządkuj zegary światowe
+Read source catalogue|||Прочитать каталог источников|||Lasīt avotu katalogu|||Odczytaj katalog źródeł
+Read saved source|||Прочитать сохранённый источник|||Lasīt saglabāto avotu|||Odczytaj zapisane źródło
+Preview public source|||Предпросмотр публичного источника|||Publiska avota priekšskatījums|||Podgląd publicznego źródła
+Save source settings|||Сохранить настройки источника|||Saglabāt avota iestatījumus|||Zapisz ustawienia źródła
+Manage source|||Управлять источником|||Pārvaldīt avotu|||Zarządzaj źródłem
+Read daily briefs|||Прочитать обзоры дня|||Lasīt dienas pārskatus|||Odczytaj przeglądy dnia
+Build or read a brief|||Создать или прочитать обзор|||Izveidot vai lasīt pārskatu|||Utwórz lub odczytaj przegląd
+Change brief settings|||Изменить настройки обзора|||Mainīt pārskata iestatījumus|||Zmień ustawienia przeglądu
+Open daily tool|||Открыть инструмент дня|||Atvērt ikdienas rīku|||Otwórz narzędzie dnia
+Read launcher widgets|||Прочитать виджеты рабочего стола|||Lasīt sākuma ekrāna logrīkus|||Odczytaj widżety pulpitu
+Configure launcher widget|||Настроить виджет рабочего стола|||Iestatīt sākuma ekrāna logrīku|||Skonfiguruj widżet pulpitu
+Add launcher widget|||Добавить виджет рабочего стола|||Pievienot sākuma ekrāna logrīku|||Dodaj widżet pulpitu
+Local data was restored, but Screen or settings could not finish. Do not repeat this restore. Review the restored data and Screen, or use Undo restore.|||Локальные данные восстановлены, но настройка Screen или параметров не завершилась. Не повторяйте восстановление. Проверьте данные и Screen или отмените восстановление.|||Vietējie dati atjaunoti, bet Screen vai iestatījumu atjaunošana nav pabeigta. Neatkārtojiet atjaunošanu. Pārskatiet datus un Screen vai atsauciet atjaunošanu.|||Dane lokalne przywrócono, ale Screen lub ustawienia nie zostały ukończone. Nie powtarzaj przywracania. Sprawdź dane i Screen albo cofnij przywracanie.
+Events|||События|||Notikumi|||Wydarzenia
+Use BuddyBot’s local IP address.|||Укажите локальный IP-адрес BuddyBot.|||Izmantojiet BuddyBot vietējo IP adresi.|||Użyj lokalnego adresu IP BuddyBot.
+Active items|||Активные записи|||Aktīvie vienumi|||Aktywne elementy
+Due today|||Срок сегодня|||Termiņš šodien|||Termin dzisiaj

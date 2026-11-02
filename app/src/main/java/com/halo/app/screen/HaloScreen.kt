@@ -43,6 +43,7 @@ import com.halo.app.data.workspace.WorkspaceQuery
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.language.uiText
 import com.halo.app.R
+import com.halo.app.everyday.presentation.*
 import com.halo.app.ui.components.HaloReadAloud
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloShapes
@@ -67,6 +68,7 @@ internal data class ScreenDisplay(
     val showFullTimestamp: Boolean = false,
     val stateArguments: List<Any> = emptyList(),
     val continuation: ScreenContinuation? = null,
+    val everydayRows: List<EverydayCardRow> = emptyList(),
 )
 
 /** The same local layout is used on phones, tablets and in full screen. */
@@ -83,6 +85,8 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     val dimAtNight by store.dimAtNight.collectAsStateWithLifecycle()
     val topics by store.topics.collectAsStateWithLifecycle()
     val presets by store.presets.collectAsStateWithLifecycle()
+    var everydayRefresh by remember { mutableIntStateOf(0) }
+    val everyday by rememberEverydayScreenState(everydayRefresh)
     var topicsOpen by rememberSaveable { mutableStateOf(false) }
     var topicsDraft by rememberSaveable { mutableStateOf("") }
     val daily by ManualDependencyGraph.dailyAssistantController.snapshot.collectAsStateWithLifecycle()
@@ -124,6 +128,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     var showingArchivedCards by rememberSaveable { mutableStateOf(false) }
     var appearanceOpen by rememberSaveable { mutableStateOf(false) }
     var cardOptionsIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+    var configurationId by rememberSaveable { mutableStateOf<String?>(null) }
     var presetNameOpen by rememberSaveable { mutableStateOf(false) }
     var presetName by rememberSaveable { mutableStateOf("") }
     var presetError by remember { mutableStateOf(false) }
@@ -182,6 +187,10 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         disabledActionReasons = listOf("page.screen.add", "page.screen.customize", "page.screen.appearance")
             .associateWith { if (customizing && canInteract) stringResource(R.string.action_already_arranging) else editUnavailable })
     BindShellPageActions(screenOwner, listOf(
+        ShellPageAction("page.screen.organizer", "Organizer", HaloGlyph.CALENDAR, canInteract) { onFullScreen(false); onOpen("screen/organizer") },
+        ShellPageAction("page.screen.brief", "Your day in Halo", HaloGlyph.ACTIVITY, canInteract) { onFullScreen(false); onOpen("screen/brief") },
+        ShellPageAction("page.screen.sources", "Sources", HaloGlyph.INTEGRATIONS, canInteract) { onFullScreen(false); onOpen("screen/sources") },
+        ShellPageAction("page.screen.clocks", "World clocks", HaloGlyph.WATCH, canInteract) { onFullScreen(false); onOpen("screen/clocks") },
         ShellPageAction("page.screen.add", stringResource(R.string.zone5_widgets), HaloGlyph.NOTE, layout != null && canInteract) {
             if (!customizing) setCustomizing(true)
             picker = true
@@ -221,11 +230,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     fun add(type: String, itemId: String? = null) {
         val current = working.value ?: return
         if (current.cards.size >= 24) { notice = "Your Screen is full. Hide a card to make room."; return }
-        if (current.cards.any { it.widgetType == type && it.itemId == itemId }) {
-            notice = "This card is already on your Screen."; picker = false; return
-        }
         change(current.cards + ScreenCard(type, itemId,
-            if (type == "halo_activity") CardSize.COMPACT else CardSize.STANDARD, false), "Card added")
+            if (type == "halo_activity") CardSize.COMPACT else CardSize.STANDARD, false,
+            presentationId=java.util.UUID.randomUUID().toString()), "Card added")
         picker = false
         if (type == "calendar" && !calendarAllowed && !customizing) calendarPermission.launch(Manifest.permission.READ_CALENDAR)
     }
@@ -247,7 +254,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     }
     LaunchedEffect(layout?.cards) {
         detailCard?.let { selected ->
-            if (layout?.cards?.none { it.widgetType == selected.widgetType && it.itemId == selected.itemId } != false) detailCard = null
+            if (layout?.cards?.none { it.presentationId == selected.presentationId } != false) detailCard = null
         }
     }
     LaunchedEffect(lifecycle) {
@@ -302,7 +309,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     LaunchedEffect(environment.resumed, environment.locked, orbActive, maskSensitive) {
         if (!environment.resumed || environment.locked || orbActive) {
             settings = false; picker = false; appearanceOpen = false; cardOptionsIndex = null
-            presetNameOpen = false; topicsOpen = false; askLayout = false; previewType = null; detailCard = null
+            presetNameOpen = false; topicsOpen = false; askLayout = false; previewType = null; detailCard = null; configurationId=null
         }
         if (!environment.resumed || environment.locked) researchRefreshQuery = null
         if (maskSensitive) {
@@ -312,7 +319,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         }
     }
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.ENGLISH
-    @Composable fun display(card: ScreenCard): ScreenDisplay = when (card.widgetType) {
+    @Composable fun display(card: ScreenCard): ScreenDisplay = if (card.widgetType in EverydayCards.screenKinds) everydayScreenDisplay(card,everyday,now,locale,screenResources) else when (card.widgetType) {
         "clock" -> ScreenDisplay(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
             .format(now.atZone(ZoneId.systemDefault())), DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
             .withLocale(locale).format(now.atZone(ZoneId.systemDefault())), "On this phone", null, sourceTitle = true, sourceSummary = true)
@@ -524,6 +531,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             }
             ScreenNativeSheet(onDismissRequest = { cardOptionsIndex = null }) {
                 ScreenSheetBody(screenWidgetTitle(card.widgetType), { cardOptionsIndex = null }) {
+                    if (card.widgetType in EverydayCards.screenKinds && !maskSensitive) TextButton({ configurationId=card.presentationId;cardOptionsIndex=null }) { Text(uiText("Configure this card")) }
                     Text(stringResource(R.string.screen_grid_help), style = MaterialTheme.typography.bodySmall)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(Triple(R.string.screen_move_left, -1, 0), Triple(R.string.screen_move_right, 1, 0),
@@ -732,7 +740,19 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
             TextButton(onClick = { proposedLayout = null; askLayout = false; setCustomizing(true) }) { Text(uiText("Customize")) }
         }
     }
-    detailCard?.let { selected -> layout?.cards?.firstOrNull { it.widgetType == selected.widgetType && it.itemId == selected.itemId }?.let { card ->
+    if (configurationId != null && !maskSensitive && everyday.snapshot != null) workingLayout?.cards?.find { it.presentationId == configurationId }?.let { card ->
+        val kind=EverydayCards.screenKinds[card.widgetType]
+        if (kind != null) ScreenNativeSheet(onDismissRequest={configurationId=null}) {
+            val config=runCatching { EverydayCardConfig.from(card.config,kind) }.getOrDefault(EverydayCardConfig(kind))
+            com.halo.app.nativeactions.EverydayWidgetConfigurationForm(
+                com.halo.app.nativeactions.EverydayWidgetInstance(card.presentationId.hashCode(),workingLayout.version.toLong(),config),
+                everyday.snapshot!!,false,null,cancel={configurationId=null},save={ value ->
+                    change(workingLayout.cards.map { if (it.presentationId==card.presentationId) it.copy(config=value.fields()) else it },"Card updated")
+                    configurationId=null
+                },openSources={configurationId=null;onFullScreen(false);onOpen("screen/sources")},launcher=false)
+        }
+    }
+    detailCard?.let { selected -> layout?.cards?.firstOrNull { it.presentationId == selected.presentationId }?.let { card ->
         val data = display(card)
         val researchItem = if (card.widgetType == "research")
             routineItems.firstOrNull { it.id == card.itemId && it.sourceType == ScreenSourceType.RESEARCH } else null
@@ -743,6 +763,21 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 else {
                     val detailSummary = data.detailSummary ?: data.summary
                     Text(if (data.sourceSummary) detailSummary else uiText(detailSummary), style = MaterialTheme.typography.bodyLarge)
+                    if(card.widgetType in EverydayCards.screenKinds) TextButton({everydayRefresh++}) { Text(uiText("Reload saved data")) }
+                    data.everydayRows.forEach { row -> row.target?.let { target ->
+                        com.halo.app.ui.components.HaloActionButton(onClick={coroutineScope.launch {
+                            try {
+                                val destination=withContext(Dispatchers.IO) { target.route() }
+                                val unlocked=context.getSystemService(android.app.KeyguardManager::class.java)?.isKeyguardLocked==false
+                                if(latestCanInteract.value && unlocked && !(data.sensitive && latestMaskSensitive.value)) {
+                                    detailCard=null;onFullScreen(false);onOpen(destination)
+                                }
+                            } catch(cancelled: CancellationException) { throw cancelled }
+                              catch(_: Exception) { detailCard=null;notice=context.getString(R.string.screen60_source_changed) }
+                        }},modifier=Modifier.fillMaxWidth()) {
+                            Column(Modifier.fillMaxWidth()) { Text(row.title);if(row.detail.isNotBlank()) Text(row.detail,style=MaterialTheme.typography.bodySmall) }
+                        }
+                    } }
                     if (data.showFullTimestamp) data.updatedAt?.let { instant ->
                         val dateTime = formatScreenTimestamp(instant, true, locale)
                         Text(uiText("Retrieved") + " · " + dateTime, style = MaterialTheme.typography.labelMedium,
@@ -806,24 +841,25 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                                 android.net.Uri.parse("package:${context.packageName}")))
                             else calendarPermission.launch(Manifest.permission.READ_CALENDAR)
                         }) { Text(uiText(if (calendarDenied) "Open Android settings" else "Allow calendar access")) }
-                    data.route?.let { route ->
+                    data.route?.takeUnless { data.continuation is ScreenContinuation.Everyday && data.everydayRows.any { it.target==data.continuation.target } }?.let { route ->
                         val unavailable = stringResource(R.string.screen60_source_changed)
                         com.halo.app.ui.components.HaloActionButton(onClick = {
                             coroutineScope.launch {
-                                val current = try {
+                                val resolvedRoute = try {
                                     withContext(Dispatchers.IO) {
-                                        data.continuation?.isCurrent(ManualDependencyGraph.workspaceRepository,
+                                        if (data.continuation is ScreenContinuation.Everyday) data.continuation.target.route()
+                                        else if (data.continuation?.isCurrent(ManualDependencyGraph.workspaceRepository,
                                             ManualDependencyGraph.studyUseCases, ManualDependencyGraph.routineRepository,
-                                            ManualDependencyGraph.followUpRepository) ?: true
+                                            ManualDependencyGraph.followUpRepository) != false) route else null
                                     }
                                 } catch (cancelled: CancellationException) { throw cancelled }
-                                catch (_: Exception) { false }
+                                catch (_: Exception) { null }
                                 val unlocked = runCatching {
                                     context.getSystemService(android.app.KeyguardManager::class.java)?.isKeyguardLocked == false
                                 }.getOrDefault(false)
-                                if (!current) { detailCard = null; notice = unavailable }
+                                if (resolvedRoute == null) { detailCard = null; notice = unavailable }
                                 else if (latestCanInteract.value && unlocked && !(data.sensitive && latestMaskSensitive.value)) {
-                                    detailCard = null; onFullScreen(false); onOpen(route)
+                                    detailCard = null; onFullScreen(false); onOpen(resolvedRoute)
                                 }
                             }
                         }) { Text(uiText("Open source")) }
@@ -878,6 +914,7 @@ private fun researchNoteBody(item: ScreenItem): String = buildString {
 }.take(12_000)
 
 internal fun widgetTitle(type: String): String = when (type) {
+    in EverydayCards.screenKinds.keys -> EverydayCards.title(EverydayCards.screenKinds.getValue(type))
     "clock" -> "Clock & date"; "weather" -> "Weather"; "calendar" -> "Calendar"
     "tasks" -> "Needs attention"; "notebook" -> "Continue in Notebook"; "study" -> "Continue studying"
     "automation_result" -> "Routine results"; "halo_activity" -> "What halo did"; "research" -> "Research"; "device" -> "This phone"; else -> "Reading & interests"

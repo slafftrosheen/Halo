@@ -17,11 +17,11 @@
     <string name="mode47_configured_providers">Konfigurētie pakalpojumi</string>
     <string name="mode47_no_provider">Jākonfigurē pakalpojums</string>
     <string name="mode47_other_routes">Tīmekļa lasīšanai tiek izmantota pieprasītā publiskā vietne. Savienotie pakalpojumi izmanto darbībai konfigurēto kontu vai serveri. Tiešsaistes runai tiek izmantots izvēlētais runas pakalpojums. Nekonfigurētie savienojumi nav pieejami.</string>
-    <string name="mode47_billing_explanation">Pakalpojuma sniedzējs var iekasēt maksu no jūsu konta. Cenas un kvotas ir atkarīgas no modeļa un plāna. Halo rāda sniedzēja paziņotās izmaksas, ja tās ir pieejamas; citādi izmaksas nav zināmas. Pilna jauda nav tēriņu apstiprinājums.</string>
+    <string name="mode47_billing_explanation">Pakalpojuma sniedzējs var iekasēt maksu no jūsu konta. Cenas un kvotas ir atkarīgas no modeļa un plāna. Halo rāda sniedzēja paziņotās izmaksas, ja tās ir pieejamas; citādi izmaksas nav zināmas. Power nav tēriņu apstiprinājums.</string>
     <string name="mode47_boundaries">Android atļaujas, bērnu režīma ierobežojumi, darbību apstiprinājumi un tēriņu kontrole joprojām ir spēkā.</string>
-    <string name="mode47_activation_failed">Neizdevās aktivizēt profilu. Privātais režīms bloķē attālināto apstrādi. Pārskatiet režīmu profilus un mēģiniet vēlreiz.</string>
-    <string name="mode47_local_route">Privāts · apstrāde šajā ierīcē</string>
-    <string name="mode47_route">Pilna jauda · izvēlētais savienojums: %1$s</string>
+    <string name="mode47_activation_failed">Neizdevās aktivizēt profilu. Local režīms bloķē attālināto apstrādi. Pārskatiet režīmu profilus un mēģiniet vēlreiz.</string>
+    <string name="mode47_local_route">Local · apstrāde šajā ierīcē</string>
+    <string name="mode47_route">Power · izvēlētais savienojums: %1$s</string>
     <string name="mode47_provider">Pakalpojums</string>
     <string name="mode47_model">Modelis</string>
     <string name="mode47_routing">Maršrutēšana</string>

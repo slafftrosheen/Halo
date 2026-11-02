@@ -36,6 +36,11 @@ data class OrganizerChangeEntity(@PrimaryKey(autoGenerate = true) val sequence: 
 
 @Dao
 interface OrganizerDao {
+    @Query("SELECT id,version FROM organizer_records ORDER BY id") suspend fun authorityRows(): List<OrganizerAuthorityRow>
+    @Query("SELECT * FROM organizer_changes ORDER BY sequence DESC LIMIT 100") fun observeChanges(): Flow<List<OrganizerChangeEntity>>
+    @Query("DELETE FROM organizer_records") suspend fun clearRecords()
+    @Query("DELETE FROM organizer_changes") suspend fun clearChanges()
+    @Query("DELETE FROM organizer_deliveries WHERE recordId=:id") suspend fun clearReceipts(id: String)
     @Query("SELECT * FROM organizer_records WHERE deletedAt IS NULL ORDER BY updatedAt DESC, id")
     fun observe(): Flow<List<OrganizerEntity>>
     @Query("SELECT * FROM organizer_records WHERE :includeDeleted OR deletedAt IS NULL ORDER BY updatedAt DESC, id")
@@ -54,6 +59,10 @@ interface OrganizerDao {
     suspend fun removeOverride(id: String, start: Long): Int
     @Query("SELECT * FROM organizer_deliveries WHERE recordId = :id ORDER BY triggerAt")
     suspend fun receipts(id: String): List<OrganizerDeliveryEntity>
+    @Query("SELECT * FROM organizer_deliveries ORDER BY triggerAt")
+    fun observeReceipts(): Flow<List<OrganizerDeliveryEntity>>
+    @Query("SELECT * FROM organizer_deliveries ORDER BY occurrenceKey")
+    suspend fun allReceipts(): List<OrganizerDeliveryEntity>
     @Query("SELECT * FROM organizer_deliveries WHERE occurrenceKey = :key") suspend fun receipt(key: String): OrganizerDeliveryEntity?
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putReceipt(value: OrganizerDeliveryEntity)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun enqueue(value: OrganizerScheduleEntity)
@@ -64,3 +73,5 @@ interface OrganizerDao {
     @Query("SELECT * FROM organizer_changes WHERE at >= :since ORDER BY sequence") suspend fun changes(since: Long): List<OrganizerChangeEntity>
     @Query("DELETE FROM organizer_changes WHERE at < :before") suspend fun pruneChanges(before: Long)
 }
+
+data class OrganizerAuthorityRow(val id: String,val version: Long)

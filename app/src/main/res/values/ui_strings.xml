@@ -586,24 +586,24 @@
     <string name="ui_4fda695d3e86" formatted="false">"Local network"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Cloud"</string>
     <string name="ui_848e96567d6b" formatted="false">"Power"</string>
-    <string name="ui_d47b51ac5c4a" formatted="false">"Full Power mode"</string>
-    <string name="ui_f7c25d67b4c2" formatted="false">"Private / Full Power"</string>
-    <string name="ui_a0f62566edfc" formatted="false">"Everything stays on this phone. Full Power features are off."</string>
-    <string name="ui_7be2dcda5a77" formatted="false">"AI processing stays on this phone. Full Power features are off."</string>
-    <string name="ui_f95736e4ba58" formatted="false">"Full Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."</string>
-    <string name="ui_91d1493a8e85" formatted="false">"One switch at the top of every screen controls sharing. Mode profiles keep your Private and Full Power choices separate."</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Power mode"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Local / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Everything stays on this phone. Power features are off."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"AI processing stays on this phone. Power features are off."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"One switch at the top of every screen controls sharing. Mode profiles keep your Local and Power choices separate."</string>
     <string name="ui_b78e8b0ee157" formatted="false">"This switch controls sharing for supported online halo features."</string>
-    <string name="ui_91e23dc2c14e" formatted="false">"This action needs Full Power mode. Use the switch at the top of halo."</string>
-    <string name="ui_c3b89f7b634c" formatted="false">"Switch to Full Power"</string>
-    <string name="ui_2ff19ca13b1f" formatted="false">"Full Power mode could not be enabled. Check Kids settings or try again."</string>
-    <string name="ui_ec07e6b3552b" formatted="false">"A grown-up must allow Full Power mode in Kids settings."</string>
-    <string name="ui_7c81ad053a8f" formatted="false">"Switch to Full Power mode at the top of halo."</string>
-    <string name="ui_914a820f10fd" formatted="false">"Cloud voice needs Full Power mode. Use the switch at the top of halo. Kids sessions also need grown-up approval."</string>
-    <string name="ui_b7b8b4725c30" formatted="false">"Cloud processing is off. Use the Private / Full Power switch at the top of halo, or choose an on-device model. Kids sessions also need grown-up approval."</string>
-    <string name="ui_80bb16adde05" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Full Power switch at the top of halo."</string>
-    <string name="ui_a8f9f96f6425" formatted="false">"Media sharing follows the Private / Full Power switch at the top of halo."</string>
-    <string name="ui_e5a3e94e5574" formatted="false">"File sharing follows the Private / Full Power switch at the top of halo."</string>
-    <string name="ui_eede4c33bb88" formatted="false">"Memory sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_91e23dc2c14e" formatted="false">"This action needs Power mode. Use the mode control beside the halo Orb."</string>
+    <string name="ui_c3b89f7b634c" formatted="false">"Switch to Power"</string>
+    <string name="ui_2ff19ca13b1f" formatted="false">"Power mode could not be enabled. Check Kids settings or try again."</string>
+    <string name="ui_ec07e6b3552b" formatted="false">"A grown-up must allow Power mode in Kids settings."</string>
+    <string name="ui_7c81ad053a8f" formatted="false">"Switch to Power mode at the top of halo."</string>
+    <string name="ui_914a820f10fd" formatted="false">"Cloud voice needs Power mode. Use the mode control beside the halo Orb. Kids sessions also need grown-up approval."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model. Kids sessions also need grown-up approval."</string>
+    <string name="ui_80bb16adde05" formatted="false">"Cloud sharing is not allowed for this image. Use the Local / Power mode control beside the halo Orb."</string>
+    <string name="ui_a8f9f96f6425" formatted="false">"Media sharing follows the Local / Power mode control beside the halo Orb."</string>
+    <string name="ui_e5a3e94e5574" formatted="false">"File sharing follows the Local / Power mode control beside the halo Orb."</string>
+    <string name="ui_eede4c33bb88" formatted="false">"Memory sharing follows the Local / Power mode control beside the halo Orb."</string>
     <string name="ui_824ddc4cb517" formatted="false">"Conversation default"</string>
     <string name="ui_30e82a8c8371" formatted="false">"Model roles"</string>
     <string name="ui_dff99ddda166" formatted="false">"Images and visual context"</string>
@@ -3783,26 +3783,26 @@
     <string name="ui_c4bd14cbcafa" formatted="false">"App actions could not be read. Open the app and try again."</string>
     <string name="ui_369a21c566b2" formatted="false">"Driving was not confirmed. Check BuddyBot, then hold to try again."</string>
     <string name="ui_3f64a7d11458" formatted="false">"Waiting for BuddyBot…"</string>
-    <string name="ui_c63eb6720c6e" formatted="false">"Private"</string>
-    <string name="ui_defb207e462d" formatted="false">"Private mode"</string>
+    <string name="ui_c63eb6720c6e" formatted="false">"Local"</string>
+    <string name="ui_defb207e462d" formatted="false">"Local mode"</string>
     <string name="ui_db5a6e265164" formatted="false">"Cloud mode"</string>
     <string name="ui_614747862584" formatted="false">"Private / Cloud"</string>
     <string name="ui_b8afca338753" formatted="false">"AI privacy mode"</string>
     <string name="ui_9271dee9f2c8" formatted="false">"Everything stays on this phone. Cloud features are off."</string>
     <string name="ui_7f349e913fcc" formatted="false">"Cloud models can use your conversation, images, memories, and workspace. Provider charges may apply."</string>
     <string name="ui_3ced50c35e31" formatted="false">"Could not change privacy mode. Try again."</string>
-    <string name="ui_c25ce219f913" formatted="false">"This action needs Cloud mode. Use the switch at the top of halo."</string>
+    <string name="ui_c25ce219f913" formatted="false">"This action needs Cloud mode. Use the mode control beside the halo Orb."</string>
     <string name="ui_3dc72e8799f1" formatted="false">"Switch to Cloud"</string>
     <string name="ui_501135113f1a" formatted="false">"Cloud mode could not be enabled. Check Kids settings or try again."</string>
     <string name="ui_8d78466721bf" formatted="false">"One switch at the top of every screen controls sharing. No separate image, memory, or workspace permissions are needed."</string>
     <string name="ui_a9eb29a9820e" formatted="false">"Android permissions, Kids restrictions, spending limits, and action confirmations still apply."</string>
-    <string name="ui_7e69b2a8e184" formatted="false">"Memory sharing follows the Private / Cloud switch at the top of halo."</string>
-    <string name="ui_e1280ec15f9b" formatted="false">"File sharing follows the Private / Cloud switch at the top of halo."</string>
-    <string name="ui_0592aa13f4c4" formatted="false">"Media sharing follows the Private / Cloud switch at the top of halo."</string>
+    <string name="ui_7e69b2a8e184" formatted="false">"Memory sharing follows the Private / Cloud mode control beside the halo Orb."</string>
+    <string name="ui_e1280ec15f9b" formatted="false">"File sharing follows the Private / Cloud mode control beside the halo Orb."</string>
+    <string name="ui_0592aa13f4c4" formatted="false">"Media sharing follows the Private / Cloud mode control beside the halo Orb."</string>
     <string name="ui_b4ec9b047647" formatted="false">"Open Android app permissions"</string>
     <string name="ui_44615c1caed8" formatted="false">"Reference image required"</string>
     <string name="ui_fc1a856ef2c3" formatted="false">"This model needs a reference image. Open an image in Workspace or Canvas to edit it."</string>
-    <string name="ui_5b064d896dea" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Cloud switch at the top of halo."</string>
+    <string name="ui_5b064d896dea" formatted="false">"Cloud sharing is not allowed for this image. Use the Private / Cloud mode control beside the halo Orb."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Check provider credits"</string>
     <string name="ui_c1329b9fbe25" formatted="false">"Image model"</string>
     <string name="ui_b4d1afd63af6" formatted="false">"Describe your image"</string>
@@ -3966,7 +3966,7 @@
     <string name="ui_cf3975c3bb90" formatted="false">"Explicit model only"</string>
     <string name="ui_d8da64e2a75e" formatted="false">"Preferred provider with fallback"</string>
     <string name="ui_0c3f86e41410" formatted="false">"Refresh selected provider metadata"</string>
-    <string name="ui_ecdc23a45a3e" formatted="false">"Media sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_ecdc23a45a3e" formatted="false">"Media sharing follows the Local / Power mode control beside the halo Orb."</string>
     <string name="ui_04dedf8afeb8" formatted="false">"STOP"</string>
     <string name="ui_29887a5ff984" formatted="false">"Share"</string>
     <string name="ui_dda99bd2e8f7" formatted="false">"What should halo remember?"</string>
@@ -3974,10 +3974,10 @@
     <string name="ui_32eb267f0398" formatted="false">"⇥"</string>
     <string name="ui_040d2b3689dd" formatted="false">"Attachment"</string>
     <string name="ui_5e970ab2e158" formatted="false">"halo will stop using this memory. Your notes are kept. Copies in existing backups follow your storage settings."</string>
-    <string name="ui_7b0f33ec7e23" formatted="false">"File sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_7b0f33ec7e23" formatted="false">"File sharing follows the Local / Power mode control beside the halo Orb."</string>
     <string name="ui_d1e5ade9c63c" formatted="false">"Talk to halo from any app"</string>
-    <string name="ui_5236256f569d" formatted="false">"Private / Full Power"</string>
-    <string name="ui_47fa02ab7a5d" formatted="false">"Memory sharing follows the Private / Full Power switch at the top of halo."</string>
+    <string name="ui_5236256f569d" formatted="false">"Local / Power"</string>
+    <string name="ui_47fa02ab7a5d" formatted="false">"Memory sharing follows the Local / Power mode control beside the halo Orb."</string>
     <string name="ui_fe32924b26f0" formatted="false">"Could not save. Try again."</string>
     <string name="ui_ac83c14ed2a2" formatted="false">"Private voice and intent starter bundle"</string>
     <string name="ui_fe1513423fca" formatted="false">"Optionally download the Qwen intent candidate, Whisper Small, Silero VAD and Supertonic voice files together. halo checks the files but does not select models or claim device quality."</string>
@@ -3994,7 +3994,7 @@
     <string name="ui_c9f85270686f" formatted="false">"Imported model: inspect native task before any role qualification."</string>
     <string name="ui_0931c93dff69" formatted="false">"Let halo see photos"</string>
     <string name="ui_308373a20f92" formatted="false">"Try to answer without looking. Your answer stays in the draft. You can choose to compare it with halo’s answer."</string>
-    <string name="ui_61d06b0e190e" formatted="false">"This action needs Full Power mode. Use the switch at the top of halo."</string>
+    <string name="ui_61d06b0e190e" formatted="false">"This action needs Power mode. Use the mode control beside the halo Orb."</string>
     <string name="ui_6de4468dd1ad" formatted="false">"Original image"</string>
     <string name="ui_6f62aa63353f" formatted="false">"Choose an image model"</string>
     <string name="ui_1ef065d5f5b1" formatted="false">"Loading image models..."</string>
@@ -4037,7 +4037,7 @@
     <string name="ui_16c5077d5ac3" formatted="false">"Tap to talk. Hold for shortcuts. Menu opens every page."</string>
     <string name="ui_65f9ce203b63" formatted="false">"Canvas tools"</string>
     <string name="ui_59a0ed5dfe29" formatted="false">"Context and privacy"</string>
-    <string name="ui_7a637f64d66d" formatted="false">"This action needs Full Power mode. Use the control beside the halo Orb."</string>
+    <string name="ui_7a637f64d66d" formatted="false">"This action needs Power mode. Use the control beside the halo Orb."</string>
     <string name="ui_bc79cdffbaa8" formatted="false">"More options"</string>
     <string name="ui_fb646fa83d0c" formatted="false">"Use this page as context"</string>
     <string name="ui_7446c9bed868" formatted="false">"Page added as context"</string>
@@ -4226,4 +4226,531 @@
     <string name="ui_07fb0c16abc7" formatted="false">"What halo can remember"</string>
     <string name="ui_f32b0d69f95f" formatted="false">"New canvas"</string>
     <string name="ui_a424e33d9093" formatted="false">"Locked"</string>
+    <string name="ui_81a1e6cf650a" formatted="false">"Your day in halo"</string>
+    <string name="ui_72650f6a8adb" formatted="false">"Open daily brief"</string>
+    <string name="ui_d8de3c541dc0" formatted="false">"Brief history"</string>
+    <string name="ui_339c49d889e9" formatted="false">"Brief settings"</string>
+    <string name="ui_576ee92ed015" formatted="false">"Update brief"</string>
+    <string name="ui_715a9cc0c34c" formatted="false">"Organizer"</string>
+    <string name="ui_20d4d413670f" formatted="false">"Open organizer"</string>
+    <string name="ui_19ea75a57216" formatted="false">"Choose sources"</string>
+    <string name="ui_85f9cb4f3ff3" formatted="false">"Open item"</string>
+    <string name="ui_12463f9e1058" formatted="false">"Your plan, selected information and what needs your attention."</string>
+    <string name="ui_56f69e16bffb" formatted="false">"Build a brief from your saved plan and selected sources. Local mode uses saved information; opening this page never refreshes the internet."</string>
+    <string name="ui_a99babae2999" formatted="false">"Wait for the current action to finish."</string>
+    <string name="ui_98da16495c8c" formatted="false">"Study presentation"</string>
+    <string name="ui_de45320b16da" formatted="false">"Saved at %1$s"</string>
+    <string name="ui_dc4f10e7c277" formatted="false">"Selected sources may refresh in Power. This brief keeps its saved facts."</string>
+    <string name="ui_84255a7241d0" formatted="false">"Local mode · External information is cached and may be out of date."</string>
+    <string name="ui_ed3c7b274204" formatted="false">"No selected information is available for this brief."</string>
+    <string name="ui_f40c3bd3737b" formatted="false">"%1$d items are no longer in the current local plan."</string>
+    <string name="ui_8cae95d5a1df" formatted="false">"This brief shows a selection. Open the organizer or a source for the complete available list."</string>
+    <string name="ui_c124ab5f8a3f" formatted="false">"Freshness and sources"</string>
+    <string name="ui_f6627102027f" formatted="false">"No saved briefs yet."</string>
+    <string name="ui_a2c09f07727d" formatted="false">"Up to 60 briefs are kept for 30 days. The first morning comparison remains fixed for its day."</string>
+    <string name="ui_e503d2a25ef9" formatted="false">"Morning and evening notices"</string>
+    <string name="ui_da29b1e93e6a" formatted="false">"Android may deliver notices late. Quiet hours and system Do Not Disturb still apply. Notices never read your brief aloud."</string>
+    <string name="ui_889d0e668408" formatted="false">"Morning · HH:mm"</string>
+    <string name="ui_d4fffc9898ac" formatted="false">"Evening · HH:mm"</string>
+    <string name="ui_bf0671dd69c6" formatted="false">"Quiet hours"</string>
+    <string name="ui_9ca1b537ed4b" formatted="false">"Quiet from · HH:mm"</string>
+    <string name="ui_7341def2b21b" formatted="false">"Quiet until · HH:mm"</string>
+    <string name="ui_900822485190" formatted="false">"Matching quiet-hour times mean quiet all day."</string>
+    <string name="ui_4a6c007b1f53" formatted="false">"Headlines · 0–10"</string>
+    <string name="ui_0ac7b2e090e1" formatted="false">"Tasks · 1–20"</string>
+    <string name="ui_91597bdcd327" formatted="false">"Priorities and Kids sharing"</string>
+    <string name="ui_96cc2a3138ab" formatted="false">"Only the items you share here may appear in Kids briefs. Sharing a source alone does not share your private plan."</string>
+    <string name="ui_40ebb68fb635" formatted="false">"Prioritize in brief"</string>
+    <string name="ui_01cd14f49984" formatted="false">"Share with Kids"</string>
+    <string name="ui_9ad7d4a75698" formatted="false">"Use 24-hour HH:mm times and numbers within the displayed limits."</string>
+    <string name="ui_2bdfff8bca9e" formatted="false">"The brief could not be opened. Try again."</string>
+    <string name="ui_b14fa0189283" formatted="false">"This change could not be saved. Your saved data is kept; reopen and retry."</string>
+    <string name="ui_421cb442e697" formatted="false">"Brief settings saved."</string>
+    <string name="ui_ba461404afba" formatted="false">"This saved brief is no longer available. Build a new brief from your current information."</string>
+    <string name="ui_046dacaca6b3" formatted="false">"A fixed calendar copy and its event list will be saved in Workspace. Then you can copy that file to a destination you choose."</string>
+    <string name="ui_0362d4f5d3e5" formatted="false">"A missing daylight-saving time moves forward by the gap. A repeated time uses the earlier offset."</string>
+    <string name="ui_27a570585516" formatted="false">"A parent manages the saved plan."</string>
+    <string name="ui_40fd74fb94a0" formatted="false">"A source can be saved in Local without fetching it. Preview checks real feed contents in Power."</string>
+    <string name="ui_2f531c2a7c57" formatted="false">"Add clock"</string>
+    <string name="ui_aa1e3c901a1f" formatted="false">"Add feed"</string>
+    <string name="ui_d1a0b329a72b" formatted="false">"Add item"</string>
+    <string name="ui_65db0c29ba4f" formatted="false">"Add subtask"</string>
+    <string name="ui_c15ee28680c2" formatted="false">"Add weather city"</string>
+    <string name="ui_5e5ac74681de" formatted="false">"Adult settings required"</string>
+    <string name="ui_0fdf485f5bfd" formatted="false">"Agenda"</string>
+    <string name="ui_6a2e39447e44" formatted="false">"Agenda date"</string>
+    <string name="ui_f700e2fb4728" formatted="false">"Alarms"</string>
+    <string name="ui_07be9dcc86b4" formatted="false">"Alert cancelled"</string>
+    <string name="ui_98fa60e5a53b" formatted="false">"Alert dismissed"</string>
+    <string name="ui_352c8007b320" formatted="false">"Alert dispatched"</string>
+    <string name="ui_34233e542b7b" formatted="false">"All day"</string>
+    <string name="ui_acce3d0e30f9" formatted="false">"All languages"</string>
+    <string name="ui_fe8bbe784d8d" formatted="false">"Allow exact alarms"</string>
+    <string name="ui_80c93d586f18" formatted="false">"Android could not open that settings page. Open halo permissions in system settings."</string>
+    <string name="ui_2fd417e87be4" formatted="false">"Approval covers this public source. It does not share your private tasks, notes or activity."</string>
+    <string name="ui_36b5537b70a1" formatted="false">"Approve this public source for Kids"</string>
+    <string name="ui_7e299402ffc9" formatted="false">"Article changed"</string>
+    <string name="ui_fd609b3cef55" formatted="false">"Back to saved source"</string>
+    <string name="ui_4ac7ffc63d2c" formatted="false">"CAP alerts"</string>
+    <string name="ui_c59794d2a679" formatted="false">"Cached source information cleared. Source settings are kept."</string>
+    <string name="ui_262e742d5c0e" formatted="false">"Cached · may be out of date"</string>
+    <string name="ui_14e6fd889347" formatted="false">"Calendar copy saved"</string>
+    <string name="ui_71c07e189e4d" formatted="false">"Calendar copy saved in Workspace. Choose a destination to export this exact copy."</string>
+    <string name="ui_f524f5ab52e5" formatted="false">"Calendar import finished. Existing event IDs were kept."</string>
+    <string name="ui_37c951113bba" formatted="false">"Cancel refresh"</string>
+    <string name="ui_19998e6db07b" formatted="false">"Cancel schedule"</string>
+    <string name="ui_292c06f0045a" formatted="false">"Category"</string>
+    <string name="ui_8baf30155fb4" formatted="false">"Changed source"</string>
+    <string name="ui_b536eac8fdac" formatted="false">"Changes affect only the selected occurrence. The remaining series is kept."</string>
+    <string name="ui_9cb2bba648f8" formatted="false">"Check scheduling again"</string>
+    <string name="ui_f6452ac0b669" formatted="false">"Check the dates, time zone, duration and recurrence limits. Your saved item has not been replaced."</string>
+    <string name="ui_d3fa8de85153" formatted="false">"Check the source name, public HTTPS address, language and refresh interval."</string>
+    <string name="ui_0cfe5674684f" formatted="false">"Choose a date in Agenda to edit, skip or complete one occurrence."</string>
+    <string name="ui_4b33f8d23c77" formatted="false">"Choose calendar events to export"</string>
+    <string name="ui_d788b7f1fd6f" formatted="false">"Choose cities from the offline catalogue. Clock times follow their time zones and daylight-saving rules."</string>
+    <string name="ui_343b5a9c7fd6" formatted="false">"Choose date"</string>
+    <string name="ui_89b2c11022de" formatted="false">"Choose sources on this phone. Only selected, enabled sources refresh in Power. Saved snapshots remain readable in Local."</string>
+    <string name="ui_144bd5340f8d" formatted="false">"Choose up to 200 events per file. If duplicate calendar UIDs exist, export one of those events at a time."</string>
+    <string name="ui_02360a05821d" formatted="false">"Choose weather city"</string>
+    <string name="ui_0c3ba6aa7359" formatted="false">"City coordinates are sent to Open-Meteo only when this selected source refreshes in Power."</string>
+    <string name="ui_ebf6794383b5" formatted="false">"City or country code"</string>
+    <string name="ui_5c8271c2e26b" formatted="false">"City search could not be opened. Try again."</string>
+    <string name="ui_ec25ca143d69" formatted="false">"Clear cached information"</string>
+    <string name="ui_bcf9858d075e" formatted="false">"Clear cached information?"</string>
+    <string name="ui_f7f51225b8b5" formatted="false">"Clear sky"</string>
+    <string name="ui_76c57847be24" formatted="false">"Clock name"</string>
+    <string name="ui_e48c24c7b063" formatted="false">"Clock removed. You can undo this change."</string>
+    <string name="ui_f9126d256e3d" formatted="false">"Complete task"</string>
+    <string name="ui_c5c7ea796b58" formatted="false">"Custom sources"</string>
+    <string name="ui_b36c2611dcdf" formatted="false">"Daily"</string>
+    <string name="ui_9e315fdf33e2" formatted="false">"Delete entire series"</string>
+    <string name="ui_280b10c89cc4" formatted="false">"Delete permanently"</string>
+    <string name="ui_c1b15a371248" formatted="false">"Delete permanently?"</string>
+    <string name="ui_54921b9f63d4" formatted="false">"Delivering alert"</string>
+    <string name="ui_045b87610cc6" formatted="false">"Delivery status"</string>
+    <string name="ui_8b631300b94c" formatted="false">"Delivery time missed"</string>
+    <string name="ui_1bafdb89429e" formatted="false">"Deselect source"</string>
+    <string name="ui_7eb09d26530b" formatted="false">"Discard edits and reload saved settings"</string>
+    <string name="ui_effbaffc6839" formatted="false">"Discard this edit?"</string>
+    <string name="ui_cfbecfd90a4c" formatted="false">"Dismiss alert"</string>
+    <string name="ui_621d129ab80a" formatted="false">"Does not repeat"</string>
+    <string name="ui_bb090d4cc6a0" formatted="false">"Drizzle"</string>
+    <string name="ui_e1cb6d30fa3f" formatted="false">"Due date"</string>
+    <string name="ui_1ec520bb9420" formatted="false">"Duration in seconds · 1–2678400"</string>
+    <string name="ui_43b49d7f3650" formatted="false">"Earlier item version · %1$d"</string>
+    <string name="ui_9916d68ae209" formatted="false">"Edit entire series"</string>
+    <string name="ui_9f84eeebf87f" formatted="false">"Edit item"</string>
+    <string name="ui_7a96fd3fa212" formatted="false">"Edit this occurrence"</string>
+    <string name="ui_d3a0604884bb" formatted="false">"Edited occurrence"</string>
+    <string name="ui_b5a82d62d82e" formatted="false">"Enable refresh"</string>
+    <string name="ui_14303aa0c4a0" formatted="false">"End date"</string>
+    <string name="ui_10213931412a" formatted="false">"End date · first day after the event"</string>
+    <string name="ui_f1f9b2e562d8" formatted="false">"End time · HH:mm"</string>
+    <string name="ui_059a63900027" formatted="false">"Ends %1$s"</string>
+    <string name="ui_673e24cc4953" formatted="false">"Exact alarm access is off. Android may deliver this later; allow exact alarms for precise timing"</string>
+    <string name="ui_82eeb5c27d89" formatted="false">"Expires %1$s"</string>
+    <string name="ui_08b44debb5e5" formatted="false">"Export calendar"</string>
+    <string name="ui_38375045ae44" formatted="false">"Find a city"</string>
+    <string name="ui_21c2385104dd" formatted="false">"Find a note"</string>
+    <string name="ui_3c991584d81f" formatted="false">"Find a parent task"</string>
+    <string name="ui_0d73d6e5f6b7" formatted="false">"Find sources"</string>
+    <string name="ui_7804f7a79a9e" formatted="false">"Finished"</string>
+    <string name="ui_14394e978d84" formatted="false">"Fog"</string>
+    <string name="ui_99703d295b39" formatted="false">"Follow the phone time zone when travelling"</string>
+    <string name="ui_096850154789" formatted="false">"Follows phone time zone · %1$s"</string>
+    <string name="ui_88c7286659b1" formatted="false">"Forecast time %1$s"</string>
+    <string name="ui_b2e855dc5f9a" formatted="false">"Freezing drizzle"</string>
+    <string name="ui_83a4965f99d0" formatted="false">"Freezing rain"</string>
+    <string name="ui_7d563032dbba" formatted="false">"Full-screen alarm settings"</string>
+    <string name="ui_b7e98e6fa83c" formatted="false">"Full-screen alarms are unavailable. Android can still show an allowed notification."</string>
+    <string name="ui_59d4638510cd" formatted="false">"halo-calendar.ics"</string>
+    <string name="ui_c723ea3e000c" formatted="false">"Heavy rain"</string>
+    <string name="ui_c4ebc6d4a583" formatted="false">"High"</string>
+    <string name="ui_dfa82a97b837" formatted="false">"History is trimmed to 60 briefs and 30 days when a new brief is saved. The first morning comparison remains fixed for its day."</string>
+    <string name="ui_dc2e399e3159" formatted="false">"Import calendar"</string>
+    <string name="ui_b44d9687e26c" formatted="false">"Import supported events"</string>
+    <string name="ui_2f48a681094a" formatted="false">"Import warning · item %1$d"</string>
+    <string name="ui_2198944e8b97" formatted="false">"Include in selected sources"</string>
+    <string name="ui_36e1bc89a841" formatted="false">"Individual occurrence changes"</string>
+    <string name="ui_229cf205c160" formatted="false">"Item %1$d was not imported"</string>
+    <string name="ui_bcc1735e5279" formatted="false">"Item moved to trash. You can undo this change."</string>
+    <string name="ui_ac8e92bca027" formatted="false">"Item saved. Delivery status is shown separately."</string>
+    <string name="ui_03feb5aba2e1" formatted="false">"Keep your plan on this phone. Saved items, delivery permissions and actual notification outcomes are shown separately."</string>
+    <string name="ui_9ddc8ca2935d" formatted="false">"Last refresh succeeded"</string>
+    <string name="ui_20a14fdcd2c8" formatted="false">"Last verified %1$s"</string>
+    <string name="ui_3c86ebf7e2ce" formatted="false">"Latest attempt %1$s"</string>
+    <string name="ui_988c8160b754" formatted="false">"Latvia"</string>
+    <string name="ui_ca3c7ff04ba5" formatted="false">"Leave both end limits empty to keep repeating. Monthly dates absent from a month are skipped."</string>
+    <string name="ui_b9ab3f71c623" formatted="false">"Linked notes"</string>
+    <string name="ui_9e7c966a2d5b" formatted="false">"Local keeps saved information without internet requests. Android may delay background refreshes to save battery."</string>
+    <string name="ui_91bc2c4ad359" formatted="false">"Local time and the places you choose."</string>
+    <string name="ui_4ba8844456bb" formatted="false">"Local · No internet refresh. Saved external information may be out of date."</string>
+    <string name="ui_15b61974b270" formatted="false">"Location"</string>
+    <string name="ui_f793de205ead" formatted="false">"Low"</string>
+    <string name="ui_a14e12292079" formatted="false">"Low %1$s · High %2$s"</string>
+    <string name="ui_bd7a32643ade" formatted="false">"Mainly clear"</string>
+    <string name="ui_66cfb935cb3b" formatted="false">"Minutes before · 0–10080"</string>
+    <string name="ui_15c3bef016a4" formatted="false">"Missing clock"</string>
+    <string name="ui_9800f914f466" formatted="false">"Missing source"</string>
+    <string name="ui_9b11f6b707d2" formatted="false">"Monthly"</string>
+    <string name="ui_6d090914f6d7" formatted="false">"Move to trash?"</string>
+    <string name="ui_685e68475013" formatted="false">"Mute in briefs and proactive suggestions"</string>
+    <string name="ui_7d6bf2f6bcaa" formatted="false">"Muted in briefs. Selected sources can still refresh."</string>
+    <string name="ui_97bdc5cf7d08" formatted="false">"Muted sources may still refresh when selected. Disable refresh to stop updates."</string>
+    <string name="ui_b1483fad94db" formatted="false">"Network preview needs Power and permitted connected services. You can still save the source locally."</string>
+    <string name="ui_b84cad41b231" formatted="false">"New item"</string>
+    <string name="ui_2b6a38b89f9c" formatted="false">"Next day"</string>
+    <string name="ui_f2eef9a981e4" formatted="false">"Next eligible refresh %1$s"</string>
+    <string name="ui_23bbb52d3a94" formatted="false">"No local information is available from this source yet."</string>
+    <string name="ui_1daa9a3d7a61" formatted="false">"No matching city. Try another spelling or a larger nearby city."</string>
+    <string name="ui_d2446154a2fd" formatted="false">"No matching items. Add your first item or change the search."</string>
+    <string name="ui_1e81a116b180" formatted="false">"No matching sources. Change the filters or add a feed."</string>
+    <string name="ui_57f84eca4e56" formatted="false">"No network connection · saved information is kept"</string>
+    <string name="ui_7d4f1a0fd762" formatted="false">"No parent task"</string>
+    <string name="ui_e80fcee71eef" formatted="false">"No saved information yet. Select this source and refresh it when Power is enabled."</string>
+    <string name="ui_8a7c6f2af461" formatted="false">"No saved snapshot"</string>
+    <string name="ui_425525eb2069" formatted="false">"No supported events in this saved calendar."</string>
+    <string name="ui_760b2ce4ae0a" formatted="false">"No unexpired notices in the saved snapshot. This does not confirm that no warnings exist."</string>
+    <string name="ui_de6cb7a78259" formatted="false">"No usable preview was received. Check the address or try again after the refresh delay."</string>
+    <string name="ui_64d7055a9fd6" formatted="false">"Not selected · this source does not refresh."</string>
+    <string name="ui_cb0531228e48" formatted="false">"Notes remain in Workspace. Removing a link does not delete the note."</string>
+    <string name="ui_991b4a99352a" formatted="false">"Nothing planned for this day. Add an item or choose another date."</string>
+    <string name="ui_ee6dfd87e5a5" formatted="false">"Notification permission needed"</string>
+    <string name="ui_fd6dcc1ee65f" formatted="false">"Notifications are off. The item is saved, but Android cannot alert you"</string>
+    <string name="ui_a5b3a74811e6" formatted="false">"Notify me"</string>
+    <string name="ui_7c25d05a2551" formatted="false">"Number of occurrences · optional, 1–10000"</string>
+    <string name="ui_cc9b0ea41697" formatted="false">"Official notices"</string>
+    <string name="ui_f1fa89664414" formatted="false">"Only new event IDs are added. Existing items and items in Trash are kept. Embedded alarms and attachments are not imported."</string>
+    <string name="ui_b4682f392236" formatted="false">"Open agenda"</string>
+    <string name="ui_4395e0a14d6f" formatted="false">"Open linked note"</string>
+    <string name="ui_c6885c8ebcb2" formatted="false">"Open notification settings"</string>
+    <string name="ui_22b3cc130f64" formatted="false">"Open publisher in browser"</string>
+    <string name="ui_de5cc828b63c" formatted="false">"Open-Meteo"</string>
+    <string name="ui_8438092fcd2e" formatted="false">"Opening a publisher website needs Power. The saved article remains available here."</string>
+    <string name="ui_f7f05a229030" formatted="false">"Or repeat until · YYYY-MM-DD"</string>
+    <string name="ui_721c455d6dc4" formatted="false">"Overcast"</string>
+    <string name="ui_3b46da8e192a" formatted="false">"Overlaps another event"</string>
+    <string name="ui_d4382ebde46d" formatted="false">"Parent item"</string>
+    <string name="ui_fb8d859156cd" formatted="false">"Parent task"</string>
+    <string name="ui_f7be32278df9" formatted="false">"Partly cloudy"</string>
+    <string name="ui_8537d5798d8a" formatted="false">"Power · Only selected and enabled sources may refresh."</string>
+    <string name="ui_b0cb10bd7ef9" formatted="false">"Preparing delivery"</string>
+    <string name="ui_5f54233cc4da" formatted="false">"Preview feed"</string>
+    <string name="ui_c7ae4098f4b4" formatted="false">"Preview is unavailable in Local. You can save the address now and check it later in Power."</string>
+    <string name="ui_9aa06e408751" formatted="false">"Preview received. It is not saved as a source snapshot."</string>
+    <string name="ui_e4a1e89ee1db" formatted="false">"Previous day"</string>
+    <string name="ui_d60dbba07922" formatted="false">"Priority"</string>
+    <string name="ui_01db7cb4a9af" formatted="false">"Public HTTPS feed address"</string>
+    <string name="ui_e041a007fc0a" formatted="false">"Public iCalendar"</string>
+    <string name="ui_70041b75a185" formatted="false">"Published %1$s"</string>
+    <string name="ui_21378545892f" formatted="false">"Publisher"</string>
+    <string name="ui_654c90df0e2c" formatted="false">"RSS or Atom feed"</string>
+    <string name="ui_a6d20aa6a4c7" formatted="false">"Rain"</string>
+    <string name="ui_0156925b1586" formatted="false">"Rain showers"</string>
+    <string name="ui_62fbd278dc0a" formatted="false">"Read saved article"</string>
+    <string name="ui_b18e2648e1c0" formatted="false">"Refresh budget reached"</string>
+    <string name="ui_61eb37675858" formatted="false">"Refresh cancelled"</string>
+    <string name="ui_08cbbd3def78" formatted="false">"Refresh did not replace the last saved information. Check the source status below."</string>
+    <string name="ui_e7fc419dd1d8" formatted="false">"Refresh disabled"</string>
+    <string name="ui_744220d57cc7" formatted="false">"Refresh disabled · the saved snapshot is kept."</string>
+    <string name="ui_65283c4bb3a1" formatted="false">"Refresh external sources in Power. Saved information stays available in Local."</string>
+    <string name="ui_d2444a112f9e" formatted="false">"Refresh failed · saved information is kept"</string>
+    <string name="ui_80a5d3726c12" formatted="false">"Refresh interval in minutes · 15–1440"</string>
+    <string name="ui_5f6f7a8c0a5a" formatted="false">"Refresh needs Power and permitted connected services"</string>
+    <string name="ui_684496500f6c" formatted="false">"Refresh source"</string>
+    <string name="ui_f92e2ad582c0" formatted="false">"Refreshing"</string>
+    <string name="ui_b1af742021ca" formatted="false">"Remind me about this article"</string>
+    <string name="ui_bc0c3c712528" formatted="false">"Reminder date"</string>
+    <string name="ui_7971dd752669" formatted="false">"Reminders"</string>
+    <string name="ui_952b4797cb71" formatted="false">"Remove a clock before adding another."</string>
+    <string name="ui_f55296180370" formatted="false">"Remove source"</string>
+    <string name="ui_2ee10bf411a6" formatted="false">"Remove this source?"</string>
+    <string name="ui_eb36841b0dcf" formatted="false">"Remove unavailable note link"</string>
+    <string name="ui_169fce45909a" formatted="false">"Rename clock"</string>
+    <string name="ui_91ada2114c37" formatted="false">"Reopen task"</string>
+    <string name="ui_f4ecef2a1f22" formatted="false">"Repeat interval · 1–366"</string>
+    <string name="ui_d7d1947e0184" formatted="false">"Repeating series · %1$s"</string>
+    <string name="ui_d68565a6b0dc" formatted="false">"Reset individual occurrence changes if the series schedule changes"</string>
+    <string name="ui_1a8fe8ae37c2" formatted="false">"Restore original occurrence"</string>
+    <string name="ui_cdf8b57b1a60" formatted="false">"Retrieved %1$s"</string>
+    <string name="ui_cd0cb9e6700f" formatted="false">"Review calendar import"</string>
+    <string name="ui_4c021b8aa684" formatted="false">"Save calendar copy"</string>
+    <string name="ui_ac7f6759f63e" formatted="false">"Save reminder"</string>
+    <string name="ui_36d26ce8c3f6" formatted="false">"Save source"</string>
+    <string name="ui_f83d22844f3c" formatted="false">"Saved clocks could not be opened. Your data is kept; try again."</string>
+    <string name="ui_7d1410d40d67" formatted="false">"Saved information with clear sources and timestamps."</string>
+    <string name="ui_74284b4b54f3" formatted="false">"Saved snapshot is current"</string>
+    <string name="ui_91e0f81f39e8" formatted="false">"Saved. Android scheduling is still being prepared, or no future alert is due."</string>
+    <string name="ui_3275da5f99d2" formatted="false">"Scheduled approximately"</string>
+    <string name="ui_731735485ceb" formatted="false">"Scheduled precisely"</string>
+    <string name="ui_5c73921f042a" formatted="false">"Science and space"</string>
+    <string name="ui_32ebf3eb5cc8" formatted="false">"Search a city to see its time. No internet or location permission is needed."</string>
+    <string name="ui_77fe1f427465" formatted="false">"Search your plan"</string>
+    <string name="ui_6aff0319286e" formatted="false">"Select and enable the source, or wait for the current action to finish."</string>
+    <string name="ui_140b762af5a2" formatted="false">"Select source"</string>
+    <string name="ui_04f3404c72f5" formatted="false">"Selected sources"</string>
+    <string name="ui_fb6f0c89eb3c" formatted="false">"Skip this occurrence"</string>
+    <string name="ui_e777f6963859" formatted="false">"Snooze %1$d minutes"</string>
+    <string name="ui_88096584e4a8" formatted="false">"Snoozed"</string>
+    <string name="ui_4f946da92e82" formatted="false">"Snow"</string>
+    <string name="ui_26ecb3538285" formatted="false">"Snow showers"</string>
+    <string name="ui_780999c3fecb" formatted="false">"Some calendar entries need review and were omitted. The snapshot does not include unsupported recurrence rules."</string>
+    <string name="ui_672d26be45e5" formatted="false">"Source added. A successful refresh is required before its contents are available."</string>
+    <string name="ui_a07288114728" formatted="false">"Source and its local snapshot removed. Organizer items and notes are kept."</string>
+    <string name="ui_15d05a0adeb6" formatted="false">"Source confirmed unchanged"</string>
+    <string name="ui_ee4dddd703d3" formatted="false">"Source language · en, ru, lv or another code"</string>
+    <string name="ui_1939968f47d1" formatted="false">"Source name"</string>
+    <string name="ui_8d633cbc8148" formatted="false">"Source removed"</string>
+    <string name="ui_389019cf3066" formatted="false">"Source settings"</string>
+    <string name="ui_bdde92811926" formatted="false">"Source settings saved. Selection does not fetch in Local."</string>
+    <string name="ui_5c0178f26973" formatted="false">"Source updated. Retrieval and verification times are shown below."</string>
+    <string name="ui_8bcead3a65c2" formatted="false">"Sources could not be opened. Your saved choices are kept; try again."</string>
+    <string name="ui_8169693101a4" formatted="false">"Start date"</string>
+    <string name="ui_4b9d37eba6de" formatted="false">"Stop timer"</string>
+    <string name="ui_b3a60e61a523" formatted="false">"Tasks"</string>
+    <string name="ui_7beb41946e0f" formatted="false">"Tasks without a due date"</string>
+    <string name="ui_3169ce6442ac" formatted="false">"Technology"</string>
+    <string name="ui_707f4ad79b85" formatted="false">"Temperature unavailable"</string>
+    <string name="ui_c69b19ae1842" formatted="false">"The action finished, but the updated view could not be loaded. Retry to view the saved result."</string>
+    <string name="ui_33a0bd94f0dd" formatted="false">"The clock changed or could not be saved. Reopen it and try again."</string>
+    <string name="ui_01e878fcb764" formatted="false">"The plan shared with you."</string>
+    <string name="ui_9777239200e7" formatted="false">"The publisher supplied a title only. Open the publisher to read more."</string>
+    <string name="ui_a912c5da6c1f" formatted="false">"The source action could not finish. Your last saved information is kept."</string>
+    <string name="ui_071e3c26c417" formatted="false">"The timer starts when you save it."</string>
+    <string name="ui_c9a01dc2f737" formatted="false">"This action could not finish. Your saved data is kept; reopen and try again."</string>
+    <string name="ui_9e6d77cab031" formatted="false">"This article is no longer in the saved feed. Open the source for current saved items."</string>
+    <string name="ui_7e56049e35b6" formatted="false">"This erases this item and its occurrence history. It cannot be undone. Linked notes are kept."</string>
+    <string name="ui_ca258fc6b157" formatted="false">"This item changed, has remaining subtasks or needs a recurrence decision. Reopen it and review before trying again."</string>
+    <string name="ui_5bf941f58948" formatted="false">"This item is no longer available here. It may have been removed or its sharing changed."</string>
+    <string name="ui_4b2c9eabaf9b" formatted="false">"This linked item changed or is no longer available. Update the brief to see current information."</string>
+    <string name="ui_b8e55e676964" formatted="false">"This linked item is no longer available. Refresh the local source to update its list."</string>
+    <string name="ui_15bccc663119" formatted="false">"This linked note is unavailable. It may have been moved to trash."</string>
+    <string name="ui_f1f3c6717092" formatted="false">"This occurrence"</string>
+    <string name="ui_168fc6a31b9d" formatted="false">"This permanently removes its settings and cached content from halo. Organizer items, notes and other sources are kept. Deselect it instead if you want to keep its settings."</string>
+    <string name="ui_1a19a916c1e7" formatted="false">"This removes the entire series and cancels its scheduled alerts. You can restore it from Trash."</string>
+    <string name="ui_45cb8405f1f8" formatted="false">"This removes the item and cancels its scheduled alert. You can restore it from Trash."</string>
+    <string name="ui_ec8c160428a3" formatted="false">"This removes the saved snapshot and invalidates its old brief links. A selected source can fetch again in Power. Its settings are kept."</string>
+    <string name="ui_16ac1039ecad" formatted="false">"This saved copy has its own version. Later organizer edits will not change the exported bytes."</string>
+    <string name="ui_5859b3145aac" formatted="false">"This source changed. Reopen its settings before saving again."</string>
+    <string name="ui_140e69c55e4e" formatted="false">"This source is unavailable or is no longer shared with this experience."</string>
+    <string name="ui_55d0c82e67ce" formatted="false">"This source returned no articles."</string>
+    <string name="ui_b0af52cab2cd" formatted="false">"This website could not be opened. The saved information is kept."</string>
+    <string name="ui_31a9beb9609b" formatted="false">"Thunderstorm"</string>
+    <string name="ui_9d42e22b9fa0" formatted="false">"Thunderstorm with hail"</string>
+    <string name="ui_767b663a1557" formatted="false">"Time · HH:mm"</string>
+    <string name="ui_26fac15e94c7" formatted="false">"Timer due · waiting for Android delivery"</string>
+    <string name="ui_cca94c56deb8" formatted="false">"Timers"</string>
+    <string name="ui_c560122ac470" formatted="false">"Trash"</string>
+    <string name="ui_4ff140671613" formatted="false">"Trash is empty."</string>
+    <string name="ui_6b83c3f4d833" formatted="false">"Undo removal"</string>
+    <string name="ui_bc6e73680a24" formatted="false">"Unsupported local item"</string>
+    <string name="ui_8bc06944ab9a" formatted="false">"Unsupported timer action"</string>
+    <string name="ui_2e138668a392" formatted="false">"Up to 24 saved clocks. City data: GeoNames, CC BY 4.0."</string>
+    <string name="ui_1b015904cc17" formatted="false">"Urgent"</string>
+    <string name="ui_69316b17e5c8" formatted="false">"Use a valid date and 24-hour HH:mm time."</string>
+    <string name="ui_a8914691f595" formatted="false">"Use phone time zone"</string>
+    <string name="ui_5971c1e1acff" formatted="false">"Waiting before the next refresh"</string>
+    <string name="ui_e767bffd798c" formatted="false">"Weather condition unavailable"</string>
+    <string name="ui_2975132481a7" formatted="false">"Weekly"</string>
+    <string name="ui_78ae647dc554" formatted="false">"World"</string>
+    <string name="ui_7c020b91b876" formatted="false">"World clocks"</string>
+    <string name="ui_6e69b59ed34d" formatted="false">"Yearly"</string>
+    <string name="ui_777b4b64dc80" formatted="false">"Your calendar, tasks and time, saved on this phone."</string>
+    <string name="ui_4b76b34e2df1" formatted="false">"Your organizer could not be opened. Your saved data is kept; try again."</string>
+    <string name="ui_3a907221c18a" formatted="false">"Your saved item is kept. The changes in this form will be discarded."</string>
+    <string name="ui_042935db0ee2" formatted="false">"%1$d events added; %2$d existing event IDs kept."</string>
+    <string name="ui_5c9ad4eb9514" formatted="false">"%1$d items are no longer in the current selected information."</string>
+    <string name="ui_7a61296ae7d3" formatted="false">"%1$d supported events are ready to import."</string>
+    <string name="ui_e819fe050bdf" formatted="false">"%1$d%% chance of precipitation"</string>
+    <string name="ui_f3b1c63149c7" formatted="false">"All day · end date is exclusive"</string>
+    <string name="ui_844461c78b78" formatted="false">"Android schedule cancellation is still pending. The item stays in Trash. Check scheduling again, then retry permanent removal."</string>
+    <string name="ui_4f85bd6f529a" formatted="false">"Calendar export"</string>
+    <string name="ui_c17e79e63456" formatted="false">"Cancelled event"</string>
+    <string name="ui_53eb187b3809" formatted="false">"Cancelled occurrence"</string>
+    <string name="ui_57a9b5958b87" formatted="false">"Changed occurrence"</string>
+    <string name="ui_cea4d2e010b8" formatted="false">"Clear selection"</string>
+    <string name="ui_a706a8c0b3b0" formatted="false">"Find an organizer item"</string>
+    <string name="ui_2b39e3f2daa6" formatted="false">"Follows the phone time zone"</string>
+    <string name="ui_01f7b5dc221c" formatted="false">"No changes found in the sources that could be compared. Some sources are unavailable."</string>
+    <string name="ui_2c7c4805b5cb" formatted="false">"Nothing changed since the saved morning comparison."</string>
+    <string name="ui_d6e97dd2a5d4" formatted="false">"Occurrences · %1$d"</string>
+    <string name="ui_fa1cf1a69afa" formatted="false">"Original occurrence %1$s"</string>
+    <string name="ui_5a3602bd4865" formatted="false">"Repeating series · %1$s · interval %2$d"</string>
+    <string name="ui_0d176824dbe3" formatted="false">"Repeats until %1$s"</string>
+    <string name="ui_315f4e5915aa" formatted="false">"Selected occurrence"</string>
+    <string name="ui_e41a55315538" formatted="false">"Showing the first 100 matching items. Refine your search to find more."</string>
+    <string name="ui_9f6923517f72" formatted="false">"Some selected events changed or were removed. Clear the selection and review the current list."</string>
+    <string name="ui_d28cf18dbe82" formatted="false">"Stop sharing all organizer items"</string>
+    <string name="ui_9cdeddc911cd" formatted="false">"The date above is the series start. Saved occurrence changes are listed below."</string>
+    <string name="ui_fd831af0c14e" formatted="false">"The selection contains multiple versions of the same calendar event. Select one version of each event or export the calendars separately."</string>
+    <string name="ui_c66c9db99f62" formatted="false">"The source has not been added. The details in this form will be discarded."</string>
+    <string name="ui_1f70a85d80f9" formatted="false">"This article or its source changed. Cancel this form and reopen the saved article to review it before creating a reminder."</string>
+    <string name="ui_a84c61c6818a" formatted="false">"This saved occurrence changed or is no longer available. Open the source to review its current calendar."</string>
+    <string name="ui_90c2d4050282" formatted="false">"Time zone · for example Europe/Riga"</string>
+    <string name="ui_bc181c84f941" formatted="false">"Unavailable saved item · %1$s"</string>
+    <string name="ui_ba423a46403c" formatted="false">"Add task"</string>
+    <string name="ui_7ee2b75023d3" formatted="false">"Add to your plan"</string>
+    <string name="ui_530b2020e211" formatted="false">"Alarm controls"</string>
+    <string name="ui_f55c19a63ed4" formatted="false">"Alarms and timers"</string>
+    <string name="ui_015c173e9395" formatted="false">"Alert delivered"</string>
+    <string name="ui_205b1819fb82" formatted="false">"All matching items"</string>
+    <string name="ui_423775b6a593" formatted="false">"All priorities"</string>
+    <string name="ui_2a77f7acd564" formatted="false">"All selected feeds"</string>
+    <string name="ui_4b99f563992d" formatted="false">"Android controls refresh timing. Clock display is managed by the launcher; other information is a saved snapshot. Resize the widget for more details."</string>
+    <string name="ui_d2c6dfd98588" formatted="false">"Apply to this card"</string>
+    <string name="ui_1099f91164f6" formatted="false">"Apply to this widget"</string>
+    <string name="ui_9f3333846284" formatted="false">"Approximate scheduling"</string>
+    <string name="ui_2399216958e6" formatted="false">"Ask a grown-up to configure this widget."</string>
+    <string name="ui_b0799603a9f9" formatted="false">"Battery unavailable"</string>
+    <string name="ui_87df86236528" formatted="false">"Build your day from saved information"</string>
+    <string name="ui_f50ef27c2148" formatted="false">"Choose a saved weather source"</string>
+    <string name="ui_2eb4d5162b77" formatted="false">"Choose clock city"</string>
+    <string name="ui_84ffa162f96b" formatted="false">"Clock and weather"</string>
+    <string name="ui_0ef695754dea" formatted="false">"Configure this card"</string>
+    <string name="ui_55fd1e26c214" formatted="false">"Configure widget"</string>
+    <string name="ui_a1cbb539ae49" formatted="false">"Dashboard sections"</string>
+    <string name="ui_ec6aaaa9fcf4" formatted="false">"Everyday dashboard"</string>
+    <string name="ui_de3652baa803" formatted="false">"Exact alarm scheduled"</string>
+    <string name="ui_45450c26be45" formatted="false">"First selected weather city"</string>
+    <string name="ui_2eb6a61480cf" formatted="false">"Follow halo"</string>
+    <string name="ui_25da9b3c491d" formatted="false">"halo widget"</string>
+    <string name="ui_916e79e9ad73" formatted="false">"Headline source"</string>
+    <string name="ui_962799df75bc" formatted="false">"Item filter"</string>
+    <string name="ui_e06ac8463ab2" formatted="false">"Last refresh failed"</string>
+    <string name="ui_4f22b6ff9df0" formatted="false">"Manage sources and weather cities"</string>
+    <string name="ui_e36cbd0877de" formatted="false">"Next seven days"</string>
+    <string name="ui_9ea6e7b8e45f" formatted="false">"No active alarms or timers"</string>
+    <string name="ui_25b9f6af179c" formatted="false">"No matching active items"</string>
+    <string name="ui_17df65a98f41" formatted="false">"No saved brief yet"</string>
+    <string name="ui_d4c0e47aebe1" formatted="false">"No saved headlines from selected sources"</string>
+    <string name="ui_beeb64080e45" formatted="false">"No upcoming events in the next seven days"</string>
+    <string name="ui_e8b48321eee0" formatted="false">"Notifications blocked"</string>
+    <string name="ui_0d840153ae44" formatted="false">"Oldest saved"</string>
+    <string name="ui_431b08d0cb30" formatted="false">"Oldest selected snapshot"</string>
+    <string name="ui_51d530448a96" formatted="false">"On battery"</string>
+    <string name="ui_81738b9d656a" formatted="false">"Open halo to load this widget"</string>
+    <string name="ui_6c0b22fab17d" formatted="false">"Personal titles and details stay inside halo. The widget shows safe summaries and opens the original item."</string>
+    <string name="ui_c435db5deab4" formatted="false">"Phone time zone"</string>
+    <string name="ui_e54cc8c8a674" formatted="false">"Priority filter"</string>
+    <string name="ui_82f47a54326f" formatted="false">"Private item"</string>
+    <string name="ui_6f129fe45c02" formatted="false">"Refine the search to find more items."</string>
+    <string name="ui_e466bfe6c68c" formatted="false">"Saved at"</string>
+    <string name="ui_bcfff71cf87c" formatted="false">"Saved information is unavailable"</string>
+    <string name="ui_9505a526725d" formatted="false">"Saved snapshots are current"</string>
+    <string name="ui_b738a691cf68" formatted="false">"Scheduling failed"</string>
+    <string name="ui_d25c80711ae7" formatted="false">"Scheduling pending"</string>
+    <string name="ui_2cf21f3c5382" formatted="false">"Selected headlines"</string>
+    <string name="ui_060b0576a013" formatted="false">"Set alarm"</string>
+    <string name="ui_1976f9f76209" formatted="false">"Some saved headlines may be out of date"</string>
+    <string name="ui_5e5894bfab2a" formatted="false">"Source selection does not fetch in Local. Selected external sources refresh only in Power."</string>
+    <string name="ui_4fcf31d41403" formatted="false">"Start timer"</string>
+    <string name="ui_7ffc664a9769" formatted="false">"Tasks and reminders"</string>
+    <string name="ui_7e021da8fc34" formatted="false">"The configured item is unavailable. Choose another item or all matching items."</string>
+    <string name="ui_a5fa0596f337" formatted="false">"The selected source is unavailable. Choose another source."</string>
+    <string name="ui_5cbc6ed3779a" formatted="false">"These card settings apply when you save the Screen layout."</string>
+    <string name="ui_d4eead7e1b4c" formatted="false">"This widget changed or its item is unavailable. Open halo and review the widget."</string>
+    <string name="ui_1222ccb800f1" formatted="false">"This widget or its source changed. Cancel and reopen configuration to review current settings."</string>
+    <string name="ui_8d691136332e" formatted="false">"Timer controls"</string>
+    <string name="ui_2f4ddffe07c3" formatted="false">"Timer paused"</string>
+    <string name="ui_bf584f968f98" formatted="false">"Upcoming event"</string>
+    <string name="ui_22b699fdffe1" formatted="false">"Visible items"</string>
+    <string name="ui_e7f20bbe1124" formatted="false">"Weather source"</string>
+    <string name="ui_80d83ba4b502" formatted="false">"Widget settings could not be opened. Your saved settings are kept."</string>
+    <string name="ui_70933efc8e94" formatted="false">"Widget theme"</string>
+    <string name="ui_dcf7b3e00265" formatted="false">"Overdue in the last 30 days"</string>
+    <string name="ui_09d2ea5a523b" formatted="false">"Series details"</string>
+    <string name="ui_d9e659733eb7" formatted="false">"This occurrence changed or was cancelled. The series details are shown below."</string>
+    <string name="ui_2b3b5252c6fc" formatted="false">"Reload saved data"</string>
+    <string name="ui_df3347a4673d" formatted="false">"Saved information could not be opened. Open halo and try again."</string>
+    <string name="ui_8bb61f66a0b4" formatted="false">"Reconfigure this card to use its current settings."</string>
+    <string name="ui_6b02e0d363a4" formatted="false">"Added"</string>
+    <string name="ui_a251c18205f1" formatted="false">"Cached"</string>
+    <string name="ui_22b693223fcb" formatted="false">"Charging"</string>
+    <string name="ui_ba6a6869f9fd" formatted="false">"Daily brief"</string>
+    <string name="ui_9d74727714db" formatted="false">"Dismissed"</string>
+    <string name="ui_cebf7f1f504e" formatted="false">"Headlines"</string>
+    <string name="ui_967533ec1d19" formatted="false">"Last attempt"</string>
+    <string name="ui_3d86eb082e36" formatted="false">"Missed"</string>
+    <string name="ui_ca3a4f99aefd" formatted="false">"Next refresh eligible"</string>
+    <string name="ui_8a7356bb2722" formatted="false">"No saved weather yet"</string>
+    <string name="ui_77d8f0e37907" formatted="false">"Refresh in progress"</string>
+    <string name="ui_5c1a17bbf4a2" formatted="false">"Sections appear in this order"</string>
+    <string name="ui_e33c20272fc4" formatted="false">"The plan is too large for a card. Open Organizer."</string>
+    <string name="ui_fd4d3e289ab7" formatted="false">"Applying Screen cards replaces its current layout. You can undo the layout change in Screen. Android launcher placement remains your choice."</string>
+    <string name="ui_f28716b8f207" formatted="false">"Ask a grown-up to choose sources and cards. You can continue setup without changing them."</string>
+    <string name="ui_7b98f4d03ee2" formatted="false">"Choose a valid date between 1970 and 2199."</string>
+    <string name="ui_1e0ab92b61b6" formatted="false">"Choose city offline"</string>
+    <string name="ui_0f9ce1f41d25" formatted="false">"Choose initial Screen cards"</string>
+    <string name="ui_cdf7518f34f0" formatted="false">"Everyday choices saved. You can change sources and cards later."</string>
+    <string name="ui_0f99b988cf35" formatted="false">"Everyday setup could not be opened. Your saved choices are kept."</string>
+    <string name="ui_a32b5402ddb2" formatted="false">"Fetch preview in Power"</string>
+    <string name="ui_e32a83ec6687" formatted="false">"Find a related item"</string>
+    <string name="ui_d9444a7a3f3d" formatted="false">"Manage in its instrument"</string>
+    <string name="ui_7c170d76ee12" formatted="false">"No saved preview"</string>
+    <string name="ui_488fdd7891f8" formatted="false">"No weather city selected"</string>
+    <string name="ui_c4a662538496" formatted="false">"Open related item"</string>
+    <string name="ui_5edcaf55f4d8" formatted="false">"Preview shows saved source settings. Fetching a preview is optional and requires Power."</string>
+    <string name="ui_99e15fdbef0d" formatted="false">"Preview source"</string>
+    <string name="ui_39f9aeef2311" formatted="false">"Refresh interval"</string>
+    <string name="ui_67205b0e06a4" formatted="false">"Related items stay in their original instrument. Removing a link does not delete them."</string>
+    <string name="ui_4145a3de295e" formatted="false">"Related notes, plans and activity"</string>
+    <string name="ui_4537d888c2e5" formatted="false">"Reload saved choices"</string>
+    <string name="ui_4953f8970948" formatted="false">"Remove link"</string>
+    <string name="ui_77acfc3c9b01" formatted="false">"Remove weather city"</string>
+    <string name="ui_38d3b2dfbe8c" formatted="false">"Save everyday choices"</string>
+    <string name="ui_2d8eef71a905" formatted="false">"Source category"</string>
+    <string name="ui_b42d7c19ae1d" formatted="false">"Source choices were saved. The Screen layout changed or could not be saved. Review saved choices before trying again."</string>
+    <string name="ui_088b23e3327d" formatted="false">"Source language"</string>
+    <string name="ui_1e00736c8575" formatted="false">"These choices changed or could not be saved. Reload saved choices, review them and try again."</string>
+    <string name="ui_6714cc14f2b5" formatted="false">"This action could not finish. Saved choices are kept; review the current mode and try again."</string>
+    <string name="ui_b105ec460f5d" formatted="false">"This related item is unavailable. Reopen its instrument to review current information."</string>
+    <string name="ui_bcbd0132fce6" formatted="false">"Use these cards on Screen"</string>
+    <string name="ui_d9a53fd129e6" formatted="false">"View item activity"</string>
+    <string name="ui_83beb7eac7b3" formatted="false">"Weather city"</string>
+    <string name="ui_d4e658980d3d" formatted="false">"World clock"</string>
+    <string name="ui_c4b13f9ef80d" formatted="false">"Your clock, organizer and daily brief work in Local. External sources are optional; only selected sources refresh in Power."</string>
+    <string name="ui_b5b35eb8c85a" formatted="false">"Your day"</string>
+    <string name="ui_37a6f0ef32d6" formatted="false">"A real source preview was retrieved. Saving your choices is a separate step."</string>
+    <string name="ui_08e56a01ccaa" formatted="false">"Your day, your choices"</string>
+    <string name="ui_3fc4e2f241db" formatted="false">"Everyday sources and cards"</string>
+    <string name="ui_995a85556012" formatted="false">"Choose sources, city and initial Screen cards."</string>
+    <string name="ui_ab7250aaa557" formatted="false">"Daily briefs"</string>
+    <string name="ui_2e602c410819" formatted="false">"Saved sources"</string>
+    <string name="ui_9d27d74673ab" formatted="false">"Events, tasks, reminders, alarms and timers"</string>
+    <string name="ui_fde27b724d15" formatted="false">"Build and read a brief from saved information"</string>
+    <string name="ui_e5dba5f71d7f" formatted="false">"Time in your saved cities"</string>
+    <string name="ui_1265dc291752" formatted="false">"Choose saved weather, news and public calendars"</string>
+    <string name="ui_9c04c994c776" formatted="false">"Everyday items could not be loaded. Your saved information is kept."</string>
+    <string name="ui_52deea4929d9" formatted="false">"This item changed. Open its instrument and review the current information."</string>
+    <string name="ui_4e673b58d0e1" formatted="false">"Organizer item saved"</string>
+    <string name="ui_bf41cbd001bb" formatted="false">"Local record changed. Delivery status is shown in Organizer."</string>
+    <string name="ui_92dcde024203" formatted="false">"A restored subtask needs its active parent. Restore that parent too or keep the local plan."</string>
+    <string name="ui_5e88821cb6d6" formatted="false">"Read this Screen card configuration"</string>
+    <string name="ui_e6cf4db3cafb" formatted="false">"Find organizer items"</string>
+    <string name="ui_f5131bb42ed4" formatted="false">"Read organizer item"</string>
+    <string name="ui_de0c5bb61ec7" formatted="false">"Create organizer item"</string>
+    <string name="ui_64ba9dc4054a" formatted="false">"Edit organizer item"</string>
+    <string name="ui_a09334173b27" formatted="false">"Update organizer item"</string>
+    <string name="ui_7a5c78cd530c" formatted="false">"Update one occurrence"</string>
+    <string name="ui_a67b175b0041" formatted="false">"Manage alert delivery"</string>
+    <string name="ui_43e4afaa0a2f" formatted="false">"Read world clocks"</string>
+    <string name="ui_45b2eaf1a5f9" formatted="false">"Save world clock"</string>
+    <string name="ui_23f6a0d9d6b3" formatted="false">"Arrange world clocks"</string>
+    <string name="ui_368fc8540a43" formatted="false">"Read source catalogue"</string>
+    <string name="ui_d3cfeed74118" formatted="false">"Read saved source"</string>
+    <string name="ui_379e914964fa" formatted="false">"Preview public source"</string>
+    <string name="ui_411e5239c33f" formatted="false">"Save source settings"</string>
+    <string name="ui_d68ebd7c51a1" formatted="false">"Manage source"</string>
+    <string name="ui_78e67cc0e02b" formatted="false">"Read daily briefs"</string>
+    <string name="ui_b80dca3f22f6" formatted="false">"Build or read a brief"</string>
+    <string name="ui_d6f211f8864a" formatted="false">"Change brief settings"</string>
+    <string name="ui_eff0c244cb71" formatted="false">"Open daily tool"</string>
+    <string name="ui_ae51e8d0119f" formatted="false">"Read launcher widgets"</string>
+    <string name="ui_71f10b9aa5df" formatted="false">"Configure launcher widget"</string>
+    <string name="ui_92ad7a770d5a" formatted="false">"Add launcher widget"</string>
+    <string name="ui_b0c90ac39985" formatted="false">"Local data was restored, but Screen or settings could not finish. Do not repeat this restore. Review the restored data and Screen, or use Undo restore."</string>
+    <string name="ui_8d14f6e72de8" formatted="false">"Events"</string>
+    <string name="ui_c6f974c44b32" formatted="false">"Use BuddyBot’s local IP address."</string>
+    <string name="ui_1ca2a9635d72" formatted="false">"Active items"</string>
+    <string name="ui_19e82138c35f" formatted="false">"Due today"</string>
 </resources>

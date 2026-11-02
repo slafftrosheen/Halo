@@ -348,6 +348,7 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
                     Secondary("Review what may be shared") { onOpen("settings/intelligence/context") }
                     Secondary("Review saved memory") { onOpen("memory_learning") }
                 }
+                SetupStage.EVERYDAY -> {com.halo.app.ui.everyday.EverydaySetupPage()}
                 SetupStage.READINESS -> {
                     Copy("These checks show availability, not a promise that a request will succeed. Test speaking and try a real request next.")
                     Readiness("Microphone", microphone && microphoneTested, "guided_setup", { store.open(SetupStage.PERMISSIONS) })

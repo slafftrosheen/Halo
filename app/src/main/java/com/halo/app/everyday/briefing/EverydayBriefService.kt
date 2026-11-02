@@ -13,7 +13,10 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
     private val audience: () -> BriefAudience, private val childLocalFactIds: suspend () -> Set<String>,
     private val localFactStillExists: suspend (BriefFact) -> Boolean, private val clock: Clock = Clock.systemUTC(),
     private val zone: () -> ZoneId = { ZoneId.systemDefault() },
-    private val contentChanges: Flow<Unit> = flowOf(Unit)) {
+    private val contentChanges: Flow<Unit> = flowOf(Unit),private val readState: (suspend ()->Any)? = null) {
+    private suspend fun disclosureState(): Any = readState?.invoke() ?: Triple(repository.settings().version,
+        collectors.states().map {it.source.id to it.source.version}.sortedBy {it.first},
+        organizer.records(true).map {it.id to it.version}.sortedBy {it.first})
     /** Only active subscribers tick. No fetch, model, background loop or stored timestamp is advanced. */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun changes(): Flow<Unit> = merge(repository.observe().map { Unit }, repository.observeSettings().map { Unit },
@@ -43,6 +46,8 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
     }
     /** Revalidate current source selection and child authority before re-displaying a stored brief. */
     suspend fun visible(id: String): EverydayBrief? {
+        val disclosure=com.halo.app.everyday.EverydayReadAuthority.capture()
+        val canonical=disclosureState()
         val stored = repository.get(id) ?: return null
         val familyAudience = audience()
         val actualAudience = if (familyAudience == BriefAudience.KIDS) BriefAudience.KIDS else stored.audience
@@ -69,6 +74,9 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
             eligibleChanges.filter { it.factId in visibleIds }.take(12)
         } else eligibleChanges
         check(audience() == familyAudience) { "Experience changed; reopen the brief" }
+        if(actualAudience==BriefAudience.KIDS) check(childLocalFactIds()==childFacts) {"Shared local items changed; reopen the brief"}
+        check(disclosureState()==canonical) {"Everyday disclosure authority changed"}
+        com.halo.app.everyday.EverydayReadAuthority.requireCurrent(disclosure)
         return stored.copy(audience = actualAudience, facts = facts, sources = stored.sources.filter { it.id in allowed },
             changes = changes, baselineAt = if (differentAudience) null else stored.baselineAt,
             baselineMissing = stored.baselineMissing || differentAudience && stored.period == BriefPeriod.CHANGES,

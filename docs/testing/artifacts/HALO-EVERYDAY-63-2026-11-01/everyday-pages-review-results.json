@@ -1,0 +1,135 @@
+{
+  "outcome": "BUILD FAILED in 5m 17s",
+  "sourceFilesMatched": 127,
+  "totals": {
+    "tests": 101,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.data.everyday.CollectorIntegrationTest",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydayEditingTest",
+      "tests": 7,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": [
+        {
+          "case": "floatingDstReplacementSurvivesTitleEditAndDraftRestoration",
+          "message": "java.lang.AssertionError: expected:<OrganizerTime(start=2026-03-29T03:30, end=2026-03-29T05:30, zoneId=Europe/Riga, allDay=false, followDeviceZone=true)> but was:<OrganizerTime(start=2026-03-29T03:30, end=null, zoneId=Europe/Riga, allDay=false, followDeviceZone=true)>"
+        }
+      ]
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydaySourceReviewTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.data.everyday.WorldClockAndCitiesTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.data.workspace.EverydayCalendarExportTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.data.workspace.WorkspaceExternalExportTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.everyday.briefing.EverydayBriefTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.ui.shell.ExactPrimaryNavigationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenCatalogTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.ui.shell.HaloScreenRequestsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": []
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": 7,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failuresDetail": [
+        {
+          "case": "kidsMenuCannotExposeAdultDestinationsAsUsable",
+          "message": "java.lang.AssertionError: expected:<[home, study]> but was:<[home, screen/organizer, screen/clocks, screen/brief, study]>"
+        }
+      ]
+    }
+  ],
+  "scope": "Production and test compilation succeeded. Two failed behavioral assertions are retained; this is not a passing integration boundary."
+}

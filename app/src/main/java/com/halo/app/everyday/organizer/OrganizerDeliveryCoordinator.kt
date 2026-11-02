@@ -34,6 +34,22 @@ class OrganizerDeliveryCoordinator(
     private val mutex = Mutex()
     private val catchUp = Duration.ofMinutes(10)
 
+    /** Keep OS callbacks out of a portable restore and revoke old locked-boot/notification authority. */
+    suspend fun <T> withRestoredState(action: suspend ()->T): T = mutex.withLock {
+        try {
+        repository.records(true).forEach {record ->
+            port.revokeVersion(record.id,record.version)
+            repository.receipts(record.id).forEach {port.dismiss(it.occurrenceKey,it.recordVersion)}
+        }
+        port.resetSchedules()
+        action()
+        } finally {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                port.resetSchedules();repository.records(true).forEach {reconcileLocked(it.id)}
+            }
+        }
+    }
+
     suspend fun reconcileAll() = mutex.withLock {
         port.resetSchedules()
         repository.records(includeDeleted = true).forEach { reconcileLocked(it.id) }

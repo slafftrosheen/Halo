@@ -175,7 +175,7 @@ class AndroidDynamicPageExtractor(
                             handler.post { finish(DynamicExtractionOutcome.Failed("Mode profile changed")) }
                         }
                     } catch (_: Exception) {
-                        finish(DynamicExtractionOutcome.Unavailable("Rendered web reading needs Full Power with web enabled"))
+                        finish(DynamicExtractionOutcome.Unavailable("Rendered web reading needs Power with web enabled"))
                         return@suspendCancellableCoroutine
                     }
                 if (!continuation.isActive) {

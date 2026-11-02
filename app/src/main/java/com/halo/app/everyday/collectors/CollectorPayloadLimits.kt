@@ -2,6 +2,16 @@ package com.halo.app.everyday.collectors
 
 /** Publication and restore share these limits; an accepted snapshot must remain readable after restart. */
 object CollectorPayloadLimits {
+    fun validateKind(kind: CollectorKind,payload: CollectorPayload) {
+        require(when(kind) {
+            CollectorKind.FEED -> payload is CollectorPayload.Articles
+            CollectorKind.WEATHER -> payload is CollectorPayload.Weather
+            CollectorKind.ALERTS -> payload is CollectorPayload.Warnings
+            CollectorKind.PUBLIC_CALENDAR -> payload is CollectorPayload.Calendar
+            else -> payload is CollectorPayload.Local
+        }) {"Snapshot does not match its source type"}
+        validate(payload)
+    }
     fun validate(payload: CollectorPayload) {
         when (payload) {
             is CollectorPayload.Articles -> {

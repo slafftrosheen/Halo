@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class SetupStage(val title: String) {
     WELCOME("Welcome to Halo"), USE("How would you like to start?"), PERMISSIONS("You choose the access"),
     AI("How Halo answers"), SPEECH("Listening and speaking"), DEVICES("Your devices"),
-    PRIVACY("Your data, your choice"), READINESS("Let's check what works"), FIRST("Try Halo for real")
+    PRIVACY("Your data, your choice"), EVERYDAY("Your day, your choices"), READINESS("Let's check what works"), FIRST("Try Halo for real")
 }
 enum class SetupError { PERMISSION_DENIED, PROVIDER_CONNECTION, SPEECH_TEST, UNCONFIRMED_ACTION }
 enum class SetupOutcome { INCOMPLETE, LIMITED, VERIFIED }

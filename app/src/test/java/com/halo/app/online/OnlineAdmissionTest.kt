@@ -1,6 +1,6 @@
 package com.halo.app.online
 
-import com.halo.app.ai.KEY_CLOUD_WORKSPACE
+import com.halo.app.ai.*
 import com.halo.app.ai.WorkspaceImageChoice
 import com.halo.app.ai.WorkspaceImageService
 import com.halo.sdk.provider.*
@@ -16,11 +16,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.math.BigDecimal
 
-/** Hermetic source cases; transport interception never contacts a paid endpoint. Not run in this batch. */
+/** Hermetic admission cases using the real mode profile owner and a non-network fixture provider. */
 @RunWith(RobolectricTestRunner::class)
 class OnlineAdmissionTest {
     @Test fun referenceRequiredModelCannotPrepareTextOnlyGeneration() = runTest {
-        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage)
+        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, privacyModes=f.modes.mode)
         val choice = f.choice.copy(model = f.choice.model.copy(requiresReference = true))
         try { service.prepareSpend(choice, "draw", null, "image/png"); fail("Reference required") }
         catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
@@ -28,7 +28,7 @@ class OnlineAdmissionTest {
     }
     @Test fun savedImageReferenceMustAllowCloudBeforeApproval() = runTest {
         val f = Fixture(); f.storage.putBoolean(com.halo.app.ai.KEY_CLOUD_IMAGES, true)
-        val service = WorkspaceImageService(f.router, f.storage, allowReference = { false })
+        val service = WorkspaceImageService(f.router, f.storage, allowReference = { false },privacyModes=f.modes.mode)
         try { service.prepareSpend(f.choice, "edit", byteArrayOf(1), "image/png", "local-only-note"); fail("Source permission required") }
         catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
         assertEquals(0, f.provider.imageCalls)
@@ -36,10 +36,10 @@ class OnlineAdmissionTest {
     @Test fun revokedReferenceAccessStopsApprovedImageBeforeDispatch() = runTest {
         val f = Fixture(); f.storage.putBoolean(com.halo.app.ai.KEY_CLOUD_IMAGES, true)
         var allowed = true
-        val service = WorkspaceImageService(f.router, f.storage, allowReference = { allowed })
+        val service = WorkspaceImageService(f.router, f.storage, allowReference = { allowed },privacyModes=f.modes.mode)
         val bytes = byteArrayOf(1)
         val approval = service.prepareSpend(f.choice, "edit", bytes, "image/png", "source-note")
-        f.storage.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) allowed = false }
+        f.disk.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) allowed = false }
         try { service.generate(f.choice, "edit", bytes, "image/png", approval, BigDecimal("0.01"), true, "source-note"); fail("Revoked source permission required") }
         catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
         assertEquals(0, f.provider.imageCalls)
@@ -75,7 +75,7 @@ class OnlineAdmissionTest {
         f.allowed = false
         assertEquals(OnlineProblem.CHILD_RESTRICTED,
             rejected { f.search.search("question", "en", c, BigDecimal("0.01"), true) }.problem)
-        f.allowed = true; f.router.routingPolicy.value = AiRoutingPolicy.LOCAL_ONLY
+        f.allowed = true; f.modes.set(PrivacyMode.PRIVATE)
         assertEquals(OnlineProblem.LOCAL_ONLY,
             rejected { f.search.search("question", "en", c, BigDecimal("0.01"), true) }.problem)
         assertEquals(0, f.calls)
@@ -108,13 +108,13 @@ class OnlineAdmissionTest {
     }
     @Test fun imageWithoutApprovalCannotCallProvider() = runTest {
         val f = Fixture()
-        val service = WorkspaceImageService(f.router, f.storage)
+        val service = WorkspaceImageService(f.router, f.storage, privacyModes=f.modes.mode)
         assertEquals(OnlineProblem.CONSENT_REQUIRED,
             rejected { service.generate(f.choice, "draw", null, "image/png") }.problem)
         assertEquals(0, f.provider.imageCalls)
     }
     @Test fun imageApprovalIsConsumedEvenOnProviderFailure() = runTest {
-        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage)
+        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, privacyModes=f.modes.mode)
         val consent = service.prepareSpend(f.choice, "draw", null, "image/png")
         try { service.generate(f.choice, "draw", null, "image/png", consent, BigDecimal("0.10"), true); fail("Expected provider timeout") }
         catch (_: AiProviderException) { }
@@ -127,22 +127,22 @@ class OnlineAdmissionTest {
     }
     @Test fun revokedAccessDuringReservationStopsSearchBeforeTransport() = runTest {
         val f = Fixture(); val c = f.search.prepare("question", "en")
-        f.storage.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) f.allowed = false }
+        f.disk.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) f.allowed = false }
         assertEquals(OnlineProblem.CHILD_RESTRICTED,
             rejected { f.search.search("question", "en", c, BigDecimal("0.01"), true) }.problem)
         assertEquals(0, f.calls)
     }
     @Test fun keyChangedDuringReservationStopsSearchBeforeTransport() = runTest {
         val f = Fixture(); val c = f.search.prepare("question", "en")
-        f.storage.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) f.storage.putString("openrouter_api_key", "replacement") }
+        f.disk.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) f.storage.putString("openrouter_api_key", "replacement") }
         assertEquals(OnlineProblem.CONSENT_EXPIRED,
             rejected { f.search.search("question", "en", c, BigDecimal("0.01"), true) }.problem)
         assertEquals(0, f.calls)
     }
     @Test fun revokedAccessDuringReservationStopsImageBeforeProvider() = runTest {
-        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, { f.allowed })
+        val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, { f.allowed },privacyModes=f.modes.mode)
         val c = service.prepareSpend(f.choice, "draw", null, "image/png")
-        f.storage.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) f.allowed = false }
+        f.disk.afterWrite = { if (it == OnlineOperationLedger.RECORDS_KEY) f.allowed = false }
         try { service.generate(f.choice, "draw", null, "image/png", c, BigDecimal("0.1"), true); fail("Expected revoked access") }
         catch (_: com.halo.app.ai.WorkspaceImageUnavailable) { }
         assertEquals(0, f.provider.imageCalls)
@@ -157,7 +157,7 @@ class OnlineAdmissionTest {
         f.allowed = true
         f.storage.putString("openrouter_api_key", null)
         assertEquals(OnlineProblem.KEY_REQUIRED, f.search.availability())
-        f.router.routingPolicy.value = AiRoutingPolicy.LOCAL_ONLY
+        f.modes.set(PrivacyMode.PRIVATE)
         assertEquals(OnlineProblem.LOCAL_ONLY, f.search.availability())
         assertEquals(0, f.calls)
     }
@@ -166,7 +166,9 @@ class OnlineAdmissionTest {
         throw AssertionError("Expected rejection")
     }
     private class Fixture(response: String = """{"model":"free-resolved","choices":[{"finish_reason":"stop","message":{"content":"Answer","annotations":[{"type":"url_citation","url_citation":{"url":"https://example.org/report","title":"Report"}}]}}],"usage":{"cost":0.007}}""") {
-        val storage = MemoryStorage().apply { putString("openrouter_api_key", "test-key"); putBoolean(KEY_CLOUD_WORKSPACE, true) }
+        val disk=MemoryStorage().apply {putString("openrouter_api_key","test-key")}
+        val modes=PrivacyModeStore(disk).apply {remoteAllowed={true};configuredProviders={setOf("openrouter")};acknowledgeSharing();set(PrivacyMode.CLOUD)}
+        val storage=modes.storage.apply {putBoolean(KEY_CLOUD_WORKSPACE,true)}
         val provider = ImageProvider()
         val router = Router(provider)
         val choice = WorkspaceImageChoice(provider.id, provider.displayName, AiImageModel("image-model"))
@@ -177,7 +179,7 @@ class OnlineAdmissionTest {
             Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
                 .body(response.toResponseBody("application/json".toMediaType())).build()
         }.build())
-        val search = GroundedWebSearchService(storage, router, { allowed }, client)
+        val search = GroundedWebSearchService(storage, router, { allowed }, client,modes.mode)
     }
     private class ImageProvider : AiImageProvider {
         override val id = "openrouter"

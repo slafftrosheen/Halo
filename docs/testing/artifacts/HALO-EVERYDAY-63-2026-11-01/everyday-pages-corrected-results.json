@@ -1,0 +1,6 @@
+{
+  "outcome": "BUILD FAILED in 3m 54s",
+  "sourceFilesMatched": 130,
+  "junit": "NOT_RUN",
+  "reason": "Production compiled; new render-test source failed compilation. Prior XML is not evidence for this snapshot."
+}

@@ -10,6 +10,7 @@ import com.halo.app.study.StudyUseCases
 import com.halo.sdk.runtime.study.StudySessionLifecycle
 import com.halo.runtime.cognition.routine.RoutineId
 import com.halo.runtime.cognition.watch.ContinuationWatch
+import com.halo.app.everyday.presentation.route
 
 /** Ephemeral review identity, never another copy of a document or a conversation owner. */
 internal sealed interface ScreenContinuation {
@@ -17,6 +18,7 @@ internal sealed interface ScreenContinuation {
     data class Study(val observed: StudySessionRecord) : ScreenContinuation
     data class Routine(val id: String, val revision: String) : ScreenContinuation
     data class FollowUp(val observed: ContinuationWatch) : ScreenContinuation
+    data class Everyday(val target: com.halo.app.everyday.presentation.EverydayTarget) : ScreenContinuation
 }
 
 /** Resolve against the existing owner immediately before navigation. Deleted, archived and
@@ -34,4 +36,5 @@ internal suspend fun ScreenContinuation.isCurrent(
         study.getSession(observed.id) == observed
     is ScreenContinuation.Routine -> routines.managementGet(RoutineId(id))?.routine?.updatedAt?.toString() == revision
     is ScreenContinuation.FollowUp -> followUps.findById(observed.id) == observed
+    is ScreenContinuation.Everyday -> runCatching { target.route(); true }.getOrDefault(false)
 }

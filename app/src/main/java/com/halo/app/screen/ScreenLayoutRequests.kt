@@ -88,6 +88,7 @@ internal object ScreenLayoutRequests {
     fun apply(layout: ScreenLayout, plan: Plan): ScreenLayout? {
         if (plan.changes.size > 24) return null
         return plan.changes.fold(layout) { current, change ->
+            if(change is LayoutChange.Add && current.cards.any { it.widgetType==change.widgetType && (change.config.isEmpty() || it.config==change.config) }) return@fold current
             apply(current, change) ?: if (change is LayoutChange.Add && current.cards.any { it.widgetType == change.widgetType }) current else return null
         }.takeIf { it.cards != layout.cards || !plan.researchQuery.isNullOrBlank() }
     }
@@ -124,12 +125,23 @@ internal object ScreenLayoutRequests {
         val cards = layout.cards.toMutableList()
         when (change) {
             is LayoutChange.Add -> {
-                if (change.widgetType !in ScreenWidgets.types || cards.size >= 24 || cards.any { it.widgetType == change.widgetType }) return null
-                cards.add(ScreenCard(change.widgetType, null, CardSize.STANDARD, false, config = change.config))
+                if (change.widgetType !in ScreenWidgets.types || cards.size >= 24) return null
+                com.halo.app.everyday.presentation.EverydayCards.screenKinds[change.widgetType]?.let {
+                    require(com.halo.app.everyday.presentation.EverydayCardConfig.from(change.config,it).kind==it)
+                }
+                val seed=ScreenLayoutCodec.encode(layout)+"\u0000"+change.widgetType+"\u0000"+change.config.toSortedMap().entries.joinToString("") { "${it.key.length}:${it.key}${it.value.length}:${it.value}" }
+                cards.add(ScreenCard(change.widgetType, null, CardSize.STANDARD, false, config = change.config,
+                    presentationId=java.util.UUID.nameUUIDFromBytes(seed.toByteArray(Charsets.UTF_8)).toString()))
             }
-            is LayoutChange.Remove -> { if (!cards.removeAll { it.widgetType == change.widgetType }) return null }
+            is LayoutChange.Remove -> {
+                val matches=cards.withIndex().filter { it.value.widgetType==change.widgetType && (change.cardId==null || it.value.presentationId==change.cardId) }
+                if (matches.size != 1) return null
+                cards.removeAt(matches.single().index)
+            }
             is LayoutChange.Resize -> {
-                val index = cards.indexOfFirst { it.widgetType == change.widgetType }
+                val matches=cards.indices.filter { cards[it].widgetType==change.widgetType && (change.cardId==null || cards[it].presentationId==change.cardId) }
+                if (matches.size != 1) return null
+                val index=matches.single()
                 if (index < 0) return null
                 val resized = cards[index].copy(size = change.size, placement = cards[index].placement?.let {
                     it.copy(width = if (change.size == CardSize.COMPACT) 6 else 12,
@@ -139,7 +151,9 @@ internal object ScreenLayoutRequests {
                 cards[index] = resized
             }
             is LayoutChange.Move -> {
-                val index = cards.indexOfFirst { it.widgetType == change.widgetType }
+                val matches=cards.indices.filter { cards[it].widgetType==change.widgetType && (change.cardId==null || cards[it].presentationId==change.cardId) }
+                if (matches.size != 1) return null
+                val index=matches.single()
                 if (index < 0 || change.toIndex !in cards.indices || index == change.toIndex) return null
                 return layout.copy(cards = ScreenGrid.reorder(cards, index, change.toIndex))
             }

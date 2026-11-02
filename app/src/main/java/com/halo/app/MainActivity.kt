@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -54,6 +55,7 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 open class MainActivity : ComponentActivity() {
+    private val widgetEntries by viewModels<com.halo.app.nativeactions.EverydayWidgetEntryViewModel>()
     internal val speechHandoff = com.halo.app.ui.shell.ShellSpeechHandoff()
 
     /** Own-app presentation transfer; a failed launch keeps Mini open and releases capture. */
@@ -293,6 +295,7 @@ open class MainActivity : ComponentActivity() {
 
         startUiGraphBootstrap()
         startRuntimeLoop()
+        widgetEntries // Restore the durable queue even if the consumed Intent has no widget extras.
         handleHaloScreenIntent(intent)
         handleIncomingShareIntent(intent)
         handleAssistantIntent(intent)
@@ -328,7 +331,29 @@ open class MainActivity : ComponentActivity() {
     }
 
     private fun handleHaloScreenIntent(intent: Intent?) {
+        if (intent?.hasExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ID) == true) {
+            val widgetId = intent.getIntExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ID,-1)
+            val revision = intent.getLongExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_VERSION,-1)
+            val action = intent.getStringExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ACTION).orEmpty()
+            val payload = intent.getStringExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_TARGET).orEmpty()
+            runCatching { widgetEntries.offer(widgetId,revision,action,payload) }
+            listOf(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ID,com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_VERSION,
+                com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ACTION,com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_TARGET).forEach(intent::removeExtra)
+            return
+        }
+        if (intent?.hasExtra(com.halo.app.ui.everyday.EverydayBriefEntry.EXTRA_BRIEF_ID) == true) {
+            widgetEntries.cancelPending()
+            val id = intent.getStringExtra(com.halo.app.ui.everyday.EverydayBriefEntry.EXTRA_BRIEF_ID)
+            intent.removeExtra(com.halo.app.ui.everyday.EverydayBriefEntry.EXTRA_BRIEF_ID)
+            intent.removeExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)
+            com.halo.app.ui.everyday.EverydayBriefEntry.route(id)?.let { route ->
+                ManualDependencyGraph.explicitHaloScreenRequested = true
+                ManualDependencyGraph.requestedHaloScreen.value = route
+            }
+            return
+        }
         val screen = intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN) ?: return
+        widgetEntries.cancelPending()
         intent.removeExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)
         if (screen in com.halo.app.ui.shell.HaloScreenCatalog.screens) {
             if (screen == "mini_halo") {

@@ -67,6 +67,7 @@ class StagedBrainImporter(
         StudioProjectSnapshot::class.java, StudioVersionSnapshot::class.java,
         FileSnapshot::class.java, AgentRunSnapshot::class.java, AgentStepSnapshot::class.java,
         ReminderSnapshot::class.java, DeviceConfigurationSnapshot::class.java,
+        EverydayArchiveEntry::class.java,
     ).associateWith { moshi.adapter(it) }
 
     override suspend fun stage(source: Uri): File = withContext(Dispatchers.IO) {
@@ -151,6 +152,17 @@ class StagedBrainImporter(
                     }
                 }
             }
+            val localScreen=com.halo.app.screen.LocalScreenStore(context)
+            val localEveryday=EverydayArchive.localEntries(database)+(if(localScreen.layout.value!=null) mapOf("everyday:SCREEN:1" to EverydayArchiveEntry("SCREEN","1",localScreen.portableSnapshot())) else emptyMap())
+            parsed.snapshot.everyday.filter {it.kind in setOf("ORGANIZER","SOURCE","CLOCK","BRIEF","BRIEF_SETTINGS","SCREEN")}.forEach {incoming ->
+                val key=EverydayArchive.key(incoming)
+                val local=localEveryday[key]
+                if(local==null) create+=ImportOperation(key,"EVERYDAY_${incoming.kind}",EverydayArchive.title(incoming))
+                else {
+                    update+=ImportOperation(key,"EVERYDAY_${incoming.kind}",EverydayArchive.title(incoming))
+                    if(local.body!=incoming.body) conflicts+=ImportConflict(key,"EVERYDAY_${incoming.kind}",null,null,0,parsed.manifest.createdAtEpochMs)
+                }
+            }
             val missing = parsed.snapshot.files.filter { file ->
                 file.ownership == "HALO_OWNED" && parsed.contentEntries[file.objectId] == null && parsed.contentEntries[safeSegment(file.objectId)] == null
             }.map(FileSnapshot::displayName)
@@ -202,13 +214,14 @@ class StagedBrainImporter(
         }
         val dao = database.brainSnapshotDao()
         val existingIds = dao.workspaceObjects().mapTo(mutableSetOf()) { it.id }
+        val existingEveryday=EverydayArchive.localEntries(database).keys+(if(com.halo.app.screen.LocalScreenStore(context).layout.value!=null) setOf("everyday:SCREEN:1") else emptySet())
         val existingMemoryIds = dao.memories().mapTo(mutableSetOf()) { it.id }
         val existingLegacyMemories = database.memoryDao().snapshot()
         val existingConversationIds = dao.conversations().mapTo(mutableSetOf()) { it.id }
         val skippedIds = if (mode == BrainImportMode.MERGE) {
             existingIds.filterTo(mutableSetOf()) { id -> conflictPolicies[id] != ImportConflictPolicy.USE_BACKUP }
         } else mutableSetOf()
-        val duplicateIds = conflictPolicies.filterValues { it == ImportConflictPolicy.DUPLICATE }.keys
+        val duplicateIds = if(mode==BrainImportMode.MERGE) conflictPolicies.filterValues { it == ImportConflictPolicy.DUPLICATE }.keys else emptySet()
         val idMap = duplicateIds.associateWith { UUID.randomUUID().toString() }
         var snapshot = remap(parsed.snapshot, idMap)
         if (mode == BrainImportMode.MERGE) {
@@ -226,6 +239,7 @@ class StagedBrainImporter(
             )
         }
 
+        var committed=false
         try {
             val materializedFiles = materializeOwnedFiles(snapshot.files, parsed.zipFile, parsed.contentEntries, idMap.entries.associate { it.value to it.key })
             val fileUris = snapshot.files.zip(materializedFiles).associate { (before, after) -> before.uri to after.uri }
@@ -258,7 +272,10 @@ class StagedBrainImporter(
                     else -> memory.confidence
                 })
             })
-            database.withTransaction {
+            var everydayMapping=emptyMap<String,String>()
+            val maintenance=com.halo.app.everyday.EverydayWriteAuthority.beginMaintenance()
+            try {reconciler.withEverydayRestore {
+              try {database.withTransaction {
                 if (mode == BrainImportMode.REPLACE) clearBrain(dao)
                 dao.putWorkspaceObjects(room.workspace)
                 dao.putNotes(room.notes)
@@ -309,7 +326,13 @@ class StagedBrainImporter(
                 }
                 dao.putAgentRuns(normalizedAgentRuns)
                 dao.putAgentSteps(room.agentSteps)
-            }
+                everydayMapping=EverydayArchive.restore(database,snapshot.everyday,mode,conflictPolicies,idMap)
+              };committed=true} finally {maintenance.close()}
+            }} finally {maintenance.close()}
+            val screenStore=com.halo.app.di.ManualDependencyGraph.screenStore
+            val screen=snapshot.everyday.firstOrNull {it.kind=="SCREEN"}
+            if(screen!=null && (mode==BrainImportMode.REPLACE || conflictPolicies[EverydayArchive.key(screen)]==ImportConflictPolicy.USE_BACKUP || screenStore.layout.value==null && conflictPolicies[EverydayArchive.key(screen)]!=ImportConflictPolicy.KEEP_LOCAL)) screenStore.restorePortable(screenStore.remapPortable(screen.body,everydayMapping))
+            else if(mode==BrainImportMode.REPLACE && screen==null) screenStore.clearPortable()
             val portableStrings = snapshot.settings.values.filterKeys { it in PORTABLE_STRING_KEYS }.filter { (key,value) ->
                 key != "learning_mode" || value in setOf("OFF","EXPLICIT_ONLY","SUGGEST")
             }
@@ -362,13 +385,20 @@ class StagedBrainImporter(
                     ))
                 }
             }
+            try {reconciler.reconcile()} catch(error: Exception) {throw BrainImportCommittedFailure(error)}
+        } catch(error: Exception) {
+            if(committed && error !is BrainImportCommittedFailure) throw BrainImportCommittedFailure(error)
+            throw error
         } finally {
             parsed.zipFile.close()
             decryptedFile?.delete()
         }
         val created = snapshot.workspace.count { it.id !in existingIds }
-        reconciler.reconcile()
-        BrainImportResult(created, snapshot.workspace.size - created, skippedIds.size)
+        val domain=snapshot.everyday.filter {it.kind in setOf("ORGANIZER","SOURCE","CLOCK","BRIEF","BRIEF_SETTINGS","SCREEN")}
+        val domainCreated=domain.count {mode==BrainImportMode.REPLACE || EverydayArchive.key(it) !in existingEveryday || conflictPolicies[EverydayArchive.key(it)]==ImportConflictPolicy.DUPLICATE && it.kind !in setOf("SCREEN","BRIEF_SETTINGS")}
+        val domainUpdated=if(mode==BrainImportMode.REPLACE) 0 else domain.count {EverydayArchive.key(it) in existingEveryday && conflictPolicies[EverydayArchive.key(it)]==ImportConflictPolicy.USE_BACKUP}
+        val domainSkipped=domain.size-domainCreated-domainUpdated
+        BrainImportResult(created+domainCreated,snapshot.workspace.size-created+domainUpdated,skippedIds.size+domainSkipped)
     }
 
     private suspend fun createSafetySnapshot() {
@@ -454,6 +484,8 @@ class StagedBrainImporter(
         val snapshot = readSnapshot(zip, manifest)
         StudioArchive.validate(snapshot)
         NoteBlockArchive.validate(snapshot)
+        EverydayArchive.validate(snapshot.everyday)
+        snapshot.everyday.filter {it.kind=="SCREEN"}.forEach {com.halo.app.screen.LocalScreenStore(context).validatePortable(it.body)}
         require(snapshot.notes.all { note -> snapshot.workspace.any { it.id == note.objectId } }) { "Note references missing workspace object" }
         require(snapshot.turns.all { turn -> snapshot.conversations.any { it.id == turn.conversationId } }) { "Turn references missing conversation" }
         require(snapshot.files.all { file -> snapshot.workspace.any { it.id == file.objectId } }) { "File references missing workspace object" }
@@ -474,6 +506,8 @@ class StagedBrainImporter(
     private fun readSnapshot(zip: ZipFile, manifest: HaloBrainManifest): BrainSnapshot = BrainSnapshot(
         snapshotId = manifest.archiveId,
         createdAt = manifest.createdAtEpochMs,
+        everyday = zip.entries().asSequence().map {it.name}.filter {it.matches(Regex("everyday/entries-[0-9]{5}\\.jsonl"))}.sorted()
+            .flatMap {path -> readLines(zip,path,EverydayArchiveEntry::class.java).asSequence()}.toList(),
         workspace = readLines(zip, "workspace/objects.jsonl", WorkspaceObjectSnapshot::class.java),
         notes = readLines(zip, "notes/metadata.jsonl", NoteSnapshot::class.java),
         conversations = readLines(zip, "conversations/conversations.jsonl", ConversationSnapshot::class.java),

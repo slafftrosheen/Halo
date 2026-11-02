@@ -585,13 +585,13 @@
     <string name="ui_13e10588f9f9" formatted="false">"Настройка провайдера"</string>
     <string name="ui_4fda695d3e86" formatted="false">"Локальная сеть"</string>
     <string name="ui_b977b950c1ae" formatted="false">"Облако"</string>
-    <string name="ui_848e96567d6b" formatted="false">"Полная мощность"</string>
-    <string name="ui_d47b51ac5c4a" formatted="false">"Режим полной мощности"</string>
-    <string name="ui_f7c25d67b4c2" formatted="false">"Приватно / Полная мощность"</string>
-    <string name="ui_a0f62566edfc" formatted="false">"Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены."</string>
-    <string name="ui_7be2dcda5a77" formatted="false">"Обработка ИИ остаётся на этом телефоне. Возможности полной мощности выключены."</string>
-    <string name="ui_f95736e4ba58" formatted="false">"В режиме полной мощности переписка, изображения, воспоминания и материалы рабочего пространства могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера."</string>
-    <string name="ui_91d1493a8e85" formatted="false">"Переключатель вверху каждого экрана управляет передачей данных. Профили хранят настройки приватного режима и полной мощности раздельно."</string>
+    <string name="ui_848e96567d6b" formatted="false">"Power"</string>
+    <string name="ui_d47b51ac5c4a" formatted="false">"Режим Power"</string>
+    <string name="ui_f7c25d67b4c2" formatted="false">"Локально / Power"</string>
+    <string name="ui_a0f62566edfc" formatted="false">"Обработка ИИ остаётся на этом телефоне. Возможности Power выключены."</string>
+    <string name="ui_7be2dcda5a77" formatted="false">"Обработка ИИ остаётся на этом телефоне. Возможности Power выключены."</string>
+    <string name="ui_f95736e4ba58" formatted="false">"В режиме Power переписка, изображения, воспоминания и материалы рабочего пространства могут отправляться выбранному провайдеру. Возможна плата за услуги провайдера."</string>
+    <string name="ui_91d1493a8e85" formatted="false">"Переключатель вверху каждого экрана управляет передачей данных. Профили хранят настройки режима Local и Power раздельно."</string>
     <string name="ui_b78e8b0ee157" formatted="false">"Этот переключатель управляет передачей данных для поддерживаемых онлайн-функций halo."</string>
     <string name="ui_91e23dc2c14e" formatted="false">"Для этого действия нужна полная мощность. Используйте переключатель вверху Halo."</string>
     <string name="ui_c3b89f7b634c" formatted="false">"Включить полную мощность"</string>
@@ -599,7 +599,7 @@
     <string name="ui_ec07e6b3552b" formatted="false">"Взрослый должен разрешить полную мощность в настройках детского режима."</string>
     <string name="ui_7c81ad053a8f" formatted="false">"Включите полную мощность в верхней части Halo."</string>
     <string name="ui_914a820f10fd" formatted="false">"Для онлайн-озвучивания нужна полная мощность. Используйте переключатель вверху Halo. Детским сеансам также требуется разрешение взрослого."</string>
-    <string name="ui_b7b8b4725c30" formatted="false">"Удалённая обработка выключена. Используйте переключатель Приватно / Полная мощность вверху Halo или выберите модель на устройстве. Детским сеансам также требуется разрешение взрослого."</string>
+    <string name="ui_b7b8b4725c30" formatted="false">"Удалённая обработка выключена. Используйте переключатель Локально / Power вверху Halo или выберите модель на устройстве. Детским сеансам также требуется разрешение взрослого."</string>
     <string name="ui_80bb16adde05" formatted="false">"Передача этого изображения провайдеру запрещена. Проверьте профили режимов и настройки доступа к изображению."</string>
     <string name="ui_a8f9f96f6425" formatted="false">"Передача медиафайлов определяется профилем активного режима."</string>
     <string name="ui_e5a3e94e5574" formatted="false">"Передача файлов определяется профилем активного режима и настройками доступа к файлу."</string>
@@ -3783,8 +3783,8 @@
     <string name="ui_c4bd14cbcafa" formatted="false">"Не удалось получить действия приложения. Откройте его и повторите попытку."</string>
     <string name="ui_369a21c566b2" formatted="false">"Движение не подтверждено. Проверьте BuddyBot, затем удерживайте кнопку для новой попытки."</string>
     <string name="ui_3f64a7d11458" formatted="false">"Ожидание BuddyBot…"</string>
-    <string name="ui_c63eb6720c6e" formatted="false">"Приватно"</string>
-    <string name="ui_defb207e462d" formatted="false">"Приватный режим"</string>
+    <string name="ui_c63eb6720c6e" formatted="false">"Локально"</string>
+    <string name="ui_defb207e462d" formatted="false">"режим Local"</string>
     <string name="ui_db5a6e265164" formatted="false">"Облачный режим"</string>
     <string name="ui_614747862584" formatted="false">"Приватно / Облако"</string>
     <string name="ui_b8afca338753" formatted="false">"Режим конфиденциальности ИИ"</string>
@@ -3796,13 +3796,13 @@
     <string name="ui_501135113f1a" formatted="false">"Не удалось включить облачный режим. Проверь детские настройки или попробуй ещё раз."</string>
     <string name="ui_8d78466721bf" formatted="false">"Один переключатель вверху каждого экрана управляет передачей данных. Отдельные разрешения для изображений, памяти и рабочего пространства не нужны."</string>
     <string name="ui_a9eb29a9820e" formatted="false">"Разрешения Android, детские ограничения, лимиты расходов и подтверждения действий остаются в силе."</string>
-    <string name="ui_7e69b2a8e184" formatted="false">"Передачей памяти управляет переключатель «Приватно / Облако» вверху halo."</string>
-    <string name="ui_e1280ec15f9b" formatted="false">"Передачей файлов управляет переключатель «Приватно / Облако» вверху halo."</string>
-    <string name="ui_0592aa13f4c4" formatted="false">"Передачей медиа управляет переключатель «Приватно / Облако» вверху halo."</string>
+    <string name="ui_7e69b2a8e184" formatted="false">"Передачей памяти управляет переключатель «Локально / Облако» вверху halo."</string>
+    <string name="ui_e1280ec15f9b" formatted="false">"Передачей файлов управляет переключатель «Локально / Облако» вверху halo."</string>
+    <string name="ui_0592aa13f4c4" formatted="false">"Передачей медиа управляет переключатель «Локально / Облако» вверху halo."</string>
     <string name="ui_b4ec9b047647" formatted="false">"Открыть разрешения приложения в Android"</string>
     <string name="ui_44615c1caed8" formatted="false">"Нужно исходное изображение"</string>
     <string name="ui_fc1a856ef2c3" formatted="false">"Этой модели нужно исходное изображение. Открой изображение в рабочем пространстве или на холсте для редактирования."</string>
-    <string name="ui_5b064d896dea" formatted="false">"Облачная передача этого изображения недоступна. Используй переключатель «Приватно / Облако» вверху halo."</string>
+    <string name="ui_5b064d896dea" formatted="false">"Облачная передача этого изображения недоступна. Используй переключатель «Локально / Облако» вверху halo."</string>
     <string name="ui_5aeedc2d4d5b" formatted="false">"Проверить средства у провайдера"</string>
     <string name="ui_c1329b9fbe25" formatted="false">"Модель изображений"</string>
     <string name="ui_b4d1afd63af6" formatted="false">"Опишите изображение"</string>
@@ -3966,7 +3966,7 @@
     <string name="ui_cf3975c3bb90" formatted="false">"Только выбранная модель"</string>
     <string name="ui_d8da64e2a75e" formatted="false">"Предпочтительный провайдер с резервным вариантом"</string>
     <string name="ui_0c3f86e41410" formatted="false">"Обновить данные выбранного провайдера"</string>
-    <string name="ui_ecdc23a45a3e" formatted="false">"Обмен медиа подчиняется переключателю Private / Full Power вверху halo."</string>
+    <string name="ui_ecdc23a45a3e" formatted="false">"Обмен медиа подчиняется переключателю Local / Power вверху halo."</string>
     <string name="ui_04dedf8afeb8" formatted="false">"СТОП"</string>
     <string name="ui_29887a5ff984" formatted="false">"Поделиться"</string>
     <string name="ui_dda99bd2e8f7" formatted="false">"Что halo должен запомнить?"</string>
@@ -3974,10 +3974,10 @@
     <string name="ui_32eb267f0398" formatted="false">"⇥"</string>
     <string name="ui_040d2b3689dd" formatted="false">"Вложение"</string>
     <string name="ui_5e970ab2e158" formatted="false">"halo перестанет использовать это воспоминание. Заметки сохранятся. Копии в существующих резервных копиях подчиняются настройкам хранения."</string>
-    <string name="ui_7b0f33ec7e23" formatted="false">"Обмен файлами подчиняется переключателю Private / Full Power вверху halo."</string>
+    <string name="ui_7b0f33ec7e23" formatted="false">"Обмен файлами подчиняется переключателю Local / Power вверху halo."</string>
     <string name="ui_d1e5ade9c63c" formatted="false">"Говорите с halo из любого приложения"</string>
-    <string name="ui_5236256f569d" formatted="false">"Private / Full Power"</string>
-    <string name="ui_47fa02ab7a5d" formatted="false">"Обмен воспоминаниями подчиняется переключателю Private / Full Power вверху halo."</string>
+    <string name="ui_5236256f569d" formatted="false">"Local / Power"</string>
+    <string name="ui_47fa02ab7a5d" formatted="false">"Обмен воспоминаниями подчиняется переключателю Local / Power вверху halo."</string>
     <string name="ui_fe32924b26f0" formatted="false">"Не удалось сохранить. Попробуйте ещё раз."</string>
     <string name="ui_ac83c14ed2a2" formatted="false">"Начальный набор для приватного голоса и намерений"</string>
     <string name="ui_fe1513423fca" formatted="false">"При желании скачайте вместе кандидат Qwen для намерений, Whisper Small, Silero VAD и файлы голоса Supertonic. halo проверяет файлы, но не выбирает модели и не подтверждает качество на устройстве."</string>
@@ -3994,7 +3994,7 @@
     <string name="ui_c9f85270686f" formatted="false">"Импортированная модель: проверьте нативную задачу перед квалификацией любой роли."</string>
     <string name="ui_0931c93dff69" formatted="false">"Разрешить halo видеть фотографии"</string>
     <string name="ui_308373a20f92" formatted="false">"Попробуйте ответить без подсказки. Ответ останется в черновике. При желании сравните его с ответом halo."</string>
-    <string name="ui_61d06b0e190e" formatted="false">"Для этого действия нужен режим Full Power. Используйте переключатель вверху halo."</string>
+    <string name="ui_61d06b0e190e" formatted="false">"Для этого действия нужен режим Power. Используйте переключатель вверху halo."</string>
     <string name="ui_6de4468dd1ad" formatted="false">"Исходное изображение"</string>
     <string name="ui_6f62aa63353f" formatted="false">"Выбрать модель изображений"</string>
     <string name="ui_1ef065d5f5b1" formatted="false">"Загрузка моделей изображений…"</string>
@@ -4226,4 +4226,531 @@
     <string name="ui_07fb0c16abc7" formatted="false">"Что halo может запомнить"</string>
     <string name="ui_f32b0d69f95f" formatted="false">"Новый холст"</string>
     <string name="ui_a424e33d9093" formatted="false">"Заблокировано"</string>
+    <string name="ui_81a1e6cf650a" formatted="false">"Ваш день в halo"</string>
+    <string name="ui_72650f6a8adb" formatted="false">"Открыть обзор дня"</string>
+    <string name="ui_d8de3c541dc0" formatted="false">"История обзоров"</string>
+    <string name="ui_339c49d889e9" formatted="false">"Настройки обзора"</string>
+    <string name="ui_576ee92ed015" formatted="false">"Обновить обзор"</string>
+    <string name="ui_715a9cc0c34c" formatted="false">"Органайзер"</string>
+    <string name="ui_20d4d413670f" formatted="false">"Открыть органайзер"</string>
+    <string name="ui_19ea75a57216" formatted="false">"Выбрать источники"</string>
+    <string name="ui_85f9cb4f3ff3" formatted="false">"Открыть элемент"</string>
+    <string name="ui_12463f9e1058" formatted="false">"Ваш план, выбранная информация и то, что требует внимания."</string>
+    <string name="ui_56f69e16bffb" formatted="false">"Создайте обзор из сохранённого плана и выбранных источников. Локальный режим использует сохранённые данные; открытие этой страницы не загружает данные из интернета."</string>
+    <string name="ui_a99babae2999" formatted="false">"Дождитесь завершения текущего действия."</string>
+    <string name="ui_98da16495c8c" formatted="false">"Представление для учёбы"</string>
+    <string name="ui_de45320b16da" formatted="false">"Сохранено: %1$s"</string>
+    <string name="ui_dc4f10e7c277" formatted="false">"Выбранные источники могут обновляться в режиме Power. Этот обзор сохраняет факты на момент его создания."</string>
+    <string name="ui_84255a7241d0" formatted="false">"Локальный режим · Внешние данные сохранены в кеше и могут устареть."</string>
+    <string name="ui_ed3c7b274204" formatted="false">"Для этого обзора нет доступных выбранных данных."</string>
+    <string name="ui_f40c3bd3737b" formatted="false">"Элементов, которых больше нет в текущем локальном плане: %1$d."</string>
+    <string name="ui_8cae95d5a1df" formatted="false">"В обзоре показана подборка. Полный доступный список находится в органайзере или источнике."</string>
+    <string name="ui_c124ab5f8a3f" formatted="false">"Актуальность и источники"</string>
+    <string name="ui_f6627102027f" formatted="false">"Сохранённых обзоров пока нет."</string>
+    <string name="ui_a2c09f07727d" formatted="false">"До 60 обзоров хранятся 30 дней. Первый утренний обзор остаётся основой сравнения на этот день."</string>
+    <string name="ui_e503d2a25ef9" formatted="false">"Утренние и вечерние уведомления"</string>
+    <string name="ui_da29b1e93e6a" formatted="false">"Android может задерживать уведомления. Тихие часы и системный режим «Не беспокоить» продолжают действовать. Уведомления не читают обзор вслух."</string>
+    <string name="ui_889d0e668408" formatted="false">"Утро · ЧЧ:мм"</string>
+    <string name="ui_d4fffc9898ac" formatted="false">"Вечер · ЧЧ:мм"</string>
+    <string name="ui_bf0671dd69c6" formatted="false">"Тихие часы"</string>
+    <string name="ui_9ca1b537ed4b" formatted="false">"Тишина с · ЧЧ:мм"</string>
+    <string name="ui_7341def2b21b" formatted="false">"Тишина до · ЧЧ:мм"</string>
+    <string name="ui_900822485190" formatted="false">"Одинаковое начало и окончание означают тишину весь день."</string>
+    <string name="ui_4a6c007b1f53" formatted="false">"Заголовки · 0–10"</string>
+    <string name="ui_0ac7b2e090e1" formatted="false">"Задачи · 1–20"</string>
+    <string name="ui_91597bdcd327" formatted="false">"Приоритеты и доступ в Kids"</string>
+    <string name="ui_96cc2a3138ab" formatted="false">"В обзорах Kids могут появляться только элементы, которыми вы поделитесь здесь. Разрешение источника не открывает доступ к личному плану."</string>
+    <string name="ui_40ebb68fb635" formatted="false">"Повысить приоритет в обзоре"</string>
+    <string name="ui_01cd14f49984" formatted="false">"Поделиться с Kids"</string>
+    <string name="ui_9ad7d4a75698" formatted="false">"Укажите время в 24-часовом формате ЧЧ:мм и числа в указанных пределах."</string>
+    <string name="ui_2bdfff8bca9e" formatted="false">"Не удалось открыть обзор. Повторите попытку."</string>
+    <string name="ui_b14fa0189283" formatted="false">"Не удалось сохранить изменение. Сохранённые данные не потеряны; откройте заново и повторите попытку."</string>
+    <string name="ui_421cb442e697" formatted="false">"Настройки обзора сохранены."</string>
+    <string name="ui_ba461404afba" formatted="false">"Этот сохранённый обзор больше недоступен. Создайте новый из текущих данных."</string>
+    <string name="ui_046dacaca6b3" formatted="false">"В Workspace будут сохранены неизменная копия календаря и список событий. Затем файл можно скопировать в выбранное место."</string>
+    <string name="ui_0362d4f5d3e5" formatted="false">"Время, пропущенное при переходе на летнее время, сдвигается вперёд на величину перехода. Для повторяющегося времени используется более раннее смещение."</string>
+    <string name="ui_27a570585516" formatted="false">"Сохранённым планом управляет родитель."</string>
+    <string name="ui_40fd74fb94a0" formatted="false">"Источник можно сохранить локально без загрузки. Предпросмотр проверяет содержимое ленты в Power."</string>
+    <string name="ui_2f531c2a7c57" formatted="false">"Добавить часы"</string>
+    <string name="ui_aa1e3c901a1f" formatted="false">"Добавить ленту"</string>
+    <string name="ui_d1a0b329a72b" formatted="false">"Добавить запись"</string>
+    <string name="ui_65db0c29ba4f" formatted="false">"Добавить подзадачу"</string>
+    <string name="ui_c15ee28680c2" formatted="false">"Добавить город для погоды"</string>
+    <string name="ui_5e5ac74681de" formatted="false">"Нужны настройки взрослого"</string>
+    <string name="ui_0fdf485f5bfd" formatted="false">"Повестка дня"</string>
+    <string name="ui_6a2e39447e44" formatted="false">"Дата повестки"</string>
+    <string name="ui_f700e2fb4728" formatted="false">"Будильники"</string>
+    <string name="ui_07be9dcc86b4" formatted="false">"Оповещение отменено"</string>
+    <string name="ui_98fa60e5a53b" formatted="false">"Оповещение закрыто"</string>
+    <string name="ui_352c8007b320" formatted="false">"Оповещение отправлено"</string>
+    <string name="ui_34233e542b7b" formatted="false">"Весь день"</string>
+    <string name="ui_acce3d0e30f9" formatted="false">"Все языки"</string>
+    <string name="ui_fe8bbe784d8d" formatted="false">"Разрешить точные будильники"</string>
+    <string name="ui_80c93d586f18" formatted="false">"Android не открыл эту страницу настроек. Откройте разрешения halo в системных настройках."</string>
+    <string name="ui_2fd417e87be4" formatted="false">"Разрешение относится к этому публичному источнику. Личные задачи, заметки и действия не становятся доступными."</string>
+    <string name="ui_36b5537b70a1" formatted="false">"Разрешить этот публичный источник в Kids"</string>
+    <string name="ui_7e299402ffc9" formatted="false">"Статья изменилась"</string>
+    <string name="ui_fd609b3cef55" formatted="false">"К сохранённому источнику"</string>
+    <string name="ui_4ac7ffc63d2c" formatted="false">"Оповещения CAP"</string>
+    <string name="ui_c59794d2a679" formatted="false">"Кеш источника очищен. Настройки сохранены."</string>
+    <string name="ui_262e742d5c0e" formatted="false">"Из кеша · данные могут устареть"</string>
+    <string name="ui_14e6fd889347" formatted="false">"Копия календаря сохранена"</string>
+    <string name="ui_71c07e189e4d" formatted="false">"Копия календаря сохранена в Workspace. Выберите место для экспорта именно этой копии."</string>
+    <string name="ui_f524f5ab52e5" formatted="false">"Импорт календаря завершён. Существующие идентификаторы событий сохранены."</string>
+    <string name="ui_37c951113bba" formatted="false">"Отменить обновление"</string>
+    <string name="ui_19998e6db07b" formatted="false">"Отменить расписание"</string>
+    <string name="ui_292c06f0045a" formatted="false">"Категория"</string>
+    <string name="ui_8baf30155fb4" formatted="false">"Источник изменился"</string>
+    <string name="ui_b536eac8fdac" formatted="false">"Изменения относятся только к выбранному повторению. Остальная серия сохранится."</string>
+    <string name="ui_9cb2bba648f8" formatted="false">"Проверить расписание снова"</string>
+    <string name="ui_f6452ac0b669" formatted="false">"Проверьте даты, часовой пояс, длительность и ограничения повторения. Сохранённая запись не заменена."</string>
+    <string name="ui_d3fa8de85153" formatted="false">"Проверьте название источника, публичный HTTPS-адрес, язык и интервал обновления."</string>
+    <string name="ui_0cfe5674684f" formatted="false">"Выберите дату в повестке, чтобы изменить, пропустить или завершить одно повторение."</string>
+    <string name="ui_4b33f8d23c77" formatted="false">"Выберите события для экспорта"</string>
+    <string name="ui_d788b7f1fd6f" formatted="false">"Выбирайте города из офлайн-каталога. Часы учитывают часовой пояс и переходы на летнее время."</string>
+    <string name="ui_343b5a9c7fd6" formatted="false">"Выбрать дату"</string>
+    <string name="ui_89b2c11022de" formatted="false">"Выбирайте источники на телефоне. В Power обновляются только выбранные и включённые источники. Сохранённые данные доступны локально."</string>
+    <string name="ui_144bd5340f8d" formatted="false">"Выбирайте до 200 событий на файл. Если идентификаторы UID повторяются, экспортируйте такие события по одному."</string>
+    <string name="ui_02360a05821d" formatted="false">"Выбрать город для погоды"</string>
+    <string name="ui_0c3ba6aa7359" formatted="false">"Координаты города отправляются Open-Meteo только при обновлении этого выбранного источника в Power."</string>
+    <string name="ui_ebf6794383b5" formatted="false">"Город или код страны"</string>
+    <string name="ui_5c8271c2e26b" formatted="false">"Поиск городов не открылся. Повторите попытку."</string>
+    <string name="ui_ec25ca143d69" formatted="false">"Очистить кеш"</string>
+    <string name="ui_bcf9858d075e" formatted="false">"Очистить кеш?"</string>
+    <string name="ui_f7f51225b8b5" formatted="false">"Ясное небо"</string>
+    <string name="ui_76c57847be24" formatted="false">"Название часов"</string>
+    <string name="ui_e48c24c7b063" formatted="false">"Часы удалены. Это действие можно отменить."</string>
+    <string name="ui_f9126d256e3d" formatted="false">"Завершить задачу"</string>
+    <string name="ui_c5c7ea796b58" formatted="false">"Свои источники"</string>
+    <string name="ui_b36c2611dcdf" formatted="false">"Ежедневно"</string>
+    <string name="ui_9e315fdf33e2" formatted="false">"Удалить всю серию"</string>
+    <string name="ui_280b10c89cc4" formatted="false">"Удалить навсегда"</string>
+    <string name="ui_c1b15a371248" formatted="false">"Удалить навсегда?"</string>
+    <string name="ui_54921b9f63d4" formatted="false">"Доставка оповещения"</string>
+    <string name="ui_045b87610cc6" formatted="false">"Статус доставки"</string>
+    <string name="ui_8b631300b94c" formatted="false">"Время доставки пропущено"</string>
+    <string name="ui_1bafdb89429e" formatted="false">"Убрать из выбранных"</string>
+    <string name="ui_7eb09d26530b" formatted="false">"Отбросить изменения и загрузить сохранённые настройки"</string>
+    <string name="ui_effbaffc6839" formatted="false">"Отбросить изменения?"</string>
+    <string name="ui_cfbecfd90a4c" formatted="false">"Закрыть оповещение"</string>
+    <string name="ui_621d129ab80a" formatted="false">"Без повторения"</string>
+    <string name="ui_bb090d4cc6a0" formatted="false">"Морось"</string>
+    <string name="ui_e1cb6d30fa3f" formatted="false">"Срок выполнения"</string>
+    <string name="ui_1ec520bb9420" formatted="false">"Длительность в секундах · 1–2678400"</string>
+    <string name="ui_43b49d7f3650" formatted="false">"Предыдущая версия записи · %1$d"</string>
+    <string name="ui_9916d68ae209" formatted="false">"Изменить всю серию"</string>
+    <string name="ui_9f84eeebf87f" formatted="false">"Изменить запись"</string>
+    <string name="ui_7a96fd3fa212" formatted="false">"Изменить это повторение"</string>
+    <string name="ui_d3a0604884bb" formatted="false">"Изменённое повторение"</string>
+    <string name="ui_b5a82d62d82e" formatted="false">"Включить обновление"</string>
+    <string name="ui_14303aa0c4a0" formatted="false">"Дата окончания"</string>
+    <string name="ui_10213931412a" formatted="false">"Дата окончания · первый день после события"</string>
+    <string name="ui_f1f9b2e562d8" formatted="false">"Время окончания · ЧЧ:мм"</string>
+    <string name="ui_059a63900027" formatted="false">"Окончание %1$s"</string>
+    <string name="ui_673e24cc4953" formatted="false">"Точные будильники не разрешены. Android может доставить оповещение позже. Для точного времени разрешите точные будильники."</string>
+    <string name="ui_82eeb5c27d89" formatted="false">"Действует до %1$s"</string>
+    <string name="ui_08b44debb5e5" formatted="false">"Экспорт календаря"</string>
+    <string name="ui_38375045ae44" formatted="false">"Найти город"</string>
+    <string name="ui_21c2385104dd" formatted="false">"Найти заметку"</string>
+    <string name="ui_3c991584d81f" formatted="false">"Найти родительскую задачу"</string>
+    <string name="ui_0d73d6e5f6b7" formatted="false">"Найти источники"</string>
+    <string name="ui_7804f7a79a9e" formatted="false">"Завершено"</string>
+    <string name="ui_14394e978d84" formatted="false">"Туман"</string>
+    <string name="ui_99703d295b39" formatted="false">"Следовать часовому поясу телефона в поездках"</string>
+    <string name="ui_096850154789" formatted="false">"Часовой пояс телефона · %1$s"</string>
+    <string name="ui_88c7286659b1" formatted="false">"Время прогноза %1$s"</string>
+    <string name="ui_b2e855dc5f9a" formatted="false">"Ледяная морось"</string>
+    <string name="ui_83a4965f99d0" formatted="false">"Ледяной дождь"</string>
+    <string name="ui_7d563032dbba" formatted="false">"Настройки полноэкранных будильников"</string>
+    <string name="ui_b7e98e6fa83c" formatted="false">"Полноэкранные будильники недоступны. Android всё ещё может показать разрешённое уведомление."</string>
+    <string name="ui_59d4638510cd" formatted="false">"halo-calendar.ics"</string>
+    <string name="ui_c723ea3e000c" formatted="false">"Сильный дождь"</string>
+    <string name="ui_c4ebc6d4a583" formatted="false">"Высокий"</string>
+    <string name="ui_dfa82a97b837" formatted="false">"При сохранении нового обзора история сокращается до 60 обзоров за 30 дней. Первый утренний обзор остаётся основой сравнения на этот день."</string>
+    <string name="ui_dc2e399e3159" formatted="false">"Импорт календаря"</string>
+    <string name="ui_b44d9687e26c" formatted="false">"Импортировать поддерживаемые события"</string>
+    <string name="ui_2f48a681094a" formatted="false">"Предупреждение импорта · запись %1$d"</string>
+    <string name="ui_2198944e8b97" formatted="false">"Включить в выбранные источники"</string>
+    <string name="ui_36e1bc89a841" formatted="false">"Изменения отдельных повторений"</string>
+    <string name="ui_229cf205c160" formatted="false">"Запись %1$d не импортирована"</string>
+    <string name="ui_bcc1735e5279" formatted="false">"Запись перемещена в корзину. Это действие можно отменить."</string>
+    <string name="ui_ac8e92bca027" formatted="false">"Запись сохранена. Статус доставки показан отдельно."</string>
+    <string name="ui_03feb5aba2e1" formatted="false">"Храните план на телефоне. Сохранённые записи, разрешения и фактические результаты доставки показаны отдельно."</string>
+    <string name="ui_9ddc8ca2935d" formatted="false">"Последнее обновление успешно"</string>
+    <string name="ui_20a14fdcd2c8" formatted="false">"Последняя проверка %1$s"</string>
+    <string name="ui_3c86ebf7e2ce" formatted="false">"Последняя попытка %1$s"</string>
+    <string name="ui_988c8160b754" formatted="false">"Латвия"</string>
+    <string name="ui_ca3c7ff04ba5" formatted="false">"Оставьте оба ограничения пустыми для бессрочного повторения. Даты, которых нет в месяце, пропускаются."</string>
+    <string name="ui_b9ab3f71c623" formatted="false">"Связанные заметки"</string>
+    <string name="ui_9e7c966a2d5b" formatted="false">"Локальный режим хранит данные без запросов в интернет. Android может задерживать фоновые обновления для экономии батареи."</string>
+    <string name="ui_91bc2c4ad359" formatted="false">"Местное время и выбранные вами места."</string>
+    <string name="ui_4ba8844456bb" formatted="false">"Локально · Без обновлений из интернета. Сохранённые внешние данные могут устареть."</string>
+    <string name="ui_15b61974b270" formatted="false">"Место"</string>
+    <string name="ui_f793de205ead" formatted="false">"Низкий"</string>
+    <string name="ui_a14e12292079" formatted="false">"Минимум %1$s · Максимум %2$s"</string>
+    <string name="ui_bd7a32643ade" formatted="false">"Преимущественно ясно"</string>
+    <string name="ui_66cfb935cb3b" formatted="false">"Минут до начала · 0–10080"</string>
+    <string name="ui_15c3bef016a4" formatted="false">"Часы не найдены"</string>
+    <string name="ui_9800f914f466" formatted="false">"Источник не найден"</string>
+    <string name="ui_9b11f6b707d2" formatted="false">"Ежемесячно"</string>
+    <string name="ui_6d090914f6d7" formatted="false">"Переместить в корзину?"</string>
+    <string name="ui_685e68475013" formatted="false">"Не показывать в обзорах и инициативных предложениях"</string>
+    <string name="ui_7d6bf2f6bcaa" formatted="false">"Не показывается в обзорах. Выбранный источник может обновляться."</string>
+    <string name="ui_97bdc5cf7d08" formatted="false">"Выбранные заглушённые источники могут обновляться. Отключите обновление, чтобы остановить загрузку."</string>
+    <string name="ui_b1483fad94db" formatted="false">"Для предпросмотра нужны Power и разрешённые подключённые сервисы. Источник можно сохранить локально."</string>
+    <string name="ui_b84cad41b231" formatted="false">"Новая запись"</string>
+    <string name="ui_2b6a38b89f9c" formatted="false">"Следующий день"</string>
+    <string name="ui_f2eef9a981e4" formatted="false">"Следующее доступное обновление %1$s"</string>
+    <string name="ui_23bbb52d3a94" formatted="false">"От этого источника пока нет локальных данных."</string>
+    <string name="ui_1daa9a3d7a61" formatted="false">"Город не найден. Попробуйте другое написание или крупный город рядом."</string>
+    <string name="ui_d2446154a2fd" formatted="false">"Подходящих записей нет. Добавьте первую запись или измените поиск."</string>
+    <string name="ui_1e81a116b180" formatted="false">"Подходящих источников нет. Измените фильтры или добавьте ленту."</string>
+    <string name="ui_57f84eca4e56" formatted="false">"Нет подключения · сохранённые данные доступны"</string>
+    <string name="ui_7d4f1a0fd762" formatted="false">"Без родительской задачи"</string>
+    <string name="ui_e80fcee71eef" formatted="false">"Сохранённых данных пока нет. Выберите источник и обновите его в Power."</string>
+    <string name="ui_8a7c6f2af461" formatted="false">"Нет сохранённого снимка"</string>
+    <string name="ui_425525eb2069" formatted="false">"В сохранённом календаре нет поддерживаемых событий."</string>
+    <string name="ui_760b2ce4ae0a" formatted="false">"В сохранённых данных нет действующих оповещений. Это не подтверждает отсутствие предупреждений."</string>
+    <string name="ui_de6cb7a78259" formatted="false">"Не удалось получить пригодный предпросмотр. Проверьте адрес или попробуйте после паузы обновления."</string>
+    <string name="ui_64d7055a9fd6" formatted="false">"Не выбран · источник не обновляется"</string>
+    <string name="ui_cb0531228e48" formatted="false">"Заметки остаются в Workspace. Удаление ссылки не удаляет заметку."</string>
+    <string name="ui_991b4a99352a" formatted="false">"На этот день ничего не запланировано. Добавьте запись или выберите другую дату."</string>
+    <string name="ui_ee6dfd87e5a5" formatted="false">"Нужно разрешение на уведомления"</string>
+    <string name="ui_fd6dcc1ee65f" formatted="false">"Уведомления отключены. Запись сохранена, но Android не может оповестить вас."</string>
+    <string name="ui_a5b3a74811e6" formatted="false">"Уведомить меня"</string>
+    <string name="ui_7c25d05a2551" formatted="false">"Число повторений · необязательно, 1–10000"</string>
+    <string name="ui_cc9b0ea41697" formatted="false">"Официальные сообщения"</string>
+    <string name="ui_f1fa89664414" formatted="false">"Добавляются только новые идентификаторы событий. Существующие записи и корзина сохраняются. Встроенные будильники и вложения не импортируются."</string>
+    <string name="ui_b4682f392236" formatted="false">"Открыть повестку"</string>
+    <string name="ui_4395e0a14d6f" formatted="false">"Открыть связанную заметку"</string>
+    <string name="ui_c6885c8ebcb2" formatted="false">"Настройки уведомлений"</string>
+    <string name="ui_22b3cc130f64" formatted="false">"Открыть сайт издателя"</string>
+    <string name="ui_de5cc828b63c" formatted="false">"Open-Meteo"</string>
+    <string name="ui_8438092fcd2e" formatted="false">"Для открытия сайта издателя нужен Power. Сохранённая статья остаётся доступной здесь."</string>
+    <string name="ui_f7f05a229030" formatted="false">"Или повторять до · ГГГГ-ММ-ДД"</string>
+    <string name="ui_721c455d6dc4" formatted="false">"Пасмурно"</string>
+    <string name="ui_3b46da8e192a" formatted="false">"Пересекается с другим событием"</string>
+    <string name="ui_d4382ebde46d" formatted="false">"Запись родителя"</string>
+    <string name="ui_fb8d859156cd" formatted="false">"Родительская задача"</string>
+    <string name="ui_f7be32278df9" formatted="false">"Переменная облачность"</string>
+    <string name="ui_8537d5798d8a" formatted="false">"Power · Обновляются только выбранные и включённые источники."</string>
+    <string name="ui_b0cb10bd7ef9" formatted="false">"Подготовка доставки"</string>
+    <string name="ui_5f54233cc4da" formatted="false">"Предпросмотр ленты"</string>
+    <string name="ui_c7ae4098f4b4" formatted="false">"Предпросмотр недоступен локально. Сохраните адрес сейчас и проверьте его позже в Power."</string>
+    <string name="ui_9aa06e408751" formatted="false">"Предпросмотр получен. Он не сохранён как снимок источника."</string>
+    <string name="ui_e4a1e89ee1db" formatted="false">"Предыдущий день"</string>
+    <string name="ui_d60dbba07922" formatted="false">"Приоритет"</string>
+    <string name="ui_01db7cb4a9af" formatted="false">"Публичный HTTPS-адрес ленты"</string>
+    <string name="ui_e041a007fc0a" formatted="false">"Публичный iCalendar"</string>
+    <string name="ui_70041b75a185" formatted="false">"Опубликовано %1$s"</string>
+    <string name="ui_21378545892f" formatted="false">"Издатель"</string>
+    <string name="ui_654c90df0e2c" formatted="false">"Лента RSS или Atom"</string>
+    <string name="ui_a6d20aa6a4c7" formatted="false">"Дождь"</string>
+    <string name="ui_0156925b1586" formatted="false">"Ливни"</string>
+    <string name="ui_62fbd278dc0a" formatted="false">"Читать сохранённую статью"</string>
+    <string name="ui_b18e2648e1c0" formatted="false">"Лимит обновлений достигнут"</string>
+    <string name="ui_61eb37675858" formatted="false">"Обновление отменено"</string>
+    <string name="ui_08cbbd3def78" formatted="false">"Обновление не заменило сохранённые данные. Проверьте статус источника ниже."</string>
+    <string name="ui_e7fc419dd1d8" formatted="false">"Обновление отключено"</string>
+    <string name="ui_744220d57cc7" formatted="false">"Обновление отключено · сохранённый снимок доступен."</string>
+    <string name="ui_65283c4bb3a1" formatted="false">"Обновляйте внешние источники в Power. Сохранённые данные доступны локально."</string>
+    <string name="ui_d2444a112f9e" formatted="false">"Обновление не удалось · сохранённые данные доступны"</string>
+    <string name="ui_80a5d3726c12" formatted="false">"Интервал обновления в минутах · 15–1440"</string>
+    <string name="ui_5f6f7a8c0a5a" formatted="false">"Для обновления нужны Power и разрешённые подключённые сервисы"</string>
+    <string name="ui_684496500f6c" formatted="false">"Обновить источник"</string>
+    <string name="ui_f92e2ad582c0" formatted="false">"Обновление"</string>
+    <string name="ui_b1af742021ca" formatted="false">"Напомнить об этой статье"</string>
+    <string name="ui_bc0c3c712528" formatted="false">"Дата напоминания"</string>
+    <string name="ui_7971dd752669" formatted="false">"Напоминания"</string>
+    <string name="ui_952b4797cb71" formatted="false">"Удалите часы, прежде чем добавить новые."</string>
+    <string name="ui_f55296180370" formatted="false">"Удалить источник"</string>
+    <string name="ui_2ee10bf411a6" formatted="false">"Удалить этот источник?"</string>
+    <string name="ui_eb36841b0dcf" formatted="false">"Удалить недоступную ссылку на заметку"</string>
+    <string name="ui_169fce45909a" formatted="false">"Переименовать часы"</string>
+    <string name="ui_91ada2114c37" formatted="false">"Открыть задачу снова"</string>
+    <string name="ui_f4ecef2a1f22" formatted="false">"Интервал повторения · 1–366"</string>
+    <string name="ui_d7d1947e0184" formatted="false">"Повторяющаяся серия · %1$s"</string>
+    <string name="ui_d68565a6b0dc" formatted="false">"Сбросить изменения отдельных повторений при изменении расписания серии"</string>
+    <string name="ui_1a8fe8ae37c2" formatted="false">"Восстановить исходное повторение"</string>
+    <string name="ui_cdf8b57b1a60" formatted="false">"Получено %1$s"</string>
+    <string name="ui_cd0cb9e6700f" formatted="false">"Проверить импорт календаря"</string>
+    <string name="ui_4c021b8aa684" formatted="false">"Сохранить копию календаря"</string>
+    <string name="ui_ac7f6759f63e" formatted="false">"Сохранить напоминание"</string>
+    <string name="ui_36d26ce8c3f6" formatted="false">"Сохранить источник"</string>
+    <string name="ui_f83d22844f3c" formatted="false">"Не удалось открыть сохранённые часы. Данные сохранены; повторите попытку."</string>
+    <string name="ui_7d1410d40d67" formatted="false">"Сохранённые данные с понятными источниками и отметками времени."</string>
+    <string name="ui_74284b4b54f3" formatted="false">"Сохранённый снимок актуален"</string>
+    <string name="ui_91e0f81f39e8" formatted="false">"Сохранено. Расписание Android ещё готовится или будущих оповещений нет."</string>
+    <string name="ui_3275da5f99d2" formatted="false">"Запланировано приблизительно"</string>
+    <string name="ui_731735485ceb" formatted="false">"Запланировано точно"</string>
+    <string name="ui_5c73921f042a" formatted="false">"Наука и космос"</string>
+    <string name="ui_32ebf3eb5cc8" formatted="false">"Найдите город, чтобы узнать время. Интернет и разрешение на местоположение не нужны."</string>
+    <string name="ui_77fe1f427465" formatted="false">"Поиск в плане"</string>
+    <string name="ui_6aff0319286e" formatted="false">"Выберите и включите источник или дождитесь завершения текущего действия."</string>
+    <string name="ui_140b762af5a2" formatted="false">"Выбрать источник"</string>
+    <string name="ui_04f3404c72f5" formatted="false">"Выбранные источники"</string>
+    <string name="ui_fb6f0c89eb3c" formatted="false">"Пропустить это повторение"</string>
+    <string name="ui_e777f6963859" formatted="false">"Отложить на %1$d мин."</string>
+    <string name="ui_88096584e4a8" formatted="false">"Отложено"</string>
+    <string name="ui_4f946da92e82" formatted="false">"Снег"</string>
+    <string name="ui_26ecb3538285" formatted="false">"Снежные заряды"</string>
+    <string name="ui_780999c3fecb" formatted="false">"Часть записей календаря требует проверки и пропущена. Снимок не включает неподдерживаемые правила повторения."</string>
+    <string name="ui_672d26be45e5" formatted="false">"Источник добавлен. Содержимое появится после успешного обновления."</string>
+    <string name="ui_a07288114728" formatted="false">"Источник и его локальный снимок удалены. Записи органайзера и заметки сохранены."</string>
+    <string name="ui_15d05a0adeb6" formatted="false">"Источник подтвердил отсутствие изменений"</string>
+    <string name="ui_ee4dddd703d3" formatted="false">"Язык источника · en, ru, lv или другой код"</string>
+    <string name="ui_1939968f47d1" formatted="false">"Название источника"</string>
+    <string name="ui_8d633cbc8148" formatted="false">"Источник удалён"</string>
+    <string name="ui_389019cf3066" formatted="false">"Настройки источника"</string>
+    <string name="ui_bdde92811926" formatted="false">"Настройки источника сохранены. Выбор не запускает загрузку в локальном режиме."</string>
+    <string name="ui_5c0178f26973" formatted="false">"Источник обновлён. Время получения и проверки показано ниже."</string>
+    <string name="ui_8bcead3a65c2" formatted="false">"Не удалось открыть источники. Выбор сохранён; повторите попытку."</string>
+    <string name="ui_8169693101a4" formatted="false">"Дата начала"</string>
+    <string name="ui_4b9d37eba6de" formatted="false">"Остановить таймер"</string>
+    <string name="ui_b3a60e61a523" formatted="false">"Задачи"</string>
+    <string name="ui_7beb41946e0f" formatted="false">"Задачи без срока"</string>
+    <string name="ui_3169ce6442ac" formatted="false">"Технологии"</string>
+    <string name="ui_707f4ad79b85" formatted="false">"Температура недоступна"</string>
+    <string name="ui_c69b19ae1842" formatted="false">"Действие завершено, но обновлённый вид не загрузился. Повторите загрузку, чтобы увидеть сохранённый результат."</string>
+    <string name="ui_33a0bd94f0dd" formatted="false">"Часы изменились или не сохранились. Откройте их снова и повторите попытку."</string>
+    <string name="ui_01e878fcb764" formatted="false">"План, которым с вами поделились."</string>
+    <string name="ui_9777239200e7" formatted="false">"Издатель предоставил только заголовок. Откройте его сайт, чтобы прочитать больше."</string>
+    <string name="ui_a912c5da6c1f" formatted="false">"Действие с источником не завершилось. Последние сохранённые данные доступны."</string>
+    <string name="ui_071e3c26c417" formatted="false">"Таймер запустится после сохранения."</string>
+    <string name="ui_c9a01dc2f737" formatted="false">"Действие не завершилось. Данные сохранены; откройте запись снова и повторите попытку."</string>
+    <string name="ui_9e6d77cab031" formatted="false">"Этой статьи больше нет в сохранённой ленте. Откройте источник, чтобы увидеть текущие сохранённые записи."</string>
+    <string name="ui_7e56049e35b6" formatted="false">"Будут удалены запись и история её повторений. Это нельзя отменить. Связанные заметки сохранятся."</string>
+    <string name="ui_ca258fc6b157" formatted="false">"Запись изменилась, содержит незавершённые подзадачи или требует решения о повторении. Откройте её снова и проверьте перед повтором."</string>
+    <string name="ui_5bf941f58948" formatted="false">"Запись здесь больше недоступна. Возможно, она удалена или изменён доступ."</string>
+    <string name="ui_4b2c9eabaf9b" formatted="false">"Связанная запись изменилась или недоступна. Обновите обзор, чтобы увидеть актуальные данные."</string>
+    <string name="ui_b8e55e676964" formatted="false">"Связанная запись больше недоступна. Обновите локальный источник, чтобы обновить список."</string>
+    <string name="ui_15bccc663119" formatted="false">"Связанная заметка недоступна. Возможно, она в корзине."</string>
+    <string name="ui_f1f3c6717092" formatted="false">"Это повторение"</string>
+    <string name="ui_168fc6a31b9d" formatted="false">"Настройки и кеш этого источника будут удалены из halo навсегда. Записи органайзера, заметки и другие источники сохранятся. Чтобы сохранить настройки, уберите источник из выбранных."</string>
+    <string name="ui_1a19a916c1e7" formatted="false">"Будет удалена вся серия и отменены её оповещения. Серию можно восстановить из корзины."</string>
+    <string name="ui_45cb8405f1f8" formatted="false">"Запись будет удалена, а её оповещение отменено. Запись можно восстановить из корзины."</string>
+    <string name="ui_ec8c160428a3" formatted="false">"Сохранённый снимок будет удалён, а старые ссылки из обзоров станут недействительными. Выбранный источник сможет загрузить данные снова в Power. Настройки сохранятся."</string>
+    <string name="ui_16ac1039ecad" formatted="false">"У этой копии своя версия. Последующие изменения органайзера не изменят экспортируемые данные."</string>
+    <string name="ui_5859b3145aac" formatted="false">"Источник изменился. Откройте настройки снова перед сохранением."</string>
+    <string name="ui_140e69c55e4e" formatted="false">"Источник недоступен или больше не разрешён в этом режиме."</string>
+    <string name="ui_55d0c82e67ce" formatted="false">"Источник не вернул статей."</string>
+    <string name="ui_b0af52cab2cd" formatted="false">"Сайт не открылся. Сохранённые данные доступны."</string>
+    <string name="ui_31a9beb9609b" formatted="false">"Гроза"</string>
+    <string name="ui_9d42e22b9fa0" formatted="false">"Гроза с градом"</string>
+    <string name="ui_767b663a1557" formatted="false">"Время · ЧЧ:мм"</string>
+    <string name="ui_26fac15e94c7" formatted="false">"Время таймера истекло · ожидание доставки Android"</string>
+    <string name="ui_cca94c56deb8" formatted="false">"Таймеры"</string>
+    <string name="ui_c560122ac470" formatted="false">"Корзина"</string>
+    <string name="ui_4ff140671613" formatted="false">"Корзина пуста."</string>
+    <string name="ui_6b83c3f4d833" formatted="false">"Отменить удаление"</string>
+    <string name="ui_bc6e73680a24" formatted="false">"Неподдерживаемая локальная запись"</string>
+    <string name="ui_8bc06944ab9a" formatted="false">"Неподдерживаемое действие таймера"</string>
+    <string name="ui_2e138668a392" formatted="false">"До 24 сохранённых часов. Данные городов: GeoNames, CC BY 4.0."</string>
+    <string name="ui_1b015904cc17" formatted="false">"Срочный"</string>
+    <string name="ui_69316b17e5c8" formatted="false">"Укажите корректную дату и время в формате ЧЧ:мм."</string>
+    <string name="ui_a8914691f595" formatted="false">"Использовать часовой пояс телефона"</string>
+    <string name="ui_5971c1e1acff" formatted="false">"Ожидание следующего обновления"</string>
+    <string name="ui_e767bffd798c" formatted="false">"Погодные условия недоступны"</string>
+    <string name="ui_2975132481a7" formatted="false">"Еженедельно"</string>
+    <string name="ui_78ae647dc554" formatted="false">"Мир"</string>
+    <string name="ui_7c020b91b876" formatted="false">"Мировое время"</string>
+    <string name="ui_6e69b59ed34d" formatted="false">"Ежегодно"</string>
+    <string name="ui_777b4b64dc80" formatted="false">"Ваш календарь, задачи и время, сохранённые на телефоне."</string>
+    <string name="ui_4b76b34e2df1" formatted="false">"Не удалось открыть органайзер. Данные сохранены; повторите попытку."</string>
+    <string name="ui_3a907221c18a" formatted="false">"Сохранённая запись останется. Изменения в этой форме будут отброшены."</string>
+    <string name="ui_042935db0ee2" formatted="false">"Добавлено событий: %1$d; сохранено существующих идентификаторов: %2$d."</string>
+    <string name="ui_5c9ad4eb9514" formatted="false">"В текущей выбранной информации больше нет элементов: %1$d."</string>
+    <string name="ui_7a61296ae7d3" formatted="false">"Поддерживаемых событий, готовых к импорту: %1$d."</string>
+    <string name="ui_e819fe050bdf" formatted="false">"Вероятность осадков: %1$d%%"</string>
+    <string name="ui_f3b1c63149c7" formatted="false">"Весь день · дата окончания не включается"</string>
+    <string name="ui_844461c78b78" formatted="false">"Android ещё отменяет расписание. Элемент остаётся в корзине. Проверьте расписание ещё раз, затем повторите окончательное удаление."</string>
+    <string name="ui_4f85bd6f529a" formatted="false">"Экспорт календаря"</string>
+    <string name="ui_c17e79e63456" formatted="false">"Отменённое событие"</string>
+    <string name="ui_53eb187b3809" formatted="false">"Отменённый повтор"</string>
+    <string name="ui_57a9b5958b87" formatted="false">"Изменённый повтор"</string>
+    <string name="ui_cea4d2e010b8" formatted="false">"Сбросить выбор"</string>
+    <string name="ui_a706a8c0b3b0" formatted="false">"Найти элемент органайзера"</string>
+    <string name="ui_2b39e3f2daa6" formatted="false">"Следует часовому поясу телефона"</string>
+    <string name="ui_01f7b5dc221c" formatted="false">"В доступных для сравнения источниках изменений нет. Некоторые источники недоступны."</string>
+    <string name="ui_2c7c4805b5cb" formatted="false">"С момента сохранённого утреннего сравнения ничего не изменилось."</string>
+    <string name="ui_d6e97dd2a5d4" formatted="false">"Число повторов: %1$d"</string>
+    <string name="ui_fa1cf1a69afa" formatted="false">"Исходный повтор: %1$s"</string>
+    <string name="ui_5a3602bd4865" formatted="false">"Повторяющаяся серия · %1$s · интервал %2$d"</string>
+    <string name="ui_0d176824dbe3" formatted="false">"Повторяется до %1$s"</string>
+    <string name="ui_315f4e5915aa" formatted="false">"Выбранный повтор"</string>
+    <string name="ui_e41a55315538" formatted="false">"Показаны первые 100 подходящих элементов. Уточните поиск, чтобы найти остальные."</string>
+    <string name="ui_9f6923517f72" formatted="false">"Некоторые выбранные события изменены или удалены. Сбросьте выбор и проверьте текущий список."</string>
+    <string name="ui_d28cf18dbe82" formatted="false">"Закрыть детям доступ ко всем элементам органайзера"</string>
+    <string name="ui_9cdeddc911cd" formatted="false">"Дата выше — начало серии. Сохранённые изменения отдельных повторов указаны ниже."</string>
+    <string name="ui_fd831af0c14e" formatted="false">"В выборке есть несколько версий одного события. Выберите одну версию каждого события или экспортируйте календари отдельно."</string>
+    <string name="ui_c66c9db99f62" formatted="false">"Источник ещё не добавлен. Данные в этой форме будут удалены."</string>
+    <string name="ui_1f70a85d80f9" formatted="false">"Статья или её источник изменились. Закройте форму и снова откройте сохранённую статью, чтобы проверить её перед созданием напоминания."</string>
+    <string name="ui_a84c61c6818a" formatted="false">"Этот сохранённый повтор изменён или больше недоступен. Откройте источник, чтобы проверить текущий календарь."</string>
+    <string name="ui_90c2d4050282" formatted="false">"Часовой пояс · например Europe/Riga"</string>
+    <string name="ui_bc181c84f941" formatted="false">"Недоступный сохранённый элемент · %1$s"</string>
+    <string name="ui_ba423a46403c" formatted="false">"Добавить задачу"</string>
+    <string name="ui_7ee2b75023d3" formatted="false">"Добавить в план"</string>
+    <string name="ui_530b2020e211" formatted="false">"Управление будильником"</string>
+    <string name="ui_f55c19a63ed4" formatted="false">"Будильники и таймеры"</string>
+    <string name="ui_015c173e9395" formatted="false">"Оповещение доставлено"</string>
+    <string name="ui_205b1819fb82" formatted="false">"Все подходящие элементы"</string>
+    <string name="ui_423775b6a593" formatted="false">"Все приоритеты"</string>
+    <string name="ui_2a77f7acd564" formatted="false">"Все выбранные ленты"</string>
+    <string name="ui_4b99f563992d" formatted="false">"Время обновления определяет Android. Часы отображает лаунчер; остальная информация — сохранённый снимок. Увеличьте виджет, чтобы видеть больше."</string>
+    <string name="ui_d2c6dfd98588" formatted="false">"Применить к этой карточке"</string>
+    <string name="ui_1099f91164f6" formatted="false">"Применить к этому виджету"</string>
+    <string name="ui_9f3333846284" formatted="false">"Приблизительное время запуска"</string>
+    <string name="ui_2399216958e6" formatted="false">"Попроси взрослого настроить этот виджет."</string>
+    <string name="ui_b0799603a9f9" formatted="false">"Данные батареи недоступны"</string>
+    <string name="ui_87df86236528" formatted="false">"Соберите обзор дня из сохранённой информации"</string>
+    <string name="ui_f50ef27c2148" formatted="false">"Выберите сохранённый источник погоды"</string>
+    <string name="ui_2eb4d5162b77" formatted="false">"Выбрать город для часов"</string>
+    <string name="ui_84ffa162f96b" formatted="false">"Часы и погода"</string>
+    <string name="ui_0ef695754dea" formatted="false">"Настроить эту карточку"</string>
+    <string name="ui_55fd1e26c214" formatted="false">"Настроить виджет"</string>
+    <string name="ui_a1cbb539ae49" formatted="false">"Разделы панели"</string>
+    <string name="ui_ec6aaaa9fcf4" formatted="false">"Повседневная панель"</string>
+    <string name="ui_de3652baa803" formatted="false">"Точный будильник запланирован"</string>
+    <string name="ui_45450c26be45" formatted="false">"Первый выбранный город погоды"</string>
+    <string name="ui_2eb6a61480cf" formatted="false">"Как в halo"</string>
+    <string name="ui_25da9b3c491d" formatted="false">"Виджет halo"</string>
+    <string name="ui_916e79e9ad73" formatted="false">"Источник заголовков"</string>
+    <string name="ui_962799df75bc" formatted="false">"Фильтр элементов"</string>
+    <string name="ui_e06ac8463ab2" formatted="false">"Последнее обновление не удалось"</string>
+    <string name="ui_4f22b6ff9df0" formatted="false">"Источники и города погоды"</string>
+    <string name="ui_e36cbd0877de" formatted="false">"Следующие семь дней"</string>
+    <string name="ui_9ea6e7b8e45f" formatted="false">"Нет активных будильников или таймеров"</string>
+    <string name="ui_25b9f6af179c" formatted="false">"Нет подходящих активных элементов"</string>
+    <string name="ui_17df65a98f41" formatted="false">"Сохранённого обзора пока нет"</string>
+    <string name="ui_d4c0e47aebe1" formatted="false">"Нет сохранённых заголовков из выбранных источников"</string>
+    <string name="ui_beeb64080e45" formatted="false">"В следующие семь дней событий нет"</string>
+    <string name="ui_e8b48321eee0" formatted="false">"Уведомления заблокированы"</string>
+    <string name="ui_0d840153ae44" formatted="false">"Самый ранний сохранённый снимок"</string>
+    <string name="ui_431b08d0cb30" formatted="false">"Самый ранний выбранный снимок"</string>
+    <string name="ui_51d530448a96" formatted="false">"От батареи"</string>
+    <string name="ui_81738b9d656a" formatted="false">"Откройте halo, чтобы загрузить виджет"</string>
+    <string name="ui_6c0b22fab17d" formatted="false">"Личные названия и подробности остаются в halo. Виджет показывает безопасные сводки и открывает исходный элемент."</string>
+    <string name="ui_c435db5deab4" formatted="false">"Часовой пояс телефона"</string>
+    <string name="ui_e54cc8c8a674" formatted="false">"Фильтр приоритета"</string>
+    <string name="ui_82f47a54326f" formatted="false">"Личный элемент"</string>
+    <string name="ui_6f129fe45c02" formatted="false">"Уточните поиск, чтобы найти больше элементов."</string>
+    <string name="ui_e466bfe6c68c" formatted="false">"Сохранено"</string>
+    <string name="ui_bcfff71cf87c" formatted="false">"Сохранённая информация недоступна"</string>
+    <string name="ui_9505a526725d" formatted="false">"Сохранённые снимки актуальны"</string>
+    <string name="ui_b738a691cf68" formatted="false">"Планирование не удалось"</string>
+    <string name="ui_d25c80711ae7" formatted="false">"Ожидает планирования"</string>
+    <string name="ui_2cf21f3c5382" formatted="false">"Выбранные заголовки"</string>
+    <string name="ui_060b0576a013" formatted="false">"Поставить будильник"</string>
+    <string name="ui_1976f9f76209" formatted="false">"Часть сохранённых заголовков может быть устаревшей"</string>
+    <string name="ui_5e5894bfab2a" formatted="false">"Выбор источника не загружает данные в режиме Local. Внешние источники обновляются только в Power."</string>
+    <string name="ui_4fcf31d41403" formatted="false">"Запустить таймер"</string>
+    <string name="ui_7ffc664a9769" formatted="false">"Задачи и напоминания"</string>
+    <string name="ui_7e021da8fc34" formatted="false">"Настроенный элемент недоступен. Выберите другой элемент или все подходящие элементы."</string>
+    <string name="ui_a5fa0596f337" formatted="false">"Выбранный источник недоступен. Выберите другой."</string>
+    <string name="ui_5cbc6ed3779a" formatted="false">"Эти настройки карточки применятся после сохранения макета Screen."</string>
+    <string name="ui_d4eead7e1b4c" formatted="false">"Виджет изменился или его элемент недоступен. Откройте halo и проверьте виджет."</string>
+    <string name="ui_1222ccb800f1" formatted="false">"Виджет или источник изменился. Отмените и снова откройте настройку, чтобы проверить текущие параметры."</string>
+    <string name="ui_8d691136332e" formatted="false">"Управление таймером"</string>
+    <string name="ui_2f4ddffe07c3" formatted="false">"Таймер приостановлен"</string>
+    <string name="ui_bf584f968f98" formatted="false">"Ближайшее событие"</string>
+    <string name="ui_22b699fdffe1" formatted="false">"Видимые элементы"</string>
+    <string name="ui_e7f20bbe1124" formatted="false">"Источник погоды"</string>
+    <string name="ui_80d83ba4b502" formatted="false">"Не удалось открыть настройки виджета. Сохранённые настройки не изменены."</string>
+    <string name="ui_70933efc8e94" formatted="false">"Тема виджета"</string>
+    <string name="ui_dcf7b3e00265" formatted="false">"Просрочено за последние 30 дней"</string>
+    <string name="ui_09d2ea5a523b" formatted="false">"Данные серии"</string>
+    <string name="ui_d9e659733eb7" formatted="false">"Этот повтор изменился или отменён. Ниже приведены данные серии."</string>
+    <string name="ui_2b3b5252c6fc" formatted="false">"Заново открыть сохранённые данные"</string>
+    <string name="ui_df3347a4673d" formatted="false">"Не удалось открыть сохранённую информацию. Откройте halo и повторите попытку."</string>
+    <string name="ui_8bb61f66a0b4" formatted="false">"Настройте карточку заново, чтобы использовать текущие параметры."</string>
+    <string name="ui_6b02e0d363a4" formatted="false">"Добавлено"</string>
+    <string name="ui_a251c18205f1" formatted="false">"Сохранено"</string>
+    <string name="ui_22b693223fcb" formatted="false">"Заряжается"</string>
+    <string name="ui_ba6a6869f9fd" formatted="false">"Обзор дня"</string>
+    <string name="ui_9d74727714db" formatted="false">"Закрыто"</string>
+    <string name="ui_cebf7f1f504e" formatted="false">"Заголовки"</string>
+    <string name="ui_967533ec1d19" formatted="false">"Последняя попытка"</string>
+    <string name="ui_3d86eb082e36" formatted="false">"Пропущено"</string>
+    <string name="ui_ca3a4f99aefd" formatted="false">"Следующее обновление доступно"</string>
+    <string name="ui_8a7356bb2722" formatted="false">"Погода ещё не сохранена"</string>
+    <string name="ui_77d8f0e37907" formatted="false">"Обновление выполняется"</string>
+    <string name="ui_5c1a17bbf4a2" formatted="false">"Разделы показаны в этом порядке"</string>
+    <string name="ui_e33c20272fc4" formatted="false">"План слишком велик для карточки. Откройте органайзер."</string>
+    <string name="ui_fd4d3e289ab7" formatted="false">"Применение карточек Screen заменит текущую раскладку. Изменение можно отменить в Screen. Размещение виджетов на рабочем столе Android вы выбираете отдельно."</string>
+    <string name="ui_f28716b8f207" formatted="false">"Попроси взрослого выбрать источники и карточки. Можно продолжить настройку без изменений."</string>
+    <string name="ui_7b98f4d03ee2" formatted="false">"Выберите допустимую дату с 1970 по 2199 год."</string>
+    <string name="ui_1e0ab92b61b6" formatted="false">"Выбрать город офлайн"</string>
+    <string name="ui_0f9ce1f41d25" formatted="false">"Начальные карточки Screen"</string>
+    <string name="ui_cdf7518f34f0" formatted="false">"Настройки дня сохранены. Источники и карточки можно изменить позже."</string>
+    <string name="ui_0f99b988cf35" formatted="false">"Не удалось открыть настройки дня. Сохранённые настройки не потеряны."</string>
+    <string name="ui_a32b5402ddb2" formatted="false">"Загрузить предпросмотр в Power"</string>
+    <string name="ui_e32a83ec6687" formatted="false">"Найти связанный элемент"</string>
+    <string name="ui_d9444a7a3f3d" formatted="false">"Управлять в своём инструменте"</string>
+    <string name="ui_7c170d76ee12" formatted="false">"Нет сохранённого предпросмотра"</string>
+    <string name="ui_488fdd7891f8" formatted="false">"Город для погоды не выбран"</string>
+    <string name="ui_c4a662538496" formatted="false">"Открыть связанный элемент"</string>
+    <string name="ui_5edcaf55f4d8" formatted="false">"Предпросмотр показывает сохранённые настройки источника. Загрузка предпросмотра необязательна и требует Power."</string>
+    <string name="ui_99e15fdbef0d" formatted="false">"Предпросмотр источника"</string>
+    <string name="ui_39f9aeef2311" formatted="false">"Интервал обновления"</string>
+    <string name="ui_67205b0e06a4" formatted="false">"Связанные элементы остаются в своих инструментах. Удаление ссылки не удаляет их."</string>
+    <string name="ui_4145a3de295e" formatted="false">"Связанные заметки, планы и действия"</string>
+    <string name="ui_4537d888c2e5" formatted="false">"Загрузить сохранённые настройки"</string>
+    <string name="ui_4953f8970948" formatted="false">"Удалить ссылку"</string>
+    <string name="ui_77acfc3c9b01" formatted="false">"Убрать город погоды"</string>
+    <string name="ui_38d3b2dfbe8c" formatted="false">"Сохранить настройки дня"</string>
+    <string name="ui_2d8eef71a905" formatted="false">"Категория источника"</string>
+    <string name="ui_b42d7c19ae1d" formatted="false">"Источники сохранены. Раскладка Screen изменилась или не сохранилась. Проверьте сохранённые настройки перед повтором."</string>
+    <string name="ui_088b23e3327d" formatted="false">"Язык источника"</string>
+    <string name="ui_1e00736c8575" formatted="false">"Настройки изменились или не сохранились. Загрузите сохранённые настройки, проверьте их и повторите."</string>
+    <string name="ui_6714cc14f2b5" formatted="false">"Не удалось завершить действие. Настройки сохранены; проверьте текущий режим и повторите."</string>
+    <string name="ui_b105ec460f5d" formatted="false">"Связанный элемент недоступен. Откройте его инструмент, чтобы проверить актуальные данные."</string>
+    <string name="ui_bcbd0132fce6" formatted="false">"Использовать эти карточки в Screen"</string>
+    <string name="ui_d9a53fd129e6" formatted="false">"Действия с элементом"</string>
+    <string name="ui_83beb7eac7b3" formatted="false">"Город погоды"</string>
+    <string name="ui_d4e658980d3d" formatted="false">"Мировое время"</string>
+    <string name="ui_c4b13f9ef80d" formatted="false">"Часы, органайзер и обзор дня работают в Local. Внешние источники необязательны; в Power обновляются только выбранные."</string>
+    <string name="ui_b5b35eb8c85a" formatted="false">"Ваш день"</string>
+    <string name="ui_37a6f0ef32d6" formatted="false">"Предпросмотр загружен из источника. Сохранение настроек выполняется отдельно."</string>
+    <string name="ui_08e56a01ccaa" formatted="false">"Ваш день, ваш выбор"</string>
+    <string name="ui_3fc4e2f241db" formatted="false">"Источники и карточки дня"</string>
+    <string name="ui_995a85556012" formatted="false">"Выберите источники, город и начальные карточки Screen."</string>
+    <string name="ui_ab7250aaa557" formatted="false">"Обзоры дня"</string>
+    <string name="ui_2e602c410819" formatted="false">"Сохранённые источники"</string>
+    <string name="ui_9d27d74673ab" formatted="false">"События, задачи, напоминания, будильники и таймеры"</string>
+    <string name="ui_fde27b724d15" formatted="false">"Создать и прочитать обзор из сохранённых данных"</string>
+    <string name="ui_e5dba5f71d7f" formatted="false">"Время в сохранённых городах"</string>
+    <string name="ui_1265dc291752" formatted="false">"Выбрать погоду, новости и публичные календари"</string>
+    <string name="ui_9c04c994c776" formatted="false">"Не удалось загрузить элементы дня. Сохранённые данные не потеряны."</string>
+    <string name="ui_52deea4929d9" formatted="false">"Элемент изменился. Откройте его инструмент и проверьте актуальные данные."</string>
+    <string name="ui_4e673b58d0e1" formatted="false">"Элемент органайзера сохранён"</string>
+    <string name="ui_bf41cbd001bb" formatted="false">"Локальная запись изменена. Статус уведомления указан в органайзере."</string>
+    <string name="ui_92dcde024203" formatted="false">"Восстановленной подзадаче нужна активная родительская задача. Восстановите её или оставьте локальный план."</string>
+    <string name="ui_5e88821cb6d6" formatted="false">"Прочитать настройки карточки Screen"</string>
+    <string name="ui_e6cf4db3cafb" formatted="false">"Найти элементы органайзера"</string>
+    <string name="ui_f5131bb42ed4" formatted="false">"Прочитать элемент органайзера"</string>
+    <string name="ui_de0c5bb61ec7" formatted="false">"Создать элемент органайзера"</string>
+    <string name="ui_64ba9dc4054a" formatted="false">"Изменить элемент органайзера"</string>
+    <string name="ui_a09334173b27" formatted="false">"Обновить элемент органайзера"</string>
+    <string name="ui_7a5c78cd530c" formatted="false">"Изменить одно повторение"</string>
+    <string name="ui_a67b175b0041" formatted="false">"Управлять уведомлением"</string>
+    <string name="ui_43e4afaa0a2f" formatted="false">"Прочитать мировое время"</string>
+    <string name="ui_45b2eaf1a5f9" formatted="false">"Сохранить мировое время"</string>
+    <string name="ui_23f6a0d9d6b3" formatted="false">"Упорядочить мировые часы"</string>
+    <string name="ui_368fc8540a43" formatted="false">"Прочитать каталог источников"</string>
+    <string name="ui_d3cfeed74118" formatted="false">"Прочитать сохранённый источник"</string>
+    <string name="ui_379e914964fa" formatted="false">"Предпросмотр публичного источника"</string>
+    <string name="ui_411e5239c33f" formatted="false">"Сохранить настройки источника"</string>
+    <string name="ui_d68ebd7c51a1" formatted="false">"Управлять источником"</string>
+    <string name="ui_78e67cc0e02b" formatted="false">"Прочитать обзоры дня"</string>
+    <string name="ui_b80dca3f22f6" formatted="false">"Создать или прочитать обзор"</string>
+    <string name="ui_d6f211f8864a" formatted="false">"Изменить настройки обзора"</string>
+    <string name="ui_eff0c244cb71" formatted="false">"Открыть инструмент дня"</string>
+    <string name="ui_ae51e8d0119f" formatted="false">"Прочитать виджеты рабочего стола"</string>
+    <string name="ui_71f10b9aa5df" formatted="false">"Настроить виджет рабочего стола"</string>
+    <string name="ui_92ad7a770d5a" formatted="false">"Добавить виджет рабочего стола"</string>
+    <string name="ui_b0c90ac39985" formatted="false">"Локальные данные восстановлены, но настройка Screen или параметров не завершилась. Не повторяйте восстановление. Проверьте данные и Screen или отмените восстановление."</string>
+    <string name="ui_8d14f6e72de8" formatted="false">"События"</string>
+    <string name="ui_c6f974c44b32" formatted="false">"Укажите локальный IP-адрес BuddyBot."</string>
+    <string name="ui_1ca2a9635d72" formatted="false">"Активные записи"</string>
+    <string name="ui_19e82138c35f" formatted="false">"Срок сегодня"</string>
 </resources>

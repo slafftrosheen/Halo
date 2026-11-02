@@ -1,0 +1,173 @@
+{
+  "outcome": "BUILD FAILED in 13m 54s",
+  "production": "COMPILED",
+  "testSource": "COMPILED",
+  "sourceFilesMatched": 230,
+  "junit": {
+    "tests": 108,
+    "failures": 6,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydayEditingTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydaySourceReviewTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.di.tools.EverydayToolExecutorTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.di.tools.ScreenToolExecutorTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.everyday.presentation.EverydayCardsTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetApplyOperationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetEntryQueueTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "tests": "6",
+      "failures": "5",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetStateTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.screen.EverydayScreenInstancesTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutPersistenceTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutRequestsTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "tests": "6",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.shell.EverydayEntryNavigationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "failures": [
+    {
+      "suite": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "test": "allAdvertisedMinimumSizesFitAt200Percent",
+      "message": "java.lang.IllegalArgumentException: View should have Activity"
+    },
+    {
+      "suite": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "test": "liveClockAndDateOwnTheirAccessibilityTextAfterTimeChangesWithoutRepaint",
+      "message": "java.lang.AssertionError: expected null, but was:<23:59>"
+    },
+    {
+      "suite": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "test": "allEightVariantsPreserveGeometryAtHighDensity",
+      "message": "java.lang.IllegalArgumentException: failed to parse qualifiers 'lv-rLV-xxhdpi-w400dp-h900dp'. See https://developer.android.com/guide/topics/resources/providing-resources.html#QualifierRules for expected format."
+    },
+    {
+      "suite": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "test": "allEightVariantsFitAt200PercentInDarkHighContrast",
+      "message": "java.lang.IllegalArgumentException: View should have Activity"
+    },
+    {
+      "suite": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "test": "allEightVariantsBindAndFitInLightTheme",
+      "message": "java.lang.IllegalArgumentException: View should have Activity"
+    },
+    {
+      "suite": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "childDateInputKeeps56DpActionsAt200Percent",
+      "message": "androidx.test.espresso.AppNotIdleException: Compose did not get idle after 121525 attempts in 60 SECONDS.\n\n1. Check your measure/layout lambdas for infinite composition loops.\n2. Verify that the 'busy' resources listed above are not deadlocked.\n3. Increase Espresso's master idling policy if a longer timeout is required.\n The following Idle Conditions failed ."
+    }
+  ],
+  "renderFiles": 4,
+  "limitation": "Four named editor captures only. The finalizer touches historical render files, so timestamps alone are insufficient. Native render-loop methods stop before recording; no launcher frames claimed. Existing prior images/XML excluded. No phone acceptance.",
+  "renderPaths": [
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.editorKeepsDraftAfterDiscardIsDeclinedAndRestoration.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.latvianEditorAt200Percent.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.polishEditorAt200Percent.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.russianEditorAt200Percent.png"
+  ]
+}

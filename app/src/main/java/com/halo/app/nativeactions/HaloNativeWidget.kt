@@ -30,7 +30,11 @@ class HaloNativeWidget : AppWidgetProvider() {
     }
     companion object {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        fun refreshAsync(context: Context) { scope.launch { refreshAll(context.applicationContext) } }
+        fun refreshAsync(context: Context) {
+            runCatching { EverydayWidgetUpdates.enqueue(context.applicationContext) }
+                .onFailure { android.util.Log.w("HaloWidget","Everyday widget refresh needs retry",it) }
+            scope.launch { refreshAll(context.applicationContext) }
+        }
         fun refreshAll(context: Context) {
             runCatching {
                 val manager = AppWidgetManager.getInstance(context)

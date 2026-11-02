@@ -1,5 +1,7 @@
 package com.halo.app.di
 
+import kotlinx.coroutines.flow.map
+
 import android.content.Context
 import com.halo.runtime.observer.DefaultRuntimeHealthEvaluator
 import com.halo.runtime.observer.DefaultRuntimeObserver
@@ -21,7 +23,14 @@ class ObserverGraph(
 
     val timelineEventMapper by lazy { DefaultTimelineEventMapper() }
     val timelineRecorder by lazy {
-        TimelineRecorder(infra.eventBus, timelineEventMapper, infra.scope)
+        TimelineRecorder(infra.eventBus, timelineEventMapper, infra.scope,
+            additionalEvents=ManualDependencyGraph.appDatabase.organizerDao().observeChanges().map {rows ->
+                rows.map {change ->com.halo.sdk.runtime.TimelineEvent(
+                    presentationId="organizer:${change.sequence}:${change.recordId}:${change.version}",correlationId="organizer:${change.recordId}",
+                    title="Organizer item saved",description="Local record changed. Delivery status is shown in Organizer.",
+                    timestamp=java.time.Instant.ofEpochMilli(change.at),status="Confirmed",category="Actions",objectId="organizer:${change.recordId}",
+                    details=mapOf("action" to change.action,"version" to change.version.toString()))}
+            })
     }
 
     val runtimeValidator by lazy { com.halo.runtime.observer.RuntimeValidator() }

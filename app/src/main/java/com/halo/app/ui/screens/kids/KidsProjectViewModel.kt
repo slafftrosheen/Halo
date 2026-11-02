@@ -108,6 +108,7 @@ class KidsProjectViewModel : ViewModel() {
             snapshot.authorship, snapshot.providerId, snapshot.modelId, snapshot.updatedAt)
         val items = (listOf(item) + savedProjects.value.filterNot { it.noteId == noteId }).take(200)
         writes.withLock { withContext(Dispatchers.IO) {
+            com.halo.app.everyday.EverydayReadAuthority.invalidate()
             Graph.storage.putString(libraryKey, org.json.JSONArray().apply { items.forEach { project ->
                 put(JSONObject().put("note", project.noteId).put("title", project.title).put("kind", project.kind.orEmpty())
                     .put("details", project.details).put("canvas", project.canvasId.orEmpty()).put("canvasReady", project.canvasReady)

@@ -38,8 +38,8 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             validateParent(record)
             if (record.status == OrganizerStatus.COMPLETED && records().any { it.parentId == record.id && it.status == OrganizerStatus.ACTIVE })
                 throw OrganizerConflict("Complete the remaining subtasks first")
-            beforeRecordChange(record.id)
-            if (resetOccurrences) dao.clearOverrides(record.id)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(record.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+            if (resetOccurrences && previous != null && (previous.time != record.time || previous.repeat != record.repeat)) dao.clearOverrides(record.id)
             val now = Instant.ofEpochMilli(clock.millis())
             val next = OrganizerCodec.decode(OrganizerCodec.encode(record.copy(version = (previous?.version ?: 0) + 1,
                 createdAt = previous?.createdAt ?: now, updatedAt = now)))
@@ -62,6 +62,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
         }
     }
     private suspend fun changed(record: OrganizerRecord, action: String) {
+        com.halo.app.everyday.EverydayReadAuthority.invalidate()
         dao.enqueue(OrganizerScheduleEntity(record.id, record.version))
         dao.change(OrganizerChangeEntity(recordId = record.id, version = record.version, action = action, at = record.updatedAt.toEpochMilli()))
         dao.pruneChanges(record.updatedAt.minusSeconds(90L * 86400).toEpochMilli())
@@ -72,7 +73,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             if (old.version != expectedVersion || old.deletedAt != null) throw OrganizerConflict("Record changed; reopen before deleting")
             if (records().any { it.parentId == id }) throw OrganizerConflict("Delete or move the subtasks first")
             val now = Instant.ofEpochMilli(clock.millis())
-            beforeRecordChange(id)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             old.copy(version = old.version + 1, updatedAt = now, deletedAt = now).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "deleted")
             }
@@ -84,7 +85,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             val old = get(id) ?: throw OrganizerConflict("Record no longer exists")
             if (old.version != deletedVersion || old.deletedAt == null) throw OrganizerConflict("This deletion can no longer be undone")
             validateParent(old)
-            beforeRecordChange(id)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis()), deletedAt = null).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "restored")
             }
@@ -94,9 +95,10 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
     override suspend fun purgeDeleted(id: String, deletedVersion: Long) = database.withTransaction {
         val old = get(id) ?: throw OrganizerConflict("Record no longer exists")
         if (old.version != deletedVersion || old.deletedAt == null) throw OrganizerConflict("Only the reviewed item in trash can be permanently removed")
-        check(id !in dao.pending()) { "Wait for schedule cancellation before permanently removing this item" }
+        if (id in dao.pending()) throw ScheduleCancellationPending()
         if (records(includeDeleted = true).any { it.parentId == id }) throw OrganizerConflict("Move or permanently remove the subtasks first")
-        beforeRecordChange(id)
+        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+        com.halo.app.everyday.EverydayReadAuthority.invalidate()
         check(dao.purgeDeleted(id, deletedVersion) == 1)
         dao.change(OrganizerChangeEntity(recordId = id, version = deletedVersion + 1, action = "purged", at = clock.millis()))
     }
@@ -113,7 +115,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             require(old.kind != OrganizerKind.EVENT || exception.replacementTime == null || exception.replacementTime.end != null)
             val previous = overrides(old.id).find { it.originalStart == exception.originalStart }
             val value = exception.copy(version = (previous?.version ?: 0) + 1)
-            beforeRecordChange(old.id)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(old.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             dao.putOverride(OrganizerOccurrenceEntity(value.recordId, value.originalStart.toEpochMilli(), OrganizerCodec.encode(value)))
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis())).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "occurrence_${exception.disposition.name.lowercase(java.util.Locale.ROOT)}")
@@ -141,7 +143,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             if (old.version != expectedRecordVersion || old.deletedAt != null || old.status != OrganizerStatus.ACTIVE)
                 throw OrganizerConflict("Record changed; reopen this occurrence")
             check(overrides(recordId).any { it.originalStart == originalStart }) { "Occurrence has no change to remove" }
-            beforeRecordChange(recordId)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(recordId); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             check(dao.removeOverride(recordId, originalStart.toEpochMilli()) == 1) { "Occurrence has no change to remove" }
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis())).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "occurrence_restored")
@@ -150,6 +152,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
         runCatching(schedulesChanged); return next
     }
     override suspend fun receipts(recordId: String) = dao.receipts(recordId).map(OrganizerCodec::receipt)
+    fun observeReceipts() = dao.observeReceipts().map { rows -> rows.map(OrganizerCodec::receipt) }
     override suspend fun putReceipt(receipt: DeliveryReceipt, expected: DeliveryReceipt?): Boolean = database.withTransaction {
         val record = get(receipt.recordId) ?: return@withTransaction false
         if (record.version != receipt.recordVersion || record.deletedAt != null && receipt.state != DeliveryState.CANCELLED) return@withTransaction false
@@ -184,7 +187,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             if (old.version != version || old.deletedAt != null || old.status != OrganizerStatus.ACTIVE ||
                 receipt.recordVersion != version || receipt.state !in setOf(DeliveryState.FIRED, DeliveryState.DELIVERING))
                 throw OrganizerConflict("This alert changed or is no longer ringing; reopen it")
-            beforeRecordChange(old.id)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(old.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             val now = Instant.ofEpochMilli(clock.millis())
             val next = old.copy(version = old.version + 1, updatedAt = now)
             check(dao.update(OrganizerCodec.entity(next)) == 1)
@@ -204,7 +207,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             val record = get(receipt.recordId) ?: return@withTransaction false
             if (record.version != version || receipt.recordVersion != version || record.deletedAt != null ||
                 receipt.state !in setOf(DeliveryState.FIRED, DeliveryState.DELIVERING)) return@withTransaction false
-            beforeRecordChange(record.id)
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(record.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             val now = Instant.ofEpochMilli(clock.millis())
             dao.putReceipt(OrganizerCodec.entity(receipt.copy(state = DeliveryState.DISMISSED, updatedAt = now)))
             if (record.kind == OrganizerKind.TIMER || record.repeat == null && record.kind in setOf(OrganizerKind.ALARM, OrganizerKind.REMINDER)) {
@@ -230,7 +233,7 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             }
             if (receipts.any { it.recordVersion == version && it.state == DeliveryState.DISMISSED } &&
                 (record.kind == OrganizerKind.TIMER || record.repeat == null && record.kind in setOf(OrganizerKind.ALARM, OrganizerKind.REMINDER))) {
-                beforeRecordChange(record.id)
+                com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(record.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
                 val next = record.copy(version = version + 1, updatedAt = Instant.ofEpochMilli(clock.millis()), status = OrganizerStatus.COMPLETED,
                     timer = record.timer?.copy(remainingMs = 0, startedAt = null, elapsedStartMs = null, bootId = null))
                 check(dao.update(OrganizerCodec.entity(next)) == 1)
@@ -245,4 +248,42 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
     override suspend fun pendingScheduleIds() = dao.pending()
     override suspend fun acknowledgeSchedule(id: String, version: Long) = dao.acknowledge(id, version) == 1
     override suspend fun changes(since: Instant) = dao.changes(since.toEpochMilli()).map { OrganizerChange(it.recordId, it.version, it.action, Instant.ofEpochMilli(it.at)) }
+
+    override suspend fun importCalendar(preview: CalendarImportPreview): CalendarImportResult {
+        require(preview.records.size <= 2000 && preview.exceptions.size <= 10000)
+        val incoming = preview.records.associateBy { it.id }
+        require(incoming.size == preview.records.size && preview.exceptions.distinctBy { it.recordId to it.originalStart }.size == preview.exceptions.size)
+        incoming.values.forEach { record ->
+            record.validate()
+            require(record.kind == OrganizerKind.EVENT && record.calendarUid != null && record.deletedAt == null &&
+                record.notifyBeforeMinutes == null && record.parentId == null && record.links.isEmpty())
+        }
+        preview.exceptions.forEach { exception ->
+            val record = requireNotNull(incoming[exception.recordId])
+            require(record.repeat != null && OrganizerRecurrence.contains(record, exception.originalStart, deviceZone()))
+            require(exception.disposition != OccurrenceDisposition.COMPLETED)
+            require(exception.replacementTime == null || exception.replacementTime.end != null)
+        }
+        val result = database.withTransaction {
+            val existing = records(includeDeleted = true)
+            val ids = existing.map { it.id }.toSet()
+            val uids = existing.mapNotNull { it.calendarUid }.toMutableSet()
+            val added = incoming.values.filter { it.id !in ids && uids.add(requireNotNull(it.calendarUid)) }
+            require(existing.size + added.size <= 10000) { "Organizer storage limit reached" }
+            val now = Instant.ofEpochMilli(clock.millis())
+            added.forEach { record ->
+                val saved = record.copy(version = 1, createdAt = now, updatedAt = now)
+                com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(saved.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+                dao.insert(OrganizerCodec.entity(saved))
+                preview.exceptions.filter { it.recordId == saved.id }.forEach { exception ->
+                    val value = exception.copy(version = 1)
+                    dao.putOverride(OrganizerOccurrenceEntity(value.recordId, value.originalStart.toEpochMilli(), OrganizerCodec.encode(value)))
+                }
+                changed(saved, "calendar_imported")
+            }
+            CalendarImportResult(added.map { it.id }, (incoming.keys - added.map { it.id }.toSet()).toList())
+        }
+        if (result.added.isNotEmpty()) runCatching(schedulesChanged)
+        return result
+    }
 }

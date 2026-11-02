@@ -100,6 +100,7 @@ data class BrainSnapshot(
     val reflectionStatuses: List<ReflectionStatusSnapshot> = emptyList(),
     val studioProjects: List<StudioProjectSnapshot> = emptyList(),
     val studioVersions: List<StudioVersionSnapshot> = emptyList(),
+    val everyday: List<EverydayArchiveEntry> = emptyList(),
 )
 
 @JsonClass(generateAdapter = true)
@@ -133,6 +134,7 @@ class RoomBrainSnapshotSource(
             FileSnapshot(record.objectId, uri, source.name, metadata.optString("mimeType", "image/jpeg"), source.length(), source.lastModified(), source.absolutePath, false, "HALO_OWNED", "OWNED_LOCAL", null)
         }
         BrainSnapshot(
+            everyday = EverydayArchive.snapshot(database,com.halo.app.screen.LocalScreenStore(context).portableSnapshot()),
             studioProjects = dao.studioProjects().map { StudioProjectSnapshot(it.objectId, it.revision, it.committed, it.session) },
             studioVersions = dao.studioVersions().map { StudioVersionSnapshot(it.objectId, it.revision, it.document, it.savedAt) },
             snapshotId = UUID.randomUUID().toString(),

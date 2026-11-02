@@ -93,7 +93,7 @@ import kotlinx.coroutines.flow.stateIn
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onOpenObject: (String) -> Unit = {}, onReviewRun: (String) -> Unit = {}, onHome: () -> Unit = {}) {
+fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, focusObjectId: String?=null,focusEventId: String?=null,onShowAll: ()->Unit={}, onOpenObject: (String) -> Unit = {}, onReviewRun: (String) -> Unit = {}, onHome: () -> Unit = {}) {
     val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsStateWithLifecycle(emptyList())
     val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
     val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
@@ -102,10 +102,10 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Round 2: exactly three user-facing views, while ALL remains an internal ledger filter.
     // The default follows the current journal; manually chosen tabs remain sticky.
-    var selectedFilter by rememberSaveable(focusRunId) { mutableStateOf<ActivityFilter?>(null) }
-    val focusedStory = uiState.events.firstOrNull {
-        focusRunId != null && (it.id == "agent:$focusRunId" || focusRunId in it.relatedRunIds)
-    }
+    var selectedFilter by rememberSaveable(focusRunId,focusObjectId,focusEventId) { mutableStateOf<ActivityFilter?>(null) }
+    fun matchesFocus(story: ActivityStory)=focusRunId!=null && (story.id=="agent:$focusRunId" || focusRunId in story.relatedRunIds) ||
+        focusObjectId!=null && story.objectId==focusObjectId || focusEventId!=null && story.steps.any {it.presentationId==focusEventId}
+    val focusedStory = uiState.events.firstOrNull(::matchesFocus)
     val filter = selectedFilter ?: when {
         focusedStory?.reviewRunId != null -> ActivityFilter.REVIEW
         focusedStory?.status == ActivityStatus.PENDING -> ActivityFilter.RUNNING
@@ -115,7 +115,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         uiState.events.any { it.status == ActivityStatus.PENDING } -> ActivityFilter.RUNNING
         else -> ActivityFilter.HISTORY
     }
-    val filtered = filterActivityStories(uiState.events, filter)
+    val filtered = filterActivityStories(uiState.events, filter).filter {focusObjectId==null || it.objectId==focusObjectId}
     val reviewCount = uiState.events.count { it.reviewRunId != null } +
         pendingUpdates.size + learningSuggestions.size
     val runningCount = uiState.events.count {
@@ -131,11 +131,10 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
         other != filter && filterActivityStories(uiState.events, other).isNotEmpty()
     }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    var focusScrolled by remember(focusRunId) { mutableStateOf(false) }
-    LaunchedEffect(focusRunId, filtered, filter) {
-        val index = filtered.indexOfFirst { it.id == "agent:$focusRunId" ||
-            focusRunId != null && focusRunId in it.relatedRunIds }
-        if (!focusScrolled && focusRunId != null && index >= 0) {
+    var focusScrolled by remember(focusRunId,focusObjectId,focusEventId) { mutableStateOf(false) }
+    LaunchedEffect(focusRunId,focusObjectId,focusEventId,filtered, filter) {
+        val index = filtered.indexOfFirst(::matchesFocus)
+        if (!focusScrolled && index >= 0) {
             listState.scrollToItem(index + 1)
             focusScrolled = true
         }
@@ -143,9 +142,10 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, onO
     var showActivityDetails by rememberSaveable { mutableStateOf(false) }
     val activityHelp = uiText("Everything halo did, in plain words.") + "\n" +
         uiText("Approvals and answers wait here until you choose what happens next.")
-    BindShellPageActions(ShellPageOwner("activity", sourceIdentity = "${filter.name}:$focusRunId",
+    BindShellPageActions(ShellPageOwner("activity", sourceIdentity = "${filter.name}:$focusRunId:$focusObjectId:$focusEventId",
         helpDescription = activityHelp,
         defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_current_view)), listOf(
+        ShellPageAction("page.activity.all", "Show all activity", HaloGlyph.ACTIVITY, focusObjectId!=null || focusEventId!=null) {onShowAll()},
         ShellPageAction("page.activity.details", "Details", HaloGlyph.QUESTION) { showActivityDetails = true },
         ShellPageAction("page.activity.review", "Show requests", HaloGlyph.APPROVAL, filter != ActivityFilter.REVIEW) { selectedFilter = ActivityFilter.REVIEW },
         ShellPageAction("page.activity.history", "Show completed", HaloGlyph.ACTIVITY, filter != ActivityFilter.HISTORY) { selectedFilter = ActivityFilter.HISTORY },

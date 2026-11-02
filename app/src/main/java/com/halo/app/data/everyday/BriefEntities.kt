@@ -14,6 +14,7 @@ data class BriefDeliveryEntity(@PrimaryKey val key: String, val documentId: Stri
 
 @Dao
 interface BriefDao {
+    @Query("DELETE FROM everyday_brief_settings") suspend fun clearSettings()
     @Query("SELECT * FROM everyday_briefs ORDER BY generatedAt DESC, id LIMIT 60") fun observe(): Flow<List<BriefEntity>>
     @Query("SELECT * FROM everyday_briefs ORDER BY generatedAt DESC, id LIMIT :limit") suspend fun recent(limit: Int): List<BriefEntity>
     @Query("SELECT * FROM everyday_briefs WHERE id=:id") suspend fun get(id: String): BriefEntity?

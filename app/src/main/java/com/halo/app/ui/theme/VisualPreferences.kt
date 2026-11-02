@@ -18,6 +18,7 @@ val LocalHaloAccentInk = staticCompositionLocalOf { Color(0xFF047A5E) }
 
 /** App-wide options are restored on IO; writes cannot race the initial restore. */
 class VisualPreferences internal constructor(context: Context) {
+    private val contextForWidgets = context.applicationContext
     private val disk = context.applicationContext.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -42,6 +43,7 @@ class VisualPreferences internal constructor(context: Context) {
             check(disk.edit().putBoolean("contrast", next.higherContrast).putBoolean("motion", next.lessMotion)
                 .putBoolean("guide", next.guideLight).putString("guidanceAmount", next.guidanceAmount.name).commit()) { "Unable to save visual preferences" }
             mutable.value = next
+            com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(contextForWidgets)
         }
     }
     companion object {

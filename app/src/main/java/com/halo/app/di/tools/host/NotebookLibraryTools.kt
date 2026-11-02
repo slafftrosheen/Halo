@@ -74,16 +74,20 @@ class NotebookLibraryTools(private val session: NotebookLibrarySession) : ToolEx
     private fun encode(frame: NotebookLibraryFrame, offset: Int): JSONObject {
         val v = frame.view; val state = v.rendered
         val visible = state.items.filterNot { it.objectRef.id.value.startsWith("learning:") || state.filter == NotebookFilter.MEMORY }
-        val rows = visible.drop(offset).take(100).map { item ->
+        val objectRows = visible.map { item ->
             val o = item.objectRef
             JSONObject().put("id", o.id.value).put("type", o.type.name).put("lifecycle", o.lifecycle.name)
                 .put("updatedAt", o.updatedAt).put("favorite", o.id.value in state.favorites).put("selected", o.id.value in v.selection)
         }
+        val domainRows=state.everyday.map {entry ->JSONObject().put("id",entry.key).put("type",entry.kind).put("canonicalId",entry.id)
+            .put("sourceVersion",entry.version).put("updatedAt",entry.updatedAt).put("selectable",false).put("manageTool",entry.manageTool)}
+        val allRows=objectRows+domainRows
+        val rows=allRows.drop(offset).take(100)
         return JSONObject().put("schemaVersion", 1).put("snapshot", frame.snapshot).put("settled", v.settled).put("mutating", v.mutating)
             .put("requested", settings(v.query, v.filter, v.sort, v.collectionId))
             .put("rendered", settings(state.resolvedQuery, state.filter, state.sort, state.selectedCollectionId))
             .put("selectedIds", JSONArray(v.selection.sorted())).put("rows", JSONArray(rows)).put("offset", offset)
-            .put("totalRows", visible.size).put("nextOffset", if (offset + rows.size < visible.size) offset + rows.size else JSONObject.NULL)
+            .put("totalRows", allRows.size).put("nextOffset", if (offset + rows.size < allRows.size) offset + rows.size else JSONObject.NULL)
             .put("collectionIds", JSONArray(state.collections.take(100).map { it.id })).put("totalCollections", state.collections.size)
             .put("collectionsTruncated", state.collections.size > 100).put("contentRead", false)
     }

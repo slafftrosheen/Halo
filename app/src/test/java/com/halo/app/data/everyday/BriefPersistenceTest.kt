@@ -41,6 +41,17 @@ class BriefPersistenceTest {
         return organizer.save(OrganizerRecord("task", OrganizerKind.TASK, "Private plan", createdAt = start), null)
     }
     @After fun close() { db.close() }
+    @Test fun aHeldVisibleBriefCannotReturnAfterSharingIsRevokedWithoutLeavingKids()=runBlocking {withTimeout(10000) {
+        val task=seed();briefs.saveSettings(BriefSettings(childRecordIds=setOf(task.id)),0)
+        audience=BriefAudience.KIDS
+        val original=service.build(BriefPeriod.ON_DEMAND)
+        val entered=CompletableDeferred<Unit>();val release=CompletableDeferred<Unit>()
+        val held=EverydayBriefService(briefs,collectors,organizer,{DailyAssistantSnapshot()},{audience},{emptySet()},{entered.complete(Unit);release.await();true},clock,{zone})
+        val request=async {runCatching {held.visible(original.id)}}
+        entered.await();briefs.saveSettings(BriefSettings(),1);release.complete(Unit)
+        assertTrue(request.await().isFailure);assertEquals(BriefAudience.KIDS,audience)
+        assertTrue(service.visible(original.id)!!.facts.isEmpty())
+    }}
     @Test fun morningBaselineIsAtomicImmutableAndSurvivesReopen() = runBlocking {
         val task = seed()
         val first = service.build(BriefPeriod.MORNING)

@@ -31,7 +31,7 @@ class AppLanguageTest {
         val english = localized("en")
         uiCatalogue.values.forEach { id -> assertTrue(english.getString(id).isNotBlank()) }
         assertEquals("Workspace", english.getString(uiCatalogue.getValue("Notebook")))
-        assertEquals("Full Power mode", english.getString(uiCatalogue.getValue("Full Power mode")))
+        assertEquals("Power mode", english.getString(uiCatalogue.getValue("Full Power mode")))
         assertEquals(R.string.mode47_profiles, uiCatalogue.getValue("Mode profiles"))
         assertEquals(R.string.workspace49_capture, uiCatalogue.getValue("Quick capture"))
         assertEquals("Учёба", localized("ru").getString(uiCatalogue.getValue("Study")))

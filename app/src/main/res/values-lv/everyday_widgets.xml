@@ -1,0 +1,14 @@
+<resources>
+<string name="everyday_widget_clock">Pulkstenis un datums</string>
+<string name="everyday_widget_clock_weather">Pulkstenis un laikapstākļi</string>
+<string name="everyday_widget_upcoming">Nākamais notikums</string>
+<string name="everyday_widget_tasks">Uzdevumi un atgādinājumi</string>
+<string name="everyday_widget_brief">Tava diena ar halo</string>
+<string name="everyday_widget_headlines">Virsraksti</string>
+<string name="everyday_widget_alarms_timers">Modinātāji un taimeri</string>
+<string name="everyday_widget_dashboard">Ikdienas panelis</string>
+<string name="everyday_widget_preview">Atver halo, lai skatītu saglabāto informāciju</string>
+<string name="everyday_widget_saved">Saglabāts šajā tālrunī</string>
+<string name="everyday_widget_configure">Iestatīt logrīku</string>
+<string name="everyday_widget_description">Tavs saglabātais plāns un atlasītā halo informācija. Maini izmēru plašākam skatam; privātā informācija ir pieejama halo.</string>
+</resources>

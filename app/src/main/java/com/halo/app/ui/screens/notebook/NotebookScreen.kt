@@ -115,7 +115,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
     onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L,
-    onOpenCanvasLibrary: (() -> Unit)? = null) {
+    onOpenCanvasLibrary: (() -> Unit)? = null, onOpenEveryday: ((String)->Unit)? = null) {
     var returnItem by remember { mutableStateOf<String?>(null) }
     val viewBinding by viewModel.viewBinding.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel to viewBinding) {
@@ -245,7 +245,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             .background(com.halo.app.ui.theme.haloWorkspaceBackground()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
             if (!zoneTabs) item("workspace-heading") { WorkspaceHeadingAndTabs(false, selectView) }
-            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools, onOpenCanvasLibrary) }
+            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools, onOpenCanvasLibrary,onOpenEveryday) }
             item("workspace-bottom") { Spacer(Modifier.height(12.dp)) }
         }
         return
@@ -456,6 +456,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             SectionTitle(location, if (state.isLoaded) uiText("Items: %1\$d", visibleItems.size) else "")
         }
 
+        if(showLibrary && !selecting) items(state.everyday,key={it.key}) {entry ->EverydayLibraryRow(entry) {viewModel.openEverydayItem(entry)}}
+        if(showLibrary && state.everydayError) item("everyday-library-error") {
+            Text(uiText("Everyday items could not be loaded. Your saved information is kept."),color=MaterialTheme.colorScheme.error)
+            TextButton(viewModel::retryLibraryLoad) {Text(uiText("Try again"))}
+        }
         if (state.loadError) item(key = "library-error") {
             Surface(color = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
@@ -473,7 +478,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             item(key = "loading") {
                 HaloProgressPresentation(uiText("Loading your library…"))
             }
-        } else if (!state.loadError && visibleItems.isEmpty() && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
+        } else if (!state.loadError && visibleItems.isEmpty() && state.everyday.isEmpty() && !state.everydayError && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
             item(key = "empty") {
                 NotebookEmptyGuidance(state.query, state.filter, state.selectedCollectionId != null, !mutating,
                     viewModel::createNote, viewModel::createCanvas) {

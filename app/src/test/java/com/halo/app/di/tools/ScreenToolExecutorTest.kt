@@ -43,6 +43,19 @@ class ScreenToolExecutorTest {
             "previewToken" to proposal.getString("previewToken"))))
     }
 
+    @Test fun exactCardQueryDistinguishesIndependentCitiesAndCannotReadAnOldRevision()=runBlocking {
+        store.saveLayout(ScreenLayout("day","Day",listOf(
+            ScreenCard("clock",null,CardSize.STANDARD,false,mapOf("zoneId" to "Asia/Tokyo","cityLabel" to "Tokyo"),presentationId="tokyo"),
+            ScreenCard("clock",null,CardSize.STANDARD,false,mapOf("zoneId" to "Europe/Riga","cityLabel" to "Riga"),presentationId="riga")),1))
+        val before=revision()
+        val tokyo=json(call("halo_screen_card_configuration",mapOf("revision" to before,"index" to 0)))
+        val riga=json(call("halo_screen_card_configuration",mapOf("revision" to before,"index" to 1)))
+        assertEquals("Asia/Tokyo",tokyo.getJSONObject("config").getString("zoneId"))
+        assertEquals("Europe/Riga",riga.getJSONObject("config").getString("zoneId"));assertNotEquals(tokyo.getString("configurationId"),riga.getString("configurationId"))
+        store.saveLayout(store.layout.value!!.copy(cards=store.layout.value!!.cards.reversed()))
+        assertTrue(call("halo_screen_card_configuration",mapOf("revision" to before,"index" to 0)) is ToolExecutionResult.Rejected)
+    }
+
     @Test fun stateIsBoundedConfigurationOnlyAndKeepsPrivacyDefault() = runBlocking {
         store.publish(ScreenItem("secret-item", ScreenSourceType.NOTEBOOK, "secret-source", "secret-title", "secret-body",
             ScreenContentType.NOTE_REF, Instant.EPOCH, Instant.EPOCH, null, ScreenItemState.READY,
@@ -177,7 +190,7 @@ class ScreenToolExecutorTest {
         val registry = ToolRegistry(listOf(executor), descriptors)
         val review = registry.operabilityReport(listOf(ToolFeatureOperability("screen", descriptors.map { it.name }.toSet())))
         assertTrue(review.toString(), review.isEmpty())
-        assertEquals(7, descriptors.size)
+        assertEquals(8, descriptors.size)
         descriptors.forEach { assertEquals(false, it.definition.parameters["additionalProperties"]) }
         assertNotNull(registry.validate(ToolCall("invalid-native-type", "halo_screen_state", mapOf("widgetType" to "html"))))
     }

@@ -18,6 +18,10 @@ class ShellOrbCatalogTest {
         assertFalse(ShellOrbCatalog.pageOwnerMatches(canvas, "settings", "board-A"))
         assertFalse(ShellOrbCatalog.pageOwnerMatches(com.halo.app.ui.presence.ShellPageOwner("settings"), "advanced_settings", null))
         assertTrue(ShellOrbCatalog.pageOwnerMatches(com.halo.app.ui.presence.ShellPageOwner("advanced_settings"), "advanced_settings", null))
+        val organizer=com.halo.app.ui.presence.ShellPageOwner("everyday_organizer","record-one")
+        assertTrue(ShellOrbCatalog.pageOwnerMatches(organizer,"screen/organizer?recordId={recordId}&createKind={createKind}","record-one"))
+        assertFalse(ShellOrbCatalog.pageOwnerMatches(organizer,"screen/organizer?recordId={recordId}&createKind={createKind}","record-two"))
+        assertTrue(ShellOrbCatalog.pageOwnerMatches(com.halo.app.ui.presence.ShellPageOwner("everyday_clocks"),"screen/clocks?zoneId={zoneId}&cityLabel={cityLabel}",null))
     }
     @Test fun globalMenuContainsEveryUsableExactDestinationWithoutInventingObjectsOrLabs() {
         val routes = ShellOrbCatalog.destinations(false).map { it.route }
@@ -29,7 +33,8 @@ class ShellOrbCatalogTest {
     }
 
     @Test fun kidsMenuCannotExposeAdultDestinationsAsUsable() {
-        assertEquals(setOf("home", "study"), ShellOrbCatalog.destinations(true).map { it.route }.toSet())
+        assertEquals(setOf("home", "study", "screen/organizer", "screen/clocks", "screen/brief"), ShellOrbCatalog.destinations(true).map { it.route }.toSet())
+        assertFalse(ShellOrbCatalog.destinations(true).any { it.route in setOf("screen/sources", "screen", "settings", "notebook") })
         assertTrue(ShellOrbCatalog.context("notebook/canvas/child-source", true).all { it.id == "study" })
     }
 

@@ -1,0 +1,6 @@
+{
+  "outcome": "BUILD FAILED in 6m 48s",
+  "sourceFilesMatched": 219,
+  "junit": "NOT_RUN",
+  "reason": "Production compiled; render test compilation failed: ShadowSystemClock.setCurrentTimeMillis unresolved. No prior XML or render is evidence for this snapshot."
+}

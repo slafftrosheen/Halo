@@ -2,7 +2,16 @@ package com.halo.app.ui.presence
 
 /** Discovery only. Exact routes map to registered typed owners; tools still require their own
  * fresh read/version, scope and approvals. No UI callback or source-version alias is created. */
-internal fun shellChildCanonicalTools(route: String): List<String> = when (route) {
+internal fun shellChildCanonicalTools(route: String): List<String> {
+    val prefix=when(route.substringBefore("?")) {
+        "screen/organizer" -> "halo_organizer_"
+        "screen/clocks" -> "halo_clock_"
+        "screen/source", "screen/sources" -> "halo_source_"
+        "screen/brief" -> "halo_brief_"
+        else -> null
+    }
+    if(prefix!=null) return com.halo.app.di.tools.EverydayToolContracts.names.filter {it.startsWith(prefix)}.sorted()+"halo_everyday_open"
+    return when (route) {
     "settings" -> listOf("halo_get_preferences", "halo_set_preferences")
     "ai_settings", "provider_setup", "settings/intelligence/providers",
     "settings/intelligence/providers/{providerId}", "settings/intelligence/images/{providerId}",
@@ -31,4 +40,6 @@ internal fun shellChildCanonicalTools(route: String): List<String> = when (route
         "halo_routines_list", "halo_routine_get", "halo_routine_set_enabled", "halo_routine_save_existing",
         "halo_routine_delete", "halo_routine_run_now", "halo_routine_run_status")
     else -> emptyList()
+}
+
 }

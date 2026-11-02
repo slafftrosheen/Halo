@@ -157,6 +157,50 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         return value.copy(cards = screenCardIdentities(value.cards).map { it.copy(placement = it.placement?.bounded(), typography = it.typography.bounded()) })
     }
 
+    fun portableSnapshot(): String = synchronized(lock) {
+        JSONObject().put("schema",1).put("layout",_layout.value?.let {JSONObject(ScreenLayoutCodec.encode(it))})
+            .put("presets",JSONArray(_presets.value.map {JSONObject(ScreenLayoutCodec.encode(it))}))
+            .put("items",JSONArray(itemsJson(_items.value))).put("topics",_topics.value).put("dimAtNight",_dimAtNight.value).toString()
+    }
+    fun validatePortable(raw: String) {
+        val json=com.halo.app.everyday.collectors.SafeCollectorJson.objectValue(raw,8*1024*1024)
+        require(json.getInt("schema")==1 && json.keys().asSequence().all {it in setOf("schema","layout","presets","items","topics","dimAtNight")})
+        json.optJSONObject("layout")?.let {checkedLayout(requireNotNull(ScreenLayoutCodec.decode(it.toString())))}
+        val presets=json.getJSONArray("presets");require(presets.length()<=12)
+        (0 until presets.length()).forEach {checkedLayout(requireNotNull(ScreenLayoutCodec.decode(presets.getJSONObject(it).toString())))}
+        val items=json.getJSONArray("items");require(items.length()<=100 && items.toString().length<=2000000)
+        require(readItems(items.toString()).size==items.length())
+        require(json.getString("topics").length<=1000);json.getBoolean("dimAtNight")
+    }
+    fun remapPortable(raw: String,mapping: Map<String,String>): String {
+        validatePortable(raw)
+        val root=JSONObject(raw)
+        fun layout(value: JSONObject) {
+            val cards=value.getJSONArray("cards")
+            (0 until cards.length()).forEach {index ->cards.getJSONObject(index).optJSONObject("config")?.let {config ->
+                listOf("recordId" to "ORGANIZER","sourceId" to "SOURCE","headlineSourceId" to "SOURCE").forEach { (field,kind) ->
+                    config.optString(field).takeIf {it.isNotBlank()}?.let {id ->mapping["everyday:$kind:$id"]?.let {config.put(field,it)}}
+                }
+            }}
+        }
+        root.optJSONObject("layout")?.let(::layout)
+        val presets=root.getJSONArray("presets");(0 until presets.length()).forEach {layout(presets.getJSONObject(it))}
+        return root.toString().also(::validatePortable)
+    }
+    fun restorePortable(raw: String) = synchronized(lock) {
+        validatePortable(raw)
+        val json=JSONObject(raw)
+        val layout=json.optJSONObject("layout")?.let {requireNotNull(ScreenLayoutCodec.decode(it.toString())).copy(version=(_layout.value?.version ?: 0)+1)}
+        val presets=json.getJSONArray("presets").let {values ->(0 until values.length()).map {requireNotNull(ScreenLayoutCodec.decode(values.getJSONObject(it).toString()))}}
+        val items=readItems(json.getJSONArray("items").toString())
+        check(preferences.edit().putString("layout",layout?.let(ScreenLayoutCodec::encode)).putString("presets",JSONArray(presets.map {JSONObject(ScreenLayoutCodec.encode(it))}).toString())
+            .putString("items",itemsJson(items)).putString("topics",json.getString("topics")).putBoolean("dim_night",json.getBoolean("dimAtNight"))
+            .putBoolean("hide_private",true).putBoolean("keep_charging",false).remove("undo_layout").commit())
+        _layout.value=layout;_presets.value=presets;_items.value=items;_topics.value=json.getString("topics");_dimAtNight.value=json.getBoolean("dimAtNight")
+        _hidePrivate.value=true;_keepCharging.value=false;undoLayout=null
+    }
+    fun clearPortable()=restorePortable(JSONObject().put("schema",1).put("presets",JSONArray()).put("items",JSONArray()).put("topics","").put("dimAtNight",true).toString())
+
     private fun validateItem(item: ScreenItem) {
         require(item.id.length in 1..240 && item.title.length <= 240)
         require(item.sourceId == null || item.sourceId.length in 1..240)
@@ -176,8 +220,7 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 
     private fun readLayout(): ScreenLayout? = ScreenLayoutCodec.decode(preferences.getString("layout", null))
 
-    private fun readItems(): List<ScreenItem> = runCatching {
-        val raw = preferences.getString("items", "[]").orEmpty()
+    private fun readItems(raw: String = preferences.getString("items", "[]").orEmpty()): List<ScreenItem> = runCatching {
         if (raw.length > 2_000_000) return@runCatching emptyList()
         val array = JSONArray(raw)
         (maxOf(0, array.length() - 100) until array.length()).mapNotNull { index ->
@@ -251,12 +294,12 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
 }
 
 object ScreenWidgets {
-    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "follow_up", "halo_activity", "interests", "research", "device")
+    val types = setOf("clock", "weather", "calendar", "tasks", "notebook", "study", "automation_result", "follow_up", "halo_activity", "interests", "research", "device") + com.halo.app.everyday.presentation.EverydayCards.screenKinds.keys
     fun starter(name: String): ScreenLayout {
         val types = when (name) {
             "Focus" -> listOf("clock", "tasks", "notebook")
             "Quiet" -> listOf("clock", "notebook")
-            else -> listOf("clock", "calendar", "tasks", "automation_result", "notebook", "study")
+            else -> listOf("clock", "upcoming", "organizer_tasks", "briefing", "weather", "notebook")
         }
         return ScreenLayout(name.lowercase(), name, types.map { ScreenCard(it, null, CardSize.STANDARD, it == "clock") }, 1)
     }

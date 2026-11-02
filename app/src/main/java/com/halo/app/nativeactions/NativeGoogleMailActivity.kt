@@ -42,7 +42,7 @@ class NativeGoogleMailActivity : ComponentActivity() {
                 com.halo.sdk.provider.RemoteOperation.CONNECTED_SERVICE,
                 setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT, com.halo.sdk.provider.RemoteDataCategory.ACCOUNT_METADATA) + remoteProvenance?.categories.orEmpty()),
                 remoteProvenance?.revision ?: policy.revision) { runOnUiThread { fail("Mode profile changed. Gmail request stopped.") } }
-        } catch (_: Exception) { fail("Gmail requires Full Power and enabled connected services. Review Mode profiles."); return }
+        } catch (_: Exception) { fail("Gmail requires Power and enabled connected services. Review Mode profiles."); return }
         android.app.AlertDialog.Builder(this).setTitle(nativeUi("Read Gmail?"))
             .setMessage(nativeUi("Authorize read-only access for this request. Halo keeps the access token in memory and does not send email content to a model in this flow."))
             .setNegativeButton(android.R.string.cancel) { _, _ -> fail("Gmail request cancelled.") }

@@ -95,7 +95,8 @@ object EverydayBriefEngine {
                         facts += BriefFact("${source.id}:event:${occurrence.key}", BriefFactKind.EVENT, occurrence.record.title, occurrence.record.details.take(500),
                             source.id, fingerprint(occurrence.record.title, occurrence.record.details.take(500), occurrence.start.toString(),
                                 occurrence.end?.toString().orEmpty(), occurrence.record.sourceUrl.orEmpty()),
-                            "halo://sources/${source.id}/calendar", 5, occurrence.start, occurrence.record.sourceUrl)
+                            "halo://sources/${source.id}/calendar", 5, occurrence.start, occurrence.record.sourceUrl,
+                            mapOf("calendarSelection" to SavedCalendarSelection(record.id, occurrence.originalStart, snapshot.contentRevision, input.zone.id).encode()))
                     }
                 }
                 is CollectorPayload.Local -> if (source.kind != CollectorKind.LOCAL_ORGANIZER) payload.items.filter {

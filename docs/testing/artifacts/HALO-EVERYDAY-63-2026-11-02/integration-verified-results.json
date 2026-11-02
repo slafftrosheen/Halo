@@ -1,0 +1,412 @@
+{
+  "build": "SUCCESSFUL",
+  "duration": "8m58s",
+  "sourceFiles": 3743,
+  "sourceMismatches": [],
+  "tests": 302,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "com.halo.app.ai.ModeProfileRoutingTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:53.451Z"
+    },
+    {
+      "name": "com.halo.app.ai.ModeProfilesTest",
+      "tests": "18",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:58.854Z"
+    },
+    {
+      "name": "com.halo.app.ai.PrivacyModeRoutingTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:59.920Z"
+    },
+    {
+      "name": "com.halo.app.ai.ProviderMetadataPolicyTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:00.189Z"
+    },
+    {
+      "name": "com.halo.app.automation.EverydayAutomationTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:03.807Z"
+    },
+    {
+      "name": "com.halo.app.backup.BrainArchiveCryptoTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:07.818Z"
+    },
+    {
+      "name": "com.halo.app.backup.EverydayArchiveTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:10.760Z"
+    },
+    {
+      "name": "com.halo.app.backup.NoteBlockArchiveTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:17.898Z"
+    },
+    {
+      "name": "com.halo.app.backup.StudioArchiveTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:17.994Z"
+    },
+    {
+      "name": "com.halo.app.context.CurrentScreenRemotePolicyTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:19.982Z"
+    },
+    {
+      "name": "com.halo.app.data.CognitionMigrationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:24.773Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.BriefPersistenceTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:33.443Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.CollectorIntegrationTest",
+      "tests": "20",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:41.244Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.CollectorReviewedRefreshTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:44.025Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydayEditingTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:49.256Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydayRetentionTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:49.811Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.EverydaySourceReviewTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:50.024Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.OrganizerDeliveryTest",
+      "tests": "18",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:50.288Z"
+    },
+    {
+      "name": "com.halo.app.data.everyday.OrganizerPersistenceTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:40:54.321Z"
+    },
+    {
+      "name": "com.halo.app.data.workspace.EverydayCalendarExportTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:00.661Z"
+    },
+    {
+      "name": "com.halo.app.di.tools.EverydayToolExecutorTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:11.544Z"
+    },
+    {
+      "name": "com.halo.app.di.tools.ScreenToolExecutorTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:21.779Z"
+    },
+    {
+      "name": "com.halo.app.embodiment.BuddyBotLocalEndpointTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:23.902Z"
+    },
+    {
+      "name": "com.halo.app.everyday.briefing.BriefNoticeAuthorityTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.271Z"
+    },
+    {
+      "name": "com.halo.app.everyday.briefing.EverydayBriefTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.346Z"
+    },
+    {
+      "name": "com.halo.app.everyday.collectors.CollectorParsingTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.437Z"
+    },
+    {
+      "name": "com.halo.app.everyday.organizer.OrganizerIcsTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.602Z"
+    },
+    {
+      "name": "com.halo.app.everyday.organizer.OrganizerRecurrenceTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.741Z"
+    },
+    {
+      "name": "com.halo.app.everyday.presentation.EverydayCardsTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.767Z"
+    },
+    {
+      "name": "com.halo.app.everyday.presentation.EverydayLibraryProjectionTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:24.816Z"
+    },
+    {
+      "name": "com.halo.app.language.AppLanguageTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:26.391Z"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetApplyOperationTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:30.990Z"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetEntryQueueTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:31.251Z"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetRenderingTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:27.353Z"
+    },
+    {
+      "name": "com.halo.app.nativeactions.EverydayWidgetStateTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:31.626Z"
+    },
+    {
+      "name": "com.halo.app.online.OnlineAdmissionTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:40.014Z"
+    },
+    {
+      "name": "com.halo.app.screen.EverydayScreenInstancesTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:33.972Z"
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutPersistenceTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:38.542Z"
+    },
+    {
+      "name": "com.halo.app.screen.ScreenLayoutRequestsTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:43.062Z"
+    },
+    {
+      "name": "com.halo.app.ui.components.CompactPrivacyModeButtonTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:45.647Z"
+    },
+    {
+      "name": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:39:43.094Z"
+    },
+    {
+      "name": "com.halo.app.ui.everyday.EverydaySetupChoicesTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:41:53.962Z"
+    },
+    {
+      "name": "com.halo.app.ui.screens.settings.SettingsEverydayFlowTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:42:20.424Z"
+    },
+    {
+      "name": "com.halo.app.ui.shell.EverydayEntryNavigationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:42:33.648Z"
+    },
+    {
+      "name": "com.halo.app.ui.shell.ShellOrbCatalogTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "timestamp": "2026-11-02T11:42:40.552Z"
+    }
+  ],
+  "renderFiles": [
+    "everyday-widget-alarms_timers-en-1.0-1.0-synthetic.png",
+    "everyday-widget-alarms_timers-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-alarms_timers-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-alarms_timers-ru-minimum-200-synthetic.png",
+    "everyday-widget-brief-en-1.0-1.0-synthetic.png",
+    "everyday-widget-brief-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-brief-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-brief-ru-minimum-200-synthetic.png",
+    "everyday-widget-clock-en-1.0-1.0-synthetic.png",
+    "everyday-widget-clock-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-clock-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-clock-ru-minimum-200-synthetic.png",
+    "everyday-widget-clock_weather-en-1.0-1.0-synthetic.png",
+    "everyday-widget-clock_weather-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-clock_weather-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-clock_weather-ru-minimum-200-synthetic.png",
+    "everyday-widget-dashboard-en-1.0-1.0-synthetic.png",
+    "everyday-widget-dashboard-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-dashboard-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-dashboard-ru-minimum-200-synthetic.png",
+    "everyday-widget-headlines-en-1.0-1.0-synthetic.png",
+    "everyday-widget-headlines-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-headlines-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-headlines-ru-minimum-200-synthetic.png",
+    "everyday-widget-tasks-en-1.0-1.0-synthetic.png",
+    "everyday-widget-tasks-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-tasks-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-tasks-ru-minimum-200-synthetic.png",
+    "everyday-widget-upcoming-en-1.0-1.0-synthetic.png",
+    "everyday-widget-upcoming-lv-1.0-3.0-synthetic.png",
+    "everyday-widget-upcoming-ru-2.0-1.0-synthetic.png",
+    "everyday-widget-upcoming-ru-minimum-200-synthetic.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.childDateInputKeeps56DpActionsAt200Percent.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.editorKeepsDraftAfterDiscardIsDeclinedAndRestoration.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.latvianEditorAt200Percent.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.polishEditorAt200Percent.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.russianEditorAt200Percent.png",
+    "com.halo.app.ui.everyday.EverydayFormsRenderingTest.widgetDashboardOrderIsReachableAt200PercentAndSurvivesRestoration.png"
+  ]
+}

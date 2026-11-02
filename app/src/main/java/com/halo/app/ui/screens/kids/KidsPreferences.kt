@@ -12,6 +12,8 @@ class KidsPreferences(context: Context) {
     private val context = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val writes = Mutex()
+    private val actionRevision = java.util.concurrent.atomic.AtomicLong(0)
+    private val changing = java.util.concurrent.atomic.AtomicBoolean(false)
     private val mutable = MutableStateFlow(false)
     private val ready = MutableStateFlow(false)
     val loadedState = ready.asStateFlow()
@@ -27,7 +29,7 @@ class KidsPreferences(context: Context) {
     private val loaded = scope.async {
         try { mutable.value = disk().getBoolean("enabled", false); preReading.value = disk().getBoolean("pre_reader", false) }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { mutable.value = true; error.value = "Could not read Kids settings. Private mode stays on until a grown-up can save the settings." }
+        catch (_: Exception) { mutable.value = true; error.value = "Could not read Kids settings. Local mode stays on until a grown-up can save the settings." }
         finally { ready.value = true }
     }
     suspend fun setPreReader(value: Boolean) = withContext(Dispatchers.IO) {
@@ -38,13 +40,25 @@ class KidsPreferences(context: Context) {
         }
     }
     suspend fun getEnabled(): Boolean { loaded.await(); return enabled.value }
+    fun adultActionRevision(): Long = actionRevision.get().also { requireAdultAction(it) }
+    fun presentationRevision(): Long {
+        check(ready.value && !changing.get()) { "Family presentation is changing" }
+        return actionRevision.get()
+    }
+    fun requirePresentation(revision: Long) { check(presentationRevision()==revision) { "Family presentation changed" } }
+    fun requireAdultAction(revision: Long) {
+        check(ready.value && !mutable.value && !changing.get() && actionRevision.get() == revision) { "Adult action authority changed" }
+    }
     suspend fun setEnabled(value: Boolean) = withContext(Dispatchers.IO) {
         loaded.await()
         writes.withLock {
-            check(disk().edit().putBoolean("enabled", value).commit()) { "Could not save Kids mode" }
-            mutable.value = value
-            error.value = null
-            if (!value) cloud.value = false
+            changing.set(true); actionRevision.incrementAndGet()
+            try {
+                check(disk().edit().putBoolean("enabled", value).commit()) { "Could not save Kids mode" }
+                mutable.value = value
+                error.value = null
+                if (!value) cloud.value = false
+            } finally { changing.set(false) }
         }
     }
 }

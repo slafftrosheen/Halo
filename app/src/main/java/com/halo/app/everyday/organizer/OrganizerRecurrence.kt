@@ -114,6 +114,15 @@ object OrganizerRecurrence {
         return slots(time, record.repeat, deviceZone).takeWhile { it.identity <= originalStart }.any { it.identity == originalStart }
     }
 
+    fun exact(record: OrganizerRecord, overrides: List<OccurrenceOverride>, originalStart: Instant, deviceZone: ZoneId): OrganizerOccurrence? {
+        if (!contains(record,originalStart,deviceZone)) return null
+        val time=record.time ?: return null
+        val changed=overrides.find { it.recordId==record.id && it.originalStart==originalStart }
+        val start=changed?.replacementTime?.instant(deviceZone) ?: if(time.followDeviceZone)
+            originalStart.atZone(ZoneId.of(time.zoneId)).toLocalDate().atTime(time.start.toLocalTime()).atZone(deviceZone).toInstant() else originalStart
+        return between(record,overrides,start,start.plusSeconds(1),deviceZone).find { it.originalStart==originalStart }
+    }
+
     fun conflicts(events: List<OrganizerOccurrence>): Map<String, Set<String>> {
         val result = mutableMapOf<String, MutableSet<String>>()
         val sorted = events.filter { it.record.kind == OrganizerKind.EVENT && it.end != null && !it.completed }.sortedBy { it.start }

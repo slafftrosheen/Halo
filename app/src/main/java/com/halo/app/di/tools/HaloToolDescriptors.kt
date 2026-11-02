@@ -750,7 +750,8 @@ object HaloToolDescriptors {
     }
 
     private fun interfaceConfiguration(definition: ToolDefinition): ToolDescriptor? {
-        val contract = ScreenOperabilityContracts.forDefinition(definition)
+        val contract = EverydayToolContracts.operability(definition)
+            ?: ScreenOperabilityContracts.forDefinition(definition)
             ?: DeviceNotificationOperability.forDefinition(definition)
             ?: com.halo.app.di.tools.host.VoiceConfigurationTools.operability(definition.name)
             ?: LearningConfigurationTools.operability(definition.name)
@@ -763,7 +764,8 @@ object HaloToolDescriptors {
             ?: SpeechInventoryOperability.forDefinition(definition) ?: return null
         val query = contract.operation == com.halo.runtime.cognition.tools.ToolOperation.QUERY
         val screen = definition.name in ScreenOperabilityContracts.readTools + ScreenOperabilityContracts.mutationTools
-        val always = !query && (!screen || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
+        val everyday=definition.name in EverydayToolContracts.names
+        val always = !query && (!screen && !everyday || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
         val security = when {
             query -> readOnly(definition.name)
             always -> ToolSecurityPolicy(
@@ -783,6 +785,7 @@ object HaloToolDescriptors {
             "halo_mcp_refresh_tools" -> "Refresh connected server tools"
             "halo_local_role_state" -> "Read local model roles"
             "halo_local_role_select" -> "Change a local model role"
+            "halo_screen_card_configuration" -> "Read this Screen card configuration"
             "halo_screen_state" -> "Read Screen layout"
             "halo_screen_preview" -> "Preview Screen layout"
             "halo_screen_apply" -> "Apply Screen layout"
@@ -830,20 +833,20 @@ object HaloToolDescriptors {
             "halo_canvas_export_note" -> "Export Canvas to a note"
             "halo_speech_inventory" -> "List local speech models"
             "halo_speech_model_action" -> "Manage local speech model"
-            else -> return null
+            else -> if(everyday) EverydayToolContracts.title(definition.name) else return null
         }
         return descriptor(definition.name, definition, if (query) ToolCategory.INFORMATION else ToolCategory.HOST_CONTROL,
-            security, keywords = if (screen) setOf("screen", "layout", "card", "preset", "typography")
+            security, keywords = if(everyday) setOf("organizer","calendar","tasks","reminders","alarms","timer","world clock","weather","sources","news","brief","widget") else if (screen) setOf("screen", "layout", "card", "preset", "typography")
                 else setOf("saved device", "connection", "notification", "digest", "preferences", "voice", "learning", "routine", "provider", "study", "canvas", "review draft", "speech model"),
             requirements = setOf(ToolRequirement.Capability(contract.capabilityId)),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(
-                maxOutputChars = if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
+                maxOutputChars = if(everyday) 128000 else if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
             presentation = ToolPresentation(title = title, actionVerb = if (query) "Read" else "Apply",
                 targetArgument = when {
                     definition.name.startsWith("halo_saved_device_") -> "deviceId"
                     definition.name.startsWith("halo_notification_policy_") -> "packageName"
                     else -> null
-                }, sensitiveArguments = setOf("settings", "topics", "name", "text", "sourceVersions", "trigger", "conditions", "actions", "delivery", "patch")))
+                }, sensitiveArguments = (if(everyday) (definition.parameters["properties"] as Map<*,*>).keys.filterIsInstance<String>().toSet() else emptySet()) + setOf("settings", "topics", "name", "text", "sourceVersions", "trigger", "conditions", "actions", "delivery", "patch")))
             .copy(operability = contract)
     }
 

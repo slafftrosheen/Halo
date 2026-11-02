@@ -1,5 +1,7 @@
 package com.halo.app.di
 
+import kotlinx.coroutines.withContext
+import com.halo.app.everyday.presentation.route
 import kotlinx.coroutines.flow.stateIn
 import com.halo.sdk.provider.withRemoteDispatchPolicy
 import com.halo.runtime.cognition.blackboard.toObservationOrigin
@@ -152,7 +154,8 @@ object ManualDependencyGraph {
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val collectorRepository: com.halo.app.data.everyday.RoomCollectorRepository by lazy {
         com.halo.app.data.everyday.RoomCollectorRepository(appDatabase,
-            sourceChanging = { id -> if (collectorCoordinatorOwner.isInitialized()) collectorCoordinatorOwner.value.cancel(id) },
+            sourceChanging = { id -> com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+                if (collectorCoordinatorOwner.isInitialized()) collectorCoordinatorOwner.value.cancel(id) },
             scheduleChanged = { com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(applicationContext) })
     }
     val collectorRegistry: com.halo.app.everyday.collectors.CollectorRegistry by lazy {
@@ -182,7 +185,9 @@ object ManualDependencyGraph {
         com.halo.app.data.everyday.RoomWorldClockRepository(appDatabase)
     }
     val briefRepository: com.halo.app.data.everyday.RoomBriefRepository by lazy {
-        com.halo.app.data.everyday.RoomBriefRepository(appDatabase, settingsChanged = {
+        com.halo.app.data.everyday.RoomBriefRepository(appDatabase,beforePublish={document ->
+            com.halo.app.data.everyday.EverydayBriefPublicationAuthority.requireCurrent(appDatabase,document)
+        }, settingsChanged = {
             infra.scope.launch { com.halo.app.everyday.briefing.android.BriefWorker.maintain(applicationContext, briefRepository.settings().proactive) }
         })
     }
@@ -193,6 +198,8 @@ object ManualDependencyGraph {
         com.halo.app.everyday.briefing.BriefLocalAuthority(applicationContext, appDatabase, storage,
             ::currentTimelineEvents, { briefAttention().items.map { it.id }.toSet() })
     }
+    private suspend fun everydayDisclosureState(): Any = com.halo.app.data.everyday.EverydayDisclosureSnapshot.capture(
+        appDatabase,storage.getString("kids_project_library_v1"))
     val briefService: com.halo.app.everyday.briefing.EverydayBriefService by lazy {
         com.halo.app.everyday.briefing.EverydayBriefService(briefRepository, collectorRepository, organizerRepository,
             attention = { briefAttention() }, audience = {
@@ -200,7 +207,7 @@ object ManualDependencyGraph {
                 else com.halo.app.everyday.briefing.BriefAudience.EVERYDAY
             }, childLocalFactIds = briefLocalAuthority::childFactIds, localFactStillExists = briefLocalAuthority::stillExists,
             contentChanges = kotlinx.coroutines.flow.combine(briefLocalAuthority.changes(), kidsPreferences.enabled,
-                kidsPreferences.loadedState, privacyModes.profileChanges) { _, _, _, _ -> Unit })
+                kidsPreferences.loadedState, privacyModes.profileChanges) { _, _, _, _ -> Unit },readState=::everydayDisclosureState)
     }
     val briefReadAloud: com.halo.app.everyday.briefing.BriefReadAloud by lazy {
         com.halo.app.everyday.briefing.BriefReadAloud(briefService, readAloud, remoteDispatchPolicy,
@@ -231,7 +238,7 @@ object ManualDependencyGraph {
     val organizerRepository by lazy {
         com.halo.app.data.everyday.RoomOrganizerRepository(appDatabase,
             schedulesChanged = { com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.enqueue(applicationContext) },
-            beforeRecordChange = organizerBootStore::invalidate)
+            beforeRecordChange = { id -> com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); organizerBootStore.invalidate(id) })
     }
     val organizerUseCases by lazy {
         com.halo.app.everyday.organizer.OrganizerUseCases(organizerRepository,
@@ -297,7 +304,7 @@ object ManualDependencyGraph {
     fun setPrivacyMode(mode: com.halo.app.ai.PrivacyMode) {
         if (mode == com.halo.app.ai.PrivacyMode.CLOUD) {
             check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
-                "A grown-up must allow Full Power mode in Kids settings."
+                "A grown-up must allow Power mode in Kids settings."
             }
         }
         privacyModes.set(mode, recoverPrivate = { reloadProcessingOwners() }) {
@@ -313,7 +320,7 @@ object ManualDependencyGraph {
     }
     fun enableFullPowerAfterDisclosure() {
         check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
-            "A grown-up must allow Full Power mode in Kids settings."
+            "A grown-up must allow Power mode in Kids settings."
         }
         privacyModes.acknowledgeSharing()
         setPrivacyMode(com.halo.app.ai.PrivacyMode.CLOUD)
@@ -467,6 +474,7 @@ object ManualDependencyGraph {
         }
     }
     val requestedHaloScreen = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val uiNavigationRevision=kotlinx.coroutines.flow.MutableStateFlow(0L)
 
     /** One runtime instance per Android process; Activities are only views over it. */
     private val runtimeOwner = lazy {
@@ -1163,6 +1171,25 @@ object ManualDependencyGraph {
                     }) {
                         foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                     }),
+                com.halo.app.di.tools.EverydayToolExecutor(organizerUseCases,worldClocks,offlineCities,collectorRepository,collectorCoordinator,collectorPreview,
+                    briefRepository,briefService,readBrief={briefReadAloud.read(it)},stopReading={briefReadAloud.stop()},
+                    clearSource={id,version -> collectorRepository.clearSnapshot(id,version)},
+                    widgetAction={name,args -> com.halo.app.nativeactions.EverydayWidgetTools(applicationContext) {
+                        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+                    }.execute(name,args)},
+                    open={target -> val route=withContext(kotlinx.coroutines.Dispatchers.IO) {target.route()}
+                        withContext(kotlinx.coroutines.Dispatchers.Main) {requestedHaloScreen.value=route};true},
+                    canAccess={foregroundUnlocked() && kidsPreferences.loadedState.value},kids={kidsPreferences.enabled.value},
+                    authority={
+                        val family=kidsPreferences.presentationRevision()
+                        val mode=privacyModes.revision
+                        val verify: ()->Unit={check(foregroundUnlocked() && kidsPreferences.loadedState.value && kidsPreferences.presentationRevision()==family && privacyModes.revision==mode)}
+                        verify
+                    },
+                    elapsedMs=com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
+                    bootId={com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext)},
+                    power={privacyModes.mode.value==com.halo.app.ai.PrivacyMode.CLOUD},
+                    ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState),
                 com.halo.app.di.tools.ScreenToolExecutor(screenStore) {
                     foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },
@@ -1980,6 +2007,24 @@ object ManualDependencyGraph {
             study = studyUseCases,
             personalLearning = personalLearning,
             conversationStore = conversationStore,
+            everyday={com.halo.app.everyday.presentation.EverydayLibraryProjection(organizerRepository,briefRepository,worldClocks,collectorRepository,
+                kidsPreferences.enabled,kidsPreferences.loadedState).observe()},
+            openEveryday={entry ->
+                val family=kidsPreferences.presentationRevision()
+                val visible={
+                    (attentionContextProvider.snapshot().foregroundState==com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
+                        com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible) &&
+                        applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked!=true
+                }
+                check(visible() && kidsPreferences.loadedState.value)
+                val route=withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    if(entry.kind=="CLOCK") {val current=requireNotNull(worldClocks.get(entry.id));require(current.deletedAt==null && current.version==entry.version && !kidsPreferences.enabled.value)}
+                    if(entry.kind=="BRIEF") requireNotNull(briefService.visible(entry.id))
+                    entry.target.route()
+                }
+                check(visible() && kidsPreferences.presentationRevision()==family)
+                requestedHaloScreen.value=route;true
+            },
             batchOwner = com.halo.app.ui.screens.notebook.NotebookLibraryBatchOwner(
                 appDatabase, workspaceUseCases, notebookOrganizationRepository, conversationStore),
         )

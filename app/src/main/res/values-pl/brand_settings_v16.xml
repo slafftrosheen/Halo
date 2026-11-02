@@ -6,7 +6,7 @@
     <string name="brand_intelligence_where">"Gdzie halo przetwarza odpowiedzi"</string>
     <string name="brand_intelligence_select_help">"Wybierz, gdzie mogą być przetwarzane odpowiedzi. Samo otwarcie opcji nie zmienia aktywnego modelu."</string>
     <string name="brand_intelligence_phone">"Na tym telefonie"</string>
-    <string name="brand_intelligence_phone_summary">"Prywatnie · może działać offline z zainstalowanym modelem"</string>
+    <string name="brand_intelligence_phone_summary">"Lokalnie · może działać offline z zainstalowanym modelem"</string>
     <string name="brand_intelligence_network">"W Twojej sieci"</string>
     <string name="brand_intelligence_network_summary">"Komputer lub serwer, nad którym masz kontrolę"</string>
     <string name="brand_intelligence_cloud">"W chmurze"</string>

@@ -2,7 +2,7 @@
 <resources>
     <string name="capability_guide_title">Halo iespēju iestatīšana</string>
     <string name="capability_guide_explanation">Sāciet vienreiz un pārskatiet Android pieprasījumus pēc kārtas. Visas iespējas ir neobligātas. Android var rādīt atsevišķus dialogus; īpašai piekļuvei atveras iestatījumi. Failus un fotoattēlus izvēlas sistēmas atlasītājā bez piekļuves visai bibliotēkai.</string>
-    <string name="capability_guide_privacy">Private un Full Power nosaka apstrādi, nevis Android atļaujas. Piekļuve neatļauj darbības, maksājumus vai nepārtrauktu ierakstīšanu. Sensitīvos iestatījumus aizsargā esošā pieaugušo kontrole.</string>
+    <string name="capability_guide_privacy">Private un Power nosaka apstrādi, nevis Android atļaujas. Piekļuve neatļauj darbības, maksājumus vai nepārtrauktu ierakstīšanu. Sensitīvos iestatījumus aizsargā esošā pieaugušo kontrole.</string>
     <string name="capability_guide_start">Sākt iespēju iestatīšanu</string>
     <string name="capability_guide_continue">Turpināt iestatīšanu</string>
     <string name="capability_guide_open_settings">Atvērt Android iestatījumus</string>

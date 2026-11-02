@@ -200,4 +200,6 @@ interface OrganizerRepository {
     suspend fun pendingScheduleIds(): List<String>
     suspend fun acknowledgeSchedule(id: String, version: Long): Boolean
     suspend fun changes(since: Instant): List<OrganizerChange>
+    /** Add-only, atomic import. An existing UID (including trash) is never overwritten or resurrected. */
+    suspend fun importCalendar(preview: CalendarImportPreview): CalendarImportResult
 }

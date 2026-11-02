@@ -11,7 +11,7 @@ object PersonalConfigurationToolAccess {
         "halo_mcp_tool_set_enabled", "halo_mcp_refresh_tools")
     val localRoles = setOf("halo_local_role_state", "halo_local_role_select")
     val preferences = setOf("halo_get_preferences", "halo_set_preferences", "halo_get_mode_profile", "halo_edit_mode_profile")
-    val screenLayout = setOf("halo_screen_state", "halo_screen_preview", "halo_screen_apply", "halo_screen_settings",
+    val screenLayout = setOf("halo_screen_card_configuration","halo_screen_state", "halo_screen_preview", "halo_screen_apply", "halo_screen_settings",
         "halo_screen_undo", "halo_screen_save_preset", "halo_screen_remove_preset")
     val savedDevices = setOf("halo_saved_devices", "halo_saved_device_get", "halo_device_preferences", "halo_device_thumbnail_quality",
         "halo_saved_device_retry", "halo_saved_device_connect", "halo_saved_device_disconnect", "halo_saved_device_autoconnect", "halo_saved_device_forget")
@@ -26,7 +26,10 @@ object PersonalConfigurationToolAccess {
         "halo_procedure_set_enabled", "halo_procedure_delete")
     val activeStudy = setOf("halo_study_current", "halo_study_session_action")
     val speechInventory = setOf("halo_speech_inventory", "halo_speech_model_action")
-    val all = currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + procedures + activeStudy + speechInventory
+    val everyday=setOf("halo_organizer_query","halo_organizer_get","halo_organizer_create","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence","halo_organizer_delivery",
+        "halo_clock_query","halo_clock_save","halo_clock_action","halo_source_query","halo_source_get","halo_source_preview","halo_source_save","halo_source_action",
+        "halo_brief_query","halo_brief_action","halo_brief_settings","halo_everyday_open","halo_widget_query","halo_widget_configure","halo_widget_pin")
+    val all = everyday + currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + procedures + activeStudy + speechInventory
 }
 
 /** Tools whose results contain private workspace content or personal configuration metadata. */
@@ -57,6 +60,16 @@ internal fun remoteToolResultCategories(toolName: String): Set<com.halo.sdk.prov
         add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
     }
     if (toolName in WorkspaceToolAccess.readTools) add(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE)
+    if(toolName=="halo_screen_card_configuration") add(com.halo.sdk.provider.RemoteDataCategory.LOCATION)
+    if(toolName in PersonalConfigurationToolAccess.everyday) {
+        // A selected source/brief may contain a manual weather city and scoped local activity/device facts.
+        if(toolName.startsWith("halo_clock_") || toolName.startsWith("halo_source_") || toolName.startsWith("halo_brief_") || toolName.startsWith("halo_widget_") || toolName=="halo_everyday_open")
+            add(com.halo.sdk.provider.RemoteDataCategory.LOCATION)
+        if(toolName=="halo_source_get" || toolName=="halo_brief_query" || toolName=="halo_brief_action") {
+            add(com.halo.sdk.provider.RemoteDataCategory.RECENT_EVENTS)
+            add(com.halo.sdk.provider.RemoteDataCategory.DEVICE_STATE)
+        }
+    }
     if (toolName in PersonalConfigurationToolAccess.savedChats) add(com.halo.sdk.provider.RemoteDataCategory.CONVERSATION)
     if (toolName in setOf("halo_search_memory", "halo_propose_memory", "halo_context_used_sources")) add(com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
     if (toolName in DefaultToolExposureGate.CLOUD_SCREEN_GATED_TOOLS || toolName.startsWith("halo_appfn_"))
