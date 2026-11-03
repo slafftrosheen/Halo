@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.cognition.language.NativeCommandParserTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-11-03T22:10:42.755Z" hostname="raspberrypi" time="0.26">
+  <properties/>
+  <testcase name="scrollingIsNativeAndCannotInventATarget" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.12"/>
+  <testcase name="organizerCapturePreservesTextAndResponsibilityWithoutInventingAPlan" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.011"/>
+  <testcase name="explicitScreenWorkflowKeepsEveryStepAndNeverTurnsIntoAnAppName" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.026"/>
+  <testcase name="deterministicSequenceIsBounded" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.009"/>
+  <testcase name="explicitSystemClockRequestsRetainOwnerWhileOrdinaryTimersUseHalo" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.009"/>
+  <testcase name="contactAndCalendarEditorAreNativeUserReviewHandoffs" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.006"/>
+  <testcase name="reportedPhysicalCommandsStayNativeRegardlessOfCaseAndWhitespace" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.011"/>
+  <testcase name="resolvedCommands" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.012"/>
+  <testcase name="haloPagesAndAdditionalAndroidSettingsAreNativeWithoutBroadAppMatching" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.005"/>
+  <testcase name="invalidNativeSlotsRequestClarification" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.005"/>
+  <testcase name="scriptSeparatorsDoNotCorruptDictatedValues" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.01"/>
+  <testcase name="ordinaryMemoryRequestsRemainWithTheMemorySemanticOwner" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.004"/>
+  <testcase name="polishCaptureRetainsUserIntentWithoutInventingAnExecutionPlan" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.001"/>
+  <testcase name="globalBackDoesNotRequireSemanticAppSupportOrModel" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.004"/>
+  <testcase name="rejectsExplanationsCompoundAmbiguousAndOutOfRange" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.01"/>
+  <testcase name="clockLifecycleIsExplicitAndDoesNotAssumeAnOwnedTimer" classname="com.halo.cognition.language.NativeCommandParserTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

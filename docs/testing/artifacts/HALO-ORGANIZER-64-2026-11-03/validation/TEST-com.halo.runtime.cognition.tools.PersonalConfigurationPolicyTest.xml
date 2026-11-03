@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-03T22:16:06.921Z" hostname="raspberrypi" time="0.113">
+  <properties/>
+  <testcase name="configurationToolsRemainOnDemandAndDoNotExpandLocalBootstrapSchemas" classname="com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest" time="0.055"/>
+  <testcase name="workspaceConsentDoesNotBypassOperatingModeOrAvailableToolsPolicy" classname="com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest" time="0.026"/>
+  <testcase name="personalMetadataRequiresItsDeclaredDisclosureRegardlessOfCategory" classname="com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest" time="0.006"/>
+  <testcase name="resultProvenanceIncludesMetadataMutationReceiptsWithoutInspectingTheirText" classname="com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest" time="0.017"/>
+  <testcase name="everyEverydayCommandHasReviewedScopedProvenance" classname="com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

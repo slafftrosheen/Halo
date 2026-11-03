@@ -1,0 +1,74 @@
+{
+  "status": "INCOMPLETE_HOST_RESTARTS_THEN_USER_REDIRECTED_TO_65",
+  "sourceHead": "d8d690134",
+  "productionSource": "74f2e62d1374f1392f84e5d0a31f35c8e8b7dc27",
+  "gatePassed": false,
+  "appTests": "NOT_REACHED",
+  "apk": "NOT_BUILT",
+  "device": "NOT_INSTALLED_PHONE_NOT_DETECTED_AFTER_RESTART",
+  "attempts": [
+    {
+      "log": "focused-01.log",
+      "exitCode": null,
+      "status": "HOST_RESTART",
+      "lastTask": ":app:kspDebugKotlin"
+    },
+    {
+      "log": "focused-02.log",
+      "exitCode": null,
+      "status": "HOST_RESTART",
+      "lastTask": ":providers:sherpa-stt:bundleLibCompileToJarDebug"
+    }
+  ],
+  "selectedCompletedSuites": [
+    {
+      "name": "com.halo.cognition.language.NativeCommandParserTest",
+      "tests": "16",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-11-03T22:10:42.755Z",
+      "hostname": "raspberrypi",
+      "time": "0.26",
+      "artifact": "TEST-com.halo.cognition.language.NativeCommandParserTest.xml"
+    },
+    {
+      "name": "com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest",
+      "tests": "7",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-11-03T22:16:07.271Z",
+      "hostname": "raspberrypi",
+      "time": "6.296",
+      "artifact": "TEST-com.halo.runtime.cognition.native.NativeCapabilityDispatcherTest.xml"
+    },
+    {
+      "name": "com.halo.runtime.cognition.routine.OrganizerRoutineStartTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-11-03T22:16:13.601Z",
+      "hostname": "raspberrypi",
+      "time": "0.031",
+      "artifact": "TEST-com.halo.runtime.cognition.routine.OrganizerRoutineStartTest.xml"
+    },
+    {
+      "name": "com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest",
+      "tests": "5",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-11-03T22:16:06.921Z",
+      "hostname": "raspberrypi",
+      "time": "0.113",
+      "artifact": "TEST-com.halo.runtime.cognition.tools.PersonalConfigurationPolicyTest.xml"
+    }
+  ],
+  "workers": 1,
+  "maxTestForks": 1,
+  "gradleHeapMiB": 2048,
+  "testHeapMiB": 1024,
+  "swapGiB": 16
+}

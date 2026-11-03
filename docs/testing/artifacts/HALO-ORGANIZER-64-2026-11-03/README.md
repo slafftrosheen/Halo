@@ -16,3 +16,9 @@ Use one worker, no parallel execution and the installed local JVM/toolchain conf
 - Then build the APK once, record its source and SHA-256, and perform native scheduling/notification/render checks.
 
 Actual typed device, STT-final voice and permitted model/provider workflows remain distinct required evidence in [HALO-ORGANIZER-64-OPERABILITY.md](../../HALO-ORGANIZER-64-OPERABILITY.md). The inherited #63 gate also remains unverified after power-interrupted runs. No issue has been closed and no branch has been pushed or merged.
+
+## Validation update — 3 November 2026
+
+After the source freeze, the user authorized one-worker validation. Two runs were interrupted by host restarts, without a terminal Gradle result. Before the first restart, 16 native parser tests and 14 selected Runtime tests passed with zero failures/errors/skips. App unit tests were not reached, no APK was built, and nothing was installed on the phone. The phone was initially unauthorized and was no longer detected after restart. These partial results do not constitute a passing combined gate or #64 acceptance.
+
+The user then requested pushing all local work and moving to issue #65. Prior NOT_RUN statements describe the source-freeze point; the partial executable evidence is preserved in [validation/status.json](validation/status.json). No issue closure, merge, speech, provider or device acceptance is claimed.

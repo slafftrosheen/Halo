@@ -46,3 +46,9 @@ These are authored regression scenarios, not executed device/STT/provider eviden
 Production and regression sources are authored before the later gate. The initial independent source review found seven Important issues; all seven have authored source corrections and regressions in [ISSUE-64-SOURCE-REVIEW.md](ISSUE-64-SOURCE-REVIEW.md). There is no independent re-review of those corrections; no compilation or test outcome has been inferred from the diff. Source-only checks: generated language resources from reviewed catalog and whitespace/diff checks. Full acceptance mapping: [ISSUE-64-IMPLEMENTATION.md](../everyday/ISSUE-64-IMPLEMENTATION.md).
 
 Focused tests/build, exact APK identity, installed APK readback, device serial/API, UI render inspection, native Android work/alarm/notification behavior, actual STT-final recognition and permitted model/provider routes: **NOT_RUN**. The issue remains open. No current passing #63 combined gate exists either; its prior power-interrupted evidence is retained separately.
+
+## Validation update — 3 November 2026
+
+After the source freeze, the user authorized one-worker validation. Two runs were interrupted by host restarts, without a terminal Gradle result. Before the first restart, 16 native parser tests and 14 selected Runtime tests passed with zero failures/errors/skips. App unit tests were not reached, no APK was built, and nothing was installed on the phone. The phone was initially unauthorized and was no longer detected after restart. These partial results do not constitute a passing combined gate or #64 acceptance.
+
+The user then requested pushing all local work and moving to issue #65. Prior NOT_RUN statements describe the source-freeze point; the partial executable evidence is preserved in [validation/status.json](artifacts/HALO-ORGANIZER-64-2026-11-03/validation/status.json). No issue closure, merge, speech, provider or device acceptance is claimed.

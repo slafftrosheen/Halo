@@ -47,3 +47,9 @@ The localization catalog contains reviewed EN/RU/LV/PL copy; generated Android s
 Run the focused source gate only after the coding batch is finished and the host's power is stable. Include the new Organizer persistence, operations, research, brief, UI policy, archive, manifest parity and native parsing suites plus affected existing #63 regressions. Then build the APK once and record exact source/APK identity. Device rendering, native alarms/notification permissions, actual spoken recognition and permitted remote-provider evidence remain separate gates in [the operability record](../testing/HALO-ORGANIZER-64-OPERABILITY.md).
 
 Public provider/policy contracts consulted: [MediaWiki Search API](https://www.mediawiki.org/wiki/API:Search/en), [Internet Archive advanced search](https://archive.org/advancedsearch.php), [RFC 9309 robots exclusion protocol](https://www.rfc-editor.org/rfc/rfc9309.html). These references are interface/policy evidence, not proof of a successful live provider request by this build.
+
+## Validation update — 3 November 2026
+
+After the source freeze, the user authorized one-worker validation. Two runs were interrupted by host restarts, without a terminal Gradle result. Before the first restart, 16 native parser tests and 14 selected Runtime tests passed with zero failures/errors/skips. App unit tests were not reached, no APK was built, and nothing was installed on the phone. The phone was initially unauthorized and was no longer detected after restart. These partial results do not constitute a passing combined gate or #64 acceptance.
+
+The user then requested pushing all local work and moving to issue #65. Prior NOT_RUN statements describe the source-freeze point; the partial executable evidence is preserved in [validation/status.json](../testing/artifacts/HALO-ORGANIZER-64-2026-11-03/validation/status.json). No issue closure, merge, speech, provider or device acceptance is claimed.
