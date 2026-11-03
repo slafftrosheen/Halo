@@ -151,6 +151,11 @@ fun AppShell(
         return
     }
     LaunchedEffect(kidsMode) { if (kidsMode) navController.navigateToPrimary("home") }
+    var familyModeDisclosure by remember { mutableStateOf(false) }
+    val familyModeControl = com.halo.app.ui.screens.kids.rememberFamilyModeMenuControl(ManualDependencyGraph.kidsPreferences,
+        onDisclosureChanged = { familyModeDisclosure = it }) {
+        homeViewModel.cancelVoiceInput()
+    }
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
     val exportOwner = ManualDependencyGraph.workspaceExternalExport
@@ -432,7 +437,7 @@ fun AppShell(
                 val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
                 val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
                 val voiceFields by com.halo.app.ui.components.VoiceFieldCancellation.activeFields.collectAsStateWithLifecycle()
-    val shellGuideIdle = voiceFields.isEmpty() && (!kidsMode || orbOverride.value?.interaction?.canStop != true) && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
+    val shellGuideIdle = !familyModeDisclosure && voiceFields.isEmpty() && (!kidsMode || orbOverride.value?.interaction?.canStop != true) && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
                         !liveHome.speechActive && !liveHome.speechProcessing &&
                         liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle &&
                         (liveHome.sessionState == com.halo.sdk.provider.CognitiveSessionState.Idle ||
@@ -510,6 +515,7 @@ fun AppShell(
                     entryId = backStackEntry?.id,
                     nextStep = livePageActions?.owner?.nextStep,
                     kids = kidsMode,
+                    familyControl = familyModeControl,
                     profile = { if (!kidsMode) com.halo.app.ui.components.PrivacyModeControl(detail = true) },
                     guideIdle = shellGuideIdle,
                     composer = contextualRoute == "home" && !kidsMode,
@@ -637,20 +643,21 @@ fun AppShell(
                             entry.arguments?.getString("createKind")?.let { value -> runCatching { com.halo.app.everyday.organizer.OrganizerKind.valueOf(value) }.getOrNull() },
                             entry.arguments?.getString("occurrenceStart")?.let { value -> runCatching { java.time.Instant.parse(value) }.getOrNull() })
                     })
-                    OrganizerScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                    OrganizerScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely(if (kidsMode) "home" else "notebook") },
                         onClocks = { navigateSafely(EverydayRoutes.CLOCKS) }, onBrief = { navigateSafely(EverydayRoutes.BRIEF) },
+                        onSources = { navigateSafely(EverydayRoutes.SOURCES) },
                         onOpenRelated = { navigateSafely(it) })
                 }
                 composable("screen/clocks?zoneId={zoneId}&cityLabel={cityLabel}",arguments=listOf(navArgument("zoneId") { type=NavType.StringType;nullable=true;defaultValue=null },
                     navArgument("cityLabel") { type=NavType.StringType;nullable=true;defaultValue=null })) { entry ->
                     val model: WorldClockViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "clocks:${entry.id}", factory = EverydayViewModelFactory { WorldClockViewModel(entry.savedStateHandle) })
-                    WorldClockScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },initialZone=entry.arguments?.getString("zoneId"),initialLabel=entry.arguments?.getString("cityLabel"))
+                    WorldClockScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely(EverydayRoutes.ORGANIZER) },initialZone=entry.arguments?.getString("zoneId"),initialLabel=entry.arguments?.getString("cityLabel"))
                 }
                 composable("screen/brief?briefId={briefId}", arguments = listOf(navArgument("briefId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     val model: EverydayBriefViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "brief:${entry.id}", factory = EverydayViewModelFactory {
                         EverydayBriefViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.arguments?.getString("briefId"), entry.savedStateHandle)
                     })
-                    EverydayBriefScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                    EverydayBriefScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely(EverydayRoutes.ORGANIZER) },
                         onSources = { navigateSafely(EverydayRoutes.SOURCES) }, onOrganizer = { navigateSafely(EverydayRoutes.ORGANIZER) },
                         onOpenFact = { model.openFact(it, ::navigateSafely) })
                 }
@@ -658,7 +665,7 @@ fun AppShell(
                     val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "sources:${entry.id}", factory = EverydayViewModelFactory {
                         SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
                     })
-                    SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                    SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely(EverydayRoutes.ORGANIZER) },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
                         onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
                 }
@@ -669,7 +676,7 @@ fun AppShell(
                         SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
                     })
                     SourcesScreen(model, entry.arguments?.getString("sourceId"), entry.arguments?.getString("itemId"),
-                        onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                        onBack = { if (!navController.popBackStack()) navigateSafely(if (kidsMode) EverydayRoutes.ORGANIZER else EverydayRoutes.SOURCES) },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
                         onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
                 }

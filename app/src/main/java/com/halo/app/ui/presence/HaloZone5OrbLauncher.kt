@@ -47,6 +47,7 @@ internal class HaloZone5Navigation(
     val kids: Boolean = false,
     val guidanceTargetVisible: Boolean = false,
     val compactUtilityIncludesStatus: Boolean = false,
+    val familyControl: @Composable () -> Unit = {},
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -265,7 +266,9 @@ internal fun HaloZone5OrbLauncher(
             Text(when (disclosure) { "menu" -> stringResource(R.string.zone5_navigation); "help" -> stringResource(R.string.zone5_help_title); "pins" -> stringResource(R.string.zone5_pins_choose); else -> actionsLabel },
                 style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             if (disclosure == "menu") {
+                navigation.familyControl()
                 val selected = when {
+                    navigation.kids && navigation.route?.substringBefore("?") in setOf("screen/organizer", "screen/clocks", "screen/brief", "screen/source") -> "screen/organizer"
                     navigation.destinations.any { it.route == "study" } &&
                         (navigation.route?.startsWith("study") == true || navigation.route?.startsWith("notebook/study/") == true) -> "study"
                     navigation.route == "screen" -> "screen"
@@ -277,7 +280,9 @@ internal fun HaloZone5OrbLauncher(
                         modifier = Modifier.fillMaxWidth().heightIn(min = targetSize).semantics { this.selected = destination.route == selected }) {
                         Zone5Icon(when (destination.route) {
                             "screen" -> "nav_screen"; "home" -> "nav_home"; "notebook" -> "nav_workspace"
-                            "devices" -> "nav_devices"; "activity" -> "nav_activity"; "study" -> "tool_study"; else -> "nav_settings"
+                            "devices" -> "nav_devices"; "activity" -> "nav_activity"; "study" -> "tool_study"
+                            "screen/organizer" -> "tool_organizer"
+                            else -> "nav_settings"
                         }, destination.glyph, Modifier.size(24.dp))
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
@@ -300,6 +305,7 @@ internal fun HaloZone5OrbLauncher(
                         }
                         if (instrumentsExpanded) com.halo.app.ui.shell.ShellOrbCatalog.workspaceDestinations(navigation.kids).forEach { instrument ->
                             val icon = when (instrument.route) {
+                                "screen/organizer" -> "tool_organizer"
                                 "studio" -> "tool_studio"; "study" -> "tool_study"; "notebook/memory" -> "tool_memory"
                                 "canvases" -> "tool_canvas"; else -> "tool_notes"
                             }

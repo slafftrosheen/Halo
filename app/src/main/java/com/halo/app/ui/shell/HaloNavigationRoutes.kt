@@ -17,6 +17,7 @@ fun primaryNavigationRoute(route: String?): String? = when {
     route.substringBefore("?") == "automation" -> "settings"
     route == "notifications" || route.startsWith("notifications/") -> "home"
     route.substringBefore("?") == "study" -> "notebook"
+    route.substringBefore("?") in setOf("screen/organizer", "screen/brief", "screen/clocks", "screen/sources", "screen/source") -> "notebook"
     route == "workspace_handoff" || route == "canvases" || route.startsWith("notebook/") || route.startsWith("studio") || route.startsWith("file_tools") -> "notebook"
     route == "screen" || route.startsWith("screen/") -> "home"
     route == "discovery" || route.startsWith("device/") -> "devices"

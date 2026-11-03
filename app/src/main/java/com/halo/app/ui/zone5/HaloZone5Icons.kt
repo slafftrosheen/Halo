@@ -138,6 +138,7 @@ object HaloZone5Icons {
         "screen_add_widget" -> R.drawable.ic_halo_screen_add_widget
         "screen_arrange" -> R.drawable.ic_halo_screen_arrange
         "screen_calendar" -> R.drawable.ic_halo_screen_calendar
+        "tool_organizer" -> R.drawable.ic_halo_screen_calendar
         "screen_clock" -> R.drawable.ic_halo_screen_clock
         "screen_display_mode" -> R.drawable.ic_halo_screen_display_mode
         "screen_weather" -> R.drawable.ic_halo_screen_weather

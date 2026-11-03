@@ -5,7 +5,8 @@ import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.briefing.*
 import com.halo.app.everyday.collectors.*
 
-/** All everyday destinations are Screen subroutes; imported routes are never passed to NavController. */
+/** Preserve legacy Screen paths for saved entries; these instruments now belong under Workspace's Organizer.
+ * Imported routes are never passed to NavController. */
 object EverydayRoutes {
     const val ORGANIZER = "screen/organizer"
     const val CLOCKS = "screen/clocks"

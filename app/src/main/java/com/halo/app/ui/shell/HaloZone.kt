@@ -39,6 +39,7 @@ internal fun HaloZone(
     nextStep: ShellNextStep? = null,
     guideIdle: Boolean = false,
     kids: Boolean = false,
+    familyControl: @Composable () -> Unit = {},
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.4f
     val singleRow = compact || primaryNavigationRoute(route) == "settings" || availableHeight < 520.dp
@@ -109,7 +110,8 @@ internal fun HaloZone(
         val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
             entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true,
             compactUtility = { if (utilityInSheet && header?.owner?.routeFamily != "notebook") utility() }, kids = kids, guidanceTargetVisible = !fallback && !menusInSheet,
-            compactUtilityIncludesStatus = utilityInSheet && header?.owner?.routeFamily != "notebook" && header?.includesStatus == true)
+            compactUtilityIncludesStatus = utilityInSheet && header?.owner?.routeFamily != "notebook" && header?.includesStatus == true,
+            familyControl = familyControl)
         val utilityScroll = rememberScrollState()
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * .25f) else Modifier)

@@ -8,7 +8,9 @@ import com.halo.app.ui.screens.settings.isDeveloperDestination
 /** Exact navigation whitelist shared with assistant discovery; never synthesizes object IDs. */
 internal object ShellOrbCatalog {
     /** Adult shell roots only. Child mode retains its existing allowlist. */
-    fun globalDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) destinations(true) else listOf(
+    fun globalDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) destinations(true).filterNot {
+        it.route in setOf("screen/brief", "screen/clocks")
+    } else listOf(
         HaloOrbDestination("screen", "HaloScreen", HaloGlyph.HOME),
         HaloOrbDestination("home", "Home", HaloGlyph.HOME),
         HaloOrbDestination("notebook", "Workspace", HaloGlyph.NOTE),
@@ -18,8 +20,12 @@ internal object ShellOrbCatalog {
     )
     /** Direct instrument destinations are a presentation subset of the canonical catalogue. */
     fun workspaceDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) emptyList() else
-        listOf("studio", "file_tools", "study", "notebook/memory", "canvases").mapNotNull { route ->
+        listOf("screen/organizer", "studio", "file_tools", "study", "notebook/memory", "canvases").mapNotNull { route ->
             destinations(false).firstOrNull { it.route == route }
+        }
+    fun organizerDestinations(kids: Boolean): List<HaloOrbDestination> =
+        listOf("screen/brief", "screen/clocks", "screen/sources").mapNotNull { route ->
+            destinations(kids).firstOrNull { it.route == route }
         }
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =

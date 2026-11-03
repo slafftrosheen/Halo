@@ -33,7 +33,7 @@ import java.time.format.FormatStyle
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () -> Unit, onBrief: () -> Unit,
-    onOpenRelated: (String) -> Unit) {
+    onSources: () -> Unit, onOpenRelated: (String) -> Unit) {
     val state by model.state.collectAsStateWithLifecycle()
     val familyReady by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val familyEnabled by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
@@ -87,6 +87,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
         ShellPageAction("page.organizer.undo", uiText("Undo removal"), HaloGlyph.PREVIOUS, state.undoId != null && !kids && !state.busy) { model.undo() },
         ShellPageAction("page.organizer.clocks", uiText("World clocks"), HaloGlyph.WATCH) { onClocks() },
         ShellPageAction("page.organizer.brief", uiText("Your day in Halo"), HaloGlyph.ACTIVITY) { onBrief() },
+        ShellPageAction("page.organizer.sources", uiText("Sources"), HaloGlyph.SETTINGS, !kids) { onSources() },
         ShellPageAction("page.organizer.import", uiText("Import calendar"), HaloGlyph.DOWNLOAD, !kids && !state.busy) {
             importer.launch(arrayOf("text/calendar", "application/ics", "text/plain", "application/octet-stream"))
         },
@@ -102,6 +103,15 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
         item {
             Zone5PageHeading(uiText("Organizer"), uiText(if (kids) "The plan shared with you." else "Your calendar, tasks and time, saved on this phone."))
             if (!LocalShellHaloOrb.current) TextButton({ if (current != null || state.missing) model.open(null) else onBack() }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back")) }
+        }
+        if (current == null && !state.missing) item {
+            OrganizerToolLinks(kids) { route ->
+                when (route) {
+                    EverydayRoutes.CLOCKS -> onClocks()
+                    EverydayRoutes.BRIEF -> onBrief()
+                    EverydayRoutes.SOURCES -> if (!kids) onSources()
+                }
+            }
         }
         if (state.loading || state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.error?.let { item { EverydayMessage(it, true); TextButton(model::retry, enabled = !state.busy, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Retry")) } } }

@@ -6,9 +6,21 @@ import org.junit.Test
 
 class ShellOrbCatalogTest {
     @Test fun directWorkspaceGroupHasOnlyExistingAdultInstruments() {
-        assertEquals(listOf("studio", "file_tools", "study", "notebook/memory", "canvases"),
+        assertEquals(listOf("screen/organizer", "studio", "file_tools", "study", "notebook/memory", "canvases"),
             ShellOrbCatalog.workspaceDestinations(false).map { it.route })
         assertTrue(ShellOrbCatalog.workspaceDestinations(true).isEmpty())
+    }
+
+    @Test fun organizerOwnsItsSubtoolsWithoutChangingDeepLinkAuthority() {
+        val rootTools = ShellOrbCatalog.workspaceDestinations(false).map { it.route }
+        assertFalse(rootTools.any { it in setOf("screen/brief", "screen/clocks", "screen/sources") })
+        assertEquals(listOf("screen/brief", "screen/clocks", "screen/sources"), ShellOrbCatalog.organizerDestinations(false).map { it.route })
+        assertEquals(listOf("screen/brief", "screen/clocks"), ShellOrbCatalog.organizerDestinations(true).map { it.route })
+        assertEquals(setOf("home", "study", "screen/organizer"), ShellOrbCatalog.globalDestinations(true).map { it.route }.toSet())
+        for (route in listOf("screen/organizer", "screen/clocks?zoneId=UTC", "screen/brief?briefId=one", "screen/source?sourceId=news")) {
+            assertEquals("notebook", primaryNavigationRoute(route))
+        }
+        assertEquals("home", primaryNavigationRoute("screen"))
     }
 
     @Test fun activePageActionsRequireTheExactObjectAndPageFamily() {

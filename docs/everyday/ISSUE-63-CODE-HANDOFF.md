@@ -1,5 +1,7 @@
 # Issue 63 code handoff
 
+User-requested navigation follow-up: [Organizer/menu/family-switch implementation](../testing/ISSUE-63-ORGANIZER-MENU-FAMILY-SWITCH-2026-11-03.md) groups the Everyday instruments under Workspace's Organizer and restores a shell-owned, credential-gated Kids/full Halo menu switch. Its test/build/device verification is **NOT_RUN** in the code-first phase.
+
 3 November source audit follow-up: [completion audit](../testing/ISSUE-63-COMPLETION-AUDIT-2026-11-03.md) records conditional-cache, empty-attention briefing and calendar-interchange corrections plus updated privacy regression sources. New tests/builds are **NOT_RUN** by the user's request to implement first on the Raspberry Pi. The historical green results below do not validate that follow-up.
 
 The source implementation covers the complete A–H code scope. Final release evidence and installation are recorded below when completed. This does not close the issue or claim 10/10 human usability.

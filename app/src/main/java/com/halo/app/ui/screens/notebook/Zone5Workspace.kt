@@ -78,13 +78,9 @@ internal fun WorkspaceToolsList(onStudy: () -> Unit, onMemory: () -> Unit,
             modifier = Modifier.semantics { heading() })
         Surface(color = Color.Transparent) {
             Column {
-                listOf(Triple("Organizer","Events, tasks, reminders, alarms and timers",com.halo.app.ui.everyday.EverydayRoutes.ORGANIZER),
-                    Triple("Your day in Halo","Build and read a brief from saved information",com.halo.app.ui.everyday.EverydayRoutes.BRIEF),
-                    Triple("World clocks","Time in your saved cities",com.halo.app.ui.everyday.EverydayRoutes.CLOCKS),
-                    Triple("Sources","Choose saved weather, news and public calendars",com.halo.app.ui.everyday.EverydayRoutes.SOURCES)).forEach { (title,purpose,route) ->
-                    WorkspaceInstrumentRow(uiText(title),uiText(purpose),"tool_notes",onEveryday?.let {open ->{open(route)}})
-                    HorizontalDivider(Modifier.padding(horizontal=16.dp))
-                }
+                WorkspaceInstrumentRow(uiText("Organizer"), uiText("Events, tasks, reminders, alarms and timers"),
+                    "tool_organizer", onEveryday?.let { open -> { open(com.halo.app.ui.everyday.EverydayRoutes.ORGANIZER) } })
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_studio), stringResource(R.string.zone5_studio_purpose), "tool_studio", onStudio)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_notes), stringResource(R.string.zone5_office_purpose), "tool_notes", onOffice)
