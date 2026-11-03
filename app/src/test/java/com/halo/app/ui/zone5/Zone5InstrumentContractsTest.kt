@@ -66,6 +66,14 @@ class Zone5InstrumentContractsTest {
         "page.canvas.add" to "action_add", "page.canvas.arrange" to "screen_arrange", "page.canvas.fit" to "canvas_fit")
     @Test fun studioUsesLayerAndExportAssets() = icons(
         "page.studio.add-layer" to "studio_layer_add", "page.studio.layers" to "studio_layers", "page.studio.export" to "action_export")
+    @Test fun studioFourPrimaryGroupsHaveDistinctMeaningfulAssets() {
+        val ids=listOf("page.studio.add-layer","page.studio.layers","page.studio.tools","page.studio.ai")
+        val assets=ids.map {zone5ActionIconId(HaloOrbContextAction("page:$it",it,HaloGlyph.TOOL))}
+        assertEquals(4,assets.distinct().size)
+        assets.forEach {assertNotNull(HaloZone5Icons.resource(it))}
+        val actions=ids.map {HaloOrbContextAction("page:$it",it,HaloGlyph.TOOL)}+HaloOrbContextAction("page:page.studio.export","Export",HaloGlyph.FILE)
+        assertEquals(ids,zone5InstrumentOrbitActions(actions).map {it.id.removePrefix("page:")})
+    }
     @Test fun studyUsesLessonPracticeAndNarrationAssets() = icons(
         "page.study.new" to "study_lesson", "page.study.practice" to "study_practice", "page.study.read" to "action_read_aloud")
     @Test fun memoryDetailUsesSourceEditAndForgetAssets() = icons(

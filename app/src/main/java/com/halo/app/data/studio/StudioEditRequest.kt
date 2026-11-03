@@ -9,6 +9,7 @@ sealed interface StudioEditRequest {
     data object Redo : StudioEditRequest
     data class Restore(val revision: Long) : StudioEditRequest
     data class Import(val objectId: String, val sourceVersion: String) : StudioEditRequest
+    data class Fill(val x:Int,val y:Int,val color:Int,val tolerance:Int):StudioEditRequest
 }
 
 /** Closed data-only editing vocabulary. No scripts, paths, reflection or external URLs. */
@@ -21,28 +22,41 @@ object StudioEditParser {
             "redo" -> { only(); return StudioEditRequest.Redo }
             "restore_version" -> { only("version"); return StudioEditRequest.Restore(fields.long("version")) }
             "import_image" -> { only("objectId", "sourceVersion"); return StudioEditRequest.Import(fields.text("objectId"), fields.text("sourceVersion").also { require(it.length in 1..200) }) }
-            "add_text", "add_rectangle", "add_ellipse", "add_ink" -> {
-                only("name", "text", "color", "bounds", "ink")
+            "fill_area" -> {
+                only("x","y","color","tolerance")
+                val x=fields.integer("x");val y=fields.integer("y");val tolerance=fields.integer("tolerance");val color=color(fields["color"])
+                require(x in 0..1000&&y in 0..1000&&tolerance in 0..255&&android.graphics.Color.alpha(color)>0)
+                return StudioEditRequest.Fill(x,y,color,tolerance)
+            }
+            "add_text", "add_rectangle", "add_ellipse", "add_ink", "add_line", "add_texture", "add_frame" -> {
+                only("name", "text", "color", "bounds", "ink", "texture", "textureSeed")
                 val kind = when (operation) {
                     "add_text" -> StudioLayerKind.TEXT
                     "add_rectangle" -> StudioLayerKind.RECTANGLE
+                    "add_frame" -> StudioLayerKind.RECTANGLE
                     "add_ellipse" -> StudioLayerKind.ELLIPSE
+                    "add_line" -> StudioLayerKind.LINE
+                    "add_texture" -> StudioLayerKind.TEXTURE
                     else -> StudioLayerKind.INK
                 }
                 if (kind != StudioLayerKind.TEXT) require("text" !in fields)
                 if (kind != StudioLayerKind.INK) require("ink" !in fields)
+                if (kind != StudioLayerKind.TEXTURE) require("texture" !in fields && "textureSeed" !in fields)
                 StudioCommand.Add(StudioLayer(name = fields.text("name"), kind = kind,
                     bounds = fields["bounds"]?.let(::rect) ?: StudioRect(),
                     color = fields["color"]?.let(::color) ?: 0xff18203a.toInt(),
                     text = if (kind == StudioLayerKind.TEXT) fields.text("text") else "",
-                    ink = if (kind == StudioLayerKind.INK) fields.text("ink") else ""))
+                    ink = if (kind == StudioLayerKind.INK) fields.text("ink") else "",
+                    texture = if (kind == StudioLayerKind.TEXTURE) StudioTexture.valueOf(fields.text("texture")) else null,
+                    textureSeed = if ("textureSeed" in fields) fields.integer("textureSeed") else 1,strokeOnly=operation=="add_frame"))
             }
             "update_layer" -> {
                 only("layerId", "changes")
                 val current = layer()
                 val changes = fields["changes"].objectFields()
                 require(changes.isNotEmpty() && changes.keys.all { it in setOf("name", "visible", "locked", "opacity", "rotation",
-                    "color", "text", "fontSize", "strokeWidth", "mask", "bounds", "brightness", "contrast", "saturation") })
+                    "color", "text", "fontSize", "strokeWidth", "mask", "bounds", "brightness", "contrast", "saturation",
+                    "typography", "imageCrop", "blend", "effects", "texture", "textureSeed", "strokeOnly") })
                 StudioCommand.Replace(current.copy(
                     name = if ("name" in changes) changes.text("name") else current.name,
                     visible = if ("visible" in changes) changes.flag("visible") else current.visible,
@@ -57,7 +71,17 @@ object StudioEditParser {
                     mask = if ("mask" in changes) changes["mask"]?.let(::rect) else current.mask,
                     brightness = if ("brightness" in changes) changes.integer("brightness") else current.brightness,
                     contrast = if ("contrast" in changes) changes.integer("contrast") else current.contrast,
-                    saturation = if ("saturation" in changes) changes.integer("saturation") else current.saturation))
+                    saturation = if ("saturation" in changes) changes.integer("saturation") else current.saturation,
+                    typography = if ("typography" in changes) StudioCreativeCodec.readTypography(org.json.JSONObject(changes["typography"].objectFields())) else current.typography,
+                    imageCrop = if ("imageCrop" in changes) changes["imageCrop"]?.let(::rect) else current.imageCrop,
+                    blend = if ("blend" in changes) StudioBlend.valueOf(changes.text("blend")) else current.blend,
+                    effects = if ("effects" in changes) changes["effects"].let { value ->
+                        require(value is List<*> && value.size <= 8)
+                        value.map { StudioCreativeCodec.readEffect(org.json.JSONObject(it.objectFields())) }
+                    } else current.effects,
+                    texture = if ("texture" in changes) StudioTexture.valueOf(changes.text("texture")) else current.texture,
+                    textureSeed = if ("textureSeed" in changes) changes.integer("textureSeed") else current.textureSeed,
+                    strokeOnly = if("strokeOnly" in changes) changes.flag("strokeOnly") else current.strokeOnly))
             }
             "set_ink" -> {
                 only("layerId", "ink")
@@ -65,6 +89,11 @@ object StudioEditParser {
                 StudioCommand.Replace(current.copy(ink = fields.text("ink")))
             }
             "delete_layer" -> { only("layerId"); StudioCommand.Remove(fields.text("layerId")) }
+            "duplicate_layer" -> { only("layerId"); StudioCommand.Duplicate(fields.text("layerId")) }
+            "apply_style" -> {only("layerId","style");StudioCommand.Replace(StudioCreativePresets.styled(layer(),fields.text("style")))}
+            "group_layers" -> { only("layerIds", "name"); StudioCommand.Group(fields.ids(), fields.text("name")) }
+            "ungroup_layer" -> { only("layerId"); StudioCommand.Ungroup(fields.text("layerId")) }
+            "layout_layers" -> { only("layerIds", "layout"); StudioCommand.Layout(fields.ids(), StudioLayout.valueOf(fields.text("layout"))) }
             "move_layer" -> { only("layerId", "index"); StudioCommand.Move(fields.text("layerId"), fields.integer("index")) }
             "select_layer" -> { only("layerId"); StudioCommand.Select(fields["layerId"]?.let { require(it is String); it }) }
             "resize" -> { only("width", "height"); StudioCommand.Resize(fields.integer("width"), fields.integer("height")) }
@@ -101,6 +130,10 @@ object StudioEditParser {
     }
     private fun Map<String, Any?>.text(key: String): String = (get(key) as? String) ?: error("Expected edit text")
     private fun Map<String, Any?>.flag(key: String): Boolean = (get(key) as? Boolean) ?: error("Expected edit flag")
+    private fun Map<String, Any?>.ids(): List<String> {
+        val value=get("layerIds");require(value is List<*> && value.size in 1..StudioDocument.MAX_LAYERS)
+        return value.map { require(it is String);it }.also { require(it.distinct().size==it.size) }
+    }
     private fun Map<String, Any?>.integer(key: String): Int = long(key).also { require(it in Int.MIN_VALUE..Int.MAX_VALUE) }.toInt()
     private fun Map<String, Any?>.long(key: String): Long {
         val value = get(key); require(value is Number)

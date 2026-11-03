@@ -31,6 +31,11 @@ internal fun StudioLayerDialog(layer: StudioLayer, onApply: (StudioLayer) -> Uni
     var strokeWidth by remember(layer) { mutableStateOf((layer.strokeWidth / 10f).toString()) }
     var advanced by remember { mutableStateOf(false) }
     var masked by remember(layer) { mutableStateOf(layer.mask != null) }
+    var typography by remember(layer) { mutableStateOf(layer.typography) }
+    var blend by remember(layer) { mutableStateOf(layer.blend) }
+    var cropped by remember(layer) { mutableStateOf(layer.imageCrop!=null) }
+    var strokeOnly by remember(layer) {mutableStateOf(layer.strokeOnly)}
+    val imageCrop=remember(layer) { (layer.imageCrop ?: StudioRect()).let { listOf(it.x,it.y,it.width,it.height).map { value->mutableStateOf((value/10f).toString()) } } }
     val geometry = remember(layer) { listOf(layer.bounds.x, layer.bounds.y, layer.bounds.width, layer.bounds.height)
         .map { mutableStateOf((it / 10f).toString()) } }
     val mask = remember(layer) { (layer.mask ?: StudioRect(100, 100, 800, 800)).let {
@@ -50,16 +55,33 @@ internal fun StudioLayerDialog(layer: StudioLayer, onApply: (StudioLayer) -> Uni
                     OutlinedTextField(text, { text = it.take(2000) }, label = { Text(stringResource(R.string.studio_text)) },
                         modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, enabled = !locked)
                     StudioNumberField(stringResource(R.string.studio_font_size), fontSize, { fontSize = it }, "%", enabled = !locked)
+                    FlowRow {
+                        StudioFont.entries.forEach { family->FilterChip(typography.family==family,{typography=typography.copy(family=family)},enabled=!locked,
+                            label={Text(com.halo.app.language.uiText(family.name.lowercase().replaceFirstChar { it.uppercase() }))}) }
+                        FilterChip(typography.weight==700,{typography=typography.copy(weight=if(typography.weight==700) 400 else 700)},enabled=!locked,label={Text(com.halo.app.language.uiText("Bold"))})
+                        FilterChip(typography.italic,{typography=typography.copy(italic=!typography.italic)},enabled=!locked,label={Text(com.halo.app.language.uiText("Italic"))})
+                    }
+                    FlowRow { StudioTextAlignment.entries.forEach { alignment->FilterChip(typography.alignment==alignment,{typography=typography.copy(alignment=alignment)},enabled=!locked,
+                        label={Text(com.halo.app.language.uiText(when(alignment) {StudioTextAlignment.START->"Align start";StudioTextAlignment.CENTER->"Align center";StudioTextAlignment.END->"Align end"}))}) } }
+                    StudioSlider(com.halo.app.language.uiText("Letter spacing"),typography.letterSpacing.toFloat(),-100f..500f,!locked) {typography=typography.copy(letterSpacing=it.roundToInt())}
+                    StudioSlider(com.halo.app.language.uiText("Line spacing"),typography.lineSpacing.toFloat(),500f..2500f,!locked) {typography=typography.copy(lineSpacing=it.roundToInt())}
                 }
-                if (layer.kind != StudioLayerKind.IMAGE) {
+                if (layer.kind != StudioLayerKind.IMAGE && layer.kind!=StudioLayerKind.GROUP) {
                     StudioColorChoices(color, { color = it }, enabled = !locked)
                     if (advanced) OutlinedTextField(color, { color = it.take(9) },
                         label = { Text(stringResource(R.string.studio_color)) }, singleLine = true,
                         modifier = Modifier.fillMaxWidth(), enabled = !locked)
                 }
-                if (layer.kind == StudioLayerKind.INK) StudioNumberField(stringResource(R.string.studio_stroke_width),
+                if(layer.kind in setOf(StudioLayerKind.RECTANGLE,StudioLayerKind.ELLIPSE)) FilterChip(strokeOnly,{strokeOnly=!strokeOnly},enabled=!locked,label={Text(com.halo.app.language.uiText("Outline"))})
+                if (layer.kind == StudioLayerKind.INK || layer.kind==StudioLayerKind.LINE || strokeOnly) StudioNumberField(stringResource(R.string.studio_stroke_width),
                     strokeWidth, { strokeWidth = it }, "%", enabled = !locked)
                 StudioSlider(stringResource(R.string.studio_opacity), opacity, 0f..1000f, !locked) { opacity = it }
+                FlowRow { StudioBlend.entries.forEach { value->FilterChip(blend==value,{blend=value},enabled=!locked,
+                    label={Text(com.halo.app.language.uiText(value.name.lowercase().replaceFirstChar { it.uppercase() }))}) } }
+                if(layer.kind==StudioLayerKind.IMAGE) {
+                    FilterChip(cropped,{cropped=!cropped},enabled=!locked,label={Text(com.halo.app.language.uiText("Crop image"))})
+                    if(cropped) StudioRectFields(imageCrop,!locked)
+                }
                 TextButton(onClick = { advanced = !advanced }) { Text(stringResource(R.string.studio_more)) }
                 if (advanced) {
                     Text(stringResource(R.string.studio_position), style = MaterialTheme.typography.titleSmall)
@@ -83,7 +105,8 @@ internal fun StudioLayerDialog(layer: StudioLayer, onApply: (StudioLayer) -> Uni
                 layer.copy(name = name, text = text, color = color.drop(1).toLong(16).toInt(), visible = visible, locked = locked,
                     opacity = opacity.roundToInt(), brightness = brightness.roundToInt(), contrast = contrast.roundToInt(),
                     saturation = saturation.roundToInt(), rotation = rotation.toInt(), fontSize = (fontSize.replace(',', '.').toFloat() * 10).roundToInt(),
-                    strokeWidth = (strokeWidth.replace(',', '.').toFloat() * 10).roundToInt(), bounds = studioRect(geometry), mask = if (masked) studioRect(mask) else null)
+                    strokeWidth = (strokeWidth.replace(',', '.').toFloat() * 10).roundToInt(), bounds = studioRect(geometry), mask = if (masked) studioRect(mask) else null,
+                    typography=typography,blend=blend,imageCrop=if(cropped) studioRect(imageCrop) else null,strokeOnly=strokeOnly)
                     .also(StudioLayer::requireValid)
             }.onSuccess { onApply(it); onDismiss() }.onFailure { invalid = true }
         }) { Text(stringResource(R.string.studio_apply)) } },

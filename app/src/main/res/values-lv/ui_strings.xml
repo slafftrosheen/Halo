@@ -4922,4 +4922,132 @@
     <string name="ui_a37bed66cd27" formatted="false">"Esmu pārskatījis iepriekšējo izpildi"</string>
     <string name="ui_34099e54cc54" formatted="false">"Pirms turpināšanas pārbaudi iepriekšējo izpildi un apstiprini, ka esi pārskatījis tās nenoteiktos rezultātus."</string>
     <string name="ui_5e2a35a482a0" formatted="false">"Šim atkārtotajam plānam nav aktīva grafika. Iespējo pārskatīto grafiku vai palaid nākamo pārbaudi manuāli."</string>
+    <string name="ui_0a7d58a7a31e" formatted="false">"Mainot otu, tiek sākts jauns krāsojuma slānis; iepriekšējie triepieni paliek nemainīti."</string>
+    <string name="ui_11fb682be0a0" formatted="false">"MI"</string>
+    <string name="ui_f5511c810f23" formatted="false">"MI radošā palīdzība"</string>
+    <string name="ui_1c8b1583e1fb" formatted="false">"Pievienojiet slāni, lai sāktu veidot."</string>
+    <string name="ui_8fce42d6d0aa" formatted="false">"Pievienot efektu"</string>
+    <string name="ui_3fc8b134170d" formatted="false">"Pievienot slāni"</string>
+    <string name="ui_4d069cd9e788" formatted="false">"Pievienot vienkrāsainu aizpildījuma slāni"</string>
+    <string name="ui_7ba097da6312" formatted="false">"Līdzināt apakšmalas"</string>
+    <string name="ui_e55c76591fa2" formatted="false">"Centrēt horizontāli"</string>
+    <string name="ui_2f68a2058826" formatted="false">"Līdzināt pie rindas sākuma"</string>
+    <string name="ui_e5a1cc1cc141" formatted="false">"Līdzināt pie rindas beigām"</string>
+    <string name="ui_eac0f9c3da59" formatted="false">"Līdzināt kreisās malas"</string>
+    <string name="ui_2cce0b3a9122" formatted="false">"Centrēt vertikāli"</string>
+    <string name="ui_8f4f8efcbee1" formatted="false">"Līdzināt labās malas"</string>
+    <string name="ui_4868688f4c68" formatted="false">"Līdzināt augšmalas"</string>
+    <string name="ui_49e96d7cdf58" formatted="false">"Stiprums"</string>
+    <string name="ui_6536eef7c8e9" formatted="false">"Zīmēšanas laukums"</string>
+    <string name="ui_e7aebe3f338f" formatted="false">"Laukuma apgriešana un pārveidošana"</string>
+    <string name="ui_fe689170440f" formatted="false">"Gaišo daļu mirdzums"</string>
+    <string name="ui_cd83e6731d2b" formatted="false">"Izpludinājums"</string>
+    <string name="ui_ec811d30a89c" formatted="false">"Spilgtums"</string>
+    <string name="ui_520cdb7e4609" formatted="false">"Pārvietot priekšplānā"</string>
+    <string name="ui_8624ca0fcb3c" formatted="false">"Ota"</string>
+    <string name="ui_404ef4ac60fe" formatted="false">"Otas necaurspīdīgums"</string>
+    <string name="ui_8154dc2d5258" formatted="false">"Otu sākumiestatījumi"</string>
+    <string name="ui_da6f847e1715" formatted="false">"Otas lielums"</string>
+    <string name="ui_87d296ec9489" formatted="false">"Paraksts"</string>
+    <string name="ui_d946067427e9" formatted="false">"Centrā"</string>
+    <string name="ui_dff818031dae" formatted="false">"Krāsa · #AARRGGBB"</string>
+    <string name="ui_fbb34a2104d8" formatted="false">"Betons"</string>
+    <string name="ui_08795ba031bc" formatted="false">"Kontrasts"</string>
+    <string name="ui_508ed9b9b866" formatted="false">"Apgriezt attēlu"</string>
+    <string name="ui_d540e5346b75" formatted="false">"Tumšināšana"</string>
+    <string name="ui_0072e6b93494" formatted="false">"Dizains"</string>
+    <string name="ui_7d50757f95ba" formatted="false">"Atmest nesaglabātos triepienus"</string>
+    <string name="ui_d9d22a2e50ba" formatted="false">"Vienmērīgi izkārtot horizontāli"</string>
+    <string name="ui_612b67cee50a" formatted="false">"Vienmērīgi izkārtot vertikāli"</string>
+    <string name="ui_b86d11af7918" formatted="false">"Uz leju"</string>
+    <string name="ui_b8c226f25a11" formatted="false">"Velciet, lai pārvietotu. Stūris maina izmēru, augšējais rokturis pagriež, divi pirksti pārvieto skatu."</string>
+    <string name="ui_e8b0b8daf176" formatted="false">"Krītoša ēna"</string>
+    <string name="ui_27e78e7e8cca" formatted="false">"Divtoņu efekts"</string>
+    <string name="ui_75372bcd9ea0" formatted="false">"Putekļi"</string>
+    <string name="ui_658b158af9bd" formatted="false">"Kontūras"</string>
+    <string name="ui_8c4e5e737fae" formatted="false">"Rediģēt slāni"</string>
+    <string name="ui_5ad6a405f686" formatted="false">"Redakcionāls"</string>
+    <string name="ui_358511c8c098" formatted="false">"Efekti"</string>
+    <string name="ui_70ec71745866" formatted="false">"Efekti / maska"</string>
+    <string name="ui_b3c1a9a8b278" formatted="false">"Efekti un apgaismojums"</string>
+    <string name="ui_95b9aa619ee2" formatted="false">"Reljefs"</string>
+    <string name="ui_f4db1e48476f" formatted="false">"Beigas"</string>
+    <string name="ui_686eee3c6cd5" formatted="false">"Dzēšgumija"</string>
+    <string name="ui_cc5454a4b7ce" formatted="false">"Ekspozīcija"</string>
+    <string name="ui_d06fab1c42a4" formatted="false">"Pipete"</string>
+    <string name="ui_de7b2b8384b8" formatted="false">"Audums"</string>
+    <string name="ui_3dea292f300e" formatted="false">"Filmas graudainība"</string>
+    <string name="ui_9f06d4dcf2f2" formatted="false">"Pabeigt gleznošanu"</string>
+    <string name="ui_db9a78f719af" formatted="false">"Ietilpināt laukumu"</string>
+    <string name="ui_38e9b86f2bcd" formatted="false">"Gaismas atspīdums"</string>
+    <string name="ui_f534ed976dc8" formatted="false">"Mirdzums"</string>
+    <string name="ui_ccf7e858a4ba" formatted="false">"Gradienta gaisma"</string>
+    <string name="ui_540faafbd767" formatted="false">"Graudainība"</string>
+    <string name="ui_93638ea9e0b0" formatted="false">"Pelēktoņi"</string>
+    <string name="ui_762ebb70ef0e" formatted="false">"Grupas nosaukums"</string>
+    <string name="ui_3f5c98191fe1" formatted="false">"Grupēt atlasītos slāņus"</string>
+    <string name="ui_577ad4d66a5a" formatted="false">"Dūmaka"</string>
+    <string name="ui_6e517828c3d8" formatted="false">"Gaišās daļas"</string>
+    <string name="ui_c2e94710b98c" formatted="false">"Iekšējā ēna"</string>
+    <string name="ui_0e66373f45dc" formatted="false">"Etiķete"</string>
+    <string name="ui_0bcd66e677f4" formatted="false">"Slāņi"</string>
+    <string name="ui_1516f64fed58" formatted="false">"Slāņi un līdzināšana"</string>
+    <string name="ui_4b2eb7f7cd01" formatted="false">"Burtu atstatums"</string>
+    <string name="ui_df175633e5b9" formatted="false">"Gaismas noplūde"</string>
+    <string name="ui_c1d5c40b2fef" formatted="false">"Gaišināšana"</string>
+    <string name="ui_d7852cd0d245" formatted="false">"Līnija"</string>
+    <string name="ui_0db45da1214b" formatted="false">"Rindu atstatums"</string>
+    <string name="ui_e83c082be7dd" formatted="false">"Lokāli ģenerēti materiāli. Lejupielāde nav vajadzīga."</string>
+    <string name="ui_13ce08699c85" formatted="false">"Marķieris"</string>
+    <string name="ui_64c223c2036f" formatted="false">"Vienplatuma"</string>
+    <string name="ui_7e817044b6c0" formatted="false">"Noskaņu kolāža"</string>
+    <string name="ui_13e39d914bc0" formatted="false">"Pārvietot maziem soļiem"</string>
+    <string name="ui_33bcea638489" formatted="false">"Reizināšana"</string>
+    <string name="ui_9ada8e83c118" formatted="false">"Troksnis"</string>
+    <string name="ui_dd546bc86223" formatted="false">"Tiek piedāvāti tikai konfigurēti attēlu rediģēšanas modeļi. Īpašas maskas, objektu noņemšana un apgaismojuma maiņa ir atkarīga no pakalpojuma iespējām."</string>
+    <string name="ui_9cf172ca3fce" formatted="false">"Sākotnējie slāņi paliek rediģējami. Efektu jebkurā laikā var izslēgt vai noņemt."</string>
+    <string name="ui_2af93aeb435d" formatted="false">"Pārklājums"</string>
+    <string name="ui_50d0cceb2f7a" formatted="false">"Gleznošana"</string>
+    <string name="ui_ddba7813d5ee" formatted="false">"Triepienus neizdevās saglabāt. Pirms turpināšanas saglabājiet atkopšanas kopiju."</string>
+    <string name="ui_bfd8c97cea8f" formatted="false">"Gleznot darba laukumā"</string>
+    <string name="ui_fd92d952db92" formatted="false">"Skata pārvietošana"</string>
+    <string name="ui_35045eff549e" formatted="false">"Papīrs"</string>
+    <string name="ui_a04bd35be167" formatted="false">"Pildspalva"</string>
+    <string name="ui_be3435a5af5f" formatted="false">"Zīmulis"</string>
+    <string name="ui_f4982f86e732" formatted="false">"Pikseļošana"</string>
+    <string name="ui_1ba76ea7e3d9" formatted="false">"Plakāts"</string>
+    <string name="ui_6d75dd5c4cf9" formatted="false">"Toņu samazināšana"</string>
+    <string name="ui_974d0aa17323" formatted="false">"Priekšskatījums nav pieejams. Projekts ir saglabāts."</string>
+    <string name="ui_6fe0661c82d1" formatted="false">"Rādiuss"</string>
+    <string name="ui_7893261c8af3" formatted="false">"Atkopt gleznojuma melnrakstu"</string>
+    <string name="ui_7538c2135b03" formatted="false">"Atspulgs"</string>
+    <string name="ui_feed1b73b065" formatted="false">"Pārskatiet attēla labojumu ar konfigurētu modeli. Pieņemot priekšlikumu, attēla slānis tiek pievienots atsevišķai rediģējamai projekta kopijai."</string>
+    <string name="ui_65df03312ccb" formatted="false">"Pārskatīt attēla labojumu"</string>
+    <string name="ui_a639fd28b58d" formatted="false">"Pagriezt par 15°"</string>
+    <string name="ui_b3c18129f841" formatted="false">"Bezserifa"</string>
+    <string name="ui_993f024b650e" formatted="false">"Piesātinājums"</string>
+    <string name="ui_5b9ad6777f98" formatted="false">"Saglabāt atkopšanas kopiju"</string>
+    <string name="ui_195efbad3844" formatted="false">"Skrāpējumi"</string>
+    <string name="ui_e3237ef55d1f" formatted="false">"Atlasiet slāni darba laukumā vai slāņu sarakstā."</string>
+    <string name="ui_6fb1ec9a7997" formatted="false">"Atlasiet vienu slāni rediģēšanai vai atzīmējiet viena līmeņa slāņus grupēšanai un līdzināšanai."</string>
+    <string name="ui_ca4067071fcf" formatted="false">"Atlase"</string>
+    <string name="ui_e3daa79eaf69" formatted="false">"Pārvietot aizmugurē"</string>
+    <string name="ui_1b5e747e5031" formatted="false">"Serifa"</string>
+    <string name="ui_2a19bdc09aa3" formatted="false">"Tumšās daļas"</string>
+    <string name="ui_ac6f0be1274c" formatted="false">"Asināšana"</string>
+    <string name="ui_6bb4c1177681" formatted="false">"Slaids"</string>
+    <string name="ui_f5f75c9b97d0" formatted="false">"Puscaurspīdīga ota"</string>
+    <string name="ui_0b099867389c" formatted="false">"Vienkrāsains aizpildījums"</string>
+    <string name="ui_e28411a3404d" formatted="false">"Tekstūra"</string>
+    <string name="ui_298837b8bdcb" formatted="false">"Jaunākie triepieni joprojām tiek glabāti atmiņā. Saglabājiet tos atsevišķā projektā vai skaidri atmetiet nesaglabātos triepienus."</string>
+    <string name="ui_740e4843c07e" formatted="false">"Sasniegts projekta slāņu ierobežojums. Pirms MI priekšlikuma saglabāšanas noņemiet vienu slāni."</string>
+    <string name="ui_6a822da0d9db" formatted="false">"Nokrāsa"</string>
+    <string name="ui_6bb5969ca349" formatted="false">"Pirms rediģēšanas atbloķējiet šo slāni vai tā grupu."</string>
+    <string name="ui_55490a4bf3a8" formatted="false">"Uz augšu"</string>
+    <string name="ui_f841c2080740" formatted="false">"Vinjete"</string>
+    <string name="ui_d0b50e064a4f" formatted="false">"Rāmis"</string>
+    <string name="ui_c6c0a7fe81c8" formatted="false">"Aizpildīt savienotu apgabalu"</string>
+    <string name="ui_d638785dd42e" formatted="false">"Pirms aizpildīšanas izvēlieties redzamu krāsu."</string>
+    <string name="ui_8dadf856e07b" formatted="false">"Pieskarieties apgabalam, lai to aizpildītu. Sākotnējie slāņi paliks rediģējami."</string>
+    <string name="ui_fb73bdbd1540" formatted="false">"Pieskarieties darba laukumam, lai izvēlētos krāsu."</string>
 </resources>

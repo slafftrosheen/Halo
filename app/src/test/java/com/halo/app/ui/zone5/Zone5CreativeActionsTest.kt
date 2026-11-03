@@ -153,6 +153,53 @@ class Zone5CreativeActionsTest {
         override fun stop() = Unit
         override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget = error("Unexpected provider request")
     }
+    @Test fun studioModesShareTheSameRoomDocumentAndAiNeedsExplicitReview() {
+        val context=ApplicationProvider.getApplicationContext<Application>()
+        val projects=StudioProjectRepository(fixture.database)
+        val assets=NotebookAssetRepository(context,fixture.database)
+        val service=StudioService(context,projects,fixture.files,fixture.workspace,StudioRenderer(context,fixture.files,fixture.workspace),assets,fixture.canvases,
+            fixture.database.workspaceContextDao(),StudioUiRequests(fixture.scope,{}))
+        val shape=StudioLayer(id="shape",name="Editable shape",kind=StudioLayerKind.RECTANGLE,bounds=StudioRect(100,100,600,600))
+        val project=runBlocking {projects.create("One creative document",StudioDocument(layers=listOf(shape),selectedLayerId=shape.id))}
+        lateinit var model:StudioViewModel
+        compose.runOnUiThread {model=StudioViewModel(service,fixture.files,WorkspaceImageService(router,IntentQualificationFixture.MemoryStorage()),assets,project.id);own(model)}
+        var reviews=0
+        render("studio?projectId={projectId}") {StudioScreen(model,{},{},{},{},{reviews++})}
+        await {model.state.value.project?.id==project.id&&!model.state.value.loading}
+        compose.onNodeWithText("Design").performClick()
+        compose.onNodeWithText("Paint").performClick()
+        compose.onNodeWithText("Paint").assertIsDisplayed()
+        assertEquals(project,runBlocking {projects.get(project.id)})
+        compose.runOnIdle {assertTrue(actions.value!!.invoke("page.studio.ai"))}
+        compose.onNodeWithText("Review image edit").assertIsDisplayed()
+        assertEquals(0,reviews)
+        assertEquals(project,runBlocking {projects.get(project.id)})
+        compose.onNodeWithText("Review image edit").performClick()
+        assertEquals(1,reviews)
+        assertEquals(project,runBlocking {projects.get(project.id)})
+    }
+    @Test fun studioArtboardTapAndDragCommitThroughCanonicalRevisionWithUndo() {
+        val context=ApplicationProvider.getApplicationContext<Application>()
+        val projects=StudioProjectRepository(fixture.database)
+        val assets=NotebookAssetRepository(context,fixture.database)
+        val service=StudioService(context,projects,fixture.files,fixture.workspace,StudioRenderer(context,fixture.files,fixture.workspace),assets,fixture.canvases,
+            fixture.database.workspaceContextDao(),StudioUiRequests(fixture.scope,{}))
+        val shape=StudioLayer(id="shape",name="Touch shape",kind=StudioLayerKind.RECTANGLE,bounds=StudioRect(100,100,600,600))
+        val project=runBlocking {projects.create("Touch revision",StudioDocument(layers=listOf(shape)))}
+        lateinit var model:StudioViewModel
+        compose.runOnUiThread {model=StudioViewModel(service,fixture.files,WorkspaceImageService(router,IntentQualificationFixture.MemoryStorage()),assets,project.id);own(model)}
+        render("studio?projectId={projectId}") {StudioScreen(model,{},{},{},{},{})}
+        await {model.state.value.project!=null&&!model.state.value.loading}
+        compose.waitUntil(10_000) {compose.onAllNodesWithTag("studio-artboard").fetchSemanticsNodes().firstOrNull()?.config?.get(androidx.compose.ui.semantics.SemanticsProperties.StateDescription)=="Ready"}
+        compose.onNodeWithTag("studio-artboard").performTouchInput {click(center)}
+        await {model.state.value.project?.session?.current?.selectedLayerId==shape.id&&!model.state.value.busy}
+        compose.onNodeWithTag("studio-artboard").performTouchInput {swipe(center,center+androidx.compose.ui.geometry.Offset(50f,0f))}
+        await {model.state.value.project?.session?.current?.layers?.first()?.bounds?.x!=100&&!model.state.value.busy}
+        val edited=runBlocking {projects.get(project.id)!!}
+        assertTrue(edited.session.current.layers.single().bounds.x>100)
+        val restored=runBlocking {projects.undo(edited.id,edited.revision)}
+        assertEquals(shape.bounds,restored.session.current.layers.single().bounds)
+    }
     @Test fun studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val projects = StudioProjectRepository(fixture.database)
@@ -171,7 +218,7 @@ class Zone5CreativeActionsTest {
         }
         compose.onRoot().captureRoboImage()
         compose.runOnIdle {
-            assertEquals(listOf("page.studio.add-layer", "page.studio.layers", "page.studio.export"), actions.value!!.actions.take(3).map { it.id })
+            assertEquals(listOf("page.studio.add-layer", "page.studio.layers", "page.studio.tools"), actions.value!!.actions.take(3).map { it.id })
             assertTrue(actions.value!!.invoke("page.studio.add-layer"))
         }
         compose.onNodeWithText("Choose a layer type").assertIsDisplayed()

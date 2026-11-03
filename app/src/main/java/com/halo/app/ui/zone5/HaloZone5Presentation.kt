@@ -61,6 +61,8 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
     "page.office.graphics" -> "tool_studio"
     "page.studio.add-layer" -> "studio_layer_add"
     "page.studio.layers" -> "studio_layers"
+    "page.studio.tools" -> "studio_transform"
+    "page.studio.ai" -> "cognition_think"
     "page.studio.new" -> "studio_shapes"
     "page.studio.new-canvas" -> "type_canvas"
     "page.studio.save" -> "action_save"

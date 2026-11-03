@@ -1,6 +1,6 @@
 package com.halo.app.data.studio
 
-enum class StudioPreset { BLANK, SQUARE, POSTCARD, PORTRAIT }
+enum class StudioPreset { BLANK, SQUARE, POSTCARD, PORTRAIT, POSTER, LABEL, SLIDE, MOODBOARD }
 
 /** Small local templates, made from the same editable layers rather than pre-rendered assets. */
 object StudioTemplates {
@@ -10,6 +10,10 @@ object StudioTemplates {
         val (width, height) = when (preset) {
             StudioPreset.POSTCARD -> 1536 to 1024
             StudioPreset.PORTRAIT -> 1080 to 1920
+            StudioPreset.POSTER -> 1440 to 2048
+            StudioPreset.LABEL -> 1200 to 600
+            StudioPreset.SLIDE -> 1920 to 1080
+            StudioPreset.MOODBOARD -> 1600 to 1200
             else -> 1024 to 1024
         }
         return StudioDocument(width, height, background = 0xffffffff.toInt(), layers = listOf(

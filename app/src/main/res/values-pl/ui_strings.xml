@@ -4922,4 +4922,132 @@
     <string name="ui_a37bed66cd27" formatted="false">"Sprawdzono poprzednie wykonanie"</string>
     <string name="ui_34099e54cc54" formatted="false">"Przed kontynuacją sprawdź poprzednie wykonanie i potwierdź zapoznanie się z jego niepewnymi skutkami."</string>
     <string name="ui_5e2a35a482a0" formatted="false">"Ten plan cykliczny nie ma aktywnego harmonogramu. Włącz przejrzany harmonogram lub jawnie uruchom następną kontrolę."</string>
+    <string name="ui_0a7d58a7a31e" formatted="false">"Zmiana pędzla rozpoczyna nową warstwę, zachowując wcześniejsze ślady."</string>
+    <string name="ui_11fb682be0a0" formatted="false">"AI"</string>
+    <string name="ui_f5511c810f23" formatted="false">"Pomoc twórcza AI"</string>
+    <string name="ui_1c8b1583e1fb" formatted="false">"Dodaj warstwę, aby zacząć tworzyć."</string>
+    <string name="ui_8fce42d6d0aa" formatted="false">"Dodaj efekt"</string>
+    <string name="ui_3fc8b134170d" formatted="false">"Dodaj warstwę"</string>
+    <string name="ui_4d069cd9e788" formatted="false">"Dodaj warstwę jednolitego wypełnienia"</string>
+    <string name="ui_7ba097da6312" formatted="false">"Wyrównaj do dołu"</string>
+    <string name="ui_e55c76591fa2" formatted="false">"Wyśrodkuj poziomo"</string>
+    <string name="ui_2f68a2058826" formatted="false">"Wyrównaj do początku wiersza"</string>
+    <string name="ui_e5a1cc1cc141" formatted="false">"Wyrównaj do końca wiersza"</string>
+    <string name="ui_eac0f9c3da59" formatted="false">"Wyrównaj do lewej"</string>
+    <string name="ui_2cce0b3a9122" formatted="false">"Wyśrodkuj pionowo"</string>
+    <string name="ui_8f4f8efcbee1" formatted="false">"Wyrównaj do prawej"</string>
+    <string name="ui_4868688f4c68" formatted="false">"Wyrównaj do góry"</string>
+    <string name="ui_49e96d7cdf58" formatted="false">"Siła"</string>
+    <string name="ui_6536eef7c8e9" formatted="false">"Obszar roboczy"</string>
+    <string name="ui_e7aebe3f338f" formatted="false">"Kadrowanie i przekształcanie obszaru"</string>
+    <string name="ui_fe689170440f" formatted="false">"Poświata jasnych obszarów"</string>
+    <string name="ui_cd83e6731d2b" formatted="false">"Rozmycie"</string>
+    <string name="ui_ec811d30a89c" formatted="false">"Jasność"</string>
+    <string name="ui_520cdb7e4609" formatted="false">"Przenieś na wierzch"</string>
+    <string name="ui_8624ca0fcb3c" formatted="false">"Pędzel"</string>
+    <string name="ui_404ef4ac60fe" formatted="false">"Krycie pędzla"</string>
+    <string name="ui_8154dc2d5258" formatted="false">"Ustawienia pędzli"</string>
+    <string name="ui_da6f847e1715" formatted="false">"Rozmiar pędzla"</string>
+    <string name="ui_87d296ec9489" formatted="false">"Podpis"</string>
+    <string name="ui_d946067427e9" formatted="false">"Wyśrodkowanie"</string>
+    <string name="ui_dff818031dae" formatted="false">"Kolor · #AARRGGBB"</string>
+    <string name="ui_fbb34a2104d8" formatted="false">"Beton"</string>
+    <string name="ui_08795ba031bc" formatted="false">"Kontrast"</string>
+    <string name="ui_508ed9b9b866" formatted="false">"Kadruj obraz"</string>
+    <string name="ui_d540e5346b75" formatted="false">"Przyciemnianie"</string>
+    <string name="ui_0072e6b93494" formatted="false">"Projektowanie"</string>
+    <string name="ui_7d50757f95ba" formatted="false">"Odrzuć niezapisane ślady"</string>
+    <string name="ui_d9d22a2e50ba" formatted="false">"Rozmieść poziomo"</string>
+    <string name="ui_612b67cee50a" formatted="false">"Rozmieść pionowo"</string>
+    <string name="ui_b86d11af7918" formatted="false">"W dół"</string>
+    <string name="ui_b8c226f25a11" formatted="false">"Przeciągnij, aby przesunąć. Narożnik zmienia rozmiar, górny uchwyt obraca, a dwa palce przesuwają widok."</string>
+    <string name="ui_e8b0b8daf176" formatted="false">"Cień zewnętrzny"</string>
+    <string name="ui_27e78e7e8cca" formatted="false">"Duotonia"</string>
+    <string name="ui_75372bcd9ea0" formatted="false">"Kurz"</string>
+    <string name="ui_658b158af9bd" formatted="false">"Krawędzie"</string>
+    <string name="ui_8c4e5e737fae" formatted="false">"Edytuj warstwę"</string>
+    <string name="ui_5ad6a405f686" formatted="false">"Redakcyjny"</string>
+    <string name="ui_358511c8c098" formatted="false">"Efekty"</string>
+    <string name="ui_70ec71745866" formatted="false">"Efekty / maska"</string>
+    <string name="ui_b3c1a9a8b278" formatted="false">"Efekty i oświetlenie"</string>
+    <string name="ui_95b9aa619ee2" formatted="false">"Wytłoczenie"</string>
+    <string name="ui_f4db1e48476f" formatted="false">"Koniec"</string>
+    <string name="ui_686eee3c6cd5" formatted="false">"Gumka"</string>
+    <string name="ui_cc5454a4b7ce" formatted="false">"Ekspozycja"</string>
+    <string name="ui_d06fab1c42a4" formatted="false">"Próbnik koloru"</string>
+    <string name="ui_de7b2b8384b8" formatted="false">"Tkanina"</string>
+    <string name="ui_3dea292f300e" formatted="false">"Ziarno filmu"</string>
+    <string name="ui_9f06d4dcf2f2" formatted="false">"Zakończ malowanie"</string>
+    <string name="ui_db9a78f719af" formatted="false">"Dopasuj obszar roboczy"</string>
+    <string name="ui_38e9b86f2bcd" formatted="false">"Rozbłysk"</string>
+    <string name="ui_f534ed976dc8" formatted="false">"Poświata"</string>
+    <string name="ui_ccf7e858a4ba" formatted="false">"Światło gradientowe"</string>
+    <string name="ui_540faafbd767" formatted="false">"Ziarno"</string>
+    <string name="ui_93638ea9e0b0" formatted="false">"Skala szarości"</string>
+    <string name="ui_762ebb70ef0e" formatted="false">"Nazwa grupy"</string>
+    <string name="ui_3f5c98191fe1" formatted="false">"Grupuj wybrane warstwy"</string>
+    <string name="ui_577ad4d66a5a" formatted="false">"Zamglenie"</string>
+    <string name="ui_6e517828c3d8" formatted="false">"Światła"</string>
+    <string name="ui_c2e94710b98c" formatted="false">"Cień wewnętrzny"</string>
+    <string name="ui_0e66373f45dc" formatted="false">"Etykieta"</string>
+    <string name="ui_0bcd66e677f4" formatted="false">"Warstwy"</string>
+    <string name="ui_1516f64fed58" formatted="false">"Warstwy i wyrównanie"</string>
+    <string name="ui_4b2eb7f7cd01" formatted="false">"Odstęp między literami"</string>
+    <string name="ui_df175633e5b9" formatted="false">"Prześwietlenie światłem"</string>
+    <string name="ui_c1d5c40b2fef" formatted="false">"Rozjaśnianie"</string>
+    <string name="ui_d7852cd0d245" formatted="false">"Linia"</string>
+    <string name="ui_0db45da1214b" formatted="false">"Interlinia"</string>
+    <string name="ui_e83c082be7dd" formatted="false">"Materiały generowane lokalnie. Pobieranie nie jest potrzebne."</string>
+    <string name="ui_13ce08699c85" formatted="false">"Marker"</string>
+    <string name="ui_64c223c2036f" formatted="false">"Monospace"</string>
+    <string name="ui_7e817044b6c0" formatted="false">"Tablica inspiracji"</string>
+    <string name="ui_13e39d914bc0" formatted="false">"Przesuwaj małymi krokami"</string>
+    <string name="ui_33bcea638489" formatted="false">"Mnożenie"</string>
+    <string name="ui_9ada8e83c118" formatted="false">"Szum"</string>
+    <string name="ui_dd546bc86223" formatted="false">"Dostępne są tylko skonfigurowane modele edycji obrazów. Specjalistyczne maski, usuwanie obiektów i zmiana oświetlenia zależą od możliwości dostawcy."</string>
+    <string name="ui_9cf172ca3fce" formatted="false">"Oryginalne warstwy pozostają edytowalne. Efekt można w każdej chwili wyłączyć lub usunąć."</string>
+    <string name="ui_2af93aeb435d" formatted="false">"Nakładka"</string>
+    <string name="ui_50d0cceb2f7a" formatted="false">"Malowanie"</string>
+    <string name="ui_ddba7813d5ee" formatted="false">"Nie udało się zachować śladów. Przed kontynuowaniem zapisz kopię odzyskiwania."</string>
+    <string name="ui_bfd8c97cea8f" formatted="false">"Maluj w obszarze roboczym"</string>
+    <string name="ui_fd92d952db92" formatted="false">"Przesuwanie widoku"</string>
+    <string name="ui_35045eff549e" formatted="false">"Papier"</string>
+    <string name="ui_a04bd35be167" formatted="false">"Pióro"</string>
+    <string name="ui_be3435a5af5f" formatted="false">"Ołówek"</string>
+    <string name="ui_f4982f86e732" formatted="false">"Pikselizacja"</string>
+    <string name="ui_1ba76ea7e3d9" formatted="false">"Plakat"</string>
+    <string name="ui_6d75dd5c4cf9" formatted="false">"Posteryzacja"</string>
+    <string name="ui_974d0aa17323" formatted="false">"Podgląd jest niedostępny. Projekt został zachowany."</string>
+    <string name="ui_6fe0661c82d1" formatted="false">"Promień"</string>
+    <string name="ui_7893261c8af3" formatted="false">"Odzyskaj szkic malarski"</string>
+    <string name="ui_7538c2135b03" formatted="false">"Odbicie"</string>
+    <string name="ui_feed1b73b065" formatted="false">"Sprawdź edycję obrazu przy użyciu skonfigurowanego modelu. Przyjęcie propozycji dodaje warstwę obrazu w osobnej, edytowalnej kopii projektu."</string>
+    <string name="ui_65df03312ccb" formatted="false">"Sprawdź edycję obrazu"</string>
+    <string name="ui_a639fd28b58d" formatted="false">"Obróć o 15°"</string>
+    <string name="ui_b3c18129f841" formatted="false">"Bezszeryfowy"</string>
+    <string name="ui_993f024b650e" formatted="false">"Nasycenie"</string>
+    <string name="ui_5b9ad6777f98" formatted="false">"Zapisz kopię odzyskiwania"</string>
+    <string name="ui_195efbad3844" formatted="false">"Rysy"</string>
+    <string name="ui_e3237ef55d1f" formatted="false">"Wybierz warstwę w obszarze roboczym lub na liście warstw."</string>
+    <string name="ui_6fb1ec9a7997" formatted="false">"Wybierz warstwę do edycji albo zaznacz warstwy tego samego poziomu, aby je grupować i wyrównywać."</string>
+    <string name="ui_ca4067071fcf" formatted="false">"Zaznaczenie"</string>
+    <string name="ui_e3daa79eaf69" formatted="false">"Przenieś na spód"</string>
+    <string name="ui_1b5e747e5031" formatted="false">"Szeryfowy"</string>
+    <string name="ui_2a19bdc09aa3" formatted="false">"Cienie"</string>
+    <string name="ui_ac6f0be1274c" formatted="false">"Wyostrzenie"</string>
+    <string name="ui_6bb4c1177681" formatted="false">"Slajd"</string>
+    <string name="ui_f5f75c9b97d0" formatted="false">"Pędzel półprzezroczysty"</string>
+    <string name="ui_0b099867389c" formatted="false">"Jednolite wypełnienie"</string>
+    <string name="ui_e28411a3404d" formatted="false">"Tekstura"</string>
+    <string name="ui_298837b8bdcb" formatted="false">"Ostatnie ślady nadal są przechowywane w pamięci. Zapisz je jako osobny projekt albo świadomie odrzuć niezapisane ślady."</string>
+    <string name="ui_740e4843c07e" formatted="false">"Projekt osiągnął limit warstw. Usuń warstwę przed zachowaniem propozycji AI."</string>
+    <string name="ui_6a822da0d9db" formatted="false">"Odcień"</string>
+    <string name="ui_6bb5969ca349" formatted="false">"Przed edycją odblokuj warstwę lub jej grupę."</string>
+    <string name="ui_55490a4bf3a8" formatted="false">"W górę"</string>
+    <string name="ui_f841c2080740" formatted="false">"Winieta"</string>
+    <string name="ui_d0b50e064a4f" formatted="false">"Ramka"</string>
+    <string name="ui_c6c0a7fe81c8" formatted="false">"Wypełnij spójny obszar"</string>
+    <string name="ui_d638785dd42e" formatted="false">"Przed wypełnieniem wybierz widoczny kolor."</string>
+    <string name="ui_8dadf856e07b" formatted="false">"Dotknij obszaru do wypełnienia. Oryginalne warstwy pozostaną edytowalne."</string>
+    <string name="ui_fb73bdbd1540" formatted="false">"Dotknij obszaru roboczego, aby pobrać kolor."</string>
 </resources>

@@ -6,7 +6,7 @@ import java.util.UUID
 
 /** Source pixels remain in Workspace. A layer pins the exact version it was edited against. */
 data class StudioSource(val objectId: String, val version: String)
-enum class StudioLayerKind { IMAGE, INK, TEXT, RECTANGLE, ELLIPSE }
+enum class StudioLayerKind { IMAGE, INK, TEXT, RECTANGLE, ELLIPSE, LINE, GROUP, TEXTURE }
 data class StudioRect(val x: Int = 0, val y: Int = 0, val width: Int = 1000, val height: Int = 1000) {
     fun requireValid() {
         require(x in -1000..2000 && y in -1000..2000 && width in 1..3000 && height in 1..3000)
@@ -32,6 +32,14 @@ data class StudioLayer(
     val brightness: Int = 0,
     val contrast: Int = 1000,
     val saturation: Int = 1000,
+    val parentId: String? = null,
+    val blend: StudioBlend = StudioBlend.NORMAL,
+    val typography: StudioTypography = StudioTypography(),
+    val imageCrop: StudioRect? = null,
+    val effects: List<StudioEffect> = emptyList(),
+    val texture: StudioTexture? = null,
+    val textureSeed: Int = 1,
+    val strokeOnly: Boolean = false,
 ) {
     fun requireValid() {
         require(id.matches(Regex("[A-Za-z0-9_-]{1,100}")))
@@ -45,6 +53,15 @@ data class StudioLayer(
         } else require(source == null)
         if (kind == StudioLayerKind.INK) require(InkCodec.decode(ink) != null) else require(ink.isEmpty())
         if (kind != StudioLayerKind.TEXT) require(text.isEmpty())
+        require(parentId == null || parentId != id && parentId.matches(Regex("[A-Za-z0-9_-]{1,100}")))
+        typography.requireValid()
+        require(kind == StudioLayerKind.TEXT || typography == StudioTypography())
+        require((kind == StudioLayerKind.TEXTURE) == (texture != null))
+        require(kind == StudioLayerKind.IMAGE || imageCrop == null)
+        imageCrop?.let { it.requireValid(); require(it.x >= 0 && it.y >= 0 && it.x + it.width <= 1000 && it.y + it.height <= 1000) }
+        require(effects.size <= 8 && effects.map { it.id }.distinct().size == effects.size)
+        effects.forEach(StudioEffect::requireValid)
+        require(!strokeOnly || kind in setOf(StudioLayerKind.RECTANGLE,StudioLayerKind.ELLIPSE))
     }
 }
 
@@ -61,6 +78,7 @@ data class StudioDocument(
         require(layers.size <= MAX_LAYERS && layers.map { it.id }.distinct().size == layers.size)
         require(selectedLayerId == null || layers.any { it.id == selectedLayerId })
         layers.forEach(StudioLayer::requireValid)
+        layers.forEach { ancestors(it) }
         val points = layers.filter { it.kind == StudioLayerKind.INK }.sumOf { layer ->
             requireNotNull(InkCodec.decode(layer.ink)).strokes.sumOf { it.points.size }
         }
@@ -85,11 +103,15 @@ sealed interface StudioCommand {
     data class Transform(val recipe: CanvasImageRecipe) : StudioCommand
     data class Resize(val width: Int, val height: Int) : StudioCommand
     data class Background(val color: Int) : StudioCommand
+    data class Duplicate(val layerId: String) : StudioCommand
+    data class Group(val layerIds: List<String>, val name: String, val groupId: String = UUID.randomUUID().toString()) : StudioCommand
+    data class Ungroup(val layerId: String) : StudioCommand
+    data class Layout(val layerIds: List<String>, val operation: StudioLayout) : StudioCommand
 }
 
 fun StudioDocument.apply(command: StudioCommand): StudioDocument {
     requireValid()
-    fun editable(id: String): StudioLayer = requireNotNull(layers.find { it.id == id }).also { require(!it.locked) }
+    fun editable(id: String): StudioLayer = requireNotNull(layers.find { it.id == id }).also { require(isEditable(it)) }
     val result = when (command) {
         is StudioCommand.Batch -> {
             require(command.commands.size in 1..64 && command.commands.none { it is StudioCommand.Batch })
@@ -97,21 +119,28 @@ fun StudioDocument.apply(command: StudioCommand): StudioDocument {
         }
         is StudioCommand.Add -> {
             require(layers.none { it.id == command.layer.id })
+            command.layer.parentId?.let { editable(it) }
             copy(layers = layers + command.layer, selectedLayerId = command.layer.id)
         }
         is StudioCommand.Replace -> {
             val existing = requireNotNull(layers.find { it.id == command.layer.id })
             // Unlocking is permitted; locked layers cannot otherwise be edited through another surface.
             require(!existing.locked || command.layer == existing.copy(locked = false))
-            copy(layers = layers.map { if (it.id == command.layer.id) command.layer else it })
+            require(ancestors(existing).none { it.locked })
+            require(existing.parentId == command.layer.parentId) { "Use group/ungroup to change hierarchy" }
+            if (existing.kind == StudioLayerKind.GROUP && existing.bounds != command.layer.bounds || existing.rotation != command.layer.rotation)
+                require(descendants(existing.id).all { isEditable(it) })
+            copy(layers = transformChildren(existing, command.layer).map { if (it.id == command.layer.id) command.layer else it })
         }
         is StudioCommand.Remove -> {
             editable(command.layerId)
-            val remaining = layers.filterNot { it.id == command.layerId }
-            copy(layers = remaining, selectedLayerId = selectedLayerId.takeUnless { it == command.layerId })
+            val ids = (descendants(command.layerId) + layers.single { it.id == command.layerId }).map { editable(it.id).id }.toSet()
+            val remaining = layers.filterNot { it.id in ids }
+            copy(layers = remaining, selectedLayerId = selectedLayerId.takeUnless { it in ids })
         }
         is StudioCommand.Move -> {
             val layer = editable(command.layerId)
+            require(descendants(layer.id).all {isEditable(it)})
             require(command.index in layers.indices)
             copy(layers = layers.toMutableList().apply { remove(layer); add(command.index, layer) })
         }
@@ -119,6 +148,10 @@ fun StudioDocument.apply(command: StudioCommand): StudioDocument {
         is StudioCommand.Transform -> copy(recipe = command.recipe)
         is StudioCommand.Resize -> copy(width = command.width, height = command.height)
         is StudioCommand.Background -> copy(background = command.color)
+        is StudioCommand.Duplicate -> duplicateLayer(command.layerId)
+        is StudioCommand.Group -> groupLayers(command)
+        is StudioCommand.Ungroup -> ungroupLayer(command.layerId)
+        is StudioCommand.Layout -> layoutLayers(command)
     }
     return result.also(StudioDocument::requireValid)
 }

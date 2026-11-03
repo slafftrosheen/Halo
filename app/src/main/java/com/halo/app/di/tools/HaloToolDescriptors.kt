@@ -368,6 +368,7 @@ object HaloToolDescriptors {
             presentation = ToolPresentation(title = "Continue with this item", actionVerb = "Continue"))
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("studio", "image", "drawing", "layers", "project"),
+            execution = ToolExecutionPolicy(maxOutputChars=24000),
             presentation = ToolPresentation(title = "Studio", actionVerb = "Open"))
         "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),

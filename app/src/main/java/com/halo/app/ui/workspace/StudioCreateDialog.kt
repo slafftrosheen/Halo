@@ -29,9 +29,10 @@ internal fun StudioCreateDialog(service: StudioService, initial: String,
             Text(stringResource(R.string.studio_presets), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StudioPreset.entries.forEach { choice ->
-                    val label = when (choice) { StudioPreset.BLANK -> R.string.studio_blank; StudioPreset.SQUARE -> R.string.studio_square
-                        StudioPreset.POSTCARD -> R.string.studio_postcard; StudioPreset.PORTRAIT -> R.string.studio_portrait }
-                    FilterChip(choice == preset, { preset = choice }, label = { Text(stringResource(label)) })
+                    val label = when (choice) { StudioPreset.BLANK -> stringResource(R.string.studio_blank); StudioPreset.SQUARE -> stringResource(R.string.studio_square)
+                        StudioPreset.POSTCARD -> stringResource(R.string.studio_postcard); StudioPreset.PORTRAIT -> stringResource(R.string.studio_portrait)
+                        else->com.halo.app.language.uiText(choice.name.lowercase().replaceFirstChar {it.uppercase()}) }
+                    FilterChip(choice == preset, { preset = choice }, label = { Text(label) })
                 }
             }
             if (title.isNotBlank()) StudioDocumentPreview(service, remember(preset, title) { StudioTemplates.document(preset, title) },

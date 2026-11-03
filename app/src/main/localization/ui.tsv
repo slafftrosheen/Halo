@@ -4928,3 +4928,131 @@ Open previous execution record|||Открыть запись предыдуще�
 I reviewed the previous execution|||Я проверил предыдущее выполнение|||Esmu pārskatījis iepriekšējo izpildi|||Sprawdzono poprzednie wykonanie
 Inspect the previous execution and acknowledge its uncertain effects before continuing.|||Перед продолжением проверьте предыдущее выполнение и подтвердите, что вы ознакомились с его неопределёнными результатами.|||Pirms turpināšanas pārbaudi iepriekšējo izpildi un apstiprini, ka esi pārskatījis tās nenoteiktos rezultātus.|||Przed kontynuacją sprawdź poprzednie wykonanie i potwierdź zapoznanie się z jego niepewnymi skutkami.
 This recurring plan has no active schedule. Enable its reviewed schedule or run the next check explicitly.|||У этого повторяющегося плана нет активного расписания. Включите проверенное расписание или запустите следующую проверку вручную.|||Šim atkārtotajam plānam nav aktīva grafika. Iespējo pārskatīto grafiku vai palaid nākamo pārbaudi manuāli.|||Ten plan cykliczny nie ma aktywnego harmonogramu. Włącz przejrzany harmonogram lub jawnie uruchom następną kontrolę.
+A changed brush starts a new paint layer, keeping earlier marks unchanged.|||Изменённая кисть начинает новый слой; прежние штрихи сохраняются.|||Mainot otu, tiek sākts jauns krāsojuma slānis; iepriekšējie triepieni paliek nemainīti.|||Zmiana pędzla rozpoczyna nową warstwę, zachowując wcześniejsze ślady.
+AI|||ИИ|||MI|||AI
+AI creative assistance|||Творческая помощь ИИ|||MI radošā palīdzība|||Pomoc twórcza AI
+Add a layer to start creating.|||Добавьте слой, чтобы начать.|||Pievienojiet slāni, lai sāktu veidot.|||Dodaj warstwę, aby zacząć tworzyć.
+Add effect|||Добавить эффект|||Pievienot efektu|||Dodaj efekt
+Add layer|||Добавить слой|||Pievienot slāni|||Dodaj warstwę
+Add solid fill layer|||Добавить слой сплошной заливки|||Pievienot vienkrāsainu aizpildījuma slāni|||Dodaj warstwę jednolitego wypełnienia
+Align bottom|||По нижнему краю|||Līdzināt apakšmalas|||Wyrównaj do dołu
+Align center|||По центру по горизонтали|||Centrēt horizontāli|||Wyśrodkuj poziomo
+Align start|||По началу строки|||Līdzināt pie rindas sākuma|||Wyrównaj do początku wiersza
+Align end|||По концу строки|||Līdzināt pie rindas beigām|||Wyrównaj do końca wiersza
+Align left|||По левому краю|||Līdzināt kreisās malas|||Wyrównaj do lewej
+Align middle|||По центру по вертикали|||Centrēt vertikāli|||Wyśrodkuj pionowo
+Align right|||По правому краю|||Līdzināt labās malas|||Wyrównaj do prawej
+Align top|||По верхнему краю|||Līdzināt augšmalas|||Wyrównaj do góry
+Amount|||Сила|||Stiprums|||Siła
+Artboard|||Монтажная область|||Zīmēšanas laukums|||Obszar roboczy
+Artboard crop and transform|||Обрезка и преобразование области|||Laukuma apgriešana un pārveidošana|||Kadrowanie i przekształcanie obszaru
+Bloom|||Свечение ярких участков|||Gaišo daļu mirdzums|||Poświata jasnych obszarów
+Blur|||Размытие|||Izpludinājums|||Rozmycie
+Brightness|||Яркость|||Spilgtums|||Jasność
+Bring to front|||На передний план|||Pārvietot priekšplānā|||Przenieś na wierzch
+Brush|||Кисть|||Ota|||Pędzel
+Brush opacity|||Непрозрачность кисти|||Otas necaurspīdīgums|||Krycie pędzla
+Brush presets|||Наборы кистей|||Otu sākumiestatījumi|||Ustawienia pędzli
+Brush size|||Размер кисти|||Otas lielums|||Rozmiar pędzla
+Caption|||Подпись|||Paraksts|||Podpis
+Center|||По центру|||Centrā|||Wyśrodkowanie
+Colour · #AARRGGBB|||Цвет · #AARRGGBB|||Krāsa · #AARRGGBB|||Kolor · #AARRGGBB
+Concrete|||Бетон|||Betons|||Beton
+Contrast|||Контраст|||Kontrasts|||Kontrast
+Crop image|||Обрезать изображение|||Apgriezt attēlu|||Kadruj obraz
+Darken|||Затемнение|||Tumšināšana|||Przyciemnianie
+Design|||Дизайн|||Dizains|||Projektowanie
+Discard unkept marks|||Удалить несохранённые штрихи|||Atmest nesaglabātos triepienus|||Odrzuć niezapisane ślady
+Distribute horizontal|||Распределить по горизонтали|||Vienmērīgi izkārtot horizontāli|||Rozmieść poziomo
+Distribute vertical|||Распределить по вертикали|||Vienmērīgi izkārtot vertikāli|||Rozmieść pionowo
+Down|||Вниз|||Uz leju|||W dół
+Drag to move. Use the corner to resize, the top handle to rotate, or two fingers to move the view.|||Перетаскивайте для перемещения. Угол меняет размер, верхний маркер поворачивает, два пальца перемещают вид.|||Velciet, lai pārvietotu. Stūris maina izmēru, augšējais rokturis pagriež, divi pirksti pārvieto skatu.|||Przeciągnij, aby przesunąć. Narożnik zmienia rozmiar, górny uchwyt obraca, a dwa palce przesuwają widok.
+Drop shadow|||Падающая тень|||Krītoša ēna|||Cień zewnętrzny
+Duotone|||Дуотон|||Divtoņu efekts|||Duotonia
+Dust|||Пыль|||Putekļi|||Kurz
+Edges|||Контуры|||Kontūras|||Krawędzie
+Edit layer|||Редактировать слой|||Rediģēt slāni|||Edytuj warstwę
+Editorial|||Редакционный|||Redakcionāls|||Redakcyjny
+Effects|||Эффекты|||Efekti|||Efekty
+Effects / mask|||Эффекты / маска|||Efekti / maska|||Efekty / maska
+Effects and lighting|||Эффекты и освещение|||Efekti un apgaismojums|||Efekty i oświetlenie
+Emboss|||Рельеф|||Reljefs|||Wytłoczenie
+End|||Конец|||Beigas|||Koniec
+Eraser|||Ластик|||Dzēšgumija|||Gumka
+Exposure|||Экспозиция|||Ekspozīcija|||Ekspozycja
+Eyedropper|||Пипетка|||Pipete|||Próbnik koloru
+Fabric|||Ткань|||Audums|||Tkanina
+Film grain|||Плёночное зерно|||Filmas graudainība|||Ziarno filmu
+Finish painting|||Закончить рисование|||Pabeigt gleznošanu|||Zakończ malowanie
+Fit artboard|||Вписать область|||Ietilpināt laukumu|||Dopasuj obszar roboczy
+Flare|||Световой блик|||Gaismas atspīdums|||Rozbłysk
+Glow|||Свечение|||Mirdzums|||Poświata
+Gradient light|||Градиентный свет|||Gradienta gaisma|||Światło gradientowe
+Grain|||Зерно|||Graudainība|||Ziarno
+Grayscale|||Оттенки серого|||Pelēktoņi|||Skala szarości
+Group name|||Название группы|||Grupas nosaukums|||Nazwa grupy
+Group selected layers|||Сгруппировать выбранные слои|||Grupēt atlasītos slāņus|||Grupuj wybrane warstwy
+Haze|||Дымка|||Dūmaka|||Zamglenie
+Highlights|||Светлые участки|||Gaišās daļas|||Światła
+Inner shadow|||Внутренняя тень|||Iekšējā ēna|||Cień wewnętrzny
+Label|||Этикетка|||Etiķete|||Etykieta
+Layers|||Слои|||Slāņi|||Warstwy
+Layers and alignment|||Слои и выравнивание|||Slāņi un līdzināšana|||Warstwy i wyrównanie
+Letter spacing|||Межбуквенный интервал|||Burtu atstatums|||Odstęp między literami
+Light leak|||Засветка|||Gaismas noplūde|||Prześwietlenie światłem
+Lighten|||Осветление|||Gaišināšana|||Rozjaśnianie
+Line|||Линия|||Līnija|||Linia
+Line spacing|||Межстрочный интервал|||Rindu atstatums|||Interlinia
+Local procedural materials. No download needed.|||Локальные процедурные материалы. Загрузка не требуется.|||Lokāli ģenerēti materiāli. Lejupielāde nav vajadzīga.|||Materiały generowane lokalnie. Pobieranie nie jest potrzebne.
+Marker|||Маркер|||Marķieris|||Marker
+Monospace|||Моноширинный|||Vienplatuma|||Monospace
+Moodboard|||Доска настроения|||Noskaņu kolāža|||Tablica inspiracji
+Move in small steps|||Перемещать малыми шагами|||Pārvietot maziem soļiem|||Przesuwaj małymi krokami
+Multiply|||Умножение|||Reizināšana|||Mnożenie
+Noise|||Шум|||Troksnis|||Szum
+Only configured image-editing models are offered. Specialized masks, object removal and relighting are available only when the provider supports the requested edit.|||Доступны только настроенные модели редактирования изображений. Специальные маски, удаление объектов и изменение освещения зависят от возможностей провайдера.|||Tiek piedāvāti tikai konfigurēti attēlu rediģēšanas modeļi. Īpašas maskas, objektu noņemšana un apgaismojuma maiņa ir atkarīga no pakalpojuma iespējām.|||Dostępne są tylko skonfigurowane modele edycji obrazów. Specjalistyczne maski, usuwanie obiektów i zmiana oświetlenia zależą od możliwości dostawcy.
+Original layers stay editable. Toggle or remove an effect at any time.|||Исходные слои остаются редактируемыми. Эффект можно отключить или удалить в любой момент.|||Sākotnējie slāņi paliek rediģējami. Efektu jebkurā laikā var izslēgt vai noņemt.|||Oryginalne warstwy pozostają edytowalne. Efekt można w każdej chwili wyłączyć lub usunąć.
+Overlay|||Перекрытие|||Pārklājums|||Nakładka
+Paint|||Рисование|||Gleznošana|||Malowanie
+Paint could not be kept. Save a recovery copy before continuing.|||Не удалось сохранить штрихи. Перед продолжением сохраните восстановительную копию.|||Triepienus neizdevās saglabāt. Pirms turpināšanas saglabājiet atkopšanas kopiju.|||Nie udało się zachować śladów. Przed kontynuowaniem zapisz kopię odzyskiwania.
+Paint on artboard|||Рисовать в рабочей области|||Gleznot darba laukumā|||Maluj w obszarze roboczym
+Pan|||Перемещение вида|||Skata pārvietošana|||Przesuwanie widoku
+Paper|||Бумага|||Papīrs|||Papier
+Pen|||Перо|||Pildspalva|||Pióro
+Pencil|||Карандаш|||Zīmulis|||Ołówek
+Pixelate|||Пикселизация|||Pikseļošana|||Pikselizacja
+Poster|||Плакат|||Plakāts|||Plakat
+Posterize|||Постеризация|||Toņu samazināšana|||Posteryzacja
+Preview unavailable. Your project is kept.|||Предпросмотр недоступен. Проект сохранён.|||Priekšskatījums nav pieejams. Projekts ir saglabāts.|||Podgląd jest niedostępny. Projekt został zachowany.
+Radius|||Радиус|||Rādiuss|||Promień
+Recover paint draft|||Восстановить черновик рисунка|||Atkopt gleznojuma melnrakstu|||Odzyskaj szkic malarski
+Reflection|||Отражение|||Atspulgs|||Odbicie
+Review an image edit with a configured model. Keeping the proposal adds an image layer in a separate editable project copy.|||Проверьте правку изображения с настроенной моделью. Принятый результат добавится слоем в отдельную редактируемую копию проекта.|||Pārskatiet attēla labojumu ar konfigurētu modeli. Pieņemot priekšlikumu, attēla slānis tiek pievienots atsevišķai rediģējamai projekta kopijai.|||Sprawdź edycję obrazu przy użyciu skonfigurowanego modelu. Przyjęcie propozycji dodaje warstwę obrazu w osobnej, edytowalnej kopii projektu.
+Review image edit|||Проверить правку изображения|||Pārskatīt attēla labojumu|||Sprawdź edycję obrazu
+Rotate 15°|||Повернуть на 15°|||Pagriezt par 15°|||Obróć o 15°
+Sans|||Без засечек|||Bezserifa|||Bezszeryfowy
+Saturation|||Насыщенность|||Piesātinājums|||Nasycenie
+Save recovery copy|||Сохранить восстановительную копию|||Saglabāt atkopšanas kopiju|||Zapisz kopię odzyskiwania
+Scratches|||Царапины|||Skrāpējumi|||Rysy
+Select a layer on the artboard or in Layers.|||Выберите слой на рисунке или в списке слоёв.|||Atlasiet slāni darba laukumā vai slāņu sarakstā.|||Wybierz warstwę w obszarze roboczym lub na liście warstw.
+Select one layer to edit, or mark siblings to group and align.|||Выберите слой для правки или отметьте слои одного уровня для группировки и выравнивания.|||Atlasiet vienu slāni rediģēšanai vai atzīmējiet viena līmeņa slāņus grupēšanai un līdzināšanai.|||Wybierz warstwę do edycji albo zaznacz warstwy tego samego poziomu, aby je grupować i wyrównywać.
+Selection|||Выделение|||Atlase|||Zaznaczenie
+Send to back|||На задний план|||Pārvietot aizmugurē|||Przenieś na spód
+Serif|||С засечками|||Serifa|||Szeryfowy
+Shadows|||Тёмные участки|||Tumšās daļas|||Cienie
+Sharpen|||Резкость|||Asināšana|||Wyostrzenie
+Slide|||Слайд|||Slaids|||Slajd
+Wash|||Полупрозрачная кисть|||Puscaurspīdīga ota|||Pędzel półprzezroczysty
+Solid fill|||Сплошная заливка|||Vienkrāsains aizpildījums|||Jednolite wypełnienie
+Texture|||Текстура|||Tekstūra|||Tekstura
+The latest marks are still held here. Save them as a separate project or explicitly discard the unkept marks.|||Последние штрихи всё ещё сохранены здесь в памяти. Сохраните их отдельным проектом или явно удалите несохранённые штрихи.|||Jaunākie triepieni joprojām tiek glabāti atmiņā. Saglabājiet tos atsevišķā projektā vai skaidri atmetiet nesaglabātos triepienus.|||Ostatnie ślady nadal są przechowywane w pamięci. Zapisz je jako osobny projekt albo świadomie odrzuć niezapisane ślady.
+This project has reached its layer limit. Remove a layer before keeping an AI proposal.|||Достигнут лимит слоёв. Удалите слой перед сохранением предложения ИИ.|||Sasniegts projekta slāņu ierobežojums. Pirms MI priekšlikuma saglabāšanas noņemiet vienu slāni.|||Projekt osiągnął limit warstw. Usuń warstwę przed zachowaniem propozycji AI.
+Tint|||Оттенок|||Nokrāsa|||Odcień
+Unlock this layer or its group before editing.|||Перед правкой разблокируйте слой или его группу.|||Pirms rediģēšanas atbloķējiet šo slāni vai tā grupu.|||Przed edycją odblokuj warstwę lub jej grupę.
+Up|||Вверх|||Uz augšu|||W górę
+Vignette|||Виньетка|||Vinjete|||Winieta
+Frame|||Рамка|||Rāmis|||Ramka
+Fill connected area|||Залить связанную область|||Aizpildīt savienotu apgabalu|||Wypełnij spójny obszar
+Choose a visible colour before filling an area.|||Перед заливкой выберите непрозрачный цвет.|||Pirms aizpildīšanas izvēlieties redzamu krāsu.|||Przed wypełnieniem wybierz widoczny kolor.
+Tap an area to fill. The original layers stay editable.|||Коснитесь области для заливки. Исходные слои останутся редактируемыми.|||Pieskarieties apgabalam, lai to aizpildītu. Sākotnējie slāņi paliks rediģējami.|||Dotknij obszaru do wypełnienia. Oryginalne warstwy pozostaną edytowalne.
+Tap the artboard to pick a colour.|||Коснитесь рисунка, чтобы выбрать цвет.|||Pieskarieties darba laukumam, lai izvēlētos krāsu.|||Dotknij obszaru roboczego, aby pobrać kolor.

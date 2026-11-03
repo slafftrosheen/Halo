@@ -4922,4 +4922,132 @@
     <string name="ui_a37bed66cd27" formatted="false">"Я проверил предыдущее выполнение"</string>
     <string name="ui_34099e54cc54" formatted="false">"Перед продолжением проверьте предыдущее выполнение и подтвердите, что вы ознакомились с его неопределёнными результатами."</string>
     <string name="ui_5e2a35a482a0" formatted="false">"У этого повторяющегося плана нет активного расписания. Включите проверенное расписание или запустите следующую проверку вручную."</string>
+    <string name="ui_0a7d58a7a31e" formatted="false">"Изменённая кисть начинает новый слой; прежние штрихи сохраняются."</string>
+    <string name="ui_11fb682be0a0" formatted="false">"ИИ"</string>
+    <string name="ui_f5511c810f23" formatted="false">"Творческая помощь ИИ"</string>
+    <string name="ui_1c8b1583e1fb" formatted="false">"Добавьте слой, чтобы начать."</string>
+    <string name="ui_8fce42d6d0aa" formatted="false">"Добавить эффект"</string>
+    <string name="ui_3fc8b134170d" formatted="false">"Добавить слой"</string>
+    <string name="ui_4d069cd9e788" formatted="false">"Добавить слой сплошной заливки"</string>
+    <string name="ui_7ba097da6312" formatted="false">"По нижнему краю"</string>
+    <string name="ui_e55c76591fa2" formatted="false">"По центру по горизонтали"</string>
+    <string name="ui_2f68a2058826" formatted="false">"По началу строки"</string>
+    <string name="ui_e5a1cc1cc141" formatted="false">"По концу строки"</string>
+    <string name="ui_eac0f9c3da59" formatted="false">"По левому краю"</string>
+    <string name="ui_2cce0b3a9122" formatted="false">"По центру по вертикали"</string>
+    <string name="ui_8f4f8efcbee1" formatted="false">"По правому краю"</string>
+    <string name="ui_4868688f4c68" formatted="false">"По верхнему краю"</string>
+    <string name="ui_49e96d7cdf58" formatted="false">"Сила"</string>
+    <string name="ui_6536eef7c8e9" formatted="false">"Монтажная область"</string>
+    <string name="ui_e7aebe3f338f" formatted="false">"Обрезка и преобразование области"</string>
+    <string name="ui_fe689170440f" formatted="false">"Свечение ярких участков"</string>
+    <string name="ui_cd83e6731d2b" formatted="false">"Размытие"</string>
+    <string name="ui_ec811d30a89c" formatted="false">"Яркость"</string>
+    <string name="ui_520cdb7e4609" formatted="false">"На передний план"</string>
+    <string name="ui_8624ca0fcb3c" formatted="false">"Кисть"</string>
+    <string name="ui_404ef4ac60fe" formatted="false">"Непрозрачность кисти"</string>
+    <string name="ui_8154dc2d5258" formatted="false">"Наборы кистей"</string>
+    <string name="ui_da6f847e1715" formatted="false">"Размер кисти"</string>
+    <string name="ui_87d296ec9489" formatted="false">"Подпись"</string>
+    <string name="ui_d946067427e9" formatted="false">"По центру"</string>
+    <string name="ui_dff818031dae" formatted="false">"Цвет · #AARRGGBB"</string>
+    <string name="ui_fbb34a2104d8" formatted="false">"Бетон"</string>
+    <string name="ui_08795ba031bc" formatted="false">"Контраст"</string>
+    <string name="ui_508ed9b9b866" formatted="false">"Обрезать изображение"</string>
+    <string name="ui_d540e5346b75" formatted="false">"Затемнение"</string>
+    <string name="ui_0072e6b93494" formatted="false">"Дизайн"</string>
+    <string name="ui_7d50757f95ba" formatted="false">"Удалить несохранённые штрихи"</string>
+    <string name="ui_d9d22a2e50ba" formatted="false">"Распределить по горизонтали"</string>
+    <string name="ui_612b67cee50a" formatted="false">"Распределить по вертикали"</string>
+    <string name="ui_b86d11af7918" formatted="false">"Вниз"</string>
+    <string name="ui_b8c226f25a11" formatted="false">"Перетаскивайте для перемещения. Угол меняет размер, верхний маркер поворачивает, два пальца перемещают вид."</string>
+    <string name="ui_e8b0b8daf176" formatted="false">"Падающая тень"</string>
+    <string name="ui_27e78e7e8cca" formatted="false">"Дуотон"</string>
+    <string name="ui_75372bcd9ea0" formatted="false">"Пыль"</string>
+    <string name="ui_658b158af9bd" formatted="false">"Контуры"</string>
+    <string name="ui_8c4e5e737fae" formatted="false">"Редактировать слой"</string>
+    <string name="ui_5ad6a405f686" formatted="false">"Редакционный"</string>
+    <string name="ui_358511c8c098" formatted="false">"Эффекты"</string>
+    <string name="ui_70ec71745866" formatted="false">"Эффекты / маска"</string>
+    <string name="ui_b3c1a9a8b278" formatted="false">"Эффекты и освещение"</string>
+    <string name="ui_95b9aa619ee2" formatted="false">"Рельеф"</string>
+    <string name="ui_f4db1e48476f" formatted="false">"Конец"</string>
+    <string name="ui_686eee3c6cd5" formatted="false">"Ластик"</string>
+    <string name="ui_cc5454a4b7ce" formatted="false">"Экспозиция"</string>
+    <string name="ui_d06fab1c42a4" formatted="false">"Пипетка"</string>
+    <string name="ui_de7b2b8384b8" formatted="false">"Ткань"</string>
+    <string name="ui_3dea292f300e" formatted="false">"Плёночное зерно"</string>
+    <string name="ui_9f06d4dcf2f2" formatted="false">"Закончить рисование"</string>
+    <string name="ui_db9a78f719af" formatted="false">"Вписать область"</string>
+    <string name="ui_38e9b86f2bcd" formatted="false">"Световой блик"</string>
+    <string name="ui_f534ed976dc8" formatted="false">"Свечение"</string>
+    <string name="ui_ccf7e858a4ba" formatted="false">"Градиентный свет"</string>
+    <string name="ui_540faafbd767" formatted="false">"Зерно"</string>
+    <string name="ui_93638ea9e0b0" formatted="false">"Оттенки серого"</string>
+    <string name="ui_762ebb70ef0e" formatted="false">"Название группы"</string>
+    <string name="ui_3f5c98191fe1" formatted="false">"Сгруппировать выбранные слои"</string>
+    <string name="ui_577ad4d66a5a" formatted="false">"Дымка"</string>
+    <string name="ui_6e517828c3d8" formatted="false">"Светлые участки"</string>
+    <string name="ui_c2e94710b98c" formatted="false">"Внутренняя тень"</string>
+    <string name="ui_0e66373f45dc" formatted="false">"Этикетка"</string>
+    <string name="ui_0bcd66e677f4" formatted="false">"Слои"</string>
+    <string name="ui_1516f64fed58" formatted="false">"Слои и выравнивание"</string>
+    <string name="ui_4b2eb7f7cd01" formatted="false">"Межбуквенный интервал"</string>
+    <string name="ui_df175633e5b9" formatted="false">"Засветка"</string>
+    <string name="ui_c1d5c40b2fef" formatted="false">"Осветление"</string>
+    <string name="ui_d7852cd0d245" formatted="false">"Линия"</string>
+    <string name="ui_0db45da1214b" formatted="false">"Межстрочный интервал"</string>
+    <string name="ui_e83c082be7dd" formatted="false">"Локальные процедурные материалы. Загрузка не требуется."</string>
+    <string name="ui_13ce08699c85" formatted="false">"Маркер"</string>
+    <string name="ui_64c223c2036f" formatted="false">"Моноширинный"</string>
+    <string name="ui_7e817044b6c0" formatted="false">"Доска настроения"</string>
+    <string name="ui_13e39d914bc0" formatted="false">"Перемещать малыми шагами"</string>
+    <string name="ui_33bcea638489" formatted="false">"Умножение"</string>
+    <string name="ui_9ada8e83c118" formatted="false">"Шум"</string>
+    <string name="ui_dd546bc86223" formatted="false">"Доступны только настроенные модели редактирования изображений. Специальные маски, удаление объектов и изменение освещения зависят от возможностей провайдера."</string>
+    <string name="ui_9cf172ca3fce" formatted="false">"Исходные слои остаются редактируемыми. Эффект можно отключить или удалить в любой момент."</string>
+    <string name="ui_2af93aeb435d" formatted="false">"Перекрытие"</string>
+    <string name="ui_50d0cceb2f7a" formatted="false">"Рисование"</string>
+    <string name="ui_ddba7813d5ee" formatted="false">"Не удалось сохранить штрихи. Перед продолжением сохраните восстановительную копию."</string>
+    <string name="ui_bfd8c97cea8f" formatted="false">"Рисовать в рабочей области"</string>
+    <string name="ui_fd92d952db92" formatted="false">"Перемещение вида"</string>
+    <string name="ui_35045eff549e" formatted="false">"Бумага"</string>
+    <string name="ui_a04bd35be167" formatted="false">"Перо"</string>
+    <string name="ui_be3435a5af5f" formatted="false">"Карандаш"</string>
+    <string name="ui_f4982f86e732" formatted="false">"Пикселизация"</string>
+    <string name="ui_1ba76ea7e3d9" formatted="false">"Плакат"</string>
+    <string name="ui_6d75dd5c4cf9" formatted="false">"Постеризация"</string>
+    <string name="ui_974d0aa17323" formatted="false">"Предпросмотр недоступен. Проект сохранён."</string>
+    <string name="ui_6fe0661c82d1" formatted="false">"Радиус"</string>
+    <string name="ui_7893261c8af3" formatted="false">"Восстановить черновик рисунка"</string>
+    <string name="ui_7538c2135b03" formatted="false">"Отражение"</string>
+    <string name="ui_feed1b73b065" formatted="false">"Проверьте правку изображения с настроенной моделью. Принятый результат добавится слоем в отдельную редактируемую копию проекта."</string>
+    <string name="ui_65df03312ccb" formatted="false">"Проверить правку изображения"</string>
+    <string name="ui_a639fd28b58d" formatted="false">"Повернуть на 15°"</string>
+    <string name="ui_b3c18129f841" formatted="false">"Без засечек"</string>
+    <string name="ui_993f024b650e" formatted="false">"Насыщенность"</string>
+    <string name="ui_5b9ad6777f98" formatted="false">"Сохранить восстановительную копию"</string>
+    <string name="ui_195efbad3844" formatted="false">"Царапины"</string>
+    <string name="ui_e3237ef55d1f" formatted="false">"Выберите слой на рисунке или в списке слоёв."</string>
+    <string name="ui_6fb1ec9a7997" formatted="false">"Выберите слой для правки или отметьте слои одного уровня для группировки и выравнивания."</string>
+    <string name="ui_ca4067071fcf" formatted="false">"Выделение"</string>
+    <string name="ui_e3daa79eaf69" formatted="false">"На задний план"</string>
+    <string name="ui_1b5e747e5031" formatted="false">"С засечками"</string>
+    <string name="ui_2a19bdc09aa3" formatted="false">"Тёмные участки"</string>
+    <string name="ui_ac6f0be1274c" formatted="false">"Резкость"</string>
+    <string name="ui_6bb4c1177681" formatted="false">"Слайд"</string>
+    <string name="ui_f5f75c9b97d0" formatted="false">"Полупрозрачная кисть"</string>
+    <string name="ui_0b099867389c" formatted="false">"Сплошная заливка"</string>
+    <string name="ui_e28411a3404d" formatted="false">"Текстура"</string>
+    <string name="ui_298837b8bdcb" formatted="false">"Последние штрихи всё ещё сохранены здесь в памяти. Сохраните их отдельным проектом или явно удалите несохранённые штрихи."</string>
+    <string name="ui_740e4843c07e" formatted="false">"Достигнут лимит слоёв. Удалите слой перед сохранением предложения ИИ."</string>
+    <string name="ui_6a822da0d9db" formatted="false">"Оттенок"</string>
+    <string name="ui_6bb5969ca349" formatted="false">"Перед правкой разблокируйте слой или его группу."</string>
+    <string name="ui_55490a4bf3a8" formatted="false">"Вверх"</string>
+    <string name="ui_f841c2080740" formatted="false">"Виньетка"</string>
+    <string name="ui_d0b50e064a4f" formatted="false">"Рамка"</string>
+    <string name="ui_c6c0a7fe81c8" formatted="false">"Залить связанную область"</string>
+    <string name="ui_d638785dd42e" formatted="false">"Перед заливкой выберите непрозрачный цвет."</string>
+    <string name="ui_8dadf856e07b" formatted="false">"Коснитесь области для заливки. Исходные слои останутся редактируемыми."</string>
+    <string name="ui_fb73bdbd1540" formatted="false">"Коснитесь рисунка, чтобы выбрать цвет."</string>
 </resources>

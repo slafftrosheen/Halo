@@ -59,6 +59,9 @@ internal fun CanvasInkSurface(
     onSaveSelection: ((InkSelectionContext) -> Unit)? = null,
     strokeColor: Color? = null,
     strokeWidthFraction: Float? = null,
+    modifier: Modifier = Modifier,
+    showControls: Boolean = true,
+    externalMode: String? = null,
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -73,6 +76,7 @@ internal fun CanvasInkSurface(
     val committedCallback by rememberUpdatedState(onChanged)
     var revision by remember(initial) { mutableIntStateOf(0) }
     var mode by remember { mutableStateOf(InkMode.DRAW) }
+    LaunchedEffect(externalMode) { externalMode?.let { mode=InkMode.valueOf(it) } }
     var zoom by remember { mutableFloatStateOf(1f) }
     var pan by remember { mutableStateOf(Offset.Zero) }
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -85,6 +89,9 @@ internal fun CanvasInkSurface(
     var rejectedChange by remember { mutableStateOf(false) }
     var panPointer by remember { mutableIntStateOf(-1) }
     var lastPan by remember { mutableStateOf(Offset.Zero) }
+    var multiContact by remember { mutableStateOf(false) }
+    var pinchDistance by remember { mutableFloatStateOf(0f) }
+    var pinchCenter by remember { mutableStateOf(Offset.Zero) }
     val density = LocalDensity.current.density
     val focus = remember { FocusRequester() }
     val disallowIntercept = remember { RequestDisallowInterceptTouchEvent() }
@@ -190,9 +197,9 @@ internal fun CanvasInkSurface(
     fun undo() { input.abort(); clearSelection(); if (editor.undo()) publish { editor.redo() } }
     fun redo() { input.abort(); clearSelection(); if (editor.redo()) publish() }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (!readable) Text(stringResource(R.string.ink_unreadable), color = MaterialTheme.colorScheme.error)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if(showControls) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(InkMode.DRAW to R.string.ink_draw, InkMode.ERASE to R.string.ink_erase,
                 InkMode.PAN to R.string.ink_pan).plus(
                 if (!selectionOwnerId.isNullOrBlank()) listOf(InkMode.SELECT to R.string.ink_select) else emptyList()
@@ -204,7 +211,7 @@ internal fun CanvasInkSurface(
         val height = (LocalConfiguration.current.screenHeightDp * 0.42f).coerceIn(180f, 440f).dp
         val inkColor = strokeColor ?: if (background != null) Color.Black else MaterialTheme.colorScheme.onSurface
         val selectionColor = MaterialTheme.colorScheme.primary
-        Canvas(Modifier.fillMaxWidth().height(height).clipToBounds()
+        Canvas((if(showControls) Modifier.fillMaxWidth().height(height) else Modifier.fillMaxSize()).clipToBounds()
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .focusRequester(focus)
             .onPreviewKeyEvent { event ->
@@ -217,6 +224,22 @@ internal fun CanvasInkSurface(
             .onSizeChanged { if (boardSize != it) { input.abort(); boardSize = it; pan = Offset.Zero; revision++ } }
             .pointerInteropFilter(disallowIntercept) { event ->
                 if (!readable) false else {
+                    if(event.actionMasked==MotionEvent.ACTION_DOWN) {multiContact=false;pinchDistance=0f}
+                    if(event.pointerCount>=2) {
+                        input.abort();multiContact=true
+                        val center=Offset((event.getX(0)+event.getX(1))/2,(event.getY(0)+event.getY(1))/2)
+                        val distance=kotlin.math.hypot(event.getX(0)-event.getX(1),event.getY(0)-event.getY(1))
+                        if(pinchDistance>0 && event.actionMasked==MotionEvent.ACTION_MOVE) {
+                            zoom=(zoom*distance/pinchDistance).coerceIn(1f,4f)
+                            pan=clampPan(pan+center-pinchCenter);revision++
+                        }
+                        pinchDistance=distance;pinchCenter=center
+                        return@pointerInteropFilter true
+                    }
+                    if(multiContact) {
+                        if(event.actionMasked==MotionEvent.ACTION_UP||event.actionMasked==MotionEvent.ACTION_CANCEL) {multiContact=false;pinchDistance=0f;disallowIntercept(false)}
+                        return@pointerInteropFilter true
+                    }
                     if (event.actionMasked == MotionEvent.ACTION_DOWN) { focus.requestFocus(); disallowIntercept(true) }
                     if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL)
                         disallowIntercept(false)
@@ -311,7 +334,7 @@ internal fun CanvasInkSurface(
                 }
             }
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if(showControls) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { undo() }, enabled = readable && editor.canUndo) { Text(stringResource(R.string.ink_undo)) }
             TextButton(onClick = { redo() }, enabled = readable && editor.canRedo) { Text(stringResource(R.string.ink_redo)) }
             TextButton(onClick = { input.abort(); clearSelection(); if (editor.clear()) publish() }, enabled = readable && preview.strokes.isNotEmpty()) {
@@ -327,19 +350,19 @@ internal fun CanvasInkSurface(
                 Text(stringResource(R.string.ink_selection_clear))
             }
         }
-        if (selectionContext != null) {
+        if (showControls && selectionContext != null) {
             val selected = requireNotNull(selectionContext)
             Text(stringResource(R.string.ink_selection_count, selected.selectedStrokeIds.size),
                 color = selectionColor, style = MaterialTheme.typography.bodySmall)
             onSaveSelection?.let { save ->
                 TextButton(onClick = { save(selected) }) { Text(com.halo.app.language.uiText("Save selection")) }
             }
-        } else if (selectionBounds != null) {
+        } else if (showControls && selectionBounds != null) {
             Text(stringResource(R.string.ink_selection_empty), style = MaterialTheme.typography.bodySmall)
-        } else if (mode == InkMode.SELECT) {
+        } else if (showControls && mode == InkMode.SELECT) {
             Text(stringResource(R.string.ink_selection_help), style = MaterialTheme.typography.bodySmall)
         }
-        Text(stringResource(R.string.ink_input_help), style = MaterialTheme.typography.bodySmall)
+        if(showControls) Text(stringResource(R.string.ink_input_help), style = MaterialTheme.typography.bodySmall)
         if (editor.limitReached) Text(stringResource(R.string.ink_capacity), color = MaterialTheme.colorScheme.error)
         if (rejectedChange) Text(stringResource(R.string.ink_draft_rejected), color = MaterialTheme.colorScheme.error)
     }

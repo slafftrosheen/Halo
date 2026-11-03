@@ -110,6 +110,39 @@ class StudioLocalWorkflowTest {
         assertEquals(output.objectId.value, canvases.observe(canvas).first()!!.nodes.single { it.id == node }.refObjectId)
         assertTrue(runCatching { service.export(created.id, created.revision, CanvasImageFormat.PNG) }.isFailure)
     }
+    @Test fun registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded()=runTest {
+        val executor=com.halo.app.di.tools.StudioToolExecutor(service)
+        val descriptors=executor.definitions().map {requireNotNull(com.halo.app.di.tools.HaloToolDescriptors.workspace(it))}
+        val registry=com.halo.runtime.cognition.tools.ToolRegistry(listOf(executor),descriptors)
+        assertEquals(emptyList<com.halo.runtime.cognition.tools.ToolOperabilityProblem>(),registry.operabilityReport(listOf(com.halo.runtime.cognition.tools.ToolFeatureOperability("studio65",descriptors.map {it.name}.toSet()))))
+        val effects=List(8) {index->StudioEffect(id="effect-$index",kind=StudioEffectKind.GRAIN)}
+        val original=projects.create("Registered creative workflow",StudioDocument(64,64,layers=List(12) {index->StudioLayer(id="shape-$index",name="Shape $index",kind=StudioLayerKind.RECTANGLE,effects=effects)}))
+        suspend fun call(name:String,args:Map<String,Any>)=registry.executeAuthorized(com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(com.halo.sdk.provider.ToolCall(java.util.UUID.randomUUID().toString(),name,args)))
+        val read=call("halo_studio_get",mapOf("projectId" to original.id)) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        assertTrue(read.output.length<24000)
+        val page=org.json.JSONObject(read.output)
+        assertEquals(4,page.getJSONArray("layers").length());assertEquals(4,page.getInt("nextLayerOffset"));assertTrue(page.getBoolean("layersTruncated"))
+        val grouped=call("halo_studio_edit",mapOf("projectId" to original.id,"revision" to original.revision,"operation" to "group_layers","fields" to mapOf("layerIds" to listOf("shape-0","shape-1"),"name" to "Reviewed pair")))
+        assertTrue(grouped is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+        val current=projects.get(original.id)!!
+        assertEquals(1,current.session.current.layers.count {it.kind==StudioLayerKind.GROUP})
+        assertTrue(call("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"offset" to 4)) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+        val picked=call("halo_studio_get",mapOf("projectId" to original.id,"revision" to current.revision,"layerId" to "shape-0","sample" to mapOf("x" to 500,"y" to 500))) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        assertTrue(org.json.JSONObject(picked.output).has("sampleColor"))
+    }
+    @Test fun connectedFillIsANewUndoableSourcePinnedLayer()=runTest {
+        val bar=StudioLayer(id="bar",name="Barrier",kind=StudioLayerKind.RECTANGLE,bounds=StudioRect(400,0,200,1000),color=Color.BLACK)
+        val original=projects.create("Fill original",StudioDocument(32,32,background=Color.WHITE,layers=listOf(bar)))
+        val filled=service.edit(original.id,original.revision,"fill_area",mapOf("x" to 100,"y" to 500,"color" to "#ff0000","tolerance" to 0))
+        assertEquals(bar,filled.session.current.layers.first())
+        val source=requireNotNull(filled.session.current.layers.last().source)
+        readable(requireNotNull(files.getFile(WorkspaceObjectId(source.objectId))))
+        val pixels=renderer.render(filled.session.current,true)
+        try {assertEquals(Color.RED,pixels.getPixel(3,16));assertEquals(Color.WHITE,pixels.getPixel(28,16));assertEquals(Color.BLACK,pixels.getPixel(16,16))} finally {pixels.recycle()}
+        val undone=projects.undo(filled.id,filled.revision)
+        assertEquals(original.session.current,undone.session.current)
+        assertTrue(runCatching {service.edit(original.id,original.revision,"fill_area",mapOf("x" to 100,"y" to 500,"color" to "#ff0000","tolerance" to 0))}.isFailure)
+    }
     @Test fun assistantUsesSameRevisionGuardAndDispatchReceiptsAsLocalEditing() = runTest {
         val tools = com.halo.app.di.tools.StudioToolExecutor(service)
         val definitions = tools.definitions()
@@ -147,6 +180,21 @@ class StudioLocalWorkflowTest {
         val metadata = org.json.JSONObject(provenance.metadata)
         assertEquals(original.session.current, StudioDocumentCodec.decode(metadata.getJSONObject("document").toString()))
         assertFalse(metadata.has("prompt"))
+    }
+    @Test fun aiLayerPreservesOriginalStackAndGlobalRecipe()=runTest {
+        val layer=StudioLayer(id="original-text",name="Text",kind=StudioLayerKind.TEXT,text="Keep editable")
+        val original=projects.create("Original",StudioDocument(320,240,layers=listOf(layer),recipe=CanvasImageRecipe(quarterTurns=1,mirrorHorizontal=true,crop=CanvasImageCrop(100,100,800,800))))
+        val proposal=com.halo.sdk.provider.AiImageResult(png(),"image/png","fixture-provider","fixture-model")
+        val kept=service.keepAiCopy(original,proposal,"Layer copy")
+        assertEquals(original,projects.get(original.id))
+        assertEquals(original.session.current.recipe,kept.session.current.recipe)
+        assertEquals(layer,kept.session.current.layers.first())
+        val added=kept.session.current.layers.last()
+        assertEquals(StudioRect(100,100,800,800),added.bounds)
+        assertEquals(StudioLayerKind.IMAGE,added.kind)
+        readable(requireNotNull(files.getFile(WorkspaceObjectId(requireNotNull(added.source).objectId))))
+        val preview=renderer.render(kept.session.current,true)
+        try {assertTrue(preview.width>0&&preview.height>0)} finally {preview.recycle()}
     }
     @Test fun cropRotateAndMirrorReuseCanonicalPixelTransform() = runTest {
         val source = Bitmap.createBitmap(100, 60, Bitmap.Config.ARGB_8888)

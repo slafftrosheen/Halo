@@ -11,6 +11,18 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class StudioArchiveTest {
+    @Test fun creativeArchiveRemapsSourcesWhilePreservingGroupsEffectsAndSelection() {
+        val image=StudioLayer(id="i",name="Image",kind=StudioLayerKind.IMAGE,source=StudioSource("old-file","pinned"),
+            imageCrop=StudioRect(100,100,800,800),blend=StudioBlend.SCREEN,
+            effects=listOf(StudioEffect(id="light",kind=StudioEffectKind.LIGHT_LEAK,seed=12)))
+        val grouped=StudioDocument(layers=listOf(image)).apply(StudioCommand.Group(listOf("i"),"Group","g"))
+        val copy=StudioDocumentCodec.decode(StudioArchive.document(StudioDocumentCodec.encode(grouped),mapOf("old-file" to "new-file")))
+        assertEquals(grouped.layers.map {it.id to it.parentId},copy.layers.map {it.id to it.parentId})
+        assertEquals(grouped.selectedLayerId,copy.selectedLayerId)
+        assertEquals(image.effects,copy.layers.single {it.id=="i"}.effects)
+        assertEquals("new-file",copy.layers.single {it.id=="i"}.source?.objectId)
+        assertEquals("pinned",copy.layers.single {it.id=="i"}.source?.version)
+    }
     private val source = StudioDocument(layers = listOf(StudioLayer(id = "image", name = "Original", kind = StudioLayerKind.IMAGE,
         source = StudioSource("old-file", "immutable-sha"))))
     @Test fun duplicationRemapsEveryUndoRedoAndProvenanceSourceWithoutChangingVersion() {

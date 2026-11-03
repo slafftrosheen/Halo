@@ -6,6 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.halo.app.R
@@ -43,6 +45,19 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
         !LocalShellPageOwnerFilter.current(projection.owner)) return
     val actions = projection.actions.filterNot { it.title == "Back" || it.id.endsWith(".back") ||
         it.id in setOf("page.notebook.view-library", "page.notebook.view-tools") }
+    if(projection.owner.routeFamily=="studio" && actions.any {it.id=="page.studio.tools"}) {
+        val primary=listOf("page.studio.add-layer","page.studio.layers","page.studio.tools","page.studio.ai")
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+            primary.forEach {id->actions.find {it.id==id}?.let {action->
+                val active=projection.owner.activeToolId==id
+                FilterChip(selected=active,onClick={projection.invoke(id)},enabled=action.enabled,
+                    label={Text(uiText(action.title))},leadingIcon={Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:$id",action.title,action.glyph)),action.glyph,Modifier.size(20.dp))},
+                    modifier=Modifier.heightIn(min=48.dp).semantics {selected=active}
+                        .haloTrace(action.id==guidedActionId,MaterialTheme.colorScheme.primary,12.dp,lapOnAppear=true))
+            }}
+        }
+        return
+    }
     var opened by remember(projection.owner.routeFamily, projection.owner.objectId) { mutableStateOf<WorkspaceMenuGroup?>(null) }
     val target = if (LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
     LaunchedEffect(projection) { opened = null }

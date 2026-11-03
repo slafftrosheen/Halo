@@ -24,7 +24,7 @@ class StudioDocumentTest {
     @Test fun unsupportedOrMalformedDataNeverBecomesAnEmptyDocument() {
         val original = StudioDocumentCodec.encode(StudioDocument(layers = listOf(text)))
         for (mutation in listOf<(JSONObject) -> Unit>(
-            { it.put("schema", 2) }, { it.put("width", 1.5) }, { it.put("width", "1024") },
+            { it.put("schema", 99) }, { it.put("width", 1.5) }, { it.put("width", "1024") },
             { it.put("script", "arbitrary") }, { it.getJSONArray("layers").getJSONObject(0).put("uri", "file:///private") },
             { it.put("selected", "missing") })) {
             val changed = JSONObject(original).also(mutation)

@@ -178,7 +178,23 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
             StudioEditRequest.Redo -> projects.redo(id, expectedRevision)
             is StudioEditRequest.Restore -> projects.restoreVersion(id, expectedRevision, request.revision)
             is StudioEditRequest.Import -> importImage(id, expectedRevision, request.objectId, expectedSourceVersion = request.sourceVersion)
+            is StudioEditRequest.Fill -> fillArea(project,request)
         }
+    }
+    private suspend fun fillArea(project:StudioProject,request:StudioEditRequest.Fill):StudioProject {
+        require(project.session.current.layers.size<StudioDocument.MAX_LAYERS)
+        val document=project.session.current
+        val pixels=renderer.render(document.copy(recipe=document.recipe.copy(quarterTurns=0,mirrorHorizontal=false,squareCrop=false,crop=null,maxEdge=1024)),false)
+        val bytes=try {withContext(Dispatchers.IO) {
+            val mask=StudioFloodFill.mask(pixels,(request.x*pixels.width/1000).coerceIn(0,pixels.width-1),(request.y*pixels.height/1000).coerceIn(0,pixels.height-1),request.color,request.tolerance)
+            try {CanvasImageTools.encodeBitmap(mask,CanvasImageFormat.PNG)} finally {mask.recycle()}
+        }} finally {pixels.recycle()}
+        current(project.id,project.revision)
+        val metadata=JSONObject().put("operation","studio-fill-layer").put("projectRevision",project.revision)
+            .put("x",request.x).put("y",request.y).put("tolerance",request.tolerance).put("color",request.color).toString()
+        val file=files.createManagedFile("Fill.png","image/png",bytes,project.id,project.revision.toString(),metadata) {current(project.id,project.revision)}
+        return projects.apply(project.id,project.revision,StudioCommand.Add(StudioLayer(name="Fill",kind=StudioLayerKind.IMAGE,
+            source=StudioSource(file.objectId.value,requireNotNull(file.sha256)))))
     }
     suspend fun inkBackdrop(document: StudioDocument, layer: StudioLayer): Bitmap = renderer.inkBackdrop(document, layer)
     fun inkWidthFraction(document: StudioDocument, layer: StudioLayer): Float = renderer.inkWidthFraction(document, layer)
@@ -192,7 +208,8 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     /** Keeping a proposal creates an independent project, so local edits made meanwhile are never overwritten. */
     suspend fun keepAiCopy(source: StudioProject, result: com.halo.sdk.provider.AiImageResult, title: String): StudioProject {
         requireNotNull(projects.get(source.id)) { "Original project unavailable" }
-        val dimensions = withContext(Dispatchers.IO) {
+        require(source.session.current.layers.size<StudioDocument.MAX_LAYERS) { "Project layer limit reached" }
+        withContext(Dispatchers.IO) {
             require(result.bytes.size in 1..20_000_000)
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeByteArray(result.bytes, 0, result.bytes.size, bounds)
@@ -205,13 +222,11 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         val metadata = JSONObject().put("operation", "studio-ai-proposal-kept").put("projectRevision", source.revision)
             .put("providerReportedId", result.providerId).put("providerReportedModel", result.modelId)
             .put("document", JSONObject(StudioDocumentCodec.encode(source.session.current))).toString()
-        val extension = when (dimensions.third) { "image/jpeg" -> "jpg"; "image/webp" -> "webp"; else -> "png" }
-        val file = files.createManagedFile(title.take(100) + "." + extension, dimensions.third, result.bytes,
+        val placement=placeStudioAiLayer(result.bytes,source.session.current)
+        val file = files.createManagedFile(title.take(100) + ".png", "image/png", placement.png,
             source.id, source.revision.toString(), metadata) { requireNotNull(projects.get(source.id)) }
-        val scale = minOf(1f, 2048f / maxOf(dimensions.first, dimensions.second))
-        val document = StudioDocument((dimensions.first * scale).roundToInt().coerceAtLeast(1),
-            (dimensions.second * scale).roundToInt().coerceAtLeast(1), layers = listOf(StudioLayer(name = title.take(120),
-                kind = StudioLayerKind.IMAGE, source = StudioSource(file.objectId.value, requireNotNull(file.sha256)))))
+        val generated=StudioLayer(name=title.take(120),kind=StudioLayerKind.IMAGE,bounds=placement.bounds,source=StudioSource(file.objectId.value,requireNotNull(file.sha256)))
+        val document=source.session.current.copy(layers=source.session.current.layers+generated,selectedLayerId=generated.id)
         return projects.create(title.take(120), document, source.id, source.revision)
     }
     suspend fun insertOutput(canvasId: String, outputId: String, expectedFileVersion: String, expectedCanvasVersion: String? = null): String {

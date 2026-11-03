@@ -1,0 +1,38 @@
+# Issue 65 implementation and acceptance map
+
+Authority: [GitHub issue 65](https://github.com/slafftrosheen/Halo/issues/65), [snapshot](ISSUE-65-SOURCE.md), [design](../superpowers/specs/2026-11-03-issue-65-studio-design.md).
+Branch `codex/issue-65-studio`, base `cd08e9ad6`. Production and regression source batch is authored; independent review, compilation, executable tests, APK and native acceptance are pending. Source-only checks are not runtime acceptance.
+
+| Issue area | Canonical implementation | Regression/evidence |
+|---|---|---|
+| One instrument / modes | `StudioScreen`, compact Zone identity selector and contextual Tools; modes are saveable presentation state, never document copies or commands | Whole-screen mode/review regression authored; native appearance pending |
+| Existing revisions / compatibility | Same `StudioProjectRepository`, `StudioSession`, Workspace/Room and archive owner; schema-1 decoder, strict schema-2 document envelope | Legacy roundtrip, Room/CAS/undo/save and archive regressions authored |
+| Shared layers | Existing image, ink, text, rectangle/ellipse plus line, outline frame, group and procedural texture; same ordered layer identities in Design/Paint/AI | Hierarchy, identity, duplication, ancestor locks and roundtrip regressions |
+| Four primary groups | Actual `WorkspaceToolMenus` Studio branch and orbit policy show Add, Layers, Tools, AI; distinct supplied icons, active selection and busy gates | Icon/orbit contract and existing Studio screen regressions extended |
+| Artboard / Zone ownership | Artboard and temporary status in the working viewport; compact mode in existing utility row; all inspectors invoked from Zone; no permanent upper toolbar | Existing 75/25 host owner retained; actual geometry/render gate pending |
+| Touch Design | Tap/clear selection, drag, corner resize, rotation handle, snapping, pinch zoom, two-finger pan/rotate, fit, labeled button alternatives | Native Compose gesture test authored; coordinate tests cover global crop/mirror/quarter-turn order |
+| Text / shapes / images | Typography family/weight/italic/alignment/spacing, colour/opacity/blend, image crop and rectangular clip masks, lines/outline frames; existing managed import/camera | Strict parser/codec tests plus old import/export/camera suites |
+| Arrangement / styles | Sibling alignment/distribution, front/back, duplication, grouping/ungrouping, visibility/locking/rename/delete; local reusable styles and eight artboard presets | Command/lock/layout/history tests; templates remain ordinary editable layers |
+| Paint | Existing pressure/stylus-aware portable Ink/session writer drives direct artboard; brush/eraser/selection/pan, colour/size/opacity presets, eyedropper, solid-fill layers and real connected raster fill | Existing Ink regression sources retained; new connected-fill tests and same-owner typed operations |
+| Non-destructive effects | Up to eight independent editable/toggleable/ordered effects per layer/group: tone, blur/sharpen/grain/vignette/posterize/pixelate/emboss/edges, glow/shadows/bloom/flare/leak/haze/gradient/reflection | Every advertised effect has authored pixel-change coverage, disabled/seed repeat coverage |
+| Textures / future packs | Eight deterministic procedural materials: paper, canvas, concrete, fabric, grain, dust, scratches, noise; preset IDs and portable effect data independent of download architecture | Texture pixel/roundtrip tests; no external asset/license dependency |
+| AI / originals | Existing configured image-editing catalogue and review/spend/privacy owner; opening panel/switching mode sends no generation request. Kept proposals become a new image layer in a separate copy retaining original layers and provenance | Concurrent-original preservation and inverse-placement regression sources; live provider acceptance pending |
+| Provider truth | Only actual configured editing models offered by existing owner; no guaranteed segmentation, removal or relighting button for unsupported specialised capabilities | Existing provenance/consent suites; no mock provider claim |
+| Undo / history / export / Canvas | Exact-revision commands and source pinning; old save/save-as/history/PNG/JPEG/Canvas handoff remain canonical | Existing Studio local workflow/archive/recovery suites included in later gate |
+| Performance / recovery | Serial IO renderer; 640-edge previews, bounded one-layer effect buffers (1600 edge), hierarchy depth 4, 32 layers, eight effects, bounded ink/history, cancellation, capacity failure; paint failure retains explicit recovery copy/discard path | Bounded-model and pixel sources; actual Android memory/process-loss acceptance pending |
+| Accessibility / languages | Halo tokens/icons/theme/trace, labeled 48dp controls, scrollable/large-text inspectors, selected semantics and haptics; EN/RU/LV/PL catalog | Generated 5,050 keys per language as source check; actual dark/light/200%/reduced-motion renders pending |
+| Assistant parity | Expanded existing `halo_studio_edit` closed data vocabulary; `halo_studio_get` reads all editable metadata/presets and exact-revision colour samples; v1 operability with closed bounded results | Parser/registered workflow/operability tests; actual STT/device/model routes remain separate |
+
+## Explicit supported boundaries
+
+Groups retain global coordinates and acyclic parent identity. Ancestor locks fence UI and typed writes. Ungrouping cannot silently discard group effects/opacity/masks; reset group styling first. Rectangular clip masks are real and are labeled as such; this is not a full vector/path or segmentation editor. Changing brush style starts a fresh ink layer so earlier marks remain unchanged; presets tune actual size and opacity, not a claimed desktop brush engine.
+
+Effects/groups composite through a bounded raster buffer; a large export can therefore contain lower-resolution effect processing while editable text and simple primitives keep their normal rendering. Connected fill uses a bounded composition raster and adds only the filled region on an independent transparent image layer. It never modifies retained image sources. Original source versions remain pinned; failure/cancellation never substitutes a different source.
+
+AI copy placement reverses the existing global mirror/rotation and places pixels within the original crop bounds before the normal document recipe is applied. The original project can continue changing and is never overwritten by an earlier proposal. Layer capacity is checked before keeping. Specialised AI quality depends on the selected real model, not the wording of a prompt.
+
+Android artistic Multiply uses `BlendMode.MULTIPLY` on API 29+ and bounded row-wise compositing on API 26–28; PorterDuff's alpha-modulating multiply is not substituted. Primary API evidence: [Android BlendMode](https://developer.android.com/reference/android/graphics/BlendMode), [AOSP BlendMode mapping](https://android.googlesource.com/platform/frameworks/base/+/4fda9095ba9b/graphics/java/android/graphics/BlendMode.java).
+
+## Evidence status
+
+Source-only language generation and whitespace checks passed. No #65 compiler, test, build, native gesture/render, actual spoken recognition or provider outcome has run yet. The issue remains open; no merge or release acceptance is implied. The preceding #64 app gate remains incomplete after two host restarts, with its partial 30 passing language/Runtime tests preserved separately.

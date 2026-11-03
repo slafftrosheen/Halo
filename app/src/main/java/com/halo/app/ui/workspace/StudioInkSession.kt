@@ -28,7 +28,7 @@ internal class StudioInkSession(val initial: StudioProject, val layerId: String,
     init {
         var revision = project.revision
         var layer = requireNotNull(project.session.current.layers.find { it.id == layerId })
-        require(layer.kind == StudioLayerKind.INK && !layer.locked)
+        require(layer.kind == StudioLayerKind.INK && initial.session.current.isEditable(layer))
         scope.launch {
             try {
                 for (encoded in pending) {

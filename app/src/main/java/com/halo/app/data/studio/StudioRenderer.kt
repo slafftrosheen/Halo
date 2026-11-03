@@ -38,16 +38,17 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
                 owned = output
                 output.eraseColor(document.background)
                 val canvas = Canvas(output)
-                for (layer in document.layers) {
+                for (layer in document.layers.filter { it.parentId == null }) {
                     coroutineContext.ensureActive()
                     if (!layer.visible || layer.opacity == 0) continue
-                    drawLayer(canvas, layer, preview)
+                    drawNode(canvas, output, document, layer, preview)
                 }
                 CanvasImageTools.transformOwnedBitmap(output, document.recipe, preview).also { owned = it }
             } }
             owned = null
             return result
-        } finally { owned?.takeUnless { it.isRecycled }?.recycle() }
+        } catch(capacity:OutOfMemoryError) {throw IllegalStateException("Not enough memory to render this project. The saved layers are kept.",capacity)}
+        finally { owned?.takeUnless { it.isRecycled }?.recycle() }
     }
 
     /** Shows the other layers in the exact coordinate rectangle used by this Ink layer. */
@@ -90,6 +91,59 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
         return RectF(target.centerX() - width / 2, target.centerY() - height / 2,
             target.centerX() + width / 2, target.centerY() + height / 2)
     }
+    private suspend fun drawNode(canvas: Canvas, destination:Bitmap, document: StudioDocument, layer: StudioLayer, preview: Boolean) {
+        coroutineContext.ensureActive()
+        if (!layer.visible || layer.opacity == 0) return
+        if (layer.kind != StudioLayerKind.GROUP && layer.effects.none { it.enabled } && layer.blend == StudioBlend.NORMAL) {
+            drawLayer(canvas,layer,preview);return
+        }
+        // A compositing group/effect owns one bounded temporary buffer, independently of export dimensions.
+        val ratio = min(1f,1600f/maxOf(canvas.width,canvas.height))
+        val width=(canvas.width*ratio).roundToInt().coerceAtLeast(1)
+        val height=(canvas.height*ratio).roundToInt().coerceAtLeast(1)
+        val pixels=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
+        try {
+            val target=Canvas(pixels)
+            if(layer.kind==StudioLayerKind.GROUP) {
+                for(child in document.layers.filter { it.parentId==layer.id }) drawNode(target,pixels,document,child,preview)
+                layer.mask?.let { mask ->
+                    val bounds=layer.bounds.pixels(width,height)
+                    val clip=RectF(bounds.left+mask.x*bounds.width()/1000,bounds.top+mask.y*bounds.height()/1000,
+                        bounds.left+(mask.x+mask.width)*bounds.width()/1000,bounds.top+(mask.y+mask.height)*bounds.height()/1000)
+                    val p=Paint().apply { xfermode=PorterDuffXfermode(PorterDuff.Mode.DST_IN) }
+                    val maskBitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
+                    try { Canvas(maskBitmap).drawRect(clip,Paint().apply { color=Color.WHITE });target.drawBitmap(maskBitmap,0f,0f,p) }
+                    finally { maskBitmap.recycle() }
+                }
+            } else drawLayer(target,layer.copy(opacity=1000,brightness=0,contrast=1000,saturation=1000),preview)
+            StudioEffectRenderer.apply(pixels,layer.effects)
+            if(layer.blend==StudioBlend.MULTIPLY && android.os.Build.VERSION.SDK_INT<29) {
+                StudioBlendRenderer.multiply(destination,pixels,layer);return
+            }
+            val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+                alpha=layer.opacity*255/1000;colorFilter=adjustmentFilter(layer)
+                xfermode=PorterDuffXfermode(when(layer.blend) {
+                    StudioBlend.NORMAL->PorterDuff.Mode.SRC_OVER;StudioBlend.MULTIPLY->PorterDuff.Mode.MULTIPLY
+                    StudioBlend.SCREEN->PorterDuff.Mode.SCREEN;StudioBlend.OVERLAY->PorterDuff.Mode.OVERLAY
+                    StudioBlend.DARKEN->PorterDuff.Mode.DARKEN;StudioBlend.LIGHTEN->PorterDuff.Mode.LIGHTEN;StudioBlend.ADD->PorterDuff.Mode.ADD
+                })
+                if(android.os.Build.VERSION.SDK_INT>=29) blendMode=when(layer.blend) {
+                    StudioBlend.NORMAL->BlendMode.SRC_OVER;StudioBlend.MULTIPLY->BlendMode.MULTIPLY
+                    StudioBlend.SCREEN->BlendMode.SCREEN;StudioBlend.OVERLAY->BlendMode.OVERLAY
+                    StudioBlend.DARKEN->BlendMode.DARKEN;StudioBlend.LIGHTEN->BlendMode.LIGHTEN;StudioBlend.ADD->BlendMode.PLUS
+                }
+            }
+            canvas.drawBitmap(pixels,null,RectF(0f,0f,canvas.width.toFloat(),canvas.height.toFloat()),paint)
+        } finally { pixels.recycle() }
+    }
+    private fun adjustmentFilter(layer: StudioLayer): ColorMatrixColorFilter {
+        val matrix=ColorMatrix().apply { setSaturation(layer.saturation/1000f) }
+        val contrast=layer.contrast/1000f
+        val offset=128f*(1f-contrast)+layer.brightness*255f/1000f
+        matrix.postConcat(ColorMatrix(floatArrayOf(contrast,0f,0f,0f,offset,0f,contrast,0f,0f,offset,
+            0f,0f,contrast,0f,offset,0f,0f,0f,1f,0f)))
+        return ColorMatrixColorFilter(matrix)
+    }
     private suspend fun drawLayer(canvas: Canvas, layer: StudioLayer, preview: Boolean) {
         val bounds = layer.bounds.pixels(canvas.width, canvas.height)
         val transform = canvas.save()
@@ -110,17 +164,29 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
             val layerPaint = Paint().apply { alpha = layer.opacity * 255 / 1000; colorFilter = ColorMatrixColorFilter(matrix) }
             val saved = canvas.saveLayer(bounds, layerPaint)
             try {
-                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = layer.color }
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = layer.color
+                    if(layer.strokeOnly) {style=Paint.Style.STROKE;strokeWidth=layer.strokeWidth*canvas.width/1000f}
+                }
                 when (layer.kind) {
                     StudioLayerKind.IMAGE -> drawImage(canvas, layer, bounds, preview)
-                    StudioLayerKind.RECTANGLE -> canvas.drawRect(bounds, paint)
-                    StudioLayerKind.ELLIPSE -> canvas.drawOval(bounds, paint)
+                    StudioLayerKind.RECTANGLE -> canvas.drawRect(RectF(bounds).apply {if(layer.strokeOnly) inset(min(paint.strokeWidth/2,width()/2),min(paint.strokeWidth/2,height()/2))}, paint)
+                    StudioLayerKind.ELLIPSE -> canvas.drawOval(RectF(bounds).apply {if(layer.strokeOnly) inset(min(paint.strokeWidth/2,width()/2),min(paint.strokeWidth/2,height()/2))}, paint)
+                    StudioLayerKind.LINE -> { paint.strokeWidth=layer.strokeWidth*canvas.width/1000f; canvas.drawLine(bounds.left,bounds.top,bounds.right,bounds.bottom,paint) }
+                    StudioLayerKind.TEXTURE -> StudioTextureRenderer.draw(canvas,bounds,requireNotNull(layer.texture),layer.color,layer.textureSeed)
+                    StudioLayerKind.GROUP -> error("Groups must be composited through their hierarchy")
                     StudioLayerKind.TEXT -> {
                         val textPaint = TextPaint(paint).apply {
                             textSize = (layer.fontSize * canvas.width / 1000f).coerceAtLeast(1f)
+                            typeface=Typeface.create(when(layer.typography.family) {
+                                StudioFont.SANS->"sans-serif";StudioFont.SERIF->"serif";StudioFont.MONOSPACE->"monospace"
+                            }, (if(layer.typography.weight==700) Typeface.BOLD else Typeface.NORMAL) or
+                                (if(layer.typography.italic) Typeface.ITALIC else Typeface.NORMAL))
+                            letterSpacing=layer.typography.letterSpacing/1000f
                         }
                         val layout = StaticLayout.Builder.obtain(layer.text, 0, layer.text.length, textPaint,
-                            bounds.width().toInt().coerceAtLeast(1)).setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                            bounds.width().toInt().coerceAtLeast(1)).setAlignment(when(layer.typography.alignment) {
+                                StudioTextAlignment.START->Layout.Alignment.ALIGN_NORMAL;StudioTextAlignment.CENTER->Layout.Alignment.ALIGN_CENTER;StudioTextAlignment.END->Layout.Alignment.ALIGN_OPPOSITE
+                            }).setLineSpacing(0f,layer.typography.lineSpacing/1000f)
                             .setIncludePad(false).setMaxLines(200).setEllipsize(TextUtils.TruncateAt.END).build()
                         canvas.translate(bounds.left, bounds.top)
                         layout.draw(canvas)
@@ -141,11 +207,15 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
         }
         val image = CanvasImageTools.stitchSource(context, file, preview)
         try {
-            val scale = min(bounds.width() / image.width, bounds.height() / image.height)
-            val width = image.width * scale; val height = image.height * scale
+            val crop=layer.imageCrop ?: StudioRect()
+            val sourceRect=Rect(crop.x*image.width/1000,crop.y*image.height/1000,
+                ((crop.x+crop.width)*image.width/1000).coerceAtLeast(crop.x*image.width/1000+1).coerceAtMost(image.width),
+                ((crop.y+crop.height)*image.height/1000).coerceAtLeast(crop.y*image.height/1000+1).coerceAtMost(image.height))
+            val scale = min(bounds.width() / sourceRect.width(), bounds.height() / sourceRect.height())
+            val width = sourceRect.width() * scale; val height = sourceRect.height() * scale
             val target = RectF(bounds.centerX() - width / 2, bounds.centerY() - height / 2,
                 bounds.centerX() + width / 2, bounds.centerY() + height / 2)
-            canvas.drawBitmap(image, null, target, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+            canvas.drawBitmap(image, sourceRect, target, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
             require(workspace.get(WorkspaceObjectId(source.objectId))?.lifecycle ==
                 com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE &&
                 files.getFile(WorkspaceObjectId(source.objectId))?.version == source.version) { "Image source changed during preview" }

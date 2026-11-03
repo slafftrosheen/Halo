@@ -100,7 +100,8 @@ object WorkspaceOperabilityContracts {
         }
         return ToolOperability(capabilityId = CapabilityId(if (operation.operation in setOf(ToolOperation.QUERY, ToolOperation.PRESENT)) "workspace.read" else "workspace.write"), owner = operation.owner,
             operation = operation.operation, resultEncoding = operation.encoding,
-            resultSchema = if (operation.owner == "NotebookAssetRepository") WorkspaceNoteAttachmentActions.resultSchema(definition.name)
+            resultSchema = if(operation.owner=="StudioService") StudioToolResultContracts.forTool(definition.name)
+                else if (operation.owner == "NotebookAssetRepository") WorkspaceNoteAttachmentActions.resultSchema(definition.name)
                 else if (operation.owner == "CrossDeviceInkController") RemoteInkActions.resultSchema(definition.name)
                 else if (operation.owner == "CurrentCanvasContextOwner") mapOf("type" to "object", "properties" to mapOf(
                     "canvasId" to mapOf("type" to "string", "pattern" to com.halo.app.data.workspace.WorkspaceActionIds.PATTERN),

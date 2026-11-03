@@ -17,6 +17,24 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = Application::class)
 class StudioProjectRepositoryTest {
+    @Test fun creativeHierarchyAndEffectsPersistThroughSaveUndoAndStaleWrite() = kotlinx.coroutines.test.runTest {
+        val context=androidx.test.core.app.ApplicationProvider.getApplicationContext<android.app.Application>()
+        val database=androidx.room.Room.inMemoryDatabaseBuilder(context,com.halo.app.data.AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val owner=StudioProjectRepository(database)
+            val layer=StudioLayer(id="texture",name="Canvas",kind=StudioLayerKind.TEXTURE,texture=StudioTexture.CANVAS,
+                effects=listOf(StudioEffect(id="grain",kind=StudioEffectKind.GRAIN,seed=64)))
+            val created=owner.create("Creative round trip",StudioDocument(layers=listOf(layer)))
+            val grouped=owner.apply(created.id,created.revision,StudioCommand.Group(listOf(layer.id),"Materials","group"))
+            val saved=owner.save(grouped.id,grouped.revision)
+            assertEquals(saved,StudioProjectRepository(database).get(saved.id))
+            assertTrue(runCatching {owner.apply(created.id,created.revision,StudioCommand.Remove(layer.id))}.isFailure)
+            val undone=owner.undo(saved.id,saved.revision)
+            assertEquals(created.session.current,undone.session.current)
+            val redone=owner.redo(undone.id,undone.revision)
+            assertEquals(grouped.session.current,redone.session.current)
+        } finally {database.close()}
+    }
     private lateinit var database: AppDatabase
     private lateinit var projects: StudioProjectRepository
     @Before fun setup() {

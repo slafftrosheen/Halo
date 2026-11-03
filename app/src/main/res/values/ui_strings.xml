@@ -4922,4 +4922,132 @@
     <string name="ui_a37bed66cd27" formatted="false">"I reviewed the previous execution"</string>
     <string name="ui_34099e54cc54" formatted="false">"Inspect the previous execution and acknowledge its uncertain effects before continuing."</string>
     <string name="ui_5e2a35a482a0" formatted="false">"This recurring plan has no active schedule. Enable its reviewed schedule or run the next check explicitly."</string>
+    <string name="ui_0a7d58a7a31e" formatted="false">"A changed brush starts a new paint layer, keeping earlier marks unchanged."</string>
+    <string name="ui_11fb682be0a0" formatted="false">"AI"</string>
+    <string name="ui_f5511c810f23" formatted="false">"AI creative assistance"</string>
+    <string name="ui_1c8b1583e1fb" formatted="false">"Add a layer to start creating."</string>
+    <string name="ui_8fce42d6d0aa" formatted="false">"Add effect"</string>
+    <string name="ui_3fc8b134170d" formatted="false">"Add layer"</string>
+    <string name="ui_4d069cd9e788" formatted="false">"Add solid fill layer"</string>
+    <string name="ui_7ba097da6312" formatted="false">"Align bottom"</string>
+    <string name="ui_e55c76591fa2" formatted="false">"Align center"</string>
+    <string name="ui_2f68a2058826" formatted="false">"Align start"</string>
+    <string name="ui_e5a1cc1cc141" formatted="false">"Align end"</string>
+    <string name="ui_eac0f9c3da59" formatted="false">"Align left"</string>
+    <string name="ui_2cce0b3a9122" formatted="false">"Align middle"</string>
+    <string name="ui_8f4f8efcbee1" formatted="false">"Align right"</string>
+    <string name="ui_4868688f4c68" formatted="false">"Align top"</string>
+    <string name="ui_49e96d7cdf58" formatted="false">"Amount"</string>
+    <string name="ui_6536eef7c8e9" formatted="false">"Artboard"</string>
+    <string name="ui_e7aebe3f338f" formatted="false">"Artboard crop and transform"</string>
+    <string name="ui_fe689170440f" formatted="false">"Bloom"</string>
+    <string name="ui_cd83e6731d2b" formatted="false">"Blur"</string>
+    <string name="ui_ec811d30a89c" formatted="false">"Brightness"</string>
+    <string name="ui_520cdb7e4609" formatted="false">"Bring to front"</string>
+    <string name="ui_8624ca0fcb3c" formatted="false">"Brush"</string>
+    <string name="ui_404ef4ac60fe" formatted="false">"Brush opacity"</string>
+    <string name="ui_8154dc2d5258" formatted="false">"Brush presets"</string>
+    <string name="ui_da6f847e1715" formatted="false">"Brush size"</string>
+    <string name="ui_87d296ec9489" formatted="false">"Caption"</string>
+    <string name="ui_d946067427e9" formatted="false">"Center"</string>
+    <string name="ui_dff818031dae" formatted="false">"Colour · #AARRGGBB"</string>
+    <string name="ui_fbb34a2104d8" formatted="false">"Concrete"</string>
+    <string name="ui_08795ba031bc" formatted="false">"Contrast"</string>
+    <string name="ui_508ed9b9b866" formatted="false">"Crop image"</string>
+    <string name="ui_d540e5346b75" formatted="false">"Darken"</string>
+    <string name="ui_0072e6b93494" formatted="false">"Design"</string>
+    <string name="ui_7d50757f95ba" formatted="false">"Discard unkept marks"</string>
+    <string name="ui_d9d22a2e50ba" formatted="false">"Distribute horizontal"</string>
+    <string name="ui_612b67cee50a" formatted="false">"Distribute vertical"</string>
+    <string name="ui_b86d11af7918" formatted="false">"Down"</string>
+    <string name="ui_b8c226f25a11" formatted="false">"Drag to move. Use the corner to resize, the top handle to rotate, or two fingers to move the view."</string>
+    <string name="ui_e8b0b8daf176" formatted="false">"Drop shadow"</string>
+    <string name="ui_27e78e7e8cca" formatted="false">"Duotone"</string>
+    <string name="ui_75372bcd9ea0" formatted="false">"Dust"</string>
+    <string name="ui_658b158af9bd" formatted="false">"Edges"</string>
+    <string name="ui_8c4e5e737fae" formatted="false">"Edit layer"</string>
+    <string name="ui_5ad6a405f686" formatted="false">"Editorial"</string>
+    <string name="ui_358511c8c098" formatted="false">"Effects"</string>
+    <string name="ui_70ec71745866" formatted="false">"Effects / mask"</string>
+    <string name="ui_b3c1a9a8b278" formatted="false">"Effects and lighting"</string>
+    <string name="ui_95b9aa619ee2" formatted="false">"Emboss"</string>
+    <string name="ui_f4db1e48476f" formatted="false">"End"</string>
+    <string name="ui_686eee3c6cd5" formatted="false">"Eraser"</string>
+    <string name="ui_cc5454a4b7ce" formatted="false">"Exposure"</string>
+    <string name="ui_d06fab1c42a4" formatted="false">"Eyedropper"</string>
+    <string name="ui_de7b2b8384b8" formatted="false">"Fabric"</string>
+    <string name="ui_3dea292f300e" formatted="false">"Film grain"</string>
+    <string name="ui_9f06d4dcf2f2" formatted="false">"Finish painting"</string>
+    <string name="ui_db9a78f719af" formatted="false">"Fit artboard"</string>
+    <string name="ui_38e9b86f2bcd" formatted="false">"Flare"</string>
+    <string name="ui_f534ed976dc8" formatted="false">"Glow"</string>
+    <string name="ui_ccf7e858a4ba" formatted="false">"Gradient light"</string>
+    <string name="ui_540faafbd767" formatted="false">"Grain"</string>
+    <string name="ui_93638ea9e0b0" formatted="false">"Grayscale"</string>
+    <string name="ui_762ebb70ef0e" formatted="false">"Group name"</string>
+    <string name="ui_3f5c98191fe1" formatted="false">"Group selected layers"</string>
+    <string name="ui_577ad4d66a5a" formatted="false">"Haze"</string>
+    <string name="ui_6e517828c3d8" formatted="false">"Highlights"</string>
+    <string name="ui_c2e94710b98c" formatted="false">"Inner shadow"</string>
+    <string name="ui_0e66373f45dc" formatted="false">"Label"</string>
+    <string name="ui_0bcd66e677f4" formatted="false">"Layers"</string>
+    <string name="ui_1516f64fed58" formatted="false">"Layers and alignment"</string>
+    <string name="ui_4b2eb7f7cd01" formatted="false">"Letter spacing"</string>
+    <string name="ui_df175633e5b9" formatted="false">"Light leak"</string>
+    <string name="ui_c1d5c40b2fef" formatted="false">"Lighten"</string>
+    <string name="ui_d7852cd0d245" formatted="false">"Line"</string>
+    <string name="ui_0db45da1214b" formatted="false">"Line spacing"</string>
+    <string name="ui_e83c082be7dd" formatted="false">"Local procedural materials. No download needed."</string>
+    <string name="ui_13ce08699c85" formatted="false">"Marker"</string>
+    <string name="ui_64c223c2036f" formatted="false">"Monospace"</string>
+    <string name="ui_7e817044b6c0" formatted="false">"Moodboard"</string>
+    <string name="ui_13e39d914bc0" formatted="false">"Move in small steps"</string>
+    <string name="ui_33bcea638489" formatted="false">"Multiply"</string>
+    <string name="ui_9ada8e83c118" formatted="false">"Noise"</string>
+    <string name="ui_dd546bc86223" formatted="false">"Only configured image-editing models are offered. Specialized masks, object removal and relighting are available only when the provider supports the requested edit."</string>
+    <string name="ui_9cf172ca3fce" formatted="false">"Original layers stay editable. Toggle or remove an effect at any time."</string>
+    <string name="ui_2af93aeb435d" formatted="false">"Overlay"</string>
+    <string name="ui_50d0cceb2f7a" formatted="false">"Paint"</string>
+    <string name="ui_ddba7813d5ee" formatted="false">"Paint could not be kept. Save a recovery copy before continuing."</string>
+    <string name="ui_bfd8c97cea8f" formatted="false">"Paint on artboard"</string>
+    <string name="ui_fd92d952db92" formatted="false">"Pan"</string>
+    <string name="ui_35045eff549e" formatted="false">"Paper"</string>
+    <string name="ui_a04bd35be167" formatted="false">"Pen"</string>
+    <string name="ui_be3435a5af5f" formatted="false">"Pencil"</string>
+    <string name="ui_f4982f86e732" formatted="false">"Pixelate"</string>
+    <string name="ui_1ba76ea7e3d9" formatted="false">"Poster"</string>
+    <string name="ui_6d75dd5c4cf9" formatted="false">"Posterize"</string>
+    <string name="ui_974d0aa17323" formatted="false">"Preview unavailable. Your project is kept."</string>
+    <string name="ui_6fe0661c82d1" formatted="false">"Radius"</string>
+    <string name="ui_7893261c8af3" formatted="false">"Recover paint draft"</string>
+    <string name="ui_7538c2135b03" formatted="false">"Reflection"</string>
+    <string name="ui_feed1b73b065" formatted="false">"Review an image edit with a configured model. Keeping the proposal adds an image layer in a separate editable project copy."</string>
+    <string name="ui_65df03312ccb" formatted="false">"Review image edit"</string>
+    <string name="ui_a639fd28b58d" formatted="false">"Rotate 15°"</string>
+    <string name="ui_b3c18129f841" formatted="false">"Sans"</string>
+    <string name="ui_993f024b650e" formatted="false">"Saturation"</string>
+    <string name="ui_5b9ad6777f98" formatted="false">"Save recovery copy"</string>
+    <string name="ui_195efbad3844" formatted="false">"Scratches"</string>
+    <string name="ui_e3237ef55d1f" formatted="false">"Select a layer on the artboard or in Layers."</string>
+    <string name="ui_6fb1ec9a7997" formatted="false">"Select one layer to edit, or mark siblings to group and align."</string>
+    <string name="ui_ca4067071fcf" formatted="false">"Selection"</string>
+    <string name="ui_e3daa79eaf69" formatted="false">"Send to back"</string>
+    <string name="ui_1b5e747e5031" formatted="false">"Serif"</string>
+    <string name="ui_2a19bdc09aa3" formatted="false">"Shadows"</string>
+    <string name="ui_ac6f0be1274c" formatted="false">"Sharpen"</string>
+    <string name="ui_6bb4c1177681" formatted="false">"Slide"</string>
+    <string name="ui_f5f75c9b97d0" formatted="false">"Wash"</string>
+    <string name="ui_0b099867389c" formatted="false">"Solid fill"</string>
+    <string name="ui_e28411a3404d" formatted="false">"Texture"</string>
+    <string name="ui_298837b8bdcb" formatted="false">"The latest marks are still held here. Save them as a separate project or explicitly discard the unkept marks."</string>
+    <string name="ui_740e4843c07e" formatted="false">"This project has reached its layer limit. Remove a layer before keeping an AI proposal."</string>
+    <string name="ui_6a822da0d9db" formatted="false">"Tint"</string>
+    <string name="ui_6bb5969ca349" formatted="false">"Unlock this layer or its group before editing."</string>
+    <string name="ui_55490a4bf3a8" formatted="false">"Up"</string>
+    <string name="ui_f841c2080740" formatted="false">"Vignette"</string>
+    <string name="ui_d0b50e064a4f" formatted="false">"Frame"</string>
+    <string name="ui_c6c0a7fe81c8" formatted="false">"Fill connected area"</string>
+    <string name="ui_d638785dd42e" formatted="false">"Choose a visible colour before filling an area."</string>
+    <string name="ui_8dadf856e07b" formatted="false">"Tap an area to fill. The original layers stay editable."</string>
+    <string name="ui_fb73bdbd1540" formatted="false">"Tap the artboard to pick a colour."</string>
 </resources>
