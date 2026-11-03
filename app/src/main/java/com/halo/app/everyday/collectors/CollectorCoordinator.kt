@@ -70,7 +70,12 @@ class CollectorCoordinator(
                                 }
                                 is CollectorFetchResult.Unavailable -> {
                                     val failures = (active.consecutiveFailures + 1).coerceAtMost(100)
-                                    repository.finish(active, active.cached, CollectorAttempt(sourceId, now,
+                                    // A 304 from a different final destination must not renew freshness.
+                                    // Forget only stale validators, not the last good snapshot.
+                                    val retained = if (result.resetValidators)
+                                        active.cached?.copy(etag = null, lastModified = null)
+                                        else active.cached
+                                    repository.finish(active, retained, CollectorAttempt(sourceId, now,
                                         when { result.retryAfter != null -> CollectorAttemptState.BACKOFF
                                             result.offline -> CollectorAttemptState.OFFLINE
                                             else -> CollectorAttemptState.FAILED }, failures,

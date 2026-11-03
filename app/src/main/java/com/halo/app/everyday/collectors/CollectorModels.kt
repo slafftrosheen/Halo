@@ -85,7 +85,10 @@ data class CollectorAttempt(val sourceId: String, val at: Instant?, val state: C
 sealed interface CollectorFetchResult {
     data class Updated(val payload: CollectorPayload, val contentRevision: String, val etag: String?, val lastModified: String?, val effectiveUrl: String?) : CollectorFetchResult
     data object NotModified : CollectorFetchResult
-    data class Unavailable(val reason: String, val retryAfter: Duration? = null, val offline: Boolean = false) : CollectorFetchResult
+    /** resetValidators removes only obsolete ETag/Last-Modified metadata after a destination change;
+     *  the last successful body and its honest retrieval timestamp remain available offline. */
+    data class Unavailable(val reason: String, val retryAfter: Duration? = null, val offline: Boolean = false,
+        val resetValidators: Boolean = false) : CollectorFetchResult
 }
 
 interface Collector {

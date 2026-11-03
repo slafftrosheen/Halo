@@ -200,6 +200,49 @@ class CollectorIntegrationTest {
         assertThrows(RemoteDispatchBlocked::class.java) { runBlocking { adapter.fetch(selected, null) } }
         assertEquals(3, requests.size)
     }
+    @Test fun changedConditionalDestinationKeepsCachedBodyButDropsOldValidatorsBeforeRetry() = runBlocking {
+        policy.change(true)
+        val selected = repository.save(source(), null)
+        val existing = snapshot(selected)
+        val initial = reserve(selected)
+        assertTrue(repository.finish(initial, existing, CollectorAttempt(selected.id, start, CollectorAttemptState.CURRENT)))
+        clock.advance(3700)
+
+        val requests = CopyOnWriteArrayList<Request>()
+        val movedUrl = "https://example.org/redirected"
+        val base = OkHttpClient.Builder().addInterceptor { chain ->
+            requests += chain.request()
+            // Deterministic fixture for OkHttp's final URL after an HTTP redirect.
+            val finalRequest = chain.request().newBuilder().url(movedUrl).build()
+            Response.Builder().request(finalRequest).protocol(Protocol.HTTP_1_1).message("fixture")
+                .code(if (requests.size == 1) 304 else 200)
+                .body("<rss><channel><item><guid>two</guid><title>Moved feed</title></item></channel></rss>".toResponseBody())
+                .build()
+        }.build()
+        val coordinator = owner(PublicHttpCollector(CollectorKind.FEED, policy, base, clock))
+        coordinator.refresh(selected.id, manual = true)
+
+        val withheld = requireNotNull(repository.state(selected.id))
+        assertEquals(CollectorAttemptState.FAILED, withheld.attempt.state)
+        assertEquals(existing.payload, withheld.snapshot?.payload)
+        assertEquals(existing.retrievedAt, withheld.snapshot?.retrievedAt)
+        assertEquals(existing.verifiedAt, withheld.snapshot?.verifiedAt)
+        assertNull(withheld.snapshot?.etag)
+        assertNull(withheld.snapshot?.lastModified)
+        assertEquals("v1", requests.single().header("If-None-Match"))
+
+        // After the bounded backoff, a new permitted request is unconditional.
+        clock.advance(86_401)
+        coordinator.refresh(selected.id, manual = true)
+        val refreshed = requireNotNull(repository.state(selected.id)).snapshot!!
+        assertEquals(movedUrl, refreshed.effectiveUrl)
+        assertTrue(refreshed.retrievedAt > existing.retrievedAt)
+        assertEquals("Moved feed", (refreshed.payload as CollectorPayload.Articles).items.single().title)
+        assertEquals(2, requests.size)
+        assertNull(requests.last().header("If-None-Match"))
+        assertNull(requests.last().header("If-Modified-Since"))
+    }
+
     @Test fun httpAdapterRejectsOversizeAndReturnsRetryAfterWithoutClobberingCache() = runBlocking {
         policy.change(true); var status = 429
         val base = OkHttpClient.Builder().addInterceptor { chain -> Response.Builder().request(chain.request())

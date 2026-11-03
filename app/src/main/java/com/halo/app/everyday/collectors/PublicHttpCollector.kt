@@ -66,8 +66,23 @@ class PublicHttpCollector(
                 }
             }
             lease.requireCurrent()
-            if (response.code == 304) return@coroutineScope if (cache != null) CollectorFetchResult.NotModified
-                else CollectorFetchResult.Unavailable("Source reported unchanged content, but no matching snapshot is stored")
+            if (response.code == 304) {
+                val previous = cache ?: return@coroutineScope CollectorFetchResult.Unavailable(
+                    "Source reported unchanged content, but no matching snapshot is stored")
+                // Conditional validators belong to the actual final resource that supplied
+                // the body, not merely to an unchanged source ID or a redirecting entry URL.
+                // Never use another final URL's 304 as proof that this cached body is fresh.
+                val resourceUnchanged = runCatching {
+                    val expected = CollectorUrlPolicy.validate(previous.effectiveUrl ?: requireNotNull(source.endpoint))
+                        .newBuilder().fragment(null).build()
+                    val actual = CollectorUrlPolicy.validate(response.url).newBuilder().fragment(null).build()
+                    expected == actual
+                }.getOrDefault(false)
+                if (!resourceUnchanged) return@coroutineScope CollectorFetchResult.Unavailable(
+                    "The feed destination changed. Cached news remains available; refresh will fetch the new destination",
+                    resetValidators = true)
+                return@coroutineScope CollectorFetchResult.NotModified
+            }
             if (response.bytes == null) return@coroutineScope CollectorFetchResult.Unavailable(
                 if (response.code == 429) "Source request limit reached" else "Source returned HTTP ${response.code}", response.retryAfter)
             val payload = withContext(Dispatchers.Default) {
