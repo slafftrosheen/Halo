@@ -251,7 +251,7 @@ class DefaultSkillRegistry(
             configurationSkill("halo.everyday", "Your day, organizer and widgets",
                 "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.everyday,
-                setOf("halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")),
+                setOf("halo_organizer_calendar_preview","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")),
             configurationSkill("halo.screen.layout", "halo Screen layout",
                 "Preview and edit the native halo Screen layout, saved presets and presentation settings. Separate from cross-app screen control.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.screenLayout,

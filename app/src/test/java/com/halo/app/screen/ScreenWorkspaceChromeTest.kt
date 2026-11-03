@@ -28,14 +28,14 @@ class ScreenWorkspaceChromeTest {
     private var cancels = 0
     private var exited = false
 
-    private fun show(editing: Boolean = false, full: Boolean = true, active: Boolean = false, visible: Boolean = true, hasLayout: Boolean = true) {
+    private fun show(editing: Boolean = false, full: Boolean = true, active: Boolean = false, visible: Boolean = true, hasLayout: Boolean = true, applyAllowed: Boolean = true) {
         compose.setContent { HostlessHaloTheme(fontScale = 2f) { Box(Modifier.width(700.dp).height(300.dp)) {
             ScreenWorkspaceChrome(hasLayout, editing, full, visible, active, !active, {}, {}, { exited = !it }, {},
                 { applies++ }, { cancels++ }, {}, {}, { notes++ }, {}, { size ->
                     HaloOrbLauncher(HaloSignalPresentation(reducedMotion = true),
                         HaloOrbInteraction(if (active) HaloOrbPrimary.STOP else HaloOrbPrimary.TALK, active),
                         HaloOrbShortcut.defaults, {}, { stops++ }, { stops++ }, { tools++ }, size)
-                })
+                },applyAllowed=applyAllowed)
         } } }
     }
 
@@ -63,6 +63,13 @@ class ScreenWorkspaceChromeTest {
         compose.onNodeWithText("Cancel").assertIsDisplayed().performClick()
         assertEquals(1, applies); assertEquals(1, cancels)
         assertEquals(0, notes); assertEquals(0, tools)
+    }
+
+    @Test fun unconfirmedSaveDisablesReplayWhileKeepingExplicitCancelAvailable() {
+        show(editing=true,full=false,applyAllowed=false)
+        compose.onNodeWithText("Apply").assertIsNotEnabled()
+        compose.onNodeWithText("Cancel").assertIsEnabled().performClick()
+        assertEquals(0,applies);assertEquals(1,cancels)
     }
 
     @Test fun deskEntryBeforeAnyLayoutStillHasAnExplicitExit() {

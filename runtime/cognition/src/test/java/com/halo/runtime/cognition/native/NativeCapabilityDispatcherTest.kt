@@ -19,8 +19,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeCapabilityDispatcherTest {
-    private val commands = linkedMapOf("Set a timer for two minutes" to "halo_timer", "Show my alarms" to "halo_clock_view",
-        "Snooze the alarm" to "halo_clock_modify", "Create new contact" to "halo_contact_editor",
+    private val commands = linkedMapOf("Set a timer for two minutes" to "halo_organizer_create", "Show my alarms" to "halo_organizer_query",
+        "Snooze the alarm" to "halo_organizer_clock_action",
+        "Show system clock alarms" to "halo_clock_view","Snooze system clock alarm" to "halo_clock_modify",
+        "Set a system alarm for 7 AM" to "halo_set_alarm","Start a system timer for two minutes" to "halo_timer", "Create new contact" to "halo_contact_editor",
         "Create a calendar event" to "halo_calendar_editor", "Open Halo Notebook" to "halo_open_screen", "Open Spotify" to "halo_open_app", "Lower volume" to "halo_volume",
         "Turn off the flashlight" to "halo_flashlight", "Mute the phone" to "halo_ringer",
         "Set brightness to forty percent" to "halo_brightness", "Open Bluetooth settings" to "halo_open_settings",
@@ -70,6 +72,19 @@ class NativeCapabilityDispatcherTest {
             assertEquals(mapOf("screen" to destination.wireId), typed?.arguments)
             assertEquals(typed?.arguments, speechFinal?.arguments)
             assertNull(dispatcher.requestFor(Interpretation("uncertain", intent = intent, confidence = 0.79f)))
+        }
+        for(source in listOf(Source.USER,Source.MICROPHONE)) {
+            val alarm=dispatcher.requestFor(Interpretation("Wake me at 7 AM",intent=SetAlarmIntent,confidence=1f,source=source))!!
+            assertEquals("halo_organizer_alarm",alarm.operation)
+            assertEquals(mapOf("timeExpression" to "7 AM"),alarm.arguments)
+            val timer=dispatcher.requestFor(Interpretation("two minutes",intent=TimerIntent(120),confidence=1f,source=source))!!
+            assertEquals("halo_organizer_create",timer.operation)
+            assertEquals(mapOf("record" to mapOf("kind" to "TIMER","title" to "Timer","timerDurationMs" to 120000L)),timer.arguments)
+            val system=dispatcher.requestFor(Interpretation("Show system clock alarms",intent=NativeCommandParser.parse("Show system clock alarms")!!,confidence=1f,source=source))!!
+            assertEquals("halo_clock_view",system.operation)
+            val clarified=dispatcher.requestFor(Interpretation("Wake me tomorrow morning",intent=SetAlarmIntent,confidence=1f,source=source,
+                entities=listOf(TimeEntity(TemporalValue.TimeOfDay(java.time.LocalTime.of(7,15),DayRelation.TOMORROW),"7:15 AM",0.99f))))!!
+            assertEquals(mapOf("type" to "CLOCK","time" to "07:15","dayRelation" to "TOMORROW"),clarified.arguments["resolvedTime"])
         }
         assertNull(dispatcher.requestFor(Interpretation("untrusted route", intent = NativeHaloScreenIntent("canvas/guessed"), confidence = 1f)))
         for (provider in listOf("provider.litert.local", "gemini_503", "openai", "openrouter/concrete", "openrouter/free")) {

@@ -311,6 +311,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         is NativeOpenApplicationIntent,
         is NativeHaloScreenIntent,
         is TimerIntent,
+        is NativeSystemAlarmIntent,
         is VolumeIntent,
         is FlashlightIntent,
         is BrightnessIntent,
@@ -340,6 +341,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
 
     fun requestFor(interpretation: Interpretation): NativeCapabilityRequest? {
         if (interpretation.confidence < 0.8f) return null
+        OrganizerNativeRequests.requestFor(interpretation)?.let {return it}
         val args: Map<String, Any>
         val tool: String
         val capability: String
@@ -366,14 +368,6 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 tool = "halo_calendar_editor"
                 capability = "host.calendar.editor"
                 args = emptyMap()
-            }
-            is NativeClockIntent -> {
-                val view = intent.action in setOf("show_alarms", "show_timers")
-                val modify = intent.action in setOf("dismiss_next_alarm", "snooze_alarm", "dismiss_expired_timers")
-                if (!view && !modify) return null
-                tool = if (view) "halo_clock_view" else "halo_clock_modify"
-                capability = if (view) "host.clock.view" else "host.clock.modify"
-                args = mapOf("action" to intent.action)
             }
             is com.halo.cognition.language.NativeTargetIntent -> {
                 tool = "halo_native_target"
@@ -405,7 +399,6 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 capability = "host.native.destination"
                 args = mapOf("destination" to intent.destination.wireId)
             }
-            is TimerIntent -> { tool = "halo_timer"; capability = "host.timer.set"; args = mapOf("seconds" to intent.seconds) }
             is VolumeIntent -> { tool = "halo_volume"; capability = "host.volume.control"; args = intent.percent?.let { mapOf("percent" to it) } ?: mapOf("direction" to (intent.direction ?: return null)) }
             is FlashlightIntent -> { tool = "halo_flashlight"; capability = "host.flashlight.control"; args = mapOf("state" to if (intent.enabled) "on" else "off") }
             is BrightnessIntent -> { tool = "halo_brightness"; capability = "host.screen.brightness"; args = mapOf("level" to intent.percent) }
@@ -419,7 +412,6 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             NetworkStatusIntent -> { tool = "halo_network_status"; capability = "host.network.read"; args = emptyMap() }
             OpenIntent -> { tool = "halo_open_app"; capability = "host.application.launch"; args = mapOf("appName" to (interpretation.entities.filterIsInstance<ApplicationEntity>().singleOrNull()?.name ?: return null)) }
             CallIntent -> { tool = "halo_dial_contact"; capability = "host.contacts.read"; args = mapOf("name" to (interpretation.entities.filterIsInstance<PersonEntity>().singleOrNull()?.name ?: return null)) }
-            SetAlarmIntent -> { tool = "halo_set_alarm"; capability = "host.alarm.set"; args = mapOf("timeExpression" to interpretation.transcript.trim().trimEnd('.').replace(Regex("^(?:set (?:an? )?alarm(?: for)?|alarm for|wake me at)\\s+", RegexOption.IGNORE_CASE), "")) }
             PlayIntent, PauseIntent -> {
                 // A named track must never silently become "resume whatever is playing".
                 if (interpretation.intent == PlayIntent && interpretation.entities.filterIsInstance<MediaEntity>().any { it.title.lowercase() !in setOf("music", "the music", "media") }) return null

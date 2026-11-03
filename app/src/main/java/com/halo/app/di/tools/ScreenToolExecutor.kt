@@ -128,7 +128,12 @@ class ScreenToolExecutor(private val store: LocalScreenStore, private val allowe
                         } else {
                             require(string(args, "previewToken") == token)
                             if (state.layout == null) store.saveLayout(draft)
-                            else check(store.applyDraft(state.layout, draft))
+                            else when(store.applyDraftChecked(state.layout,draft)) {
+                                ScreenApplyResult.CONFLICT -> return@withToolState reject(ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                                ScreenApplyResult.PERSISTENCE_UNKNOWN -> return@withToolState ToolExecutionResult.Failed(toolCall.id,toolCall.functionName,
+                                    "Screen disk save is unconfirmed. Read current state; do not replay this change.",completionUnknown=true)
+                                ScreenApplyResult.APPLIED -> Unit
+                            }
                             persisted(expected)
                         }
                     }

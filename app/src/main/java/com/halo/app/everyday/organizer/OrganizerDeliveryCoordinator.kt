@@ -20,6 +20,7 @@ interface OrganizerDeliveryPort {
 }
 
 data class DeliveryOutcome(val state: DeliveryState, val detail: String? = null)
+class OrganizerDeliveryUncertain(cause: Exception): IllegalStateException("Delivery state changed; Android completion is unconfirmed",cause)
 
 /** One application owner serializes callbacks, actions and reconciliation. Room also fences every write. */
 class OrganizerDeliveryCoordinator(
@@ -161,8 +162,11 @@ class OrganizerDeliveryCoordinator(
     suspend fun snooze(key: String, version: Long, duration: Duration, expectedTriggerAt: Instant? = null): OrganizerRecord = mutex.withLock {
         checkActionTrigger(key, version, expectedTriggerAt)
         val saved = repository.snoozeDelivery(key, version, duration, elapsedMs(), bootId())
-        port.dismiss(key, version)
-        reconcileLocked(saved.id)
+        try {
+            port.dismiss(key, version)
+            reconcileLocked(saved.id)
+        } catch(cancelled: CancellationException) {throw cancelled}
+          catch(error: Exception) {throw OrganizerDeliveryUncertain(error)}
         saved
     }
 
@@ -170,8 +174,11 @@ class OrganizerDeliveryCoordinator(
     suspend fun dismiss(key: String, version: Long, expectedTriggerAt: Instant? = null): Boolean = mutex.withLock {
         checkActionTrigger(key, version, expectedTriggerAt)
         val accepted = repository.dismissDelivery(key, version)
-        port.dismiss(key, version)
-        if (accepted) reconcileLocked(key.substringBefore('@'))
+        if(accepted) try {
+            port.dismiss(key, version)
+            reconcileLocked(key.substringBefore('@'))
+        } catch(cancelled: CancellationException) {throw cancelled}
+          catch(error: Exception) {throw OrganizerDeliveryUncertain(error)}
         accepted
     }
 

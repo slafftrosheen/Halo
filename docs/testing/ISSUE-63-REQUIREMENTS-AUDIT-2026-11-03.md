@@ -1,5 +1,7 @@
 # Issue 63 requirements audit — 3 November 2026
 
+Follow-up: [the ten-finding coding batch](/home/pi/Projects/Halo/docs/testing/ISSUE-63-AUDIT-FIXES-2026-11-03.md) now tracks authored corrections and current validation. This audit describes code at `ba177d110`; its original findings/checklist are retained as that historical assessment.
+
 **Audit complete. Issue 63 implementation is not code complete.** The production source implements most requested owners and surfaces, but the findings below require code changes. Device acceptance is a separate remaining gate.
 
 Audited code: `ba177d110b1c1e092cea6666ccaeca1409f7baff` on `codex/issue-63-completion`, including the `511718999` corrections and `ba177d110` Organizer/menu changes. The live [GitHub issue #63](https://github.com/slafftrosheen/Halo/issues/63) was read for this audit: updated `2026-11-03T04:56:11Z`, still open; its requirements body matches [the repository snapshot][issue]. The updated issue title is “Halo Everyday Intelligence — Organizer, Collectors, Daily Briefing & Widgets | UI 5.0”.

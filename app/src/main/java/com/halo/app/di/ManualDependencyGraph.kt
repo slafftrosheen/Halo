@@ -191,9 +191,10 @@ object ManualDependencyGraph {
             infra.scope.launch { com.halo.app.everyday.briefing.android.BriefWorker.maintain(applicationContext, briefRepository.settings().proactive) }
         })
     }
-    private fun briefAttention(): com.halo.app.daily.DailyAssistantSnapshot =
-        if (dailyAssistantControllerOwner.isInitialized()) dailyAssistantControllerOwner.value.recentBase()
-        else com.halo.app.daily.DailyAssistantSnapshot()
+    private fun briefAttentionObservation(): com.halo.app.daily.DailyAssistantObservation =
+        if (dailyAssistantControllerOwner.isInitialized()) dailyAssistantControllerOwner.value.recentBaseObservation()
+        else com.halo.app.daily.DailyAssistantObservation()
+    private fun briefAttention(): com.halo.app.daily.DailyAssistantSnapshot = briefAttentionObservation().snapshot
     private val briefLocalAuthority: com.halo.app.everyday.briefing.BriefLocalAuthority by lazy {
         com.halo.app.everyday.briefing.BriefLocalAuthority(applicationContext, appDatabase, storage,
             ::currentTimelineEvents, { briefAttention().items.map { it.id }.toSet() })
@@ -202,7 +203,7 @@ object ManualDependencyGraph {
         appDatabase,storage.getString("kids_project_library_v1"))
     val briefService: com.halo.app.everyday.briefing.EverydayBriefService by lazy {
         com.halo.app.everyday.briefing.EverydayBriefService(briefRepository, collectorRepository, organizerRepository,
-            attention = { briefAttention() }, audience = {
+            attention = { briefAttentionObservation() }, audience = {
                 if (!kidsPreferences.loadedState.value || kidsPreferences.enabled.value) com.halo.app.everyday.briefing.BriefAudience.KIDS
                 else com.halo.app.everyday.briefing.BriefAudience.EVERYDAY
             }, childLocalFactIds = briefLocalAuthority::childFactIds, localFactStillExists = briefLocalAuthority::stillExists,
@@ -244,6 +245,10 @@ object ManualDependencyGraph {
         com.halo.app.everyday.organizer.OrganizerUseCases(organizerRepository,
             elapsedMs = com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
             bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) })
+    }
+    val organizerCalendars by lazy {
+        com.halo.app.data.everyday.OrganizerCalendarService(appDatabase,organizerUseCases,workspaceFileRepository,workspaceRepository,
+            notebookRepository,applicationContext.contentResolver)
     }
     val organizerDelivery by lazy {
         com.halo.app.everyday.organizer.OrganizerDeliveryCoordinator(organizerRepository,
@@ -1188,6 +1193,7 @@ object ManualDependencyGraph {
                     },
                     elapsedMs=com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
                     bootId={com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext)},
+                    delivery=organizerDelivery,calendars=organizerCalendars,
                     power={privacyModes.mode.value==com.halo.app.ai.PrivacyMode.CLOUD},
                     ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState),
                 com.halo.app.di.tools.ScreenToolExecutor(screenStore) {

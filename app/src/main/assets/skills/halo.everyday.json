@@ -15,6 +15,11 @@
     "halo_clock_save",
     "halo_everyday_open",
     "halo_organizer_action",
+    "halo_organizer_alarm",
+    "halo_organizer_calendar_export",
+    "halo_organizer_calendar_import",
+    "halo_organizer_calendar_preview",
+    "halo_organizer_clock_action",
     "halo_organizer_create",
     "halo_organizer_delivery",
     "halo_organizer_edit",
@@ -68,6 +73,31 @@
     },
     {
       "toolId": "halo_organizer_action",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_organizer_alarm",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_organizer_calendar_export",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_organizer_calendar_import",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_organizer_calendar_preview",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_organizer_clock_action",
       "risk": "REVERSIBLE",
       "requiredPermissions": []
     },

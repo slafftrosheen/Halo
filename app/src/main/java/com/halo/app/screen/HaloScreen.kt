@@ -112,7 +112,9 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
     val screenResources = androidx.compose.ui.platform.LocalResources.current
     val environment = rememberScreenEnvironment()
     val maskSensitive = screenMasksSensitive(fullScreen, hidePrivate, environment)
-    val canInteract = environment.resumed && environment.interactive && !environment.locked && !orbActive
+    var savingLayout by remember { mutableStateOf(false) }
+    var layoutSaveUnknown by rememberSaveable { mutableStateOf(false) }
+    val canInteract = !savingLayout && environment.resumed && environment.interactive && !environment.locked && !orbActive
     val latestCanInteract = rememberUpdatedState(canInteract)
     val latestMaskSensitive = rememberUpdatedState(maskSensitive)
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
@@ -303,7 +305,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         calendarReadAt = if (calendarAllowed && result.isSuccess) Instant.now() else null
         calendarLoading = false
     }
-    BackHandler(fullScreen || customizing) { if (fullScreen) onFullScreen(false) else setCustomizing(false) }
+    BackHandler(fullScreen || customizing) { if (!savingLayout) {if (fullScreen) onFullScreen(false) else {setCustomizing(false);layoutSaveUnknown=false}} }
     ScreenWindowPolicy(fullScreen, keepCharging, dimAtNight, now, environment)
     val shift = if (fullScreen && environment.resumed && environment.interactive) ((now.epochSecond / 300L) % 5L).toInt() - 2 else 0
     LaunchedEffect(environment.resumed, environment.locked, orbActive, maskSensitive) {
@@ -431,14 +433,23 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         ScreenWorkspaceChrome(workingLayout != null, customizing, fullScreen, chromeVisible, orbActive,
             canInteract, onChat, { onFullScreen(false); settings = true }, onFullScreen,
             onEdit = { setCustomizing(true) }, onApply = {
-                if (editBase != null && editDraft != null && store.applyDraft(editBase, editDraft)) {
-                    val research = editResearchQuery
-                    setCustomizing(false); notice = "Layout changed"; canUndo = store.hasUndo()
-                    if (!research.isNullOrBlank()) researchRefreshQuery = research
-                } else notice = conflictText
-            }, onCancel = { setCustomizing(false); notice = null }, onAppearance = { appearanceOpen = true },
+                if(!savingLayout && !layoutSaveUnknown && editBase!=null && editDraft!=null) {
+                    val base=editBase;val draft=editDraft;val research=editResearchQuery
+                    savingLayout=true
+                    coroutineScope.launch {
+                        try {
+                            when(withContext(Dispatchers.IO) {store.applyDraftChecked(base,draft)}) {
+                                ScreenApplyResult.APPLIED -> {setCustomizing(false);notice="Layout changed";canUndo=store.hasUndo()
+                                    if(!research.isNullOrBlank()) researchRefreshQuery=research}
+                                ScreenApplyResult.CONFLICT -> notice=conflictText
+                                ScreenApplyResult.PERSISTENCE_UNKNOWN -> {layoutSaveUnknown=true;notice="Save was not confirmed. Your draft is kept. Cancel to review the saved layout before another change."}
+                            }
+                        } finally {savingLayout=false}
+                    }
+                }
+            }, onCancel = { if(!savingLayout) {setCustomizing(false);layoutSaveUnknown=false;notice=null} }, onAppearance = { appearanceOpen = true },
             onAdd = { picker = true }, onNote = { onQuickNote(); notice = noteRequestedText },
-            onTalk = onTalk, orbControl = orbControl, shellZone = shellZone)
+            onTalk = onTalk, orbControl = orbControl, shellZone = shellZone, applyAllowed = !layoutSaveUnknown)
     }
     val utilityProjected = com.halo.app.ui.presence.BindShellUtilityBand(
         screenOwner, content = screenUtility)
@@ -674,7 +685,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
         }
     }
     if (askLayout && !maskSensitive) ScreenNativeSheet(onDismissRequest = {
-        askLayout = false; proposedLayout = null; proposedPlan = null; proposedResearchQuery = null
+        if(!savingLayout) {askLayout = false; proposedLayout = null; proposedPlan = null; proposedResearchQuery = null; layoutSaveUnknown=false}
     }) {
         Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -685,6 +696,7 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                 layoutRequest = it; proposedLayout = null; proposedPlan = null; proposedResearchQuery = null; requestError = false
             }, label = { Text(uiText("What would you like to change?")) },
                 modifier = Modifier.fillMaxWidth(), kind = com.halo.app.ui.components.VoiceFieldKind.TEXT)
+            if(layoutSaveUnknown) Text(uiText("Save was not confirmed. Your draft is kept. Cancel to review the saved layout before another change."),color=MaterialTheme.colorScheme.error)
             if (requestError) Text(uiText("That change is unavailable. Use Customize to choose the card and action."),
                 color = MaterialTheme.colorScheme.error)
             val proposal = proposedLayout
@@ -727,15 +739,25 @@ fun HaloScreen(store: LocalScreenStore, fullScreen: Boolean, onFullScreen: (Bool
                     else { startEdit(proposal, proposedResearchQuery); askLayout = false; proposedLayout = null; proposedPlan = null }
                 }, enabled = selectedChanges.isNotEmpty() || !proposedResearchQuery.isNullOrBlank()) { Text(stringResource(R.string.screen_preview_on_screen)) }
                 com.halo.app.ui.components.HaloActionButton(onClick = {
-                    val base = proposalBase
-                    if (base == null || !store.applyDraft(base, proposal)) { proposedLayout = null; proposedPlan = null; requestError = true }
-                    else {
-                        canUndo = store.hasUndo(); notice = "Layout changed"
-                        proposedLayout = null; proposedPlan = null; askLayout = false
-                        proposedResearchQuery?.let { researchRefreshQuery = it }
-                        proposedResearchQuery = null
+                    val base=proposalBase
+                    if(base==null) requestError=true
+                    else if(!savingLayout && !layoutSaveUnknown) {
+                        val research=proposedResearchQuery
+                        savingLayout=true
+                        coroutineScope.launch {
+                            try {
+                                when(withContext(Dispatchers.IO) {store.applyDraftChecked(base,proposal)}) {
+                                    ScreenApplyResult.APPLIED -> {canUndo=store.hasUndo();notice="Layout changed"
+                                        proposedLayout=null;proposedPlan=null;askLayout=false
+                                        if(!research.isNullOrBlank()) researchRefreshQuery=research
+                                        proposedResearchQuery=null}
+                                    ScreenApplyResult.CONFLICT -> requestError=true
+                                    ScreenApplyResult.PERSISTENCE_UNKNOWN -> {layoutSaveUnknown=true;notice="Save was not confirmed. Your draft is kept. Cancel to review the saved layout before another change."}
+                                }
+                            } finally {savingLayout=false}
+                        }
                     }
-                }, enabled = selectedChanges.isNotEmpty() || !proposedResearchQuery.isNullOrBlank()) { Text(uiText("Apply")) }
+                }, enabled = !savingLayout && !layoutSaveUnknown && (selectedChanges.isNotEmpty() || !proposedResearchQuery.isNullOrBlank())) { Text(uiText("Apply")) }
             }
             TextButton(onClick = { proposedLayout = null; askLayout = false; setCustomizing(true) }) { Text(uiText("Customize")) }
         }

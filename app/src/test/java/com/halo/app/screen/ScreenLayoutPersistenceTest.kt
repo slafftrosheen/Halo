@@ -134,6 +134,34 @@ class ScreenLayoutPersistenceTest {
         assertEquals(restoredBase, LocalScreenStore(context).layout.value)
     }
 
+    @Test fun checkedApplyDistinguishesDiskFailureFromConflictAndOnlyAcknowledgesCommittedReadback() {
+        val initial=LocalScreenStore(context)
+        initial.saveLayout(ScreenWidgets.starter("Quiet"))
+        assertTrue(initial.confirmToolPersistence())
+        val base=initial.layout.value!!
+        val draft=base.copy(name="Draft survives")
+        var writes=0
+        val failing=LocalScreenStore(context) {writes++;false}
+        assertEquals(ScreenApplyResult.PERSISTENCE_UNKNOWN,failing.applyDraftChecked(base,draft))
+        assertEquals("Draft survives",failing.layout.value!!.name)
+        assertEquals(base,LocalScreenStore(context).layout.value)
+        assertEquals(ScreenApplyResult.CONFLICT,failing.applyDraftChecked(base,draft))
+        assertEquals(1,writes)
+        val healthy=LocalScreenStore(context)
+        assertEquals(ScreenApplyResult.APPLIED,healthy.applyDraftChecked(base,draft))
+        assertEquals(healthy.layout.value,LocalScreenStore(context).layout.value)
+        assertTrue(LocalScreenStore(context).hasUndo())
+    }
+
+    @Test fun commitFalseAfterMemoryPublicationDoesNotBecomeAFalseUnsavedOrSuccessReceipt() {
+        val first=LocalScreenStore(context);first.saveLayout(ScreenWidgets.starter("Quiet"));assertTrue(first.confirmToolPersistence())
+        val base=first.layout.value!!
+        val unknown=LocalScreenStore(context) {editor -> editor.commit();false}
+        assertEquals(ScreenApplyResult.PERSISTENCE_UNKNOWN,unknown.applyDraftChecked(base,base.copy(name="Maybe saved")))
+        assertEquals("Maybe saved",LocalScreenStore(context).layout.value!!.name)
+        assertEquals(ScreenApplyResult.CONFLICT,unknown.applyDraftChecked(base,base.copy(name="Blind repeat")))
+    }
+
     @Test fun applyingAnUnchangedPreviewDoesNotCreateAnUndoOrVersionChange() {
         val store = LocalScreenStore(context)
         store.saveLayout(ScreenWidgets.starter("Quiet"))

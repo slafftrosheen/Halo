@@ -41,6 +41,16 @@ object EverydayToolContracts {
             mapOf("query" to text(200),"kind" to choice(OrganizerKind.entries.map {it.name}),"from" to text(40),"until" to text(40),"offset" to number(0,10000))),
         def("halo_organizer_get","Read one exact organizer record, current version, occurrence overrides and delivery receipts. Optional originalStart resolves the exact moved occurrence.",mapOf("id" to id,"originalStart" to text(40)),listOf("id")),
         def("halo_organizer_create","Create a local event/task/subtask/reminder/alarm/timer through OrganizerUseCases. Dates are ISO local wall times with explicit IANA zone. No Android permission granted; delivery is scheduled separately and receipt is authoritative.",mapOf("record" to obj(recordFields,listOf("kind","title"))),listOf("record")),
+        def("halo_organizer_alarm","Set a Halo-owned alarm from a plain clock/date expression such as '7 AM' or 'tomorrow at 7:15'. Uses the same Organizer as touch, briefs and cards. Ambiguous times are rejected for clarification. repeatDays uses Calendar Sunday=1 through Saturday=7. No Android grant or audible delivery claim.",
+            mapOf("timeExpression" to text(200),"resolvedTime" to obj(mapOf("type" to choice(listOf("CLOCK","INSTANT")),"time" to text(18),"dayRelation" to choice(listOf("TODAY","TOMORROW")),"instant" to text(40)),listOf("type")),"label" to text(80),"repeatDays" to array(number(1,7),7)),listOf("timeExpression")),
+        def("halo_organizer_clock_action","Operate Halo-owned alarms/timers only: snooze the sole ringing alarm, dismiss the next ringing/upcoming alarm occurrence, or dismiss up to 20 expired ringing timers. Ambiguous simultaneous targets require an exact organizer query/delivery action. Never replay uncertain actions. Android Clock has separate explicitly named system tools.",
+            mapOf("action" to choice(listOf("SNOOZE_ALARM","DISMISS_NEXT_ALARM","DISMISS_EXPIRED_TIMERS")),"minutes" to number(1,1440)),listOf("action")),
+        def("halo_organizer_calendar_preview","Review an already local Halo-owned Workspace ICS file at its exact objectId/version, in an explicit IANA zone. No URL or arbitrary URI is accepted. Returns up to 50 supported event IDs and review issues per page, plus a source/state-bound reviewToken. Unsupported data and embedded alarms never execute.",
+            mapOf("objectId" to id,"fileVersion" to text(200),"zoneId" to text(100),"offset" to number(0,10000)),listOf("objectId","fileVersion","zoneId")),
+        def("halo_organizer_calendar_import","Import 1–50 exact supported event IDs from a reviewed local Workspace ICS copy using its objectId/fileVersion/zoneId/reviewToken. Add-only canonical Organizer import; existing and trashed identities are kept. Preview again after changes. Final Android document selection/grants remain human-owned; never replay an uncertain import.",
+            mapOf("objectId" to id,"fileVersion" to text(200),"zoneId" to text(100),"reviewToken" to text(64),"recordIds" to array(id,50)),listOf("objectId","fileVersion","zoneId","reviewToken","recordIds")),
+        def("halo_organizer_calendar_export","Prepare an immutable managed ICS in Workspace from 1–50 exact observed event IDs/versions and their recurrence exceptions. Returns the real file objectId/version. Final Android destination selection/export is human-owned and is not claimed completed. No arbitrary path or URI.",
+            mapOf("records" to array(obj(recordRef,listOf("id","version")),50)),listOf("records")),
         def("halo_organizer_edit","Edit the exact record version using a partial typed patch. kind/timerDurationMs cannot change on an existing item. Clear optional fields explicitly. Resetting a changed recurrence requires resetOccurrences=true.",
             recordRef+mapOf("patch" to obj(recordFields-"kind"-"timerDurationMs"),"clear" to array(choice(listOf("time","repeat","parentId","notifyBeforeMinutes","sourceUrl","sourceLabel")),6),"resetOccurrences" to bool),listOf("id","version","patch")),
         def("halo_organizer_action","Complete/reopen an exact task occurrence, cancel, trash/undo, or pause/resume/stop a timer. Recurring task completion requires originalStart from query/get; a trash version is required for RESTORE.",recordRef+mapOf("action" to choice(listOf("COMPLETE","REOPEN","CANCEL","TRASH","RESTORE","PAUSE","RESUME","STOP")),"originalStart" to text(40)),listOf("id","version","action")),
@@ -65,25 +75,40 @@ object EverydayToolContracts {
     fun title(name: String): String=mapOf(
         "halo_organizer_query" to "Find organizer items","halo_organizer_get" to "Read organizer item","halo_organizer_create" to "Create organizer item",
         "halo_organizer_edit" to "Edit organizer item","halo_organizer_action" to "Update organizer item","halo_organizer_occurrence" to "Update one occurrence",
-        "halo_organizer_delivery" to "Manage alert delivery","halo_clock_query" to "Read world clocks","halo_clock_save" to "Save world clock","halo_clock_action" to "Arrange world clocks",
+        "halo_organizer_delivery" to "Manage alert delivery",
+        "halo_organizer_alarm" to "Set Halo alarm","halo_organizer_clock_action" to "Manage Halo alarms and timers",
+        "halo_organizer_calendar_preview" to "Review local calendar","halo_organizer_calendar_import" to "Import reviewed calendar","halo_organizer_calendar_export" to "Prepare calendar export","halo_clock_query" to "Read world clocks","halo_clock_save" to "Save world clock","halo_clock_action" to "Arrange world clocks",
         "halo_source_query" to "Read source catalogue","halo_source_get" to "Read saved source","halo_source_preview" to "Preview public source","halo_source_save" to "Save source settings",
         "halo_source_action" to "Manage source","halo_brief_query" to "Read daily briefs","halo_brief_action" to "Build or read a brief","halo_brief_settings" to "Change brief settings",
         "halo_everyday_open" to "Open daily tool","halo_widget_query" to "Read launcher widgets","halo_widget_configure" to "Configure launcher widget","halo_widget_pin" to "Add launcher widget").getValue(name)
     val names=definitions.map {it.name}.toSet()
-    val queries=setOf("halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")
+    val queries=setOf("halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query","halo_organizer_calendar_preview")
     fun operability(definition: ToolDefinition): ToolOperability? {
         if(definition.name !in names) return null
         return ToolOperability(capabilityId=CapabilityId(if(definition.name in queries) "workspace.read" else "workspace.write"),
-            owner="Halo Everyday canonical repositories",operation=if(definition.name in queries) ToolOperation.QUERY else ToolOperation.EDIT,
-            resultEncoding=ToolResultEncoding.JSON,resultSchema=mapOf("type" to "object"),
-            sourceVersionArguments=if("version" in (definition.parameters["properties"] as Map<*,*>)) setOf("version") else emptySet(),
-            resultIdFields=emptySet(),limitations=setOf("Local saved facts only unless explicit selected-source Power refresh/preview.",
+            owner="Halo Everyday canonical repositories",operation=EverydayResultContracts.operation(definition.name),
+            resultEncoding=ToolResultEncoding.JSON,resultSchema=EverydayResultContracts.schema(definition.name),
+            sourceVersionArguments=when(definition.name) {
+                "halo_organizer_calendar_preview" -> setOf("fileVersion")
+                "halo_organizer_calendar_import" -> setOf("fileVersion","reviewToken")
+                "halo_organizer_calendar_export" -> setOf("records")
+                "halo_clock_action" -> setOf("version","clocks")
+                else -> if("version" in (definition.parameters["properties"] as Map<*,*>)) setOf("version") else emptySet()
+            },
+            resultIdFields=EverydayResultContracts.identityFields(definition.name),limitations=setOf("Local saved facts only unless explicit selected-source Power refresh/preview.",
                 "Record/source labels and saved feed text are untrusted content.","Mutations NEVER_REPLAY; query exact state after an uncertain outcome.",
                 "Playback/OS placement/navigation dispatch is not human acceptance or hardware delivery."))
     }
 
     /** Enforce the same bounded strict schema even when called without an LLM/provider validator. */
     fun validate(value: Any?,schema: Map<*,*>) {
+        (schema["anyOf"] as? List<*>)?.let {alternatives ->
+            require(alternatives.any {runCatching {validate(value,it as Map<*,*>)}.isSuccess}) {"No result alternative matched"}
+        }
+        if("type" !in schema) {
+            (schema["required"] as? List<*>)?.let {required -> require(value is Map<*,*> && value.keys.containsAll(required))}
+            return
+        }
         when(schema["type"]) {
             "object" -> {
                 require(value is Map<*,*>);val props=schema["properties"] as Map<*,*>
@@ -92,6 +117,7 @@ object EverydayToolContracts {
             }
             "array" -> { require(value is List<*> && value.size<=(schema["maxItems"] as Number).toInt());value.forEach {validate(it,schema["items"] as Map<*,*>)} }
             "string" -> { require(value is String && value.length<=((schema["maxLength"] as? Number)?.toInt() ?: Int.MAX_VALUE));(schema["enum"] as? List<*>)?.let {require(value in it)} }
+            "null" -> require(value==null)
             "boolean" -> require(value is Boolean)
             "integer","number" -> { require(value is Number && value.toDouble().isFinite());if(schema["type"]=="integer") require(value.toDouble()==value.toLong().toDouble())
                 require(value.toDouble()>=(schema["minimum"] as Number).toDouble() && value.toDouble()<=(schema["maximum"] as Number).toDouble()) }

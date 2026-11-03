@@ -4753,4 +4753,26 @@
     <string name="ui_c6f974c44b32" formatted="false">"Укажите локальный IP-адрес BuddyBot."</string>
     <string name="ui_1ca2a9635d72" formatted="false">"Активные записи"</string>
     <string name="ui_19e82138c35f" formatted="false">"Срок сегодня"</string>
+    <string name="ui_616c35db6880" formatted="false">"Эта запись календаря недействительна или не поддерживается. Проверьте её в исходном календаре."</string>
+    <string name="ui_cd6e7bad6639" formatted="false">"Это повторение не поддерживается. Проверьте серию вручную; её правила не упрощались."</string>
+    <string name="ui_5e68c2952f6f" formatted="false">"Определение часового пояса недействительно, не поддерживается или не охватывает это событие."</string>
+    <string name="ui_20a605a1cc77" formatted="false">"Длительность недействительна или превышает допустимый предел в один год."</string>
+    <string name="ui_d703a5c16272" formatted="false">"Для событий на весь день длительность задаётся целыми календарными днями или неделями."</string>
+    <string name="ui_885c1391058d" formatted="false">"Конец события приходится на второе повторение времени при переводе часов. Проверьте время окончания вручную."</string>
+    <string name="ui_dc6929fd201a" formatted="false">"Длительность в днях или неделях без фиксированного часового пояса меняется с поясом устройства. Проверьте её вручную."</string>
+    <string name="ui_3e78ae507962" formatted="false">"Длительность повторений в днях или неделях нельзя сохранить при переводе часов. Проверьте её вручную."</string>
+    <string name="ui_dde9f8db47e2" formatted="false">"Перед импортом этому событию нужно указать время окончания или длительность."</string>
+    <string name="ui_cea78d564796" formatted="false">"У этого события нет поддерживаемого времени начала."</string>
+    <string name="ui_40781bcd72eb" formatted="false">"Идентификатор события или повторения отсутствует, дублируется или неоднозначен."</string>
+    <string name="ui_8d7a8b9d6896" formatted="false">"Это изменение повторения нельзя применить к импортированной серии."</string>
+    <string name="ui_dafa0cb03deb" formatted="false">"Встроенные будильники и вложения не импортируются, не открываются и не планируются."</string>
+    <string name="ui_67a5115f8a4d" formatted="false">"Встроенного часового пояса нет; используются установленные правила IANA для %1$s"</string>
+    <string name="ui_abdc7e8b74a7" formatted="false">"Серия не импортирована: %1$s"</string>
+    <string name="ui_f15a357ac531" formatted="false">"Показано до 90 совпадений. Ищите более старые записи по названию. Активности и хронология используют сохранённую историю."</string>
+    <string name="ui_4d35dd492527" formatted="false">"Сохранение не подтверждено. Черновик сохранён в редакторе. Отмените редактирование и проверьте сохранённый макет перед следующим изменением."</string>
+    <string name="ui_83a21b71adce" formatted="false">"Поставить будильник halo"</string>
+    <string name="ui_93db11f6655e" formatted="false">"Управлять будильниками и таймерами halo"</string>
+    <string name="ui_1f172d9e59c7" formatted="false">"Проверить локальный календарь"</string>
+    <string name="ui_70793485d58a" formatted="false">"Импортировать проверенный календарь"</string>
+    <string name="ui_c1804c4ab7d7" formatted="false">"Подготовить экспорт календаря"</string>
 </resources>

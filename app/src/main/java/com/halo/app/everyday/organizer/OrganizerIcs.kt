@@ -5,7 +5,10 @@ import java.security.MessageDigest
 import java.time.*
 import java.time.format.DateTimeFormatter
 
-data class CalendarImportIssue(val item: Int, val uid: String?, val reason: String, val warning: Boolean = false)
+data class CalendarImportIssue(val item: Int, val uid: String?, val reason: String, val warning: Boolean = false,
+    val reasonCode: CalendarImportReason = CalendarImportReason.fromDiagnostic(reason),
+    val reasonArguments: List<String> = if(reasonCode==CalendarImportReason.IANA_RULES) listOf(reason.substringAfter("for ").take(100)) else emptyList(),
+    val seriesWithheld: Boolean = reason.startsWith("Series withheld: "))
 data class CalendarImportPreview(val records: List<OrganizerRecord>, val exceptions: List<OccurrenceOverride>,
     val issues: List<CalendarImportIssue>)
 

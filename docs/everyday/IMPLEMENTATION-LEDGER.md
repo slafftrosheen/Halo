@@ -1,5 +1,7 @@
 # Everyday implementation ledger — issue 63
 
+Current correction batch: all ten audit findings have authored production fixes and targeted regression sources. See [ten-finding correction record](/home/pi/Projects/Halo/docs/testing/ISSUE-63-AUDIT-FIXES-2026-11-03.md). Source review and the matching test/build gate are tracked there; the audit and release history below must not be treated as current executable evidence.
+
 Status, 3 November: **source implementation is not complete**. The [full requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) at `ba177d110` identifies AUD63-01–09 required code/contract corrections and AUD63-10 setup consistency. The recent correction and menu batches have authored regression sources but no matching test/build run, per the user's code-first instruction. The evidence history below is retained for its exact earlier snapshots; it does not establish current completion. Human/OS acceptance remains separate. Requirements: [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); UI integration history: [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
 
 ## Audited ownership

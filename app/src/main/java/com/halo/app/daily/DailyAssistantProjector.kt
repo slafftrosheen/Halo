@@ -36,6 +36,9 @@ data class DailyAssistantInput(
     val showLearning: Boolean = false, val readyDeviceLabels: List<String> = emptyList(),
     val connectedDeviceLabels: List<String> = emptyList(), val voice: DailyVoiceFact? = null,
 )
+/** Null observation time means the source is unavailable, not successfully empty. */
+data class DailyAssistantObservation(val snapshot: DailyAssistantSnapshot = DailyAssistantSnapshot(), val observedAt: Instant? = null)
+
 data class DailyAssistantSnapshot(val primary: DailyAssistantItem? = null,
     val secondary: List<DailyAssistantItem> = emptyList(), val items: List<DailyAssistantItem> = emptyList(),
     val counts: DailyAssistantCounts = DailyAssistantCounts(), val nextRoutine: DailyRoutinePreview? = null,

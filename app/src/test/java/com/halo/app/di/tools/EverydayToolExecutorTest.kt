@@ -6,6 +6,8 @@ import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.everyday.*
+import com.halo.app.data.workspace.*
+import com.halo.app.data.notebook.*
 import com.halo.app.everyday.briefing.*
 import com.halo.app.everyday.collectors.*
 import com.halo.app.everyday.organizer.*
@@ -34,6 +36,14 @@ class EverydayToolExecutorTest {
     private val useCases=OrganizerUseCases(organizer,clock,{ZoneOffset.UTC},{1000},{"boot"})
     private val sources=RoomCollectorRepository(db)
     private val briefs=RoomBriefRepository(db,clock)
+    private val fileRoot=java.io.File(app.cacheDir,"c-${java.util.UUID.randomUUID().toString().take(8)}").also {it.mkdirs()}
+    private val files=RoomWorkspaceFileRepository(app,db,fileRoot,ownedUri={file ->
+        val uri=android.net.Uri.parse("content://calendar-tools/${file.name}")
+        org.robolectric.Shadows.shadowOf(app.contentResolver).registerInputStreamSupplier(uri) {file.inputStream()}
+        uri
+    })
+    private val notes=RoomNotebookRepository(db.notebookDao(),documents=NotebookDocumentRepository(db.notebookDocumentDao(),db))
+    private val calendars=OrganizerCalendarService(db,useCases,files,RoomWorkspaceRepository(db.notebookDao()),notes,app.contentResolver,clock)
     private var child=false
     private var allowed=true
     private var networkCalls=0
@@ -45,15 +55,27 @@ class EverydayToolExecutorTest {
         override val kind=CollectorKind.FEED
         override suspend fun fetch(source: CollectorSource,cached: CollectorSnapshot?): CollectorFetchResult {networkCalls++;error("Local must not fetch")}
     }))
-    private val briefService=EverydayBriefService(briefs,sources,organizer,{com.halo.app.daily.DailyAssistantSnapshot()},
+    private val briefService=EverydayBriefService(briefs,sources,organizer,{com.halo.app.daily.DailyAssistantObservation()},
         {if(child) BriefAudience.KIDS else BriefAudience.EVERYDAY},{emptySet()},{true},clock,{ZoneOffset.UTC})
+    private var afterDismiss: suspend ()->Unit = {}
+    private val dismissed=mutableListOf<Pair<String,Long>>()
+    private val scheduled=mutableListOf<PlannedDelivery>()
+    private val delivery=OrganizerDeliveryCoordinator(organizer,object: OrganizerDeliveryPort {
+        override suspend fun resetSchedules()=Unit
+        override suspend fun cancelSchedule(recordId: String)=Unit
+        override suspend fun schedule(record: OrganizerRecord,delivery: PlannedDelivery): DeliveryOutcome {
+            scheduled+=delivery;return DeliveryOutcome(DeliveryState.EXACT)
+        }
+        override suspend fun present(record: OrganizerRecord,receipt: DeliveryReceipt,recovered: Boolean)=DeliveryOutcome(DeliveryState.FIRED)
+        override suspend fun dismiss(occurrenceKey: String,recordVersion: Long) {dismissed+=occurrenceKey to recordVersion;afterDismiss()}
+    },clock,{ZoneOffset.UTC},{1000},{"boot"})
     private var opened: EverydayTarget?=null
     private fun executorFor(records: OrganizerUseCases=useCases,sourceReader: CollectorRepository=sources,onAdmission: ()->Unit = {})=EverydayToolExecutor(records,RoomWorldClockRepository(db,clock),OfflineCityCatalogue {error("Not needed")},sourceReader,
         CollectorCoordinator(sources,registry,policy,clock),CollectorPreview(sources,registry,policy,clock),briefs,briefService,{}, {},
         {id,version -> sources.clearSnapshot(id,version)}, {_,_ -> JSONObject()}, {opened=it;true}, {allowed},{child},
-        {val family=child;onAdmission();{check(allowed && child==family)}},{1000},{"boot"},clock,readState={EverydayDisclosureSnapshot.capture(db)})
+        {val family=child;onAdmission();{check(allowed && child==family)}},{1000},{"boot"},delivery,calendars,clock,readState={EverydayDisclosureSnapshot.capture(db)})
     private val executor=executorFor()
-    @After fun close() {db.close();app.deleteDatabase(dbName)}
+    @After fun close() {db.close();app.deleteDatabase(dbName);fileRoot.deleteRecursively()}
     private suspend fun call(name: String,args: Map<String,Any> = emptyMap(),interaction: String?="synthetic")=
         executor.execute(ToolCall("synthetic",name,args),ToolExecutionContext(interactionId=interaction))
     private fun json(value: ToolExecutionResult)=JSONObject((value as ToolExecutionResult.Success).output)
@@ -67,6 +89,118 @@ class EverydayToolExecutorTest {
         assertNotNull(organizer.get(id)!!.deletedAt)
         json(call("halo_organizer_action",mapOf("id" to id,"version" to 3,"action" to "RESTORE")))
         assertNull(organizer.get(id)!!.deletedAt);assertEquals("Moved plan",organizer.get(id)!!.title)
+    }
+    @Test fun assistantSnoozeAndRecurringDismissCancelTheExactPostedVersionWithoutReplay()=runBlocking {
+        for (action in listOf("SNOOZE","DISMISS")) {
+            val record=useCases.create(OrganizerKind.ALARM,"Ring",time=OrganizerTime(LocalDateTime.ofInstant(now,ZoneOffset.UTC),zoneId="UTC"),
+                repeat=RepeatRule(RepeatFrequency.DAILY,count=3))
+            delivery.reconcile(record.id)
+            val receipt=organizer.receipts(record.id).single()
+            assertTrue(delivery.fire(receipt.occurrenceKey,record.version,receipt.triggerAt))
+            val args=mapOf("id" to record.id,"version" to record.version,"occurrenceKey" to receipt.occurrenceKey,"action" to action,"minutes" to 5)
+            val result=call("halo_organizer_delivery",args)
+            assertTrue(result is ToolExecutionResult.Success)
+            assertTrue(receipt.occurrenceKey to record.version in dismissed)
+            val count=scheduled.size
+            assertTrue(call("halo_organizer_delivery",args) is ToolExecutionResult.Rejected)
+            assertEquals(count,scheduled.size)
+            assertEquals(if(action=="SNOOZE") DeliveryState.EXACT else DeliveryState.DISMISSED,
+                organizer.receipts(record.id).first {it.occurrenceKey==receipt.occurrenceKey}.state)
+        }
+    }
+    @Test fun recognizedAlarmAndTimerOperationsSaveCanonicalRecordsWithoutAndroidClockDispatch()=runBlocking {
+        val result=json(call("halo_organizer_alarm",mapOf("timeExpression" to "7 AM","label" to "Wake")))
+        val alarm=organizer.get(result.getJSONObject("record").getString("id"))!!
+        assertEquals(OrganizerKind.ALARM,alarm.kind)
+        assertEquals(LocalTime.of(7,0),alarm.time!!.start.toLocalTime())
+        assertTrue(alarm.time!!.instant(ZoneId.systemDefault())>now)
+        assertFalse(result.getBoolean("deliveryConfirmed"))
+        assertTrue(call("halo_organizer_alarm",mapOf("timeExpression" to "morning")) is ToolExecutionResult.Rejected)
+        val timer=json(call("halo_organizer_create",mapOf("record" to mapOf("kind" to "TIMER","title" to "Timer","timerDurationMs" to 120000))))
+        assertEquals(120000L,organizer.get(timer.getJSONObject("record").getString("id"))!!.timer!!.durationMs)
+        assertEquals(2,organizer.records().size)
+        val clarified=json(call("halo_organizer_alarm",mapOf("timeExpression" to "tomorrow morning",
+            "resolvedTime" to mapOf("type" to "CLOCK","time" to "07:15:30","dayRelation" to "TOMORROW"))))
+        val exact=organizer.get(clarified.getString("id"))!!.time!!
+        assertEquals(LocalTime.of(7,15,30),exact.start.toLocalTime())
+        assertEquals(now.atZone(ZoneId.systemDefault()).toLocalDate().plusDays(1),exact.start.toLocalDate())
+    }
+    @Test fun typedAndSpeechFinalNativeRequestsUseTheRegisteredExecutorAndCanonicalOrganizer()=runBlocking {
+        val registry=ToolRegistry(listOf(executor),EverydayToolContracts.definitions.map {HaloToolDescriptors.assistant(it)!!})
+        for(source in listOf(com.halo.sdk.runtime.Source.USER,com.halo.sdk.runtime.Source.MICROPHONE)) {
+            val intent=com.halo.cognition.language.NativeCommandParser.parse("Set a timer for two minutes")!!
+            val request=com.halo.runtime.cognition.native.OrganizerNativeRequests.requestFor(
+                com.halo.runtime.cognition.blackboard.Interpretation("Set a timer for two minutes",intent=intent,confidence=1f,source=source))!!
+            val result=json(registry.executeAuthorized(ToolAuthorization.Authorized(ToolCall(request.interactionId,request.operation,request.arguments)),
+                ToolExecutionContext(interactionId=request.interactionId)))
+            val saved=organizer.get(result.getString("id"))!!
+            assertEquals(OrganizerKind.TIMER,saved.kind);assertEquals(120000L,saved.timer!!.durationMs)
+            assertEquals(saved.id,json(call("halo_organizer_get",mapOf("id" to saved.id))).getString("id"))
+            val alarm=com.halo.runtime.cognition.native.OrganizerNativeRequests.requestFor(
+                com.halo.runtime.cognition.blackboard.Interpretation("Wake me tomorrow morning",intent=com.halo.cognition.language.SetAlarmIntent,confidence=1f,source=source,
+                    entities=listOf(com.halo.cognition.language.TimeEntity(com.halo.cognition.language.TemporalValue.TimeOfDay(LocalTime.of(7,15),com.halo.cognition.language.DayRelation.TOMORROW),"7:15",0.99f))))!!
+            val alarmResult=json(registry.executeAuthorized(ToolAuthorization.Authorized(ToolCall(alarm.interactionId,alarm.operation,alarm.arguments)),ToolExecutionContext(interactionId=alarm.interactionId)))
+            val alarmRecord=organizer.get(alarmResult.getString("id"))!!
+            assertEquals(OrganizerKind.ALARM,alarmRecord.kind);assertEquals(LocalTime.of(7,15),alarmRecord.time!!.start.toLocalTime())
+        }
+        assertEquals(4,organizer.records().size)
+    }
+    @Test fun calendarToolsReviewImportAndExportExactLocalCopiesWithAuthorityAndStaleGuards()=runBlocking {
+        val note=notes.createNote(title="Calendar source")
+        val raw="BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:one\r\nDTSTART:20261104T090000Z\r\nDTEND:20261104T100000Z\r\nSUMMARY:Local appointment\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n".toByteArray()
+        val file=files.createManagedFile("source.ics","text/calendar",raw,note.id,note.revision.toString(),"{}")
+        val args=mapOf("objectId" to file.objectId.value,"fileVersion" to file.version!!,"zoneId" to "UTC")
+        val reviewed=json(call("halo_organizer_calendar_preview",args,interaction=null))
+        val id=reviewed.getJSONArray("records").getJSONObject(0).getString("id")
+        val apply=args+mapOf("reviewToken" to reviewed.getString("reviewToken"),"recordIds" to listOf(id))
+        assertTrue(call("halo_organizer_calendar_import",apply,interaction=null) is ToolExecutionResult.Rejected)
+        val imported=json(call("halo_organizer_calendar_import",apply))
+        assertEquals(id,imported.getJSONArray("added").getString(0))
+        assertTrue(call("halo_organizer_calendar_import",apply) is ToolExecutionResult.Rejected)
+        val exported=json(call("halo_organizer_calendar_export",mapOf("records" to listOf(mapOf("id" to id,"version" to 1)))))
+        assertFalse(exported.getBoolean("exportedExternally"))
+        val local=files.getFile(WorkspaceObjectId(exported.getString("objectId")))!!
+        val saved=java.io.File(db.workspaceFileDao().getFile(local.objectId.value)!!.ownedCopyPath!!).readText()
+        assertTrue(saved.contains("SUMMARY:Local appointment"));assertEquals(exported.getString("fileVersion"),local.version)
+        assertTrue(call("halo_organizer_calendar_export",mapOf("records" to listOf(mapOf("id" to id,"version" to 99)))) is ToolExecutionResult.Rejected)
+        child=true
+        assertTrue(call("halo_organizer_calendar_preview",args) is ToolExecutionResult.Rejected)
+        child=false
+        val rechecked=json(call("halo_organizer_calendar_preview",args))
+        org.robolectric.Shadows.shadowOf(app.contentResolver).registerInputStreamSupplier(file.uri) {
+            allowed=false
+            java.io.ByteArrayInputStream(raw)
+        }
+        val revoked=call("halo_organizer_calendar_import",args+mapOf("reviewToken" to rechecked.getString("reviewToken"),"recordIds" to listOf(id)))
+        assertFalse(revoked is ToolExecutionResult.Success)
+        assertEquals(1,organizer.records().size)
+    }
+    @Test fun deliveryFailureAfterSnoozeCommitAndPartialTimerBatchRemainUnknown()=runBlocking {
+        val record=useCases.create(OrganizerKind.ALARM,"Ring",time=OrganizerTime(LocalDateTime.ofInstant(now,ZoneOffset.UTC),zoneId="UTC"))
+        delivery.reconcile(record.id)
+        val receipt=organizer.receipts(record.id).single()
+        delivery.fire(receipt.occurrenceKey,record.version,receipt.triggerAt)
+        afterDismiss={throw IllegalArgumentException("Port failure after commit")}
+        val result=call("halo_organizer_delivery",mapOf("id" to record.id,"version" to record.version,"occurrenceKey" to receipt.occurrenceKey,"action" to "SNOOZE","minutes" to 5))
+        assertTrue(result is ToolExecutionResult.Failed && result.completionUnknown)
+        assertEquals(record.version+1,organizer.get(record.id)!!.version)
+        afterDismiss={}
+        for(n in 1..2) {
+            val timer=organizer.save(OrganizerRecord("timer$n",OrganizerKind.TIMER,"Timer $n",createdAt=now,
+                timer=TimerState(1000,1000,now.minusSeconds(1),0,"boot")),null)
+            val key="${timer.id}@timer:${timer.timer!!.runId}"
+            organizer.putReceipt(DeliveryReceipt(key,timer.id,timer.version,now,DeliveryState.FIRED,now))
+        }
+        var changed=false
+        afterDismiss={if(!changed) {
+            changed=true
+            val other=organizer.records().first {it.kind==OrganizerKind.TIMER && it.status==OrganizerStatus.ACTIVE}
+            useCases.cancel(other.id,other.version)
+        }}
+        val partial=call("halo_organizer_clock_action",mapOf("action" to "DISMISS_EXPIRED_TIMERS"))
+        assertTrue(partial is ToolExecutionResult.Failed && partial.completionUnknown)
+        assertEquals(1,organizer.records().count {it.kind==OrganizerKind.TIMER && it.status==OrganizerStatus.COMPLETED})
+        assertEquals(1,organizer.records().count {it.kind==OrganizerKind.TIMER && it.status==OrganizerStatus.CANCELLED})
     }
     @Test fun selectedSourceRefreshInLocalPerformsZeroTransportCallsAndRetainsTheSource()=runBlocking {
         val source=sources.save(StarterSourceCatalogue.external().first().copy(selected=true),null)
@@ -165,6 +299,65 @@ class EverydayToolExecutorTest {
             assertTrue(definition.name,definition.name in WorkspaceToolAccess.readTools)
             if(definition.name !in EverydayToolContracts.queries) assertEquals(ReplaySafety.NEVER_REPLAY,descriptor.security.replaySafety)
             else assertEquals(ConfirmationPolicy.NONE,descriptor.security.confirmation)
+            val contract=descriptor.operability!!
+            assertEquals(false,contract.resultSchema["additionalProperties"])
+            assertTrue((contract.resultSchema["properties"] as Map<*,*>).isNotEmpty())
+            assertTrue(definition.name,runCatching {EverydayResultContracts.validate(definition.name,JSONObject())}.isFailure)
         }
+        val descriptors=EverydayToolContracts.definitions.map {HaloToolDescriptors.assistant(it)!!}
+        val registry=ToolRegistry(listOf(executor),descriptors)
+        assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("everyday",EverydayToolContracts.names))).isEmpty())
+        assertEquals(ToolOperation.CREATE,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_alarm"})!!.operation)
+        assertEquals(ToolOperation.EXPORT,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.operation)
+        assertEquals(setOf("objectId"),EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.resultIdFields)
+    }
+    @Test fun actualQueryResultIsClosedAndBoundedAndInvalidPostWriteReceiptRemainsUnknown()=runBlocking {
+        useCases.create(OrganizerKind.TASK,"Observed")
+        val query=json(call("halo_organizer_query"))
+        EverydayResultContracts.validate("halo_organizer_query",query)
+        val rows=query.getJSONArray("records")
+        val tooMany=org.json.JSONArray((1..51).map {rows.getJSONObject(0)})
+        assertTrue(runCatching {EverydayResultContracts.validate("halo_organizer_query",JSONObject(query.toString()).put("records",tooMany))}.isFailure)
+        assertTrue(runCatching {EverydayResultContracts.validate("halo_organizer_query",JSONObject(query.toString()).put("unexpected","data"))}.isFailure)
+        val broken=object: OrganizerRepository by organizer {
+            override suspend fun save(record: OrganizerRecord,expectedVersion: Long?,resetOccurrences: Boolean): OrganizerRecord {
+                val saved=organizer.save(record,expectedVersion,resetOccurrences)
+                return saved.copy(title="x".repeat(201))
+            }
+        }
+        val writer=executorFor(OrganizerUseCases(broken,clock,{ZoneOffset.UTC},{1000},{"boot"}))
+        val result=writer.execute(ToolCall("unknown","halo_organizer_create",mapOf("record" to mapOf("kind" to "TASK","title" to "Written once"))),ToolExecutionContext(interactionId="unknown"))
+        assertTrue(result is ToolExecutionResult.Failed && result.completionUnknown)
+        assertEquals(1,organizer.records().count {it.title=="Written once"})
+    }
+    @Test fun realSourceFamiliesClockEditsAndBriefReadReceiptsMatchRegisteredResults()=runBlocking {
+        val cases=listOf(
+            CollectorKind.FEED to CollectorPayload.Articles(listOf(ArticleFact("a","News","Text",null,"Publisher",null,"en"))),
+            CollectorKind.ALERTS to CollectorPayload.Warnings(listOf(WarningFact("w","Warning","Detail",null,null,null,null,null,"Agency"))),
+            CollectorKind.WEATHER to CollectorPayload.Weather(WeatherFact(StarterSourceCatalogue.riga,null,null,null,listOf(WeatherDay(LocalDate.of(2026,11,3),null,null,null,null)))),
+            CollectorKind.LOCAL_DEVICE to CollectorPayload.Local(listOf(LocalFact("local","DEVICE","Battery","Ready","halo://day",null,null))))
+        for((kind,payload) in cases) {
+            val external=kind!=CollectorKind.LOCAL_DEVICE
+            val source=sources.save(CollectorSource("fixture:${kind.name}",kind.name,"Publisher",kind,SourceCategory.CUSTOM,"en",
+                endpoint=if(kind==CollectorKind.WEATHER) OpenMeteoParser.endpoint(StarterSourceCatalogue.riga) else if(external) "https://example.org/${kind.name.lowercase()}" else null,selected=true,
+                place=if(kind==CollectorKind.WEATHER) StarterSourceCatalogue.riga else null),null)
+            val reservation=(sources.reserve(source.id,source.version,now,true) as CollectorAdmission.Accepted).reservation
+            assertTrue(sources.finish(reservation,CollectorSnapshot(source.id,source.version,payload,"revision",now,now,now.plusSeconds(3600)),
+                CollectorAttempt(source.id,now,CollectorAttemptState.CURRENT)))
+            val value=json(call("halo_source_get",mapOf("id" to source.id,"version" to source.version)))
+            assertEquals(source.id,value.getString("id"));assertFalse(value.isNull("content"))
+        }
+        val saved=json(call("halo_clock_save",mapOf("label" to "Riga","zoneId" to "Europe/Riga")))
+        val id=saved.getString("id")
+        assertEquals(1,json(call("halo_clock_query")).getJSONArray("clocks").length())
+        json(call("halo_clock_action",mapOf("id" to id,"version" to 1,"action" to "REMOVE")))
+        val restored=json(call("halo_clock_action",mapOf("id" to id,"version" to 2,"action" to "RESTORE")))
+        json(call("halo_clock_action",mapOf("action" to "REORDER","clocks" to listOf(mapOf("id" to id,"version" to restored.getJSONObject("clock").getLong("version"))))))
+        val brief=json(call("halo_brief_action",mapOf("action" to "BUILD")))
+        json(call("halo_brief_query",mapOf("id" to brief.getString("id"))))
+        json(call("halo_brief_query"))
+        val reading=json(call("halo_brief_action",mapOf("action" to "READ","id" to brief.getString("id"))))
+        assertTrue(reading.getBoolean("playbackRequested"));assertFalse(reading.getBoolean("audible"));assertFalse(reading.getBoolean("completed"))
+        json(call("halo_brief_action",mapOf("action" to "STOP")))
     }
 }

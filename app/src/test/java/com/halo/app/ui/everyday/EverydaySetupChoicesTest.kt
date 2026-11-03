@@ -57,4 +57,19 @@ class EverydaySetupChoicesTest {
         assertTrue(runCatching {EverydaySetupChoices.apply(db,sources,screen,EverydaySetupDraft(sourceIds=setOf("unknown")),emptyList(),null)}.isFailure)
         assertTrue(sources.states().isEmpty());assertNull(screen.layout.value)
     }
+    @Test fun removingAndReplacingSavedWeatherCityUpdatesActualSelectedSources()=runBlocking {
+        val source=sources.save(StarterSourceCatalogue.external().first(),null)
+        val draft=EverydaySetupDraft(sourceIds=setOf(source.id),cityId=city.id,applyScreen=false,
+            versions=mapOf(source.id to source.version),screenRevision=screen.withToolState {it.revision})
+        val first=EverydaySetupChoices.apply(db,sources,screen,draft,sources.states(),city)
+        val removed=EverydaySetupChoices.apply(db,sources,screen,first.draft.withWeatherCity(null),first.sources,null)
+        assertFalse(sources.state("weather:setup:${city.id}")!!.source.selected)
+        assertTrue(sources.state(source.id)!!.source.selected)
+        val again=EverydaySetupChoices.apply(db,sources,screen,removed.draft.withWeatherCity(city.id),removed.sources,city)
+        val next=city.copy(id="524901",name="Moscow",zoneId="Europe/Moscow")
+        EverydaySetupChoices.apply(db,sources,screen,again.draft.withWeatherCity(next.id),again.sources,next)
+        assertFalse(sources.state("weather:setup:${city.id}")!!.source.selected)
+        assertTrue(sources.state("weather:setup:${next.id}")!!.source.selected)
+        assertTrue(sources.state(source.id)!!.source.selected)
+    }
 }

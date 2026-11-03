@@ -15,7 +15,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.*
 
-data class OrganizerLinkChoice(val id: String,val title: String,val kind: String)
+data class OrganizerLinkChoice(val id: String,val title: String,val kind: String,val searchText: String=title)
 
 data class OrganizerPageState(
     val loading: Boolean = true, val busy: Boolean = false, val kids: Boolean = true,
@@ -96,9 +96,9 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
             .filter { it.lifecycle == WorkspaceObjectLifecycle.ACTIVE }
         val choices=if(kids) emptyList() else buildList {
             addAll(notes.map {OrganizerLinkChoice(it.id.value,it.title,"NOTE")})
-            addAll(active.filter {it.kind in setOf(OrganizerKind.TASK,OrganizerKind.EVENT) && it.id!=current?.id}.take(40).map {OrganizerLinkChoice("organizer:${it.id}",it.title,it.kind.name)})
-            addAll(Graph.appDatabase.agentRunDao().recentRoots(20).map {OrganizerLinkChoice("run:${it.id}",it.request.take(120),"ACTIVITY")})
-            addAll(Graph.currentTimelineEvents().takeLast(20).filter {it.presentationId.length<=240}.map {OrganizerLinkChoice("timeline:${it.presentationId}",it.title.take(200),"TIMELINE")})
+            addAll(active.filter {it.kind in setOf(OrganizerKind.TASK,OrganizerKind.EVENT) && it.id!=current?.id}.map {OrganizerLinkChoice("organizer:${it.id}",it.title,it.kind.name)})
+            addAll(Graph.appDatabase.agentRunDao().linkCandidates().map {OrganizerLinkChoice("run:${it.id}",it.request.take(120),"ACTIVITY",it.request)})
+            addAll(Graph.currentTimelineEvents().filter {it.presentationId.length<=240}.map {OrganizerLinkChoice("timeline:${it.presentationId}",it.title.take(200),"TIMELINE",it.title)})
         }
         if (kids != Graph.kidsPreferences.enabled.value) return
         mutable.update { old -> old.copy(loading = false, kids = kids,
@@ -231,23 +231,7 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
         mutable.update { it.copy(import = null, imported = result, notice = "Calendar import finished. Existing event IDs were kept.") }
     }
     fun prepareCalendarExport(expected: Map<String, Long>) = work {
-        require(expected.isNotEmpty() && expected.size <= 2000)
-        val rows = expected.map { (id, version) -> Graph.organizerUseCases.requireCurrent(id, version).also { require(it.kind == OrganizerKind.EVENT) } }
-        val exceptions = rows.flatMap { Graph.organizerRepository.overrides(it.id) }
-        val bytes = withContext(Dispatchers.Default) { OrganizerIcs.export(rows, exceptions, Instant.now()) }
-        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
-        val manifest = rows.joinToString("\n") { "${it.title} · ${it.id} · ${it.version}" }
-        val file = Graph.workspaceFileRepository.createManagedFileWithPreparedSource("Halo-calendar.ics", "text/calendar", bytes,
-            metadata = org.json.JSONObject().put("kind", "organizer-calendar-export").put("records", org.json.JSONObject(expected)).toString(),
-            validateSource = {
-                com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
-                expected.forEach { (id, version) -> Graph.organizerUseCases.requireCurrent(id, version) }
-            }, prepareSource = {
-                com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
-                val title = com.halo.app.everyday.briefing.BriefPresentation.text(app.resources.configuration.locales[0],
-                    "Calendar export", "Экспорт календаря", "Kalendāra eksports", "Eksport kalendarza")
-                Graph.notebookRepository.createNote(body = manifest, source = WorkspaceSource.USER_CREATED, title = "$title · ${LocalDate.now()}").id
-            })
+        val file=Graph.organizerCalendars.prepareExport(expected)
         saved["organizer.exportId"] = file.objectId.value
         mutable.update { it.copy(exportFile = file, notice = "Calendar copy saved in Workspace. Choose a destination to export this exact copy.") }
     }

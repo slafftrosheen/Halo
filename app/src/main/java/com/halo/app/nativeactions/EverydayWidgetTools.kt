@@ -14,11 +14,11 @@ class EverydayWidgetTools(private val context: Context,private val requireCurren
         requireCurrent()
         val store=EverydayWidgetStore(context)
         return when(name) {
-            "halo_widget_query" -> JSONObject().put("instances",JSONArray(EverydayWidgetProviders.ids(context).sorted().map {id ->
+            "halo_widget_query" -> JSONObject().put("instances",JSONArray(EverydayWidgetProviders.ids(context).sorted().take(100).map {id ->
                 val kind=requireNotNull(EverydayWidgetProviders.kind(context,id))
                 val instance=store.get(id) ?: EverydayWidgetInstance(id,0,EverydayCardConfig(kind))
                 JSONObject().put("id",id).put("version",instance.version).put("config",JSONObject(instance.config.fields()))
-            })).put("pinSupported",android.os.Build.VERSION.SDK_INT>=26 && AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported)
+            })).put("omittedInstances",(EverydayWidgetProviders.ids(context).size-100).coerceAtLeast(0)).put("pinSupported",android.os.Build.VERSION.SDK_INT>=26 && AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported)
             "halo_widget_configure" -> {
                 val id=args.long("id").toInt();val version=args.long("version")
                 val kind=requireNotNull(EverydayWidgetProviders.kind(context,id))

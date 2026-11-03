@@ -116,11 +116,12 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
             if (draft.occurrence == null) {
                 Text(uiText("Related notes, plans and activity"), style = MaterialTheme.typography.titleMedium)
                 OutlinedTextField(noteQuery, { noteQuery = it.take(200) }, label = { Text(uiText("Find a related item")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                state.linkChoices.filter { it.title.contains(noteQuery, ignoreCase = true) || it.id in draft.links }.sortedBy { it.id !in draft.links }.take(90).forEach { note ->
+                organizerLinkSearch(state.linkChoices,noteQuery,draft.links).forEach { note ->
                     EverydayToggle(note.title, note.id in draft.links, !state.busy && (draft.links.size < 50 || note.id in draft.links)) {
                         change(draft.copy(links = if (it) draft.links + note.id else draft.links - note.id))
                     }
                 }
+                Text(uiText("Showing up to 90 matching items. Search to find older items. Activity and Timeline use retained history."),style=MaterialTheme.typography.bodySmall)
                 draft.links.filter { id -> state.linkChoices.none { it.id == id } }.forEach { id ->
                     TextButton({ change(draft.copy(links = draft.links - id)) }, enabled = !state.busy) { Text(uiText("Remove link")) }
                 }

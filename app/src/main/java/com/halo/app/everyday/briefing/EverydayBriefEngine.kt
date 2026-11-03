@@ -55,6 +55,15 @@ object EverydayBriefEngine {
                     record.title, "", sourceId, record.version.toString(), "halo://organizer/record/${record.id}", 10,
                     record.timer?.startedAt, values = mapOf("recordId" to record.id, "running" to (record.timer?.startedAt != null).toString()))
             }
+            input.outstandingReminders.filter { !it.occurrence.completed && recordAllowed(it.occurrence.record) }.forEach { outstanding ->
+                val occurrence=outstanding.occurrence
+                val record=occurrence.record
+                facts += BriefFact("organizer:${occurrence.key}",BriefFactKind.REMINDER,record.title,record.details.take(500),sourceId,
+                    fingerprint(record.version.toString(),occurrence.start.toString(),outstanding.state.name,outstanding.snoozedUntil?.toString().orEmpty()),
+                    "halo://organizer/record/${record.id}",priority(record,settings)+40,outstanding.snoozedUntil ?: occurrence.start,record.sourceUrl,
+                    mapOf("recordId" to record.id,"version" to record.version.toString(),"occurrence" to occurrence.originalStart.toString(),
+                        "outstanding" to "true","deliveryState" to outstanding.state.name,"snoozed" to (outstanding.snoozedUntil!=null).toString()))
+            }
             if (input.period == BriefPeriod.EVENING) input.organizer.filter { it.deletedAt == null && it.kind == OrganizerKind.TASK &&
                 it.status == OrganizerStatus.COMPLETED && it.updatedAt in from..input.now && recordAllowed(it) }.forEach { record ->
                 facts += BriefFact("organizer:${record.id}", BriefFactKind.TASK, record.title, record.details.take(500), sourceId,
@@ -114,11 +123,12 @@ object EverydayBriefEngine {
             }
         }
         // The existing Daily Assistant owns approvals, recovery and Study prompts; preserve that owner and its action route.
-        val attention = input.attention.items.filter { input.audience != BriefAudience.KIDS || it.id in input.childLocalFactIds }
+        val observedAttention = input.attentionObservedAt?.takeIf { it <= input.now && it >= input.now.minusSeconds(90) }
+        val attention = input.attention.items.takeIf { observedAttention != null }.orEmpty().filter { input.audience != BriefAudience.KIDS || it.id in input.childLocalFactIds }
         // An empty successful owner read is still an observation. Without this stamp,
         // the first new item cannot be ADDED and the last resolved item looks unavailable.
-        sources += BriefSourceStamp("halo:attention", 0, "Halo", "Halo", null, false, input.now, input.now,
-            input.now.plusSeconds(900), CollectorAttemptState.CURRENT, true)
+        if(observedAttention!=null) sources += BriefSourceStamp("halo:attention", 0, "Halo", "Halo", null, false, observedAttention, input.now,
+            observedAttention.plusSeconds(90), CollectorAttemptState.CURRENT, true)
         attention.forEach { item -> facts += BriefFact("attention:${item.id}", BriefFactKind.ATTENTION, item.title,
                 item.summary.orEmpty(), "halo:attention", fingerprint(item.title, item.summary.orEmpty(), item.priority.name),
                 "halo://day/attention/${item.id}", when (item.priority) {

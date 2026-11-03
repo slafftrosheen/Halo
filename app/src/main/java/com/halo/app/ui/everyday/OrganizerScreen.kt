@@ -348,7 +348,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             items(preview.records, key = { it.id }) { Text(it.title) }
             items(preview.issues) { issue ->
                 Text(uiText(if (issue.warning) "Import warning · item %1\$d" else "Item %1\$d was not imported", issue.item), color = if (issue.warning) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error)
-                Text(issue.reason, style = MaterialTheme.typography.bodySmall)
+                Text(calendarImportIssueText(issue), style = MaterialTheme.typography.bodySmall)
             }
             item {
                 Button(model::importCalendar, enabled = !state.busy && preview.records.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text(uiText("Import supported events")) }

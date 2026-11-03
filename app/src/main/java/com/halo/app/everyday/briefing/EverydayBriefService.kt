@@ -1,6 +1,6 @@
 package com.halo.app.everyday.briefing
 
-import com.halo.app.daily.DailyAssistantSnapshot
+import com.halo.app.daily.DailyAssistantObservation
 import com.halo.app.everyday.collectors.CollectorRepository
 import com.halo.app.everyday.organizer.*
 import java.time.*
@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.*
 
 /** Shared manual/voice/Screen/widget owner. Building a brief does not refresh sources or start speech. */
 class EverydayBriefService(private val repository: BriefRepository, private val collectors: CollectorRepository,
-    private val organizer: OrganizerRepository, private val attention: suspend () -> DailyAssistantSnapshot,
+    private val organizer: OrganizerRepository, private val attention: suspend () -> DailyAssistantObservation,
     private val audience: () -> BriefAudience, private val childLocalFactIds: suspend () -> Set<String>,
     private val localFactStillExists: suspend (BriefFact) -> Boolean, private val clock: Clock = Clock.systemUTC(),
     private val zone: () -> ZoneId = { ZoneId.systemDefault() },
@@ -35,11 +35,21 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
         val day = now.atZone(deviceZone).toLocalDate()
         val start = day.atStartOfDay(deviceZone).toInstant(); val end = day.plusDays(1).atStartOfDay(deviceZone).toInstant()
         val records = organizer.records()
-        val occurrences = records.flatMap { record -> OrganizerRecurrence.between(record, organizer.overrides(record.id), start, end, deviceZone) }
+        val occurrences = mutableListOf<OrganizerOccurrence>()
+        val outstanding = mutableListOf<OutstandingReminder>()
+        records.forEach { record ->
+            val overrides=organizer.overrides(record.id)
+            occurrences += OrganizerRecurrence.between(record,overrides,start,end,deviceZone)
+            if(record.kind==OrganizerKind.REMINDER) outstanding += OutstandingReminders.project(record,overrides,
+                organizer.receipts(record.id),start,deviceZone)
+            require(occurrences.size+outstanding.size<=10_000) {"Brief organizer input exceeds the supported limit"}
+        }
+        val observedAttention=attention()
         val baseline = repository.baseline(day, deviceZone, actualAudience)
         val settings = repository.settings()
         val projection = EverydayBriefEngine.project(BriefInput(now, deviceZone, actualAudience, period,
-            collectors.states(), records, occurrences, attention(), baseline, settings.childRecordIds, childLocalFactIds()), settings)
+            collectors.states(), records, occurrences, observedAttention.snapshot, baseline, settings.childRecordIds, childLocalFactIds(),
+            observedAttention.observedAt, outstanding), settings)
         check(audience() == familyAudience) { "Experience changed; build the brief again" }
         val saved = repository.publish(projection)
         return visible(saved.id) ?: error("Brief is no longer available")

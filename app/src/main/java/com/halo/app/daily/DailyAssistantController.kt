@@ -45,14 +45,14 @@ class DailyAssistantController(
             voice = a?.let { DailyVoiceFact(safeDeviceLabel(it.originLabel), safeDeviceLabel(it.intendedTargetLabel),
                 it.resolvedEndpointLabel?.let(::safeDeviceLabel), it.routeState) })
     }
-    @Volatile private var baseUpdatedAt: Instant? = null
-    @Volatile private var baseObserved = false
+    @Volatile private var baseObservation = DailyAssistantObservation()
     private val clockTicks = flow { while (currentCoroutineContext().isActive) { emit(Unit); delay(30_000) } }
     private val baseSnapshot: StateFlow<DailyAssistantSnapshot> = combine(work, context, refreshes, clockTicks) { w, c, _, _ ->
         DailyAssistantProjector.project(w.copy(routines = c.routines, routineRuns = c.routineRuns,
             learningCount = c.learningCount, showLearning = allowLearning(), readyDeviceLabels = c.readyDeviceLabels,
             connectedDeviceLabels = c.connectedDeviceLabels, voice = c.voice), now())
-    }.onStart { baseUpdatedAt = null; baseObserved = true }.onCompletion { baseObserved = false }.onEach { baseUpdatedAt = now() }
+    }.onStart { baseObservation = DailyAssistantObservation() }
+    .onCompletion { baseObservation = DailyAssistantObservation() }.onEach { baseObservation = DailyAssistantObservation(it, now()) }
     .distinctUntilChanged().onEach {
         log("HALO_DAILY_ASSISTANT_PROJECT uniqueItemCount=${it.items.size} primaryKind=${it.primary?.kind} needsYouCount=${it.counts.needsYou} dueCount=${it.counts.due}")
     }.flowOn(Dispatchers.IO).stateIn(scope, SharingStarted.WhileSubscribed(5000), DailyAssistantSnapshot())
@@ -61,8 +61,8 @@ class DailyAssistantController(
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), DailyAssistantSnapshot())
 
     /** A background brief never starts the runtime just to obtain optional attention facts. */
-    fun recentBase(): DailyAssistantSnapshot = if (baseObserved && baseUpdatedAt != null)
-        baseSnapshot.value else DailyAssistantSnapshot()
+    fun recentBaseObservation(): DailyAssistantObservation = baseObservation
+    fun recentBase(): DailyAssistantSnapshot = recentBaseObservation().snapshot
 
     fun refresh() { refreshes.value += 1 }
     fun recordAction(action: DailyAssistantAction) { log("HALO_DAILY_ASSISTANT_ACTION actionKind=${action.javaClass.simpleName}") }

@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4783) {
+    buildMap(4805) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4822,6 +4822,28 @@ private fun uiCataloguePart15(): Map<String, Int> = mapOf(
     "Use BuddyBot’s local IP address." to R.string.ui_c6f974c44b32,
     "Active items" to R.string.ui_1ca2a9635d72,
     "Due today" to R.string.ui_19e82138c35f,
+    "This calendar entry is invalid or unsupported. Review it in the original calendar." to R.string.ui_616c35db6880,
+    "This recurrence is unsupported. Review the series manually; it was not simplified." to R.string.ui_cd6e7bad6639,
+    "The timezone definition is invalid, unsupported or does not cover this event." to R.string.ui_5e68c2952f6f,
+    "This calendar duration is invalid or exceeds the supported one-year limit." to R.string.ui_20a605a1cc77,
+    "All-day durations must use whole calendar days or weeks." to R.string.ui_d703a5c16272,
+    "The event ends in the later daylight-saving overlap. Review the end time manually." to R.string.ui_885c1391058d,
+    "A floating day/week duration changes with the device timezone. Review it manually." to R.string.ui_dc6929fd201a,
+    "A recurring day/week duration cannot be preserved across daylight-saving changes. Review it manually." to R.string.ui_3e78ae507962,
+    "This timed event needs an end time or a duration before import." to R.string.ui_dde9f8db47e2,
+    "This event has no supported start time." to R.string.ui_cea78d564796,
+    "The event or occurrence identity is missing, duplicated or ambiguous." to R.string.ui_40781bcd72eb,
+    "This occurrence change cannot be applied to the imported series." to R.string.ui_8d7a8b9d6896,
+    "Embedded alarms and attachments are not imported, opened or scheduled." to R.string.ui_dafa0cb03deb,
+    "No embedded timezone; uses installed IANA rules for %1\$s" to R.string.ui_67a5115f8a4d,
+    "Series withheld: %1\$s" to R.string.ui_abdc7e8b74a7,
+    "Showing up to 90 matching items. Search to find older items. Activity and Timeline use retained history." to R.string.ui_f15a357ac531,
+    "Save was not confirmed. Your draft is kept. Cancel to review the saved layout before another change." to R.string.ui_4d35dd492527,
+    "Set Halo alarm" to R.string.ui_83a21b71adce,
+    "Manage Halo alarms and timers" to R.string.ui_93db11f6655e,
+    "Review local calendar" to R.string.ui_1f172d9e59c7,
+    "Import reviewed calendar" to R.string.ui_70793485d58a,
+    "Prepare calendar export" to R.string.ui_c1804c4ab7d7,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

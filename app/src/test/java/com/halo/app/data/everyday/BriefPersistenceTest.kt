@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
-import com.halo.app.daily.DailyAssistantSnapshot
+import com.halo.app.daily.DailyAssistantObservation
 import com.halo.app.everyday.briefing.*
 import com.halo.app.everyday.collectors.*
 import com.halo.app.everyday.organizer.*
@@ -34,11 +34,32 @@ class BriefPersistenceTest {
     private val collectors = RoomCollectorRepository(db)
     private val organizer = RoomOrganizerRepository(db, clock, { zone })
     private var audience = BriefAudience.EVERYDAY
-    private val service = EverydayBriefService(briefs, collectors, organizer, { DailyAssistantSnapshot() },
+    private val service = EverydayBriefService(briefs, collectors, organizer, { DailyAssistantObservation() },
         { audience }, { emptySet() }, { true }, clock, { zone })
     private suspend fun seed(): OrganizerRecord {
         collectors.save(StarterSourceCatalogue.local().first { it.kind == CollectorKind.LOCAL_ORGANIZER }, null)
         return organizer.save(OrganizerRecord("task", OrganizerKind.TASK, "Private plan", createdAt = start), null)
+    }
+    @Test fun previousDayUnresolvedRemindersRetainReceiptStatusAndExcludeDismissedAndCancelled()=runBlocking {
+        seed()
+        val yesterday=start.minusSeconds(86400).atZone(zone).toLocalDateTime()
+        val ids=mutableSetOf<String>()
+        for(state in listOf(DeliveryState.NOTIFICATIONS_BLOCKED,DeliveryState.FAILED,DeliveryState.MISSED,DeliveryState.DISMISSED,DeliveryState.CANCELLED)) {
+            val record=organizer.save(OrganizerRecord(state.name,OrganizerKind.REMINDER,state.name,
+                time=OrganizerTime(yesterday,zoneId=zone.id),createdAt=start.minusSeconds(86400)),null)
+            val at=record.time!!.instant(zone)
+            assertTrue(organizer.putReceipt(DeliveryReceipt("${record.id}@${at.toEpochMilli()}",record.id,record.version,at,state,start)))
+            if(state !in setOf(DeliveryState.DISMISSED,DeliveryState.CANCELLED)) ids+=record.id
+        }
+        val document=service.build(BriefPeriod.ON_DEMAND)
+        val facts=document.facts.filter {it.kind==BriefFactKind.REMINDER}
+        assertEquals(ids,facts.map {it.values["recordId"]}.toSet())
+        assertEquals(ids,facts.map {it.values["deliveryState"]}.toSet())
+        assertTrue(facts.all {it.at!!<start && it.values["outstanding"]=="true"})
+        briefs.saveSettings(BriefSettings(childRecordIds=setOf(DeliveryState.FAILED.name)),0)
+        audience=BriefAudience.KIDS
+        assertEquals(listOf(DeliveryState.FAILED.name),service.build(BriefPeriod.ON_DEMAND).facts
+            .filter {it.kind==BriefFactKind.REMINDER}.map {it.values["recordId"]})
     }
     @After fun close() { db.close() }
     @Test fun aHeldVisibleBriefCannotReturnAfterSharingIsRevokedWithoutLeavingKids()=runBlocking {withTimeout(10000) {
@@ -46,7 +67,7 @@ class BriefPersistenceTest {
         audience=BriefAudience.KIDS
         val original=service.build(BriefPeriod.ON_DEMAND)
         val entered=CompletableDeferred<Unit>();val release=CompletableDeferred<Unit>()
-        val held=EverydayBriefService(briefs,collectors,organizer,{DailyAssistantSnapshot()},{audience},{emptySet()},{entered.complete(Unit);release.await();true},clock,{zone})
+        val held=EverydayBriefService(briefs,collectors,organizer,{DailyAssistantObservation()},{audience},{emptySet()},{entered.complete(Unit);release.await();true},clock,{zone})
         val request=async {runCatching {held.visible(original.id)}}
         entered.await();briefs.saveSettings(BriefSettings(),1);release.complete(Unit)
         assertTrue(request.await().isFailure);assertEquals(BriefAudience.KIDS,audience)

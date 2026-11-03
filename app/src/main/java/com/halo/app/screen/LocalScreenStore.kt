@@ -7,7 +7,10 @@ import org.json.JSONObject
 import java.time.Instant
 
 /** Local presentation cache. Source ownership stays with Notebook, Calendar and routines. */
-class LocalScreenStore(context: Context) : ScreenItemStore {
+enum class ScreenApplyResult { APPLIED, CONFLICT, PERSISTENCE_UNKNOWN }
+
+class LocalScreenStore(context: Context,
+    private val commitConfiguration: (android.content.SharedPreferences.Editor)->Boolean = {it.commit()}) : ScreenItemStore {
     private val preferences = context.applicationContext.getSharedPreferences("halo_screen", Context.MODE_PRIVATE)
     private val lock = Any()
     private val _items = MutableStateFlow(readItems())
@@ -86,13 +89,19 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
         persistLayout(previous.copy(version = (_layout.value?.version ?: 0) + 1))
     } }
 
-    /** A preview never overwrites a layout changed by another source while it was open. */
-    fun applyDraft(base: ScreenLayout, draft: ScreenLayout): Boolean = synchronized(lock) {
-        if (_layout.value != base) return@synchronized false
-        if (base == draft) return@synchronized true
-        saveLayout(draft)
-        true
+    /** Caller runs on IO. Failure is unknown: SharedPreferences may have changed memory before disk failed. */
+    fun applyDraftChecked(base: ScreenLayout,draft: ScreenLayout): ScreenApplyResult = synchronized(lock) {
+        if(_layout.value!=base) return@synchronized ScreenApplyResult.CONFLICT
+        if(base==draft) return@synchronized if(confirmToolPersistence()) ScreenApplyResult.APPLIED else ScreenApplyResult.PERSISTENCE_UNKNOWN
+        val checked=checkedLayout(draft).copy(version=base.version+1)
+        undoLayout=base
+        val persisted=runCatching {commitConfiguration(preferences.edit().putString("layout",ScreenLayoutCodec.encode(checked))
+            .putString("undo_layout",ScreenLayoutCodec.encode(base)))}.getOrDefault(false)
+        _layout.value=checked
+        if(persisted) ScreenApplyResult.APPLIED else ScreenApplyResult.PERSISTENCE_UNKNOWN
     }
+    /** Compatibility callers must not treat a persistence failure as success. */
+    fun applyDraft(base: ScreenLayout,draft: ScreenLayout): Boolean = applyDraftChecked(base,draft)==ScreenApplyResult.APPLIED
 
     fun savePreset(name: String, value: ScreenLayout): Boolean = synchronized(lock) {
         val label = name.trim().filterNot(Char::isISOControl).take(64)
@@ -144,7 +153,13 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
      * Tools call this on IO before claiming a durable configuration receipt.
      * A false result leaves completion unknown; do not replay the mutation.
      */
-    internal fun confirmToolPersistence(): Boolean = synchronized(lock) { preferences.edit().commit() }
+    internal fun confirmToolPersistence(): Boolean = synchronized(lock) {
+        runCatching {commitConfiguration(preferences.edit().putString("layout",_layout.value?.let(ScreenLayoutCodec::encode))
+            .putString("undo_layout",undoLayout?.let(ScreenLayoutCodec::encode))
+            .putString("presets",JSONArray(_presets.value.map {JSONObject(ScreenLayoutCodec.encode(it))}).toString())
+            .putBoolean("hide_private",_hidePrivate.value).putBoolean("keep_charging",_keepCharging.value)
+            .putBoolean("dim_night",_dimAtNight.value).putString("topics",_topics.value))}.getOrDefault(false)
+    }
 
     private fun persistLayout(value: ScreenLayout) {
         preferences.edit().putString("layout", ScreenLayoutCodec.encode(value))

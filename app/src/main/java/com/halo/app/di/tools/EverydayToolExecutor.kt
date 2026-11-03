@@ -1,6 +1,7 @@
 package com.halo.app.di.tools
 
 import com.halo.app.everyday.EverydayWriteAuthority
+import com.halo.host.android.capability.resolveOccurrence
 import com.halo.app.everyday.organizer.*
 import com.halo.app.everyday.collectors.*
 import com.halo.app.everyday.briefing.*
@@ -14,6 +15,8 @@ import kotlinx.coroutines.*
 import org.json.*
 import java.time.*
 import java.util.UUID
+
+private class OrganizerTimeClarification(message: String): IllegalArgumentException(message)
 
 /** Runtime adapter only: repositories/services remain the sole mutation, scheduling and network owners. */
 class EverydayToolExecutor(
@@ -35,6 +38,8 @@ class EverydayToolExecutor(
     private val authority: ()->(()->Unit),
     private val elapsedMs: ()->Long,
     private val bootId: ()->String,
+    private val delivery: OrganizerDeliveryCoordinator,
+    private val calendars: com.halo.app.data.everyday.OrganizerCalendarService,
     private val clock: Clock = Clock.systemUTC(),
     private val power: ()->Boolean = {false},
     private val ready: suspend ()->Unit = {},
@@ -55,7 +60,7 @@ class EverydayToolExecutor(
             val child=kids()
             val a=toolCall.arguments
             val childAction=toolCall.functionName=="halo_everyday_open" || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ","STOP")
-            if(child && (toolCall.functionName=="halo_widget_query" || toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
+            if(child && (toolCall.functionName in setOf("halo_widget_query","halo_organizer_calendar_preview") || toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             if(toolCall.functionName !in EverydayToolContracts.queries && context.interactionId.isNullOrBlank()) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             val disclosure=if(toolCall.functionName in EverydayToolContracts.queries || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ"))
                 com.halo.app.everyday.EverydayReadAuthority.capture() else null
@@ -66,6 +71,8 @@ class EverydayToolExecutor(
                 dispatch(toolCall.functionName,a,child)
             }
             val encoded=result.toString()
+            check(encoded.length<=128000) {"Everyday result exceeds the declared output bound"}
+            check(runCatching {EverydayResultContracts.validate(toolCall.functionName,result)}.isSuccess) {"Everyday result contract changed"}
             if(disclosure!=null) check(readDisclosureState()==canonical) {"Everyday disclosure authority changed"}
             check();ensureActive()
             disclosure?.let(com.halo.app.everyday.EverydayReadAuthority::requireCurrent)
@@ -73,6 +80,8 @@ class EverydayToolExecutor(
         } catch(cancelled: CancellationException) { throw cancelled }
         catch(error: Exception) {
             when {
+                error is OrganizerTimeClarification -> ToolExecutionResult.Rejected(toolCall.id,toolCall.functionName,
+                    error.message ?: "Choose an exact alarm time",ToolRejectionKind.INVALID_ARGUMENTS)
                 error is OrganizerConflict || error is CollectorConflict -> rejected(ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 error is IllegalArgumentException -> rejected(ToolRejectionKind.INVALID_ARGUMENTS)
                 mutationStarted -> ToolExecutionResult.Failed(toolCall.id,toolCall.functionName,
@@ -122,7 +131,7 @@ class EverydayToolExecutor(
                 val value=record(id(),child)
                 val overrides=organizer.repository.overrides(value.id)
                 val disclosed=if(child) value.copy(links=emptyList(),parentId=value.parentId?.takeIf {it in briefs.settings().childRecordIds}) else value
-                JSONObject().put("record",JSONObject(OrganizerCodec.encode(disclosed)))
+                JSONObject().put("id",value.id).put("version",value.version).put("record",JSONObject(OrganizerCodec.encode(disclosed)))
                     .put("overrides",JSONArray(overrides.take(100).map { JSONObject().put("originalStart",it.originalStart.toString()).put("disposition",it.disposition.name)
                         .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString()) }))
                     .put("omittedOverrides",(overrides.size-100).coerceAtLeast(0))
@@ -135,6 +144,59 @@ class EverydayToolExecutor(
                     p.optionalString("priority")?.let(TaskPriority::valueOf) ?: TaskPriority.NORMAL,p.optionalString("parentId"),p.optionalLong("notifyBeforeMinutes")?.toInt(),
                     p.optionalLong("timerDurationMs"),links(p),p.optionalString("sourceUrl"),p.optionalString("sourceLabel"),p.optionalString("location").orEmpty())
                 saved(value)
+            }
+            "halo_organizer_alarm" -> {
+                val zone=ZoneId.systemDefault()
+                val now=clock.instant()
+                val label=a.optionalString("label") ?: "Alarm"
+                val days=(a["repeatDays"] as? List<*>)?.map {(it as Number).toInt()}.orEmpty()
+                require(days.distinct()==days)
+                val resolved=a.optionalMap("resolvedTime")?.let {time -> when(time.string("type")) {
+                    "CLOCK" -> {
+                        require(time.keys.all {it in setOf("type","time","dayRelation")})
+                        com.halo.cognition.language.TemporalValue.TimeOfDay(LocalTime.parse(time.string("time")),
+                            time.optionalString("dayRelation")?.let(com.halo.cognition.language.DayRelation::valueOf))
+                    }
+                    else -> {require(time.keys==setOf("type","instant"));com.halo.cognition.language.TemporalValue.InstantValue(Instant.parse(time.string("instant")))}
+                }}
+                val plan=com.halo.host.android.capability.AlarmCommandResolver(clock,zone).resolve(resolved,a.string("timeExpression"),label)
+                var at=if(resolved is com.halo.cognition.language.TemporalValue.TimeOfDay) resolved.resolveOccurrence(clock,zone) else when(plan) {
+                    is com.halo.host.android.capability.AlarmExecutionPlan.SystemAlarm -> {
+                        val time=LocalTime.of(plan.hour,plan.minute)
+                        val today=now.atZone(zone).toLocalDate().atTime(time).atZone(zone)
+                        if(today.toInstant()>now) today else today.plusDays(1)
+                    }
+                    is com.halo.host.android.capability.AlarmExecutionPlan.HaloExactAlarm -> plan.triggerAt.atZone(zone)
+                    is com.halo.host.android.capability.AlarmExecutionPlan.Clarification -> throw OrganizerTimeClarification(plan.prompt)
+                }
+                require(at.toInstant()>now && at.toLocalDateTime().atZone(zone).toInstant()==at.toInstant())
+                val weekdays=days.map {DayOfWeek.of((it+5)%7+1)}.toSet()
+                if(weekdays.isNotEmpty()) while(at.dayOfWeek !in weekdays) at=at.plusDays(1)
+                saved(organizer.create(OrganizerKind.ALARM,label,time=OrganizerTime(at.toLocalDateTime(),zoneId=zone.id,followDeviceZone=true),
+                    repeat=weekdays.takeIf {it.isNotEmpty()}?.let {RepeatRule(RepeatFrequency.WEEKLY,weekdays=it)}))
+            }
+            "halo_organizer_clock_action" -> clockAction(a)
+            "halo_organizer_calendar_preview" -> {
+                val source=com.halo.app.data.workspace.WorkspaceFileVersion(a.string("objectId"),a.string("fileVersion"))
+                val review=calendars.preview(source,ZoneId.of(a.string("zoneId")))
+                val offset=a.optionalLong("offset")?.toInt() ?: 0
+                JSONObject().put("objectId",source.objectId).put("fileVersion",source.version).put("zoneId",a.string("zoneId"))
+                    .put("reviewToken",review.token).put("records",JSONArray(review.preview.records.drop(offset).take(50).map(::summary)))
+                    .put("issues",JSONArray(review.preview.issues.drop(offset).take(50).map {issue -> JSONObject().put("item",issue.item)
+                        .put("reasonCode",issue.reasonCode.name).put("arguments",JSONArray(issue.reasonArguments)).put("warning",issue.warning).put("seriesWithheld",issue.seriesWithheld)}))
+                    .put("recordCount",review.preview.records.size).put("issueCount",review.preview.issues.size)
+                    .put("nextOffset",if(offset+50<maxOf(review.preview.records.size,review.preview.issues.size)) offset+50 else JSONObject.NULL)
+            }
+            "halo_organizer_calendar_import" -> {
+                val result=calendars.import(com.halo.app.data.workspace.WorkspaceFileVersion(a.string("objectId"),a.string("fileVersion")),
+                    ZoneId.of(a.string("zoneId")),a.string("reviewToken"),(a["recordIds"] as List<*>).filterIsInstance<String>())
+                JSONObject().put("added",JSONArray(result.added)).put("alreadyPresent",JSONArray(result.alreadyPresent)).put("saved",true).put("deliveryConfirmed",false)
+            }
+            "halo_organizer_calendar_export" -> {
+                val rows=a.maps("records");require(rows.isNotEmpty() && rows.map {it.string("id")}.distinct().size==rows.size)
+                val file=calendars.prepareExport(rows.associate {it.string("id") to it.long("version")})
+                JSONObject().put("objectId",file.objectId.value).put("fileVersion",file.version).put("name",file.displayName)
+                    .put("mimeType",file.mimeType).put("saved",true).put("exportedExternally",false)
             }
             "halo_organizer_edit" -> {
                 val value=organizer.requireCurrent(id(),version());val p=a.map("patch");require(p.isNotEmpty())
@@ -180,8 +242,11 @@ class EverydayToolExecutor(
             "halo_organizer_delivery" -> {
                 organizer.requireCurrent(id(),version())
                 val receipt=requireNotNull(organizer.repository.receipts(id()).find {it.occurrenceKey==a.string("occurrenceKey") && it.recordVersion==version()})
-                if(a.string("action")=="SNOOZE") saved(organizer.repository.snoozeDelivery(receipt.occurrenceKey,version(),Duration.ofMinutes(a.long("minutes")),elapsedMs(),bootId()))
-                else JSONObject().put("dismissed",organizer.repository.dismissDelivery(receipt.occurrenceKey,version())).put("occurrenceKey",receipt.occurrenceKey)
+                if(a.string("action")=="SNOOZE") saved(delivery.snooze(receipt.occurrenceKey,version(),Duration.ofMinutes(a.long("minutes")),receipt.triggerAt)).put("occurrenceKey",receipt.occurrenceKey)
+                else {
+                    if(!delivery.dismiss(receipt.occurrenceKey,version(),receipt.triggerAt)) throw OrganizerConflict("This delivery is no longer active")
+                    JSONObject().put("dismissed",true).put("occurrenceKey",receipt.occurrenceKey)
+                }
             }
             "halo_clock_query" -> {
                 val rows=if(child) emptyList() else clocks.all()
@@ -192,12 +257,12 @@ class EverydayToolExecutor(
             "halo_clock_save" -> {
                 require(a.containsKey("id")==a.containsKey("version"))
                 val value=WorldClockRecord(a.optionalString("id") ?: UUID.randomUUID().toString(),a.string("label"),a.string("zoneId"))
-                JSONObject().put("clock",worldClock(clocks.save(value,a.optionalLong("version")))).put("saved",true)
+                JSONObject().put("clock",worldClock(clocks.save(value,a.optionalLong("version")))).put("id",value.id).put("saved",true)
             }
             "halo_clock_action" -> {
                 when(a.string("action")) {
-                    "REMOVE" -> JSONObject().put("clock",worldClock(clocks.remove(id(),version()))).put("saved",true)
-                    "RESTORE" -> JSONObject().put("clock",worldClock(clocks.restore(id(),version()))).put("saved",true)
+                    "REMOVE" -> JSONObject().put("clock",worldClock(clocks.remove(id(),version()))).put("id",id()).put("saved",true)
+                    "RESTORE" -> JSONObject().put("clock",worldClock(clocks.restore(id(),version()))).put("id",id()).put("saved",true)
                     else -> {val rows=a.maps("clocks");require(rows.map {it.string("id")}.distinct().size==rows.size)
                         clocks.reorder(rows.map {it.string("id")},rows.associate {it.string("id") to it.long("version")});JSONObject().put("saved",true)}
                 }
@@ -285,9 +350,43 @@ class EverydayToolExecutor(
             else -> widgetAction(name,a)
         }
     }
+    private suspend fun clockAction(a: Map<String,Any?>): JSONObject {
+        val action=a.string("action")
+        val kind=if(action=="DISMISS_EXPIRED_TIMERS") OrganizerKind.TIMER else OrganizerKind.ALARM
+        val records=organizer.repository.records().filter {it.kind==kind && it.status==OrganizerStatus.ACTIVE && it.deletedAt==null}
+        val ringing=records.flatMap {record -> organizer.repository.receipts(record.id).filter {
+            it.recordVersion==record.version && it.state in setOf(DeliveryState.FIRED,DeliveryState.DELIVERING)
+        }}
+        if(action=="SNOOZE_ALARM") {
+            require(ringing.size==1) {"Choose one exact ringing Halo alarm"}
+            val receipt=ringing.single()
+            return saved(delivery.snooze(receipt.occurrenceKey,receipt.recordVersion,Duration.ofMinutes(a.optionalLong("minutes") ?: 10),receipt.triggerAt))
+        }
+        if(ringing.isNotEmpty()) {
+            require(if(kind==OrganizerKind.TIMER) ringing.size<=20 else ringing.size==1) {"Choose exact Halo alert occurrences"}
+            val dismissed=mutableListOf<String>()
+            try {ringing.forEach {receipt ->
+                if(!delivery.dismiss(receipt.occurrenceKey,receipt.recordVersion,receipt.triggerAt)) throw OrganizerConflict("Delivery changed")
+                dismissed+=receipt.occurrenceKey
+            }} catch(cancelled: CancellationException) {throw cancelled}
+              catch(error: Exception) {
+                if(dismissed.isNotEmpty()) throw OrganizerDeliveryUncertain(error)
+                throw error
+            }
+            return JSONObject().put("dismissedOccurrences",JSONArray(dismissed)).put("dismissedCount",dismissed.size)
+        }
+        if(action=="DISMISS_EXPIRED_TIMERS") return JSONObject().put("dismissedOccurrences",JSONArray()).put("dismissedCount",0)
+        val now=clock.instant()
+        val next=organizer.agenda(now,now.plusSeconds(366L*86400),setOf(OrganizerKind.ALARM))
+            .filter {it.record.status==OrganizerStatus.ACTIVE && !it.completed}
+        require(next.isNotEmpty() && next.count {it.start==next.first().start}==1) {"Choose one exact upcoming Halo alarm"}
+        val occurrence=next.first()
+        return saved(if(occurrence.record.repeat==null) organizer.cancel(occurrence.record.id,occurrence.record.version)
+            else organizer.repository.saveOverride(OccurrenceOverride(occurrence.record.id,occurrence.originalStart,OccurrenceDisposition.CANCELLED),occurrence.record.version))
+    }
     private fun summary(r: OrganizerRecord)=JSONObject().put("id",r.id).put("version",r.version).put("kind",r.kind.name).put("title",r.title).put("status",r.status.name)
         .put("priority",r.priority.name).put("start",r.time?.start?.toString()).put("zoneId",r.time?.zoneId).put("repeating",r.repeat!=null)
-    private fun saved(r: OrganizerRecord)=JSONObject().put("record",summary(r)).put("saved",true).put("deliveryConfirmed",false)
+    private fun saved(r: OrganizerRecord)=JSONObject().put("id",r.id).put("version",r.version).put("record",summary(r)).put("saved",true).put("deliveryConfirmed",false)
     private fun occurrence(o: OrganizerOccurrence)=summary(o.record).put("originalStart",o.originalStart.toString()).put("startInstant",o.start.toString()).put("endInstant",o.end?.toString()).put("completed",o.completed)
     private fun receipt(r: DeliveryReceipt)=JSONObject().put("occurrenceKey",r.occurrenceKey).put("recordVersion",r.recordVersion).put("triggerAt",r.triggerAt.toString()).put("state",r.state.name).put("updatedAt",r.updatedAt.toString()).put("snoozedUntil",r.snoozedUntil?.toString())
     private fun worldClock(r: WorldClockRecord)=JSONObject().put("id",r.id).put("version",r.version).put("label",r.label).put("zoneId",r.zoneId).put("position",r.position).put("deleted",r.deletedAt!=null)

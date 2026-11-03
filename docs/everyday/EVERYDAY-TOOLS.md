@@ -1,5 +1,7 @@
 # Everyday tools
 
+Current correction batch: all ten audit findings have authored production fixes and targeted regression sources. See [ten-finding correction record](/home/pi/Projects/Halo/docs/testing/ISSUE-63-AUDIT-FIXES-2026-11-03.md). Source review and the matching test/build gate are tracked there; the audit and release history below must not be treated as current executable evidence.
+
 Status, 3 November: the registered Everyday operations are integrated, but functional parity is incomplete. The [requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) records missing delivery-coordinator side effects, recognized alarm/timer routing to Android Clock, generic result operability metadata and missing Organizer ICS import/export preparation commands (AUD63-01/02/08/09). The live issue body matches ISSUE-63-SOURCE.md; GitHub metadata was updated 3 November. Current tests/build are NOT_RUN; phone/voice/provider acceptance remains separate.
 
 `EverydayToolContracts` publishes strict nested schemas; `EverydayToolExecutor` adapts them to the existing Runtime `ToolExecutor`. `HostTools` registers that executor in the phone composition root. `HaloToolDescriptors` supplies capabilities, replay and approval policy. The built-in `halo.everyday` skill supplies discovery. This adds no agent, parser of conversational text, alternate database or independent network client.

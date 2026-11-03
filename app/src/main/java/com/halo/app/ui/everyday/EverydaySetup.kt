@@ -30,6 +30,7 @@ import org.json.*
 data class EverydaySetupDraft(val sourceIds: Set<String> = emptySet(),val cards: List<String> = listOf("clock","upcoming","organizer_tasks","briefing"),
     val minutes: Int=60,val cityId: String?=null,val applyScreen: Boolean=true,val language: String?=null,val category: String?=null,
     val versions: Map<String,Long> = emptyMap(),val screenRevision: String="") {
+    fun withWeatherCity(id: String?)=copy(cityId=id,sourceIds=sourceIds.filterNot {it.startsWith("weather:setup:")}.toSet())
     fun encode()=JSONObject().put("sources",JSONArray(sourceIds.sorted())).put("cards",JSONArray(cards)).put("minutes",minutes).put("city",cityId)
         .put("applyScreen",applyScreen).put("language",language).put("category",category).put("versions",JSONObject(versions)).put("screenRevision",screenRevision).toString()
     companion object {
@@ -72,6 +73,7 @@ class EverydaySetupViewModel(application: Application,private val savedState: Sa
                 val screen=Graph.screenStore.withToolState {it}
                 val retained=if(reviewCurrent) null else (savedState.get<String>("draft") ?: preferences.getString("draft",null))?.let {runCatching {EverydaySetupDraft.decode(it)}.getOrNull()}
                 val draft=retained ?: EverydaySetupDraft(sourceIds=rows.filter {it.source.external && it.source.selected}.map {it.source.id}.toSet(),
+                    cityId=rows.filter {it.source.selected && it.source.id.startsWith("weather:setup:")}.singleOrNull()?.source?.id?.substringAfterLast(':'),
                     applyScreen=screen.layout==null,versions=rows.associate {it.source.id to it.source.version},screenRevision=screen.revision)
                 mutable.value=EverydaySetupState(loading=false,kids=Graph.kidsPreferences.getEnabled(),draft=draft,sources=rows,
                     city=draft.cityId?.let {Graph.offlineCities.get(it)})
@@ -88,7 +90,8 @@ class EverydaySetupViewModel(application: Application,private val savedState: Sa
             if(draftRevision.get()==revision) preferences.edit().putString("draft",raw).commit()
         }}
     }
-    fun city(city: OfflineCity) {change(requireNotNull(state.value.draft).copy(cityId=city.id));mutable.value=state.value.copy(city=city)}
+    fun city(city: OfflineCity) {change(requireNotNull(state.value.draft).withWeatherCity(city.id));mutable.value=state.value.copy(city=city)}
+    fun removeCity() {change(requireNotNull(state.value.draft).withWeatherCity(null));mutable.value=state.value.copy(city=null)}
     fun preview(source: CollectorSource) {
         if(state.value.busy) return
         mutable.value=state.value.copy(preview=SourcePreview(source,CollectorFetchResult.Unavailable("Preview shows saved source settings. Fetching a preview is optional and requires Power.")))
@@ -165,7 +168,7 @@ fun EverydaySetupPage(model: EverydaySetupViewModel=viewModel()) {
             Text(uiText("Weather city"),style=MaterialTheme.typography.titleMedium)
             Text(state.city?.let {"${it.name} · ${it.countryCode}"} ?: uiText("No weather city selected"))
             TextButton({cityPicker=true},enabled=!state.busy,modifier=Modifier.heightIn(min=48.dp)) {Text(uiText("Choose city offline"))}
-            if(state.city!=null) TextButton({model.change(draft.copy(cityId=null));model.load()},enabled=!state.busy) {Text(uiText("Remove weather city"))}
+            if(state.city!=null) TextButton(model::removeCity,enabled=!state.busy) {Text(uiText("Remove weather city"))}
             Text(uiText("Choose initial Screen cards"),style=MaterialTheme.typography.titleMedium)
             EverydayCards.screenKinds.forEach { (type,kind) ->EverydayToggle(uiText(EverydayCards.title(kind)),type in draft.cards,!state.busy) {selected ->
                 model.change(draft.copy(cards=if(selected) draft.cards+type else draft.cards-type))}}

@@ -4753,4 +4753,26 @@
     <string name="ui_c6f974c44b32" formatted="false">"Izmantojiet BuddyBot vietējo IP adresi."</string>
     <string name="ui_1ca2a9635d72" formatted="false">"Aktīvie vienumi"</string>
     <string name="ui_19e82138c35f" formatted="false">"Termiņš šodien"</string>
+    <string name="ui_616c35db6880" formatted="false">"Šis kalendāra ieraksts ir nederīgs vai netiek atbalstīts. Pārbaudi to sākotnējā kalendārā."</string>
+    <string name="ui_cd6e7bad6639" formatted="false">"Šī atkārtošanās netiek atbalstīta. Pārbaudi sēriju manuāli; tās noteikumi nav vienkāršoti."</string>
+    <string name="ui_5e68c2952f6f" formatted="false">"Laika joslas definīcija ir nederīga, netiek atbalstīta vai neaptver šo notikumu."</string>
+    <string name="ui_20a605a1cc77" formatted="false">"Ilgums ir nederīgs vai pārsniedz atbalstīto viena gada robežu."</string>
+    <string name="ui_d703a5c16272" formatted="false">"Visas dienas notikumu ilgumam jāizmanto pilnas kalendāra dienas vai nedēļas."</string>
+    <string name="ui_885c1391058d" formatted="false">"Notikums beidzas otrajā atkārtotā laikā, pārejot uz ziemas laiku. Pārbaudi beigu laiku manuāli."</string>
+    <string name="ui_dc6929fd201a" formatted="false">"Ilgums dienās vai nedēļās bez fiksētas laika joslas mainās līdz ar ierīces laika joslu. Pārbaudi to manuāli."</string>
+    <string name="ui_3e78ae507962" formatted="false">"Atkārtotu notikumu ilgumu dienās vai nedēļās nevar saglabāt, mainoties vasaras laikam. Pārbaudi to manuāli."</string>
+    <string name="ui_dde9f8db47e2" formatted="false">"Pirms importēšanas šim notikumam vajadzīgs beigu laiks vai ilgums."</string>
+    <string name="ui_cea78d564796" formatted="false">"Šim notikumam nav atbalstīta sākuma laika."</string>
+    <string name="ui_40781bcd72eb" formatted="false">"Notikuma vai atkārtojuma identifikators trūkst, dublējas vai ir neviennozīmīgs."</string>
+    <string name="ui_8d7a8b9d6896" formatted="false">"Šīs atkārtojuma izmaiņas nevar piemērot importētajai sērijai."</string>
+    <string name="ui_dafa0cb03deb" formatted="false">"Iegultie modinātāji un pielikumi netiek importēti, atvērti vai ieplānoti."</string>
+    <string name="ui_67a5115f8a4d" formatted="false">"Nav iegultas laika joslas; tiek izmantoti instalētie IANA noteikumi zonai %1$s"</string>
+    <string name="ui_abdc7e8b74a7" formatted="false">"Sērija nav importēta: %1$s"</string>
+    <string name="ui_f15a357ac531" formatted="false">"Tiek rādīti līdz 90 atbilstošiem vienumiem. Meklē pēc nosaukuma, lai atrastu vecākus. Aktivitātes un laika skala izmanto saglabāto vēsturi."</string>
+    <string name="ui_4d35dd492527" formatted="false">"Saglabāšana nav apstiprināta. Melnraksts paliek redaktorā. Atcel rediģēšanu un pārbaudi saglabāto izkārtojumu pirms nākamajām izmaiņām."</string>
+    <string name="ui_83a21b71adce" formatted="false">"Iestatīt halo modinātāju"</string>
+    <string name="ui_93db11f6655e" formatted="false">"Pārvaldīt halo modinātājus un taimerus"</string>
+    <string name="ui_1f172d9e59c7" formatted="false">"Pārskatīt lokālo kalendāru"</string>
+    <string name="ui_70793485d58a" formatted="false">"Importēt pārskatīto kalendāru"</string>
+    <string name="ui_c1804c4ab7d7" formatted="false">"Sagatavot kalendāra eksportu"</string>
 </resources>

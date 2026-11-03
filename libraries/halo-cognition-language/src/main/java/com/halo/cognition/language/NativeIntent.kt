@@ -4,9 +4,10 @@ package com.halo.cognition.language
 sealed interface NativeControlIntent : Intent
 data class NativeClarificationIntent(val reason: String) : NativeControlIntent
 
-data class TimerIntent(val seconds: Int) : NativeControlIntent
-/** Official AlarmClock actions; no inferred alarm/timer state. */
-data class NativeClockIntent(val action: String) : NativeControlIntent
+data class TimerIntent(val seconds: Int, val systemClock: Boolean = false) : NativeControlIntent
+/** Defaults to the Halo organizer; explicit system requests retain Android Clock dispatch. */
+data class NativeClockIntent(val action: String, val systemClock: Boolean = false) : NativeControlIntent
+data class NativeSystemAlarmIntent(val timeExpression: String) : NativeControlIntent
 /** User-reviewable external editor handoffs: dispatch never means saved. */
 data class NativeContactEditorIntent(val mode: String) : NativeControlIntent
 data object NativeCalendarEditorIntent : NativeControlIntent
@@ -44,6 +45,18 @@ object NativeCommandParser {
             else -> null
         }
         if (clock != null) return NativeClockIntent(clock)
+        val systemAction=when(command) {
+            "show system clock alarms","show android clock alarms","open system clock alarms" -> "show_alarms"
+            "show system clock timers","show android clock timers","open system clock timers" -> "show_timers"
+            "dismiss next system clock alarm","dismiss next android clock alarm" -> "dismiss_next_alarm"
+            "snooze system clock alarm","snooze android clock alarm" -> "snooze_alarm"
+            "dismiss expired system clock timers","dismiss expired android clock timers" -> "dismiss_expired_timers"
+            else -> null
+        }
+        if(systemAction!=null) return NativeClockIntent(systemAction,systemClock=true)
+        Regex("(?:set )?(?:an? )?(?:system|android clock) alarm (?:for |at )?(.+)").matchEntire(command)?.let {
+            return NativeSystemAlarmIntent(it.groupValues[1])
+        }
         if (command in setOf("create contact", "create a contact", "create new contact",
                 "add contact", "add a contact", "add new contact", "open contact editor"))
             return NativeContactEditorIntent("create")
@@ -81,11 +94,11 @@ object NativeCommandParser {
         if (settingsDestination != null) return OpenSettingsIntent(settingsDestination)
         AppCommandParser.parse(raw)?.let { return it as? NativeControlIntent }
         if (Regex("\\b(and then|then|and)\\b").containsMatchIn(command)) return null
-        Regex("(?:set|start) (?:a )?timer (?:for )?([a-z\\d -]+) (seconds?|minutes?|hours?)").matchEntire(command)?.let {
-            val amount = number(it.groupValues[1]) ?: return NativeClarificationIntent("Specify a timer duration from 1 second to 24 hours.")
-            val multiplier = when { it.groupValues[2].startsWith("hour") -> 3600; it.groupValues[2].startsWith("minute") -> 60; else -> 1 }
+        Regex("(?:set|start) (?:an? )?(?:(system|android clock) )?timer (?:for )?([a-z\\d -]+) (seconds?|minutes?|hours?)").matchEntire(command)?.let {
+            val amount = number(it.groupValues[2]) ?: return NativeClarificationIntent("Specify a timer duration from 1 second to 24 hours.")
+            val multiplier = when { it.groupValues[3].startsWith("hour") -> 3600; it.groupValues[3].startsWith("minute") -> 60; else -> 1 }
             val seconds = amount.toLong() * multiplier
-            return seconds.takeIf { v -> v in 1..86400 }?.let { v -> TimerIntent(v.toInt()) } ?: NativeClarificationIntent("Specify a timer duration from 1 second to 24 hours.")
+            return seconds.takeIf { v -> v in 1..86400 }?.let { v -> TimerIntent(v.toInt(),systemClock=it.groupValues[1].isNotEmpty()) } ?: NativeClarificationIntent("Specify a timer duration from 1 second to 24 hours.")
         }
         Regex("(?:set )?(brightness|volume)(?: to)? ([a-z\\d -]+)(?:%| percent)").matchEntire(command)?.let {
             val value = number(it.groupValues[2]) ?: return NativeClarificationIntent("Specify a percentage from 1 to 100 for brightness, or 0 to 100 for volume.")

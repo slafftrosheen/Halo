@@ -36,7 +36,8 @@ data class EverydayBrief(val id: String, val period: BriefPeriod, val audience: 
 data class BriefInput(val now: Instant, val zone: ZoneId, val audience: BriefAudience,
     val period: BriefPeriod, val sources: List<CollectorState>, val organizer: List<OrganizerRecord>,
     val occurrences: List<OrganizerOccurrence>, val attention: DailyAssistantSnapshot = DailyAssistantSnapshot(),
-    val baseline: BriefBaseline? = null, val childRecordIds: Set<String> = emptySet(), val childLocalFactIds: Set<String> = emptySet())
+    val baseline: BriefBaseline? = null, val childRecordIds: Set<String> = emptySet(), val childLocalFactIds: Set<String> = emptySet(),
+    val attentionObservedAt: Instant? = null, val outstandingReminders: List<OutstandingReminder> = emptyList())
 
 data class BriefProjection(val document: EverydayBrief, val baseline: BriefBaseline)
 data class BriefDeliveryRecord(val key: String, val documentId: String, val at: Instant, val state: String)

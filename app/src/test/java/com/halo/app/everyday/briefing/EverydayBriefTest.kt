@@ -16,7 +16,7 @@ class EverydayBriefTest {
     private val news = CollectorSource("news", "News", "Publisher", CollectorKind.FEED, SourceCategory.WORLD, "en", "https://example.org/feed", selected = true)
     private fun input(records: List<OrganizerRecord> = emptyList(), sources: List<CollectorState> = listOf(local),
         period: BriefPeriod = BriefPeriod.ON_DEMAND, baseline: BriefBaseline? = null, audience: BriefAudience = BriefAudience.EVERYDAY) =
-        BriefInput(now, zone, audience, period, sources, records, emptyList(), baseline = baseline)
+        BriefInput(now, zone, audience, period, sources, records, emptyList(), baseline = baseline, attentionObservedAt = now)
     private fun task(id: String = "task", version: Long = 1) = OrganizerRecord(id, OrganizerKind.TASK, "Plan", version = version, createdAt = now)
     private fun feed(title: String, at: Instant = now) = CollectorState(news,
         CollectorSnapshot(news.id, news.version, CollectorPayload.Articles(listOf(ArticleFact("one", title, "Text", "https://example.org/one", "Publisher", now, "en"))),
@@ -47,11 +47,24 @@ class EverydayBriefTest {
         assertEquals(BriefChangeKind.ADDED, added.document.changes.single().kind)
         assertEquals(BriefFactKind.ATTENTION, added.document.changes.single().fact!!.kind)
         val resolved = EverydayBriefEngine.project(request.copy(now = now.plusSeconds(120),
-            attention = DailyAssistantSnapshot(), baseline = added.baseline))
+            attention = DailyAssistantSnapshot(), attentionObservedAt = now.plusSeconds(120), baseline = added.baseline))
         assertTrue(resolved.document.facts.isEmpty())
         assertEquals(BriefChangeKind.REMOVED, resolved.document.changes.single().kind)
         assertEquals(added.document.facts.single().id, resolved.document.changes.single().factId)
         assertFalse("halo:attention" in resolved.document.comparisonUnavailableSources)
+    }
+
+    @Test fun unavailableOrStaleAttentionDoesNotAssertResolutionButObservedEmptyDoes() {
+        val morning=EverydayBriefEngine.project(input(period=BriefPeriod.MORNING)
+            .copy(attention=DailyAssistantSnapshot(items=listOf(attention()))))
+        for(observed in listOf<Instant?>(null,now.minusSeconds(300))) {
+            val unavailable=EverydayBriefEngine.project(input(period=BriefPeriod.CHANGES,baseline=morning.baseline)
+                .copy(attentionObservedAt=observed))
+            assertTrue(unavailable.document.changes.isEmpty())
+            assertTrue("halo:attention" in unavailable.document.comparisonUnavailableSources)
+        }
+        val empty=EverydayBriefEngine.project(input(period=BriefPeriod.CHANGES,baseline=morning.baseline))
+        assertEquals(BriefChangeKind.REMOVED,empty.document.changes.single().kind)
     }
 
     @Test fun emptyKidsAttentionObservationDoesNotExposeAdultItems() {

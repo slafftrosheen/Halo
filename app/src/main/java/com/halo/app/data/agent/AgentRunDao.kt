@@ -8,8 +8,12 @@ data class AgentRunWithSteps(
     @Relation(parentColumn = "id", entityColumn = "runId") val steps: List<AgentStepEntity>,
 )
 
+data class AgentRunLinkCandidate(val id: String, val request: String)
+
 @Dao
 interface AgentRunDao {
+    @Query("SELECT id, request FROM agent_runs WHERE parentRunId IS NULL ORDER BY updatedAt DESC, id")
+    suspend fun linkCandidates(): List<AgentRunLinkCandidate>
     @Query("SELECT * FROM agent_runs WHERE parentRunId IS NULL ORDER BY updatedAt DESC, id LIMIT :limit")
     suspend fun recentRoots(limit: Int): List<AgentRunEntity>
     @Transaction

@@ -4753,4 +4753,26 @@
     <string name="ui_c6f974c44b32" formatted="false">"Użyj lokalnego adresu IP BuddyBot."</string>
     <string name="ui_1ca2a9635d72" formatted="false">"Aktywne elementy"</string>
     <string name="ui_19e82138c35f" formatted="false">"Termin dzisiaj"</string>
+    <string name="ui_616c35db6880" formatted="false">"Ten wpis kalendarza jest nieprawidłowy lub nieobsługiwany. Sprawdź go w kalendarzu źródłowym."</string>
+    <string name="ui_cd6e7bad6639" formatted="false">"To powtarzanie nie jest obsługiwane. Sprawdź serię ręcznie; jej zasad nie uproszczono."</string>
+    <string name="ui_5e68c2952f6f" formatted="false">"Definicja strefy czasowej jest nieprawidłowa, nieobsługiwana lub nie obejmuje tego wydarzenia."</string>
+    <string name="ui_20a605a1cc77" formatted="false">"Czas trwania jest nieprawidłowy lub przekracza obsługiwany limit jednego roku."</string>
+    <string name="ui_d703a5c16272" formatted="false">"Czas trwania wydarzeń całodniowych musi być podany w pełnych dniach lub tygodniach kalendarzowych."</string>
+    <string name="ui_885c1391058d" formatted="false">"Wydarzenie kończy się w drugim wystąpieniu powtórzonego czasu przy zmianie czasu. Sprawdź godzinę zakończenia ręcznie."</string>
+    <string name="ui_dc6929fd201a" formatted="false">"Czas trwania w dniach lub tygodniach bez stałej strefy zmienia się wraz ze strefą urządzenia. Sprawdź go ręcznie."</string>
+    <string name="ui_3e78ae507962" formatted="false">"Czasu trwania powtórzeń w dniach lub tygodniach nie można zachować przy zmianie czasu. Sprawdź go ręcznie."</string>
+    <string name="ui_dde9f8db47e2" formatted="false">"Przed importem tego wydarzenia podaj godzinę zakończenia lub czas trwania."</string>
+    <string name="ui_cea78d564796" formatted="false">"To wydarzenie nie ma obsługiwanej godziny rozpoczęcia."</string>
+    <string name="ui_40781bcd72eb" formatted="false">"Brakuje identyfikatora wydarzenia lub wystąpienia, jest on powielony albo niejednoznaczny."</string>
+    <string name="ui_8d7a8b9d6896" formatted="false">"Tej zmiany wystąpienia nie można zastosować do importowanej serii."</string>
+    <string name="ui_dafa0cb03deb" formatted="false">"Osadzone alarmy i załączniki nie są importowane, otwierane ani planowane."</string>
+    <string name="ui_67a5115f8a4d" formatted="false">"Brak osadzonej strefy czasowej; używane są zainstalowane reguły IANA dla %1$s"</string>
+    <string name="ui_abdc7e8b74a7" formatted="false">"Seria nie została zaimportowana: %1$s"</string>
+    <string name="ui_f15a357ac531" formatted="false">"Wyświetlanych jest do 90 pasujących elementów. Wyszukaj starsze po nazwie. Aktywność i oś czasu korzystają z zachowanej historii."</string>
+    <string name="ui_4d35dd492527" formatted="false">"Nie potwierdzono zapisu. Szkic pozostaje w edytorze. Anuluj edycję i sprawdź zapisany układ przed następną zmianą."</string>
+    <string name="ui_83a21b71adce" formatted="false">"Ustaw alarm halo"</string>
+    <string name="ui_93db11f6655e" formatted="false">"Zarządzaj alarmami i minutnikami halo"</string>
+    <string name="ui_1f172d9e59c7" formatted="false">"Sprawdź lokalny kalendarz"</string>
+    <string name="ui_70793485d58a" formatted="false">"Importuj sprawdzony kalendarz"</string>
+    <string name="ui_c1804c4ab7d7" formatted="false">"Przygotuj eksport kalendarza"</string>
 </resources>

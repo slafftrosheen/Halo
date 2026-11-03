@@ -1,5 +1,7 @@
 # Issue 63 code handoff
 
+Current correction batch: all ten audit findings have authored production fixes and targeted regression sources. See [ten-finding correction record](/home/pi/Projects/Halo/docs/testing/ISSUE-63-AUDIT-FIXES-2026-11-03.md). Source review and the matching test/build gate are tracked there; the audit and release history below must not be treated as current executable evidence.
+
 Current status, 3 November: **source implementation is not complete**. The [full requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) at `ba177d110` records nine required functional/contract corrections and a repeated-setup consistency issue. These include assistant delivery cancellation, recognized alarm/timer ownership, briefing correctness, localized ICS reasons, link search, Screen persistence acknowledgement and calendar/tool parity. Historical green results below do not cover the current source. Builds/tests remain **NOT_RUN** for the recent batches at the user's code-first request.
 
 User-requested navigation follow-up: [Organizer/menu/family-switch implementation](../testing/ISSUE-63-ORGANIZER-MENU-FAMILY-SWITCH-2026-11-03.md) groups the Everyday instruments under Workspace's Organizer and restores a shell-owned, credential-gated Kids/full Halo menu switch. Its test/build/device verification is **NOT_RUN** in the code-first phase.

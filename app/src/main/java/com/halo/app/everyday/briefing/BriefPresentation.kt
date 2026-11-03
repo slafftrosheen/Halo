@@ -33,7 +33,14 @@ object BriefPresentation {
         val at = fact.at?.takeIf { fact.kind in setOf(BriefFactKind.EVENT, BriefFactKind.TASK, BriefFactKind.REMINDER, BriefFactKind.ALARM) }
             ?.let { time(it, locale, zone) }
         val completed = if (fact.values["completed"] == "true") text(locale, "Done", "Готово", "Paveikts", "Gotowe") else null
-        return listOfNotNull(fact.title, at, completed).joinToString(" · ")
+        val outstanding=if(fact.values["outstanding"]!="true") null else when {
+            fact.values["snoozed"]=="true" -> text(locale,"Snoozed reminder","Напоминание отложено","Atlikts atgādinājums","Odłożone przypomnienie")
+            fact.values["deliveryState"]=="NOTIFICATIONS_BLOCKED" -> text(locale,"Outstanding reminder · notifications blocked","Незавершённое напоминание · уведомления заблокированы","Neizpildīts atgādinājums · paziņojumi bloķēti","Zaległe przypomnienie · powiadomienia zablokowane")
+            fact.values["deliveryState"]=="FAILED" -> text(locale,"Outstanding reminder · delivery failed","Незавершённое напоминание · ошибка доставки","Neizpildīts atgādinājums · piegāde neizdevās","Zaległe przypomnienie · dostarczenie nie powiodło się")
+            fact.values["deliveryState"]=="MISSED" -> text(locale,"Outstanding reminder · delivery missed","Незавершённое напоминание · доставка пропущена","Neizpildīts atgādinājums · piegāde izlaista","Zaległe przypomnienie · pominięte dostarczenie")
+            else -> text(locale,"Outstanding reminder","Незавершённое напоминание","Neizpildīts atgādinājums","Zaległe przypomnienie")
+        }
+        return listOfNotNull(fact.title, at, completed,outstanding).joinToString(" · ")
     }
     fun comparisonNotice(brief: EverydayBrief, locale: Locale): String? = when {
         brief.baselineMissing -> text(locale, "This saved view has no matching morning brief for comparison. Save a morning brief in this experience, then check changes.",
@@ -41,10 +48,10 @@ object BriefPresentation {
             "Šim saglabātajam skatam nav atbilstoša rīta pārskata salīdzināšanai. Saglabā rīta pārskatu šajā vidē un tad pārbaudi izmaiņas.",
             "Ten zapisany widok nie ma pasującego porannego podsumowania do porównania. Zapisz poranne podsumowanie w tym trybie, a potem sprawdź zmiany.")
         brief.period == BriefPeriod.CHANGES && brief.changes.isEmpty() && brief.comparisonUnavailableSources.isNotEmpty() -> text(locale,
-            "Some sources have no morning snapshot. No changes were found in the sources that could be compared.",
-            "Для части источников нет утренних данных. В доступных для сравнения источниках изменений не найдено.",
-            "Dažiem avotiem nav rīta datu. Salīdzināmajos avotos izmaiņas nav atrastas.",
-            "Część źródeł nie ma porannych danych. W źródłach dostępnych do porównania nie znaleziono zmian.")
+            "Some sources are unavailable or have no morning snapshot. No changes were found in the sources that could be compared.",
+            "Часть источников недоступна или не имеет утренних данных. В доступных для сравнения источниках изменений не найдено.",
+            "Daži avoti nav pieejami vai tiem nav rīta datu. Salīdzināmajos avotos izmaiņas nav atrastas.",
+            "Część źródeł jest niedostępna lub nie ma porannych danych. W źródłach dostępnych do porównania nie znaleziono zmian.")
         brief.period == BriefPeriod.CHANGES && brief.changes.isEmpty() -> text(locale,
             "No changes in the available information since your morning brief.", "В доступных данных нет изменений с утреннего обзора.",
             "Pieejamajos datos kopš rīta pārskata izmaiņu nav.", "Brak zmian w dostępnych danych od porannego podsumowania.")

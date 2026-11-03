@@ -29,6 +29,7 @@ class DailyAssistantReadOnlyTest {
             val controller = DailyAssistantController(flowOf(emptyList()), flowOf(emptyList()), flowOf(NotificationInboxState(emptyList(), true)),
                 flowOf(emptyList()), flowOf(emptyList()), flowOf(emptyList()), flowOf(emptyList()), flowOf(2),
                 flowOf(emptyMap()), flowOf(null), InMemoryDeviceRegistry(), { evaluated.send(Unit); true }, scope, { now })
+            assertNull(controller.recentBaseObservation().observedAt)
             val observing = scope.launch { controller.snapshot.collect() }
             withTimeout(5000) { controller.snapshot.first { it.counts.learningSuggestions == 2 } }
             evaluated.receive()
@@ -37,7 +38,10 @@ class DailyAssistantReadOnlyTest {
             withTimeout(5000) { evaluated.receive() }
             assertEquals(2, controller.recentBase().counts.learningSuggestions)
             assertTrue(controller.recentBase().items.none { it.kind == DailyAssistantKind.BRIEF })
+            assertNotNull(controller.recentBaseObservation().observedAt)
             observing.cancelAndJoin()
+            scope.coroutineContext[Job]!!.cancelAndJoin()
+            assertNull(controller.recentBaseObservation().observedAt)
         } finally { scope.coroutineContext[Job]!!.cancelAndJoin(); evaluated.close() }
     }
     @Test fun malformedRoutineObservationDoesNotDisableOrRewriteStoredSchedule() = runBlocking {

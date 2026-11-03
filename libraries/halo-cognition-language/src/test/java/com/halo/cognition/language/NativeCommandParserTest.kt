@@ -4,6 +4,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeCommandParserTest {
+    @org.junit.Test fun explicitSystemClockRequestsRetainOwnerWhileOrdinaryTimersUseHalo() {
+        org.junit.Assert.assertEquals(NativeClockIntent("show_alarms",true),NativeCommandParser.parse("Show system clock alarms"))
+        org.junit.Assert.assertEquals(NativeClockIntent("snooze_alarm",true),NativeCommandParser.parse("Snooze Android Clock alarm"))
+        org.junit.Assert.assertEquals(TimerIntent(120,true),NativeCommandParser.parse("Start a system timer for two minutes"))
+        org.junit.Assert.assertEquals(TimerIntent(120),NativeCommandParser.parse("Start a timer for two minutes"))
+        org.junit.Assert.assertEquals(NativeSystemAlarmIntent("7 am"),NativeCommandParser.parse("Set a system alarm for 7 AM"))
+    }
+
 
     @Test fun reportedPhysicalCommandsStayNativeRegardlessOfCaseAndWhitespace() {
         val commands = mapOf(

@@ -23,13 +23,13 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
     onChat: () -> Unit, onSettings: () -> Unit, onFullScreen: (Boolean) -> Unit,
     onEdit: () -> Unit, onApply: () -> Unit, onCancel: () -> Unit, onAppearance: () -> Unit,
     onAdd: () -> Unit, onNote: () -> Unit, onTalk: () -> Unit,
-    orbControl: (@Composable (Dp) -> Unit)?, shellZone: Boolean = false) {
+    orbControl: (@Composable (Dp) -> Unit)?, shellZone: Boolean = false, applyAllowed: Boolean = true) {
     if (shellZone) {
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (editing) {
                 Text(uiText("Preview"), Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary)
-                TextButton(onClick = onApply, enabled = interactionAllowed, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
+                TextButton(onClick = onApply, enabled = interactionAllowed && applyAllowed, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
                 TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
             }
             if (fullScreen) TextButton(onClick = { onFullScreen(false) }, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -54,7 +54,7 @@ internal fun ScreenWorkspaceChrome(hasLayout: Boolean, editing: Boolean, fullScr
         if (hasLayout) {
             if (editing) FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Preview"), Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.labelSmall)
-                TextButton(onClick = onApply, enabled = interactionAllowed, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
+                TextButton(onClick = onApply, enabled = interactionAllowed && applyAllowed, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
                 TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
                 IconButton(onClick = onAppearance, enabled = interactionAllowed, modifier = Modifier.size(48.dp)) { HaloIcon(HaloGlyph.APPEARANCE, stringResource(R.string.screen_appearance)) }
                 IconButton(onClick = onAdd, enabled = interactionAllowed, modifier = Modifier.size(48.dp)) { Icon(painterResource(R.drawable.halo_ic_add), uiText("Add card"), Modifier.size(24.dp)) }
