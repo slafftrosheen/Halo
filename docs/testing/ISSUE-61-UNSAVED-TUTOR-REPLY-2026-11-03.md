@@ -23,3 +23,5 @@ Run locally:
 ```
 
 Finish with the issue #61 native selected-passage → three tutor turns → reviewed practice → save/restart, including a storage-denial/failure where safely reproducible. Strict semantic source-only truth (the earlier 'surface tension' hallucination) and actual voice/Kids acceptance remain OPEN.
+
+Follow-up test hygiene: the regression fixture uses the canonical `kotlinx.coroutines.ExperimentalCoroutinesApi` annotation and joins cancelled ViewModel jobs before database teardown. This does not change production behavior or represent an executed test.

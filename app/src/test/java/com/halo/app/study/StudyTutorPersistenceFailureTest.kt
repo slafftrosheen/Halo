@@ -13,11 +13,8 @@ import com.halo.app.ui.screens.study.StudyLessonStore
 import com.halo.app.ui.screens.study.StudyViewModel
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -69,6 +66,7 @@ class StudyTutorPersistenceFailureTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val owner = ViewModelStore()
+        val jobs = mutableListOf<Job>()
         try {
             val repository = StudyRepository(db, db.studyDao())
             val session = repository.createSession(emptyList(), null, StudyLanguagePreferences(), "Vocabulary")
@@ -77,6 +75,7 @@ class StudyTutorPersistenceFailureTest {
             var requests = 0
             val vm = StudyViewModel(session.id, StudyUseCases(repository), gateway = tutor { requests++ }, lessons = lessons)
             owner.put("lesson", vm)
+            jobs += vm.viewModelScope.coroutineContext.job
             withTimeout(5000) { vm.uiState.first { !it.loading } }
             vm.setDraft("Explain this term")
             withTimeout(5000) { vm.uiState.first { it.draftKept && it.draft == "Explain this term" } }
@@ -91,8 +90,8 @@ class StudyTutorPersistenceFailureTest {
             assertTrue(lessons.load(session.id).isEmpty())
         } finally {
             owner.clear()
-            db.close()
-            Dispatchers.resetMain()
+            try { withTimeout(5000) { jobs.joinAll() } }
+            finally { db.close(); Dispatchers.resetMain() }
         }
     }
 
@@ -101,12 +100,14 @@ class StudyTutorPersistenceFailureTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val owner = ViewModelStore()
+        val jobs = mutableListOf<Job>()
         try {
             val repository = StudyRepository(db, db.studyDao())
             val session = repository.createSession(emptyList(), null, StudyLanguagePreferences(), "Vocabulary")
             val lessons = StudyLessonStore(ReplyDroppingStorage())
             val vm = StudyViewModel(session.id, StudyUseCases(repository), gateway = tutor {}, lessons = lessons)
             owner.put("lesson", vm)
+            jobs += vm.viewModelScope.coroutineContext.job
             withTimeout(5000) { vm.uiState.first { !it.loading } }
             vm.setDraft("Explain this term")
             withTimeout(5000) { vm.uiState.first { it.draftKept } }
@@ -117,8 +118,8 @@ class StudyTutorPersistenceFailureTest {
             assertEquals("Explain this term", lessons.load(session.id).single().question)
         } finally {
             owner.clear()
-            db.close()
-            Dispatchers.resetMain()
+            try { withTimeout(5000) { jobs.joinAll() } }
+            finally { db.close(); Dispatchers.resetMain() }
         }
     }
 }
