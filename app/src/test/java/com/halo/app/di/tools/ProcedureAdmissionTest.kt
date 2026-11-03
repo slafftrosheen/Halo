@@ -88,6 +88,32 @@ class ProcedureAdmissionTest {
         assertEquals("First approved review", store.get("same-id")!!.name)
     }
 
+    @Test fun concurrentReviewChangeBeforeUseReceiptCannotReturnStaleInstructions() = runBlocking {
+        val original = recipe("saved", "First review")
+        val stored = InMemoryLearnedProcedureStore(listOf(original))
+        val racing = object : LearnedProcedureStore by stored {
+            override suspend fun recordUsageIfCurrent(expected: LearnedProcedure, usedAtMs: Long): Boolean {
+                assertTrue(stored.compareAndSet(expected, expected.copy(name = "Second review")))
+                return stored.recordUsageIfCurrent(expected, usedAtMs)
+            }
+        }
+        val tools = ProcedureToolExecutor(racing, { true }, now = { 200L })
+        val result = tools.execute(ToolCall("read", "halo_use_procedure", mapOf("procedureId" to "saved")))
+        assertTrue(result is ToolExecutionResult.Rejected)
+        assertEquals("Second review", stored.get("saved")?.name)
+        assertEquals(0L, stored.get("saved")?.usageCount)
+    }
+
+    @Test fun successiveUnchangedUseReceiptsRemainAtomicAndDoNotAlterReviewVersion() = runBlocking {
+        val original = recipe("saved", "Stable review")
+        val store = InMemoryLearnedProcedureStore(listOf(original))
+        val tools = ProcedureToolExecutor(store, { true }, now = { 200L })
+        assertTrue(tools.execute(ToolCall("first", "halo_use_procedure", mapOf("procedureId" to "saved"))) is ToolExecutionResult.Success)
+        assertTrue(tools.execute(ToolCall("second", "halo_use_procedure", mapOf("procedureId" to "saved"))) is ToolExecutionResult.Success)
+        assertEquals(2L, store.get("saved")?.usageCount)
+        assertEquals(original.updatedAt, store.get("saved")?.updatedAt)
+    }
+
     @Test fun actionRemovedAfterProposalCannotBeSavedAsIfStillKnown() = runBlocking {
         val store = InMemoryLearnedProcedureStore()
         var known = true

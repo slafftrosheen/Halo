@@ -28,7 +28,9 @@ class SharedPreferencesLearnedProcedureStore(
 
     private val preferences =
         context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-    private val mutex = Mutex()
+    // The same preferences file may be opened through more than one store instance.
+    // A per-instance mutex cannot serialize those read/modify/commit transactions.
+    private val mutex = sharedMutex
 
     override suspend fun all(): List<LearnedProcedure> = mutex.withLock { readAll() }
 
@@ -166,6 +168,7 @@ class SharedPreferencesLearnedProcedureStore(
     }
 
     private companion object {
+        val sharedMutex = Mutex()
         const val PREFERENCES_NAME = "halo_learned_procedures"
         const val KEY_PROCEDURES = "procedures_v1"
         const val MAX_PROCEDURES = 50

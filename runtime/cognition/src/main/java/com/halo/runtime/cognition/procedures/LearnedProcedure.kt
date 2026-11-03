@@ -102,6 +102,14 @@ interface LearnedProcedureStore {
     suspend fun recordUsage(id: String, usedAtMs: Long)
     /** Atomic compare/edit/delete. Hosts without transactional support refuse the write. */
     suspend fun compareAndSet(expected: LearnedProcedure, replacement: LearnedProcedure?): Boolean = false
+    /** Preview must only count and return the *same reviewed* row that was validated.
+     * Usage metadata does not modify a workflow's sourceVersion or approval scope.
+     */
+    suspend fun recordUsageIfCurrent(expected: LearnedProcedure, usedAtMs: Long): Boolean =
+        compareAndSet(expected, expected.copy(
+            usageCount = expected.usageCount + 1,
+            lastUsedAt = usedAtMs,
+        ))
 }
 
 /** In-memory store used by tests, previews and hosts that have no durable storage. */
@@ -114,12 +122,12 @@ class InMemoryLearnedProcedureStore(
         initial.forEach { procedures[it.id] = it }
     }
 
-    override suspend fun all(): List<LearnedProcedure> = procedures.values.toList()
+    override suspend fun all(): List<LearnedProcedure> = synchronized(procedures) { procedures.values.toList() }
 
-    override suspend fun get(id: String): LearnedProcedure? = procedures[id]
+    override suspend fun get(id: String): LearnedProcedure? = synchronized(procedures) { procedures[id] }
 
     override suspend fun upsert(procedure: LearnedProcedure) {
-        procedures[procedure.id] = procedure
+        synchronized(procedures) { procedures[procedure.id] = procedure }
     }
 
     override suspend fun insertIfAbsent(procedure: LearnedProcedure): Boolean = synchronized(procedures) {
@@ -131,22 +139,25 @@ class InMemoryLearnedProcedureStore(
     }
 
     override suspend fun delete(id: String) {
-        procedures.remove(id)
+        synchronized(procedures) { procedures.remove(id) }
     }
 
-    override suspend fun compareAndSet(expected: LearnedProcedure, replacement: LearnedProcedure?): Boolean {
-        if (procedures[expected.id] != expected) return false
-        require(replacement == null || replacement.id == expected.id)
-        if (replacement == null) procedures.remove(expected.id) else procedures[expected.id] = replacement
-        return true
-    }
+    override suspend fun compareAndSet(expected: LearnedProcedure, replacement: LearnedProcedure?): Boolean =
+        synchronized(procedures) {
+            if (procedures[expected.id] != expected) return@synchronized false
+            require(replacement == null || replacement.id == expected.id)
+            if (replacement == null) procedures.remove(expected.id) else procedures[expected.id] = replacement
+            true
+        }
 
     override suspend fun recordUsage(id: String, usedAtMs: Long) {
-        val current = procedures[id] ?: return
-        procedures[id] = current.copy(
-            usageCount = current.usageCount + 1,
-            lastUsedAt = usedAtMs,
-            updatedAt = current.updatedAt,
-        )
+        synchronized(procedures) {
+            val current = procedures[id] ?: return@synchronized
+            procedures[id] = current.copy(
+                usageCount = current.usageCount + 1,
+                lastUsedAt = usedAtMs,
+                updatedAt = current.updatedAt,
+            )
+        }
     }
 }

@@ -320,7 +320,8 @@ class ProcedureToolExecutor(
             catch (_: org.json.JSONException) { return reject("Saved workflow data unavailable") }
         if (bound.sumOf { it?.let { args -> JSONObject(args).toString().length } ?: 0 } + procedure.steps.sumOf { it.intent.length + it.capabilityId.length } > 2_500)
             return reject("Workflow inputs exceed the bounded preview size. Use shorter inputs.")
-        store.recordUsage(procedure.id, now())
+        if (!store.recordUsageIfCurrent(procedure, now()))
+            return reject("The reviewed workflow changed during preparation. Read it again before using it.")
         return ToolExecutionResult.Success(
             toolCall.id,
             toolCall.functionName,
