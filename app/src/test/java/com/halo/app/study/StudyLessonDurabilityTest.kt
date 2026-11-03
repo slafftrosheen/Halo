@@ -96,6 +96,17 @@ class StudyLessonDurabilityTest {
         assertEquals(raw, storage.getString("study_journey_v1_lesson"))
     }
 
+    @Test fun oversizedNewJourneyIsRejectedBeforeItCanBecomeUnreadableOnRestart() = runBlocking {
+        val storage = StorageFixture()
+        val lessons = StudyLessonStore(storage)
+        var rejected = false
+        try {
+            lessons.saveJourney("lesson", LearningJourney(branches = listOf("X".repeat(200_001))))
+        } catch (_: IllegalArgumentException) { rejected = true }
+        assertTrue("New journey output must respect its own read limit", rejected)
+        assertNull(storage.getString("study_journey_v1_lesson"))
+    }
+
     @Test fun confirmedTurnsAndProgressRestoreThroughFreshStoreInstance() = runBlocking {
         val storage = StorageFixture()
         val original = StudyLessonStore(storage)

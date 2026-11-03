@@ -204,6 +204,9 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                     .put("source", exercise.sourceObjectId.orEmpty()).put("locator", exercise.locator.orEmpty())
                     .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed).put("finished", exercise.finished))
             } }).toString()
+        // The read path refuses an oversized document. Never write an artifact that
+        // this same version would refuse to reopen after process recreation.
+        require(encoded.length <= 200_000) { "Learning progression exceeds its supported storage size" }
         storage.putString(key, encoded)
         check(storage.getString(key) == encoded) { "Study progression was not confirmed in local storage" }
     } }

@@ -24,3 +24,5 @@ Local verification command:
 ```
 
 Device acceptance: saved note and Study output after process death, storage-denial diagnostic, and a controlled corrupted-history recovery without destroying saved raw data. The previously observed **strict source-only semantic hallucination remains FAIL**, and actual Kids/voice gates remain open. Do not close #61 from this patch.
+
+Follow-up storage-boundary guard: new journey JSON is now checked against the same 200,000-character size cap required for restore, **before** committing it. An oversized new journey is rejected without persisting a record the reader would later refuse. One additional regression test is authored; still NOT_RUN.
