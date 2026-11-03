@@ -127,7 +127,9 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                 .put("question", turn.question.orEmpty().take(2000)).put("verdict", turn.verdict?.name.orEmpty()).put("citations", citations))
         }
         while (array.length() > 1 && array.toString().length > 590_000) array.remove(0)
-        storage.putString(key(id), array.toString())
+        val encoded = array.toString()
+        storage.putString(key(id), encoded)
+        check(storage.getString(key(id)) == encoded) { "Study replies were not confirmed in local storage" }
         revision.update { it + 1 }
     } }
     suspend fun loadJourney(id: String): LearningJourney? = withContext(Dispatchers.IO) {
@@ -169,7 +171,8 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
         requireWritable(id)
-        storage.putString("study_journey_v1_$id", JSONObject()
+        val key = "study_journey_v1_$id"
+        val encoded = JSONObject()
             .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
             .put("probeSkipped", journey.probeSkipped)
             .put("explanationDepth", journey.explanationDepth.name)
@@ -190,7 +193,9 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                 put(JSONObject().put("id", exercise.id).put("text", exercise.text.take(4000))
                     .put("source", exercise.sourceObjectId.orEmpty()).put("locator", exercise.locator.orEmpty())
                     .put("uncertainty", exercise.uncertainty.orEmpty()).put("reviewed", exercise.reviewed).put("finished", exercise.finished))
-            } }).toString())
+            } }).toString()
+        storage.putString(key, encoded)
+        check(storage.getString(key) == encoded) { "Study progression was not confirmed in local storage" }
     } }
     private fun snapshot(id: String) = listOf(key(id), "study_journey_v1_$id", recoveryKey(id)).associateWith { storage.getString(it) }
     private fun fingerprint(id: String, values: Map<String, String?>): String {
