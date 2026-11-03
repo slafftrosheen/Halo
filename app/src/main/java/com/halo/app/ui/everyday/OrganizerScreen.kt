@@ -120,7 +120,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                 OrganizerOrbAction.WATCH -> current?.let { model.commitmentAction(it, "WATCH") }
                 OrganizerOrbAction.STOP -> current?.let { model.commitmentAction(it, "STOP") }
                 OrganizerOrbAction.PLAN -> current?.let { openWorkEditor(it, it.commitment.purpose) }
-                OrganizerOrbAction.RESULT -> current?.commitment?.execution?.runId?.let { onOpenRelated("activity?runId=${android.net.Uri.encode(it)}") }
+                OrganizerOrbAction.RESULT -> (current?.commitment?.execution?.runId ?: current?.commitment?.recovery?.runId)?.let { onOpenRelated("activity?runId=${android.net.Uri.encode(it)}") }
                 OrganizerOrbAction.UNDO -> model.undo()
                 OrganizerOrbAction.CLOCKS -> onClocks()
                 OrganizerOrbAction.SOURCES -> onSources()
@@ -200,7 +200,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                 current.sourceLabel?.let { Text(it, style = MaterialTheme.typography.labelLarge) }
                 current.sourceUrl?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 if (!kids) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (current.kind == OrganizerKind.TASK && current.commitment.owner == CommitmentOwner.ME && current.commitment.purpose != CommitmentPurpose.STOPWATCH && current.repeat == null) TextButton({ model.complete(current) }, enabled = !state.busy) {
+                    if (current.kind == OrganizerKind.TASK && current.commitment.owner == CommitmentOwner.ME && current.commitment.purpose != CommitmentPurpose.STOPWATCH && current.repeat == null) TextButton({ model.complete(current) }, enabled = !state.busy && !current.commitment.recoveryNeedsReview) {
                         Text(uiText(if (current.status == OrganizerStatus.COMPLETED) "Reopen task" else "Complete task"))
                     }
                     if (current.kind == OrganizerKind.TASK && current.status == OrganizerStatus.ACTIVE) TextButton({ model.new(OrganizerKind.TASK, current.id) }, enabled = !state.busy) { Text(uiText("Add subtask")) }

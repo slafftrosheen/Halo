@@ -176,10 +176,10 @@ internal fun OrganizerWorkDetails(record: OrganizerRecord, model: OrganizerViewM
                 }
                 if (!reviewable && work.actions.isNotEmpty()) Text(uiText("Some required capabilities or sources changed. Edit the plan before reviewing it."))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (work.execution == null) TextButton({ model.commitmentAction(record, "PREPARE") }, enabled = !busy && reviewable) { Text(uiText("Review work plan")) }
+                    if (work.execution == null) TextButton({ model.commitmentAction(record, "PREPARE") }, enabled = !busy && reviewable && !work.recoveryNeedsReview) { Text(uiText("Review work plan")) }
                     if (work.execution != null && work.state in setOf(HaloWorkState.READY, HaloWorkState.WAITING)) {
                         TextButton({ model.commitmentAction(record, "RUN_NOW") }, enabled = !busy) { Text(uiText("Run reviewed plan now")) }
-                        TextButton({ model.commitmentAction(record, "ARM") }, enabled = !busy && record.time != null && work.state == HaloWorkState.READY) { Text(uiText("Enable reviewed schedule")) }
+                        TextButton({ model.commitmentAction(record, "ARM") }, enabled = !busy && record.time != null && work.state in setOf(HaloWorkState.READY, HaloWorkState.WAITING) && work.execution.scheduling !in setOf("SCHEDULED", "EVENT_DRIVEN")) { Text(uiText("Enable reviewed schedule")) }
                     }
                     if (work.execution != null) TextButton({ model.commitmentAction(record, "STOP") }, enabled = !busy) { Text(uiText("Stop Halo work")) }
                     if (work.owner == CommitmentOwner.SHARED && work.state == HaloWorkState.NEEDS_USER && work.result?.conditionMatched != false && work.result?.newMatch != false && work.result?.waiting == false && resultAllowed)
@@ -191,6 +191,13 @@ internal fun OrganizerWorkDetails(record: OrganizerRecord, model: OrganizerViewM
                     binding.runId?.let { id -> TextButton({ onOpenRelated("activity?runId=${android.net.Uri.encode(id)}") }) { Text(uiText("Open execution record")) } }
                 }
             }
+        }
+        work.recovery?.let { recovery ->
+            Text(uiText("Previous execution"), style = MaterialTheme.typography.titleMedium)
+            Text(recovery.recordedAt.toString())
+            if (work.recoveryNeedsReview) Text(uiText("Inspect the previous execution and acknowledge its uncertain effects before continuing."))
+            recovery.runId?.let { id -> TextButton({ onOpenRelated("activity?runId=${android.net.Uri.encode(id)}") }) { Text(uiText("Open previous execution record")) } }
+            if (work.recoveryNeedsReview && work.execution == null) TextButton({ model.commitmentAction(record, "ACKNOWLEDGE_RECOVERY") }, enabled = !busy) { Text(uiText("I reviewed the previous execution")) }
         }
         work.result?.let { result ->
             val sourceAccess = (work.sources + result.sourceRefs).all { ref -> sourceStates.any { it.source.id == ref.id && it.source.version == ref.version && it.source.selected && it.source.enabled && !it.source.muted } }

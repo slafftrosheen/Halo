@@ -46,6 +46,8 @@ class EverydayArchiveTest {
         assertEquals(CommitmentCreator.IMPORTED, restored.commitment.createdBy)
         assertEquals(saved.commitment.actions, restored.commitment.actions)
         assertEquals("Real observation", restored.commitment.result!!.summary)
+        assertEquals("run", restored.commitment.recovery!!.runId)
+        assertTrue(restored.commitment.recoveryNeedsReview)
         val paused = organizer.get(watch.id)!!.commitment.stopwatch!!
         assertNull(paused.startedAt); assertNull(paused.bootId); assertTrue(paused.accumulatedMs >= 5000)
         assertTrue(restored.version > saved.version)

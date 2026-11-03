@@ -4,6 +4,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeCommandParserTest {
+    @Test fun ordinaryMemoryRequestsRemainWithTheMemorySemanticOwner() {
+        listOf("Remember that my preferred language is Latvian", "Запомни, что я предпочитаю латышский", "Запомни мой адрес",
+            "Zapamiętaj, że wolę język łotewski").forEach { assertNull(it, NativeCommandParser.parse(it)) }
+    }
     @Test fun polishCaptureRetainsUserIntentWithoutInventingAnExecutionPlan() {
         assertEquals(NativeOrganizerCommitmentIntent("ME", "INBOX", "kup materiał w piątek"), NativeCommandParser.parse("Zapisz kup materiał w piątek"))
         assertEquals(NativeOrganizerCommitmentIntent("HALO", "WATCH", "zmiany zamówienia"), NativeCommandParser.parse("Obserwuj zmiany zamówienia"))

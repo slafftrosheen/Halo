@@ -98,7 +98,11 @@ internal object EverydayArchive {
             val version=nextVersion(r.version,prior?.version ?: 0,oldVersion)
             recordVersions[r.id]=version
             val timer=r.timer?.let {it.copy(remainingMs=it.remaining(clockNow(),0,"portable-restore"),startedAt=null,elapsedStartMs=null,bootId=null)}
-            val work = r.commitment.copy(execution = null,
+            val recovery = r.commitment.execution?.let { binding ->
+                if (binding.runId == null) r.commitment.recovery else OrganizerWorkRecovery(binding.planId, binding.routineId, binding.runId, clockNow(),
+                    r.commitment.state != HaloWorkState.COMPLETED)
+            } ?: r.commitment.recovery
+            val work = r.commitment.copy(execution = null, recovery = recovery,
                 createdBy = CommitmentCreator.IMPORTED,
                 state = if (r.commitment.owner == CommitmentOwner.ME) r.commitment.state else HaloWorkState.NEEDS_USER,
                 nextHumanAction = if (r.commitment.owner == CommitmentOwner.ME) r.commitment.nextHumanAction else "Restored Halo work must be reviewed before it can run or monitor again.",

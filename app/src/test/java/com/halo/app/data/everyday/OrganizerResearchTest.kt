@@ -174,4 +174,25 @@ class OrganizerResearchTest {
         assertTrue(service.search("printer", 8, chosen.id).all { it.sourceId == chosen.id })
         assertEquals(1, service.search("printer", 8, chosen.id).size)
     }
+    @Test fun positiveSiteCrawlDelayFailsClosedBeforeASecondRequestAndReservesBothRequestUnits() = runBlocking {
+        val page = repository.save(source("public_page", "https://example.org/page"), null)
+        assertTrue(repository.reserve(page.id, page.version, now, true) is CollectorAdmission.Accepted)
+        assertEquals(2, db.collectorDao().requestCount(0))
+        val visited = mutableListOf<String>()
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            visited += chain.request().url.encodedPath
+            Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("Fixture")
+                .body("User-agent: Halo\nAllow: /\nCrawl-delay: 1".toResponseBody("text/plain".toMediaType())).build()
+        }.build()
+        assertTrue(PublicHttpCollector(CollectorKind.RESEARCH, Policy(), client, clock).fetch(page, null) is CollectorFetchResult.Unavailable)
+        assertEquals(listOf("/robots.txt"), visited)
+    }
+    @Test fun aPageCannotConsumeTheLastSingleRequestUnitOfTheDailyBudget() = runBlocking {
+        val page = repository.save(source("public_page", "https://example.org/page"), null)
+        repeat(CollectorRefreshPolicy.MAX_EXTERNAL_REQUESTS_PER_DAY - 1) { index ->
+            db.collectorDao().request(CollectorRequestEntity("previous:$index", "other-origin", now.minusSeconds(3600).toEpochMilli()))
+        }
+        assertTrue(repository.reserve(page.id, page.version, now, true) is CollectorAdmission.Deferred)
+        assertEquals(CollectorRefreshPolicy.MAX_EXTERNAL_REQUESTS_PER_DAY - 1, db.collectorDao().requestCount(0))
+    }
 }

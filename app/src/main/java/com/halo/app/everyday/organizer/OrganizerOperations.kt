@@ -20,6 +20,7 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
     private val clock: Clock = Clock.systemUTC(), private val runAllowed: () -> Boolean = { true },
     private val readBrief: suspend (String) -> com.halo.app.everyday.briefing.EverydayBrief? = { null }) {
     private val repository get() = organizer.repository
+    private val runAuthorities = java.util.concurrent.ConcurrentHashMap<String, () -> Unit>()
     private suspend fun requireSources(refs: List<OrganizerSourceRef>) {
         refs.distinct().forEach { ref ->
             val source = requireNotNull(sources.source(ref.id))
@@ -55,11 +56,15 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
         validateBaselines(actions.filter { action -> old?.commitment?.createdBy == CommitmentCreator.IMPORTED || action !in old?.commitment?.actions.orEmpty() })
         refs.forEach { ref -> val source = requireNotNull(sources.state(ref.id)); require(source.source.version == ref.version && source.source.selected && source.source.enabled && !source.source.muted) }
         val needsSetup = responsibility != CommitmentOwner.ME && actions.isEmpty()
+        val recovery = old?.commitment?.recovery
+        val needsRecovery = old?.commitment?.recoveryNeedsReview == true
         val commitment = OrganizerCommitment(responsibility, purpose, intent,
-            if (needsSetup) HaloWorkState.NEEDS_USER else if (responsibility != CommitmentOwner.ME || purpose == CommitmentPurpose.INBOX) HaloWorkState.DRAFT else HaloWorkState.READY,
-            actions, refs, nextHumanAction = if (needsSetup) "Choose installed capabilities and review the concrete work plan, or take over." else null,
+            if (needsSetup || needsRecovery) HaloWorkState.NEEDS_USER else if (responsibility != CommitmentOwner.ME || purpose == CommitmentPurpose.INBOX) HaloWorkState.DRAFT else HaloWorkState.READY,
+            actions, refs, result = old?.commitment?.result,
+            nextHumanAction = if (needsRecovery) "Inspect the previous execution and acknowledge its uncertain effects before continuing."
+                else if (needsSetup) "Choose installed capabilities and review the concrete work plan, or take over." else null,
             createdBy = old?.commitment?.createdBy ?: CommitmentCreator.USER,
-            stopwatch = if (purpose == CommitmentPurpose.STOPWATCH) old?.commitment?.stopwatch ?: StopwatchState() else null)
+            stopwatch = if (purpose == CommitmentPurpose.STOPWATCH) old?.commitment?.stopwatch ?: StopwatchState() else null, recovery = recovery)
         return if (old == null) organizer.create(OrganizerKind.TASK, title, commitment = commitment)
             else repository.save(old.copy(title = title, commitment = commitment), old.version)
     }
@@ -82,8 +87,9 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
         val responsibility = owner ?: record.commitment.owner
         return repository.promoteInbox(record.copy(kind = kind, time = time ?: record.time, parentId = if (kind == OrganizerKind.TASK) record.parentId else null,
             commitment = record.commitment.copy(owner = responsibility, purpose = purpose,
-                state = if (responsibility == CommitmentOwner.ME) HaloWorkState.READY else if (record.commitment.actions.isEmpty()) HaloWorkState.NEEDS_USER else HaloWorkState.DRAFT,
-                nextHumanAction = if (responsibility != CommitmentOwner.ME && record.commitment.actions.isEmpty()) "Choose installed capabilities and review the concrete work plan, or take over." else null)), version)
+                state = if (record.commitment.recoveryNeedsReview) HaloWorkState.NEEDS_USER else if (responsibility == CommitmentOwner.ME) HaloWorkState.READY else if (record.commitment.actions.isEmpty()) HaloWorkState.NEEDS_USER else HaloWorkState.DRAFT,
+                nextHumanAction = if (record.commitment.recoveryNeedsReview) "Inspect the previous execution and acknowledge its uncertain effects before continuing."
+                    else if (responsibility != CommitmentOwner.ME && record.commitment.actions.isEmpty()) "Choose installed capabilities and review the concrete work plan, or take over." else null)), version)
     }
     suspend fun acknowledge(id: String, version: Long): OrganizerRecord {
         val record = organizer.requireCurrent(id, version)
@@ -122,6 +128,7 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
     }
     suspend fun prepare(id: String, version: Long): OrganizerRecord {
         val record = organizer.requireCurrent(id, version)
+        require(!record.commitment.recoveryNeedsReview) { "Review the previous uncertain execution before approving more work" }
         require(record.status == OrganizerStatus.ACTIVE && record.commitment.owner != CommitmentOwner.ME && record.commitment.state != HaloWorkState.RUNNING)
         require(record.commitment.execution == null) { "Stop the existing plan before reviewing a replacement" }
         capabilities.validate(record.commitment.actions)
@@ -159,8 +166,10 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
     }
     suspend fun arm(id: String, version: Long): OrganizerRecord {
         val record = organizer.requireCurrent(id, version)
-        require(record.time != null && record.commitment.owner != CommitmentOwner.ME && record.commitment.state == HaloWorkState.READY)
+        require(record.time != null && record.commitment.owner != CommitmentOwner.ME && !record.commitment.recoveryNeedsReview &&
+            record.commitment.state in setOf(HaloWorkState.READY, HaloWorkState.WAITING))
         val snapshot = bound(record)
+        require(record.commitment.state == HaloWorkState.READY || snapshot.routine?.enabled == false) { "This reviewed schedule is already enabled" }
         // Durable WAITING is published only after the scheduler's real receipt, never from a button click.
         val receipt = requireNotNull(management().setEnabled(snapshot.id, true, snapshot.sourceVersion))
         val current = organizer.requireCurrent(id, version)
@@ -172,25 +181,41 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
     }
     suspend fun runNow(id: String, version: Long): OrganizerRecord {
         val record = organizer.requireCurrent(id, version)
-        require(record.commitment.owner != CommitmentOwner.ME && record.commitment.state in setOf(HaloWorkState.READY, HaloWorkState.WAITING))
+        require(record.commitment.owner != CommitmentOwner.ME && !record.commitment.recoveryNeedsReview && record.commitment.state in setOf(HaloWorkState.READY, HaloWorkState.WAITING))
         val snapshot = bound(record)
         requireNotNull(management().runNow(snapshot.id, snapshot.sourceVersion))
         return requireNotNull(repository.get(id))
     }
     suspend fun stop(id: String, version: Long): OrganizerRecord {
         val record = organizer.requireCurrent(id, version); val binding = requireNotNull(record.commitment.execution)
+        val recovery = recoveryEvidence(record)
         val saved = repository.save(record.copy(commitment = record.commitment.copy(execution = null,
-            state = HaloWorkState.NEEDS_USER, nextHumanAction = "Work stopped. Review recorded results; an interrupted effect must not be repeated automatically.")), version)
+            recovery = recovery, state = HaloWorkState.NEEDS_USER,
+            nextHumanAction = "Work stopped. Review recorded results; an interrupted effect must not be repeated automatically.")), version)
         // Revocation above fences suspended capability calls before any subsequent publication/effect.
         val current = routines.managementGet(RoutineId(binding.routineId))
         if (current != null) management().setEnabled(current.id, false, current.sourceVersion)
         binding.runId?.let { cancelRun(it) }
         return saved
     }
+    private suspend fun recoveryEvidence(record: OrganizerRecord): OrganizerWorkRecovery? {
+        val binding = record.commitment.execution ?: return record.commitment.recovery
+        val run = binding.runId?.let { runs.get(AgentRunId(it)) }
+        return if (binding.runId != null) OrganizerWorkRecovery(binding.planId, binding.routineId, binding.runId, clock.instant(),
+            run == null || run.state != AgentRunState.COMPLETED) else record.commitment.recovery
+    }
     suspend fun transfer(id: String, version: Long, owner: CommitmentOwner): OrganizerRecord {
         val record = organizer.requireCurrent(id, version)
         val current = if (record.commitment.execution != null) stop(id, version) else record
         return organizer.transfer(id, current.version, owner)
+    }
+    suspend fun acknowledgeRecovery(id: String, version: Long): OrganizerRecord {
+        val record = organizer.requireCurrent(id, version)
+        require(record.commitment.execution == null && record.commitment.recoveryNeedsReview)
+        val setup = record.commitment.owner != CommitmentOwner.ME && record.commitment.actions.isEmpty()
+        return repository.save(record.copy(commitment = record.commitment.copy(recovery = record.commitment.recovery!!.copy(reviewed = true),
+            state = if (setup) HaloWorkState.NEEDS_USER else if (record.commitment.owner == CommitmentOwner.ME) HaloWorkState.READY else HaloWorkState.DRAFT,
+            nextHumanAction = if (setup) "Choose installed capabilities and review the concrete work plan, or take over." else null)), version)
     }
     suspend fun watch(id: String, version: Long): OrganizerRecord {
         val record = organizer.requireCurrent(id, version)
@@ -203,10 +228,15 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
             CommitmentPurpose.WATCH, actions, current.commitment.sources)
     }
     /** Called only inside a journal-claimed RoutineExecutor tool scope, once per exact step. */
-    suspend fun perform(id: String, planId: String, index: Int, runId: String, toolCallId: String): OrganizerRecord {
+    suspend fun perform(id: String, planId: String, index: Int, runId: String, toolCallId: String, authority: () -> Unit = {}): OrganizerRecord {
         require(runAllowed()) { "Organizer background authority changed" }
         val run = requireNotNull(runs.get(AgentRunId(runId)))
         require(!run.state.isTerminal && run.steps.any { it is AgentStep.ToolExecutionClaimed && it.toolId == PERFORM && it.toolCallId == toolCallId }) { "No durable automation claim" }
+        if (runAuthorities.size >= 128) runAuthorities.keys.forEach { previous ->
+            if (runs.get(AgentRunId(previous))?.state?.isTerminal != false) runAuthorities.remove(previous)
+        }
+        val verify = runAuthorities.putIfAbsent(runId, authority) ?: authority
+        verify()
         var record = requireNotNull(repository.get(id)); val binding = requireNotNull(record.commitment.execution)
         val occurrence = requireNotNull(routines.runResult(runId)) { "No durable automation occurrence" }
         require(occurrence.routineId.value == binding.routineId && occurrence.state == RoutineRunState.RUNNING && toolCallId == "$runId:action:$index")
@@ -214,6 +244,10 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
         bound(record)
         require(record.deletedAt == null && record.status == OrganizerStatus.ACTIVE && record.commitment.owner != CommitmentOwner.ME && binding.planId == planId)
         require(index in record.commitment.actions.indices)
+        // Automatic ticks may observe a pending shared handoff, but cannot replace it or repeat its capabilities.
+        if (record.commitment.owner == CommitmentOwner.SHARED && record.commitment.state == HaloWorkState.NEEDS_USER &&
+            record.commitment.result?.waiting == false && record.commitment.result?.newMatch != false &&
+            binding.runId != runId && binding.runId?.let { routines.runResult(it)?.state } == RoutineRunState.COMPLETED) return record
         if (index == 0) require(OrganizerResponsibility.mayExecute(record, planId) && binding.runId != runId)
         else require(record.commitment.state == HaloWorkState.RUNNING && binding.runId == runId && binding.claimedStep == index - 1)
         val action = record.commitment.actions[index]; val arguments = capabilities.arguments(action)
@@ -222,13 +256,14 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
             execution = binding.copy(runId = runId, claimedStep = index))), record.version)
         val claimedVersion = record.version
         suspend fun current() {
+            com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); verify()
             require(runAllowed()) { "Organizer background authority changed" }
             val latest = organizer.requireCurrent(id, claimedVersion)
             require(latest.commitment.execution?.planId == planId && latest.commitment.execution?.runId == runId)
             require(!requireNotNull(runs.get(AgentRunId(runId))).state.isTerminal) { "Execution was cancelled" }
         }
         try {
-            val outcome = capabilities.require(action.capability).execute(arguments, ::current)
+            val outcome = com.halo.app.everyday.EverydayEffectAuthority.run(::current) { capabilities.require(action.capability).execute(arguments, ::current) }
             current()
             val previous = record.commitment.result
             val matched = when { previous?.conditionMatched == false || outcome.conditionMatched == false -> false
@@ -254,12 +289,17 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
                 else -> HaloWorkState.COMPLETED
             }
             return db.withTransaction {
+                current()
                 validateSources(record); requireSources(dependencies)
-                repository.save(record.copy(commitment = record.commitment.copy(state = next, result = result,
+                val saved = repository.save(record.copy(commitment = record.commitment.copy(state = next, result = result,
                 execution = record.commitment.execution!!.copy(lastEvidenceIds = if (last && !waiting) evidenceIds else binding.lastEvidenceIds),
                 nextHumanAction = if (next == HaloWorkState.NEEDS_USER) if (waiting) "No current source observation is available. Review availability or choose another check."
                     else if (newMatch == false) "No new condition match was observed. Choose another check or a recurring schedule."
-                    else "Review the prepared result and complete your part, or revise the plan." else null)), claimedVersion)
+                    else "Review the prepared result and complete your part, or revise the plan."
+                    else if (next == HaloWorkState.WAITING && record.commitment.execution!!.scheduling !in setOf("SCHEDULED", "EVENT_DRIVEN"))
+                        "This recurring plan has no active schedule. Enable its reviewed schedule or run the next check explicitly." else null)), claimedVersion)
+                com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); verify()
+                saved
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
@@ -272,18 +312,22 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
     }
     suspend fun onRoutineFinished(routine: Routine, summary: RoutineRunSummary?): Boolean {
         if (!routine.id.value.startsWith("organizer:") || routine.actions.isEmpty() || routine.actions.any { it.toolId != PERFORM }) return false
+        val authority = summary?.agentRunId?.let { runAuthorities.remove(it) }
+        val mayPresent = authority != null && runCatching { authority() }.isSuccess
         val id = routine.actions.firstOrNull()?.argumentsJson?.let { JSONObject(it).optString("id") } ?: return true
         var record = repository.get(id) ?: return true
         if (record.deletedAt != null || record.commitment.execution?.routineId != routine.id.value || summary == null) return true
         val planId = JSONObject(routine.actions.first().argumentsJson).getString("planId")
         if (record.commitment.execution?.planId != planId || record.status != OrganizerStatus.ACTIVE) return true
+        if (record.commitment.owner == CommitmentOwner.SHARED && record.commitment.state == HaloWorkState.NEEDS_USER &&
+            record.commitment.result != null && record.commitment.execution?.runId != summary.agentRunId) return true
         if (summary.state !in setOf(RoutineRunState.RUNNING, RoutineRunState.SCHEDULED, RoutineRunState.COMPLETED)) {
             record = repository.save(record.copy(commitment = record.commitment.copy(state = if (summary.state == RoutineRunState.FAILED) HaloWorkState.FAILED else HaloWorkState.NEEDS_USER,
                 execution = record.commitment.execution!!.copy(runId = summary.agentRunId, scheduling = "BLOCKED"),
                 nextHumanAction = "Review the execution record before continuing.")), record.version)
             routines.setEnabled(routine.id, false)
         }
-        if (runAllowed() && record.commitment.execution?.runId == summary.agentRunId && record.commitment.result?.waiting != true && record.commitment.result?.conditionMatched != false && record.commitment.result?.newMatch != false &&
+        if (mayPresent && runAllowed() && record.commitment.execution?.runId == summary.agentRunId && record.commitment.result?.waiting != true && record.commitment.result?.conditionMatched != false && record.commitment.result?.newMatch != false &&
             record.commitment.state in setOf(HaloWorkState.COMPLETED, HaloWorkState.NEEDS_USER, HaloWorkState.FAILED, HaloWorkState.WAITING)) notifyResult(record, summary.id)
         return true
     }
@@ -313,7 +357,7 @@ class OrganizerOperations(private val db: AppDatabase, val organizer: OrganizerU
             val binding = record.commitment.execution!!
             val linked = runCatching { bound(record) }.getOrNull()
             if (linked == null || record.commitment.state == HaloWorkState.WAITING && binding.scheduling in setOf("SCHEDULED", "EVENT_DRIVEN") && linked.routine?.enabled != true)
-                repository.save(record.copy(commitment = record.commitment.copy(execution = null, state = HaloWorkState.NEEDS_USER,
+                repository.save(record.copy(commitment = record.commitment.copy(execution = null, recovery = recoveryEvidence(record), state = HaloWorkState.NEEDS_USER,
                     nextHumanAction = "The saved execution owner changed. Review this work plan before enabling it again.")), record.version)
         }
         repository.records().filter { it.commitment.state == HaloWorkState.RUNNING }.forEach { record ->

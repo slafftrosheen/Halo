@@ -4917,4 +4917,9 @@
     <string name="ui_953e3efbb3ce" formatted="false">"Tēma vai meklēšanas vaicājums"</string>
     <string name="ui_24736fea728f" formatted="false">"halo darbs neizdevās. Atver izpildes ierakstu, lai pārskatītu atkopšanu."</string>
     <string name="ui_bcdcf704c3a5" formatted="false">"Darba grafiki atbalsta vienu datumu vai ikdienas/iknedēļas atkārtošanos ar norādītu laika joslu. Citi grafiki pirms iespējošanas jāmaina."</string>
+    <string name="ui_6835dc03351a" formatted="false">"Iepriekšējā izpilde"</string>
+    <string name="ui_5fb33d955c68" formatted="false">"Atvērt iepriekšējās izpildes ierakstu"</string>
+    <string name="ui_a37bed66cd27" formatted="false">"Esmu pārskatījis iepriekšējo izpildi"</string>
+    <string name="ui_34099e54cc54" formatted="false">"Pirms turpināšanas pārbaudi iepriekšējo izpildi un apstiprini, ka esi pārskatījis tās nenoteiktos rezultātus."</string>
+    <string name="ui_5e2a35a482a0" formatted="false">"Šim atkārtotajam plānam nav aktīva grafika. Iespējo pārskatīto grafiku vai palaid nākamo pārbaudi manuāli."</string>
 </resources>

@@ -104,6 +104,7 @@ class OrganizerOperationTools(private val owner: OrganizerOperations, private va
                         (time["end"] as? String)?.let(LocalDateTime::parse), time["zoneId"] as String, time["allDay"] == true, time["followDeviceZone"] == true) },
                     (a["owner"] as? String)?.let(CommitmentOwner::valueOf), (a["purpose"] as? String)?.let(CommitmentPurpose::valueOf) ?: CommitmentPurpose.STANDARD)
                 "ACKNOWLEDGE" -> owner.acknowledge(id, version)
+                "ACKNOWLEDGE_RECOVERY" -> owner.acknowledgeRecovery(id, version)
                 else -> owner.organizer.stopwatch(id, version, action)
             }
             receipt(value)
@@ -136,6 +137,8 @@ class OrganizerOperationTools(private val owner: OrganizerOperations, private va
         work.result?.takeIf { available }?.let { put("result", JSONObject().put("summary", it.summary).put("confirmedAt", it.confirmedAt.toString())
             .put("evidenceIds", JSONArray(it.evidenceIds)).put("conditionMatched", it.conditionMatched).put("newMatch", it.newMatch).put("messages", JSONArray(it.messages)).put("waiting", it.waiting)
             .put("sourceRefs", JSONArray(it.sourceRefs.map { ref -> JSONObject().put("id", ref.id).put("version", ref.version) }))) }
+        work.recovery?.let { put("recovery", JSONObject().put("planId", it.planId).put("routineId", it.routineId).put("runId", it.runId)
+            .put("recordedAt", it.recordedAt.toString()).put("uncertain", it.uncertain).put("reviewed", it.reviewed)) }
         work.stopwatch?.let { put("stopwatchMs", it.elapsed(clock.instant(), elapsedMs(), bootId())); put("stopwatchRunning", it.startedAt != null); put("laps", JSONArray(it.laps)) }
     }
     }

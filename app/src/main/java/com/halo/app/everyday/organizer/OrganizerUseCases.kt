@@ -33,6 +33,7 @@ class OrganizerUseCases(
         val record = requireCurrent(id, version)
         require(record.kind == OrganizerKind.TASK)
         require(record.commitment.owner == CommitmentOwner.ME) { "Halo work needs a confirmed execution result; take over before completing it yourself" }
+        require(!record.commitment.recoveryNeedsReview) { "Inspect the previous execution before completing this task" }
         if (record.repeat != null) {
             require(occurrenceStart != null) { "Choose which recurring task occurrence to complete" }
             val existing = repository.overrides(id).find { it.originalStart == occurrenceStart }

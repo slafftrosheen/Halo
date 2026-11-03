@@ -4917,4 +4917,9 @@
     <string name="ui_953e3efbb3ce" formatted="false">"Temat lub zapytanie"</string>
     <string name="ui_24736fea728f" formatted="false">"Praca halo nie powiodła się. Otwórz zapis wykonania, aby sprawdzić możliwości odzyskania."</string>
     <string name="ui_bcdcf704c3a5" formatted="false">"Harmonogram pracy obsługuje jeden termin lub cykl dzienny/tygodniowy z jawną strefą czasową. Inne harmonogramy trzeba zmienić przed włączeniem."</string>
+    <string name="ui_6835dc03351a" formatted="false">"Poprzednie wykonanie"</string>
+    <string name="ui_5fb33d955c68" formatted="false">"Otwórz zapis poprzedniego wykonania"</string>
+    <string name="ui_a37bed66cd27" formatted="false">"Sprawdzono poprzednie wykonanie"</string>
+    <string name="ui_34099e54cc54" formatted="false">"Przed kontynuacją sprawdź poprzednie wykonanie i potwierdź zapoznanie się z jego niepewnymi skutkami."</string>
+    <string name="ui_5e2a35a482a0" formatted="false">"Ten plan cykliczny nie ma aktywnego harmonogramu. Włącz przejrzany harmonogram lub jawnie uruchom następną kontrolę."</string>
 </resources>

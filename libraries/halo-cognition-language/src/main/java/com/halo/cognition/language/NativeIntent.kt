@@ -33,7 +33,7 @@ object NativeCommandParser {
         val command = raw.replace(Regex("[\\s\\u00A0]+"), " ").lowercase(java.util.Locale.ROOT).removePrefix("please ")
         if (ConversationSemantics.isExplanation(raw) || ConversationSemantics.answerFromModel(raw)) return null
         val capturePrefixes = listOf(
-            Triple("(?:capture|add to (?:my )?inbox|remember|запомни|запиши|добавь во входящие|pieraksti|saglabā ienākošajos|zapisz|zapamiętaj|dodaj do skrzynki)\\s+(.+)", "ME", "INBOX"),
+            Triple("(?:capture|add to (?:my )?inbox|запиши|добавь во входящие|pieraksti|saglabā ienākošajos|zapisz|dodaj do skrzynki)\\s+(.+)", "ME", "INBOX"),
             Triple("(?:delegate to halo|ask halo to|поручи halo|uztic halo|zleć halo|poproś halo)\\s+(.+)", "HALO", "STANDARD"),
             Triple("(?:create shared task|make shared task|создай совместную задачу|izveido kopīgu uzdevumu|utwórz wspólne zadanie)\\s+(.+)", "SHARED", "STANDARD"),
             Triple("(?:watch for|watch this|monitor|следи за|наблюдай за|uzraugi|obserwuj|monitoruj)\\s+(.+)", "HALO", "WATCH"))

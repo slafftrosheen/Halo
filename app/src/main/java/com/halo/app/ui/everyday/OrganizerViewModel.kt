@@ -175,6 +175,7 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
             "WATCH" -> Graph.organizerOperations.watch(record.id, record.version)
             "PROMOTE" -> Graph.organizerOperations.promote(record.id, record.version)
             "ACKNOWLEDGE" -> Graph.organizerOperations.acknowledge(record.id, record.version)
+            "ACKNOWLEDGE_RECOVERY" -> Graph.organizerOperations.acknowledgeRecovery(record.id, record.version)
             else -> Graph.organizerUseCases.stopwatch(record.id, record.version, action)
         }
     }

@@ -309,6 +309,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                 }
                 if(run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
                 else repository.dao.finishRun(identity, if (unknown) "INTERRUPTED" else "CANCELLED", completed, routine.actions.size, System.currentTimeMillis(), "Routine execution cancelled")
+                if (trial == null) runCatching { publishSemanticResult(routine, repository.runResult(identity)) }
             }
             throw e
         }
@@ -317,6 +318,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             if (run != null && !run.state.isTerminal) coordinator.fail(runId, e.message ?: "Routine failed")
             if (run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
             else repository.dao.finishRun(identity, if (run?.hasUnknownAction == true) "INTERRUPTED" else if (completed > 0) "PARTIAL" else "FAILED", completed, routine.actions.size, System.currentTimeMillis(), "Routine execution failed")
+            if (trial == null) runCatching { publishSemanticResult(routine, repository.runResult(identity)) }
             return e.message ?: "Routine failed"
         }
     }

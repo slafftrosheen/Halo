@@ -9,6 +9,8 @@ import com.halo.app.data.everyday.*
 import com.halo.app.data.routine.RoomRoutineRepository
 import com.halo.app.di.tools.*
 import com.halo.app.everyday.collectors.*
+import com.halo.app.everyday.briefing.*
+import com.halo.app.daily.DailyAssistantObservation
 import com.halo.app.everyday.organizer.*
 import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.attention.*
@@ -30,7 +32,7 @@ import java.time.*
 @Config(sdk = [34], manifest = Config.NONE, application = Application::class)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class OrganizerOperationsTest {
-    private class Harness : AutoCloseable {
+    private class Harness(private val capabilityFactory: ((Harness) -> OrganizerWorkCapability)? = null) : AutoCloseable {
         val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java).build()
         val organizer = RoomOrganizerRepository(db)
         val routines = RoomRoutineRepository(db.routineDao())
@@ -38,7 +40,7 @@ class OrganizerOperationsTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val runs = RoomAgentRunRepository(db)
         val coordinator = DefaultAgentRunCoordinator(runs, scope)
-        var allowed = true; var calls = 0; var notices = 0; var schedules = 0
+        var modeRevision = 0L; var allowed = true; var calls = 0; var notices = 0; var schedules = 0
         var matched: Boolean? = null; var evidence = "observed:one"; var suspendWork = false
         var resultSources: List<OrganizerSourceRef> = emptyList(); var waiting = false; var failWork = false
         val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
@@ -54,7 +56,11 @@ class OrganizerOperationsTest {
             }
         }
         lateinit var operations: OrganizerOperations
-        val work = OrganizerWorkTool({ operations }) { allowed }
+        val work = OrganizerWorkTool({ operations }, canRun = { allowed }, captureAuthority = {
+            val admitted = modeRevision
+            val verify: () -> Unit = { check(allowed && modeRevision == admitted) }
+            verify
+        })
         val registry = ToolRegistry(listOf(work), listOf(work.descriptor()))
         val attention = AttentionController(object : AttentionContextProvider {
             override fun snapshot() = AttentionContext(); override val changes = emptyFlow<Unit>()
@@ -73,7 +79,7 @@ class OrganizerOperationsTest {
         }
         val management = RoutineManagementActions(routines, scheduler, executor::validateForSave, executor::validate, executor::grantSummary, executor::execute)
         val useCases = OrganizerUseCases(organizer, elapsedMs = { 1000 }, bootId = { "boot" })
-        init { operations = OrganizerOperations(db, useCases, routines, { management }, OrganizerWorkCapabilities(listOf(capability)), runs,
+        init { operations = OrganizerOperations(db, useCases, routines, { management }, OrganizerWorkCapabilities(listOf(capabilityFactory?.invoke(this) ?: capability)), runs,
             sources, { coordinator.cancel(AgentRunId(it), "Stopped") }, { _, _ -> notices++ }, runAllowed = { allowed }) }
         suspend fun task(owner: CommitmentOwner = CommitmentOwner.HALO, purpose: CommitmentPurpose = CommitmentPurpose.STANDARD): OrganizerRecord =
             operations.saveDefinition(null, null, "Observed work", "Observe the fixture owner", owner, purpose,
@@ -144,6 +150,15 @@ class OrganizerOperationsTest {
             val current = h.organizer.get(taken.id)!!
             assertEquals(CommitmentOwner.ME, current.commitment.owner); assertNull(current.commitment.execution)
             assertNull(current.commitment.result); assertEquals(0, h.notices)
+            assertEquals(running.commitment.execution!!.runId, current.commitment.recovery!!.runId)
+            assertTrue(current.commitment.recoveryNeedsReview); assertEquals(HaloWorkState.NEEDS_USER, current.commitment.state)
+            assertThrows(IllegalArgumentException::class.java) { runBlocking { h.useCases.completeTask(current.id, current.version) } }
+            val edited = h.operations.saveDefinition(current.id, current.version, "Human continuation", "Inspect earlier work", CommitmentOwner.ME,
+                CommitmentPurpose.STANDARD, emptyList(), emptyList())
+            assertEquals(current.commitment.recovery, edited.commitment.recovery)
+            val reviewed = h.operations.acknowledgeRecovery(edited.id, edited.version)
+            assertFalse(reviewed.commitment.recoveryNeedsReview); assertEquals(current.commitment.recovery!!.runId, reviewed.commitment.recovery!!.runId)
+            assertEquals(OrganizerStatus.COMPLETED, h.useCases.completeTask(reviewed.id, reviewed.version).status)
         }
     }
     @Test fun aDirectInternalCallWithoutTheRunnerClaimCannotExecute() = runBlocking {
@@ -286,6 +301,97 @@ class OrganizerOperationsTest {
             val recovered = h.organizer.get(interrupted.id)!!
             assertEquals(HaloWorkState.NEEDS_USER, recovered.commitment.state); assertEquals(0, h.calls)
             assertThrows(IllegalArgumentException::class.java) { runBlocking { h.operations.runNow(recovered.id, recovered.version) } }
+        }
+    }
+    @Test fun pendingSharedHandoffSurvivesAnotherScheduledOccurrenceAndCanStillBeAcknowledged() = runBlocking {
+        Harness().use { h ->
+            val draft = h.task(CommitmentOwner.SHARED, CommitmentPurpose.ROUTINE)
+            val dated = h.organizer.save(draft.copy(time = OrganizerTime(LocalDateTime.now(ZoneOffset.UTC).withNano(0).minusDays(1), zoneId = "UTC"),
+                repeat = RepeatRule(RepeatFrequency.DAILY)), draft.version)
+            val ready = h.operations.prepare(dated.id, dated.version); val armed = h.operations.arm(ready.id, ready.version)
+            val prepared = h.operations.runNow(armed.id, armed.version)
+            val originalRun = prepared.commitment.execution!!.runId
+            val routine = h.routines.get(RoutineId(prepared.commitment.execution!!.routineId))!!
+            h.executor.execute(RoutineOccurrence.scheduled(routine, Instant.now()))
+            val held = h.organizer.get(prepared.id)!!
+            assertEquals(HaloWorkState.NEEDS_USER, held.commitment.state); assertEquals(originalRun, held.commitment.execution!!.runId)
+            assertEquals(1, h.calls); assertEquals(1, h.notices); assertTrue(h.routines.get(routine.id)!!.enabled)
+            assertEquals(HaloWorkState.WAITING, h.operations.acknowledge(held.id, held.version).commitment.state)
+        }
+    }
+    @Test fun aConfirmedManualRunCanBeFollowedByEnablingItsUnarmedRecurringSchedule() = runBlocking {
+        Harness().use { h ->
+            val draft = h.task()
+            val dated = h.organizer.save(draft.copy(time = OrganizerTime(LocalDateTime.now(ZoneOffset.UTC).withNano(0).plusHours(1), zoneId = "UTC"),
+                repeat = RepeatRule(RepeatFrequency.DAILY)), draft.version)
+            val ready = h.operations.prepare(dated.id, dated.version)
+            val run = h.operations.runNow(ready.id, ready.version)
+            assertEquals(HaloWorkState.WAITING, run.commitment.state); assertEquals("UNCONFIRMED", run.commitment.execution!!.scheduling)
+            assertNotNull(run.commitment.nextHumanAction)
+            assertEquals(0, h.schedules)
+            val armed = h.operations.arm(run.id, run.version)
+            assertEquals("SCHEDULED", armed.commitment.execution!!.scheduling); assertEquals(1, h.schedules)
+        }
+    }
+    @Test fun takeoverInsideRealBriefAssemblyPreventsItsNestedDocumentAndMorningBaseline() = runBlocking {
+        lateinit var briefs: RoomBriefRepository
+        Harness { h ->
+            briefs = RoomBriefRepository(h.db)
+            OrganizerBriefCapability(EverydayBriefService(briefs, h.sources, h.organizer,
+                { h.entered.complete(Unit); withContext(NonCancellable) { h.release.await() }; DailyAssistantObservation() },
+                { BriefAudience.EVERYDAY }, { emptySet() }, { true }, zone = { ZoneOffset.UTC }))
+        }.use { h ->
+            h.sources.save(StarterSourceCatalogue.local().first { it.kind == CollectorKind.LOCAL_ORGANIZER }, null)
+            val draft = h.operations.saveDefinition(null, null, "Morning work", "", CommitmentOwner.HALO, CommitmentPurpose.STANDARD,
+                listOf(OrganizerPlannedAction("summarize", "{\"period\":\"MORNING\"}")), emptyList())
+            val ready = h.operations.prepare(draft.id, draft.version)
+            val job = launch { runCatching { h.operations.runNow(ready.id, ready.version) } }
+            withTimeout(10000) { h.entered.await() }
+            val running = h.organizer.get(draft.id)!!
+            val human = h.operations.transfer(running.id, running.version, CommitmentOwner.ME)
+            h.release.complete(Unit); job.join()
+            assertTrue(briefs.recent().isEmpty())
+            assertNull(briefs.baseline(LocalDate.now(ZoneOffset.UTC), ZoneOffset.UTC, BriefAudience.EVERYDAY))
+            assertEquals(human.commitment.recovery!!.runId, h.organizer.get(draft.id)!!.commitment.recovery!!.runId)
+            assertEquals(0, h.notices)
+        }
+    }
+    private class PermittedPolicy : com.halo.sdk.provider.RemoteDispatchPolicy {
+        override val revision = 0L
+        override fun acquire(request: com.halo.sdk.provider.RemoteDispatchRequest, expectedRevision: Long, recordActivity: Boolean, cancel: () -> Unit) =
+            object : com.halo.sdk.provider.RemoteDispatchLease {
+                override fun requireCurrent() {}
+                override fun finish(outcome: com.halo.sdk.provider.RemoteDispatchOutcome, providerReportedCostUsd: String?) {}
+            }
+    }
+    @Test fun modeRevisionDuringRealResearchRefreshPreventsPublicationButAFreshLocalReadCanRun() = runBlocking {
+        val now = Instant.now()
+        val payload = CollectorPayload.Articles(listOf(ArticleFact("printer", "Printer facts", "Printer evidence", "https://example.org/printer", "Publisher", null, "en")))
+        var fetches = 0
+        Harness { h ->
+            val adapter = object : Collector {
+                override val kind = CollectorKind.FEED
+                override suspend fun fetch(source: CollectorSource, cached: CollectorSnapshot?): CollectorFetchResult {
+                    fetches++; h.entered.complete(Unit); withContext(NonCancellable) { h.release.await() }
+                    return CollectorFetchResult.Updated(payload, "observation")
+                }
+            }
+            OrganizerResearchCapability(h.sources, CollectorCoordinator(h.sources, CollectorRegistry(listOf(adapter)), PermittedPolicy()), OrganizerResearch(h.sources))
+        }.use { h ->
+            val source = h.selectedSource()
+            fun action(refresh: Boolean) = OrganizerPlannedAction("web.search", "{\"query\":\"printer\",\"sourceId\":\"source\",\"sourceVersion\":${source.version},\"refresh\":$refresh}")
+            val draft = h.operations.saveDefinition(null, null, "Research", "", CommitmentOwner.HALO, CommitmentPurpose.STANDARD, listOf(action(true)), emptyList())
+            val ready = h.operations.prepare(draft.id, draft.version)
+            val job = launch { runCatching { h.operations.runNow(ready.id, ready.version) } }
+            withTimeout(10000) { h.entered.await() }
+            h.modeRevision++; h.release.complete(Unit); job.join()
+            assertNull(h.sources.state(source.id)!!.snapshot); assertNull(h.organizer.get(draft.id)!!.commitment.result); assertEquals(0, h.notices)
+            // A new admission in Local may use actual retained evidence without another fetch.
+            h.db.collectorDao().putSnapshot(CollectorCodec.entity(CollectorSnapshot(source.id, source.version, payload, "retained", now, now, now.plusSeconds(3600))))
+            val local = h.operations.saveDefinition(null, null, "Retained research", "", CommitmentOwner.HALO, CommitmentPurpose.STANDARD, listOf(action(false)), emptyList())
+            val reviewed = h.operations.prepare(local.id, local.version)
+            assertEquals(HaloWorkState.COMPLETED, h.operations.runNow(reviewed.id, reviewed.version).commitment.state)
+            assertEquals(1, fetches)
         }
     }
 }

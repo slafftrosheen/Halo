@@ -19,6 +19,7 @@ class RoomBriefRepository(private val db: AppDatabase, private val clock: Clock 
         val document = projection.document
         com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
         beforePublish(document)
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         dao.get(document.id)?.let { return@withTransaction BriefCodec.document(it.body) }
         if (document.period == BriefPeriod.MORNING) {
             val baseline = projection.baseline
@@ -30,6 +31,7 @@ class RoomBriefRepository(private val db: AppDatabase, private val clock: Clock 
         dao.insert(BriefEntity(document.id, document.generatedAt.toEpochMilli(), encoded))
         val before = clock.instant().minusSeconds(30 * 86400).toEpochMilli()
         dao.prune(before); dao.pruneBaselines(before); dao.pruneDeliveries(before)
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         document
     }
     override suspend fun remove(id: String) = db.withTransaction { com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); com.halo.app.everyday.EverydayReadAuthority.invalidate(); dao.remove(id) }

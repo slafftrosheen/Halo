@@ -10,7 +10,8 @@ import org.json.JSONObject
 import kotlin.coroutines.coroutineContext
 
 /** Internal bridge: only the existing routine runner can supply a durable claimed run scope. */
-class OrganizerWorkTool(private val owner: () -> OrganizerOperations, private val canRun: () -> Boolean) : ToolExecutor {
+class OrganizerWorkTool(private val owner: () -> OrganizerOperations, private val canRun: () -> Boolean,
+    private val captureAuthority: () -> (() -> Unit) = { { check(canRun()) } }) : ToolExecutor {
     private val definition = ToolDefinition(OrganizerOperations.PERFORM, OrganizerOperations.PERFORM,
         "Execute one exact reviewed Organizer capability step under an existing automation journal claim.",
         EverydayToolContracts.obj(mapOf("id" to EverydayToolContracts.text(200), "planId" to EverydayToolContracts.text(80),
@@ -24,7 +25,8 @@ class OrganizerWorkTool(private val owner: () -> OrganizerOperations, private va
         operability = ToolOperability(capabilityId = CapabilityId("workspace.write"), owner = "Organizer / RoutineExecutor",
             operation = ToolOperation.EDIT, resultEncoding = ToolResultEncoding.JSON,
             resultSchema = EverydayToolContracts.obj(mapOf("id" to EverydayToolContracts.text(200), "version" to EverydayToolContracts.number(1, Long.MAX_VALUE),
-                "state" to EverydayToolContracts.choice(HaloWorkState.entries.map { it.name }), "saved" to mapOf("type" to "boolean")), listOf("id", "version", "state", "saved")),
+                "state" to EverydayToolContracts.choice(HaloWorkState.entries.map { it.name }), "saved" to mapOf("type" to "boolean"),
+                "performed" to mapOf("type" to "boolean")), listOf("id", "version", "state", "saved", "performed")),
             sourceVersionArguments = setOf("planId"), resultIdFields = setOf("id")))
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         var entered = false
@@ -32,13 +34,14 @@ class OrganizerWorkTool(private val owner: () -> OrganizerOperations, private va
             require(toolCall.functionName == definition.name && canRun()) { "Organizer automation is not currently permitted" }
             EverydayToolContracts.validate(toolCall.arguments, definition.parameters)
             val scope = requireNotNull(coroutineContext[RunToolScope]) { "A claimed automation run is required" }
+            val verify = captureAuthority(); verify()
             entered = true
-            val saved = com.halo.app.everyday.EverydayWriteAuthority.run({ check(canRun()) }) {
+            val saved = com.halo.app.everyday.EverydayWriteAuthority.run(verify) {
                 owner().perform(toolCall.arguments.getValue("id") as String, toolCall.arguments.getValue("planId") as String,
-                    (toolCall.arguments.getValue("index") as Number).toInt(), scope.runId.value, toolCall.id)
+                    (toolCall.arguments.getValue("index") as Number).toInt(), scope.runId.value, toolCall.id, verify)
             }
             return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, JSONObject().put("id", saved.id).put("version", saved.version)
-                .put("state", saved.commitment.state.name).put("saved", true).toString())
+                .put("state", saved.commitment.state.name).put("saved", true).put("performed", saved.commitment.execution?.runId == scope.runId.value).toString())
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) {
             return if (entered) ToolExecutionResult.Failed(toolCall.id, toolCall.functionName,

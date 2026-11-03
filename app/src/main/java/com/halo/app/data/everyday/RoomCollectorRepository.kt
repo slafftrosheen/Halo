@@ -98,6 +98,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
             nextAllowedAt = now.toEpochMilli(), message = "Refresh was interrupted; the previous snapshot is unchanged")) }
     }
     override suspend fun reserve(id: String, expectedVersion: Long, now: Instant, manual: Boolean): CollectorAdmission = database.withTransaction {
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         val current = state(id) ?: throw CollectorConflict("Source no longer exists")
         val source = current.source
         if (source.version != expectedVersion) throw CollectorConflict("Source changed before refresh")
@@ -108,6 +109,8 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         if (!manual && prior.nextAllowedAt?.let { it > now } == true)
             return@withTransaction deferred(CollectorAttemptState.BACKOFF, "The next refresh is not due yet")
         val budgetKey = source.endpoint?.let { CollectorEndpointIdentity.budgetKey(source) }
+        // Reserve the bounded worst case before dispatch: robots and page are separate requests.
+        val requestUnits = if (source.research?.providerId == PublicPageResearchProvider.id) 2 else 1
         var failureLineage = prior.consecutiveFailures
         if (source.external) {
             val endpoint = dao.endpoint(requireNotNull(budgetKey))
@@ -118,21 +121,25 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
                 return@withTransaction deferred(CollectorAttemptState.BACKOFF, "This endpoint is waiting before retrying", Instant.ofEpochMilli(blockedUntil))
             if (attemptedAt != null && now.toEpochMilli() < attemptedAt + 60_000)
                 return@withTransaction deferred(CollectorAttemptState.BACKOFF, "Wait one minute between requests to this endpoint", Instant.ofEpochMilli(attemptedAt + 60_000))
-            val limit = quotaLimit(budgetKey, now)
+            val limit = quotaLimit(budgetKey, now, requestUnits)
             if (limit != null) {
                 val attempt = CollectorAttempt(id, prior.at, CollectorAttemptState.QUOTA, prior.consecutiveFailures, limit,
                     "Refresh budget reached; stored information remains available")
+                com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
                 dao.putAttempt(CollectorCodec.entity(source.version, attempt))
+                com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
                 return@withTransaction CollectorAdmission.Deferred(attempt)
             }
         }
         val token = UUID.randomUUID().toString()
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         if (source.external) {
-            dao.request(CollectorRequestEntity(token, requireNotNull(budgetKey), now.toEpochMilli()))
+            repeat(requestUnits) { unit -> dao.request(CollectorRequestEntity("$token:$unit", requireNotNull(budgetKey), now.toEpochMilli())) }
             dao.putEndpoint(CollectorEndpointEntity(budgetKey, now.toEpochMilli(), null, dao.endpoint(budgetKey)?.failures ?: 0))
         }
         dao.putAttempt(CollectorCodec.entity(source.version, CollectorAttempt(id, now, CollectorAttemptState.FETCHING,
             failureLineage), token))
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         CollectorAdmission.Accepted(CollectorReservation(token, source, current.snapshot, now, failureLineage))
     }
     override suspend fun reservePreview(sourceId: String, now: Instant): Boolean = database.withTransaction {
@@ -155,19 +162,21 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
             it.retryAfter?.seconds?.coerceIn(0, 86400) ?: 0).coerceAtMost(86400)).toEpochMilli() }
         dao.putEndpoint(prior.copy(blockedUntil = blocked, failures = failures))
     }
-    private suspend fun quotaLimit(id: String, now: Instant): Instant? {
+    private suspend fun quotaLimit(id: String, now: Instant, units: Int = 1): Instant? {
         val since = now.minusSeconds(86400).toEpochMilli()
         dao.pruneRequests(since)
         dao.pruneEndpoints(now.minusSeconds(7 * 86400).toEpochMilli())
-        val global = if (dao.requestCount(since) >= CollectorRefreshPolicy.MAX_EXTERNAL_REQUESTS_PER_DAY) dao.oldestRequest(since) else null
-        val source = if (dao.sourceRequestCount(id, since) >= CollectorRefreshPolicy.MAX_SOURCE_REQUESTS_PER_DAY) dao.oldestSourceRequest(id, since) else null
+        val global = if (dao.requestCount(since) + units > CollectorRefreshPolicy.MAX_EXTERNAL_REQUESTS_PER_DAY) dao.oldestRequest(since) else null
+        val source = if (dao.sourceRequestCount(id, since) + units > CollectorRefreshPolicy.MAX_SOURCE_REQUESTS_PER_DAY) dao.oldestSourceRequest(id, since) else null
         return listOfNotNull(global, source).maxOrNull()?.let { Instant.ofEpochMilli(it).plusSeconds(86400).plusMillis(1) }
     }
     override suspend fun finish(reservation: CollectorReservation, snapshot: CollectorSnapshot?, attempt: CollectorAttempt): Boolean = database.withTransaction {
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         val source = dao.source(reservation.source.id) ?: return@withTransaction false
         val current = dao.attempt(source.id) ?: return@withTransaction false
         if (source.version != reservation.source.version || current.token != reservation.token) return@withTransaction false
         require(attempt.sourceId == source.id && attempt.state != CollectorAttemptState.FETCHING)
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         if (snapshot != null) {
             require(snapshot.sourceId == source.id && snapshot.sourceVersion == source.version)
             CollectorPayloadLimits.validateKind(reservation.source.kind,snapshot.payload)
@@ -185,13 +194,17 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
                     failures = when { success -> 0; failed -> attempt.consecutiveFailures; else -> endpoint.failures }))
             }
         }
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         true
     }
     override suspend fun recordAttempt(id: String, expectedVersion: Long, attempt: CollectorAttempt): Boolean = database.withTransaction {
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         val source = dao.source(id) ?: return@withTransaction false
         if (source.version != expectedVersion || dao.attempt(id)?.token != null) return@withTransaction false
         require(attempt.sourceId == id && attempt.state != CollectorAttemptState.FETCHING)
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         dao.putAttempt(CollectorCodec.entity(source.version, attempt))
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         true
     }
 }

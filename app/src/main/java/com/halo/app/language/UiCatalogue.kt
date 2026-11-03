@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4947) {
+    buildMap(4952) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4990,6 +4990,11 @@ private fun uiCataloguePart16(): Map<String, Int> = mapOf(
     "Topic or search query" to R.string.ui_953e3efbb3ce,
     "Organizer work failed. Open its execution record to review recovery." to R.string.ui_24736fea728f,
     "Reviewed work schedules support one date or daily/weekly recurrence with an explicit time zone. Other schedules need revision before enabling." to R.string.ui_bcdcf704c3a5,
+    "Previous execution" to R.string.ui_6835dc03351a,
+    "Open previous execution record" to R.string.ui_5fb33d955c68,
+    "I reviewed the previous execution" to R.string.ui_a37bed66cd27,
+    "Inspect the previous execution and acknowledge its uncertain effects before continuing." to R.string.ui_34099e54cc54,
+    "This recurring plan has no active schedule. Enable its reviewed schedule or run the next check explicitly." to R.string.ui_5e2a35a482a0,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

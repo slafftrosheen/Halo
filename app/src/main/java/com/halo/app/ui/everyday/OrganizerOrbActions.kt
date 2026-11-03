@@ -24,7 +24,7 @@ internal fun organizerOrbActions(record: OrganizerRecord?, section: String, kids
     }.distinct()
     val work = record.commitment
     return buildList {
-        if (record.kind == OrganizerKind.TASK && work.owner == CommitmentOwner.ME && record.status == OrganizerStatus.ACTIVE && record.repeat == null && work.purpose != CommitmentPurpose.STOPWATCH) add(OrganizerOrbAction.COMPLETE)
+        if (record.kind == OrganizerKind.TASK && work.owner == CommitmentOwner.ME && record.status == OrganizerStatus.ACTIVE && record.repeat == null && !work.recoveryNeedsReview && work.purpose != CommitmentPurpose.STOPWATCH) add(OrganizerOrbAction.COMPLETE)
         if (work.execution == null) addAll(listOf(OrganizerOrbAction.EDIT, OrganizerOrbAction.ATTACH))
         if ((record.kind == OrganizerKind.TASK || work.owner != CommitmentOwner.ME) && work.purpose != CommitmentPurpose.STOPWATCH && record.status == OrganizerStatus.ACTIVE) {
             if (work.owner != CommitmentOwner.HALO) add(OrganizerOrbAction.DELEGATE)
@@ -33,6 +33,6 @@ internal fun organizerOrbActions(record: OrganizerRecord?, section: String, kids
             if (record.kind == OrganizerKind.TASK && work.purpose !in setOf(CommitmentPurpose.WATCH, CommitmentPurpose.INBOX)) add(OrganizerOrbAction.WATCH)
             if (work.execution == null) add(OrganizerOrbAction.PLAN) else add(OrganizerOrbAction.STOP)
         }
-        if (work.execution?.runId != null) add(OrganizerOrbAction.RESULT)
+        if (work.execution?.runId != null || work.recovery?.runId != null) add(OrganizerOrbAction.RESULT)
     }
 }

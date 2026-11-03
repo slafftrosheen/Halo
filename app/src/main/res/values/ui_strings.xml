@@ -4917,4 +4917,9 @@
     <string name="ui_953e3efbb3ce" formatted="false">"Topic or search query"</string>
     <string name="ui_24736fea728f" formatted="false">"Organizer work failed. Open its execution record to review recovery."</string>
     <string name="ui_bcdcf704c3a5" formatted="false">"Reviewed work schedules support one date or daily/weekly recurrence with an explicit time zone. Other schedules need revision before enabling."</string>
+    <string name="ui_6835dc03351a" formatted="false">"Previous execution"</string>
+    <string name="ui_5fb33d955c68" formatted="false">"Open previous execution record"</string>
+    <string name="ui_a37bed66cd27" formatted="false">"I reviewed the previous execution"</string>
+    <string name="ui_34099e54cc54" formatted="false">"Inspect the previous execution and acknowledge its uncertain effects before continuing."</string>
+    <string name="ui_5e2a35a482a0" formatted="false">"This recurring plan has no active schedule. Enable its reviewed schedule or run the next check explicitly."</string>
 </resources>

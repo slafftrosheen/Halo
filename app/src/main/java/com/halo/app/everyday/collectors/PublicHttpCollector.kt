@@ -34,6 +34,7 @@ class PublicHttpCollector(
                 request.tag(CollectorRequestScope::class.java)?.categories ?: setOf(RemoteDataCategory.TEXT, RemoteDataCategory.WORKSPACE))
         }
     override suspend fun fetch(source: CollectorSource, cached: CollectorSnapshot?): CollectorFetchResult = coroutineScope {
+        com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         require(source.kind == kind && source.external && source.selected && source.enabled) { "Select and enable this source before fetching it" }
         val url = CollectorUrlPolicy.validate(requireNotNull(source.endpoint))
         val publicPage = source.research?.providerId == PublicPageResearchProvider.id
@@ -61,12 +62,13 @@ class PublicHttpCollector(
         try {
             if (publicPage) {
                 val robots = readRobots(transferClient, request.build(), url, secondary, lease)
-                if (robots.crawlDelaySeconds > 60) return@coroutineScope CollectorFetchResult.Unavailable(
-                    "This site requests a longer crawl interval than this bounded page retriever supports", Duration.ofSeconds(robots.crawlDelaySeconds.coerceAtMost(86400)))
+                if (robots.crawlDelaySeconds > 0) return@coroutineScope CollectorFetchResult.Unavailable(
+                    "This site requests crawl spacing this bounded page retriever does not support; the page was not requested", Duration.ofSeconds(robots.crawlDelaySeconds.coerceAtMost(86400)))
                 val path = url.encodedPath + (url.encodedQuery?.let { "?$it" } ?: "")
                 if (!robots.allows(path)) return@coroutineScope CollectorFetchResult.Unavailable("This site's robots policy does not allow Halo to retain this page")
             }
             val response = withContext(Dispatchers.IO) {
+                com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
                 call.execute().use { reply ->
                     if (reply.code == 304) {
                         val finalEtag = reply.request.header("If-None-Match")
@@ -143,7 +145,7 @@ class PublicHttpCollector(
                 }
             }
             CollectorPayloadLimits.validate(payload)
-            lease.requireCurrent(); ensureActive()
+            lease.requireCurrent(); ensureActive(); com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
             CollectorFetchResult.Updated(payload, MessageDigest.getInstance("SHA-256").digest(response.bytes).joinToString("") { "%02x".format(it) },
                 response.etag, response.lastModified, response.url)
         } catch (cancelled: CancellationException) { throw cancelled }
@@ -159,7 +161,7 @@ class PublicHttpCollector(
         val request = page.newBuilder().url(robotsUrl).removeHeader("If-None-Match").removeHeader("If-Modified-Since").header("Accept", "text/plain").build()
         val call = transfer.newCall(request); secondary.set(call)
         try {
-            lease.requireCurrent(); ensureActive()
+            lease.requireCurrent(); ensureActive(); com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
             call.execute().use { reply ->
                 if (reply.code in setOf(404, 410)) return@withContext ResearchRobotsPolicy.allowMissing()
                 require(reply.isSuccessful) { "Robots policy is unavailable; the page was not requested" }

@@ -284,9 +284,17 @@ object ManualDependencyGraph {
                 (storage.getString("skill_approval_halo.everyday") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW" }, readBrief = { briefService.visible(it) })
     }
     val organizerWorkTool by lazy {
-        com.halo.app.di.tools.OrganizerWorkTool({ organizerOperations }) {
+        com.halo.app.di.tools.OrganizerWorkTool({ organizerOperations }, canRun = {
             kidsPreferences.loadedState.value && !kidsPreferences.enabled.value && storage.getBoolean("skill_enabled_halo.everyday", true)
-        }
+        }, captureAuthority = {
+            val family = kidsPreferences.presentationRevision(); val mode = privacyModes.revision
+            val verify: () -> Unit = {
+                check(kidsPreferences.loadedState.value && !kidsPreferences.enabled.value && kidsPreferences.presentationRevision() == family &&
+                    privacyModes.revision == mode && storage.getBoolean("skill_enabled_halo.everyday", true) &&
+                    (storage.getString("skill_approval_halo.everyday") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW")
+            }
+            verify
+        })
     }
     val organizerCalendars by lazy {
         com.halo.app.data.everyday.OrganizerCalendarService(appDatabase,organizerUseCases,workspaceFileRepository,workspaceRepository,

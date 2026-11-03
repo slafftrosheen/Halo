@@ -35,7 +35,11 @@ class CollectorCoordinator(
             val failedByPolicy = AtomicBoolean(false)
             supervisorScope {
                 val transfer = async(start = CoroutineStart.LAZY) {
-                    val categories = if (current.source.kind == CollectorKind.WEATHER) setOf(RemoteDataCategory.LOCATION) else setOf(RemoteDataCategory.ACCOUNT_METADATA)
+                    val categories = when (current.source.kind) {
+                        CollectorKind.WEATHER -> setOf(RemoteDataCategory.LOCATION)
+                        CollectorKind.RESEARCH -> setOf(RemoteDataCategory.TEXT, RemoteDataCategory.WORKSPACE)
+                        else -> setOf(RemoteDataCategory.ACCOUNT_METADATA)
+                    }
                     val job = currentCoroutineContext().job
                     val authority = if (current.source.external) policy.acquire(RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER,
                         RemoteOperation.CONNECTED_SERVICE, categories), revision, recordActivity = false, cancel = {

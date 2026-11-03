@@ -20,6 +20,14 @@ data class OrganizerSourceRef(val id: String, val version: Long) {
     init { require(id.isNotBlank() && id.length <= 256 && version > 0) }
 }
 
+/** Historical evidence only. It can never authorize another execution. */
+data class OrganizerWorkRecovery(val planId: String, val routineId: String, val runId: String?, val recordedAt: Instant,
+    val uncertain: Boolean, val reviewed: Boolean = false) {
+    init {
+        require(planId.length in 1..80 && routineId.length in 1..80 && (runId == null || runId.isNotBlank() && runId.length <= 256))
+    }
+}
+
 /** References the existing automation owner. It does not claim that scheduling or execution succeeded. */
 data class OrganizerExecutionBinding(val planId: String, val routineId: String,
     val routineVersion: String? = null, val runId: String? = null, val scheduling: String = "UNCONFIRMED", val claimedStep: Int = -1,
@@ -77,8 +85,10 @@ data class OrganizerCommitment(val owner: CommitmentOwner = CommitmentOwner.ME,
     val state: HaloWorkState = HaloWorkState.READY, val actions: List<OrganizerPlannedAction> = emptyList(),
     val sources: List<OrganizerSourceRef> = emptyList(), val execution: OrganizerExecutionBinding? = null,
     val result: OrganizerWorkResult? = null, val nextHumanAction: String? = null,
-    val createdBy: CommitmentCreator = CommitmentCreator.USER, val stopwatch: StopwatchState? = null) {
+    val createdBy: CommitmentCreator = CommitmentCreator.USER, val stopwatch: StopwatchState? = null,
+    val recovery: OrganizerWorkRecovery? = null) {
     val requiredCapabilities: Set<String> get() = actions.map { it.capability }.toSet()
+    val recoveryNeedsReview: Boolean get() = recovery?.let { it.uncertain && !it.reviewed } == true
     fun validate() {
         require(intent.length <= 2000 && actions.size <= 6 && sources.size <= 10 && sources.distinctBy { it.id }.size == sources.size)
         require(nextHumanAction == null || nextHumanAction.isNotBlank() && nextHumanAction.length <= 1000)
@@ -99,8 +109,8 @@ object OrganizerResponsibility {
         require(value.owner != owner) { "This responsibility is already selected" }
         require(value.state != HaloWorkState.RUNNING) { "Stop the active work and read its result before changing responsibility" }
         return value.copy(owner = owner, execution = null,
-            state = if (owner == CommitmentOwner.ME) HaloWorkState.READY else HaloWorkState.DRAFT,
-            nextHumanAction = null).also { it.validate() }
+            state = if (value.recoveryNeedsReview) HaloWorkState.NEEDS_USER else if (owner == CommitmentOwner.ME) HaloWorkState.READY else HaloWorkState.DRAFT,
+            nextHumanAction = if (value.recoveryNeedsReview) "Inspect the previous execution and acknowledge its uncertain effects before continuing." else null).also { it.validate() }
     }
     fun mayExecute(record: OrganizerRecord, planId: String): Boolean = record.deletedAt == null &&
         record.status == OrganizerStatus.ACTIVE && record.commitment.owner != CommitmentOwner.ME &&

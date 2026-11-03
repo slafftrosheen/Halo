@@ -15,6 +15,8 @@ internal object OrganizerCommitmentCodec {
         put("nextHumanAction", value.nextHumanAction)
         put("actions", JSONArray(value.actions.map { JSONObject().put("capability", it.capability).put("arguments", it.argumentsJson) }))
         put("sources", JSONArray(value.sources.map { JSONObject().put("id", it.id).put("version", it.version) }))
+        value.recovery?.let { put("recovery", JSONObject().put("planId", it.planId).put("routineId", it.routineId).put("runId", it.runId)
+            .put("recordedAt", it.recordedAt.toEpochMilli()).put("uncertain", it.uncertain).put("reviewed", it.reviewed)) }
         value.execution?.let { put("execution", JSONObject().put("planId", it.planId).put("routineId", it.routineId)
             .put("routineVersion", it.routineVersion).put("runId", it.runId).put("scheduling", it.scheduling).put("claimedStep", it.claimedStep)
             .put("lastEvidenceIds", JSONArray(it.lastEvidenceIds)).put("planNonce", it.planNonce)) }
@@ -43,6 +45,8 @@ internal object OrganizerCommitmentCodec {
             (0 until actions.length()).map { actions.getJSONObject(it).let { a -> OrganizerPlannedAction(a.getString("capability"), a.getString("arguments")) }
                 .also { com.halo.app.automation.RoutineArguments.decode(it.argumentsJson) } },
             (0 until sources.length()).map { sources.getJSONObject(it).let { s -> OrganizerSourceRef(s.getString("id"), s.getLong("version")) } },
-            execution, result, json.text("nextHumanAction"), CommitmentCreator.valueOf(json.getString("createdBy")), stopwatch).also { it.validate() }
+            execution, result, json.text("nextHumanAction"), CommitmentCreator.valueOf(json.getString("createdBy")), stopwatch,
+            json.optJSONObject("recovery")?.let { OrganizerWorkRecovery(it.getString("planId"), it.getString("routineId"), it.text("runId"),
+                Instant.ofEpochMilli(it.getLong("recordedAt")), it.getBoolean("uncertain"), it.getBoolean("reviewed")) }).also { it.validate() }
     }
 }
