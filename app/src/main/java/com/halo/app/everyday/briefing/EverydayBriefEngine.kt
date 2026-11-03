@@ -115,10 +115,11 @@ object EverydayBriefEngine {
         }
         // The existing Daily Assistant owns approvals, recovery and Study prompts; preserve that owner and its action route.
         val attention = input.attention.items.filter { input.audience != BriefAudience.KIDS || it.id in input.childLocalFactIds }
-        if (attention.isNotEmpty()) {
-            sources += BriefSourceStamp("halo:attention", 0, "Halo", "Halo", null, false, input.now, input.now,
-                input.now.plusSeconds(900), CollectorAttemptState.CURRENT, true)
-            attention.forEach { item -> facts += BriefFact("attention:${item.id}", BriefFactKind.ATTENTION, item.title,
+        // An empty successful owner read is still an observation. Without this stamp,
+        // the first new item cannot be ADDED and the last resolved item looks unavailable.
+        sources += BriefSourceStamp("halo:attention", 0, "Halo", "Halo", null, false, input.now, input.now,
+            input.now.plusSeconds(900), CollectorAttemptState.CURRENT, true)
+        attention.forEach { item -> facts += BriefFact("attention:${item.id}", BriefFactKind.ATTENTION, item.title,
                 item.summary.orEmpty(), "halo:attention", fingerprint(item.title, item.summary.orEmpty(), item.priority.name),
                 "halo://day/attention/${item.id}", when (item.priority) {
                     DailyAssistantPriority.NEEDS_YOU_NOW -> 100
@@ -126,7 +127,6 @@ object EverydayBriefEngine {
                     DailyAssistantPriority.SOON -> 30
                     DailyAssistantPriority.AVAILABLE -> 0
                 }, item.occurredAt, values = mapOf("localId" to item.id)) }
-        }
         // Imported feed IDs can be long. Stable opaque keys keep the daily comparison index bounded.
         val unique = facts.distinctBy { it.id }.map { it.copy(id = fingerprint(it.id)) }
         require(unique.size <= 20_000) { "Brief input exceeds the supported fact limit" }

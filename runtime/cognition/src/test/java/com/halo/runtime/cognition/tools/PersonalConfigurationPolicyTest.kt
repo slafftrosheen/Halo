@@ -9,6 +9,16 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PersonalConfigurationPolicyTest {
+    // Explicit identities keep additions visible to privacy review without a brittle
+    // count across unrelated configuration families.
+    private val everydayLocationTools = setOf(
+        "halo_clock_query", "halo_clock_save", "halo_clock_action",
+        "halo_source_query", "halo_source_get", "halo_source_preview", "halo_source_save", "halo_source_action",
+        "halo_brief_query", "halo_brief_action", "halo_brief_settings", "halo_everyday_open",
+        "halo_widget_query", "halo_widget_configure", "halo_widget_pin")
+    private val everydayLocalContextTools = setOf("halo_source_get", "halo_brief_query", "halo_brief_action")
+    private val everydayOrganizerTools = setOf("halo_organizer_query", "halo_organizer_get", "halo_organizer_create",
+        "halo_organizer_edit", "halo_organizer_action", "halo_organizer_occurrence", "halo_organizer_delivery")
     private fun descriptor(name: String, risk: ToolRiskClass = ToolRiskClass.READ_ONLY) = ToolDescriptor(
         id = ToolId(name), definition = ToolDefinition(name, name, "Local configuration fixture"),
         // Deliberately outside WORKSPACE: category alone must not bypass consent.
@@ -17,8 +27,7 @@ class PersonalConfigurationPolicyTest {
     @Test fun personalMetadataRequiresItsDeclaredDisclosureRegardlessOfCategory() {
         val gate = DefaultToolExposureGate()
         val names = PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current"
-        // Includes the six saved-workflow actions, whose templates can contain personal content.
-        assertEquals(78, names.size)
+        assertTrue(names.containsAll(everydayLocationTools + everydayOrganizerTools))
         val localOnly = PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats
         assertTrue(localOnly.containsAll(setOf("halo_library_batch", "halo_library_apply_batch")))
         names.forEach { name ->
@@ -47,15 +56,35 @@ class PersonalConfigurationPolicyTest {
     @Test fun resultProvenanceIncludesMetadataMutationReceiptsWithoutInspectingTheirText() {
         (PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current").forEach { name ->
             assertTrue(name, name in WorkspaceToolAccess.readTools)
-            val extra = when (name) {
-                in PersonalConfigurationToolAccess.currentScreen -> setOf(RemoteDataCategory.SCREEN)
-                in PersonalConfigurationToolAccess.savedChats -> setOf(RemoteDataCategory.CONVERSATION)
-                else -> emptySet()
+            val extra = buildSet {
+                if (name in PersonalConfigurationToolAccess.currentScreen) add(RemoteDataCategory.SCREEN)
+                if (name in PersonalConfigurationToolAccess.savedChats) add(RemoteDataCategory.CONVERSATION)
+                if (name in everydayLocationTools || name == "halo_screen_card_configuration") add(RemoteDataCategory.LOCATION)
+                if (name in everydayLocalContextTools) {
+                    add(RemoteDataCategory.RECENT_EVENTS)
+                    add(RemoteDataCategory.DEVICE_STATE)
+                }
             }
             assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE) + extra, remoteToolResultCategories(name))
         }
         // Routing follows actual registered identities, not a broad prefix guess.
         assertEquals(setOf(RemoteDataCategory.TOOLS), remoteToolResultCategories("halo_screen_unregistered_example"))
+    }
+
+    @Test fun everyEverydayCommandHasReviewedScopedProvenance() {
+        assertEquals(everydayOrganizerTools + everydayLocationTools, PersonalConfigurationToolAccess.everyday)
+        everydayOrganizerTools.forEach { name ->
+            assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE), remoteToolResultCategories(name))
+        }
+        everydayLocationTools.forEach { name ->
+            val extra = if (name in everydayLocalContextTools)
+                setOf(RemoteDataCategory.RECENT_EVENTS, RemoteDataCategory.DEVICE_STATE) else emptySet()
+            assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE, RemoteDataCategory.LOCATION) + extra,
+                remoteToolResultCategories(name))
+        }
+        // Unknown names never acquire personal categories from a prefix alone.
+        assertEquals(setOf(RemoteDataCategory.TOOLS), remoteToolResultCategories("halo_clock_unregistered"))
+        assertEquals(setOf(RemoteDataCategory.TOOLS), remoteToolResultCategories("halo_source_unregistered"))
     }
 
     @Test fun configurationToolsRemainOnDemandAndDoNotExpandLocalBootstrapSchemas() {

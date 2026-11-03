@@ -1,5 +1,6 @@
 package com.halo.app.everyday.briefing
 
+import com.halo.app.daily.*
 import com.halo.app.everyday.collectors.*
 import com.halo.app.everyday.organizer.*
 import java.time.*
@@ -26,13 +27,44 @@ class EverydayBriefTest {
         val first = EverydayBriefEngine.project(request)
         assertEquals(first, EverydayBriefEngine.project(request))
         assertEquals("Plan", first.document.facts.single().title)
-        assertEquals(now, first.document.sources.single().verifiedAt)
+        assertEquals(now, first.document.sources.single { it.id == localSource.id }.verifiedAt)
         assertFalse(first.document.baselineMissing)
     }
     @Test fun absentMorningBaselineIsNeverReportedAsNoChanges() {
         val document = EverydayBriefEngine.project(input(listOf(task()), period = BriefPeriod.CHANGES)).document
         assertTrue(document.baselineMissing); assertNull(document.baselineAt)
         assertTrue(BriefPresentation.comparisonNotice(document, Locale.ENGLISH)!!.contains("no matching morning brief"))
+    }
+    private fun attention(id: String = "approval") = DailyAssistantItem(id, DailyAssistantKind.APPROVAL,
+        DailyAssistantPriority.NEEDS_YOU_NOW, "Review local request", null, DailyAssistantAction.OpenVoice, id, now)
+
+    @Test fun emptyAttentionBaselineCanReportNewItemsAndResolvedItemsAreRemoved() {
+        val morning = EverydayBriefEngine.project(input(period = BriefPeriod.MORNING))
+        assertTrue("halo:attention" in morning.baseline.observedSources)
+        val request = input(period = BriefPeriod.CHANGES, baseline = morning.baseline)
+            .copy(now = now.plusSeconds(60), attention = DailyAssistantSnapshot(items = listOf(attention())))
+        val added = EverydayBriefEngine.project(request)
+        assertEquals(BriefChangeKind.ADDED, added.document.changes.single().kind)
+        assertEquals(BriefFactKind.ATTENTION, added.document.changes.single().fact!!.kind)
+        val resolved = EverydayBriefEngine.project(request.copy(now = now.plusSeconds(120),
+            attention = DailyAssistantSnapshot(), baseline = added.baseline))
+        assertTrue(resolved.document.facts.isEmpty())
+        assertEquals(BriefChangeKind.REMOVED, resolved.document.changes.single().kind)
+        assertEquals(added.document.facts.single().id, resolved.document.changes.single().factId)
+        assertFalse("halo:attention" in resolved.document.comparisonUnavailableSources)
+    }
+
+    @Test fun emptyKidsAttentionObservationDoesNotExposeAdultItems() {
+        val request = input(period = BriefPeriod.MORNING, audience = BriefAudience.KIDS)
+            .copy(attention = DailyAssistantSnapshot(items = listOf(attention("adult"), attention("shared"))),
+                childLocalFactIds = setOf("shared"))
+        val morning = EverydayBriefEngine.project(request)
+        assertEquals(listOf("shared"), morning.document.facts.map { it.values["localId"] })
+        val later = EverydayBriefEngine.project(request.copy(period = BriefPeriod.CHANGES, baseline = morning.baseline,
+            attention = DailyAssistantSnapshot(items = listOf(attention("adult")))))
+        assertTrue(later.document.facts.isEmpty())
+        assertEquals(morning.document.facts.single().id, later.document.changes.single().factId)
+        assertFalse("halo:attention" in later.document.comparisonUnavailableSources)
     }
     @Test fun comparesStableFactsAndConditionalVerificationDoesNotInventNewsChanges() {
         val morning = EverydayBriefEngine.project(input(listOf(task()), listOf(local, feed("Morning")), BriefPeriod.MORNING))

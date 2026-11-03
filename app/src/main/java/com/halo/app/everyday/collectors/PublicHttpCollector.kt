@@ -46,7 +46,15 @@ class PublicHttpCollector(
         try {
             val response = withContext(Dispatchers.IO) {
                 call.execute().use { reply ->
-                    if (reply.code == 304) return@withContext RawReply(reply.code, null, null, null, reply.request.url.toString(), null)
+                    if (reply.code == 304) {
+                        val finalEtag = reply.request.header("If-None-Match")
+                        val finalModified = reply.request.header("If-Modified-Since")
+                        // If-None-Match takes precedence over If-Modified-Since. An
+                        // unrelated replacement validator cannot verify this cached body.
+                        val conditional = if (finalEtag != null) cache?.etag?.takeIf(::safeValidator)?.trim() == finalEtag
+                            else finalModified != null && cache?.lastModified?.takeIf(::safeValidator)?.trim() == finalModified
+                        return@withContext RawReply(reply.code, null, null, null, reply.request.url.toString(), null, conditional)
+                    }
                     if (!reply.isSuccessful) return@withContext RawReply(reply.code, null, null, null, reply.request.url.toString(), retryAfter(reply.header("Retry-After")))
                     val body = reply.body ?: throw IOException("Source response was empty")
                     require(body.contentLength() <= CollectorRefreshPolicy.MAX_BODY_BYTES) { "Source exceeds the download size limit" }
@@ -69,6 +77,11 @@ class PublicHttpCollector(
             if (response.code == 304) {
                 val previous = cache ?: return@coroutineScope CollectorFetchResult.Unavailable(
                     "Source reported unchanged content, but no matching snapshot is stored")
+                // A 304 only verifies a cached body when the final request was conditional.
+                // Redirects/interceptors can remove headers even if the initial request had them.
+                if (!response.conditional) return@coroutineScope CollectorFetchResult.Unavailable(
+                    "Source returned unchanged content without a conditional request. Cached data was not revalidated",
+                    resetValidators = true)
                 // Conditional validators belong to the actual final resource that supplied
                 // the body, not merely to an unchanged source ID or a redirecting entry URL.
                 // Never use another final URL's 304 as proof that this cached body is fresh.
@@ -108,11 +121,12 @@ class PublicHttpCollector(
           catch (_: Exception) { CollectorFetchResult.Unavailable("Source data could not be parsed. Check the feed address or try again later; the previous snapshot is retained") }
           finally { cancellation.cancel(); lease.close() }
     }
-    private fun safeValidator(value: String) = value.length <= 1024 && value.none { it.isISOControl() }
+    private fun safeValidator(value: String) = value.isNotBlank() && value.length <= 1024 && value.none { it.isISOControl() }
     private fun retryAfter(value: String?): Duration? = value?.let {
         it.toLongOrNull()?.let { seconds -> Duration.ofSeconds(seconds.coerceIn(0, 86400)) }
             ?: runCatching { Duration.between(clock.instant(), ZonedDateTime.parse(it, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant())
                 .coerceIn(Duration.ZERO, Duration.ofDays(1)) }.getOrNull()
     }
-    private data class RawReply(val code: Int, val bytes: ByteArray?, val etag: String?, val lastModified: String?, val url: String, val retryAfter: Duration?)
+    private data class RawReply(val code: Int, val bytes: ByteArray?, val etag: String?, val lastModified: String?, val url: String,
+        val retryAfter: Duration?, val conditional: Boolean = false)
 }

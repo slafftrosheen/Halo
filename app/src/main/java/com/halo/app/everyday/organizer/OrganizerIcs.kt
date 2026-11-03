@@ -33,6 +33,35 @@ object OrganizerIcs {
     private data class ParsedTime(val local: LocalDateTime, val zone: ZoneId, val allDay: Boolean, val floating: Boolean) {
         fun instant(): Instant = local.atZone(zone).toInstant()
     }
+    private data class CalendarDuration(val days: Long, val seconds: Long, val hasTime: Boolean) {
+        fun end(start: ParsedTime): LocalDateTime {
+            require(!start.allDay || !hasTime) { "All-day duration must use days or weeks" }
+            // RFC 5545: add nominal days/weeks before elapsed hours, minutes and seconds.
+            return OrganizerIcs.representableEnd(start.local.atZone(start.zone).plusDays(days).plusSeconds(seconds))
+        }
+    }
+    private fun representableEnd(end: ZonedDateTime): LocalDateTime {
+        val local = end.toLocalDateTime()
+        require(local.atZone(end.zone).toInstant() == end.toInstant()) {
+            "Event end uses the later daylight-saving overlap offset and needs manual review"
+        }
+        return local
+    }
+    private val durationPattern = Regex("\\+?P(?:(\\d+)W|(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?)?)")
+    private fun duration(value: String): CalendarDuration {
+        val match = requireNotNull(durationPattern.matchEntire(value)) { "Unsupported calendar duration" }
+        require(match.groupValues.drop(1).any { it.isNotEmpty() } && !value.endsWith('T')) { "Empty calendar duration" }
+        // Bound components before arithmetic, including adversarially large input numbers.
+        fun component(index: Int, maximum: Long): Long = match.groupValues[index].takeIf { it.isNotEmpty() }?.let {
+            val number = requireNotNull(it.toLongOrNull()) { "Calendar duration exceeds supported limits" }
+            require(number <= maximum) { "Calendar duration exceeds supported limits" }
+            number
+        } ?: 0L
+        val days = component(1, 52) * 7 + component(2, 366)
+        val seconds = component(3, 8784) * 3600 + component(4, 527040) * 60 + component(5, 31622400)
+        require(days * 86400 + seconds in 1L..31622400L) { "Calendar duration must be positive and at most one year" }
+        return CalendarDuration(days, seconds, 'T' in value)
+    }
     private fun parseTime(property: Property, fallback: ZoneId, zones: Map<String, Result<IcsTimeZones.Coverage>> = emptyMap()): ParsedTime {
         val allDay = property.parameters["VALUE"] == "DATE"
         val value = property.value
@@ -119,14 +148,25 @@ object OrganizerIcs {
         fun List<Property>.one(name: String): Property? {
             val matching = filter { it.name == name }; require(matching.size <= 1) { "Duplicate $name property" }; return matching.singleOrNull()
         }
+        fun withhold(event: List<Property>) {
+            event.filter { it.name == "UID" }.forEach { value ->
+                runCatching { unescape(value.value) }.getOrNull()?.let { blockedSeries += identity(calendarId, it) }
+            }
+        }
         fun parseEvent(event: List<Property>): Pair<OrganizerTime, ParsedTime> {
             val start = parseTime(requireNotNull(event.one("DTSTART")) { "Missing event start" }, defaultZone, zones)
             val explicitEnd = event.one("DTEND")?.let { parseTime(it, start.zone, zones) }
-            val duration = event.one("DURATION")?.value?.let(Duration::parse)
+            val duration = event.one("DURATION")?.value?.let(::duration)
             require(explicitEnd == null || duration == null) { "Both end and duration were supplied" }
             require(explicitEnd == null || explicitEnd.allDay == start.allDay)
-            val end = explicitEnd?.instant()?.atZone(start.zone)?.toLocalDateTime()
-                ?: duration?.let { start.local.atZone(start.zone).plus(it).toLocalDateTime() }
+            require(duration == null || duration.days == 0L || start.allDay || !start.floating) {
+                "Floating timed day/week duration needs manual review; its meaning changes with the device time zone"
+            }
+            require(duration == null || duration.days == 0L || start.allDay || start.zone.rules.isFixedOffset || event.none { it.name == "RRULE" }) {
+                "Recurring timed day/week duration needs manual review; it cannot be simplified across daylight-saving changes"
+            }
+            val end = explicitEnd?.instant()?.atZone(start.zone)?.let(::representableEnd)
+                ?: duration?.end(start)
                 ?: if (start.allDay) start.local.plusDays(1) else error("Timed event has no end or duration; choose one before importing")
             return OrganizerTime(start.local, end, start.zone.id, start.allDay, start.floating).also { it.validate() } to start
         }
@@ -167,7 +207,7 @@ object OrganizerIcs {
                 if (event.any { it.name == "ATTACH" || it.name == "X-HALO-OMITTED" }) issues += CalendarImportIssue(events.indexOf(event) + 1,
                     uid.take(200), "Embedded alarms and attachments are not imported, opened or scheduled", warning = true)
             } catch (failure: Exception) {
-                uid?.let { id -> identity(calendarId, id).takeIf { key -> records.any { it.id == key } }?.let(blockedSeries::add) }
+                withhold(event)
                 issues += CalendarImportIssue(events.indexOf(event) + 1, uid?.take(200), failure.message ?: "Unsupported calendar event")
             }
         }
@@ -177,6 +217,9 @@ object OrganizerIcs {
                 event.one("UID")
                 require(!uid.isNullOrBlank())
                 val parent = requireNotNull(records.find { it.id == identity(calendarId, uid) }) { "Occurrence has no imported series" }
+                require(event.none { it.name in setOf("RRULE", "RDATE", "EXRULE", "EXDATE") }) {
+                    "Recurrence rules on an occurrence override need manual review"
+                }
                 val recurrenceId = requireNotNull(event.one("RECURRENCE-ID"))
                 require("RANGE" !in recurrenceId.parameters) { "This-and-future recurrence overrides need manual review" }
                 val original = parseTime(recurrenceId, ZoneId.of(parent.time!!.zoneId), zones).instant()
@@ -189,7 +232,7 @@ object OrganizerIcs {
                 exceptions.removeAll { it.recordId == parent.id && it.originalStart == original }; exceptions += value
                 if (event.any { it.name == "ATTACH" || it.name == "X-HALO-OMITTED" }) issues += CalendarImportIssue(events.indexOf(event) + 1, uid.take(200), "Embedded alarms and attachments are omitted", warning = true)
             } catch (failure: Exception) {
-                uid?.let { blockedSeries += identity(calendarId, it) }
+                withhold(event)
                 issues += CalendarImportIssue(events.indexOf(event) + 1, uid?.take(200), "Series withheld: " + (failure.message ?: "Unsupported occurrence change"))
             }
         }

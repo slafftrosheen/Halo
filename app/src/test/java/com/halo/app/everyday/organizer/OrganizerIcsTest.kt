@@ -59,6 +59,94 @@ class OrganizerIcsTest {
         assertEquals(valid.title, imported.records.single().title); assertEquals(valid.details, imported.records.single().details)
         assertEquals(valid.time, imported.records.single().time); assertEquals(valid.repeat, imported.records.single().repeat)
     }
+    @Test fun allDayDurationsKeepMidnightAcrossBothDstChangesAndRepeat() {
+        listOf("20260329" to 23L, "20261025" to 25L).forEach { (date, hours) ->
+            val preview = parse("BEGIN:VEVENT\nUID:day\nDTSTART;VALUE=DATE:$date\nDURATION:P1D\nRRULE:FREQ=DAILY;COUNT=2\nSUMMARY:Day\nEND:VEVENT")
+            assertTrue(preview.issues.toString(), preview.issues.none { !it.warning })
+            val record = preview.records.single()
+            val time = requireNotNull(record.time)
+            assertEquals(time.start.plusDays(1), time.end)
+            val rows = OrganizerRecurrence.between(record, emptyList(), time.instant(zone),
+                time.start.plusDays(3).atZone(zone).toInstant(), zone)
+            assertEquals(2, rows.size)
+            assertEquals(hours, Duration.between(rows.first().start, rows.first().end).toHours())
+            assertTrue(rows.all { it.end!!.atZone(zone).toLocalTime() == LocalTime.MIDNIGHT })
+        }
+    }
+
+    @Test fun nominalDaysAndWeeksDifferFromElapsedHoursAcrossDst() {
+        fun timed(duration: String) = parse("BEGIN:VEVENT\nUID:duration\nDTSTART;TZID=Europe/Riga:20260328T120000\nDURATION:$duration\nSUMMARY:Trip\nEND:VEVENT").records.single().time!!
+        assertEquals(LocalDateTime.parse("2026-03-29T12:00"), timed("P1D").end)
+        assertEquals(LocalDateTime.parse("2026-03-29T13:00"), timed("PT24H").end)
+        assertEquals(LocalDateTime.parse("2026-03-29T14:00"), timed("P1DT2H").end)
+        assertEquals(LocalDateTime.parse("2026-04-04T12:00"), timed("+P1W").end)
+        assertEquals(LocalDateTime.parse("2026-03-28T13:02:03"), timed("PT1H2M3S").end)
+    }
+
+    @Test fun invalidAndUnsupportedDurationFormsAreNotNormalizedIntoEvents() {
+        listOf("P", "PT", "P1DT", "P0D", "PT0S", "-P1D", "PT-1H", "P1M", "P1W1D", "P999999999999999999999D").forEach { duration ->
+            val preview = parse("BEGIN:VEVENT\nUID:invalid\nDTSTART:20260101T100000Z\nDURATION:$duration\nSUMMARY:Invalid\nEND:VEVENT")
+            assertTrue(duration, preview.records.isEmpty())
+            assertTrue(duration, preview.issues.any { !it.warning })
+        }
+        val allDayHours = parse("BEGIN:VEVENT\nUID:invalid\nDTSTART;VALUE=DATE:20260101\nDURATION:PT24H\nSUMMARY:Invalid\nEND:VEVENT")
+        assertTrue(allDayHours.records.isEmpty())
+    }
+
+    @Test fun timedRecurringNominalDurationRequiresReviewWhenModelCannotPreserveDstSemantics() {
+        val preview = parse("BEGIN:VEVENT\nUID:repeat\nDTSTART;TZID=Europe/Riga:20260328T120000\nDURATION:P1D\nRRULE:FREQ=DAILY;COUNT=3\nSUMMARY:Trip\nEND:VEVENT")
+        assertTrue(preview.records.isEmpty())
+        assertTrue(preview.issues.any { !it.warning && it.reason.contains("duration") })
+    }
+
+    @Test fun floatingTimedNominalDurationsRequireReviewEvenWhenImportedInAFixedZone() {
+        for (deviceZone in listOf(zone, ZoneId.of("UTC"))) {
+            for (recurrence in listOf("", "RRULE:FREQ=DAILY;COUNT=3\n")) {
+                val body = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:floating\nDTSTART:20260328T120000\nDURATION:P1D\n${recurrence}SUMMARY:Trip\nEND:VEVENT\nEND:VCALENDAR"
+                val preview = OrganizerIcs.preview(body.toByteArray(), "personal", deviceZone, now)
+                assertTrue("$deviceZone $recurrence", preview.records.isEmpty())
+                assertTrue(preview.issues.any { !it.warning && it.reason.contains("Floating") })
+            }
+        }
+        val elapsed = parse("BEGIN:VEVENT\nUID:elapsed\nDTSTART:20260328T120000\nDURATION:PT24H\nSUMMARY:Elapsed\nEND:VEVENT")
+        assertEquals(1, elapsed.records.size)
+    }
+
+    @Test fun laterOverlapEndpointsAreWithheldRatherThanShortenedByLosingTheirOffset() {
+        listOf("DURATION:P1DT1H", "DURATION:PT25H", "DTEND:20261025T013000Z").forEach { end ->
+            val preview = parse("BEGIN:VEVENT\nUID:overlap\nDTSTART;TZID=Europe/Riga:20261024T033000\n$end\nSUMMARY:Trip\nEND:VEVENT")
+            assertTrue(end, preview.records.isEmpty())
+            assertTrue(preview.issues.any { !it.warning && it.reason.contains("overlap") })
+        }
+        val representable = parse("BEGIN:VEVENT\nUID:overlap\nDTSTART;TZID=Europe/Riga:20261024T033000\nDURATION:PT24H\nSUMMARY:Trip\nEND:VEVENT")
+        assertEquals(LocalDateTime.parse("2026-10-25T03:30"), representable.records.single().time!!.end)
+    }
+
+    @Test fun unsupportedRecurrenceOnOverrideWithholdsWholeSeries() {
+        val master = "BEGIN:VEVENT\nUID:a\nDTSTART:20260101T100000Z\nDTEND:20260101T110000Z\nRRULE:FREQ=DAILY;COUNT=3\nSUMMARY:Master\nEND:VEVENT"
+        listOf("RRULE:FREQ=DAILY;COUNT=2", "RDATE:20260104T100000Z", "EXRULE:FREQ=WEEKLY", "EXDATE:20260103T100000Z").forEach { property ->
+            val occurrence = "BEGIN:VEVENT\nUID:a\nRECURRENCE-ID:20260102T100000Z\nDTSTART:20260102T120000Z\nDTEND:20260102T130000Z\n$property\nSUMMARY:Moved\nEND:VEVENT"
+            val preview = parse("$master\n$occurrence")
+            assertTrue(property, preview.records.isEmpty())
+            assertTrue(preview.exceptions.isEmpty())
+            assertTrue(preview.issues.any { !it.warning })
+        }
+    }
+
+    @Test fun malformedDuplicateMasterCannotBeAcceptedByChangingInputOrder() {
+        val valid = "BEGIN:VEVENT\nUID:a\nDTSTART:20260101T100000Z\nDTEND:20260101T110000Z\nSUMMARY:Master\nEND:VEVENT"
+        val invalid = valid.replace("DTEND:20260101T110000Z", "RRULE:FREQ=MONTHLY;BYDAY=1MO")
+        listOf("$invalid\n$valid", "$valid\n$invalid").forEach { events ->
+            val preview = parse(events)
+            assertTrue(preview.records.isEmpty())
+            assertTrue(preview.exceptions.isEmpty())
+            assertTrue(preview.issues.any { !it.warning })
+        }
+        val ambiguous = valid.replace("UID:a", "UID:a\nUID:b")
+        val other = valid.replace("UID:a", "UID:b")
+        assertTrue(parse("$ambiguous\n$other").records.isEmpty())
+        assertTrue(parse("$other\n$ambiguous").records.isEmpty())
+    }
     @Test fun oversizeAndMalformedDocumentsFailBeforePartialPublication() {
         assertThrows(IllegalArgumentException::class.java) { OrganizerIcs.preview(ByteArray(2 * 1024 * 1024 + 1), "id", zone, now) }
         assertThrows(IllegalArgumentException::class.java) { OrganizerIcs.preview("BEGIN:VEVENT\nEND:VEVENT".toByteArray(), "id", zone, now) }

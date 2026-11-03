@@ -200,6 +200,60 @@ class CollectorIntegrationTest {
         assertThrows(RemoteDispatchBlocked::class.java) { runBlocking { adapter.fetch(selected, null) } }
         assertEquals(3, requests.size)
     }
+    @Test fun unsolicitedNotModifiedCannotRenewCacheAndLaterBodyRecoversNormally() = runBlocking {
+        policy.change(true)
+        val selected = repository.save(source(), null)
+        val existing = snapshot(selected).copy(etag = null, lastModified = null)
+        assertTrue(repository.finish(reserve(selected), existing, CollectorAttempt(selected.id, start, CollectorAttemptState.CURRENT)))
+        clock.advance(3700)
+        val requests = CopyOnWriteArrayList<Request>()
+        val base = OkHttpClient.Builder().addInterceptor { chain ->
+            requests += chain.request()
+            Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).message("fixture")
+                .code(if (requests.size == 1) 304 else 200)
+                .body("<rss><channel><item><title>New body</title></item></channel></rss>".toResponseBody()).build()
+        }.build()
+        val coordinator = owner(PublicHttpCollector(CollectorKind.FEED, policy, base, clock))
+        coordinator.refresh(selected.id, true)
+        val rejected = repository.state(selected.id)!!
+        assertEquals(CollectorAttemptState.FAILED, rejected.attempt.state)
+        assertEquals(existing, rejected.snapshot)
+        assertNull(requests.single().header("If-None-Match"))
+        assertNull(requests.single().header("If-Modified-Since"))
+
+        clock.advance(86_401)
+        coordinator.refresh(selected.id, true)
+        assertEquals(CollectorAttemptState.CURRENT, repository.state(selected.id)!!.attempt.state)
+        assertEquals("New body", (repository.state(selected.id)!!.snapshot!!.payload as CollectorPayload.Articles).items.single().title)
+        assertEquals(clock.instant(), repository.state(selected.id)!!.snapshot!!.retrievedAt)
+        policy.change(false)
+        coordinator.refresh(selected.id, true)
+        assertEquals(2, requests.size)
+    }
+
+    @Test fun conditionalProofMustComeFromTheFinalRequestAndValidatorsMustBeUsable() = runBlocking {
+        policy.change(true)
+        val selected = source()
+        var stripValidators = true
+        var replacementEtag: String? = null
+        val base = OkHttpClient.Builder().addInterceptor { chain ->
+            val filtered = if (stripValidators) chain.request().newBuilder()
+                .removeHeader("If-None-Match").removeHeader("If-Modified-Since").build() else chain.request()
+            val request = replacementEtag?.let { filtered.newBuilder().header("If-None-Match", it).build() } ?: filtered
+            Response.Builder().request(request).protocol(Protocol.HTTP_1_1).message("fixture")
+                .code(304).body("".toResponseBody()).build()
+        }.build()
+        val collector = PublicHttpCollector(CollectorKind.FEED, policy, base, clock)
+        assertTrue(collector.fetch(selected, snapshot(selected)) is CollectorFetchResult.Unavailable)
+        stripValidators = false
+        assertTrue(collector.fetch(selected, snapshot(selected).copy(etag = " ", lastModified = "")) is CollectorFetchResult.Unavailable)
+        replacementEtag = "different-body"
+        assertTrue(collector.fetch(selected, snapshot(selected)) is CollectorFetchResult.Unavailable)
+        replacementEtag = null
+        assertEquals(CollectorFetchResult.NotModified, collector.fetch(selected, snapshot(selected).copy(etag = null)))
+        assertEquals(CollectorFetchResult.NotModified, collector.fetch(selected, snapshot(selected).copy(lastModified = null)))
+    }
+
     @Test fun changedConditionalDestinationKeepsCachedBodyButDropsOldValidatorsBeforeRetry() = runBlocking {
         policy.change(true)
         val selected = repository.save(source(), null)
