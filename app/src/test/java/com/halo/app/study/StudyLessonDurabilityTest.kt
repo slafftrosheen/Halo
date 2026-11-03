@@ -54,6 +54,48 @@ class StudyLessonDurabilityTest {
         assertNull(lessons.loadJourney("lesson"))
     }
 
+    @Test fun corruptExistingHistoryCannotBeReplacedByAValidButIncompleteTurnList() = runBlocking {
+        val storage = StorageFixture()
+        val raw = "[{damaged"
+        storage.putString("study_lesson_v1_lesson", raw)
+        val lessons = StudyLessonStore(storage)
+        var readFailed = false
+        try { lessons.load("lesson") } catch (_: Exception) { readFailed = true }
+        assertTrue("Damaged saved history must not masquerade as an empty lesson", readFailed)
+        var saveFailed = false
+        try {
+            lessons.save("lesson", listOf(StudyTurn(id = "new", stage = TutorStage.EXPLAIN, text = "New reply")))
+        } catch (_: Exception) { saveFailed = true }
+        assertTrue("New inference must not overwrite an unreadable original", saveFailed)
+        assertEquals(raw, storage.getString("study_lesson_v1_lesson"))
+    }
+
+    @Test fun oversizedSavedHistoryIsNotTruncatedAndReplaced() = runBlocking {
+        val storage = StorageFixture()
+        val raw = " ".repeat(600_001)
+        storage.putString("study_lesson_v1_lesson", raw)
+        val lessons = StudyLessonStore(storage)
+        var rejected = false
+        try { lessons.save("lesson", emptyList()) } catch (_: IllegalArgumentException) { rejected = true }
+        assertTrue("Oversized saved history must remain available for explicit recovery", rejected)
+        assertEquals(raw, storage.getString("study_lesson_v1_lesson"))
+    }
+
+    @Test fun corruptJourneyCannotBeTreatedAsNewAndOverwriteLearnerBaseline() = runBlocking {
+        val storage = StorageFixture()
+        val raw = "{broken"
+        storage.putString("study_journey_v1_lesson", raw)
+        val lessons = StudyLessonStore(storage)
+        var readFailed = false
+        try { lessons.loadJourney("lesson") } catch (_: Exception) { readFailed = true }
+        assertTrue(readFailed)
+        var saveFailed = false
+        try { lessons.saveJourney("lesson", LearningJourney(priorKnowledge = "New baseline")) }
+        catch (_: Exception) { saveFailed = true }
+        assertTrue(saveFailed)
+        assertEquals(raw, storage.getString("study_journey_v1_lesson"))
+    }
+
     @Test fun confirmedTurnsAndProgressRestoreThroughFreshStoreInstance() = runBlocking {
         val storage = StorageFixture()
         val original = StudyLessonStore(storage)

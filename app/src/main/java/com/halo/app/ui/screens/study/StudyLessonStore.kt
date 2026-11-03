@@ -90,11 +90,17 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     private val revision = MutableStateFlow(0L)
     fun observeSavedResponseCount(id: String) = revision.map { load(id).size }.distinctUntilChanged()
     private fun key(id: String) = "study_lesson_v1_$id"
-    suspend fun load(id: String): List<StudyTurn> = withContext(Dispatchers.IO) {
-        val raw = storage.getString(key(id)) ?: return@withContext emptyList()
-        runCatching {
-            val array = JSONArray(raw.take(600_000))
-            (0 until array.length().coerceAtMost(30)).map { index ->
+    suspend fun load(id: String): List<StudyTurn> = withContext(Dispatchers.IO) { readSavedTurns(id) }
+
+    /** Refuse damaged or unexpectedly oversized history rather than interpreting it as empty.
+     * A later generated reply must not overwrite records the current version cannot decode.
+     */
+    private fun readSavedTurns(id: String): List<StudyTurn> {
+        val raw = storage.getString(key(id)) ?: return emptyList()
+        require(raw.length <= 600_000) { "Saved lesson history exceeds its supported size; preserve for recovery" }
+        val array = JSONArray(raw)
+        require(array.length() <= 30) { "Saved lesson history exceeds its supported turn limit" }
+        return (0 until array.length()).map { index ->
                 val item = array.getJSONObject(index)
                 val citations = item.optJSONArray("citations") ?: JSONArray()
                 StudyTurn(materialFocus = item.optString("materialFocus").takeIf(String::isNotBlank), sourceVersions = item.optJSONObject("sourceVersions")?.let { versions ->
@@ -110,10 +116,12 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                             cite.optString("version").takeIf { it.isNotBlank() }, cite.optString("title").takeIf { it.isNotBlank() })
                     })
             }
-        }.getOrDefault(emptyList())
     }
     suspend fun save(id: String, turns: List<StudyTurn>) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
         requireWritable(id)
+        // Old history might have become unreadable after a downgrade/storage fault.
+        // Do not overwrite it with a new answer assembled from an empty UI projection.
+        readSavedTurns(id)
         val array = JSONArray()
         turns.filter { it.failure == null }.takeLast(30).forEach { turn ->
             val citations = JSONArray()
@@ -132,10 +140,12 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
         check(storage.getString(key(id)) == encoded) { "Study replies were not confirmed in local storage" }
         revision.update { it + 1 }
     } }
-    suspend fun loadJourney(id: String): LearningJourney? = withContext(Dispatchers.IO) {
-        val raw = storage.getString("study_journey_v1_$id") ?: return@withContext null
-        runCatching {
-            val json = JSONObject(raw)
+    suspend fun loadJourney(id: String): LearningJourney? = withContext(Dispatchers.IO) { readSavedJourney(id) }
+
+    private fun readSavedJourney(id: String): LearningJourney? {
+        val raw = storage.getString("study_journey_v1_$id") ?: return null
+        require(raw.length <= 200_000) { "Saved learning progression exceeds its supported size; preserve for recovery" }
+        val json = JSONObject(raw)
             val branches = json.optJSONArray("branches") ?: JSONArray()
             LearningJourney(LearningStage.valueOf(json.getString("stage")),
                 json.optString("prior"), (0 until branches.length()).map { branches.getString(it) },
@@ -167,10 +177,10 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                 summaryNoteId = json.optString("summaryNoteId").takeIf(String::isNotBlank),
                 summaryNoteRevision = if (json.has("summaryNoteRevision") && !json.isNull("summaryNoteRevision"))
                     json.getLong("summaryNoteRevision") else null)
-        }.getOrNull()
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
         requireWritable(id)
+        readSavedJourney(id)
         val key = "study_journey_v1_$id"
         val encoded = JSONObject()
             .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
