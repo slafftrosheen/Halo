@@ -1079,12 +1079,6 @@ class StudyViewModel(
                         acceptLearningReview(learningTask, response, question.orEmpty())
                         return@launch
                     }
-                    val journey = mutableUiState.value.journey
-                    if (question != null && question == journey.currentBranch) {
-                        keepJourney(journey.copy(concepts = journey.concepts.map {
-                            if (it.title == question) it.copy(explored = true) else it
-                        }))
-                    }
                     val turn = StudyTurn(
                         exerciseId = exerciseAtRequest,
                         id = response.generationId,
@@ -1102,7 +1096,22 @@ class StudyViewModel(
                     val turns = (mutableUiState.value.turns + turn).takeLast(30)
                     try { lessons?.save(sessionId, turns) }
                     catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                    catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "This reply couldn't be saved locally. Save study notes to keep a copy.") }
+                    catch (_: Exception) {
+                        // The Storage owner did not confirm this response. Do not advance
+                        // source-linked lesson history, clear the learner draft, create a
+                        // review artifact or accept feedback from an unsaved model reply.
+                        mutableUiState.value = mutableUiState.value.copy(
+                            isGenerating = false,
+                            notice = "This reply was not saved. Your question and earlier lesson remain available; check storage and ask again."
+                        )
+                        return@launch
+                    }
+                    val journey = mutableUiState.value.journey
+                    if (question != null && question == journey.currentBranch) {
+                        keepJourney(journey.copy(concepts = journey.concepts.map {
+                            if (it.title == question) it.copy(explored = true) else it
+                        }))
+                    }
                     mutableUiState.value = mutableUiState.value.copy(
                         isGenerating = false,
                         turns = turns,
