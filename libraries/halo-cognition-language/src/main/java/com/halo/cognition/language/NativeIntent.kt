@@ -8,6 +8,8 @@ data class TimerIntent(val seconds: Int, val systemClock: Boolean = false) : Nat
 /** Defaults to the Halo organizer; explicit system requests retain Android Clock dispatch. */
 data class NativeClockIntent(val action: String, val systemClock: Boolean = false) : NativeControlIntent
 data class NativeSystemAlarmIntent(val timeExpression: String) : NativeControlIntent
+/** Capture a responsibility/intent; no guessed schedule, capability or execution is asserted. */
+data class NativeOrganizerCommitmentIntent(val owner: String, val purpose: String, val text: String) : NativeControlIntent
 /** User-reviewable external editor handoffs: dispatch never means saved. */
 data class NativeContactEditorIntent(val mode: String) : NativeControlIntent
 data object NativeCalendarEditorIntent : NativeControlIntent
@@ -30,6 +32,15 @@ object NativeCommandParser {
         val raw = ConversationSemantics.commandText(text)
         val command = raw.replace(Regex("[\\s\\u00A0]+"), " ").lowercase(java.util.Locale.ROOT).removePrefix("please ")
         if (ConversationSemantics.isExplanation(raw) || ConversationSemantics.answerFromModel(raw)) return null
+        val capturePrefixes = listOf(
+            Triple("(?:capture|add to (?:my )?inbox|remember|запомни|запиши|добавь во входящие|pieraksti|saglabā ienākošajos|zapisz|zapamiętaj|dodaj do skrzynki)\\s+(.+)", "ME", "INBOX"),
+            Triple("(?:delegate to halo|ask halo to|поручи halo|uztic halo|zleć halo|poproś halo)\\s+(.+)", "HALO", "STANDARD"),
+            Triple("(?:create shared task|make shared task|создай совместную задачу|izveido kopīgu uzdevumu|utwórz wspólne zadanie)\\s+(.+)", "SHARED", "STANDARD"),
+            Triple("(?:watch for|watch this|monitor|следи за|наблюдай за|uzraugi|obserwuj|monitoruj)\\s+(.+)", "HALO", "WATCH"))
+        capturePrefixes.forEach { (expression, owner, purpose) ->
+            Regex(expression, RegexOption.IGNORE_CASE).matchEntire(raw)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotBlank() && it.length <= 2000 }
+                ?.let { return NativeOrganizerCommitmentIntent(owner, purpose, it) }
+        }
         NativeDestination.parse(command)?.let { return NativeDestinationIntent(it) }
         NativeGlobalAction.entries.firstOrNull { command in it.phrases }?.let { return NativeGlobalIntent(it) }
         NativeObservationKind.entries.firstOrNull { command in it.phrases }?.let { return NativeObservationIntent(it) }

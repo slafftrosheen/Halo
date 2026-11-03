@@ -13,6 +13,10 @@ object OrganizerNativeRequests {
         val tool: String
         val capability: String
         when(val intent=interpretation.intent) {
+            is NativeOrganizerCommitmentIntent -> {
+                tool="halo_commitment_save"; capability="workspace.write"
+                args=mapOf("title" to intent.text.take(200),"intent" to intent.text,"owner" to intent.owner,"purpose" to intent.purpose)
+            }
             is NativeClockIntent -> {
                 val view = intent.action in setOf("show_alarms", "show_timers")
                 val modify = intent.action in setOf("dismiss_next_alarm", "snooze_alarm", "dismiss_expired_timers")

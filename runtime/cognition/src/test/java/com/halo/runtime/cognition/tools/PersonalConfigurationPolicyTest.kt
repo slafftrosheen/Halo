@@ -15,8 +15,8 @@ class PersonalConfigurationPolicyTest {
         "halo_clock_query", "halo_clock_save", "halo_clock_action",
         "halo_source_query", "halo_source_get", "halo_source_preview", "halo_source_save", "halo_source_action",
         "halo_brief_query", "halo_brief_action", "halo_brief_settings", "halo_everyday_open",
-        "halo_widget_query", "halo_widget_configure", "halo_widget_pin")
-    private val everydayLocalContextTools = setOf("halo_source_get", "halo_brief_query", "halo_brief_action")
+        "halo_widget_query", "halo_widget_configure", "halo_widget_pin") + PersonalConfigurationToolAccess.organizerOperations
+    private val everydayLocalContextTools = setOf("halo_source_get", "halo_brief_query", "halo_brief_action") + PersonalConfigurationToolAccess.organizerOperations
     private val everydayOrganizerTools = setOf("halo_organizer_alarm","halo_organizer_clock_action","halo_organizer_calendar_import","halo_organizer_calendar_export","halo_organizer_query", "halo_organizer_get", "halo_organizer_create",
         "halo_organizer_edit", "halo_organizer_action", "halo_organizer_occurrence", "halo_organizer_delivery")
     private fun descriptor(name: String, risk: ToolRiskClass = ToolRiskClass.READ_ONLY) = ToolDescriptor(

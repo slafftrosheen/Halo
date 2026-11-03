@@ -4775,4 +4775,146 @@
     <string name="ui_1f172d9e59c7" formatted="false">"Проверить локальный календарь"</string>
     <string name="ui_70793485d58a" formatted="false">"Импортировать проверенный календарь"</string>
     <string name="ui_c1804c4ab7d7" formatted="false">"Подготовить экспорт календаря"</string>
+    <string name="ui_e3c4b39d6d50" formatted="false">"Совместно"</string>
+    <string name="ui_4bc74b21357c" formatted="false">"Задача"</string>
+    <string name="ui_0b5baf309897" formatted="false">"Сценарий"</string>
+    <string name="ui_cb880222ede3" formatted="false">"Секундомер"</string>
+    <string name="ui_38581d183b73" formatted="false">"Планировщик"</string>
+    <string name="ui_33b93476cf59" formatted="false">"Время"</string>
+    <string name="ui_a2baa08ca9b1" formatted="false">"Круг"</string>
+    <string name="ui_c91217be093a" formatted="false">"Ответственность"</string>
+    <string name="ui_ac40ae1e8d41" formatted="false">"Обзор"</string>
+    <string name="ui_66c33cf7da99" formatted="false">"День"</string>
+    <string name="ui_458c1fed5743" formatted="false">"Вечер"</string>
+    <string name="ui_39b36d38d6eb" formatted="false">"Условие"</string>
+    <string name="ui_4e1f49a9c8ae" formatted="false">"Событие"</string>
+    <string name="ui_31757bbfa17e" formatted="false">"Напоминание"</string>
+    <string name="ui_99c40ab40592" formatted="false">"Дата"</string>
+    <string name="ui_3315f922986b" formatted="false">"Добавить будильник"</string>
+    <string name="ui_8feb67afe098" formatted="false">"Добавить действие halo"</string>
+    <string name="ui_6e1d9eea1aa0" formatted="false">"Добавить дело"</string>
+    <string name="ui_57d208bc0d04" formatted="false">"Добавить событие"</string>
+    <string name="ui_39f824afb752" formatted="false">"Добавить сценарий"</string>
+    <string name="ui_23bb6ee4e7e6" formatted="false">"Добавить секундомер"</string>
+    <string name="ui_5a6dfa2dc247" formatted="false">"Добавить таймер"</string>
+    <string name="ui_d08f910e3e21" formatted="false">"Будильники и сценарии"</string>
+    <string name="ui_93f389d94ab9" formatted="false">"Прикрепить связанный объект"</string>
+    <string name="ui_7ee72053c153" formatted="false">"Заряд ниже порога"</string>
+    <string name="ui_5274957eb41c" formatted="false">"Заряд в процентах"</string>
+    <string name="ui_788732338601" formatted="false">"Обзор составлен из выбранных локальных данных."</string>
+    <string name="ui_35311fdbd8a6" formatted="false">"Разделы обзора"</string>
+    <string name="ui_5b520e8e4bc8" formatted="false">"Составить выбранный обзор"</string>
+    <string name="ui_02c368f840c9" formatted="false">"Сохранённые / устаревшие данные"</string>
+    <string name="ui_24634d97a421" formatted="false">"Перед переносом проверьте дату, часовой пояс и время окончания события."</string>
+    <string name="ui_932d0532ec68" formatted="false">"Выберите доступные действия и проверьте конкретный план либо возьмите дело на себя."</string>
+    <string name="ui_1b16f3ef2dc2" formatted="false">"Выберите действия, которые должен выполнить halo. Сохранение не запускает и не планирует их."</string>
+    <string name="ui_d5a7771b2c5d" formatted="false">"Перед сохранением выберите допустимые действия и точные версии выбранных источников."</string>
+    <string name="ui_c6e54a964247" formatted="false">"Дело сохранено. Проверьте план перед включением работы halo."</string>
+    <string name="ui_889855905779" formatted="false">"Тип дела"</string>
+    <string name="ui_c5856efc2a94" formatted="false">"Сравнивать с выбранным сохранённым состоянием источника."</string>
+    <string name="ui_19c3ecdb986c" formatted="false">"Состояние устройства"</string>
+    <string name="ui_f60c408119c7" formatted="false">"Состояние устройства"</string>
+    <string name="ui_c4b221d18e80" formatted="false">"Изменить ответственность и план"</string>
+    <string name="ui_6d59d89ff294" formatted="false">"Включить проверенное расписание"</string>
+    <string name="ui_59207641b268" formatted="false">"Введите адрес одной общедоступной HTTPS-страницы. halo проверит правила robots и сохранит читаемый текст, не переходя по ссылкам или перенаправлениям."</string>
+    <string name="ui_2d8db7004efc" formatted="false">"Выполнение прервано. Перед продолжением проверьте записанные результаты действий."</string>
+    <string name="ui_568177234209" formatted="false">"Завершите или закройте текущую форму, прежде чем выбрать другое действие."</string>
+    <string name="ui_412592124dd3" formatted="false">"Бесплатные источники справочных данных и документов имеют разный охват. Архивные материалы могут быть неактуальны."</string>
+    <string name="ui_5e64c20d6c7e" formatted="false">"Действие halo"</string>
+    <string name="ui_da9a53b0d566" formatted="false">"Работа halo и совместные дела"</string>
+    <string name="ui_d9629bbadc3b" formatted="false">"Я выполнил свою часть"</string>
+    <string name="ui_ac8c21ab5b16" formatted="false">"Дело перенесено из входящих. Его исходный идентификатор и связи сохранены."</string>
+    <string name="ui_e06773bac158" formatted="false">"Internet Archive"</string>
+    <string name="ui_36d0bc43b3ff" formatted="false">"Круг %1$d · %2$s"</string>
+    <string name="ui_045f1e1332d7" formatted="false">"Сделать совместным"</string>
+    <string name="ui_450b9a6897c1" formatted="false">"Управление работой в органайзере"</string>
+    <string name="ui_f585abd70b6f" formatted="false">"Следить за состоянием устройства"</string>
+    <string name="ui_c743ba2ba42a" formatted="false">"Следить за выбранным источником"</string>
+    <string name="ui_ea7159d682d3" formatted="false">"Нужно ваше решение"</string>
+    <string name="ui_83c8d1f20674" formatted="false">"Сеть доступна"</string>
+    <string name="ui_24e035ce4128" formatted="false">"В этом разделе пока нет дел."</string>
+    <string name="ui_cfa40e1d7d47" formatted="false">"Подтверждённого активного расписания нет."</string>
+    <string name="ui_7fb41dae0b48" formatted="false">"Нет актуальных данных источника с действующим разрешением. Ожидается следующая проверка по согласованному плану."</string>
+    <string name="ui_1a2488d4470e" formatted="false">"Нет актуальных данных источника. Проверьте его доступность или выберите другую проверку."</string>
+    <string name="ui_79c0868ba00b" formatted="false">"В проверенном источнике нет изменений, соответствующих условию."</string>
+    <string name="ui_de88fc7b723e" formatted="false">"Среди сохранённых данных совпадений нет. Поиск не обращался к сети."</string>
+    <string name="ui_5c0befc65b1d" formatted="false">"Нового совпадения с условием нет. Выберите другую проверку или повторяющееся расписание."</string>
+    <string name="ui_117264842ea9" formatted="false">"Для этого обзора нет выбранных данных."</string>
+    <string name="ui_df12aeba9bb9" formatted="false">"Не выбран"</string>
+    <string name="ui_0004ca88b337" formatted="false">"Здесь нет дел, требующих внимания."</string>
+    <string name="ui_098c234bb535" formatted="false">"Открыть исходные данные"</string>
+    <string name="ui_0e21394e04b3" formatted="false">"Открыть запись выполнения"</string>
+    <string name="ui_a3cd48d39b69" formatted="false">"Открыть сохранённые автоматизации"</string>
+    <string name="ui_77c95ea4b242" formatted="false">"Дело в органайзере"</string>
+    <string name="ui_78a9a1a7d04d" formatted="false">"В органайзере записан новый результат. Откройте его для просмотра."</string>
+    <string name="ui_18b9c6060ec1" formatted="false">"Для дела нужно ваше решение. Откройте органайзер и проверьте записанный результат."</string>
+    <string name="ui_4702c2971fec" formatted="false">"Запланировать как"</string>
+    <string name="ui_4a8f5dbe154d" formatted="false">"Перенести дело из входящих"</string>
+    <string name="ui_76b701d1c1db" formatted="false">"Перенести дело"</string>
+    <string name="ui_add478e24c0c" formatted="false">"Общедоступная веб-страница"</string>
+    <string name="ui_3ef639da6da9" formatted="false">"Посмотреть ответственность за дела"</string>
+    <string name="ui_7356d5bbda8d" formatted="false">"Перед продолжением проверьте текущее дело и запись выполнения. Не повторяйте действие с неизвестным результатом."</string>
+    <string name="ui_66a0dfe68bb0" formatted="false">"Записанный результат"</string>
+    <string name="ui_fbb9a28a5a05" formatted="false">"Обновлять перед проверкой в Power"</string>
+    <string name="ui_7edb6e293d0f" formatted="false">"Обновить выбранный источник"</string>
+    <string name="ui_9a81cea9de9b" formatted="false">"Перенести время / изменить"</string>
+    <string name="ui_eb258bde40e2" formatted="false">"Исследования / Интернет"</string>
+    <string name="ui_2cf947325f37" formatted="false">"Поставщик поиска"</string>
+    <string name="ui_8aa08a00cbd1" formatted="false">"Поисковый запрос"</string>
+    <string name="ui_709934747161" formatted="false">"Исследовать выбранные данные"</string>
+    <string name="ui_3d229fa0549c" formatted="false">"Источник поиска сохранён. Обновите его в Power для получения актуальных данных."</string>
+    <string name="ui_057c954f19b9" formatted="false">"После восстановления работу halo нужно проверить перед новым запуском или наблюдением."</string>
+    <string name="ui_08787f88235c" formatted="false">"Сохранённые данные изменились или недоступны для чтения. Проверьте выбранные источники и повторите поиск."</string>
+    <string name="ui_7d87e616f1a7" formatted="false">"Проверьте заблокированное расписание автоматизации."</string>
+    <string name="ui_ed70d77e2e91" formatted="false">"Перед продолжением проверьте запись выполнения."</string>
+    <string name="ui_8dff1369d57e" formatted="false">"Проверьте подготовленный результат и выполните свою часть либо измените план."</string>
+    <string name="ui_761adbf85662" formatted="false">"Проверить план работы"</string>
+    <string name="ui_5f56d1af462a" formatted="false">"Запустить проверенный план сейчас"</string>
+    <string name="ui_bde0ab43b690" formatted="false">"Сохранить дело в органайзере"</string>
+    <string name="ui_e8fbcd79a9ab" formatted="false">"Сохранить дело"</string>
+    <string name="ui_efced7f847a1" formatted="false">"Сохранить источник поиска"</string>
+    <string name="ui_53d5b5001397" formatted="false">"Сохранить выбранный источник поиска"</string>
+    <string name="ui_3e685c7eaf07" formatted="false">"Поиск / Исследования"</string>
+    <string name="ui_a47b38a6df79" formatted="false">"Поиск по сохранённым данным"</string>
+    <string name="ui_c50b62c7e5f1" formatted="false">"Ищите по сохранённым данным без сети. Чтобы получить больше, сохраните конкретный источник поиска и обновите его в Power."</string>
+    <string name="ui_bb7e1db3bcdb" formatted="false">"Указать дату"</string>
+    <string name="ui_c546bf7de911" formatted="false">"Укажите даты и повторение в редакторе дела, затем проверьте и включите конкретный план работы."</string>
+    <string name="ui_89a466565800" formatted="false">"С утра"</string>
+    <string name="ui_cd237fb5656f" formatted="false">"Часть данных сохранена ранее или устарела."</string>
+    <string name="ui_eb142800f1b3" formatted="false">"Некоторые необходимые действия или источники изменились. Отредактируйте план перед проверкой."</string>
+    <string name="ui_1ff76c54d10c" formatted="false">"Источник изменился"</string>
+    <string name="ui_f134e03c22bb" formatted="false">"Источник содержит текст"</string>
+    <string name="ui_8f24276f72af" formatted="false">"Остановить работу halo"</string>
+    <string name="ui_66abfef02cd8" formatted="false">"Взять на себя"</string>
+    <string name="ui_377d98036acd" formatted="false">"Ранее обнаруженное условие не изменилось; нового уведомления о совпадении нет."</string>
+    <string name="ui_634c43e5e2f7" formatted="false">"Проверяемое условие устройства не выполнено."</string>
+    <string name="ui_dcbd09a9a490" formatted="false">"Проверяемое условие устройства выполнено."</string>
+    <string name="ui_bee388246e3e" formatted="false">"Проверяемое условие источника выполнено."</string>
+    <string name="ui_ced015d92d9b" formatted="false">"Сохранённая привязка выполнения изменилась. Проверьте план перед повторным включением."</string>
+    <string name="ui_c3e8e0326f9b" formatted="false">"Расписание заблокировано. Проверьте его разрешения и настройки."</string>
+    <string name="ui_f30e53dbcc0c" formatted="false">"Это действие использует сохранённые данные источника."</string>
+    <string name="ui_955cac23c6ac" formatted="false">"Результат скрыт: доступ к его источникам изменился. Проверьте источники перед чтением."</string>
+    <string name="ui_b9fe1464783e" formatted="false">"Часовой пояс"</string>
+    <string name="ui_de9e254b369f" formatted="false">"Действие недоступно"</string>
+    <string name="ui_82bd4ef32c12" formatted="false">"Незавершённые дела"</string>
+    <string name="ui_23d4c868f072" formatted="false">"Следить / наблюдать"</string>
+    <string name="ui_cfb17824d3ee" formatted="false">"Что должно произойти?"</string>
+    <string name="ui_ee1aad6ffbbc" formatted="false">"Работа остановлена без подтверждённого результата. Перед новой попыткой прочитайте запись выполнения."</string>
+    <string name="ui_e9def07b2a90" formatted="false">"Работа остановлена. Проверьте записанные результаты; прерванное действие нельзя повторять автоматически."</string>
+    <string name="ui_c138a635dbfd" formatted="false">"Запрос фонового расписания записан. Android может задержать выполнение."</string>
+    <string name="ui_4fca5ccc2898" formatted="false">"Это действие включает разрешённое обновление в Power."</string>
+    <string name="ui_3851db1e602c" formatted="false">"Сохранённый план ещё не означает выполнение. Выполнение и доставка показаны по отдельным записям."</string>
+    <string name="ui_bacc8cb5a046" formatted="false">"Сохранить во входящие"</string>
+    <string name="ui_687c8233ac63" formatted="false">"Поручить halo"</string>
+    <string name="ui_6c399ac7d23a" formatted="false">"Перенести в планировщик"</string>
+    <string name="ui_64584f5efaa0" formatted="false">"Откройте дело, чтобы проверить результат и следующий шаг."</string>
+    <string name="ui_761cc30c337c" formatted="false">"Показаны первые 60 совпадений. Уточните поиск, чтобы найти остальные."</string>
+    <string name="ui_ad2f7fffee1c" formatted="false">"Искомый текст"</string>
+    <string name="ui_44844fcd3ab6" formatted="false">"Отслеживание изменений использует выбранный здесь снимок данных как исходное состояние."</string>
+    <string name="ui_a16e721b7c9d" formatted="false">"Для передачи дела используйте отдельные действия смены ответственности."</string>
+    <string name="ui_756294f2389d" formatted="false">"Обновлено %1$s"</string>
+    <string name="ui_ad1c84cf54c1" formatted="false">"Адрес общедоступной HTTPS-страницы"</string>
+    <string name="ui_953e3efbb3ce" formatted="false">"Тема или поисковый запрос"</string>
+    <string name="ui_24736fea728f" formatted="false">"Работа halo завершилась ошибкой. Откройте запись выполнения для восстановления."</string>
+    <string name="ui_bcdcf704c3a5" formatted="false">"План работы поддерживает одну дату или ежедневное/еженедельное повторение с указанным часовым поясом. Другие расписания нужно изменить перед включением."</string>
 </resources>

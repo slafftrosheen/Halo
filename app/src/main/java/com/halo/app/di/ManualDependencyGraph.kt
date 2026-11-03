@@ -169,7 +169,8 @@ object ManualDependencyGraph {
             }).adapters()
         com.halo.app.everyday.collectors.CollectorRegistry(local + listOf(
             com.halo.app.everyday.collectors.CollectorKind.FEED, com.halo.app.everyday.collectors.CollectorKind.WEATHER,
-            com.halo.app.everyday.collectors.CollectorKind.ALERTS, com.halo.app.everyday.collectors.CollectorKind.PUBLIC_CALENDAR
+            com.halo.app.everyday.collectors.CollectorKind.ALERTS, com.halo.app.everyday.collectors.CollectorKind.PUBLIC_CALENDAR,
+            com.halo.app.everyday.collectors.CollectorKind.RESEARCH
         ).map { kind -> com.halo.app.everyday.collectors.PublicHttpCollector(kind, remoteDispatchPolicy) })
     }
     private val collectorCoordinatorOwner: Lazy<com.halo.app.everyday.collectors.CollectorCoordinator> = lazy {
@@ -245,6 +246,47 @@ object ManualDependencyGraph {
         com.halo.app.everyday.organizer.OrganizerUseCases(organizerRepository,
             elapsedMs = com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
             bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) })
+    }
+    val organizerResearch by lazy {
+        com.halo.app.everyday.collectors.OrganizerResearch(collectorRepository, power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD })
+    }
+    val organizerWorkCapabilities by lazy {
+        com.halo.app.everyday.organizer.OrganizerWorkCapabilities(listOf(
+            com.halo.app.everyday.organizer.OrganizerBriefCapability(briefService),
+            com.halo.app.everyday.organizer.OrganizerResearchCapability(collectorRepository, collectorCoordinator, organizerResearch),
+            com.halo.app.everyday.organizer.OrganizerSourceMonitorCapability(collectorRepository, collectorCoordinator),
+            com.halo.app.everyday.organizer.OrganizerSystemMonitorCapability { routineExecutor.environmentSnapshot() }))
+    }
+    val organizerRoutineManagement by lazy {
+        com.halo.app.automation.RoutineManagementActions(routineRepository, routineScheduler, routineExecutor::validateForSave,
+            routineExecutor::validate, routineExecutor::grantSummary, routineExecutor::execute)
+    }
+    val organizerOperations by lazy {
+        com.halo.app.everyday.organizer.OrganizerOperations(appDatabase, organizerUseCases, routineRepository, { organizerRoutineManagement },
+            organizerWorkCapabilities, agentRunStore, collectorRepository, cancelRun = { id ->
+                agentRunStore.get(com.halo.runtime.cognition.agent.AgentRunId(id))?.takeIf { !it.state.isTerminal }?.let { agentRunCoordinator.cancel(it.id, "Organizer work stopped by user") }
+            }, notifyResult = { record, runId ->
+                if (kidsPreferences.loadedState.value && !kidsPreferences.enabled.value &&
+                    !briefRepository.settings().quiet(java.time.LocalTime.now())) {
+                    attentionController.submit(com.halo.runtime.cognition.attention.AttentionRequest(
+                        id = com.halo.runtime.cognition.attention.AttentionRequestId("organizer-result:$runId"),
+                        source = com.halo.runtime.cognition.attention.AttentionSource.Routine,
+                        deliveryIntent = com.halo.runtime.cognition.attention.DeliveryIntent.Inform(
+                            com.halo.runtime.cognition.attention.UserFacingContent(com.halo.app.language.resolveUiText(applicationContext.resources, "Organizer"), com.halo.app.language.resolveUiText(applicationContext.resources, when (record.commitment.state) {
+                                com.halo.app.everyday.organizer.HaloWorkState.FAILED -> "Organizer work failed. Open its execution record to review recovery."
+                                com.halo.app.everyday.organizer.HaloWorkState.NEEDS_USER -> "Organizer work needs your decision. Open Organizer to review the recorded result."
+                                else -> "Organizer has a new recorded result. Open it to review." }))),
+                        preferredRoutineChannel = com.halo.runtime.cognition.attention.DeliveryChannel.AndroidNotification,
+                        deduplicationKey = "organizer-result:$runId", expiresAt = java.time.Instant.now().plusSeconds(86400),
+                        explanation = "Canonical Organizer commitment result"))
+                }
+            }, runAllowed = { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value && storage.getBoolean("skill_enabled_halo.everyday", true) &&
+                (storage.getString("skill_approval_halo.everyday") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW" }, readBrief = { briefService.visible(it) })
+    }
+    val organizerWorkTool by lazy {
+        com.halo.app.di.tools.OrganizerWorkTool({ organizerOperations }) {
+            kidsPreferences.loadedState.value && !kidsPreferences.enabled.value && storage.getBoolean("skill_enabled_halo.everyday", true)
+        }
     }
     val organizerCalendars by lazy {
         com.halo.app.data.everyday.OrganizerCalendarService(appDatabase,organizerUseCases,workspaceFileRepository,workspaceRepository,
@@ -853,7 +895,7 @@ object ManualDependencyGraph {
     }
     val routineMessageTool by lazy { com.halo.app.automation.RoutineMessageTool() }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
-    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool, routineMessageTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) + routineMessageTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage), payloadStore = contentPayloadStore) }
+    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool, routineMessageTool, organizerWorkTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) + routineMessageTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage) + organizerWorkTool.descriptor(), payloadStore = contentPayloadStore) }
     val screenStore by lazy { com.halo.app.screen.LocalScreenStore(applicationContext) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
     val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
@@ -877,9 +919,10 @@ object ManualDependencyGraph {
             val skill = when (tool) {
                 com.halo.app.notification.NotificationDigestTool.ID -> "halo.notifications"
                 com.halo.app.automation.RoutineMessageTool.ID -> "halo.automation"
+                com.halo.app.everyday.organizer.OrganizerOperations.PERFORM -> "halo.everyday"
                 else -> null
             }
-            skill != null && storage.getBoolean("skill_enabled_$skill", true) &&
+            skill != null && (tool != com.halo.app.everyday.organizer.OrganizerOperations.PERFORM || kidsPreferences.loadedState.value && !kidsPreferences.enabled.value) && storage.getBoolean("skill_enabled_$skill", true) &&
                 (storage.getString("skill_approval_$skill") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW"
         }, resources = { toolResourceCoordinator }, publishScreenResult = { routine, state, completed ->
             val timestamp = java.time.Instant.now()
@@ -899,7 +942,7 @@ object ManualDependencyGraph {
                 com.halo.app.screen.ScreenItemState.ERROR, com.halo.app.screen.ScreenSensitivity.PRIVATE,
                 null, listOf(com.halo.app.screen.ScreenAction.OpenSource, com.halo.app.screen.ScreenAction.HideFromScreen),
                 sourceRevision = routine.updatedAt.toString()))
-        }) }
+        }, publishSemanticResult = { routine, summary -> organizerOperations.onRoutineFinished(routine, summary) }) }
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
     val automationRuntime by lazy {
         com.halo.app.automation.AutomationRuntime(com.halo.runtime.cognition.routine.AutomationSignalRegistry(mapOf(
@@ -1196,6 +1239,16 @@ object ManualDependencyGraph {
                     delivery=organizerDelivery,calendars=organizerCalendars,
                     power={privacyModes.mode.value==com.halo.app.ai.PrivacyMode.CLOUD},
                     ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState),
+                com.halo.app.di.tools.OrganizerOperationTools(organizerOperations, collectorRepository, organizerResearch,
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    authority = {
+                        val family = kidsPreferences.presentationRevision(); val mode = privacyModes.revision
+                        val verify: () -> Unit = { check(foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value &&
+                            kidsPreferences.presentationRevision() == family && privacyModes.revision == mode) }
+                        verify
+                    }, elapsedMs = com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
+                    bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) },
+                    ready = { (applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap(); collectorBootstrap.ensureInitialized() }),
                 com.halo.app.di.tools.ScreenToolExecutor(screenStore) {
                     foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },

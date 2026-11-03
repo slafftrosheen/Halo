@@ -4,7 +4,7 @@ package com.halo.app.everyday.collectors
 object CollectorPayloadLimits {
     fun validateKind(kind: CollectorKind,payload: CollectorPayload) {
         require(when(kind) {
-            CollectorKind.FEED -> payload is CollectorPayload.Articles
+            CollectorKind.FEED, CollectorKind.RESEARCH -> payload is CollectorPayload.Articles
             CollectorKind.WEATHER -> payload is CollectorPayload.Weather
             CollectorKind.ALERTS -> payload is CollectorPayload.Warnings
             CollectorKind.PUBLIC_CALENDAR -> payload is CollectorPayload.Calendar

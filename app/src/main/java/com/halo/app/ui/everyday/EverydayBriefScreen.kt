@@ -73,7 +73,7 @@ fun EverydayBriefScreen(model: EverydayBriefViewModel, onBack: () -> Unit, onSou
                 uiText("Your plan, selected information and what needs your attention."))
             if (!LocalShellHaloOrb.current) TextButton(onBack, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back")) }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(BriefPeriod.MORNING, BriefPeriod.ON_DEMAND, BriefPeriod.EVENING, BriefPeriod.CHANGES).forEach { period ->
+                BriefPeriod.entries.toList().forEach { period ->
                     FilterChip(selected = document?.period == period, onClick = { model.build(period, study) }, enabled = !state.busy, modifier = Modifier.heightIn(min = 56.dp),
                         label = { Text(BriefPresentation.title(period, locale)) })
                 }
@@ -111,6 +111,7 @@ fun EverydayBriefScreen(model: EverydayBriefViewModel, onBack: () -> Unit, onSou
                 Surface(onClick = { onOpenFact(fact) }, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLow) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(uiText(briefSectionLabel(EverydayBriefEngine.section(fact))), style = MaterialTheme.typography.labelLarge)
                         if (comparing) brief.changes.find { it.factId == fact.id }?.let {
                             Text(uiText(if (it.kind == BriefChangeKind.ADDED) "Added" else "Updated"), style = MaterialTheme.typography.labelLarge)
                         }
@@ -169,6 +170,7 @@ internal fun BriefSettingsSheet(saved: BriefSettings, records: List<com.halo.app
     var headlines by rememberSaveable(saved.version) { mutableStateOf(saved.headlineLimit.toString()) }
     var tasks by rememberSaveable(saved.version) { mutableStateOf(saved.taskLimit.toString()) }
     var pinned by rememberSaveable(saved.version) { mutableStateOf(ArrayList(saved.pinnedRecordIds)) }
+    var sections by rememberSaveable(saved.version) { mutableStateOf(ArrayList(saved.sections.map { it.name })) }
     var shared by rememberSaveable(saved.version) { mutableStateOf(ArrayList(saved.childRecordIds)) }
     var query by rememberSaveable { mutableStateOf("") }
     var invalid by remember { mutableStateOf(false) }
@@ -176,6 +178,12 @@ internal fun BriefSettingsSheet(saved: BriefSettings, records: List<com.halo.app
     EverydaySheet(onDismiss = { if (!busy) discard = true }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Brief settings"), style = MaterialTheme.typography.headlineSmall)
+            Text(uiText("Brief sections"), style = MaterialTheme.typography.titleMedium)
+            BriefSection.entries.forEach { section ->
+                EverydayToggle(uiText(briefSectionLabel(section)), section.name in sections, !busy) { selected ->
+                    sections = ArrayList(if (selected) sections + section.name else sections - section.name)
+                }
+            }
             error?.let {
                 Text(uiText(it), color = MaterialTheme.colorScheme.error)
                 TextButton(reload, enabled = !busy) { Text(uiText("Discard edits and reload saved settings")) }
@@ -215,7 +223,7 @@ internal fun BriefSettingsSheet(saved: BriefSettings, records: List<com.halo.app
             Button(onClick = {
                 val next = runCatching { saved.copy(proactive = proactive, morning = LocalTime.parse(morning), evening = LocalTime.parse(evening),
                     quietEnabled = quiet, quietStart = LocalTime.parse(start), quietEnd = LocalTime.parse(end),
-                    headlineLimit = headlines.toInt(), taskLimit = tasks.toInt(), pinnedRecordIds = pinned.toSet(), childRecordIds = shared.toSet()) }.getOrNull()
+                    headlineLimit = headlines.toInt(), taskLimit = tasks.toInt(), pinnedRecordIds = pinned.toSet(), childRecordIds = shared.toSet(), sections = sections.map(BriefSection::valueOf).toSet()) }.getOrNull()
                 invalid = next == null
                 if (next != null) save(next)
             }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text(uiText("Save")) }
@@ -226,4 +234,11 @@ internal fun BriefSettingsSheet(saved: BriefSettings, records: List<com.halo.app
         text = { Text(uiText("Your saved item is kept. The changes in this form will be discarded.")) },
         confirmButton = { TextButton({ discard = false; dismiss() }) { Text(uiText("Discard")) } },
         dismissButton = { TextButton({ discard = false }) { Text(uiText("Keep editing")) } })
+}
+
+internal fun briefSectionLabel(section: BriefSection): String = when (section) {
+    BriefSection.WEATHER -> "Weather"; BriefSection.EVENTS -> "Events"; BriefSection.TASKS -> "Tasks"
+    BriefSection.HALO_WORK -> "Halo and shared work"; BriefSection.UNFINISHED -> "Unfinished work"
+    BriefSection.NEWS -> "News"; BriefSection.RESEARCH -> "Research / Web"; BriefSection.REMINDERS -> "Reminders"
+    BriefSection.ALARMS_ROUTINES -> "Alarms and routines"; BriefSection.WORKSPACE -> "Workspace context"; BriefSection.DEVICE -> "Device status"
 }

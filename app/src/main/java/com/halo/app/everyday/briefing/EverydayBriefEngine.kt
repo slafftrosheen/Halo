@@ -11,7 +11,7 @@ object EverydayBriefEngine {
     fun project(input: BriefInput, settings: BriefSettings = BriefSettings()): BriefProjection {
         val date = input.now.atZone(input.zone).toLocalDate()
         val from = date.atStartOfDay(input.zone).toInstant()
-        val until = date.plusDays(1).atStartOfDay(input.zone).toInstant()
+        val until = date.plusDays(if (input.period == BriefPeriod.WEEKLY) 7 else 1).atStartOfDay(input.zone).toInstant()
         val allowed = input.sources.filter { it.source.selected && it.source.enabled && !it.source.muted &&
             (input.audience != BriefAudience.KIDS || it.source.childApproved) }.sortedBy { it.source.id }
         val sources = allowed.map { state -> stamp(state) }.toMutableList()
@@ -25,7 +25,8 @@ object EverydayBriefEngine {
             sources += stamp(organizerSource).copy(retrievedAt = input.now, verifiedAt = input.now,
                 expiresAt = input.now.plusSeconds(900), attempt = CollectorAttemptState.CURRENT)
             input.occurrences.filter { it.start < until && (it.end?.let { end -> end > from } ?: (it.start >= from)) &&
-                it.record.deletedAt == null && it.record.status == OrganizerStatus.ACTIVE && recordAllowed(it.record) }.forEach { occurrence ->
+                it.record.deletedAt == null && it.record.status == OrganizerStatus.ACTIVE && recordAllowed(it.record) &&
+                it.record.commitment.owner == CommitmentOwner.ME }.forEach { occurrence ->
                 val record = occurrence.record
                 if (!occurrence.completed || input.period == BriefPeriod.EVENING) {
                     val kind = BriefFactKind.valueOf(record.kind.name)
@@ -41,15 +42,29 @@ object EverydayBriefEngine {
                         fingerprint(record.version.toString(), occurrence.start.toString(), occurrence.end?.toString().orEmpty(), occurrence.completed.toString(), record.title),
                         "halo://organizer/record/${record.id}", priority, occurrence.start, record.sourceUrl,
                         mapOf("completed" to occurrence.completed.toString(), "recordId" to record.id,
-                            "occurrence" to occurrence.originalStart.toString(), "version" to record.version.toString()))
+                            "occurrence" to occurrence.originalStart.toString(), "version" to record.version.toString(),
+                            "owner" to record.commitment.owner.name, "workState" to record.commitment.state.name,
+                            "purpose" to record.commitment.purpose.name))
                 }
             }
             input.organizer.filter { it.deletedAt == null && it.status == OrganizerStatus.ACTIVE && recordAllowed(it) }.forEach { record ->
-                if (record.kind == OrganizerKind.TASK && record.repeat == null &&
+                if (record.kind == OrganizerKind.TASK && record.commitment.owner == CommitmentOwner.ME &&
+                    record.commitment.purpose !in setOf(CommitmentPurpose.INBOX, CommitmentPurpose.STOPWATCH) && record.repeat == null &&
                     (record.time == null || record.time.instant(input.zone) < from)) {
                     facts += BriefFact("organizer:${record.id}", BriefFactKind.TASK, record.title, record.details.take(500), sourceId,
                         record.version.toString(), "halo://organizer/record/${record.id}", priority(record, settings) + if (record.time != null) 40 else 0,
-                        record.time?.instant(input.zone), record.sourceUrl, mapOf("recordId" to record.id, "version" to record.version.toString()))
+                        record.time?.instant(input.zone), record.sourceUrl, mapOf("recordId" to record.id, "version" to record.version.toString(),
+                            "owner" to record.commitment.owner.name, "unfinished" to (record.createdAt < from).toString(), "purpose" to record.commitment.purpose.name))
+                }
+                if (record.commitment.owner != CommitmentOwner.ME && record.commitment.state != HaloWorkState.COMPLETED) {
+                    // Only the exact shared record is visible to Kids; adult execution plans/results stay private.
+                    // Work status is an owned commitment fact. Derived result bodies are revalidated
+                    // only at their Organizer owner; they must not bypass a removed input source here.
+                    facts += BriefFact("organizer:work:${record.id}", BriefFactKind.TASK, record.title, "", sourceId,
+                        record.version.toString(), "halo://organizer/record/${record.id}",
+                        priority(record, settings) + if (record.commitment.state == HaloWorkState.NEEDS_USER) 60 else 5,
+                        record.time?.instant(input.zone), values = mapOf("recordId" to record.id, "version" to record.version.toString(),
+                            "owner" to record.commitment.owner.name, "workState" to record.commitment.state.name, "purpose" to record.commitment.purpose.name))
                 }
                 if (record.kind == OrganizerKind.TIMER) facts += BriefFact("organizer:${record.id}", BriefFactKind.TIMER,
                     record.title, "", sourceId, record.version.toString(), "halo://organizer/record/${record.id}", 10,
@@ -78,7 +93,8 @@ object EverydayBriefEngine {
                 is CollectorPayload.Articles -> payload.items.forEach { item -> facts += BriefFact("${source.id}:article:${item.id}",
                     BriefFactKind.HEADLINE, item.title, item.text.take(500), source.id,
                     fingerprint(item.title, item.text, item.url.orEmpty(), item.publishedAt?.toString().orEmpty()),
-                    "halo://sources/${source.id}/article/${item.id}", 0, item.publishedAt, item.url) }
+                    "halo://sources/${source.id}/article/${item.id}", 0, item.publishedAt, item.url,
+                    values = if (source.kind == CollectorKind.RESEARCH) mapOf("research" to "true", "query" to source.research!!.query) else emptyMap()) }
                 is CollectorPayload.Weather -> {
                     val weather = payload.fact
                     val today = weather.days.find { it.date == input.now.atZone(ZoneId.of(weather.place.zoneId)).toLocalDate() }
@@ -141,7 +157,7 @@ object EverydayBriefEngine {
         val unique = facts.distinctBy { it.id }.map { it.copy(id = fingerprint(it.id)) }
         require(unique.size <= 20_000) { "Brief input exceeds the supported fact limit" }
         val current = unique.associateBy { it.id }
-        val fingerprints = unique.sortedBy { it.id }.map { BriefFingerprint(it.id, it.sourceId, it.revision, it.kind) }
+        val fingerprints = unique.sortedBy { it.id }.map { BriefFingerprint(it.id, it.sourceId, it.revision, it.kind, section(it)) }
         val observed = sources.filter { it.retrievedAt != null }.map { it.id }.toSet()
         val baseline = input.baseline?.takeIf { it.date == date && it.zoneId == input.zone.id && it.audience == input.audience }
         val before = baseline?.facts?.associateBy { it.id }.orEmpty()
@@ -156,25 +172,27 @@ object EverydayBriefEngine {
             // Only a current, successfully read local source can assert removal. Missing, muted, failed or rolled-out feed items cannot.
             val reliableLocal = sources.filter { !it.external && it.verifiedAt == input.now && it.attempt == CollectorAttemptState.CURRENT }.map { it.id }.toSet()
             before.values.filter { it.id !in current && it.sourceId in reliableLocal }.forEach { old ->
-                add(BriefChange(BriefChangeKind.REMOVED, old.id, old.sourceId, null))
+                add(BriefChange(BriefChangeKind.REMOVED, old.id, old.sourceId, null, old.section))
             }
         }
+        val selectedChanges = changes.filter { change -> change.fact?.let { included(it, settings) }
+            ?: (change.section?.let { it in settings.sections } ?: (settings.sections == BriefSection.entries.toSet())) }
         val chosen = select(unique, input.audience, settings)
         val digest = fingerprint(fingerprints.joinToString("\n") { "${it.id}:${it.revision}" })
         val identity = fingerprint(input.now.toString(), input.zone.id, input.period.name, input.audience.name, digest,
-            settings.version.toString(), settings.headlineLimit.toString(), settings.taskLimit.toString(), settings.pinnedRecordIds.sorted().joinToString("\n"),
+            settings.version.toString(), settings.headlineLimit.toString(), settings.taskLimit.toString(), settings.pinnedRecordIds.sorted().joinToString("\n"), settings.sections.map { it.name }.sorted().joinToString(","),
             baseline?.capturedAt?.toString().orEmpty(), sources.sortedBy { it.id }.joinToString("\n") { "${it.id}:${it.version}:${it.verifiedAt}:${it.attempt}" })
         return BriefProjection(EverydayBrief(identity, input.period, input.audience, date, input.zone.id,
-            input.now, chosen, sources.sortedBy { it.id }, changes.take(200), baseline?.capturedAt, input.period == BriefPeriod.CHANGES && baseline == null,
+            input.now, chosen, sources.sortedBy { it.id }, selectedChanges.take(200), baseline?.capturedAt, input.period == BriefPeriod.CHANGES && baseline == null,
             if (baseline == null) observed else (observed - baseline.observedSources) + (baseline.observedSources - observed),
-            unique.size - chosen.size, (changes.size - 200).coerceAtLeast(0), digest), BriefBaseline(date, input.zone.id, input.audience, input.now, fingerprints, observed))
+            unique.size - chosen.size, (selectedChanges.size - 200).coerceAtLeast(0), digest), BriefBaseline(date, input.zone.id, input.audience, input.now, fingerprints, observed))
     }
     internal fun select(facts: List<BriefFact>, audience: BriefAudience, settings: BriefSettings): List<BriefFact> {
         val kinds = mutableMapOf<BriefFactKind, Int>()
         val order = compareByDescending<BriefFact> { it.priority }.thenBy { rank(it.kind, audience) }
             .thenBy { if (it.kind == BriefFactKind.HEADLINE) null else it.at ?: Instant.MAX }
             .thenByDescending { if (it.kind == BriefFactKind.HEADLINE) it.at else null }.thenBy { it.id }
-        return facts.sortedWith(order).filter { fact ->
+        return facts.filter { included(it, settings) }.sortedWith(order).filter { fact ->
             val limit = when (fact.kind) {
                 BriefFactKind.HEADLINE -> if (audience == BriefAudience.KIDS) minOf(settings.headlineLimit, 3) else settings.headlineLimit
                 BriefFactKind.TASK -> settings.taskLimit
@@ -184,6 +202,24 @@ object EverydayBriefEngine {
             val count = kinds[fact.kind] ?: 0
             if (count < limit) { kinds[fact.kind] = count + 1; true } else false
         }.take(if (audience == BriefAudience.KIDS) 12 else 40)
+    }
+    internal fun included(fact: BriefFact, settings: BriefSettings) = section(fact) in settings.sections ||
+        fact.values["purpose"] == "ROUTINE" && BriefSection.ALARMS_ROUTINES in settings.sections
+    fun section(fact: BriefFact): BriefSection = when {
+        fact.values["research"] == "true" -> BriefSection.RESEARCH
+        fact.values["owner"] in setOf("HALO", "SHARED") -> BriefSection.HALO_WORK
+        fact.values["unfinished"] == "true" || fact.values["outstanding"] == "true" -> BriefSection.UNFINISHED
+        fact.values["purpose"] == "ROUTINE" -> BriefSection.ALARMS_ROUTINES
+        else -> when (fact.kind) {
+            BriefFactKind.EVENT -> BriefSection.EVENTS
+            BriefFactKind.TASK -> BriefSection.TASKS
+            BriefFactKind.REMINDER -> BriefSection.REMINDERS
+            BriefFactKind.ALARM, BriefFactKind.TIMER -> BriefSection.ALARMS_ROUTINES
+            BriefFactKind.WEATHER, BriefFactKind.WARNING -> BriefSection.WEATHER
+            BriefFactKind.HEADLINE -> BriefSection.NEWS
+            BriefFactKind.DEVICE -> BriefSection.DEVICE
+            else -> BriefSection.WORKSPACE
+        }
     }
     private fun rank(kind: BriefFactKind, audience: BriefAudience): Int = when (kind) {
         BriefFactKind.ATTENTION -> 0; BriefFactKind.WARNING -> 1; BriefFactKind.EVENT -> 2

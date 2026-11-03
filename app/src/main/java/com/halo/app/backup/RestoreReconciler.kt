@@ -26,8 +26,9 @@ class RestoreReconciler(
         RoomWorkspaceFileRepository(context, database, haloStorageLayout(context).managedWorkspaceFiles).reconcileAvailability()
         ReminderRecordStore(context).reconcile()
         com.halo.app.di.ManualDependencyGraph.notificationRepository.reconcilePolicies()
-        com.halo.app.di.ManualDependencyGraph.routineScheduler.reconcile()
         val graph=com.halo.app.di.ManualDependencyGraph
+        graph.organizerOperations.reconcile()
+        graph.routineScheduler.reconcile()
         com.halo.app.everyday.collectors.StarterSourceCatalogue.local().forEach {source ->
             if(graph.collectorRepository.state(source.id)==null) graph.collectorRepository.save(source,null)
         }

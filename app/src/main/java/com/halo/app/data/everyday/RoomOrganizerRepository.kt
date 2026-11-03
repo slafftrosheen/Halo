@@ -19,6 +19,10 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
     override suspend fun get(id: String) = dao.get(id)?.let { OrganizerCodec.decode(it.body) }
 
     override suspend fun save(record: OrganizerRecord, expectedVersion: Long?, resetOccurrences: Boolean): OrganizerRecord {
+        return saveRecord(record, expectedVersion, resetOccurrences, false)
+    }
+    override suspend fun promoteInbox(record: OrganizerRecord, expectedVersion: Long): OrganizerRecord = saveRecord(record, expectedVersion, false, true)
+    private suspend fun saveRecord(record: OrganizerRecord, expectedVersion: Long?, resetOccurrences: Boolean, promotion: Boolean): OrganizerRecord {
         record.validate()
         val saved = database.withTransaction {
             val previous = get(record.id)
@@ -28,9 +32,19 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
                 require(record.deletedAt == null)
             } else {
                 if (expectedVersion != previous.version || previous.deletedAt != null) throw OrganizerConflict("Record changed; reopen it before saving")
-                require(previous.kind == record.kind) { "A record's instrument cannot change" }
+                if (promotion) {
+                    require(previous.kind == OrganizerKind.TASK && previous.commitment.purpose == CommitmentPurpose.INBOX && previous.commitment.execution == null)
+                    require(record.kind in setOf(OrganizerKind.TASK, OrganizerKind.EVENT, OrganizerKind.REMINDER) && record.commitment.purpose != CommitmentPurpose.INBOX)
+                    require(previous.kind == record.kind || records().none { it.parentId == previous.id }) { "Move or complete the Inbox subtasks before promoting this item" }
+                    require(dao.overrides(record.id).isEmpty()) { "Review occurrence changes before promoting this capture" }
+                } else require(previous.kind == record.kind) { "A record's instrument cannot change" }
                 require(record.deletedAt == null) { "Use the delete operation" }
                 require(record.createdAt == previous.createdAt)
+                if (previous.commitment.execution != null && record.commitment.execution?.planId == previous.commitment.execution.planId &&
+                    (previous.title != record.title || previous.details != record.details || previous.time != record.time || previous.repeat != record.repeat ||
+                        previous.links != record.links || previous.commitment.actions != record.commitment.actions || previous.commitment.owner != record.commitment.owner ||
+                        previous.commitment.intent != record.commitment.intent || previous.commitment.sources != record.commitment.sources))
+                    throw OrganizerConflict("Stop the reviewed Halo work before changing its plan or context")
                 // A series edit cannot silently discard individually moved/completed occurrences.
                 if ((previous.time != record.time || previous.repeat != record.repeat) && dao.overrides(record.id).isNotEmpty() && !resetOccurrences)
                     throw OrganizerConflict("This series has occurrence changes. Review them and explicitly choose whether to reset them")
@@ -272,7 +286,8 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             require(existing.size + added.size <= 10000) { "Organizer storage limit reached" }
             val now = Instant.ofEpochMilli(clock.millis())
             added.forEach { record ->
-                val saved = record.copy(version = 1, createdAt = now, updatedAt = now)
+                val saved = record.copy(version = 1, createdAt = now, updatedAt = now,
+                    commitment = OrganizerCommitment(createdBy = CommitmentCreator.IMPORTED))
                 com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(saved.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
                 dao.insert(OrganizerCodec.entity(saved))
                 preview.exceptions.filter { it.recordId == saved.id }.forEach { exception ->

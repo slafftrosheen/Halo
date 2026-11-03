@@ -33,7 +33,7 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
         val now = Instant.ofEpochMilli(clock.millis()); val deviceZone = zone(); val familyAudience = audience()
         val actualAudience = if (familyAudience == BriefAudience.KIDS) BriefAudience.KIDS else requestedAudience
         val day = now.atZone(deviceZone).toLocalDate()
-        val start = day.atStartOfDay(deviceZone).toInstant(); val end = day.plusDays(1).atStartOfDay(deviceZone).toInstant()
+        val start = day.atStartOfDay(deviceZone).toInstant(); val end = day.plusDays(if (period == BriefPeriod.WEEKLY) 7 else 1).atStartOfDay(deviceZone).toInstant()
         val records = organizer.records()
         val occurrences = mutableListOf<OrganizerOccurrence>()
         val outstanding = mutableListOf<OutstandingReminder>()
@@ -77,7 +77,8 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
             })
         val facts = EverydayBriefEngine.select(stored.facts.filter { visible(it) }, actualAudience, settings)
         val eligibleChanges = stored.changes.filter { it.sourceId in allowed &&
-            (it.fact?.let { fact -> visible(fact) } ?: (actualAudience != BriefAudience.KIDS)) }
+            (it.fact?.let { fact -> visible(fact) && EverydayBriefEngine.included(fact, settings) } ?: (actualAudience != BriefAudience.KIDS &&
+                (it.section?.let { section -> section in settings.sections } ?: (settings.sections == BriefSection.entries.toSet())))) }
         val differentAudience = actualAudience != stored.audience
         val changes = if (differentAudience) emptyList() else if (actualAudience == BriefAudience.KIDS) {
             val visibleIds = EverydayBriefEngine.select(eligibleChanges.mapNotNull { it.fact }, actualAudience, settings).map { it.id }.toSet()

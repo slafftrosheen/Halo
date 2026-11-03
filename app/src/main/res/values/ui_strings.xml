@@ -4775,4 +4775,146 @@
     <string name="ui_1f172d9e59c7" formatted="false">"Review local calendar"</string>
     <string name="ui_70793485d58a" formatted="false">"Import reviewed calendar"</string>
     <string name="ui_c1804c4ab7d7" formatted="false">"Prepare calendar export"</string>
+    <string name="ui_e3c4b39d6d50" formatted="false">"Shared"</string>
+    <string name="ui_4bc74b21357c" formatted="false">"Task"</string>
+    <string name="ui_0b5baf309897" formatted="false">"Routine"</string>
+    <string name="ui_cb880222ede3" formatted="false">"Stopwatch"</string>
+    <string name="ui_38581d183b73" formatted="false">"Planner"</string>
+    <string name="ui_33b93476cf59" formatted="false">"Time"</string>
+    <string name="ui_a2baa08ca9b1" formatted="false">"Lap"</string>
+    <string name="ui_c91217be093a" formatted="false">"Responsibility"</string>
+    <string name="ui_ac40ae1e8d41" formatted="false">"Brief"</string>
+    <string name="ui_66c33cf7da99" formatted="false">"Midday"</string>
+    <string name="ui_458c1fed5743" formatted="false">"Evening"</string>
+    <string name="ui_39b36d38d6eb" formatted="false">"Condition"</string>
+    <string name="ui_4e1f49a9c8ae" formatted="false">"Event"</string>
+    <string name="ui_31757bbfa17e" formatted="false">"Reminder"</string>
+    <string name="ui_99c40ab40592" formatted="false">"Date"</string>
+    <string name="ui_3315f922986b" formatted="false">"Add alarm"</string>
+    <string name="ui_8feb67afe098" formatted="false">"Add capability"</string>
+    <string name="ui_6e1d9eea1aa0" formatted="false">"Add commitment"</string>
+    <string name="ui_57d208bc0d04" formatted="false">"Add event"</string>
+    <string name="ui_39f824afb752" formatted="false">"Add routine"</string>
+    <string name="ui_23bb6ee4e7e6" formatted="false">"Add stopwatch"</string>
+    <string name="ui_5a6dfa2dc247" formatted="false">"Add timer"</string>
+    <string name="ui_d08f910e3e21" formatted="false">"Alarms and routines"</string>
+    <string name="ui_93f389d94ab9" formatted="false">"Attach related item"</string>
+    <string name="ui_7ee72053c153" formatted="false">"Battery below threshold"</string>
+    <string name="ui_5274957eb41c" formatted="false">"Battery percentage"</string>
+    <string name="ui_788732338601" formatted="false">"Brief built from selected local evidence."</string>
+    <string name="ui_35311fdbd8a6" formatted="false">"Brief sections"</string>
+    <string name="ui_5b520e8e4bc8" formatted="false">"Build a selected brief"</string>
+    <string name="ui_02c368f840c9" formatted="false">"Cached / stale"</string>
+    <string name="ui_24634d97a421" formatted="false">"Check the date, time zone and event end before promoting this item."</string>
+    <string name="ui_932d0532ec68" formatted="false">"Choose installed capabilities and review the concrete work plan, or take over."</string>
+    <string name="ui_1b16f3ef2dc2" formatted="false">"Choose the real actions halo should perform. Saving alone does not start or schedule them."</string>
+    <string name="ui_d5a7771b2c5d" formatted="false">"Choose valid actions and exact selected sources before saving."</string>
+    <string name="ui_c6e54a964247" formatted="false">"Commitment saved. Review the plan before enabling halo work."</string>
+    <string name="ui_889855905779" formatted="false">"Commitment type"</string>
+    <string name="ui_c5856efc2a94" formatted="false">"Compare against the selected saved source observation."</string>
+    <string name="ui_19c3ecdb986c" formatted="false">"Device condition"</string>
+    <string name="ui_f60c408119c7" formatted="false">"Device status"</string>
+    <string name="ui_c4b221d18e80" formatted="false">"Edit responsibility and plan"</string>
+    <string name="ui_6d59d89ff294" formatted="false">"Enable reviewed schedule"</string>
+    <string name="ui_59207641b268" formatted="false">"Enter one public HTTPS page address. halo checks robots policy and retains readable text without following links or page redirects."</string>
+    <string name="ui_2d8db7004efc" formatted="false">"Execution was interrupted. Inspect its recorded effects before continuing."</string>
+    <string name="ui_568177234209" formatted="false">"Finish or close the current form before choosing another action."</string>
+    <string name="ui_412592124dd3" formatted="false">"Free reference and document providers have different coverage. Archived material is not guaranteed current."</string>
+    <string name="ui_5e64c20d6c7e" formatted="false">"halo action"</string>
+    <string name="ui_da9a53b0d566" formatted="false">"halo and shared work"</string>
+    <string name="ui_d9629bbadc3b" formatted="false">"I completed my part"</string>
+    <string name="ui_ac8c21ab5b16" formatted="false">"Inbox item promoted. Its original identity and links are kept."</string>
+    <string name="ui_e06773bac158" formatted="false">"Internet Archive"</string>
+    <string name="ui_36d0bc43b3ff" formatted="false">"Lap %1$d · %2$s"</string>
+    <string name="ui_045f1e1332d7" formatted="false">"Make shared"</string>
+    <string name="ui_450b9a6897c1" formatted="false">"Manage Organizer work"</string>
+    <string name="ui_f585abd70b6f" formatted="false">"Monitor a device condition"</string>
+    <string name="ui_c743ba2ba42a" formatted="false">"Monitor a selected source"</string>
+    <string name="ui_ea7159d682d3" formatted="false">"Needs your decision"</string>
+    <string name="ui_83c8d1f20674" formatted="false">"Network available"</string>
+    <string name="ui_24e035ce4128" formatted="false">"No commitments in this section yet."</string>
+    <string name="ui_cfa40e1d7d47" formatted="false">"No confirmed active schedule is recorded."</string>
+    <string name="ui_7fb41dae0b48" formatted="false">"No current permitted source observation is available. Waiting for the next reviewed check."</string>
+    <string name="ui_1a2488d4470e" formatted="false">"No current source observation is available. Review availability or choose another check."</string>
+    <string name="ui_79c0868ba00b" formatted="false">"No matching change in the observed source."</string>
+    <string name="ui_de88fc7b723e" formatted="false">"No matching retained evidence. This search made no network request."</string>
+    <string name="ui_5c0befc65b1d" formatted="false">"No new condition match was observed. Choose another check or a recurring schedule."</string>
+    <string name="ui_117264842ea9" formatted="false">"No selected facts are available for this brief."</string>
+    <string name="ui_df12aeba9bb9" formatted="false">"Not selected"</string>
+    <string name="ui_0004ca88b337" formatted="false">"Nothing requiring attention here."</string>
+    <string name="ui_098c234bb535" formatted="false">"Open evidence"</string>
+    <string name="ui_0e21394e04b3" formatted="false">"Open execution record"</string>
+    <string name="ui_a3cd48d39b69" formatted="false">"Open saved automations"</string>
+    <string name="ui_77c95ea4b242" formatted="false">"Organizer commitment"</string>
+    <string name="ui_78a9a1a7d04d" formatted="false">"Organizer has a new recorded result. Open it to review."</string>
+    <string name="ui_18b9c6060ec1" formatted="false">"Organizer work needs your decision. Open Organizer to review the recorded result."</string>
+    <string name="ui_4702c2971fec" formatted="false">"Plan as"</string>
+    <string name="ui_4a8f5dbe154d" formatted="false">"Promote Inbox item"</string>
+    <string name="ui_76b701d1c1db" formatted="false">"Promote item"</string>
+    <string name="ui_add478e24c0c" formatted="false">"Public web page"</string>
+    <string name="ui_3ef639da6da9" formatted="false">"Read Organizer responsibilities"</string>
+    <string name="ui_7356d5bbda8d" formatted="false">"Read the current work and execution record before continuing. Do not repeat an uncertain operation."</string>
+    <string name="ui_66a0dfe68bb0" formatted="false">"Recorded result"</string>
+    <string name="ui_fbb9a28a5a05" formatted="false">"Refresh before checking in Power"</string>
+    <string name="ui_7edb6e293d0f" formatted="false">"Refresh selected source"</string>
+    <string name="ui_9a81cea9de9b" formatted="false">"Reschedule / edit"</string>
+    <string name="ui_eb258bde40e2" formatted="false">"Research / Web"</string>
+    <string name="ui_2cf947325f37" formatted="false">"Research provider"</string>
+    <string name="ui_8aa08a00cbd1" formatted="false">"Research query"</string>
+    <string name="ui_709934747161" formatted="false">"Research selected evidence"</string>
+    <string name="ui_3d229fa0549c" formatted="false">"Research source saved. Refresh in Power to retrieve current evidence."</string>
+    <string name="ui_057c954f19b9" formatted="false">"Restored halo work must be reviewed before it can run or monitor again."</string>
+    <string name="ui_08787f88235c" formatted="false">"Retained evidence changed or could not be read. Search again after reviewing your selected sources."</string>
+    <string name="ui_7d87e616f1a7" formatted="false">"Review the blocked automation schedule."</string>
+    <string name="ui_ed70d77e2e91" formatted="false">"Review the execution record before continuing."</string>
+    <string name="ui_8dff1369d57e" formatted="false">"Review the prepared result and complete your part, or revise the plan."</string>
+    <string name="ui_761adbf85662" formatted="false">"Review work plan"</string>
+    <string name="ui_5f56d1af462a" formatted="false">"Run reviewed plan now"</string>
+    <string name="ui_bde0ab43b690" formatted="false">"Save Organizer commitment"</string>
+    <string name="ui_e8fbcd79a9ab" formatted="false">"Save commitment"</string>
+    <string name="ui_efced7f847a1" formatted="false">"Save research source"</string>
+    <string name="ui_53d5b5001397" formatted="false">"Save selected research source"</string>
+    <string name="ui_3e685c7eaf07" formatted="false">"Search / Research"</string>
+    <string name="ui_a47b38a6df79" formatted="false">"Search retained evidence"</string>
+    <string name="ui_c50b62c7e5f1" formatted="false">"Search retained evidence offline. To retrieve more, save an explicit research source and refresh it in Power."</string>
+    <string name="ui_bb7e1db3bcdb" formatted="false">"Set a date"</string>
+    <string name="ui_c546bf7de911" formatted="false">"Set dates and recurrence in the item editor, then review and enable the exact work plan."</string>
+    <string name="ui_89a466565800" formatted="false">"Since morning"</string>
+    <string name="ui_cd237fb5656f" formatted="false">"Some evidence is cached or stale."</string>
+    <string name="ui_eb142800f1b3" formatted="false">"Some required capabilities or sources changed. Edit the plan before reviewing it."</string>
+    <string name="ui_1ff76c54d10c" formatted="false">"Source changed"</string>
+    <string name="ui_f134e03c22bb" formatted="false">"Source contains text"</string>
+    <string name="ui_8f24276f72af" formatted="false">"Stop halo work"</string>
+    <string name="ui_66abfef02cd8" formatted="false">"Take over"</string>
+    <string name="ui_377d98036acd" formatted="false">"The previously observed condition is unchanged; no new match was announced."</string>
+    <string name="ui_634c43e5e2f7" formatted="false">"The reviewed device condition has not matched."</string>
+    <string name="ui_dcbd09a9a490" formatted="false">"The reviewed device condition matched."</string>
+    <string name="ui_bee388246e3e" formatted="false">"The reviewed source condition matched."</string>
+    <string name="ui_ced015d92d9b" formatted="false">"The saved execution owner changed. Review this work plan before enabling it again."</string>
+    <string name="ui_c3e8e0326f9b" formatted="false">"The schedule is blocked. Review its permissions and definition."</string>
+    <string name="ui_f30e53dbcc0c" formatted="false">"This action uses retained source observations."</string>
+    <string name="ui_955cac23c6ac" formatted="false">"This saved result is withheld because its source access changed. Review sources before reading it."</string>
+    <string name="ui_b9fe1464783e" formatted="false">"Time zone"</string>
+    <string name="ui_de9e254b369f" formatted="false">"Unavailable capability"</string>
+    <string name="ui_82bd4ef32c12" formatted="false">"Unfinished work"</string>
+    <string name="ui_23d4c868f072" formatted="false">"Watch / monitor"</string>
+    <string name="ui_cfb17824d3ee" formatted="false">"What should happen?"</string>
+    <string name="ui_ee1aad6ffbbc" formatted="false">"Work stopped before a confirmed result. Read the execution record before retrying."</string>
+    <string name="ui_e9def07b2a90" formatted="false">"Work stopped. Review recorded results; an interrupted effect must not be repeated automatically."</string>
+    <string name="ui_c138a635dbfd" formatted="false">"A background schedule request is recorded. Android may delay execution."</string>
+    <string name="ui_4fca5ccc2898" formatted="false">"A permitted Power refresh is part of this action."</string>
+    <string name="ui_3851db1e602c" formatted="false">"A saved plan is not running work. Execution and delivery are shown from their own records."</string>
+    <string name="ui_bacc8cb5a046" formatted="false">"Capture to Inbox"</string>
+    <string name="ui_687c8233ac63" formatted="false">"Delegate to halo"</string>
+    <string name="ui_6c399ac7d23a" formatted="false">"Move to Planner"</string>
+    <string name="ui_64584f5efaa0" formatted="false">"Open this item to review the result and your next step."</string>
+    <string name="ui_761cc30c337c" formatted="false">"Showing the first 60 matching items. Refine your search to find more."</string>
+    <string name="ui_ad2f7fffee1c" formatted="false">"Text to watch for"</string>
+    <string name="ui_44844fcd3ab6" formatted="false">"Change monitoring uses the exact snapshot selected here as its baseline."</string>
+    <string name="ui_a16e721b7c9d" formatted="false">"Use the explicit responsibility actions on the item to hand work over."</string>
+    <string name="ui_756294f2389d" formatted="false">"Updated %1$s"</string>
+    <string name="ui_ad1c84cf54c1" formatted="false">"Public HTTPS page address"</string>
+    <string name="ui_953e3efbb3ce" formatted="false">"Topic or search query"</string>
+    <string name="ui_24736fea728f" formatted="false">"Organizer work failed. Open its execution record to review recovery."</string>
+    <string name="ui_bcdcf704c3a5" formatted="false">"Reviewed work schedules support one date or daily/weekly recurrence with an explicit time zone. Other schedules need revision before enabling."</string>
 </resources>

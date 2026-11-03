@@ -28,6 +28,7 @@ internal fun LazyListScope.collectorContent(state: CollectorState, itemId: Strin
                 Text(article.title, style = MaterialTheme.typography.headlineMedium)
                 Text(article.publisher, style = MaterialTheme.typography.labelLarge)
                 article.publishedAt?.let { Text(uiText("Published %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
+                article.updatedAt?.let { Text(uiText("Updated %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
                 Text(article.text.ifBlank { uiText("The publisher supplied a title only. Open the publisher to read more.") })
                 article.url?.let { url -> Text(url, style = MaterialTheme.typography.bodySmall); if (!kids) TextButton({ onExternal(url) }) { Text(uiText("Open publisher in browser")) } }
                 if (!kids) TextButton({ onRemind(article) }) { Text(uiText("Remind me about this article")) }
@@ -39,6 +40,7 @@ internal fun LazyListScope.collectorContent(state: CollectorState, itemId: Strin
                             Text(entry.title, style = MaterialTheme.typography.titleMedium)
                             Text(entry.publisher, style = MaterialTheme.typography.bodySmall)
                             entry.publishedAt?.let { Text(uiText("Published %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
+                            entry.updatedAt?.let { Text(uiText("Updated %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
                             Text(uiText("Read saved article"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         }
                     }

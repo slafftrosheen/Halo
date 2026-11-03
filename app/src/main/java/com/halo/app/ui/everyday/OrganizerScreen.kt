@@ -46,11 +46,12 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     val zone = ZoneId.systemDefault()
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     val boot = remember(context) { OrganizerAndroidClock.bootId(context) }
-    val now by produceState(Instant.now(), lifecycle, kind, state.selected?.timer?.startedAt) {
+    val now by produceState(Instant.now(), lifecycle, kind, state.selected?.timer?.startedAt, state.selected?.commitment?.stopwatch?.startedAt) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (isActive) { value = Instant.now(); delay(if (kind == "TIMER" || state.selected?.timer != null) 1000 else 60_000) }
+            while (isActive) { value = Instant.now(); delay(if (state.selected?.commitment?.stopwatch?.startedAt != null) 100 else if (kind in setOf("TIMER", "TIME") || state.selected?.timer != null) 1000 else 60_000) }
         }
     }
+    LaunchedEffect(now.atZone(zone).toLocalDate()) { model.refreshView() }
     val access = remember(context) { OrganizerPermissionAccess(context) }
     var permission by remember { mutableStateOf(access.current()) }
     var permissionError by remember { mutableStateOf(false) }
@@ -69,32 +70,65 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     var exportVersions by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
     var dayInput by rememberSaveable(day) { mutableStateOf(day) }
     var adding by rememberSaveable { mutableStateOf(false) }
+    var promotionBase by rememberSaveable { mutableStateOf<String?>(null) }
+    var workEditorOpen by rememberSaveable { mutableStateOf(false) }
+    var workEditorBase by rememberSaveable { mutableStateOf<String?>(null) }
+    var workEditorPurpose by rememberSaveable { mutableStateOf(CommitmentPurpose.STANDARD.name) }
+    fun openWorkEditor(record: OrganizerRecord?, purpose: CommitmentPurpose) {
+        workEditorBase = record?.let { com.halo.app.data.everyday.OrganizerCodec.encode(it) }
+        workEditorPurpose = purpose.name; workEditorOpen = true
+    }
     var deleting by remember { mutableStateOf<OrganizerRecord?>(null) }
     var purging by remember { mutableStateOf<OrganizerRecord?>(null) }
     var occurrence by remember { mutableStateOf<OrganizerOccurrence?>(null) }
     val canShow = familyReady && familyEnabled == state.kids
     val current = state.selected.takeIf { canShow }
-    LaunchedEffect(kids) { if (kids) { adding = false; deleting = null; purging = null; occurrence = null } }
+    LaunchedEffect(kids) { if (kids) { workEditorOpen = false; workEditorBase = null; promotionBase = null; adding = false; deleting = null; purging = null; occurrence = null } }
+    val formOpen = workEditorOpen || promotionBase != null || adding || exportReview || state.draft != null
     val owner = ShellPageOwner("everyday_organizer", objectId = current?.id,
-        sourceIdentity = "${current?.id}:${current?.version}:$kind:$day:${state.busy}:${state.draft != null}:$kids",
+        sourceIdentity = "${current?.id}:${current?.version}:$kind:$day:${state.busy}:$formOpen:$kids",
         helpDescription = uiText("Keep your plan on this phone. Saved items, delivery permissions and actual notification outcomes are shown separately."),
-        guidanceBlocked = state.loading || state.busy || state.draft != null,
-        defaultDisabledActionReason = uiText(if (kids) "A parent manages the saved plan." else "Wait for the current action to finish."))
-    BindShellPageActions(owner, listOf(
-        ShellPageAction("page.organizer.add", uiText("Add item"), HaloGlyph.CALENDAR, !kids && !state.busy) { adding = true },
-        ShellPageAction("page.organizer.edit", uiText(if (current?.repeat != null) "Edit entire series" else "Edit item"), HaloGlyph.NOTE,
-            current != null && !kids && !state.busy) { current?.let { model.edit(it) } },
-        ShellPageAction("page.organizer.undo", uiText("Undo removal"), HaloGlyph.PREVIOUS, state.undoId != null && !kids && !state.busy) { model.undo() },
-        ShellPageAction("page.organizer.clocks", uiText("World clocks"), HaloGlyph.WATCH) { onClocks() },
-        ShellPageAction("page.organizer.brief", uiText("Your day in Halo"), HaloGlyph.ACTIVITY) { onBrief() },
-        ShellPageAction("page.organizer.sources", uiText("Sources"), HaloGlyph.SETTINGS, !kids) { onSources() },
-        ShellPageAction("page.organizer.import", uiText("Import calendar"), HaloGlyph.DOWNLOAD, !kids && !state.busy) {
-            importer.launch(arrayOf("text/calendar", "application/ics", "text/plain", "application/octet-stream"))
-        },
-        ShellPageAction("page.organizer.export", uiText("Export calendar"), HaloGlyph.FILE, !kids && !state.busy) {
-            exportVersions = arrayListOf(); exportReview = true
-        },
-    ))
+        guidanceBlocked = state.loading || state.busy || formOpen,
+        defaultDisabledActionReason = uiText(if (kids) "A parent manages the saved plan." else "Finish or close the current form before choosing another action."))
+    BindShellPageActions(owner, organizerOrbActions(current, kind, kids).map { action ->
+        val glyph = when (action) {
+            OrganizerOrbAction.TIMER, OrganizerOrbAction.ALARM, OrganizerOrbAction.CLOCKS -> HaloGlyph.WATCH
+            OrganizerOrbAction.BRIEF, OrganizerOrbAction.RESULT, OrganizerOrbAction.PLAN, OrganizerOrbAction.ROUTINE -> HaloGlyph.ACTIVITY
+            OrganizerOrbAction.SOURCES -> HaloGlyph.SETTINGS
+            OrganizerOrbAction.IMPORT -> HaloGlyph.DOWNLOAD
+            OrganizerOrbAction.EXPORT -> HaloGlyph.FILE
+            OrganizerOrbAction.STOP -> HaloGlyph.STOP
+            else -> HaloGlyph.CALENDAR
+        }
+        ShellPageAction("page.organizer.${action.name.lowercase(java.util.Locale.ROOT)}", uiText(action.label), glyph,
+            !state.busy && !state.loading && !formOpen && (action != OrganizerOrbAction.UNDO || state.undoId != null)) {
+            when (action) {
+                OrganizerOrbAction.TASK -> model.new(OrganizerKind.TASK)
+                OrganizerOrbAction.EVENT -> model.new(OrganizerKind.EVENT)
+                OrganizerOrbAction.TIMER -> model.new(OrganizerKind.TIMER)
+                OrganizerOrbAction.ALARM -> model.new(OrganizerKind.ALARM)
+                OrganizerOrbAction.BRIEF -> onBrief()
+                OrganizerOrbAction.TODAY -> { model.open(null); model.kind("TODAY") }
+                OrganizerOrbAction.CAPTURE -> openWorkEditor(null, CommitmentPurpose.INBOX)
+                OrganizerOrbAction.RESEARCH -> { model.open(null); model.kind("RESEARCH") }
+                OrganizerOrbAction.ROUTINE -> openWorkEditor(null, CommitmentPurpose.ROUTINE)
+                OrganizerOrbAction.COMPLETE -> current?.let(model::complete)
+                OrganizerOrbAction.EDIT, OrganizerOrbAction.ATTACH -> current?.let { model.edit(it) }
+                OrganizerOrbAction.DELEGATE -> current?.let { model.commitmentAction(it, "DELEGATE") }
+                OrganizerOrbAction.TAKE_OVER -> current?.let { model.commitmentAction(it, "TAKE_OVER") }
+                OrganizerOrbAction.SHARED -> current?.let { model.commitmentAction(it, "MAKE_SHARED") }
+                OrganizerOrbAction.WATCH -> current?.let { model.commitmentAction(it, "WATCH") }
+                OrganizerOrbAction.STOP -> current?.let { model.commitmentAction(it, "STOP") }
+                OrganizerOrbAction.PLAN -> current?.let { openWorkEditor(it, it.commitment.purpose) }
+                OrganizerOrbAction.RESULT -> current?.commitment?.execution?.runId?.let { onOpenRelated("activity?runId=${android.net.Uri.encode(it)}") }
+                OrganizerOrbAction.UNDO -> model.undo()
+                OrganizerOrbAction.CLOCKS -> onClocks()
+                OrganizerOrbAction.SOURCES -> onSources()
+                OrganizerOrbAction.IMPORT -> importer.launch(arrayOf("text/calendar", "application/ics", "text/plain", "application/octet-stream"))
+                OrganizerOrbAction.EXPORT -> { exportVersions = arrayListOf(); exportReview = true }
+            }
+        }
+    })
     if (LocalShellHaloOrb.current) BindShellUtilityBand(owner) {
         ToolZoneHeader(uiText("Organizer"), { if (current != null || state.missing) model.open(null) else onBack() })
     }
@@ -136,6 +170,10 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             } }
             item {
                 Text(current.title, style = MaterialTheme.typography.headlineMedium)
+                if (!kids) OrganizerWorkDetails(current, model, state.busy, now, state.selectedResultAllowed,
+                    onEdit = { openWorkEditor(current, current.commitment.purpose) },
+                    onPromote = { promotionBase = com.halo.app.data.everyday.OrganizerCodec.encode(current) }, onOpenRelated = onOpenRelated)
+                else Text(uiText(responsibilityLabel(current.commitment.owner)))
                 Text(uiText(organizerKindLabel(current.kind)), style = MaterialTheme.typography.labelLarge)
                 Text(uiText(statusLabel(current.status)), style = MaterialTheme.typography.labelLarge)
                 if (current.details.isNotBlank()) Text(current.details)
@@ -162,7 +200,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                 current.sourceLabel?.let { Text(it, style = MaterialTheme.typography.labelLarge) }
                 current.sourceUrl?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 if (!kids) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (current.kind == OrganizerKind.TASK && current.repeat == null) TextButton({ model.complete(current) }, enabled = !state.busy) {
+                    if (current.kind == OrganizerKind.TASK && current.commitment.owner == CommitmentOwner.ME && current.commitment.purpose != CommitmentPurpose.STOPWATCH && current.repeat == null) TextButton({ model.complete(current) }, enabled = !state.busy) {
                         Text(uiText(if (current.status == OrganizerStatus.COMPLETED) "Reopen task" else "Complete task"))
                     }
                     if (current.kind == OrganizerKind.TASK && current.status == OrganizerStatus.ACTIVE) TextButton({ model.new(OrganizerKind.TASK, current.id) }, enabled = !state.busy) { Text(uiText("Add subtask")) }
@@ -233,7 +271,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             item {
                 OutlinedTextField(query, model::query, label = { Text(uiText("Search your plan")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    (listOf("AGENDA" to "Agenda") + OrganizerKind.entries.map { it.name to organizerKindLabel(it) } + if (kids) emptyList() else listOf("TRASH" to "Trash")).forEach { (key, label) ->
+                    (OrganizerSection.entries.filter { !kids || it != OrganizerSection.RESEARCH }.map { it.name to organizerSectionLabel(it) } + listOf("AGENDA" to "Agenda") + OrganizerKind.entries.map { it.name to organizerKindLabel(it) } + if (kids) emptyList() else listOf("TRASH" to "Trash")).forEach { (key, label) ->
                         FilterChip(kind == key, { model.kind(key) }, modifier = Modifier.heightIn(min = if (kids) 56.dp else 48.dp), label = { Text(uiText(label)) })
                     }
                 }
@@ -246,7 +284,10 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                     }
                 }
             }
-            if (kind in setOf("AGENDA", "EVENT")) {
+            if (kind in OrganizerSection.entries.map { it.name }) {
+                item { OrganizerSectionContent(OrganizerSection.valueOf(kind), state, model, now, kids,
+                    onCreate = { openWorkEditor(null, it) }, onClocks = onClocks, onOpenRelated = onOpenRelated) }
+            } else if (kind in setOf("AGENDA", "EVENT")) {
                 val rows = state.agenda.filter { kind == "AGENDA" || it.record.kind == OrganizerKind.EVENT }
                 if (!state.loading && rows.isEmpty()) item { Text(uiText("Nothing planned for this day. Add an item or choose another date.")) }
                 items(rows, key = { it.key }) { row ->
@@ -259,7 +300,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                             FlowRow {
                                 TextButton({ model.open(row.record.id) }, Modifier.heightIn(min = if (kids) 56.dp else 48.dp)) { Text(uiText("Open item")) }
                                 if (!kids && row.record.repeat != null) TextButton({ occurrence = row }, enabled = !state.busy) { Text(uiText("This occurrence")) }
-                                if (!kids && row.record.kind == OrganizerKind.TASK) TextButton({ model.complete(row.record, row.takeIf { it.record.repeat != null }) }, enabled = !state.busy) { Text(uiText(if (row.completed) "Reopen task" else "Complete task")) }
+                                if (!kids && row.record.kind == OrganizerKind.TASK && row.record.commitment.owner == CommitmentOwner.ME) TextButton({ model.complete(row.record, row.takeIf { it.record.repeat != null }) }, enabled = !state.busy) { Text(uiText(if (row.completed) "Reopen task" else "Complete task")) }
                             }
                         }
                     }
@@ -288,6 +329,9 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             OrganizerKind.entries.forEach { type -> TextButton({ adding = false; model.new(type) }, Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText(organizerKindLabel(type))) } }
         }
     }
+    if (!kids) promotionBase?.let { body -> OrganizerInboxPromotion(com.halo.app.data.everyday.OrganizerCodec.decode(body), state, model) { promotionBase = null } }
+    if (!kids && workEditorOpen) OrganizerCommitmentEditor(workEditorBase?.let { com.halo.app.data.everyday.OrganizerCodec.decode(it) },
+        CommitmentPurpose.valueOf(workEditorPurpose), model, state) { workEditorOpen = false; workEditorBase = null }
     if (!kids) state.draft?.let { OrganizerEditor(model, state, it) }
     if (exportReview && !kids) EverydaySheet({ if (!state.busy) exportReview = false }) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

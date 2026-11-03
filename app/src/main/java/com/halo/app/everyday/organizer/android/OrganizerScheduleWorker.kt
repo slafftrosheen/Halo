@@ -12,6 +12,7 @@ class OrganizerScheduleWorker(context: Context, params: WorkerParameters) : Coro
         (applicationContext as HaloApplication).awaitOrganizerBootstrap()
         val owner = ManualDependencyGraph.organizerDelivery
         if (inputData.getBoolean("full", false)) owner.reconcileAll() else owner.reconcilePending()
+        ManualDependencyGraph.organizerOperations.reconcile()
         if (ManualDependencyGraph.organizerRepository.pendingScheduleIds().isEmpty()) Result.success() else Result.retry()
     } catch (cancelled: CancellationException) { throw cancelled }
       catch (_: Exception) { Result.retry() }

@@ -12,7 +12,7 @@ class RoutineCodec {
         when (t) {
             is RoutineTrigger.Once -> put("type", "once").put("at", t.at.toString())
             is RoutineTrigger.AtTime -> put("type", "time").put("time", t.localTime.toString())
-                .put("zone", t.zoneId.id).put("days", JSONArray(t.days.map { it.name }.sorted()))
+                .put("zone", t.zoneId.id).put("days", JSONArray(t.days.map { it.name }.sorted())).put("notBefore", t.notBefore?.toString())
             is RoutineTrigger.DeviceConnected -> put("type", "connected").put("device", t.deviceId)
             is RoutineTrigger.DeviceDisconnected -> put("type", "disconnected").put("device", t.deviceId)
             is RoutineTrigger.AppStarted -> put("type", "app_started").put("package", t.appPackage)
@@ -32,7 +32,8 @@ class RoutineCodec {
         return when (j.getString("type")) {
             "once" -> RoutineTrigger.Once(Instant.parse(j.getString("at")))
             "time" -> RoutineTrigger.AtTime(LocalTime.parse(j.getString("time")),
-                j.getJSONArray("days").strings().map { DayOfWeek.valueOf(it) }.toSet(), ZoneId.of(j.getString("zone")))
+                j.getJSONArray("days").strings().map { DayOfWeek.valueOf(it) }.toSet(), ZoneId.of(j.getString("zone")),
+                if (j.isNull("notBefore")) null else Instant.parse(j.getString("notBefore")))
             "connected" -> RoutineTrigger.DeviceConnected(j.getString("device"))
             "disconnected" -> RoutineTrigger.DeviceDisconnected(j.getString("device"))
             "app_started" -> RoutineTrigger.AppStarted(j.getString("package"))

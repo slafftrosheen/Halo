@@ -16,12 +16,13 @@ class OrganizerUseCases(
     suspend fun create(kind: OrganizerKind, title: String, details: String = "", time: OrganizerTime? = null,
         repeat: RepeatRule? = null, priority: TaskPriority = TaskPriority.NORMAL, parentId: String? = null,
         notifyBeforeMinutes: Int? = null, timerDurationMs: Long? = null,
-        links: List<OrganizerLink> = emptyList(), sourceUrl: String? = null, sourceLabel: String? = null, location: String = ""): OrganizerRecord {
+        links: List<OrganizerLink> = emptyList(), sourceUrl: String? = null, sourceLabel: String? = null, location: String = "",
+        commitment: OrganizerCommitment = OrganizerCommitment()): OrganizerRecord {
         val now = Instant.ofEpochMilli(clock.millis())
         val timer = timerDurationMs?.let { TimerState(it, it).start(now, elapsedMs(), bootId()) }
         return repository.save(OrganizerRecord(newId(), kind, title.trim(), details, time, repeat, priority,
             parentId = parentId, notifyBeforeMinutes = notifyBeforeMinutes, timer = timer, links = links,
-            sourceUrl = sourceUrl, sourceLabel = sourceLabel, createdAt = now, location = location), null)
+            sourceUrl = sourceUrl, sourceLabel = sourceLabel, createdAt = now, location = location, commitment = commitment), null)
     }
     suspend fun requireCurrent(id: String, version: Long): OrganizerRecord {
         val record = repository.get(id) ?: throw OrganizerConflict("Record no longer exists")
@@ -31,6 +32,7 @@ class OrganizerUseCases(
     suspend fun completeTask(id: String, version: Long, occurrenceStart: Instant? = null): OrganizerRecord {
         val record = requireCurrent(id, version)
         require(record.kind == OrganizerKind.TASK)
+        require(record.commitment.owner == CommitmentOwner.ME) { "Halo work needs a confirmed execution result; take over before completing it yourself" }
         if (record.repeat != null) {
             require(occurrenceStart != null) { "Choose which recurring task occurrence to complete" }
             val existing = repository.overrides(id).find { it.originalStart == occurrenceStart }
@@ -73,6 +75,24 @@ class OrganizerUseCases(
     suspend fun cancel(id: String, version: Long): OrganizerRecord {
         val record = requireCurrent(id, version)
         return repository.save(record.copy(status = OrganizerStatus.CANCELLED), version)
+    }
+    suspend fun transfer(id: String, version: Long, owner: CommitmentOwner): OrganizerRecord {
+        val record = requireCurrent(id, version)
+        return repository.save(record.copy(commitment = OrganizerResponsibility.transfer(record.commitment, owner)), version)
+    }
+    suspend fun capture(title: String, intent: String = title): OrganizerRecord = create(OrganizerKind.TASK, title,
+        commitment = OrganizerCommitment(purpose = CommitmentPurpose.INBOX, intent = intent, state = HaloWorkState.DRAFT))
+    suspend fun stopwatch(id: String, version: Long, action: String): OrganizerRecord {
+        val record = requireCurrent(id, version)
+        val current = requireNotNull(record.commitment.stopwatch)
+        val next = when (action) {
+            "START" -> current.start(clock.instant(), elapsedMs(), bootId())
+            "PAUSE" -> current.pause(clock.instant(), elapsedMs(), bootId())
+            "LAP" -> current.lap(clock.instant(), elapsedMs(), bootId())
+            "RESET" -> { require(current.startedAt == null); StopwatchState() }
+            else -> throw IllegalArgumentException("Unknown stopwatch action")
+        }
+        return repository.save(record.copy(commitment = record.commitment.copy(stopwatch = next)), version)
     }
     suspend fun agenda(from: Instant, until: Instant, kinds: Set<OrganizerKind> = setOf(OrganizerKind.EVENT, OrganizerKind.TASK, OrganizerKind.REMINDER, OrganizerKind.ALARM)): List<OrganizerOccurrence> {
         val results = mutableListOf<OrganizerOccurrence>()

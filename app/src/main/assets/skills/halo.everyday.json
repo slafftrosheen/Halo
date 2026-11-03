@@ -1,7 +1,7 @@
 {
   "id": "halo.everyday",
   "name": "Your day, organizer and widgets",
-  "description": "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants.",
+  "description": "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants. Organizer commitments separate You/Halo/Shared responsibility and reviewed capabilities. Research exposes retained dated evidence; current retrieval uses permitted source refresh before synthesis.",
   "schemaVersion": 2,
   "category": "WORKSPACE",
   "risk": "SENSITIVE",
@@ -13,6 +13,9 @@
     "halo_clock_action",
     "halo_clock_query",
     "halo_clock_save",
+    "halo_commitment_action",
+    "halo_commitment_save",
+    "halo_commitments_query",
     "halo_everyday_open",
     "halo_organizer_action",
     "halo_organizer_alarm",
@@ -26,6 +29,8 @@
     "halo_organizer_get",
     "halo_organizer_occurrence",
     "halo_organizer_query",
+    "halo_research_query",
+    "halo_research_source",
     "halo_source_action",
     "halo_source_get",
     "halo_source_preview",
@@ -64,6 +69,21 @@
     {
       "toolId": "halo_clock_save",
       "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_commitment_action",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_commitment_save",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_commitments_query",
+      "risk": "READ_ONLY",
       "requiredPermissions": []
     },
     {
@@ -129,6 +149,16 @@
     {
       "toolId": "halo_organizer_query",
       "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_research_query",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_research_source",
+      "risk": "REVERSIBLE",
       "requiredPermissions": []
     },
     {

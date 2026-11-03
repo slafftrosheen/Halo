@@ -18,7 +18,8 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
     private val attention: com.halo.runtime.cognition.attention.AttentionController,
     private val currentlyAllowed: (String) -> Boolean,
     private val resources: () -> ToolResourceCoordinator,
-    private val publishScreenResult: suspend (Routine, RoutineRunState, Int) -> Unit = { _, _, _ -> }) {
+    private val publishScreenResult: suspend (Routine, RoutineRunState, Int) -> Unit = { _, _, _ -> },
+    private val publishSemanticResult: suspend (Routine, RoutineRunSummary?) -> Boolean = { _, _ -> false }) {
     private val policy = DefaultToolAutomationPolicy(registry::descriptor)
     fun actionDescriptors() = routineActionDescriptors(registry)
     fun grantSummary(r: Routine): String {
@@ -144,6 +145,9 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                 repository.dao.deliveryEvidence(identity, "TRIAL_RECORDED")
                 return
             }
+            // Organizer owns the commitment/result semantics; generic dispatch summaries must not
+            // announce a monitor check as completed work or duplicate its conditional notification.
+            if (publishSemanticResult(routine, repository.runResult(identity))) return
             // A presentation-cache failure never changes the routine's recorded outcome.
             try { publishScreenResult(routine, state, completed) }
             catch (cancelled: CancellationException) { throw cancelled }

@@ -35,7 +35,7 @@ object EverydayResultContracts {
     private val record=obj(mapOf("schema" to integer(1,1),"id" to id,"version" to version,"kind" to choice(OrganizerKind.entries.map {it.name}),
         "title" to text(200),"details" to text(16000),"priority" to choice(TaskPriority.entries.map {it.name}),"status" to choice(OrganizerStatus.entries.map {it.name}),
         "parentId" to id,"notifyBeforeMinutes" to integer(0,10080),"createdAt" to epoch,"updatedAt" to epoch,"deletedAt" to epoch,
-        "sourceUrl" to text(2048),"sourceLabel" to text(200),"location" to text(1000),"calendarUid" to text(2000),"time" to recordTime,"repeat" to recordRepeat,
+        "sourceUrl" to text(2048),"sourceLabel" to text(200),"location" to text(1000),"calendarUid" to text(2000),"commitment" to OrganizerOperationContracts.storageCommitmentSchema,"time" to recordTime,"repeat" to recordRepeat,
         "timer" to obj(mapOf("duration" to integer(1000,31L*86400000),"remaining" to integer(0,31L*86400000),"started" to epoch,
             "elapsed" to integer(),"boot" to text(200),"runId" to text(200)),listOf("duration","remaining","runId")),
         "links" to array(obj(mapOf("id" to id,"relation" to choice(listOf("RELATED_TO","REFERENCES","SOURCE_OF")))),50)),
@@ -50,11 +50,11 @@ object EverydayResultContracts {
         "kind" to choice(CollectorKind.entries.map {it.name}),"category" to choice(SourceCategory.entries.map {it.name}),"language" to text(40),
         "selected" to bool,"enabled" to bool,"muted" to bool,"childApproved" to bool,"refreshMinutes" to integer(15,1440),
         "contentRevision" to text(200),"retrievedAt" to instant,"expiresAt" to instant,"attempt" to choice(CollectorAttemptState.entries.map {it.name}),
-        "attemptedAt" to instant,"nextAllowedAt" to instant,"stale" to bool,"mode" to choice(listOf("Local","Power")),"cached" to bool)
-    private val sourceRequired=sourceFields.keys.filter {it !in setOf("contentRevision","retrievedAt","expiresAt","attemptedAt","nextAllowedAt")}
+        "attemptedAt" to instant,"nextAllowedAt" to instant,"stale" to bool,"mode" to choice(listOf("Local","Power")),"cached" to bool,"researchQuery" to text(400),"researchProvider" to text(80))
+    private val sourceRequired=sourceFields.keys.filter {it !in setOf("contentRevision","retrievedAt","expiresAt","attemptedAt","nextAllowedAt","researchQuery","researchProvider")}
     private val source=obj(sourceFields,sourceRequired)
     private val payloadItem=obj(mapOf("id" to text(2000),"title" to text(1000),"text" to text(8000),"summary" to text(1000),
-        "url" to text(4096),"publisher" to text(200),"published" to epoch,"language" to text(40),"categories" to array(text(200),20),
+        "url" to text(4096),"publisher" to text(200),"published" to epoch,"updated" to epoch,"language" to text(40),"categories" to array(text(200),20),
         "area" to text(2000),"severity" to text(200),"onset" to epoch,"expires" to epoch,"kind" to text(100),"route" to text(4096),"revision" to text(4000),"at" to epoch),listOf("id","title"))
     private val content=obj(mapOf("schema" to integer(1,1),"type" to choice(listOf("articles","warnings","local","weather")),"items" to array(payloadItem,5),
         "place" to obj(mapOf("name" to text(200),"lat" to decimal(-90.0,90.0),"lon" to decimal(-180.0,180.0),"zone" to text(100))),
@@ -71,11 +71,11 @@ object EverydayResultContracts {
         "baselineMissing" to bool,"changes" to array(obj(mapOf("kind" to choice(BriefChangeKind.entries.map {it.name}),"factId" to text(2500),"sourceId" to text(200))),30))
     private val settings=variants(mapOf("schema" to integer(1,1),"version" to integer(),"proactive" to bool,"morning" to text(18),"evening" to text(18),
         "quiet" to bool,"quietStart" to text(18),"quietEnd" to text(18),"headlines" to integer(0,10),"tasks" to integer(1,20),
-        "pinned" to array(id,100),"childRecords" to array(id,100),"sharedRecordCount" to integer(0,100)),listOf("schema","version","proactive","morning","evening","quiet","quietStart","quietEnd","headlines","tasks","pinned","childRecords"),listOf("sharedRecordCount"))
+        "pinned" to array(id,100),"childRecords" to array(id,100),"sections" to array(choice(BriefSection.entries.map {it.name}),BriefSection.entries.size),"sharedRecordCount" to integer(0,100)),listOf("schema","version","proactive","morning","evening","quiet","quietStart","quietEnd","headlines","tasks","pinned","childRecords"),listOf("sharedRecordCount"))
     private val config=obj((listOf("kind","zoneId","cityLabel","sourceId","headlineSourceId","recordId","priority","limit","hidePrivate","theme","sections")
         .associateWith {text(if(it=="sections") 200 else 256)}),listOf("kind","cityLabel","limit","hidePrivate","theme","sections"))
 
-    fun schema(name: String): Map<String,Any> = when(name) {
+    fun schema(name: String): Map<String,Any> = if (name in OrganizerOperationContracts.names) OrganizerOperationContracts.result(name) else when(name) {
         "halo_organizer_query" -> variants(mapOf("records" to array(summary,50),"occurrences" to array(occurrence,50),"nextOffset" to nullable(integer(0,10050))),listOf("records","nextOffset"),listOf("occurrences","nextOffset"))
         "halo_organizer_get" -> obj(mapOf("id" to id,"version" to version,"record" to record,"overrides" to array(obj(mapOf("originalStart" to instant,
             "disposition" to choice(OccurrenceDisposition.entries.map {it.name}),"version" to version,"title" to text(200),"replacementStart" to text(32)),listOf("originalStart","disposition","version")),100),
@@ -124,7 +124,7 @@ object EverydayResultContracts {
         "halo_organizer_clock_action","halo_clock_save","halo_clock_action","halo_source_get","halo_source_save","halo_brief_query","halo_brief_action","halo_widget_configure" -> setOf("id")
         else -> emptySet()
     }
-    private fun value(raw: Any?): Any? = when(raw) {
+    internal fun value(raw: Any?): Any? = when(raw) {
         null,JSONObject.NULL -> null
         is JSONObject -> raw.keys().asSequence().associateWith {value(raw.get(it))}
         is JSONArray -> (0 until raw.length()).map {value(raw.get(it))}

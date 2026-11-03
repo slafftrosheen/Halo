@@ -62,9 +62,9 @@ class ConfigurationSkillManifestParityTest {
             "halo.notebook" to WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current",
         )
         val names = ownership.values.flatten()
-        assertEquals("Review the manifest contract when adding configuration operations", 75, names.size)
+        assertEquals("Review the manifest contract when adding configuration operations", 80, names.size)
         assertEquals(names.size, names.toSet().size)
-        val readOnly = setOf(
+        val readOnly = setOf("halo_commitments_query", "halo_research_query",
             "halo_get_preferences", "halo_get_mode_profile", "halo_screen_state", "halo_screen_preview", "halo_screen_card_configuration",
             "halo_saved_devices", "halo_saved_device_get", "halo_device_preferences",
             "halo_notification_settings_apps", "halo_notification_policy_get", "halo_digest_delivery_get",

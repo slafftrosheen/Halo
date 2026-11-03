@@ -13,6 +13,8 @@ object BriefPresentation {
         BriefPeriod.MORNING -> text(locale, "Your morning", "Ваше утро", "Tavs rīts", "Twój poranek")
         BriefPeriod.ON_DEMAND -> text(locale, "Your day in Halo", "Ваш день в Halo", "Tava diena ar Halo", "Twój dzień w Halo")
         BriefPeriod.EVENING -> text(locale, "Your evening", "Ваш вечер", "Tavs vakars", "Twój wieczór")
+        BriefPeriod.MIDDAY -> text(locale, "Your midday", "Середина дня", "Tavs pusdienlaiks", "Południe")
+        BriefPeriod.WEEKLY -> text(locale, "Your week", "Ваша неделя", "Tava nedēļa", "Twój tydzień")
         BriefPeriod.CHANGES -> text(locale, "Since morning", "С утра", "Kopš rīta", "Od rana")
     }
     fun sourceStatus(source: BriefSourceStamp, now: Instant, power: Boolean, locale: Locale, zone: ZoneId): String {
@@ -40,7 +42,24 @@ object BriefPresentation {
             fact.values["deliveryState"]=="MISSED" -> text(locale,"Outstanding reminder · delivery missed","Незавершённое напоминание · доставка пропущена","Neizpildīts atgādinājums · piegāde izlaista","Zaległe przypomnienie · pominięte dostarczenie")
             else -> text(locale,"Outstanding reminder","Незавершённое напоминание","Neizpildīts atgādinājums","Zaległe przypomnienie")
         }
-        return listOfNotNull(fact.title, at, completed,outstanding).joinToString(" · ")
+        val owner = when (fact.values["owner"]) {
+            "ME" -> text(locale, "You", "Вы", "Tu", "Ty")
+            "HALO" -> "Halo"
+            "SHARED" -> text(locale, "Shared", "Совместно", "Kopīgi", "Wspólnie")
+            else -> null
+        }
+        val work = if (fact.values["owner"] !in setOf("HALO", "SHARED")) null else when (fact.values["workState"]) {
+            "DRAFT" -> text(locale, "Draft", "Черновик", "Melnraksts", "Szkic")
+            "READY" -> text(locale, "Ready", "Готово к запуску", "Gatavs", "Gotowe")
+            "RUNNING" -> text(locale, "Running", "Выполняется", "Notiek izpilde", "W trakcie")
+            "WAITING" -> text(locale, "Waiting", "Ожидание", "Gaida", "Oczekiwanie")
+            "NEEDS_USER" -> text(locale, "Needs your decision", "Нужно ваше решение", "Vajadzīgs tavs lēmums", "Wymaga Twojej decyzji")
+            "COMPLETED" -> text(locale, "Completed", "Завершено", "Pabeigts", "Ukończone")
+            "FAILED" -> text(locale, "Failed", "Ошибка", "Neizdevās", "Niepowodzenie")
+            else -> null
+        }
+        val research = if (fact.values["research"] == "true") text(locale, "Research / Web", "Исследования / Интернет", "Izpēte / Tīmeklis", "Badania / Internet") else null
+        return listOfNotNull(research, owner, work, fact.title, at, completed,outstanding).joinToString(" · ")
     }
     fun comparisonNotice(brief: EverydayBrief, locale: Locale): String? = when {
         brief.baselineMissing -> text(locale, "This saved view has no matching morning brief for comparison. Save a morning brief in this experience, then check changes.",

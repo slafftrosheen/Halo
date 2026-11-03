@@ -32,7 +32,7 @@ internal object BriefCodec {
         .put("date", value.date.toString()).put("zone", value.zoneId).put("at", value.generatedAt.toEpochMilli())
         .put("facts", JSONArray(value.facts.map(::fact))).put("sources", JSONArray(value.sources.map(::stamp)))
         .put("changes", JSONArray(value.changes.map { change -> JSONObject().put("kind", change.kind.name).put("id", change.factId)
-            .put("source", change.sourceId).put("fact", change.fact?.let(::fact)) }))
+            .put("source", change.sourceId).put("fact", change.fact?.let(::fact)).put("section", change.section?.name) }))
         .put("baselineAt", value.baselineAt?.toEpochMilli()).put("missing", value.baselineMissing)
         .put("uncompared", JSONArray(value.comparisonUnavailableSources.sorted())).put("omitted", value.omittedFacts)
         .put("omittedChanges", value.omittedChanges)
@@ -41,21 +41,23 @@ internal object BriefCodec {
         BriefAudience.valueOf(value.getString("audience")), LocalDate.parse(value.getString("date")), ZoneId.of(value.getString("zone")).id,
         Instant.ofEpochMilli(value.getLong("at")), value.getJSONArray("facts").rows(40).map(::fact), value.getJSONArray("sources").rows(101).map(::stamp),
         value.getJSONArray("changes").rows(200).map { change -> BriefChange(BriefChangeKind.valueOf(change.getString("kind")), change.getString("id"),
-            change.getString("source"), change.optJSONObject("fact")?.let(::fact)) }, value.instant("baselineAt"), value.getBoolean("missing"),
+            change.getString("source"), change.optJSONObject("fact")?.let(::fact), change.text("section")?.let(BriefSection::valueOf)) }, value.instant("baselineAt"), value.getBoolean("missing"),
         value.getJSONArray("uncompared").strings(101).toSet(), value.getInt("omitted"), value.getInt("omittedChanges"), value.getString("fingerprint")) }
     fun encode(value: BriefBaseline): String = objectValue().put("date", value.date.toString()).put("zone", value.zoneId).put("audience", value.audience.name)
         .put("at", value.capturedAt.toEpochMilli()).put("sources", JSONArray(value.observedSources.sorted())).put("facts", JSONArray(value.facts.map { fact ->
-            JSONObject().put("id", fact.id).put("source", fact.sourceId).put("revision", fact.revision).put("kind", fact.kind.name) })).toString()
+            JSONObject().put("id", fact.id).put("source", fact.sourceId).put("revision", fact.revision).put("kind", fact.kind.name).put("section", fact.section?.name) })).toString()
     fun baseline(body: String) = parse(body).let { value -> BriefBaseline(LocalDate.parse(value.getString("date")), ZoneId.of(value.getString("zone")).id,
         BriefAudience.valueOf(value.getString("audience")), Instant.ofEpochMilli(value.getLong("at")), value.getJSONArray("facts").rows(20000).map { fact ->
-            BriefFingerprint(fact.getString("id"), fact.getString("source"), fact.getString("revision"), BriefFactKind.valueOf(fact.getString("kind"))) },
+            BriefFingerprint(fact.getString("id"), fact.getString("source"), fact.getString("revision"), BriefFactKind.valueOf(fact.getString("kind")), fact.text("section")?.let(BriefSection::valueOf)) },
         value.getJSONArray("sources").strings(101).toSet()) }
     fun encode(value: BriefSettings): String = objectValue().put("version", value.version).put("proactive", value.proactive)
         .put("morning", value.morning.toString()).put("evening", value.evening.toString()).put("quiet", value.quietEnabled)
         .put("quietStart", value.quietStart.toString()).put("quietEnd", value.quietEnd.toString()).put("headlines", value.headlineLimit).put("tasks", value.taskLimit)
-        .put("pinned", JSONArray(value.pinnedRecordIds.sorted())).put("childRecords", JSONArray(value.childRecordIds.sorted())).toString()
+        .put("pinned", JSONArray(value.pinnedRecordIds.sorted())).put("childRecords", JSONArray(value.childRecordIds.sorted()))
+        .put("sections", JSONArray(value.sections.map { it.name }.sorted())).toString()
     fun settings(body: String) = parse(body).let { value -> BriefSettings(value.getLong("version"), value.getBoolean("proactive"),
         LocalTime.parse(value.getString("morning")), LocalTime.parse(value.getString("evening")), value.getBoolean("quiet"),
         LocalTime.parse(value.getString("quietStart")), LocalTime.parse(value.getString("quietEnd")), value.getInt("headlines"), value.getInt("tasks"),
-        value.getJSONArray("pinned").strings(100).toSet(), value.getJSONArray("childRecords").strings(100).toSet()) }
+        value.getJSONArray("pinned").strings(100).toSet(), value.getJSONArray("childRecords").strings(100).toSet(),
+        value.optJSONArray("sections")?.strings(BriefSection.entries.size)?.map(BriefSection::valueOf)?.toSet() ?: BriefSection.entries.toSet()) }
 }

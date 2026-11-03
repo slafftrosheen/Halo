@@ -106,8 +106,11 @@ data class OrganizerRecord(
     val deletedAt: Instant? = null,
     val location: String = "",
     val calendarUid: String? = null,
+    val commitment: OrganizerCommitment = OrganizerCommitment(),
 ) {
     fun validate() {
+        commitment.validate()
+        require(commitment.purpose == CommitmentPurpose.STANDARD || kind == OrganizerKind.TASK)
         require(id.matches(Regex("[A-Za-z0-9_.:-]{1,200}"))) { "Invalid record identity" }
         require(title.isNotBlank() && title.length <= 200 && details.length <= 16000) { "Title or details exceed supported limits" }
         require(location.length <= 1000)
@@ -184,6 +187,8 @@ interface OrganizerRepository {
     suspend fun records(includeDeleted: Boolean = false): List<OrganizerRecord>
     suspend fun get(id: String): OrganizerRecord?
     suspend fun save(record: OrganizerRecord, expectedVersion: Long?, resetOccurrences: Boolean = false): OrganizerRecord
+    /** Explicit promotion preserves the captured identity; ordinary edits cannot change instrument. */
+    suspend fun promoteInbox(record: OrganizerRecord, expectedVersion: Long): OrganizerRecord = throw OrganizerConflict("Inbox promotion is unavailable")
     suspend fun delete(id: String, expectedVersion: Long): OrganizerRecord
     suspend fun restore(id: String, deletedVersion: Long): OrganizerRecord
     suspend fun purgeDeleted(id: String, deletedVersion: Long)

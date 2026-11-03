@@ -1,0 +1,49 @@
+# Issue 64 implementation and acceptance map
+
+Issue: https://github.com/slafftrosheen/Halo/issues/64. Authoritative snapshot: [ISSUE-64-SOURCE.md](ISSUE-64-SOURCE.md).
+Branch: `codex/issue-64-organizer`, based on `b381c6834` (issue-63 source checkpoint).
+
+This document maps the code, not a release acceptance verdict. The user requested the complete source batch while repairing the Pi's power. No #64 compilation, tests, APK build, installation, render inspection, real speech recognition or remote-provider acceptance has run. The inherited #63 gate was interrupted by host power loss and remains unverified.
+
+| Acceptance area | Source implementation | Regression sources / remaining evidence |
+|---|---|---|
+| Sixth Workspace family and internal tools | Existing Organizer family and saved legacy routes retained; Sources, Brief and World clocks remain under Organizer | Existing `OrganizerToolHierarchyTest`; device/menu/render checks NOT_RUN |
+| Today: You / Halo / Shared | `OrganizerSections`, `OrganizerSectionContent`, live current-day occurrence IDs, outstanding receipts, selected cached weather and daily brief | `OrganizerCommitmentPersistenceTest`, `OrganizerOperationsUiTest`; rendering NOT_RUN |
+| ME / HALO / SHARED creation | Optional `OrganizerCommitment` on canonical `OrganizerRecord`, codec, shared UI/domain/tool owner | Persistence and registered workflow regressions authored, NOT_RUN |
+| Delegate / Take over / Make shared / Watch | Explicit versioned transitions; stop/revoke before ownership handoff; Watch selects concrete monitor plan or needs setup | Suspended-owner handoff, CAS and false-completion regressions authored, NOT_RUN |
+| Truthful lifecycle | Draft definition, reviewed readiness, actual journal claim for running, scheduler receipt for scheduled waiting, retained results, failure/recovery and explicit shared acknowledgement | `OrganizerOperationsTest`; native work scheduling NOT_RUN |
+| Real monitoring | Selected source revision/baseline or observed device battery/network/charging; fresh observations only; actual predicate truth separate from notification dedup | Source-revocation and unchanged-condition regressions; native observation/alerts NOT_RUN |
+| Unified Planner | Same records for dated tasks, events, reminders and delegated work; Inbox promotion preserves record identity and links | Persistence regressions and existing recurrence/ICS tests; native UI NOT_RUN |
+| Halo time tools | Existing alarms, timers and world clocks; additive persistent monotonic stopwatch with portable pause and lap bounds | Stopwatch/reboot/overflow and archive regressions; device timing/notification checks NOT_RUN |
+| First-class routines | Commitment purposes ROUTINE/WATCH map to existing reviewed `RoutineExecutor`; one-shot and daily/weekly schedule; optional `AtTime.notBefore` retains future start dates | Real runner/Room harness and `OrganizerRoutineStartTest`; WorkManager/device evidence NOT_RUN |
+| Composable briefs | Selected sections; MIDDAY/WEEKLY; work responsibility/state, unfinished tasks, reminders/routines, Workspace and Research/Web | `OrganizerBriefCompositionTest` plus existing brief tests; no synthesized execution result body bypasses source revalidation |
+| Semantic notifications | Existing attention owner, notification channel/policy, quiet hours, real routine outcome and run dedup; failed work described as failure | Registered runner notification-count regressions; actual Android presentation NOT_RUN |
+| Voice without opening Organizer | Explicit capture/delegate/shared/watch intents in EN/RU/LV/PL; USER and MICROPHONE interpretations map to the same registered save command; existing reminder/time parsing retained | Parser + registered semantic-boundary regressions authored; actual STT and audio NOT_RUN |
+| Cross-instrument references | Existing Workspace object IDs and Study session IDs; exact active-object revalidation, owner-specific Studio/Notes/Memory/Canvas/Study routes | `OrganizerOperationsUiTest`; actual native navigation NOT_RUN |
+| Instrument boundaries | No separate task database, agent engine, document body owner, calendar or clock application dependency | Architectural source review; inherited runtime owners retained |
+| Capability driven work | Installed strict capability schemas (`summarize`, `web.search`, `monitor`, `system.monitor`), reviewed immutable plan fingerprint and fresh nonce, internal runner-only bridge | Grant tamper, long-ID collision, unsupported/direct internal calls and exact-plan regressions |
+| Contextual Orb and forms | Page-specific creation vs exact-item Complete/Edit/Attach/Delegate/Take over/Watch/Stop; forms block other actions, retain drafts and require explicit discard | Orb projection and route regressions; Compose/native rendering NOT_RUN |
+| Honest state and recovery | Scheduler acceptance, claimed execution, confirmed result and presentation remain separate; interrupted claims require inspection; backup never restores execution approval | Archive, process-loss, orphan-schedule, readback and authority-revocation regressions |
+| General free research | Provider-neutral registry: Wikipedia query search, Internet Archive document search, one explicit public HTTPS page; retained local evidence search | Parser, source selection, provenance, free setup and Local zero-dispatch regressions |
+| Local and routed evidence | Same bounded registered research result schema; retained source ID/version, actual publisher, URL, retrieved/verified/published/updated times, stale flag and computed lexical relevance | Closed result-contract/registry regressions; permitted local/routed model acceptance NOT_RUN |
+| Research/Web briefs | Explicit saved topic/query sources, never an inferred engagement feed; selected Research section and source reader links | Brief provenance, selected-section persistence and revocation regressions |
+| Bounded retrieval | Existing source count/global/day/source quotas and backoff; shared per-origin research budget; 2 MiB payload, bounded parsing, guarded DNS/URLs, no recursive crawling | Transport, parser, robots, revocation and persistent budget regressions |
+| Current information before synthesis | Search reports retained evidence with dates/staleness; explicit permitted Power refresh supplies new evidence; no fabricated current answers or hidden model call | Tool contract and Local zero-request source; actual provider/network acceptance NOT_RUN |
+
+## Implementation limits surfaced in the product
+
+Only installed capabilities can be reviewed or executed. There is no email/reply connector, numeric price-drop comparator, account scraping, dynamic browser execution, inferred location trigger, free-time planner or marketplace. Requests requiring these remain drafts/needs-user, with an explicit setup/take-over path. Source changes and literal text monitoring are available; they do not pretend to be those missing connectors.
+
+The current routine scheduler supports one-shot and interval-one daily/weekly work with an explicit zone; count/until/monthly variants and device-following recurrent zones require revision before enabling. Human calendar recurrence keeps its existing broader semantics. A manual reviewed run is explicit and may precede a future scheduled start; automatic runs cannot. A saved disabled manual-only plan has no confirmed active schedule.
+
+Research coverage is attributed and bounded. Wikipedia is reference search; Internet Archive supplies archived documents, without a promise of current coverage. Public-page retrieval accepts readable public HTTPS pages only, checks robots first, refuses page redirects and noindex/noarchive restrictions, fails closed on unavailable policy, and does not execute scripts or follow discovered links. Sites requesting crawl intervals over one minute are unavailable through this bounded adapter. Local mode uses retained evidence only; no paid subscription, key or Google dependency is required.
+
+Source visibility is rechecked for results, including derived brief dependencies. A backup keeps facts and links but clears execution binding, marks Halo work for review, pauses stopwatches, disables external refresh and revokes child grants. Reconciliation also disables old orphan routines. An interrupted claimed effect is never automatically replayed to obtain a success receipt.
+
+## Source checks and next gate
+
+The localization catalog contains reviewed EN/RU/LV/PL copy; generated Android strings and lookup files are produced from `app/src/main/localization/ui.tsv`. Resource generation and `git diff --check` are source checks, not compile/test evidence.
+
+Run the focused source gate only after the coding batch is finished and the host's power is stable. Include the new Organizer persistence, operations, research, brief, UI policy, archive, manifest parity and native parsing suites plus affected existing #63 regressions. Then build the APK once and record exact source/APK identity. Device rendering, native alarms/notification permissions, actual spoken recognition and permitted remote-provider evidence remain separate gates in [the operability record](../testing/HALO-ORGANIZER-64-OPERABILITY.md).
+
+Public provider/policy contracts consulted: [MediaWiki Search API](https://www.mediawiki.org/wiki/API:Search/en), [Internet Archive advanced search](https://archive.org/advancedsearch.php), [RFC 9309 robots exclusion protocol](https://www.rfc-editor.org/rfc/rfc9309.html). These references are interface/policy evidence, not proof of a successful live provider request by this build.

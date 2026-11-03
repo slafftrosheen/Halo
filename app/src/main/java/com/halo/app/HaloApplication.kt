@@ -58,6 +58,7 @@ class HaloApplication :
             com.halo.app.everyday.organizer.android.OrganizerLockedDelivery.importAfterUnlock(this, repository)
             com.halo.app.everyday.organizer.android.LegacyOrganizerReminders(this, repository).migrate()
             ManualDependencyGraph.organizerDelivery.reconcileAll()
+            ManualDependencyGraph.organizerOperations.reconcile()
             com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.maintain(this)
             organizerRecovered = true
         } finally { organizerRecovery.unlock() }

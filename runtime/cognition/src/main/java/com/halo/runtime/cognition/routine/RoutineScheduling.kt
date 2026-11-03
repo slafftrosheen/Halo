@@ -27,10 +27,10 @@ interface RoutineScheduler {
 /** Zone rules resolve gaps forward and select the earlier overlap, once per local date. */
 fun RoutineTrigger.nextOccurrence(after: Instant): Instant? = when (this) {
     is RoutineTrigger.Once -> at.takeIf { it > after }
-    is RoutineTrigger.AtTime -> (0L..8L).asSequence().map { after.atZone(zoneId).toLocalDate().plusDays(it) }
+    is RoutineTrigger.AtTime -> (0L..8L).asSequence().map { maxOf(after, notBefore ?: after).atZone(zoneId).toLocalDate().plusDays(it) }
         .filter { days.isEmpty() || it.dayOfWeek in days }
         .map { it.atTime(localTime).atZone(zoneId).withEarlierOffsetAtOverlap().toInstant() }
-        .firstOrNull { it > after }
+        .firstOrNull { it > after && (notBefore == null || it >= notBefore) }
     else -> null
 }
 enum class AutomationPermission { DISALLOWED, ALLOWED_WITH_ROUTINE_GRANT, REQUIRES_INTERACTIVE_APPROVAL }

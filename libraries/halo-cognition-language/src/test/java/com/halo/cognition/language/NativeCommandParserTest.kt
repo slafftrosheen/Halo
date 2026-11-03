@@ -4,6 +4,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeCommandParserTest {
+    @Test fun polishCaptureRetainsUserIntentWithoutInventingAnExecutionPlan() {
+        assertEquals(NativeOrganizerCommitmentIntent("ME", "INBOX", "kup materiał w piątek"), NativeCommandParser.parse("Zapisz kup materiał w piątek"))
+        assertEquals(NativeOrganizerCommitmentIntent("HALO", "WATCH", "zmiany zamówienia"), NativeCommandParser.parse("Obserwuj zmiany zamówienia"))
+    }
+
+    @Test fun organizerCapturePreservesTextAndResponsibilityWithoutInventingAPlan() {
+        assertEquals(NativeOrganizerCommitmentIntent("ME", "INBOX", "Friday Buy Material"), NativeCommandParser.parse("Capture Friday Buy Material"))
+        assertEquals(NativeOrganizerCommitmentIntent("HALO", "STANDARD", "check the order tomorrow"), NativeCommandParser.parse("Delegate to Halo check the order tomorrow"))
+        assertEquals(NativeOrganizerCommitmentIntent("SHARED", "STANDARD", "choose a printer"), NativeCommandParser.parse("Create shared task choose a printer"))
+        assertEquals(NativeOrganizerCommitmentIntent("HALO", "WATCH", "a reply"), NativeCommandParser.parse("Watch for a reply"))
+        assertEquals(NativeOrganizerCommitmentIntent("ME", "INBOX", "проверить заказ"), NativeCommandParser.parse("Запиши проверить заказ"))
+        assertEquals(NativeOrganizerCommitmentIntent("HALO", "WATCH", "pasūtījuma izmaiņas"), NativeCommandParser.parse("Uzraugi pasūtījuma izmaiņas"))
+        assertNull(NativeCommandParser.parse("Explain how to delegate to Halo"))
+        assertNull(NativeCommandParser.parse("Capture " + "x".repeat(2001)))
+    }
     @org.junit.Test fun explicitSystemClockRequestsRetainOwnerWhileOrdinaryTimersUseHalo() {
         org.junit.Assert.assertEquals(NativeClockIntent("show_alarms",true),NativeCommandParser.parse("Show system clock alarms"))
         org.junit.Assert.assertEquals(NativeClockIntent("snooze_alarm",true),NativeCommandParser.parse("Snooze Android Clock alarm"))

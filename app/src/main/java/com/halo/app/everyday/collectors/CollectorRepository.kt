@@ -16,6 +16,8 @@ interface CollectorRepository {
     fun observe(): Flow<List<CollectorState>>
     suspend fun states(): List<CollectorState>
     suspend fun state(id: String): CollectorState?
+    /** Authority-only reads avoid decoding retained article/page bodies. */
+    suspend fun source(id: String): CollectorSource? = state(id)?.source
     suspend fun save(source: CollectorSource, expectedVersion: Long?): CollectorSource
     suspend fun remove(id: String, expectedVersion: Long)
     suspend fun recoverInterrupted(now: Instant)

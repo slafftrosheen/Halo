@@ -4781,3 +4781,145 @@ Manage Halo alarms and timers|||Управлять будильниками и �
 Review local calendar|||Проверить локальный календарь|||Pārskatīt lokālo kalendāru|||Sprawdź lokalny kalendarz
 Import reviewed calendar|||Импортировать проверенный календарь|||Importēt pārskatīto kalendāru|||Importuj sprawdzony kalendarz
 Prepare calendar export|||Подготовить экспорт календаря|||Sagatavot kalendāra eksportu|||Przygotuj eksport kalendarza
+Shared|||Совместно|||Kopīgi|||Wspólnie
+Task|||Задача|||Uzdevums|||Zadanie
+Routine|||Сценарий|||Scenārijs|||Rutyna
+Stopwatch|||Секундомер|||Hronometrs|||Stoper
+Planner|||Планировщик|||Plānotājs|||Planer
+Time|||Время|||Laiks|||Czas
+Lap|||Круг|||Aplis|||Okrążenie
+Responsibility|||Ответственность|||Atbildība|||Odpowiedzialność
+Brief|||Обзор|||Pārskats|||Podsumowanie
+Midday|||День|||Dienas vidus|||Południe
+Evening|||Вечер|||Vakars|||Wieczór
+Condition|||Условие|||Nosacījums|||Warunek
+Event|||Событие|||Notikums|||Wydarzenie
+Reminder|||Напоминание|||Atgādinājums|||Przypomnienie
+Date|||Дата|||Datums|||Data
+Add alarm|||Добавить будильник|||Pievienot modinātāju|||Dodaj alarm
+Add capability|||Добавить действие Halo|||Pievienot Halo darbību|||Dodaj działanie Halo
+Add commitment|||Добавить дело|||Pievienot apņemšanos|||Dodaj zobowiązanie
+Add event|||Добавить событие|||Pievienot notikumu|||Dodaj wydarzenie
+Add routine|||Добавить сценарий|||Pievienot scenāriju|||Dodaj rutynę
+Add stopwatch|||Добавить секундомер|||Pievienot hronometru|||Dodaj stoper
+Add timer|||Добавить таймер|||Pievienot taimeri|||Dodaj minutnik
+Alarms and routines|||Будильники и сценарии|||Modinātāji un scenāriji|||Alarmy i rutyny
+Attach related item|||Прикрепить связанный объект|||Pievienot saistītu vienumu|||Dołącz powiązany element
+Battery below threshold|||Заряд ниже порога|||Akumulatora līmenis zem sliekšņa|||Poziom baterii poniżej progu
+Battery percentage|||Заряд в процентах|||Akumulatora uzlādes procenti|||Poziom baterii w procentach
+Brief built from selected local evidence.|||Обзор составлен из выбранных локальных данных.|||Pārskats izveidots no atlasītajiem vietējiem datiem.|||Podsumowanie utworzono z wybranych danych lokalnych.
+Brief sections|||Разделы обзора|||Pārskata sadaļas|||Sekcje podsumowania
+Build a selected brief|||Составить выбранный обзор|||Izveidot atlasīto pārskatu|||Utwórz wybrane podsumowanie
+Cached / stale|||Сохранённые / устаревшие данные|||Kešoti / novecojuši dati|||Dane z pamięci podręcznej / nieaktualne
+Check the date, time zone and event end before promoting this item.|||Перед переносом проверьте дату, часовой пояс и время окончания события.|||Pirms pārvietošanas pārbaudi datumu, laika joslu un notikuma beigas.|||Przed przeniesieniem sprawdź datę, strefę czasową i koniec wydarzenia.
+Choose installed capabilities and review the concrete work plan, or take over.|||Выберите доступные действия и проверьте конкретный план либо возьмите дело на себя.|||Izvēlies pieejamās darbības un pārskati konkrēto plānu vai pārņem darbu.|||Wybierz dostępne działania i przejrzyj konkretny plan albo przejmij zadanie.
+Choose the real actions Halo should perform. Saving alone does not start or schedule them.|||Выберите действия, которые должен выполнить Halo. Сохранение не запускает и не планирует их.|||Izvēlies darbības, kas Halo jāveic. Saglabāšana tās nepalaiž un neieplāno.|||Wybierz działania, które Halo ma wykonać. Samo zapisanie ich nie uruchamia ani nie planuje.
+Choose valid actions and exact selected sources before saving.|||Перед сохранением выберите допустимые действия и точные версии выбранных источников.|||Pirms saglabāšanas izvēlies derīgas darbības un precīzas atlasīto avotu versijas.|||Przed zapisaniem wybierz prawidłowe działania i dokładne wersje wybranych źródeł.
+Commitment saved. Review the plan before enabling Halo work.|||Дело сохранено. Проверьте план перед включением работы Halo.|||Apņemšanās saglabāta. Pārskati plānu, pirms iespējot Halo darbu.|||Zobowiązanie zapisano. Przejrzyj plan przed włączeniem pracy Halo.
+Commitment type|||Тип дела|||Apņemšanās veids|||Typ zobowiązania
+Compare against the selected saved source observation.|||Сравнивать с выбранным сохранённым состоянием источника.|||Salīdzināt ar atlasīto saglabāto avota novērojumu.|||Porównuj z wybraną zapisaną obserwacją źródła.
+Device condition|||Состояние устройства|||Ierīces stāvoklis|||Warunek dotyczący urządzenia
+Device status|||Состояние устройства|||Ierīces statuss|||Stan urządzenia
+Edit responsibility and plan|||Изменить ответственность и план|||Rediģēt atbildību un plānu|||Edytuj odpowiedzialność i plan
+Enable reviewed schedule|||Включить проверенное расписание|||Iespējot pārskatīto grafiku|||Włącz przejrzany harmonogram
+Enter one public HTTPS page address. Halo checks robots policy and retains readable text without following links or page redirects.|||Введите адрес одной общедоступной HTTPS-страницы. Halo проверит правила robots и сохранит читаемый текст, не переходя по ссылкам или перенаправлениям.|||Ievadi vienas publiskas HTTPS lapas adresi. Halo pārbauda robots noteikumus un saglabā lasāmu tekstu, nesekojot saitēm vai lapas pāradresācijām.|||Wpisz adres jednej publicznej strony HTTPS. Halo sprawdza zasady robots i zachowuje czytelny tekst bez przechodzenia po linkach ani przekierowaniach strony.
+Execution was interrupted. Inspect its recorded effects before continuing.|||Выполнение прервано. Перед продолжением проверьте записанные результаты действий.|||Izpilde pārtraukta. Pirms turpināšanas pārbaudi reģistrētos darbību rezultātus.|||Wykonanie przerwano. Przed kontynuacją sprawdź zapisane skutki działań.
+Finish or close the current form before choosing another action.|||Завершите или закройте текущую форму, прежде чем выбрать другое действие.|||Pabeidz vai aizver pašreizējo veidlapu, pirms izvēlies citu darbību.|||Zakończ lub zamknij bieżący formularz przed wybraniem innego działania.
+Free reference and document providers have different coverage. Archived material is not guaranteed current.|||Бесплатные источники справочных данных и документов имеют разный охват. Архивные материалы могут быть неактуальны.|||Bezmaksas uzziņu un dokumentu avotiem ir atšķirīgs pārklājums. Arhīva materiāli var nebūt aktuāli.|||Bezpłatne źródła informacji i dokumentów mają różny zakres. Materiały archiwalne mogą być nieaktualne.
+Halo action|||Действие Halo|||Halo darbība|||Działanie Halo
+Halo and shared work|||Работа Halo и совместные дела|||Halo un kopīgais darbs|||Praca Halo i zadania wspólne
+I completed my part|||Я выполнил свою часть|||Savu daļu esmu pabeidzis|||Moja część jest gotowa
+Inbox item promoted. Its original identity and links are kept.|||Дело перенесено из входящих. Его исходный идентификатор и связи сохранены.|||Vienums pārvietots no iesūtnes. Tā sākotnējais identifikators un saites ir saglabātas.|||Element przeniesiono ze skrzynki. Zachowano jego pierwotną tożsamość i powiązania.
+Internet Archive|||Internet Archive|||Internet Archive|||Internet Archive
+Lap %1$d · %2$s|||Круг %1$d · %2$s|||Aplis %1$d · %2$s|||Okrążenie %1$d · %2$s
+Make shared|||Сделать совместным|||Padarīt kopīgu|||Ustaw jako wspólne
+Manage Organizer work|||Управление работой в органайзере|||Pārvaldīt organizētāja darbu|||Zarządzaj pracą organizera
+Monitor a device condition|||Следить за состоянием устройства|||Uzraudzīt ierīces stāvokli|||Monitoruj warunek dotyczący urządzenia
+Monitor a selected source|||Следить за выбранным источником|||Uzraudzīt atlasīto avotu|||Monitoruj wybrane źródło
+Needs your decision|||Нужно ваше решение|||Vajadzīgs tavs lēmums|||Wymaga Twojej decyzji
+Network available|||Сеть доступна|||Tīkls pieejams|||Sieć dostępna
+No commitments in this section yet.|||В этом разделе пока нет дел.|||Šajā sadaļā vēl nav apņemšanos.|||W tej sekcji nie ma jeszcze zobowiązań.
+No confirmed active schedule is recorded.|||Подтверждённого активного расписания нет.|||Nav reģistrēts apstiprināts aktīvs grafiks.|||Brak potwierdzonego aktywnego harmonogramu.
+No current permitted source observation is available. Waiting for the next reviewed check.|||Нет актуальных данных источника с действующим разрешением. Ожидается следующая проверка по согласованному плану.|||Nav pieejams aktuāls atļauts avota novērojums. Gaida nākamo pārskatīto pārbaudi.|||Brak aktualnej obserwacji źródła z ważnym uprawnieniem. Oczekiwanie na następną zatwierdzoną kontrolę.
+No current source observation is available. Review availability or choose another check.|||Нет актуальных данных источника. Проверьте его доступность или выберите другую проверку.|||Nav pieejams aktuāls avota novērojums. Pārbaudi pieejamību vai izvēlies citu pārbaudi.|||Brak aktualnej obserwacji źródła. Sprawdź dostępność lub wybierz inną kontrolę.
+No matching change in the observed source.|||В проверенном источнике нет изменений, соответствующих условию.|||Novērotajā avotā nav nosacījumam atbilstošu izmaiņu.|||W obserwowanym źródle nie ma zmiany pasującej do warunku.
+No matching retained evidence. This search made no network request.|||Среди сохранённых данных совпадений нет. Поиск не обращался к сети.|||Saglabātajos datos nav atbilstību. Meklēšana neveica tīkla pieprasījumu.|||Brak pasujących zachowanych danych. Wyszukiwanie nie wysłało żądania sieciowego.
+No new condition match was observed. Choose another check or a recurring schedule.|||Нового совпадения с условием нет. Выберите другую проверку или повторяющееся расписание.|||Jauna nosacījuma atbilstība nav novērota. Izvēlies citu pārbaudi vai atkārtotu grafiku.|||Nie zaobserwowano nowego spełnienia warunku. Wybierz inną kontrolę lub harmonogram cykliczny.
+No selected facts are available for this brief.|||Для этого обзора нет выбранных данных.|||Šim pārskatam nav pieejamu atlasīto datu.|||Brak wybranych danych do tego podsumowania.
+Not selected|||Не выбран|||Nav atlasīts|||Niewybrane
+Nothing requiring attention here.|||Здесь нет дел, требующих внимания.|||Šeit nekam nav nepieciešama uzmanība.|||Nic tutaj nie wymaga uwagi.
+Open evidence|||Открыть исходные данные|||Atvērt avota datus|||Otwórz dane źródłowe
+Open execution record|||Открыть запись выполнения|||Atvērt izpildes ierakstu|||Otwórz zapis wykonania
+Open saved automations|||Открыть сохранённые автоматизации|||Atvērt saglabātās automatizācijas|||Otwórz zapisane automatyzacje
+Organizer commitment|||Дело в органайзере|||Organizētāja apņemšanās|||Zobowiązanie w organizerze
+Organizer has a new recorded result. Open it to review.|||В органайзере записан новый результат. Откройте его для просмотра.|||Organizētājā ir jauns reģistrēts rezultāts. Atver to apskatei.|||W organizerze zapisano nowy wynik. Otwórz go, aby go przejrzeć.
+Organizer work needs your decision. Open Organizer to review the recorded result.|||Для дела нужно ваше решение. Откройте органайзер и проверьте записанный результат.|||Darbam vajadzīgs tavs lēmums. Atver organizētāju un pārskati reģistrēto rezultātu.|||Zadanie wymaga Twojej decyzji. Otwórz organizer i przejrzyj zapisany wynik.
+Plan as|||Запланировать как|||Plānot kā|||Zaplanuj jako
+Promote Inbox item|||Перенести дело из входящих|||Pārvietot iesūtnes vienumu|||Przenieś element ze skrzynki
+Promote item|||Перенести дело|||Pārvietot vienumu|||Przenieś element
+Public web page|||Общедоступная веб-страница|||Publiska tīmekļa lapa|||Publiczna strona internetowa
+Read Organizer responsibilities|||Посмотреть ответственность за дела|||Lasīt organizētāja atbildības|||Odczytaj odpowiedzialność za zadania
+Read the current work and execution record before continuing. Do not repeat an uncertain operation.|||Перед продолжением проверьте текущее дело и запись выполнения. Не повторяйте действие с неизвестным результатом.|||Pirms turpināšanas izlasi pašreizējo darbu un izpildes ierakstu. Neatkārto darbību ar nenoteiktu rezultātu.|||Przed kontynuacją sprawdź bieżące zadanie i zapis wykonania. Nie powtarzaj operacji o niepewnym wyniku.
+Recorded result|||Записанный результат|||Reģistrētais rezultāts|||Zapisany wynik
+Refresh before checking in Power|||Обновлять перед проверкой в Power|||Atjaunināt pirms pārbaudes Power režīmā|||Odśwież przed sprawdzeniem w trybie Power
+Refresh selected source|||Обновить выбранный источник|||Atjaunināt atlasīto avotu|||Odśwież wybrane źródło
+Reschedule / edit|||Перенести время / изменить|||Pārplānot / rediģēt|||Zmień termin / edytuj
+Research / Web|||Исследования / Интернет|||Izpēte / Tīmeklis|||Badania / Internet
+Research provider|||Поставщик поиска|||Izpētes nodrošinātājs|||Dostawca wyszukiwania
+Research query|||Поисковый запрос|||Izpētes vaicājums|||Zapytanie badawcze
+Research selected evidence|||Исследовать выбранные данные|||Izpētīt atlasītos datus|||Zbadaj wybrane dane
+Research source saved. Refresh in Power to retrieve current evidence.|||Источник поиска сохранён. Обновите его в Power для получения актуальных данных.|||Izpētes avots saglabāts. Atjaunini Power režīmā, lai iegūtu aktuālus datus.|||Źródło wyszukiwania zapisano. Odśwież je w trybie Power, aby pobrać aktualne dane.
+Restored Halo work must be reviewed before it can run or monitor again.|||После восстановления работу Halo нужно проверить перед новым запуском или наблюдением.|||Atjaunotais Halo darbs jāpārskata, pirms to atkal palaist vai uzraudzīt.|||Przywróconą pracę Halo trzeba przejrzeć przed ponownym uruchomieniem lub monitorowaniem.
+Retained evidence changed or could not be read. Search again after reviewing your selected sources.|||Сохранённые данные изменились или недоступны для чтения. Проверьте выбранные источники и повторите поиск.|||Saglabātie dati ir mainījušies vai nav nolasāmi. Pārskati atlasītos avotus un meklē vēlreiz.|||Zachowane dane zmieniły się lub nie można ich odczytać. Sprawdź wybrane źródła i wyszukaj ponownie.
+Review the blocked automation schedule.|||Проверьте заблокированное расписание автоматизации.|||Pārskati bloķēto automatizācijas grafiku.|||Przejrzyj zablokowany harmonogram automatyzacji.
+Review the execution record before continuing.|||Перед продолжением проверьте запись выполнения.|||Pirms turpināšanas pārskati izpildes ierakstu.|||Przed kontynuacją przejrzyj zapis wykonania.
+Review the prepared result and complete your part, or revise the plan.|||Проверьте подготовленный результат и выполните свою часть либо измените план.|||Pārskati sagatavoto rezultātu un pabeidz savu daļu vai maini plānu.|||Przejrzyj przygotowany wynik i wykonaj swoją część albo zmień plan.
+Review work plan|||Проверить план работы|||Pārskatīt darba plānu|||Przejrzyj plan pracy
+Run reviewed plan now|||Запустить проверенный план сейчас|||Palaist pārskatīto plānu tagad|||Uruchom przejrzany plan teraz
+Save Organizer commitment|||Сохранить дело в органайзере|||Saglabāt organizētāja apņemšanos|||Zapisz zobowiązanie w organizerze
+Save commitment|||Сохранить дело|||Saglabāt apņemšanos|||Zapisz zobowiązanie
+Save research source|||Сохранить источник поиска|||Saglabāt izpētes avotu|||Zapisz źródło wyszukiwania
+Save selected research source|||Сохранить выбранный источник поиска|||Saglabāt atlasīto izpētes avotu|||Zapisz wybrane źródło wyszukiwania
+Search / Research|||Поиск / Исследования|||Meklēšana / Izpēte|||Wyszukiwanie / Badania
+Search retained evidence|||Поиск по сохранённым данным|||Meklēt saglabātajos datos|||Przeszukaj zachowane dane
+Search retained evidence offline. To retrieve more, save an explicit research source and refresh it in Power.|||Ищите по сохранённым данным без сети. Чтобы получить больше, сохраните конкретный источник поиска и обновите его в Power.|||Meklē saglabātajos datos bezsaistē. Lai iegūtu vairāk, saglabā konkrētu izpētes avotu un atjaunini to Power režīmā.|||Przeszukuj zachowane dane offline. Aby pobrać więcej, zapisz konkretne źródło wyszukiwania i odśwież je w trybie Power.
+Set a date|||Указать дату|||Iestatīt datumu|||Ustaw datę
+Set dates and recurrence in the item editor, then review and enable the exact work plan.|||Укажите даты и повторение в редакторе дела, затем проверьте и включите конкретный план работы.|||Vienuma redaktorā iestati datumus un atkārtošanos, tad pārskati un iespējo precīzo darba plānu.|||Ustaw daty i cykliczność w edytorze elementu, a następnie przejrzyj i włącz dokładny plan pracy.
+Since morning|||С утра|||Kopš rīta|||Od rana
+Some evidence is cached or stale.|||Часть данных сохранена ранее или устарела.|||Daļa datu ir kešota vai novecojusi.|||Część danych pochodzi z pamięci podręcznej lub jest nieaktualna.
+Some required capabilities or sources changed. Edit the plan before reviewing it.|||Некоторые необходимые действия или источники изменились. Отредактируйте план перед проверкой.|||Dažas vajadzīgās darbības vai avoti ir mainījušies. Rediģē plānu pirms tā pārskatīšanas.|||Niektóre wymagane działania lub źródła zmieniły się. Edytuj plan przed jego przejrzeniem.
+Source changed|||Источник изменился|||Avots mainījies|||Źródło się zmieniło
+Source contains text|||Источник содержит текст|||Avots satur tekstu|||Źródło zawiera tekst
+Stop Halo work|||Остановить работу Halo|||Apturēt Halo darbu|||Zatrzymaj pracę Halo
+Take over|||Взять на себя|||Pārņemt darbu|||Przejmij zadanie
+The previously observed condition is unchanged; no new match was announced.|||Ранее обнаруженное условие не изменилось; нового уведомления о совпадении нет.|||Iepriekš novērotais nosacījums nav mainījies; par jaunu atbilstību nav paziņots.|||Wcześniej zaobserwowany warunek się nie zmienił; nie ogłoszono nowego spełnienia warunku.
+The reviewed device condition has not matched.|||Проверяемое условие устройства не выполнено.|||Pārskatītais ierīces nosacījums nav izpildīts.|||Przejrzany warunek dotyczący urządzenia nie został spełniony.
+The reviewed device condition matched.|||Проверяемое условие устройства выполнено.|||Pārskatītais ierīces nosacījums ir izpildīts.|||Przejrzany warunek dotyczący urządzenia został spełniony.
+The reviewed source condition matched.|||Проверяемое условие источника выполнено.|||Pārskatītais avota nosacījums ir izpildīts.|||Przejrzany warunek dotyczący źródła został spełniony.
+The saved execution owner changed. Review this work plan before enabling it again.|||Сохранённая привязка выполнения изменилась. Проверьте план перед повторным включением.|||Saglabātā izpildes piesaiste ir mainījusies. Pārskati darba plānu pirms atkārtotas iespējošanas.|||Zapisane powiązanie wykonania zmieniło się. Przejrzyj plan przed ponownym włączeniem.
+The schedule is blocked. Review its permissions and definition.|||Расписание заблокировано. Проверьте его разрешения и настройки.|||Grafiks ir bloķēts. Pārskati tā atļaujas un definīciju.|||Harmonogram jest zablokowany. Sprawdź jego uprawnienia i definicję.
+This action uses retained source observations.|||Это действие использует сохранённые данные источника.|||Šī darbība izmanto saglabātos avota novērojumus.|||To działanie korzysta z zachowanych obserwacji źródła.
+This saved result is withheld because its source access changed. Review sources before reading it.|||Результат скрыт: доступ к его источникам изменился. Проверьте источники перед чтением.|||Saglabātais rezultāts ir paslēpts, jo mainījusies piekļuve tā avotiem. Pirms lasīšanas pārskati avotus.|||Zapisany wynik jest ukryty, ponieważ zmienił się dostęp do jego źródeł. Sprawdź źródła przed odczytaniem.
+Time zone|||Часовой пояс|||Laika josla|||Strefa czasowa
+Unavailable capability|||Действие недоступно|||Darbība nav pieejama|||Niedostępne działanie
+Unfinished work|||Незавершённые дела|||Nepabeigtais darbs|||Niedokończona praca
+Watch / monitor|||Следить / наблюдать|||Sekot / uzraudzīt|||Obserwuj / monitoruj
+What should happen?|||Что должно произойти?|||Kam jānotiek?|||Co ma się wydarzyć?
+Work stopped before a confirmed result. Read the execution record before retrying.|||Работа остановлена без подтверждённого результата. Перед новой попыткой прочитайте запись выполнения.|||Darbs apturēts pirms apstiprināta rezultāta. Pirms atkārtotas mēģināšanas izlasi izpildes ierakstu.|||Pracę zatrzymano przed potwierdzonym wynikiem. Przed kolejną próbą przeczytaj zapis wykonania.
+Work stopped. Review recorded results; an interrupted effect must not be repeated automatically.|||Работа остановлена. Проверьте записанные результаты; прерванное действие нельзя повторять автоматически.|||Darbs apturēts. Pārskati reģistrētos rezultātus; pārtrauktu darbību nedrīkst atkārtot automātiski.|||Pracę zatrzymano. Sprawdź zapisane wyniki; przerwanego działania nie wolno powtarzać automatycznie.
+A background schedule request is recorded. Android may delay execution.|||Запрос фонового расписания записан. Android может задержать выполнение.|||Fona grafika pieprasījums ir reģistrēts. Android var aizkavēt izpildi.|||Zapisano żądanie harmonogramu w tle. Android może opóźnić wykonanie.
+A permitted Power refresh is part of this action.|||Это действие включает разрешённое обновление в Power.|||Šī darbība ietver atļautu atjaunināšanu Power režīmā.|||To działanie obejmuje dozwolone odświeżenie w trybie Power.
+A saved plan is not running work. Execution and delivery are shown from their own records.|||Сохранённый план ещё не означает выполнение. Выполнение и доставка показаны по отдельным записям.|||Saglabāts plāns vēl nenozīmē notiekošu darbu. Izpilde un piegāde tiek rādīta pēc to atsevišķajiem ierakstiem.|||Zapisany plan nie oznacza trwającej pracy. Wykonanie i dostarczenie są pokazywane na podstawie własnych zapisów.
+Capture to Inbox|||Сохранить во входящие|||Saglabāt iesūtnē|||Zapisz w skrzynce
+Delegate to Halo|||Поручить Halo|||Uzticēt Halo|||Przekaż Halo
+Move to Planner|||Перенести в планировщик|||Pārvietot uz plānotāju|||Przenieś do planera
+Open this item to review the result and your next step.|||Откройте дело, чтобы проверить результат и следующий шаг.|||Atver šo vienumu, lai pārskatītu rezultātu un savu nākamo soli.|||Otwórz ten element, aby przejrzeć wynik i następny krok.
+Showing the first 60 matching items. Refine your search to find more.|||Показаны первые 60 совпадений. Уточните поиск, чтобы найти остальные.|||Rādīti pirmie 60 atbilstošie vienumi. Precizē meklēšanu, lai atrastu citus.|||Pokazano pierwszych 60 pasujących elementów. Doprecyzuj wyszukiwanie, aby znaleźć pozostałe.
+Text to watch for|||Искомый текст|||Teksts, ko uzraudzīt|||Tekst do obserwowania
+Change monitoring uses the exact snapshot selected here as its baseline.|||Отслеживание изменений использует выбранный здесь снимок данных как исходное состояние.|||Izmaiņu uzraudzība izmanto tieši šeit atlasīto momentuzņēmumu kā sākotnējo stāvokli.|||Monitorowanie zmian korzysta z dokładnie wybranego tutaj zapisu danych jako stanu początkowego.
+Use the explicit responsibility actions on the item to hand work over.|||Для передачи дела используйте отдельные действия смены ответственности.|||Lai nodotu darbu, izmanto vienuma atbildības maiņas darbības.|||Aby przekazać zadanie, użyj osobnych działań zmiany odpowiedzialności przy elemencie.
+Updated %1$s|||Обновлено %1$s|||Atjaunināts %1$s|||Zaktualizowano %1$s
+Public HTTPS page address|||Адрес общедоступной HTTPS-страницы|||Publiskas HTTPS lapas adrese|||Adres publicznej strony HTTPS
+Topic or search query|||Тема или поисковый запрос|||Tēma vai meklēšanas vaicājums|||Temat lub zapytanie
+Organizer work failed. Open its execution record to review recovery.|||Работа Halo завершилась ошибкой. Откройте запись выполнения для восстановления.|||Halo darbs neizdevās. Atver izpildes ierakstu, lai pārskatītu atkopšanu.|||Praca Halo nie powiodła się. Otwórz zapis wykonania, aby sprawdzić możliwości odzyskania.
+Reviewed work schedules support one date or daily/weekly recurrence with an explicit time zone. Other schedules need revision before enabling.|||План работы поддерживает одну дату или ежедневное/еженедельное повторение с указанным часовым поясом. Другие расписания нужно изменить перед включением.|||Darba grafiki atbalsta vienu datumu vai ikdienas/iknedēļas atkārtošanos ar norādītu laika joslu. Citi grafiki pirms iespējošanas jāmaina.|||Harmonogram pracy obsługuje jeden termin lub cykl dzienny/tygodniowy z jawną strefą czasową. Inne harmonogramy trzeba zmienić przed włączeniem.

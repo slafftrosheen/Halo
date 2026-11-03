@@ -306,7 +306,8 @@ class EverydayToolExecutorTest {
         }
         val descriptors=EverydayToolContracts.definitions.map {HaloToolDescriptors.assistant(it)!!}
         val registry=ToolRegistry(listOf(executor),descriptors)
-        assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("everyday",EverydayToolContracts.names))).isEmpty())
+        // This fixture owns the original executor; the new operation owner has its own registered workflow fixture.
+        assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("everyday-core",EverydayToolContracts.coreDefinitions.map {it.name}.toSet()))).isEmpty())
         assertEquals(ToolOperation.CREATE,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_alarm"})!!.operation)
         assertEquals(ToolOperation.EXPORT,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.operation)
         assertEquals(setOf("objectId"),EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.resultIdFields)

@@ -32,6 +32,25 @@ class EverydayArchiveTest {
     @After fun close() {db.close();app.getSharedPreferences("halo_screen",0).edit().clear().commit()}
     private fun task(id: String,title: String=id,parent: String?=null)=OrganizerRecord(id,OrganizerKind.TASK,title,parentId=parent,createdAt=now)
 
+    @Test fun restoreRetainsWorkFactsButRevokesExecutionAndPausesPortableStopwatches() = runBlocking {
+        val binding = OrganizerExecutionBinding("approved", "organizer:routine", runId = "run", claimedStep = 0, planNonce = "nonce")
+        val saved = organizer.save(task("work").copy(commitment = OrganizerCommitment(CommitmentOwner.HALO, CommitmentPurpose.WATCH,
+            state = HaloWorkState.WAITING, actions = listOf(OrganizerPlannedAction("system.monitor", "{\"condition\":\"CHARGING\"}")),
+            execution = binding, result = OrganizerWorkResult("Real observation", now))), null)
+        val watch = organizer.save(task("watch").copy(commitment = OrganizerCommitment(purpose = CommitmentPurpose.STOPWATCH,
+            stopwatch = StopwatchState(5000).start(now, 100, "original-boot"))), null)
+        val archive = EverydayArchive.snapshot(db)
+        db.withTransaction { EverydayArchive.restore(db, archive, BrainImportMode.REPLACE, emptyMap(), emptyMap()) }
+        val restored = organizer.get(saved.id)!!
+        assertNull(restored.commitment.execution); assertEquals(HaloWorkState.NEEDS_USER, restored.commitment.state)
+        assertEquals(CommitmentCreator.IMPORTED, restored.commitment.createdBy)
+        assertEquals(saved.commitment.actions, restored.commitment.actions)
+        assertEquals("Real observation", restored.commitment.result!!.summary)
+        val paused = organizer.get(watch.id)!!.commitment.stopwatch!!
+        assertNull(paused.startedAt); assertNull(paused.bootId); assertTrue(paused.accumulatedMs >= 5000)
+        assertTrue(restored.version > saved.version)
+    }
+
     @Test fun roundTripPreservesFactsButRevokesLiveDeliveryExternalRefreshAndChildGrants()=runBlocking {
         val record=organizer.save(task("plan"),null)
         val timer=organizer.save(OrganizerRecord("timer",OrganizerKind.TIMER,"Tea",timer=TimerState(600000,600000).start(now,50,"old-boot"),createdAt=now),null)

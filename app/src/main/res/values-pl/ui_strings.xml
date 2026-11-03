@@ -4775,4 +4775,146 @@
     <string name="ui_1f172d9e59c7" formatted="false">"Sprawdź lokalny kalendarz"</string>
     <string name="ui_70793485d58a" formatted="false">"Importuj sprawdzony kalendarz"</string>
     <string name="ui_c1804c4ab7d7" formatted="false">"Przygotuj eksport kalendarza"</string>
+    <string name="ui_e3c4b39d6d50" formatted="false">"Wspólnie"</string>
+    <string name="ui_4bc74b21357c" formatted="false">"Zadanie"</string>
+    <string name="ui_0b5baf309897" formatted="false">"Rutyna"</string>
+    <string name="ui_cb880222ede3" formatted="false">"Stoper"</string>
+    <string name="ui_38581d183b73" formatted="false">"Planer"</string>
+    <string name="ui_33b93476cf59" formatted="false">"Czas"</string>
+    <string name="ui_a2baa08ca9b1" formatted="false">"Okrążenie"</string>
+    <string name="ui_c91217be093a" formatted="false">"Odpowiedzialność"</string>
+    <string name="ui_ac40ae1e8d41" formatted="false">"Podsumowanie"</string>
+    <string name="ui_66c33cf7da99" formatted="false">"Południe"</string>
+    <string name="ui_458c1fed5743" formatted="false">"Wieczór"</string>
+    <string name="ui_39b36d38d6eb" formatted="false">"Warunek"</string>
+    <string name="ui_4e1f49a9c8ae" formatted="false">"Wydarzenie"</string>
+    <string name="ui_31757bbfa17e" formatted="false">"Przypomnienie"</string>
+    <string name="ui_99c40ab40592" formatted="false">"Data"</string>
+    <string name="ui_3315f922986b" formatted="false">"Dodaj alarm"</string>
+    <string name="ui_8feb67afe098" formatted="false">"Dodaj działanie halo"</string>
+    <string name="ui_6e1d9eea1aa0" formatted="false">"Dodaj zobowiązanie"</string>
+    <string name="ui_57d208bc0d04" formatted="false">"Dodaj wydarzenie"</string>
+    <string name="ui_39f824afb752" formatted="false">"Dodaj rutynę"</string>
+    <string name="ui_23bb6ee4e7e6" formatted="false">"Dodaj stoper"</string>
+    <string name="ui_5a6dfa2dc247" formatted="false">"Dodaj minutnik"</string>
+    <string name="ui_d08f910e3e21" formatted="false">"Alarmy i rutyny"</string>
+    <string name="ui_93f389d94ab9" formatted="false">"Dołącz powiązany element"</string>
+    <string name="ui_7ee72053c153" formatted="false">"Poziom baterii poniżej progu"</string>
+    <string name="ui_5274957eb41c" formatted="false">"Poziom baterii w procentach"</string>
+    <string name="ui_788732338601" formatted="false">"Podsumowanie utworzono z wybranych danych lokalnych."</string>
+    <string name="ui_35311fdbd8a6" formatted="false">"Sekcje podsumowania"</string>
+    <string name="ui_5b520e8e4bc8" formatted="false">"Utwórz wybrane podsumowanie"</string>
+    <string name="ui_02c368f840c9" formatted="false">"Dane z pamięci podręcznej / nieaktualne"</string>
+    <string name="ui_24634d97a421" formatted="false">"Przed przeniesieniem sprawdź datę, strefę czasową i koniec wydarzenia."</string>
+    <string name="ui_932d0532ec68" formatted="false">"Wybierz dostępne działania i przejrzyj konkretny plan albo przejmij zadanie."</string>
+    <string name="ui_1b16f3ef2dc2" formatted="false">"Wybierz działania, które halo ma wykonać. Samo zapisanie ich nie uruchamia ani nie planuje."</string>
+    <string name="ui_d5a7771b2c5d" formatted="false">"Przed zapisaniem wybierz prawidłowe działania i dokładne wersje wybranych źródeł."</string>
+    <string name="ui_c6e54a964247" formatted="false">"Zobowiązanie zapisano. Przejrzyj plan przed włączeniem pracy halo."</string>
+    <string name="ui_889855905779" formatted="false">"Typ zobowiązania"</string>
+    <string name="ui_c5856efc2a94" formatted="false">"Porównuj z wybraną zapisaną obserwacją źródła."</string>
+    <string name="ui_19c3ecdb986c" formatted="false">"Warunek dotyczący urządzenia"</string>
+    <string name="ui_f60c408119c7" formatted="false">"Stan urządzenia"</string>
+    <string name="ui_c4b221d18e80" formatted="false">"Edytuj odpowiedzialność i plan"</string>
+    <string name="ui_6d59d89ff294" formatted="false">"Włącz przejrzany harmonogram"</string>
+    <string name="ui_59207641b268" formatted="false">"Wpisz adres jednej publicznej strony HTTPS. halo sprawdza zasady robots i zachowuje czytelny tekst bez przechodzenia po linkach ani przekierowaniach strony."</string>
+    <string name="ui_2d8db7004efc" formatted="false">"Wykonanie przerwano. Przed kontynuacją sprawdź zapisane skutki działań."</string>
+    <string name="ui_568177234209" formatted="false">"Zakończ lub zamknij bieżący formularz przed wybraniem innego działania."</string>
+    <string name="ui_412592124dd3" formatted="false">"Bezpłatne źródła informacji i dokumentów mają różny zakres. Materiały archiwalne mogą być nieaktualne."</string>
+    <string name="ui_5e64c20d6c7e" formatted="false">"Działanie halo"</string>
+    <string name="ui_da9a53b0d566" formatted="false">"Praca halo i zadania wspólne"</string>
+    <string name="ui_d9629bbadc3b" formatted="false">"Moja część jest gotowa"</string>
+    <string name="ui_ac8c21ab5b16" formatted="false">"Element przeniesiono ze skrzynki. Zachowano jego pierwotną tożsamość i powiązania."</string>
+    <string name="ui_e06773bac158" formatted="false">"Internet Archive"</string>
+    <string name="ui_36d0bc43b3ff" formatted="false">"Okrążenie %1$d · %2$s"</string>
+    <string name="ui_045f1e1332d7" formatted="false">"Ustaw jako wspólne"</string>
+    <string name="ui_450b9a6897c1" formatted="false">"Zarządzaj pracą organizera"</string>
+    <string name="ui_f585abd70b6f" formatted="false">"Monitoruj warunek dotyczący urządzenia"</string>
+    <string name="ui_c743ba2ba42a" formatted="false">"Monitoruj wybrane źródło"</string>
+    <string name="ui_ea7159d682d3" formatted="false">"Wymaga Twojej decyzji"</string>
+    <string name="ui_83c8d1f20674" formatted="false">"Sieć dostępna"</string>
+    <string name="ui_24e035ce4128" formatted="false">"W tej sekcji nie ma jeszcze zobowiązań."</string>
+    <string name="ui_cfa40e1d7d47" formatted="false">"Brak potwierdzonego aktywnego harmonogramu."</string>
+    <string name="ui_7fb41dae0b48" formatted="false">"Brak aktualnej obserwacji źródła z ważnym uprawnieniem. Oczekiwanie na następną zatwierdzoną kontrolę."</string>
+    <string name="ui_1a2488d4470e" formatted="false">"Brak aktualnej obserwacji źródła. Sprawdź dostępność lub wybierz inną kontrolę."</string>
+    <string name="ui_79c0868ba00b" formatted="false">"W obserwowanym źródle nie ma zmiany pasującej do warunku."</string>
+    <string name="ui_de88fc7b723e" formatted="false">"Brak pasujących zachowanych danych. Wyszukiwanie nie wysłało żądania sieciowego."</string>
+    <string name="ui_5c0befc65b1d" formatted="false">"Nie zaobserwowano nowego spełnienia warunku. Wybierz inną kontrolę lub harmonogram cykliczny."</string>
+    <string name="ui_117264842ea9" formatted="false">"Brak wybranych danych do tego podsumowania."</string>
+    <string name="ui_df12aeba9bb9" formatted="false">"Niewybrane"</string>
+    <string name="ui_0004ca88b337" formatted="false">"Nic tutaj nie wymaga uwagi."</string>
+    <string name="ui_098c234bb535" formatted="false">"Otwórz dane źródłowe"</string>
+    <string name="ui_0e21394e04b3" formatted="false">"Otwórz zapis wykonania"</string>
+    <string name="ui_a3cd48d39b69" formatted="false">"Otwórz zapisane automatyzacje"</string>
+    <string name="ui_77c95ea4b242" formatted="false">"Zobowiązanie w organizerze"</string>
+    <string name="ui_78a9a1a7d04d" formatted="false">"W organizerze zapisano nowy wynik. Otwórz go, aby go przejrzeć."</string>
+    <string name="ui_18b9c6060ec1" formatted="false">"Zadanie wymaga Twojej decyzji. Otwórz organizer i przejrzyj zapisany wynik."</string>
+    <string name="ui_4702c2971fec" formatted="false">"Zaplanuj jako"</string>
+    <string name="ui_4a8f5dbe154d" formatted="false">"Przenieś element ze skrzynki"</string>
+    <string name="ui_76b701d1c1db" formatted="false">"Przenieś element"</string>
+    <string name="ui_add478e24c0c" formatted="false">"Publiczna strona internetowa"</string>
+    <string name="ui_3ef639da6da9" formatted="false">"Odczytaj odpowiedzialność za zadania"</string>
+    <string name="ui_7356d5bbda8d" formatted="false">"Przed kontynuacją sprawdź bieżące zadanie i zapis wykonania. Nie powtarzaj operacji o niepewnym wyniku."</string>
+    <string name="ui_66a0dfe68bb0" formatted="false">"Zapisany wynik"</string>
+    <string name="ui_fbb9a28a5a05" formatted="false">"Odśwież przed sprawdzeniem w trybie Power"</string>
+    <string name="ui_7edb6e293d0f" formatted="false">"Odśwież wybrane źródło"</string>
+    <string name="ui_9a81cea9de9b" formatted="false">"Zmień termin / edytuj"</string>
+    <string name="ui_eb258bde40e2" formatted="false">"Badania / Internet"</string>
+    <string name="ui_2cf947325f37" formatted="false">"Dostawca wyszukiwania"</string>
+    <string name="ui_8aa08a00cbd1" formatted="false">"Zapytanie badawcze"</string>
+    <string name="ui_709934747161" formatted="false">"Zbadaj wybrane dane"</string>
+    <string name="ui_3d229fa0549c" formatted="false">"Źródło wyszukiwania zapisano. Odśwież je w trybie Power, aby pobrać aktualne dane."</string>
+    <string name="ui_057c954f19b9" formatted="false">"Przywróconą pracę halo trzeba przejrzeć przed ponownym uruchomieniem lub monitorowaniem."</string>
+    <string name="ui_08787f88235c" formatted="false">"Zachowane dane zmieniły się lub nie można ich odczytać. Sprawdź wybrane źródła i wyszukaj ponownie."</string>
+    <string name="ui_7d87e616f1a7" formatted="false">"Przejrzyj zablokowany harmonogram automatyzacji."</string>
+    <string name="ui_ed70d77e2e91" formatted="false">"Przed kontynuacją przejrzyj zapis wykonania."</string>
+    <string name="ui_8dff1369d57e" formatted="false">"Przejrzyj przygotowany wynik i wykonaj swoją część albo zmień plan."</string>
+    <string name="ui_761adbf85662" formatted="false">"Przejrzyj plan pracy"</string>
+    <string name="ui_5f56d1af462a" formatted="false">"Uruchom przejrzany plan teraz"</string>
+    <string name="ui_bde0ab43b690" formatted="false">"Zapisz zobowiązanie w organizerze"</string>
+    <string name="ui_e8fbcd79a9ab" formatted="false">"Zapisz zobowiązanie"</string>
+    <string name="ui_efced7f847a1" formatted="false">"Zapisz źródło wyszukiwania"</string>
+    <string name="ui_53d5b5001397" formatted="false">"Zapisz wybrane źródło wyszukiwania"</string>
+    <string name="ui_3e685c7eaf07" formatted="false">"Wyszukiwanie / Badania"</string>
+    <string name="ui_a47b38a6df79" formatted="false">"Przeszukaj zachowane dane"</string>
+    <string name="ui_c50b62c7e5f1" formatted="false">"Przeszukuj zachowane dane offline. Aby pobrać więcej, zapisz konkretne źródło wyszukiwania i odśwież je w trybie Power."</string>
+    <string name="ui_bb7e1db3bcdb" formatted="false">"Ustaw datę"</string>
+    <string name="ui_c546bf7de911" formatted="false">"Ustaw daty i cykliczność w edytorze elementu, a następnie przejrzyj i włącz dokładny plan pracy."</string>
+    <string name="ui_89a466565800" formatted="false">"Od rana"</string>
+    <string name="ui_cd237fb5656f" formatted="false">"Część danych pochodzi z pamięci podręcznej lub jest nieaktualna."</string>
+    <string name="ui_eb142800f1b3" formatted="false">"Niektóre wymagane działania lub źródła zmieniły się. Edytuj plan przed jego przejrzeniem."</string>
+    <string name="ui_1ff76c54d10c" formatted="false">"Źródło się zmieniło"</string>
+    <string name="ui_f134e03c22bb" formatted="false">"Źródło zawiera tekst"</string>
+    <string name="ui_8f24276f72af" formatted="false">"Zatrzymaj pracę halo"</string>
+    <string name="ui_66abfef02cd8" formatted="false">"Przejmij zadanie"</string>
+    <string name="ui_377d98036acd" formatted="false">"Wcześniej zaobserwowany warunek się nie zmienił; nie ogłoszono nowego spełnienia warunku."</string>
+    <string name="ui_634c43e5e2f7" formatted="false">"Przejrzany warunek dotyczący urządzenia nie został spełniony."</string>
+    <string name="ui_dcbd09a9a490" formatted="false">"Przejrzany warunek dotyczący urządzenia został spełniony."</string>
+    <string name="ui_bee388246e3e" formatted="false">"Przejrzany warunek dotyczący źródła został spełniony."</string>
+    <string name="ui_ced015d92d9b" formatted="false">"Zapisane powiązanie wykonania zmieniło się. Przejrzyj plan przed ponownym włączeniem."</string>
+    <string name="ui_c3e8e0326f9b" formatted="false">"Harmonogram jest zablokowany. Sprawdź jego uprawnienia i definicję."</string>
+    <string name="ui_f30e53dbcc0c" formatted="false">"To działanie korzysta z zachowanych obserwacji źródła."</string>
+    <string name="ui_955cac23c6ac" formatted="false">"Zapisany wynik jest ukryty, ponieważ zmienił się dostęp do jego źródeł. Sprawdź źródła przed odczytaniem."</string>
+    <string name="ui_b9fe1464783e" formatted="false">"Strefa czasowa"</string>
+    <string name="ui_de9e254b369f" formatted="false">"Niedostępne działanie"</string>
+    <string name="ui_82bd4ef32c12" formatted="false">"Niedokończona praca"</string>
+    <string name="ui_23d4c868f072" formatted="false">"Obserwuj / monitoruj"</string>
+    <string name="ui_cfb17824d3ee" formatted="false">"Co ma się wydarzyć?"</string>
+    <string name="ui_ee1aad6ffbbc" formatted="false">"Pracę zatrzymano przed potwierdzonym wynikiem. Przed kolejną próbą przeczytaj zapis wykonania."</string>
+    <string name="ui_e9def07b2a90" formatted="false">"Pracę zatrzymano. Sprawdź zapisane wyniki; przerwanego działania nie wolno powtarzać automatycznie."</string>
+    <string name="ui_c138a635dbfd" formatted="false">"Zapisano żądanie harmonogramu w tle. Android może opóźnić wykonanie."</string>
+    <string name="ui_4fca5ccc2898" formatted="false">"To działanie obejmuje dozwolone odświeżenie w trybie Power."</string>
+    <string name="ui_3851db1e602c" formatted="false">"Zapisany plan nie oznacza trwającej pracy. Wykonanie i dostarczenie są pokazywane na podstawie własnych zapisów."</string>
+    <string name="ui_bacc8cb5a046" formatted="false">"Zapisz w skrzynce"</string>
+    <string name="ui_687c8233ac63" formatted="false">"Przekaż halo"</string>
+    <string name="ui_6c399ac7d23a" formatted="false">"Przenieś do planera"</string>
+    <string name="ui_64584f5efaa0" formatted="false">"Otwórz ten element, aby przejrzeć wynik i następny krok."</string>
+    <string name="ui_761cc30c337c" formatted="false">"Pokazano pierwszych 60 pasujących elementów. Doprecyzuj wyszukiwanie, aby znaleźć pozostałe."</string>
+    <string name="ui_ad2f7fffee1c" formatted="false">"Tekst do obserwowania"</string>
+    <string name="ui_44844fcd3ab6" formatted="false">"Monitorowanie zmian korzysta z dokładnie wybranego tutaj zapisu danych jako stanu początkowego."</string>
+    <string name="ui_a16e721b7c9d" formatted="false">"Aby przekazać zadanie, użyj osobnych działań zmiany odpowiedzialności przy elemencie."</string>
+    <string name="ui_756294f2389d" formatted="false">"Zaktualizowano %1$s"</string>
+    <string name="ui_ad1c84cf54c1" formatted="false">"Adres publicznej strony HTTPS"</string>
+    <string name="ui_953e3efbb3ce" formatted="false">"Temat lub zapytanie"</string>
+    <string name="ui_24736fea728f" formatted="false">"Praca halo nie powiodła się. Otwórz zapis wykonania, aby sprawdzić możliwości odzyskania."</string>
+    <string name="ui_bcdcf704c3a5" formatted="false">"Harmonogram pracy obsługuje jeden termin lub cykl dzienny/tygodniowy z jawną strefą czasową. Inne harmonogramy trzeba zmienić przed włączeniem."</string>
 </resources>

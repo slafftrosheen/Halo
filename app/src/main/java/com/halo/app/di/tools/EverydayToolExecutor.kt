@@ -45,7 +45,7 @@ class EverydayToolExecutor(
     private val ready: suspend ()->Unit = {},
     private val readState: (suspend ()->Any)? = null,
 ) : ToolExecutor {
-    override fun definitions()=EverydayToolContracts.definitions
+    override fun definitions()=EverydayToolContracts.coreDefinitions
     override suspend fun execute(toolCall: ToolCall)=execute(toolCall,ToolExecutionContext())
     override suspend fun execute(toolCall: ToolCall,context: ToolExecutionContext): ToolExecutionResult = withContext(Dispatchers.IO) {
         var mutationStarted=false
@@ -131,7 +131,7 @@ class EverydayToolExecutor(
                 val value=record(id(),child)
                 val overrides=organizer.repository.overrides(value.id)
                 val disclosed=if(child) value.copy(links=emptyList(),parentId=value.parentId?.takeIf {it in briefs.settings().childRecordIds}) else value
-                JSONObject().put("id",value.id).put("version",value.version).put("record",JSONObject(OrganizerCodec.encode(disclosed)))
+                JSONObject().put("id",value.id).put("version",value.version).put("record",JSONObject(OrganizerCodec.encode(disclosed)).apply { remove("commitment") })
                     .put("overrides",JSONArray(overrides.take(100).map { JSONObject().put("originalStart",it.originalStart.toString()).put("disposition",it.disposition.name)
                         .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString()) }))
                     .put("omittedOverrides",(overrides.size-100).coerceAtLeast(0))
@@ -299,7 +299,7 @@ class EverydayToolExecutor(
                     p.optionalString("publisher") ?: old?.publisher ?: "User-selected source",kind,p.optionalString("category")?.let(SourceCategory::valueOf) ?: old?.category ?: SourceCategory.CUSTOM,
                     p.optionalString("language") ?: old?.language ?: "en",endpoint,old?.attributionUrl,p["selected"] as? Boolean ?: old?.selected ?: false,
                     p["enabled"] as? Boolean ?: old?.enabled ?: true,p["muted"] as? Boolean ?: old?.muted ?: false,p.optionalLong("refreshMinutes")?.toInt() ?: old?.refreshMinutes ?: 60,
-                    place,p["childApproved"] as? Boolean ?: old?.childApproved ?: false,old?.version ?: 1)
+                    place,p["childApproved"] as? Boolean ?: old?.childApproved ?: false,old?.version ?: 1,old?.research)
                 val saved=sources.save(next,old?.version)
                 sourceSummary(requireNotNull(sources.state(saved.id))).put("saved",true).put("fetched",false)
             }
@@ -334,7 +334,7 @@ class EverydayToolExecutor(
                 val next=old.copy(proactive=p["proactive"] as? Boolean ?: old.proactive,morning=at("morning",old.morning),evening=at("evening",old.evening),
                     quietEnabled=p["quietEnabled"] as? Boolean ?: old.quietEnabled,quietStart=at("quietStart",old.quietStart),quietEnd=at("quietEnd",old.quietEnd),
                     headlineLimit=p.optionalLong("headlineLimit")?.toInt() ?: old.headlineLimit,taskLimit=p.optionalLong("taskLimit")?.toInt() ?: old.taskLimit,
-                    pinnedRecordIds=ids("pinnedRecordIds",old.pinnedRecordIds),childRecordIds=ids("childRecordIds",old.childRecordIds))
+                    pinnedRecordIds=ids("pinnedRecordIds",old.pinnedRecordIds),childRecordIds=ids("childRecordIds",old.childRecordIds), sections = if ("sections" in p) (p["sections"] as List<*>).map { BriefSection.valueOf(it as String) }.toSet() else old.sections)
                 require((next.pinnedRecordIds+next.childRecordIds).all {organizer.repository.get(it)?.deletedAt==null && organizer.repository.get(it)!=null})
                 JSONObject().put("settings",JSONObject(BriefCodec.encode(briefs.saveSettings(next,old.version)))).put("saved",true)
             }
@@ -396,6 +396,7 @@ class EverydayToolExecutor(
         .put("retrievedAt",s.snapshot?.retrievedAt?.toString()).put("expiresAt",s.snapshot?.expiresAt?.toString()).put("attempt",s.attempt.state.name)
         .put("attemptedAt",s.attempt.at?.toString()).put("nextAllowedAt",s.attempt.nextAllowedAt?.toString()).put("stale",s.snapshot?.stale(clock.instant(),s.source.external,power()) ?: true)
         .put("mode",if(power()) "Power" else "Local").put("cached",s.snapshot!=null)
+        .put("researchQuery",s.source.research?.query).put("researchProvider",s.source.research?.providerId)
     private fun briefSummary(b: EverydayBrief)=JSONObject().put("id",b.id).put("period",b.period.name).put("audience",b.audience.name).put("date",b.date.toString()).put("zoneId",b.zoneId).put("generatedAt",b.generatedAt.toString())
     private fun brief(b: EverydayBrief)=briefSummary(b).put("facts",JSONArray(b.facts.take(30).map {f -> JSONObject().put("id",f.id).put("kind",f.kind.name).put("title",f.title.take(200)).put("detail",f.detail.take(400)).put("sourceId",f.sourceId).put("revision",f.revision).put("at",f.at?.toString()).put("url",f.externalUrl)}))
         .put("sources",JSONArray(b.sources.map {s -> JSONObject().put("id",s.id).put("version",s.version).put("publisher",s.publisher).put("retrievedAt",s.retrievedAt?.toString()).put("expiresAt",s.expiresAt?.toString()).put("attempt",s.attempt.name)}))

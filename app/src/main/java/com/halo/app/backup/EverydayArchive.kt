@@ -98,8 +98,15 @@ internal object EverydayArchive {
             val version=nextVersion(r.version,prior?.version ?: 0,oldVersion)
             recordVersions[r.id]=version
             val timer=r.timer?.let {it.copy(remainingMs=it.remaining(clockNow(),0,"portable-restore"),startedAt=null,elapsedStartMs=null,bootId=null)}
+            val work = r.commitment.copy(execution = null,
+                createdBy = CommitmentCreator.IMPORTED,
+                state = if (r.commitment.owner == CommitmentOwner.ME) r.commitment.state else HaloWorkState.NEEDS_USER,
+                nextHumanAction = if (r.commitment.owner == CommitmentOwner.ME) r.commitment.nextHumanAction else "Restored Halo work must be reviewed before it can run or monitor again.",
+                sources = r.commitment.sources.map { it.copy(id = sourceId(it.id)) },
+                result = r.commitment.result?.let { result -> result.copy(sourceRefs = result.sourceRefs.map { it.copy(id = sourceId(it.id)) }) },
+                stopwatch = r.commitment.stopwatch?.pause(clockNow(), 0, "portable-restore"))
             r.copy(id=recordId(r.id),version=version,parentId=r.parentId?.let(::recordId),links=r.links.map {it.copy(objectId=if(it.objectId.startsWith("organizer:")) "organizer:"+recordId(it.objectId.removePrefix("organizer:")) else workspaceIds[it.objectId] ?: it.objectId)},timer=timer,status=if(timer?.remainingMs==0L && r.status==OrganizerStatus.ACTIVE) OrganizerStatus.COMPLETED else r.status,
-                calendarUid=if("everyday:ORGANIZER:${r.id}" in duplicate) null else r.calendarUid)
+                calendarUid=if("everyday:ORGANIZER:${r.id}" in duplicate) null else r.calendarUid, commitment = work)
         }
         incoming.forEach {r ->
             val entity=OrganizerCodec.entity(r)

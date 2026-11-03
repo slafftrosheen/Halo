@@ -4775,4 +4775,146 @@
     <string name="ui_1f172d9e59c7" formatted="false">"Pārskatīt lokālo kalendāru"</string>
     <string name="ui_70793485d58a" formatted="false">"Importēt pārskatīto kalendāru"</string>
     <string name="ui_c1804c4ab7d7" formatted="false">"Sagatavot kalendāra eksportu"</string>
+    <string name="ui_e3c4b39d6d50" formatted="false">"Kopīgi"</string>
+    <string name="ui_4bc74b21357c" formatted="false">"Uzdevums"</string>
+    <string name="ui_0b5baf309897" formatted="false">"Scenārijs"</string>
+    <string name="ui_cb880222ede3" formatted="false">"Hronometrs"</string>
+    <string name="ui_38581d183b73" formatted="false">"Plānotājs"</string>
+    <string name="ui_33b93476cf59" formatted="false">"Laiks"</string>
+    <string name="ui_a2baa08ca9b1" formatted="false">"Aplis"</string>
+    <string name="ui_c91217be093a" formatted="false">"Atbildība"</string>
+    <string name="ui_ac40ae1e8d41" formatted="false">"Pārskats"</string>
+    <string name="ui_66c33cf7da99" formatted="false">"Dienas vidus"</string>
+    <string name="ui_458c1fed5743" formatted="false">"Vakars"</string>
+    <string name="ui_39b36d38d6eb" formatted="false">"Nosacījums"</string>
+    <string name="ui_4e1f49a9c8ae" formatted="false">"Notikums"</string>
+    <string name="ui_31757bbfa17e" formatted="false">"Atgādinājums"</string>
+    <string name="ui_99c40ab40592" formatted="false">"Datums"</string>
+    <string name="ui_3315f922986b" formatted="false">"Pievienot modinātāju"</string>
+    <string name="ui_8feb67afe098" formatted="false">"Pievienot halo darbību"</string>
+    <string name="ui_6e1d9eea1aa0" formatted="false">"Pievienot apņemšanos"</string>
+    <string name="ui_57d208bc0d04" formatted="false">"Pievienot notikumu"</string>
+    <string name="ui_39f824afb752" formatted="false">"Pievienot scenāriju"</string>
+    <string name="ui_23bb6ee4e7e6" formatted="false">"Pievienot hronometru"</string>
+    <string name="ui_5a6dfa2dc247" formatted="false">"Pievienot taimeri"</string>
+    <string name="ui_d08f910e3e21" formatted="false">"Modinātāji un scenāriji"</string>
+    <string name="ui_93f389d94ab9" formatted="false">"Pievienot saistītu vienumu"</string>
+    <string name="ui_7ee72053c153" formatted="false">"Akumulatora līmenis zem sliekšņa"</string>
+    <string name="ui_5274957eb41c" formatted="false">"Akumulatora uzlādes procenti"</string>
+    <string name="ui_788732338601" formatted="false">"Pārskats izveidots no atlasītajiem vietējiem datiem."</string>
+    <string name="ui_35311fdbd8a6" formatted="false">"Pārskata sadaļas"</string>
+    <string name="ui_5b520e8e4bc8" formatted="false">"Izveidot atlasīto pārskatu"</string>
+    <string name="ui_02c368f840c9" formatted="false">"Kešoti / novecojuši dati"</string>
+    <string name="ui_24634d97a421" formatted="false">"Pirms pārvietošanas pārbaudi datumu, laika joslu un notikuma beigas."</string>
+    <string name="ui_932d0532ec68" formatted="false">"Izvēlies pieejamās darbības un pārskati konkrēto plānu vai pārņem darbu."</string>
+    <string name="ui_1b16f3ef2dc2" formatted="false">"Izvēlies darbības, kas halo jāveic. Saglabāšana tās nepalaiž un neieplāno."</string>
+    <string name="ui_d5a7771b2c5d" formatted="false">"Pirms saglabāšanas izvēlies derīgas darbības un precīzas atlasīto avotu versijas."</string>
+    <string name="ui_c6e54a964247" formatted="false">"Apņemšanās saglabāta. Pārskati plānu, pirms iespējot halo darbu."</string>
+    <string name="ui_889855905779" formatted="false">"Apņemšanās veids"</string>
+    <string name="ui_c5856efc2a94" formatted="false">"Salīdzināt ar atlasīto saglabāto avota novērojumu."</string>
+    <string name="ui_19c3ecdb986c" formatted="false">"Ierīces stāvoklis"</string>
+    <string name="ui_f60c408119c7" formatted="false">"Ierīces statuss"</string>
+    <string name="ui_c4b221d18e80" formatted="false">"Rediģēt atbildību un plānu"</string>
+    <string name="ui_6d59d89ff294" formatted="false">"Iespējot pārskatīto grafiku"</string>
+    <string name="ui_59207641b268" formatted="false">"Ievadi vienas publiskas HTTPS lapas adresi. halo pārbauda robots noteikumus un saglabā lasāmu tekstu, nesekojot saitēm vai lapas pāradresācijām."</string>
+    <string name="ui_2d8db7004efc" formatted="false">"Izpilde pārtraukta. Pirms turpināšanas pārbaudi reģistrētos darbību rezultātus."</string>
+    <string name="ui_568177234209" formatted="false">"Pabeidz vai aizver pašreizējo veidlapu, pirms izvēlies citu darbību."</string>
+    <string name="ui_412592124dd3" formatted="false">"Bezmaksas uzziņu un dokumentu avotiem ir atšķirīgs pārklājums. Arhīva materiāli var nebūt aktuāli."</string>
+    <string name="ui_5e64c20d6c7e" formatted="false">"halo darbība"</string>
+    <string name="ui_da9a53b0d566" formatted="false">"halo un kopīgais darbs"</string>
+    <string name="ui_d9629bbadc3b" formatted="false">"Savu daļu esmu pabeidzis"</string>
+    <string name="ui_ac8c21ab5b16" formatted="false">"Vienums pārvietots no iesūtnes. Tā sākotnējais identifikators un saites ir saglabātas."</string>
+    <string name="ui_e06773bac158" formatted="false">"Internet Archive"</string>
+    <string name="ui_36d0bc43b3ff" formatted="false">"Aplis %1$d · %2$s"</string>
+    <string name="ui_045f1e1332d7" formatted="false">"Padarīt kopīgu"</string>
+    <string name="ui_450b9a6897c1" formatted="false">"Pārvaldīt organizētāja darbu"</string>
+    <string name="ui_f585abd70b6f" formatted="false">"Uzraudzīt ierīces stāvokli"</string>
+    <string name="ui_c743ba2ba42a" formatted="false">"Uzraudzīt atlasīto avotu"</string>
+    <string name="ui_ea7159d682d3" formatted="false">"Vajadzīgs tavs lēmums"</string>
+    <string name="ui_83c8d1f20674" formatted="false">"Tīkls pieejams"</string>
+    <string name="ui_24e035ce4128" formatted="false">"Šajā sadaļā vēl nav apņemšanos."</string>
+    <string name="ui_cfa40e1d7d47" formatted="false">"Nav reģistrēts apstiprināts aktīvs grafiks."</string>
+    <string name="ui_7fb41dae0b48" formatted="false">"Nav pieejams aktuāls atļauts avota novērojums. Gaida nākamo pārskatīto pārbaudi."</string>
+    <string name="ui_1a2488d4470e" formatted="false">"Nav pieejams aktuāls avota novērojums. Pārbaudi pieejamību vai izvēlies citu pārbaudi."</string>
+    <string name="ui_79c0868ba00b" formatted="false">"Novērotajā avotā nav nosacījumam atbilstošu izmaiņu."</string>
+    <string name="ui_de88fc7b723e" formatted="false">"Saglabātajos datos nav atbilstību. Meklēšana neveica tīkla pieprasījumu."</string>
+    <string name="ui_5c0befc65b1d" formatted="false">"Jauna nosacījuma atbilstība nav novērota. Izvēlies citu pārbaudi vai atkārtotu grafiku."</string>
+    <string name="ui_117264842ea9" formatted="false">"Šim pārskatam nav pieejamu atlasīto datu."</string>
+    <string name="ui_df12aeba9bb9" formatted="false">"Nav atlasīts"</string>
+    <string name="ui_0004ca88b337" formatted="false">"Šeit nekam nav nepieciešama uzmanība."</string>
+    <string name="ui_098c234bb535" formatted="false">"Atvērt avota datus"</string>
+    <string name="ui_0e21394e04b3" formatted="false">"Atvērt izpildes ierakstu"</string>
+    <string name="ui_a3cd48d39b69" formatted="false">"Atvērt saglabātās automatizācijas"</string>
+    <string name="ui_77c95ea4b242" formatted="false">"Organizētāja apņemšanās"</string>
+    <string name="ui_78a9a1a7d04d" formatted="false">"Organizētājā ir jauns reģistrēts rezultāts. Atver to apskatei."</string>
+    <string name="ui_18b9c6060ec1" formatted="false">"Darbam vajadzīgs tavs lēmums. Atver organizētāju un pārskati reģistrēto rezultātu."</string>
+    <string name="ui_4702c2971fec" formatted="false">"Plānot kā"</string>
+    <string name="ui_4a8f5dbe154d" formatted="false">"Pārvietot iesūtnes vienumu"</string>
+    <string name="ui_76b701d1c1db" formatted="false">"Pārvietot vienumu"</string>
+    <string name="ui_add478e24c0c" formatted="false">"Publiska tīmekļa lapa"</string>
+    <string name="ui_3ef639da6da9" formatted="false">"Lasīt organizētāja atbildības"</string>
+    <string name="ui_7356d5bbda8d" formatted="false">"Pirms turpināšanas izlasi pašreizējo darbu un izpildes ierakstu. Neatkārto darbību ar nenoteiktu rezultātu."</string>
+    <string name="ui_66a0dfe68bb0" formatted="false">"Reģistrētais rezultāts"</string>
+    <string name="ui_fbb9a28a5a05" formatted="false">"Atjaunināt pirms pārbaudes Power režīmā"</string>
+    <string name="ui_7edb6e293d0f" formatted="false">"Atjaunināt atlasīto avotu"</string>
+    <string name="ui_9a81cea9de9b" formatted="false">"Pārplānot / rediģēt"</string>
+    <string name="ui_eb258bde40e2" formatted="false">"Izpēte / Tīmeklis"</string>
+    <string name="ui_2cf947325f37" formatted="false">"Izpētes nodrošinātājs"</string>
+    <string name="ui_8aa08a00cbd1" formatted="false">"Izpētes vaicājums"</string>
+    <string name="ui_709934747161" formatted="false">"Izpētīt atlasītos datus"</string>
+    <string name="ui_3d229fa0549c" formatted="false">"Izpētes avots saglabāts. Atjaunini Power režīmā, lai iegūtu aktuālus datus."</string>
+    <string name="ui_057c954f19b9" formatted="false">"Atjaunotais halo darbs jāpārskata, pirms to atkal palaist vai uzraudzīt."</string>
+    <string name="ui_08787f88235c" formatted="false">"Saglabātie dati ir mainījušies vai nav nolasāmi. Pārskati atlasītos avotus un meklē vēlreiz."</string>
+    <string name="ui_7d87e616f1a7" formatted="false">"Pārskati bloķēto automatizācijas grafiku."</string>
+    <string name="ui_ed70d77e2e91" formatted="false">"Pirms turpināšanas pārskati izpildes ierakstu."</string>
+    <string name="ui_8dff1369d57e" formatted="false">"Pārskati sagatavoto rezultātu un pabeidz savu daļu vai maini plānu."</string>
+    <string name="ui_761adbf85662" formatted="false">"Pārskatīt darba plānu"</string>
+    <string name="ui_5f56d1af462a" formatted="false">"Palaist pārskatīto plānu tagad"</string>
+    <string name="ui_bde0ab43b690" formatted="false">"Saglabāt organizētāja apņemšanos"</string>
+    <string name="ui_e8fbcd79a9ab" formatted="false">"Saglabāt apņemšanos"</string>
+    <string name="ui_efced7f847a1" formatted="false">"Saglabāt izpētes avotu"</string>
+    <string name="ui_53d5b5001397" formatted="false">"Saglabāt atlasīto izpētes avotu"</string>
+    <string name="ui_3e685c7eaf07" formatted="false">"Meklēšana / Izpēte"</string>
+    <string name="ui_a47b38a6df79" formatted="false">"Meklēt saglabātajos datos"</string>
+    <string name="ui_c50b62c7e5f1" formatted="false">"Meklē saglabātajos datos bezsaistē. Lai iegūtu vairāk, saglabā konkrētu izpētes avotu un atjaunini to Power režīmā."</string>
+    <string name="ui_bb7e1db3bcdb" formatted="false">"Iestatīt datumu"</string>
+    <string name="ui_c546bf7de911" formatted="false">"Vienuma redaktorā iestati datumus un atkārtošanos, tad pārskati un iespējo precīzo darba plānu."</string>
+    <string name="ui_89a466565800" formatted="false">"Kopš rīta"</string>
+    <string name="ui_cd237fb5656f" formatted="false">"Daļa datu ir kešota vai novecojusi."</string>
+    <string name="ui_eb142800f1b3" formatted="false">"Dažas vajadzīgās darbības vai avoti ir mainījušies. Rediģē plānu pirms tā pārskatīšanas."</string>
+    <string name="ui_1ff76c54d10c" formatted="false">"Avots mainījies"</string>
+    <string name="ui_f134e03c22bb" formatted="false">"Avots satur tekstu"</string>
+    <string name="ui_8f24276f72af" formatted="false">"Apturēt halo darbu"</string>
+    <string name="ui_66abfef02cd8" formatted="false">"Pārņemt darbu"</string>
+    <string name="ui_377d98036acd" formatted="false">"Iepriekš novērotais nosacījums nav mainījies; par jaunu atbilstību nav paziņots."</string>
+    <string name="ui_634c43e5e2f7" formatted="false">"Pārskatītais ierīces nosacījums nav izpildīts."</string>
+    <string name="ui_dcbd09a9a490" formatted="false">"Pārskatītais ierīces nosacījums ir izpildīts."</string>
+    <string name="ui_bee388246e3e" formatted="false">"Pārskatītais avota nosacījums ir izpildīts."</string>
+    <string name="ui_ced015d92d9b" formatted="false">"Saglabātā izpildes piesaiste ir mainījusies. Pārskati darba plānu pirms atkārtotas iespējošanas."</string>
+    <string name="ui_c3e8e0326f9b" formatted="false">"Grafiks ir bloķēts. Pārskati tā atļaujas un definīciju."</string>
+    <string name="ui_f30e53dbcc0c" formatted="false">"Šī darbība izmanto saglabātos avota novērojumus."</string>
+    <string name="ui_955cac23c6ac" formatted="false">"Saglabātais rezultāts ir paslēpts, jo mainījusies piekļuve tā avotiem. Pirms lasīšanas pārskati avotus."</string>
+    <string name="ui_b9fe1464783e" formatted="false">"Laika josla"</string>
+    <string name="ui_de9e254b369f" formatted="false">"Darbība nav pieejama"</string>
+    <string name="ui_82bd4ef32c12" formatted="false">"Nepabeigtais darbs"</string>
+    <string name="ui_23d4c868f072" formatted="false">"Sekot / uzraudzīt"</string>
+    <string name="ui_cfb17824d3ee" formatted="false">"Kam jānotiek?"</string>
+    <string name="ui_ee1aad6ffbbc" formatted="false">"Darbs apturēts pirms apstiprināta rezultāta. Pirms atkārtotas mēģināšanas izlasi izpildes ierakstu."</string>
+    <string name="ui_e9def07b2a90" formatted="false">"Darbs apturēts. Pārskati reģistrētos rezultātus; pārtrauktu darbību nedrīkst atkārtot automātiski."</string>
+    <string name="ui_c138a635dbfd" formatted="false">"Fona grafika pieprasījums ir reģistrēts. Android var aizkavēt izpildi."</string>
+    <string name="ui_4fca5ccc2898" formatted="false">"Šī darbība ietver atļautu atjaunināšanu Power režīmā."</string>
+    <string name="ui_3851db1e602c" formatted="false">"Saglabāts plāns vēl nenozīmē notiekošu darbu. Izpilde un piegāde tiek rādīta pēc to atsevišķajiem ierakstiem."</string>
+    <string name="ui_bacc8cb5a046" formatted="false">"Saglabāt iesūtnē"</string>
+    <string name="ui_687c8233ac63" formatted="false">"Uzticēt halo"</string>
+    <string name="ui_6c399ac7d23a" formatted="false">"Pārvietot uz plānotāju"</string>
+    <string name="ui_64584f5efaa0" formatted="false">"Atver šo vienumu, lai pārskatītu rezultātu un savu nākamo soli."</string>
+    <string name="ui_761cc30c337c" formatted="false">"Rādīti pirmie 60 atbilstošie vienumi. Precizē meklēšanu, lai atrastu citus."</string>
+    <string name="ui_ad2f7fffee1c" formatted="false">"Teksts, ko uzraudzīt"</string>
+    <string name="ui_44844fcd3ab6" formatted="false">"Izmaiņu uzraudzība izmanto tieši šeit atlasīto momentuzņēmumu kā sākotnējo stāvokli."</string>
+    <string name="ui_a16e721b7c9d" formatted="false">"Lai nodotu darbu, izmanto vienuma atbildības maiņas darbības."</string>
+    <string name="ui_756294f2389d" formatted="false">"Atjaunināts %1$s"</string>
+    <string name="ui_ad1c84cf54c1" formatted="false">"Publiskas HTTPS lapas adrese"</string>
+    <string name="ui_953e3efbb3ce" formatted="false">"Tēma vai meklēšanas vaicājums"</string>
+    <string name="ui_24736fea728f" formatted="false">"halo darbs neizdevās. Atver izpildes ierakstu, lai pārskatītu atkopšanu."</string>
+    <string name="ui_bcdcf704c3a5" formatted="false">"Darba grafiki atbalsta vienu datumu vai ikdienas/iknedēļas atkārtošanos ar norādītu laika joslu. Citi grafiki pirms iespējošanas jāmaina."</string>
 </resources>

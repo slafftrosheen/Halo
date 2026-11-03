@@ -13,6 +13,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
     override fun observe() = dao.observe().map { database.withTransaction { dao.sources().map { state(it) } } }
     override suspend fun states() = database.withTransaction { dao.sources().map { state(it) } }
     override suspend fun state(id: String) = database.withTransaction { dao.source(id)?.let { state(it) } }
+    override suspend fun source(id: String) = dao.source(id)?.let { CollectorCodec.source(it.body) }
     private suspend fun state(row: CollectorSourceEntity): CollectorState {
         val source = CollectorCodec.source(row.body)
         var attempt = dao.attempt(row.id)?.let(CollectorCodec::attempt) ?: CollectorAttempt(row.id, null, CollectorAttemptState.NEVER)
@@ -106,7 +107,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         val prior = current.attempt
         if (!manual && prior.nextAllowedAt?.let { it > now } == true)
             return@withTransaction deferred(CollectorAttemptState.BACKOFF, "The next refresh is not due yet")
-        val budgetKey = source.endpoint?.let(CollectorEndpointIdentity::budgetKey)
+        val budgetKey = source.endpoint?.let { CollectorEndpointIdentity.budgetKey(source) }
         var failureLineage = prior.consecutiveFailures
         if (source.external) {
             val endpoint = dao.endpoint(requireNotNull(budgetKey))
@@ -174,7 +175,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         }
         dao.putAttempt(CollectorCodec.entity(source.version, attempt))
         if (reservation.source.external) {
-            val key = CollectorEndpointIdentity.budgetKey(requireNotNull(reservation.source.endpoint))
+            val key = CollectorEndpointIdentity.budgetKey(reservation.source)
             val endpoint = dao.endpoint(key)
             if (endpoint?.attemptedAt == reservation.startedAt.toEpochMilli()) {
                 val success = attempt.state in setOf(CollectorAttemptState.CURRENT, CollectorAttemptState.NOT_MODIFIED)

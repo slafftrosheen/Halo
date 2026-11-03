@@ -21,20 +21,22 @@ internal object CollectorCodec {
         .put("publisher", source.publisher).put("kind", source.kind.name).put("category", source.category.name).put("language", source.language)
         .put("endpoint", source.endpoint).put("attribution", source.attributionUrl).put("selected", source.selected).put("enabled", source.enabled)
         .put("muted", source.muted).put("refresh", source.refreshMinutes).put("place", source.place?.let(::place))
-        .put("childApproved", source.childApproved).put("version", source.version).toString()
+        .put("childApproved", source.childApproved).put("version", source.version)
+        .apply { source.research?.let { put("research", JSONObject().put("query", it.query).put("provider", it.providerId)) } }.toString()
     fun source(body: String): CollectorSource = parse(body).let { json ->
         require(json.getInt("schema") == 1)
         CollectorSource(json.getString("id"), json.getString("title"), json.getString("publisher"), CollectorKind.valueOf(json.getString("kind")),
             SourceCategory.valueOf(json.getString("category")), json.getString("language"), json.text("endpoint"), json.text("attribution"),
             json.getBoolean("selected"), json.getBoolean("enabled"), json.getBoolean("muted"), json.getInt("refresh"),
-            json.optJSONObject("place")?.let(::place), json.getBoolean("childApproved"), json.getLong("version"))
+            json.optJSONObject("place")?.let(::place), json.getBoolean("childApproved"), json.getLong("version"),
+            json.optJSONObject("research")?.let { ResearchSourceQuery(it.getString("query"), it.getString("provider")) })
     }
     fun encode(payload: CollectorPayload): String = JSONObject().put("schema", 1).apply {
         CollectorPayloadLimits.validate(payload)
         when (payload) {
             is CollectorPayload.Articles -> { put("type", "articles"); put("items", array(payload.items.map { item -> JSONObject()
                 .put("id", item.id).put("title", item.title).put("text", item.text).put("url", item.url).put("publisher", item.publisher)
-                .put("published", item.publishedAt?.toEpochMilli()).put("language", item.language).put("categories", JSONArray(item.categories)) })) }
+                .put("published", item.publishedAt?.toEpochMilli()).put("updated", item.updatedAt?.toEpochMilli()).put("language", item.language).put("categories", JSONArray(item.categories)) })) }
             is CollectorPayload.Warnings -> { put("type", "warnings"); put("items", array(payload.items.map { item -> JSONObject()
                 .put("id", item.id).put("title", item.title).put("text", item.text).put("url", item.url).put("publisher", item.publisher)
                 .put("area", item.area).put("severity", item.severity).put("onset", item.onset?.toEpochMilli()).put("expires", item.expires?.toEpochMilli()) })) }
@@ -58,7 +60,7 @@ internal object CollectorCodec {
         when (json.getString("type")) {
             "articles" -> CollectorPayload.Articles(json.getJSONArray("items").rows().map { item -> ArticleFact(item.getString("id"), item.getString("title"),
                 item.getString("text"), item.text("url"), item.getString("publisher"), item.instant("published"), item.getString("language"),
-                item.getJSONArray("categories").let { categories -> require(categories.length() <= 20); (0 until categories.length()).map(categories::getString) }) })
+                item.getJSONArray("categories").let { categories -> require(categories.length() <= 20); (0 until categories.length()).map(categories::getString) }, item.instant("updated")) })
             "warnings" -> CollectorPayload.Warnings(json.getJSONArray("items").rows().map { item -> WarningFact(item.getString("id"), item.getString("title"),
                 item.getString("text"), item.text("area"), item.text("severity"), item.instant("onset"), item.instant("expires"), item.text("url"), item.getString("publisher")) })
             "local" -> CollectorPayload.Local(json.getJSONArray("items").rows().map { item -> LocalFact(item.getString("id"), item.getString("kind"),

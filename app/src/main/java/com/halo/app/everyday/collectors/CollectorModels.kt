@@ -3,7 +3,7 @@ package com.halo.app.everyday.collectors
 import java.time.Duration
 import java.time.Instant
 
-enum class CollectorKind { LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR }
+enum class CollectorKind { LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR, RESEARCH }
 enum class SourceCategory { PERSONAL, LATVIA, WORLD, SCIENCE, TECHNOLOGY, WEATHER, OFFICIAL, CALENDAR, CUSTOM }
 enum class CollectorAttemptState { NEVER, FETCHING, CURRENT, NOT_MODIFIED, LOCAL_ONLY, OFFLINE, DISABLED, BACKOFF, QUOTA, FAILED, CANCELLED }
 
@@ -31,8 +31,9 @@ data class CollectorSource(
     val place: WeatherPlace? = null,
     val childApproved: Boolean = false,
     val version: Long = 1,
+    val research: ResearchSourceQuery? = null,
 ) {
-    val external: Boolean get() = kind in setOf(CollectorKind.FEED, CollectorKind.WEATHER, CollectorKind.ALERTS, CollectorKind.PUBLIC_CALENDAR)
+    val external: Boolean get() = kind in setOf(CollectorKind.FEED, CollectorKind.WEATHER, CollectorKind.ALERTS, CollectorKind.PUBLIC_CALENDAR, CollectorKind.RESEARCH)
     init {
         require(id.matches(Regex("[A-Za-z0-9_.:-]{1,160}")))
         require(title.isNotBlank() && title.length <= 200 && publisher.isNotBlank() && publisher.length <= 200)
@@ -41,11 +42,13 @@ data class CollectorSource(
         require(!external || !endpoint.isNullOrBlank())
         require(kind != CollectorKind.WEATHER || place != null)
         require(endpoint == null || endpoint.length <= 4096)
+        require((kind == CollectorKind.RESEARCH) == (research != null))
+        research?.let { require(ResearchProviderRegistry.public.require(it.providerId).endpoint(it.query, language).toString() == endpoint) { "Research endpoint does not match its explicit query/provider" } }
     }
 }
 
 data class ArticleFact(val id: String, val title: String, val text: String, val url: String?, val publisher: String,
-    val publishedAt: Instant?, val language: String, val categories: List<String> = emptyList())
+    val publishedAt: Instant?, val language: String, val categories: List<String> = emptyList(), val updatedAt: Instant? = null)
 data class WeatherDay(val date: java.time.LocalDate, val maximumC: Double?, val minimumC: Double?,
     val precipitationProbability: Int?, val weatherCode: Int?)
 data class WeatherFact(val place: WeatherPlace, val observedAt: Instant?, val temperatureC: Double?, val weatherCode: Int?,

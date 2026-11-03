@@ -19,7 +19,8 @@ sealed interface RoutineTrigger {
     data class AtTime(
         val localTime: LocalTime,
         val days: Set<DayOfWeek> = emptySet(),
-        val zoneId: java.time.ZoneId = java.time.ZoneId.systemDefault()
+        val zoneId: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+        val notBefore: Instant? = null
     ) : RoutineTrigger
 
     data class Once(

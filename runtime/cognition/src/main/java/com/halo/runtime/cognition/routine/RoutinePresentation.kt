@@ -1,7 +1,7 @@
 package com.halo.runtime.cognition.routine
 
 fun RoutineTrigger.summary(): String = when(this) {
-    is RoutineTrigger.AtTime -> "${if(days.isEmpty()) "Every day" else days.sorted().joinToString { it.name.lowercase().replaceFirstChar(Char::uppercase) }} · $localTime · ${zoneId.id}"
+    is RoutineTrigger.AtTime -> "${if(days.isEmpty()) "Every day" else days.sorted().joinToString { it.name.lowercase().replaceFirstChar(Char::uppercase) }} · $localTime · ${zoneId.id}${notBefore?.let { " · ≥ $it" }.orEmpty()}"
     is RoutineTrigger.Once -> "Once at $at"
     is RoutineTrigger.DeviceConnected -> "When my device connects"
     is RoutineTrigger.DeviceDisconnected -> "When my device disconnects"
