@@ -146,8 +146,8 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
         val raw = storage.getString("study_journey_v1_$id") ?: return null
         require(raw.length <= 200_000) { "Saved learning progression exceeds its supported size; preserve for recovery" }
         val json = JSONObject(raw)
-            val branches = json.optJSONArray("branches") ?: JSONArray()
-            LearningJourney(LearningStage.valueOf(json.getString("stage")),
+        val branches = json.optJSONArray("branches") ?: JSONArray()
+        return LearningJourney(LearningStage.valueOf(json.getString("stage")),
                 json.optString("prior"), (0 until branches.length()).map { branches.getString(it) },
                 json.optString("branch").takeIf(String::isNotBlank), json.optString("reflection"),
                 exercises = json.optJSONArray("exercises")?.let { items ->
