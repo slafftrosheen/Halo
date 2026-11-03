@@ -2,13 +2,13 @@
 
 Current correction batch: all ten audit findings have authored production fixes and targeted regression sources. See [ten-finding correction record](/home/pi/Projects/Halo/docs/testing/ISSUE-63-AUDIT-FIXES-2026-11-03.md). Source review and the matching test/build gate are tracked there; the audit and release history below must not be treated as current executable evidence.
 
-Current status, 3 November: **source implementation is not complete**. The [full requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) at `ba177d110` records nine required functional/contract corrections and a repeated-setup consistency issue. These include assistant delivery cancellation, recognized alarm/timer ownership, briefing correctness, localized ICS reasons, link search, Screen persistence acknowledgement and calendar/tool parity. Historical green results below do not cover the current source. Builds/tests remain **NOT_RUN** for the recent batches at the user's code-first request.
+Current status, 3 November: all ten audited code/contract findings have production corrections and targeted regression sources in `416a9b302`. The whole-batch independent source review and correction pass are complete. Matching host tests are INTERRUPTED (power instability; deferred by the user); APK, device, real voice and provider acceptance are not yet verified for this code. See the current correction record above for results; the historical results below do not validate this revision.
 
 User-requested navigation follow-up: [Organizer/menu/family-switch implementation](../testing/ISSUE-63-ORGANIZER-MENU-FAMILY-SWITCH-2026-11-03.md) groups the Everyday instruments under Workspace's Organizer and restores a shell-owned, credential-gated Kids/full Halo menu switch. Its test/build/device verification is **NOT_RUN** in the code-first phase.
 
 3 November source audit follow-up: [completion audit](../testing/ISSUE-63-COMPLETION-AUDIT-2026-11-03.md) records conditional-cache, empty-attention briefing and calendar-interchange corrections plus updated privacy regression sources. New tests/builds are **NOT_RUN** by the user's request to implement first on the Raspberry Pi. The historical green results below do not validate that follow-up.
 
-The table below inventories existing A–H owners; it does not certify complete behavior. The full requirements audit supersedes the previous statement that all A–H source implementation was complete. Device acceptance remains separate from the known code gaps.
+The table below inventories existing A–H owners; it does not certify complete behavior. The historical requirements audit describes `ba177d110`; the current correction record above tracks its resolved source findings and matching verification. Device acceptance remains separate.
 
 | Scope | Implemented owners / delivery |
 |---|---|
@@ -23,7 +23,7 @@ The table below inventories existing A–H owners; it does not certify complete 
 
 Architecture, retention, disclosure and Android limitations: EVERYDAY-INTEGRATION.md, COLLECTORS.md, BRIEFING.md, ANDROID-CONSTRAINTS.md and LOCAL-POWER-MATRIX.md. Detailed history, failed runs and corrective results are retained in IMPLEMENTATION-LEDGER.md and adjacent test artifacts.
 
-Historical independent widget review found no remaining concrete native-widget production defect within its scope. Expert usability/implementation 8.0/10 and visual clarity 9.2/10 on the original rubrics; fresh frames closed compact-identity/localization findings. These are bounded expert ratings for that snapshot, not a whole-product 10/10 or observed launcher/assistive behavior. The current audit separately identifies a Halo Screen touch-persistence gap.
+Historical independent widget review found no remaining concrete native-widget production defect within its scope. Expert usability/implementation 8.0/10 and visual clarity 9.2/10 on the original rubrics; fresh frames closed compact-identity/localization findings. These are bounded expert ratings for that snapshot, not a whole-product 10/10 or observed launcher/assistive behavior. AUD63-07 identified a Halo Screen touch-persistence gap, corrected in the current source batch; native persistence acceptance remains separate.
 
 Later phone acceptance includes notification/exact/full-screen permission behavior, actual alarm/audio/Doze, launcher placement/resize/background refresh/lock presentation and TalkBack/Switch Access. Human participant sessions remain deferred by the user. Correct the known source gaps and run the matching host/build gate before requesting that acceptance; do not defer missing code to those sessions.
 

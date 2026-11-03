@@ -21,12 +21,17 @@ The five new operations are `halo_organizer_alarm`, `halo_organizer_clock_action
 
 Calendar preview/import accepts Workspace IDs and exact versions, never a model-supplied URL/path/URI. Only already local immutable copies are eligible: no hidden download in Local and no file-provider grant is silently obtained. Preview is read-only; import selects 1–50 observed supported IDs; export prepares 1–50 exact observed events per assistant request. The UI retains its bounded 2,000-event export selection. Final protected Android document selection/grants and destination export remain human-owned and explicitly unconfirmed by a prepared-file receipt.
 
-Review correction pass: initial source review identified unreachable explicit Clock phrases, discarded resolved temporal entities, post-write failure truth and repeated terminal dismissal. The correction sources address these at the parser/mapping, host resolver, coordinator and executor boundaries, with targeted regressions. Full initial/follow-up reports and rulings remain in this plan's local `.superpowers/sdd` workspace.
+Review correction pass: initial source review identified unreachable explicit Clock phrases, discarded resolved temporal entities, post-write failure truth and repeated terminal dismissal. The correction sources address these at the parser/mapping, host resolver, coordinator and executor boundaries, with targeted regressions. The independent initial report and correction rulings are retained in this plan's local `.superpowers/sdd` workspace. A follow-up verdict is not claimed.
 
 ## Validation
 
-- Test/build execution: NOT_RUN while the full coding/review batch is in progress.
+- Coding batch committed as `416a9b302`; all 3,969 frozen source inputs match. Focused execution is INTERRUPTED (power instability; deferred by the user) after the full coding/review correction batch. APK build is NOT_RUN.
+- First attempt lost its process/session before a terminal Gradle result; `focused-first.log` is retained as interrupted, never green. The same command was resumed into `focused-resume.log` without source edits.
 - Resource catalogue: regenerated from reviewed UTF-8 `ui.tsv`; no generated catalogue was edited by hand.
 - Static diff/manifest/source checks are separate from executable regression evidence.
 - Later gate: focused language/native-policy, organizer/collector/brief/Screen/widget/typed-tool/archive/migration suites, followed by `haloAppBuild` on the corrected source. Record exact source identity, results and failures without reusing old green evidence.
 - Actual OS notification/audio/exact/full-screen/Doze/locked-boot delivery, launcher behavior, real STT/provider sessions, accessibility and performance/battery remain separately observed acceptance. Source corrections do not mark those passed.
+
+## Power interruption and user-directed handoff
+
+Two focused attempts ended without a terminal Gradle result across host restarts; their logs are retained. Kernel logs recorded repeated undervoltage; no OOM entry was found in the inspected previous boot. The parser XML observed 13 cases with zero failures/errors/skips before interruption, but no overall gate is marked passed. The low-load launcher was interrupted before producing Gradle output. There is no APK for this source. On 3 November the user deferred builds/tests while repairing power and redirected source work to issue #64. All 3,969 source hashes still matched `416a9b302` before that handoff.

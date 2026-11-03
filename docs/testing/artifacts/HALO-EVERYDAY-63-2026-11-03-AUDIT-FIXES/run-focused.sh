@@ -3,8 +3,8 @@ set -euo pipefail
 cd /home/pi/Projects/Halo
 source /home/pi/.config/halo/env.sh
 # Run only after the complete coding/source-review batch. No per-edit gates.
-nice -n 10 ./gradlew --no-daemon --max-workers=1 --console=plain \
-  '-Dorg.gradle.jvmargs=-Xmx3g -XX:ActiveProcessorCount=2 -Dfile.encoding=UTF-8' \
+nice -n 10 taskset -c 0 ./gradlew --no-daemon --max-workers=1 --console=plain \
+  '-Dorg.gradle.jvmargs=-Xmx3g -XX:ActiveProcessorCount=1 -Dfile.encoding=UTF-8' \
   -Pkotlin.compiler.execution.strategy=in-process \
   :libraries:halo-cognition-language:test --tests '*NativeCommandParserTest' \
   :runtime:cognition:test --tests '*NativeCapabilityDispatcherTest' --tests '*InterpretationRouteTest' --tests '*PersonalConfigurationPolicyTest' \
