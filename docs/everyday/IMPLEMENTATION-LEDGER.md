@@ -1,6 +1,6 @@
 # Everyday implementation ledger — issue 63
 
-Status: source implementation, final host checks and APK build/install are complete. Paused for the user's own phone testing; human/OS acceptance remains separate. No issue-63 acceptance is complete merely because it appears in this plan. The complete source requirements are [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); the UI integration decisions are [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
+Status, 3 November: **source implementation is not complete**. The [full requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) at `ba177d110` identifies AUD63-01–09 required code/contract corrections and AUD63-10 setup consistency. The recent correction and menu batches have authored regression sources but no matching test/build run, per the user's code-first instruction. The evidence history below is retained for its exact earlier snapshots; it does not establish current completion. Human/OS acceptance remains separate. Requirements: [ISSUE-63-SOURCE.md](ISSUE-63-SOURCE.md); UI integration history: [ISSUE-63-UX-INTEGRATION-AUDIT.md](ISSUE-63-UX-INTEGRATION-AUDIT.md).
 
 ## Audited ownership
 
@@ -10,7 +10,7 @@ Status: source implementation, final host checks and APK build/install are compl
 | Local persistence | `data/AppDatabase` v34; Workspace/Notes/relation owners | Organizer records, recurrence exceptions, delivery receipts, scheduling outbox and collector state implemented in the same Room database. Notes stay in their existing tables. Migration through v34 passed the bounded host suite. Portable archive version 5 integrates these domains; see EVERYDAY-INTEGRATION.md. |
 | Time and delivery | `host-android/reminder/ReminderRecordStore`, `ExactAlarmAccess`, Android alarm actions | Retain legacy receipt/import support, implement owned recurring schedules, occurrence identity, snooze/stop, reconciliation after crash/reboot/time change, notification/exact/full-screen permission receipts. |
 | Tool execution | `ToolExecutor`, descriptor catalogue, Runtime/ReasoningEngine/CommandExecutor | Typed organizer/source/brief/widget commands with version checks and structured outcome truth. No second agent path. |
-| Screen and UI | `HaloScreen`, `LocalScreenStore`, `ShellPageOwner`, UI 5 contracts | Organizer routes are Screen subroutes, model-independent. Stable card instance IDs throughout layout/config/actions. Reuse Apply/Cancel/CAS/Undo, semantic assets and measured Zone. |
+| Screen and UI | `HaloScreen`, `LocalScreenStore`, `ShellPageOwner`, UI 5 contracts | Organizer now belongs to Workspace alongside Studio/Notes, with Your Day/clocks/Sources nested; legacy Screen URIs remain supported. Stable card instance IDs throughout layout/config/actions. Reuse Apply/Cancel/CAS/Undo, semantic assets and measured Zone; touch persistence acknowledgement remains AUD63-07. |
 | Your Day | `daily/DailyAssistantProjector` and controller | Share structured deterministic briefs and local attention signals. Persist morning baseline; compare stable source identities and revisions. |
 | Library | Workspace records, relations and canonical detail router | Typed organizer/brief projections and revalidated links; never route them as generic files. |
 | Native widgets | `HaloNativeWidget` | Per-appWidgetId settings and click identity, actual data variants, configuration, redaction, bounded updates and previews. |
@@ -30,14 +30,14 @@ Status: source implementation, final host checks and APK build/install are compl
 
 | Scope | Status | Required evidence |
 |---|---|---|
-| A organizer (calendar, tasks/subtasks, reminders, alarms, timers, world time, links, undo, ICS) | Implemented | Canonical Room owners, UI5 instruments, delivery/recurrence/ICS, Library and Activity links; current host evidence below. OS delivery/permission acceptance remains phone-dependent. |
-| B typed collectors, sources, safety, caching, quotas, cancellation, workers | Implemented | Passive local readers, real bounded public adapters, source catalogue/reader/onboarding/tools and guarded workers. Dated public endpoint validation remains a reachability snapshot, not uptime. |
-| C deterministic briefs, changes, quiet hours, spoken/child presentation | Implemented | Structured engine, baseline comparison, source/family revalidation, optional speech and quiet-hour owner. Audible completion and actual scheduled notification delivery remain phone-dependent. |
-| D UI5 screens/states, languages and assets | Implemented; matching rendering/review checks complete | First-party instruments, retained editable drafts, loading/error/stale/permission recovery and EN/RU/LV/PL source catalogue generation. |
-| E persistent configurable Screen instances | Implemented | Stable independent IDs, arrangement/size/visibility, per-card configuration, revisioned Apply/Cancel/Undo and portable state. |
-| F launcher variants, configuration, privacy and updates | Implemented; matching render/live-clock checks complete | Eight providers, native/themed responsive layouts, independent atomic settings, live TextClock, privacy filtering and bounded update owner. Real launcher behavior remains phone-dependent. |
-| G typed canonical AI/voice operations | Implemented | Twenty-two strict Everyday commands plus Screen query/configure; central capabilities/descriptors/disclosure and canonical executor checks. Provider wording/recognition remains real-session acceptance. |
-| H policy, docs, compatibility, tests and delivery | Code, documentation, host verification and APK handoff complete | Explicit LOCAL-POWER-MATRIX.md, transport audit, archive/retention/recovery/component map and frozen host evidence. Build/install and review must finish before handoff. |
+| A organizer (calendar, tasks/subtasks, reminders, alarms, timers, world time, links, undo, ICS) | Owners present; source gaps open | AUD63-01/02/05/06/09 affect delivery, recognized intents, localized interchange, cross-link search and assistant interchange parity. OS delivery/permission acceptance remains separate. |
+| B typed collectors, sources, safety, caching, quotas, cancellation, workers | Owners present; setup consistency open | Conditional-cache corrections await execution; AUD63-10 concerns repeated setup city/source selection. Dated endpoint observations are reachability snapshots, not uptime or exact current production-request acceptance. |
+| C deterministic briefs, changes, quiet hours, spoken/child presentation | Owners present; source gaps open | AUD63-03/04 affect unavailable attention and previous-day outstanding reminders. Audible completion and actual scheduled delivery remain separate. |
+| D UI5 screens/states, languages and assets | Owners present; source and validation gaps open | AUD63-05 covers English-only ICS reasons. Current Organizer/menu/family-switch sources await execution and rendered/device review; historical visual checks remain bounded. |
+| E persistent configurable Screen instances | Owners present; source gap open | AUD63-07: main touch Apply does not acknowledge persistence failure. Stable IDs/configuration/arrangement/undo/portable state otherwise have production paths. |
+| F launcher variants, configuration, privacy and updates | Owners present; current validation open | Eight providers, atomic independent settings, TextClock, privacy, previews and bounded updates. No concrete F defect identified by this audit; historical rendering is not current launcher acceptance. |
+| G typed canonical AI/voice operations | Owners present; source/contract gaps open | AUD63-01/02/08/09 cover coordinator side effects, native intent ownership, result metadata and Organizer interchange parity. Actual recognized voice/provider acceptance remains separate. |
+| H policy, docs, compatibility, tests and delivery | Documentation corrected; current gate open | Matrix, transport inventory, archive/retention/migrations and regression sources exist. Fix the audit findings before matching host/build checks; hardware/accessibility/performance/battery evidence stays separately identified. |
 
 An intermediate commit is a reviewable implementation batch, not a declaration that unfinished workstreams are complete. Hardware-only criteria and participant criteria remain separately identified; neither may be inferred from a host test or screenshot.
 
@@ -70,7 +70,9 @@ The independent visual pass then found two compact-widget/localization issues an
 `release` compiled the coherent disclosure correction and ran 306 cases: 296 passed and ten failed in the new file-backed tool fixture because Robolectric's method-name temp directory plus the UUID database filename exceeded Windows MAX_PATH. All 3,745 source hashes matched. The failure was isolated to the test path; source and JUnit evidence are retained. `release-final` keeps production identical and uses a short database filename while retaining actual WAL and the new transaction-start regression.
 
 
-## Final source acceptance and installation handoff
+## Historical release and installation handoff — 2 November 2026
+
+The following results predate the current audited source and the findings above. The historical stop-for-user-testing language records that earlier phase; current sequencing is the code-first correction and matching gate described at the top of this ledger.
 
 `release-final-results.json` records **306 tests in 45 suites, zero failures/errors/skips, BUILD SUCCESSFUL in 5m51s**. All **3,745** frozen source hashes match. JUnit, source and 38 rendered fixtures are archived beside the result. This includes the metadata-only coherent disclosure stamp, three held same-profile grant regressions and the file-backed Room WAL writer-start regression; source review found no residual in that ordering. The short test filename fixes the evidenced Windows path limit without changing production or disabling WAL.
 

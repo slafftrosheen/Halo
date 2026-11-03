@@ -1,10 +1,12 @@
 # Issue 63 code handoff
 
+Current status, 3 November: **source implementation is not complete**. The [full requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) at `ba177d110` records nine required functional/contract corrections and a repeated-setup consistency issue. These include assistant delivery cancellation, recognized alarm/timer ownership, briefing correctness, localized ICS reasons, link search, Screen persistence acknowledgement and calendar/tool parity. Historical green results below do not cover the current source. Builds/tests remain **NOT_RUN** for the recent batches at the user's code-first request.
+
 User-requested navigation follow-up: [Organizer/menu/family-switch implementation](../testing/ISSUE-63-ORGANIZER-MENU-FAMILY-SWITCH-2026-11-03.md) groups the Everyday instruments under Workspace's Organizer and restores a shell-owned, credential-gated Kids/full Halo menu switch. Its test/build/device verification is **NOT_RUN** in the code-first phase.
 
 3 November source audit follow-up: [completion audit](../testing/ISSUE-63-COMPLETION-AUDIT-2026-11-03.md) records conditional-cache, empty-attention briefing and calendar-interchange corrections plus updated privacy regression sources. New tests/builds are **NOT_RUN** by the user's request to implement first on the Raspberry Pi. The historical green results below do not validate that follow-up.
 
-The source implementation covers the complete A–H code scope. Final release evidence and installation are recorded below when completed. This does not close the issue or claim 10/10 human usability.
+The table below inventories existing A–H owners; it does not certify complete behavior. The full requirements audit supersedes the previous statement that all A–H source implementation was complete. Device acceptance remains separate from the known code gaps.
 
 | Scope | Implemented owners / delivery |
 |---|---|
@@ -19,9 +21,9 @@ The source implementation covers the complete A–H code scope. Final release ev
 
 Architecture, retention, disclosure and Android limitations: EVERYDAY-INTEGRATION.md, COLLECTORS.md, BRIEFING.md, ANDROID-CONSTRAINTS.md and LOCAL-POWER-MATRIX.md. Detailed history, failed runs and corrective results are retained in IMPLEMENTATION-LEDGER.md and adjacent test artifacts.
 
-Independent widget review: no remaining concrete widget production defect. Expert usability/implementation 8.0/10 and visual clarity 9.2/10 on the original rubrics. Fresh frames close compact-identity/localization findings. These are bounded expert ratings, not a whole-product 10/10 or observed launcher/assistive behavior.
+Historical independent widget review found no remaining concrete native-widget production defect within its scope. Expert usability/implementation 8.0/10 and visual clarity 9.2/10 on the original rubrics; fresh frames closed compact-identity/localization findings. These are bounded expert ratings for that snapshot, not a whole-product 10/10 or observed launcher/assistive behavior. The current audit separately identifies a Halo Screen touch-persistence gap.
 
-User-owned phone phase: installation and launch only, then stop for the user's own testing. Notification/exact/full-screen permission behavior, actual alarm/audio/Doze, launcher placement/resize/background refresh/lock presentation and TalkBack/Switch Access remain observed acceptance on the phone. Human participant sessions remain deferred by the user. No additional code feature is silently deferred to those sessions.
+Later phone acceptance includes notification/exact/full-screen permission behavior, actual alarm/audio/Doze, launcher placement/resize/background refresh/lock presentation and TalkBack/Switch Access. Human participant sessions remain deferred by the user. Correct the known source gaps and run the matching host/build gate before requesting that acceptance; do not defer missing code to those sessions.
 
 Final release run: PASS, 306/306 tests, zero failures/errors/skips, 5m51s, 3,745 matching frozen source hashes; release-final-results.json and adjacent source/JUnit/render ZIPs. Final APK build: PASS, assembleDebug in 6m17s from code commit `f7efa32f76f6c16dee62a3dac5d9cf0c91fb431d`. Installed with data retained on Xiaomi 23124RA7EO; MainActivity returned Status ok and running PID 22558. APK SHA-256 `923d4f040ddfc061ef2cae0df067920a453ca0514bc5ce698ee8b2bccf21e413`. This is installation/launch evidence only. The phone is now handed to the user; no further automated hardware feature tests were run.
 

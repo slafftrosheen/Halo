@@ -2,6 +2,8 @@
 
 Status: source changes and regression tests authored; execution deliberately **NOT_RUN** at the user's request. This document does not close issue #63 or assert phone/voice/provider acceptance.
 
+Superseded completion assessment: the subsequent [full requirements audit](/home/pi/Projects/Halo/docs/testing/ISSUE-63-REQUIREMENTS-AUDIT-2026-11-03.md) at `ba177d110` identifies outstanding code gaps. Its AUD63-03 also identifies a regression in this document's empty-attention change: an unavailable/unobserved owner currently becomes indistinguishable from a successfully empty read. The observation stamp needs explicit availability before this correction can be considered complete. The conditional-cache and ICS changes below remain authored, unexecuted source changes.
+
 ## Starting point and scope
 
 Audited against [issue #63](https://github.com/slafftrosheen/Halo/issues/63), its [repository snapshot](../everyday/ISSUE-63-SOURCE.md), [implementation ledger](../everyday/IMPLEMENTATION-LEDGER.md), and [code handoff](../everyday/ISSUE-63-CODE-HANDOFF.md). Baseline: `78018b0ed90c9ad8f0d210000e64d0bca1ff753e`.
