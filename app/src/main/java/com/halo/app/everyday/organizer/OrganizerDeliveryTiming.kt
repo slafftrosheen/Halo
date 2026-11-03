@@ -13,7 +13,10 @@ object OrganizerDeliveryTiming {
                 record.timer.elapsedStartMs + record.timer.remainingMs
             else -> null
         }
-        return if (deadline != null) elapsedMs - deadline else Duration.between(receipt.triggerAt, now).toMillis()
+        // After a reboot the prior boot's elapsed deadline is unusable. The persisted
+        // snooze wall time, not a potentially stale original trigger, is authoritative.
+        val wallDeadline = receipt.snoozedUntil ?: receipt.triggerAt
+        return if (deadline != null) elapsedMs - deadline else Duration.between(wallDeadline, now).toMillis()
     }
 
     fun snoozedPlan(record: OrganizerRecord, receipt: DeliveryReceipt, now: Instant, elapsedMs: Long, bootId: String): PlannedDelivery? {
