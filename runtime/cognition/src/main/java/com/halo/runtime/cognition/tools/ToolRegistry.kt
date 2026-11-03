@@ -211,10 +211,18 @@ class ToolRegistry(
                 if (text.length !in min..max) return "$path has an invalid length"
             }
             "integer", "number" -> {
-                val number = (value as? Number)?.toDouble() ?: return "$path must be a number"
-                if (!number.isFinite() || (schema["type"] == "integer" && number % 1.0 != 0.0)) return "$path must be a finite ${schema["type"]}"
-                val min = (schema["minimum"] as? Number)?.toDouble()
-                val max = (schema["maximum"] as? Number)?.toDouble()
+                val raw = value as? Number ?: return "$path must be a number"
+                // Exact decimal comparison is required for revisions/IDs larger than 2^53.
+                // Double rounded Long values may incorrectly pass minimum/maximum constraints.
+                val number = exactDecimal(raw) ?: return "$path must be a finite ${schema["type"]}"
+                if (schema["type"] == "integer" && number.stripTrailingZeros().scale() > 0)
+                    return "$path must be a finite integer"
+                val rawMin = schema["minimum"]
+                val rawMax = schema["maximum"]
+                if (rawMin != null && rawMin !is Number || rawMax != null && rawMax !is Number)
+                    return "$path has invalid numeric constraints"
+                val min = (rawMin as? Number)?.let { exactDecimal(it) ?: return "$path has invalid numeric constraints" }
+                val max = (rawMax as? Number)?.let { exactDecimal(it) ?: return "$path has invalid numeric constraints" }
                 if ((min != null && number < min) || (max != null && number > max)) return "$path is out of range"
             }
             "boolean" -> if (value !is Boolean) return "$path must be true or false"
@@ -230,6 +238,12 @@ class ToolRegistry(
             }
         }
         return null
+    }
+
+    /** Reject non-finite values; preserve the decimal identity of Long/BigDecimal schema values. */
+    private fun exactDecimal(number: Number): java.math.BigDecimal? {
+        if (!number.toDouble().isFinite()) return null
+        return runCatching { java.math.BigDecimal(number.toString()) }.getOrNull()
     }
 
     private fun effectiveExecutionPolicy(toolName: String): ToolExecutionPolicy {
