@@ -1,0 +1,9 @@
+{
+  "attempt": "ui-xint-01",
+  "outcome": "INTERRUPTED_BY_HOST_RESTART",
+  "completedTestOutcome": null,
+  "binarySource": "175298336bf0052b91aa76221c395e5db9a2955d",
+  "resumedBootId": "385718e2-f5fc-438b-99cc-6a0764bbcf5f",
+  "recordedAt": "2026-11-04T19:55:42.090106+00:00",
+  "cause": "No concluding crash/OOM/undervoltage evidence; do not attribute reset to app."
+}

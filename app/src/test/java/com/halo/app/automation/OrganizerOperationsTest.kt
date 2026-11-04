@@ -285,7 +285,7 @@ class OrganizerOperationsTest {
             assertEquals(1, h.calls)
         }
     }
-    @Test fun reconciliationRevokesOrphanSchedulesAndDoesNotReplayAnInterruptedClaim() = runBlocking {
+    @Test fun reconciliationRevokesOrphanSchedulesAndDoesNotReplayAnInterruptedClaim(): Unit = runBlocking {
         Harness().use { h ->
             val draft = h.task(); val ready = h.operations.prepare(draft.id, draft.version)
             val owner = ready.commitment.execution!!.routineId

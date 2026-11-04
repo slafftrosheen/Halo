@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "175298336bf0052b91aa76221c395e5db9a2955d",
+  "sourceDirty": false,
+  "package": "com.aistudio.braintool.xkqzps",
+  "apk": "/home/pi/Projects/Halo/app/build/outputs/apk/halo-issues63-65-175298336.apk",
+  "bytes": 298468085,
+  "sha256": "a188616e7fe7b04ecf6a2f5c1b2c144ee9909a0c01de51c0f912bd5c52e68aba",
+  "signatureVerified": true,
+  "signerCertificateSha256": "d016e155446e2d96644e396fcb682282e97a2a816d9592875510469f1b22b737",
+  "recordedAt": "2026-11-04T18:34:07.022350+00:00",
+  "installed": true,
+  "installedSha256": "a188616e7fe7b04ecf6a2f5c1b2c144ee9909a0c01de51c0f912bd5c52e68aba",
+  "installedVerifiedAt": "2026-11-04T18:38:03.839322+00:00"
+}

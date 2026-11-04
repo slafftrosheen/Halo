@@ -331,7 +331,7 @@ class EverydayToolExecutorTest {
         assertTrue(result is ToolExecutionResult.Failed && result.completionUnknown)
         assertEquals(1,organizer.records().count {it.title=="Written once"})
     }
-    @Test fun realSourceFamiliesClockEditsAndBriefReadReceiptsMatchRegisteredResults()=runBlocking {
+    @Test fun realSourceFamiliesClockEditsAndBriefReadReceiptsMatchRegisteredResults(): Unit =runBlocking {
         val cases=listOf(
             CollectorKind.FEED to CollectorPayload.Articles(listOf(ArticleFact("a","News","Text",null,"Publisher",null,"en"))),
             CollectorKind.ALERTS to CollectorPayload.Warnings(listOf(WarningFact("w","Warning","Detail",null,null,null,null,null,"Agency"))),

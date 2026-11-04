@@ -41,7 +41,7 @@ class OrganizerCommitmentPersistenceTest {
         assertEquals(saved, RoomOrganizerRepository(db, clock).get(saved.id))
         assertEquals(commitment.requiredCapabilities, setOf("summarize"))
     }
-    @Test fun humanCompletionCannotForgeADelegatedResult() = runBlocking {
+    @Test fun humanCompletionCannotForgeADelegatedResult(): Unit = runBlocking {
         val saved = useCases.create(OrganizerKind.TASK, "Delegated", commitment = OrganizerCommitment(CommitmentOwner.HALO, state = HaloWorkState.DRAFT))
         assertThrows(IllegalArgumentException::class.java) { runBlocking { useCases.completeTask(saved.id, saved.version) } }
         assertNull(repository.get(saved.id)!!.commitment.result)

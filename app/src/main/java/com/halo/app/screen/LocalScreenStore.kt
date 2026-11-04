@@ -314,7 +314,7 @@ object ScreenWidgets {
         val types = when (name) {
             "Focus" -> listOf("clock", "tasks", "notebook")
             "Quiet" -> listOf("clock", "notebook")
-            else -> listOf("clock", "upcoming", "organizer_tasks", "briefing", "weather", "notebook")
+            else -> listOf("clock", "upcoming", "organizer_tasks", "briefing", "weather", "study", "notebook")
         }
         return ScreenLayout(name.lowercase(), name, types.map { ScreenCard(it, null, CardSize.STANDARD, it == "clock") }, 1)
     }

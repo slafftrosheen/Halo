@@ -56,12 +56,17 @@ internal fun HaloZone(
                 it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS
         }
         val density = LocalDensity.current
-        var utilityHeight by remember(entryId) { mutableStateOf<Dp?>(null) }
-        var menuHeight by remember(entryId) { mutableStateOf<Dp?>(null) }
+        val page = LocalShellPageActions.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
+        // A hidden row cannot measure itself again. Invalidate its old busy/disabled size
+        // when the live presentation changes, without keying on callback identities.
+        val presentation = listOf(header?.owner, page?.owner, page?.actions)
+        var utilityHeight by remember(entryId, presentation, maxWidth, density.fontScale) { mutableStateOf<Dp?>(null) }
+        var menuHeight by remember(entryId, presentation, maxWidth, density.fontScale) { mutableStateOf<Dp?>(null) }
         var navigationHeight by remember(entryId, fallback, kids, density.fontScale) { mutableStateOf(if (fallback) 68.dp else 84.dp) }
         var hintHeight by remember(entryId) { mutableStateOf(64.dp) }
         val placement = zone5SecondaryPlacement(availableHeight * .25f, navigationHeight,
-            utilityHeight ?: 0.dp, menuHeight ?: if (workspace) 48.dp else if (kids) 56.dp else 64.dp)
+            utilityHeight ?: 0.dp, menuHeight ?: if (workspace) 48.dp else if (kids) 56.dp else 64.dp,
+            preferMenus = header?.owner?.routeFamily == "studio")
         val utilityInSheet = !composer && (singleRow || bounded && placement.utilityInActions)
         val menusInSheet = singleRow || bounded && placement.menusInActions
         val spareForHint = bounded && workspace && utilityHeight != null && menuHeight != null &&
@@ -163,8 +168,10 @@ internal fun HaloZone(
 
 /** Fit secondary controls before any scrolling is necessary; the primary row never shrinks. */
 internal data class Zone5SecondaryPlacement(val menusInActions: Boolean, val utilityInActions: Boolean)
-internal fun zone5SecondaryPlacement(zone: Dp, navigation: Dp, utility: Dp, menus: Dp): Zone5SecondaryPlacement {
+internal fun zone5SecondaryPlacement(zone: Dp, navigation: Dp, utility: Dp, menus: Dp,
+    preferMenus: Boolean = false): Zone5SecondaryPlacement {
     val available = zone - navigation - 9.dp // divider and vertical padding
+    if (preferMenus && menus <= available) return Zone5SecondaryPlacement(false, utility + menus > available)
     val moveMenus = utility + menus > available
     return Zone5SecondaryPlacement(moveMenus, utility > available)
 }

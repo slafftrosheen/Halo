@@ -147,7 +147,8 @@ class StudioLocalWorkflowTest {
             for(y in 16 until 640 step 32) for(x in 16 until 640 step 32) assertEquals(preview.getPixel(x,y),down.getPixel(x,y))
         } finally {preview.recycle();output.recycle();down.recycle()}
     }
-    @Test fun registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded()=runTest {
+    // Room uses real IO threads; the registry deadline must use the same wall clock.
+    @Test fun registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded()=runBlocking {
         val executor=com.halo.app.di.tools.StudioToolExecutor(service)
         val descriptors=executor.definitions().map {requireNotNull(com.halo.app.di.tools.HaloToolDescriptors.workspace(it))}
         val registry=com.halo.runtime.cognition.tools.ToolRegistry(listOf(executor),descriptors)
@@ -155,7 +156,9 @@ class StudioLocalWorkflowTest {
         val effects=List(8) {index->StudioEffect(id="effect-$index",kind=StudioEffectKind.GRAIN)}
         val original=projects.create("Registered creative workflow",StudioDocument(64,64,layers=List(12) {index->StudioLayer(id="shape-$index",name="Shape $index",kind=StudioLayerKind.RECTANGLE,effects=effects)}))
         suspend fun call(name:String,args:Map<String,Any>)=registry.executeAuthorized(com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(com.halo.sdk.provider.ToolCall(java.util.UUID.randomUUID().toString(),name,args)))
-        val read=call("halo_studio_get",mapOf("projectId" to original.id)) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        val result=call("halo_studio_get",mapOf("projectId" to original.id))
+        assertTrue("Registered Studio read failed: $result",result is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+        val read=result as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
         assertTrue(read.output.length<24000)
         val page=org.json.JSONObject(read.output)
         assertTrue(page.has("background"));assertTrue(page.has("recipe"));assertTrue(page.getJSONArray("layers").getJSONObject(0).has("mask"))

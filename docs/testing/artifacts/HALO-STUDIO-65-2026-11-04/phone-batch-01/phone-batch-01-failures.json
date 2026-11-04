@@ -1,0 +1,298 @@
+{
+  "totals": {
+    "tests": 589,
+    "failures": 48,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "class": "com.halo.app.screen.ScreenAppearanceSheetTest",
+      "test": "shortSheetPreserves200PercentTextAndPinnedDoneWhileOptionsScroll",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.data.everyday.OrganizerCommitmentPersistenceTest",
+      "test": "initializationError",
+      "type": "org.junit.runners.model.InvalidTestClassError",
+      "message": "org.junit.runners.model.InvalidTestClassError: Invalid test class 'com.halo.app.data.everyday.OrganizerCommitmentPersistenceTest':\n  1. Method humanCompletionCannotForgeADelegatedResult() should be void"
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioPreviewLifetimeTest",
+      "test": "publishedPreviewRemainsDrawableAcrossDocumentChangesAndDisposal",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioAiProvenanceTest",
+      "test": "deferredReviewKeepsScreenMemoryAndOriginalRevisionAtActualGeneration",
+      "type": "kotlinx.coroutines.TimeoutCancellationException",
+      "message": "kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 5000 ms"
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioAiProvenanceTest",
+      "test": "staleOrBarredOriginsCannotReachGenerationOrReceiveFreshAuthority",
+      "type": "kotlinx.coroutines.TimeoutCancellationException",
+      "message": "kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 5000 ms"
+    },
+    {
+      "class": "com.halo.app.di.tools.EverydayToolExecutorTest",
+      "test": "initializationError",
+      "type": "org.junit.runners.model.InvalidTestClassError",
+      "message": "org.junit.runners.model.InvalidTestClassError: Invalid test class 'com.halo.app.di.tools.EverydayToolExecutorTest':\n  1. Method realSourceFamiliesClockEditsAndBriefReadReceiptsMatchRegisteredResults() should be void"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioArtboardTapAndDragCommitThroughCanonicalRevisionWithUndo",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioModesShareTheSameRoomDocumentAndAiNeedsExplicitReview",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioSaveAndUndoDrainAndResumeTheConfirmedPaintRevision",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioInterruptedExportIsUnknownAndNeverAutomaticallyReplayed",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioDiscardRequiresCurrentRevisionConfirmationAndCancelKeepsDraft",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioNavigationKeepsQueuedFailureRecoveryAfterTheViewModelIsCleared",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioLayersUseCanonicalRevisionAndStaleRestoreIsRejected",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5CreativeActionsTest",
+      "test": "studioFailuresNameTheOperationAndVerifyTheRetainedProject",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "test": "lightPhone360",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "test": "latvianLargePhone200",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.workspace.StudioLayerLayoutTest",
+      "test": "russianShortLandscape200",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.LocalScreenStoreTest",
+      "test": "morningLayoutIncludesNativeStudyResumeCard",
+      "type": "java.lang.AssertionError",
+      "message": "java.lang.AssertionError"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "shortLandscape200ActiveStop",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "russian200",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "lightPhone360",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "ambientPrivateMasks",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "darkPhone412",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "editPreview200",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "latvian200",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenWorkspaceVisualTest",
+      "test": "widePlacement",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.screens.notebook.OrganizerToolHierarchyTest",
+      "test": "childOrganizerDoesNotExposeAdultSourceSettings",
+      "type": "java.lang.AssertionError",
+      "message": "java.lang.AssertionError: Failed: assertExists.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Your day in Halo' (ignoreCase: false))\n"
+    },
+    {
+      "class": "com.halo.app.ui.screens.notebook.OrganizerToolHierarchyTest",
+      "test": "organizerProvidesWorkingToolsAndSourceSettings",
+      "type": "java.lang.AssertionError",
+      "message": "java.lang.AssertionError: Failed to inject touch input.\nReason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Your day in Halo' (ignoreCase: false))\n"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenGridInteractionTest",
+      "test": "resizeCornerAcceptsTouchDraggingInBothDimensions",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenGridInteractionTest",
+      "test": "legacyDuplicateReorderKeepsFocusOnTheSelectedPresentationCard",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenGridInteractionTest",
+      "test": "keyboardArrowsMoveAndShiftArrowsResizeTheFocusedHandle",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenGridInteractionTest",
+      "test": "accessibleMoveAndTwoDimensionalResizeUseRealGridAndNeverOpenTheSource",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenGridInteractionTest",
+      "test": "consecutiveOneColumnKeyboardMovesRetainTheFocusedHandle",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.screen.ScreenGridInteractionTest",
+      "test": "heldTouchDragMovesToTheNeighbouringTrackWithoutOpeningTheCard",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "test": "registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded",
+      "type": "java.lang.ClassCastException",
+      "message": "java.lang.ClassCastException: class com.halo.runtime.cognition.tools.ToolExecutionResult$Failed cannot be cast to class com.halo.runtime.cognition.tools.ToolExecutionResult$Success (com.halo.runtime.cognition.tools.ToolExecutionResult$Failed and com.halo.runtime.cognition.tools.ToolExecutionResult$Success are in unnamed module of loader org.robolectric.internal.AndroidSandbox$SdkSandboxClassLoader @1fcb4808)"
+    },
+    {
+      "class": "com.halo.app.di.ConfigurationSkillManifestParityTest",
+      "test": "configurationToolsKeepTheirUniqueOwnerRiskPermissionsAndAssetProvenance",
+      "type": "java.lang.AssertionError",
+      "message": "java.lang.AssertionError: Review the manifest contract when adding configuration operations expected:<80> but was:<85>"
+    },
+    {
+      "class": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "russianEditorAt200Percent",
+      "type": "java.lang.ArrayIndexOutOfBoundsException",
+      "message": "java.lang.ArrayIndexOutOfBoundsException: Index 7 out of bounds for length 7"
+    },
+    {
+      "class": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "latvianEditorAt200Percent",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "editorKeepsDraftAfterDiscardIsDeclinedAndRestoration",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "parentCanRevokeUnavailableAndLateSharedRecordsWithoutLosingOtherSettings",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "widgetDashboardOrderIsReachableAt200PercentAndSurvivesRestoration",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.everyday.EverydayFormsRenderingTest",
+      "test": "polishEditorAt200Percent",
+      "type": "java.lang.IllegalStateException",
+      "message": "java.lang.IllegalStateException: Cannot delegate to an already delegated node"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "disabledStudioPrimaryGroupExplainsItsLiveOwnerReason",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "memoryHasOneDefaultSatelliteWhileSettingsRemainInAllActions",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "childAppearanceKeepsTheCurrentPaletteAcrossThemeChanges",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "test": "studioLongDirtyRussianIdentityKeepsAllFourPrimaryGroupsVisible",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.ui.shell.HaloZoneLayoutTest",
+      "test": "compactStudioActionsShowTheRelocatedSaveStatusOnce",
+      "type": "androidx.compose.runtime.ComposeRuntimeError",
+      "message": "androidx.compose.runtime.ComposeRuntimeError: Compose Runtime internal error. Unexpected or incorrect use of the Compose internal runtime API (Updating the data of a group that was not created with a data slot). Please report to Google or use https://goo.gle/compose-feedback"
+    },
+    {
+      "class": "com.halo.app.automation.OrganizerOperationsTest",
+      "test": "initializationError",
+      "type": "org.junit.runners.model.InvalidTestClassError",
+      "message": "org.junit.runners.model.InvalidTestClassError: Invalid test class 'com.halo.app.automation.OrganizerOperationsTest':\n  1. Method reconciliationRevokesOrphanSchedulesAndDoesNotReplayAnInterruptedClaim() should be void"
+    }
+  ]
+}

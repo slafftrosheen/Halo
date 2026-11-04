@@ -34,14 +34,17 @@ class Zone5InstrumentContractsTest {
         val invoked = mutableListOf<String>()
         val labels = listOf("Добавить", "Слои", "Инструменты", "ИИ")
         val ids = listOf("page.studio.add-layer", "page.studio.layers", "page.studio.tools", "page.studio.ai")
+        val busy = mutableStateOf(false)
         compose.setContent { HostlessHaloTheme {
             val projection = remember { mutableStateOf<ShellPageProjection?>(null) }
             val header = remember { mutableStateOf<ShellUtilityProjection?>(null) }
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides projection,
                 LocalShellUtilityBand provides header) {
-                val owner = ShellPageOwner("studio", objectId = "phone-regression")
+                val owner = ShellPageOwner("studio", objectId = "phone-regression",
+                    statusLabel = if (busy.value) "Сохранение" else "Сохранено",
+                    defaultDisabledActionReason = if (busy.value) "Завершаем сохранение рисунка перед изменением проекта" else null)
                 BindShellPageActions(owner, ids.zip(labels).map { (id, label) ->
-                    ShellPageAction(id, label, HaloGlyph.TOOL, true) { invoked += id }
+                    ShellPageAction(id, label, HaloGlyph.TOOL, !busy.value) { invoked += id }
                 })
                 BindShellUtilityBand(owner, includesStatus = true) {
                     ToolZoneHeader("Длинное название сохраняемого творческого проекта", {},
@@ -61,6 +64,12 @@ class Zone5InstrumentContractsTest {
                 }
             }
         } }
+        // The native regression appeared only after the busy reason enlarged the menu;
+        // an initially saved/dirty screenshot alone could not catch the sticky overflow.
+        compose.runOnIdle { busy.value = true }
+        compose.waitForIdle()
+        compose.runOnIdle { busy.value = false }
+        compose.waitForIdle()
         compose.onNodeWithTag("zone5-command-groups").assertIsDisplayed()
         labels.forEach { label ->
             val node = compose.onNodeWithText(label)
@@ -84,6 +93,26 @@ class Zone5InstrumentContractsTest {
         }}
         compose.onNodeWithText("Tools").assertIsNotEnabled().assert(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.StateDescription,"Finishing paint"))
         compose.onNodeWithText("Finishing paint").assertIsDisplayed()
+    }
+
+    @Test fun studioPrimaryLabelsWrapWithoutClippingAt200Percent() {
+        val labels = listOf("Добавить", "Слои", "Инструменты", "ИИ")
+        val ids = listOf("page.studio.add-layer", "page.studio.layers", "page.studio.tools", "page.studio.ai")
+        compose.setContent { HostlessHaloTheme(fontScale = 2f) {
+            val projection = remember { mutableStateOf<ShellPageProjection?>(null) }
+            CompositionLocalProvider(LocalShellPageActions provides projection) {
+                BindShellPageActions(ShellPageOwner("studio"), ids.zip(labels).map { (id, label) ->
+                    ShellPageAction(id, label, HaloGlyph.TOOL) {}
+                })
+                Box(Modifier.width(320.dp)) { WorkspaceToolMenus() }
+            }
+        } }
+        labels.forEach { label ->
+            val node = compose.onNodeWithText(label).assertIsDisplayed()
+            val layouts = mutableListOf<TextLayoutResult>()
+            node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertFalse("Large primary label is clipped: $label", layouts.single().hasVisualOverflow)
+        }
     }
 
     @Test fun instrumentBackIsVisibleAndInvokesTheExistingOwner() {

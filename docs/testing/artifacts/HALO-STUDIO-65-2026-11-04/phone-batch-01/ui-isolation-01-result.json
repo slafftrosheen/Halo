@@ -1,0 +1,28 @@
+{
+  "command": [
+    "taskset",
+    "-c",
+    "0",
+    "bash",
+    "./gradlew",
+    "--offline",
+    "--no-daemon",
+    "--no-parallel",
+    "--max-workers=1",
+    "--console=plain",
+    "-Dorg.gradle.workers.max=1",
+    "-Dorg.gradle.parallel=false",
+    "-Dorg.gradle.jvmargs=-Xmx6144m -XX:ActiveProcessorCount=1 -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/pi/Projects/Halo/.superpowers/sdd/2026-11-03-issue-65-studio/validation/heapdumps -XX:+UseG1GC -XX:ParallelGCThreads=1 -XX:ConcGCThreads=1",
+    "-Pkotlin.compiler.execution.strategy=in-process",
+    "-I",
+    "/home/pi/Projects/Halo/.superpowers/sdd/2026-11-03-issue-65-studio/validation/one-worker-x64.init.gradle",
+    ":app:testDebugUnitTest",
+    "--tests",
+    "*Zone5InstrumentContractsTest.disabledStudioPrimaryGroupExplainsItsLiveOwnerReason"
+  ],
+  "startedAt": "2026-11-04T19:18:03.856358+00:00",
+  "finishedAt": "2026-11-04T19:24:49.713560+00:00",
+  "exitCode": 1,
+  "workers": 1,
+  "testForks": 1
+}

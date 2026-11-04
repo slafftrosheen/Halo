@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "175298336bf0052b91aa76221c395e5db9a2955d",
+  "worktreeStatus": "",
+  "recordedAt": "2026-11-04T18:12:43.668604+00:00",
+  "tasks": [
+    ":app:assembleDebug",
+    ":app:testDebugUnitTest"
+  ],
+  "workers": 1,
+  "testForks": 1,
+  "cpuAffinity": [
+    0
+  ],
+  "jvmHeapMiB": 6144,
+  "gc": "G1",
+  "testJvm": "Temurin x86_64 JRE17 through Box64; actual test execution not yet verified"
+}

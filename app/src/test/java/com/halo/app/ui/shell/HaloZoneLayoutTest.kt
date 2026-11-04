@@ -30,6 +30,17 @@ class HaloZoneLayoutTest {
     private val invoked = mutableListOf<String>()
     private val actions = (1..9).map { HaloOrbContextAction("tool-$it", "Action $it", HaloGlyph.TOOL) }
 
+    @Test fun studioKeepsItsPrimaryGroupsWhenOnlyTheUtilityMustMove() {
+        assertEquals(Zone5SecondaryPlacement(false, true),
+            zone5SecondaryPlacement(200.dp, 84.dp, 60.dp, 56.dp, preferMenus = true))
+        assertEquals(Zone5SecondaryPlacement(true, false),
+            zone5SecondaryPlacement(200.dp, 84.dp, 60.dp, 56.dp))
+        assertEquals(Zone5SecondaryPlacement(true, false),
+            zone5SecondaryPlacement(130.dp, 84.dp, 24.dp, 56.dp, preferMenus = true))
+        assertEquals(Zone5SecondaryPlacement(false, false),
+            zone5SecondaryPlacement(240.dp, 84.dp, 60.dp, 56.dp, preferMenus = true))
+    }
+
     private fun show(compact: Boolean = false, scale: Float = 1f, childHeader: Boolean = false,
         mode: com.halo.app.ai.PrivacyMode = com.halo.app.ai.PrivacyMode.PRIVATE, headerTool: Boolean = false,
         actionCount: Int = actions.size, route: String = "notebook") {
