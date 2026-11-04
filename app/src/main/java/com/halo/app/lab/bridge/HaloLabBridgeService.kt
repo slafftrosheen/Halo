@@ -153,7 +153,7 @@ class HaloLabBridgeService : Service() {
 
     private fun authenticate() {
         val uid = Binder.getCallingUid()
-        if (checkCallingOrSelfPermission(HaloLabProtocol.BRIDGE_PERMISSION) != PackageManager.PERMISSION_GRANTED) throw SecurityException()
+        if (checkCallingOrSelfPermission("$packageName.permission.HALO_LAB_BRIDGE") != PackageManager.PERMISSION_GRANTED) throw SecurityException()
         val packages = packageManager.getPackagesForUid(uid).orEmpty()
         if (HaloLabProtocol.LAB_PACKAGE !in packages) throw SecurityException()
         if (packageManager.checkSignatures(packageName, HaloLabProtocol.LAB_PACKAGE) != PackageManager.SIGNATURE_MATCH) throw SecurityException()

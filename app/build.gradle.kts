@@ -6,6 +6,9 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+// Isolated device QA when an existing installation was signed on another machine.
+val parallelDebug = providers.gradleProperty("halo.parallelDebug").orNull?.toBooleanStrict() ?: false
+
 // Catch a missing packaged built-in before creating an APK, including focused test/build runs.
 val verifyBuiltInSkillAssets by tasks.registering {
     val registryFile = rootProject.layout.projectDirectory.file("runtime/cognition/src/main/java/com/halo/runtime/cognition/skills/SkillRegistry.kt")
@@ -62,6 +65,7 @@ android {
     targetSdk = 37
     versionCode = 2
     versionName = "1.0-RC1"
+    manifestPlaceholders["haloAppLabel"] = "@string/app_name"
 
     buildConfigField("String", "GIT_COMMIT", "\"${getGitCommitHash()}\"")
     buildConfigField("Boolean", "GIT_DIRTY", getGitDirty().toString())
@@ -99,6 +103,10 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
+      if (parallelDebug) {
+        applicationIdSuffix = ".dev"
+        manifestPlaceholders["haloAppLabel"] = "Halo Dev"
+      }
       val debugConfig = signingConfigs.findByName("debugConfig")
       if (debugConfig != null) {
         signingConfig = debugConfig
