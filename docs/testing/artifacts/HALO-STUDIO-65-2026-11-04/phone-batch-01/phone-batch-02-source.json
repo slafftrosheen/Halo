@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "256516c5ffed87b29c5ea8f4c6a8bcf62daf7360",
+  "worktreeStatus": "",
+  "recordedAt": "2026-11-04T20:09:42.508965+00:00",
+  "tasks": [
+    ":app:assembleDebug",
+    ":app:testDebugUnitTest"
+  ],
+  "workers": 1,
+  "testForks": 1,
+  "cpuAffinity": [
+    0
+  ],
+  "jvmHeapMiB": 6144,
+  "gc": "G1",
+  "testJvm": "Temurin x86_64 JRE17 under Box64; C1 only (-XX:TieredStopAtLevel=1), max heap1024MiB; actual full run pending"
+}

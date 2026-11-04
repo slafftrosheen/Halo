@@ -1,0 +1,23 @@
+{
+  "builtSource": "175298336bf0052b91aa76221c395e5db9a2955d",
+  "normalVoiceInboxSaved": true,
+  "savedTitle": "проверить голосовой WOT-Hail'o",
+  "expectedPhrase": "Запиши проверить голосовой ввод Halo",
+  "recognitionAccuracy": "IMPERFECT",
+  "microphoneProbe": {
+    "provider": "speech.sherpa_onnx.whisper_small",
+    "model": "whisper-small",
+    "language": "ru",
+    "audioMs": 14960,
+    "decodeMs": 17124,
+    "error": null,
+    "gate": "Accepted",
+    "controlledPhraseMatched": false
+  },
+  "appCrashed": true,
+  "exception": "java.lang.IllegalStateException: Everyday disclosure authority changed",
+  "site": "EverydayBriefService.visible:89",
+  "overallVoiceAcceptance": "FAIL_PENDING_CRASH_FIX_AND_RECHECK",
+  "modeConfirmed": "Power",
+  "recordedAt": "2026-11-04T20:19:37.282742+00:00"
+}

@@ -10,6 +10,9 @@ import com.halo.app.everyday.collectors.*
 import com.halo.app.everyday.organizer.*
 import java.time.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -62,6 +65,42 @@ class BriefPersistenceTest {
             .filter {it.kind==BriefFactKind.REMINDER}.map {it.values["recordId"]})
     }
     @After fun close() { db.close() }
+    @Test fun liveBriefRevocationClearsContentWithoutEndingTheSubscription() = runBlocking {
+        exerciseRevokedObservation(latest = false)
+    }
+    @Test fun latestBriefRevocationClearsContentWithoutCrashingItsBackgroundOwner() = runBlocking {
+        exerciseRevokedObservation(latest = true)
+    }
+    private suspend fun exerciseRevokedObservation(latest: Boolean) = coroutineScope { withTimeout(10000) {
+        val task = seed()
+        val original = service.build(BriefPeriod.ON_DEMAND)
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val firstRead = java.util.concurrent.atomic.AtomicBoolean(true)
+        val held = EverydayBriefService(briefs, collectors, organizer, { DailyAssistantObservation() },
+            { audience }, { emptySet() }, {
+                if (firstRead.compareAndSet(true, false)) { entered.complete(Unit); release.await() }
+                true
+            }, clock, { zone })
+        val observed = Channel<EverydayBrief?>(Channel.UNLIMITED)
+        val subscription = launch {
+            (if (latest) held.observeLatestVisible() else held.observeVisible(original.id)).collect { observed.send(it) }
+        }
+        try {
+            entered.await()
+            organizer.save(task.copy(title = "Changed during a live read"), task.version)
+            release.complete(Unit)
+            assertNull("A revoked projection must not publish its content", observed.receive())
+            assertEquals(original.id, observed.receive()?.id)
+            assertTrue("The next canonical change must still be observed", subscription.isActive)
+        } finally { subscription.cancelAndJoin(); observed.close() }
+    } }
+    @Test fun liveBriefDoesNotHideUnrelatedStorageFailures(): Unit = runBlocking {
+        seed()
+        val original = service.build(BriefPeriod.ON_DEMAND)
+        val broken = EverydayBriefService(briefs, collectors, organizer, { DailyAssistantObservation() },
+            { audience }, { emptySet() }, { throw java.io.IOException("Fixture read failure") }, clock, { zone })
+        assertThrows(java.io.IOException::class.java) { runBlocking { broken.observeVisible(original.id).first() } }
+    }
     @Test fun aHeldVisibleBriefCannotReturnAfterSharingIsRevokedWithoutLeavingKids()=runBlocking {withTimeout(10000) {
         val task=seed();briefs.saveSettings(BriefSettings(childRecordIds=setOf(task.id)),0)
         audience=BriefAudience.KIDS

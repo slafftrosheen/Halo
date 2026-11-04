@@ -13,8 +13,30 @@
     "skipped": 0,
     "status": "FAIL_CORRECTIONS_IN_PROGRESS"
   },
-  "phone": "MULTIPLE_NATIVE_WORKFLOWS_PASSED_STUDIO_BUSY_MENU_REGRESSION_OPEN",
-  "actualMicrophoneStt": "NOT_RUN_MODEL_NOT_INSTALLED",
+  "phone": "NATIVE_BRIEF_REVOCATION_CRASH_CORRECTION_AND_FINAL_STUDIO_RECHECK_PENDING",
+  "actualMicrophoneStt": {
+    "builtSource": "175298336bf0052b91aa76221c395e5db9a2955d",
+    "normalVoiceInboxSaved": true,
+    "savedTitle": "проверить голосовой WOT-Hail'o",
+    "expectedPhrase": "Запиши проверить голосовой ввод Halo",
+    "recognitionAccuracy": "IMPERFECT",
+    "microphoneProbe": {
+      "provider": "speech.sherpa_onnx.whisper_small",
+      "model": "whisper-small",
+      "language": "ru",
+      "audioMs": 14960,
+      "decodeMs": 17124,
+      "error": null,
+      "gate": "Accepted",
+      "controlledPhraseMatched": false
+    },
+    "appCrashed": true,
+    "exception": "java.lang.IllegalStateException: Everyday disclosure authority changed",
+    "site": "EverydayBriefService.visible:89",
+    "overallVoiceAcceptance": "FAIL_PENDING_CRASH_FIX_AND_RECHECK",
+    "modeConfirmed": "Power",
+    "recordedAt": "2026-11-04T20:19:37.282742+00:00"
+  },
   "liveProvider": "PAID_IMAGE_GENERATION_SKIPPED_BY_USER",
   "gradleWorkers": 1,
   "testForks": 1,
@@ -300,5 +322,15 @@
         "committedSha256": "a5f43d6490150a9703ec68c175e3e4c8e636890a4eb99488c3458e6c323cc359"
       }
     ]
+  },
+  "phoneBatch02": {
+    "attempt": "phone-batch-02",
+    "sourceCommit": "256516c5ffed87b29c5ea8f4c6a8bcf62daf7360",
+    "outcome": "STOPPED_BY_AUTHOR_FOR_NATIVE_CRASH_CORRECTION",
+    "lastTask": ":app:compileDebugKotlin",
+    "testCasesExecuted": 0,
+    "apkBuilt": false,
+    "exitCode": 143,
+    "reason": "A real phone voice command exposed an uncaught expected brief-disclosure revocation in a background subscriber. Complete this correction before restarting the combined gate."
   }
 }

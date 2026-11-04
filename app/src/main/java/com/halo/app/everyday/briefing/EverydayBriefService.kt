@@ -1,6 +1,7 @@
 package com.halo.app.everyday.briefing
 
 import com.halo.app.daily.DailyAssistantObservation
+import com.halo.app.everyday.EverydayDisclosureRevoked
 import com.halo.app.everyday.collectors.CollectorRepository
 import com.halo.app.everyday.organizer.*
 import java.time.*
@@ -22,12 +23,16 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
     private fun changes(): Flow<Unit> = merge(repository.observe().map { Unit }, repository.observeSettings().map { Unit },
         collectors.observe().map { Unit }, organizer.observe().map { Unit }, contentChanges,
         flow { while (currentCoroutineContext().isActive) { emit(Unit); delay(60_000) } })
-    fun observeVisible(id: String): Flow<EverydayBrief?> = changes().map { visible(id) }.distinctUntilChanged().flowOn(Dispatchers.IO)
+    // Revocation is normal during live organizer/profile changes. Clear this emission
+    // without terminating the subscriber; direct reads still reject stale authority.
+    private suspend fun observedVisible(id: String): EverydayBrief? = try { visible(id) }
+        catch (_: EverydayDisclosureRevoked) { null }
+    fun observeVisible(id: String): Flow<EverydayBrief?> = changes().map { observedVisible(id) }.distinctUntilChanged().flowOn(Dispatchers.IO)
     fun observeLatestVisible(): Flow<EverydayBrief?> = changes().map {
         val today = clock.instant().atZone(zone()).toLocalDate()
         val family = audience()
         repository.recent().firstOrNull { it.date == today && it.zoneId == zone().id &&
-            (family != BriefAudience.KIDS || it.audience == BriefAudience.KIDS) }?.let { visible(it.id) }
+            (family != BriefAudience.KIDS || it.audience == BriefAudience.KIDS) }?.let { observedVisible(it.id) }
     }.distinctUntilChanged().flowOn(Dispatchers.IO)
     suspend fun build(period: BriefPeriod, requestedAudience: BriefAudience = audience()): EverydayBrief {
         val now = Instant.ofEpochMilli(clock.millis()); val deviceZone = zone(); val familyAudience = audience()
@@ -84,9 +89,10 @@ class EverydayBriefService(private val repository: BriefRepository, private val 
             val visibleIds = EverydayBriefEngine.select(eligibleChanges.mapNotNull { it.fact }, actualAudience, settings).map { it.id }.toSet()
             eligibleChanges.filter { it.factId in visibleIds }.take(12)
         } else eligibleChanges
-        check(audience() == familyAudience) { "Experience changed; reopen the brief" }
-        if(actualAudience==BriefAudience.KIDS) check(childLocalFactIds()==childFacts) {"Shared local items changed; reopen the brief"}
-        check(disclosureState()==canonical) {"Everyday disclosure authority changed"}
+        if (audience() != familyAudience) throw EverydayDisclosureRevoked("Experience changed; reopen the brief")
+        if(actualAudience==BriefAudience.KIDS && childLocalFactIds()!=childFacts)
+            throw EverydayDisclosureRevoked("Shared local items changed; reopen the brief")
+        if(disclosureState()!=canonical) throw EverydayDisclosureRevoked("Everyday disclosure authority changed")
         com.halo.app.everyday.EverydayReadAuthority.requireCurrent(disclosure)
         return stored.copy(audience = actualAudience, facts = facts, sources = stored.sources.filter { it.id in allowed },
             changes = changes, baselineAt = if (differentAudience) null else stored.baselineAt,

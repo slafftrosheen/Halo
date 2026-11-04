@@ -1,0 +1,10 @@
+{
+  "attempt": "phone-batch-02",
+  "sourceCommit": "256516c5ffed87b29c5ea8f4c6a8bcf62daf7360",
+  "outcome": "STOPPED_BY_AUTHOR_FOR_NATIVE_CRASH_CORRECTION",
+  "lastTask": ":app:compileDebugKotlin",
+  "testCasesExecuted": 0,
+  "apkBuilt": false,
+  "exitCode": 143,
+  "reason": "A real phone voice command exposed an uncaught expected brief-disclosure revocation in a background subscriber. Complete this correction before restarting the combined gate."
+}
