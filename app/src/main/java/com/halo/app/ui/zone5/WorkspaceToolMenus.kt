@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.halo.app.R
 import com.halo.app.language.uiText
@@ -49,12 +50,13 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
     if(projection.owner.routeFamily=="studio" && actions.any {it.id=="page.studio.tools"}) {
         val primary=listOf("page.studio.add-layer","page.studio.layers","page.studio.tools","page.studio.ai")
         Column {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
             primary.forEach {id->actions.find {it.id==id}?.let {action->
                 val active=projection.owner.activeToolId==id
                 FilterChip(selected=active,onClick={projection.invoke(id)},enabled=action.enabled,
-                    label={Text(uiText(action.title))},leadingIcon={Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:$id",action.title,action.glyph)),action.glyph,Modifier.size(20.dp))},
-                    modifier=Modifier.heightIn(min=48.dp).semantics {selected=active;if(!action.enabled) stateDescription=projection.owner.disabledReasonFor(id).orEmpty()}
+                    label={Text(uiText(action.title),style=MaterialTheme.typography.labelSmall,maxLines=2,overflow=TextOverflow.Ellipsis)},
+                    leadingIcon={Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:$id",action.title,action.glyph)),action.glyph,Modifier.size(20.dp))},
+                    modifier=Modifier.weight(1f).heightIn(min=48.dp).semantics {selected=active;if(!action.enabled) stateDescription=projection.owner.disabledReasonFor(id).orEmpty()}
                         .haloTrace(action.id==guidedActionId,MaterialTheme.colorScheme.primary,12.dp,lapOnAppear=true))
             }}
         }

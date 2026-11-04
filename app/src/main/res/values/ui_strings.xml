@@ -5052,4 +5052,9 @@
     <string name="ui_fb73bdbd1540" formatted="false">"Tap the artboard to pick a colour."</string>
     <string name="ui_67e600e7e4c5" formatted="false">"Updating preview…"</string>
     <string name="ui_ac0c1250abb8" formatted="false">"The paint layer is full. Keep this drawing before adding more marks."</string>
+    <string name="ui_db44b8db4f05" formatted="false">"Lock"</string>
+    <string name="ui_4ac709aa58bc" formatted="false">"Unlock"</string>
+    <string name="ui_31b22954a6ff" formatted="false">"Select layer %1$s"</string>
+    <string name="ui_4c99e10f0d89" formatted="false">"Enable effect %1$s"</string>
+    <string name="ui_361ef0904840" formatted="false">"Edit an image"</string>
 </resources>

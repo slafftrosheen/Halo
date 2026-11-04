@@ -18,7 +18,8 @@ import com.halo.app.ui.icons.HaloIcon
 /** Compact utility band. Editing gestures and durable action owners stay in their page. */
 @Composable
 internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean = true,
-    onTitleClick: (() -> Unit)? = null, subtitle: String? = null, trailing: @Composable RowScope.() -> Unit = {}) {
+    onTitleClick: (() -> Unit)? = null, subtitle: String? = null, compactIdentity: Boolean = false,
+    trailing: @Composable RowScope.() -> Unit = {}) {
     val density = LocalDensity.current
     val identityTarget = if (onTitleClick != null && com.halo.app.ui.presence.LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
     val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
@@ -40,9 +41,11 @@ internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean 
             else Modifier), contentAlignment = Alignment.CenterStart) {
             Column {
                 Text(title, modifier = Modifier.semantics { heading() }, style = MaterialTheme.typography.titleSmall,
-                    softWrap = true)
+                    softWrap = true, maxLines = if (compactIdentity && !stacked) 1 else Int.MAX_VALUE,
+                    overflow = TextOverflow.Ellipsis)
                 if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, softWrap = true)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, softWrap = true,
+                    maxLines = if (compactIdentity && !stacked) 1 else Int.MAX_VALUE, overflow = TextOverflow.Ellipsis)
             }
         }
     }

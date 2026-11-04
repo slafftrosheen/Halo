@@ -111,11 +111,13 @@ internal fun StudioLayerManager(project:StudioProject,busy:Boolean,onCommand:(St
             val editable=document.isEditable(layer)
             val depth=document.ancestors(layer).size
             val active=layer.id==document.selectedLayerId
+            val selectionLabel=uiText("Select layer %1\$s",layer.name)
             Surface(color=if(active) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
                 shape=MaterialTheme.shapes.medium,modifier=Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(start=(8+depth*12).dp,end=8.dp,top=8.dp,bottom=8.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
-                        Checkbox(layer.id in multiple,{checked->multiple=if(checked) multiple+layer.id else multiple-layer.id},enabled=!busy)
+                        Checkbox(layer.id in multiple,{checked->multiple=if(checked) multiple+layer.id else multiple-layer.id},enabled=!busy,
+                            modifier=Modifier.semantics { contentDescription=selectionLabel })
                         Zone5Icon(when(layer.kind) { StudioLayerKind.IMAGE->"type_image";StudioLayerKind.INK->"studio_draw";StudioLayerKind.TEXT->"studio_text";StudioLayerKind.GROUP->"studio_group";StudioLayerKind.TEXTURE->"studio_palette";else->"studio_shapes" },HaloGlyph.FILE,Modifier.size(24.dp))
                         TextButton({onCommand(StudioCommand.Select(layer.id))},enabled=!busy,modifier=Modifier.weight(1f).semantics { this.selected=active }) { Text(layer.name) }
                     }
@@ -158,9 +160,12 @@ internal fun StudioEffectsDialog(service:StudioService,project:StudioProject,lay
             StudioDocumentPreview(service,preview,Modifier.fillMaxWidth().height(180.dp))
             Text(uiText("Original layers stay editable. Toggle or remove an effect at any time."),style=MaterialTheme.typography.bodySmall)
             effects.forEachIndexed { index,effect->
+                val effectLabel=uiText(effect.kind.name.lowercase().replace('_',' ').replaceFirstChar { it.uppercase() })
+                val enabledLabel=uiText("Enable effect %1\$s",effectLabel)
                 Row(verticalAlignment=Alignment.CenterVertically) {
-                    Switch(effect.enabled,{v->effects=effects.map { if(it.id==effect.id) it.copy(enabled=v) else it }})
-                    TextButton({selected=effect.id},modifier=Modifier.weight(1f)) { Text(uiText(effect.kind.name.lowercase().replace('_',' ').replaceFirstChar { it.uppercase() })) }
+                    Switch(effect.enabled,{v->effects=effects.map { if(it.id==effect.id) it.copy(enabled=v) else it }},
+                        modifier=Modifier.semantics { contentDescription=enabledLabel })
+                    TextButton({selected=effect.id},modifier=Modifier.weight(1f)) { Text(effectLabel) }
                     TextButton({effects=effects.toMutableList().apply { add(index-1,removeAt(index)) }},enabled=index>0) { Text(uiText("Up")) }
                     TextButton({effects=effects.filterNot { it.id==effect.id }}) { Text(uiText("Remove")) }
                 }

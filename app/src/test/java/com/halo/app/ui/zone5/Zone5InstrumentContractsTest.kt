@@ -1,9 +1,8 @@
 package com.halo.app.ui.zone5
 
 import android.app.Application
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
@@ -12,11 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.icons.HaloGlyph
-import com.halo.app.ui.presence.HaloOrbContextAction
-import com.halo.app.ui.presence.HaloOrbLauncher
-import com.halo.app.ui.presence.HaloOrbInteraction
-import com.halo.app.ui.presence.HaloOrbPrimary
-import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.presence.*
 import com.halo.app.ui.shell.HaloZone
 import com.halo.app.ui.screens.kids.KidsBrandTheme
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
@@ -35,6 +30,49 @@ import com.github.takahirom.roborazzi.captureRoboImage
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp")
 class Zone5InstrumentContractsTest {
     @get:Rule val compose = createComposeRule()
+    @Test fun studioLongDirtyRussianIdentityKeepsAllFourPrimaryGroupsVisible() {
+        val invoked = mutableListOf<String>()
+        val labels = listOf("Добавить", "Слои", "Инструменты", "ИИ")
+        val ids = listOf("page.studio.add-layer", "page.studio.layers", "page.studio.tools", "page.studio.ai")
+        compose.setContent { HostlessHaloTheme {
+            val projection = remember { mutableStateOf<ShellPageProjection?>(null) }
+            val header = remember { mutableStateOf<ShellUtilityProjection?>(null) }
+            CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides projection,
+                LocalShellUtilityBand provides header) {
+                val owner = ShellPageOwner("studio", objectId = "phone-regression")
+                BindShellPageActions(owner, ids.zip(labels).map { (id, label) ->
+                    ShellPageAction(id, label, HaloGlyph.TOOL, true) { invoked += id }
+                })
+                BindShellUtilityBand(owner, includesStatus = true) {
+                    ToolZoneHeader("Длинное название сохраняемого творческого проекта", {},
+                        subtitle = "Черновик сохранён на этом телефоне · 1440 × 2048 пикс. · Слои: 5",
+                        compactIdentity = true) {
+                        TextButton({}) { Text("Рисование") }
+                        IconButton({}) { Zone5Icon("action_save", HaloGlyph.NOTE, Modifier.size(24.dp)) }
+                        IconButton({}) { Zone5Icon("action_more", HaloGlyph.TOOL, Modifier.size(24.dp)) }
+                    }
+                }
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1f))
+                    HaloZone("studio", 760.dp, false, emptyList(), {}, {}, 0,
+                        utility = { header.value?.let { RenderShellUtilityBand(it) } },
+                        orb = { size -> HaloOrbLauncher(HaloSignalPresentation(label = "Ready", reducedMotion = true),
+                            HaloOrbInteraction(HaloOrbPrimary.TALK, false), emptySet(), {}, {}, {}, {}, size = size) })
+                }
+            }
+        } }
+        compose.onNodeWithTag("zone5-command-groups").assertIsDisplayed()
+        labels.forEach { label ->
+            val node = compose.onNodeWithText(label)
+            node.assertIsDisplayed().assertHeightIsAtLeast(48.dp)
+            val layouts = mutableListOf<TextLayoutResult>()
+            node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertTrue("Missing text layout for $label", layouts.isNotEmpty())
+            assertFalse("Primary group label is clipped: $label", layouts.single().hasVisualOverflow)
+            node.performClick()
+        }
+        assertEquals(ids, invoked)
+    }
     @Test fun disabledStudioPrimaryGroupExplainsItsLiveOwnerReason() {
         compose.setContent {HostlessHaloTheme {
             val projection=remember {mutableStateOf<com.halo.app.ui.presence.ShellPageProjection?>(null)}

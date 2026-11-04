@@ -5052,4 +5052,9 @@
     <string name="ui_fb73bdbd1540" formatted="false">"Pieskarieties darba laukumam, lai izvēlētos krāsu."</string>
     <string name="ui_67e600e7e4c5" formatted="false">"Priekšskatījuma atjaunināšana…"</string>
     <string name="ui_ac0c1250abb8" formatted="false">"Gleznojuma slānis ir pilns. Saglabājiet zīmējumu, pirms pievienojat jaunus triepienus."</string>
+    <string name="ui_db44b8db4f05" formatted="false">"Bloķēt"</string>
+    <string name="ui_4ac709aa58bc" formatted="false">"Atbloķēt"</string>
+    <string name="ui_31b22954a6ff" formatted="false">"Atlasīt slāni %1$s"</string>
+    <string name="ui_4c99e10f0d89" formatted="false">"Ieslēgt efektu %1$s"</string>
+    <string name="ui_361ef0904840" formatted="false">"Rediģēt attēlu"</string>
 </resources>

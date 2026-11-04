@@ -5052,4 +5052,9 @@
     <string name="ui_fb73bdbd1540" formatted="false">"Dotknij obszaru roboczego, aby pobrać kolor."</string>
     <string name="ui_67e600e7e4c5" formatted="false">"Aktualizowanie podglądu…"</string>
     <string name="ui_ac0c1250abb8" formatted="false">"Warstwa malarska jest pełna. Zachowaj rysunek przed dodaniem kolejnych śladów."</string>
+    <string name="ui_db44b8db4f05" formatted="false">"Zablokuj"</string>
+    <string name="ui_4ac709aa58bc" formatted="false">"Odblokuj"</string>
+    <string name="ui_31b22954a6ff" formatted="false">"Wybierz warstwę %1$s"</string>
+    <string name="ui_4c99e10f0d89" formatted="false">"Włącz efekt %1$s"</string>
+    <string name="ui_361ef0904840" formatted="false">"Edytuj obraz"</string>
 </resources>

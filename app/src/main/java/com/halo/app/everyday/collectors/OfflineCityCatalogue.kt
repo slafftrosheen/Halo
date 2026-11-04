@@ -23,8 +23,8 @@ class OfflineCityCatalogue(private val openAsset: () -> InputStream) {
     @Volatile private var entries: List<Entry>? = null
     suspend fun search(query: String, countryCode: String? = null, limit: Int = 30): List<OfflineCity> = withContext(Dispatchers.Default) {
         require(query.length <= 120 && limit in 1..100)
-        require(countryCode == null || countryCode.matches(Regex("[A-Z]{2}")))
-        val words = normalize(query).trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+        require(countryCode == null || countryPattern.matches(countryCode))
+        val words = normalize(query).trim().split(wordSeparators).filter { it.isNotBlank() }
         val joined = words.joinToString(" ")
         val candidates = load().filterIndexed { index, entry ->
             if (index % 128 == 0) ensureActive()
@@ -52,7 +52,7 @@ class OfflineCityCatalogue(private val openAsset: () -> InputStream) {
                     if (runCatching { ZoneId.of(zone) }.isFailure) return@forEachIndexed
                     val city = OfflineCity(columns[0], columns[1], columns[3], columns[4].toDouble(), columns[5].toDouble(), zone, columns[7].toLong())
                     city.weatherPlace()
-                    require(city.id.matches(Regex("[0-9]{1,12}")) && city.population >= 0 && city.countryCode.matches(Regex("[A-Z]{2}")))
+                    require(cityIdPattern.matches(city.id) && city.population >= 0 && countryPattern.matches(city.countryCode))
                     loaded += Entry(city, normalize(city.name), normalize("${city.name} ${columns[2]} ${city.countryCode} ${columns[8]}"))
                 }
             }
@@ -62,6 +62,11 @@ class OfflineCityCatalogue(private val openAsset: () -> InputStream) {
     companion object {
         const val ATTRIBUTION = "GeoNames · CC BY 4.0"
         const val ATTRIBUTION_URL = "https://www.geonames.org/"
+        // The bundled catalogue has tens of thousands of rows. Compile validators once,
+        // rather than repeatedly invoking Android's regular-expression compiler on first open.
+        private val cityIdPattern = Regex("[0-9]{1,12}")
+        private val countryPattern = Regex("[A-Z]{2}")
+        private val wordSeparators = Regex("\\s+")
         private val marks = Regex("\\p{M}+")
         private fun normalize(value: String) = marks.replace(Normalizer.normalize(value, Normalizer.Form.NFKD), "").lowercase(Locale.ROOT)
     }

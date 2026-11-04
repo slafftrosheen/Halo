@@ -268,6 +268,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         com.halo.app.ui.screens.notebook.ToolZoneHeader(projectTitle ?: stringResource(if (canvasLibrary) R.string.zone5_tool_canvas else R.string.zone5_tool_studio),
             onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy,
             onTitleClick = if (project != null) ({ nameProject("rename") }) else null,
+            compactIdentity = project != null,
             subtitle = project?.let { pageOwner.statusLabel + " · " + stringResource(R.string.zone5_graphics_dimensions,
                 it.session.current.width, it.session.current.height, it.session.current.layers.size) }) {
                 if(project!=null) Box {

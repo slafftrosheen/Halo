@@ -65,7 +65,7 @@ class OrganizerOperationsTest {
         val attention = AttentionController(object : AttentionContextProvider {
             override fun snapshot() = AttentionContext(); override val changes = emptyFlow<Unit>()
         }, DefaultAttentionPolicyEngine(), InMemoryAttentionQueue(), object : AttentionDeliveryCoordinator {
-            override suspend fun deliver(request: AttentionRequest, decision: AttentionDecision): DeliveryReceipt = error("Organizer owns semantic notifications")
+            override suspend fun deliver(request: AttentionRequest, decision: AttentionDecision): com.halo.runtime.cognition.attention.DeliveryReceipt = error("Organizer owns semantic notifications")
         }, scope)
         val executor = RoutineExecutor(db, routines, coordinator, runs, registry,
             { AutomationEnvironmentSnapshot(Instant.now(), batteryPercent = 80, networkAvailable = true, screenInteractive = true) },
@@ -188,7 +188,7 @@ class OrganizerOperationsTest {
         Harness().use { h ->
             val api = OrganizerOperationTools(h.operations, h.sources, OrganizerResearch(h.sources), { true }, { {} }, elapsedMs = { 1 }, bootId = { "boot" })
             val registry = ToolRegistry(listOf(api), api.definitions().map { HaloToolDescriptors.assistant(it)!! })
-            for (source in listOf(com.halo.cognition.language.Source.USER, com.halo.cognition.language.Source.MICROPHONE)) {
+            for (source in listOf(com.halo.sdk.runtime.Source.USER, com.halo.sdk.runtime.Source.MICROPHONE)) {
                 for (text in listOf("Capture Friday buy material", "Delegate to Halo check the order tomorrow", "Create shared task choose a printer", "Watch for a reply")) {
                     val intent = com.halo.cognition.language.NativeCommandParser.parse(text)!!
                     val request = com.halo.runtime.cognition.native.OrganizerNativeRequests.requestFor(
@@ -373,7 +373,7 @@ class OrganizerOperationsTest {
                 override val kind = CollectorKind.FEED
                 override suspend fun fetch(source: CollectorSource, cached: CollectorSnapshot?): CollectorFetchResult {
                     fetches++; h.entered.complete(Unit); withContext(NonCancellable) { h.release.await() }
-                    return CollectorFetchResult.Updated(payload, "observation")
+                    return CollectorFetchResult.Updated(payload, "observation", null, null, source.endpoint)
                 }
             }
             OrganizerResearchCapability(h.sources, CollectorCoordinator(h.sources, CollectorRegistry(listOf(adapter)), PermittedPolicy()), OrganizerResearch(h.sources))
