@@ -77,10 +77,31 @@ class EverydayFormsRenderingTest {
         compose.onNodeWithText(edit).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
         assertEquals(scale, layouts.single().layoutInput.density.fontScale, .001f)
         compose.onAllNodes(isRoot()).onLast().captureRoboImage()
-        compose.onNodeWithText(cancel).performScrollTo().performClick()
+        compose.onNodeWithText(cancel).assertIsDisplayed().performClick()
         compose.onNodeWithText(keep).performClick()
-        compose.onNodeWithText(save).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(save).assertIsDisplayed()
         compose.onNodeWithText("Unsaved local edit").assertExists()
+    }
+
+    @Test fun longOrganizerFormKeepsSaveAndCancelVisibleWithoutScrolling() = longEditor(1f)
+    @Test @Config(qualifiers = "ru-rRU-w640dp-h360dp") fun shortLandscapeOrganizerKeepsDecisionsVisibleAt200Percent() = longEditor(2f)
+    private fun longEditor(scale:Float) {
+        val original=OrganizerDraft(OrganizerRecord("fixture",OrganizerKind.TIMER,"Timer with many related items",createdAt=Instant.EPOCH),true)
+        val choices=List(90) {OrganizerLinkChoice("link-$it","Saved activity $it","ACTIVITY")}
+        var save="";var cancel="";var title="";var saved:OrganizerDraft?=null
+        compose.setContent {HostlessHaloTheme(fontScale=scale) {
+            var draft by remember {mutableStateOf(original)}
+            save=uiText("Save");cancel=uiText("Cancel");title=uiText("Title")
+            OrganizerEditorForm(OrganizerPageState(loading=false,kids=false,linkChoices=choices),draft,
+                {if(it!=null) draft=it},{saved=draft})
+        }}
+        compose.onNodeWithText(save).assertIsDisplayed().assertHeightIsAtLeast(56.dp)
+        compose.onNodeWithText(cancel).assertIsDisplayed().assertHeightIsAtLeast(56.dp)
+        compose.onNodeWithText(title).performScrollTo().performTextReplacement("Reviewed timer")
+        compose.onNodeWithText("Saved activity 89").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(save).assertIsDisplayed().performClick()
+        compose.runOnIdle {assertEquals("Reviewed timer",saved!!.title);assertTrue(saved!!.links.isEmpty())}
+        compose.onNodeWithText(cancel).assertIsDisplayed()
     }
 
     @Test fun parentCanRevokeUnavailableAndLateSharedRecordsWithoutLosingOtherSettings() {

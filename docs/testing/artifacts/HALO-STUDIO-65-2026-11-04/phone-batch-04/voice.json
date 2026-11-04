@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+  "input": "Real spoken command through the normal phone Orb",
+  "expectedCommand": "Запиши тестовую задачу проверить календарь",
+  "savedInboxTitle": "тестовую задачу проверить календарь",
+  "exactTitleMatched": true,
+  "appStayedOpenAfterCapture": true,
+  "persistedAfterForceStopAndRelaunch": true,
+  "currentProcessCrashBufferEmpty": true,
+  "result": "PASS_FOR_THIS_SPOKEN_INBOX_FLOW",
+  "recordedAt": "2026-11-04T21:01:04.794914+00:00"
+}

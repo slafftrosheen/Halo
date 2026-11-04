@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+  "timer": "QA63 idle timer",
+  "durationSeconds": 120,
+  "observedRemainingBeforeIdleSeconds": 27,
+  "forcedDeepState": "IDLE",
+  "forcedAt": "2026-11-04T21:30:47.298797+00:00",
+  "phoneSideAutomaticUnforceAfterSeconds": 90,
+  "forceOutput": "Now forced in to deep idle mode",
+  "observedAt": "2026-11-04T21:32:06.396802+00:00",
+  "deepStateAtNotificationRead": "IDLE",
+  "ownNotificationCount": 1,
+  "timerNotificationPresent": true,
+  "normalModeRestored": true,
+  "deepStateAfterRestore": "ACTIVE",
+  "restoredAt": "2026-11-04T21:32:29.935497+00:00",
+  "result": "PASS_TIMER_NOTIFICATION_WHILE_DEEP_IDLE",
+  "timerStoppedInApp": true,
+  "ownAlarmNotificationRemoved": true,
+  "cleanupCheckedAt": "2026-11-04T21:38:10.115856+00:00"
+}

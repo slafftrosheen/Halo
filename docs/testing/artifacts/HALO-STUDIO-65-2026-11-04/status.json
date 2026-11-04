@@ -1,41 +1,31 @@
 {
-  "recordedAt": "2026-11-04T19:57:13.870648+00:00",
+  "recordedAt": "2026-11-04T21:44:59.682047+00:00",
   "branch": "codex/issue-65-studio",
-  "latestBuiltSource": "175298336bf0052b91aa76221c395e5db9a2955d",
+  "latestBuiltSource": "88291b18f16dd34e4fc8026a852253873d730032",
   "fullAppCompile": "PASS",
   "apk": "BUILT_SIGNED_INSTALLED_HASH_VERIFIED",
-  "apkSha256": "a188616e7fe7b04ecf6a2f5c1b2c144ee9909a0c01de51c0f912bd5c52e68aba",
+  "apkSha256": "fe1fd84c122bb2b91f8ef4dd759b32698e6b7fae2d6869852e166330ecf7b97a",
   "appTests": {
-    "attempt": "phone-batch-01",
-    "tests": 589,
-    "failures": 48,
+    "attempt": "phone-batch-04",
+    "tests": 649,
+    "passed": 645,
+    "failures": 4,
     "errors": 0,
     "skipped": 0,
-    "status": "FAIL_CORRECTIONS_IN_PROGRESS"
+    "status": "FAIL_CORRECTIONS_AUTHORED"
   },
-  "phone": "NATIVE_BRIEF_REVOCATION_CRASH_CORRECTION_AND_FINAL_STUDIO_RECHECK_PENDING",
+  "phone": "UPDATED_882_NATIVE_VOICE_DOZE_AND_BUSY_IDLE_PASS_FINAL_CORRECTIONS_PENDING",
   "actualMicrophoneStt": {
-    "builtSource": "175298336bf0052b91aa76221c395e5db9a2955d",
-    "normalVoiceInboxSaved": true,
-    "savedTitle": "проверить голосовой WOT-Hail'o",
-    "expectedPhrase": "Запиши проверить голосовой ввод Halo",
-    "recognitionAccuracy": "IMPERFECT",
-    "microphoneProbe": {
-      "provider": "speech.sherpa_onnx.whisper_small",
-      "model": "whisper-small",
-      "language": "ru",
-      "audioMs": 14960,
-      "decodeMs": 17124,
-      "error": null,
-      "gate": "Accepted",
-      "controlledPhraseMatched": false
-    },
-    "appCrashed": true,
-    "exception": "java.lang.IllegalStateException: Everyday disclosure authority changed",
-    "site": "EverydayBriefService.visible:89",
-    "overallVoiceAcceptance": "FAIL_PENDING_CRASH_FIX_AND_RECHECK",
-    "modeConfirmed": "Power",
-    "recordedAt": "2026-11-04T20:19:37.282742+00:00"
+    "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+    "input": "Real spoken command through the normal phone Orb",
+    "expectedCommand": "Запиши тестовую задачу проверить календарь",
+    "savedInboxTitle": "тестовую задачу проверить календарь",
+    "exactTitleMatched": true,
+    "appStayedOpenAfterCapture": true,
+    "persistedAfterForceStopAndRelaunch": true,
+    "currentProcessCrashBufferEmpty": true,
+    "result": "PASS_FOR_THIS_SPOKEN_INBOX_FLOW",
+    "recordedAt": "2026-11-04T21:01:04.794914+00:00"
   },
   "liveProvider": "PAID_IMAGE_GENERATION_SKIPPED_BY_USER",
   "gradleWorkers": 1,
@@ -332,5 +322,80 @@
     "apkBuilt": false,
     "exitCode": 143,
     "reason": "A real phone voice command exposed an uncaught expected brief-disclosure revocation in a background subscriber. Complete this correction before restarting the combined gate."
+  },
+  "historicalPhoneBatch01": {
+    "latestBuiltSource": "175298336bf0052b91aa76221c395e5db9a2955d",
+    "apkSha256": "a188616e7fe7b04ecf6a2f5c1b2c144ee9909a0c01de51c0f912bd5c52e68aba",
+    "appTests": {
+      "attempt": "phone-batch-01",
+      "tests": 589,
+      "failures": 48,
+      "errors": 0,
+      "skipped": 0,
+      "status": "FAIL_CORRECTIONS_IN_PROGRESS"
+    },
+    "phone": "NATIVE_BRIEF_REVOCATION_CRASH_CORRECTION_AND_FINAL_STUDIO_RECHECK_PENDING",
+    "actualMicrophoneStt": {
+      "builtSource": "175298336bf0052b91aa76221c395e5db9a2955d",
+      "normalVoiceInboxSaved": true,
+      "savedTitle": "проверить голосовой WOT-Hail'o",
+      "expectedPhrase": "Запиши проверить голосовой ввод Halo",
+      "recognitionAccuracy": "IMPERFECT",
+      "microphoneProbe": {
+        "provider": "speech.sherpa_onnx.whisper_small",
+        "model": "whisper-small",
+        "language": "ru",
+        "audioMs": 14960,
+        "decodeMs": 17124,
+        "error": null,
+        "gate": "Accepted",
+        "controlledPhraseMatched": false
+      },
+      "appCrashed": true,
+      "exception": "java.lang.IllegalStateException: Everyday disclosure authority changed",
+      "site": "EverydayBriefService.visible:89",
+      "overallVoiceAcceptance": "FAIL_PENDING_CRASH_FIX_AND_RECHECK",
+      "modeConfirmed": "Power",
+      "recordedAt": "2026-11-04T20:19:37.282742+00:00"
+    },
+    "laterDiagnostic": {
+      "binarySource": "175298336bf0052b91aa76221c395e5db9a2955d",
+      "interpreter": {
+        "tests": 1,
+        "failures": 0
+      },
+      "c1Only": {
+        "tests": 13,
+        "failures": 1,
+        "remainingFailure": "Primary group label is clipped: Добавить",
+        "internalComposeErrors": 0
+      },
+      "inference": "C1-only avoids the earlier internal failures in this unchanged class. This does not yet prove all shared UI failures resolved.",
+      "remainingFix": "Allow translated primary labels to wrap completely at normal and large font sizes.",
+      "jvm": "-XX:TieredStopAtLevel=1",
+      "reference": "https://github.com/ptitSeb/box64/issues/4023",
+      "recordedAt": "2026-11-04T20:09:11.976703+00:00"
+    }
+  },
+  "dozeDelivery": {
+    "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+    "timer": "QA63 idle timer",
+    "durationSeconds": 120,
+    "observedRemainingBeforeIdleSeconds": 27,
+    "forcedDeepState": "IDLE",
+    "forcedAt": "2026-11-04T21:30:47.298797+00:00",
+    "phoneSideAutomaticUnforceAfterSeconds": 90,
+    "forceOutput": "Now forced in to deep idle mode",
+    "observedAt": "2026-11-04T21:32:06.396802+00:00",
+    "deepStateAtNotificationRead": "IDLE",
+    "ownNotificationCount": 1,
+    "timerNotificationPresent": true,
+    "normalModeRestored": true,
+    "deepStateAfterRestore": "ACTIVE",
+    "restoredAt": "2026-11-04T21:32:29.935497+00:00",
+    "result": "PASS_TIMER_NOTIFICATION_WHILE_DEEP_IDLE",
+    "timerStoppedInApp": true,
+    "ownAlarmNotificationRemoved": true,
+    "cleanupCheckedAt": "2026-11-04T21:38:10.115856+00:00"
   }
 }

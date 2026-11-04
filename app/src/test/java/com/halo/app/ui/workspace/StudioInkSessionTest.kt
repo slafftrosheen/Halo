@@ -78,6 +78,9 @@ class StudioInkSessionTest {
             session.submit(recoverable)
             assertFalse(session.awaitPersisted())
             assertTrue(session.failed.value)
+            // The failed StateFlow wakes readers before the writer's callback
+            // returns. Drain that worker before asserting its completed effects.
+            assertFalse(session.finishAndAwait())
             assertEquals(1, failures)
             assertEquals(winner, projects.get(initial.id))
             assertEquals(recoverable, session.draft().layers.single().ink)

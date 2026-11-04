@@ -6,8 +6,6 @@ import com.halo.runtime.cognition.tools.*
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
-import org.json.JSONArray
 import org.json.JSONObject
 
 /** Data-only adapter onto the same local Studio commands used by touch controls. */
@@ -59,15 +57,22 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
             mapOf("projectId" to id, "revision" to revision, "prompt" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 4000))),
         definition("halo_studio_status", "Read a transient Studio presentation/proposal receipt. UNKNOWN after process death or expiry of retained history; never replay an uncertain action. Proposal disposition does not confirm provider billing.", mapOf("requestId" to id)),
         definition("halo_studio_current", "Read the project currently attached to Halo Studio UI, if any. This is a Studio document reference, not proof of OS foreground or file contents.", emptyMap()),
-        definition("halo_studio_list", "Find saved local Studio projects. Results contain IDs and current revisions, never pixels.",
-            mapOf("query" to mapOf("type" to "string", "maxLength" to 200)), emptyList()),
+        definition("halo_studio_list", "Find saved local Studio projects, at most four per page. Follow nextProjectOffset with the same query; this is a live catalogue of the latest 100 saved projects. Titles are previews; get the document for its full title and revision. Never returns pixels.",
+            mapOf("query" to mapOf("type" to "string", "maxLength" to 200),
+                "offset" to mapOf("type" to "integer", "minimum" to 0, "maximum" to Int.MAX_VALUE),
+                "limit" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4)), emptyList()),
         definition("halo_studio_create", "Create a separate local layered Studio project. Optional sourceId/sourceVersion together create a new project from that exact image; cannot combine with preset/dimensions. No provider or network. Originals remain unchanged.",
             mapOf("title" to text, "handoffId" to id, "sourceId" to id, "sourceVersion" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 200), "width" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "height" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "preset" to mapOf("type" to "string", "enum" to StudioPreset.entries.map { it.name })), listOf("title")),
-        definition("halo_studio_get", "Read Studio layer/effect/typography metadata, local presets and saved versions. Optional sample plus exact revision returns one locally rendered ARGB pixel at normalized project coordinates; no recognition or network. A sample outside the cropped artboard is rejected.",
-            mapOf("projectId" to id,"revision" to revision,"layerId" to id,"offset" to mapOf("type" to "integer","minimum" to 0,"maximum" to 32),"limit" to mapOf("type" to "integer","minimum" to 1,"maximum" to 4),
-                "sample" to schema(mapOf("x" to mapOf("type" to "integer","minimum" to 0,"maximum" to 1000),"y" to mapOf("type" to "integer","minimum" to 0,"maximum" to 1000)))),listOf("projectId")),
+        definition("halo_studio_get", "Read one bounded Studio view. Default document discovers revision, full title, recipe and selection. Pin that revision for other views: layers (four summaries/page via offset/limit), layer (exact layerId properties), text (exact layerId, textOffset/textLimit up to 384; follow nextTextOffset for complete text), effects (exact layerId ordered stack), capabilities (brushes/palette/styles/effects/blends), versions. Text and effects are separate from layer properties so every JSON result fits the Runtime budget. Optional sample is document-only and requires exact revision; returns one locally rendered ARGB pixel, rejecting cropped-out coordinates. No recognition or network.",
+            mapOf("projectId" to id, "revision" to revision, "view" to mapOf("type" to "string", "enum" to StudioToolReadback.views),
+                "layerId" to id, "offset" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 32),
+                "limit" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4),
+                "textOffset" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 2000),
+                "textLimit" to mapOf("type" to "integer", "minimum" to 2, "maximum" to 384),
+                "sample" to schema(mapOf("x" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 1000),
+                    "y" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 1000)))), listOf("projectId")),
         definition("halo_studio_edit", "Edit the shared Design/Paint Studio draft at its exact revision. Bounds/mask/imageCrop use thousandths. Group/layout use layerIds (siblings), name or layout; duplicate/ungroup use layerId. update_layer supports typography, imageCrop, blend, effects and texture. Effects are editable bounded stacks with integer ARGB colours. Add texture requires name and texture. Locked ancestors fence child writes. Mode/viewport switching never edits the document. Undo/redo/restore preserve originals; never replay stale writes.",
             mapOf("projectId" to id, "revision" to revision, "operation" to mapOf("type" to "string", "enum" to listOf(
                 "add_text", "add_rectangle", "add_ellipse", "add_ink", "set_ink", "update_layer", "delete_layer", "move_layer", "select_layer",
@@ -83,7 +88,11 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun rejected(kind: ToolRejectionKind = ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(
             toolCall.id, toolCall.functionName, "Studio could not complete this action. Check the current project revision and source availability.", kind)
-        fun success(value: JSONObject) = ToolExecutionResult.Success(toolCall.id, toolCall.functionName, value.toString())
+        fun success(value: JSONObject): ToolExecutionResult.Success {
+            val encoded = value.toString()
+            check(encoded.length <= ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS) { "Studio readback exceeded its bounded projection" }
+            return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, encoded)
+        }
         val args = toolCall.arguments
         fun exact(required: Set<String>, optional: Set<String> = emptySet()) {
             require(args.keys.containsAll(required) && args.keys.all { it in required || it in optional })
@@ -119,12 +128,8 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     return success(studio.currentProject()?.let(::summary) ?: JSONObject().put("attached", false))
                 }
                 "halo_studio_list" -> {
-                    exact(emptySet(), setOf("query"))
-                    val query = if ("query" in args) string("query").also { require(it.length <= 200) } else ""
-                    val rows = studio.projects.observeProjects().first().filter { it.title.contains(query, ignoreCase = true) }
-                    val values = JSONArray()
-                    rows.take(20).forEach { row -> studio.projects.get(row.id)?.let { values.put(summary(it)) } }
-                    return success(JSONObject().put("projects", values).put("more", rows.size > 20))
+                    exact(emptySet(), setOf("query", "offset", "limit"))
+                    return success(StudioToolReadback.list(studio, args))
                 }
                 "halo_studio_create" -> {
                     exact(setOf("title"), setOf("width", "height", "preset", "sourceId", "sourceVersion", "handoffId"))
@@ -151,67 +156,8 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     return success(JSONObject().put("canvasId", canvas).put("outputId", output).put("nodeId", node).put("inserted", true))
                 }
                 "halo_studio_get" -> {
-                    exact(setOf("projectId"),setOf("revision","sample","layerId","offset","limit")); val project = requireNotNull(studio.projects.get(objectId("projectId")))
-                    require("sample" !in args||"revision" in args)
-                    if("revision" in args) require(project.revision==number("revision"))
-                    require("layerId" !in args || "offset" !in args&&"limit" !in args)
-                    val result = summary(project)
-                    val document=project.session.current
-                    fun encodedRect(rect:StudioRect)=JSONObject().put("x",rect.x).put("y",rect.y).put("width",rect.width).put("height",rect.height)
-                    result.put("background",document.background).put("recipe",JSONObject().put("quarterTurns",document.recipe.quarterTurns)
-                        .put("mirror",document.recipe.mirrorHorizontal).put("squareCrop",document.recipe.squareCrop).put("maxEdge",document.recipe.maxEdge)
-                        .put("format",document.recipe.format.name).put("crop",document.recipe.crop?.let {encodedRect(StudioRect(it.x,it.y,it.width,it.height))} ?: JSONObject.NULL))
-                    if("sample" in args) {
-                        require(project.revision==number("revision"))
-                        val sample=args["sample"];require(sample is Map<*,*> && sample.keys==setOf("x","y"))
-                        fun coordinate(key:String):Float {val v=sample[key];require(v is Number);val n=v.toDouble();require(n.isFinite()&&n%1==0.0&&n in 0.0..1000.0);return n.toFloat()}
-                        val point=StudioCanvasGeometry.forward(project.session.current,coordinate("x"),coordinate("y"))
-                        require(point.first in 0f..1f&&point.second in 0f..1f)
-                        val bitmap=studio.preview(project.id,project.revision)
-                        try { result.put("sampleColor",bitmap.getPixel((point.first*bitmap.width).toInt().coerceIn(0,bitmap.width-1),(point.second*bitmap.height).toInt().coerceIn(0,bitmap.height-1))) }
-                        finally {bitmap.recycle()}
-                        check(studio.projects.get(project.id)?.revision==project.revision) {"Project changed during sampling"}
-                    }
-                    result.put("brushes",JSONArray().apply {StudioCreativePresets.brushes.forEach {put(JSONObject().put("id",it.id.name).put("width",it.width).put("opacity",it.opacity))}})
-                    result.put("palette",JSONArray(StudioCreativePresets.palette))
-                    result.put("styles",JSONArray().apply {StudioCreativePresets.styles.forEach {put(JSONObject().put("id",it.id).put("color",it.color).put("opacity",it.opacity).put("typography",StudioCreativeCodec.typography(it.typography)))}})
-                    result.put("supportedEffects",JSONArray(StudioEffectKind.entries.map {it.name}))
-                    result.put("supportedBlends",JSONArray(StudioBlend.entries.map {it.name}))
-                    fun pageNumber(key:String,default:Int,min:Int,max:Int):Int {
-                        if(key !in args) return default
-                        val value=args[key];require(value is Number);val n=value.toDouble();require(n.isFinite()&&n%1==0.0&&n in min.toDouble()..max.toDouble());return n.toInt()
-                    }
-                    val offset=pageNumber("offset",0,0,32);val limit=pageNumber("limit",4,1,4)
-                    val layers=if("layerId" in args) listOf(requireNotNull(project.session.current.layers.find {it.id==objectId("layerId")})) else project.session.current.layers.drop(offset).take(limit)
-                    val more="layerId" !in args && offset+layers.size<project.session.current.layers.size
-                    val textLimit=if("layerId" in args) 2000 else 120
-                    result.put("layersTruncated",more).put("nextLayerOffset",if(more) offset+layers.size else JSONObject.NULL)
-                    result.put("layers", JSONArray().apply { layers.forEach { layer ->
-                        put(JSONObject().put("id", layer.id).put("name", layer.name.take(80)).put("kind", layer.kind.name)
-                            .put("visible", layer.visible).put("locked", layer.locked).put("opacity", layer.opacity)
-                            .put("rotation",layer.rotation).put("color",layer.color).put("fontSize",layer.fontSize).put("strokeWidth",layer.strokeWidth)
-                            .put("brightness",layer.brightness).put("contrast",layer.contrast).put("saturation",layer.saturation)
-                            .put("bounds", JSONObject().put("x", layer.bounds.x).put("y", layer.bounds.y).put("width", layer.bounds.width).put("height", layer.bounds.height))
-                            .put("text", layer.text.take(textLimit)).put("textTruncated", layer.text.length > textLimit)
-                            .put("parentId",layer.parentId ?: JSONObject.NULL).put("blend",layer.blend.name).put("editable",project.session.current.isEditable(layer))
-                            .put("typography",StudioCreativeCodec.typography(layer.typography))
-                            .put("imageCrop",layer.imageCrop?.let { JSONObject().put("x",it.x).put("y",it.y).put("width",it.width).put("height",it.height) } ?: JSONObject.NULL)
-                            .put("mask",layer.mask?.let(::encodedRect) ?: JSONObject.NULL)
-                            .put("effects",JSONArray().apply { layer.effects.forEach { put(StudioCreativeCodec.effect(it)) } })
-                            .put("texture",layer.texture?.name ?: JSONObject.NULL).put("textureSeed",layer.textureSeed).put("strokeOnly",layer.strokeOnly)
-                            .put("sourceId", layer.source?.objectId ?: JSONObject.NULL).put("sourceVersion", layer.source?.version ?: JSONObject.NULL))
-                    } })
-                    result.put("versions", JSONArray(studio.projects.versions(project.id).map { it.revision }))
-                    studio.selectedInk(project.id)?.takeIf { it.projectRevision == project.revision }?.let { selected -> result.put("inkSelection", JSONObject()
-                        .put("layerId", selected.layerId).put("projectRevision", selected.projectRevision)
-                        .put("sourceRevision", selected.selection.sourceRevision).put("strokeCount", selected.selection.selectedStrokeIds.size)
-                        .put("bounds", JSONObject().put("left", selected.selection.bounds.left).put("top", selected.selection.bounds.top)
-                            .put("right", selected.selection.bounds.right).put("bottom", selected.selection.bounds.bottom))) }
-                    if("sample" in args) {
-                        check(studio.projects.get(project.id)?.revision==project.revision)
-                        studio.validatePinnedSources(project.session.current)
-                    }
-                    return success(result)
+                    exact(setOf("projectId"), setOf("revision", "view", "sample", "layerId", "offset", "limit", "textOffset", "textLimit"))
+                    return success(StudioToolReadback.get(studio, args))
                 }
                 "halo_studio_edit" -> {
                     exact(setOf("projectId", "revision", "operation", "fields"))
@@ -246,9 +192,5 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         catch (_: Exception) { return ToolExecutionResult.Failed(toolCall.id, toolCall.functionName,
             "Studio could not complete this action. Reopen the project before retrying.") }
     }
-    private fun summary(project: StudioProject) = JSONObject().put("projectId", project.id).put("revision", project.revision)
-        .put("selectedLayerId",project.session.current.selectedLayerId ?: JSONObject.NULL)
-        .put("title", project.title).put("width", project.session.current.width).put("height", project.session.current.height)
-        .put("layerCount", project.session.current.layers.size).put("localDraft", project.hasUnsavedChanges)
-        .put("canUndo", project.session.undo.isNotEmpty()).put("canRedo", project.session.redo.isNotEmpty())
+    private fun summary(project: StudioProject) = StudioToolReadback.summary(project)
 }

@@ -95,8 +95,15 @@ class EverydayToolExecutorTest {
             val record=useCases.create(OrganizerKind.ALARM,"Ring",time=OrganizerTime(LocalDateTime.ofInstant(now,ZoneOffset.UTC),zoneId="UTC"),
                 repeat=RepeatRule(RepeatFrequency.DAILY,count=3))
             delivery.reconcile(record.id)
-            val receipt=organizer.receipts(record.id).single()
-            assertTrue(delivery.fire(receipt.occurrenceKey,record.version,receipt.triggerAt))
+            val receipts=organizer.receipts(record.id)
+            // Reconciliation delivers the due occurrence and schedules only the
+            // next one. The third recurrence is enabled but not yet scheduled.
+            assertEquals(2,receipts.size)
+            val receipt=receipts.single {it.triggerAt==now}
+            val future=receipts.filter {it.triggerAt>now}
+            assertEquals(1,future.size)
+            assertEquals(DeliveryState.FIRED,receipt.state)
+            assertFalse(delivery.fire(receipt.occurrenceKey,record.version,receipt.triggerAt))
             val args=mapOf("id" to record.id,"version" to record.version,"occurrenceKey" to receipt.occurrenceKey,"action" to action,"minutes" to 5)
             val result=call("halo_organizer_delivery",args)
             assertTrue(result is ToolExecutionResult.Success)
@@ -106,6 +113,10 @@ class EverydayToolExecutorTest {
             assertEquals(count,scheduled.size)
             assertEquals(if(action=="SNOOZE") DeliveryState.EXACT else DeliveryState.DISMISSED,
                 organizer.receipts(record.id).first {it.occurrenceKey==receipt.occurrenceKey}.state)
+            assertEquals(future,organizer.receipts(record.id).filter {it.occurrenceKey in future.map {row->row.occurrenceKey}})
+            val saved=organizer.get(record.id)!!
+            assertEquals(OrganizerStatus.ACTIVE,saved.status)
+            assertEquals(2,OrganizerRecurrence.between(saved,emptyList(),now.plusSeconds(86400),now.plusSeconds(3L*86400),ZoneOffset.UTC).size)
         }
     }
     @Test fun recognizedAlarmAndTimerOperationsSaveCanonicalRecordsWithoutAndroidClockDispatch()=runBlocking {

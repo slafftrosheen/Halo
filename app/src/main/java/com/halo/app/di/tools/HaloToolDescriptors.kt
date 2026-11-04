@@ -7,6 +7,7 @@ import com.halo.runtime.cognition.tools.ToolAutomationMetadata
 import com.halo.runtime.cognition.tools.ToolCategory
 import com.halo.runtime.cognition.tools.ToolDescriptor
 import com.halo.runtime.cognition.tools.ToolExecutionPolicy
+import com.halo.runtime.cognition.tools.ToolExecutionLimits
 import com.halo.runtime.cognition.tools.ToolId
 import com.halo.runtime.cognition.tools.ToolPresentation
 import com.halo.runtime.cognition.tools.ToolRequirement
@@ -369,7 +370,7 @@ object HaloToolDescriptors {
             presentation = ToolPresentation(title = "Continue with this item", actionVerb = "Continue"))
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("studio", "image", "drawing", "layers", "project"),
-            execution = ToolExecutionPolicy(maxOutputChars=24000),
+            execution = ToolExecutionPolicy(maxOutputChars=ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS),
             presentation = ToolPresentation(title = "Studio", actionVerb = "Open"))
         "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),

@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+  "sourceDirty": false,
+  "bytes": 298468085,
+  "sha256": "fe1fd84c122bb2b91f8ef4dd759b32698e6b7fae2d6869852e166330ecf7b97a",
+  "compiledSourceMarkerFound": true,
+  "revocationFixClassFound": true,
+  "recordedAt": "2026-11-04T20:51:36.743386+00:00",
+  "signatureVerified": true,
+  "installed": true,
+  "signerCertificateSha256": "d016e155446e2d96644e396fcb682282e97a2a816d9592875510469f1b22b737",
+  "installedSha256": "fe1fd84c122bb2b91f8ef4dd759b32698e6b7fae2d6869852e166330ecf7b97a",
+  "installedVerifiedAt": "2026-11-04T20:55:58.904171+00:00"
+}

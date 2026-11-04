@@ -6,6 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
@@ -53,10 +55,12 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
             primary.forEach {id->actions.find {it.id==id}?.let {action->
                 val active=projection.owner.activeToolId==id
                 FilterChip(selected=active,onClick={projection.invoke(id)},enabled=action.enabled,
-                    // Icons consume part of each equal-width target. Translated labels
-                    // must wrap completely even at normal scale on a 360dp phone.
-                    label={Text(uiText(action.title),style=MaterialTheme.typography.labelSmall)},
-                    leadingIcon={Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:$id",action.title,action.glyph)),action.glyph,Modifier.size(20.dp))},
+                    // Stack the icon above the label so four translated targets retain
+                    // their full text width on narrow phones and at large font sizes.
+                    label={Column(Modifier.fillMaxWidth(), horizontalAlignment=Alignment.CenterHorizontally) {
+                        Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:$id",action.title,action.glyph)),action.glyph,Modifier.size(20.dp))
+                        Text(uiText(action.title),Modifier.fillMaxWidth(),style=MaterialTheme.typography.labelSmall,textAlign=TextAlign.Center)
+                    }},
                     modifier=Modifier.weight(1f).heightIn(min=48.dp).semantics {selected=active;if(!action.enabled) stateDescription=projection.owner.disabledReasonFor(id).orEmpty()}
                         .haloTrace(action.id==guidedActionId,MaterialTheme.colorScheme.primary,12.dp,lapOnAppear=true))
             }}

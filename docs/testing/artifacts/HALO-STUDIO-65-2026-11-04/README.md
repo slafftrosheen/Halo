@@ -1,3 +1,15 @@
+# Latest verification checkpoint
+
+Clean `88291b18f` compiled, packaged and installed as an update. APK SHA-256 `fe1fd84c122bb2b91f8ef4dd759b32698e6b7fae2d6869852e166330ecf7b97a`; on-device bytes and signature matched. Actual spoken Russian Inbox capture saved the exact requested task, survived reopening and did not crash. A real timer notification was observed while Android remained in forced deep idle; normal mode was restored and the own timer stopped. Studio's four groups remained visible through add/save/undo/save; named Blur and Grain switches operated independently.
+
+The completed C1-only related run executed **649 cases: 645 passed, four failed, zero errors/skips**. Its 256MiB code cache remained enabled. The four failures are oversized Studio JSON readback, narrow ИИ label clipping, a recurring-receipt fixture assuming one occurrence, and a callback assertion before the asynchronous writer finished. The next coherent source batch addresses these and the native Organizer editor's buried Save control. That batch still requires a fresh compile/test/APK/device gate. [Current evidence](phone-batch-04/summary.json), [phone report](../../ISSUES-63-65-PHONE-2026-11-04.md), [status](status.json).
+
+Paid image generation remains skipped by the user's instruction. Physical reboot delivery, all widget variants, 200% native text and final corrected APK acceptance remain separate, unfinished checks.
+
+---
+
+## Historical 175 checkpoint
+
 # Current evidence — issues 63–65, 4 November 2026
 
 The standard APK now **compiles, packages, verifies and runs on the connected Android 15 phone**. Clean source `175298336bf0052b91aa76221c395e5db9a2955d`; APK SHA-256 `a188616e7fe7b04ecf6a2f5c1b2c144ee9909a0c01de51c0f912bd5c52e68aba`, 298,468,085 bytes. Installed as an update, matching the existing debug signature; on-device APK hash matched. No app data was cleared.

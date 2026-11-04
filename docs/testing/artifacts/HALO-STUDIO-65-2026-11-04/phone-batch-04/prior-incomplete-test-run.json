@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+  "productionCompile": "PASS",
+  "testCompile": "PASS",
+  "tests": "INCOMPLETE_STOPPED_FOR_HOST_CODE_CACHE_CAPACITY",
+  "reason": "C1-only JVM default code cache49152KiB filled at529s and disabled compilation. Increase reserved cache for the unchanged full suite.",
+  "reportedFailuresBeforeStop": [
+    "Zone5InstrumentContractsTest.studioLongDirtyRussianIdentityKeepsAllFourPrimaryGroupsVisible: label ИИ overflow",
+    "StudioLocalWorkflowTest.registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded: registered JSON result truncated",
+    "EverydayToolExecutorTest.assistantSnoozeAndRecurringDismissCancelTheExactPostedVersionWithoutReplay: recurring receipts.single() contains more than one item"
+  ],
+  "completedTotal": null,
+  "oldXmlWarning": "Existing XML still belongs to ui-c1-01 until Gradle writes the final report; do not count it as current suite results.",
+  "recordedAt": "2026-11-04T21:14:28.023057+00:00"
+}

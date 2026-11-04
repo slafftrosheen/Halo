@@ -153,24 +153,100 @@ class StudioLocalWorkflowTest {
         val descriptors=executor.definitions().map {requireNotNull(com.halo.app.di.tools.HaloToolDescriptors.workspace(it))}
         val registry=com.halo.runtime.cognition.tools.ToolRegistry(listOf(executor),descriptors)
         assertEquals(emptyList<com.halo.runtime.cognition.tools.ToolOperabilityProblem>(),registry.operabilityReport(listOf(com.halo.runtime.cognition.tools.ToolFeatureOperability("studio65",descriptors.map {it.name}.toSet()))))
-        val effects=List(8) {index->StudioEffect(id="effect-$index",kind=StudioEffectKind.GRAIN)}
+        val effects=List(8) {index->StudioEffect(id="effect-$index",kind=StudioEffectKind.GRAIN,enabled=false)}
         val original=projects.create("Registered creative workflow",StudioDocument(64,64,layers=List(12) {index->StudioLayer(id="shape-$index",name="Shape $index",kind=StudioLayerKind.RECTANGLE,effects=effects)}))
         suspend fun call(name:String,args:Map<String,Any>)=registry.executeAuthorized(com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(com.halo.sdk.provider.ToolCall(java.util.UUID.randomUUID().toString(),name,args)))
         val result=call("halo_studio_get",mapOf("projectId" to original.id))
         assertTrue("Registered Studio read failed: $result",result is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
         val read=result as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
-        assertTrue(read.output.length<24000)
-        val page=org.json.JSONObject(read.output)
-        assertTrue(page.has("background"));assertTrue(page.has("recipe"));assertTrue(page.getJSONArray("layers").getJSONObject(0).has("mask"))
+        assertTrue(read.output.length<=com.halo.runtime.cognition.tools.ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS)
+        assertFalse(read.outputMetadata?.truncated == true)
+        val document=org.json.JSONObject(read.output)
+        assertTrue(document.has("background"));assertTrue(document.has("recipe"))
+        val pageResult=call("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"view" to "layers")) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        val page=org.json.JSONObject(pageResult.output)
         assertEquals(4,page.getJSONArray("layers").length());assertEquals(4,page.getInt("nextLayerOffset"));assertTrue(page.getBoolean("layersTruncated"))
+        val properties=call("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"view" to "layer","layerId" to "shape-0")) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        assertTrue(org.json.JSONObject(properties.output).getJSONObject("layer").has("mask"))
         val grouped=call("halo_studio_edit",mapOf("projectId" to original.id,"revision" to original.revision,"operation" to "group_layers","fields" to mapOf("layerIds" to listOf("shape-0","shape-1"),"name" to "Reviewed pair")))
         assertTrue(grouped is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
         val current=projects.get(original.id)!!
         assertEquals(1,current.session.current.layers.count {it.kind==StudioLayerKind.GROUP})
         assertTrue(call("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"offset" to 4)) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
-        val picked=call("halo_studio_get",mapOf("projectId" to original.id,"revision" to current.revision,"layerId" to "shape-0","sample" to mapOf("x" to 500,"y" to 500))) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
-        assertTrue(org.json.JSONObject(picked.output).has("sampleColor"))
+        val picked=call("halo_studio_get",mapOf("projectId" to original.id,"revision" to current.revision,"view" to "document","sample" to mapOf("x" to 500,"y" to 500))) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        assertEquals(original.session.current.layers.first().color,org.json.JSONObject(picked.output).getInt("sampleColor"))
     }
+    @Test fun registeredReadbackPagesEscapedMetadataTextAndEffectsWithoutTruncatingJson()=runBlocking {
+        val executor=com.halo.app.di.tools.StudioToolExecutor(service)
+        val descriptors=executor.definitions().map {requireNotNull(com.halo.app.di.tools.HaloToolDescriptors.workspace(it))}
+        val registry=com.halo.runtime.cognition.tools.ToolRegistry(listOf(executor),descriptors)
+        val title="A"+"\u0001".repeat(118)+"Z"
+        val text=("\u0001".repeat(383)+"😀"+"\u0002".repeat(1615))
+        assertEquals(2000,text.length)
+        val effects=List(8) {StudioEffect(id=("e$it"+"x".repeat(98)),kind=StudioEffectKind.GRADIENT_LIGHT,enabled=false,
+            color=Int.MIN_VALUE,secondaryColor=Int.MIN_VALUE,seed=Int.MIN_VALUE)}
+        val source=StudioSource("s".repeat(100),"\u0001".repeat(200))
+        val image=StudioLayer(id="i".repeat(100),name=title,kind=StudioLayerKind.IMAGE,source=source,
+            bounds=StudioRect(-1000,-1000,3000,3000),mask=StudioRect(-1000,-1000,3000,3000),imageCrop=StudioRect(),effects=effects)
+        val layers=List(12) {index->StudioLayer(id="text-$index",name=title,kind=StudioLayerKind.TEXT,text=text,effects=effects)}+image
+        val original=projects.create(title,StudioDocument(64,64,layers=layers))
+        suspend fun raw(name:String,args:Map<String,Any>)=registry.executeAuthorized(com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(
+            com.halo.sdk.provider.ToolCall(UUID.randomUUID().toString(),name,args)))
+        suspend fun json(name:String,args:Map<String,Any>):org.json.JSONObject {
+            val result=raw(name,args)
+            assertTrue("Registered result failed: $result",result is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+            val read=result as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+            assertFalse(read.outputMetadata?.truncated == true)
+            assertTrue(read.output.length<=com.halo.runtime.cognition.tools.ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS)
+            return org.json.JSONObject(read.output)
+        }
+        suspend fun get(view:String,extra:Map<String,Any> = emptyMap())=json("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"view" to view)+extra)
+        val document=get("document")
+        assertEquals(title,document.getString("title"))
+        val seen=mutableListOf<String>()
+        var offset=0
+        do {
+            val page=get("layers",mapOf("offset" to offset))
+            val rows=page.getJSONArray("layers")
+            repeat(rows.length()) {index->seen+=rows.getJSONObject(index).getString("id");assertTrue(rows.getJSONObject(index).getBoolean("nameTruncated"))}
+            offset=if(page.isNull("nextLayerOffset")) -1 else page.getInt("nextLayerOffset")
+        } while(offset>=0)
+        assertEquals(layers.map {it.id},seen)
+        val properties=get("layer",mapOf("layerId" to "text-0")).getJSONObject("layer")
+        assertEquals(title,properties.getString("name"));assertEquals(2000,properties.getInt("textLength"));assertEquals(8,properties.getInt("effectCount"))
+        val imageProperties=get("layer",mapOf("layerId" to image.id)).getJSONObject("layer")
+        assertEquals(source.version,imageProperties.getString("sourceVersion"));assertEquals(title,imageProperties.getString("name"))
+        assertEquals(-1000,imageProperties.getJSONObject("mask").getInt("x"))
+        val stack=get("effects",mapOf("layerId" to "text-0")).getJSONArray("effects")
+        assertEquals(effects,(0 until stack.length()).map {StudioCreativeCodec.readEffect(stack.getJSONObject(it))})
+        val assembled=StringBuilder();var textOffset=0
+        do {
+            val chunk=get("text",mapOf("layerId" to "text-0","textOffset" to textOffset))
+            assertEquals(textOffset,chunk.getInt("textOffset"))
+            assembled.append(chunk.getString("text"))
+            textOffset=if(chunk.isNull("nextTextOffset")) -1 else chunk.getInt("nextTextOffset")
+        } while(textOffset>=0)
+        assertEquals(text,assembled.toString())
+        val capabilities=get("capabilities")
+        assertEquals(StudioEffectKind.entries.size,capabilities.getJSONArray("supportedEffects").length())
+        assertEquals(4,capabilities.getJSONArray("brushes").length())
+        assertEquals(original.revision,get("versions").getJSONArray("versions").getLong(0))
+        assertTrue(raw("halo_studio_get",mapOf("projectId" to original.id,"view" to "layers","offset" to 4)) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+        assertTrue(raw("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"view" to "text","layerId" to "text-0","textOffset" to 384)) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+        // List titles are previews; pagination still reaches every matching saved project.
+        repeat(5) {projects.create(title,StudioDocument(1,1))}
+        val projectIds=mutableSetOf<String>();var projectOffset=0
+        do {
+            val page=json("halo_studio_list",mapOf("offset" to projectOffset))
+            val rows=page.getJSONArray("projects")
+            repeat(rows.length()) {index->projectIds+=rows.getJSONObject(index).getString("projectId");assertTrue(rows.getJSONObject(index).getBoolean("titleTruncated"))}
+            projectOffset=if(page.isNull("nextProjectOffset")) -1 else page.getInt("nextProjectOffset")
+        } while(projectOffset>=0)
+        assertEquals(6,projectIds.size);assertTrue(original.id in projectIds)
+        projects.apply(original.id,original.revision,StudioCommand.Background(Color.RED))
+        assertTrue(raw("halo_studio_get",mapOf("projectId" to original.id,"revision" to original.revision,"view" to "text","layerId" to "text-0","textOffset" to 383)) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+    }
+
     @Test fun connectedFillIsANewUndoableSourcePinnedLayer()=runTest {
         val bar=StudioLayer(id="bar",name="Barrier",kind=StudioLayerKind.RECTANGLE,bounds=StudioRect(400,0,200,1000),color=Color.BLACK)
         val original=projects.create("Fill original",StudioDocument(32,32,background=Color.WHITE,layers=listOf(bar)))

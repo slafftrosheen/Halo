@@ -35,7 +35,7 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
     var discard by rememberSaveable { mutableStateOf(false) }
     val change: (OrganizerDraft) -> Unit = { if (!state.busy) onDraft(it) }
     EverydaySheet(onDismiss = { if (!state.busy) discard = true }) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText(if (draft.creating) "Add item" else if (draft.occurrence != null) "Edit this occurrence" else if (draft.base.repeat != null) "Edit entire series" else "Edit item"), style = MaterialTheme.typography.headlineSmall)
             Text(uiText(organizerKindLabel(draft.base.kind)), style = MaterialTheme.typography.labelLarge)
             state.error?.let { EverydayMessage(it, true) }
@@ -127,8 +127,12 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
                 }
                 Text(uiText("Related items stay in their original instrument. Removing a link does not delete them."), style = MaterialTheme.typography.bodySmall)
             }
-            Button(onSave, enabled = !state.busy && draft.title.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Save")) }
-            TextButton({ discard = true }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
+        }
+        // Related-item results can fill many screens. The decision controls stay
+        // outside that scroll area, including above the keyboard on short screens.
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TextButton({ discard = true }, enabled = !state.busy, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) { Text(uiText("Cancel")) }
+            Button(onSave, enabled = !state.busy && draft.title.isNotBlank(), modifier = Modifier.weight(1f).heightIn(min = 56.dp)) { Text(uiText("Save")) }
         }
     }
     if (discard) HaloAlertDialog(onDismissRequest = { discard = false }, title = { Text(uiText("Discard this edit?")) },

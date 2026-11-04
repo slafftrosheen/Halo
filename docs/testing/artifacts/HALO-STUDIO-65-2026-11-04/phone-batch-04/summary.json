@@ -1,0 +1,35 @@
+{
+  "counts": {
+    "tests": 649,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "passed": 645,
+  "suites": 113,
+  "failures": [
+    {
+      "classname": "com.halo.app.data.studio.StudioLocalWorkflowTest",
+      "name": "registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded",
+      "message": "org.json.JSONException: Unterminated object at character 2620 of {\"projectId\":\"c34acf4d-5e60-4b27-b7b4-c40d8672dd45\",\"revision\":1,\"selectedLayerId\":null,\"title\":\"Registered creative workflow\",\"width\":"
+    },
+    {
+      "classname": "com.halo.app.di.tools.EverydayToolExecutorTest",
+      "name": "assistantSnoozeAndRecurringDismissCancelTheExactPostedVersionWithoutReplay",
+      "message": "java.lang.IllegalArgumentException: List has more than one element."
+    },
+    {
+      "classname": "com.halo.app.ui.workspace.StudioInkSessionTest",
+      "name": "completedSnapshotsCoalesceAndExternalEditsStopWithoutOverwritingTheirWinner",
+      "message": "java.lang.AssertionError: expected:<1> but was:<0>"
+    },
+    {
+      "classname": "com.halo.app.ui.zone5.Zone5InstrumentContractsTest",
+      "name": "studioLongDirtyRussianIdentityKeepsAllFourPrimaryGroupsVisible",
+      "message": "java.lang.AssertionError: Primary group label is clipped: \u0418\u0418"
+    }
+  ],
+  "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
+  "result": "FAIL_FOUR_CORRECTIONS_AUTHORED",
+  "host": "One core/worker/fork; Box64 x64 JRE17, C1-only, 256MiB reserved code cache, G1; no internal Compose errors in completed run."
+}
