@@ -19,7 +19,24 @@
   "gradleWorkers": 1,
   "testForks": 1,
   "swapGiB": 16,
-  "laterDiagnostic": "Fresh worker exited139; interpreter follow-up interrupted by host reset without result. No app or power cause inferred.",
+  "laterDiagnostic": {
+    "binarySource": "175298336bf0052b91aa76221c395e5db9a2955d",
+    "interpreter": {
+      "tests": 1,
+      "failures": 0
+    },
+    "c1Only": {
+      "tests": 13,
+      "failures": 1,
+      "remainingFailure": "Primary group label is clipped: Добавить",
+      "internalComposeErrors": 0
+    },
+    "inference": "C1-only avoids the earlier internal failures in this unchanged class. This does not yet prove all shared UI failures resolved.",
+    "remainingFix": "Allow translated primary labels to wrap completely at normal and large font sizes.",
+    "jvm": "-XX:TieredStopAtLevel=1",
+    "reference": "https://github.com/ptitSeb/box64/issues/4023",
+    "recordedAt": "2026-11-04T20:09:11.976703+00:00"
+  },
   "historicalBeforeStandardApk": {
     "recordedAt": "2026-11-04T08:26:40.197352+00:00",
     "sourceCommit": "08e1217d8369e083bc7527a9c64afe2cad5eb795",
