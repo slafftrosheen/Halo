@@ -59,6 +59,7 @@ import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.host.android.assistant.AndroidAssistantRoleController
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler
+import com.halo.runtime.cognition.agent.isTerminal
 import com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner
 import com.halo.runtime.cognition.attention.DeliveryChannel
 import com.halo.runtime.cognition.context.AssistantContextRepository
@@ -261,7 +262,7 @@ object ManualDependencyGraph {
         com.halo.app.automation.RoutineManagementActions(routineRepository, routineScheduler, routineExecutor::validateForSave,
             routineExecutor::validate, routineExecutor::grantSummary, routineExecutor::execute)
     }
-    val organizerOperations by lazy {
+    val organizerOperations: com.halo.app.everyday.organizer.OrganizerOperations by lazy {
         com.halo.app.everyday.organizer.OrganizerOperations(appDatabase, organizerUseCases, routineRepository, { organizerRoutineManagement },
             organizerWorkCapabilities, agentRunStore, collectorRepository, cancelRun = { id ->
                 agentRunStore.get(com.halo.runtime.cognition.agent.AgentRunId(id))?.takeIf { !it.state.isTerminal }?.let { agentRunCoordinator.cancel(it.id, "Organizer work stopped by user") }
@@ -906,7 +907,7 @@ object ManualDependencyGraph {
     val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool, routineMessageTool, organizerWorkTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) + routineMessageTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage) + organizerWorkTool.descriptor(), payloadStore = contentPayloadStore) }
     val screenStore by lazy { com.halo.app.screen.LocalScreenStore(applicationContext) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
-    val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
+    val routineExecutor: com.halo.app.automation.RoutineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
         agentRunCoordinator, agentRunStore, automationToolRegistry, environmentSnapshot = {
             val battery = applicationContext.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
             val level = battery?.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) ?: -1

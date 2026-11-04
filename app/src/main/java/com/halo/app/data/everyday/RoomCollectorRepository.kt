@@ -134,8 +134,9 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         val token = UUID.randomUUID().toString()
         com.halo.app.everyday.EverydayEffectAuthority.requireCurrent()
         if (source.external) {
-            repeat(requestUnits) { unit -> dao.request(CollectorRequestEntity("$token:$unit", requireNotNull(budgetKey), now.toEpochMilli())) }
-            dao.putEndpoint(CollectorEndpointEntity(budgetKey, now.toEpochMilli(), null, dao.endpoint(budgetKey)?.failures ?: 0))
+            val endpointKey = requireNotNull(budgetKey)
+            repeat(requestUnits) { unit -> dao.request(CollectorRequestEntity("$token:$unit", endpointKey, now.toEpochMilli())) }
+            dao.putEndpoint(CollectorEndpointEntity(endpointKey, now.toEpochMilli(), null, dao.endpoint(endpointKey)?.failures ?: 0))
         }
         dao.putAttempt(CollectorCodec.entity(source.version, CollectorAttempt(id, now, CollectorAttemptState.FETCHING,
             failureLineage), token))

@@ -24,7 +24,11 @@ internal object StudioToolResultContracts {
         "textTruncated" to bool,"sourceId" to nullable(id),"sourceVersion" to nullable(text),"parentId" to nullable(id),"blend" to StudioCreativeToolSchemas.fields.getValue("blend"),
         "editable" to bool,"typography" to StudioCreativeToolSchemas.typography,"imageCrop" to nullable(rect),"mask" to nullable(rect),"effects" to StudioCreativeToolSchemas.fields.getValue("effects"),
         "texture" to nullable(enumeration(StudioTexture.entries.map {it.name})),"textureSeed" to integer(Int.MIN_VALUE.toLong(),Int.MAX_VALUE.toLong()),"strokeOnly" to bool))
-    private val get=closed(summary+mapOf("background" to integer(Int.MIN_VALUE.toLong(),Int.MAX_VALUE.toLong()),
+    private val inkSelection=closed(mapOf(
+        "layerId" to id,"projectRevision" to revision,"sourceRevision" to text,"strokeCount" to integer(0,256),
+        "bounds" to closed(mapOf("left" to integer(0,1000),"top" to integer(0,1000),
+            "right" to integer(0,1000),"bottom" to integer(0,1000)))))
+    private val get:Map<String,Any> = closed(summary+mapOf("background" to integer(Int.MIN_VALUE.toLong(),Int.MAX_VALUE.toLong()),
         "recipe" to closed(mapOf("quarterTurns" to integer(0,3),"mirror" to bool,"squareCrop" to bool,"maxEdge" to integer(512,4096),
             "format" to enumeration(listOf("PNG","JPEG")),"crop" to nullable(rect))),
         "layers" to array(layer,4),"layersTruncated" to bool,"nextLayerOffset" to nullable(integer(0,32)),"versions" to array(revision,100),
@@ -34,8 +38,7 @@ internal object StudioToolResultContracts {
         "supportedEffects" to array(enumeration(StudioEffectKind.entries.map {it.name}),StudioEffectKind.entries.size),
         "supportedBlends" to array(enumeration(StudioBlend.entries.map {it.name}),StudioBlend.entries.size),
         "sampleColor" to integer(Int.MIN_VALUE.toLong(),Int.MAX_VALUE.toLong()),
-        "inkSelection" to closed(mapOf("layerId" to id,"projectRevision" to revision,"sourceRevision" to text,"strokeCount" to integer(0,256),
-            "bounds" to closed(mapOf("left" to integer(0,1000),"top" to integer(0,1000),"right" to integer(0,1000),"bottom" to integer(0,1000))))),setOf("sampleColor","inkSelection"))
+        "inkSelection" to inkSelection),setOf("sampleColor","inkSelection"))
     fun forTool(name:String):Map<String,Any> = when(name) {
         "halo_studio_get"->get
         "halo_studio_list"->closed(mapOf("projects" to array(closed(summary),20),"more" to bool))

@@ -46,11 +46,11 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         val project = projects.get(binding.projectId)
         return project.takeIf { active.get() == binding }
     }
-    private val inkOwner = java.util.concurrent.atomic.AtomicReference<Binding?>(null)
-    fun attachInkSelectionOwner(projectId: String, token: String) { inkOwner.set(Binding(projectId, token)) }
+    private val inkSelectionOwner = java.util.concurrent.atomic.AtomicReference<Binding?>(null)
+    fun attachInkSelectionOwner(projectId: String, token: String) { inkSelectionOwner.set(Binding(projectId, token)) }
     fun detachInkSelectionOwner(token: String) {
-        val owner = inkOwner.get()
-        if (owner?.token == token && inkOwner.compareAndSet(owner, null)) clearSelection(owner.projectId, token)
+        val owner = inkSelectionOwner.get()
+        if (owner?.token == token && inkSelectionOwner.compareAndSet(owner, null)) clearSelection(owner.projectId, token)
     }
     private val selection = java.util.concurrent.atomic.AtomicReference<StudioSelectionSnapshot?>(null)
     fun clearSelection(projectId: String, ownerToken: String? = null) {
@@ -60,7 +60,7 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     suspend fun publishSelection(projectId: String, layerId: String, baseRevision: Long, ownerToken: String,
         context: com.halo.sdk.runtime.ink.InkSelectionContext, expectedRevision: Long): Boolean {
         val owner = Binding(projectId, ownerToken)
-        if (inkOwner.get() != owner) return false
+        if (inkSelectionOwner.get() != owner) return false
         val project = projects.get(projectId) ?: return false
         // The digest anchor is frozen at input-session start, but publication must
         // still match the revision actually persisted by that session's writer.
@@ -72,14 +72,14 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
             .joinToString("") { "%02x".format(it) }
         if (context.workspaceObjectId != projectId || context.pageId != layerId || context.sourceRevision != digest ||
             !context.selectedStrokeIds.all { id -> ink.strokes.any { it.strokeId == id } }) return false
-        if (inkOwner.get() != owner) return false
+        if (inkSelectionOwner.get() != owner) return false
         selection.set(StudioSelectionSnapshot(projectId, project.revision, layerId, context, ownerToken))
         return true
     }
     suspend fun selectedInk(projectId: String): StudioSelectionSnapshot? {
         val snapshot = selection.get()?.takeIf { it.projectId == projectId } ?: return null
         if (projects.get(projectId)?.revision != snapshot.projectRevision ||
-            inkOwner.get() != Binding(projectId, snapshot.ownerToken) || selection.get() != snapshot) {
+            inkSelectionOwner.get() != Binding(projectId, snapshot.ownerToken) || selection.get() != snapshot) {
             selection.compareAndSet(snapshot, null); return null
         }
         return snapshot
