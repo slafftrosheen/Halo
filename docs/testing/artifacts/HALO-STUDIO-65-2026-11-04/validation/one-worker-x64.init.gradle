@@ -1,0 +1,9 @@
+allprojects {
+    tasks.withType(org.gradle.api.tasks.testing.Test).configureEach {
+        maxParallelForks = 1
+        executable = "/home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/bin/java"
+        maxHeapSize = "1024m"
+        jvmArgs "-XX:ActiveProcessorCount=1", "-Dfile.encoding=UTF-8"
+        testLogging { events "failed", "skipped"; exceptionFormat "full" }
+    }
+}

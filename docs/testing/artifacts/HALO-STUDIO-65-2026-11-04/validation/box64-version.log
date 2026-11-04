@@ -1,0 +1,34 @@
+[BOX64] Dynarec for ARM64, with extension: ASIMD AES CRC32 PMULL ATOMICS SHA1 SHA2
+[BOX64] Running on Cortex-A76 with 4 cores, pagesize: 4096
+[BOX64] Will use hardware counter measured at 54.0 MHz emulating 3.4 GHz
+[BOX64] Didn't detect 48bits of address space, considering it's 39bits
+[BOX64] Counted 81 Env var
+[BOX64] Library search path:
+[BOX64] Binary search path: ./:bin/:/home/pi/.local/share/halo-toolchains/node-v22.23.4-linux-arm64/bin/:/home/pi/.local/share/halo-toolchains/jdk-21.0.13+9/bin/:/home/pi/Android/Sdk/cmdline-tools/19.0/bin/:/usr/local/sbin/:/usr/local/bin/:/usr/sbin/:/usr/bin/:/sbin/:/bin/:/usr/local/games/:/usr/games/
+[BOX64] Looking for /home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/bin/java
+[BOX64] BOX64ENV: Variables overridden via env and/or RC file:
+	BOX64_DYNAREC_BIGBLOCK=0
+	BOX64_DYNAREC_STRONGMEM=1
+	BOX64_LOG=1
+	BOX64_NOBANNER=1
+	BOX64_SSE42=0
+[BOX64] argv[1]="-XX:ActiveProcessorCount=1"
+[BOX64] argv[2]="-version"
+[BOX64] Rename process to "java"
+[BOX64] Using emulated /home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/bin/../lib/libjli.so
+[BOX64] Using native(wrapped) libpthread.so.0
+[BOX64] Using native(wrapped) libdl.so.2
+[BOX64] Using native(wrapped) libc.so.6
+[BOX64] Using native(wrapped) ld-linux-x86-64.so.2
+[BOX64] Using native(wrapped) libutil.so.1
+[BOX64] Using native(wrapped) librt.so.1
+[BOX64] Using native(wrapped) libbsd.so.0
+[BOX64] Using emulated /home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/lib/server/libjvm.so
+[BOX64] libjvm detected, disable Dynarec BigBlock and enable Dynarec StrongMem, hide SSE 4.2
+[BOX64] Using native(wrapped) libm.so.6
+[BOX64] Using emulated /home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/lib/libjimage.so
+[BOX64] Using emulated /home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/lib/libjava.so
+[BOX64] Using emulated /home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre/lib/libjsvml.so
+openjdk version "17.0.21" 2026-10-20
+OpenJDK Runtime Environment Temurin-17.0.21+9 (build 17.0.21+9)
+OpenJDK 64-Bit Server VM Temurin-17.0.21+9 (build 17.0.21+9, mixed mode, sharing)

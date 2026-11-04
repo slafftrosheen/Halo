@@ -1,0 +1,6 @@
+{
+  "home": "/home/pi/.local/share/halo-toolchains/jdk-17.0.21+9-jre",
+  "sha256": "9f41bf88c7900c7097444a1bdeb84146ae692bc08842490ab098063c74bf9a8a",
+  "source": "https://github.com/adoptium/temurin17-binaries/releases/tag/jdk-17.0.21%2B9",
+  "box64": "0.3.5 198eea49"
+}

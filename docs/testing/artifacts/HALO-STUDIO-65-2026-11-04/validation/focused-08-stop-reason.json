@@ -1,0 +1,12 @@
+{
+  "status": "STOPPED_HOST_UNDERVOLTAGE",
+  "stoppedAt": "2026-11-04T08:24:18.307099+00:00",
+  "cpuCapKHz": 1500000,
+  "gradleWorkers": 1,
+  "cpuAffinity": [
+    0
+  ],
+  "testsRun": false,
+  "reason": "Fresh repeated kernel undervoltage events continued after temporary frequency cap; prior runs interrupted by host reboots. No source compiler failure or passing app gate recorded.",
+  "powerEvidence": "focused-08-power.log"
+}

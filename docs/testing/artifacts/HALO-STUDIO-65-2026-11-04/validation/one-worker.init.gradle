@@ -1,0 +1,8 @@
+allprojects {
+    tasks.withType(org.gradle.api.tasks.testing.Test).configureEach {
+        maxParallelForks = 1
+        maxHeapSize = "1024m"
+        jvmArgs "-XX:ActiveProcessorCount=1", "-Dfile.encoding=UTF-8"
+        testLogging { events "failed", "skipped"; exceptionFormat "full" }
+    }
+}

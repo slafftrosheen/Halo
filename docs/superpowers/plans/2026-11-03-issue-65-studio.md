@@ -26,9 +26,13 @@ Base: cd08e9ad6. Branch codex/issue-65-studio.
 
 ## Tasks
 
-- [ ] 1. Model/codec/commands: extend StudioDocument.kt and StudioDocumentCodec.kt; new StudioCreativeModel.kt and StudioLayoutOperations.kt. Add schema compatibility, typography/crop/blends/effects/textures/groups, group-safe commands and regression sources.
-- [ ] 2. Rendering: StudioRenderer.kt plus StudioEffectRenderer.kt and StudioTextureRenderer.kt; real bounded seeded effects, crop, typography, blending/group compositing, cancellation. Author pixel-output and provenance regressions.
-- [ ] 3. Typed parity/presets: StudioEditRequest.kt, StudioToolExecutor.kt, operability/result contracts, closed schemas for all new commands and bounded metadata readback; expand local preset contracts and regressions.
-- [ ] 4. Zone shell/Design: StudioScreen.kt, StudioWorkbench.kt, StudioCanvasSurface.kt, StudioCreativePanels.kt and layer manager; four orbit groups, mode selector, selection and gesture tools, contextual inspectors/arrange/styles and accessibility.
-- [ ] 5. Paint/effects/AI: brush presets/settings/picker/fill/selection, effect/texture editors and AI context/destination, real provider capability gating with existing consent. Retain source/version continuity and copy recovery.
+Checked items mean production/regression sources are authored and the independent source-review correction pass is applied. Compiler/test acceptance remains pending; see the [4 November host-interrupted validation record](../../testing/artifacts/HALO-STUDIO-65-2026-11-04/README.md).
+
+- [x] 1. Model/codec/commands: extend StudioDocument.kt and StudioDocumentCodec.kt; new StudioCreativeModel.kt and StudioLayoutOperations.kt. Add schema compatibility, typography/crop/blends/effects/textures/groups, group-safe commands and regression sources.
+- [x] 2. Rendering: StudioRenderer.kt plus StudioEffectRenderer.kt and StudioTextureRenderer.kt; real bounded seeded effects, crop, typography, blending/group compositing, cancellation. Author pixel-output and provenance regressions.
+- [x] 3. Typed parity/presets: StudioEditRequest.kt, StudioToolExecutor.kt, operability/result contracts, closed schemas for all new commands and bounded metadata readback; expand local preset contracts and regressions.
+- [x] 4. Zone shell/Design: StudioScreen.kt, StudioWorkbench.kt, StudioCanvasSurface.kt, StudioCreativePanels.kt and layer manager; four orbit groups, mode selector, selection and gesture tools, contextual inspectors/arrange/styles and accessibility.
+- [x] 5. Paint/effects/AI: brush presets/settings/picker/fill/selection, effect/texture editors and AI context/destination, real provider capability gating with existing consent. Retain source/version continuity and copy recovery.
 - [ ] 6. EN/RU/LV/PL copy, UI/behavior/Room/archive regressions, acceptance/operability evidence map and final whole-batch review/corrections. Then one-worker focused gate and APK/device evidence when host permits; no false completion claim.
+
+Task6 source/localization/review work is complete. Its one-worker focused gate, APK and device steps remain blocked by repeated host resets/undervoltage; no app test has executed. Resume executable validation on stable power, fixing actual compiler/test failures before declaring acceptance.

@@ -1,0 +1,9 @@
+{
+  "status": "HOST_INTERRUPTED",
+  "exitCode": null,
+  "testsRun": false,
+  "bootAtStart": "378d298d-cdce-4dfd-b194-56469312d520",
+  "bootNow": "16d76655-fea0-4e4c-8844-8020cd35ceeb",
+  "detectedAt": "2026-11-04T08:21:10.959586+00:00",
+  "powerEvidence": "focused-07-power.log"
+}

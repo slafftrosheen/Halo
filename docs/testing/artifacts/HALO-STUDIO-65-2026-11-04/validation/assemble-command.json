@@ -1,0 +1,19 @@
+[
+  "taskset",
+  "-c",
+  "0",
+  "bash",
+  "./gradlew",
+  "--offline",
+  "--no-daemon",
+  "--no-parallel",
+  "--max-workers=1",
+  "--console=plain",
+  "-Dorg.gradle.workers.max=1",
+  "-Dorg.gradle.parallel=false",
+  "-Dorg.gradle.jvmargs=-Xmx6144m -XX:ActiveProcessorCount=1 -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/pi/Projects/Halo/.superpowers/sdd/2026-11-03-issue-65-studio/validation/heapdumps",
+  "-Pkotlin.compiler.execution.strategy=in-process",
+  "-I",
+  "/home/pi/Projects/Halo/.superpowers/sdd/2026-11-03-issue-65-studio/validation/one-worker.init.gradle",
+  ":app:assembleDebug"
+]

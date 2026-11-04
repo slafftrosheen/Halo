@@ -1,0 +1,11 @@
+{
+  "status": "HOST_INTERRUPTED",
+  "logEnd": "app:compileDebugKotlin",
+  "exitCode": null,
+  "testsRun": false,
+  "previousBoot": "1c87c66f-06c6-4218-9a53-371a46ccffd7",
+  "currentBoot": "378d298d-cdce-4dfd-b194-56469312d520",
+  "detectedAt": "2026-11-04T08:05:12.183643+00:00",
+  "powerEvidence": "focused-06-power.log",
+  "userConfirmedPowerFixed": true
+}

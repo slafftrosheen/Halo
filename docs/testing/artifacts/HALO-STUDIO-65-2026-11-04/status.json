@@ -1,0 +1,264 @@
+{
+  "recordedAt": "2026-11-04T08:26:40.197352+00:00",
+  "sourceCommit": "08e1217d8369e083bc7527a9c64afe2cad5eb795",
+  "branch": "codex/issue-65-studio",
+  "sourceLanguageKeysPerLanguage": 5052,
+  "sourceChecks": "PASS: generated catalog and whitespace",
+  "ksp": "PASS after regenerating zero-byte interrupted caches",
+  "fullAppCompile": "INCOMPLETE",
+  "appTests": "NOT_RUN",
+  "apk": "NOT_BUILT",
+  "phone": "ADB_NO_DEVICE",
+  "actualMicrophoneStt": "NOT_RUN",
+  "liveProvider": "NOT_RUN",
+  "gradleWorkers": 1,
+  "testForks": 1,
+  "cpuAffinity": [
+    0
+  ],
+  "swapGiB": 16,
+  "blockingEvidence": "Repeated host resets and fresh kernel undervoltage persisted at temporary1500000kHz CPU cap. Attempt08 stopped deliberately; original2400000kHz restored. Heap-limited attempts02/03/05 stopped for sustained fullGC; no app compiler diagnostic was emitted.",
+  "testHostSetup": "Pinned Robolectric native distribution includes Linuxx86_64 only. Official Temurin17.0.21+9x64JRE verified, Box640.3.5 version probes recorded; actual test execution under emulation not verified.",
+  "artifacts": [
+    {
+      "path": "focused-01.log",
+      "originalSha256": "5476c7a9cf8ee339e38d034aa9a10acbe18243c2d36fca5405ba11c789597713",
+      "originalBytes": 25908,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "aface636f4b6b6ecc3a33c2837311c49edb8c5e5146c11695c927940af3cd53b"
+    },
+    {
+      "path": "focused-02.log",
+      "originalSha256": "611c84988055f69f342931a915fcebda5ef14765cee87d9c7e3d45907b62ddaf",
+      "originalBytes": 24592,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "4a79fa50826a38387f78d696bc3dc179b4c28c40685b1a7b1d05bec2b0512dab"
+    },
+    {
+      "path": "focused-03.log",
+      "originalSha256": "867f66b9c578fa9e1c094c55d577e04c8f1814f447964acd19c35da586f0c793",
+      "originalBytes": 24603,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "28c298f9aead4156f3f3381660454d34bcfe6d286a72d6526411b665b42b5865"
+    },
+    {
+      "path": "focused-04.log",
+      "originalSha256": "bf601d45d8a9c514949ab3f46367844c19b6b44f9df7ede02d21e61effd71b43",
+      "originalBytes": 2029,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "b30e9eb38399bcae14b7a4907e7683d0a34fd6ec6c21877a10bf8eb7a2127d82"
+    },
+    {
+      "path": "focused-05.log",
+      "originalSha256": "e95a7c5659ed14625e5ad6d21d97ca1cc88ae3ee5a70b46cd5fb809236a6c335",
+      "originalBytes": 24771,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "f8f13cb07212a9dd5630f33b780506daea24f9570ab4e0904fa2e569e66150d6"
+    },
+    {
+      "path": "focused-06.log",
+      "originalSha256": "867f66b9c578fa9e1c094c55d577e04c8f1814f447964acd19c35da586f0c793",
+      "originalBytes": 24603,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "28c298f9aead4156f3f3381660454d34bcfe6d286a72d6526411b665b42b5865"
+    },
+    {
+      "path": "focused-07.log",
+      "originalSha256": "d5e2a0475d7b925144207e6351af8c19044a99e82fadc1ed94dde7592521a33c",
+      "originalBytes": 24576,
+      "nulBytesRenderedAsMarker": true,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "7eea12ab56837033cb3b8e912a514dd98254ae4822ed8aac43fcffb1f2c36d87"
+    },
+    {
+      "path": "focused-08.log",
+      "originalSha256": "867f66b9c578fa9e1c094c55d577e04c8f1814f447964acd19c35da586f0c793",
+      "originalBytes": 24603,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "28c298f9aead4156f3f3381660454d34bcfe6d286a72d6526411b665b42b5865"
+    },
+    {
+      "path": "focused-04-result.json",
+      "originalSha256": "9a8503abf1ef4ec26a1bfb6681131af6d85c91bb72aa5b630cd0460dc6d4258b",
+      "originalBytes": 952,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "9a8503abf1ef4ec26a1bfb6681131af6d85c91bb72aa5b630cd0460dc6d4258b"
+    },
+    {
+      "path": "focused-02-result.json",
+      "originalSha256": "9bc7f02ea8aec0f595f3a8a34155d2d3ebb37501418650bbe7ebda52e3826645",
+      "originalBytes": 950,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "9bc7f02ea8aec0f595f3a8a34155d2d3ebb37501418650bbe7ebda52e3826645"
+    },
+    {
+      "path": "focused-03-result.json",
+      "originalSha256": "d4dbb59d1c2d1b914e0fe08be194f59ebce7e2e5629f0cd4f3ec9277eb618376",
+      "originalBytes": 950,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "d4dbb59d1c2d1b914e0fe08be194f59ebce7e2e5629f0cd4f3ec9277eb618376"
+    },
+    {
+      "path": "focused-08-result.json",
+      "originalSha256": "5fd8e9eeb6c57c8cc4c2107e62ada4ee72536590869eed7dd5d3996f2377f436",
+      "originalBytes": 1091,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "5fd8e9eeb6c57c8cc4c2107e62ada4ee72536590869eed7dd5d3996f2377f436"
+    },
+    {
+      "path": "focused-05-result.json",
+      "originalSha256": "0e455157c0418446af2478be0df82260fe77d2ba4c2cebe57bc70899650d6c53",
+      "originalBytes": 954,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "0e455157c0418446af2478be0df82260fe77d2ba4c2cebe57bc70899650d6c53"
+    },
+    {
+      "path": "focused-01-result.json",
+      "originalSha256": "79872884ca2c89a5fc41f165fedd4108b9e0c70ccc7841978cde27c1008b9647",
+      "originalBytes": 948,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "79872884ca2c89a5fc41f165fedd4108b9e0c70ccc7841978cde27c1008b9647"
+    },
+    {
+      "path": "focused-06-interrupted.json",
+      "originalSha256": "3ffe5b9525601f46bb788a703f136f0e2793c1722f172218994e7189e4d20d97",
+      "originalBytes": 359,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "3ffe5b9525601f46bb788a703f136f0e2793c1722f172218994e7189e4d20d97"
+    },
+    {
+      "path": "focused-07-interrupted.json",
+      "originalSha256": "0187d7d5bd8d3f208bd0717fdceabbccfbee687f0fbbe3b5fabea7ac637635af",
+      "originalBytes": 281,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "0187d7d5bd8d3f208bd0717fdceabbccfbee687f0fbbe3b5fabea7ac637635af"
+    },
+    {
+      "path": "focused-07-start.json",
+      "originalSha256": "f84bce5ceaee7e514a4e49fedafa348f00d769c4babbbfc414f874a5786e6921",
+      "originalBytes": 215,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "f84bce5ceaee7e514a4e49fedafa348f00d769c4babbbfc414f874a5786e6921"
+    },
+    {
+      "path": "focused-08-stop-reason.json",
+      "originalSha256": "99052ab76bbbeb11b2cb69b874a2f7acecdf8b2201bc769c21e4b78df80901b3",
+      "originalBytes": 430,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "99052ab76bbbeb11b2cb69b874a2f7acecdf8b2201bc769c21e4b78df80901b3"
+    },
+    {
+      "path": "focused-08-power-profile.json",
+      "originalSha256": "009e51777b4041fe8163709562363fc0c6257031281bf8f32f0cd5323ad32c84",
+      "originalBytes": 221,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "009e51777b4041fe8163709562363fc0c6257031281bf8f32f0cd5323ad32c84"
+    },
+    {
+      "path": "focused-06-power.log",
+      "originalSha256": "19d3164d58f5b45df81255d029829499cd11cd0790a375e661f507d7795ec155",
+      "originalBytes": 8480,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "19d3164d58f5b45df81255d029829499cd11cd0790a375e661f507d7795ec155"
+    },
+    {
+      "path": "focused-07-power.log",
+      "originalSha256": "fbd7317f5e53e54e72accaaf17a0564dbe34c82f693517692df25fa8ef30a0e0",
+      "originalBytes": 2322,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "fbd7317f5e53e54e72accaaf17a0564dbe34c82f693517692df25fa8ef30a0e0"
+    },
+    {
+      "path": "focused-08-power.log",
+      "originalSha256": "1485b03d952c8a9704759031937d13b2335cd4987a4c5d4198b5057be65e6a02",
+      "originalBytes": 2720,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "1485b03d952c8a9704759031937d13b2335cd4987a4c5d4198b5057be65e6a02"
+    },
+    {
+      "path": "gate-command.json",
+      "originalSha256": "eee67ef697ab481225e7cb202234cf5ae59d07ceeb4d98759d424dad37782e03",
+      "originalBytes": 862,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "eee67ef697ab481225e7cb202234cf5ae59d07ceeb4d98759d424dad37782e03"
+    },
+    {
+      "path": "assemble-command.json",
+      "originalSha256": "494fc455d1f62bd916b4a90e7ec6f6dac842c1dde87b096d8915183c9a443283",
+      "originalBytes": 627,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "494fc455d1f62bd916b4a90e7ec6f6dac842c1dde87b096d8915183c9a443283"
+    },
+    {
+      "path": "one-worker.init.gradle",
+      "originalSha256": "2fbf1507e77f8c81b95ade2c289e953376d5a11ff808b41a44237a7599deda95",
+      "originalBytes": 296,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "2fbf1507e77f8c81b95ade2c289e953376d5a11ff808b41a44237a7599deda95"
+    },
+    {
+      "path": "one-worker-x64.init.gradle",
+      "originalSha256": "2e732e9f6190e3e23f5e093d42a7d497a2d6f98942d021de1110072f7a2b23c1",
+      "originalBytes": 384,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "2e732e9f6190e3e23f5e093d42a7d497a2d6f98942d021de1110072f7a2b23c1"
+    },
+    {
+      "path": "x64-jre.json",
+      "originalSha256": "3c0adaf336e51205fd80846b3fb79572a29429c554089c5479de76de5c22ebef",
+      "originalBytes": 272,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "3c0adaf336e51205fd80846b3fb79572a29429c554089c5479de76de5c22ebef"
+    },
+    {
+      "path": "box64-version.log",
+      "originalSha256": "408f73253be8e781efa5c375d98ea963d87d012842dbd77c35f412768e5448b0",
+      "originalBytes": 2104,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": true,
+      "committedSha256": "982182c2804e944c7f0ba898609d5758ba487d517e9f38b6a7c92b187300b598"
+    },
+    {
+      "path": "box64-version-probes.json",
+      "originalSha256": "a0c98f6e94f602de9526108749ebe9cf19a06bcd2b7510ce27c59bf622df4499",
+      "originalBytes": 756,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "a0c98f6e94f602de9526108749ebe9cf19a06bcd2b7510ce27c59bf622df4499"
+    },
+    {
+      "path": "source-checks.md",
+      "originalSha256": "a5f43d6490150a9703ec68c175e3e4c8e636890a4eb99488c3458e6c323cc359",
+      "originalBytes": 1438,
+      "nulBytesRenderedAsMarker": false,
+      "trailingWhitespaceTrimmed": false,
+      "committedSha256": "a5f43d6490150a9703ec68c175e3e4c8e636890a4eb99488c3458e6c323cc359"
+    }
+  ]
+}
