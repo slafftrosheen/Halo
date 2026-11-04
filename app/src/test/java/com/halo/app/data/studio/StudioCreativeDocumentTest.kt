@@ -10,6 +10,41 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class StudioCreativeDocumentTest {
+    @Test fun nearLimitLegacyHistoryDoesNotGrowWithCreativeDefaults() {
+        val point=com.halo.sdk.runtime.ink.InkPoint(999,999,999999,999,1571,-3142,65535)
+        fun document(points:Int):StudioDocument {
+            val ink=com.halo.sdk.runtime.ink.InkCodec.encode(com.halo.sdk.runtime.ink.InkDocument(List(points) {point}.chunked(2048).mapIndexed {index,row->
+                com.halo.sdk.runtime.ink.InkStroke(com.halo.sdk.runtime.ink.InkTool.STYLUS,row,"stroke-$index")
+            }))
+            return StudioDocument(layers=List(4) {StudioLayer(id="ink-$it",name="Ink",kind=StudioLayerKind.INK,ink=ink)}+
+                List(28) {StudioLayer(id="text-$it",name="Text",kind=StudioLayerKind.TEXT,text="a".repeat(2000))})
+        }
+        fun legacy(doc:StudioDocument):String {
+            val root=JSONObject(StudioDocumentCodec.encode(doc)).put("schema",1)
+            val rows=root.getJSONArray("layers")
+            for(index in 0 until rows.length()) listOf("parent","blend","typography","imageCrop","effects","texture","textureSeed","strokeOnly").forEach {rows.getJSONObject(index).remove(it)}
+            return root.toString()
+        }
+        val base=legacy(document(6000)).length
+        val encoded=legacy(document(6000+(998000-base)/(4*36)))
+        assertTrue(encoded.length.toString(),encoded.length*4 in 3_980_000..4_000_000)
+        val envelope=JSONObject().put("schema",1).put("current",encoded).put("undo",org.json.JSONArray(List(4) {encoded})).put("redo",org.json.JSONArray()).toString()
+        val reopened=StudioSession.decode(envelope)
+        assertEquals(4,reopened.undo.size)
+        assertEquals(4,StudioSession.decode(reopened.encode()).undo.size)
+    }
+    @Test fun ungroupKeepsCurrentPaintOrderAndRefusesToneLoss() {
+        val a=shape("a");val b=shape("b");val top=shape("top")
+        val grouped=StudioDocument(layers=listOf(a,b,top)).apply(StudioCommand.Group(listOf("a","b"),"Pair","g"))
+        val front=grouped.apply(StudioCommand.Move("g",grouped.layers.lastIndex))
+        val ungrouped=front.apply(StudioCommand.Ungroup("g"))
+        assertEquals(listOf("top","a","b"),ungrouped.layers.map {it.id})
+        val group=grouped.layers.single {it.id=="g"}
+        for(adjusted in listOf(group.copy(brightness=100),group.copy(contrast=1200),group.copy(saturation=500))) {
+            val toned=grouped.apply(StudioCommand.Replace(adjusted))
+            assertTrue(runCatching {toned.apply(StudioCommand.Ungroup("g"))}.isFailure)
+        }
+    }
     private fun shape(id: String, x: Int = 100) = StudioLayer(id = id, name = id,
         kind = StudioLayerKind.RECTANGLE, bounds = StudioRect(x, 100, 200, 200))
 

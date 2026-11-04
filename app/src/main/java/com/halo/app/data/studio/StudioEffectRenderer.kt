@@ -25,7 +25,7 @@ object StudioEffectRenderer {
     private suspend fun applyEffect(source: IntArray, w: Int, h: Int, effect: StudioEffect): IntArray {
         val a = effect.amount/1000.0
         val intensity = abs(a)
-        val radius = (effect.radius * maxOf(w,h)/640.0).roundToInt().coerceIn(1,32)
+        val radius = (effect.radius * maxOf(w,h)/640.0).roundToInt().coerceIn(1,64)
         val blurred = if (effect.kind in setOf(StudioEffectKind.BLUR,StudioEffectKind.SHARPEN,StudioEffectKind.GLOW,
             StudioEffectKind.BLOOM,StudioEffectKind.DROP_SHADOW,StudioEffectKind.INNER_SHADOW)) blur(source,w,h,radius) else null
         val output = IntArray(source.size)

@@ -17,7 +17,7 @@ data class StudioUiReceipt(val id: String, val projectId: String, val kind: Stud
     val phase: StudioUiRequestPhase, val resultProjectId: String? = null)
 
 /** Bounded, ephemeral presentation handoff only. Runtime and image consent owners retain execution authority. */
-class StudioUiRequests(private val scope: CoroutineScope, private val launchUi: () -> Unit,
+class StudioUiRequests(internal val scope: CoroutineScope, private val launchUi: () -> Unit,
     private val now: () -> Long = System::nanoTime) {
     private val lock = Any()
     private val mutable = MutableStateFlow<StudioUiRequest?>(null)

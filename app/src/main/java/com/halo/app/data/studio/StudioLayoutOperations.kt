@@ -32,10 +32,12 @@ internal fun StudioDocument.ungroupLayer(id: String): StudioDocument {
     val group = requireNotNull(layers.find { it.id == id && it.kind == StudioLayerKind.GROUP })
     require(isEditable(group) && descendants(id).all { isEditable(it) })
     // Group-level styling cannot be silently discarded by ungrouping.
-    require(group.visible && group.opacity == 1000 && group.blend == StudioBlend.NORMAL && group.effects.isEmpty() && group.mask == null) {
+    require(group.visible && group.opacity == 1000 && group.blend == StudioBlend.NORMAL && group.effects.isEmpty() && group.mask == null &&
+        group.brightness==0&&group.contrast==1000&&group.saturation==1000) {
         "Reset group styling before ungrouping"
     }
-    return copy(layers = layers.filterNot { it.id == id }.map { if (it.parentId == id) it.copy(parentId = group.parentId) else it },
+    fun ordered(parent:String?):List<StudioLayer> = layers.filter {it.parentId==parent}.flatMap {listOf(it)+ordered(it.id)}
+    return copy(layers = ordered(null).filterNot { it.id == id }.map { if (it.parentId == id) it.copy(parentId = group.parentId) else it },
         selectedLayerId = selectedLayerId.takeUnless { it == id })
 }
 

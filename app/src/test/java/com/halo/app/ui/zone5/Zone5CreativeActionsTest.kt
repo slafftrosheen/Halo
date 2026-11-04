@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.*
+import androidx.room.withTransaction
 import androidx.navigation.compose.*
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -153,6 +155,89 @@ class Zone5CreativeActionsTest {
         override fun stop() = Unit
         override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget = error("Unexpected provider request")
     }
+    @Test fun studioNavigationKeepsQueuedFailureRecoveryAfterTheViewModelIsCleared() {
+        val service=fixture.studio();val projects=service.projects
+        val layer=StudioLayer(id="ink",name="Retain marks",kind=StudioLayerKind.INK)
+        val original=runBlocking {projects.create("Navigation recovery",StudioDocument(layers=listOf(layer)))}
+        lateinit var model:StudioViewModel
+        compose.runOnUiThread {model=StudioViewModel(service,fixture.files,WorkspaceImageService(router,IntentQualificationFixture.MemoryStorage()),NotebookAssetRepository(fixture.context,fixture.database),original.id);own(model)}
+        render("studio?projectId={projectId}") {StudioScreen(model,{},{},{},{},{})}
+        await {model.state.value.project!=null&&!model.state.value.loading}
+        val entered=CompletableDeferred<Unit>();val release=CompletableDeferred<Unit>()
+        val held=fixture.scope.launch {fixture.database.withTransaction {
+            projects.apply(original.id,original.revision,StudioCommand.Background(42));entered.complete(Unit);release.await()
+        }}
+        runBlocking {entered.await()}
+        val marks=com.halo.sdk.runtime.ink.InkCodec.encode(com.halo.sdk.runtime.ink.InkDocument(listOf(com.halo.sdk.runtime.ink.InkStroke(com.halo.sdk.runtime.ink.InkTool.FINGER,listOf(com.halo.sdk.runtime.ink.InkPoint(100,100))))))
+        lateinit var session:StudioInkSession
+        compose.runOnIdle {session=requireNotNull(model.startInk(original.revision,layer.id));session.submit(marks);model.closeProject();assertTrue(model.state.value.busy);owners.clear()}
+        release.complete(Unit)
+        await {service.inkRecovery.value===session}
+        assertEquals(marks,session.draft().layers.single().ink)
+        assertEquals(42,runBlocking {projects.get(original.id)!!}.session.current.background)
+        runBlocking {held.join()}
+    }
+    @Test fun studioSaveAndUndoDrainAndResumeTheConfirmedPaintRevision() {
+        val service=fixture.studio();val projects=service.projects
+        val layer=StudioLayer(id="ink",name="Paint",kind=StudioLayerKind.INK)
+        val original=runBlocking {projects.create("Paint boundaries",StudioDocument(64,64,layers=listOf(layer),selectedLayerId=layer.id))}
+        lateinit var model:StudioViewModel
+        compose.runOnUiThread {model=StudioViewModel(service,fixture.files,WorkspaceImageService(router,IntentQualificationFixture.MemoryStorage()),NotebookAssetRepository(fixture.context,fixture.database),original.id);own(model)}
+        render("studio?projectId={projectId}") {StudioScreen(model,{},{},{},{},{})}
+        await {model.state.value.project!=null&&!model.state.value.loading}
+        lateinit var first:StudioInkSession
+        fun marks(x:Int)=com.halo.sdk.runtime.ink.InkCodec.encode(com.halo.sdk.runtime.ink.InkDocument(listOf(com.halo.sdk.runtime.ink.InkStroke(com.halo.sdk.runtime.ink.InkTool.FINGER,listOf(com.halo.sdk.runtime.ink.InkPoint(x,x))))))
+        compose.runOnIdle {first=requireNotNull(model.startInk(original.revision,layer.id));first.submit(marks(100));model.save()}
+        await {!model.state.value.busy&&model.activeInk.value!=null&&model.activeInk.value!==first}
+        val saved=model.state.value.project!!
+        assertFalse(saved.hasUnsavedChanges)
+        assertEquals(saved.revision,model.activeInk.value!!.persistedRevision)
+        compose.runOnIdle {model.edit(saved.revision,"undo")}
+        await {!model.state.value.busy&&model.state.value.project?.revision!=saved.revision&&model.activeInk.value!=null}
+        val resumed=model.activeInk.value!!
+        assertTrue(requireNotNull(com.halo.sdk.runtime.ink.InkCodec.decode(resumed.initialLayer.ink)).strokes.isEmpty())
+        val finalMarks=marks(300)
+        compose.runOnIdle {resumed.submit(finalMarks)}
+        await {resumed.fullyPersisted}
+        assertNull(model.inkRecovery.value)
+        assertEquals(finalMarks,runBlocking {projects.get(original.id)!!}.session.current.layers.single().ink)
+    }
+    @Test fun studioPaintShowsTheCanonicalStackInsteadOfRawInkAboveAnOpaqueLayer() {
+        val service=fixture.studio()
+        val ink=StudioLayer(id="ink",name="Under painting",kind=StudioLayerKind.INK,color=0x80ff0000.toInt(),opacity=500)
+        val top=StudioLayer(id="top",name="Opaque cover",kind=StudioLayerKind.RECTANGLE,color=android.graphics.Color.BLUE)
+        val project=runBlocking {service.projects.create("Canonical paint",StudioDocument(64,64,layers=listOf(ink,top)))}
+        val session=StudioInkSession(project,ink.id,service.projects,fixture.scope,{}, {})
+        render("studio?projectId={projectId}") {
+            BindShellPageActions(ShellPageOwner("studio"),emptyList())
+            StudioPaintSurface(service,session,"DRAW",{})
+        }
+        compose.waitUntil(10_000) {compose.onAllNodesWithTag("studio-paint-artboard").fetchSemanticsNodes().firstOrNull()?.config?.get(androidx.compose.ui.semantics.SemanticsProperties.StateDescription)=="Ready"}
+        compose.onNodeWithTag("studio-paint-artboard").performTouchInput {swipe(center,center+androidx.compose.ui.geometry.Offset(24f,0f))}
+        compose.waitUntil(10_000) {session.fullyPersisted&&compose.onNodeWithTag("studio-paint-artboard").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.StateDescription]=="Ready"}
+        val pixels=compose.onNodeWithTag("studio-paint-artboard").captureToImage().toPixelMap()
+        assertEquals(androidx.compose.ui.graphics.Color.Blue,pixels[pixels.width/2,pixels.height/2])
+        runBlocking {session.finishAndAwait()}
+    }
+    @Test fun studioDoesNotSampleOrPresentAnOldBitmapAfterTheNewRenderFails() {
+        val service=fixture.studio()
+        val document=StudioDocument(64,64,background=android.graphics.Color.RED)
+        val current=mutableStateOf(StudioProject("preview","Preview",1,document,StudioSession(document)))
+        var picked:Int?=null
+        render("studio?projectId={projectId}") {
+            BindShellPageActions(ShellPageOwner("studio"),emptyList())
+            StudioCanvasSurface(service,current.value,false,{},{},{},onPick={picked=it})
+        }
+        compose.waitUntil(10_000) {compose.onAllNodesWithTag("studio-artboard").fetchSemanticsNodes().firstOrNull()?.config?.get(androidx.compose.ui.semantics.SemanticsProperties.StateDescription)=="Ready"}
+        compose.runOnIdle {
+            val missing=StudioLayer(name="Unavailable image",kind=StudioLayerKind.IMAGE,source=StudioSource("missing-source","pinned"))
+            current.value=current.value.copy(revision=2,session=StudioSession(document.apply(StudioCommand.Add(missing))))
+        }
+        compose.waitUntil(10_000) {compose.onAllNodesWithText("Preview unavailable. Your project is kept.").fetchSemanticsNodes().isNotEmpty()}
+        compose.onNodeWithTag("studio-artboard").performTouchInput {click(center)}
+        assertNull(picked)
+        compose.onNodeWithTag("studio-artboard").assert(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.StateDescription,"Preview unavailable. Your project is kept."))
+    }
     @Test fun studioModesShareTheSameRoomDocumentAndAiNeedsExplicitReview() {
         val context=ApplicationProvider.getApplicationContext<Application>()
         val projects=StudioProjectRepository(fixture.database)
@@ -171,6 +256,7 @@ class Zone5CreativeActionsTest {
         compose.onNodeWithText("Paint").assertIsDisplayed()
         assertEquals(project,runBlocking {projects.get(project.id)})
         compose.runOnIdle {assertTrue(actions.value!!.invoke("page.studio.ai"))}
+        compose.waitUntil(10_000) {compose.onAllNodesWithText("Review image edit").fetchSemanticsNodes().isNotEmpty()}
         compose.onNodeWithText("Review image edit").assertIsDisplayed()
         assertEquals(0,reviews)
         assertEquals(project,runBlocking {projects.get(project.id)})

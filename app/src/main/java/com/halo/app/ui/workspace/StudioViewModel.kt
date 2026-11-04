@@ -65,7 +65,13 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         attachAfterOperation(kept.id)
     }
     private var observation: Job? = null
-    private var inkSession: StudioInkSession? = null
+    private val mutableInkSession=MutableStateFlow<StudioInkSession?>(null)
+    internal val activeInk=mutableInkSession.asStateFlow()
+    private val mutableInkRecovery=service.inkRecovery
+    internal val inkRecovery=mutableInkRecovery.asStateFlow()
+    private var inkSession:StudioInkSession?
+        get()=mutableInkSession.value
+        set(value) {mutableInkSession.value=value}
     private var openedId: String? = null
     private var retryOperation: (() -> Unit)? = null
     init {
@@ -82,16 +88,19 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
 
     fun open(id: String) {
         if (mutable.value.busy) return
+        if(inkSession!=null) {finishInk {open(id)};return}
+        if(mutableInkRecovery.value!=null) return
         observeProject(id, false)
     }
     private fun observeProject(id: String, keepBusy: Boolean) {
         retryOperation = null
-        finishInk()
+        check(inkSession==null)
         observation?.cancel(); openedId = id; savedState["studioProject"] = id
         mutable.value = StudioUiState(loading = true, busy = keepBusy, exportedSource = savedState.get<String>("studioExportedSource"))
         observation = viewModelScope.launch {
             try {
                 service.projects.observe(id).collect { project ->
+                    if(project!=null&&mutable.value.project?.id==project.id&&(mutable.value.project?.revision ?: 0)>project.revision) return@collect
                     if (project == null) retryOperation = { open(id) }
                     mutable.value = mutable.value.copy(project = project, loading = false,
                         failure = if (project == null) StudioFailure(StudioOperation.OPEN, canRetry = true)
@@ -106,8 +115,9 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
     }
     fun closeProject() {
         if (mutable.value.busy) return
+        if(inkSession!=null) {finishInk {closeProject()};return}
+        if(mutableInkRecovery.value!=null) return
         retryOperation = null
-        finishInk()
         observation?.cancel(); openedId = null; savedState["studioProject"] = null; mutable.value = StudioUiState()
     }
     fun openSource(sourceId: String, attachmentId: String?, title: String, expectedSourceVersion: String? = null, handoffId: String? = null) {
@@ -150,13 +160,26 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         val project = visible(expectedRevision) ?: return
         operation(StudioOperation.EDIT, retryable = true) { service.projects.apply(project.id, project.revision, command) }
     }
-    fun edit(expectedRevision: Long, action: String, fields: Map<String, Any?> = emptyMap()) {
+    fun edit(expectedRevision: Long, action: String, fields: Map<String, Any?> = emptyMap(),resumePaint:StudioLayer?=null) {
+        if(inkSession!=null&&action in setOf("undo","redo")) {
+            if(visible(expectedRevision)==null) return
+            val previous=inkSession?.initialLayer
+            finishInk {revision->edit(revision ?: expectedRevision,action,fields,previous)};return
+        }
         val project = visible(expectedRevision) ?: return
-        operation(StudioOperation.EDIT, retryable = true) { service.edit(project.id, project.revision, action, fields) }
+        operation(StudioOperation.EDIT, retryable = true) {
+            val result=service.edit(project.id,project.revision,action,fields)
+            if(resumePaint!=null) resumeInk(result,resumePaint)
+        }
     }
-    fun save() {
+    fun save() = saveWithPaint(null)
+    private fun saveWithPaint(resumePaint:StudioLayer?) {
+        if(inkSession!=null) {val previous=inkSession?.initialLayer;finishInk {saveWithPaint(previous)};return}
         val project = mutable.value.project ?: return
-        operation(StudioOperation.SAVE, retryable = true) { service.projects.save(project.id, project.revision) }
+        operation(StudioOperation.SAVE, retryable = true) {
+            val result=service.projects.save(project.id,project.revision)
+            if(resumePaint!=null) resumeInk(result,resumePaint)
+        }
     }
     fun discardDraft(expectedProjectId: String, expectedRevision: Long) {
         val project = mutable.value.project ?: return
@@ -222,18 +245,113 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
     }
     fun dismissOutput() { mutable.value = mutable.value.copy(output = null) }
     internal fun startInk(expectedRevision: Long, layerId: String): StudioInkSession? {
+        inkSession?.let {return if(it.layerId==layerId) it else null}
+        if(mutable.value.busy||mutableInkRecovery.value!=null) return null
         val project = visible(expectedRevision) ?: return null
-        finishInk()
-        return StudioInkSession(project, layerId, service.projects, viewModelScope, { updated ->
+        val layer=project.session.current.layers.singleOrNull {it.id==layerId} ?: return null
+        return attachInk(project,layer,false)
+    }
+    internal fun startNewInk(expectedRevision:Long,layer:StudioLayer):StudioInkSession? {
+        if(mutable.value.busy||inkSession!=null||mutableInkRecovery.value!=null) return null
+        return visible(expectedRevision)?.let {attachInk(it,layer,true)}
+    }
+    private fun resumeInk(project:StudioProject,previous:StudioLayer) {
+        mutable.update {it.copy(project=project)}
+        val existing=project.session.current.layers.find {it.id==previous.id&&it.kind==StudioLayerKind.INK&&project.session.current.isEditable(it)}
+        if(existing!=null) attachInk(project,existing,false)
+        else if(project.session.current.layers.size<StudioDocument.MAX_LAYERS) attachInk(project,
+            StudioLayer(name=previous.name,kind=StudioLayerKind.INK,color=previous.color,opacity=previous.opacity,strokeWidth=previous.strokeWidth),true)
+    }
+    private fun attachInk(project:StudioProject,layer:StudioLayer,adding:Boolean):StudioInkSession? {
+        if(service.inkOwner.get()!=null||mutableInkRecovery.value!=null) return null
+        val ratio=project.session.current.width*1000/project.session.current.height
+        val actual=if(adding&&layer.ink.isEmpty()) layer.copy(ink=com.halo.sdk.runtime.ink.InkCodec.encode(
+            com.halo.sdk.runtime.ink.InkDocument(aspectMilli=ratio.takeIf {it in 125..8000} ?: 0))) else layer
+        lateinit var attached:StudioInkSession
+        attached=StudioInkSession(project, actual.id, service.projects, service.uiRequests.scope, { updated ->
             val current = mutable.value.project
             if (current?.id == updated.id && current.revision <= updated.revision)
                 mutable.value = mutable.value.copy(project = updated)
-        }, { mutable.value = mutable.value.copy(failure = StudioFailure(StudioOperation.EDIT, StudioFailureReason.CHANGED)) }).also { inkSession = it; service.attachInkSelectionOwner(project.id, it.ownerToken) }
+        }, { mutableInkRecovery.value=attached
+            mutable.value = mutable.value.copy(failure = StudioFailure(StudioOperation.EDIT, StudioFailureReason.CHANGED)) },newLayer=actual.takeIf {adding})
+        if(!service.inkOwner.compareAndSet(null,attached)) {attached.finish();return null}
+        inkSession=attached;service.attachInkSelectionOwner(project.id,attached.ownerToken)
+        return attached
     }
-    internal fun saveInkCopy(session: StudioInkSession, title: String) = operation(StudioOperation.COPY) {
-        attachAfterOperation(service.projects.create(title, session.draft(), session.initial.id, session.initial.revision).id)
+    internal fun saveInkCopy(session: StudioInkSession, title: String) {
+        mutableInkRecovery.value=session
+        operation(StudioOperation.COPY,allowInkRecovery=true) {
+            session.finishAndAwait()
+            if(inkSession===session) inkSession=null
+            service.inkOwner.compareAndSet(session,null)
+            service.detachInkSelectionOwner(session.ownerToken)
+            val copy=service.projects.create(title,session.draft(),session.initial.id,session.initial.revision)
+            mutableInkRecovery.compareAndSet(session,null)
+            attachAfterOperation(copy.id)
+        }
     }
-    internal fun finishInk() { inkSession?.let { it.finish(); service.detachInkSelectionOwner(it.ownerToken) }; inkSession = null }
+    /** Keep the writer and its draft attached until every accepted snapshot has a terminal outcome. */
+    internal fun finishInk(after:(Long?)->Unit={}) {
+        if(mutable.value.busy) return
+        val session=inkSession
+        if(session==null) {if(mutableInkRecovery.value==null) after(null);return}
+        session.finish()
+        savedState["studioPendingOperation"]=StudioOperation.EDIT.name
+        mutable.update {it.copy(busy=true,operation=StudioOperation.EDIT)}
+        service.uiRequests.scope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+            var completed=false
+            try {
+                val persisted=session.finishAndAwait()
+                val current=service.projects.get(session.initial.id)
+                if(mutable.value.project?.id==session.initial.id&&current!=null) mutable.update {it.copy(project=current)}
+                completed=persisted&&current?.revision==session.persistedRevision
+                if(!completed) {
+                    if(!persisted) mutableInkRecovery.value=session
+                    mutable.update {it.copy(failure=StudioFailure(StudioOperation.EDIT,StudioFailureReason.CHANGED))}
+                }
+                savedState["studioPendingOperation"]=null
+            } catch(cancelled:CancellationException) {if(!session.fullyPersisted) mutableInkRecovery.value=session;throw cancelled}
+            catch(_:Exception) {
+                if(!session.fullyPersisted) mutableInkRecovery.value=session
+                mutable.update {it.copy(failure=StudioFailure(StudioOperation.EDIT,StudioFailureReason.FAILED))}
+                savedState["studioPendingOperation"]=null
+            } finally {
+                mutableInkSession.compareAndSet(session,null)
+                service.inkOwner.compareAndSet(session,null)
+                service.detachInkSelectionOwner(session.ownerToken)
+                mutable.update {it.copy(busy=false,operation=null)}
+            }
+            if(completed&&viewModelScope.coroutineContext[Job]?.isActive==true) viewModelScope.launch {after(session.persistedRevision)}
+        }
+    }
+    internal fun discardInkRecovery(after:()->Unit={}) {
+        if(mutable.value.busy) return
+        val session=mutableInkRecovery.value ?: return
+        mutable.update {it.copy(busy=true)}
+        viewModelScope.launch {
+            try {
+                session.finishAndAwait()
+                mutableInkSession.compareAndSet(session,null)
+                service.inkOwner.compareAndSet(session,null)
+                mutableInkRecovery.compareAndSet(session,null)
+                service.detachInkSelectionOwner(session.ownerToken)
+                mutable.update {it.copy(failure=null)}
+            } finally {mutable.update {it.copy(busy=false)}}
+            after()
+        }
+    }
+    override fun onCleared() {
+        val session=inkSession
+        if(session!=null) {
+            session.finish()
+            service.uiRequests.scope.launch {
+                if(!session.finishAndAwait()) mutableInkRecovery.value=session
+                service.inkOwner.compareAndSet(session,null)
+                service.detachInkSelectionOwner(session.ownerToken)
+            }
+        }
+        super.onCleared()
+    }
     fun retry() { retryOperation?.invoke() ?: openedId?.let(::open) }
     private fun visible(expectedRevision: Long): StudioProject? {
         val project = mutable.value.project
@@ -298,8 +416,11 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { null }
 
-    private fun operation(kind: StudioOperation, retryable: Boolean = false, expected: StudioProject? = null, block: suspend () -> Unit) {
+    private fun operation(kind: StudioOperation, retryable: Boolean = false, expected: StudioProject? = null,
+        allowInkRecovery:Boolean=false,block: suspend () -> Unit) {
         if (mutable.value.busy) return
+        if(!allowInkRecovery&&inkSession!=null) {finishInk {operation(kind,retryable,expected,block=block)};return}
+        if(!allowInkRecovery&&mutableInkRecovery.value!=null) return
         val original = expected ?: mutable.value.project
         retryOperation = null
         savedState["studioPendingOperation"] = kind.name

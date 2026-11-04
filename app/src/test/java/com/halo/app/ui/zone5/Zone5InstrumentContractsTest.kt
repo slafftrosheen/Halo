@@ -35,6 +35,18 @@ import com.github.takahirom.roborazzi.captureRoboImage
 @Config(sdk = [33], application = Application::class, qualifiers = "w360dp-h800dp")
 class Zone5InstrumentContractsTest {
     @get:Rule val compose = createComposeRule()
+    @Test fun disabledStudioPrimaryGroupExplainsItsLiveOwnerReason() {
+        compose.setContent {HostlessHaloTheme {
+            val projection=remember {mutableStateOf<com.halo.app.ui.presence.ShellPageProjection?>(null)}
+            CompositionLocalProvider(com.halo.app.ui.presence.LocalShellPageActions provides projection) {
+                com.halo.app.ui.presence.BindShellPageActions(com.halo.app.ui.presence.ShellPageOwner("studio",activeToolId="page.studio.tools",defaultDisabledActionReason="Finishing paint"),
+                    listOf(com.halo.app.ui.presence.ShellPageAction("page.studio.tools","Tools",HaloGlyph.TOOL,false) {}))
+                WorkspaceToolMenus()
+            }
+        }}
+        compose.onNodeWithText("Tools").assertIsNotEnabled().assert(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.StateDescription,"Finishing paint"))
+        compose.onNodeWithText("Finishing paint").assertIsDisplayed()
+    }
 
     @Test fun instrumentBackIsVisibleAndInvokesTheExistingOwner() {
         var back = 0

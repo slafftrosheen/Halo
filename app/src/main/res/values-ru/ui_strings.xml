@@ -5050,4 +5050,6 @@
     <string name="ui_d638785dd42e" formatted="false">"Перед заливкой выберите непрозрачный цвет."</string>
     <string name="ui_8dadf856e07b" formatted="false">"Коснитесь области для заливки. Исходные слои останутся редактируемыми."</string>
     <string name="ui_fb73bdbd1540" formatted="false">"Коснитесь рисунка, чтобы выбрать цвет."</string>
+    <string name="ui_67e600e7e4c5" formatted="false">"Обновление предпросмотра…"</string>
+    <string name="ui_ac0c1250abb8" formatted="false">"Слой рисунка заполнен. Сохраните рисунок перед добавлением новых штрихов."</string>
 </resources>

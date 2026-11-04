@@ -26,10 +26,10 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
     private val workspace: com.halo.app.data.workspace.WorkspaceRepository) {
     private val rendering = Semaphore(1)
     suspend fun render(document: StudioDocument, preview: Boolean): Bitmap {
-        document.requireValid()
         var owned: Bitmap? = null
         try {
             val result = rendering.withPermit { withContext(Dispatchers.IO) {
+                coroutineContext.ensureActive();document.requireValid()
                 val edge = min(document.recipe.maxEdge, if (preview) 640 else 4096)
                 val scale = min(1f, edge.toFloat() / maxOf(document.width, document.height))
                 val width = (document.width * scale).roundToInt().coerceAtLeast(1)
@@ -98,9 +98,10 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
             drawLayer(canvas,layer,preview);return
         }
         // A compositing group/effect owns one bounded temporary buffer, independently of export dimensions.
-        val ratio = min(1f,1600f/maxOf(canvas.width,canvas.height))
-        val width=(canvas.width*ratio).roundToInt().coerceAtLeast(1)
-        val height=(canvas.height*ratio).roundToInt().coerceAtLeast(1)
+        // One logical raster for both preview and export keeps seeded/spatial effects identical.
+        val ratio = min(1f,640f/maxOf(document.width,document.height))
+        val width=(document.width*ratio).roundToInt().coerceAtLeast(1)
+        val height=(document.height*ratio).roundToInt().coerceAtLeast(1)
         val pixels=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
         try {
             val target=Canvas(pixels)
@@ -112,7 +113,7 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
                         bounds.left+(mask.x+mask.width)*bounds.width()/1000,bounds.top+(mask.y+mask.height)*bounds.height()/1000)
                     val p=Paint().apply { xfermode=PorterDuffXfermode(PorterDuff.Mode.DST_IN) }
                     val maskBitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
-                    try { Canvas(maskBitmap).drawRect(clip,Paint().apply { color=Color.WHITE });target.drawBitmap(maskBitmap,0f,0f,p) }
+                    try { Canvas(maskBitmap).apply {rotate(layer.rotation.toFloat(),bounds.centerX(),bounds.centerY());drawRect(clip,Paint().apply { color=Color.WHITE })};target.drawBitmap(maskBitmap,0f,0f,p) }
                     finally { maskBitmap.recycle() }
                 }
             } else drawLayer(target,layer.copy(opacity=1000,brightness=0,contrast=1000,saturation=1000),preview)

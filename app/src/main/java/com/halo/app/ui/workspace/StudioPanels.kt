@@ -20,6 +20,20 @@ import com.halo.app.data.studio.StudioDocument
 import com.halo.app.data.studio.StudioService
 import kotlinx.coroutines.CancellationException
 
+internal data class StudioPixelState(val bitmap:Bitmap?,val failed:Boolean)
+
+/** The composition key owns the result: an old document's pixels are never presented as a new render. */
+@Composable
+internal fun rememberStudioPixels(service:StudioService,document:StudioDocument):StudioPixelState = key(document) {
+    var failed by remember {mutableStateOf(false)}
+    val bitmap by produceState<Bitmap?>(null) {
+        try {value=service.previewDocument(document)}
+        catch(cancelled:CancellationException) {throw cancelled}
+        catch(_:Exception) {failed=true}
+    }
+    StudioPixelState(bitmap,failed)
+}
+
 /** Dialog windows retain the app's accessibility density and keep controls outside the scrolling body. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

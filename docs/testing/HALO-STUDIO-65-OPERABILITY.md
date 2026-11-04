@@ -10,7 +10,7 @@ Uses [AI-CONTROLLABLE-TOOL-VERIFICATION-TEMPLATE.md](AI-CONTROLLABLE-TOOL-VERIFI
 | `halo_studio_ai_draft` / status | Explicit review handoff; dispatch is not generation, billing, UI render or kept output | Exact review source; existing provider/privacy/spend owner; immutable proposal source and independent kept copy |
 | export / insert / open / create | Existing PNG/JPEG, exact Canvas/file versions and managed-source creation | Existing Workspace/Room/source and ephemeral presentation leases retained |
 
-Document schema is version 2; operability framework remains supported version 1. No parallel command registry, storage engine or provider dispatcher exists. Tool IDs and skill ownership are unchanged; the existing Notebook/Workspace skill owns Studio. Human pen/drag gestures have data-operation equivalents (portable ink and numeric geometry); viewport/mode changes are presentation only. Android camera/import permission dialogs remain human/system security boundaries.
+Legacy-compatible documents retain schema 1; creative fields use document schema 2; operability framework remains supported version 1. No parallel command registry, storage engine or provider dispatcher exists. Tool IDs and skill ownership are unchanged; the existing Notebook/Workspace skill owns Studio. Human pen/drag gestures have data-operation equivalents (portable ink and numeric geometry); viewport/mode changes are presentation only. Android camera/import permission dialogs remain human/system security boundaries.
 
 Three workflows for later executable acceptance:
 

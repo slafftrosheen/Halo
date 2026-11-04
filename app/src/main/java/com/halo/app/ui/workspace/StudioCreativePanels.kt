@@ -130,7 +130,7 @@ internal fun StudioLayerManager(project:StudioProject,busy:Boolean,onCommand:(St
                         TextButton({onCommand(StudioCommand.Move(layer.id,document.layers.indexOf(siblings[index-1])))},enabled=!busy&&editable&&index>0) { Text(uiText("Down")) }
                         TextButton({onCommand(StudioCommand.Duplicate(layer.id))},enabled=!busy&&editable&&document.layers.size+document.descendants(layer.id).size+1<=StudioDocument.MAX_LAYERS) { Text(uiText("Duplicate")) }
                         TextButton({onCommand(StudioCommand.Remove(layer.id))},enabled=!busy&&editable) { Text(uiText("Delete")) }
-                        if(layer.kind==StudioLayerKind.GROUP) TextButton({onCommand(StudioCommand.Ungroup(layer.id))},enabled=!busy&&editable&&layer.visible&&layer.opacity==1000&&layer.blend==StudioBlend.NORMAL&&layer.effects.isEmpty()&&layer.mask==null) { Text(uiText("Ungroup")) }
+                        if(layer.kind==StudioLayerKind.GROUP) TextButton({onCommand(StudioCommand.Ungroup(layer.id))},enabled=!busy&&editable&&layer.visible&&layer.opacity==1000&&layer.blend==StudioBlend.NORMAL&&layer.effects.isEmpty()&&layer.mask==null&&layer.brightness==0&&layer.contrast==1000&&layer.saturation==1000) { Text(uiText("Ungroup")) }
                     }
                 }
             }

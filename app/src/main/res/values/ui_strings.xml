@@ -5050,4 +5050,6 @@
     <string name="ui_d638785dd42e" formatted="false">"Choose a visible colour before filling an area."</string>
     <string name="ui_8dadf856e07b" formatted="false">"Tap an area to fill. The original layers stay editable."</string>
     <string name="ui_fb73bdbd1540" formatted="false">"Tap the artboard to pick a colour."</string>
+    <string name="ui_67e600e7e4c5" formatted="false">"Updating preview…"</string>
+    <string name="ui_ac0c1250abb8" formatted="false">"The paint layer is full. Keep this drawing before adding more marks."</string>
 </resources>

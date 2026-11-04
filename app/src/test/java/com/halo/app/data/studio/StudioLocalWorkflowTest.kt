@@ -110,6 +110,43 @@ class StudioLocalWorkflowTest {
         assertEquals(output.objectId.value, canvases.observe(canvas).first()!!.nodes.single { it.id == node }.refObjectId)
         assertTrue(runCatching { service.export(created.id, created.revision, CanvasImageFormat.PNG) }.isFailure)
     }
+    @Test fun fillRevalidatesRevokedSourcesAndRollsBackFileAndLayerTogether()=runTest {
+        val original=projects.create("Atomic fill")
+        val input=files.createManagedFile("source.png","image/png",png(),original.id,original.revision.toString(),"{}")
+        readable(input)
+        val imported=service.importImage(original.id,original.revision,input.objectId.value)
+        val workspace=RoomWorkspaceRepository(db.notebookDao())
+        fun withFiles(delegate:WorkspaceFileRepository)=StudioService(context,projects,delegate,workspace,renderer,NotebookAssetRepository(context,db),canvases,db.workspaceContextDao(),StudioUiRequests(scope,{}))
+        fun wrapper(revoke:Boolean)=object:WorkspaceFileRepository by files {
+            override suspend fun createManagedFile(displayName:String,mimeType:String,bytes:ByteArray,sourceObjectId:String,sourceRevision:String,metadata:String,
+                published:suspend (WorkspaceFile)->Unit,validateSource:suspend ()->Unit):WorkspaceFile {
+                if(revoke) db.notebookDao().setLifecycle(input.objectId.value,"TRASHED",10)
+                return files.createManagedFile(displayName,mimeType,bytes,sourceObjectId,sourceRevision,metadata,
+                    published={file->published(file);if(!revoke) error("Injected failure after layer publication")},validateSource=validateSource)
+            }
+        }
+        val fields=mapOf("x" to 100,"y" to 100,"color" to "#ff0000","tolerance" to 16)
+        assertTrue(runCatching {withFiles(wrapper(false)).edit(imported.id,imported.revision,"fill_area",fields)}.isFailure)
+        assertEquals(imported,projects.get(imported.id));assertEquals(1,files.observeFiles().first().size)
+        assertTrue(runCatching {withFiles(wrapper(true)).edit(imported.id,imported.revision,"fill_area",fields)}.isFailure)
+        assertEquals(imported,projects.get(imported.id));assertEquals(1,files.observeFiles().first().size)
+    }
+    @Test fun rotatedGroupMaskTracksTheGroupAndSpatialEffectsKeepLogicalScale()=runTest {
+        val group=StudioLayer(id="g",name="Mask",kind=StudioLayerKind.GROUP,mask=StudioRect(0,0,500,1000))
+        val shape=StudioLayer(id="s",name="Red",kind=StudioLayerKind.RECTANGLE,color=Color.RED,parentId="g")
+        val document=StudioDocument(128,128,layers=listOf(group,shape)).apply(StudioCommand.Replace(group.copy(rotation=90)))
+        val pixels=renderer.render(document,true)
+        try {assertEquals(Color.RED,pixels.getPixel(96,32));assertEquals(Color.TRANSPARENT,pixels.getPixel(96,96))} finally {pixels.recycle()}
+        val texture=StudioLayer(name="Grain",kind=StudioLayerKind.TEXTURE,texture=StudioTexture.NOISE,
+            effects=listOf(StudioEffect(kind=StudioEffectKind.PIXELATE,amount=1000)))
+        val large=StudioDocument(1280,1280,layers=listOf(texture))
+        val preview=renderer.render(large,true);val output=renderer.render(large,false)
+        val down=Bitmap.createScaledBitmap(output,preview.width,preview.height,false)
+        try {
+            // Sampling interiors of logical blocks avoids export-edge interpolation while proving block placement.
+            for(y in 16 until 640 step 32) for(x in 16 until 640 step 32) assertEquals(preview.getPixel(x,y),down.getPixel(x,y))
+        } finally {preview.recycle();output.recycle();down.recycle()}
+    }
     @Test fun registeredCreativeWorkflowKeepsSchemasReceiptsAndLayerPagesBounded()=runTest {
         val executor=com.halo.app.di.tools.StudioToolExecutor(service)
         val descriptors=executor.definitions().map {requireNotNull(com.halo.app.di.tools.HaloToolDescriptors.workspace(it))}
@@ -121,6 +158,7 @@ class StudioLocalWorkflowTest {
         val read=call("halo_studio_get",mapOf("projectId" to original.id)) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
         assertTrue(read.output.length<24000)
         val page=org.json.JSONObject(read.output)
+        assertTrue(page.has("background"));assertTrue(page.has("recipe"));assertTrue(page.getJSONArray("layers").getJSONObject(0).has("mask"))
         assertEquals(4,page.getJSONArray("layers").length());assertEquals(4,page.getInt("nextLayerOffset"));assertTrue(page.getBoolean("layersTruncated"))
         val grouped=call("halo_studio_edit",mapOf("projectId" to original.id,"revision" to original.revision,"operation" to "group_layers","fields" to mapOf("layerIds" to listOf("shape-0","shape-1"),"name" to "Reviewed pair")))
         assertTrue(grouped is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)

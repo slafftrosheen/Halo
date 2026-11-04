@@ -5050,4 +5050,6 @@
     <string name="ui_d638785dd42e" formatted="false">"Pirms aizpildīšanas izvēlieties redzamu krāsu."</string>
     <string name="ui_8dadf856e07b" formatted="false">"Pieskarieties apgabalam, lai to aizpildītu. Sākotnējie slāņi paliks rediģējami."</string>
     <string name="ui_fb73bdbd1540" formatted="false">"Pieskarieties darba laukumam, lai izvēlētos krāsu."</string>
+    <string name="ui_67e600e7e4c5" formatted="false">"Priekšskatījuma atjaunināšana…"</string>
+    <string name="ui_ac0c1250abb8" formatted="false">"Gleznojuma slānis ir pilns. Saglabājiet zīmējumu, pirms pievienojat jaunus triepienus."</string>
 </resources>

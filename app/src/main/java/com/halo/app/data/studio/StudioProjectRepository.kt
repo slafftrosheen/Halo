@@ -6,6 +6,7 @@ import com.halo.app.data.ObjectProvenance
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -112,7 +113,7 @@ class StudioProjectRepository(private val database: AppDatabase,
     fun observeProjects(): Flow<List<WorkspaceObjectEntity>> = dao.observeProjects()
     fun observe(id: String): Flow<StudioProject?> = combine(dao.observe(id), database.notebookCanvasDao().observeWorkspaceObject(id)) { row, header ->
         if (row == null || header?.lifecycle != "ACTIVE" || header.type != "ARTIFACT" || header.contentRef != "studio:$id") null else decode(row, header.title)
-    }
+    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
     suspend fun get(id: String): StudioProject? = database.withTransaction { current(id) }
     private suspend fun current(id: String): StudioProject? {
         val header = database.notebookDao().getWorkspaceObject(id) ?: return null

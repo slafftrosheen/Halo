@@ -1,12 +1,12 @@
 # Issue 65 implementation and acceptance map
 
 Authority: [GitHub issue 65](https://github.com/slafftrosheen/Halo/issues/65), [snapshot](ISSUE-65-SOURCE.md), [design](../superpowers/specs/2026-11-03-issue-65-studio-design.md).
-Branch `codex/issue-65-studio`, base `cd08e9ad6`. Production and regression source batch is authored; independent review, compilation, executable tests, APK and native acceptance are pending. Source-only checks are not runtime acceptance.
+Branch `codex/issue-65-studio`, base `cd08e9ad6`. Production and regression source batch is authored; independent source review and its correction pass are complete; compilation, executable tests, APK and native acceptance are pending. Source-only checks are not runtime acceptance.
 
 | Issue area | Canonical implementation | Regression/evidence |
 |---|---|---|
 | One instrument / modes | `StudioScreen`, compact Zone identity selector and contextual Tools; modes are saveable presentation state, never document copies or commands | Whole-screen mode/review regression authored; native appearance pending |
-| Existing revisions / compatibility | Same `StudioProjectRepository`, `StudioSession`, Workspace/Room and archive owner; schema-1 decoder, strict schema-2 document envelope | Legacy roundtrip, Room/CAS/undo/save and archive regressions authored |
+| Existing revisions / compatibility | Same `StudioProjectRepository`, `StudioSession`, Workspace/Room and archive owner; legacy-compatible schema-1 encoding/decoding, strict schema-2 envelope for creative fields | Legacy roundtrip, Room/CAS/undo/save and archive regressions authored |
 | Shared layers | Existing image, ink, text, rectangle/ellipse plus line, outline frame, group and procedural texture; same ordered layer identities in Design/Paint/AI | Hierarchy, identity, duplication, ancestor locks and roundtrip regressions |
 | Four primary groups | Actual `WorkspaceToolMenus` Studio branch and orbit policy show Add, Layers, Tools, AI; distinct supplied icons, active selection and busy gates | Icon/orbit contract and existing Studio screen regressions extended |
 | Artboard / Zone ownership | Artboard and temporary status in the working viewport; compact mode in existing utility row; all inspectors invoked from Zone; no permanent upper toolbar | Existing 75/25 host owner retained; actual geometry/render gate pending |
@@ -19,8 +19,8 @@ Branch `codex/issue-65-studio`, base `cd08e9ad6`. Production and regression sour
 | AI / originals | Existing configured image-editing catalogue and review/spend/privacy owner; opening panel/switching mode sends no generation request. Kept proposals become a new image layer in a separate copy retaining original layers and provenance | Concurrent-original preservation and inverse-placement regression sources; live provider acceptance pending |
 | Provider truth | Only actual configured editing models offered by existing owner; no guaranteed segmentation, removal or relighting button for unsupported specialised capabilities | Existing provenance/consent suites; no mock provider claim |
 | Undo / history / export / Canvas | Exact-revision commands and source pinning; old save/save-as/history/PNG/JPEG/Canvas handoff remain canonical | Existing Studio local workflow/archive/recovery suites included in later gate |
-| Performance / recovery | Serial IO renderer; 640-edge previews, bounded one-layer effect buffers (1600 edge), hierarchy depth 4, 32 layers, eight effects, bounded ink/history, cancellation, capacity failure; paint failure retains explicit recovery copy/discard path | Bounded-model and pixel sources; actual Android memory/process-loss acceptance pending |
-| Accessibility / languages | Halo tokens/icons/theme/trace, labeled 48dp controls, scrollable/large-text inspectors, selected semantics and haptics; EN/RU/LV/PL catalog | Generated 5,050 keys per language as source check; actual dark/light/200%/reduced-motion renders pending |
+| Performance / recovery | Serial IO renderer; 640-edge previews and fixed logical 640-edge effect/group buffers across preview/export, hierarchy depth 4, 32 layers, eight effects, bounded ink/history, cancellation, capacity failure; host-wide input lease drains on the application scope through navigation; Save/Undo drain and resume; failed input retains explicit recovery copy/discard path | Bounded-model and pixel sources; actual Android memory/process-loss acceptance pending |
+| Accessibility / languages | Halo tokens/icons/theme/trace, labeled 48dp controls, scrollable/large-text inspectors, selected semantics and haptics; EN/RU/LV/PL catalog | Generated 5,052 keys per language as source check; actual dark/light/200%/reduced-motion renders pending |
 | Assistant parity | Expanded existing `halo_studio_edit` closed data vocabulary; `halo_studio_get` reads all editable metadata/presets and exact-revision colour samples; v1 operability with closed bounded results | Parser/registered workflow/operability tests; actual STT/device/model routes remain separate |
 
 ## Explicit supported boundaries
@@ -36,3 +36,5 @@ Android artistic Multiply uses `BlendMode.MULTIPLY` on API 29+ and bounded row-w
 ## Evidence status
 
 Source-only language generation and whitespace checks passed. No #65 compiler, test, build, native gesture/render, actual spoken recognition or provider outcome has run yet. The issue remains open; no merge or release acceptance is implied. The preceding #64 app gate remains incomplete after two host restarts, with its partial 30 passing language/Runtime tests preserved separately.
+
+Independent source review and the authored correction regressions are recorded in [ISSUE-65-SOURCE-REVIEW.md](../testing/ISSUE-65-SOURCE-REVIEW.md). Empty Paint entry is transient until the first completed stroke. Live Paint uses canonical composition including occlusion, masks, blend/effects and alpha; previews are explicitly marked while updating. Connected fill validates all pinned sources and publishes its managed file and layer transactionally. Source-only checks do not establish executable acceptance.

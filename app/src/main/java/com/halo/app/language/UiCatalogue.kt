@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(5080) {
+    buildMap(5082) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -5123,6 +5123,8 @@ private fun uiCataloguePart16(): Map<String, Int> = mapOf(
     "Choose a visible colour before filling an area." to R.string.ui_d638785dd42e,
     "Tap an area to fill. The original layers stay editable." to R.string.ui_8dadf856e07b,
     "Tap the artboard to pick a colour." to R.string.ui_fb73bdbd1540,
+    "Updating preview…" to R.string.ui_67e600e7e4c5,
+    "The paint layer is full. Keep this drawing before adding more marks." to R.string.ui_ac0c1250abb8,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

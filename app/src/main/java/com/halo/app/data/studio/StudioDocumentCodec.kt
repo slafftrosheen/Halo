@@ -11,12 +11,15 @@ object StudioDocumentCodec {
     fun encode(document: StudioDocument): String {
         document.requireValid()
         val recipe = document.recipe
-        return JSONObject().put("schema", 2).put("width", document.width).put("height", document.height)
+        val legacyKinds=setOf(StudioLayerKind.IMAGE,StudioLayerKind.INK,StudioLayerKind.TEXT,StudioLayerKind.RECTANGLE,StudioLayerKind.ELLIPSE)
+        val schema=if(document.layers.all {it.kind in legacyKinds&&it.parentId==null&&it.blend==StudioBlend.NORMAL&&it.typography==StudioTypography()&&
+            it.imageCrop==null&&it.effects.isEmpty()&&it.texture==null&&it.textureSeed==1&&!it.strokeOnly}) 1 else 2
+        return JSONObject().put("schema", schema).put("width", document.width).put("height", document.height)
             .put("background", document.background).put("selected", document.selectedLayerId ?: JSONObject.NULL)
             .put("recipe", JSONObject().put("turns", recipe.quarterTurns).put("mirror", recipe.mirrorHorizontal)
                 .put("square", recipe.squareCrop).put("edge", recipe.maxEdge).put("format", recipe.format.name)
                 .put("crop", recipe.crop?.let { rect(StudioRect(it.x, it.y, it.width, it.height)) } ?: JSONObject.NULL))
-            .put("layers", JSONArray().apply { document.layers.forEach { put(layer(it)) } })
+            .put("layers", JSONArray().apply { document.layers.forEach { put(layer(it,schema)) } })
             .toString().also { require(it.length <= StudioDocument.MAX_ENCODED_CHARS) }
     }
 
@@ -41,7 +44,8 @@ object StudioDocumentCodec {
         value.fields("x", "y", "width", "height")
         return StudioRect(value.integer("x"), value.integer("y"), value.integer("width"), value.integer("height"))
     }
-    private fun layer(value: StudioLayer): JSONObject = JSONObject()
+    private fun layer(value: StudioLayer,schema:Int): JSONObject {
+        val base=JSONObject()
         .put("id", value.id).put("name", value.name).put("kind", value.kind.name).put("bounds", rect(value.bounds))
         .put("visible", value.visible).put("locked", value.locked).put("opacity", value.opacity)
         .put("rotation", value.rotation).put("color", value.color).put("text", value.text)
@@ -49,11 +53,13 @@ object StudioDocumentCodec {
         .put("source", value.source?.let { JSONObject().put("id", it.objectId).put("version", it.version) } ?: JSONObject.NULL)
         .put("mask", value.mask?.let(::rect) ?: JSONObject.NULL)
         .put("brightness", value.brightness).put("contrast", value.contrast).put("saturation", value.saturation)
-        .put("parent", value.parentId ?: JSONObject.NULL).put("blend", value.blend.name)
+        if(schema==1) return base
+        return base.put("parent", value.parentId ?: JSONObject.NULL).put("blend", value.blend.name)
         .put("typography", StudioCreativeCodec.typography(value.typography))
         .put("imageCrop", value.imageCrop?.let(::rect) ?: JSONObject.NULL)
         .put("effects", JSONArray().apply { value.effects.forEach { put(StudioCreativeCodec.effect(it)) } })
         .put("texture", value.texture?.name ?: JSONObject.NULL).put("textureSeed", value.textureSeed).put("strokeOnly",value.strokeOnly)
+    }
     private fun readLayer(value: JSONObject, schema: Int): StudioLayer {
         val legacy = arrayOf("id", "name", "kind", "bounds", "visible", "locked", "opacity", "rotation", "color", "text",
             "fontSize", "strokeWidth", "ink", "source", "mask", "brightness", "contrast", "saturation")

@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
@@ -56,7 +57,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     val project = state.project
     DisposableEffect(viewModel, project?.id) {
         val token = project?.id?.let(viewModel.service::attachProject)
-        onDispose { token?.let(viewModel.service::detachProject) }
+        onDispose { viewModel.finishInk();token?.let(viewModel.service::detachProject) }
     }
     val defaultName = stringResource(R.string.studio_new_project)
     var discardTarget by remember(project?.id) { mutableStateOf<StudioProject?>(null) }
@@ -93,8 +94,10 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var restoring by remember(project?.id) { mutableStateOf(false) }
     var importing by remember(project?.id) { mutableStateOf(false) }
     var pendingInk by remember(project?.id) { mutableStateOf<String?>(null) }
-    var activeInk by remember(project?.id) { mutableStateOf<StudioInkSession?>(null) }
-    var recoveryInk by remember(project?.id) {mutableStateOf<StudioInkSession?>(null)}
+    val activeInk by viewModel.activeInk.collectAsStateWithLifecycle()
+    val recoveryInk by viewModel.inkRecovery.collectAsStateWithLifecycle()
+    val idlePaintSaving=remember {kotlinx.coroutines.flow.MutableStateFlow(false)}
+    val paintSaving by (activeInk?.saving ?: idlePaintSaving).collectAsStateWithLifecycle()
     var pickerProjectId by rememberSaveable { mutableStateOf<String?>(null) }
     var pickerProjectRevision by rememberSaveable { mutableStateOf<Long?>(null) }
     var importBaseRevision by remember(project?.id) { mutableStateOf<Long?>(null) }
@@ -110,7 +113,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         if (busy) return
         val selected = current.session.current.layers.find { it.id == current.session.current.selectedLayerId && it.kind == StudioLayerKind.INK && current.session.current.isEditable(it) &&
             (mode!=StudioMode.PAINT || it.color==brushColor&&it.strokeWidth==brush.width&&it.opacity==brush.opacity) }
-        if (selected != null) activeInk = viewModel.startInk(current.revision, selected.id)
+        if (selected != null) viewModel.startInk(current.revision, selected.id)
         else {
             val ratio = current.session.current.width * 1000 / current.session.current.height
             val layer = StudioLayer(name = drawName, kind = StudioLayerKind.INK,
@@ -119,20 +122,29 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             viewModel.command(current.revision, StudioCommand.Add(layer)); pendingInk = layer.id
         }
     }
+    fun enterPaint() {
+        val current=viewModel.state.value.project ?: return
+        val selected=current.session.current.layers.find {it.id==current.session.current.selectedLayerId&&it.kind==StudioLayerKind.INK&&current.session.current.isEditable(it)&&
+            it.color==brushColor&&it.strokeWidth==brush.width&&it.opacity==brush.opacity}
+        if(selected!=null) viewModel.startInk(current.revision,selected.id)
+        else if(current.session.current.layers.size<StudioDocument.MAX_LAYERS)
+            viewModel.startNewInk(current.revision,StudioLayer(name=drawName,kind=StudioLayerKind.INK,color=brushColor,strokeWidth=brush.width,opacity=brush.opacity))
+    }
     fun add(kind: StudioLayerKind, name: String) {
         val current = viewModel.state.value.project ?: return
         if (!busy) editing = StudioLayerEdit(current.revision, StudioLayer(name = name, kind = kind,
             bounds = StudioRect(100, 100, 800, 300)), true)
     }
-    fun finishPainting() {
-        activeInk?.takeIf {it.failed.value}?.let {recoveryInk=it}
-        activeInk=null;pendingInk=null;picking=false;fillPicking=false;viewModel.finishInk()
+    fun finishPainting(after:()->Unit={}) {
+        pendingInk=null;picking=false;fillPicking=false
+        viewModel.finishInk {after()}
     }
     val pageOwner = ShellPageOwner(if (canvasLibrary) "canvases" else "studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection:$modeName:$paintTool:$picking:$fillPicking",
         canonicalSourceVersion = project?.revision?.toString(),
         statusLabel = project?.let { stringResource(when {
             state.operation == StudioOperation.SAVE -> R.string.work_saving
             state.operation == StudioOperation.EXPORT -> R.string.work_exporting
+            paintSaving -> R.string.work_saving
             state.busy -> R.string.work_keeping
             it.hasUnsavedChanges -> R.string.work_draft_kept
             else -> R.string.zone5_saved_state
@@ -171,15 +183,18 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             "page.studio.discard" to stringResource(if (busy) R.string.action_wait else R.string.action_no_changes),
             "page.studio.undo" to stringResource(if (busy) R.string.action_wait else R.string.action_no_undo),
             "page.studio.redo" to stringResource(if (busy) R.string.action_wait else R.string.action_no_redo)))
+    LaunchedEffect(project?.id,modeName,busy,activeInk,recoveryInk,pageOwner.guidanceBlocked) {
+        if(project!=null&&mode==StudioMode.PAINT&&!busy&&activeInk==null&&recoveryInk==null&&!pageOwner.guidanceBlocked) enterPaint()
+    }
     BindShellPageActions(pageOwner,
         if (project == null) listOf(
             if (librarySection == "canvases") ShellPageAction("page.studio.new-canvas", uiText("New canvas"), HaloGlyph.NOTE,
                 !busy && !state.loading && onOpenCanvas != null) { naming = "canvas" }
             else ShellPageAction("page.studio.new", stringResource(R.string.studio_new_project), HaloGlyph.NOTE, !busy && !state.loading) { naming = "new" },
         ) else listOf(
-            ShellPageAction("page.studio.add-layer", uiText("Add"), HaloGlyph.NOTE, !busy) { finishPainting();addingLayer = true },
-            ShellPageAction("page.studio.layers", stringResource(R.string.studio_layers), HaloGlyph.NOTE, !busy) { finishPainting();layers = true },
-            ShellPageAction("page.studio.tools",uiText("Tools"),HaloGlyph.TOOL,!busy) { finishPainting();toolsPanel=true },
+            ShellPageAction("page.studio.add-layer", uiText("Add"), HaloGlyph.NOTE, !busy) { finishPainting {addingLayer = true} },
+            ShellPageAction("page.studio.layers", stringResource(R.string.studio_layers), HaloGlyph.NOTE, !busy) { finishPainting {layers = true} },
+            ShellPageAction("page.studio.tools",uiText("Tools"),HaloGlyph.TOOL,!busy) { finishPainting {toolsPanel=true} },
             ShellPageAction("page.studio.export", stringResource(R.string.studio_export_png), HaloGlyph.FILE, !busy) { viewModel.export(CanvasImageFormat.PNG) },
             ShellPageAction("page.studio.versions", stringResource(R.string.studio_versions), HaloGlyph.ACTIVITY, !busy, showVersions),
             ShellPageAction("page.studio.rename", uiText("Rename"), HaloGlyph.NOTE, !busy) { nameProject("rename") },
@@ -195,7 +210,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.shape", rectangleName, HaloGlyph.TOOL, !busy) { addingLayer = true },
             ShellPageAction("page.studio.transform", stringResource(R.string.studio_transforms), HaloGlyph.TOOL, !busy) { transforms = project },
             ShellPageAction("page.studio.background", stringResource(R.string.studio_background), HaloGlyph.APPEARANCE, !busy) { background = project },
-            ShellPageAction("page.studio.ai", uiText("AI"), HaloGlyph.THINK, !busy) { finishPainting();aiPanel=true },
+            ShellPageAction("page.studio.ai", uiText("AI"), HaloGlyph.THINK, !busy) { finishPainting {aiPanel=true} },
             ShellPageAction("page.studio.continue", stringResource(R.string.link53_continue), HaloGlyph.FILE, !busy) {
                 handoff = project.id to project.revision.toString()
             },
@@ -228,10 +243,10 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         }
     }
     BackHandler(project != null) { if (!busy) viewModel.closeProject() }
-    LaunchedEffect(project?.revision, pendingInk) {
+    LaunchedEffect(project?.revision, pendingInk,busy) {
         val id = pendingInk
-        if (project != null && id != null && project.session.current.layers.any { it.id == id }) {
-            activeInk = viewModel.startInk(project.revision, id); pendingInk = null
+        if (project != null && id != null && !busy && project.session.current.layers.any { it.id == id }) {
+            if(viewModel.startInk(project.revision,id)!=null) pendingInk=null
         }
     }
     LaunchedEffect(restoring, state.busy, state.error) {
@@ -248,13 +263,13 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 it.session.current.width, it.session.current.height, it.session.current.layers.size) }) {
                 if(project!=null) Box {
                     val painting=activeInk!=null&&mode==StudioMode.PAINT
-                    TextButton({modeMenu=true},enabled=!busy) {Text(uiText(if(painting) when(paintTool) {"ERASE"->"Eraser";"SELECT"->"Selection";"PAN"->"Pan";else->"Brush"} else when(mode) {StudioMode.DESIGN->"Design";StudioMode.PAINT->"Paint";StudioMode.AI->"AI"}))}
+                    TextButton({modeMenu=true},enabled=!busy) {Text(uiText(when(mode) {StudioMode.DESIGN->"Design";StudioMode.PAINT->"Paint";StudioMode.AI->"AI"}))}
                     DropdownMenu(modeMenu,{modeMenu=false}) {
                         if(painting) listOf("DRAW" to "Brush","ERASE" to "Eraser","SELECT" to "Selection","PAN" to "Pan").forEach { (id,label)->
-                            DropdownMenuItem(text={Text(uiText(label))},onClick={paintTool=id;modeMenu=false})
+                            DropdownMenuItem(text={Text(uiText(label))},onClick={paintTool=id;modeMenu=false},modifier=Modifier.semantics {selected=paintTool==id})
                         }
                         if(painting) DropdownMenuItem(text={Text(uiText("Finish painting"))},onClick={finishPainting();modeMenu=false})
-                        StudioMode.entries.forEach {next->DropdownMenuItem(text={Text(uiText(when(next) {StudioMode.DESIGN->"Design";StudioMode.PAINT->"Paint";StudioMode.AI->"AI"}))},onClick={finishPainting();modeName=next.name;picking=false;modeMenu=false})}
+                        StudioMode.entries.forEach {next->DropdownMenuItem(text={Text(uiText(when(next) {StudioMode.DESIGN->"Design";StudioMode.PAINT->"Paint";StudioMode.AI->"AI"}))},onClick={finishPainting {modeName=next.name;modeMenu=false;if(next==StudioMode.PAINT) enterPaint()}})}
                     }
                 }
                 if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
@@ -292,7 +307,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError)
                 if(mode==StudioMode.PAINT&&activeInk!=null) StudioPaintSurface(viewModel.service,requireNotNull(activeInk),paintTool,
-                    {recoveryInk=activeInk;finishPainting()},Modifier.weight(1f))
+                    {activeInk?.let {viewModel.saveInkCopy(it,defaultName)}},Modifier.weight(1f),busy=busy)
                 else StudioWorkbench(viewModel.service, project, busy, ::draw, { add(StudioLayerKind.TEXT, textName) },
                     { addingLayer = true }, { importBaseRevision = project.revision; importing = true },
                     { layers = true }, { transforms = project },
@@ -304,7 +319,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     onPointPick=if(fillPicking) ({x,y->fillPicking=false;viewModel.edit(project.revision,"fill_area",mapOf("x" to x,"y" to y,"color" to ("#"+brushColor.toUInt().toString(16).padStart(8,'0')),"tolerance" to 16))}) else null)
                 if(fillPicking) Text(uiText("Tap an area to fill. The original layers stay editable."),style=MaterialTheme.typography.bodySmall)
                 if(picking) Text(uiText("Tap the artboard to pick a colour."),style=MaterialTheme.typography.bodySmall)
-                if(!shellOwnsOrb) StudioModeSwitch(mode,{next->finishPainting();modeName=next.name;picking=false},!busy)
+                if(!shellOwnsOrb) StudioModeSwitch(mode,{next->finishPainting {modeName=next.name;if(next==StudioMode.PAINT) enterPaint()}},!busy)
             } else LazyColumn(Modifier.fillMaxSize().testTag("studio-content"), contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (shellOwnsOrb) item("studio-heading") { Zone5InstrumentHeading(stringResource(R.string.studio_title), if (canvasLibrary) "tool_canvas" else "tool_studio", project?.title,
@@ -383,7 +398,9 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             Zone5ActionButton(stringResource(R.string.studio_import_image), "action_import", !busy, Modifier.fillMaxWidth()) {
                 addingLayer = false; importBaseRevision = project.revision; importing = true
             }
-            Zone5ActionButton(stringResource(R.string.studio_camera),"capture_camera",!busy,Modifier.fillMaxWidth()) {addingLayer=false;onCamera(project)}
+            Zone5ActionButton(stringResource(if(onRecoverCamera==null) R.string.studio_camera else R.string.studio_recover_photo),"capture_camera",!busy,Modifier.fillMaxWidth()) {
+                addingLayer=false;if(onRecoverCamera==null) onCamera(project) else onRecoverCamera(project)
+            }
             Zone5ActionButton(uiText("Texture"),"studio_palette",!busy,Modifier.fillMaxWidth()) {addingLayer=false;texturePanel=project}
             Zone5ActionButton(stringResource(R.string.studio_background),"setting_appearance",!busy,Modifier.fillMaxWidth()) {addingLayer=false;background=project}
             val textName = stringResource(R.string.studio_text)
@@ -493,13 +510,13 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         title = { Text(stringResource(R.string.studio_output_saved)) }, text = { Column { Text(output.displayName); WorkspaceExportButton(output); WorkspaceContinueButton(output.objectId.value, output.version) } },
         confirmButton = { TextButton(onClick = { viewModel.dismissOutput(); onOpenOutput(output) }) { Text(stringResource(R.string.studio_open_output)) } },
         dismissButton = { TextButton(onClick = { viewModel.dismissOutput(); onInsertOutput(output) }) { Text(stringResource(R.string.studio_insert_canvas)) } }) }
-    activeInk?.takeIf { mode!=StudioMode.PAINT }?.let { session -> StudioInkDialog(viewModel.service, session, {
-        viewModel.saveInkCopy(session, defaultName); activeInk = null; viewModel.finishInk()
-    }, { activeInk = null; viewModel.finishInk() }) }
+    activeInk?.takeIf { mode!=StudioMode.PAINT&&recoveryInk==null }?.let { session -> StudioInkDialog(viewModel.service, session, {
+        viewModel.saveInkCopy(session, defaultName)
+    }, { finishPainting() },busy=busy) }
     recoveryInk?.let { session->StudioAlertDialog({}, {Text(uiText("Recover paint draft"))}, {
-        Column {Text(uiText("The latest marks are still held here. Save them as a separate project or explicitly discard the unkept marks."));StudioRecoveryNotice(state,viewModel::retry,viewModel::dismissError)}
+        Column {Text(session.initial.title);Text(uiText("The latest marks are still held here. Save them as a separate project or explicitly discard the unkept marks."));StudioRecoveryNotice(state,viewModel::retry,viewModel::dismissError)}
     },{TextButton({viewModel.saveInkCopy(session,defaultName)},enabled=!busy) {Text(uiText("Save recovery copy"))}},
-        {TextButton({recoveryInk=null},enabled=!busy) {Text(uiText("Discard unkept marks"))}}) }
+        {TextButton({viewModel.discardInkRecovery {if(mode==StudioMode.PAINT) enterPaint()}},enabled=!busy) {Text(uiText("Discard unkept marks"))}}) }
 }
 
 @Composable

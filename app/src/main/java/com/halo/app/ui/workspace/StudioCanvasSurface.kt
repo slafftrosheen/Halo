@@ -31,12 +31,10 @@ internal fun StudioCanvasSurface(service:StudioService, project:StudioProject, b
     val document=project.session.current
     val selected=document.layers.find { it.id==document.selectedLayerId }
     val pixels=document.copy(selectedLayerId=null)
-    var failed by remember(pixels) { mutableStateOf(false) }
-    val bitmap by produceState<Bitmap?>(null,pixels) {
-        try { value=service.previewDocument(pixels) }
-        catch(cancelled:CancellationException) { throw cancelled }
-        catch(_:Exception) { failed=true }
-    }
+    val render=rememberStudioPixels(service,pixels)
+    val bitmap=render.bitmap
+    val failed=render.failed
+    val latestBitmap by rememberUpdatedState(bitmap)
     var zoom by remember(project.id,fitToken) { mutableFloatStateOf(1f) }
     var rotation by remember(project.id,fitToken) { mutableFloatStateOf(0f) }
     var pan by remember(project.id,fitToken) { mutableStateOf(Offset.Zero) }
@@ -75,9 +73,8 @@ internal fun StudioCanvasSurface(service:StudioService, project:StudioProject, b
                 return f.center+pan+Offset((v.x*cos(a)-v.y*sin(a)).toFloat(),(v.x*sin(a)+v.y*cos(a)).toFloat())*zoom
             }
             fun layerPoint(layer:StudioLayer,u:Float,v:Float):Offset {
-                val b=layer.bounds;val radians=Math.toRadians(layer.rotation.toDouble())
-                val x=(u-.5f)*b.width;val y=(v-.5f)*b.height
-                return screenPoint((b.x+b.width/2f+x*cos(radians)-y*sin(radians)).toFloat(),(b.y+b.height/2f+x*sin(radians)+y*cos(radians)).toFloat())
+                val b=layer.bounds;val p=StudioCanvasGeometry.rotate(document,b.x+u*b.width,b.y+v*b.height,b.x+b.width/2f,b.y+b.height/2f,layer.rotation.toFloat())
+                return screenPoint(p.first,p.second)
             }
             awaitEachGesture {
                 val down=awaitFirstDown(requireUnconsumed=false)
@@ -109,10 +106,10 @@ internal fun StudioCanvasSurface(service:StudioService, project:StudioProject, b
                             val point=docPoint(change.position)
                             if(target!=null && document.isEditable(target)) {
                                 candidate=when {
-                                    resizing->{val a=Math.toRadians(-target.rotation.toDouble());val dx=point.first-start.first;val dy=point.second-start.second
-                                        target.copy(bounds=target.bounds.copy(width=(target.bounds.width+dx*cos(a)-dy*sin(a)).roundToInt().coerceIn(1,3000),height=(target.bounds.height+dx*sin(a)+dy*cos(a)).roundToInt().coerceIn(1,3000)))}
+                                    resizing->target.copy(bounds=StudioCanvasGeometry.resizeCorner(document,target,point.first,point.second))
                                     rotating->{ val b=target.bounds
-                                        val angle=atan2((point.second-b.y-b.height/2f).toDouble(),(point.first-b.x-b.width/2f).toDouble())-atan2((start.second-b.y-b.height/2f).toDouble(),(start.first-b.x-b.width/2f).toDouble())
+                                        val angle=atan2((point.second-b.y-b.height/2f)*document.height.toDouble(),(point.first-b.x-b.width/2f)*document.width.toDouble())-
+                                            atan2((start.second-b.y-b.height/2f)*document.height.toDouble(),(start.first-b.x-b.width/2f)*document.width.toDouble())
                                         target.copy(rotation=((target.rotation+Math.toDegrees(angle).roundToInt()+540)%360)-180) }
                                     else->target.copy(bounds=StudioCanvasGeometry.snapped(document,target,target.bounds.x+(point.first-start.first).roundToInt(),target.bounds.y+(point.second-start.second).roundToInt()))
                                 }
@@ -126,7 +123,7 @@ internal fun StudioCanvasSurface(service:StudioService, project:StudioProject, b
                 draft=null
                 if(!cancelled && !multi) {
                     if(!moved) {
-                        val pick=latestPicker;val image=bitmap
+                        val pick=latestPicker;val image=latestBitmap
                         val pointPicker=latestPointPicker
                         if(pointPicker!=null && start.first in 0f..1000f&&start.second in 0f..1000f) pointPicker(start.first.roundToInt(),start.second.roundToInt())
                         else if(pick!=null && image!=null) {
@@ -152,8 +149,8 @@ internal fun StudioCanvasSurface(service:StudioService, project:StudioProject, b
                 if(layer!=null && document.isVisible(layer)) {
                     val b=layer.bounds
                     fun point(u:Float,v:Float):Offset {
-                        val a=Math.toRadians(layer.rotation.toDouble());val dx=(u-.5f)*b.width;val dy=(v-.5f)*b.height
-                        val p=StudioCanvasGeometry.forward(document,(b.x+b.width/2f+dx*cos(a)-dy*sin(a)).toFloat(),(b.y+b.height/2f+dx*sin(a)+dy*cos(a)).toFloat())
+                        val local=StudioCanvasGeometry.rotate(document,b.x+u*b.width,b.y+v*b.height,b.x+b.width/2f,b.y+b.height/2f,layer.rotation.toFloat())
+                        val p=StudioCanvasGeometry.forward(document,local.first,local.second)
                         return Offset(f.left+p.first*f.width,f.top+p.second*f.height)
                     }
                     val points=listOf(point(0f,0f),point(1f,0f),point(1f,1f),point(0f,1f))

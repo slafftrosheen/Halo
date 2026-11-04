@@ -23,6 +23,9 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     private val renderer: StudioRenderer, private val assets: NotebookAssetRepository,
     private val canvases: com.halo.app.data.notebook.NotebookCanvasRepository,
     private val provenance: com.halo.app.data.WorkspaceContextDao, val uiRequests: StudioUiRequests) {
+    /** One host-owned input lease; a route/ViewModel exit cannot evict a queued or failed draft. */
+    internal val inkOwner=java.util.concurrent.atomic.AtomicReference<StudioInkSession?>(null)
+    internal val inkRecovery=kotlinx.coroutines.flow.MutableStateFlow<StudioInkSession?>(null)
     /** Metadata only; browsing Studio never opens or attaches a canvas document. */
     val availableCanvases = workspace.observe(WorkspaceQuery(types = setOf(
         com.halo.app.data.notebook.WorkspaceObjectType.CANVAS, com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT)))
@@ -192,9 +195,22 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         current(project.id,project.revision)
         val metadata=JSONObject().put("operation","studio-fill-layer").put("projectRevision",project.revision)
             .put("x",request.x).put("y",request.y).put("tolerance",request.tolerance).put("color",request.color).toString()
-        val file=files.createManagedFile("Fill.png","image/png",bytes,project.id,project.revision.toString(),metadata) {current(project.id,project.revision)}
-        return projects.apply(project.id,project.revision,StudioCommand.Add(StudioLayer(name="Fill",kind=StudioLayerKind.IMAGE,
-            source=StudioSource(file.objectId.value,requireNotNull(file.sha256)))))
+        var filled:StudioProject?=null
+        files.createManagedFile("Fill.png","image/png",bytes,project.id,project.revision.toString(),metadata,
+            published={file->
+                filled=projects.apply(project.id,project.revision,StudioCommand.Add(StudioLayer(name="Fill",kind=StudioLayerKind.IMAGE,
+                    source=StudioSource(file.objectId.value,requireNotNull(file.sha256)))))
+                validatePinnedSources(document)
+            },validateSource={current(project.id,project.revision);validatePinnedSources(document)})
+        return requireNotNull(filled)
+    }
+    internal suspend fun validatePinnedSources(document:StudioDocument) {
+        for(source in document.layers.mapNotNull {it.source}.distinct()) {
+            val file=requireNotNull(files.getFile(WorkspaceObjectId(source.objectId)))
+            require(file.version==source.version&&file.sha256!=null&&file.ownership==ContentOwnership.HALO_OWNED&&
+                file.availability in setOf(WorkspaceFileAvailability.AVAILABLE,WorkspaceFileAvailability.OWNED_LOCAL)&&
+                workspace.get(WorkspaceObjectId(source.objectId))?.lifecycle==WorkspaceObjectLifecycle.ACTIVE) {"Image source changed before publication"}
+        }
     }
     suspend fun inkBackdrop(document: StudioDocument, layer: StudioLayer): Bitmap = renderer.inkBackdrop(document, layer)
     fun inkWidthFraction(document: StudioDocument, layer: StudioLayer): Float = renderer.inkWidthFraction(document, layer)

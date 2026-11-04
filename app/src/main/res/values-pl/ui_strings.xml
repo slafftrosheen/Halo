@@ -5050,4 +5050,6 @@
     <string name="ui_d638785dd42e" formatted="false">"Przed wypełnieniem wybierz widoczny kolor."</string>
     <string name="ui_8dadf856e07b" formatted="false">"Dotknij obszaru do wypełnienia. Oryginalne warstwy pozostaną edytowalne."</string>
     <string name="ui_fb73bdbd1540" formatted="false">"Dotknij obszaru roboczego, aby pobrać kolor."</string>
+    <string name="ui_67e600e7e4c5" formatted="false">"Aktualizowanie podglądu…"</string>
+    <string name="ui_ac0c1250abb8" formatted="false">"Warstwa malarska jest pełna. Zachowaj rysunek przed dodaniem kolejnych śladów."</string>
 </resources>

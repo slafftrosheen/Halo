@@ -61,16 +61,17 @@ fun StudioDocument.descendants(id: String): List<StudioLayer> = layers.filter { 
 internal fun StudioDocument.transformChildren(old: StudioLayer, updated: StudioLayer): List<StudioLayer> {
     if (old.kind != StudioLayerKind.GROUP || old.bounds == updated.bounds && old.rotation == updated.rotation) return layers
     val children = descendants(old.id).map { it.id }.toSet()
-    val angle = Math.toRadians((updated.rotation - old.rotation).toDouble())
-    val cosine = kotlin.math.cos(angle); val sine = kotlin.math.sin(angle)
     return layers.map { child ->
         if (child.id !in children) child else {
-            val dx = (child.bounds.x + child.bounds.width / 2.0 - old.bounds.x) * updated.bounds.width / old.bounds.width - updated.bounds.width / 2.0
-            val dy = (child.bounds.y + child.bounds.height / 2.0 - old.bounds.y) * updated.bounds.height / old.bounds.height - updated.bounds.height / 2.0
+            val original=StudioCanvasGeometry.rotate(this,child.bounds.x+child.bounds.width/2f,child.bounds.y+child.bounds.height/2f,
+                old.bounds.x+old.bounds.width/2f,old.bounds.y+old.bounds.height/2f,-old.rotation.toFloat())
+            val dx = (original.first - old.bounds.x) * updated.bounds.width / old.bounds.width - updated.bounds.width / 2f
+            val dy = (original.second - old.bounds.y) * updated.bounds.height / old.bounds.height - updated.bounds.height / 2f
             val width = (child.bounds.width.toDouble() * updated.bounds.width / old.bounds.width).toInt().coerceAtLeast(1)
             val height = (child.bounds.height.toDouble() * updated.bounds.height / old.bounds.height).toInt().coerceAtLeast(1)
-            child.copy(bounds = StudioRect((updated.bounds.x + updated.bounds.width / 2.0 + dx*cosine - dy*sine - width/2.0).toInt(),
-                (updated.bounds.y + updated.bounds.height / 2.0 + dx*sine + dy*cosine - height/2.0).toInt(), width, height),
+            val center=StudioCanvasGeometry.rotate(this,(updated.bounds.x+updated.bounds.width/2.0+dx).toFloat(),
+                (updated.bounds.y+updated.bounds.height/2.0+dy).toFloat(),updated.bounds.x+updated.bounds.width/2f,updated.bounds.y+updated.bounds.height/2f,updated.rotation.toFloat())
+            child.copy(bounds = StudioRect((center.first-width/2f).toInt(),(center.second-height/2f).toInt(), width, height),
                 rotation = ((child.rotation + updated.rotation - old.rotation + 540) % 360) - 180)
         }
     }

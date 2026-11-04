@@ -156,6 +156,11 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     if("revision" in args) require(project.revision==number("revision"))
                     require("layerId" !in args || "offset" !in args&&"limit" !in args)
                     val result = summary(project)
+                    val document=project.session.current
+                    fun encodedRect(rect:StudioRect)=JSONObject().put("x",rect.x).put("y",rect.y).put("width",rect.width).put("height",rect.height)
+                    result.put("background",document.background).put("recipe",JSONObject().put("quarterTurns",document.recipe.quarterTurns)
+                        .put("mirror",document.recipe.mirrorHorizontal).put("squareCrop",document.recipe.squareCrop).put("maxEdge",document.recipe.maxEdge)
+                        .put("format",document.recipe.format.name).put("crop",document.recipe.crop?.let {encodedRect(StudioRect(it.x,it.y,it.width,it.height))} ?: JSONObject.NULL))
                     if("sample" in args) {
                         require(project.revision==number("revision"))
                         val sample=args["sample"];require(sample is Map<*,*> && sample.keys==setOf("x","y"))
@@ -179,6 +184,7 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     val offset=pageNumber("offset",0,0,32);val limit=pageNumber("limit",4,1,4)
                     val layers=if("layerId" in args) listOf(requireNotNull(project.session.current.layers.find {it.id==objectId("layerId")})) else project.session.current.layers.drop(offset).take(limit)
                     val more="layerId" !in args && offset+layers.size<project.session.current.layers.size
+                    val textLimit=if("layerId" in args) 2000 else 120
                     result.put("layersTruncated",more).put("nextLayerOffset",if(more) offset+layers.size else JSONObject.NULL)
                     result.put("layers", JSONArray().apply { layers.forEach { layer ->
                         put(JSONObject().put("id", layer.id).put("name", layer.name.take(80)).put("kind", layer.kind.name)
@@ -186,10 +192,11 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                             .put("rotation",layer.rotation).put("color",layer.color).put("fontSize",layer.fontSize).put("strokeWidth",layer.strokeWidth)
                             .put("brightness",layer.brightness).put("contrast",layer.contrast).put("saturation",layer.saturation)
                             .put("bounds", JSONObject().put("x", layer.bounds.x).put("y", layer.bounds.y).put("width", layer.bounds.width).put("height", layer.bounds.height))
-                            .put("text", layer.text.take(120)).put("textTruncated", layer.text.length > 120)
+                            .put("text", layer.text.take(textLimit)).put("textTruncated", layer.text.length > textLimit)
                             .put("parentId",layer.parentId ?: JSONObject.NULL).put("blend",layer.blend.name).put("editable",project.session.current.isEditable(layer))
                             .put("typography",StudioCreativeCodec.typography(layer.typography))
                             .put("imageCrop",layer.imageCrop?.let { JSONObject().put("x",it.x).put("y",it.y).put("width",it.width).put("height",it.height) } ?: JSONObject.NULL)
+                            .put("mask",layer.mask?.let(::encodedRect) ?: JSONObject.NULL)
                             .put("effects",JSONArray().apply { layer.effects.forEach { put(StudioCreativeCodec.effect(it)) } })
                             .put("texture",layer.texture?.name ?: JSONObject.NULL).put("textureSeed",layer.textureSeed).put("strokeOnly",layer.strokeOnly)
                             .put("sourceId", layer.source?.objectId ?: JSONObject.NULL).put("sourceVersion", layer.source?.version ?: JSONObject.NULL))
@@ -200,6 +207,10 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                         .put("sourceRevision", selected.selection.sourceRevision).put("strokeCount", selected.selection.selectedStrokeIds.size)
                         .put("bounds", JSONObject().put("left", selected.selection.bounds.left).put("top", selected.selection.bounds.top)
                             .put("right", selected.selection.bounds.right).put("bottom", selected.selection.bounds.bottom))) }
+                    if("sample" in args) {
+                        check(studio.projects.get(project.id)?.revision==project.revision)
+                        studio.validatePinnedSources(project.session.current)
+                    }
                     return success(result)
                 }
                 "halo_studio_edit" -> {
