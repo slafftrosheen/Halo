@@ -153,7 +153,7 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                         Text("${row.source.publisher} · ${row.source.language}", style = MaterialTheme.typography.bodySmall)
                         Text(uiText(sourceCategoryLabel(row.source.category)), style = MaterialTheme.typography.labelLarge)
                         if (!kids) EverydayToggle(uiText("Include in selected sources"), row.source.selected, !state.busy) { model.select(row.source, it) }
-                        Text(uiText(if (row.snapshot == null) "No saved snapshot" else if (row.snapshot.stale(now, row.source.external, power)) "Cached · may be out of date" else "Saved snapshot is current"), style = MaterialTheme.typography.bodySmall)
+                        Text(uiText(if (row.snapshot == null) "No saved snapshot" else if (row.source.kind == CollectorKind.LOCAL_LIBRARY) "Local import metadata · source freshness is not verified" else if (row.snapshot.stale(now, row.source.external, power)) "Cached · may be out of date" else "Saved snapshot is current"), style = MaterialTheme.typography.bodySmall)
                         TextButton({ onSource(row.source.id, null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Open source")) }
                     }
                 }

@@ -5131,4 +5131,6 @@
     <string name="ui_b9e1610ff7d9" formatted="false">"Импорт не удался; выберите поддерживаемый файл"</string>
     <string name="ui_a6a01ca08abf" formatted="false">"Источник удалён; выберите новый файл для импорта"</string>
     <string name="ui_1913812b4ada" formatted="false">"Не удалось загрузить библиотеки. Повторите чтение локального состояния."</string>
+    <string name="ui_b1adb5012735" formatted="false">"Материал XML превышает общий лимит записи; выберите меньшую подборку"</string>
+    <string name="ui_34178493f5f9" formatted="false">"В статье нет текста или версии; выберите полную подборку текущих статей"</string>
 </resources>

@@ -86,6 +86,30 @@ class OrganizerOperationsTest {
                 listOf(OrganizerPlannedAction(capability.id, "{\"predicate\":\"CHANGED\",\"baseline\":\"baseline\"}")), emptyList())
         override fun close() { scope.cancel(); db.close() }
     }
+    @Test fun runningStopwatchDoesNotInvalidateRegisteredQueryContinuationAsTimePasses() = runBlocking {
+        Harness().use { h ->
+            repeat(6) { h.useCases.create(OrganizerKind.TASK, "Owned $it") }
+            val started = Instant.parse("2026-11-05T12:00:00Z")
+            val stopwatch = h.useCases.create(OrganizerKind.TASK, "Owned stopwatch", commitment = OrganizerCommitment(
+                purpose = CommitmentPurpose.STOPWATCH, stopwatch = StopwatchState(1000, started, 1000, "boot")))
+            var observed = started; var elapsed = 1000L
+            val clock = object : Clock() {
+                override fun getZone(): ZoneId = ZoneOffset.UTC
+                override fun withZone(zone: ZoneId): Clock = this
+                override fun instant(): Instant = observed
+            }
+            val api = OrganizerOperationTools(h.operations, h.sources, OrganizerResearch(h.sources), { true }, { {} }, clock = clock, elapsedMs = { elapsed }, bootId = { "boot" })
+            val registry = ToolRegistry(listOf(api), api.definitions().map { HaloToolDescriptors.assistant(it)!! })
+            suspend fun query(args: Map<String, Any>) = org.json.JSONObject((registry.executeAuthorized(
+                ToolAuthorization.Authorized(ToolCall("query", "halo_commitments_query", args)), ToolExecutionContext()) as ToolExecutionResult.Success).output)
+            val first = query(emptyMap()); observed = observed.plusSeconds(60); elapsed += 60000
+            val second = query(mapOf("offset" to first.getInt("nextOffset"), "snapshot" to first.getString("snapshot")))
+            assertEquals(first.getString("snapshot"), second.getString("snapshot")); assertTrue(second.isNull("nextOffset"))
+            val row = query(mapOf("id" to stopwatch.id)).getJSONArray("records").getJSONObject(0)
+            assertEquals(1000, row.getLong("stopwatchAccumulatedMs")); assertEquals(started.toString(), row.getString("stopwatchStartedAt"))
+            assertFalse(row.has("stopwatchMs"))
+        }
+    }
     @Test fun reviewDoesNotScheduleOrRunAndARealRunnerProducesTheConfirmedResult() = runBlocking {
         Harness().use { h ->
             val draft = h.task(); assertEquals(HaloWorkState.DRAFT, draft.commitment.state)

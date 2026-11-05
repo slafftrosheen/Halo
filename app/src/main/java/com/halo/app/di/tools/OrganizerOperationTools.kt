@@ -137,7 +137,11 @@ class OrganizerOperationTools(private val owner: OrganizerOperations, private va
             .put("sourceRefs", JSONArray(it.sourceRefs.map { ref -> JSONObject().put("id", ref.id).put("version", ref.version) }))) }
         work.recovery?.let { put("recovery", JSONObject().put("planId", it.planId).put("routineId", it.routineId).put("runId", it.runId)
             .put("recordedAt", it.recordedAt.toString()).put("uncertain", it.uncertain).put("reviewed", it.reviewed)) }
-        work.stopwatch?.let { put("stopwatchMs", it.elapsed(clock.instant(), elapsedMs(), bootId())); put("stopwatchRunning", it.startedAt != null); put("laps", JSONArray(it.laps)) }
+        work.stopwatch?.let {
+            put("stopwatchAccumulatedMs", it.accumulatedMs); put("stopwatchRunning", it.startedAt != null)
+            if (it.startedAt == null) put("stopwatchMs", it.accumulatedMs) else put("stopwatchStartedAt", it.startedAt.toString())
+            put("laps", JSONArray(it.laps))
+        }
     }
     }
 }

@@ -33,6 +33,7 @@ object SourceImages {
         require(!raw.isNullOrBlank())
         val url = CollectorUrlPolicy.validate(base).resolve(raw) ?: error("Invalid image URL")
         require(url.isHttps && url.username.isBlank() && url.password.isBlank())
+        require(!url.encodedPath.substringAfterLast('.').lowercase(java.util.Locale.ROOT).let { it == "svg" || it == "gif" })
         SourceImage(url.toString(), caption.take(500), sourceUrl = sourceUrl).also { it.validate() }
     }.getOrNull()
     fun fromHtml(root: Element, base: String): List<SourceImage> = root.select("img[src]").asSequence().filter {

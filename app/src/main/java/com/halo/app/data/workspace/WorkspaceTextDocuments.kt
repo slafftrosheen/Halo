@@ -77,6 +77,8 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
         val original = current(id, expectedRevision)
         val note = notes.createNote(body = original.text, title = (original.document.title + " — copy").take(120))
         val copy = requireNotNull(documents.ensureDocument(note.id, original.text))
+        database.workspaceContextDao().provenance(ObjectProvenance(note.id, id, expectedRevision.toString(),
+            JSONObject().put("operation", "literal-rich-copy").put("format", original.format.name).toString()))
         com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
         check(current(id, expectedRevision).text == original.text)
         WorkspaceRichCopy(id, expectedRevision, note.id, copy.revision)

@@ -33,7 +33,12 @@ class WorkspaceTextDocumentsTest {
             val raw = "# Heading\n\nParagraph with **emphasis**.\n"
             val original = f.text.create("Original", WorkspaceTextFormat.MARKDOWN, raw)
             val service = com.halo.app.di.tools.RichNoteCopyService(f.text) { {} }
-            val receipt = service.copy(original.id, original.revision)
+            val tools = com.halo.app.di.tools.RichNoteCopyTools(service)
+            val registry = com.halo.runtime.cognition.tools.ToolRegistry(listOf(tools), tools.definitions().map { com.halo.app.di.tools.HaloToolDescriptors.assistant(it)!! })
+            assertTrue(registry.operabilityReport(listOf(com.halo.runtime.cognition.tools.ToolFeatureOperability("rich-copy", setOf("halo_text_rich_copy")))).isEmpty())
+            val copied = registry.executeAuthorized(com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(com.halo.sdk.provider.ToolCall("copy", "halo_text_rich_copy", mapOf("noteId" to original.id, "revision" to original.revision))), com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId = "copy")) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+            val output = org.json.JSONObject(copied.output)
+            val receipt = WorkspaceRichCopy(original.id, original.revision, output.getString("noteId"), output.getLong("revision"))
             val unchanged = f.text.get(original.id)!!
             assertEquals(raw, unchanged.text); assertEquals(original.revision, unchanged.revision)
             val rich = f.documents.load(receipt.noteId)!!

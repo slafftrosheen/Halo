@@ -94,7 +94,7 @@ object WikipediaArticleParser {
             val url = "https://$language.wikipedia.org/w/index.php".toHttpUrl().newBuilder().addQueryParameter("curid", pageId.toString())
                 .addQueryParameter("oldid", revision.toString()).fragment(fragment.takeIf { it.isNotBlank() }).build().toString()
             ReferenceEntry("$pageId:$revision:$index", if (sectionTitle == title) title else "$title — $sectionTitle".take(500), text,
-                language, url, "Wikipedia", revision.toString(), "CC BY-SA 4.0; attribution and contributor history at the source URL", images = if (index == 0) images else emptyList())
+                language, url, "Wikipedia", revision.toString(), "CC BY-SA 4.0; attribution and contributor history at the source URL", images = if (index == 0) images.map { it.copy(sourceUrl = url) } else emptyList())
         }
     }
 }

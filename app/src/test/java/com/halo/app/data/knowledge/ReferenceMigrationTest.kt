@@ -15,6 +15,33 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = Application::class)
 class ReferenceMigrationTest {
+    @Test fun roomReopensMigrated34DatabaseAndPreservesAnExistingSource() {
+        val context = ApplicationProvider.getApplicationContext<Application>(); val name = "reference-room-migration.db"; context.deleteDatabase(name)
+        try {
+            // The unchanged tables are exactly the generated production schema. Remove only v35 additions.
+            val before = androidx.room.Room.databaseBuilder(context, AppDatabase::class.java, name).allowMainThreadQueries().build()
+            kotlinx.coroutines.runBlocking {
+                com.halo.app.data.everyday.RoomCollectorRepository(before).save(com.halo.app.everyday.collectors.CollectorSource(
+                    "existing", "Preserved", "Owned", com.halo.app.everyday.collectors.CollectorKind.LOCAL_DEVICE,
+                    com.halo.app.everyday.collectors.SourceCategory.PERSONAL, "en"), null)
+            }
+            before.close()
+            val v34 = FrameworkSQLiteOpenHelperFactory().create(SupportSQLiteOpenHelper.Configuration.builder(context).name(name).callback(object : SupportSQLiteOpenHelper.Callback(34) {
+                override fun onCreate(db: SupportSQLiteDatabase) = error("Existing fixture required")
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = error("Downgrade fixture only")
+                override fun onDowngrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                    check(oldVersion == 35 && newVersion == 34)
+                    for (table in listOf("material_images", "reference_import_jobs", "reference_entries_fts", "reference_entries", "reference_libraries")) db.execSQL("DROP TABLE IF EXISTS `$table`")
+                }
+            }).build())
+            v34.writableDatabase; v34.close()
+            val after = androidx.room.Room.databaseBuilder(context, AppDatabase::class.java, name).allowMainThreadQueries().addMigrations(AppDatabase.MIGRATION_34_35).build()
+            try {
+                after.openHelper.writableDatabase // Runs actual Room migration validation, including FTS options.
+                kotlinx.coroutines.runBlocking { assertEquals("Preserved", com.halo.app.data.everyday.RoomCollectorRepository(after).source("existing")!!.title) }
+            } finally { after.close() }
+        } finally { context.deleteDatabase(name) }
+    }
     @Test fun additiveMigrationPreservesExistingSourcesAndMaintainsDerivedFtsOnDelete() {
         val context = ApplicationProvider.getApplicationContext<Application>(); val name = "reference-migration.db"; context.deleteDatabase(name)
         val helper = FrameworkSQLiteOpenHelperFactory().create(SupportSQLiteOpenHelper.Configuration.builder(context).name(name).callback(object : SupportSQLiteOpenHelper.Callback(34) {

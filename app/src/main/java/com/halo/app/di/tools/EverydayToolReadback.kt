@@ -66,21 +66,25 @@ internal object EverydayToolReadback {
             "anyOf" to listOf(augmented, pageSchema))
     }
 
-    fun pageRows(rows: List<JSONObject>, key: String, arguments: Map<String, Any?>): JSONObject {
+    fun pageRows(rows: List<JSONObject>, key: String, arguments: Map<String, Any?>): JSONObject =
+        pageCollections(linkedMapOf(key to rows), arguments)
+
+    fun pageCollections(collections: Map<String, List<JSONObject>>, arguments: Map<String, Any?>): JSONObject {
         val start = (arguments["offset"] as? Number)?.toInt() ?: 0
         require(start >= 0)
-        return JSONObject().put(key, JSONArray(rows.drop(start).take(5)))
-            .put("nextOffset", if (start + 5 < rows.size) start + 5 else JSONObject.NULL)
-            .put("_readbackIdentity", JSONArray(rows).toString()).put("_readbackPageKey", key)
+        val whole = JSONObject(); val page = JSONObject()
+        collections.forEach { (key, rows) -> whole.put(key, JSONArray(rows)); page.put(key, JSONArray(rows.drop(start).take(5))) }
+        return page.put("nextOffset", if (start + 5 < (collections.values.maxOfOrNull { it.size } ?: 0)) start + 5 else JSONObject.NULL)
+            .put("_readbackIdentity", whole.toString()).put("_readbackPageKeys", JSONArray(collections.keys.toList()))
     }
 
     fun project(name: String, arguments: Map<String, Any?>, result: JSONObject, authority: Any?): JSONObject {
         // A list dispatcher can supply the fingerprint of its complete ordered result set.
-        val pageKey = result.optString("_readbackPageKey")
+        val pageKeys = result.optJSONArray("_readbackPageKeys")?.let { keys -> (0 until keys.length()).map(keys::getString) }.orEmpty()
         val rowIdentity = result.optString("_readbackIdentity")
-        result.remove("_readbackIdentity"); result.remove("_readbackPageKey")
-        val metadata = JSONObject(result.toString()).apply { if (pageKey.isNotBlank()) { remove(pageKey); remove("nextOffset") } }
-        val dataIdentity = if (pageKey.isBlank()) result.toString() else "$rowIdentity|$metadata"
+        result.remove("_readbackIdentity"); result.remove("_readbackPageKeys")
+        val metadata = JSONObject(result.toString()).apply { if (pageKeys.isNotEmpty()) { pageKeys.forEach { remove(it) }; remove("nextOffset") } }
+        val dataIdentity = if (pageKeys.isEmpty()) result.toString() else "$rowIdentity|$metadata"
         val filters = arguments.filterKeys { it !in setOf("snapshot", "view", "path", "readOffset", "offset", "version", "contentRevision") }.toSortedMap()
         val snapshot = MessageDigest.getInstance("SHA-256").digest("$name|$filters|$authority|$dataIdentity".toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }

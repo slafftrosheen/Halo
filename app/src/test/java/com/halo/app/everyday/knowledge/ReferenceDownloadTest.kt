@@ -23,7 +23,7 @@ class ReferenceDownloadTest {
     @Test fun localModeMakesZeroTransferCalls() = runBlocking {
         var calls = 0
         val transfer = object : ReferenceTransfer {
-            override suspend fun fetch(url: HttpUrl, maxBytes: Long, sink: OutputStream, checkIndexing: Boolean): String? { calls++; error("Unexpected transfer") }
+            override suspend fun fetch(url: HttpUrl, maxBytes: Long, sink: OutputStream, checkIndexing: Boolean, imageOnly: Boolean): String? { calls++; error("Unexpected transfer") }
         }
         val owner = ReferenceDownloadOwner(ApplicationProvider.getApplicationContext(), transfer, { {} }, { false })
         assertTrue(runCatching { owner.download(ReferenceStarterId.MEDLINEPLUS) }.isFailure)

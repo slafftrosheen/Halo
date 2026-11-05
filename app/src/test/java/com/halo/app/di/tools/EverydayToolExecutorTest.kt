@@ -326,6 +326,21 @@ class EverydayToolExecutorTest {
         assertEquals(ToolOperation.EXPORT,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.operation)
         assertEquals(setOf("objectId"),EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.resultIdFields)
     }
+    @Test fun registeredCalendarPreviewCanContinueWithOneExactFileSnapshot() = runBlocking {
+        val note = notes.createNote(title = "Calendar paging fixture")
+        val raw = "BEGIN:VCALENDAR\r\n" + (1..7).joinToString("") { index ->
+            "BEGIN:VEVENT\r\nUID:owned-$index\r\nDTSTART:20261104T090000Z\r\nSUMMARY:Event $index\r\nEND:VEVENT\r\n"
+        } + "END:VCALENDAR\r\n"
+        val file = files.createManagedFile("pages.ics", "text/calendar", raw.toByteArray(), note.id, note.revision.toString(), "{}")
+        val args = mapOf("objectId" to file.objectId.value, "fileVersion" to file.version!!, "zoneId" to "UTC")
+        val registry = ToolRegistry(listOf(executor), executor.definitions().map { HaloToolDescriptors.assistant(it)!! })
+        suspend fun read(a: Map<String, Any>) = json(registry.executeAuthorized(ToolAuthorization.Authorized(ToolCall("preview", "halo_organizer_calendar_preview", a)), ToolExecutionContext()))
+        val first = read(args)
+        assertEquals(5, first.getJSONArray("records").length())
+        val second = read(args + mapOf("offset" to first.getInt("nextOffset"), "snapshot" to first.getString("snapshot")))
+        assertEquals(2, second.getJSONArray("records").length()); assertTrue(second.isNull("nextOffset"))
+        assertEquals(first.getString("reviewToken"), second.getString("reviewToken")); assertEquals(first.getString("snapshot"), second.getString("snapshot"))
+    }
     @Test fun registeredReadbackReassemblesEscapedDetailsAndRejectsChangesBetweenChunks() = runBlocking {
         val text = ("quotes\"\\\n😀 ".repeat(1300))
         val record = useCases.create(OrganizerKind.TASK, "Long owned note", details = text)

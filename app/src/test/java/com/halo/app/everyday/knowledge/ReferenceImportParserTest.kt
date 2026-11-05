@@ -58,4 +58,17 @@ class ReferenceImportParserTest {
         assertTrue(runCatching { stream.skip(20) }.isFailure)
     }
 
+    @Test fun aggregateTopicBudgetStopsReadingBeforeRetainingAnUnboundedSynonymList() {
+        val xml = "<health-topics><health-topic id='1' title='Owned' language='English'><full-summary>Summary</full-summary>" +
+            ("<also-called>" + "x".repeat(4096) + "</also-called>").repeat(1024) + "</health-topic></health-topics>"
+        var consumed = 0L
+        assertTrue(runCatching { ReferenceImportParser.parse("medical.xml", xml.byteInputStream(), { consumed = it }) {} }.isFailure)
+        assertTrue("Parser consumed $consumed before rejecting aggregate content", consumed < 512 * 1024)
+    }
+    @Test fun incompleteMainNamespaceArticleCannotBeSilentlyDroppedFromAReadyImport() {
+        val valid = "<page><title>First</title><ns>0</ns><id>1</id><revision><id>9</id><text>Valid</text></revision></page>"
+        val missing = "<page><title>Missing</title><ns>0</ns><id>2</id><revision><id>10</id></revision></page>"
+        assertTrue(runCatching { read("wiki.xml", "<mediawiki>$valid$missing</mediawiki>") }.isFailure)
+    }
+
 }

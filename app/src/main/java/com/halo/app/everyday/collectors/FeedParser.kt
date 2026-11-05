@@ -106,7 +106,7 @@ object FeedParser {
                     if (articles.size < CollectorRefreshPolicy.MAX_ITEMS && active.title.isNotBlank()) {
                         val identity = source.id + ":" + digest(active.id ?: active.url ?: "${active.title}\n${active.published}")
                         articles.putIfAbsent(identity, ArticleFact(identity, active.title, active.text, active.url, source.publisher,
-                            date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct(), images = active.images.distinctBy { it.url }.take(SourceImages.MAX_IMAGES)))
+                            date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct(), images = active.images.distinctBy { it.url }.take(SourceImages.MAX_IMAGES).map { it.copy(sourceUrl = active.url ?: it.sourceUrl) }))
                         if (source.kind == CollectorKind.ALERTS) warnings.putIfAbsent(identity, WarningFact(identity,
                             active.cap["headline"]?.takeIf { it.isNotBlank() } ?: active.title, active.text, active.cap["areadesc"], active.cap["severity"],
                             date(active.cap["onset"] ?: active.cap["effective"]), date(active.cap["expires"]), link(active.cap["web"], source.endpoint) ?: active.url, source.publisher))

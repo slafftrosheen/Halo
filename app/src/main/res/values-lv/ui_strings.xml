@@ -5131,4 +5131,6 @@
     <string name="ui_b9e1610ff7d9" formatted="false">"Importēšana neizdevās; atlasiet atbalstītu failu"</string>
     <string name="ui_a6a01ca08abf" formatted="false">"Avots noņemts; atlasiet jaunu failu importēšanai"</string>
     <string name="ui_1913812b4ada" formatted="false">"Neizdevās ielādēt bibliotēkas. Mēģiniet vēlreiz nolasīt lokālo norisi."</string>
+    <string name="ui_b1adb5012735" formatted="false">"XML tēma pārsniedz ieraksta kopējo ierobežojumu; izvēlieties mazāku izlasi"</string>
+    <string name="ui_34178493f5f9" formatted="false">"Trūkst viki raksta teksta vai versijas; izvēlieties pilnīgu pašreizējā satura izlasi"</string>
 </resources>

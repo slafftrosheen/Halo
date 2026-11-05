@@ -15,19 +15,49 @@ import org.xml.sax.helpers.DefaultHandler
 
 /** Streaming only. No network, extraction, external entities, SQL or model calls. */
 object ReferenceImportParser {
+    private class Utf8Budget(private val limit: Int) {
+        private var bytes = 0
+        private var highSurrogate = false
+        fun append(chars: CharArray, start: Int, length: Int) {
+            for (index in start until start + length) {
+                val char = chars[index]
+                bytes += when {
+                    highSurrogate && Character.isLowSurrogate(char) -> 1 // Paired surrogate: 3 + 1 bytes.
+                    char.code <= 0x7f -> 1
+                    char.code <= 0x7ff -> 2
+                    else -> 3
+                }
+                highSurrogate = Character.isHighSurrogate(char)
+                require(bytes <= limit) { "XML topic exceeds its aggregate entry limit; choose a smaller subset" }
+            }
+        }
+        fun append(text: String) = append(text.toCharArray(), 0, text.length)
+    }
     /** Android's SAX implementations support different feature switches. Enforce this
      * boundary in the byte stream as well, before a parser can act on a declaration. */
     private class NoDtdInput(input: InputStream) : FilterInputStream(input) {
         private val tail = StringBuilder()
         private var comment = false
         private var cdata = false
+        private var markup = false
+        private var markupBytes = 0
+        private var declarationBytes = 0
         private fun scan(value: Int) {
             require(value != 0) { "XML must use UTF-8, without NUL bytes" }
             tail.append(value.toChar()); if (tail.length > 12) tail.deleteCharAt(0)
-            if (cdata) { if (value == '>'.code && tail.endsWith("]]>")) { cdata = false; tail.setLength(0) }; return }
-            if (comment) { if (value == '>'.code && tail.endsWith("-->")) { comment = false; tail.setLength(0) }; return }
-            if (value == '['.code && tail.endsWith("<![CDATA[")) { cdata = true; return }
-            if (value == '-'.code && tail.endsWith("<!--")) { comment = true; return }
+            if (cdata) {
+                require(++declarationBytes <= ReferenceLimits.ENTRY_BYTES + 3) { "XML CDATA exceeds the entry limit" }
+                if (value == '>'.code && tail.endsWith("]]>")) { cdata = false; markup = false; tail.setLength(0) }; return
+            }
+            if (comment) {
+                require(++declarationBytes <= ReferenceLimits.METADATA_BYTES + 3) { "XML comment exceeds the metadata limit" }
+                if (value == '>'.code && tail.endsWith("-->")) { comment = false; markup = false; tail.setLength(0) }; return
+            }
+            if (value == '<'.code) { markup = true; markupBytes = 0 }
+            if (markup) require(++markupBytes <= ReferenceLimits.METADATA_BYTES) { "XML tag or attributes exceed the metadata limit" }
+            if (value == '>'.code) markup = false
+            if (value == '['.code && tail.endsWith("<![CDATA[")) { cdata = true; declarationBytes = 0; return }
+            if (value == '-'.code && tail.endsWith("<!--")) { comment = true; declarationBytes = 0; return }
             require(!(value == 'E'.code && tail.endsWith("<!DOCTYPE") || value == 'Y'.code && tail.endsWith("<!ENTITY"))) { "DTD and entity declarations are not supported" }
         }
         override fun skip(n: Long): Long {
@@ -62,7 +92,7 @@ object ReferenceImportParser {
             n >= 3 && magic[0] == 'B'.code.toByte() && magic[1] == 'Z'.code.toByte() && magic[2] == 'h'.code.toByte() -> BZip2CompressorInputStream(buffered, true)
             else -> buffered
         }
-        val bounded = BoundedInput(expanded, ReferenceLimits.EXPANDED_BYTES)
+        val bounded = BoundedInput(expanded, ReferenceLimits.EXPANDED_BYTES) { progress(compressed.count) }
         var ordinal = 0
         val emit: (ReferenceEntry) -> Unit = { value -> ReferenceLimits.validate(value); ordinal++; onEntry(value) }
         val name = fileName.lowercase(Locale.ROOT).removeSuffix(".gz").removeSuffix(".bz2")
@@ -149,16 +179,20 @@ object ReferenceImportParser {
             private val stack = mutableListOf<String>(); private val buffers = mutableListOf<StringBuilder>()
             private var wiki = false; private var medline = false; private var page = mutableMapOf<String, String>(); private var revisions = 0
             private var topic = mutableMapOf<String, String>(); private var synonyms = mutableListOf<String>(); private var date: String? = null; private var base = ""; private var language = "und"
+            private var topicBudget = Utf8Budget(ReferenceLimits.ENTRY_BYTES)
             override fun startElement(uri: String?, local: String?, qName: String?, attributes: Attributes) {
                 val tag = local?.takeIf { it.isNotBlank() } ?: qName.orEmpty(); stack.add(tag); buffers.add(StringBuilder())
                 require(stack.size <= 64) { "XML nesting exceeds limit" }
                 if (stack.size == 1) { wiki = tag == "mediawiki"; medline = tag == "health-topics"; require(wiki || medline) { "Unsupported XML root" }; date = attributes.getValue("date-generated"); language = attributes.getValue("xml:lang") ?: "und" }
                 if (wiki && tag == "page") { page = mutableMapOf(); revisions = 0 }
                 if (wiki && tag == "revision") { revisions++; require(revisions == 1) { "History dumps are not supported; choose current-content XML" } }
-                if (medline && tag == "health-topic") { topic = mutableMapOf(); synonyms = mutableListOf(); for (key in listOf("id", "title", "language", "url")) topic[key] = attributes.getValue(key).orEmpty() }
+                if (medline && tag == "health-topic") { topic = mutableMapOf(); synonyms = mutableListOf(); topicBudget = Utf8Budget(ReferenceLimits.ENTRY_BYTES); for (key in listOf("id", "title", "language", "url")) topic[key] = attributes.getValue(key).orEmpty() }
             }
             override fun characters(ch: CharArray, start: Int, length: Int) {
-                if (buffers.isNotEmpty() && (stack.last() in setOf("title", "ns", "id", "timestamp", "text", "base", "lang", "full-summary", "also-called", "mesh-heading") || "full-summary" in stack)) { val buffer = buffers.last(); require(buffer.length + length <= ReferenceLimits.ENTRY_BYTES) { "XML entry exceeds limit" }; buffer.append(ch, start, length) }
+                if (buffers.isNotEmpty() && (stack.last() in setOf("title", "ns", "id", "timestamp", "text", "base", "lang", "full-summary", "also-called", "mesh-heading", "descriptor") || "full-summary" in stack)) {
+                    if (medline && "health-topic" in stack) topicBudget.append(ch, start, length)
+                    val buffer = buffers.last(); require(buffer.length + length <= ReferenceLimits.ENTRY_BYTES) { "XML entry exceeds limit" }; buffer.append(ch, start, length)
+                }
             }
             override fun endElement(uri: String?, local: String?, qName: String?) {
                 val tag = stack.last(); val text = buffers.removeAt(buffers.lastIndex).toString(); val parent = stack.getOrNull(stack.lastIndex - 1)
@@ -169,7 +203,8 @@ object ReferenceImportParser {
                     tag in setOf("id", "timestamp", "text") && parent == "revision" -> page["revision:$tag"] = text
                     tag == "page" && (page["ns"] ?: "0") == "0" -> {
                         val body = page["revision:text"].orEmpty()
-                        if (body.isNotBlank()) emit(ReferenceEntry(requireNotNull(page["id"]), requireNotNull(page["title"]), body, language,
+                        require(body.isNotBlank() && page["revision:id"]?.toLongOrNull()?.let { it > 0 } == true) { "Wiki article text or revision is missing; choose a complete current-content subset" }
+                        emit(ReferenceEntry(requireNotNull(page["id"]), requireNotNull(page["title"]), body, language,
                             base.substringBeforeLast('/').takeIf { it.startsWith("https://") }?.let { "$it/${java.net.URLEncoder.encode(page["title"], "UTF-8").replace("+", "_")}" },
                             if (base.matches(Regex("https://[a-z-]+\\.wikipedia\\.org/.*"))) "Wikipedia" else "Imported MediaWiki library", page["revision:id"],
                             if (base.matches(Regex("https://[a-z-]+\\.wikipedia\\.org/.*"))) "CC BY-SA 4.0; attribution and history at original source" else "User-supplied; rights not verified", page["revision:timestamp"], ReferenceTextFormat.WIKITEXT))
@@ -177,7 +212,10 @@ object ReferenceImportParser {
                 }
                 if (medline) when (tag) {
                     "full-summary" -> topic["text"] = Jsoup.parse(text).wholeText().trim()
-                    "also-called", "mesh-heading" -> if (text.isNotBlank()) synonyms.add(text)
+                    "also-called", "descriptor" -> if (text.isNotBlank()) {
+                        topicBudget.append(if (synonyms.isEmpty()) "\n\nAlso called: " else "; ")
+                        synonyms.add(text)
+                    }
                     "health-topic" -> {
                         val lang = when (topic["language"]?.lowercase(Locale.ROOT)) { "english" -> "en"; "spanish", "español" -> "es"; else -> topic["language"].orEmpty().ifBlank { "und" } }
                         emit(ReferenceEntry(requireNotNull(topic["id"]), requireNotNull(topic["title"]), topic["text"].orEmpty() + if (synonyms.isEmpty()) "" else "\n\nAlso called: ${synonyms.joinToString("; ")}", lang, topic["url"], "MedlinePlus, National Library of Medicine", date, "Public-domain topic summary; Source: MedlinePlus, National Library of Medicine", null))
@@ -185,7 +223,7 @@ object ReferenceImportParser {
                 }
                 if (medline && tag != "full-summary" && "full-summary" in stack && buffers.isNotEmpty()) {
                     val target = buffers.last(); require(target.length + text.length + 1 <= ReferenceLimits.ENTRY_BYTES)
-                    target.append(text); if (tag in setOf("p", "li", "tr", "div", "br")) target.append('\n')
+                    target.append(text); if (tag in setOf("p", "li", "tr", "div", "br")) { topicBudget.append("\n"); target.append('\n') }
                 }
                 stack.removeAt(stack.lastIndex)
             }

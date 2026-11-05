@@ -64,7 +64,8 @@ internal fun OrganizerResearchPanel(model: OrganizerViewModel, state: OrganizerP
                     Text(evidence.provider + " · " + evidence.retrievedAt)
                     evidence.publishedAt?.let { Text(uiText("Published %1\$s", it.toString())) }
                     evidence.updatedAt?.let { Text(uiText("Updated %1\$s", it.toString())) }
-                    if (evidence.stale) Text(uiText("Cached / stale"))
+                    if (evidence.verificationKind == "LOCAL_IMPORT_INTEGRITY") Text(uiText("Local import metadata · source freshness is not verified"))
+                    else if (evidence.stale) Text(uiText("Cached / stale"))
                     evidence.canonicalUrl?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                     TextButton({
                         if (evidence.sourceType == "LOCAL_LIBRARY" && evidence.libraryGeneration != null)

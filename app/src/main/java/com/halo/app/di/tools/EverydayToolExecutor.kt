@@ -181,13 +181,12 @@ class EverydayToolExecutor(
             "halo_organizer_calendar_preview" -> {
                 val source=com.halo.app.data.workspace.WorkspaceFileVersion(a.string("objectId"),a.string("fileVersion"))
                 val review=calendars.preview(source,ZoneId.of(a.string("zoneId")))
-                val offset=a.optionalLong("offset")?.toInt() ?: 0
-                JSONObject().put("objectId",source.objectId).put("fileVersion",source.version).put("zoneId",a.string("zoneId"))
-                    .put("reviewToken",review.token).put("records",JSONArray(review.preview.records.drop(offset).take(50).map(::summary)))
-                    .put("issues",JSONArray(review.preview.issues.drop(offset).take(50).map {issue -> JSONObject().put("item",issue.item)
-                        .put("reasonCode",issue.reasonCode.name).put("arguments",JSONArray(issue.reasonArguments)).put("warning",issue.warning).put("seriesWithheld",issue.seriesWithheld)}))
-                    .put("recordCount",review.preview.records.size).put("issueCount",review.preview.issues.size)
-                    .put("nextOffset",if(offset+50<maxOf(review.preview.records.size,review.preview.issues.size)) offset+50 else JSONObject.NULL)
+                val records = review.preview.records.map(::summary)
+                val issues = review.preview.issues.map { issue -> JSONObject().put("item", issue.item)
+                    .put("reasonCode", issue.reasonCode.name).put("arguments", JSONArray(issue.reasonArguments)).put("warning", issue.warning).put("seriesWithheld", issue.seriesWithheld) }
+                EverydayToolReadback.pageCollections(linkedMapOf("records" to records, "issues" to issues), a)
+                    .put("objectId",source.objectId).put("fileVersion",source.version).put("zoneId",a.string("zoneId"))
+                    .put("reviewToken",review.token).put("recordCount",records.size).put("issueCount",issues.size)
             }
             "halo_organizer_calendar_import" -> {
                 val result=calendars.import(com.halo.app.data.workspace.WorkspaceFileVersion(a.string("objectId"),a.string("fileVersion")),

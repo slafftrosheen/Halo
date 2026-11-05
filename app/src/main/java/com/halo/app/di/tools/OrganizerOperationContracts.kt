@@ -19,7 +19,7 @@ object OrganizerOperationContracts {
             if (name in setOf("halo_commitments_query", "halo_research_query")) it.copy(description = it.description + EverydayToolReadback.guidance) else it
         }
     val definitions = listOf(
-        definition("halo_commitments_query", "Read canonical Organizer commitments grouped by ME/HALO/SHARED. Lifecycle comes from actual execution receipts. Returns five rows and nextOffset; capabilities lists installed capability IDs and exact argument schemas as bounded JSON text.",
+        definition("halo_commitments_query", "Read canonical Organizer commitments grouped by ME/HALO/SHARED. Lifecycle comes from actual execution receipts. Returns five rows and nextOffset; Running stopwatch fields are persisted accumulated milliseconds and startedAt, not a moving elapsed observation. Capabilities lists installed capability IDs and exact argument schemas as bounded JSON text.",
             mapOf("id" to text(200), "section" to choices(OrganizerSection.entries.map { it.name } + "ALL"), "owner" to choices(CommitmentOwner.entries.map { it.name }), "query" to text(200), "offset" to number(0, 10000)), emptyList()),
         definition("halo_commitment_save", "Capture or edit one local commitment with explicit responsibility. HALO/SHARED is a draft until a concrete capability plan is reviewed; saving does not execute or schedule it. Use INBOX for unstructured capture, STANDARD for tasks, ROUTINE/WATCH for reviewed recurring work. Schedule edits use existing organizer_edit after stopping an old plan. Capability argumentsJson must match the installed schema returned by commitments_query.",
             exact + mapOf("title" to text(200), "intent" to text(2000), "owner" to choices(CommitmentOwner.entries.map { it.name }),
@@ -56,7 +56,7 @@ object OrganizerOperationContracts {
         "state" to choices(HaloWorkState.entries.map { it.name }), "intent" to text(2000), "actions" to array(action, 6), "sources" to array(source, 10), "resultAvailable" to bool, "recovery" to obj(recoveryFields + ("recordedAt" to text(40)), listOf("planId", "routineId", "recordedAt", "uncertain", "reviewed")),
         "start" to text(40), "zoneId" to text(100), "planId" to text(80), "routineId" to text(80), "runId" to text(256), "scheduling" to text(40),
         "result" to obj(mapOf("summary" to text(8000), "confirmedAt" to text(40), "evidenceIds" to array(text(256), 20), "conditionMatched" to bool, "newMatch" to bool, "messages" to array(text(300), 12), "waiting" to bool, "sourceRefs" to array(source, 100)), listOf("summary", "confirmedAt", "evidenceIds")),
-        "nextHumanAction" to text(1000), "stopwatchMs" to number(), "stopwatchRunning" to bool, "laps" to array(number(), 50)),
+        "nextHumanAction" to text(1000), "stopwatchMs" to number(), "stopwatchAccumulatedMs" to number(), "stopwatchStartedAt" to text(40), "stopwatchRunning" to bool, "laps" to array(number(), 50)),
         listOf("id", "version", "title", "kind", "owner", "purpose", "state", "intent", "actions", "sources"))
     fun result(name: String): Map<String, Any> = if (name in queries) EverydayToolReadback.schema(legacyResult(name)) else EverydayToolReadback.receiptSchema(legacyResult(name))
     private fun legacyResult(name: String): Map<String, Any> = when (name) {

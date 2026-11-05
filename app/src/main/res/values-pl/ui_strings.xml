@@ -5131,4 +5131,6 @@
     <string name="ui_b9e1610ff7d9" formatted="false">"Import nie powiódł się; wybierz obsługiwany plik"</string>
     <string name="ui_a6a01ca08abf" formatted="false">"Źródło usunięto; wybierz nowy plik do importu"</string>
     <string name="ui_1913812b4ada" formatted="false">"Nie udało się wczytać bibliotek. Ponów odczyt lokalnego postępu."</string>
+    <string name="ui_b1adb5012735" formatted="false">"Temat XML przekracza łączny limit wpisu; wybierz mniejszy podzbiór"</string>
+    <string name="ui_34178493f5f9" formatted="false">"Brak tekstu lub wersji artykułu wiki; wybierz kompletny podzbiór bieżącej treści"</string>
 </resources>

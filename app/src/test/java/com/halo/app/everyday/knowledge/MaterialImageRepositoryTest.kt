@@ -56,6 +56,15 @@ class MaterialImageRepositoryTest {
         // Isolated Robolectric application files, never the physical phone.
         File(context.filesDir, "material-images").deleteRecursively()
     }
+    @Test fun imageToolsHaveCompleteRegisteredOperabilityAndReplayGuards() {
+        val tools = com.halo.app.di.tools.MaterialImageTools(owner)
+        val descriptors = tools.definitions().map { com.halo.app.di.tools.HaloToolDescriptors.assistant(it)!! }
+        val registry = com.halo.runtime.cognition.tools.ToolRegistry(listOf(tools), descriptors)
+        assertTrue(registry.operabilityReport(listOf(com.halo.runtime.cognition.tools.ToolFeatureOperability("material-images", com.halo.app.di.tools.MaterialImageContracts.names))).isEmpty())
+        val fetch = descriptors.single { it.name == "halo_material_image_fetch" }
+        assertEquals(com.halo.runtime.cognition.tools.ConfirmationPolicy.ALWAYS, fetch.security.confirmation)
+        assertEquals(com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY, fetch.security.replaySafety)
+    }
     @Test fun localReaderMakesZeroRequestsAndPowerSavesOnlyStaticOwnedFiles() = runBlocking {
         val target = target()
         assertNull(owner.local(target).single().file); assertEquals(0, calls)
