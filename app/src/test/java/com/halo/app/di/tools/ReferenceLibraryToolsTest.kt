@@ -37,6 +37,9 @@ class ReferenceLibraryToolsTest {
     @Test fun reviewedImportAndExactReadUseRegisteredContractsAndCompleteChunks() = runBlocking {
         db.openHelper.writableDatabase
         val preview = repo.preview("content://owned/document", "reference.jsonl")
+        val history = json(call("halo_library_import_review"))
+        assertEquals(preview.id, history.getJSONArray("imports").getJSONObject(0).getString("id"))
+        assertFalse(history.toString().contains("content://"))
         val reviewed = json(call("halo_library_import_review", mapOf("jobId" to preview.id)))
         assertFalse(reviewed.toString().contains("content://"))
         json(call("halo_library_import_action", mapOf("jobId" to preview.id, "reviewToken" to reviewed.getString("reviewToken"), "action" to "CONFIRM")))

@@ -26,10 +26,10 @@ class WorkspaceImageRecoveryTest {
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
-            val storage = MemoryStorage()
-            PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
+            val modes = PrivacyModeStore(MemoryStorage()).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
+            val storage = modes.storage
             val provider = CreditBlockedProvider()
-            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage),
+            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage, privacyModes = modes.mode),
                 NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
             studio.prepare(com.halo.app.data.workspace.NoteAttachment("missing", "note", "asset", 0, null,
                 "IMAGE", "image/png", "MANAGED_FILE", java.io.File(context.cacheDir, "missing-image.png").absolutePath,
@@ -50,10 +50,10 @@ class WorkspaceImageRecoveryTest {
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
-            val storage = MemoryStorage()
-            PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
+            val modes = PrivacyModeStore(MemoryStorage()).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
+            val storage = modes.storage
             val provider = CreditBlockedProvider()
-            val service = WorkspaceImageService(Router(provider), storage)
+            val service = WorkspaceImageService(Router(provider), storage, privacyModes = modes.mode)
             val studio = WorkspaceImageStudio(scope, service, NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
             database.openHelper.writableDatabase
             assertEquals("Warm fixture dependencies before the bounded async transition", 1, service.catalogue().models.size)

@@ -61,7 +61,10 @@ object ReferenceLibraryContracts {
             val recent = obj(mapOf("imports" to mapOf("type" to "array", "items" to obj(mapOf("id" to text(64), "fileName" to text(200), "state" to text(24), "processed" to integer())), "maxItems" to 5),
                 "historyLimit" to integer(), "nextOffset" to mapOf("anyOf" to listOf(integer(), mapOf("type" to "null")))))
             @Suppress("UNCHECKED_CAST") val recentFields = recent["properties"] as Map<String, Any>
-            mapOf("type" to "object", "properties" to (fields + recentFields), "additionalProperties" to false, "anyOf" to listOf(review, recent))
+            val snapshot = mapOf("snapshot" to EverydayToolReadback.arguments.getValue("snapshot"))
+            val reviewed = review + ("properties" to (fields + snapshot))
+            val history = recent + ("properties" to (recentFields + snapshot))
+            obj(fields + recentFields + snapshot, emptyList()) + ("anyOf" to listOf(reviewed, history))
         })
         "halo_library_query" -> obj(mapOf("hits" to mapOf("type" to "array", "items" to hit, "maxItems" to 5), "snapshot" to text(64), "nextOffset" to mapOf("anyOf" to listOf(integer(), mapOf("type" to "null")))))
         else -> obj(mapOf("jobId" to text(64), "sourceId" to text(160), "state" to text(24), "completed" to mapOf("type" to "boolean")))
