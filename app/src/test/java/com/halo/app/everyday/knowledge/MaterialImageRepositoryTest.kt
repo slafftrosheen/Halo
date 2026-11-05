@@ -51,10 +51,11 @@ class MaterialImageRepositoryTest {
         assertTrue(sources.finish(reservation, CollectorSnapshot(source.id, source.version, body, "rev-one", now, now, now.plusSeconds(3600)), CollectorAttempt(source.id, now, CollectorAttemptState.CURRENT)))
         return MaterialImageTarget(source.id, source.version, "rev-one", "one")
     }
-    @After fun close() = runBlocking {
+    @After fun close(): Unit = runBlocking {
         scope.coroutineContext[Job]?.cancelAndJoin(); db.close()
         // Isolated Robolectric application files, never the physical phone.
         File(context.filesDir, "material-images").deleteRecursively()
+        Unit
     }
     @Test fun imageToolsHaveCompleteRegisteredOperabilityAndReplayGuards() {
         val tools = com.halo.app.di.tools.MaterialImageTools(owner)
@@ -97,6 +98,29 @@ class MaterialImageRepositoryTest {
             assertTrue(runCatching { owner.readIdentity() }.isFailure)
         }
         assertEquals(1, owner.local(target).size); assertEquals(0, calls)
+    }
+
+    @Test fun registeredImageQueryAndExplicitSaveUseTheSameBoundedCacheOwner() = runBlocking {
+        val target = target()
+        val tools = com.halo.app.di.tools.MaterialImageTools(owner)
+        val registry = com.halo.runtime.cognition.tools.ToolRegistry(listOf(tools),
+            tools.definitions().map { com.halo.app.di.tools.HaloToolDescriptors.assistant(it)!! })
+        val args = mapOf("sourceId" to target.sourceId, "sourceVersion" to target.sourceVersion,
+            "revision" to target.revision, "entryId" to target.entryId, "library" to false)
+        suspend fun call(name: String): org.json.JSONObject {
+            val result = registry.executeAuthorized(com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(
+                com.halo.sdk.provider.ToolCall("owned-image", name, args)),
+                com.halo.runtime.cognition.tools.ToolExecutionContext(interactionId = "owned-image"))
+            assertTrue(result.toString(), result is com.halo.runtime.cognition.tools.ToolExecutionResult.Success)
+            return org.json.JSONObject((result as com.halo.runtime.cognition.tools.ToolExecutionResult.Success).output)
+        }
+        assertFalse(call("halo_material_image_query").getJSONArray("images").getJSONObject(0).getBoolean("cached"))
+        assertEquals(0, calls)
+        power = true
+        assertEquals(1, call("halo_material_image_fetch").getInt("saved"))
+        power = false
+        assertTrue(call("halo_material_image_query").getJSONArray("images").getJSONObject(0).getBoolean("cached"))
+        assertEquals(2, calls)
     }
 
 }

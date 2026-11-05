@@ -73,7 +73,7 @@ object OrganizerOperationContracts {
         else -> error("Unknown Organizer operation")
     }
     fun operability(definition: ToolDefinition): ToolOperability? = if (definition.name !in names) null else ToolOperability(
-        version = 2, capabilityId = CapabilityId(if (definition.name in queries) "workspace.read" else "workspace.write"),
+        version = 1, capabilityId = CapabilityId(if (definition.name in queries) "workspace.read" else "workspace.write"),
         owner = "OrganizerRepository / RoutineExecutor / CollectorCoordinator", operation = if (definition.name in queries) ToolOperation.QUERY else ToolOperation.EDIT,
         resultEncoding = ToolResultEncoding.JSON, resultSchema = result(definition.name),
         sourceVersionArguments = if (definition.name == "halo_research_article") setOf("sourceVersion", "contentRevision") else if (definition.name in queries) emptySet() else setOf("version"),

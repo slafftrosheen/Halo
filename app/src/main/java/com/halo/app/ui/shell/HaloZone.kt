@@ -112,11 +112,22 @@ internal fun HaloZone(
         val dispatch: (HaloOrbContextAction) -> Unit = { action ->
             onAction(action)
         }
+        // Each control has one visible home; expose its existing action if that home is hidden.
+        val keyboardVisible = WindowInsets.ime.getBottom(density) > 0
+        val hiddenControlActionIds = buildSet {
+            if (menusInSheet) page?.actions.orEmpty().forEach { action ->
+                val presentation = WorkspaceActionPresentation.find(action.id)
+                if (presentation?.role == ShellActionRole.PRIMARY && presentation.placement == ShellPrimaryPlacement.TOOLBAR &&
+                    !(page?.owner?.routeFamily == "note" && keyboardVisible && action.id == "page.note.insert")) add(action.id)
+            }
+            if (utilityInSheet && header?.owner?.routeFamily == "notebook")
+                addAll(listOf("page.notebook.view-library", "page.notebook.view-tools"))
+        }
         val navigation = HaloZone5Navigation(route, destinations, onNavigate, attentionCount > 0, profile, profileStatus,
             entryId, compact = fallback, onDisclosureChanged = { disclosed = it }, inlineControls = true,
             compactUtility = { if (utilityInSheet && header?.owner?.routeFamily != "notebook") utility() }, kids = kids, guidanceTargetVisible = !fallback && !menusInSheet,
             compactUtilityIncludesStatus = utilityInSheet && header?.owner?.routeFamily != "notebook" && header?.includesStatus == true,
-            familyControl = familyControl)
+            familyControl = familyControl, hiddenControlActionIds = hiddenControlActionIds)
         val utilityScroll = rememberScrollState()
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * .25f) else Modifier)

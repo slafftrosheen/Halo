@@ -691,6 +691,8 @@ object HaloToolDescriptors {
         )
 
     fun assistant(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        // This local file operation is installed in the host executor, so bind its FILE policy here.
+        "halo_text_rich_copy" -> file(definition)
         in com.halo.app.di.tools.host.NotebookLibraryTools.NAMES ->
             com.halo.app.di.tools.host.NotebookLibraryTools.descriptor(definition)
         in com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES ->

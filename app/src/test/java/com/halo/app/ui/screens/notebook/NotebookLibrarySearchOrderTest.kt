@@ -222,6 +222,10 @@ class NotebookLibrarySearchOrderTest {
             assertFalse("halo_library_set_view" in actions.value!!.owner.canonicalToolIds)
         }
         compose.onNodeWithText("HaloNotes", ignoreCase = true).performClick()
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.filter == NotebookFilter.NOTES }
+        assertEquals(0, officeOpens)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.files")) }
+        compose.onNodeWithText("Tools").performClick()
         compose.onNodeWithText("HaloStudio", ignoreCase = true).performClick()
         assertEquals(1, officeOpens); assertEquals(1, studioOpens)
         compose.onNodeWithText("Library").performClick()

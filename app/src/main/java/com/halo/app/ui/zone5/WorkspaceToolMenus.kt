@@ -46,7 +46,7 @@ internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChan
     if (primary.isEmpty()) return
     val target = if (LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
     val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f
-    BoxWithConstraints(Modifier.fillMaxWidth().testTag("zone5-command-groups")) {
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("zone5-primary-actions")) {
         val columns = if (largeText || maxWidth < 300.dp) 2 else 4
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             primary.chunked(columns).forEach { row ->

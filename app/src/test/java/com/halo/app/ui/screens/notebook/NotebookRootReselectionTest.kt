@@ -188,7 +188,7 @@ class NotebookRootReselectionTest {
     @Test fun libraryStartsWithCreationImportAndVisibleOrganization() {
         renderWorkspace()
         compose.runOnIdle {
-            assertEquals(listOf("page.notebook.new-note", "page.notebook.import", "page.notebook.organize"),
+            assertEquals(listOf("page.notebook.new-note", "page.notebook.files", "page.notebook.import"),
                 actions.value!!.actions.take(3).map { it.id })
             assertTrue(actions.value!!.invoke("page.notebook.organize"))
         }
@@ -209,6 +209,10 @@ class NotebookRootReselectionTest {
         compose.onNodeWithText("HaloStudy").performClick()
         compose.onNodeWithText("HaloStudio", ignoreCase = true).performClick()
         compose.onNodeWithText("HaloNotes", ignoreCase = true).performClick()
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.filter == NotebookFilter.NOTES }
+        assertEquals(0, office)
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.notebook.files")) }
+        compose.onNodeWithText("Tools").performClick()
         compose.onNodeWithText("HaloMemory").performClick()
         compose.onNodeWithText("HaloCanvas").performClick()
         compose.waitUntil(5_000) { scheduler.runCurrent(); navigation.any { it is NotebookNavigation.OpenMemoryHub } }
@@ -234,8 +238,22 @@ class NotebookRootReselectionTest {
         }
     }
 
+    @Test fun notesDefaultsOnceAndRetainsTheChosenFilterAndQueryAfterRecreation() {
+        renderWorkspace(initialSection = "notes")
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.filter == NotebookFilter.NOTES }
+        compose.runOnIdle { model.setFilter(NotebookFilter.ALL); model.setQuery(QUERY); model.setSort(NotebookSort.TITLE) }
+        compose.waitUntil(5_000) { scheduler.runCurrent(); model.uiState.value.filter == NotebookFilter.ALL && model.uiState.value.query == QUERY }
+        restoration.emulateSavedInstanceStateRestore()
+        compose.runOnIdle {
+            assertEquals(NotebookFilter.ALL, model.uiState.value.filter)
+            assertEquals(QUERY, model.queryText.value)
+            assertEquals(NotebookSort.TITLE, model.uiState.value.sort)
+            assertEquals("library", actions.value!!.owner.activeToolId)
+        }
+    }
+
     private fun renderWorkspace(library: NotebookLibrarySession? = null,
-        study: () -> Unit = {}, studio: () -> Unit = {}, office: () -> Unit = {}, canvas: () -> Unit = {}) {
+        study: () -> Unit = {}, studio: () -> Unit = {}, office: () -> Unit = {}, canvas: () -> Unit = {}, initialSection: String? = null) {
         restoration.setContent { HostlessHaloTheme {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions) {
                 Box(Modifier.width(900.dp).height(1800.dp)) {
@@ -244,7 +262,7 @@ class NotebookRootReselectionTest {
                         composable("notebook") {
                             NotebookScreen(model, onOpenStudy = study, onOpenStudio = studio, onOpenFileTools = office,
                                 onOpenCanvasLibrary = canvas,
-                                rootRequest = rootRequest.value, librarySession = library)
+                                rootRequest = rootRequest.value, librarySession = library, initialSection = initialSection)
                         }
                     }
                 }

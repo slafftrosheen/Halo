@@ -78,7 +78,7 @@ class ReferenceImportParserTest {
     }
 
     @Test fun aValidSingleXmlZipParsesWithoutClosingTheCallersStream() {
-        val xml = "<health-topics><health-topic id='1' title='Water' language='English'><full-summary>Owned summary</full-summary></health-topic></health-topics>"
+        val xml = "<health-topics><health-topic id='1' title='Water' language='English' url='https://example.org/water'><full-summary>Owned summary</full-summary></health-topic></health-topics>"
         val bytes = ByteArrayOutputStream().apply { ZipOutputStream(this).use { zip ->
             zip.putNextEntry(ZipEntry("topics.xml")); zip.write(xml.toByteArray()); zip.closeEntry()
         } }.toByteArray()

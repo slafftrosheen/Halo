@@ -6,7 +6,7 @@ import org.junit.Test
 
 class ShellOrbCatalogTest {
     @Test fun directWorkspaceGroupHasOnlyExistingAdultInstruments() {
-        assertEquals(listOf("screen/organizer", "studio", "file_tools", "study", "notebook/memory", "canvases"),
+        assertEquals(listOf("screen/organizer", "studio", "notebook?filter=notes", "study", "notebook/memory", "canvases"),
             ShellOrbCatalog.workspaceDestinations(false).map { it.route })
         assertTrue(ShellOrbCatalog.workspaceDestinations(true).isEmpty())
     }

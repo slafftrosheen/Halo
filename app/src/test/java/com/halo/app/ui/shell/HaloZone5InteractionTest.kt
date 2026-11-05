@@ -84,12 +84,12 @@ class HaloZone5InteractionTest {
         assertEquals(listOf("voice"), invoked)
     }
 
-    @Test fun workspaceInstrumentsOpenExistingAdultRoutesWithoutExecutingCommands() {
+    @Test fun workspaceMenuOpensTheCanonicalChooserWithoutExecutingCommands() {
         show()
         compose.onNodeWithText("Menu").performClick()
         compose.onNodeWithText("Workspace instruments").performScrollTo().performClick()
-        compose.onNode(hasText("HaloNotes") and hasClickAction()).performScrollTo().performClick()
-        assertEquals(listOf("file_tools"), invoked)
+        assertEquals(listOf("notebook?filter=tools"), invoked)
+        compose.onNode(hasText("HaloNotes") and hasClickAction()).assertDoesNotExist()
     }
 
     @Test fun lightStaticOrbRetainsNonTextContrast() {

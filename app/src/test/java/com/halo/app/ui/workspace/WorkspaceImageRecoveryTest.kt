@@ -55,6 +55,8 @@ class WorkspaceImageRecoveryTest {
             val provider = CreditBlockedProvider()
             val service = WorkspaceImageService(Router(provider), storage)
             val studio = WorkspaceImageStudio(scope, service, NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
+            database.openHelper.writableDatabase
+            assertEquals("Warm fixture dependencies before the bounded async transition", 1, service.catalogue().models.size)
             studio.refresh()
             withTimeout(5_000) { studio.state.first { !it.loading && it.selected != null } }
             studio.prompt("Synthetic mint circle")

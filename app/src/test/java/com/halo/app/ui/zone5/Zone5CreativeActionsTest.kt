@@ -99,8 +99,10 @@ class Zone5CreativeActionsTest {
         compose.onNode(hasSetTextAction()).performTextInput("\n")
         await { model.uiState.value.blocks.size == 2 }
         assertEquals(listOf(com.halo.app.data.notebook.NoteBlockType.HEADING, com.halo.app.data.notebook.NoteBlockType.PARAGRAPH), model.uiState.value.blocks.map { it.type })
+        val expected = model.uiState.value.blocks.toList()
         await { model.uiState.value.status == SaveStatus.SAVED }
-        assertEquals(model.uiState.value.blocks, runBlocking { fixture.documents.load(note.id)!! }.blocks)
+        assertEquals(expected, model.uiState.value.blocks)
+        assertEquals(expected, runBlocking { fixture.documents.load(note.id)!! }.blocks)
     }
     @Test fun canvasArrangeOpensWithoutMutatingTheBoard() {
         val id = runBlocking { fixture.canvases.create("Field board").also { fixture.canvases.addTextNode(it, 24f, 24f, "Synthetic field observation") } }

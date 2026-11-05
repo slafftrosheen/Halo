@@ -48,6 +48,7 @@ internal class HaloZone5Navigation(
     val guidanceTargetVisible: Boolean = false,
     val compactUtilityIncludesStatus: Boolean = false,
     val familyControl: @Composable () -> Unit = {},
+    val hiddenControlActionIds: Set<String> = emptySet(),
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -348,7 +349,8 @@ internal fun HaloZone5OrbLauncher(
                     singleLine = true, modifier = Modifier.fillMaxWidth())
                 val matching = listedActions.filter { action ->
                     com.halo.app.ui.zone5.actionMatchesQuery(action, query) &&
-                        (query.isNotBlank() || WorkspaceActionPresentation.find(action.id)?.role !in setOf(ShellActionRole.PRIMARY, ShellActionRole.DESTINATION))
+                        (query.isNotBlank() || action.id.removePrefix("page:") in navigation.hiddenControlActionIds ||
+                            WorkspaceActionPresentation.find(action.id)?.role !in setOf(ShellActionRole.PRIMARY, ShellActionRole.DESTINATION))
                 }.distinctBy { it.id }
                 val grouped = if (owner?.routeFamily in workspaceMenuFamilies)
                     WorkspaceMenuGroup.entries.map { group -> stringResource(group.label) to matching.filter {

@@ -15,7 +15,7 @@ class RichNoteCopyService(private val text: WorkspaceTextDocuments, private val 
 }
 object RichNoteCopyContract {
     private val string = mapOf("type" to "string", "maxLength" to 200)
-    private val version = mapOf("type" to "integer", "minimum" to 1)
+    private val version = EverydayToolContracts.number(1, Long.MAX_VALUE)
     val definition = ToolDefinition("halo_text_rich_copy", "halo_text_rich_copy",
         "Make a separate rich block-note copy of an exact saved literal TXT/Markdown/CSV document. Preserves original bytes and source revision. Markdown is parsed by the existing note codec. Returns original/new IDs and revisions; never replay an uncertain creation.",
         mapOf("type" to "object", "properties" to mapOf("noteId" to string, "revision" to version), "required" to listOf("noteId", "revision"), "additionalProperties" to false))

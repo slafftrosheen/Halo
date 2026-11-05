@@ -90,7 +90,7 @@ object EverydayToolContracts {
     fun operability(definition: ToolDefinition): ToolOperability? {
         OrganizerOperationContracts.operability(definition)?.let { return it }
         if(definition.name !in names) return null
-        return ToolOperability(version=2,capabilityId=CapabilityId(if(definition.name in queries) "workspace.read" else "workspace.write"),
+        return ToolOperability(version=1,capabilityId=CapabilityId(if(definition.name in queries) "workspace.read" else "workspace.write"),
             owner="Halo Everyday canonical repositories",operation=EverydayResultContracts.operation(definition.name),
             resultEncoding=ToolResultEncoding.JSON,resultSchema=EverydayResultContracts.schema(definition.name),
             sourceVersionArguments=when(definition.name) {

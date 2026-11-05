@@ -18,7 +18,7 @@ internal object EverydayToolReadback {
     private val pageFields = mapOf(
         "readback" to mapOf("type" to "boolean", "const" to true),
         "id" to mapOf("type" to "string", "maxLength" to 256),
-        "version" to mapOf("type" to "integer", "minimum" to 1),
+        "version" to mapOf("type" to "integer", "minimum" to 1, "maximum" to Long.MAX_VALUE),
         "snapshot" to mapOf("type" to "string", "maxLength" to 64),
         "path" to path, "paths" to mapOf("type" to "array", "items" to path, "maxItems" to 32),
         "readOffset" to offset, "nextReadOffset" to mapOf("anyOf" to listOf(offset, mapOf("type" to "null"))),
@@ -32,12 +32,12 @@ internal object EverydayToolReadback {
         "ownerReturned" to mapOf("type" to "boolean", "const" to true),
         "operation" to mapOf("type" to "string", "maxLength" to 100),
         "id" to mapOf("type" to "string", "maxLength" to 256),
-        "version" to mapOf("type" to "integer", "minimum" to 1),
+        "version" to mapOf("type" to "integer", "minimum" to 1, "maximum" to Long.MAX_VALUE),
         "readTool" to mapOf("type" to "string", "maxLength" to 100),
         "next" to mapOf("type" to "string", "maxLength" to 300))
     fun receiptSchema(legacy: Map<String, Any>): Map<String, Any> {
         @Suppress("UNCHECKED_CAST") val fields = legacy["properties"] as? Map<String, Any> ?: emptyMap()
-        return mapOf("type" to "object", "properties" to (fields + receiptFields), "additionalProperties" to false,
+        return mapOf("type" to "object", "properties" to (fields + receiptFields), "required" to emptyList<String>(), "additionalProperties" to false,
             "anyOf" to listOf(legacy, mapOf("type" to "object", "properties" to receiptFields, "additionalProperties" to false,
                 "required" to listOf("receiptOnly", "ownerReturned", "operation", "readTool", "next"))))
     }
@@ -62,7 +62,7 @@ internal object EverydayToolReadback {
     fun schema(legacy: Map<String, Any>): Map<String, Any> {
         @Suppress("UNCHECKED_CAST") val properties = legacy["properties"] as? Map<String, Any> ?: emptyMap()
         val augmented = legacy + ("properties" to (properties + ("snapshot" to arguments.getValue("snapshot"))))
-        return mapOf("type" to "object", "properties" to (properties + pageFields), "additionalProperties" to false,
+        return mapOf("type" to "object", "properties" to (properties + pageFields), "required" to emptyList<String>(), "additionalProperties" to false,
             "anyOf" to listOf(augmented, pageSchema))
     }
 

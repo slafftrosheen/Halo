@@ -289,6 +289,13 @@ class NoteEditorViewModel(
             viewModelScope.launch {
                 document.observe(noteId).collect { snapshot ->
                     if (snapshot == null || !loaded) return@collect
+                    if (snapshot.revision < revision) {
+                        // A queued old emission cannot undo a save. A real data restore can lower
+                        // the revision, but must still match the canonical document after this read.
+                        val admittedRevision = revision
+                        val currentDocument = document.load(noteId)
+                        if (revision != admittedRevision || currentDocument != snapshot) return@collect
+                    }
                     val current = mutableUiState.value
                     // External writers (tools, restore) update the header; local unsaved blocks win.
                     if (localEditSequence != committedEditSequence || current.sourceDirty ||

@@ -138,7 +138,7 @@ class EverydayToolExecutor(
                         .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString())
                         .put("replacementDetails", it.replacementDetails).put("replacementLocation", it.replacementLocation).put("sourceUrlOverride", it.sourceUrlOverride)
                         .apply { it.replacementTime?.let { time -> put("replacementTime", JSONObject().put("start",time.start.toString()).put("end",time.end?.toString())
-                            .put("zoneId",time.zoneId).put("allDay",time.allDay).put("followDeviceZone",time.followDeviceZone)) } } }))
+                            .put("zone",time.zoneId).put("allDay",time.allDay).put("floating",time.followDeviceZone)) } } }))
                     .put("omittedOverrides",0)
                     .put("deliveries",JSONArray(organizer.repository.receipts(value.id).sortedWith(compareByDescending<DeliveryReceipt> { it.updatedAt }.thenBy { it.occurrenceKey }).map { receipt(it) }))
                     .apply {a.optionalString("originalStart")?.let {at -> put("occurrence",occurrence(requireNotNull(OrganizerRecurrence.exact(value,overrides,Instant.parse(at),ZoneId.systemDefault()))))}}

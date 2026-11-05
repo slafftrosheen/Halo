@@ -33,4 +33,22 @@ class EverydayToolReadbackTest {
     @Test fun explicitPathAndOffsetsRequireAReviewedSnapshot() {
         assertTrue(runCatching { EverydayToolReadback.project("halo_source_get", mapOf("path" to listOf("content")), JSONObject(), "epoch") }.isFailure)
     }
+    @Test fun strictHostValidationAcceptsSmallAndPagedReadsAndSmallAndBoundedWriteReceipts() {
+        val legacy = EverydayToolContracts.obj(mapOf("id" to EverydayToolContracts.text(200),
+            "version" to EverydayToolContracts.number(1, Long.MAX_VALUE), "details" to EverydayToolContracts.text(20000)),
+            listOf("id", "version", "details"))
+        for (text in listOf("Owned text", "quoted\"\\\n😀".repeat(1000))) {
+            val raw = JSONObject().put("id", "owned").put("version", 7).put("details", text)
+            val read = EverydayToolReadback.project("halo_organizer_get", emptyMap(), raw, "scope")
+            val receipt = EverydayToolReadback.receipt("halo_organizer_edit", raw)
+            EverydayToolContracts.validate(EverydayResultContracts.value(read), EverydayToolReadback.schema(legacy))
+            EverydayToolContracts.validate(EverydayResultContracts.value(receipt), EverydayToolReadback.receiptSchema(legacy))
+            assertTrue(read.toString().length <= 4000); assertTrue(receipt.toString().length <= 4000)
+            assertTrue(runCatching { EverydayToolContracts.validate(EverydayResultContracts.value(JSONObject(read.toString()).put("unexpected", true)), EverydayToolReadback.schema(legacy)) }.isFailure)
+            assertTrue(runCatching { EverydayToolContracts.validate(EverydayResultContracts.value(JSONObject(receipt.toString()).put("unexpected", true)), EverydayToolReadback.receiptSchema(legacy)) }.isFailure)
+        }
+        assertTrue(runCatching { EverydayToolContracts.validate(emptyMap<String, Any>(), EverydayToolReadback.schema(legacy)) }.isFailure)
+        assertTrue(runCatching { EverydayToolContracts.validate(emptyMap<String, Any>(), EverydayToolReadback.receiptSchema(legacy)) }.isFailure)
+    }
+
 }

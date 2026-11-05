@@ -143,10 +143,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val selectView: (Boolean) -> Unit = { library ->
         focusManager.clearFocus(); workspaceView = if (library) "library" else "tools"
     }
+    var appliedInitialSection by rememberSaveable(initialSection) { mutableStateOf(false) }
     LaunchedEffect(initialSection) {
-        when (initialSection) {
-            "notes" -> { viewModel.setFilter(NotebookFilter.NOTES); selectView(true) }
-            "tools" -> selectView(false)
+        if (!appliedInitialSection) {
+            when (initialSection) {
+                "notes" -> { viewModel.setFilter(NotebookFilter.NOTES); selectView(true) }
+                "tools" -> selectView(false)
+            }
+            appliedInitialSection = true
         }
     }
     var consumedRootRequest by rememberSaveable { mutableStateOf(0L) }

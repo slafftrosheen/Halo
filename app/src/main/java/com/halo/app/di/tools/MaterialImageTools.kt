@@ -9,7 +9,7 @@ import org.json.JSONObject
 
 object MaterialImageContracts {
     private fun text(max: Int) = mapOf("type" to "string", "maxLength" to max)
-    private val fields = mapOf("sourceId" to text(160), "sourceVersion" to mapOf("type" to "integer", "minimum" to 1),
+    private val fields = mapOf("sourceId" to text(160), "sourceVersion" to EverydayToolContracts.number(1, Long.MAX_VALUE),
         "revision" to text(200), "entryId" to text(2000), "library" to mapOf("type" to "boolean"))
     private val params = mapOf("type" to "object", "properties" to fields, "required" to fields.keys.toList(), "additionalProperties" to false)
     val definitions = listOf(

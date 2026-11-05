@@ -63,9 +63,9 @@ class Zone5WorkingAreaTest {
         compose.onNodeWithTag("halo-zone5").assertHeightIsEqualTo(200.dp)
         compose.onNode(hasText("Field poster") and hasAnyAncestor(hasTestTag("halo-zone5"))).assertIsDisplayed()
         compose.onNode(hasText("Field poster") and hasAnyAncestor(hasTestTag("work"))).assertDoesNotExist()
-        compose.onNode(hasText("File") and hasAnyAncestor(hasTestTag("halo-zone5"))).assertIsDisplayed()
+        compose.onNode(hasText("Add layer") and hasAnyAncestor(hasTestTag("halo-zone5"))).assertIsDisplayed()
+        compose.onNodeWithText("File").assertDoesNotExist()
         compose.onAllNodesWithContentDescription("Back").assertCountEquals(0)
-        compose.onNodeWithText("Add").performClick()
         assertTrue(calls.isEmpty())
         compose.onNodeWithText("Add layer").performClick()
         assertEquals(listOf("layer"), calls)
@@ -104,6 +104,7 @@ class Zone5WorkingAreaTest {
             CompositionLocalProvider(LocalShellHaloOrb provides true, LocalShellPageActions provides actions,
                 LocalShellUtilityBand provides band) {
                 BindShellPageActions(owner, listOf(
+                    ShellPageAction("page.notebook.new-note", "New note", HaloGlyph.NOTE) { calls += "new" },
                     ShellPageAction("page.notebook.view-library", "Library", HaloGlyph.FILE, !library.value) { library.value = true },
                     ShellPageAction("page.notebook.view-tools", "Tools", HaloGlyph.TOOL, library.value) { library.value = false }))
                 BindShellUtilityBand(owner) { com.halo.app.ui.screens.notebook.WorkspaceSectionSwitcher(library.value) { library.value = it } }
@@ -117,6 +118,11 @@ class Zone5WorkingAreaTest {
             }
         } }
         compose.onNodeWithText("Tools").assertDoesNotExist()
+        compose.onNodeWithText("New note").assertDoesNotExist()
+        compose.onNodeWithText("All actions").performClick()
+        compose.onAllNodesWithText("New note").assertCountEquals(1)
+        compose.onNodeWithText("New note").performClick()
+        assertEquals(listOf("new"), calls)
         compose.onNodeWithText("All actions").performClick()
         compose.onNodeWithText("Tools").performClick()
         compose.onNodeWithText("Choose a tool").assertIsDisplayed()
