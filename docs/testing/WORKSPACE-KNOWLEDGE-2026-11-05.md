@@ -1,6 +1,6 @@
 # Workspace, Organizer and reference libraries — validation record
 
-Status: validation is in progress. The resumed Gate 04 completed 1,097 app cases across 238 suites: 1,094 passed, three failed, zero errors/skips. Compact navigation, Notes durability, registered image-cache operations and the earlier shared-schema failures passed. One narrower import-review union schema and two test setup issues are corrected in the next batch; their focused rerun and the APK are pending. No new APK has been installed.
+Status: code is pushed, the affected desktop checks passed and the APK is built and signature-verified. Gate 05 passed 34/34 cases across five suites after correcting the three remaining failures. The preceding broader Gate 04 result was 1,094 passes out of 1,097 cases on its identified source; it is not described as a fresh full-suite pass on the later commit. The phone is not detected, so update installation and native/voice/provider acceptance remain pending.
 
 Approved specification: [workspace knowledge design](../superpowers/specs/2026-11-05-workspace-knowledge-design.md). User additionally requested source images for news and materials. No paid image generation is authorized.
 
@@ -19,19 +19,19 @@ Library file selection remains a human Android document-picker operation. Tools 
 
 Imports preserve the previous active generation until atomic publication. They use one worker, bounded compressed/expanded/entry/storage budgets, durable checkpoints and explicit resume. Source/family/mode/restore changes stop disclosure or publication. XML entities, archive traversal, unbounded expansion and arbitrary executable rendering are unsupported.
 
-## Authored regression coverage, not yet run
+## Desktop regression coverage
 
-Unicode discovery/domain coverage; menu roles/current-page leases/large text; rich copy and direct heading insertion/Enter; real Registry escaped-text reconstruction and stale snapshots; real Room Unicode FTS, failed replacement and interrupted/cancelled/resumed imports; migration preservation/FTS cascade; selected Wikipedia sections/revisions/tables/image metadata; local-zero-network image reads and source revocation during image transfer. Registered-feature review is asserted through `ToolRegistry.operabilityReport` in the feature fixtures; execution output is pending.
+Unicode discovery/domain coverage; menu roles/current-page leases/large text; rich copy and direct heading insertion/Enter; real Registry escaped-text reconstruction and stale snapshots; real Room Unicode FTS, failed replacement and interrupted/cancelled/resumed imports; migration preservation/FTS cascade; selected Wikipedia sections/revisions/tables/image metadata; local-zero-network image reads and source revocation during image transfer. Registered-feature review is asserted through `ToolRegistry.operabilityReport` in the executed fixtures. Exact broader/focused scopes and failures are recorded below.
 
 ## Separate acceptance gates
 
 | Workflow | Typed source fixture | Native phone | Actual spoken intent | Permitted remote provider | Durable phone readback |
 |---|---|---|---|---|---|
-| Create heading/paragraph and preserve literal original | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
-| Import/search/read exact local library evidence | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
-| Retrieve selected full article and save its images | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| Create heading/paragraph and preserve literal original | PASS · Gate 04 | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| Import/search/read exact local library evidence | PASS · Gate 05 | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| Retrieve selected full article and save its images | PASS · parser/cache pieces; live retrieval pending | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
 
-Build/test commands, counts, source identity, APK hash/signature, install verification, inspected phone renders and restored phone settings will be recorded after the complete coding batch. No issue closure, merge or provider acceptance is claimed.
+Build/test counts, source identity and APK verification are recorded below. Native installation, inspected phone renders, actual spoken intent and permitted remote-provider acceptance require their own evidence. No issue closure or merge is claimed.
 
 ## Validation attempts
 
@@ -50,3 +50,21 @@ Build/test commands, counts, source identity, APK hash/signature, install verifi
 - Gate 04, source `024fa619489d`, compiled production successfully but was interrupted during test compilation when the desktop turn stopped. No compiler failure or test result was claimed for that interruption. `gate-04-resume` reused completed production tasks on the same clean source, freshly compiled tests and completed 1,097 cases / 238 suites: 1,094 passed, three failed, zero errors/skips. All complete app JUnit XML was archived before a later focused run can replace the output directory.
 - Remaining failures were import-review's nested closed union rejecting common snapshot metadata, a positive calendar fixture missing required event end times, and an old image-recovery fixture passing plain storage where a mode-profile owner is required. The correction retains both closed review/history branches and all privacy checks, supplies valid fixture times and uses the same profile-backed settings as production. Image tests use a synthetic in-process provider; no paid request is made.
 - The next run targets the changed library review workflow, Everyday calendar/contract regressions, image recovery and the previously unselected family-mode menu regression, alongside the complete required production compilation/APK tasks. Unchanged passing cases retain their explicitly identified Gate 04 source evidence; a full-suite pass on a different commit is not claimed. Obsolete APK conversion was stopped after the failed full result was archived (daemon SIGTERM, launcher exit 1).
+
+## Verified build and published source
+
+Production source: `a873f44ca10feab2f55e8f8743e0504153fe6754`, clean generated source marker `a873f44ca10f`. Published on [`codex/issue-65-studio`](https://github.com/slafftrosheen/Halo/tree/codex/issue-65-studio). No pull request, merge or issue closure was performed.
+
+Gate 05 finished **BUILD SUCCESSFUL in 42m10s**, one core/Gradle worker/test fork, existing 16 GiB swap, no production task exclusions. Production and test compilation passed. The focused app run passed **34/34 cases, five suites, zero failures/errors/skips**: `ReferenceLibraryToolsTest`, `EverydayToolExecutorTest`, `WorkspaceImageRecoveryTest`, `MaterialImageRepositoryTest`, and `FamilyModeMenuVisibilityTest`. This verifies import-review history and exact review snapshots, complete escaped readback and revocation, calendar paging, profile-backed synthetic credit recovery, actual registered image-cache operations, and the global family switch across page/family changes. Runtime reused the unchanged Gate 02 87/87 passing result.
+
+The earlier broader Gate 04 run passed the compact-primary/destination fallback, rich heading/Enter durability, note-view recreation, literal-copy preservation, import/recovery/parser/migration and other related regressions. Its remaining three failures were corrected and exercised by the focused run. Full and focused JUnit evidence is retained separately; all-source full-suite execution on the later commit is not implied.
+
+APK retained locally as `halo-workspace-knowledge-a873f44ca.apk`:
+
+- Package: `com.aistudio.braintool.xkqzps`, version code 2, version `1.0-RC1`.
+- Size: 298,521,991 bytes.
+- SHA-256: `a58d3f33b349a0cce5afce0706f4d9a12c653001658cc3691565dd3d527a5d6b`.
+- APK v2 signature verified. Signing certificate SHA-256: `d016e155446e2d96644e396fcb682282e97a2a816d9592875510469f1b22b737`, matching the previous phone update certificate.
+- The expected source marker and reference-library/image-cache classes were verified inside the APK DEX files.
+
+ADB detects no target phone. A reconnection request is pending. The prior installed app, credentials, model, notes, projects and widgets have not been altered by this validation. No paid generation was submitted; image recovery tests use a synthetic in-process provider.
