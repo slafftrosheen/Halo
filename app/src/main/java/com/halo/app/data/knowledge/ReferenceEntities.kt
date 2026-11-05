@@ -30,6 +30,7 @@ data class ReferenceImportJobEntity(@PrimaryKey val id: String, val sourceId: St
 
 @Dao
 interface ReferenceDao {
+    @Query("SELECT uri FROM reference_import_jobs") suspend fun inputHandles(): List<String>
     @Query("SELECT * FROM reference_import_jobs WHERE sourceId=:id") suspend fun jobsForSource(id: String): List<ReferenceImportJobEntity>
     @Query("SELECT * FROM material_images WHERE id=:id") suspend fun image(id: String): MaterialImageEntity?
     @Query("SELECT * FROM material_images ORDER BY savedAt, id") suspend fun images(): List<MaterialImageEntity>

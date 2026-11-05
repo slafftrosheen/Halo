@@ -209,7 +209,8 @@ object ManualDependencyGraph {
                 val verify = referenceAuthority()
                 val adult: () -> Unit = { verify(); check(!kidsPreferences.enabled.value) }
                 adult
-            }, power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD })
+            }, power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD },
+            retainedInputs = { appDatabase.referenceDao().inputHandles().toSet() })
     }
     val collectorRegistry: com.halo.app.everyday.collectors.CollectorRegistry by lazy {
         val local = com.halo.app.everyday.collectors.android.AndroidLocalCollectors(applicationContext, appDatabase, organizerRepository,
@@ -1279,8 +1280,9 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.MaterialImageTools(materialImages),
                 com.halo.app.di.tools.RichNoteCopyTools(richNoteCopies),
                 com.halo.app.di.tools.ReferenceLibraryTools(referenceLibraries) { id ->
-                    val file = referenceDownloads.download(id)
-                    referenceLibraries.preview(file.uri.toString(), file.fileName, origin = id.name)
+                    referenceDownloads.downloadForReview(id) { file ->
+                        referenceLibraries.preview(file.uri.toString(), file.fileName, origin = id.name)
+                    }
                 },
                 com.halo.app.di.tools.host.AssistantTools(applicationContext, appearancePreferences, assistantPreferences,
                     readAloud = { text, id ->

@@ -19,6 +19,7 @@ class PersonalConfigurationPolicyTest {
     private val everydayLocalContextTools = setOf("halo_source_get", "halo_brief_query", "halo_brief_action") + PersonalConfigurationToolAccess.organizerOperations
     private val everydayOrganizerTools = setOf("halo_organizer_alarm","halo_organizer_clock_action","halo_organizer_calendar_import","halo_organizer_calendar_export","halo_organizer_query", "halo_organizer_get", "halo_organizer_create",
         "halo_organizer_edit", "halo_organizer_action", "halo_organizer_occurrence", "halo_organizer_delivery")
+    private val everydayKnowledgeTools = setOf("halo_library_catalogue", "halo_library_query", "halo_library_get", "halo_library_import_review", "halo_library_import_action", "halo_library_download", "halo_material_image_query", "halo_material_image_fetch")
     private fun descriptor(name: String, risk: ToolRiskClass = ToolRiskClass.READ_ONLY) = ToolDescriptor(
         id = ToolId(name), definition = ToolDefinition(name, name, "Local configuration fixture"),
         // Deliberately outside WORKSPACE: category alone must not bypass consent.
@@ -72,8 +73,8 @@ class PersonalConfigurationPolicyTest {
     }
 
     @Test fun everyEverydayCommandHasReviewedScopedProvenance() {
-        assertEquals(everydayOrganizerTools + everydayLocationTools, PersonalConfigurationToolAccess.everyday)
-        everydayOrganizerTools.forEach { name ->
+        assertEquals(everydayOrganizerTools + everydayLocationTools + everydayKnowledgeTools, PersonalConfigurationToolAccess.everyday)
+        (everydayOrganizerTools + everydayKnowledgeTools).forEach { name ->
             assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE), remoteToolResultCategories(name))
         }
         everydayLocationTools.forEach { name ->

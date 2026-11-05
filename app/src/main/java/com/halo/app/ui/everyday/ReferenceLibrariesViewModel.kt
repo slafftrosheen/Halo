@@ -91,13 +91,14 @@ class ReferenceLibrariesViewModel : ViewModel() {
     }
     fun cancel(job: ReferenceImportJobEntity) = work { repository.cancel(job.id, job.reviewToken); closeReview() }
     fun resume(job: ReferenceImportJobEntity, uri: Uri? = null) = work {
-        val source = requireNotNull(Graph.collectorRepository.source(job.sourceId))
-        val queued = repository.resume(job.id, job.reviewToken, source.version, uri?.toString())
+        val source = Graph.collectorRepository.source(job.sourceId)
+        val queued = repository.resume(job.id, job.reviewToken, source?.version, uri?.toString())
         mutable.update { it.copy(review = queued) }
     }
     fun download(id: ReferenceStarterId) = work {
-        val file = Graph.referenceDownloads.download(id)
-        val preview = repository.preview(file.uri.toString(), file.fileName, origin = id.name)
+        val preview = Graph.referenceDownloads.downloadForReview(id) { file ->
+            repository.preview(file.uri.toString(), file.fileName, origin = id.name)
+        }
         mutable.update { it.copy(review = preview) }
     }
 }

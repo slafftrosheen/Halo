@@ -5133,4 +5133,8 @@
     <string name="ui_1913812b4ada" formatted="false">"Libraries could not be loaded. Retry to read local progress."</string>
     <string name="ui_b1adb5012735" formatted="false">"XML topic exceeds its aggregate entry limit; choose a smaller subset"</string>
     <string name="ui_34178493f5f9" formatted="false">"Wiki article text or revision is missing; choose a complete current-content subset"</string>
+    <string name="ui_6c48580bf8e9" formatted="false">"YYYY-MM-DD"</string>
+    <string name="ui_5f5bbb8af2f5" formatted="false">"Use a language code such as en, ru, lv, pl or und"</string>
+    <string name="ui_f1b4159c43a6" formatted="false">"Source changed; select a new file to review"</string>
+    <string name="ui_8b210b42342d" formatted="false">"Source removed or changed; select a new file to import"</string>
 </resources>

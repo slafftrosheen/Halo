@@ -71,4 +71,10 @@ class ReferenceImportParserTest {
         assertTrue(runCatching { read("wiki.xml", "<mediawiki>$valid$missing</mediawiki>") }.isFailure)
     }
 
+    @Test fun emptyOptionalCsvCellsUseHonestDefaultsInsteadOfFailingDuringPublication() {
+        val entry = read("optional.csv", "title,text,language,format,publisher,license\nOwned,Body,,,,\n").single()
+        assertEquals("und", entry.language); assertEquals(ReferenceTextFormat.TEXT, entry.format)
+        assertEquals("Imported library", entry.publisher); assertEquals("User-supplied; rights not verified", entry.license)
+    }
+
 }

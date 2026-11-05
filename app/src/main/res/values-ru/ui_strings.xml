@@ -5133,4 +5133,8 @@
     <string name="ui_1913812b4ada" formatted="false">"Не удалось загрузить библиотеки. Повторите чтение локального состояния."</string>
     <string name="ui_b1adb5012735" formatted="false">"Материал XML превышает общий лимит записи; выберите меньшую подборку"</string>
     <string name="ui_34178493f5f9" formatted="false">"В статье нет текста или версии; выберите полную подборку текущих статей"</string>
+    <string name="ui_6c48580bf8e9" formatted="false">"ГГГГ-ММ-ДД"</string>
+    <string name="ui_5f5bbb8af2f5" formatted="false">"Укажите код языка: en, ru, lv, pl или und"</string>
+    <string name="ui_f1b4159c43a6" formatted="false">"Источник изменился; выберите новый файл для проверки"</string>
+    <string name="ui_8b210b42342d" formatted="false">"Источник удалён или изменился; выберите новый файл для импорта"</string>
 </resources>

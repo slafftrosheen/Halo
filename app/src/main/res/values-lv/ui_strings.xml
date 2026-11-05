@@ -5133,4 +5133,8 @@
     <string name="ui_1913812b4ada" formatted="false">"Neizdevās ielādēt bibliotēkas. Mēģiniet vēlreiz nolasīt lokālo norisi."</string>
     <string name="ui_b1adb5012735" formatted="false">"XML tēma pārsniedz ieraksta kopējo ierobežojumu; izvēlieties mazāku izlasi"</string>
     <string name="ui_34178493f5f9" formatted="false">"Trūkst viki raksta teksta vai versijas; izvēlieties pilnīgu pašreizējā satura izlasi"</string>
+    <string name="ui_6c48580bf8e9" formatted="false">"GGGG-MM-DD"</string>
+    <string name="ui_5f5bbb8af2f5" formatted="false">"Izmantojiet valodas kodu, piemēram, en, ru, lv, pl vai und"</string>
+    <string name="ui_f1b4159c43a6" formatted="false">"Avots mainījies; atlasiet jaunu failu pārskatīšanai"</string>
+    <string name="ui_8b210b42342d" formatted="false">"Avots noņemts vai mainījies; atlasiet jaunu failu importēšanai"</string>
 </resources>

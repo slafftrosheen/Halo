@@ -118,10 +118,10 @@ object ReferenceImportParser {
     }
     private fun fromJson(row: JSONObject, ordinal: Int) = ReferenceEntry(
         row.optString("id").ifBlank { ordinal.toString() }, row.getString("title"), row.getString("text"),
-        row.optString("language", "und"), row.optString("url").takeIf { it.isNotBlank() }, row.optString("publisher", "Imported library"),
-        row.optString("revision").takeIf { it.isNotBlank() }, row.optString("license", "User-supplied; rights not verified"),
+        row.optString("language", "und").ifBlank { "und" }, row.optString("url").takeIf { it.isNotBlank() }, row.optString("publisher", "Imported library").ifBlank { "Imported library" },
+        row.optString("revision").takeIf { it.isNotBlank() }, row.optString("license", "User-supplied; rights not verified").ifBlank { "User-supplied; rights not verified" },
         row.optString("updatedAt").takeIf { it.isNotBlank() },
-        row.optString("format", "TEXT").let(ReferenceTextFormat::valueOf), com.halo.app.everyday.collectors.SourceImages.decode(row.optJSONArray("images")))
+        row.optString("format", "TEXT").ifBlank { "TEXT" }.let(ReferenceTextFormat::valueOf), com.halo.app.everyday.collectors.SourceImages.decode(row.optJSONArray("images")))
 
     private fun csv(input: InputStream, emit: (ReferenceEntry) -> Unit) {
         val r = PushbackReader(reader(input), 1); var header: List<String>? = null; val row = mutableListOf<String>(); val field = StringBuilder(); var quoted = false; var closedQuote = false; var ordinal = 0

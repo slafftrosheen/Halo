@@ -27,6 +27,7 @@ object ReferenceLimits {
         com.halo.app.everyday.collectors.SourceImages.encode(entry.images)
         require(entry.id.isNotBlank() && entry.id.length <= 256 && entry.title.isNotBlank() && entry.title.length <= 500)
         require(entry.text.isNotBlank() && entry.text.toByteArray(Charsets.UTF_8).size <= ENTRY_BYTES) { "An entry exceeds 256 KiB; import a smaller subset" }
+        require(entry.language.matches(Regex("[a-z]{2,3}(-[A-Za-z0-9]{2,8})*"))) { "Use a language code such as en, ru, lv, pl or und" }
         require(entry.language.length <= 24 && entry.publisher.length <= 200 && entry.license.length <= 2000 && (entry.revision?.length ?: 0) <= 200 && (entry.updatedAt?.length ?: 0) <= 40)
         entry.url?.let { require(it.length <= 2048 && (it.startsWith("https://") || it.startsWith("http://"))) }
     }

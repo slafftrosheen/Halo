@@ -56,6 +56,14 @@ class ReferenceLibraryToolsTest {
         assertTrue(call("halo_library_get", args) is ToolExecutionResult.Rejected)
         assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("reference-libraries", ReferenceLibraryContracts.names))).isEmpty())
     }
+    @Test fun aCancelledUnconfirmedJobResumesOnlyItsReviewThroughTheRegistry() = runBlocking {
+        val preview = repo.preview("content://owned/cancelled", "reference.jsonl")
+        val args = mapOf("jobId" to preview.id, "reviewToken" to preview.reviewToken)
+        json(call("halo_library_import_action", args + ("action" to "CANCEL")))
+        val restored = json(call("halo_library_import_action", args + ("action" to "RESUME")))
+        assertEquals("REVIEWING", restored.getString("state")); assertFalse(restored.getBoolean("completed"))
+        assertNull(sources.source(preview.sourceId))
+    }
     @Test fun libraryOperationsKeepWorkspaceDisclosureAndNeverReplayDownloadsOrImports() {
         descriptors.forEach { descriptor ->
             assertTrue(descriptor.id.value in WorkspaceToolAccess.readTools)

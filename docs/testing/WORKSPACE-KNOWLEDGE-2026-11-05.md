@@ -1,6 +1,6 @@
 # Workspace, Organizer and reference libraries — validation record
 
-Status: production and regression sources in progress; this new batch has **not yet been compiled, tested or installed**. Earlier issue #63–65 test/device evidence does not validate these changes.
+Status: source implementation and fresh whole-change review completed; validation is in progress. Runtime compiled and ran 87 focused cases on the first gate: 86 passed, one failed on an expected tool identity list missing the newly registered library/image operations. The explicit reviewed identities were added to that fixture; its rerun and Android compilation/tests/APK are pending. Earlier issue #63–65 test/device evidence does not validate these changes.
 
 Approved specification: [workspace knowledge design](../superpowers/specs/2026-11-05-workspace-knowledge-design.md). User additionally requested source images for news and materials. No paid image generation is authorized.
 
@@ -32,3 +32,10 @@ Unicode discovery/domain coverage; menu roles/current-page leases/large text; ri
 | Retrieve selected full article and save its images | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
 
 Build/test commands, counts, source identity, APK hash/signature, install verification, inspected phone renders and restored phone settings will be recorded after the complete coding batch. No issue closure, merge or provider acceptance is claimed.
+
+## Validation attempts
+
+- Gate 01, source `cb3a737dc`: one core/worker/fork, no production task exclusions. Runtime 87 cases / 21 suites: 86 passed, one failed, zero errors/skips. The failure was the explicit reviewed-tool set assertion in `PersonalConfigurationPolicyTest`; the individual new-tool exposure/provenance assertions passed. Android tasks did not start after this failure.
+- Generated catalogue check passed with 5,133 entries per language. The broader Polish check found an existing missing date-format hint. The hint was added; the subsequent Polish check passed for 6,351 Android strings, with 5,137 generated entries per language.
+- Follow-up coding also handles cancelled unconfirmed previews (resume returns REVIEWING, requires confirmation), serialized download-to-preview publication and safe orphan cleanup, blank optional CSV metadata, distinct clock/Workspace/reference discovery domains, and saveable per-section Organizer scroll state. New regressions are authored; their execution is pending.
+- The read-only review's six important findings were addressed in the coherent source fix batch. The FTS migration regression now reopens through Room; execution remains pending. Room's generated content-option spelling and raw option comparison were checked against [AndroidX compiler source](https://android.googlesource.com/platform/frameworks/support/+/f2e05c341382db64d127118a13451dcaa554b702/room/compiler/src/main/kotlin/androidx/room/vo/FtsOptions.kt) and [runtime source](https://android.googlesource.com/platform/frameworks/support/+/2d5197729d110347604ba154a3006241717b54c8/room/room-runtime/src/androidMain/kotlin/androidx/room/util/FtsTableInfo.android.kt).

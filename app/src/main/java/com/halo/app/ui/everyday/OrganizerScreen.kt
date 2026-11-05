@@ -142,8 +142,16 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     if (LocalShellHaloOrb.current && current != null) BindShellUtilityBand(owner) {
         ToolZoneHeader(uiText("Organizer"), { if (current != null || state.missing) model.open(null) else onBack() })
     }
-    val sectionStates = remember { mutableMapOf<String, androidx.compose.foundation.lazy.LazyListState>() }
-    val sectionScroll = sectionStates.getOrPut("$kind:${current?.id}:${state.missing}") { androidx.compose.foundation.lazy.LazyListState() }
+    val sectionStates = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    val scrollKey = "$kids:$kind:${current?.id}:${state.missing}"
+    var retainedScrollKeys by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    LaunchedEffect(scrollKey) {
+        val retained = (retainedScrollKeys.filterNot { it == scrollKey } + scrollKey).takeLast(16)
+        retainedScrollKeys.filterNot { it in retained }.forEach(sectionStates::removeState)
+        retainedScrollKeys = retained
+    }
+    sectionStates.SaveableStateProvider(scrollKey) {
+    val sectionScroll = androidx.compose.foundation.lazy.rememberLazyListState()
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), state = sectionScroll, contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
@@ -343,6 +351,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                 }
             }
         }
+    }
     }
     if (settingsOpen && !kids) EverydaySheet({ settingsOpen = false }) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

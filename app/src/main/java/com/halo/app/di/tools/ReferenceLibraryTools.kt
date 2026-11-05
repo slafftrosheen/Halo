@@ -28,7 +28,7 @@ object ReferenceLibraryContracts {
             mapOf("jobId" to text(64), "offset" to integer()) + EverydayToolReadback.arguments, emptyList()),
         definition("halo_library_download", "Download one fixed optional public reference pack for review, in Power only. Does not import it. MEDLINEPLUS is official NLM topic summaries, PREPAREDNESS is selected CDC text, WIKIPEDIA is a compact pinned reference selection. No arbitrary URL, paid provider, recursive crawl or mode change. Read import_review for the returned jobId before an explicit import confirmation.",
             mapOf("starterId" to mapOf("type" to "string", "enum" to ReferenceStarterId.entries.map { it.name })), listOf("starterId")),
-        definition("halo_library_import_action", "Confirm, cancel or resume one exact reviewed file import. Adult-only explicit approved write; requires jobId and its reviewToken. RESUME additionally needs current sourceVersion. QUEUED/IMPORTING is not READY or completion; read review again. Never replay after uncertainty.",
+        definition("halo_library_import_action", "Confirm, cancel or resume one exact reviewed file import. Adult-only explicit approved write; requires jobId and its reviewToken. RESUME needs current sourceVersion once a source exists; omit it only for a cancelled unconfirmed preview, which returns REVIEWING and still needs CONFIRM. QUEUED/IMPORTING is not READY or completion; read review again. Never replay after uncertainty.",
             mapOf("jobId" to text(64), "reviewToken" to text(64), "action" to mapOf("type" to "string", "enum" to listOf("CONFIRM", "CANCEL", "RESUME")), "sourceVersion" to integer()),
             listOf("jobId", "reviewToken", "action")),
     )
@@ -132,12 +132,12 @@ class ReferenceLibraryTools(private val repository: ReferenceLibraryRepository, 
                 }
                 else -> {
                     require(!context.interactionId.isNullOrBlank())
-                    require((a["action"] == "RESUME") == a.containsKey("sourceVersion"))
+                    require(a["action"] == "RESUME" || !a.containsKey("sourceVersion"))
                     write = true
                     val id = string("jobId"); val token = string("reviewToken")
                     val job = when (string("action")) {
                         "CONFIRM" -> { require("sourceVersion" !in a); repository.confirm(id, token) }
-                        "RESUME" -> repository.resume(id, token, (a["sourceVersion"] as Number).toLong())
+                        "RESUME" -> repository.resume(id, token, (a["sourceVersion"] as? Number)?.toLong())
                         else -> { require("sourceVersion" !in a); repository.cancel(id, token); requireNotNull(repository.job(id)) }
                     }
                     JSONObject().put("jobId", job.id).put("sourceId", job.sourceId).put("state", job.state).put("completed", job.state == "READY")

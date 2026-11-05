@@ -113,14 +113,21 @@ class ReferenceLibraryRepository(
         launchImport(queued, check); queued
     }
 
-    suspend fun resume(id: String, reviewToken: String, expectedSourceVersion: Long, replacementUri: String? = null): ReferenceImportJobEntity = withContext(Dispatchers.IO) {
+    suspend fun resume(id: String, reviewToken: String, expectedSourceVersion: Long?, replacementUri: String? = null): ReferenceImportJobEntity = withContext(Dispatchers.IO) {
         initialize(); val check = adult(); roomBudget()
         running[id]?.join()
         EverydayWriteAuthority.run(check) {
         val job = requireNotNull(dao.job(id)); require(job.reviewToken == reviewToken && job.state in setOf("INTERRUPTED", "FAILED", "CANCELLED"))
-        val source = requireNotNull(sources.source(job.sourceId)); require(source.kind == CollectorKind.LOCAL_LIBRARY && source.version == expectedSourceVersion)
+        val source = sources.source(job.sourceId)
+        if (job.sourceVersion == null) require(source == null && expectedSourceVersion == null) { "Source changed; select a new file to review" }
+        else require(source != null && source.kind == CollectorKind.LOCAL_LIBRARY && source.version == expectedSourceVersion) { "Source removed or changed; select a new file to import" }
         val input = replacementUri ?: job.uri
         require(fingerprint(input, check).first == job.fingerprint) { "Select the same original file; a different file needs a new preview" }
+        if (source == null) {
+            val review = job.copy(uri = input, state = "REVIEWING", processed = 0, message = null, updatedAt = System.currentTimeMillis())
+            database.withTransaction { check(); require(dao.job(id) == job && sources.source(job.sourceId) == null); dao.putJob(review) }
+            return@run review // A cancelled preview needs a new explicit confirmation, never automatic import.
+        }
         val checkpointIntact = dao.count(job.sourceId, job.generation) == job.processed
         val queued = job.copy(uri = input, sourceVersion = source.version, state = "QUEUED", processed = if (checkpointIntact) job.processed else 0, message = null, updatedAt = System.currentTimeMillis())
         database.withTransaction {

@@ -91,4 +91,15 @@ class ReferenceLibraryRepositoryTest {
         assertTrue(repo.query("water").entries.isEmpty())
     }
 
+    @Test fun cancellingAnUnconfirmedPreviewCanResumeReviewButNeverStartsImport() = runBlocking {
+        files["owned:preview"] = "{\"id\":\"one\",\"title\":\"Owned\",\"text\":\"Saved reference\"}"
+        val preview = repo.preview("owned:preview", "preview.jsonl")
+        repo.cancel(preview.id, preview.reviewToken)
+        assertNull(sources.source(preview.sourceId))
+        val restored = repo.resume(preview.id, preview.reviewToken, null)
+        assertEquals("REVIEWING", restored.state); assertNull(sources.source(preview.sourceId))
+        repo.confirm(restored.id, restored.reviewToken)
+        assertEquals("READY", completed(restored.id).state)
+    }
+
 }

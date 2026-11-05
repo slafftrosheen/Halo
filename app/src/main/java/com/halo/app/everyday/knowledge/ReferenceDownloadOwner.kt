@@ -20,31 +20,55 @@ data class DownloadedReference(val uri: Uri, val fileName: String)
 
 /** Fixed optional catalogues. No recursive crawl, arbitrary model URL or bundled corpus. */
 class ReferenceDownloadOwner(private val context: Context, private val transfer: ReferenceTransfer,
-    private val authority: () -> (() -> Unit), private val power: () -> Boolean) {
+    private val authority: () -> (() -> Unit), private val power: () -> Boolean,
+    private val retainedInputs: suspend () -> Set<String> = { emptySet() },
+    private val ownedUri: (File) -> Uri = { file -> FileProvider.getUriForFile(context, "${context.packageName}.captures", file) }) {
     private val lock = Mutex()
     private val directory get() = File(context.filesDir, "reference-downloads").apply { mkdirs() }
-    suspend fun download(id: ReferenceStarterId): DownloadedReference = lock.withLock { withContext(Dispatchers.IO) {
+    /** Hold the same lease through preview publication, so orphan cleanup cannot race another preview. */
+    suspend fun <T> downloadForReview(id: ReferenceStarterId, review: suspend (DownloadedReference) -> T): T = lock.withLock { withContext(Dispatchers.IO) {
+        val guard = authority(); guard()
+        EverydayWriteAuthority.run(guard) {
+            val retainedNames = retainedInputs().mapNotNull { handle ->
+                val uri = Uri.parse(handle)
+                if (uri.authority == "${context.packageName}.captures" && uri.pathSegments.firstOrNull() == "reference-libraries") uri.lastPathSegment else null
+            }.toSet()
+            directory.listFiles().orEmpty().filter { file ->
+                file.name.matches(Regex("[0-9a-f-]{36}\\.(zip|jsonl)(\\.part)?")) && file.name !in retainedNames
+            }.forEach { file -> guard(); EverydayWriteAuthority.requireCurrent(); file.delete() }
+            val file = download(id)
+            try { review(file) }
+            catch (error: Throwable) {
+                withContext(NonCancellable + Dispatchers.IO) {
+                    // A cancelled return can follow a successful preview commit. Keep that resumable input.
+                    runCatching { if (file.uri.toString() !in retainedInputs()) releaseOwnedInput(file.uri.toString()) }
+                }
+                throw error
+            }
+        }
+    } }
+    private suspend fun download(id: ReferenceStarterId): DownloadedReference = withContext(Dispatchers.IO) {
         val guard = authority(); guard(); require(power()) { "Choose Power before downloading; local import/search still work offline" }
         EverydayWriteAuthority.run(guard) {
             val extension = if (id == ReferenceStarterId.MEDLINEPLUS) "zip" else "jsonl"
             val name = when (id) { ReferenceStarterId.MEDLINEPLUS -> "MedlinePlus-health-topics"; ReferenceStarterId.PREPAREDNESS -> "Emergency-preparedness-CDC"; else -> "General-reference-Wikipedia" } + ".$extension"
             val part = File(directory, "${UUID.randomUUID()}.$extension.part")
             val finished = File(directory, "${UUID.randomUUID()}.$extension")
-            fun checkStorage() {
+            fun checkStorage(reserved: Long = 0) {
                 guard(); EverydayWriteAuthority.requireCurrent()
                 require(power()) { "Reference download needs Power" }
-                require(context.filesDir.usableSpace >= ReferenceLimits.FREE_RESERVE_BYTES) { "Keep 512 MiB free before downloading" }
+                require(context.filesDir.usableSpace >= ReferenceLimits.FREE_RESERVE_BYTES + reserved) { "Keep 512 MiB free before downloading" }
                 require(listOf(directory, File(context.filesDir, "material-images")).sumOf { dir -> dir.listFiles().orEmpty().sumOf { it.length() } } + context.getDatabasePath("halo.db").let {
                     it.length() + File(it.path + "-wal").length() + File(it.path + "-shm").length()
-                } <= ReferenceLimits.STORAGE_BYTES) { "Managed reference storage budget reached" }
+                } + reserved <= ReferenceLimits.STORAGE_BYTES) { "Managed reference storage budget reached" }
             }
             try {
                 checkStorage()
                 FileOutputStream(part).use { file ->
                     val output = object : FilterOutputStream(file) {
                         private var written = 0L
-                        override fun write(value: Int) { checkStorage(); written++; require(written <= ReferenceLimits.INPUT_BYTES); out.write(value) }
-                        override fun write(bytes: ByteArray, offset: Int, length: Int) { checkStorage(); written += length; require(written <= ReferenceLimits.INPUT_BYTES); out.write(bytes, offset, length) }
+                        override fun write(value: Int) { checkStorage(1); written++; require(written <= ReferenceLimits.INPUT_BYTES); out.write(value) }
+                        override fun write(bytes: ByteArray, offset: Int, length: Int) { checkStorage(length.toLong()); written += length; require(written <= ReferenceLimits.INPUT_BYTES); out.write(bytes, offset, length) }
                     }
                     when (id) {
                         ReferenceStarterId.MEDLINEPLUS -> {
@@ -75,10 +99,10 @@ class ReferenceDownloadOwner(private val context: Context, private val transfer:
                     output.flush(); file.fd.sync()
                 }
                 guard(); checkStorage(); require(part.renameTo(finished)) { "Could not retain downloaded file" }
-                DownloadedReference(FileProvider.getUriForFile(context, "${context.packageName}.captures", finished), name)
+                DownloadedReference(ownedUri(finished), name)
             } catch (error: Throwable) { part.delete(); finished.delete(); throw error }
         }
-    } }
+    }
 
     fun releaseOwnedInput(uri: String) {
         val value = Uri.parse(uri)

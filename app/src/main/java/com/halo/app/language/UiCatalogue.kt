@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(5163) {
+    buildMap(5167) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -5210,6 +5210,10 @@ private fun uiCataloguePart17(): Map<String, Int> = mapOf(
     "Libraries could not be loaded. Retry to read local progress." to R.string.ui_1913812b4ada,
     "XML topic exceeds its aggregate entry limit; choose a smaller subset" to R.string.ui_b1adb5012735,
     "Wiki article text or revision is missing; choose a complete current-content subset" to R.string.ui_34178493f5f9,
+    "YYYY-MM-DD" to R.string.ui_6c48580bf8e9,
+    "Use a language code such as en, ru, lv, pl or und" to R.string.ui_5f5bbb8af2f5,
+    "Source changed; select a new file to review" to R.string.ui_f1b4159c43a6,
+    "Source removed or changed; select a new file to import" to R.string.ui_8b210b42342d,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(
