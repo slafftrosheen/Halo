@@ -104,7 +104,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
     if (headingBeforeTabs) Zone5InstrumentHeading(uiText("Memory"), "tool_memory",
         state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
-    if (!shellOwnsOrb) Zone5LocalTabs(listOf(Zone5LocalTab("Memories", uiText("Memories"), "tool_memory"),
+    Zone5LocalTabs(listOf(Zone5LocalTab("Memories", uiText("Memories"), "tool_memory"),
         Zone5LocalTab("Suggestions", uiText("Suggestions"), "memory_suggestions"),
         Zone5LocalTab("Learning history", uiText("Learning history"), "memory_history")), section,
         onSelect = { focus.clearFocus(); section = it })

@@ -157,7 +157,59 @@ object ManualDependencyGraph {
         com.halo.app.data.everyday.RoomCollectorRepository(appDatabase,
             sourceChanging = { id -> com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
                 if (collectorCoordinatorOwner.isInitialized()) collectorCoordinatorOwner.value.cancel(id) },
-            scheduleChanged = { com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(applicationContext) })
+            scheduleChanged = { com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(applicationContext) },
+            releaseReferenceInput = { uri -> referenceDownloads.releaseOwnedInput(uri) })
+    }
+    private fun referenceAuthority(): () -> Unit {
+        val family = kidsPreferences.presentationRevision(); val mode = privacyModes.revision
+        val check: () -> Unit = {
+            check(kidsPreferences.loadedState.value && kidsPreferences.presentationRevision() == family && privacyModes.revision == mode)
+            check(applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true)
+            check(androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED) ||
+                com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible)
+        }
+        return check
+    }
+    val referenceLibraries by lazy {
+        com.halo.app.data.knowledge.ReferenceLibraryRepository(appDatabase, collectorRepository,
+            openInput = { handle ->
+                val uri = android.net.Uri.parse(handle); require(uri.scheme == "content")
+                requireNotNull(applicationContext.contentResolver.openInputStream(uri)) { "Select the document again" }
+            }, freeBytes = { android.os.StatFs(applicationContext.filesDir.absolutePath).availableBytes },
+            databaseBytes = {
+                val file = applicationContext.getDatabasePath("halo.db")
+                listOf(file, java.io.File(file.path + "-wal"), java.io.File(file.path + "-shm")).sumOf { it.length() } +
+                    listOf("reference-downloads", "material-images").sumOf { name -> java.io.File(applicationContext.filesDir,name).listFiles().orEmpty().sumOf { it.length() } }
+            }, authority = ::referenceAuthority, kids = { !kidsPreferences.loadedState.value || kidsPreferences.enabled.value }, scope = infra.scope,
+            policyRevision = { kidsPreferences.presentationRevision() to privacyModes.revision },
+            releaseInput = { uri -> referenceDownloads.releaseOwnedInput(uri) })
+    }
+    val richNoteCopies by lazy {
+        com.halo.app.di.tools.RichNoteCopyService(workspaceTextDocuments) {
+            val check = referenceAuthority()
+            val adult: () -> Unit = { check(); kotlin.check(!kidsPreferences.enabled.value) }
+            adult
+        }
+    }
+    val materialImages by lazy {
+        com.halo.app.everyday.knowledge.MaterialImageRepository(applicationContext, appDatabase, collectorRepository, referenceLibraries,
+            com.halo.app.everyday.knowledge.GovernedReferenceTransfer(appDatabase, remoteDispatchPolicy, ::referenceAuthority, publicImages = true),
+            ::referenceAuthority, { !kidsPreferences.loadedState.value || kidsPreferences.enabled.value },
+            { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD },
+            { kidsPreferences.presentationRevision() to privacyModes.revision })
+    }
+    val researchArticles by lazy {
+        com.halo.app.everyday.collectors.ResearchArticleService(collectorRepository, collectorCoordinator,
+            power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD })
+    }
+    val referenceDownloads by lazy {
+        com.halo.app.everyday.knowledge.ReferenceDownloadOwner(applicationContext,
+            com.halo.app.everyday.knowledge.GovernedReferenceTransfer(appDatabase, remoteDispatchPolicy, ::referenceAuthority),
+            authority = {
+                val verify = referenceAuthority()
+                val adult: () -> Unit = { verify(); check(!kidsPreferences.enabled.value) }
+                adult
+            }, power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD })
     }
     val collectorRegistry: com.halo.app.everyday.collectors.CollectorRegistry by lazy {
         val local = com.halo.app.everyday.collectors.android.AndroidLocalCollectors(applicationContext, appDatabase, organizerRepository,
@@ -168,7 +220,7 @@ object ManualDependencyGraph {
                         "halo://settings/models", "${health.successfulWarmSamples}:${health.coldSamples}:${health.recentFailureStreak}", null)
                 }
             }).adapters()
-        com.halo.app.everyday.collectors.CollectorRegistry(local + listOf(
+        com.halo.app.everyday.collectors.CollectorRegistry(local + listOf(com.halo.app.everyday.knowledge.LocalReferenceCollector(appDatabase)) + listOf(
             com.halo.app.everyday.collectors.CollectorKind.FEED, com.halo.app.everyday.collectors.CollectorKind.WEATHER,
             com.halo.app.everyday.collectors.CollectorKind.ALERTS, com.halo.app.everyday.collectors.CollectorKind.PUBLIC_CALENDAR,
             com.halo.app.everyday.collectors.CollectorKind.RESEARCH
@@ -201,8 +253,8 @@ object ManualDependencyGraph {
         com.halo.app.everyday.briefing.BriefLocalAuthority(applicationContext, appDatabase, storage,
             ::currentTimelineEvents, { briefAttention().items.map { it.id }.toSet() })
     }
-    private suspend fun everydayDisclosureState(): Any = com.halo.app.data.everyday.EverydayDisclosureSnapshot.capture(
-        appDatabase,storage.getString("kids_project_library_v1"))
+    private suspend fun everydayDisclosureState(): Any = Triple(com.halo.app.data.everyday.EverydayDisclosureSnapshot.capture(
+        appDatabase,storage.getString("kids_project_library_v1")), kidsPreferences.presentationRevision(), privacyModes.revision)
     val briefService: com.halo.app.everyday.briefing.EverydayBriefService by lazy {
         com.halo.app.everyday.briefing.EverydayBriefService(briefRepository, collectorRepository, organizerRepository,
             attention = { briefAttentionObservation() }, audience = {
@@ -249,7 +301,23 @@ object ManualDependencyGraph {
             bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) })
     }
     val organizerResearch by lazy {
-        com.halo.app.everyday.collectors.OrganizerResearch(collectorRepository, power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD })
+        com.halo.app.everyday.collectors.OrganizerResearch(collectorRepository, power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD },
+            localLibraries = { query, limit, sourceId ->
+                if (appDatabase.referenceDao().libraries().none { it.generation != null && (sourceId == null || it.sourceId == sourceId) }) emptyList()
+                else {
+                    val page = referenceLibraries.query(query, sourceId)
+                    val terms = query.lowercase(java.util.Locale.ROOT).split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }.distinct().take(40)
+                    page.entries.take(limit).map { entry ->
+                        val library = requireNotNull(appDatabase.referenceDao().library(entry.sourceId))
+                        val imported = java.time.Instant.ofEpochMilli(requireNotNull(library.importedAt))
+                        val text = "${entry.title} ${entry.text}".lowercase(java.util.Locale.ROOT)
+                        com.halo.app.everyday.collectors.ResearchEvidence(entry.entryId, query, entry.title, entry.url,
+                            entry.sourceId, page.sources.getValue(entry.sourceId).version, entry.publisher, "LOCAL_LIBRARY", imported, imported,
+                            true, entry.text.take(4000), null, terms.count { it in text }.toDouble() / terms.size.coerceAtLeast(1),
+                            libraryGeneration = entry.generation, verificationKind = "LOCAL_IMPORT_INTEGRITY")
+                    }
+                }
+            })
     }
     val organizerWorkCapabilities by lazy {
         com.halo.app.everyday.organizer.OrganizerWorkCapabilities(listOf(
@@ -1208,6 +1276,12 @@ object ManualDependencyGraph {
             applicationContext,
             foreground,
             listOf(
+                com.halo.app.di.tools.MaterialImageTools(materialImages),
+                com.halo.app.di.tools.RichNoteCopyTools(richNoteCopies),
+                com.halo.app.di.tools.ReferenceLibraryTools(referenceLibraries) { id ->
+                    val file = referenceDownloads.download(id)
+                    referenceLibraries.preview(file.uri.toString(), file.fileName, origin = id.name)
+                },
                 com.halo.app.di.tools.host.AssistantTools(applicationContext, appearancePreferences, assistantPreferences,
                     readAloud = { text, id ->
                         startAndroidSpeaker()
@@ -1257,7 +1331,12 @@ object ManualDependencyGraph {
                         verify
                     }, elapsedMs = com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
                     bootId = { com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext) },
-                    ready = { (applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap(); collectorBootstrap.ensureInitialized() }),
+                    retrieveArticle = { args ->
+                        val receipt = researchArticles.retrieve(args["sourceId"] as String, (args["sourceVersion"] as Number).toLong(),
+                            args["contentRevision"] as String, args["articleId"] as String, (args["revision"] as? Number)?.toLong(), args["section"] as? String)
+                        org.json.JSONObject().put("id", receipt.id).put("version", receipt.version).put("saved", true).put("fetched", receipt.fetched)
+                            .put("articleCount", receipt.articleCount).apply { receipt.contentRevision?.let { put("contentRevision", it) } }
+                    }, readState = ::everydayDisclosureState, ready = { (applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap(); collectorBootstrap.ensureInitialized() }),
                 com.halo.app.di.tools.ScreenToolExecutor(screenStore) {
                     foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },

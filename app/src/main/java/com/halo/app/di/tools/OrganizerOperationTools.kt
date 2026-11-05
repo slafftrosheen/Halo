@@ -15,7 +15,8 @@ import java.time.*
 class OrganizerOperationTools(private val owner: OrganizerOperations, private val sources: CollectorRepository,
     private val research: OrganizerResearch, private val canAccess: () -> Boolean, private val authority: () -> (() -> Unit),
     private val clock: Clock = Clock.systemUTC(), private val elapsedMs: () -> Long, private val bootId: () -> String,
-    private val ready: suspend () -> Unit = {}) : ToolExecutor {
+    private val ready: suspend () -> Unit = {}, private val readState: suspend () -> Any = { Unit },
+    private val retrieveArticle: suspend (Map<String, Any?>) -> JSONObject = { error("Article adapter is unavailable") }) : ToolExecutor {
     override fun definitions() = OrganizerOperationContracts.definitions
     override suspend fun execute(toolCall: ToolCall) = execute(toolCall, ToolExecutionContext())
     override suspend fun execute(toolCall: ToolCall, context: ToolExecutionContext): ToolExecutionResult = withContext(Dispatchers.IO) {
@@ -34,13 +35,16 @@ class OrganizerOperationTools(private val owner: OrganizerOperations, private va
                 require("version" in a)
                 if (definition.name != "halo_research_source") owner.organizer.requireCurrent(a.getValue("id") as String, (a.getValue("version") as Number).toLong())
             } else require("version" !in a)
-            val result = EverydayWriteAuthority.run(check) {
+            val rawResult = EverydayWriteAuthority.run(check) {
                 enteredWrite = !query
                 dispatch(definition.name, a)
             }
             check(); ensureActive(); read?.let(EverydayReadAuthority::requireCurrent)
+            val result = if (query) EverydayToolReadback.project(definition.name, a, rawResult,
+                "${readState()}|$read|${owner.organizer.repository.records(true).map { it.id to it.version }}|${sources.states().map { Triple(it.source.id,it.source.version,it.snapshot?.contentRevision) }}") else EverydayToolReadback.receipt(definition.name, rawResult)
             val encoded = result.toString(); check(encoded.length <= 128000)
             EverydayToolContracts.validate(EverydayResultContracts.value(result), OrganizerOperationContracts.result(definition.name))
+            check(); ensureActive(); read?.let(EverydayReadAuthority::requireCurrent)
             ToolExecutionResult.Success(toolCall.id, toolCall.functionName, encoded)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) {
@@ -65,16 +69,8 @@ class OrganizerOperationTools(private val owner: OrganizerOperations, private va
             val eligible = if (section == null) all else OrganizerSections.records(OrganizerSection.valueOf(section), all, now, zone, occurrenceIds, outstanding)
             val terms = (a["query"] as? String).orEmpty().trim().lowercase(java.util.Locale.ROOT).split(Regex("\\s+")).filter { it.isNotBlank() }
             val rows = eligible.filter { row -> (a["id"] == null || row.id == a["id"]) && (a["owner"] == null || row.commitment.owner.name == a["owner"]) && terms.all { it in "${row.title} ${row.details} ${row.commitment.intent}".lowercase(java.util.Locale.ROOT) } }
-            val offset = (a["offset"] as? Number)?.toInt() ?: 0
-            val page = mutableListOf<JSONObject>(); var chars = 0
-            for (row in rows.drop(offset).take(30)) { val value = summary(row); val size = value.toString().length
-                if (chars + size > 115000) break
-                page += value; chars += size
-            }
-            require(page.isNotEmpty() || rows.size <= offset) { "This record exceeds the bounded list result; read its exact organizer detail" }
-            JSONObject().put("records", JSONArray(page))
-                .put("nextOffset", if (offset + page.size < rows.size) offset + page.size else JSONObject.NULL)
-                .put("capabilities", JSONArray(owner.capabilities.list().map { JSONObject().put("id", it.id).put("argumentsSchemaJson", JSONObject(it.argumentSchema).toString()) }))
+            val page = EverydayToolReadback.pageRows(rows.map { summary(it) }, "records", a)
+            page.put("capabilities", JSONArray(owner.capabilities.list().map { JSONObject().put("id", it.id).put("argumentsSchemaJson", JSONObject(it.argumentSchema).toString()) }))
         }
         "halo_commitment_save" -> {
             val old = (a["id"] as? String)?.let { owner.organizer.requireCurrent(it, a.long("version")) }
@@ -109,11 +105,13 @@ class OrganizerOperationTools(private val owner: OrganizerOperations, private va
             }
             receipt(value)
         }
-        "halo_research_query" -> JSONObject().put("query", a.text("query")).put("networkRequested", false).put("evidence", JSONArray(
+        "halo_research_query" -> EverydayToolReadback.pageRows(
             research.search(a.text("query"), (a["limit"] as? Number)?.toInt() ?: 10).map { e -> JSONObject().put("id", e.id).put("title", e.title).put("url", e.canonicalUrl)
                 .put("sourceId", e.sourceId).put("sourceVersion", e.sourceVersion).put("provider", e.provider).put("sourceType", e.sourceType)
                 .put("retrievedAt", e.retrievedAt.toString()).put("verifiedAt", e.verifiedAt.toString()).put("stale", e.stale).put("passage", e.passage)
-                .put("publishedAt", e.publishedAt?.toString()).put("updatedAt", e.updatedAt?.toString()).put("lexicalRelevance", e.lexicalRelevance) }))
+                .put("publishedAt", e.publishedAt?.toString()).put("updatedAt", e.updatedAt?.toString()).put("lexicalRelevance", e.lexicalRelevance).put("verificationKind", e.verificationKind)
+                .apply { e.libraryGeneration?.let { value -> put("libraryGeneration", value) } } }, "evidence", a).put("query", a.text("query")).put("networkRequested", false)
+        "halo_research_article" -> retrieveArticle(a)
         "halo_research_source" -> {
             val spec = ResearchSourceQuery(a.text("query"), a.text("provider"))
             val saved = research.saveSource(spec, a.text("language"), a["selected"] == true, a["id"] as? String, (a["version"] as? Number)?.toLong())

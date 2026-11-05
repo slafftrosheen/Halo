@@ -32,7 +32,7 @@ import java.time.format.FormatStyle
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, onBack: () -> Unit,
-    onSource: (String, String?) -> Unit, onOrganizer: (String?) -> Unit, onLocal: (LocalFact) -> Unit) {
+    onSource: (String, String?) -> Unit, onOrganizer: (String?) -> Unit, onLocal: (LocalFact) -> Unit, onLibraries: () -> Unit = {}) {
     val state by model.state.collectAsStateWithLifecycle()
     val familyReady by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val familyEnabled by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
@@ -89,6 +89,7 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
             Text(uiText(if (power) "Power · Only selected and enabled sources may refresh." else "Local · No internet refresh. Saved external information may be out of date."), style = MaterialTheme.typography.bodySmall)
             if (!LocalShellHaloOrb.current) TextButton(onBack) { Text(uiText("Back")) }
         }
+        if (sourceId == null && !kids) item { TextButton(onLibraries, Modifier.fillMaxWidth()) { Text(uiText("Reference libraries")) } }
         if (state.loading || state.busy || !canShow) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.error?.takeIf { !kids }?.let { item { EverydayMessage(it, true); TextButton(model::retry, enabled = !state.busy) { Text(uiText("Retry")) } } }
         state.notice?.takeIf { !kids }?.let { item { EverydayMessage(it) } }
@@ -103,9 +104,9 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                 else if (!source.enabled) Text(uiText("Refresh disabled · the saved snapshot is kept."))
                 if (source.muted) Text(uiText("Muted in briefs. Selected sources can still refresh."))
                 current.snapshot?.let { snapshot ->
-                    Text(uiText(if (snapshot.stale(now, source.external, power)) "Cached · may be out of date" else "Saved snapshot is current"), style = MaterialTheme.typography.titleMedium)
+                    Text(uiText(if (source.kind == CollectorKind.LOCAL_LIBRARY) "Local import metadata · source freshness is not verified" else if (snapshot.stale(now, source.external, power)) "Cached · may be out of date" else "Saved snapshot is current"), style = MaterialTheme.typography.titleMedium)
                     Text(uiText("Retrieved %1\$s", time(snapshot.retrievedAt)), style = MaterialTheme.typography.bodySmall)
-                    Text(uiText("Last verified %1\$s", time(snapshot.verifiedAt)), style = MaterialTheme.typography.bodySmall)
+                    Text(uiText(if (source.kind == CollectorKind.LOCAL_LIBRARY) "Import metadata checked %1\$s" else "Last verified %1\$s", time(snapshot.verifiedAt)), style = MaterialTheme.typography.bodySmall)
                 }
                 Text(uiText(attemptLabel(current.attempt.state)), style = MaterialTheme.typography.bodySmall)
                 current.attempt.at?.let { Text(uiText("Latest attempt %1\$s", time(it)), style = MaterialTheme.typography.bodySmall) }
@@ -117,6 +118,10 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                     TextButton({ removing = source }, enabled = !state.busy) { Text(uiText("Remove source")) }
                 }
                 if (itemId != null) TextButton({ onSource(source.id, null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back to saved source")) }
+            }
+            if (!kids && itemId != null && current.source.research?.providerId == "wikipedia") item {
+                TextButton({ current.snapshot?.let { snapshot -> model.retrieveWikipedia(source.id, source.version, snapshot.contentRevision, itemId) { onSource(it, null) } } },
+                    enabled = power && !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Retrieve full Wikipedia article")) }
             }
             collectorContent(current, itemId, now, locale, kids, { onSource(source.id, it) }, ::external, { entry ->
                 current.snapshot?.let { article = ArticleReminderReview(source.id, source.version, it.contentRevision, entry) }

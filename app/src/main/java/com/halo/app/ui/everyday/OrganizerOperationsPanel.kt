@@ -56,7 +56,6 @@ internal fun OrganizerSectionContent(section: OrganizerSection, state: Organizer
         if (section == OrganizerSection.RESEARCH) {
             if (!kids) OrganizerResearchPanel(model, state, onOpenRelated) else Text(uiText("A parent manages the saved plan."))
         } else {
-            if (section == OrganizerSection.TODAY) OrganizerTodayInformation(now, kids, onOpenRelated)
             val records = OrganizerSections.records(section, state.records, now, ZoneId.systemDefault(), state.todayOccurrenceIds, state.outstandingIds)
             val grouped = OrganizerSections.responsibility(records)
             CommitmentOwner.entries.forEach { owner ->
@@ -78,6 +77,7 @@ internal fun OrganizerSectionContent(section: OrganizerSection, state: Organizer
                     if (rows.size > 60) Text(uiText("Showing the first 60 matching items. Refine your search to find more."))
                 }
             }
+            if (section == OrganizerSection.TODAY) OrganizerTodayInformation(now, kids, onOpenRelated)
             if (records.isEmpty() && section != OrganizerSection.TODAY) Text(uiText("No commitments in this section yet."))
         }
     }

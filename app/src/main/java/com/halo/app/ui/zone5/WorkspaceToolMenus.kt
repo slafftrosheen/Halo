@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.semantics
@@ -25,82 +26,45 @@ internal enum class WorkspaceMenuGroup(val label: Int) {
     VIEW(R.string.zone5_group_view), MORE(R.string.zone5_group_more)
 }
 
-internal fun workspaceMenuGroup(id: String): WorkspaceMenuGroup {
-    val action = id.removePrefix("page:").substringAfterLast('.')
-    if (action.startsWith("view-")) return WorkspaceMenuGroup.VIEW
-    if (action.startsWith("export-")) return WorkspaceMenuGroup.FILE
-    if (action.startsWith("edit-")) return WorkspaceMenuGroup.EDIT
-    if (action.startsWith("add-")) return WorkspaceMenuGroup.ADD
-    return when (action) {
-        "new", "new-note", "new-canvas", "open", "save", "export", "versions", "close", "copy", "import", "new-image", "discard" -> WorkspaceMenuGroup.FILE
-        "undo", "redo", "rename", "find", "arrange", "edit", "forget", "background", "transform", "tools", "table" -> WorkspaceMenuGroup.EDIT
-        "insert", "add", "add-layer", "material", "attach", "text", "shape", "draw", "image", "camera" -> WorkspaceMenuGroup.ADD
-        "outline", "fit", "layers", "details", "source", "history", "practice", "read", "stop-reading" -> WorkspaceMenuGroup.VIEW
-        else -> WorkspaceMenuGroup.MORE
-    }
+internal fun workspaceMenuGroup(id: String): WorkspaceMenuGroup = when (WorkspaceActionPresentation.require(id).group) {
+    ShellActionGroup.FILE -> WorkspaceMenuGroup.FILE
+    ShellActionGroup.EDIT -> WorkspaceMenuGroup.EDIT
+    ShellActionGroup.INSERT -> WorkspaceMenuGroup.ADD
+    ShellActionGroup.VIEW -> WorkspaceMenuGroup.VIEW
+    ShellActionGroup.OPTIONS -> WorkspaceMenuGroup.MORE
 }
 
-/** All menus invoke the same live entry lease as satellites; no second command registry. */
+/** Primary operations only. Secondary options live once in the searchable action sheet. */
 @Composable
 internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChanged: (Boolean) -> Unit = {}) {
     val projection = LocalShellPageActions.current?.value ?: return
-    if (projection.owner.routeFamily !in workspaceMenuFamilies ||
-        !LocalShellPageOwnerFilter.current(projection.owner)) return
-    val actions = projection.actions.filterNot { it.title == "Back" || it.id.endsWith(".back") ||
-        it.id in setOf("page.notebook.view-library", "page.notebook.view-tools") }
-    if(projection.owner.routeFamily=="studio" && actions.any {it.id=="page.studio.tools"}) {
-        val primary=listOf("page.studio.add-layer","page.studio.layers","page.studio.tools","page.studio.ai")
-        Column {
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
-            primary.forEach {id->actions.find {it.id==id}?.let {action->
-                val active=projection.owner.activeToolId==id
-                FilterChip(selected=active,onClick={projection.invoke(id)},enabled=action.enabled,
-                    // Stack the icon above the label so four translated targets retain
-                    // their full text width on narrow phones and at large font sizes.
-                    label={Column(Modifier.fillMaxWidth(), horizontalAlignment=Alignment.CenterHorizontally) {
-                        Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:$id",action.title,action.glyph)),action.glyph,Modifier.size(20.dp))
-                        Text(uiText(action.title),Modifier.fillMaxWidth(),style=MaterialTheme.typography.labelSmall,textAlign=TextAlign.Center)
-                    }},
-                    modifier=Modifier.weight(1f).heightIn(min=48.dp).semantics {selected=active;if(!action.enabled) stateDescription=projection.owner.disabledReasonFor(id).orEmpty()}
-                        .haloTrace(action.id==guidedActionId,MaterialTheme.colorScheme.primary,12.dp,lapOnAppear=true))
-            }}
-        }
-        actions.filter {it.id in primary&&!it.enabled}.mapNotNull {projection.owner.disabledReasonFor(it.id)}.distinct().forEach {
-            Text(it,style=MaterialTheme.typography.bodySmall)
-        }
-        }
-        return
-    }
-    var opened by remember(projection.owner.routeFamily, projection.owner.objectId) { mutableStateOf<WorkspaceMenuGroup?>(null) }
+    if (projection.owner.routeFamily !in workspaceMenuFamilies || !LocalShellPageOwnerFilter.current(projection.owner)) return
+    val primary = projection.actions.filter { WorkspaceActionPresentation.require(it.id).let { presentation -> presentation.role == ShellActionRole.PRIMARY && presentation.placement == ShellPrimaryPlacement.TOOLBAR } }
+        .sortedBy { WorkspaceActionPresentation.require(it.id).order }
+    if (primary.isEmpty()) return
     val target = if (LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
-    LaunchedEffect(projection) { opened = null }
-    val disclosure by rememberUpdatedState(onDisclosureChanged)
-    LaunchedEffect(opened) { disclosure(opened != null) }
-    DisposableEffect(Unit) { onDispose { disclosure(false) } }
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        WorkspaceMenuGroup.entries.forEach { group ->
-            val entries = actions.filter { workspaceMenuGroup(it.id) == group }
-            if (entries.isNotEmpty()) Box {
-                TextButton(onClick = { opened = group }, modifier = Modifier.heightIn(min = target)
-                    .haloTrace(entries.any { it.id == guidedActionId }, MaterialTheme.colorScheme.primary, 12.dp, lapOnAppear = true),
-                    contentPadding = PaddingValues(horizontal = 12.dp)) { Text(stringResource(group.label)) }
-                DropdownMenu(expanded = opened == group, onDismissRequest = { opened = null }) {
-                    entries.forEach { action ->
-                        DropdownMenuItem(enabled = action.enabled,
-                            modifier = Modifier.heightIn(min = target).haloTrace(action.id == guidedActionId, MaterialTheme.colorScheme.primary, 12.dp),
-                            text = { Column {
-                                Text(uiText(action.title))
-                                if (!action.enabled) projection.owner.disabledReasonFor(action.id)?.let {
-                                    Text(uiText(it), style = MaterialTheme.typography.bodySmall)
-                                }
+    val largeText = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("zone5-command-groups")) {
+        val columns = if (largeText || maxWidth < 300.dp) 2 else 4
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            primary.chunked(columns).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    row.forEach { action ->
+                        val active = projection.owner.activeToolId == action.id
+                        FilterChip(selected = active, onClick = { projection.invoke(action.id) }, enabled = action.enabled,
+                            label = { Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:${action.id}", action.title, action.glyph)), action.glyph, Modifier.size(20.dp))
+                                Text(uiText(action.title), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
                             } },
-                            leadingIcon = { Zone5Icon(zone5ActionIconId(HaloOrbContextAction("page:${action.id}", action.title, action.glyph)), action.glyph, Modifier.size(24.dp)) },
-                            onClick = {
-                                opened = null
-                                projection.invoke(action.id)
-                            })
+                            modifier = Modifier.weight(1f).heightIn(min = target).semantics {
+                                selected = active
+                                if (!action.enabled) stateDescription = projection.owner.disabledReasonFor(action.id).orEmpty()
+                            }.haloTrace(action.id == guidedActionId, MaterialTheme.colorScheme.primary, 12.dp, lapOnAppear = true))
                     }
                 }
+            }
+            primary.filterNot { it.enabled }.mapNotNull { projection.owner.disabledReasonFor(it.id) }.distinct().forEach {
+                Text(uiText(it), style = MaterialTheme.typography.bodySmall)
             }
         }
     }

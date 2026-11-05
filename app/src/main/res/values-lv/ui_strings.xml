@@ -5057,4 +5057,78 @@
     <string name="ui_31b22954a6ff" formatted="false">"Atlasīt slāni %1$s"</string>
     <string name="ui_4c99e10f0d89" formatted="false">"Ieslēgt efektu %1$s"</string>
     <string name="ui_361ef0904840" formatted="false">"Rediģēt attēlu"</string>
+    <string name="ui_8375175b441a" formatted="false">"%1$d KiB"</string>
+    <string name="ui_8fb4a2d44af8" formatted="false">"Apstrādāti ieraksti: %1$d"</string>
+    <string name="ui_3e96e319d755" formatted="false">"Indeksēti ieraksti: %1$d · %2$s"</string>
+    <string name="ui_910b178efa5e" formatted="false">"Pievienojiet bibliotēku, lai meklētu saglabātos uzziņu tekstos bez interneta."</string>
+    <string name="ui_07af3e51399c" formatted="false">"Pievienot uzziņu bibliotēku"</string>
+    <string name="ui_e490f6c54951" formatted="false">"Bloka stils"</string>
+    <string name="ui_a10e21201fdb" formatted="false">"Kopsavilkuma iestatījumi"</string>
+    <string name="ui_6dd6cafb0d3f" formatted="false">"Atcelt importēšanu"</string>
+    <string name="ui_4ca48b4230a5" formatted="false">"Apstiprināt importēšanu"</string>
+    <string name="ui_14c733790a45" formatted="false">"Neizdevās apstiprināt kopiju. Pirms mēģināt vēlreiz, pārbaudiet piezīmes."</string>
+    <string name="ui_db42d0f2d0a5" formatted="false">"Datu kopas izveides datums: %1$s"</string>
+    <string name="ui_d64da3131f51" formatted="false">"Lejupielādēt pārskatīšanai"</string>
+    <string name="ui_dc0e8c2c0dac" formatted="false">"Lejupielādei vajadzīgs Power režīms. Pirms importēšanas lejupielādēto failu pārskatīsiet atsevišķi."</string>
+    <string name="ui_86e248a15621" formatted="false">"Izslēgts no meklēšanas"</string>
+    <string name="ui_1ef2cd761300" formatted="false">"Attēla tiesības atšķiras no raksta teksta tiesībām; skatiet sākotnējo avotu."</string>
+    <string name="ui_09691e94bcfc" formatted="false">"Importēt bibliotēku"</string>
+    <string name="ui_979b95389e09" formatted="false">"Izveidot formatējamu piezīmes kopiju"</string>
+    <string name="ui_14a7b1d33adf" formatted="false">"Nākamie rezultāti"</string>
+    <string name="ui_68116808fb29" formatted="false">"Nav dzēsta vienuma, ko atjaunot"</string>
+    <string name="ui_ef3782fa64e1" formatted="false">"Nav atbilstošu ierakstu. Mēģiniet avota valodu vai citus vārdus."</string>
+    <string name="ui_498260b07348" formatted="false">"Atvērt sākotnējo avotu"</string>
+    <string name="ui_d2a97fa5bfb0" formatted="false">"Papildu nelielas lejupielādes"</string>
+    <string name="ui_174cd69656c1" formatted="false">"Plānotāja iestatījumi"</string>
+    <string name="ui_d7ed2b160d8f" formatted="false">"Sākotnējais vikiteksts; servera veidnes nav izvērstas"</string>
+    <string name="ui_75cb80de3b08" formatted="false">"Plāna filtri"</string>
+    <string name="ui_f95c30c4f16d" formatted="false">"Lasīt ierakstu"</string>
+    <string name="ui_0a1f758c3b12" formatted="false">"Uzziņu bibliotēkas"</string>
+    <string name="ui_a6d703e0e93d" formatted="false">"Atkārtoti atlasīt sākotnējo failu"</string>
+    <string name="ui_f12822f97a31" formatted="false">"Turpināt importēšanu"</string>
+    <string name="ui_2a2af9ea49a4" formatted="false">"Iegūt pilnu Vikipēdijas rakstu"</string>
+    <string name="ui_323352c1a979" formatted="false">"Pārskatīt norisi"</string>
+    <string name="ui_67b15e994569" formatted="false">"Formatētas piezīmes, virsraksti, saraksti un rindkopas"</string>
+    <string name="ui_3ae9011521ac" formatted="false">"Saglabāt attēlus lasīšanai bez interneta"</string>
+    <string name="ui_d3b69a22b571" formatted="false">"Avota attēlu saglabāšanai vajadzīgs Power režīms"</string>
+    <string name="ui_49c266baaaa7" formatted="false">"Meklēt"</string>
+    <string name="ui_61840cd1f197" formatted="false">"Meklēt atlasītajās bibliotēkās"</string>
+    <string name="ui_2cc511b0e961" formatted="false">"Avota datums: %1$s"</string>
+    <string name="ui_0e4df5b2b7b2" formatted="false">"Avota attēls"</string>
+    <string name="ui_1e88f25d3896" formatted="false">"Avots: CDC. Oriģināls pieejams bez maksas. Izmantošana halo nenozīmē CDC vai ASV valdības atbalstu."</string>
+    <string name="ui_3ba8701496df" formatted="false">"Atlasītais fails tiek importēts lokāli. Avota valoda, datums un tiesību informācija tiek saglabāta."</string>
+    <string name="ui_1d16b88f1c0e" formatted="false">"Fails saglabā sākotnējo formātu. Lai pievienotu virsrakstus, rindkopas un sarakstus, izveidojiet atsevišķu formatētu piezīmi."</string>
+    <string name="ui_eda49214cfe4" formatted="false">"Atjaunināt no faila"</string>
+    <string name="ui_35d7e044e24d" formatted="false">"Lietotāja importēts teksts; izdevējs un tiesības nav pārbaudīti"</string>
+    <string name="ui_ed200c1f86a0" formatted="false">"XML, JSONL un CSV · atbalstīti saspiesti faili"</string>
+    <string name="ui_4a6597fa335d" formatted="false">"MedlinePlus veselības tēmas"</string>
+    <string name="ui_b2ac258f528c" formatted="false">"Īsi veselības tēmu kopsavilkumi angļu un spāņu valodā no ASV Nacionālās medicīnas bibliotēkas. Bez licencētas enciklopēdijas, zāļu aprakstiem un attēliem."</string>
+    <string name="ui_ea87d978da39" formatted="false">"Gatavība ārkārtas situācijām"</string>
+    <string name="ui_d19e22b63b49" formatted="false">"Atlasīti CDC uzziņu teksti par drošu ūdeni, pārtiku, temperatūru un sakopšanu pēc katastrofām. Ar avota datumiem un saitēm. Angļu valodā."</string>
+    <string name="ui_19ff5bc55a19" formatted="false">"Vispārīgas uzziņas"</string>
+    <string name="ui_f914372b5345" formatted="false">"Neliela Vikipēdijas zinātnisko un praktisko tekstu izlase ar papildu avota attēliem, fiksētām versijām un atsaucēm. Angļu valodā."</string>
+    <string name="ui_3c9fee3663dc" formatted="false">"Šis jaunais melnraksts tiks atmests."</string>
+    <string name="ui_e3f2e93c4560" formatted="false">"Uzziņu bibliotēkas importē vecāks"</string>
+    <string name="ui_d632729eb393" formatted="false">"Lejupielādēts no oficiālā avota"</string>
+    <string name="ui_6d71079d2614" formatted="false">"Lokālā importa dati · avota aktualitāte nav pārbaudīta"</string>
+    <string name="ui_cdb88338c233" formatted="false">"Importa dati pārbaudīti %1$s"</string>
+    <string name="ui_1171b1320634" formatted="false">"Samazināt attēlus"</string>
+    <string name="ui_040b8f3bba0f" formatted="false">"Palielināt attēlus"</string>
+    <string name="ui_618089568d0e" formatted="false">"Dažus attēlus neizdevās saglabāt. Raksta teksts ir saglabāts."</string>
+    <string name="ui_d880209363b2" formatted="false">"Attēli saglabāti lasīšanai bez interneta"</string>
+    <string name="ui_56c85b61080e" formatted="false">"Neizdevās apstiprināt attēlu saglabāšanu. Pirms mēģināt vēlreiz, atveriet pašreizējo avotu."</string>
+    <string name="ui_3e915aa80e1b" formatted="false">"Pārskatīt pirms importēšanas"</string>
+    <string name="ui_d252fffacbf0" formatted="false">"Importēšana"</string>
+    <string name="ui_cc24d96ee638" formatted="false">"Indeksēšana"</string>
+    <string name="ui_7aeb76ac36d8" formatted="false">"Šī darbība pašreizējā skatā nav pieejama."</string>
+    <string name="ui_97a2bf9089e8" formatted="false">"Neizdevās atvērt sākotnējo avotu"</string>
+    <string name="ui_433cadde197a" formatted="false">"Darbību ar bibliotēku neizdevās pabeigt. Iepriekš saglabātā bibliotēka paliek."</string>
+    <string name="ui_d71af6839ae9" formatted="false">"Importēšana atcelta"</string>
+    <string name="ui_f672fd61f011" formatted="false">"Importēšana pārtraukta; pārskatiet un turpiniet"</string>
+    <string name="ui_fbdaf2175c16" formatted="false">"Dokuments nav pieejams; atkārtoti atlasiet to pašu failu"</string>
+    <string name="ui_e1fc3faa6c8f" formatted="false">"Šī bibliotēkas versija jau ir instalēta"</string>
+    <string name="ui_f74ad2c27622" formatted="false">"Nav atrasti atbalstīti ieraksti"</string>
+    <string name="ui_b9e1610ff7d9" formatted="false">"Importēšana neizdevās; atlasiet atbalstītu failu"</string>
+    <string name="ui_a6a01ca08abf" formatted="false">"Avots noņemts; atlasiet jaunu failu importēšanai"</string>
+    <string name="ui_1913812b4ada" formatted="false">"Neizdevās ielādēt bibliotēkas. Mēģiniet vēlreiz nolasīt lokālo norisi."</string>
 </resources>

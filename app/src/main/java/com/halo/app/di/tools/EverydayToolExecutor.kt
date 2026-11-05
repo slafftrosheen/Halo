@@ -65,11 +65,15 @@ class EverydayToolExecutor(
             val disclosure=if(toolCall.functionName in EverydayToolContracts.queries || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ"))
                 com.halo.app.everyday.EverydayReadAuthority.capture() else null
             val canonical=if(disclosure!=null) readDisclosureState() else null
-            val result=EverydayWriteAuthority.run(check) {
+            val rawResult=EverydayWriteAuthority.run(check) {
                 // Registry descriptors authorize execution and produce content-free traces. This adapter never parses chat text.
                 mutationStarted=toolCall.functionName !in EverydayToolContracts.queries && toolCall.functionName !in setOf("halo_source_preview","halo_everyday_open")
                 dispatch(toolCall.functionName,a,child)
             }
+            if (a["version"] != null && rawResult.has("version") && toolCall.functionName in EverydayToolContracts.queries)
+                require((a["version"] as Number).toLong() == rawResult.getLong("version"))
+            val result = if (toolCall.functionName in EverydayToolContracts.queries)
+                EverydayToolReadback.project(toolCall.functionName, a, rawResult, "$canonical|$disclosure") else EverydayToolReadback.receipt(toolCall.functionName, rawResult)
             val encoded=result.toString()
             check(encoded.length<=128000) {"Everyday result exceeds the declared output bound"}
             check(runCatching {EverydayResultContracts.validate(toolCall.functionName,result)}.isSuccess) {"Everyday result contract changed"}
@@ -92,7 +96,7 @@ class EverydayToolExecutor(
     }
 
     private suspend fun readDisclosureState(): Any = readState?.invoke() ?: Triple(briefs.settings().version,
-        sources.states().map {it.source.id to it.source.version}.sortedBy {it.first},
+        sources.states().map {Triple(it.source.id,it.source.version,it.snapshot?.contentRevision)}.sortedBy {it.first},
         organizer.repository.records(true).map {it.id to it.version}.sortedBy {it.first})
 
     private suspend fun record(id: String,child: Boolean): OrganizerRecord {
@@ -102,7 +106,7 @@ class EverydayToolExecutor(
     }
     private suspend fun source(id: String,version: Long,child: Boolean,content: Boolean=false): CollectorState {
         val value=requireNotNull(sources.state(id));if(value.source.version!=version) throw CollectorConflict("Source changed")
-        if(child) require(value.source.childApproved && value.source.external)
+        if(child) require(value.source.childApproved && (value.source.external || value.source.kind == CollectorKind.LOCAL_LIBRARY))
         if(content || child) require(value.source.selected && value.source.enabled && !value.source.muted)
         return value
     }
@@ -118,24 +122,22 @@ class EverydayToolExecutor(
                     val from=Instant.parse(a.string("from"));val until=Instant.parse(a.string("until"))
                     require(until>from && Duration.between(from,until).toDays()<=366)
                     val rows=organizer.agenda(from,until,kinds).filter {grants==null || it.record.id in grants}
-                    JSONObject().put("occurrences",JSONArray(rows.drop(offset).take(50).map { occurrence(it) }))
-                        .put("nextOffset",if(offset+50<rows.size) offset+50 else JSONObject.NULL)
+                    EverydayToolReadback.pageRows(rows.map { occurrence(it) }, "occurrences", a)
                 } else {
                     val rows=organizer.search(a.optionalString("query").orEmpty()).filter {it.kind in kinds && (grants==null || it.id in grants)}
                         .map {if(child) it.copy(parentId=it.parentId?.takeIf {id -> id in grants.orEmpty()}) else it}
-                    JSONObject().put("records",JSONArray(rows.drop(offset).take(50).map { summary(it) }))
-                        .put("nextOffset",if(offset+50<rows.size) offset+50 else JSONObject.NULL)
+                    EverydayToolReadback.pageRows(rows.map { summary(it) }, "records", a)
                 }
             }
             "halo_organizer_get" -> {
                 val value=record(id(),child)
                 val overrides=organizer.repository.overrides(value.id)
                 val disclosed=if(child) value.copy(links=emptyList(),parentId=value.parentId?.takeIf {it in briefs.settings().childRecordIds}) else value
-                JSONObject().put("id",value.id).put("version",value.version).put("record",JSONObject(OrganizerCodec.encode(disclosed)).apply { remove("commitment") })
-                    .put("overrides",JSONArray(overrides.take(100).map { JSONObject().put("originalStart",it.originalStart.toString()).put("disposition",it.disposition.name)
+                JSONObject().put("id",value.id).put("version",value.version).put("record",JSONObject(OrganizerCodec.encode(disclosed)).apply { if (child) remove("commitment") })
+                    .put("overrides",JSONArray(overrides.map { JSONObject().put("originalStart",it.originalStart.toString()).put("disposition",it.disposition.name)
                         .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString()) }))
-                    .put("omittedOverrides",(overrides.size-100).coerceAtLeast(0))
-                    .put("deliveries",JSONArray(organizer.repository.receipts(value.id).sortedByDescending {it.updatedAt}.take(20).map { receipt(it) }))
+                    .put("omittedOverrides",0)
+                    .put("deliveries",JSONArray(organizer.repository.receipts(value.id).sortedWith(compareByDescending<DeliveryReceipt> { it.updatedAt }.thenBy { it.occurrenceKey }).map { receipt(it) }))
                     .apply {a.optionalString("originalStart")?.let {at -> put("occurrence",occurrence(requireNotNull(OrganizerRecurrence.exact(value,overrides,Instant.parse(at),ZoneId.systemDefault()))))}}
             }
             "halo_organizer_create" -> {
@@ -267,16 +269,16 @@ class EverydayToolExecutor(
                         clocks.reorder(rows.map {it.string("id")},rows.associate {it.string("id") to it.long("version")});JSONObject().put("saved",true)}
                 }
             }
-            "halo_source_query" -> JSONObject().put("sources",JSONArray(sources.states().filter {(!child || it.source.childApproved && it.source.external && it.source.selected && it.source.enabled && !it.source.muted) &&
-                (a["selectedOnly"]!=true || it.source.selected) && (a["category"]==null || it.source.category.name==a["category"]) && (a["language"]==null || it.source.language==a["language"])}.take(100).map {sourceSummary(it)}))
+            "halo_source_query" -> EverydayToolReadback.pageRows(sources.states().filter { (!child || it.source.childApproved && (it.source.external || it.source.kind == CollectorKind.LOCAL_LIBRARY) && it.source.selected && it.source.enabled && !it.source.muted) &&
+                (a["selectedOnly"] != true || it.source.selected) && (a["category"] == null || it.source.category.name == a["category"]) && (a["language"] == null || it.source.language == a["language"]) }.sortedBy { it.source.id }.map { sourceSummary(it) }, "sources", a)
             "halo_source_get" -> {
                 val value=source(id(),version(),child,true);val cached=value.snapshot?.takeIf {it.sourceVersion==value.source.version}
                 require(a["contentRevision"]==null || cached?.contentRevision==a["contentRevision"])
                 val body=when(val payload=cached?.payload) {
-                    is CollectorPayload.Articles -> CollectorPayload.Articles(if(a["articleId"]!=null) listOf(requireNotNull(payload.items.find {it.id==a["articleId"]})).map {it.copy(text=it.text.take(8000))} else payload.items.take(5).map {it.copy(text=it.text.take(1000))})
-                    is CollectorPayload.Local -> CollectorPayload.Local(payload.items.take(5).map {it.copy(summary=it.summary.take(1000))})
-                    is CollectorPayload.Warnings -> CollectorPayload.Warnings(payload.items.take(5).map {it.copy(text=it.text.take(1000))})
-                    is CollectorPayload.Calendar -> null // Calendar import is a separate explicit reviewed instrument action.
+                    is CollectorPayload.Articles -> CollectorPayload.Articles(if(a["articleId"]!=null) listOf(requireNotNull(payload.items.find {it.id==a["articleId"]})) else payload.items)
+                    is CollectorPayload.Local -> payload
+                    is CollectorPayload.Warnings -> payload
+                    is CollectorPayload.Calendar -> payload // Read-only evidence; importing remains an explicit reviewed operation.
                     else -> payload
                 }
                 sourceSummary(value).put("content",body?.let {JSONObject(CollectorCodec.encode(it))} ?: JSONObject.NULL)
@@ -310,7 +312,7 @@ class EverydayToolExecutor(
                         receipt.state?.let(::sourceSummary)?.put("admitted",receipt.admitted) ?: JSONObject().put("available",false)}
                     "CANCEL" -> {coordinator.cancel(id());JSONObject().put("cancellationRequested",true)}
                     "CLEAR_CACHE" -> {clearSource(id(),version());JSONObject().put("cleared",true)}
-                    else -> {require(value.source.external);sources.remove(id(),version());JSONObject().put("removed",true)}
+                    else -> {require(value.source.external || value.source.kind == CollectorKind.LOCAL_LIBRARY);sources.remove(id(),version());JSONObject().put("removed",true)}
                 }
             }
             "halo_brief_query" -> {
@@ -341,6 +343,10 @@ class EverydayToolExecutor(
             "halo_everyday_open" -> {
                 val target=when(a.string("instrument")) {
                     "ORGANIZER" -> if(a["id"]==null) EverydayTarget.Organizer else {val row=record(id(),child);require(row.deletedAt==null && row.version==version());EverydayTarget.Record(row.id,row.version,a.optionalString("originalStart")?.let(Instant::parse))}
+                    "LIBRARIES" -> if(a["id"] == null) EverydayTarget.Libraries else {
+                        val row = source(id(), version(), child, true); require(row.source.kind == CollectorKind.LOCAL_LIBRARY)
+                        EverydayTarget.LibraryEntry(id(), version(), a.string("generation"), a.string("entryId"))
+                    }
                     "SOURCE" -> {val row=source(id(),version(),child,true);EverydayTarget.Source(row.source.id,row.source.version,row.snapshot?.contentRevision,a.optionalString("articleId"))}
                     "BRIEF" -> if(a["id"]==null) EverydayTarget.BriefLatest else EverydayTarget.Brief(requireNotNull(briefService.visible(id())).id)
                     else -> if(a["zoneId"]!=null) EverydayTarget.Clock(ZoneId.of(a.string("zoneId")).id,a.optionalString("label").orEmpty()) else EverydayTarget.Clocks

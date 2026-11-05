@@ -69,6 +69,11 @@ suspend fun readEverydayAuthorityStamp(): String = Graph.appDatabase.withTransac
 /** A face is a review, not authority. Recheck the canonical source at the user's tap. */
 suspend fun EverydayTarget.route(): String = when (this) {
     EverydayTarget.Organizer -> EverydayRoutes.ORGANIZER
+    EverydayTarget.Libraries -> EverydayRoutes.LIBRARIES
+    is EverydayTarget.LibraryEntry -> {
+        Graph.referenceLibraries.entry(id, version, generation, entryId)
+        EverydayRoutes.libraryEntry(id, version, generation, entryId)
+    }
     EverydayTarget.Sources -> EverydayRoutes.SOURCES
     EverydayTarget.Clocks -> EverydayRoutes.CLOCKS
     EverydayTarget.Devices -> "devices"

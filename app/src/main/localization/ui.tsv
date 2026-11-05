@@ -5063,3 +5063,77 @@ Unlock|||Разблокировать|||Atbloķēt|||Odblokuj
 Select layer %1$s|||Выбрать слой %1$s|||Atlasīt slāni %1$s|||Wybierz warstwę %1$s
 Enable effect %1$s|||Включить эффект %1$s|||Ieslēgt efektu %1$s|||Włącz efekt %1$s
 Edit an image|||Редактировать изображение|||Rediģēt attēlu|||Edytuj obraz
+%1$d KiB|||%1$d КиБ|||%1$d KiB|||%1$d KiB
+%1$d entries processed|||Обработано записей: %1$d|||Apstrādāti ieraksti: %1$d|||Przetworzono wpisów: %1$d
+%1$d indexed entries · %2$s|||Записей в индексе: %1$d · %2$s|||Indeksēti ieraksti: %1$d · %2$s|||Zindeksowane wpisy: %1$d · %2$s
+Add a library to search saved reference text offline.|||Добавьте библиотеку для поиска по справочным материалам без интернета.|||Pievienojiet bibliotēku, lai meklētu saglabātos uzziņu tekstos bez interneta.|||Dodaj bibliotekę, aby przeszukiwać zapisane materiały bez internetu.
+Add reference library|||Добавить справочную библиотеку|||Pievienot uzziņu bibliotēku|||Dodaj bibliotekę źródeł
+Block style|||Стиль блока|||Bloka stils|||Styl bloku
+Brief preferences|||Настройки сводки|||Kopsavilkuma iestatījumi|||Ustawienia podsumowania
+Cancel import|||Отменить импорт|||Atcelt importēšanu|||Anuluj import
+Confirm import|||Подтвердить импорт|||Apstiprināt importēšanu|||Potwierdź import
+Copy could not be confirmed. Check your notes before trying again.|||Не удалось подтвердить создание копии. Проверьте заметки перед повторной попыткой.|||Neizdevās apstiprināt kopiju. Pirms mēģināt vēlreiz, pārbaudiet piezīmes.|||Nie udało się potwierdzić kopii. Przed ponowną próbą sprawdź notatki.
+Dataset generated: %1$s|||Дата формирования базы: %1$s|||Datu kopas izveides datums: %1$s|||Data utworzenia zbioru: %1$s
+Download for review|||Скачать для проверки|||Lejupielādēt pārskatīšanai|||Pobierz do sprawdzenia
+Downloads require Power. You will review the downloaded file separately before importing it.|||Для скачивания нужен режим Power. Перед импортом скачанный файл можно будет проверить отдельно.|||Lejupielādei vajadzīgs Power režīms. Pirms importēšanas lejupielādēto failu pārskatīsiet atsevišķi.|||Pobieranie wymaga trybu Power. Przed importem osobno sprawdzisz pobrany plik.
+Excluded from search|||Исключено из поиска|||Izslēgts no meklēšanas|||Wykluczono z wyszukiwania
+Image rights are separate from article text; see the original source.|||Права на изображение могут отличаться от прав на текст. См. оригинальный источник.|||Attēla tiesības atšķiras no raksta teksta tiesībām; skatiet sākotnējo avotu.|||Prawa do obrazu są odrębne od praw do tekstu; sprawdź źródło.
+Import library|||Импортировать библиотеку|||Importēt bibliotēku|||Importuj bibliotekę
+Make rich-note copy|||Создать форматируемую копию|||Izveidot formatējamu piezīmes kopiju|||Utwórz formatowaną kopię notatki
+Next results|||Следующие результаты|||Nākamie rezultāti|||Następne wyniki
+No deleted item to restore|||Нет удалённого элемента для восстановления|||Nav dzēsta vienuma, ko atjaunot|||Brak usuniętego elementu do przywrócenia
+No matching entries. Try the source language or different words.|||Ничего не найдено. Попробуйте слова на языке источника или другой запрос.|||Nav atbilstošu ierakstu. Mēģiniet avota valodu vai citus vārdus.|||Brak pasujących wpisów. Spróbuj języka źródła lub innych słów.
+Open original source|||Открыть оригинальный источник|||Atvērt sākotnējo avotu|||Otwórz oryginalne źródło
+Optional compact downloads|||Небольшие библиотеки для скачивания|||Papildu nelielas lejupielādes|||Opcjonalne małe zbiory do pobrania
+Organizer settings|||Настройки органайзера|||Plānotāja iestatījumi|||Ustawienia organizera
+Original wiki source; server templates are not expanded|||Исходный вики-текст; серверные шаблоны не раскрыты|||Sākotnējais vikiteksts; servera veidnes nav izvērstas|||Oryginalny wikitekst; szablony serwera nie są rozwijane
+Plan filters|||Фильтры плана|||Plāna filtri|||Filtry planu
+Read entry|||Читать запись|||Lasīt ierakstu|||Czytaj wpis
+Reference libraries|||Справочные библиотеки|||Uzziņu bibliotēkas|||Biblioteki źródeł
+Reselect original file|||Снова выбрать исходный файл|||Atkārtoti atlasīt sākotnējo failu|||Wybierz ponownie oryginalny plik
+Resume import|||Продолжить импорт|||Turpināt importēšanu|||Wznów import
+Retrieve full Wikipedia article|||Загрузить полную статью Википедии|||Iegūt pilnu Vikipēdijas rakstu|||Pobierz pełny artykuł Wikipedii
+Review progress|||Посмотреть ход импорта|||Pārskatīt norisi|||Sprawdź postęp
+Rich notes, headings, lists and paragraphs|||Форматируемые заметки, заголовки, списки и абзацы|||Formatētas piezīmes, virsraksti, saraksti un rindkopas|||Formatowane notatki, nagłówki, listy i akapity
+Save images for offline reading|||Сохранить изображения для чтения без интернета|||Saglabāt attēlus lasīšanai bez interneta|||Zapisz obrazy do czytania offline
+Saving source images requires Power|||Для сохранения изображений нужен режим Power|||Avota attēlu saglabāšanai vajadzīgs Power režīms|||Zapisywanie obrazów wymaga trybu Power
+Search|||Поиск|||Meklēt|||Szukaj
+Search selected libraries|||Поиск по выбранным библиотекам|||Meklēt atlasītajās bibliotēkās|||Przeszukaj wybrane biblioteki
+Source date: %1$s|||Дата в источнике: %1$s|||Avota datums: %1$s|||Data w źródle: %1$s
+Source image|||Изображение из источника|||Avota attēls|||Obraz ze źródła
+Source: CDC. Available free from CDC; use by Halo does not imply CDC or US government endorsement.|||Источник: CDC. Оригинал доступен бесплатно. Использование в Halo не означает одобрения со стороны CDC или правительства США.|||Avots: CDC. Oriģināls pieejams bez maksas. Izmantošana Halo nenozīmē CDC vai ASV valdības atbalstu.|||Źródło: CDC. Oryginał jest dostępny bezpłatnie. Użycie w Halo nie oznacza poparcia CDC ani rządu USA.
+The selected file is imported locally. Its source language, date and rights are retained.|||Выбранный файл импортируется на телефон. Язык, дата и сведения о правах сохраняются.|||Atlasītais fails tiek importēts lokāli. Avota valoda, datums un tiesību informācija tiek saglabāta.|||Wybrany plik jest importowany lokalnie. Język, data i informacje o prawach zostają zachowane.
+This file keeps its original format. Make a separate rich note to add headings, paragraphs and lists.|||Этот файл сохраняет исходный формат. Создайте отдельную форматируемую заметку, чтобы добавить заголовки, абзацы и списки.|||Fails saglabā sākotnējo formātu. Lai pievienotu virsrakstus, rindkopas un sarakstus, izveidojiet atsevišķu formatētu piezīmi.|||Plik zachowuje oryginalny format. Utwórz osobną formatowaną notatkę, aby dodać nagłówki, akapity i listy.
+Update from file|||Обновить из файла|||Atjaunināt no faila|||Aktualizuj z pliku
+User-imported text; publisher and rights are not verified|||Текст импортирован пользователем; издатель и права не проверены|||Lietotāja importēts teksts; izdevējs un tiesības nav pārbaudīti|||Tekst zaimportowany przez użytkownika; wydawca i prawa nie są zweryfikowane
+XML, JSONL and CSV · compressed files supported|||XML, JSONL и CSV · поддерживаются сжатые файлы|||XML, JSONL un CSV · atbalstīti saspiesti faili|||XML, JSONL i CSV · obsługiwane są pliki skompresowane
+MedlinePlus health topics|||Темы о здоровье MedlinePlus|||MedlinePlus veselības tēmas|||Tematy zdrowotne MedlinePlus
+Compact English/Spanish health-topic summaries from the National Library of Medicine. No licensed encyclopedia, drug monographs or images.|||Краткие материалы о здоровье на английском и испанском от Национальной медицинской библиотеки США. Без лицензируемой энциклопедии, описаний лекарств и изображений.|||Īsi veselības tēmu kopsavilkumi angļu un spāņu valodā no ASV Nacionālās medicīnas bibliotēkas. Bez licencētas enciklopēdijas, zāļu aprakstiem un attēliem.|||Krótkie materiały zdrowotne po angielsku i hiszpańsku z Narodowej Biblioteki Medycyny USA. Bez licencjonowanej encyklopedii, monografii leków i obrazów.
+Emergency preparedness|||Подготовка к чрезвычайным ситуациям|||Gatavība ārkārtas situācijām|||Przygotowanie na sytuacje awaryjne
+Selected CDC reference text on safe water, food, temperature and disaster cleanup, with original source dates and links. English.|||Избранные справочные материалы CDC о безопасной воде, пище, температуре и уборке после бедствий. С исходными датами и ссылками. На английском.|||Atlasīti CDC uzziņu teksti par drošu ūdeni, pārtiku, temperatūru un sakopšanu pēc katastrofām. Ar avota datumiem un saitēm. Angļu valodā.|||Wybrane materiały CDC o bezpiecznej wodzie, żywności, temperaturze i sprzątaniu po katastrofach. Z datami i odnośnikami. Po angielsku.
+General reference|||Общая справочная библиотека|||Vispārīgas uzziņas|||Wiedza ogólna
+A small Wikipedia text selection with optional source images covering science and practical reference, with pinned revisions and attribution. English.|||Небольшая подборка научных и практических статей Википедии с возможностью загрузить изображения. С фиксированными версиями и указанием источников. На английском.|||Neliela Vikipēdijas zinātnisko un praktisko tekstu izlase ar papildu avota attēliem, fiksētām versijām un atsaucēm. Angļu valodā.|||Mały wybór naukowych i praktycznych tekstów Wikipedii z opcjonalnymi obrazami, ustalonymi wersjami i przypisaniem autorstwa. Po angielsku.
+This new draft will be discarded.|||Этот новый черновик будет отброшен.|||Šis jaunais melnraksts tiks atmests.|||Ten nowy szkic zostanie odrzucony.
+A parent imports reference libraries|||Справочные библиотеки добавляет взрослый|||Uzziņu bibliotēkas importē vecāks|||Biblioteki importuje rodzic
+Downloaded from the official source|||Скачано с официального сайта|||Lejupielādēts no oficiālā avota|||Pobrano z oficjalnego źródła
+Local import metadata · source freshness is not verified|||Данные локального импорта · актуальность источника не проверена|||Lokālā importa dati · avota aktualitāte nav pārbaudīta|||Dane lokalnego importu · aktualność źródła nie jest sprawdzona
+Import metadata checked %1$s|||Данные импорта проверены %1$s|||Importa dati pārbaudīti %1$s|||Dane importu sprawdzono %1$s
+Compact images|||Уменьшить изображения|||Samazināt attēlus|||Zmniejsz obrazy
+Enlarge images|||Увеличить изображения|||Palielināt attēlus|||Powiększ obrazy
+Some images could not be saved. The article text is kept.|||Некоторые изображения не удалось сохранить. Текст статьи сохранён.|||Dažus attēlus neizdevās saglabāt. Raksta teksts ir saglabāts.|||Nie udało się zapisać niektórych obrazów. Tekst artykułu został zachowany.
+Images saved for offline reading|||Изображения сохранены для чтения без интернета|||Attēli saglabāti lasīšanai bez interneta|||Obrazy zapisano do czytania offline
+Images could not be confirmed. Read the current source before trying again.|||Не удалось подтвердить сохранение изображений. Откройте текущий источник перед повторной попыткой.|||Neizdevās apstiprināt attēlu saglabāšanu. Pirms mēģināt vēlreiz, atveriet pašreizējo avotu.|||Nie udało się potwierdzić zapisu obrazów. Przed ponowną próbą otwórz bieżące źródło.
+Review before import|||Проверка перед импортом|||Pārskatīt pirms importēšanas|||Sprawdź przed importem
+Importing|||Импортируется|||Importēšana|||Importowanie
+Indexing|||Создание индекса|||Indeksēšana|||Indeksowanie
+This action is unavailable in the current view.|||Это действие недоступно в текущем виде.|||Šī darbība pašreizējā skatā nav pieejama.|||Ta czynność jest niedostępna w bieżącym widoku.
+The original source could not be opened|||Не удалось открыть оригинальный источник|||Neizdevās atvērt sākotnējo avotu|||Nie udało się otworzyć oryginalnego źródła
+This library action could not finish. The previous saved library is kept.|||Не удалось завершить действие с библиотекой. Прежняя сохранённая библиотека оставлена.|||Darbību ar bibliotēku neizdevās pabeigt. Iepriekš saglabātā bibliotēka paliek.|||Nie udało się zakończyć operacji. Poprzednia biblioteka została zachowana.
+Import cancelled|||Импорт отменён|||Importēšana atcelta|||Import anulowany
+Import interrupted; review and resume|||Импорт прерван; проверьте и продолжите|||Importēšana pārtraukta; pārskatiet un turpiniet|||Import przerwano; sprawdź i wznów
+Document access unavailable; reselect the same file|||Нет доступа к документу; снова выберите тот же файл|||Dokuments nav pieejams; atkārtoti atlasiet to pašu failu|||Brak dostępu do dokumentu; wybierz ponownie ten sam plik
+This exact library is already installed|||Эта версия библиотеки уже установлена|||Šī bibliotēkas versija jau ir instalēta|||Ta wersja biblioteki jest już zainstalowana
+No supported entries were found|||Поддерживаемые записи не найдены|||Nav atrasti atbalstīti ieraksti|||Nie znaleziono obsługiwanych wpisów
+Import failed; select a supported file|||Импорт не удался; выберите поддерживаемый файл|||Importēšana neizdevās; atlasiet atbalstītu failu|||Import nie powiódł się; wybierz obsługiwany plik
+Source removed; select a new file to import|||Источник удалён; выберите новый файл для импорта|||Avots noņemts; atlasiet jaunu failu importēšanai|||Źródło usunięto; wybierz nowy plik do importu
+Libraries could not be loaded. Retry to read local progress.|||Не удалось загрузить библиотеки. Повторите чтение локального состояния.|||Neizdevās ielādēt bibliotēkas. Mēģiniet vēlreiz nolasīt lokālo norisi.|||Nie udało się wczytać bibliotek. Ponów odczyt lokalnego postępu.

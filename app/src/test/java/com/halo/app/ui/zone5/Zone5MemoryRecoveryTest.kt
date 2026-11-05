@@ -149,7 +149,6 @@ class Zone5MemoryRecoveryTest {
     }
     @Test fun hostedMemoryViewMenuInvalidatesThePreviousSectionProjection() {
         renderHub()
-        compose.onNodeWithText("View").performClick()
         compose.onNodeWithText("Memories").assertIsDisplayed()
         val previous = actions.value!!
         compose.onNodeWithText("Suggestions").performClick()
@@ -157,9 +156,7 @@ class Zone5MemoryRecoveryTest {
             assertFalse(previous.invoke("page.memory.add"))
             assertTrue(actions.value!!.actions.none { it.id in setOf("page.memory.saved", "page.memory.suggestions", "page.memory.history") })
         }
-        compose.onNodeWithText("View").performClick()
         compose.onNodeWithText("Learning history").performClick()
-        compose.onNodeWithText("View").performClick()
         compose.onNodeWithText("Memories").performClick()
         compose.onNodeWithText("Basil needs bright light.").performScrollTo().assertIsDisplayed()
     }

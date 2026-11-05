@@ -21,9 +21,9 @@ interface ResearchProviderAdapter {
 
 class ResearchProviderRegistry(adapters: List<ResearchProviderAdapter>) {
     private val providers = adapters.associateBy { it.id }.also { require(it.size == adapters.size) }
-    fun list() = providers.values.toList()
+    fun list() = providers.values.filterNot { it.id == WikipediaArticleResearchProvider.id }
     fun require(id: String) = requireNotNull(providers[id]) { "Research provider is not installed; choose an available source" }
-    companion object { val public = ResearchProviderRegistry(listOf(WikipediaResearchProvider, ArchiveResearchProvider, PublicPageResearchProvider)) }
+    companion object { val public = ResearchProviderRegistry(listOf(WikipediaResearchProvider, ArchiveResearchProvider, PublicPageResearchProvider, WikipediaArticleResearchProvider)) }
 }
 
 private fun plain(text: String, limit: Int) = Jsoup.parse(text).text().take(limit)
@@ -44,10 +44,11 @@ object PublicPageResearchProvider : ResearchProviderAdapter {
         require(listOf("noindex", "noarchive", "none").none { it in restrictions }) { "This page disallows local indexing" }
         val published = document.selectFirst("meta[property=article:published_time]")?.attr("content")?.let { runCatching { Instant.parse(it) }.getOrNull() }
         document.select("script,style,noscript,iframe,form,nav,footer,header,svg,template").remove()
-        val text = document.body()?.text().orEmpty().take(8000)
+        val text = document.body()?.let(com.halo.app.everyday.knowledge.ReferenceHtmlText::extract).orEmpty()
+        require(text.length <= 100000) { "This page exceeds retained-text limits; import a smaller local reference subset" }
         require(text.isNotBlank()) { "No readable public text is available; dynamic execution is not enabled" }
         return listOf(ArticleFact(evidenceId(id, url), document.title().ifBlank { endpoint(query, language).host }.take(500), text,
-            url, endpoint(query, language).host.take(200), published, language, listOf("research", id)))
+            url, endpoint(query, language).host.take(200), published, language, listOf("research", id), images = SourceImages.fromHtml(document.body(), url)))
     }
 }
 
@@ -95,11 +96,13 @@ object ArchiveResearchProvider : ResearchProviderAdapter {
 data class ResearchEvidence(val id: String, val query: String, val title: String, val canonicalUrl: String?,
     val sourceId: String, val sourceVersion: Long, val provider: String, val sourceType: String,
     val retrievedAt: Instant, val verifiedAt: Instant, val stale: Boolean, val passage: String,
-    val publishedAt: Instant?, val lexicalRelevance: Double, val updatedAt: Instant? = null)
+    val publishedAt: Instant?, val lexicalRelevance: Double, val updatedAt: Instant? = null,
+    val libraryGeneration: String? = null, val verificationKind: String = "HTTP_CACHE")
 
 /** Local search over already retained selected evidence; never fetches or asks a model to invent current facts. */
 class OrganizerResearch(private val sources: CollectorRepository, private val clock: java.time.Clock = java.time.Clock.systemUTC(),
-    private val power: () -> Boolean = { false }) {
+    private val power: () -> Boolean = { false },
+    private val localLibraries: suspend (String, Int, String?) -> List<ResearchEvidence> = { _, _, _ -> emptyList() }) {
     suspend fun saveSource(query: ResearchSourceQuery, language: String, selected: Boolean,
         id: String? = null, version: Long? = null): CollectorSource {
         require((id == null) == (version == null))
@@ -126,8 +129,9 @@ class OrganizerResearch(private val sources: CollectorRepository, private val cl
                     snapshot.retrievedAt, snapshot.verifiedAt, snapshot.stale(clock.instant(), state.source.external, power()), article.text.take(4000), article.publishedAt, score, article.updatedAt)
             }
         }
-        val selected = candidates.sortedWith(compareByDescending<ResearchEvidence> { it.lexicalRelevance }.thenByDescending { it.verifiedAt })
-            .distinctBy { it.canonicalUrl ?: it.id }.take(limit)
+        val combined = candidates + localLibraries(query, limit, sourceId)
+        val selected = combined.sortedWith(compareByDescending<ResearchEvidence> { it.lexicalRelevance }.thenByDescending { it.verifiedAt })
+            .distinctBy { if (it.sourceType == "LOCAL_LIBRARY") "${it.sourceId}:${it.id}" else it.canonicalUrl ?: it.id }.take(limit)
         com.halo.app.everyday.EverydayReadAuthority.requireCurrent(disclosure)
         return selected
     }

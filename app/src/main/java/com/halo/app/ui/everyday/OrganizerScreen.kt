@@ -70,6 +70,8 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     var exportVersions by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
     var dayInput by rememberSaveable(day) { mutableStateOf(day) }
     var adding by rememberSaveable { mutableStateOf(false) }
+    var settingsOpen by rememberSaveable { mutableStateOf(false) }
+    var filtersOpen by rememberSaveable { mutableStateOf(false) }
     var promotionBase by rememberSaveable { mutableStateOf<String?>(null) }
     var workEditorOpen by rememberSaveable { mutableStateOf(false) }
     var workEditorBase by rememberSaveable { mutableStateOf<String?>(null) }
@@ -89,8 +91,16 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
         sourceIdentity = "${current?.id}:${current?.version}:$kind:$day:${state.busy}:$formOpen:$kids",
         helpDescription = uiText("Keep your plan on this phone. Saved items, delivery permissions and actual notification outcomes are shown separately."),
         guidanceBlocked = state.loading || state.busy || formOpen,
-        defaultDisabledActionReason = uiText(if (kids) "A parent manages the saved plan." else "Finish or close the current form before choosing another action."))
-    BindShellPageActions(owner, organizerOrbActions(current, kind, kids).map { action ->
+        defaultDisabledActionReason = uiText(when {
+            kids -> "A parent manages the saved plan."
+            state.loading -> "Loading"
+            state.busy -> "Please wait"
+            formOpen -> "Finish or close the current form before choosing another action."
+            else -> "This action is unavailable in the current view."
+        }), disabledActionReasons = mapOf("page.organizer.undo" to uiText("No deleted item to restore")))
+    BindShellPageActions(owner, organizerOrbActions(current, kind, kids).filterNot {
+        it in setOf(OrganizerOrbAction.BRIEF, OrganizerOrbAction.TODAY, OrganizerOrbAction.RESEARCH, OrganizerOrbAction.CLOCKS, OrganizerOrbAction.SOURCES)
+    }.map { action ->
         val glyph = when (action) {
             OrganizerOrbAction.TIMER, OrganizerOrbAction.ALARM, OrganizerOrbAction.CLOCKS -> HaloGlyph.WATCH
             OrganizerOrbAction.BRIEF, OrganizerOrbAction.RESULT, OrganizerOrbAction.PLAN, OrganizerOrbAction.ROUTINE -> HaloGlyph.ACTIVITY
@@ -129,22 +139,28 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             }
         }
     })
-    if (LocalShellHaloOrb.current) BindShellUtilityBand(owner) {
+    if (LocalShellHaloOrb.current && current != null) BindShellUtilityBand(owner) {
         ToolZoneHeader(uiText("Organizer"), { if (current != null || state.missing) model.open(null) else onBack() })
     }
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp),
+    val sectionStates = remember { mutableMapOf<String, androidx.compose.foundation.lazy.LazyListState>() }
+    val sectionScroll = sectionStates.getOrPut("$kind:${current?.id}:${state.missing}") { androidx.compose.foundation.lazy.LazyListState() }
+    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), state = sectionScroll, contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            Zone5PageHeading(uiText("Organizer"), uiText(if (kids) "The plan shared with you." else "Your calendar, tasks and time, saved on this phone."))
-            if (!LocalShellHaloOrb.current) TextButton({ if (current != null || state.missing) model.open(null) else onBack() }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back")) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(uiText("Organizer"), style = MaterialTheme.typography.headlineSmall)
+                if (!kids && current == null) TextButton({ settingsOpen = true }, enabled = !state.busy) { Text(uiText("Settings")) }
+                if (current != null || state.missing) TextButton({ model.open(null) }) { Text(uiText("Back")) }
+            }
+            if (!LocalShellHaloOrb.current && current == null) TextButton(onBack) { Text(uiText("Back")) }
         }
         if (current == null && !state.missing) item {
-            OrganizerToolLinks(kids) { route ->
-                when (route) {
-                    EverydayRoutes.CLOCKS -> onClocks()
-                    EverydayRoutes.BRIEF -> onBrief()
-                    EverydayRoutes.SOURCES -> if (!kids) onSources()
-                }
+            val section = when (kind) { "TODAY" -> "TODAY"; "TIME", "ALARM", "TIMER" -> "TIME"; "RESEARCH" -> "RESEARCH"; else -> "PLANNER" }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("TODAY" to "Today", "PLANNER" to "Plan", "TIME" to "Time", "RESEARCH" to "Research")
+                    .filter { !kids || it.first != "RESEARCH" }.forEach { (key, label) ->
+                        FilterChip(section == key, { model.kind(key) }, label = { Text(uiText(label)) }, modifier = Modifier.heightIn(min = if (kids) 56.dp else 48.dp))
+                    }
             }
         }
         if (state.loading || state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
@@ -269,10 +285,15 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             }
         } else if (!state.missing && canShow) {
             item {
-                OutlinedTextField(query, model::query, label = { Text(uiText("Search your plan")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    (OrganizerSection.entries.filter { !kids || it != OrganizerSection.RESEARCH }.map { it.name to organizerSectionLabel(it) } + listOf("AGENDA" to "Agenda") + OrganizerKind.entries.map { it.name to organizerKindLabel(it) } + if (kids) emptyList() else listOf("TRASH" to "Trash")).forEach { (key, label) ->
-                        FilterChip(kind == key, { model.kind(key) }, modifier = Modifier.heightIn(min = if (kids) 56.dp else 48.dp), label = { Text(uiText(label)) })
+                if (kind !in setOf("TODAY", "TIME", "RESEARCH")) {
+                    Row(Modifier.fillMaxWidth()) {
+                        OutlinedTextField(query, model::query, label = { Text(uiText("Search your plan")) }, modifier = Modifier.weight(1f), singleLine = true)
+                        TextButton({ filtersOpen = true }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Filters")) }
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("PLANNER" to "Tasks and events", "INBOX" to "Inbox", "ROUTINES" to "Routines", "AGENDA" to "Agenda").forEach { (key, label) ->
+                            FilterChip(kind == key, { model.kind(key) }, label = { Text(uiText(label)) })
+                        }
                     }
                 }
                 if (kind in setOf("AGENDA", "EVENT")) {
@@ -321,6 +342,25 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                     } else OrganizerListRow(row, now, boot, { model.open(row.id) })
                 }
             }
+        }
+    }
+    if (settingsOpen && !kids) EverydaySheet({ settingsOpen = false }) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(uiText("Organizer settings"), style = MaterialTheme.typography.titleLarge)
+            TextButton({ settingsOpen = false; onSources() }, Modifier.fillMaxWidth()) { Text(uiText("Sources")) }
+            TextButton({ settingsOpen = false; onBrief() }, Modifier.fillMaxWidth()) { Text(uiText("Brief preferences")) }
+            TextButton({ settingsOpen = false; importer.launch(arrayOf("text/calendar", "application/ics", "application/octet-stream")) }, Modifier.fillMaxWidth()) { Text(uiText("Import calendar")) }
+            TextButton({ settingsOpen = false; exportVersions = ArrayList(state.records.filter { it.deletedAt == null }.map { "${it.id}@${it.version}" }); exportReview = true }, Modifier.fillMaxWidth()) { Text(uiText("Export calendar")) }
+            TextButton({ settingsOpen = false }, Modifier.fillMaxWidth()) { Text(uiText("Close")) }
+        }
+    }
+    if (filtersOpen) EverydaySheet({ filtersOpen = false }) {
+        Column(Modifier.fillMaxWidth().padding(20.dp)) {
+            Text(uiText("Plan filters"), style = MaterialTheme.typography.titleLarge)
+            (OrganizerKind.entries.map { it.name to organizerKindLabel(it) } + if (kids) emptyList() else listOf("TRASH" to "Trash")).forEach { (key, label) ->
+                TextButton({ model.kind(key); filtersOpen = false }, Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(label)) }
+            }
+            TextButton({ filtersOpen = false }, Modifier.fillMaxWidth()) { Text(uiText("Close")) }
         }
     }
     if (adding && !kids) EverydaySheet({ adding = false }) {

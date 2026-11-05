@@ -200,7 +200,7 @@ FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         }
     })
     if (shellOwnsOrb) com.halo.app.ui.presence.BindShellUtilityBand(pageOwner) {
-        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: stringResource(R.string.zone5_tool_notes),
+        com.halo.app.ui.screens.notebook.ToolZoneHeader(selected?.title ?: uiText("Files"),
             onBack = { if (selected != null) model.closeSelection() else onBack() }, enabled = !busy)
     }
     BackHandler(enabled = selected != null && !busy) { model.closeSelection() }
@@ -252,7 +252,7 @@ imageActions()
     }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("file-tools-content"), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
-                if (shellOwnsOrb) Zone5InstrumentHeading(stringResource(R.string.zone5_tool_notes), "tool_notes", selected?.title,
+                if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Files"), "tool_notes", selected?.title,
                     state = if (selected == null) stringResource(R.string.zone5_office_kinds) else stringResource(R.string.file52_local_scope))
                 if (!shellOwnsOrb) Text(stringResource(R.string.file52_local_scope), style = MaterialTheme.typography.bodyMedium)
                 if (!shellOwnsOrb) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

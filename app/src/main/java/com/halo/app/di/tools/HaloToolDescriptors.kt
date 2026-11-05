@@ -44,7 +44,9 @@ object HaloToolDescriptors {
         id = ToolId(id),
         definition = definition,
         category = category,
-        keywords = keywords,
+        keywords = keywords + HostDiscoveryVocabulary.keywords(id),
+        discoveryDomain = HostDiscoveryVocabulary.domain(id),
+        discoveryPriority = HostDiscoveryVocabulary.priority(id),
         visibility = visibility,
         dependencies = dependencies,
         requirements = requirements + (ProcedureOperability.forDefinition(definition) ?: WorkspaceOperabilityContracts.forDefinition(definition))?.let { setOf(ToolRequirement.Capability(it.capabilityId)) }.orEmpty(),
@@ -446,7 +448,7 @@ object HaloToolDescriptors {
             dependencies = setOf(ToolId("halo_note_get"), ToolId("halo_get_file_metadata"), ToolId("halo_workspace_canvases")),
             keywords = setOf("canvas", "board", "note", "file", "card", "attach", "link", "linked", "reference"),
             presentation = ToolPresentation(title = "Add to Canvas", actionVerb = "Apply"))
-        "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image" -> descriptor(definition.name, definition, ToolCategory.FILES,
+        "halo_text_rich_copy", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image" -> descriptor(definition.name, definition, ToolCategory.FILES,
             reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("file", "edit", "export", "csv", "pdf", "image"),
             presentation = ToolPresentation(title = "Edit local files", actionVerb = "Apply"))
         "halo_file_handoff" -> descriptor(definition.name, definition, ToolCategory.FILES,
@@ -753,7 +755,7 @@ object HaloToolDescriptors {
     }
 
     private fun interfaceConfiguration(definition: ToolDefinition): ToolDescriptor? {
-        val contract = EverydayToolContracts.operability(definition)
+        val contract = MaterialImageContracts.operability(definition) ?: ReferenceLibraryContracts.operability(definition) ?: EverydayToolContracts.operability(definition)
             ?: ScreenOperabilityContracts.forDefinition(definition)
             ?: DeviceNotificationOperability.forDefinition(definition)
             ?: com.halo.app.di.tools.host.VoiceConfigurationTools.operability(definition.name)
@@ -768,13 +770,13 @@ object HaloToolDescriptors {
         val query = contract.operation == com.halo.runtime.cognition.tools.ToolOperation.QUERY
         val screen = definition.name in ScreenOperabilityContracts.readTools + ScreenOperabilityContracts.mutationTools
         val everyday=definition.name in EverydayToolContracts.names
-        val always = !query && (!screen && !everyday || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
+        val always = !query && (definition.name == "halo_research_article" || !screen && !everyday || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
         val security = when {
             query -> readOnly(definition.name)
             always -> ToolSecurityPolicy(
                 when (definition.name) {
                     "halo_saved_device_forget", "halo_screen_remove_preset", "halo_routine_delete" -> ToolRiskClass.DESTRUCTIVE
-                    "halo_routine_run_now", "halo_provider_refresh_models", "halo_provider_test_connection", "halo_mcp_refresh_tools" -> ToolRiskClass.EXTERNAL_SIDE_EFFECT
+                    "halo_material_image_fetch", "halo_library_download", "halo_research_article", "halo_routine_run_now", "halo_provider_refresh_models", "halo_provider_test_connection", "halo_mcp_refresh_tools" -> ToolRiskClass.EXTERNAL_SIDE_EFFECT
                     else -> ToolRiskClass.SENSITIVE
                 },
                 ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
@@ -836,14 +838,17 @@ object HaloToolDescriptors {
             "halo_canvas_export_note" -> "Export Canvas to a note"
             "halo_speech_inventory" -> "List local speech models"
             "halo_speech_model_action" -> "Manage local speech model"
-            else -> if(everyday) EverydayToolContracts.title(definition.name) else return null
+            "halo_material_image_query" -> "Read material image cache"
+            "halo_material_image_fetch" -> "Save source images"
+            else -> if (definition.name in ReferenceLibraryContracts.names) ReferenceLibraryContracts.title(definition.name) else if(everyday) EverydayToolContracts.title(definition.name) else return null
         }
         return descriptor(definition.name, definition, if (query) ToolCategory.INFORMATION else ToolCategory.HOST_CONTROL,
             security, keywords = if(everyday) setOf("organizer","calendar","tasks","reminders","alarms","timer","world clock","weather","sources","news","brief","widget") else if (screen) setOf("screen", "layout", "card", "preset", "typography")
                 else setOf("saved device", "connection", "notification", "digest", "preferences", "voice", "learning", "routine", "provider", "study", "canvas", "review draft", "speech model"),
             requirements = setOf(ToolRequirement.Capability(contract.capabilityId)),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(
-                maxOutputChars = if(everyday) 128000 else if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
+                timeoutMs = if (definition.name in setOf("halo_material_image_fetch", "halo_library_download", "halo_research_article")) 30000 else 10000,
+                maxOutputChars = if(everyday || definition.name in ReferenceLibraryContracts.names || definition.name in MaterialImageContracts.names) 4000 else if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
             presentation = ToolPresentation(title = title, actionVerb = if (query) "Read" else "Apply",
                 targetArgument = when {
                     definition.name.startsWith("halo_saved_device_") -> "deviceId"

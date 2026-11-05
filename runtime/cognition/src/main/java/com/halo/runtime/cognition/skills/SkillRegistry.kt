@@ -211,12 +211,13 @@ class DefaultSkillRegistry(
         }
         private val NATIVE_COMPATIBILITY_IDS = setOf("halo.contacts", "halo.media", "halo.sharing", "halo.alarms", "halo.settings")
         private fun configurationSkill(id: String, name: String, description: String, tools: Set<String>, reads: Set<String>,
-            sensitive: Set<String> = emptySet(), destructive: Set<String> = emptySet()): SkillDescriptor =
+            sensitive: Set<String> = emptySet(), destructive: Set<String> = emptySet(), external: Set<String> = emptySet()): SkillDescriptor =
             SkillDescriptor(id = SkillId(id), name = name, description = description, category = SkillCategory.WORKSPACE,
                 tools = tools, risk = SkillRisk.SENSITIVE, toolDefinitions = tools.sorted().map { tool ->
                     com.halo.sdk.runtime.skills.SkillToolDefinition(tool, when (tool) {
                         in reads -> SkillRisk.READ_ONLY
                         in destructive -> SkillRisk.DESTRUCTIVE
+                        in external -> SkillRisk.EXTERNAL_SIDE_EFFECT
                         in sensitive -> SkillRisk.SENSITIVE
                         else -> SkillRisk.REVERSIBLE
                     })
@@ -251,7 +252,7 @@ class DefaultSkillRegistry(
             configurationSkill("halo.everyday", "Your day, organizer and widgets",
                 "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants. Organizer commitments separate You/Halo/Shared responsibility and reviewed capabilities. Research exposes retained dated evidence; current retrieval uses permitted source refresh before synthesis.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.everyday,
-                setOf("halo_commitments_query","halo_research_query","halo_organizer_calendar_preview","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")),
+                setOf("halo_material_image_query", "halo_library_catalogue", "halo_library_query", "halo_library_get", "halo_library_import_review", "halo_commitments_query","halo_research_query","halo_organizer_calendar_preview","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query"), sensitive = setOf("halo_library_import_action"), external = setOf("halo_material_image_fetch", "halo_library_download", "halo_research_article")),
             configurationSkill("halo.screen.layout", "halo Screen layout",
                 "Preview and edit the native halo Screen layout, saved presets and presentation settings. Separate from cross-app screen control.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.screenLayout,
@@ -359,7 +360,7 @@ class DefaultSkillRegistry(
                 description = "Create, edit and export local text, CSV, images and source-linked PDF page images; inspect exact files and checksums.",
                 category = SkillCategory.WORKSPACE,
                 tools = setOf("halo_search_files", "halo_get_file_metadata", "halo_read_text_file", "halo_checksum",
-                    "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas"),
+                    "halo_text_rich_copy", "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas"),
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),

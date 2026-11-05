@@ -3,7 +3,7 @@ package com.halo.app.everyday.collectors
 import java.time.Duration
 import java.time.Instant
 
-enum class CollectorKind { LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR, RESEARCH }
+enum class CollectorKind { LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR, RESEARCH, LOCAL_LIBRARY }
 enum class SourceCategory { PERSONAL, LATVIA, WORLD, SCIENCE, TECHNOLOGY, WEATHER, OFFICIAL, CALENDAR, CUSTOM }
 enum class CollectorAttemptState { NEVER, FETCHING, CURRENT, NOT_MODIFIED, LOCAL_ONLY, OFFLINE, DISABLED, BACKOFF, QUOTA, FAILED, CANCELLED }
 
@@ -48,7 +48,7 @@ data class CollectorSource(
 }
 
 data class ArticleFact(val id: String, val title: String, val text: String, val url: String?, val publisher: String,
-    val publishedAt: Instant?, val language: String, val categories: List<String> = emptyList(), val updatedAt: Instant? = null)
+    val publishedAt: Instant?, val language: String, val categories: List<String> = emptyList(), val updatedAt: Instant? = null, val images: List<SourceImage> = emptyList())
 data class WeatherDay(val date: java.time.LocalDate, val maximumC: Double?, val minimumC: Double?,
     val precipitationProbability: Int?, val weatherCode: Int?)
 data class WeatherFact(val place: WeatherPlace, val observedAt: Instant?, val temperatureC: Double?, val weatherCode: Int?,

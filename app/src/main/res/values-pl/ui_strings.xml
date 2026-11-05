@@ -5057,4 +5057,78 @@
     <string name="ui_31b22954a6ff" formatted="false">"Wybierz warstwę %1$s"</string>
     <string name="ui_4c99e10f0d89" formatted="false">"Włącz efekt %1$s"</string>
     <string name="ui_361ef0904840" formatted="false">"Edytuj obraz"</string>
+    <string name="ui_8375175b441a" formatted="false">"%1$d KiB"</string>
+    <string name="ui_8fb4a2d44af8" formatted="false">"Przetworzono wpisów: %1$d"</string>
+    <string name="ui_3e96e319d755" formatted="false">"Zindeksowane wpisy: %1$d · %2$s"</string>
+    <string name="ui_910b178efa5e" formatted="false">"Dodaj bibliotekę, aby przeszukiwać zapisane materiały bez internetu."</string>
+    <string name="ui_07af3e51399c" formatted="false">"Dodaj bibliotekę źródeł"</string>
+    <string name="ui_e490f6c54951" formatted="false">"Styl bloku"</string>
+    <string name="ui_a10e21201fdb" formatted="false">"Ustawienia podsumowania"</string>
+    <string name="ui_6dd6cafb0d3f" formatted="false">"Anuluj import"</string>
+    <string name="ui_4ca48b4230a5" formatted="false">"Potwierdź import"</string>
+    <string name="ui_14c733790a45" formatted="false">"Nie udało się potwierdzić kopii. Przed ponowną próbą sprawdź notatki."</string>
+    <string name="ui_db42d0f2d0a5" formatted="false">"Data utworzenia zbioru: %1$s"</string>
+    <string name="ui_d64da3131f51" formatted="false">"Pobierz do sprawdzenia"</string>
+    <string name="ui_dc0e8c2c0dac" formatted="false">"Pobieranie wymaga trybu Power. Przed importem osobno sprawdzisz pobrany plik."</string>
+    <string name="ui_86e248a15621" formatted="false">"Wykluczono z wyszukiwania"</string>
+    <string name="ui_1ef2cd761300" formatted="false">"Prawa do obrazu są odrębne od praw do tekstu; sprawdź źródło."</string>
+    <string name="ui_09691e94bcfc" formatted="false">"Importuj bibliotekę"</string>
+    <string name="ui_979b95389e09" formatted="false">"Utwórz formatowaną kopię notatki"</string>
+    <string name="ui_14a7b1d33adf" formatted="false">"Następne wyniki"</string>
+    <string name="ui_68116808fb29" formatted="false">"Brak usuniętego elementu do przywrócenia"</string>
+    <string name="ui_ef3782fa64e1" formatted="false">"Brak pasujących wpisów. Spróbuj języka źródła lub innych słów."</string>
+    <string name="ui_498260b07348" formatted="false">"Otwórz oryginalne źródło"</string>
+    <string name="ui_d2a97fa5bfb0" formatted="false">"Opcjonalne małe zbiory do pobrania"</string>
+    <string name="ui_174cd69656c1" formatted="false">"Ustawienia organizera"</string>
+    <string name="ui_d7ed2b160d8f" formatted="false">"Oryginalny wikitekst; szablony serwera nie są rozwijane"</string>
+    <string name="ui_75cb80de3b08" formatted="false">"Filtry planu"</string>
+    <string name="ui_f95c30c4f16d" formatted="false">"Czytaj wpis"</string>
+    <string name="ui_0a1f758c3b12" formatted="false">"Biblioteki źródeł"</string>
+    <string name="ui_a6d703e0e93d" formatted="false">"Wybierz ponownie oryginalny plik"</string>
+    <string name="ui_f12822f97a31" formatted="false">"Wznów import"</string>
+    <string name="ui_2a2af9ea49a4" formatted="false">"Pobierz pełny artykuł Wikipedii"</string>
+    <string name="ui_323352c1a979" formatted="false">"Sprawdź postęp"</string>
+    <string name="ui_67b15e994569" formatted="false">"Formatowane notatki, nagłówki, listy i akapity"</string>
+    <string name="ui_3ae9011521ac" formatted="false">"Zapisz obrazy do czytania offline"</string>
+    <string name="ui_d3b69a22b571" formatted="false">"Zapisywanie obrazów wymaga trybu Power"</string>
+    <string name="ui_49c266baaaa7" formatted="false">"Szukaj"</string>
+    <string name="ui_61840cd1f197" formatted="false">"Przeszukaj wybrane biblioteki"</string>
+    <string name="ui_2cc511b0e961" formatted="false">"Data w źródle: %1$s"</string>
+    <string name="ui_0e4df5b2b7b2" formatted="false">"Obraz ze źródła"</string>
+    <string name="ui_1e88f25d3896" formatted="false">"Źródło: CDC. Oryginał jest dostępny bezpłatnie. Użycie w halo nie oznacza poparcia CDC ani rządu USA."</string>
+    <string name="ui_3ba8701496df" formatted="false">"Wybrany plik jest importowany lokalnie. Język, data i informacje o prawach zostają zachowane."</string>
+    <string name="ui_1d16b88f1c0e" formatted="false">"Plik zachowuje oryginalny format. Utwórz osobną formatowaną notatkę, aby dodać nagłówki, akapity i listy."</string>
+    <string name="ui_eda49214cfe4" formatted="false">"Aktualizuj z pliku"</string>
+    <string name="ui_35d7e044e24d" formatted="false">"Tekst zaimportowany przez użytkownika; wydawca i prawa nie są zweryfikowane"</string>
+    <string name="ui_ed200c1f86a0" formatted="false">"XML, JSONL i CSV · obsługiwane są pliki skompresowane"</string>
+    <string name="ui_4a6597fa335d" formatted="false">"Tematy zdrowotne MedlinePlus"</string>
+    <string name="ui_b2ac258f528c" formatted="false">"Krótkie materiały zdrowotne po angielsku i hiszpańsku z Narodowej Biblioteki Medycyny USA. Bez licencjonowanej encyklopedii, monografii leków i obrazów."</string>
+    <string name="ui_ea87d978da39" formatted="false">"Przygotowanie na sytuacje awaryjne"</string>
+    <string name="ui_d19e22b63b49" formatted="false">"Wybrane materiały CDC o bezpiecznej wodzie, żywności, temperaturze i sprzątaniu po katastrofach. Z datami i odnośnikami. Po angielsku."</string>
+    <string name="ui_19ff5bc55a19" formatted="false">"Wiedza ogólna"</string>
+    <string name="ui_f914372b5345" formatted="false">"Mały wybór naukowych i praktycznych tekstów Wikipedii z opcjonalnymi obrazami, ustalonymi wersjami i przypisaniem autorstwa. Po angielsku."</string>
+    <string name="ui_3c9fee3663dc" formatted="false">"Ten nowy szkic zostanie odrzucony."</string>
+    <string name="ui_e3f2e93c4560" formatted="false">"Biblioteki importuje rodzic"</string>
+    <string name="ui_d632729eb393" formatted="false">"Pobrano z oficjalnego źródła"</string>
+    <string name="ui_6d71079d2614" formatted="false">"Dane lokalnego importu · aktualność źródła nie jest sprawdzona"</string>
+    <string name="ui_cdb88338c233" formatted="false">"Dane importu sprawdzono %1$s"</string>
+    <string name="ui_1171b1320634" formatted="false">"Zmniejsz obrazy"</string>
+    <string name="ui_040b8f3bba0f" formatted="false">"Powiększ obrazy"</string>
+    <string name="ui_618089568d0e" formatted="false">"Nie udało się zapisać niektórych obrazów. Tekst artykułu został zachowany."</string>
+    <string name="ui_d880209363b2" formatted="false">"Obrazy zapisano do czytania offline"</string>
+    <string name="ui_56c85b61080e" formatted="false">"Nie udało się potwierdzić zapisu obrazów. Przed ponowną próbą otwórz bieżące źródło."</string>
+    <string name="ui_3e915aa80e1b" formatted="false">"Sprawdź przed importem"</string>
+    <string name="ui_d252fffacbf0" formatted="false">"Importowanie"</string>
+    <string name="ui_cc24d96ee638" formatted="false">"Indeksowanie"</string>
+    <string name="ui_7aeb76ac36d8" formatted="false">"Ta czynność jest niedostępna w bieżącym widoku."</string>
+    <string name="ui_97a2bf9089e8" formatted="false">"Nie udało się otworzyć oryginalnego źródła"</string>
+    <string name="ui_433cadde197a" formatted="false">"Nie udało się zakończyć operacji. Poprzednia biblioteka została zachowana."</string>
+    <string name="ui_d71af6839ae9" formatted="false">"Import anulowany"</string>
+    <string name="ui_f672fd61f011" formatted="false">"Import przerwano; sprawdź i wznów"</string>
+    <string name="ui_fbdaf2175c16" formatted="false">"Brak dostępu do dokumentu; wybierz ponownie ten sam plik"</string>
+    <string name="ui_e1fc3faa6c8f" formatted="false">"Ta wersja biblioteki jest już zainstalowana"</string>
+    <string name="ui_f74ad2c27622" formatted="false">"Nie znaleziono obsługiwanych wpisów"</string>
+    <string name="ui_b9e1610ff7d9" formatted="false">"Import nie powiódł się; wybierz obsługiwany plik"</string>
+    <string name="ui_a6a01ca08abf" formatted="false">"Źródło usunięto; wybierz nowy plik do importu"</string>
+    <string name="ui_1913812b4ada" formatted="false">"Nie udało się wczytać bibliotek. Ponów odczyt lokalnego postępu."</string>
 </resources>

@@ -4,8 +4,8 @@ package com.halo.app.ui.shell
 object HaloScreenCatalog {
     val screens = linkedMapOf(
         "home" to "Home", "screen" to "Screen", "mini_halo" to "Mini Halo", "activity" to "Activity", "notebook" to "Workspace",
-        "screen/organizer" to "Organizer", "screen/clocks" to "World clocks", "screen/brief" to "Your day in Halo", "screen/sources" to "Sources",
-        "workspace_handoff" to "Continue with this item", "studio" to "HaloStudio", "file_tools" to "HaloNotes", "canvases" to "HaloCanvas", "devices" to "Devices", "settings" to "Settings", "study" to "HaloStudy",
+        "screen/organizer" to "Organizer", "screen/organizer/libraries" to "Reference libraries", "screen/clocks" to "World clocks", "screen/brief" to "Your day in Halo", "screen/sources" to "Sources",
+        "workspace_handoff" to "Continue with this item", "studio" to "HaloStudio", "file_tools" to "Files", "canvases" to "HaloCanvas", "devices" to "Devices", "settings" to "Settings", "study" to "HaloStudy",
         "ai_settings" to "Intelligence", "voice_settings" to "Voice",
         "android_assistant" to "Android assistant", "permissions" to "Permissions",
         "skills" to "Skills", "runtime_status" to "Runtime", "system_check" to "System check",

@@ -36,11 +36,12 @@ import com.halo.app.ui.icons.HaloIcon
 }
 
 /** Shared, persistent control; every app screen observes the same durable mode. */
-@Composable fun PrivacyModeControl(modifier: Modifier = Modifier, detail: Boolean = false) {
+@Composable fun PrivacyModeControl(modifier: Modifier = Modifier, detail: Boolean = false, collapsibleDetail: Boolean = false) {
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
     val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
     val kidsCloud by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
     val kidsLoaded by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
+    var detailsExpanded by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val modeDescription = uiText("AI privacy mode")
     val changeMode = rememberModeChangeAction()
     Surface(modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainerLow) {
@@ -58,7 +59,8 @@ import com.halo.app.ui.icons.HaloIcon
                     style = MaterialTheme.typography.labelLarge,
                     color = if (mode == PrivacyMode.CLOUD) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (detail) Text(uiText(if (mode == PrivacyMode.PRIVATE)
+            if (detail && collapsibleDetail) TextButton({ detailsExpanded = !detailsExpanded }) { Text(uiText(if (detailsExpanded) "Hide mode details" else "Mode details")) }
+            if (detail && (!collapsibleDetail || detailsExpanded)) Text(uiText(if (mode == PrivacyMode.PRIVATE)
                 "AI processing stays on this phone. Power features are off."
                 else "Power mode can send your conversation, images, memories, and workspace to the selected provider. Provider charges may apply."),
                 style = MaterialTheme.typography.bodySmall)

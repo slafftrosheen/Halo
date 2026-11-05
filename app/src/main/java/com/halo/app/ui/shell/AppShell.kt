@@ -240,7 +240,7 @@ fun AppShell(
     }
     fun navigateSafely(route: String) {
         val childSurface = route in setOf("home", "mini_halo", "study", "workspace_handoff") ||
-            route.substringBefore("?") in setOf(EverydayRoutes.BRIEF, EverydayRoutes.CLOCKS, EverydayRoutes.ORGANIZER, EverydayRoutes.SOURCE) ||
+            route.substringBefore("?") in setOf(EverydayRoutes.BRIEF, EverydayRoutes.CLOCKS, EverydayRoutes.ORGANIZER, EverydayRoutes.SOURCE, EverydayRoutes.LIBRARIES) ||
             route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
         else performNavigation(route)
@@ -517,7 +517,7 @@ fun AppShell(
                     nextStep = livePageActions?.owner?.nextStep,
                     kids = kidsMode,
                     familyControl = familyModeControl,
-                    profile = { if (!kidsMode) com.halo.app.ui.components.PrivacyModeControl(detail = true) },
+                    profile = { if (!kidsMode) com.halo.app.ui.components.PrivacyModeControl(detail = true, collapsibleDetail = true) },
                     guideIdle = shellGuideIdle,
                     composer = contextualRoute == "home" && !kidsMode,
                     profileStatus = { com.halo.app.ui.components.PrivacyModeStatus() })
@@ -662,11 +662,23 @@ fun AppShell(
                         onSources = { navigateSafely(EverydayRoutes.SOURCES) }, onOrganizer = { navigateSafely(EverydayRoutes.ORGANIZER) },
                         onOpenFact = { model.openFact(it, ::navigateSafely) })
                 }
+                composable(EverydayRoutes.LIBRARIES + "?sourceId={sourceId}&sourceVersion={sourceVersion}&generation={generation}&entryId={entryId}", arguments = listOf(
+                    navArgument("sourceId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("sourceVersion") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("generation") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("entryId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                    val model: com.halo.app.ui.everyday.ReferenceLibrariesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "references:${entry.id}")
+                    com.halo.app.ui.everyday.ReferenceLibrariesScreen(model,
+                        initialSourceId = entry.arguments?.getString("sourceId"), initialVersion = entry.arguments?.getString("sourceVersion")?.toLongOrNull(),
+                        initialGeneration = entry.arguments?.getString("generation"), initialEntryId = entry.arguments?.getString("entryId"),
+                        onBack = { if (!navController.popBackStack()) navigateSafely(EverydayRoutes.ORGANIZER) },
+                        onSource = { id -> navigateSafely(EverydayRoutes.source(id)) })
+                }
                 composable(EverydayRoutes.SOURCES) { entry ->
                     val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "sources:${entry.id}", factory = EverydayViewModelFactory {
                         SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
                     })
-                    SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely(EverydayRoutes.ORGANIZER) },
+                    SourcesScreen(model, null, null, onLibraries = { navigateSafely(EverydayRoutes.LIBRARIES) }, onBack = { if (!navController.popBackStack()) navigateSafely(EverydayRoutes.ORGANIZER) },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
                         onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
                 }
@@ -739,7 +751,9 @@ fun AppShell(
                     })
                 }
 
-                composable(Screen.Notebook.route) { notebookEntry ->
+                composable(Screen.Notebook.route + "?filter={filter}", arguments = listOf(navArgument("filter") {
+                    type = NavType.StringType; nullable = true; defaultValue = null
+                })) { notebookEntry ->
                     val requestLocalSearch by notebookEntry.savedStateHandle.getStateFlow("openLocalSearch", false).collectAsStateWithLifecycle()
                     val notebookViewModel = ManualDependencyGraph.notebookViewModel
                     DisposableEffect(notebookViewModel, notebookEntry) {
@@ -765,7 +779,7 @@ fun AppShell(
                             }
                         }
                     }
-                    NotebookScreen(notebookViewModel, rootRequest = workspaceRootRequest,
+                    NotebookScreen(notebookViewModel, rootRequest = workspaceRootRequest, initialSection = notebookEntry.arguments?.getString("filter"),
                         librarySession = ManualDependencyGraph.notebookLibrarySession,
                         requestLocalSearch = requestLocalSearch,
                         onLocalSearchOpened = { notebookEntry.savedStateHandle["openLocalSearch"] = false },
@@ -820,6 +834,10 @@ fun AppShell(
                             onExportCopy = if (kidsMode) null else { id, revision, format ->
                                 check(ManualDependencyGraph.kidsPreferences.loadedState.value && !ManualDependencyGraph.kidsPreferences.enabled.value)
                                 ManualDependencyGraph.workspaceTextDocuments.exportNote(id, revision, format)
+                            },
+                            onRichCopy = if (kidsMode) null else { id, revision ->
+                                val copy = ManualDependencyGraph.richNoteCopies.copy(id, revision)
+                                navigateSafely("notebook/note/${android.net.Uri.encode(copy.noteId)}")
                             },
                         )
                     }

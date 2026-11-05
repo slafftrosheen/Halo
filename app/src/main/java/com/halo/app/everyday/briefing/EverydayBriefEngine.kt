@@ -124,7 +124,7 @@ object EverydayBriefEngine {
                             mapOf("calendarSelection" to SavedCalendarSelection(record.id, occurrence.originalStart, snapshot.contentRevision, input.zone.id).encode()))
                     }
                 }
-                is CollectorPayload.Local -> if (source.kind != CollectorKind.LOCAL_ORGANIZER) payload.items.filter {
+                is CollectorPayload.Local -> if (source.kind !in setOf(CollectorKind.LOCAL_ORGANIZER, CollectorKind.LOCAL_LIBRARY)) payload.items.filter {
                     input.audience != BriefAudience.KIDS || source.kind == CollectorKind.LOCAL_DEVICE || it.id in input.childLocalFactIds
                 }.forEach { item ->
                     val kind = when (source.kind) {

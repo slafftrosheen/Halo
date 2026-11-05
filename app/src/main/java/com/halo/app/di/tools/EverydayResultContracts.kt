@@ -53,10 +53,12 @@ object EverydayResultContracts {
         "attemptedAt" to instant,"nextAllowedAt" to instant,"stale" to bool,"mode" to choice(listOf("Local","Power")),"cached" to bool,"researchQuery" to text(400),"researchProvider" to text(80))
     private val sourceRequired=sourceFields.keys.filter {it !in setOf("contentRevision","retrievedAt","expiresAt","attemptedAt","nextAllowedAt","researchQuery","researchProvider")}
     private val source=obj(sourceFields,sourceRequired)
-    private val payloadItem=obj(mapOf("id" to text(2000),"title" to text(1000),"text" to text(8000),"summary" to text(1000),
-        "url" to text(4096),"publisher" to text(200),"published" to epoch,"updated" to epoch,"language" to text(40),"categories" to array(text(200),20),
+    private val payloadItem=obj(mapOf("id" to text(2000),"title" to text(1000),"text" to text(100000),"summary" to text(100000),
+        "url" to text(4096),"publisher" to text(200),"published" to epoch,"updated" to epoch,"language" to text(40),"categories" to array(text(200),20), "images" to array(MaterialImageContracts.imageSchema,3),
         "area" to text(2000),"severity" to text(200),"onset" to epoch,"expires" to epoch,"kind" to text(100),"route" to text(4096),"revision" to text(4000),"at" to epoch),listOf("id","title"))
-    private val content=obj(mapOf("schema" to integer(1,1),"type" to choice(listOf("articles","warnings","local","weather")),"items" to array(payloadItem,5),
+    private val content=obj(mapOf("schema" to integer(1,1),"type" to choice(listOf("articles","warnings","local","weather","calendar")),"items" to array(payloadItem,100),
+        "records" to array(text(100000),100), "exceptions" to array(text(100000),2000),
+        "issues" to array(obj(mapOf("item" to integer(), "uid" to text(2000), "reason" to text(2000), "warning" to bool), listOf("item","reason","warning")),2000),
         "place" to obj(mapOf("name" to text(200),"lat" to decimal(-90.0,90.0),"lon" to decimal(-180.0,180.0),"zone" to text(100))),
         "observed" to epoch,"temperature" to decimal(-100.0,80.0),"code" to integer(0,99),"attribution" to text(2000),"attributionUrl" to text(4096),
         "days" to array(obj(mapOf("date" to text(10),"max" to decimal(-100.0,80.0),"min" to decimal(-100.0,80.0),"rain" to integer(0,100),"code" to integer(0,99)),listOf("date")),16)),listOf("schema","type"))
@@ -75,11 +77,12 @@ object EverydayResultContracts {
     private val config=obj((listOf("kind","zoneId","cityLabel","sourceId","headlineSourceId","recordId","priority","limit","hidePrivate","theme","sections")
         .associateWith {text(if(it=="sections") 200 else 256)}),listOf("kind","cityLabel","limit","hidePrivate","theme","sections"))
 
-    fun schema(name: String): Map<String,Any> = if (name in OrganizerOperationContracts.names) OrganizerOperationContracts.result(name) else when(name) {
+    fun schema(name: String): Map<String,Any> = if (name in OrganizerOperationContracts.names) OrganizerOperationContracts.result(name) else if (name in EverydayToolContracts.queries) EverydayToolReadback.schema(legacySchema(name)) else EverydayToolReadback.receiptSchema(legacySchema(name))
+    private fun legacySchema(name: String): Map<String,Any> = if (name in OrganizerOperationContracts.names) OrganizerOperationContracts.result(name) else when(name) {
         "halo_organizer_query" -> variants(mapOf("records" to array(summary,50),"occurrences" to array(occurrence,50),"nextOffset" to nullable(integer(0,10050))),listOf("records","nextOffset"),listOf("occurrences","nextOffset"))
         "halo_organizer_get" -> obj(mapOf("id" to id,"version" to version,"record" to record,"overrides" to array(obj(mapOf("originalStart" to instant,
-            "disposition" to choice(OccurrenceDisposition.entries.map {it.name}),"version" to version,"title" to text(200),"replacementStart" to text(32)),listOf("originalStart","disposition","version")),100),
-            "omittedOverrides" to integer(),"deliveries" to array(receipt,20),"occurrence" to occurrence),listOf("id","version","record","overrides","omittedOverrides","deliveries"))
+            "disposition" to choice(OccurrenceDisposition.entries.map {it.name}),"version" to version,"title" to text(200),"replacementStart" to text(32)),listOf("originalStart","disposition","version")),10000),
+            "omittedOverrides" to integer(),"deliveries" to array(receipt,10000),"occurrence" to occurrence),listOf("id","version","record","overrides","omittedOverrides","deliveries"))
         "halo_organizer_create","halo_organizer_alarm","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence" -> saved
         "halo_organizer_delivery" -> variants(savedFields+mapOf("dismissed" to bool,"occurrenceKey" to text(450)),savedFields.keys.toList()+"occurrenceKey",listOf("dismissed","occurrenceKey"))
         "halo_organizer_clock_action" -> variants(savedFields+mapOf("dismissedOccurrences" to array(text(450),20),"dismissedCount" to integer(0,20)),savedFields.keys.toList(),listOf("dismissedOccurrences","dismissedCount"))
@@ -92,7 +95,7 @@ object EverydayResultContracts {
             "label" to text(200),"countryCode" to text(2),"zoneId" to text(100),"latitude" to decimal(-90.0,90.0),"longitude" to decimal(-180.0,180.0))),20),"cityAttribution" to text(1000)))
         "halo_clock_save" -> obj(mapOf("id" to id,"clock" to worldClock,"saved" to bool))
         "halo_clock_action" -> variants(mapOf("id" to id,"clock" to worldClock,"saved" to bool),listOf("id","clock","saved"),listOf("saved"))
-        "halo_source_query" -> obj(mapOf("sources" to array(source,100)))
+        "halo_source_query" -> obj(mapOf("sources" to array(source,100), "nextOffset" to nullable(integer(0,10050))), listOf("sources"))
         "halo_source_get" -> obj(sourceFields+mapOf("content" to nullable(content),"calendarItems" to integer(0,100)),sourceRequired+listOf("content","calendarItems"))
         "halo_source_preview" -> obj(mapOf("validated" to bool,"saved" to bool,"title" to text(200),"endpoint" to text(4096),"result" to text(4000)),listOf("validated","saved","title","result"))
         "halo_source_save" -> obj(sourceFields+mapOf("saved" to bool,"fetched" to bool),sourceRequired+listOf("saved","fetched"))

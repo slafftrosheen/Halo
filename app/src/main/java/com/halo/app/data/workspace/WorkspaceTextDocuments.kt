@@ -21,6 +21,7 @@ data class WorkspaceTextDocument(val document: NotebookDocument, val format: Wor
     val revision get() = document.revision
     val text get() = block.text
 }
+data class WorkspaceRichCopy(val sourceId: String, val sourceRevision: Long, val noteId: String, val revision: Long)
 
 /** Literal-file adapter onto the existing canonical note document and managed-file owners. */
 class WorkspaceTextDocuments(private val context: Context, private val database: AppDatabase,
@@ -69,6 +70,16 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
     }
     suspend fun current(id: String, expectedRevision: Long): WorkspaceTextDocument = requireNotNull(get(id)).also {
         check(it.revision == expectedRevision) { "Document changed. Reopen it before editing." }
+    }
+    /** Explicit copy; original literal bytes/format/revision are never changed. */
+    suspend fun richCopy(id: String, expectedRevision: Long): WorkspaceRichCopy = database.withTransaction {
+        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+        val original = current(id, expectedRevision)
+        val note = notes.createNote(body = original.text, title = (original.document.title + " — copy").take(120))
+        val copy = requireNotNull(documents.ensureDocument(note.id, original.text))
+        com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+        check(current(id, expectedRevision).text == original.text)
+        WorkspaceRichCopy(id, expectedRevision, note.id, copy.revision)
     }
     suspend fun replace(id: String, expectedRevision: Long, text: String): WorkspaceTextDocument = database.withTransaction {
         val current = current(id, expectedRevision)

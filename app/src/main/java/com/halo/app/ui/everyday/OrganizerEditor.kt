@@ -136,7 +136,7 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
         }
     }
     if (discard) HaloAlertDialog(onDismissRequest = { discard = false }, title = { Text(uiText("Discard this edit?")) },
-        text = { Text(uiText("Your saved item is kept. The changes in this form will be discarded.")) },
-        confirmButton = { TextButton({ discard = false; onDraft(null) }) { Text(uiText("Discard")) } },
+        text = { Text(uiText(if (draft.creating) "This new draft will be discarded." else "Your saved item is kept. The changes in this form will be discarded.")) },
+        confirmButton = { TextButton({ discard = false; onDraft(null) }) { Text(uiText("Discard draft")) } },
         dismissButton = { TextButton({ discard = false }) { Text(uiText("Keep editing")) } })
 }

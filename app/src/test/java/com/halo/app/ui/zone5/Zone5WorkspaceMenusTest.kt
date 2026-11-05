@@ -28,24 +28,22 @@ class Zone5WorkspaceMenusTest {
         compose.setContent { HostlessHaloTheme {
             CompositionLocalProvider(LocalShellPageActions provides holder) {
                 BindShellPageActions(ShellPageOwner("studio", objectId.value), listOf(
-                    ShellPageAction("page.studio.image", "Import picture", HaloGlyph.FILE) { calls += objectId.value },
+                    ShellPageAction("page.studio.add-layer", "Add layer", HaloGlyph.FILE) { calls += objectId.value },
                     ShellPageAction("page.studio.undo", "Undo", HaloGlyph.PREVIOUS, false) { error("Disabled action") }))
                 Column { WorkspaceToolMenus() }
             }
         } }
         lateinit var stale: ShellPageProjection
         compose.runOnIdle { stale = holder.value!! }
-        compose.onNodeWithText("Add").performClick()
-        compose.onNodeWithText("Import picture").assertIsDisplayed()
+        compose.onNodeWithText("Add layer").assertIsDisplayed()
         assertTrue(calls.isEmpty())
         compose.runOnIdle { objectId.value = "second" }
-        compose.onNodeWithText("Import picture").assertDoesNotExist()
-        compose.runOnIdle { assertFalse(stale.invoke("page.studio.image")) }
-        compose.onNodeWithText("Add").performClick()
-        compose.onNodeWithText("Import picture").performClick()
+        compose.onNodeWithText("Add layer").assertIsDisplayed()
+        compose.runOnIdle { assertFalse(stale.invoke("page.studio.add-layer")) }
+        compose.onNodeWithText("Add layer").performClick()
         assertEquals(listOf("second"), calls)
-        compose.onNodeWithText("Edit").performClick()
-        compose.onNodeWithText("Undo").assertIsNotEnabled()
+        compose.onNodeWithText("Undo").assertDoesNotExist()
+        compose.runOnIdle { assertFalse(holder.value!!.invoke("page.studio.undo")) }
     }
     @Test fun childEditorMenuAndItsCommandsRetainThe56dpFloor() {
         val holder = mutableStateOf<ShellPageProjection?>(null)
@@ -57,8 +55,7 @@ class Zone5WorkspaceMenusTest {
                 WorkspaceToolMenus()
             }
         } }
-        compose.onNodeWithText("Add").assertHeightIsAtLeast(56.dp).performClick()
-        compose.onNodeWithText("Insert").assertHeightIsAtLeast(56.dp)
+        compose.onNodeWithText("Insert").assertHeightIsAtLeast(56.dp).performClick()
     }
 
 }

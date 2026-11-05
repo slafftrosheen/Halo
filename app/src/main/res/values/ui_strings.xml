@@ -5057,4 +5057,78 @@
     <string name="ui_31b22954a6ff" formatted="false">"Select layer %1$s"</string>
     <string name="ui_4c99e10f0d89" formatted="false">"Enable effect %1$s"</string>
     <string name="ui_361ef0904840" formatted="false">"Edit an image"</string>
+    <string name="ui_8375175b441a" formatted="false">"%1$d KiB"</string>
+    <string name="ui_8fb4a2d44af8" formatted="false">"%1$d entries processed"</string>
+    <string name="ui_3e96e319d755" formatted="false">"%1$d indexed entries · %2$s"</string>
+    <string name="ui_910b178efa5e" formatted="false">"Add a library to search saved reference text offline."</string>
+    <string name="ui_07af3e51399c" formatted="false">"Add reference library"</string>
+    <string name="ui_e490f6c54951" formatted="false">"Block style"</string>
+    <string name="ui_a10e21201fdb" formatted="false">"Brief preferences"</string>
+    <string name="ui_6dd6cafb0d3f" formatted="false">"Cancel import"</string>
+    <string name="ui_4ca48b4230a5" formatted="false">"Confirm import"</string>
+    <string name="ui_14c733790a45" formatted="false">"Copy could not be confirmed. Check your notes before trying again."</string>
+    <string name="ui_db42d0f2d0a5" formatted="false">"Dataset generated: %1$s"</string>
+    <string name="ui_d64da3131f51" formatted="false">"Download for review"</string>
+    <string name="ui_dc0e8c2c0dac" formatted="false">"Downloads require Power. You will review the downloaded file separately before importing it."</string>
+    <string name="ui_86e248a15621" formatted="false">"Excluded from search"</string>
+    <string name="ui_1ef2cd761300" formatted="false">"Image rights are separate from article text; see the original source."</string>
+    <string name="ui_09691e94bcfc" formatted="false">"Import library"</string>
+    <string name="ui_979b95389e09" formatted="false">"Make rich-note copy"</string>
+    <string name="ui_14a7b1d33adf" formatted="false">"Next results"</string>
+    <string name="ui_68116808fb29" formatted="false">"No deleted item to restore"</string>
+    <string name="ui_ef3782fa64e1" formatted="false">"No matching entries. Try the source language or different words."</string>
+    <string name="ui_498260b07348" formatted="false">"Open original source"</string>
+    <string name="ui_d2a97fa5bfb0" formatted="false">"Optional compact downloads"</string>
+    <string name="ui_174cd69656c1" formatted="false">"Organizer settings"</string>
+    <string name="ui_d7ed2b160d8f" formatted="false">"Original wiki source; server templates are not expanded"</string>
+    <string name="ui_75cb80de3b08" formatted="false">"Plan filters"</string>
+    <string name="ui_f95c30c4f16d" formatted="false">"Read entry"</string>
+    <string name="ui_0a1f758c3b12" formatted="false">"Reference libraries"</string>
+    <string name="ui_a6d703e0e93d" formatted="false">"Reselect original file"</string>
+    <string name="ui_f12822f97a31" formatted="false">"Resume import"</string>
+    <string name="ui_2a2af9ea49a4" formatted="false">"Retrieve full Wikipedia article"</string>
+    <string name="ui_323352c1a979" formatted="false">"Review progress"</string>
+    <string name="ui_67b15e994569" formatted="false">"Rich notes, headings, lists and paragraphs"</string>
+    <string name="ui_3ae9011521ac" formatted="false">"Save images for offline reading"</string>
+    <string name="ui_d3b69a22b571" formatted="false">"Saving source images requires Power"</string>
+    <string name="ui_49c266baaaa7" formatted="false">"Search"</string>
+    <string name="ui_61840cd1f197" formatted="false">"Search selected libraries"</string>
+    <string name="ui_2cc511b0e961" formatted="false">"Source date: %1$s"</string>
+    <string name="ui_0e4df5b2b7b2" formatted="false">"Source image"</string>
+    <string name="ui_1e88f25d3896" formatted="false">"Source: CDC. Available free from CDC; use by halo does not imply CDC or US government endorsement."</string>
+    <string name="ui_3ba8701496df" formatted="false">"The selected file is imported locally. Its source language, date and rights are retained."</string>
+    <string name="ui_1d16b88f1c0e" formatted="false">"This file keeps its original format. Make a separate rich note to add headings, paragraphs and lists."</string>
+    <string name="ui_eda49214cfe4" formatted="false">"Update from file"</string>
+    <string name="ui_35d7e044e24d" formatted="false">"User-imported text; publisher and rights are not verified"</string>
+    <string name="ui_ed200c1f86a0" formatted="false">"XML, JSONL and CSV · compressed files supported"</string>
+    <string name="ui_4a6597fa335d" formatted="false">"MedlinePlus health topics"</string>
+    <string name="ui_b2ac258f528c" formatted="false">"Compact English/Spanish health-topic summaries from the National Library of Medicine. No licensed encyclopedia, drug monographs or images."</string>
+    <string name="ui_ea87d978da39" formatted="false">"Emergency preparedness"</string>
+    <string name="ui_d19e22b63b49" formatted="false">"Selected CDC reference text on safe water, food, temperature and disaster cleanup, with original source dates and links. English."</string>
+    <string name="ui_19ff5bc55a19" formatted="false">"General reference"</string>
+    <string name="ui_f914372b5345" formatted="false">"A small Wikipedia text selection with optional source images covering science and practical reference, with pinned revisions and attribution. English."</string>
+    <string name="ui_3c9fee3663dc" formatted="false">"This new draft will be discarded."</string>
+    <string name="ui_e3f2e93c4560" formatted="false">"A parent imports reference libraries"</string>
+    <string name="ui_d632729eb393" formatted="false">"Downloaded from the official source"</string>
+    <string name="ui_6d71079d2614" formatted="false">"Local import metadata · source freshness is not verified"</string>
+    <string name="ui_cdb88338c233" formatted="false">"Import metadata checked %1$s"</string>
+    <string name="ui_1171b1320634" formatted="false">"Compact images"</string>
+    <string name="ui_040b8f3bba0f" formatted="false">"Enlarge images"</string>
+    <string name="ui_618089568d0e" formatted="false">"Some images could not be saved. The article text is kept."</string>
+    <string name="ui_d880209363b2" formatted="false">"Images saved for offline reading"</string>
+    <string name="ui_56c85b61080e" formatted="false">"Images could not be confirmed. Read the current source before trying again."</string>
+    <string name="ui_3e915aa80e1b" formatted="false">"Review before import"</string>
+    <string name="ui_d252fffacbf0" formatted="false">"Importing"</string>
+    <string name="ui_cc24d96ee638" formatted="false">"Indexing"</string>
+    <string name="ui_7aeb76ac36d8" formatted="false">"This action is unavailable in the current view."</string>
+    <string name="ui_97a2bf9089e8" formatted="false">"The original source could not be opened"</string>
+    <string name="ui_433cadde197a" formatted="false">"This library action could not finish. The previous saved library is kept."</string>
+    <string name="ui_d71af6839ae9" formatted="false">"Import cancelled"</string>
+    <string name="ui_f672fd61f011" formatted="false">"Import interrupted; review and resume"</string>
+    <string name="ui_fbdaf2175c16" formatted="false">"Document access unavailable; reselect the same file"</string>
+    <string name="ui_e1fc3faa6c8f" formatted="false">"This exact library is already installed"</string>
+    <string name="ui_f74ad2c27622" formatted="false">"No supported entries were found"</string>
+    <string name="ui_b9e1610ff7d9" formatted="false">"Import failed; select a supported file"</string>
+    <string name="ui_a6a01ca08abf" formatted="false">"Source removed; select a new file to import"</string>
+    <string name="ui_1913812b4ada" formatted="false">"Libraries could not be loaded. Retry to read local progress."</string>
 </resources>

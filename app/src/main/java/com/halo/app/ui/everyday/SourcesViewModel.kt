@@ -114,7 +114,12 @@ class SourcesViewModel(private val app: HaloApplication, private val saved: Save
         }
         done(record.id)
     }
+    fun retrieveWikipedia(sourceId: String, version: Long, contentRevision: String, articleId: String, done: (String) -> Unit) = work {
+        val receipt = Graph.researchArticles.retrieve(sourceId, version, contentRevision, articleId)
+        mutable.update { it.copy(notice = if (receipt.fetched) "Full article sections are saved for offline reading" else "Article source saved; check its retrieval status") }
+        done(receipt.id)
+    }
     companion object {
-        fun childSource(source: CollectorSource) = source.external && source.selected && source.enabled && !source.muted && source.childApproved
+        fun childSource(source: CollectorSource) = (source.external || source.kind == CollectorKind.LOCAL_LIBRARY) && source.selected && source.enabled && !source.muted && source.childApproved
     }
 }

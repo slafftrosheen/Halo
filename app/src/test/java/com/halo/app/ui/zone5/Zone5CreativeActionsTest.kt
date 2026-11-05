@@ -83,6 +83,25 @@ class Zone5CreativeActionsTest {
         } }
         await { actions.value != null }
     }
+    @Test fun richNoteInsertConvertsTheEmptyParagraphAndEnterCreatesTheNextParagraph() {
+        val note = runBlocking { fixture.notes.createNote(title = "Owned rich note") }
+        lateinit var model: NoteEditorViewModel
+        compose.runOnUiThread {
+            model = NoteEditorViewModel(note.id, com.halo.app.notebook.NotebookUseCases(fixture.notes), document = fixture.documents)
+            own(model)
+        }
+        render("notebook/note/{noteId}", scale = 2f) { NoteEditorScreen(model, {}) }
+        await { model.uiState.value.status == SaveStatus.SAVED }
+        compose.runOnIdle { assertTrue(actions.value!!.invoke("page.note.insert")) }
+        compose.onNodeWithText("Heading 1").performScrollTo().performClick()
+        await { model.uiState.value.blocks.singleOrNull()?.type == com.halo.app.data.notebook.NoteBlockType.HEADING }
+        compose.onNode(hasSetTextAction()).performTextInput("Field heading")
+        compose.onNode(hasSetTextAction()).performTextInput("\n")
+        await { model.uiState.value.blocks.size == 2 }
+        assertEquals(listOf(com.halo.app.data.notebook.NoteBlockType.HEADING, com.halo.app.data.notebook.NoteBlockType.PARAGRAPH), model.uiState.value.blocks.map { it.type })
+        await { model.uiState.value.status == SaveStatus.SAVED }
+        assertEquals(model.uiState.value.blocks, runBlocking { fixture.documents.load(note.id)!! }.blocks)
+    }
     @Test fun canvasArrangeOpensWithoutMutatingTheBoard() {
         val id = runBlocking { fixture.canvases.create("Field board").also { fixture.canvases.addTextNode(it, 24f, 24f, "Synthetic field observation") } }
         lateinit var model: CanvasEditorViewModel

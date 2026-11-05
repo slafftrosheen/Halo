@@ -45,6 +45,8 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
 
 sealed interface EverydayTarget {
     data object Organizer : EverydayTarget
+    data object Libraries : EverydayTarget
+    data class LibraryEntry(val id: String, val version: Long, val generation: String, val entryId: String) : EverydayTarget
     data object Sources : EverydayTarget
     data object Clocks : EverydayTarget
     data object Devices : EverydayTarget

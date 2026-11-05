@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.tools
 
 import com.halo.sdk.provider.ToolDefinition
+import java.util.Locale
 
 /**
  * RUNTIME-017 / RUNTIME-020.1 bounded tool discovery.
@@ -63,16 +64,24 @@ class ToolDiscoveryService(
     /** Compact discovery summary. One bounded line per available discoverable tool. */
     fun catalogueSummary(): String = catalogueSummary(availableCatalogue())
 
+    fun catalogueSummary(filter: (ToolDescriptor) -> Boolean): String = catalogueSummary(availableCatalogue().filter(filter))
+
     private fun catalogueSummary(catalogue: List<ToolDescriptor>): String {
-        val entries = catalogue.sortedBy { it.name }.take(MAX_CATALOGUE_ENTRIES)
-        if (entries.isEmpty()) return ""
+        val domains = catalogue.groupBy { it.discoveryDomain ?: it.category.name.lowercase(Locale.ROOT) }.toSortedMap()
+        if (domains.isEmpty()) return ""
+        // Round-robin supplies one action from each domain before taking a second.
+        val ordered = domains.values.map { it.sortedWith(compareByDescending<ToolDescriptor> { descriptor -> descriptor.discoveryPriority }.thenBy { descriptor -> descriptor.name }) }
+        val entries = (0 until (ordered.maxOfOrNull { it.size } ?: 0)).asSequence()
+            .flatMap { index -> ordered.asSequence().mapNotNull { it.getOrNull(index) } }.take(MAX_CATALOGUE_ENTRIES)
         return buildString {
-            append("Available discoverable actions:")
-            append('\n')
-            entries.joinTo(this, "\n") { descriptor ->
-                "- ${descriptor.name} (${descriptor.category.name.lowercase()})"
+            append("Available discoverable actions by domain. Search a domain and intended operation for more:\n")
+            for (entry in entries) {
+                val domain = (entry.discoveryDomain ?: entry.category.name.lowercase(Locale.ROOT)).take(48)
+                val line = "- $domain: ${entry.name.take(100)}\n"
+                if (length + line.length > 3200) break
+                append(line)
             }
-        }
+        }.trimEnd()
     }
 
     /**
@@ -82,16 +91,16 @@ class ToolDiscoveryService(
      * keyword matches, then description matches.
      */
     fun search(query: String, limit: Int = MAX_SEARCH_MATCHES): List<ToolDescriptor> {
-        val terms = query.lowercase().split(Regex("[^a-z0-9_]+")).filter { it.length >= 2 }
+        val terms = query.lowercase(Locale.ROOT).split(Regex("[^\\p{L}\\p{N}_]+")).filter { it.length >= 2 }
         if (terms.isEmpty()) return emptyList()
 
         val candidates = availableCatalogue()
 
         return candidates.mapNotNull { descriptor ->
-            val name = descriptor.name.lowercase()
-            val keywords = descriptor.keywords.joinToString(" ").lowercase()
-            val description = descriptor.definition.description.lowercase()
-            val category = descriptor.category.name.lowercase()
+            val name = descriptor.name.lowercase(Locale.ROOT)
+            val keywords = descriptor.keywords.joinToString(" ").lowercase(Locale.ROOT)
+            val description = descriptor.definition.description.lowercase(Locale.ROOT)
+            val category = descriptor.category.name.lowercase(Locale.ROOT)
             var score = 0
             for (term in terms) {
                 if (name.contains(term)) score += 3
@@ -101,15 +110,15 @@ class ToolDiscoveryService(
             }
             if (score == 0) null else descriptor to score
         }
-            .sortedWith(compareByDescending<Pair<ToolDescriptor, Int>> { it.second }.thenBy { it.first.name })
+            .sortedWith(compareByDescending<Pair<ToolDescriptor, Int>> { it.second }.thenByDescending { it.first.discoveryPriority }.thenBy { it.first.name })
             .take(limit)
             .map { it.first }
     }
 
     /** One bounded line per candidate, stable enough for a small model to copy an id from. */
     fun describe(descriptors: List<ToolDescriptor>): String = descriptors.joinToString("\n") { descriptor ->
-        val risk = descriptor.security.risk.name.lowercase()
-        "- ${descriptor.name} [${descriptor.category.name.lowercase()}/$risk]: " +
+        val risk = descriptor.security.risk.name.lowercase(Locale.ROOT)
+        "- ${descriptor.name} [${descriptor.category.name.lowercase(Locale.ROOT)}/$risk]: " +
             descriptor.definition.description.lineSequence().first().take(120)
     }
 

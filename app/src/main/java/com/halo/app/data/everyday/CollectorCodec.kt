@@ -7,7 +7,7 @@ import java.time.LocalDate
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Bounded, typed local format. No raw HTML, executable reader state or remote resource references. */
+/** Bounded, typed local format. No raw HTML or executable reader state. Inert image URLs never load during parsing/reading. */
 internal object CollectorCodec {
     private fun JSONObject.text(key: String): String? = if (isNull(key)) null else getString(key)
     private fun JSONObject.instant(key: String): Instant? = if (isNull(key)) null else Instant.ofEpochMilli(getLong(key))
@@ -36,7 +36,7 @@ internal object CollectorCodec {
         when (payload) {
             is CollectorPayload.Articles -> { put("type", "articles"); put("items", array(payload.items.map { item -> JSONObject()
                 .put("id", item.id).put("title", item.title).put("text", item.text).put("url", item.url).put("publisher", item.publisher)
-                .put("published", item.publishedAt?.toEpochMilli()).put("updated", item.updatedAt?.toEpochMilli()).put("language", item.language).put("categories", JSONArray(item.categories)) })) }
+                .put("published", item.publishedAt?.toEpochMilli()).put("updated", item.updatedAt?.toEpochMilli()).put("language", item.language).put("categories", JSONArray(item.categories)).put("images", SourceImages.encode(item.images)) })) }
             is CollectorPayload.Warnings -> { put("type", "warnings"); put("items", array(payload.items.map { item -> JSONObject()
                 .put("id", item.id).put("title", item.title).put("text", item.text).put("url", item.url).put("publisher", item.publisher)
                 .put("area", item.area).put("severity", item.severity).put("onset", item.onset?.toEpochMilli()).put("expires", item.expires?.toEpochMilli()) })) }
@@ -60,7 +60,7 @@ internal object CollectorCodec {
         when (json.getString("type")) {
             "articles" -> CollectorPayload.Articles(json.getJSONArray("items").rows().map { item -> ArticleFact(item.getString("id"), item.getString("title"),
                 item.getString("text"), item.text("url"), item.getString("publisher"), item.instant("published"), item.getString("language"),
-                item.getJSONArray("categories").let { categories -> require(categories.length() <= 20); (0 until categories.length()).map(categories::getString) }, item.instant("updated")) })
+                item.getJSONArray("categories").let { categories -> require(categories.length() <= 20); (0 until categories.length()).map(categories::getString) }, item.instant("updated"), SourceImages.decode(item.optJSONArray("images"))) })
             "warnings" -> CollectorPayload.Warnings(json.getJSONArray("items").rows().map { item -> WarningFact(item.getString("id"), item.getString("title"),
                 item.getString("text"), item.text("area"), item.text("severity"), item.instant("onset"), item.instant("expires"), item.text("url"), item.getString("publisher")) })
             "local" -> CollectorPayload.Local(json.getJSONArray("items").rows().map { item -> LocalFact(item.getString("id"), item.getString("kind"),

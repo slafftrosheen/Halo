@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(5087) {
+    buildMap(5161) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -20,6 +20,7 @@ internal val uiCatalogue: Map<String, Int> by lazy {
         putAll(uiCataloguePart14())
         putAll(uiCataloguePart15())
         putAll(uiCataloguePart16())
+        putAll(uiCataloguePart17())
         putAll(uiCatalogueAliases())
     }
 }
@@ -5130,6 +5131,83 @@ private fun uiCataloguePart16(): Map<String, Int> = mapOf(
     "Select layer %1\$s" to R.string.ui_31b22954a6ff,
     "Enable effect %1\$s" to R.string.ui_4c99e10f0d89,
     "Edit an image" to R.string.ui_361ef0904840,
+    "%1\$d KiB" to R.string.ui_8375175b441a,
+    "%1\$d entries processed" to R.string.ui_8fb4a2d44af8,
+    "%1\$d indexed entries · %2\$s" to R.string.ui_3e96e319d755,
+    "Add a library to search saved reference text offline." to R.string.ui_910b178efa5e,
+    "Add reference library" to R.string.ui_07af3e51399c,
+    "Block style" to R.string.ui_e490f6c54951,
+    "Brief preferences" to R.string.ui_a10e21201fdb,
+    "Cancel import" to R.string.ui_6dd6cafb0d3f,
+    "Confirm import" to R.string.ui_4ca48b4230a5,
+    "Copy could not be confirmed. Check your notes before trying again." to R.string.ui_14c733790a45,
+    "Dataset generated: %1\$s" to R.string.ui_db42d0f2d0a5,
+    "Download for review" to R.string.ui_d64da3131f51,
+    "Downloads require Power. You will review the downloaded file separately before importing it." to R.string.ui_dc0e8c2c0dac,
+    "Excluded from search" to R.string.ui_86e248a15621,
+    "Image rights are separate from article text; see the original source." to R.string.ui_1ef2cd761300,
+    "Import library" to R.string.ui_09691e94bcfc,
+    "Make rich-note copy" to R.string.ui_979b95389e09,
+    "Next results" to R.string.ui_14a7b1d33adf,
+    "No deleted item to restore" to R.string.ui_68116808fb29,
+    "No matching entries. Try the source language or different words." to R.string.ui_ef3782fa64e1,
+    "Open original source" to R.string.ui_498260b07348,
+    "Optional compact downloads" to R.string.ui_d2a97fa5bfb0,
+    "Organizer settings" to R.string.ui_174cd69656c1,
+    "Original wiki source; server templates are not expanded" to R.string.ui_d7ed2b160d8f,
+    "Plan filters" to R.string.ui_75cb80de3b08,
+    "Read entry" to R.string.ui_f95c30c4f16d,
+    "Reference libraries" to R.string.ui_0a1f758c3b12,
+    "Reselect original file" to R.string.ui_a6d703e0e93d,
+    "Resume import" to R.string.ui_f12822f97a31,
+    "Retrieve full Wikipedia article" to R.string.ui_2a2af9ea49a4,
+    "Review progress" to R.string.ui_323352c1a979,
+    "Rich notes, headings, lists and paragraphs" to R.string.ui_67b15e994569,
+    "Save images for offline reading" to R.string.ui_3ae9011521ac,
+    "Saving source images requires Power" to R.string.ui_d3b69a22b571,
+    "Search" to R.string.ui_49c266baaaa7,
+    "Search selected libraries" to R.string.ui_61840cd1f197,
+    "Source date: %1\$s" to R.string.ui_2cc511b0e961,
+    "Source image" to R.string.ui_0e4df5b2b7b2,
+    "Source: CDC. Available free from CDC; use by Halo does not imply CDC or US government endorsement." to R.string.ui_1e88f25d3896,
+    "The selected file is imported locally. Its source language, date and rights are retained." to R.string.ui_3ba8701496df,
+    "This file keeps its original format. Make a separate rich note to add headings, paragraphs and lists." to R.string.ui_1d16b88f1c0e,
+    "Update from file" to R.string.ui_eda49214cfe4,
+    "User-imported text; publisher and rights are not verified" to R.string.ui_35d7e044e24d,
+)
+
+private fun uiCataloguePart17(): Map<String, Int> = mapOf(
+    "XML, JSONL and CSV · compressed files supported" to R.string.ui_ed200c1f86a0,
+    "MedlinePlus health topics" to R.string.ui_4a6597fa335d,
+    "Compact English/Spanish health-topic summaries from the National Library of Medicine. No licensed encyclopedia, drug monographs or images." to R.string.ui_b2ac258f528c,
+    "Emergency preparedness" to R.string.ui_ea87d978da39,
+    "Selected CDC reference text on safe water, food, temperature and disaster cleanup, with original source dates and links. English." to R.string.ui_d19e22b63b49,
+    "General reference" to R.string.ui_19ff5bc55a19,
+    "A small Wikipedia text selection with optional source images covering science and practical reference, with pinned revisions and attribution. English." to R.string.ui_f914372b5345,
+    "This new draft will be discarded." to R.string.ui_3c9fee3663dc,
+    "A parent imports reference libraries" to R.string.ui_e3f2e93c4560,
+    "Downloaded from the official source" to R.string.ui_d632729eb393,
+    "Local import metadata · source freshness is not verified" to R.string.ui_6d71079d2614,
+    "Import metadata checked %1\$s" to R.string.ui_cdb88338c233,
+    "Compact images" to R.string.ui_1171b1320634,
+    "Enlarge images" to R.string.ui_040b8f3bba0f,
+    "Some images could not be saved. The article text is kept." to R.string.ui_618089568d0e,
+    "Images saved for offline reading" to R.string.ui_d880209363b2,
+    "Images could not be confirmed. Read the current source before trying again." to R.string.ui_56c85b61080e,
+    "Review before import" to R.string.ui_3e915aa80e1b,
+    "Importing" to R.string.ui_d252fffacbf0,
+    "Indexing" to R.string.ui_cc24d96ee638,
+    "This action is unavailable in the current view." to R.string.ui_7aeb76ac36d8,
+    "The original source could not be opened" to R.string.ui_97a2bf9089e8,
+    "This library action could not finish. The previous saved library is kept." to R.string.ui_433cadde197a,
+    "Import cancelled" to R.string.ui_d71af6839ae9,
+    "Import interrupted; review and resume" to R.string.ui_f672fd61f011,
+    "Document access unavailable; reselect the same file" to R.string.ui_fbdaf2175c16,
+    "This exact library is already installed" to R.string.ui_e1fc3faa6c8f,
+    "No supported entries were found" to R.string.ui_f74ad2c27622,
+    "Import failed; select a supported file" to R.string.ui_b9e1610ff7d9,
+    "Source removed; select a new file to import" to R.string.ui_a6a01ca08abf,
+    "Libraries could not be loaded. Retry to read local progress." to R.string.ui_1913812b4ada,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

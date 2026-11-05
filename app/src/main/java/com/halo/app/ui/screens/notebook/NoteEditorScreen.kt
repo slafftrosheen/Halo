@@ -49,6 +49,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -166,6 +168,7 @@ fun NoteEditorScreen(
     onOpenStudio: ((String, String) -> Unit)? = null,
     onOpenOffice: ((String) -> Unit)? = null,
     onExportCopy: (suspend (String, Long, com.halo.app.data.workspace.WorkspaceTextFormat) -> com.halo.app.data.workspace.WorkspaceFile)? = null,
+    onRichCopy: (suspend (String, Long) -> Unit)? = null,
 ) {
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -183,6 +186,8 @@ fun NoteEditorScreen(
     var exportFailed by remember { mutableStateOf(false) }
     var exportedRevision by rememberSaveable(viewModel.noteId) { mutableStateOf<Long?>(null) }
     var exported by remember { mutableStateOf<com.halo.app.data.workspace.WorkspaceFile?>(null) }
+    var copying by remember { mutableStateOf(false) }
+    var copyFailed by remember { mutableStateOf(false) }
     val exitScope = rememberCoroutineScope()
     var leaving by remember(viewModel) { mutableStateOf(false) }
     val leaveSafely: () -> Unit = {
@@ -200,6 +205,7 @@ fun NoteEditorScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val referenceCandidates by viewModel.referenceCandidates.collectAsStateWithLifecycle()
 
+    var changeBlockStyle by remember { mutableStateOf(false) }
     var showOutline by remember { mutableStateOf(false) }
     var insertTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var showReferencePicker by remember { mutableStateOf(false) }
@@ -235,7 +241,7 @@ fun NoteEditorScreen(
         nextStep = if (insertEnabled && state.displayBody.isBlank() && insertTarget == null && !showRename && !toolsExpanded &&
             !showHaloSheet && !showAssistMenu && !showReferencePicker && !showFindBar && !showImageStudio)
             com.halo.app.ui.presence.ShellNextStep("note-insert.v1", "page.note.insert", stringResource(R.string.zone5_guide_note)) else null,
-        canonicalToolIds = listOf("halo_note_get", "halo_note_read_block", "halo_note_insert_block", "halo_note_edit_block",
+        canonicalToolIds = listOf("halo_text_rich_copy", "halo_note_get", "halo_note_read_block", "halo_note_insert_block", "halo_note_edit_block",
             "halo_note_replace_content", "halo_note_rename"),
         defaultDisabledActionReason = stringResource(when {
             state.status == SaveStatus.LOADING -> R.string.action_loading
@@ -265,6 +271,7 @@ fun NoteEditorScreen(
         })
     BindShellPageActions(pageOwner, listOf(
         ShellPageAction("page.note.insert", stringResource(R.string.zone5_insert), HaloGlyph.NOTE, insertEnabled) {
+            changeBlockStyle = false
             val current = viewModel.uiState.value
             if (current.isEditable && current.mode == EditorMode.EDIT && !current.isGenerating)
                 insertTarget = (current.selection?.blockId ?: current.blocks.lastOrNull()?.id) to noteInsertSignature(current)
@@ -330,7 +337,12 @@ fun NoteEditorScreen(
                     NoteBlockType.CODE, NoteBlockType.DIVIDER).forEach { type ->
                     Zone5ActionButton(uiText(type.label), "action_add", valid, Modifier.fillMaxWidth()) {
                         val current = viewModel.uiState.value
-                        if (noteInsertSignature(current) == target.second && current.isEditable) viewModel.insertBlock(target.first, type)
+                        if (noteInsertSignature(current) == target.second && current.isEditable) {
+                            val block = current.blocks.find { it.id == target.first }
+                            if (block != null && (changeBlockStyle || block.type == NoteBlockType.PARAGRAPH && block.text.isBlank()) && type != NoteBlockType.DIVIDER)
+                                viewModel.changeBlockType(block.id, type)
+                            else viewModel.insertBlock(target.first, type)
+                        }
                         insertTarget = null
                     }
                 }
@@ -573,6 +585,23 @@ fun NoteEditorScreen(
             },
             onTitleClick = if (state.isEditable) ({ titleDraft = state.title; showRename = true }) else null,
             fallbackTitle = uiText("Untitled note"), readText = state.displayBody)
+        if (literalFileFormat != null && onRichCopy != null) {
+            Text(uiText("This file keeps its original format. Make a separate rich note to add headings, paragraphs and lists."), style = MaterialTheme.typography.bodySmall)
+            TextButton(enabled = state.status == SaveStatus.SAVED && !state.isGenerating && !copying,
+                onClick = {
+                    val saved = viewModel.uiState.value
+                    if (saved.status == SaveStatus.SAVED && !copying) {
+                        copying = true; copyFailed = false
+                        scope.launch {
+                            try { onRichCopy(viewModel.noteId, saved.revision) }
+                            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { copyFailed = true }
+                            finally { copying = false }
+                        }
+                    }
+                }) { Text(uiText("Make rich-note copy")) }
+            if (copyFailed) Text(uiText("Copy could not be confirmed. Check your notes before trying again."), color = MaterialTheme.colorScheme.error)
+        }
         if (state.status == SaveStatus.MISSING) {
             MissingNoteState(onBack, Modifier.weight(1f))
             return@Column
@@ -651,6 +680,15 @@ fun NoteEditorScreen(
                 onPickReference = { relinkBlockId = null; showReferencePicker = true },
                 onAssist = { showHaloSheet = true }, onStudyPassage = { startStudy(null) },
                 onAttach = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) })
+        }
+        if (shellOwnsOrb && insertEnabled && WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                TextButton({ changeBlockStyle = false; insertTarget = (state.selection?.blockId ?: state.blocks.lastOrNull()?.id) to noteInsertSignature(state) },
+                    Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.zone5_insert)) }
+                TextButton({ changeBlockStyle = true; insertTarget = (state.selection?.blockId ?: state.blocks.lastOrNull()?.id) to noteInsertSignature(state) },
+                    Modifier.heightIn(min = 48.dp)) { Text(uiText("Block style")) }
+                TextButton(viewModel::undo, Modifier.heightIn(min = 48.dp), enabled = state.canUndo) { Text(uiText("Undo")) }
+            }
         }
         if (!shellOwnsOrb && state.mode == EditorMode.EDIT && state.isEditable) NoteFocusDock(state, viewModel,
             onAdd = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },

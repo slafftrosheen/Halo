@@ -305,7 +305,7 @@ class EverydayToolExecutorTest {
         assertTrue(organizer.records().isEmpty())
     }
     @Test fun everyDefinitionHasCentralCapabilitiesNeverReplayWritesAndPersonalDisclosureClassification() {
-        assertEquals(EverydayToolContracts.names,PersonalConfigurationToolAccess.everyday)
+        assertEquals(EverydayToolContracts.names + ReferenceLibraryContracts.names + MaterialImageContracts.names,PersonalConfigurationToolAccess.everyday)
         EverydayToolContracts.definitions.forEach {definition ->
             val descriptor=HaloToolDescriptors.assistant(definition)
             assertNotNull(definition.name,descriptor)
@@ -325,6 +325,26 @@ class EverydayToolExecutorTest {
         assertEquals(ToolOperation.CREATE,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_alarm"})!!.operation)
         assertEquals(ToolOperation.EXPORT,EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.operation)
         assertEquals(setOf("objectId"),EverydayToolContracts.operability(EverydayToolContracts.definitions.single {it.name=="halo_organizer_calendar_export"})!!.resultIdFields)
+    }
+    @Test fun registeredReadbackReassemblesEscapedDetailsAndRejectsChangesBetweenChunks() = runBlocking {
+        val text = ("quotes\"\\\n😀 ".repeat(1300))
+        val record = useCases.create(OrganizerKind.TASK, "Long owned note", details = text)
+        val registry = ToolRegistry(listOf(executor), executor.definitions().map { HaloToolDescriptors.assistant(it)!! })
+        suspend fun read(args: Map<String, Any>): ToolExecutionResult = registry.executeAuthorized(
+            ToolAuthorization.Authorized(ToolCall("read", "halo_organizer_get", args)), ToolExecutionContext())
+        val first = json(read(mapOf("id" to record.id)))
+        assertTrue(first.toString().length <= 4000)
+        val snapshot = first.getString("snapshot")
+        val output = StringBuilder(); var offset = 0
+        do {
+            val page = json(read(mapOf("id" to record.id, "version" to record.version, "snapshot" to snapshot,
+                "view" to "text", "path" to listOf("record", "details"), "readOffset" to offset)))
+            assertTrue(page.toString().length <= 4000); output.append(page.getString("text"))
+            offset = if (page.isNull("nextReadOffset")) -1 else page.getInt("nextReadOffset")
+        } while (offset >= 0)
+        assertEquals(text, output.toString())
+        organizer.save(record.copy(title = "Changed"), record.version)
+        assertTrue(read(mapOf("id" to record.id, "snapshot" to snapshot)) is ToolExecutionResult.Rejected)
     }
     @Test fun actualQueryResultIsClosedAndBoundedAndInvalidPostWriteReceiptRemainsUnknown()=runBlocking {
         useCases.create(OrganizerKind.TASK,"Observed")

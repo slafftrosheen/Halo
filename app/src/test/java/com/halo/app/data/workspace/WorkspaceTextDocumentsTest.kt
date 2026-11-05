@@ -28,6 +28,21 @@ class WorkspaceTextDocumentsTest {
             }
         }
     }
+    @Test fun richCopyParsesMarkdownWithoutChangingTheSavedLiteralOriginal() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val raw = "# Heading\n\nParagraph with **emphasis**.\n"
+            val original = f.text.create("Original", WorkspaceTextFormat.MARKDOWN, raw)
+            val service = com.halo.app.di.tools.RichNoteCopyService(f.text) { {} }
+            val receipt = service.copy(original.id, original.revision)
+            val unchanged = f.text.get(original.id)!!
+            assertEquals(raw, unchanged.text); assertEquals(original.revision, unchanged.revision)
+            val rich = f.documents.load(receipt.noteId)!!
+            assertTrue(rich.blocks.any { it.type == NoteBlockType.HEADING })
+            assertTrue(rich.blocks.any { it.type == NoteBlockType.PARAGRAPH && it.text.contains("Paragraph") })
+            assertTrue(runCatching { service.copy(original.id, original.revision + 1) }.isFailure)
+            assertNotEquals(original.id, receipt.noteId)
+        }
+    }
     @Test fun staleRevisionAndWrongSelectedTextNeverOverwrite() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val first = f.text.create("Draft", WorkspaceTextFormat.TXT, "hello world")

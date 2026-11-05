@@ -46,6 +46,7 @@ object FeedParser {
         var id: String? = null; var title = ""; var text = ""; var url: String? = null
         var published: String? = null; var language: String? = null
         val categories = mutableListOf<String>()
+        val images = mutableListOf<SourceImage>()
         val cap = mutableMapOf<String, String>()
     }
     fun parse(bytes: ByteArray, source: CollectorSource): ParsedFeed {
@@ -72,6 +73,9 @@ object FeedParser {
                     item!!.language = attributes.getValue("http://www.w3.org/XML/1998/namespace", "lang") ?: attributes.getValue("xml:lang")
                 }
                 val active = item ?: return
+                if (active.images.size < SourceImages.MAX_IMAGES && (name == "thumbnail" || name == "content" && (attributes.getValue("medium") == "image" || attributes.getValue("type")?.startsWith("image/") == true) || name in setOf("enclosure", "link") && attributes.getValue("type")?.startsWith("image/") == true)) {
+                    SourceImages.resolve(attributes.getValue("url") ?: attributes.getValue("href"), requireNotNull(source.endpoint))?.let { active.images.add(it) }
+                }
                 if (name == "link" && attributes.getValue("href") != null && attributes.getValue("rel") in setOf(null, "alternate"))
                     active.url = active.url ?: link(attributes.getValue("href"), source.endpoint)
                 if (name == "category" && active.categories.size < 20) attributes.getValue("term")?.let { active.categories += SafeFeedText.plain(it.take(65536), 80) }
@@ -87,7 +91,10 @@ object FeedParser {
                     when (field) {
                         "guid", "id" -> if (active.id == null && value.isNotEmpty()) active.id = value.take(2000)
                         "title" -> if (active.title.isEmpty()) active.title = SafeFeedText.plain(value, 500)
-                        "description", "summary", "content", "encoded" -> if (value.length > active.text.length) active.text = SafeFeedText.plain(value)
+                        "description", "summary", "content", "encoded" -> {
+                            if (value.length > active.text.length) active.text = SafeFeedText.plain(value)
+                            if (active.images.size < SourceImages.MAX_IMAGES) active.images.addAll(SourceImages.fromMarkup(value, requireNotNull(source.endpoint)).filter { image -> active.images.none { it.url == image.url } }.take(SourceImages.MAX_IMAGES - active.images.size))
+                        }
                         "link" -> active.url = active.url ?: link(value, source.endpoint)
                         "pubdate", "published", "date", "updated" -> if (active.published == null && date(value) != null) active.published = value
                         "category" -> if (active.categories.size < 20 && value.isNotBlank()) active.categories += SafeFeedText.plain(value, 80)
@@ -99,7 +106,7 @@ object FeedParser {
                     if (articles.size < CollectorRefreshPolicy.MAX_ITEMS && active.title.isNotBlank()) {
                         val identity = source.id + ":" + digest(active.id ?: active.url ?: "${active.title}\n${active.published}")
                         articles.putIfAbsent(identity, ArticleFact(identity, active.title, active.text, active.url, source.publisher,
-                            date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct()))
+                            date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct(), images = active.images.distinctBy { it.url }.take(SourceImages.MAX_IMAGES)))
                         if (source.kind == CollectorKind.ALERTS) warnings.putIfAbsent(identity, WarningFact(identity,
                             active.cap["headline"]?.takeIf { it.isNotBlank() } ?: active.title, active.text, active.cap["areadesc"], active.cap["severity"],
                             date(active.cap["onset"] ?: active.cap["effective"]), date(active.cap["expires"]), link(active.cap["web"], source.endpoint) ?: active.url, source.publisher))

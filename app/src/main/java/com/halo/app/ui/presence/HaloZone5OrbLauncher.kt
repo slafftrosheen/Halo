@@ -295,26 +295,9 @@ internal fun HaloZone5OrbLauncher(
                         if (destination.route == selected) Zone5Icon("action_check", HaloGlyph.SUCCESS, Modifier.size(20.dp))
                     }
                     if (destination.route == "notebook" && !navigation.kids) {
-                        var instrumentsExpanded by remember(disclosure) { mutableStateOf(false) }
-                        val expansionState = stringResource(if (instrumentsExpanded) R.string.zone5_expanded else R.string.zone5_collapsed)
-                        TextButton(onClick = { instrumentsExpanded = !instrumentsExpanded },
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp).heightIn(min = targetSize)
-                                .semantics { stateDescription = expansionState }) {
-                            Text(stringResource(R.string.zone5_workspace_group), Modifier.weight(1f))
-                            Zone5Icon(if (instrumentsExpanded) "action_up" else "action_down", HaloGlyph.NEXT, Modifier.size(24.dp))
-                        }
-                        if (instrumentsExpanded) com.halo.app.ui.shell.ShellOrbCatalog.workspaceDestinations(navigation.kids).forEach { instrument ->
-                            val icon = when (instrument.route) {
-                                "screen/organizer" -> "tool_organizer"
-                                "studio" -> "tool_studio"; "study" -> "tool_study"; "notebook/memory" -> "tool_memory"
-                                "canvases" -> "tool_canvas"; else -> "tool_notes"
-                            }
-                            TextButton(onClick = { act { navigation.onNavigate(instrument.route) } },
-                                modifier = Modifier.fillMaxWidth().padding(start = 16.dp).heightIn(min = targetSize)) {
-                                Zone5Icon(icon, instrument.glyph, Modifier.size(24.dp))
-                                Spacer(Modifier.width(12.dp))
-                                Text(com.halo.app.ui.zone5.workspaceInstrumentName(icon, uiText(instrument.title)), Modifier.weight(1f))
-                            }
+                        TextButton(onClick = { act { navigation.onNavigate("notebook?filter=tools") } },
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp).heightIn(min = targetSize)) {
+                            Text(stringResource(R.string.zone5_workspace_group))
                         }
                     }
                 }
@@ -360,10 +343,13 @@ internal fun HaloZone5OrbLauncher(
                     }
                 }
                 var query by remember(disclosure, navigation.entryId, owner?.objectId) { mutableStateOf("") }
-                if (listedActions.size > 8) OutlinedTextField(query, { query = it },
+                if (listedActions.isNotEmpty()) OutlinedTextField(query, { query = it },
                     label = { Text(stringResource(R.string.zone5_find_action)) },
                     singleLine = true, modifier = Modifier.fillMaxWidth())
-                val matching = listedActions.filter { com.halo.app.ui.zone5.actionMatchesQuery(it, query) }
+                val matching = listedActions.filter { action ->
+                    com.halo.app.ui.zone5.actionMatchesQuery(action, query) &&
+                        (query.isNotBlank() || WorkspaceActionPresentation.find(action.id)?.role !in setOf(ShellActionRole.PRIMARY, ShellActionRole.DESTINATION))
+                }.distinctBy { it.id }
                 val grouped = if (owner?.routeFamily in workspaceMenuFamilies)
                     WorkspaceMenuGroup.entries.map { group -> stringResource(group.label) to matching.filter {
                         it.id.startsWith("page:") && workspaceMenuGroup(it.id) == group

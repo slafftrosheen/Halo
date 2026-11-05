@@ -28,7 +28,8 @@ data class ShellGuideStep(val id: String, val actionId: String, val message: Str
 
 /** Presentation only. Refers to an existing enabled action, never grants authority. */
 data class ShellNextStep(val id: String, val actionId: String, val message: String)
-data class ShellPageActionMetadata(val id: String, val title: String, val glyph: HaloGlyph, val enabled: Boolean)
+data class ShellPageActionMetadata(val id: String, val title: String, val glyph: HaloGlyph, val enabled: Boolean,
+    val presentation: ShellActionPresentation? = WorkspaceActionPresentation.find(id))
 data class ShellPageAction(val id: String, val title: String, val glyph: HaloGlyph,
     val enabled: Boolean = true, val onInvoke: () -> Unit)
 

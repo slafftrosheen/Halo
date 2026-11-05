@@ -8,12 +8,15 @@ import com.halo.app.everyday.collectors.*
 /** Preserve legacy Screen paths for saved entries; these instruments now belong under Workspace's Organizer.
  * Imported routes are never passed to NavController. */
 object EverydayRoutes {
+    const val LIBRARIES = "screen/organizer/libraries"
     const val ORGANIZER = "screen/organizer"
     const val CLOCKS = "screen/clocks"
     const val BRIEF = "screen/brief"
     const val SOURCES = "screen/sources"
     const val SOURCE = "screen/source"
     private fun encode(value: String) = java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20")
+    fun libraryEntry(sourceId: String, version: Long, generation: String, entryId: String) =
+        "$LIBRARIES?sourceId=${encode(sourceId)}&sourceVersion=$version&generation=${encode(generation)}&entryId=${encode(entryId)}"
     fun organizer(id: String? = null, originalStart: java.time.Instant? = null) = id?.let { "$ORGANIZER?recordId=${encode(it)}"+
         (originalStart?.let { at -> "&occurrenceStart=${encode(at.toString())}" } ?: "") } ?: ORGANIZER
     fun clocks(zoneId: String, label: String) = "$CLOCKS?zoneId=${encode(zoneId)}&cityLabel=${encode(label)}"
@@ -29,6 +32,15 @@ object EverydayRoutes {
                 val original=uri.getQueryParameter("occurrenceStart")?.let(java.time.Instant::parse)
                 if (id != null) id.matches(Regex("[A-Za-z0-9_.:-]{1,200}")) && route == organizer(id,original)
                 else create != null && create in com.halo.app.everyday.organizer.OrganizerKind.entries.map { it.name } && route == "$ORGANIZER?createKind=$create"
+            }
+            LIBRARIES -> {
+                val id = uri.getQueryParameter("sourceId")
+                val version = uri.getQueryParameter("sourceVersion")?.toLongOrNull()
+                val generation = uri.getQueryParameter("generation")
+                val entry = uri.getQueryParameter("entryId")
+                id != null && id.matches(Regex("[A-Za-z0-9_.:-]{1,160}")) && version != null && version > 0 &&
+                    generation != null && generation.matches(Regex("[A-Za-z0-9-]{1,64}")) && !entry.isNullOrBlank() && entry.length <= 256 &&
+                    route == libraryEntry(id, version, generation, entry)
             }
             SOURCE -> {
                 val id = uri.getQueryParameter("sourceId"); val item = uri.getQueryParameter("itemId")
@@ -78,8 +90,15 @@ object EverydayRoutes {
     }
     suspend fun local(fact: LocalFact, allowSharedChildNote: Boolean = false): String {
         val kids = Graph.kidsPreferences.getEnabled()
-        check(!kids || allowSharedChildNote && fact.kind == "NOTE")
+        check(!kids || allowSharedChildNote && fact.kind == "NOTE" || fact.kind == "REFERENCE_LIBRARY")
         return when (fact.kind) {
+            "REFERENCE_LIBRARY" -> {
+                val source = requireNotNull(Graph.collectorRepository.source(fact.id))
+                require(source.kind == CollectorKind.LOCAL_LIBRARY && source.selected && source.enabled && !source.muted)
+                if (kids) require(SourcesViewModel.childSource(source))
+                require(Graph.appDatabase.referenceDao().library(source.id)?.generation == fact.revision)
+                LIBRARIES
+            }
             "EVENT", "TASK", "REMINDER", "ALARM", "TIMER" -> {
                 requireNotNull(Graph.organizerRepository.get(fact.id)).also { require(it.deletedAt == null) }
                 organizer(fact.id)

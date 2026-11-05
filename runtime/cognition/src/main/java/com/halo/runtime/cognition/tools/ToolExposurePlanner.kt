@@ -194,7 +194,14 @@ class ToolExposurePlanner(
 
         val includeDiscovery = localPolicy?.allows(ToolDiscoveryService.DISCOVER_TOOL) != false
         if (includeDiscovery) {
-            definitions.add(ToolDiscoveryService.discoveryToolDefinition(discoverySummary))
+            // Rebuild from this call's actual policy/availability; a caller-supplied string can be stale.
+            val summary = run {
+                ToolDiscoveryService(registry, availabilityResolver).catalogueSummary { descriptor ->
+                    localPolicy?.mayExpose(descriptor.name) != false &&
+                        (gate == null || gate.evaluate(descriptor, exposureContext) is ToolExposureDecision.Allow)
+                }
+            }
+            definitions.add(ToolDiscoveryService.discoveryToolDefinition(summary))
         }
 
         val budget = localPolicy?.maxExposedSchemas ?: Int.MAX_VALUE

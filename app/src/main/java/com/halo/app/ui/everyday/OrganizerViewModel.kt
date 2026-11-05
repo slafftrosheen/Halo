@@ -54,7 +54,10 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
     init { observe() }
     fun query(value: String) { saved["organizer.query"] = value.take(200) }
     fun day(value: LocalDate) { saved["organizer.day"] = value.toString() }
-    fun kind(value: String) { require(value in OrganizerKind.entries.map { it.name } + listOf("AGENDA", "TRASH") + OrganizerSection.entries.map { it.name }); saved["organizer.kind"] = value }
+    fun kind(value: String) { require(value in OrganizerKind.entries.map { it.name } + listOf("AGENDA", "TRASH") + OrganizerSection.entries.map { it.name }); saved["organizer.query.${kind.value}"] = query.value
+        saved["organizer.kind"] = value
+        saved["organizer.query"] = saved.get<String>("organizer.query.$value") ?: ""
+    }
     fun open(id: String?) { selectedId = id; saved["organizer.selected"] = id; selectedOriginal=null;saved.remove<String>("organizer.occurrence");saved["organizer.occurrenceCleared"]=true;refreshes.tryEmit(Unit) }
     fun retry() { observe() }
     fun refreshView() { refreshes.tryEmit(Unit) }

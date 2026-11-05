@@ -65,7 +65,7 @@ class ConfigurationSkillManifestParityTest {
         val calendarAndClock = setOf("halo_organizer_alarm", "halo_organizer_clock_action",
             "halo_organizer_calendar_preview", "halo_organizer_calendar_import", "halo_organizer_calendar_export")
         assertTrue(PersonalConfigurationToolAccess.everyday.containsAll(calendarAndClock))
-        assertEquals("Review the manifest contract when adding configuration operations", 85, names.size)
+        assertEquals("Review the manifest contract when adding configuration operations", 94, names.size)
         assertEquals(names.size, names.toSet().size)
         val readOnly = setOf("halo_commitments_query", "halo_research_query",
             "halo_get_preferences", "halo_get_mode_profile", "halo_screen_state", "halo_screen_preview", "halo_screen_card_configuration",
@@ -75,7 +75,7 @@ class ConfigurationSkillManifestParityTest {
             "halo_routines_list", "halo_routine_get", "halo_routine_run_status", "halo_study_current", "halo_speech_inventory",
             "halo_canvas_current", "halo_canvas_workflow_status",
         )
-        val everydayReads=setOf("halo_organizer_calendar_preview","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")
+        val everydayReads=setOf("halo_material_image_query", "halo_library_catalogue", "halo_library_query", "halo_library_get", "halo_library_import_review","halo_organizer_calendar_preview","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")
         val reversible = setOf(
             "halo_set_preferences", "halo_screen_apply", "halo_screen_undo", "halo_screen_save_preset", "halo_screen_remove_preset",
             "halo_device_thumbnail_quality", "halo_saved_device_autoconnect",
@@ -101,6 +101,8 @@ class ConfigurationSkillManifestParityTest {
                     val definition = skill.toolDefinitions.single { it.toolId == name }
                     val risk = when (name) {
                         in readOnly, in everydayReads -> SkillRisk.READ_ONLY
+                        "halo_material_image_fetch", "halo_library_download", "halo_research_article" -> SkillRisk.EXTERNAL_SIDE_EFFECT
+                        "halo_library_import_action" -> SkillRisk.SENSITIVE
                         in reversible, in PersonalConfigurationToolAccess.everyday -> SkillRisk.REVERSIBLE
                         in destructive -> SkillRisk.DESTRUCTIVE
                         "halo_routine_run_now" -> SkillRisk.EXTERNAL_SIDE_EFFECT

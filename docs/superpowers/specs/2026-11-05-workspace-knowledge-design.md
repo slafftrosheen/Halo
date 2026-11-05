@@ -1,6 +1,6 @@
 # Workspace navigation, Notes and reference libraries
 
-Status: proposed design, awaiting user review. No implementation of this scope is claimed.
+Status: approved by the user on 5 November 2026; implementation in progress. Validation is recorded separately from source completion.
 
 Builder check completed: the only question concerned the authority for source selection/child approval; the storage contract below now gives that authority solely to CollectorSource. The reviewer confirmed no important unanswered questions remain.
 
@@ -127,3 +127,7 @@ After the complete coding batch, run the related one-worker suite and compile/bu
 Complete the repository's AI-controllable verification template for changed interactive features and the registered-feature review. Typed local calls, actual spoken recognition and permitted cloud acceptance are recorded separately. No paid image calls. No issue closure or 100% acceptance claim while required gates are missing.
 
 Builder-owned choices: internal class names, file placement consistent with existing modules, exact starter article IDs after checking their current content/rights, deterministic FTS ranking weights, visual spacing and localized copy. These must honor the hierarchy, explicit resource bounds and observable behavior above. Any unavailable starter entry is reported honestly and does not remove support for the declared import formats.
+
+## Approved scope extension — source images
+
+The user additionally requested images for news and materials during implementation. Retain up to three inert publisher-provided image references with captions/source/independent rights metadata. An explicit adult Power action saves static JPEG/PNG/WebP files through governed public transport and shared quotas; 2 MiB and 4 million pixels/image, 64 MiB cache within the existing managed budget. Local rendering reads owned files only. Source selection/revision/family checks guard cache access and publication; optional image failure preserves text. Do not inherit a text license for an image or import licensed MedlinePlus imagery. AI can query metadata/cache status and request the same guarded save operation; captions are not evidence of visual recognition.

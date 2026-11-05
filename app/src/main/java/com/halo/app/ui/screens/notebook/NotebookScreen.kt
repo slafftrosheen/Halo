@@ -115,7 +115,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkills: () -> Unit = {},
     onOpenModels: () -> Unit = {}, requestLocalSearch: Boolean = false, onLocalSearchOpened: () -> Unit = {},
     onOpenStudio: (() -> Unit)? = null, onOpenFileTools: (() -> Unit)? = null, onStartVoiceMode: () -> Unit = {}, librarySession: NotebookLibrarySession? = null, rootRequest: Long = 0L,
-    onOpenCanvasLibrary: (() -> Unit)? = null, onOpenEveryday: ((String)->Unit)? = null) {
+    onOpenCanvasLibrary: (() -> Unit)? = null, onOpenEveryday: ((String)->Unit)? = null, initialSection: String? = null) {
     var returnItem by remember { mutableStateOf<String?>(null) }
     val viewBinding by viewModel.viewBinding.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel to viewBinding) {
@@ -143,10 +143,16 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val selectView: (Boolean) -> Unit = { library ->
         focusManager.clearFocus(); workspaceView = if (library) "library" else "tools"
     }
+    LaunchedEffect(initialSection) {
+        when (initialSection) {
+            "notes" -> { viewModel.setFilter(NotebookFilter.NOTES); selectView(true) }
+            "tools" -> selectView(false)
+        }
+    }
     var consumedRootRequest by rememberSaveable { mutableStateOf(0L) }
     LaunchedEffect(rootRequest) {
         if (rootRequest != consumedRootRequest) {
-            workspaceView = "library"
+            workspaceView = if (initialSection == "tools") "tools" else "library"
             consumedRootRequest = rootRequest
         }
     }
@@ -191,6 +197,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         )
         else -> listOf(
             ShellPageAction("page.notebook.new-note", "New note", HaloGlyph.NOTE, !mutating) { viewModel.createNote() },
+            ShellPageAction("page.notebook.files", "Open/import file", HaloGlyph.FILE, onOpenFileTools != null) { onOpenFileTools?.invoke() },
             ShellPageAction("page.notebook.import", "Import", HaloGlyph.TOOL, !mutating) { importFile = true; showInboxCapture = true },
             ShellPageAction("page.notebook.organize", stringResource(R.string.zone5_organize), HaloGlyph.TOOL,
                 canUseSelection) { selecting = true },
@@ -245,7 +252,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             .background(com.halo.app.ui.theme.haloWorkspaceBackground()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
             if (!zoneTabs) item("workspace-heading") { WorkspaceHeadingAndTabs(false, selectView) }
-            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools, onOpenCanvasLibrary,onOpenEveryday) }
+            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, { viewModel.setFilter(NotebookFilter.NOTES); selectView(true) }, onOpenCanvasLibrary,onOpenEveryday) }
             item("workspace-bottom") { Spacer(Modifier.height(12.dp)) }
         }
         return

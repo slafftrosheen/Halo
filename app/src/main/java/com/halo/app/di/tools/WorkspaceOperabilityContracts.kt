@@ -54,6 +54,9 @@ object WorkspaceOperabilityContracts {
         group("WorkspaceContextStore", ToolOperation.SELECT, "halo_add_to_working_set", "halo_remove_from_working_set", encoding = ToolResultEncoding.TEXT)
     }
     fun forDefinition(definition: ToolDefinition): ToolOperability? {
+        ReferenceLibraryContracts.operability(definition)?.let { return it }
+        MaterialImageContracts.operability(definition)?.let { return it }
+        RichNoteCopyContract.operability(definition)?.let { return it }
         val operation = operations[definition.name] ?: return null
         val fields = definition.parameters["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
         val resultFields = when (operation.owner) {

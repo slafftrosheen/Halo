@@ -15,6 +15,7 @@ import kotlinx.coroutines.*
 
 @Composable
 internal fun OrganizerResearchPanel(model: OrganizerViewModel, state: OrganizerPageState, onOpen: (String) -> Unit) {
+    TextButton({ onOpen(EverydayRoutes.LIBRARIES) }, Modifier.fillMaxWidth()) { Text(uiText("Reference libraries")) }
     val sources by remember { Graph.collectorRepository.observe() }.collectAsStateWithLifecycle(emptyList())
     var query by rememberSaveable { mutableStateOf("") }
     var sourceQuery by rememberSaveable { mutableStateOf("") }
@@ -65,7 +66,11 @@ internal fun OrganizerResearchPanel(model: OrganizerViewModel, state: OrganizerP
                     evidence.updatedAt?.let { Text(uiText("Updated %1\$s", it.toString())) }
                     if (evidence.stale) Text(uiText("Cached / stale"))
                     evidence.canonicalUrl?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                    TextButton({ onOpen(EverydayRoutes.source(evidence.sourceId, evidence.id)) }) { Text(uiText("Open evidence")) }
+                    TextButton({
+                        if (evidence.sourceType == "LOCAL_LIBRARY" && evidence.libraryGeneration != null)
+                            onOpen(EverydayRoutes.libraryEntry(evidence.sourceId, evidence.sourceVersion, evidence.libraryGeneration, evidence.id))
+                        else onOpen(EverydayRoutes.source(evidence.sourceId, evidence.id))
+                    }) { Text(uiText("Open evidence")) }
                 }
             }
         }

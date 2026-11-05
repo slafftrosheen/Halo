@@ -26,6 +26,7 @@ internal fun LazyListScope.collectorContent(state: CollectorState, itemId: Strin
             if (itemId != null && article == null) item { Text(uiText("This article is no longer in the saved feed. Open the source for current saved items.")) }
             else if (article != null) item {
                 Text(article.title, style = MaterialTheme.typography.headlineMedium)
+                state.snapshot?.let { saved -> MaterialImagesPanel(com.halo.app.everyday.knowledge.MaterialImageTarget(state.source.id, state.source.version, saved.contentRevision, article.id), kids) }
                 Text(article.publisher, style = MaterialTheme.typography.labelLarge)
                 article.publishedAt?.let { Text(uiText("Published %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
                 article.updatedAt?.let { Text(uiText("Updated %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
@@ -37,6 +38,7 @@ internal fun LazyListScope.collectorContent(state: CollectorState, itemId: Strin
                 items(payload.items, key = { it.id }) { entry ->
                     Surface(onClick = { onArticle(entry.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.snapshot?.let { saved -> MaterialImagesPanel(com.halo.app.everyday.knowledge.MaterialImageTarget(state.source.id, state.source.version, saved.contentRevision, entry.id), kids, compact = true) }
                             Text(entry.title, style = MaterialTheme.typography.titleMedium)
                             Text(entry.publisher, style = MaterialTheme.typography.bodySmall)
                             entry.publishedAt?.let { Text(uiText("Published %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }

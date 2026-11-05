@@ -8,7 +8,7 @@ import java.util.UUID
 import kotlinx.coroutines.flow.map
 
 class RoomCollectorRepository(private val database: AppDatabase, private val sourceChanging: (String) -> Unit = {},
-    private val scheduleChanged: () -> Unit = {}) : CollectorRepository {
+    private val scheduleChanged: () -> Unit = {}, private val releaseReferenceInput: (String) -> Unit = {}) : CollectorRepository {
     private val dao get() = database.collectorDao()
     override fun observe() = dao.observe().map { database.withTransaction { dao.sources().map { state(it) } } }
     override suspend fun states() = database.withTransaction { dao.sources().map { state(it) } }
@@ -71,12 +71,19 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         return result
     }
     override suspend fun remove(id: String, expectedVersion: Long) {
+        val inputs = mutableListOf<String>()
         database.withTransaction {
             val current = dao.source(id) ?: throw CollectorConflict("Source no longer exists")
             if (current.version != expectedVersion) throw CollectorConflict("Source changed; reopen its settings")
             com.halo.app.everyday.EverydayReadAuthority.invalidate(); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); sourceChanging(id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
+            val references = database.referenceDao()
+            for (job in references.jobsForSource(id)) {
+                inputs.add(job.uri)
+                if (job.state != "READY") references.putJob(job.copy(state = "CANCELLED", processed = 0, message = "Source removed; select a new file to import", updatedAt = System.currentTimeMillis()))
+            }
             check(dao.remove(id, expectedVersion) == 1)
         }
+        inputs.forEach { runCatching { releaseReferenceInput(it) } }
         runCatching(scheduleChanged)
     }
     /** Clearing changes the source version and invalidates the active token before dropping cached content. */

@@ -17,7 +17,7 @@ object CollectorPayloadLimits {
             is CollectorPayload.Articles -> {
                 require(payload.items.size <= 100)
                 payload.items.forEach { require(it.id.length <= 2000 && it.title.length <= 1000 && it.text.length <= 100_000 &&
-                    it.publisher.length <= 200 && it.categories.size <= 20 && it.categories.all { category -> category.length <= 200 }) }
+                    it.publisher.length <= 200 && it.categories.size <= 20 && it.categories.all { category -> category.length <= 200 }); SourceImages.encode(it.images) }
             }
             is CollectorPayload.Warnings -> {
                 require(payload.items.size <= 100)

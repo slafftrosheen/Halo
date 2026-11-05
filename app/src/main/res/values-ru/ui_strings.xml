@@ -5057,4 +5057,78 @@
     <string name="ui_31b22954a6ff" formatted="false">"Выбрать слой %1$s"</string>
     <string name="ui_4c99e10f0d89" formatted="false">"Включить эффект %1$s"</string>
     <string name="ui_361ef0904840" formatted="false">"Редактировать изображение"</string>
+    <string name="ui_8375175b441a" formatted="false">"%1$d КиБ"</string>
+    <string name="ui_8fb4a2d44af8" formatted="false">"Обработано записей: %1$d"</string>
+    <string name="ui_3e96e319d755" formatted="false">"Записей в индексе: %1$d · %2$s"</string>
+    <string name="ui_910b178efa5e" formatted="false">"Добавьте библиотеку для поиска по справочным материалам без интернета."</string>
+    <string name="ui_07af3e51399c" formatted="false">"Добавить справочную библиотеку"</string>
+    <string name="ui_e490f6c54951" formatted="false">"Стиль блока"</string>
+    <string name="ui_a10e21201fdb" formatted="false">"Настройки сводки"</string>
+    <string name="ui_6dd6cafb0d3f" formatted="false">"Отменить импорт"</string>
+    <string name="ui_4ca48b4230a5" formatted="false">"Подтвердить импорт"</string>
+    <string name="ui_14c733790a45" formatted="false">"Не удалось подтвердить создание копии. Проверьте заметки перед повторной попыткой."</string>
+    <string name="ui_db42d0f2d0a5" formatted="false">"Дата формирования базы: %1$s"</string>
+    <string name="ui_d64da3131f51" formatted="false">"Скачать для проверки"</string>
+    <string name="ui_dc0e8c2c0dac" formatted="false">"Для скачивания нужен режим Power. Перед импортом скачанный файл можно будет проверить отдельно."</string>
+    <string name="ui_86e248a15621" formatted="false">"Исключено из поиска"</string>
+    <string name="ui_1ef2cd761300" formatted="false">"Права на изображение могут отличаться от прав на текст. См. оригинальный источник."</string>
+    <string name="ui_09691e94bcfc" formatted="false">"Импортировать библиотеку"</string>
+    <string name="ui_979b95389e09" formatted="false">"Создать форматируемую копию"</string>
+    <string name="ui_14a7b1d33adf" formatted="false">"Следующие результаты"</string>
+    <string name="ui_68116808fb29" formatted="false">"Нет удалённого элемента для восстановления"</string>
+    <string name="ui_ef3782fa64e1" formatted="false">"Ничего не найдено. Попробуйте слова на языке источника или другой запрос."</string>
+    <string name="ui_498260b07348" formatted="false">"Открыть оригинальный источник"</string>
+    <string name="ui_d2a97fa5bfb0" formatted="false">"Небольшие библиотеки для скачивания"</string>
+    <string name="ui_174cd69656c1" formatted="false">"Настройки органайзера"</string>
+    <string name="ui_d7ed2b160d8f" formatted="false">"Исходный вики-текст; серверные шаблоны не раскрыты"</string>
+    <string name="ui_75cb80de3b08" formatted="false">"Фильтры плана"</string>
+    <string name="ui_f95c30c4f16d" formatted="false">"Читать запись"</string>
+    <string name="ui_0a1f758c3b12" formatted="false">"Справочные библиотеки"</string>
+    <string name="ui_a6d703e0e93d" formatted="false">"Снова выбрать исходный файл"</string>
+    <string name="ui_f12822f97a31" formatted="false">"Продолжить импорт"</string>
+    <string name="ui_2a2af9ea49a4" formatted="false">"Загрузить полную статью Википедии"</string>
+    <string name="ui_323352c1a979" formatted="false">"Посмотреть ход импорта"</string>
+    <string name="ui_67b15e994569" formatted="false">"Форматируемые заметки, заголовки, списки и абзацы"</string>
+    <string name="ui_3ae9011521ac" formatted="false">"Сохранить изображения для чтения без интернета"</string>
+    <string name="ui_d3b69a22b571" formatted="false">"Для сохранения изображений нужен режим Power"</string>
+    <string name="ui_49c266baaaa7" formatted="false">"Поиск"</string>
+    <string name="ui_61840cd1f197" formatted="false">"Поиск по выбранным библиотекам"</string>
+    <string name="ui_2cc511b0e961" formatted="false">"Дата в источнике: %1$s"</string>
+    <string name="ui_0e4df5b2b7b2" formatted="false">"Изображение из источника"</string>
+    <string name="ui_1e88f25d3896" formatted="false">"Источник: CDC. Оригинал доступен бесплатно. Использование в halo не означает одобрения со стороны CDC или правительства США."</string>
+    <string name="ui_3ba8701496df" formatted="false">"Выбранный файл импортируется на телефон. Язык, дата и сведения о правах сохраняются."</string>
+    <string name="ui_1d16b88f1c0e" formatted="false">"Этот файл сохраняет исходный формат. Создайте отдельную форматируемую заметку, чтобы добавить заголовки, абзацы и списки."</string>
+    <string name="ui_eda49214cfe4" formatted="false">"Обновить из файла"</string>
+    <string name="ui_35d7e044e24d" formatted="false">"Текст импортирован пользователем; издатель и права не проверены"</string>
+    <string name="ui_ed200c1f86a0" formatted="false">"XML, JSONL и CSV · поддерживаются сжатые файлы"</string>
+    <string name="ui_4a6597fa335d" formatted="false">"Темы о здоровье MedlinePlus"</string>
+    <string name="ui_b2ac258f528c" formatted="false">"Краткие материалы о здоровье на английском и испанском от Национальной медицинской библиотеки США. Без лицензируемой энциклопедии, описаний лекарств и изображений."</string>
+    <string name="ui_ea87d978da39" formatted="false">"Подготовка к чрезвычайным ситуациям"</string>
+    <string name="ui_d19e22b63b49" formatted="false">"Избранные справочные материалы CDC о безопасной воде, пище, температуре и уборке после бедствий. С исходными датами и ссылками. На английском."</string>
+    <string name="ui_19ff5bc55a19" formatted="false">"Общая справочная библиотека"</string>
+    <string name="ui_f914372b5345" formatted="false">"Небольшая подборка научных и практических статей Википедии с возможностью загрузить изображения. С фиксированными версиями и указанием источников. На английском."</string>
+    <string name="ui_3c9fee3663dc" formatted="false">"Этот новый черновик будет отброшен."</string>
+    <string name="ui_e3f2e93c4560" formatted="false">"Справочные библиотеки добавляет взрослый"</string>
+    <string name="ui_d632729eb393" formatted="false">"Скачано с официального сайта"</string>
+    <string name="ui_6d71079d2614" formatted="false">"Данные локального импорта · актуальность источника не проверена"</string>
+    <string name="ui_cdb88338c233" formatted="false">"Данные импорта проверены %1$s"</string>
+    <string name="ui_1171b1320634" formatted="false">"Уменьшить изображения"</string>
+    <string name="ui_040b8f3bba0f" formatted="false">"Увеличить изображения"</string>
+    <string name="ui_618089568d0e" formatted="false">"Некоторые изображения не удалось сохранить. Текст статьи сохранён."</string>
+    <string name="ui_d880209363b2" formatted="false">"Изображения сохранены для чтения без интернета"</string>
+    <string name="ui_56c85b61080e" formatted="false">"Не удалось подтвердить сохранение изображений. Откройте текущий источник перед повторной попыткой."</string>
+    <string name="ui_3e915aa80e1b" formatted="false">"Проверка перед импортом"</string>
+    <string name="ui_d252fffacbf0" formatted="false">"Импортируется"</string>
+    <string name="ui_cc24d96ee638" formatted="false">"Создание индекса"</string>
+    <string name="ui_7aeb76ac36d8" formatted="false">"Это действие недоступно в текущем виде."</string>
+    <string name="ui_97a2bf9089e8" formatted="false">"Не удалось открыть оригинальный источник"</string>
+    <string name="ui_433cadde197a" formatted="false">"Не удалось завершить действие с библиотекой. Прежняя сохранённая библиотека оставлена."</string>
+    <string name="ui_d71af6839ae9" formatted="false">"Импорт отменён"</string>
+    <string name="ui_f672fd61f011" formatted="false">"Импорт прерван; проверьте и продолжите"</string>
+    <string name="ui_fbdaf2175c16" formatted="false">"Нет доступа к документу; снова выберите тот же файл"</string>
+    <string name="ui_e1fc3faa6c8f" formatted="false">"Эта версия библиотеки уже установлена"</string>
+    <string name="ui_f74ad2c27622" formatted="false">"Поддерживаемые записи не найдены"</string>
+    <string name="ui_b9e1610ff7d9" formatted="false">"Импорт не удался; выберите поддерживаемый файл"</string>
+    <string name="ui_a6a01ca08abf" formatted="false">"Источник удалён; выберите новый файл для импорта"</string>
+    <string name="ui_1913812b4ada" formatted="false">"Не удалось загрузить библиотеки. Повторите чтение локального состояния."</string>
 </resources>

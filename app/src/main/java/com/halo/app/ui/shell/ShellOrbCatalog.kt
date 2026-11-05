@@ -20,16 +20,17 @@ internal object ShellOrbCatalog {
     )
     /** Direct instrument destinations are a presentation subset of the canonical catalogue. */
     fun workspaceDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) emptyList() else
-        listOf("screen/organizer", "studio", "file_tools", "study", "notebook/memory", "canvases").mapNotNull { route ->
-            destinations(false).firstOrNull { it.route == route }
-        }
+        listOfNotNull(destinations(false).firstOrNull { it.route == "screen/organizer" },
+            destinations(false).firstOrNull { it.route == "studio" },
+            HaloOrbDestination("notebook?filter=notes", "HaloNotes", HaloGlyph.NOTE)) +
+            listOf("study", "notebook/memory", "canvases").mapNotNull { route -> destinations(false).firstOrNull { it.route == route } }
     fun organizerDestinations(kids: Boolean): List<HaloOrbDestination> =
         listOf("screen/brief", "screen/clocks", "screen/sources").mapNotNull { route ->
             destinations(kids).firstOrNull { it.route == route }
         }
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =
-        !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study", "everyday_brief", "everyday_clocks", "everyday_organizer", "everyday_source")
+        !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study", "everyday_brief", "everyday_clocks", "everyday_organizer", "everyday_source", "reference_libraries")
 
     /** Kids Home does not host the adult catalogue; use its already allowed exact Study route. */
     fun directContextRoute(action: HaloOrbContextAction, kids: Boolean): String? =
@@ -41,9 +42,10 @@ internal object ShellOrbCatalog {
         "everyday_organizer" -> route?.substringBefore("?") == "screen/organizer" && owner.objectId==objectId
         "everyday_clocks" -> route?.substringBefore("?") == "screen/clocks"
         "everyday_brief" -> route?.substringBefore("?") == "screen/brief"
+        "reference_libraries" -> route?.substringBefore("?") == "screen/organizer/libraries"
         "everyday_sources" -> route == "screen/sources"
         "everyday_source" -> route?.substringBefore("?") == "screen/source" && owner.objectId == objectId
-        "notebook" -> route == "notebook"
+        "notebook" -> route?.substringBefore("?") == "notebook"
         "canvas" -> route?.startsWith("notebook/canvas/") == true && owner.objectId == objectId
         "note" -> route?.startsWith("notebook/note/") == true && owner.objectId == objectId
         "studio" -> route?.substringBefore("?") == "studio"

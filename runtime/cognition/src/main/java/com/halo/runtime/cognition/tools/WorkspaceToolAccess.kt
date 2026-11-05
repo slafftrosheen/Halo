@@ -26,8 +26,10 @@ object PersonalConfigurationToolAccess {
         "halo_procedure_set_enabled", "halo_procedure_delete")
     val activeStudy = setOf("halo_study_current", "halo_study_session_action")
     val speechInventory = setOf("halo_speech_inventory", "halo_speech_model_action")
-    val organizerOperations = setOf("halo_commitments_query", "halo_commitment_save", "halo_commitment_action", "halo_research_query", "halo_research_source")
-    val everyday=organizerOperations + setOf("halo_organizer_alarm","halo_organizer_clock_action","halo_organizer_calendar_preview","halo_organizer_calendar_import","halo_organizer_calendar_export","halo_organizer_query","halo_organizer_get","halo_organizer_create","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence","halo_organizer_delivery",
+    val organizerOperations = setOf("halo_commitments_query", "halo_commitment_save", "halo_commitment_action", "halo_research_query", "halo_research_source", "halo_research_article")
+    val referenceLibraries = setOf("halo_library_catalogue", "halo_library_query", "halo_library_get", "halo_library_import_review", "halo_library_import_action", "halo_library_download")
+    val materialImages = setOf("halo_material_image_query", "halo_material_image_fetch")
+    val everyday=organizerOperations + referenceLibraries + materialImages + setOf("halo_organizer_alarm","halo_organizer_clock_action","halo_organizer_calendar_preview","halo_organizer_calendar_import","halo_organizer_calendar_export","halo_organizer_query","halo_organizer_get","halo_organizer_create","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence","halo_organizer_delivery",
         "halo_clock_query","halo_clock_save","halo_clock_action","halo_source_query","halo_source_get","halo_source_preview","halo_source_save","halo_source_action",
         "halo_brief_query","halo_brief_action","halo_brief_settings","halo_everyday_open","halo_widget_query","halo_widget_configure","halo_widget_pin")
     val all = everyday + currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + procedures + activeStudy + speechInventory
@@ -46,7 +48,7 @@ object WorkspaceToolAccess {
         "halo_get_study_session", "halo_study_with_halo",
         "halo_study_sessions", "halo_study_state", "halo_study_select_exercise", "halo_study_submit_attempt", "halo_study_set_preferences", "halo_study_complete", "halo_study_delete",
         "halo_study_card_get", "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review", "halo_study_card_delete",
-        "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas",
+        "halo_text_rich_copy", "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas",
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status",
         "halo_canvas_current", "halo_context_used_sources") + remoteInkTools + PersonalConfigurationToolAccess.all + canvasWorkflowTools
 }

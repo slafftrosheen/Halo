@@ -83,7 +83,7 @@ internal fun WorkspaceToolsList(onStudy: () -> Unit, onMemory: () -> Unit,
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_studio), stringResource(R.string.zone5_studio_purpose), "tool_studio", onStudio)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_notes), stringResource(R.string.zone5_office_purpose), "tool_notes", onOffice)
+                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_notes), uiText("Rich notes, headings, lists and paragraphs"), "tool_notes", onOffice)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_study), stringResource(R.string.zone5_study_purpose), "tool_study", onStudy)
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))

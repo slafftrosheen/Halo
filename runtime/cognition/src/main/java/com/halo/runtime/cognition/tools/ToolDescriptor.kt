@@ -223,6 +223,9 @@ data class ToolDescriptor(
     val presentation: ToolPresentation? = null,
     val automation: ToolAutomationMetadata = ToolAutomationMetadata(),
     val operability: ToolOperability? = null,
+    /** Host-owned discovery grouping only; never an access-policy input. */
+    val discoveryDomain: String? = null,
+    val discoveryPriority: Int = 0,
 ) {
     val name: String get() = definition.name
 }

@@ -17,6 +17,12 @@
     "halo_commitment_save",
     "halo_commitments_query",
     "halo_everyday_open",
+    "halo_library_catalogue",
+    "halo_library_download",
+    "halo_library_get",
+    "halo_library_import_action",
+    "halo_library_import_review",
+    "halo_library_query",
     "halo_organizer_action",
     "halo_organizer_alarm",
     "halo_organizer_calendar_export",
@@ -29,6 +35,7 @@
     "halo_organizer_get",
     "halo_organizer_occurrence",
     "halo_organizer_query",
+    "halo_research_article",
     "halo_research_query",
     "halo_research_source",
     "halo_source_action",
@@ -38,7 +45,9 @@
     "halo_source_save",
     "halo_widget_configure",
     "halo_widget_pin",
-    "halo_widget_query"
+    "halo_widget_query",
+    "halo_material_image_query",
+    "halo_material_image_fetch"
   ],
   "toolDefinitions": [
     {
@@ -89,6 +98,36 @@
     {
       "toolId": "halo_everyday_open",
       "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_catalogue",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_download",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_get",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_import_action",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_import_review",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_library_query",
+      "risk": "READ_ONLY",
       "requiredPermissions": []
     },
     {
@@ -152,6 +191,11 @@
       "requiredPermissions": []
     },
     {
+      "toolId": "halo_research_article",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    },
+    {
       "toolId": "halo_research_query",
       "risk": "READ_ONLY",
       "requiredPermissions": []
@@ -199,6 +243,16 @@
     {
       "toolId": "halo_widget_query",
       "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_material_image_query",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_material_image_fetch",
+      "risk": "EXTERNAL_SIDE_EFFECT",
       "requiredPermissions": []
     }
   ]
