@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+  "sourceDirty": true,
+  "productionChanges": false,
+  "compiledProductionCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+  "testPatchSha256": "25cdfc48df4d8ab4ff8e4b2affffb68454af4a34e15cfb32183a9527897dd6de",
+  "excludedAlreadyVerifiedProductionTasks": [
+    ":app:generateDebugBuildConfig",
+    ":app:kspDebugKotlin",
+    ":app:compileDebugKotlin",
+    ":app:compileDebugJavaWithJavac"
+  ],
+  "reason": "Only the cold Room fixture setup changed; production outputs are exactly the compiled/tested/installed e1a source. No new APK is claimed.",
+  "startedAt": "2026-11-05T09:15:16.243379+00:00"
+}

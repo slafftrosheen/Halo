@@ -1,20 +1,25 @@
 {
-  "recordedAt": "2026-11-04T21:44:59.682047+00:00",
+  "recordedAt": "2026-11-05T09:51:42.632348+00:00",
   "branch": "codex/issue-65-studio",
-  "latestBuiltSource": "88291b18f16dd34e4fc8026a852253873d730032",
+  "latestBuiltSource": "e1a39a177321e6238434cc81c9764d3887a4136e",
   "fullAppCompile": "PASS",
   "apk": "BUILT_SIGNED_INSTALLED_HASH_VERIFIED",
-  "apkSha256": "fe1fd84c122bb2b91f8ef4dd759b32698e6b7fae2d6869852e166330ecf7b97a",
+  "apkSha256": "d189a4bbd0b60b506d1dd1ab70c343218bf9d020663c7b504b6137903b1aabba",
   "appTests": {
-    "attempt": "phone-batch-04",
-    "tests": 649,
-    "passed": 645,
-    "failures": 4,
+    "attempt": "phone-batch-07",
+    "tests": 652,
+    "passed": 652,
+    "failures": 0,
     "errors": 0,
     "skipped": 0,
-    "status": "FAIL_CORRECTIONS_AUTHORED"
+    "suites": 113,
+    "status": "PASS",
+    "productionSourceCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+    "testSource": "production source plus cold-Room fixture setup correction",
+    "productionTasks": "Reused verified e1a outputs; fresh unit-test compilation",
+    "evidence": "phone-batch-07/phone-batch-07-junit-summary.json"
   },
-  "phone": "UPDATED_882_NATIVE_VOICE_DOZE_AND_BUSY_IDLE_PASS_FINAL_CORRECTIONS_PENDING",
+  "phone": "E1A_INSTALLED_HASH_VERIFIED_NORMAL_STUDIO_AND_200_PERCENT_ORGANIZER_FOOTER_PASS",
   "actualMicrophoneStt": {
     "sourceCommit": "88291b18f16dd34e4fc8026a852253873d730032",
     "input": "Real spoken command through the normal phone Orb",
@@ -397,5 +402,31 @@
     "timerStoppedInApp": true,
     "ownAlarmNotificationRemoved": true,
     "cleanupCheckedAt": "2026-11-04T21:38:10.115856+00:00"
+  },
+  "previousAppTestGate": {
+    "attempt": "phone-batch-04",
+    "tests": 649,
+    "passed": 645,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0,
+    "status": "FAIL_CORRECTIONS_AUTHORED"
+  },
+  "nativeLatest": {
+    "studioNormalFont": "Four primary groups visible through add/save/undo/save",
+    "studio200Percent": "All four present; poor whole-word wrapping remains and is in proposed redesign",
+    "organizer200PercentIme": "Save/Cancel remained visible above IME after three body scrolls; only draft discarded",
+    "richNoteAudit": "Heading/Enter/paragraph entered with saved indicator; separate process-restart durability not tested",
+    "originalSettingsRestored": true
+  },
+  "remainingAcceptance": [
+    "Physical reboot alert recovery",
+    "Full light/dark/reduced-motion coverage",
+    "Widget variants not all physically placed",
+    "Paid image generation skipped by user"
+  ],
+  "newScope": {
+    "status": "PROPOSED_NOT_IMPLEMENTED",
+    "design": "../../../superpowers/specs/2026-11-05-workspace-knowledge-design.md"
   }
 }

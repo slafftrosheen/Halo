@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+  "counts": {
+    "tests": 652,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "passed": 651,
+  "suites": 113,
+  "failures": [
+    {
+      "classname": "com.halo.app.di.tools.EverydayToolExecutorTest",
+      "name": "aHeldSourceReadCannotDiscloseAnApprovalRevokedWithinTheSameKidsSession",
+      "message": "kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 10000 ms",
+      "stack": "kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 10000 ms\n\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt:42)\n\tat com.halo.app.data.everyday.RoomCollectorRepository.save(RoomCollectorRepository.kt:46)\n\tat com.halo.app.di.tools.EverydayToolExecutorTest$aHeldSourceReadCannotDiscloseAnApprovalRevokedWithinTheSameKidsSession$1$1.invokeSuspend(EverydayToolExecutorTest.kt:277)\n\tat com.halo.app.di.tools.EverydayToolExecutorTest$aHeldSourceReadCannotDiscloseAnApprovalRevokedWithinTheSameKidsSession$1.invokeSuspend(EverydayToolExecutorTest.kt:276)\nCaused by: kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 10000 ms\n\tat kotlinx.coroutines.TimeoutKt.TimeoutCancellationException(Timeout.kt:281)\n\tat kotlinx.coroutines.TimeoutCoroutine.run(Timeout.kt:243)\n\tat kotlinx.coroutines.EventLoopImplBase$DelayedRunnableTask.run(EventLoop.common.kt:498)\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:256)\n\tat kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:105)\n\tat java.base/java.lang.Thread.run(Unknown Source)\n"
+    }
+  ]
+}

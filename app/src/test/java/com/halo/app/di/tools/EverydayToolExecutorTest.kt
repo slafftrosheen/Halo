@@ -273,19 +273,22 @@ class EverydayToolExecutorTest {
         val result=request.await()
         assertTrue(result is ToolExecutionResult.Rejected);assertFalse(result.toString().contains(record.title));assertTrue(child)
     }}
-    @Test fun aHeldSourceReadCannotDiscloseAnApprovalRevokedWithinTheSameKidsSession()=runBlocking {withTimeout(10000) {
+    @Test fun aHeldSourceReadCannotDiscloseAnApprovalRevokedWithinTheSameKidsSession()=runBlocking {
+        // Cold Room schema setup is not part of the held-read race deadline.
         val source=sources.save(StarterSourceCatalogue.external().first().copy(title="Temporarily approved source",selected=true,childApproved=true),null)
-        child=true
-        val entered=CompletableDeferred<Unit>();val release=CompletableDeferred<Unit>()
-        val held=object: CollectorRepository by sources {
-            override suspend fun state(id: String): CollectorState? {val value=sources.state(id);entered.complete(Unit);release.await();return value}
+        withTimeout(10000) {
+            child=true
+            val entered=CompletableDeferred<Unit>();val release=CompletableDeferred<Unit>()
+            val held=object: CollectorRepository by sources {
+                override suspend fun state(id: String): CollectorState? {val value=sources.state(id);entered.complete(Unit);release.await();return value}
+            }
+            val reader=executorFor(sourceReader=held)
+            val request=async {reader.execute(ToolCall("held","halo_source_get",mapOf("id" to source.id,"version" to source.version)),ToolExecutionContext())}
+            entered.await();sources.save(source.copy(childApproved=false),source.version);release.complete(Unit)
+            val result=request.await()
+            assertTrue(result is ToolExecutionResult.Rejected);assertFalse(result.toString().contains(source.title));assertTrue(child)
         }
-        val reader=executorFor(sourceReader=held)
-        val request=async {reader.execute(ToolCall("held","halo_source_get",mapOf("id" to source.id,"version" to source.version)),ToolExecutionContext())}
-        entered.await();sources.save(source.copy(childApproved=false),source.version);release.complete(Unit)
-        val result=request.await()
-        assertTrue(result is ToolExecutionResult.Rejected);assertFalse(result.toString().contains(source.title));assertTrue(child)
-    }}
+    }
     @Test fun childrenCannotReadAdultLauncherConfiguration()=runBlocking {
         child=true
         assertTrue(call("halo_widget_query") is ToolExecutionResult.Rejected)

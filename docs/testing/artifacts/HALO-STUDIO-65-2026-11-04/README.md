@@ -1,3 +1,13 @@
+# Latest correction gate — 5 November 2026
+
+Production `e1a39a177` compiled, packaged, signature/source checked and installed as an update with matching on-device hash. The later test-only cold-Room fixture correction passed **652/652 cases, 113 suites, zero failures/errors/skips** in one worker/core/fork. See [the final summary](phone-batch-07/phone-batch-07-junit-summary.json), [JUnit archive](phone-batch-07/phone-batch-07-junit.zip), [command/result](phone-batch-07/phone-batch-07-result.json) and [APK identity](phone-batch-07/apk-e1a39a177.json). Production tasks reused the already verified e1a outputs; no new APK is attributed to a test-only commit. Final evidence explicitly reconciles a stale launch patch fingerprint with the actual source/class hashes and timestamps.
+
+[Gate06](phone-batch-07/phone-batch-06-junit-summary.json) had 651/652 passes: cold Room setup consumed the race fixture's ten-second timeout before its held read began. Setup moved outside that race bound; actual disclosure-revocation assertions and bound remain. All four failures from gate04 are corrected in the completed gate07.
+
+Native e1a checks passed normal Studio primary labels/busy-to-idle and [Organizer Save/Cancel above the IME at 200%](phone-batch-07/organizer-footer-e1a39a177.json). Studio's 200% labels remain awkward; adaptive layout is in the new proposed navigation scope. Physical reboot, exhaustive themes/motion and all physical widget variants remain unverified; paid generation stays skipped. See [the updated phone report](../../ISSUES-63-65-PHONE-2026-11-04.md). The records below remain historical and their pending-correction status is superseded by this section.
+
+---
+
 # Latest verification checkpoint
 
 Clean `88291b18f` compiled, packaged and installed as an update. APK SHA-256 `fe1fd84c122bb2b91f8ef4dd759b32698e6b7fae2d6869852e166330ecf7b97a`; on-device bytes and signature matched. Actual spoken Russian Inbox capture saved the exact requested task, survived reopening and did not crash. A real timer notification was observed while Android remained in forced deep idle; normal mode was restored and the own timer stopped. Studio's four groups remained visible through add/save/undo/save; named Blur and Grain switches operated independently.

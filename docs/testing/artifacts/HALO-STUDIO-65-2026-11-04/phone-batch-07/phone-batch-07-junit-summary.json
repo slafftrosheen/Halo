@@ -1,0 +1,32 @@
+{
+  "recordedAt": "2026-11-05T09:50:12.457971+00:00",
+  "productionSourceCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+  "testSource": "e1a plus cold-Room-fixture setup correction",
+  "testPatchSha256": "70fe3728011e3228eddf2bae73641d98d6c6f7069546e58d5be3b0d91787bd23",
+  "launchManifestPatchSha256": "25cdfc48df4d8ab4ff8e4b2affffb68454af4a34e15cfb32183a9527897dd6de",
+  "manifestFingerprintNote": "Launch manifest retained a stale pre-format patch fingerprint. Current test file predates run start; fresh compiled class postdates start and predates all final JUnit files. No production source changed. Original manifest is retained unchanged.",
+  "testSourceFileSha256": "25cdfc48df4d8ab4ff8e4b2affffb68454af4a34e15cfb32183a9527897dd6de",
+  "compiledTestClassSha256": "f580a2962f7a804c7b034e3556fa58b9eb17d2e824c75c0134a471dd1c7e29c9",
+  "testSourceModifiedAt": "2026-11-05T09:08:34.561615+00:00",
+  "testClassModifiedAt": "2026-11-05T09:26:27.428203+00:00",
+  "counts": {
+    "tests": 652,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "passed": 652,
+  "suites": 113,
+  "failures": [],
+  "exitCode": 0,
+  "workers": 1,
+  "testForks": 1,
+  "excludedAlreadyVerifiedProductionTasks": [
+    ":app:generateDebugBuildConfig",
+    ":app:kspDebugKotlin",
+    ":app:compileDebugKotlin",
+    ":app:compileDebugJavaWithJavac"
+  ],
+  "startedAt": "2026-11-05T09:15:16.339365+00:00",
+  "finishedAt": "2026-11-05T09:46:23.197236+00:00"
+}

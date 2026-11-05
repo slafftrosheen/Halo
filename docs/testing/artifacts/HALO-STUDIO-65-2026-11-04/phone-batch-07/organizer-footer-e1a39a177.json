@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+  "fontScale": 2.0,
+  "orientation": "portrait",
+  "keyboardOpen": true,
+  "bodyScrolls": 3,
+  "footer": {
+    "Отмена": {
+      "bounds": "[155,1335][423,1433]",
+      "enabled": "true"
+    },
+    "Сохранить": {
+      "bounds": "[622,1329][959,1525]",
+      "enabled": "true"
+    }
+  },
+  "recordSaved": false,
+  "observedAt": "2026-11-05T08:52:16.309164+00:00"
+}

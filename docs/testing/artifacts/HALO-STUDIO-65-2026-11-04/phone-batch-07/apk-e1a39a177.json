@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "e1a39a177321e6238434cc81c9764d3887a4136e",
+  "sourceDirty": false,
+  "apk": "halo-issues63-65-e1a39a177.apk",
+  "bytes": 298468085,
+  "sha256": "d189a4bbd0b60b506d1dd1ab70c343218bf9d020663c7b504b6137903b1aabba",
+  "compiledSourceMarkerFound": true,
+  "boundedReadbackClassFound": true,
+  "signatureVerified": true,
+  "signerCertificateSha256": "d016e155446e2d96644e396fcb682282e97a2a816d9592875510469f1b22b737",
+  "installed": true,
+  "recordedAt": "2026-11-04T22:24:44.980015+00:00",
+  "installedSha256": "d189a4bbd0b60b506d1dd1ab70c343218bf9d020663c7b504b6137903b1aabba",
+  "installedVerifiedAt": "2026-11-04T22:25:10.418737+00:00"
+}
