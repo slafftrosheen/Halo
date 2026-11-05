@@ -1,6 +1,6 @@
 # Workspace, Organizer and reference libraries — validation record
 
-Status: code is pushed, the affected desktop checks passed and the APK is built and signature-verified. Gate 05 passed 34/34 cases across five suites after correcting the three remaining failures. The preceding broader Gate 04 result was 1,094 passes out of 1,097 cases on its identified source; it is not described as a fresh full-suite pass on the later commit. The phone is not detected, so update installation and native/voice/provider acceptance remain pending.
+Status: code is pushed, the affected desktop checks passed and the APK is built and signature-verified. Gate 05 passed 34/34 cases across five suites after correcting the three remaining failures. The preceding broader Gate 04 result was 1,094 passes out of 1,097 cases on its identified source; it is not described as a fresh full-suite pass on the later commit. The update is installed and its installed APK hash is verified. Initial native menu and rich-note checks passed. USB then disconnected; durable reopening, remaining native flows, actual voice and remote-provider acceptance remain pending.
 
 Approved specification: [workspace knowledge design](../superpowers/specs/2026-11-05-workspace-knowledge-design.md). User additionally requested source images for news and materials. No paid image generation is authorized.
 
@@ -27,11 +27,25 @@ Unicode discovery/domain coverage; menu roles/current-page leases/large text; ri
 
 | Workflow | Typed source fixture | Native phone | Actual spoken intent | Permitted remote provider | Durable phone readback |
 |---|---|---|---|---|---|
-| Create heading/paragraph and preserve literal original | PASS · Gate 04 | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| Create heading/paragraph and preserve literal original | PASS · Gate 04 | PARTIAL · native heading/Enter/paragraph and IME controls passed; literal-copy native check pending | NOT_RUN | NOT_RUN | NOT_RUN |
 | Import/search/read exact local library evidence | PASS · Gate 05 | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
 | Retrieve selected full article and save its images | PASS · parser/cache pieces; live retrieval pending | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
 
-Build/test counts, source identity and APK verification are recorded below. Native installation, inspected phone renders, actual spoken intent and permitted remote-provider acceptance require their own evidence. No issue closure or merge is claimed.
+Build/test counts, source identity and APK verification are recorded below. Installation and the inspected rich-note render have their own phone evidence. Durable reopening, the remaining native flows, actual spoken intent and permitted remote-provider acceptance require further evidence. No issue closure or merge is claimed.
+
+## Physical-phone acceptance — partial
+
+The verified APK was installed as an update (`-r`) on the existing Xiaomi phone, Android API 35. The installed base APK SHA-256 exactly matches the artifact below. No uninstall or data clear was performed.
+
+Observed native checks:
+
+- The global menu displayed the Kids/Full control in landscape while full mode was active. The canonical Workspace chooser contained Organizer, HaloStudio, HaloNotes, HaloStudy, HaloMemory and HaloCanvas; Day, world clock and Sources were not separate peers. Mode switching itself remains unchecked in this gate.
+- HaloNotes opened the rich Notes library. A new owned QA note accepted Insert → Heading 1, entered heading text, Enter → a new paragraph, and paragraph text. Its portrait render showed a bold heading and separate normal paragraph, with the phone-saved status.
+- Insert, Block style and Undo were visible immediately above the open keyboard. The compact All actions fallback also exposed Insert when the primary toolbar did not fit.
+
+USB disconnected before the reopen/durability and large-text checks. Native Organizer details, library import/search/read/cancel, source images and offline cached-image reopening, Kids transition/protected return, actual typed assistant/provider workflows and actual speech are **NOT_RUN**. The 200% font-size command failed because the phone had already disconnected; no large-text phone pass is claimed. Source/desktop evidence above is not a substitute for these checks.
+
+**Pending device restoration:** automatic rotation was temporarily disabled for the portrait check. Its original value is on; restore it when the phone reconnects. Font scale remains its original 1.0 and user rotation remains its original 0. A reconnection request is pending.
 
 ## Validation attempts
 
@@ -67,4 +81,4 @@ APK retained locally as `halo-workspace-knowledge-a873f44ca.apk`:
 - APK v2 signature verified. Signing certificate SHA-256: `d016e155446e2d96644e396fcb682282e97a2a816d9592875510469f1b22b737`, matching the previous phone update certificate.
 - The expected source marker and reference-library/image-cache classes were verified inside the APK DEX files.
 
-ADB detects no target phone. A reconnection request is pending. The prior installed app, credentials, model, notes, projects and widgets have not been altered by this validation. No paid generation was submitted; image recovery tests use a synthetic in-process provider.
+The update installation and initial native checks above are complete. ADB currently detects no phone after the USB interruption; reconnection is needed to restore automatic rotation and continue. Existing app data was retained; the native edit created only an owned QA note. No paid generation was submitted; image recovery tests use a synthetic in-process provider.
