@@ -83,4 +83,11 @@ class EverydayWidgetStateTest {
         assertEquals(first,EverydayWidgetTargets.decode(shadowOf(p1).savedIntent.getStringExtra(EverydayWidgetViews.EXTRA_TARGET)!!))
         assertEquals(second,EverydayWidgetTargets.decode(shadowOf(p3).savedIntent.getStringExtra(EverydayWidgetViews.EXTRA_TARGET)!!))
     }
+    @Test fun referenceTargetsRoundTripExactSourceVersionGenerationAndEntryIdentity() {
+        val entry = EverydayTarget.LibraryEntry("library:one", 7, "generation-two", "water/first-aid")
+        assertEquals(EverydayTarget.Libraries, EverydayWidgetTargets.decode(EverydayWidgetTargets.encode(EverydayTarget.Libraries)))
+        assertEquals(entry, EverydayWidgetTargets.decode(EverydayWidgetTargets.encode(entry)))
+        assertTrue(runCatching { EverydayWidgetTargets.decode(EverydayWidgetTargets.encode(entry.copy(version = 0))) }.isFailure)
+    }
+
 }

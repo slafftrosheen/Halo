@@ -41,7 +41,7 @@ class ReferenceLibrariesViewModel : ViewModel() {
                     val entry = old.entry?.takeIf { value -> rows.any { it.source.id == value.sourceId && it.source.version == old.entrySourceVersion &&
                         it.library.generation == value.generation && it.source.selected && it.source.enabled && !it.source.muted } }
                     val policyChanged = rows.map { it.source.id to it.source.version } != old.libraries.map { it.source.id to it.source.version } || kids != old.kids
-                    old.copy(loading = false, libraries = rows, imports = jobs, kids = kids, entry = entry,
+                    old.copy(loading = false, libraries = rows, imports = jobs, kids = kids, entry = entry, error = if (policyChanged) null else old.error,
                         results = if (policyChanged) null else old.results,
                         review = if (kids) null else old.review?.let { review -> jobs.find { it.id == review.id } })
                 }

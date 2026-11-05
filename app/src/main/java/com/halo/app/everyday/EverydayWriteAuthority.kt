@@ -22,6 +22,15 @@ object EverydayWriteAuthority {
         verify()
         return withContext(current.asContextElement(verify)) { action() }
     }
+    /** Carry the admitted restore generation across an application-scope queue boundary. */
+    fun capture(): () -> Unit {
+        val admitted = revision.get()
+        val parent = current.get()
+        val verify: () -> Unit = { parent?.invoke(); check(!maintenance.get() && revision.get() == admitted) { "Everyday data changed during restore" } }
+        verify()
+        return verify
+    }
+    fun restoreGeneration(): Long = revision.get()
     /** Background owners retain their existing independent policy; only scoped actions carry this lease. */
     fun requireCurrent() { check(!maintenance.get()) {"Everyday restore is in progress"};current.get()?.invoke() }
 }

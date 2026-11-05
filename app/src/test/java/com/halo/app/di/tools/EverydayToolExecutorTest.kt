@@ -410,4 +410,30 @@ class EverydayToolExecutorTest {
         assertTrue(reading.getBoolean("playbackRequested"));assertFalse(reading.getBoolean("audible"));assertFalse(reading.getBoolean("completed"))
         json(call("halo_brief_action",mapOf("action" to "STOP")))
     }
+    @Test fun canonicalGetIncludesFullOccurrenceAndDeliveryMetadata() = runBlocking {
+        val task = useCases.create(OrganizerKind.TASK, "Recurring metadata",
+            time = OrganizerTime(LocalDateTime.parse("2026-11-03T09:00"), zoneId = "UTC"),
+            repeat = RepeatRule(RepeatFrequency.DAILY, count = 3))
+        val original = task.time!!.instant(ZoneOffset.UTC)
+        val time = OrganizerTime(LocalDateTime.parse("2026-11-04T11:00"), LocalDateTime.parse("2026-11-04T12:00"), "UTC", followDeviceZone = true)
+        val changed = organizer.saveOverride(OccurrenceOverride(task.id, original, OccurrenceDisposition.REPLACED,
+            time, "Moved", replacementDetails = "Full details", replacementLocation = "Owned location", sourceUrlOverride = ""), task.version)
+        val receipt = DeliveryReceipt("${task.id}@${original.toEpochMilli()}", task.id, changed.version, original,
+            DeliveryState.PENDING, now, detail = "Deferred by user", snoozedUntil = now.plusSeconds(300),
+            snoozeElapsedDeadlineMs = 301000, snoozeBootId = "boot")
+        assertTrue(organizer.putReceipt(receipt, null))
+        val result = json(call("halo_organizer_get", mapOf("id" to task.id)))
+        val occurrence = result.getJSONArray("overrides").getJSONObject(0)
+        assertEquals("Full details", occurrence.getString("replacementDetails"))
+        assertEquals("Owned location", occurrence.getString("replacementLocation"))
+        assertEquals("", occurrence.getString("sourceUrlOverride"))
+        assertEquals(time.end.toString(), occurrence.getJSONObject("replacementTime").getString("end"))
+        assertTrue(occurrence.getJSONObject("replacementTime").getBoolean("followDeviceZone"))
+        val delivery = result.getJSONArray("deliveries").getJSONObject(0)
+        assertEquals(receipt.detail, delivery.getString("detail"))
+        assertEquals(receipt.snoozeElapsedDeadlineMs, delivery.getLong("snoozeElapsedDeadlineMs"))
+        assertEquals("boot", delivery.getString("snoozeBootId"))
+        EverydayResultContracts.validate("halo_organizer_get", result)
+    }
+
 }

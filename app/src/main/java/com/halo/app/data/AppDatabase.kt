@@ -1095,6 +1095,8 @@ abstract class AppDatabase : RoomDatabase() {
         }
         val MIGRATION_34_35 = object : Migration(34, 35) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                // Retain old article text/dates, but let the next permitted refresh derive new images/full text.
+                db.execSQL("UPDATE collector_snapshots SET etag=NULL, lastModified=NULL WHERE payload LIKE '%\"type\":\"articles\"%'")
                 db.execSQL("CREATE TABLE IF NOT EXISTS material_images (id TEXT NOT NULL PRIMARY KEY, sourceId TEXT NOT NULL, savedAt INTEGER NOT NULL, bytes INTEGER NOT NULL, FOREIGN KEY(sourceId) REFERENCES collector_sources(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_material_images_sourceId ON material_images(sourceId)")
                 db.execSQL("CREATE TABLE IF NOT EXISTS reference_libraries (sourceId TEXT NOT NULL PRIMARY KEY, generation TEXT, title TEXT NOT NULL, language TEXT NOT NULL, fingerprint TEXT, importedAt INTEGER, entryCount INTEGER NOT NULL, origin TEXT NOT NULL, FOREIGN KEY(sourceId) REFERENCES collector_sources(id) ON UPDATE NO ACTION ON DELETE CASCADE)")

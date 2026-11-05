@@ -90,4 +90,13 @@ class MaterialImageRepositoryTest {
         assertNotNull(sources.state(target.sourceId)?.snapshot)
         assertNull(owner.local(target).single().file)
     }
+    @Test fun restoreMaintenanceCannotExposeLocallySavedImageMetadata() = runBlocking {
+        val target = target()
+        com.halo.app.everyday.EverydayWriteAuthority.beginMaintenance().use {
+            assertTrue(runCatching { owner.local(target) }.isFailure)
+            assertTrue(runCatching { owner.readIdentity() }.isFailure)
+        }
+        assertEquals(1, owner.local(target).size); assertEquals(0, calls)
+    }
+
 }

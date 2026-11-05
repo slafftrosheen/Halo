@@ -6,6 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.everyday.RoomCollectorRepository
 import com.halo.app.everyday.collectors.*
+import com.halo.app.everyday.EverydayWriteAuthority
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import java.io.ByteArrayInputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -100,6 +103,63 @@ class ReferenceLibraryRepositoryTest {
         assertEquals("REVIEWING", restored.state); assertNull(sources.source(preview.sourceId))
         repo.confirm(restored.id, restored.reviewToken)
         assertEquals("READY", completed(restored.id).state)
+    }
+
+    @Test fun previewHashesTheSampledStreamAndRejectsChangedBytesDuringReplacement() = runBlocking {
+        val installed = install()
+        val source = sources.source(installed.sourceId)!!
+        val prior = db.referenceDao().library(source.id)!!
+        val original = (1..4).joinToString("\n") { "{\"id\":\"$it\",\"title\":\"New $it\",\"text\":\"Reviewed water\"}" }
+        var opens = 0
+        val changing = ReferenceLibraryRepository(db, sources, {
+            opens++
+            (if (opens == 3) original.replace("Reviewed", "Unreviewed") else original).byteInputStream()
+        }, { Long.MAX_VALUE }, { 0 }, { {} }, { false }, scope)
+        val preview = changing.preview("owned:changing", "replacement.jsonl", source.id, source.version)
+        assertEquals("Preview must fingerprint the same stream it sampled", 1, opens)
+        val expected = java.security.MessageDigest.getInstance("SHA-256").digest(original.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals(expected, preview.fingerprint)
+        changing.confirm(preview.id, preview.reviewToken)
+        val finished = completed(preview.id)
+        assertEquals(finished.message, "FAILED", finished.state)
+        assertEquals(3, opens)
+        assertEquals(prior, db.referenceDao().library(source.id))
+        assertEquals(1, repo.query("reference").entries.size)
+        assertEquals(0, db.referenceDao().count(source.id, preview.generation))
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun aWorkerQueuedBeforeRestoreCannotPublishAfterMaintenanceEnds() = runBlocking {
+        val scheduler = TestCoroutineScheduler()
+        val heldScope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(scheduler))
+        try {
+            val held = ReferenceLibraryRepository(db, sources,
+                { "{\"title\":\"Queued\",\"text\":\"Reference water\"}".byteInputStream() },
+                { Long.MAX_VALUE }, { 0 }, { {} }, { false }, heldScope)
+            val preview = held.preview("owned:queued", "queued.jsonl")
+            held.confirm(preview.id, preview.reviewToken)
+            assertEquals("QUEUED", db.referenceDao().job(preview.id)!!.state)
+            EverydayWriteAuthority.beginMaintenance().close()
+            scheduler.runCurrent()
+            val stopped = completed(preview.id)
+            assertEquals(stopped.message, "INTERRUPTED", stopped.state)
+            assertNull(db.referenceDao().library(preview.sourceId)!!.generation)
+            assertEquals(0, db.referenceDao().count(preview.sourceId, preview.generation))
+        } finally {
+            val job = heldScope.coroutineContext[Job]!!; job.cancel()
+            withTimeout(10000) { while (!job.isCompleted) { scheduler.runCurrent(); delay(10) } }
+        }
+    }
+
+    @Test fun maintenanceBlocksEntryAndIdentityReadsAndFreshReadsRecoverAfterward() = runBlocking {
+        val installed = install()
+        val source = sources.source(installed.sourceId)!!
+        EverydayWriteAuthority.beginMaintenance().use {
+            assertTrue(runCatching { repo.entry(source.id, source.version, installed.generation, "water") }.isFailure)
+            assertTrue(runCatching { repo.readIdentity() }.isFailure)
+        }
+        assertEquals("water", repo.entry(source.id, source.version, installed.generation, "water").entryId)
     }
 
 }

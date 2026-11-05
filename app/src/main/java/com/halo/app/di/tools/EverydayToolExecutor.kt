@@ -135,7 +135,10 @@ class EverydayToolExecutor(
                 val disclosed=if(child) value.copy(links=emptyList(),parentId=value.parentId?.takeIf {it in briefs.settings().childRecordIds}) else value
                 JSONObject().put("id",value.id).put("version",value.version).put("record",JSONObject(OrganizerCodec.encode(disclosed)).apply { if (child) remove("commitment") })
                     .put("overrides",JSONArray(overrides.map { JSONObject().put("originalStart",it.originalStart.toString()).put("disposition",it.disposition.name)
-                        .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString()) }))
+                        .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString())
+                        .put("replacementDetails", it.replacementDetails).put("replacementLocation", it.replacementLocation).put("sourceUrlOverride", it.sourceUrlOverride)
+                        .apply { it.replacementTime?.let { time -> put("replacementTime", JSONObject().put("start",time.start.toString()).put("end",time.end?.toString())
+                            .put("zoneId",time.zoneId).put("allDay",time.allDay).put("followDeviceZone",time.followDeviceZone)) } } }))
                     .put("omittedOverrides",0)
                     .put("deliveries",JSONArray(organizer.repository.receipts(value.id).sortedWith(compareByDescending<DeliveryReceipt> { it.updatedAt }.thenBy { it.occurrenceKey }).map { receipt(it) }))
                     .apply {a.optionalString("originalStart")?.let {at -> put("occurrence",occurrence(requireNotNull(OrganizerRecurrence.exact(value,overrides,Instant.parse(at),ZoneId.systemDefault()))))}}
@@ -393,7 +396,8 @@ class EverydayToolExecutor(
         .put("priority",r.priority.name).put("start",r.time?.start?.toString()).put("zoneId",r.time?.zoneId).put("repeating",r.repeat!=null)
     private fun saved(r: OrganizerRecord)=JSONObject().put("id",r.id).put("version",r.version).put("record",summary(r)).put("saved",true).put("deliveryConfirmed",false)
     private fun occurrence(o: OrganizerOccurrence)=summary(o.record).put("originalStart",o.originalStart.toString()).put("startInstant",o.start.toString()).put("endInstant",o.end?.toString()).put("completed",o.completed)
-    private fun receipt(r: DeliveryReceipt)=JSONObject().put("occurrenceKey",r.occurrenceKey).put("recordVersion",r.recordVersion).put("triggerAt",r.triggerAt.toString()).put("state",r.state.name).put("updatedAt",r.updatedAt.toString()).put("snoozedUntil",r.snoozedUntil?.toString())
+    private fun receipt(r: DeliveryReceipt)=JSONObject().put("occurrenceKey",r.occurrenceKey).put("recordVersion",r.recordVersion).put("triggerAt",r.triggerAt.toString()).put("state",r.state.name).put("updatedAt",r.updatedAt.toString()).put("snoozedUntil",r.snoozedUntil?.toString()).put("detail",r.detail)
+        .put("snoozeElapsedDeadlineMs",r.snoozeElapsedDeadlineMs).put("snoozeBootId",r.snoozeBootId)
     private fun worldClock(r: WorldClockRecord)=JSONObject().put("id",r.id).put("version",r.version).put("label",r.label).put("zoneId",r.zoneId).put("position",r.position).put("deleted",r.deletedAt!=null)
     private fun sourceSummary(s: CollectorState)=JSONObject().put("id",s.source.id).put("version",s.source.version).put("title",s.source.title).put("publisher",s.source.publisher)
         .put("kind",s.source.kind.name).put("category",s.source.category.name).put("language",s.source.language).put("selected",s.source.selected).put("enabled",s.source.enabled)

@@ -156,7 +156,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(uiText("Organizer"), style = MaterialTheme.typography.headlineSmall)
+                Text(uiText("Organizer"), modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall)
                 if (!kids && current == null) TextButton({ settingsOpen = true }, enabled = !state.busy) { Text(uiText("Settings")) }
                 if (current != null || state.missing) TextButton({ model.open(null) }) { Text(uiText("Back")) }
             }

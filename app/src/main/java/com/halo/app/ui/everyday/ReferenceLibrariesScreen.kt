@@ -37,6 +37,12 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
     }
     val state by model.state.collectAsStateWithLifecycle()
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
+    val familyReady by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
+    val familyEnabled by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val kids = !familyReady || familyEnabled || state.kids
+    val canShow = familyReady && familyEnabled == state.kids
+    val entry = referenceVisibleEntry(state, familyReady, familyEnabled)
+    val visibleHits = referenceVisibleHits(state, familyReady, familyEnabled)
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf("Search") }
     var reselect by remember { mutableStateOf<ReferenceImportJobEntity?>(null) }
@@ -57,33 +63,32 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
     val owner = ShellPageOwner("reference_libraries", state.review?.id ?: state.entry?.entryId,
         sourceIdentity = "${state.kids}:${state.busy}:${state.review?.state}:${state.entry?.generation}",
         canonicalSourceVersion = state.entrySourceVersion?.toString(), canonicalToolIds = (com.halo.app.di.tools.ReferenceLibraryContracts.names + com.halo.app.di.tools.MaterialImageContracts.names).toList(),
-        disabledActionReasons = mapOf("page.references.import" to uiText(if (state.kids) "A parent imports reference libraries" else "Please wait")))
+        disabledActionReasons = mapOf("page.references.import" to uiText(if (kids) "A parent imports reference libraries" else "Please wait")))
     BindShellPageActions(owner, listOf(
-        ShellPageAction("page.references.import", "Import library", HaloGlyph.FILE, !state.kids && !state.busy) { replacementId = null; replacementVersion = null; picker.launch(arrayOf("*/*")) },
+        ShellPageAction("page.references.import", "Import library", HaloGlyph.FILE, !kids && !state.busy) { replacementId = null; replacementVersion = null; picker.launch(arrayOf("*/*")) },
         ShellPageAction("page.references.search", "Search local libraries", HaloGlyph.SEARCH, state.query.isNotBlank() && !state.busy) { model.search() },
     ))
-    BackHandler(state.entry != null) { model.closeEntry() }
+    BackHandler(entry != null) { model.closeEntry() }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(uiText("Reference libraries"), style = MaterialTheme.typography.headlineSmall)
-                TextButton(if (state.entry != null) model::closeEntry else onBack) { Text(uiText("Back")) }
+                Text(uiText("Reference libraries"), modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall)
+                TextButton(if (entry != null) model::closeEntry else onBack) { Text(uiText("Back")) }
             }
-            if (state.entry == null) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Search", "Libraries", "Imports").filter { !state.kids || it != "Imports" }.forEach { value ->
-                    FilterChip(tab == value, { tab = value }, label = { Text(uiText(value)) }, modifier = Modifier.heightIn(min = if (state.kids) 56.dp else 48.dp))
+            if (entry == null) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Search", "Libraries", "Imports").filter { !kids || it != "Imports" }.forEach { value ->
+                    FilterChip(tab == value, { tab = value }, label = { Text(uiText(value)) }, modifier = Modifier.heightIn(min = if (kids) 56.dp else 48.dp))
                 }
             }
         }
         if (state.loading || state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
-        state.error?.let { error -> item { EverydayMessage(error, true)
+        state.error?.takeIf { canShow }?.let { error -> item { EverydayMessage(if (kids) "This library action could not finish. The previous saved library is kept." else error, true)
             if (state.initializationFailed) TextButton(model::reload) { Text(uiText("Retry")) }
         } }
-        val entry = state.entry
         if (entry != null) {
             item {
                 Text(entry.title, style = MaterialTheme.typography.headlineMedium)
-                state.entrySourceVersion?.let { version -> MaterialImagesPanel(MaterialImageTarget(entry.sourceId, version, entry.generation, entry.entryId, library = true), state.kids) }
+                state.entrySourceVersion?.let { version -> MaterialImagesPanel(MaterialImageTarget(entry.sourceId, version, entry.generation, entry.entryId, library = true), kids) }
                 Text(entry.text, style = MaterialTheme.typography.bodyLarge)
                 HorizontalDivider()
                 Text(entry.publisher + " · " + entry.language)
@@ -103,11 +108,11 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
                     Button({ model.search() }, enabled = !state.busy && state.query.isNotBlank()) { Text(uiText("Search")) }
                     if (state.libraries.none { it.library.generation != null && it.source.selected && it.source.enabled && !it.source.muted }) {
                         Text(uiText("Add a library to search saved reference text offline."))
-                        if (!state.kids) TextButton({ tab = "Libraries" }) { Text(uiText("Add reference library")) }
+                        if (!kids) TextButton({ tab = "Libraries" }) { Text(uiText("Add reference library")) }
                     }
                     state.results?.takeIf { it.entries.isEmpty() }?.let { Text(uiText("No matching entries. Try the source language or different words.")) }
                 }
-                items(state.results?.entries.orEmpty(), key = { "${it.sourceId}:${it.generation}:${it.entryId}" }) { hit ->
+                items(visibleHits, key = { "${it.sourceId}:${it.generation}:${it.entryId}" }) { hit ->
                     Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Column(Modifier.fillMaxWidth().padding(16.dp)) {
                             Text(hit.title, style = MaterialTheme.typography.titleMedium); Text(hit.text.take(240))
@@ -115,25 +120,25 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
                         }
                     }
                 }
-                if (state.results?.nextOffset != null) item { TextButton({ model.search(true) }, enabled = !state.busy) { Text(uiText("Next results")) } }
+                if (canShow && visibleHits.isNotEmpty() && state.results?.nextOffset != null) item { TextButton({ model.search(true) }, enabled = !state.busy) { Text(uiText("Next results")) } }
             }
             "Libraries" -> {
-                if (!state.kids) item {
+                if (!kids) item {
                     Button({ replacementId = null; replacementVersion = null; picker.launch(arrayOf("*/*")) }, enabled = !state.busy) { Text(uiText("Import library")) }
                     Text(uiText("XML, JSONL and CSV · compressed files supported"), style = MaterialTheme.typography.bodySmall)
                 }
-                items(state.libraries, key = { it.source.id }) { row ->
+                items(if (canShow) state.libraries else emptyList(), key = { it.source.id }) { row ->
                     Column(Modifier.fillMaxWidth()) {
                         Text(row.library.title, style = MaterialTheme.typography.titleMedium)
                         Text(if (row.library.generation == null) uiText("Not installed") else uiText("%1\$d indexed entries · %2\$s", row.library.entryCount, row.library.language))
                         if (!row.source.selected || !row.source.enabled || row.source.muted) Text(uiText("Excluded from search"))
-                        if (!state.kids) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (!kids) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton({ onSource(row.source.id) }) { Text(uiText("Source settings")) }
                             TextButton({ replacementId = row.source.id; replacementVersion = row.source.version; picker.launch(arrayOf("*/*")) }, enabled = !state.busy) { Text(uiText("Update from file")) }
                         }
                     }
                 }
-                if (!state.kids) item {
+                if (!kids) item {
                     HorizontalDivider(); Text(uiText("Optional compact downloads"), style = MaterialTheme.typography.titleMedium)
                     ReferenceStarterId.entries.forEach { id ->
                         TextButton({ download = id }, enabled = !state.busy) { Text(uiText(id.title)) }
@@ -141,7 +146,7 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
                     }
                 }
             }
-            else -> items(state.imports.take(20), key = { it.id }) { job ->
+            else -> items(if (canShow && !kids) state.imports.take(20) else emptyList(), key = { it.id }) { job ->
                 Column(Modifier.fillMaxWidth()) {
                     Text(job.title, style = MaterialTheme.typography.titleMedium)
                     Text(uiText(referenceStateLabel(job.state)) + " · " + uiText("%1\$d entries processed", job.processed))
@@ -150,7 +155,7 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
             }
         }
     }
-    state.review?.takeIf { !state.kids }?.let { job -> EverydaySheet(model::closeReview) {
+    state.review?.takeIf { !kids }?.let { job -> EverydaySheet(model::closeReview) {
         Column(Modifier.fillMaxWidth().weight(1f, false).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(job.title, style = MaterialTheme.typography.titleLarge)
             Text(uiText(referenceStateLabel(job.state))); Text(uiText("%1\$d entries processed", job.processed))
@@ -176,11 +181,13 @@ fun ReferenceLibrariesScreen(model: ReferenceLibrariesViewModel, onBack: () -> U
             TextButton(model::closeReview) { Text(uiText("Close")) }
         }
     } }
-    download?.let { id -> EverydaySheet({ download = null }) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    download?.takeIf { !kids }?.let { id -> EverydaySheet({ download = null }) {
+        Column(Modifier.fillMaxWidth().weight(1f, false).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText(id.title), style = MaterialTheme.typography.titleLarge); Text(uiText(id.description))
             Text(uiText("Downloads require Power. You will review the downloaded file separately before importing it."))
             if (id == ReferenceStarterId.PREPAREDNESS) Text(uiText("Source: CDC. Available free from CDC; use by Halo does not imply CDC or US government endorsement."), style = MaterialTheme.typography.bodySmall)
+        }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 20.dp)) {
             Button({ download = null; model.download(id) }, enabled = mode == PrivacyMode.CLOUD && !state.busy, modifier = Modifier.fillMaxWidth()) { Text(uiText("Download for review")) }
             TextButton({ download = null }) { Text(uiText("Cancel")) }
         }

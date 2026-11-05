@@ -77,4 +77,28 @@ class ReferenceImportParserTest {
         assertEquals("Imported library", entry.publisher); assertEquals("User-supplied; rights not verified", entry.license)
     }
 
+    @Test fun aValidSingleXmlZipParsesWithoutClosingTheCallersStream() {
+        val xml = "<health-topics><health-topic id='1' title='Water' language='English'><full-summary>Owned summary</full-summary></health-topic></health-topics>"
+        val bytes = ByteArrayOutputStream().apply { ZipOutputStream(this).use { zip ->
+            zip.putNextEntry(ZipEntry("topics.xml")); zip.write(xml.toByteArray()); zip.closeEntry()
+        } }.toByteArray()
+        var closed = false
+        val input = object : java.io.FilterInputStream(ByteArrayInputStream(bytes)) {
+            override fun close() { closed = true; super.close() }
+            override fun read(): Int { check(!closed); return super.read() }
+            override fun read(b: ByteArray, off: Int, len: Int): Int { check(!closed); return super.read(b, off, len) }
+        }
+        val entries = mutableListOf<ReferenceEntry>()
+        ReferenceImportParser.parse("topics.zip", input, onEntry = { entries.add(it) })
+        assertEquals("Owned summary", entries.single().text)
+        assertFalse("Only the caller owns its input stream", closed)
+        input.close(); assertTrue(closed)
+    }
+    @Test fun jsonLinesRejectDeepNestingBeforeRecursiveParsingButAcceptEscapedBodiesAtTheDecodedLimit() {
+        val deep = "{\"title\":\"Nested\",\"text\":\"Body\",\"extra\":" + "[".repeat(5000) + "0" + "]".repeat(5000) + "}"
+        assertTrue(runCatching { read("deep.jsonl", deep) }.exceptionOrNull() is IllegalArgumentException)
+        val escaped = "{\"title\":\"Escaped\",\"text\":\"" + "\\u0061".repeat(ReferenceLimits.ENTRY_BYTES) + "\"}"
+        assertEquals("a".repeat(ReferenceLimits.ENTRY_BYTES), read("escaped.jsonl", escaped).single().text)
+    }
+
 }

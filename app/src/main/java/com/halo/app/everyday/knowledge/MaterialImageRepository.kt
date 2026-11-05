@@ -24,7 +24,7 @@ class MaterialImageRepository(private val context: Context, private val database
     private val sources: CollectorRepository, private val libraries: ReferenceLibraryRepository,
     private val transfer: ReferenceTransfer, private val authority: () -> (() -> Unit),
     private val kids: () -> Boolean, private val power: () -> Boolean, private val policyRevision: () -> Any = { Unit }) {
-    fun readIdentity(): Any { authority().invoke(); return policyRevision() }
+    fun readIdentity(): Any { authority().invoke(); EverydayWriteAuthority.requireCurrent(); return policyRevision() }
     private val mutex = Mutex()
     private val dao get() = database.referenceDao()
     private val directory get() = File(context.filesDir, "material-images").apply { mkdirs() }
@@ -41,7 +41,8 @@ class MaterialImageRepository(private val context: Context, private val database
         }.also { SourceImages.encode(it) }
     }
     suspend fun local(target: MaterialImageTarget): List<SavedMaterialImage> = withContext(Dispatchers.IO) {
-        val check = authority(); check(); val epoch = EverydayReadAuthority.capture()
+        val guard = authority(); val check: () -> Unit = { guard(); EverydayWriteAuthority.requireCurrent() }
+        check(); val epoch = EverydayReadAuthority.capture()
         val images = references(target)
         val values = images.map { image -> val id = key(target, image)
             SavedMaterialImage(image, if (dao.image(id) != null) File(directory, "$id.image").takeIf { it.isFile } else null)

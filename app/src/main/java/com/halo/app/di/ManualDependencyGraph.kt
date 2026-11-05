@@ -165,7 +165,7 @@ object ManualDependencyGraph {
         val check: () -> Unit = {
             check(kidsPreferences.loadedState.value && kidsPreferences.presentationRevision() == family && privacyModes.revision == mode)
             check(applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true)
-            check(androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED) ||
+            check(attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
                 com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible)
         }
         return check

@@ -77,12 +77,12 @@ object ReferenceImportParser {
     }
 
     fun parse(fileName: String, input: InputStream, progress: (Long) -> Unit = {}, onEntry: (ReferenceEntry) -> Unit) {
-        val compressed = BoundedInput(input, ReferenceLimits.INPUT_BYTES, progress)
+        val compressed = BoundedInput(object : FilterInputStream(input) { override fun close() = Unit }, ReferenceLimits.INPUT_BYTES, progress)
         val buffered = BufferedInputStream(compressed)
         buffered.mark(8); val magic = ByteArray(4); val n = buffered.read(magic); buffered.reset()
         val zipped = n >= 2 && magic[0] == 0x50.toByte() && magic[1] == 0x4b.toByte()
         val zip = if (zipped) ZipInputStream(buffered) else null
-        val expanded = when {
+        val expanded = try { when {
             zip != null -> {
                 val entry = requireNotNull(zip.nextEntry) { "Empty archive" }
                 require(!entry.isDirectory && !entry.name.contains('/') && !entry.name.contains('\\') && !entry.name.contains("..") && entry.name.lowercase(Locale.ROOT).endsWith(".xml")) { "Only a single XML data file is supported in ZIP" }
@@ -91,7 +91,8 @@ object ReferenceImportParser {
             n >= 2 && magic[0] == 0x1f.toByte() && magic[1] == 0x8b.toByte() -> GZIPInputStream(buffered)
             n >= 3 && magic[0] == 'B'.code.toByte() && magic[1] == 'Z'.code.toByte() && magic[2] == 'h'.code.toByte() -> BZip2CompressorInputStream(buffered, true)
             else -> buffered
-        }
+        } } catch (error: Exception) { (zip ?: buffered).close(); throw error }
+        try {
         val bounded = BoundedInput(expanded, ReferenceLimits.EXPANDED_BYTES) { progress(compressed.count) }
         var ordinal = 0
         val emit: (ReferenceEntry) -> Unit = { value -> ReferenceLimits.validate(value); ordinal++; onEntry(value) }
@@ -104,7 +105,9 @@ object ReferenceImportParser {
         }
         require(zip?.nextEntry == null) { "Archive contains unexpected additional files" }
         // Count trailing bytes as well; parser EOF is not permission to ignore an oversized input.
-        while (compressed.read() >= 0) Unit
+        val trailing = ByteArray(8192)
+        while (compressed.read(trailing) >= 0) Unit
+        } finally { expanded.close() }
     }
 
     private fun reader(input: InputStream): Reader = InputStreamReader(input, Charsets.UTF_8.newDecoder()
@@ -112,8 +115,9 @@ object ReferenceImportParser {
 
     private fun jsonLines(input: InputStream, emit: (ReferenceEntry) -> Unit) {
         val r = reader(input); val line = StringBuilder(); var ordinal = 0
-        fun flush() { if (line.isNotBlank()) { ordinal++; emit(fromJson(JSONObject(line.toString()), ordinal)) }; line.setLength(0) }
-        while (true) { val c = r.read(); if (c < 0) break; if (c == 10) flush() else { require(line.length < ReferenceLimits.ENTRY_BYTES + ReferenceLimits.METADATA_BYTES) { "JSONL record exceeds limit" }; line.append(c.toChar()) } }
+        val encodedLimit = 6 * (ReferenceLimits.ENTRY_BYTES + ReferenceLimits.METADATA_BYTES)
+        fun flush() { if (line.isNotBlank()) { ordinal++; emit(fromJson(com.halo.app.everyday.collectors.SafeCollectorJson.objectValue(line.toString(), encodedLimit, 4096), ordinal)) }; line.setLength(0) }
+        while (true) { val c = r.read(); if (c < 0) break; if (c == 10) flush() else { require(line.length < encodedLimit) { "JSONL record exceeds limit" }; line.append(c.toChar()) } }
         flush()
     }
     private fun fromJson(row: JSONObject, ordinal: Int) = ReferenceEntry(
@@ -164,7 +168,8 @@ object ReferenceImportParser {
             require(it.equals("UTF-8", true) || it.equals("UTF8", true)) { "XML must use UTF-8" }
         }
         val safe = header.replace(Regex("<!DOCTYPE\\s+health-topics\\s+(?:SYSTEM\\s+['\"][^'\"<>\\[\\]]+['\"]|PUBLIC\\s+['\"][^'\"<>\\[\\]]+['\"]\\s+['\"][^'\"<>\\[\\]]+['\"])\\s*>", RegexOption.IGNORE_CASE), "")
-        val stream = SequenceInputStream(ByteArrayInputStream(safe.toByteArray(Charsets.ISO_8859_1)), input)
+        val stream = SequenceInputStream(ByteArrayInputStream(safe.toByteArray(Charsets.ISO_8859_1)),
+            object : FilterInputStream(input) { override fun close() = Unit })
         val factory = SAXParserFactory.newInstance().apply {
             isNamespaceAware = true
             isValidating = false

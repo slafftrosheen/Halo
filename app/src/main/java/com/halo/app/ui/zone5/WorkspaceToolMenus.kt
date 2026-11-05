@@ -39,6 +39,8 @@ internal fun workspaceMenuGroup(id: String): WorkspaceMenuGroup = when (Workspac
 internal fun WorkspaceToolMenus(guidedActionId: String? = null, onDisclosureChanged: (Boolean) -> Unit = {}) {
     val projection = LocalShellPageActions.current?.value ?: return
     if (projection.owner.routeFamily !in workspaceMenuFamilies || !LocalShellPageOwnerFilter.current(projection.owner)) return
+    // The editor supplies Insert/Style/Undo above the IME; retain one editing control row.
+    if (projection.owner.routeFamily == "note" && WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0) return
     val primary = projection.actions.filter { WorkspaceActionPresentation.require(it.id).let { presentation -> presentation.role == ShellActionRole.PRIMARY && presentation.placement == ShellPrimaryPlacement.TOOLBAR } }
         .sortedBy { WorkspaceActionPresentation.require(it.id).order }
     if (primary.isEmpty()) return

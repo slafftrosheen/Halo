@@ -41,7 +41,8 @@ object EverydayResultContracts {
         "links" to array(obj(mapOf("id" to id,"relation" to choice(listOf("RELATED_TO","REFERENCES","SOURCE_OF")))),50)),
         listOf("schema","id","version","kind","title","details","priority","status","createdAt","updatedAt","location","links"))
     private val receipt=obj(mapOf("occurrenceKey" to text(450),"recordVersion" to version,"triggerAt" to instant,
-        "state" to choice(DeliveryState.entries.map {it.name}),"updatedAt" to instant,"snoozedUntil" to instant),
+        "state" to choice(DeliveryState.entries.map {it.name}),"updatedAt" to instant,"snoozedUntil" to instant,"detail" to text(4000),
+        "snoozeElapsedDeadlineMs" to integer(), "snoozeBootId" to text(200)),
         listOf("occurrenceKey","recordVersion","triggerAt","state","updatedAt"))
     private val savedFields=mapOf("id" to id,"version" to version,"record" to summary,"saved" to bool,"deliveryConfirmed" to bool)
     private val saved=obj(savedFields)
@@ -81,7 +82,8 @@ object EverydayResultContracts {
     private fun legacySchema(name: String): Map<String,Any> = if (name in OrganizerOperationContracts.names) OrganizerOperationContracts.result(name) else when(name) {
         "halo_organizer_query" -> variants(mapOf("records" to array(summary,50),"occurrences" to array(occurrence,50),"nextOffset" to nullable(integer(0,10050))),listOf("records","nextOffset"),listOf("occurrences","nextOffset"))
         "halo_organizer_get" -> obj(mapOf("id" to id,"version" to version,"record" to record,"overrides" to array(obj(mapOf("originalStart" to instant,
-            "disposition" to choice(OccurrenceDisposition.entries.map {it.name}),"version" to version,"title" to text(200),"replacementStart" to text(32)),listOf("originalStart","disposition","version")),10000),
+            "disposition" to choice(OccurrenceDisposition.entries.map {it.name}),"version" to version,"title" to text(200),"replacementStart" to text(32), "replacementDetails" to text(16000), "replacementLocation" to text(1000), "sourceUrlOverride" to text(2048),
+            "replacementTime" to recordTime),listOf("originalStart","disposition","version")),10000),
             "omittedOverrides" to integer(),"deliveries" to array(receipt,10000),"occurrence" to occurrence),listOf("id","version","record","overrides","omittedOverrides","deliveries"))
         "halo_organizer_create","halo_organizer_alarm","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence" -> saved
         "halo_organizer_delivery" -> variants(savedFields+mapOf("dismissed" to bool,"occurrenceKey" to text(450)),savedFields.keys.toList()+"occurrenceKey",listOf("dismissed","occurrenceKey"))
