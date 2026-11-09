@@ -24,6 +24,7 @@ import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.fx.HaloPairingFx
 import com.halo.app.ui.fx.HaloFxPairingPhase
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
+import com.halo.drivers.heycyan.ble.heyCyanCandidateLabel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -171,6 +172,9 @@ private fun PairingDeviceRow(
                 })
                 Text(stringResource(R.string.brand_pairing_signal, signalText),
                     style = MaterialTheme.typography.labelSmall)
+                Text(uiText(heyCyanCandidateLabel(device.advertisement)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (selected) Text(uiText("Selected"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer)

@@ -11,7 +11,8 @@ import com.halo.drivers.heycyan.codec.HexCodec
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
+import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 
 /**
  * Handles discovery of nearby BLE devices.
@@ -29,6 +30,43 @@ data class DiscoveredBleDevice(
     val firstSeenAt: Long
 )
 
+/**
+ * Android BLE often delivers an incomplete first advertisement, followed by a
+ * scan response containing the human-readable name or vendor service UUID.
+ * Never discard that later evidence because an address was already observed.
+ * RSSI-only updates are stored but do not cause UI recompositions.
+ */
+fun mergeBleAdvertisements(previous: BleAdvertisement?, incoming: BleAdvertisement): BleAdvertisement {
+    if (previous == null || !previous.address.equals(incoming.address, ignoreCase = true)) return incoming
+    return incoming.copy(
+        name = incoming.name?.takeIf(String::isNotBlank) ?: previous.name,
+        serviceUuids = (previous.serviceUuids + incoming.serviceUuids).distinct(),
+        manufacturerData = previous.manufacturerData + incoming.manufacturerData,
+    )
+}
+
+fun bleAdvertisementEvidenceChanged(previous: BleAdvertisement?, next: BleAdvertisement): Boolean =
+    previous == null || previous.name != next.name ||
+        previous.serviceUuids != next.serviceUuids || previous.manufacturerData != next.manufacturerData
+
+/** An advertisement is a hint, not protocol or READY proof. */
+fun heyCyanCandidateLabel(advertisement: BleAdvertisement): String {
+    val name = advertisement.name.orEmpty().trim()
+    val normalized = name.lowercase(java.util.Locale.ROOT)
+    val colmiA2 = Regex("(^|[^a-z0-9])colmi[^a-z0-9]*a2($|[^a-z0-9])").containsMatchIn(normalized)
+    return when {
+        advertisement.serviceUuids.any {
+            it.equals(HeyCyanProtocolConstants.PRIMARY_SERVICE.toString(), ignoreCase = true)
+        } -> "HeyCyan service advertised · verify before use"
+        colmiA2 -> "COLMI A2 · HeyCyan compatibility candidate"
+        normalized.contains("heycyan") || normalized.startsWith("o_") ||
+            normalized.startsWith("q_") || normalized.contains("bw-ag1") ->
+            "HeyCyan compatibility candidate"
+        else -> "Unverified device · HeyCyan protocol check required"
+    }
+}
+
+
 class HeyCyanBleScanner(
     private val context: Context,
     private val now: () -> Long = { System.currentTimeMillis() }
@@ -45,7 +83,7 @@ class HeyCyanBleScanner(
             return@callbackFlow
         }
 
-        val discoveredAddresses = Collections.synchronizedSet(mutableSetOf<String>())
+        val advertisementsByAddress = ConcurrentHashMap<String, BleAdvertisement>()
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
@@ -65,7 +103,7 @@ class HeyCyanBleScanner(
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
                 val scanResult = result ?: return
                 val address = scanResult.device?.address ?: return
-                if (discoveredAddresses.add(address)) {
+                run {
                     val record = scanResult.scanRecord
                     val manufacturerData = buildMap {
                         record?.manufacturerSpecificData?.let { data ->
@@ -74,15 +112,27 @@ class HeyCyanBleScanner(
                             }
                         }
                     }
-                    trySend(
-                        BleAdvertisement(
-                            address = address,
-                            name = record?.deviceName,
-                            rssi = scanResult.rssi,
-                            serviceUuids = record?.serviceUuids?.map { it.uuid.toString() } ?: emptyList(),
-                            manufacturerData = manufacturerData
-                        )
+                    // Some devices put their name in scan response or Bluetooth cache,
+                    // not the first advertisement. CONNECT permission may be absent.
+                    val cachedName = try {
+                        scanResult.device?.name
+                    } catch (_: SecurityException) {
+                        null
+                    }
+                    val incoming = BleAdvertisement(
+                        address = address,
+                        name = record?.deviceName?.takeIf(String::isNotBlank) ?: cachedName,
+                        rssi = scanResult.rssi,
+                        serviceUuids = record?.serviceUuids?.map { it.uuid.toString() } ?: emptyList(),
+                        manufacturerData = manufacturerData
                     )
+                    var changed: BleAdvertisement? = null
+                    advertisementsByAddress.compute(address) { _, previous ->
+                        val merged = mergeBleAdvertisements(previous, incoming)
+                        if (bleAdvertisementEvidenceChanged(previous, merged)) changed = merged
+                        merged
+                    }
+                    changed?.let { trySend(it) }
                 }
             }
 

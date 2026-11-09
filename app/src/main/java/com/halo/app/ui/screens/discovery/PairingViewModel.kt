@@ -191,7 +191,6 @@ class PairingViewModel(
         }
 
         scanJob = viewModelScope.launch {
-            val seen = mutableSetOf<String>()
             driver.scanner.scan()
                 .catch { error ->
                     if (error is CancellationException) throw error
@@ -211,15 +210,19 @@ class PairingViewModel(
                     }
                 }
                 .collect { advertisement ->
-                    if (seen.add(advertisement.address)) {
-                        _uiState.update { state ->
-                            state.copy(
-                                devices = state.devices + DiscoveredBleDevice(
-                                    advertisement = advertisement,
-                                    firstSeenAt = System.currentTimeMillis()
-                                )
-                            )
+                    _uiState.update { state ->
+                        val existingIndex = state.devices.indexOfFirst {
+                            it.advertisement.address.equals(advertisement.address, ignoreCase = true)
                         }
+                        val entry = DiscoveredBleDevice(
+                            advertisement = advertisement,
+                            firstSeenAt = if (existingIndex < 0) System.currentTimeMillis()
+                                else state.devices[existingIndex].firstSeenAt
+                        )
+                        state.copy(
+                            devices = if (existingIndex < 0) state.devices + entry
+                                else state.devices.toMutableList().also { it[existingIndex] = entry }
+                        )
                     }
                 }
         }
