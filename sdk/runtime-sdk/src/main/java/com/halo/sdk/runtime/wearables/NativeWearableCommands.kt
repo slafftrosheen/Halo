@@ -33,6 +33,10 @@ data class NativeSnapshot(
     val mediaEndpoint: String? = null,
     val wifiFailure: Int? = null,
     val cameraAvailable: Boolean? = null,
+    val aiPhotoAvailable: Boolean = false,
+    val aggregateMediaCount: Int? = null,
+    val videoRecording: Boolean? = null,
+    val audioRecording: Boolean? = null,
     val error: String? = null,
 )
 
@@ -126,14 +130,14 @@ object NativeCommands {
 class NativeJpegAssembler(private val limit: Int = 8 * 1024 * 1024) {
     private val bytes = ByteArrayOutputStream()
     private var active = false
-    fun start() { bytes.reset(); active = true }
-    fun reset() { active = false; bytes.reset() }
-    fun append(chunk: ByteArray) {
+    @Synchronized fun start() { bytes.reset(); active = true }
+    @Synchronized fun reset() { active = false; bytes.reset() }
+    @Synchronized fun append(chunk: ByteArray) {
         check(active) { "Image stream has no start marker" }
         if (chunk.size > limit - bytes.size()) { reset(); error("Image exceeds transfer limit") }
         bytes.write(chunk)
     }
-    fun finish(): ByteArray {
+    @Synchronized fun finish(): ByteArray {
         check(active) { "Image stream has no start marker" }
         val result = bytes.toByteArray()
         reset()

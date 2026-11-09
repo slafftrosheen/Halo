@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 /** Android GATT/RFCOMM implementations own permissions, sockets and callback fencing. */
 data class NativePacket(val bytes: ByteArray, val channel: String = "command")
 interface NativeByteLink {
+    val availableChannels: Set<String> get() = setOf("command")
     val incoming: Flow<NativePacket>
     val connected: StateFlow<Boolean>
     suspend fun open()
@@ -28,6 +29,7 @@ class NativeWearableDriver(
     val family: NativeFamily,
     private val linkFactory: () -> NativeByteLink,
     private val requestTimeoutMs: Long = 30_000L,
+    private val connectionTimeoutMs: Long = 60_000L,
 ) {
     private class Pending(val command: NativeCommand, val result: CompletableDeferred<WearableFrame>)
     private class Attempt(val link: NativeByteLink) {
@@ -80,7 +82,7 @@ class NativeWearableDriver(
                     else if (wasConnected) retire(attempt, IOException("Native Bluetooth link disconnected"))
                 }
             }
-            withTimeout(requestTimeoutMs) { attempt.link.open() }
+            withTimeout(connectionTimeoutMs) { attempt.link.open() }
             requireActive(attempt)
             publish(attempt) { it.copy(stage = NativeStage.HANDSHAKE) }
             transact(attempt, command(NativeAction.DEVICE_INFO))
@@ -107,6 +109,9 @@ class NativeWearableDriver(
 
     suspend fun execute(action: NativeAction): NativeReceipt = workflow.withLock {
         val attempt = readyAttempt()
+        if (action in setOf(NativeAction.PHOTO, NativeAction.AI_PHOTO, NativeAction.START_VIDEO, NativeAction.START_AUDIO)) {
+            check(state.value.cameraAvailable != false) { "Selected firmware reports no camera subsystem" }
+        }
         if (family == NativeFamily.TUNEBUDS && action in setOf(
                 NativeAction.STOP_AUDIO, NativeAction.STOP_VIDEO, NativeAction.END_TRANSFER)) {
             closeTuneCamera(attempt)
@@ -116,6 +121,7 @@ class NativeWearableDriver(
 
     suspend fun captureAiPhoto(): ByteArray = workflow.withLock {
         val attempt = readyAttempt()
+        check(state.value.cameraAvailable != false && state.value.aiPhotoAvailable) { "Selected connection does not expose an AI photo channel" }
         val picture = CompletableDeferred<ByteArray>()
         attempt.jpeg.start()
         check(attempt.photo.compareAndSet(null, picture))
@@ -277,7 +283,17 @@ class NativeWearableDriver(
                     require(frame.payload.size >= 8) { "Invalid EyeVue identity response" }
                     val project = frame.payload.copyOfRange(0, 4).toString(Charsets.UTF_8).trim('\u0000', ' ')
                     require(project.isNotBlank())
-                    publish(attempt) { it.copy(model = project, cameraAvailable = true) }
+                    publish(attempt) { it.copy(model = project, cameraAvailable = true, aiPhotoAvailable = "photo" in attempt.link.availableChannels) }
+                }
+                0x16, 0x42 -> {
+                    require(frame.payload.size >= 2)
+                    val count = ((frame.payload[0].toInt() and 255) shl 8) or (frame.payload[1].toInt() and 255)
+                    publish(attempt) { it.copy(aggregateMediaCount = count) }
+                }
+                0x45 -> {
+                    require(frame.payload.size >= 3)
+                    publish(attempt) { it.copy(videoRecording = frame.payload[2].toInt() == 1,
+                        audioRecording = frame.payload[1].toInt() == 1) }
                 }
                 0x25 -> {
                     require(frame.payload.size in 1..32) { "Invalid Wi-Fi SSID" }
@@ -299,6 +315,7 @@ class NativeWearableDriver(
                         model = fields[0x86]?.toString(Charsets.UTF_8)?.trim('\u0000', ' ')?.takeIf(String::isNotBlank) ?: it.model,
                         firmware = version ?: it.firmware,
                         cameraAvailable = fields[0xa0]?.firstOrNull()?.let { value -> value.toInt() == 1 } ?: it.cameraAvailable,
+                        aiPhotoAvailable = fields[0xa0]?.firstOrNull()?.let { value -> value.toInt() == 1 } ?: it.aiPhotoAvailable,
                     ) }
                 }
                 frame.command == 0xef && frame.type == 3 -> {

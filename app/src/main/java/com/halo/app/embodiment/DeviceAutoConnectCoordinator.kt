@@ -69,43 +69,39 @@ class DeviceAutoConnectCoordinator(
 ) {
     private val started = AtomicBoolean(false)
 
+    // Lazy composition alongside the existing HeyCyan/BuddyBot hosts. No scan,
+    // socket or vendor SDK is initialized for ordinary phone-only startup.
+    val nativeWearables by lazy {
+        com.halo.app.wearables.NativeWearableHost(
+            com.halo.app.di.ManualDependencyGraph.applicationContext,
+            registry, sessionManager, com.halo.app.di.ManualDependencyGraph.eventBus,
+        )
+    }
+
     fun start() {
         if (!started.compareAndSet(false, true)) return
         Log.i(TAG, "AUTOCONNECT_COORDINATOR_START")
-
+        scope.launch(Dispatchers.IO) { bootstrapSavedDevices() }
         scope.launch(Dispatchers.IO) {
-            bootstrapSavedDevices()
+            bluetoothEnabled.drop(1).filter { it }.collectLatest {
+                Log.i(TAG, "AUTOCONNECT_TRIGGER source=bluetooth_on")
+                retryHeyCyan()
+                retryNative()
+            }
         }
-
         scope.launch(Dispatchers.IO) {
-            bluetoothEnabled
-                .drop(1)
-                .filter { it }
-                .collectLatest {
-                    Log.i(TAG, "AUTOCONNECT_TRIGGER kind=heycyan source=bluetooth_on")
-                    retryHeyCyan()
-                }
-        }
-
-        scope.launch(Dispatchers.IO) {
-            networkRevision
-                .drop(1)
-                .collectLatest {
-                    // Coalesce noisy capability callbacks into one reconnect probe.
-                    delay(750L)
-                    retryBuddyBot()
-                }
+            networkRevision.drop(1).collectLatest {
+                delay(750L)
+                retryBuddyBot()
+            }
         }
     }
 
     suspend fun retryDevice(deviceId: String): Boolean {
         val original = registry.getDevice(deviceId) ?: return false
         val record = normalizeLegacyDeviceRecord(original)
-        if (record != original) {
-            registry.saveDevice(record)
-        }
+        if (record != original) registry.saveDevice(record)
         if (!record.autoConnect) return false
-
         Log.i(TAG, "AUTOCONNECT_TRIGGER kind=${record.descriptor.kind.name.lowercase()} source=user_toggle")
         return when (record.descriptor.kind) {
             DeviceKind.HEYCYAN_GLASSES -> {
@@ -120,8 +116,8 @@ class DeviceAutoConnectCoordinator(
                 host.ensureDeviceRegistered()
                 sessionManager.autoConnectDevice(deviceId)
             }
-            // These families need their own initialized vendor-specific session owner.
-            // Never send HeyCyan commands to another model by default.
+            DeviceKind.EYEVUE_GLASSES, DeviceKind.TUNEBUDS_GLASSES ->
+                bluetoothEnabled.value && nativeWearables.retry(record, explicit = true)
             else -> false
         }
     }
@@ -129,23 +125,22 @@ class DeviceAutoConnectCoordinator(
     private suspend fun bootstrapSavedDevices() {
         val rawSaved = registry.getSavedDevices()
         val saved = rawSaved.map(::normalizeLegacyDeviceRecord)
-
         saved.zip(rawSaved).forEach { (normalized, original) ->
-            if (normalized != original) {
-                registry.saveDevice(normalized)
-            }
+            if (normalized != original) registry.saveDevice(normalized)
         }
-
-        if (
-            bluetoothEnabled.value &&
-            autoConnectDeviceIds(saved, DeviceKind.HEYCYAN_GLASSES).isNotEmpty()
-        ) {
-            // Construction registers saved sessions and runs the host's initial retry.
-            heyCyanHostProvider()
+        if (bluetoothEnabled.value && autoConnectDeviceIds(saved, DeviceKind.HEYCYAN_GLASSES).isNotEmpty()) {
+            retryHeyCyan()
         }
+        if (autoConnectDeviceIds(saved, DeviceKind.BUDDYBOT).isNotEmpty()) retryBuddyBot()
+        if (bluetoothEnabled.value) retryNative()
+    }
 
-        if (autoConnectDeviceIds(saved, DeviceKind.BUDDYBOT).isNotEmpty()) {
-            retryBuddyBot()
+    private suspend fun retryNative() {
+        for (record in registry.getSavedDevices()) {
+            if (!record.autoConnect || !com.halo.app.wearables.NativeWearableHost.supports(record.descriptor.kind)) continue
+            try { nativeWearables.retry(record) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { Log.w(TAG, "Native auto-connect did not reach READY", error) }
         }
     }
 
@@ -153,36 +148,23 @@ class DeviceAutoConnectCoordinator(
         val rawSaved = registry.getSavedDevices()
         val saved = rawSaved.map(::normalizeLegacyDeviceRecord)
         saved.zip(rawSaved).forEach { (normalized, original) ->
-            if (normalized != original) {
-                registry.saveDevice(normalized)
-            }
+            if (normalized != original) registry.saveDevice(normalized)
         }
-
-        val hasAutoConnect = autoConnectDeviceIds(
-            saved,
-            DeviceKind.HEYCYAN_GLASSES
-        ).isNotEmpty()
+        val hasAutoConnect = autoConnectDeviceIds(saved, DeviceKind.HEYCYAN_GLASSES).isNotEmpty()
         if (!hasAutoConnect) return
         val success = heyCyanHostProvider().retryAutoConnect()
         Log.i(TAG, "AUTOCONNECT_RESULT kind=heycyan success=$success")
     }
 
     private suspend fun retryBuddyBot() {
-        val targetIds = autoConnectDeviceIds(
-            registry.getSavedDevices(),
-            DeviceKind.BUDDYBOT
-        )
+        val targetIds = autoConnectDeviceIds(registry.getSavedDevices(), DeviceKind.BUDDYBOT)
         if (targetIds.isEmpty()) return
-
         val host = buddyBotHostProvider()
         if (host.deviceId !in targetIds) return
-
         host.ensureDeviceRegistered()
         val success = sessionManager.autoConnectDevice(host.deviceId)
         Log.i(TAG, "AUTOCONNECT_RESULT kind=buddybot success=$success")
     }
 
-    private companion object {
-        const val TAG = "HaloAutoConnect"
-    }
+    private companion object { const val TAG = "HaloAutoConnect" }
 }
