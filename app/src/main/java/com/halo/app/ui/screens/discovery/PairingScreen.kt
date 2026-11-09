@@ -180,7 +180,12 @@ private fun PairingDeviceRow(
                 })
                 Text(stringResource(R.string.brand_pairing_signal, signalText),
                     style = MaterialTheme.typography.labelSmall)
-                Text(uiText(heyCyanCandidateLabel(device.advertisement)),
+                val family = inferGlassesFamilyFromAdvertisement(device.advertisement)
+                val compatibilityLabel = if (family != DeviceKind.HEYCYAN_GLASSES &&
+                    family != DeviceKind.UNKNOWN) {
+                    "${family.label} · separate driver needed"
+                } else heyCyanCandidateLabel(device.advertisement)
+                Text(uiText(compatibilityLabel),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (selected) Text(uiText("Selected"),

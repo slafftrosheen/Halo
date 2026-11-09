@@ -50,6 +50,49 @@ class PairingGuidanceTest {
         assertEquals(listOf("access"), calls)
     }
 
+    @Test fun foreignGlassesNeverPresentHeyCyanConnectButton() {
+        val foreignAddress = "11:22:33:44:55:66"
+        val foreign = PairingUiState(
+            selectedAddress = foreignAddress,
+            devices = listOf(com.halo.drivers.heycyan.ble.DiscoveredBleDevice(
+                advertisement = com.halo.drivers.heycyan.ble.BleAdvertisement(
+                    address = foreignAddress,
+                    name = "EyeVue",
+                    rssi = -51,
+                    serviceUuids = listOf("0000aa12-0000-1000-8000-00805f9b34fb"),
+                    manufacturerData = emptyMap(),
+                ),
+                firstSeenAt = 100L,
+            ))
+        )
+        assertEquals(PairingNextAction.FOREIGN_DEVICE, pairingNextAction(foreign))
+        assertFalse(pairingShouldGuide(PairingNextAction.FOREIGN_DEVICE, scanning = false))
+        var connects = 0
+        compose.setContent {
+            HaloTheme(darkTheme = false) {
+                PairingGuidance(foreign, {}, {}, {}, {}, { connects++ })
+            }
+        }
+        compose.onNodeWithText("Connect selected glasses").assertDoesNotExist()
+        compose.onNodeWithText("Different device family").assertExists()
+        assertEquals(0, connects)
+    }
+
+    @Test fun colmiA2RemainsEligibleForProtocolCheckedConnection() {
+        val address = "AA:BB:CC:DD:EE:FF"
+        val colmi = PairingUiState(
+            selectedAddress = address,
+            devices = listOf(com.halo.drivers.heycyan.ble.DiscoveredBleDevice(
+                advertisement = com.halo.drivers.heycyan.ble.BleAdvertisement(
+                    address = address, name = "COLMI-A2", rssi = -60,
+                    serviceUuids = emptyList(), manufacturerData = emptyMap()
+                ),
+                firstSeenAt = 200L,
+            ))
+        )
+        assertEquals(PairingNextAction.CONNECT, pairingNextAction(colmi))
+    }
+
     @Test fun connectionInProgressCannotOfferAnotherConnectOrClaimReadiness() {
         val state = mutableStateOf(PairingUiState(selectedAddress = "selected", connectionState = ConnectionState.Connected, attemptedAddress = "selected"))
         var connects = 0
