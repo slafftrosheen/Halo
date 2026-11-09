@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 private class FakeLink(private val answer: (ByteArray) -> List<ByteArray>) : NativeByteLink {
+    override var availableChannels: Set<String> = setOf("command")
     private val messages = MutableSharedFlow<NativePacket>(extraBufferCapacity = 32)
     override val incoming: Flow<NativePacket> = messages
     override val connected = MutableStateFlow(false)
@@ -107,6 +108,40 @@ fun main() = runBlocking {
         check(link.closed && driver.state.value.stage == NativeStage.ERROR)
         link.inject(EyeVueWire.encode(0x42, byteArrayOf(1, 2)))
         check(runCatching { driver.execute(NativeAction.PHOTO) }.isFailure)
+        driver.disconnect()
+    }
+    test("EyeVue AI capability is unavailable without the actual photo channel") {
+        val link = FakeLink(::eyeReply)
+        val driver = NativeWearableDriver("no-photo", NativeFamily.EYEVUE, { link }, requestTimeoutMs = 1000)
+        driver.connect()
+        check(!driver.state.value.aiPhotoAvailable)
+        check(runCatching { driver.captureAiPhoto() }.isFailure)
+        check(driver.state.value.stage == NativeStage.READY)
+        driver.disconnect()
+    }
+    test("EyeVue AI capability follows subscribed photo channel") {
+        val link = FakeLink(::eyeReply).apply { availableChannels = setOf("command", "photo") }
+        val driver = NativeWearableDriver("has-photo", NativeFamily.EYEVUE, { link }, requestTimeoutMs = 1000)
+        driver.connect()
+        check(driver.state.value.aiPhotoAvailable)
+        driver.disconnect()
+        check(!driver.state.value.aiPhotoAvailable)
+    }
+    test("TuneBuds media counters wait for data notification rather than inventing ACK counts") {
+        val link = FakeLink { bytes ->
+            val request = TuneBudsWire.Decoder().append(bytes).single()
+            val payload = if (request.command == 0x27) byteArrayOf(1, 1, 66) else byteArrayOf(0)
+            TuneBudsWire.encode(request.command, payload, type = 2).frames
+        }
+        val driver = NativeWearableDriver("counts", NativeFamily.TUNEBUDS, { link }, requestTimeoutMs = 1000)
+        driver.connect()
+        val result = driver.execute(NativeAction.MEDIA_COUNTS)
+        check(result.confirmation == NativeConfirmation.ACKNOWLEDGED)
+        check(driver.state.value.mediaCounts == null)
+        val counters = byteArrayOf(3, 0, 0, 0, 5, 0, 0, 0, 7, 0, 0, 0)
+        TuneBudsWire.encode(0xef, counters, type = 3).frames.forEach { link.inject(it) }
+        withTimeout(1000) { driver.state.first { it.mediaCounts != null } }
+        check(driver.state.value.mediaCounts == listOf(3L, 5L, 7L))
         driver.disconnect()
     }
     test("hotspot configuration encodes UTF8 byte lengths and only verified busy codes retry") {

@@ -34,7 +34,6 @@ class PairingGuidanceTest {
         assertFalse(pairingShouldGuide(PairingNextAction.DONE, scanning = false))
     }
 
-
     @Test fun openingPairingDoesNothingAndPermissionActionOnlyRequestsAccess() {
         val calls = mutableListOf<String>()
         compose.setContent {
@@ -50,46 +49,47 @@ class PairingGuidanceTest {
         assertEquals(listOf("access"), calls)
     }
 
-    @Test fun foreignGlassesNeverPresentHeyCyanConnectButton() {
+    @Test fun unavailableVendorSdkNeverPresentsHeyCyanConnectButton() {
         val foreignAddress = "11:22:33:44:55:66"
         val foreign = PairingUiState(
             selectedAddress = foreignAddress,
+            familyOverride = com.halo.sdk.runtime.embodiment.DeviceKind.META_RAYBAN_GLASSES,
             devices = listOf(com.halo.drivers.heycyan.ble.DiscoveredBleDevice(
                 advertisement = com.halo.drivers.heycyan.ble.BleAdvertisement(
-                    address = foreignAddress,
-                    name = "EyeVue",
-                    rssi = -51,
-                    serviceUuids = listOf("0000aa12-0000-1000-8000-00805f9b34fb"),
-                    manufacturerData = emptyMap(),
-                ),
-                firstSeenAt = 100L,
+                    address = foreignAddress, name = "Ray-Ban Meta", rssi = -51,
+                    serviceUuids = emptyList(), manufacturerData = emptyMap(),
+                ), firstSeenAt = 100L,
             ))
         )
         assertEquals(PairingNextAction.FOREIGN_DEVICE, pairingNextAction(foreign))
         assertFalse(pairingShouldGuide(PairingNextAction.FOREIGN_DEVICE, scanning = false))
         var connects = 0
-        compose.setContent {
-            HaloTheme(darkTheme = false) {
-                PairingGuidance(foreign, {}, {}, {}, {}, { connects++ })
-            }
-        }
+        compose.setContent { HaloTheme(darkTheme = false) { PairingGuidance(foreign, {}, {}, {}, {}, { connects++ }) } }
         compose.onNodeWithText("Connect selected glasses").assertDoesNotExist()
         compose.onNodeWithText("Different device family").assertExists()
         assertEquals(0, connects)
     }
 
+    @Test fun nativeEyeVueAndTuneBudsUseTheirOwnConnectionAdmission() {
+        val address = "AA:BB:CC:11:22:33"
+        for (kind in listOf(com.halo.sdk.runtime.embodiment.DeviceKind.EYEVUE_GLASSES,
+                com.halo.sdk.runtime.embodiment.DeviceKind.TUNEBUDS_GLASSES)) {
+            val state = PairingUiState(selectedAddress = address, familyOverride = kind)
+            assertEquals(PairingNextAction.CONNECT, pairingNextAction(state))
+            assertEquals(PairingNextAction.WAIT, pairingNextAction(state.copy(isConnecting = true)))
+            assertEquals(PairingNextAction.DONE, pairingNextAction(state.copy(completedAddress = address,
+                completedDeviceId = "different-classic-address", connectionState = ConnectionState.Ready)))
+        }
+    }
+
     @Test fun colmiA2RemainsEligibleForProtocolCheckedConnection() {
         val address = "AA:BB:CC:DD:EE:FF"
-        val colmi = PairingUiState(
-            selectedAddress = address,
+        val colmi = PairingUiState(selectedAddress = address,
             devices = listOf(com.halo.drivers.heycyan.ble.DiscoveredBleDevice(
-                advertisement = com.halo.drivers.heycyan.ble.BleAdvertisement(
-                    address = address, name = "COLMI-A2", rssi = -60,
-                    serviceUuids = emptyList(), manufacturerData = emptyMap()
-                ),
+                advertisement = com.halo.drivers.heycyan.ble.BleAdvertisement(address = address,
+                    name = "COLMI-A2", rssi = -60, serviceUuids = emptyList(), manufacturerData = emptyMap()),
                 firstSeenAt = 200L,
-            ))
-        )
+            )))
         assertEquals(PairingNextAction.CONNECT, pairingNextAction(colmi))
     }
 
@@ -117,20 +117,12 @@ class PairingGuidanceTest {
     }
 
     @Test fun priorHostReadyCannotApproveAnewGlassesSelection() {
-        val oldHostReady = PairingUiState(
-            connectionState = ConnectionState.Ready,
-            selectedAddress = "new-device",
-            attemptedAddress = "old-device",
-            completedAddress = "old-device"
-        )
+        val oldHostReady = PairingUiState(connectionState = ConnectionState.Ready, selectedAddress = "new-device",
+            attemptedAddress = "old-device", completedAddress = "old-device")
         assertEquals(PairingNextAction.CONNECT, pairingNextAction(oldHostReady))
-        assertEquals(PairingNextAction.SCAN,
-            pairingNextAction(oldHostReady.copy(selectedAddress = null)))
-        assertEquals(PairingNextAction.WAIT,
-            pairingNextAction(oldHostReady.copy(attemptedAddress = "new-device")))
-        assertEquals(PairingNextAction.DONE,
-            pairingNextAction(oldHostReady.copy(attemptedAddress = "new-device",
-                completedAddress = "new-device")))
+        assertEquals(PairingNextAction.SCAN, pairingNextAction(oldHostReady.copy(selectedAddress = null)))
+        assertEquals(PairingNextAction.WAIT, pairingNextAction(oldHostReady.copy(attemptedAddress = "new-device")))
+        assertEquals(PairingNextAction.DONE, pairingNextAction(oldHostReady.copy(attemptedAddress = "new-device", completedAddress = "new-device")))
     }
 
     @Test fun explicitSelectionAndPrerequisitesDetermineTheNextStep() {
@@ -147,27 +139,17 @@ class PairingGuidanceTest {
         assertEquals(2, pairingStage(PairingUiState(isScanning = true)))
         assertEquals(3, pairingStage(PairingUiState(selectedAddress = "AA:BB:CC:11:22:33")))
         assertEquals(1, pairingStage(PairingUiState(connectionState = ConnectionState.Ready)))
-        assertEquals(3, pairingStage(PairingUiState(
-            selectedAddress = "AA:BB:CC:11:22:33",
-            attemptedAddress = "AA:BB:CC:11:22:33",
-            completedAddress = "AA:BB:CC:11:22:33",
-            connectionState = ConnectionState.Ready)))
-        assertEquals(1, pairingStage(PairingUiState(
-            bluetoothPrerequisite = BluetoothPrerequisite.PERMISSION_REQUIRED
-        )))
+        assertEquals(3, pairingStage(PairingUiState(selectedAddress = "AA:BB:CC:11:22:33", attemptedAddress = "AA:BB:CC:11:22:33",
+            completedAddress = "AA:BB:CC:11:22:33", connectionState = ConnectionState.Ready)))
+        assertEquals(1, pairingStage(PairingUiState(bluetoothPrerequisite = BluetoothPrerequisite.PERMISSION_REQUIRED)))
     }
 
     @Test fun expiredConnectionOffersRetryInsteadOfEndlessSpinner() {
-        val expired = PairingUiState(
-            selectedAddress = "AA:BB:CC:11:22:33",
-            connectionState = ConnectionState.Connecting,
-            statusMessage = "Connection did not reach READY · Connecting"
-        )
+        val expired = PairingUiState(selectedAddress = "AA:BB:CC:11:22:33", connectionState = ConnectionState.Connecting,
+            statusMessage = "Connection did not reach READY · Connecting")
         assertEquals(PairingNextAction.CONNECT, pairingNextAction(expired))
-        assertEquals(PairingNextAction.SCAN,
-            pairingNextAction(expired.copy(selectedAddress = null, isScanning = true)))
-        assertEquals(PairingNextAction.SCAN,
-            pairingNextAction(expired.copy(selectedAddress = null, isScanning = false)))
+        assertEquals(PairingNextAction.SCAN, pairingNextAction(expired.copy(selectedAddress = null, isScanning = true)))
+        assertEquals(PairingNextAction.SCAN, pairingNextAction(expired.copy(selectedAddress = null, isScanning = false)))
     }
 
     @Test fun deviceListUsesCoarseSignalAndMaskedAddress() {

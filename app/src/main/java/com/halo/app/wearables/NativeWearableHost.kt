@@ -78,6 +78,7 @@ class NativeWearableHost(
             check(session.state.value == SessionState.READY)
             val saved = record.copy(lastSeenMs = System.currentTimeMillis(), firmwareVersion = session.driver.state.value.firmware)
             registry.saveDevice(saved)
+            sessions.refreshSavedDevices()
             saved
         } catch (error: Exception) {
             if (existing == null) {

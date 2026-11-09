@@ -1080,6 +1080,8 @@ fun AppShell(
                         deviceId == null -> navController.popBackStack()
                         deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT -> BuddyBotControlScreen(deviceId, viewModel) { navController.popBackStack() }
                         deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES -> HeyCyanControlScreen(deviceId, viewModel) { navController.popBackStack() }
+                        deviceKind != null && com.halo.app.wearables.NativeWearableHost.supports(deviceKind) ->
+                            com.halo.app.wearables.NativeWearableControlScreen(deviceId) { navController.popBackStack() }
                         else -> navController.popBackStack()
                     }
                 }

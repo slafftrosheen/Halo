@@ -1,13 +1,5 @@
 package com.halo.app.ui.screens.discovery
 
-import com.halo.app.ui.presence.BindShellChildPage
-import com.halo.app.ui.presence.ShellPageAction
-import com.halo.app.ui.components.HaloTextField
-import com.halo.app.ui.components.VoiceFieldKind
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import com.halo.app.ui.fx.haloAura
-import com.halo.app.ui.fx.haloTrace
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,113 +8,73 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.stringResource
-import com.halo.app.R
-import com.halo.app.ui.presence.HaloSignalFace
-import com.halo.app.ui.presence.HaloSignalPresentation
-import com.halo.app.ui.presence.HaloSignalState
-import com.halo.app.ui.fx.HaloPairingFx
-import com.halo.app.ui.fx.HaloFxPairingPhase
-import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
-import com.halo.drivers.heycyan.ble.heyCyanCandidateLabel
-import com.halo.drivers.heycyan.ble.inferGlassesFamilyFromAdvertisement
-import com.halo.sdk.runtime.embodiment.DeviceKind
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.R
 import com.halo.app.language.uiText
-import com.halo.app.ui.components.HaloActionStyle
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.design.*
+import com.halo.app.ui.fx.*
 import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.presence.*
+import com.halo.app.wearables.NativeWearableHost
+import com.halo.app.wearables.NativeWearableControls
+import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
+import com.halo.drivers.heycyan.ble.heyCyanCandidateLabel
+import com.halo.drivers.heycyan.ble.inferGlassesFamilyFromAdvertisement
 import com.halo.sdk.host.ConnectionState
+import com.halo.sdk.runtime.embodiment.DeviceKind
 
 internal enum class PairingNextAction { GRANT_ACCESS, TURN_ON, SCAN, CONNECT, WAIT, DONE, UNAVAILABLE, FOREIGN_DEVICE }
-
-/** A Guide may highlight only explicit discovery/connection, never permissions,
- * and never a claimed success before the selected glasses reach READY.
- */
 internal fun pairingShouldGuide(action: PairingNextAction, scanning: Boolean): Boolean =
     (action == PairingNextAction.SCAN && !scanning) || action == PairingNextAction.CONNECT
 
-/** Presentation only; discovery, admission and connection remain owned by PairingViewModel. */
 internal fun pairingNextAction(state: PairingUiState): PairingNextAction = when {
     state.bluetoothPrerequisite == BluetoothPrerequisite.UNSUPPORTED -> PairingNextAction.UNAVAILABLE
     state.bluetoothPrerequisite == BluetoothPrerequisite.PERMISSION_REQUIRED -> PairingNextAction.GRANT_ACCESS
     state.bluetoothPrerequisite == BluetoothPrerequisite.BLUETOOTH_OFF -> PairingNextAction.TURN_ON
-    // The wearable host's Ready state may be left over from another target.
-    // Only a successful connect+save for the currently selected device is Done.
     state.selectedAddress == null -> PairingNextAction.SCAN
-    state.devices.any { result ->
-        result.advertisement.address.equals(state.selectedAddress, ignoreCase = true) &&
-            inferGlassesFamilyFromAdvertisement(result.advertisement) !in
-                setOf(DeviceKind.UNKNOWN, DeviceKind.HEYCYAN_GLASSES)
-    } -> PairingNextAction.FOREIGN_DEVICE
-    state.completedAddress == state.selectedAddress &&
-        state.connectionState == ConnectionState.Ready -> PairingNextAction.DONE
-    // Selecting a different scan result is an explicit new attempt, even if
-    // the old host session is still Connected/Ready.
+    !pairingFamilyConnectable(state.selectedFamily) -> PairingNextAction.FOREIGN_DEVICE
+    state.completedAddress == state.selectedAddress && state.connectionState == ConnectionState.Ready -> PairingNextAction.DONE
+    state.isConnecting -> PairingNextAction.WAIT
     state.attemptedAddress != state.selectedAddress -> PairingNextAction.CONNECT
-    // A timeout is not infinite "connecting", even if the host's last state
-    // still says Connecting. Offer a genuine retry without pretending readiness.
-    state.statusMessage?.startsWith("Connection did not reach READY") == true &&
-        state.selectedAddress != null -> PairingNextAction.CONNECT
+    state.statusMessage?.startsWith("Connection did not reach READY") == true -> PairingNextAction.CONNECT
     state.connectionState != ConnectionState.Disconnected && state.connectionState !is ConnectionState.Failed -> PairingNextAction.WAIT
-    state.selectedAddress != null -> PairingNextAction.CONNECT
-    else -> PairingNextAction.SCAN
+    else -> PairingNextAction.CONNECT
 }
 
-
-/** Three observable stages; the progress display never starts a Bluetooth operation. */
 internal fun pairingStage(state: PairingUiState): Int = when (pairingNextAction(state)) {
     PairingNextAction.GRANT_ACCESS, PairingNextAction.TURN_ON, PairingNextAction.UNAVAILABLE -> 1
     PairingNextAction.SCAN -> if (state.isScanning || state.devices.isNotEmpty()) 2 else 1
-    PairingNextAction.CONNECT, PairingNextAction.WAIT, PairingNextAction.DONE,
-    PairingNextAction.FOREIGN_DEVICE -> 3
+    else -> 3
 }
-
-/** An RSSI band, not a claim of physical distance (device power varies). */
 internal enum class PairingSignalBand { STRONG, GOOD, WEAK }
 internal fun pairingSignalBand(rssi: Int): PairingSignalBand = when {
     rssi >= -65 -> PairingSignalBand.STRONG
     rssi >= -82 -> PairingSignalBand.GOOD
     else -> PairingSignalBand.WEAK
 }
-
-/** Expose only the trailing four address characters in user-facing discovery. */
 internal fun pairingShortAddress(address: String): String =
     address.filter(Char::isLetterOrDigit).takeLast(4).uppercase(java.util.Locale.ROOT)
 
 @Composable
 private fun PairingSteps(stage: Int) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(
-            R.string.brand_pairing_ready, R.string.brand_pairing_find, R.string.brand_pairing_connect
-        ).forEachIndexed { index, label ->
-            val active = stage == index + 1
-            val reached = stage >= index + 1
+        listOf(R.string.brand_pairing_ready, R.string.brand_pairing_find, R.string.brand_pairing_connect).forEachIndexed { index, label ->
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(
-                    shape = androidx.compose.foundation.shape.CircleShape,
-                    color = if (reached) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerLow,
-                    border = BorderStroke(if (active) 2.dp else 1.dp,
-                        if (active) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outlineVariant),
-                ) {
-                    Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                        Text((index + 1).toString(),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = if (reached) MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                Surface(shape = androidx.compose.foundation.shape.CircleShape,
+                    color = if (stage >= index + 1) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                    border = BorderStroke(if (stage == index + 1) 2.dp else 1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                    Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) { Text((index + 1).toString()) }
                 }
                 Text(stringResource(label), style = MaterialTheme.typography.labelMedium,
-                    color = if (active) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
@@ -130,67 +82,30 @@ private fun PairingSteps(stage: Int) {
 }
 
 @Composable
-private fun PairingDeviceRow(
-    device: DiscoveredBleDevice,
-    selected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    technicalNames: Boolean = false,
-) {
-    Surface(
-        onClick = onClick, enabled = enabled,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+private fun PairingDeviceRow(device: DiscoveredBleDevice, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    Surface(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
         shape = MaterialTheme.shapes.medium,
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            com.halo.app.ui.icons.HaloIcon(
-                HaloGlyph.GLASSES, contentDescription = null, modifier = Modifier.size(26.dp),
-                tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSurface
-            )
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            com.halo.app.ui.icons.HaloIcon(HaloGlyph.GLASSES, contentDescription = null, modifier = Modifier.size(26.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    device.advertisement.name?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.brand_pairing_unknown_device),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSurface
-                )
-                // Device identifiers can reveal hardware identity. Don't show
-                // even the suffix until the user explicitly opens Technical names.
-                if (technicalNames) Text(
-                    stringResource(
-                        R.string.brand_pairing_device_suffix,
-                        pairingShortAddress(device.advertisement.address)
-                    ),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                val signalText = stringResource(when (pairingSignalBand(device.advertisement.rssi)) {
+                Text(device.advertisement.name?.takeIf(String::isNotBlank) ?: stringResource(R.string.brand_pairing_unknown_device),
+                    style = MaterialTheme.typography.titleSmall)
+                val signal = stringResource(when (pairingSignalBand(device.advertisement.rssi)) {
                     PairingSignalBand.STRONG -> R.string.brand_pairing_signal_strong
                     PairingSignalBand.GOOD -> R.string.brand_pairing_signal_good
                     PairingSignalBand.WEAK -> R.string.brand_pairing_signal_weak
                 })
-                Text(stringResource(R.string.brand_pairing_signal, signalText),
-                    style = MaterialTheme.typography.labelSmall)
-                val family = inferGlassesFamilyFromAdvertisement(device.advertisement)
-                val compatibilityLabel = if (family != DeviceKind.HEYCYAN_GLASSES &&
-                    family != DeviceKind.UNKNOWN) {
-                    "${family.label} · separate driver needed"
-                } else heyCyanCandidateLabel(device.advertisement)
-                Text(uiText(compatibilityLabel),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (selected) Text(uiText("Selected"),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(stringResource(R.string.brand_pairing_signal, signal), style = MaterialTheme.typography.labelSmall)
+                val kind = inferGlassesFamilyFromAdvertisement(device.advertisement)
+                val label = when {
+                    NativeWearableHost.supports(kind) -> "${kind.label} · native protocol · hardware qualification pending"
+                    !pairingFamilyConnectable(kind) -> "${kind.label} · vendor adapter required"
+                    else -> heyCyanCandidateLabel(device.advertisement)
+                }
+                Text(uiText(label), style = MaterialTheme.typography.labelSmall)
+                if (selected) Text(uiText("Selected"), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -218,64 +133,23 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         PairingNextAction.WAIT -> "The connection is still being prepared. Controls become available after the device is ready."
         PairingNextAction.DONE -> "The device reports that it is ready. Recording and other controls remain explicit actions."
         PairingNextAction.UNAVAILABLE -> "This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device."
-        PairingNextAction.FOREIGN_DEVICE -> "These are not HeyCyan glasses. Halo will need their own adapter. No HeyCyan commands will be sent."
+        PairingNextAction.FOREIGN_DEVICE -> "This family requires its own vendor integration. No HeyCyan commands will be sent."
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val faceState = when {
-                state.connectionState is ConnectionState.Failed -> HaloSignalState.ERROR
-                next == PairingNextAction.WAIT || state.isScanning -> HaloSignalState.WAITING
-                else -> HaloSignalState.IDLE
-            }
             when (next) {
-                PairingNextAction.WAIT -> HaloPairingFx(HaloFxPairingPhase.CONNECTING,
-                    modifier = Modifier.size(116.dp))
-                PairingNextAction.DONE -> HaloPairingFx(HaloFxPairingPhase.CONNECTED,
-                    modifier = Modifier.size(116.dp))
-                else -> HaloSignalFace(
-                    HaloSignalPresentation(
-                        state = faceState,
-                        glyph = if (next == PairingNextAction.SCAN) HaloGlyph.GLASSES else HaloGlyph.HALO,
-                        label = title,
-                    ),
-                    modifier = if (next == PairingNextAction.SCAN && !state.isScanning)
-                        Modifier.haloAura(MaterialTheme.colorScheme.primaryContainer)
-                    else Modifier,
+                PairingNextAction.WAIT -> HaloPairingFx(HaloFxPairingPhase.CONNECTING, modifier = Modifier.size(116.dp))
+                PairingNextAction.DONE -> HaloPairingFx(HaloFxPairingPhase.CONNECTED, modifier = Modifier.size(116.dp))
+                else -> HaloSignalFace(HaloSignalPresentation(
+                    state = if (state.connectionState is ConnectionState.Failed) HaloSignalState.ERROR else HaloSignalState.IDLE,
+                    glyph = if (next == PairingNextAction.SCAN) HaloGlyph.GLASSES else HaloGlyph.HALO, label = title),
                     size = 116.dp, contentDescription = uiText(title))
             }
             Text(uiText(title), style = MaterialTheme.typography.titleLarge)
-            if (next == PairingNextAction.DONE) state.completedName?.let {
-                Text(it, style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            if (next == PairingNextAction.DONE) state.completedName?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
         }
         Text(uiText(instruction))
-        if (next == PairingNextAction.SCAN && state.bluetoothPrerequisite == BluetoothPrerequisite.READY) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = com.halo.app.ui.design.HaloShapes.card,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(uiText("Bluetooth is on"), style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1f))
-                        Icon(Icons.Default.Check, contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary)
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(uiText("Glasses switched on"), style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1f))
-                        Text(uiText("Your turn"), style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-        }
         if (!state.isScanning && state.statusMessage?.startsWith("Scan failed:") == true)
             HaloFeedbackSurface(uiText("Search did not finish"), uiText("Try searching again. Check nearby-device access and keep the glasses powered on."), kind = HaloFeedbackKind.FAILURE)
         if (state.connectionState is ConnectionState.Failed)
@@ -285,44 +159,32 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
             PairingNextAction.TURN_ON -> HaloFocusAction(uiText("Turn on Bluetooth"), HaloGlyph.DEVICE, true, onEnable)
             PairingNextAction.SCAN -> if (!state.isScanning) {
                 HaloFocusAction(uiText("Search nearby"), HaloGlyph.DEVICE, true, onScan,
-                    modifier = Modifier.haloTrace(
-                        pairingShouldGuide(next, state.isScanning),
-                        MaterialTheme.colorScheme.primary, lapOnAppear = true))
-                Text(uiText("Nothing connects until you choose."),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    modifier = Modifier.haloTrace(pairingShouldGuide(next, false), MaterialTheme.colorScheme.primary, lapOnAppear = true))
+                Text(uiText("Nothing connects until you choose."), style = MaterialTheme.typography.bodySmall)
             }
             PairingNextAction.CONNECT -> {
                 HaloFocusAction(uiText("Connect selected glasses"), HaloGlyph.GLASSES, true, onConnect,
-                    modifier = Modifier.haloTrace(
-                        pairingShouldGuide(next, state.isScanning),
-                        MaterialTheme.colorScheme.primary, lapOnAppear = true))
-                TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.brand_pairing_search_again))
-                }
+                    modifier = Modifier.haloTrace(true, MaterialTheme.colorScheme.primary, lapOnAppear = true))
+                TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.brand_pairing_search_again)) }
             }
             PairingNextAction.WAIT -> HaloProgressPresentation(uiText("Connecting glasses…"))
             PairingNextAction.DONE -> HaloStatusPresentation(HaloStatus.READY, label = uiText("Glasses ready"))
             PairingNextAction.UNAVAILABLE -> HaloStatusPresentation(HaloStatus.UNAVAILABLE)
             PairingNextAction.FOREIGN_DEVICE -> {
                 HaloFeedbackSurface(uiText("Different device family"),
-                    uiText("This device needs its own native driver. Choose a HeyCyan-compatible device or return to Devices."),
-                    kind = HaloFeedbackKind.WARNING)
-                TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(uiText("Search again"))
-                }
+                    uiText("The native adapter for this family is not enabled in this build."), kind = HaloFeedbackKind.WARNING)
+                TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Search again")) }
             }
         }
         if (state.isScanning) {
             HaloProgressPresentation(uiText("Searching nearby"))
-            com.halo.app.ui.components.HaloActionButton(onStopScan, style = HaloActionStyle.SECONDARY) { Text(uiText("Stop search")) }
+            OutlinedButton(onClick = onStopScan, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Stop search")) }
         }
     }
 }
 
 @Composable
-fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: () -> Unit,
-    onRequestBluetoothEnable: () -> Unit) {
+fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: () -> Unit, onRequestBluetoothEnable: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, viewModel) {
@@ -337,105 +199,71 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
     var showOtherDevices by rememberSaveable { mutableStateOf(false) }
-    var showTechnicalNames by rememberSaveable { mutableStateOf(false) }
+    val next = pairingNextAction(state)
     val shellHosted = BindShellChildPage("Add glasses", viewModel::navigateBack,
-        objectId = state.selectedAddress?.takeIf { it.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")) }, sourceIdentity = "${state.selectedAddress}:${state.bluetoothPrerequisite}:${pairingNextAction(state)}",
-        disabledActionReasons = mapOf("pairing.others" to androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_no_discovered),
-            "pairing.stop" to androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_nothing_active)),
+        objectId = state.selectedAddress?.takeIf { it.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")) },
+        sourceIdentity = "${state.selectedAddress}:${state.bluetoothPrerequisite}:$next",
         actions = listOf(
             ShellPageAction("pairing.others", "Nearby devices", HaloGlyph.DEVICE,
                 state.devices.any { it.advertisement.name.isNullOrBlank() }) { showOtherDevices = !showOtherDevices },
             ShellPageAction("pairing.stop", "Stop search", HaloGlyph.STOP, state.isScanning, viewModel::stopScan),
         ))
     val ordered = state.devices.sortedByDescending { it.advertisement.rssi }
-    val named = ordered.filter { !it.advertisement.name.isNullOrBlank() }
-    val unnamed = ordered.filter { it.advertisement.name.isNullOrBlank() }
-    val canSelect = state.bluetoothPrerequisite == BluetoothPrerequisite.READY &&
-        pairingNextAction(state) !in setOf(PairingNextAction.WAIT, PairingNextAction.DONE)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item(key = "header") {
-            if (!shellHosted) HaloScreenHeader(uiText("Add glasses"),
-                navigation = viewModel::navigateBack, glyph = HaloGlyph.GLASSES)
-        }
-        if (pairingNextAction(state) != PairingNextAction.SCAN) {
-            item(key = "steps") { PairingSteps(pairingStage(state)) }
-        }
-        item(key = "guidance") {
-            PairingGuidance(state, onRequestBluetoothPermissions, onRequestBluetoothEnable,
-                viewModel::startScan, viewModel::stopScan, viewModel::connect)
-        }
-        if (pairingNextAction(state) == PairingNextAction.DONE) item(key = "done") {
-            var editingName by rememberSaveable(state.completedAddress) { mutableStateOf(false) }
-            var nameDraft by rememberSaveable(state.completedAddress) {
-                mutableStateOf(state.completedName.orEmpty())
-            }
-            LaunchedEffect(state.completedName, editingName) {
-                if (!editingName) nameDraft = state.completedName.orEmpty()
-            }
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (editingName) {
-                    HaloTextField(
-                        value = nameDraft,
-                        onValueChange = { nameDraft = it.take(48) },
-                        label = { Text(uiText("Glasses name")) },
-                        modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 48)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { editingName = false },
-                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                        ) { Text(uiText("Cancel")) }
-                        Button(
-                            onClick = { viewModel.renameCompletedDevice(nameDraft); editingName = false },
-                            enabled = pairingValidDisplayName(nameDraft) != null &&
-                                pairingValidDisplayName(nameDraft) != state.completedName,
-                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                        ) { Text(uiText("Save name")) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item("header") { if (!shellHosted) HaloScreenHeader(uiText("Add glasses"), navigation = viewModel::navigateBack, glyph = HaloGlyph.GLASSES) }
+        if (next != PairingNextAction.SCAN) item("steps") { PairingSteps(pairingStage(state)) }
+        item("guidance") { PairingGuidance(state, onRequestBluetoothPermissions, onRequestBluetoothEnable, viewModel::startScan, viewModel::stopScan, viewModel::connect) }
+        if (state.selectedAddress != null && next !in setOf(PairingNextAction.WAIT, PairingNextAction.DONE)) item("family") {
+            var expanded by remember { mutableStateOf(false) }
+            Column {
+                Text(uiText("Device family"), style = MaterialTheme.typography.labelLarge)
+                TextButton(onClick = { expanded = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText(state.selectedFamily.label)) }
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(text = { Text(uiText("Automatic detection")) }, onClick = { viewModel.selectFamily(null); expanded = false })
+                    DeviceKind.entries.filter { it != DeviceKind.BUDDYBOT && it != DeviceKind.UNKNOWN }.forEach { kind ->
+                        DropdownMenuItem(text = { Text(uiText(kind.label)) }, onClick = { viewModel.selectFamily(kind); expanded = false })
                     }
-                } else {
-                    TextButton(
-                        onClick = { editingName = true },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                    ) { Text(uiText("Rename glasses")) }
                 }
-                if (state.statusMessage == "Could not save name") {
-                    Text(uiText("Could not save name"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error)
-                }
-                Button(onClick = viewModel::navigateBack,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
-                    Text(uiText("Done"))
-                }
+                Text(uiText("Selecting a family does not bypass its hardware handshake."), style = MaterialTheme.typography.bodySmall)
             }
         }
-        if (pairingNextAction(state) != PairingNextAction.DONE) {
-            item(key = "nearby_header") {
+        if (next == PairingNextAction.DONE) {
+            item("done") {
+                var editing by rememberSaveable(state.completedAddress) { mutableStateOf(false) }
+                var draft by rememberSaveable(state.completedAddress) { mutableStateOf(state.completedName.orEmpty()) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (editing) {
+                        HaloTextField(value = draft, onValueChange = { draft = it.take(48) }, label = { Text(uiText("Glasses name")) },
+                            modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.SHORT, maxChars = 48)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = { editing = false }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
+                            Button(onClick = { viewModel.renameCompletedDevice(draft); editing = false },
+                                enabled = pairingValidDisplayName(draft) != null, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Save name")) }
+                        }
+                    } else TextButton(onClick = { draft = state.completedName.orEmpty(); editing = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Rename glasses")) }
+                    if (state.statusMessage == "Could not save name") Text(uiText("Could not save name"), color = MaterialTheme.colorScheme.error)
+                    Button(onClick = viewModel::navigateBack, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(uiText("Done")) }
+                }
+            }
+            if (NativeWearableHost.supports(state.selectedFamily)) item("native_controls") {
+                state.completedDeviceId?.let { NativeWearableControls(deviceId = it) }
+            }
+        } else {
+            item("nearby_header") {
                 HaloSectionHeader(uiText("Nearby devices"))
-            if (state.devices.isEmpty()) Text(uiText(if (state.isScanning)
-                "Devices appear here as they are found."
-                else "No devices found. Search again with your glasses nearby."))
+                if (ordered.isEmpty()) Text(uiText(if (state.isScanning) "Devices appear here as they are found." else "No devices found. Search again with your glasses nearby."))
             }
-            items(named, key = { it.advertisement.address }) { device ->
-                PairingDeviceRow(device,
-                selected = state.selectedAddress == device.advertisement.address,
-                enabled = canSelect,
-                onClick = { viewModel.selectDevice(device) },
-                technicalNames = false)
+            items(ordered.filter { !it.advertisement.name.isNullOrBlank() }, key = { it.advertisement.address }) { device ->
+                PairingDeviceRow(device, state.selectedAddress == device.advertisement.address, next != PairingNextAction.WAIT) { viewModel.selectDevice(device) }
             }
-            if (unnamed.isNotEmpty()) item(key = "other_device_toggle") {
-            TextButton(onClick = { showOtherDevices = !showOtherDevices },
-                modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.brand_pairing_other_devices, unnamed.size) +
-                    if (showOtherDevices) " −" else " +")
-            }
+            val unnamed = ordered.filter { it.advertisement.name.isNullOrBlank() }
+            if (unnamed.isNotEmpty()) item("other_device_toggle") {
+                TextButton(onClick = { showOtherDevices = !showOtherDevices }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.brand_pairing_other_devices, unnamed.size) + if (showOtherDevices) " −" else " +")
+                }
             }
             if (showOtherDevices) items(unnamed, key = { it.advertisement.address }) { device ->
-            PairingDeviceRow(device,
-                selected = state.selectedAddress == device.advertisement.address,
-                enabled = canSelect,
-                onClick = { viewModel.selectDevice(device) },
-                technicalNames = false)
+                PairingDeviceRow(device, state.selectedAddress == device.advertisement.address, next != PairingNextAction.WAIT) { viewModel.selectDevice(device) }
             }
         }
     }
