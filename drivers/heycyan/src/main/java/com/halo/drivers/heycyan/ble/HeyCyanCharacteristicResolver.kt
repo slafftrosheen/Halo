@@ -35,11 +35,13 @@ class HeyCyanCharacteristicResolver {
         if (primary != null && primary.uuid == HeyCyanProtocolConstants.PRIMARY_SERVICE) {
             // Direct resolution for verified active Android profile
             val writeChar = primary.characteristics.firstOrNull {
-                it.uuid == HeyCyanProtocolConstants.WRITE_CHARACTERISTIC || it.properties.canWrite || it.properties.canWriteWithoutResponse
+                it.uuid == HeyCyanProtocolConstants.WRITE_CHARACTERISTIC &&
+                    (it.properties.canWrite || it.properties.canWriteWithoutResponse)
             }?.uuid
 
             val notifyChar = primary.characteristics.firstOrNull {
-                it.uuid == HeyCyanProtocolConstants.NOTIFY_CHARACTERISTIC || it.properties.canNotify || it.properties.canIndicate
+                it.uuid == HeyCyanProtocolConstants.NOTIFY_CHARACTERISTIC &&
+                    (it.properties.canNotify || it.properties.canIndicate)
             }?.uuid
 
             return HeyCyanGattEndpoints(
@@ -134,3 +136,28 @@ data class CharacteristicProperties(
     val canNotify: Boolean,
     val canIndicate: Boolean
 )
+/**
+ * Pure, testable contract for the Android HeyCyan large-data control channel.
+ * Discovery result names and Android bond state are not authoritative: only
+ * these exact service/characteristic UUIDs may unlock HeyCyan commands.
+ * The Android client additionally validates the notify CCCD and ACK.
+ */
+object HeyCyanGattProfileValidator {
+    fun rejectionReason(services: List<DiscoveredService>): String? {
+        val control = services.firstOrNull { it.uuid == HeyCyanProtocolConstants.PRIMARY_SERVICE }
+            ?: return "primary HeyCyan service is missing"
+        val write = control.characteristics.firstOrNull {
+            it.uuid == HeyCyanProtocolConstants.WRITE_CHARACTERISTIC
+        } ?: return "command-write characteristic is missing"
+        if (!write.properties.canWrite && !write.properties.canWriteWithoutResponse) {
+            return "command-write characteristic has no write permission"
+        }
+        val notify = control.characteristics.firstOrNull {
+            it.uuid == HeyCyanProtocolConstants.NOTIFY_CHARACTERISTIC
+        } ?: return "command-notification characteristic is missing"
+        if (!notify.properties.canNotify && !notify.properties.canIndicate) {
+            return "command-notification characteristic cannot notify/indicate"
+        }
+        return null
+    }
+}

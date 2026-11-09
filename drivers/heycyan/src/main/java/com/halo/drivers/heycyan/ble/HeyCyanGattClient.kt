@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
+import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import com.halo.drivers.heycyan.codec.CaptureGattStage
 import com.halo.drivers.heycyan.codec.CaptureStagePhase
 import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
@@ -166,6 +167,38 @@ open class HeyCyanGattClient(
                 status,
                 "serviceCount=${callbackGatt.services.size}"
             )
+            // A successful Android GATT connection is NOT a HeyCyan pairing.
+            // Previously *any* device with no matching notify CCCDs reached READY,
+            // so selected foreign glasses could be saved under the HeyCyan driver.
+            // Gate READY on the exact verified service, command/notify endpoints
+            // and the writable notification descriptor, before any protocol writes.
+            val observedServices = callbackGatt.services.map { service ->
+                DiscoveredService(service.uuid, service.characteristics.map { characteristic ->
+                    val flags = characteristic.properties
+                    DiscoveredCharacteristic(characteristic.uuid, CharacteristicProperties(
+                        canRead = flags and BluetoothGattCharacteristic.PROPERTY_READ != 0,
+                        canWrite = flags and BluetoothGattCharacteristic.PROPERTY_WRITE != 0,
+                        canWriteWithoutResponse = flags and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0,
+                        canNotify = flags and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0,
+                        canIndicate = flags and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0,
+                    ))
+                })
+            }
+            val profileProblem = HeyCyanGattProfileValidator.rejectionReason(observedServices)
+            val commandNotifyCccd = callbackGatt
+                .getService(HeyCyanProtocolConstants.PRIMARY_SERVICE)
+                ?.getCharacteristic(HeyCyanProtocolConstants.NOTIFY_CHARACTERISTIC)
+                ?.getDescriptor(CCCD_UUID)
+            if (profileProblem != null || commandNotifyCccd == null) {
+                val reason = profileProblem ?: "HeyCyan control notification CCCD is missing"
+                tracer.onGattStage(attempt.id, CaptureGattStage.SERVICE_DISCOVERY,
+                    CaptureStagePhase.FAILED, detail = reason)
+                failGatt(callbackGatt, IllegalStateException(
+                    "Selected Bluetooth device has no usable HeyCyan control profile: $reason"
+                ), closeImmediately = true, attempt = attempt)
+                return
+            }
+
             serviceDiscoveryStarted = true
             pendingDescriptorWrites.clear()
             for (service in callbackGatt.services) {
@@ -199,7 +232,12 @@ open class HeyCyanGattClient(
                             charUuid.startsWith("0000ae02") ||
                             charUuid.startsWith("0000ae04")
                     if ((supportsNotifications || supportsIndications) && cccd != null && isRelevantNotifyChar) {
-                        callbackGatt.setCharacteristicNotification(characteristic, true)
+                        if (!callbackGatt.setCharacteristicNotification(characteristic, true)) {
+                            failGatt(callbackGatt, IllegalStateException(
+                                "Failed to subscribe to HeyCyan notification characteristic ${characteristic.uuid}"
+                            ), closeImmediately = true, attempt = attempt)
+                            return
+                        }
                         pendingDescriptorWrites.add(PendingDescriptorWrite(characteristic, cccd))
                     }
                 }
