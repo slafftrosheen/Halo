@@ -57,7 +57,11 @@ class RuntimeDeviceCapabilityBridge(
                 SessionState.STATE_SYNC,
             )
 
-            val capabilities = if (connected) capabilitiesFor(record.descriptor.kind) else emptySet()
+            // A Bluetooth link in HANDSHAKE/STATE_SYNC is not yet an executable
+            // hardware capability. Publish tools only after the exact session
+            // has reached READY; keep transport connected state informational.
+            val ready = sessionState == SessionState.READY
+            val capabilities = if (ready) capabilitiesFor(record.descriptor.kind) else emptySet()
             deviceList += RuntimeDevice(
                 id = deviceId,
                 kind = record.descriptor.kind.name.lowercase(),
@@ -67,7 +71,7 @@ class RuntimeDeviceCapabilityBridge(
             )
 
             val scopeId = "device:$deviceId"
-            if (!connected) {
+            if (!ready) {
                 catalogue.removeScope(scopeId)
                 continue
             }

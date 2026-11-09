@@ -8,7 +8,7 @@ package com.halo.sdk.runtime.embodiment
  * HEYCYAN_GLASSES and BUDDYBOT currently have Halo production sessions.
  */
 enum class DeviceKind(val label: String) {
-    HEYCYAN_GLASSES("HeyCyan-compatible glasses"),
+    HEYCYAN_GLASSES("HeyCyan Glasses"),
     EYEVUE_GLASSES("EyeVue glasses"),
     TUNEBUDS_GLASSES("TuneBuds / AB Mate"),
     MYVU_GLASSES("Meizu MYVU / Star Air"),

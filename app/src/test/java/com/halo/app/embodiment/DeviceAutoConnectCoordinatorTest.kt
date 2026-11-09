@@ -45,6 +45,35 @@ class DeviceAutoConnectCoordinatorTest {
     }
 
     @Test
+    fun foreignGlassesAreNotMigratedThroughLegacyHeyCyanConstructorFix() {
+        val foreign = DeviceRecord(
+            identity = DeviceIdentity(
+                deviceId = "11:22:33",
+                deviceType = "EyeVue glasses",
+                displayName = "HEYCYAN_GLASSES",
+            )
+        )
+        val normalized = normalizeLegacyDeviceRecord(foreign)
+        assertEquals(foreign, normalized)
+        assertEquals(DeviceKind.EYEVUE_GLASSES, normalized.descriptor.kind)
+    }
+
+    @Test
+    fun a2LegacyConstructorBugRemainsMigratable() {
+        val old = DeviceRecord(
+            identity = DeviceIdentity(
+                deviceId = "44:55:66",
+                deviceType = "COLMI A2",
+                displayName = "HEYCYAN_GLASSES",
+            )
+        )
+        val normalized = normalizeLegacyDeviceRecord(old)
+        assertEquals(DeviceKind.HEYCYAN_GLASSES, normalized.descriptor.kind)
+        assertEquals("COLMI A2", normalized.identity.displayName)
+        assertEquals("HEYCYAN_GLASSES", normalized.identity.deviceType)
+    }
+
+    @Test
     fun canonicalHeyCyanTypeProducesGlassesDescriptor() {
         val record = DeviceRecord(
             identity = DeviceIdentity(

@@ -33,7 +33,10 @@ internal fun normalizeLegacyDeviceRecord(
     // type string was written into displayName.
     if (
         identity.displayName == "HEYCYAN_GLASSES" &&
-        identity.deviceType != "HEYCYAN_GLASSES"
+        identity.deviceType != "HEYCYAN_GLASSES" &&
+        // Do not relabel an explicitly identified EyeVue/MYVU/Meta/etc device
+        // merely because its stale display alias resembles an old Halo type.
+        DeviceKind.fromDeviceType(identity.deviceType) == DeviceKind.HEYCYAN_GLASSES
     ) {
         val newIdentity = identity.copy(
             deviceType = "HEYCYAN_GLASSES",
