@@ -117,7 +117,9 @@ class DeviceAutoConnectCoordinator(
                 host.ensureDeviceRegistered()
                 sessionManager.autoConnectDevice(deviceId)
             }
-            DeviceKind.UNKNOWN -> false
+            // These families need their own initialized vendor-specific session owner.
+            // Never send HeyCyan commands to another model by default.
+            else -> false
         }
     }
 

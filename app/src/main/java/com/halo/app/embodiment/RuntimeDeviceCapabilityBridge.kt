@@ -109,7 +109,9 @@ class RuntimeDeviceCapabilityBridge(
             DeviceCapability.Sensor("range"),
         )
 
-        DeviceKind.UNKNOWN -> emptySet()
+        // A recognized vendor identity is not proof of a connected adapter.
+        // Add each device's capabilities only after its own session is implemented.
+        else -> emptySet()
     }
 
     private fun capabilityLabel(capability: DeviceCapability, deviceName: String): String = when (capability) {
