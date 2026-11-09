@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
+import com.halo.drivers.heycyan.ble.inferGlassesFamilyFromAdvertisement
+import com.halo.sdk.runtime.embodiment.DeviceKind
 import com.halo.sdk.host.ConnectionState
 import com.halo.sdk.runtime.DeviceIdentity
 import com.halo.sdk.runtime.embodiment.DeviceRegistry
@@ -268,6 +270,17 @@ class PairingViewModel(
         }
 
         val address = _uiState.value.selectedAddress ?: return
+        val selected = _uiState.value.devices.firstOrNull {
+            it.advertisement.address.equals(address, ignoreCase = true)
+        }
+        val detectedKind = selected?.let { inferGlassesFamilyFromAdvertisement(it.advertisement) }
+            ?: DeviceKind.UNKNOWN
+        if (detectedKind != DeviceKind.HEYCYAN_GLASSES && detectedKind != DeviceKind.UNKNOWN) {
+            _uiState.update {
+                it.copy(statusMessage = "This is ${detectedKind.label}. Its native adapter is not yet available; HeyCyan commands were not sent.")
+            }
+            return
+        }
         stopScan()
         _uiState.update {
             it.copy(

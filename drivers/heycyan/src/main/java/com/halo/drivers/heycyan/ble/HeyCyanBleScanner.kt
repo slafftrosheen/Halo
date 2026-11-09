@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import java.util.concurrent.ConcurrentHashMap
 import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
+import com.halo.sdk.runtime.embodiment.DeviceKind
 
 /**
  * Handles discovery of nearby BLE devices.
@@ -66,6 +67,42 @@ fun heyCyanCandidateLabel(advertisement: BleAdvertisement): String {
     }
 }
 
+
+/**
+ * Family detection is only a hint from BLE advertisement evidence. Never use
+ * it to assert a successful pairing or to bypass the vendor session handshake.
+ * Known non-HeyCyan families must not be passed to the HeyCyan command driver.
+ */
+fun inferGlassesFamilyFromAdvertisement(advertisement: BleAdvertisement): DeviceKind {
+    val uuids = advertisement.serviceUuids.map { it.lowercase(java.util.Locale.ROOT) }
+    fun service(short: String): Boolean = uuids.any {
+        it == "0000${short}-0000-1000-8000-00805f9b34fb"
+    }
+    if (service("aa12")) return DeviceKind.EYEVUE_GLASSES
+    if (service("fdb3")) return DeviceKind.TUNEBUDS_GLASSES
+    if (service("0bd3") || service("0bd1")) return DeviceKind.MYVU_GLASSES
+    if (service("fea8")) return DeviceKind.MOYOUNG_W620_GLASSES
+    if (uuids.any { it == HeyCyanProtocolConstants.PRIMARY_SERVICE.toString() }) {
+        return DeviceKind.HEYCYAN_GLASSES
+    }
+    val name = advertisement.name.orEmpty().lowercase(java.util.Locale.ROOT)
+    return when {
+        Regex("(^|[^a-z0-9])colmi[^a-z0-9]*a2($|[^a-z0-9])").containsMatchIn(name) ||
+            name.contains("heycyan") || name.startsWith("o_") ||
+            name.startsWith("q_") || name.contains("bw-ag1") ->
+            DeviceKind.HEYCYAN_GLASSES
+        name.contains("eyevue") -> DeviceKind.EYEVUE_GLASSES
+        name.contains("tunebuds") || name.contains("ab mate") || name.contains("xk one") ->
+            DeviceKind.TUNEBUDS_GLASSES
+        name.contains("myvu") || name.contains("star air") -> DeviceKind.MYVU_GLASSES
+        name.contains("moyoung") || name.contains("w620") -> DeviceKind.MOYOUNG_W620_GLASSES
+        name.contains("ray-ban meta") || name.contains("meta ray-ban") ->
+            DeviceKind.META_RAYBAN_GLASSES
+        name.contains("mentra") -> DeviceKind.MENTRA_LIVE_GLASSES
+        name.contains("memomind") -> DeviceKind.MEMOMIND_GLASSES
+        else -> DeviceKind.UNKNOWN
+    }
+}
 
 class HeyCyanBleScanner(
     private val context: Context,

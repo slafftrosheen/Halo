@@ -25,6 +25,23 @@ class HeyCyanBleScanEvidenceTest {
         assertFalse(bleAdvertisementEvidenceChanged(enriched, enriched.copy(rssi = -50)))
     }
 
+    @Test fun namedNonHeyCyanDevicesUseIndependentFamilies() {
+        assertEquals(com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES,
+            inferGlassesFamilyFromAdvertisement(advertisement(name = "COLMI A2")))
+        assertEquals(com.halo.sdk.runtime.embodiment.DeviceKind.EYEVUE_GLASSES,
+            inferGlassesFamilyFromAdvertisement(advertisement(
+                uuids = listOf("0000aa12-0000-1000-8000-00805f9b34fb"))))
+        assertEquals(com.halo.sdk.runtime.embodiment.DeviceKind.TUNEBUDS_GLASSES,
+            inferGlassesFamilyFromAdvertisement(advertisement(
+                uuids = listOf("0000fdb3-0000-1000-8000-00805f9b34fb"))))
+        assertEquals(com.halo.sdk.runtime.embodiment.DeviceKind.MYVU_GLASSES,
+            inferGlassesFamilyFromAdvertisement(advertisement(name = "MYVU Star Air")))
+        assertEquals(com.halo.sdk.runtime.embodiment.DeviceKind.META_RAYBAN_GLASSES,
+            inferGlassesFamilyFromAdvertisement(advertisement(name = "Ray-Ban Meta")))
+        assertEquals(com.halo.sdk.runtime.embodiment.DeviceKind.UNKNOWN,
+            inferGlassesFamilyFromAdvertisement(advertisement(name = "Unknown Glasses")))
+    }
+
     @Test fun colmiNamesAreOnlyCandidatesNotProtocolProof() {
         assertTrue(heyCyanCandidateLabel(advertisement(name = "COLMI-A2")).contains("candidate"))
         assertTrue(heyCyanCandidateLabel(advertisement(name = "COLMI A2")).contains("candidate"))

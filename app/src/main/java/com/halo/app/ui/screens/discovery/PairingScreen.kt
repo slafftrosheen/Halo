@@ -25,6 +25,8 @@ import com.halo.app.ui.fx.HaloPairingFx
 import com.halo.app.ui.fx.HaloFxPairingPhase
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.drivers.heycyan.ble.heyCyanCandidateLabel
+import com.halo.drivers.heycyan.ble.inferGlassesFamilyFromAdvertisement
+import com.halo.sdk.runtime.embodiment.DeviceKind
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -37,7 +39,7 @@ import com.halo.app.ui.design.*
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.sdk.host.ConnectionState
 
-internal enum class PairingNextAction { GRANT_ACCESS, TURN_ON, SCAN, CONNECT, WAIT, DONE, UNAVAILABLE }
+internal enum class PairingNextAction { GRANT_ACCESS, TURN_ON, SCAN, CONNECT, WAIT, DONE, UNAVAILABLE, FOREIGN_DEVICE }
 
 /** A Guide may highlight only explicit discovery/connection, never permissions,
  * and never a claimed success before the selected glasses reach READY.
@@ -53,6 +55,11 @@ internal fun pairingNextAction(state: PairingUiState): PairingNextAction = when 
     // The wearable host's Ready state may be left over from another target.
     // Only a successful connect+save for the currently selected device is Done.
     state.selectedAddress == null -> PairingNextAction.SCAN
+    state.devices.any { result ->
+        result.advertisement.address.equals(state.selectedAddress, ignoreCase = true) &&
+            inferGlassesFamilyFromAdvertisement(result.advertisement) !in
+                setOf(DeviceKind.UNKNOWN, DeviceKind.HEYCYAN_GLASSES)
+    } -> PairingNextAction.FOREIGN_DEVICE
     state.completedAddress == state.selectedAddress &&
         state.connectionState == ConnectionState.Ready -> PairingNextAction.DONE
     // Selecting a different scan result is an explicit new attempt, even if
@@ -72,7 +79,8 @@ internal fun pairingNextAction(state: PairingUiState): PairingNextAction = when 
 internal fun pairingStage(state: PairingUiState): Int = when (pairingNextAction(state)) {
     PairingNextAction.GRANT_ACCESS, PairingNextAction.TURN_ON, PairingNextAction.UNAVAILABLE -> 1
     PairingNextAction.SCAN -> if (state.isScanning || state.devices.isNotEmpty()) 2 else 1
-    PairingNextAction.CONNECT, PairingNextAction.WAIT, PairingNextAction.DONE -> 3
+    PairingNextAction.CONNECT, PairingNextAction.WAIT, PairingNextAction.DONE,
+    PairingNextAction.FOREIGN_DEVICE -> 3
 }
 
 /** An RSSI band, not a claim of physical distance (device power varies). */
@@ -195,6 +203,7 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         PairingNextAction.WAIT -> "Connecting glasses…"
         PairingNextAction.DONE -> "Glasses ready"
         PairingNextAction.UNAVAILABLE -> "Bluetooth LE unavailable"
+        PairingNextAction.FOREIGN_DEVICE -> "Different glasses protocol"
     }
     val instruction = when (next) {
         PairingNextAction.GRANT_ACCESS -> "Allow nearby-device access to find glasses. You can keep using Halo without a device."
@@ -204,6 +213,7 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
         PairingNextAction.WAIT -> "The connection is still being prepared. Controls become available after the device is ready."
         PairingNextAction.DONE -> "The device reports that it is ready. Recording and other controls remain explicit actions."
         PairingNextAction.UNAVAILABLE -> "This phone does not support Bluetooth Low Energy. Use Halo on the phone or another supported device."
+        PairingNextAction.FOREIGN_DEVICE -> "These are not HeyCyan glasses. Halo will need their own adapter. No HeyCyan commands will be sent."
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
@@ -289,6 +299,14 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
             PairingNextAction.WAIT -> HaloProgressPresentation(uiText("Connecting glasses…"))
             PairingNextAction.DONE -> HaloStatusPresentation(HaloStatus.READY, label = uiText("Glasses ready"))
             PairingNextAction.UNAVAILABLE -> HaloStatusPresentation(HaloStatus.UNAVAILABLE)
+            PairingNextAction.FOREIGN_DEVICE -> {
+                HaloFeedbackSurface(uiText("Different device family"),
+                    uiText("This device needs its own native driver. Choose a HeyCyan-compatible device or return to Devices."),
+                    kind = HaloFeedbackKind.WARNING)
+                TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Search again"))
+                }
+            }
         }
         if (state.isScanning) {
             HaloProgressPresentation(uiText("Searching nearby"))
