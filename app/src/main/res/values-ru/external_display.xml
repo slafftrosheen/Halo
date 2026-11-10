@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_display_title">Внешний экран</string>
+    <string name="external_display_help">Подключите экран или очки с дисплеем к USB-C с видеовыходом либо через совместимый HDMI-адаптер. Перед отправкой выберите экран. Вывод прекращается, когда Halo уходит в фон.</string>
+    <string name="external_display_foreground">Откройте Halo, чтобы использовать внешний экран.</string>
+    <string name="external_display_empty">Android не обнаружил экран для презентаций. Проверьте, поддерживают ли устройство, кабель и адаптер вывод видео.</string>
+    <string name="external_display_dimensions">%1$d × %2$d пикселей</string>
+    <string name="external_display_active">Halo выводит изображение на этот экран.</string>
+    <string name="external_display_show_test">Показать тестовую карточку</string>
+    <string name="external_display_stop">Остановить вывод на экран</string>
+    <string name="external_display_working">Обновляем вывод на экран…</string>
+    <string name="external_display_failed">Не удалось обновить вывод на экран. Проверьте подключение и повторите попытку.</string>
+    <string name="external_display_test_content">Тест экрана Halo\n\nЕсли вы видите этот текст, Halo передаёт изображение на выбранный экран.\n\nНажмите «Остановить вывод на экран» в Halo, чтобы убрать карточку.</string>
+</resources>

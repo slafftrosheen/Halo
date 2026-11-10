@@ -110,7 +110,8 @@ internal fun deviceCanRetryFromList(
     device: GenericDeviceUiState,
 ): Boolean = deviceListGroup(device.sessionState) == DeviceListGroup.SAVED &&
     device.autoConnect &&
-    device.kind in setOf(DeviceKind.HEYCYAN_GLASSES, DeviceKind.BUDDYBOT)
+    (device.kind in setOf(DeviceKind.HEYCYAN_GLASSES, DeviceKind.BUDDYBOT) ||
+        com.halo.app.wearables.NativeWearableHost.supports(device.kind))
 
 data class GenericDeviceUiState(
     val id: String,
@@ -613,6 +614,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
         }
         item { CrossDeviceInkPanel(com.halo.app.di.ManualDependencyGraph.crossDeviceInk) }
+        item { ExternalDisplayPanel(com.halo.app.di.ManualDependencyGraph.externalDisplayPresenter) }
         listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
             val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
             if (group.isNotEmpty()) item {

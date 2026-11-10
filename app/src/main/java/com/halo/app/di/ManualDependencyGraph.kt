@@ -1247,6 +1247,13 @@ object ManualDependencyGraph {
                     sourceRevision = { privacyModes.revision }),
                 appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
+                com.halo.app.di.tools.host.ExternalDisplayTools(externalDisplayPresenter,
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    remoteReadAllowed = {
+                        val policy = storage.readRuntimeAiContextPolicy()
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                            policy.allowCloudScreenContext && policy.allowCloudWorkspace
+                    }),
                 com.halo.app.di.tools.host.ClipboardTools(applicationContext),
                 com.halo.app.di.tools.host.IntegrityTools(
                     applicationContext,
@@ -1642,6 +1649,18 @@ object ManualDependencyGraph {
             enabled = { voiceExperienceSettings.state.value.wearNearbyInteraction }, events = eventBus)
     }
     val audioAccessoryRegistry by lazy { com.halo.app.audio.AndroidAudioAccessoryRegistry(applicationContext) }
+    val externalDisplayPresenter by lazy {
+        com.halo.host.android.display.AndroidExternalDisplayPresenter(applicationContext) {
+            com.halo.app.ui.mini.HaloHostVisibility.active.value &&
+                applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true &&
+                kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+        }.also { presenter ->
+            infra.scope.launch {
+                kotlinx.coroutines.flow.combine(kidsPreferences.loadedState, kidsPreferences.enabled) { loaded, kids -> loaded && !kids }
+                    .collect { allowed -> if (!allowed) presenter.clear() }
+            }
+        }
+    }
     val continuityEndpoints by lazy {
         com.halo.app.continuity.AndroidContinuityEndpoints(capabilityCatalogue, devicePresenceRepository, deviceSessionManager, infra.scope, audioAccessoryRegistry, wearEndpointBridge.endpoints, voiceExperienceSettings.state,
             managedAudioFacet = { heyCyanAudioPairingCoordinator.matchesAudioFacet(it) })

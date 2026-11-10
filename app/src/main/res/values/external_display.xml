@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_display_title">External display</string>
+    <string name="external_display_help">Connect a display or display glasses using a video-capable USB-C port or a compatible HDMI adapter. Select the display before sending anything. Output stops when Halo leaves the foreground.</string>
+    <string name="external_display_foreground">Open Halo to use display output.</string>
+    <string name="external_display_empty">Android has not reported a presentation display. Check the host, cable and adapter support video output.</string>
+    <string name="external_display_dimensions">%1$d × %2$d pixels</string>
+    <string name="external_display_active">Halo output is active on this display.</string>
+    <string name="external_display_show_test">Show test card</string>
+    <string name="external_display_stop">Stop display output</string>
+    <string name="external_display_working">Updating display output…</string>
+    <string name="external_display_failed">Display output could not be updated. Check the connection and try again.</string>
+    <string name="external_display_test_content">Halo display test\n\nIf you can read this, Halo reached the selected display.\n\nUse Stop display output in Halo to clear this card.</string>
+</resources>

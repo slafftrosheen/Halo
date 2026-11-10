@@ -116,9 +116,8 @@ class DeviceAutoConnectCoordinator(
                 host.ensureDeviceRegistered()
                 sessionManager.autoConnectDevice(deviceId)
             }
-            DeviceKind.EYEVUE_GLASSES, DeviceKind.TUNEBUDS_GLASSES ->
+            else -> com.halo.app.wearables.NativeWearableHost.supports(record.descriptor.kind) &&
                 bluetoothEnabled.value && nativeWearables.retry(record, explicit = true)
-            else -> false
         }
     }
 

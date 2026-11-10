@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_display_title">Ārējais ekrāns</string>
+    <string name="external_display_help">Pievienojiet ekrānu vai brilles ar displeju USB-C portam ar video izvadi vai izmantojiet saderīgu HDMI adapteri. Pirms sūtīšanas izvēlieties ekrānu. Izvade tiek apturēta, kad Halo pāriet fonā.</string>
+    <string name="external_display_foreground">Atveriet Halo, lai izmantotu ārējo ekrānu.</string>
+    <string name="external_display_empty">Android nav atradis prezentācijas ekrānu. Pārbaudiet, vai ierīce, kabelis un adapteris atbalsta video izvadi.</string>
+    <string name="external_display_dimensions">%1$d × %2$d pikseļi</string>
+    <string name="external_display_active">Halo izvade šajā ekrānā ir aktīva.</string>
+    <string name="external_display_show_test">Rādīt testa kartīti</string>
+    <string name="external_display_stop">Apturēt izvadi ekrānā</string>
+    <string name="external_display_working">Atjaunina izvadi ekrānā…</string>
+    <string name="external_display_failed">Neizdevās atjaunināt izvadi ekrānā. Pārbaudiet savienojumu un mēģiniet vēlreiz.</string>
+    <string name="external_display_test_content">Halo ekrāna tests\n\nJa redzat šo tekstu, Halo attēls sasniedz izvēlēto ekrānu.\n\nLai noņemtu kartīti, Halo nospiediet «Apturēt izvadi ekrānā».</string>
+</resources>

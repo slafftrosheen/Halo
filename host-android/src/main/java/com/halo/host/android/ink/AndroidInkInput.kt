@@ -16,26 +16,44 @@ class AndroidInkInput(
     private val onHover: (Pair<Float, Float>?) -> Unit = {},
 ) {
     private var pointerId = -1
+    private var contactDeviceId: Int? = null
     private var startedAt = 0L
     private var penNearbyUntil = 0L
+    private var nearbyDeviceId: Int? = null
     private var isPen = false
 
     /** Called on layout/mode/lifecycle changes. Incomplete gestures are not durable drafts. */
-    fun abort() { editor.cancel(); pointerId = -1; isPen = false }
+    fun abort() { editor.cancel(); pointerId = -1; contactDeviceId = null; isPen = false }
+
+    /** Device removal/change invalidates a contact even if Android sends no ACTION_CANCEL. */
+    fun deviceUnavailable(deviceId: Int) {
+        val lostContact = contactDeviceId == deviceId
+        val lostNearbyPen = nearbyDeviceId == deviceId
+        if (lostContact) abort()
+        if (lostNearbyPen) { nearbyDeviceId = null; penNearbyUntil = 0; onHover(null) }
+        if (lostContact || lostNearbyPen) onPreview()
+    }
 
     fun motion(event: MotionEvent): Boolean {
+        // Pointer IDs are local to an input device. A second tablet/mouse must
+        // not append, finish or cancel another device's in-progress stroke.
+        if (contactDeviceId != null && contactDeviceId != event.deviceId) return false
         when (event.actionMasked) {
             MotionEvent.ACTION_HOVER_ENTER, MotionEvent.ACTION_HOVER_MOVE -> {
                 val i = event.actionIndex
                 if (i in 0 until event.pointerCount && pen(event.getToolType(i))) {
                     penNearbyUntil = event.eventTime + 700
+                    nearbyDeviceId = event.deviceId
                     if (pointerId != -1 && !isPen) abort()
                     onHover(position(event.getX(i), event.getY(i)))
                     onPreview()
                 }
                 return true
             }
-            MotionEvent.ACTION_HOVER_EXIT -> { penNearbyUntil = 0; onHover(null); return true }
+            MotionEvent.ACTION_HOVER_EXIT -> {
+                if (nearbyDeviceId == event.deviceId) { nearbyDeviceId = null; penNearbyUntil = 0; onHover(null) }
+                return true
+            }
             MotionEvent.ACTION_CANCEL -> { abort(); onHover(null); onPreview(); return true }
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val index = event.actionIndex
@@ -61,8 +79,9 @@ class AndroidInkInput(
                 val erasing = eraseSelected() || type == MotionEvent.TOOL_TYPE_ERASER ||
                     (incomingPen && event.buttonState and MotionEvent.BUTTON_STYLUS_PRIMARY != 0)
                 if (editor.begin(tool, erasing)) {
-                    pointerId = event.getPointerId(index); startedAt = event.eventTime; isPen = incomingPen
-                    if (isPen) penNearbyUntil = event.eventTime + 700
+                    pointerId = event.getPointerId(index); contactDeviceId = event.deviceId
+                    startedAt = event.eventTime; isPen = incomingPen
+                    if (isPen) { penNearbyUntil = event.eventTime + 700; nearbyDeviceId = event.deviceId }
                     sample(event, index)
                 }
                 onHover(null); onPreview(); return true
@@ -83,7 +102,7 @@ class AndroidInkInput(
                 if (cancelled) abort() else {
                     sample(event, index)
                     val changed = editor.finish()
-                    pointerId = -1; isPen = false
+                    pointerId = -1; contactDeviceId = null; isPen = false
                     if (changed) onCommit()
                 }
                 onPreview(); return true

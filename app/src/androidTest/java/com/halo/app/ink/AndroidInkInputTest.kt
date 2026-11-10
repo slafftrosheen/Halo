@@ -20,11 +20,11 @@ class AndroidInkInputTest {
         var hovers = 0
         val input = AndroidInkInput(editor, { x, y -> x to y }, { 15f to 15f }, { false }, {}, { commits++ }, { hovers++ })
     }
-    private fun send(f: Fixture, action: Int, at: Long, vararg pointers: Pointer, buttons: Int = 0, flags: Int = 0) {
+    private fun send(f: Fixture, action: Int, at: Long, vararg pointers: Pointer, buttons: Int = 0, flags: Int = 0, deviceId: Int = 0) {
         val properties = pointers.map { p -> MotionEvent.PointerProperties().apply { id = p.id; toolType = p.tool } }.toTypedArray()
         val coordinates = pointers.map { p -> MotionEvent.PointerCoords().apply { x = p.x; y = p.y; pressure = 0.5f; size = 0.1f } }.toTypedArray()
         val event = MotionEvent.obtain(100, at, action, pointers.size, properties, coordinates, 0, buttons,
-            1f, 1f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, flags)
+            1f, 1f, deviceId, 0, InputDevice.SOURCE_TOUCHSCREEN, flags)
         try { f.input.motion(event) } finally { event.recycle() }
     }
     @Test fun fingerTapHasNoTouchSlopRequirement() {
@@ -86,6 +86,29 @@ class AndroidInkInputTest {
         assertEquals(0, AndroidInkInput.normalizePressure(0f, 0f, 1f))
         assertNull(AndroidInkInput.normalizePressure(Float.NaN, 0f, 1f))
         assertNull(AndroidInkInput.normalizePressure(0.5f, 1f, 1f))
+    }
+    @Test fun anotherDeviceCannotMoveFinishOrCancelAnActiveStroke() {
+        val f = Fixture(); val p = Pointer(0, MotionEvent.TOOL_TYPE_STYLUS, 100f, 100f)
+        send(f, MotionEvent.ACTION_DOWN, 100, p, deviceId = 11)
+        send(f, MotionEvent.ACTION_MOVE, 110, p.copy(x = 700f), deviceId = 22)
+        send(f, MotionEvent.ACTION_UP, 120, p.copy(x = 800f), deviceId = 22)
+        send(f, MotionEvent.ACTION_CANCEL, 130, p, deviceId = 22)
+        assertTrue(f.editor.active); assertEquals(0, f.commits)
+        send(f, MotionEvent.ACTION_UP, 140, p.copy(x = 200f), deviceId = 11)
+        assertEquals(listOf(100, 200), f.editor.document.strokes.single().points.map { it.x })
+    }
+    @Test fun removedDeviceCancelsOnlyItsUncommittedStroke() {
+        val f = Fixture(); val p = Pointer(0, MotionEvent.TOOL_TYPE_STYLUS, 100f, 100f)
+        send(f, MotionEvent.ACTION_DOWN, 100, p, deviceId = 11)
+        f.input.deviceUnavailable(22)
+        assertTrue(f.editor.active)
+        f.input.deviceUnavailable(11)
+        assertFalse(f.editor.active); assertEquals(0, f.commits)
+        send(f, MotionEvent.ACTION_UP, 110, p, deviceId = 11)
+        assertTrue(f.editor.document.strokes.isEmpty())
+        send(f, MotionEvent.ACTION_DOWN, 120, p, deviceId = 22)
+        send(f, MotionEvent.ACTION_UP, 130, p, deviceId = 22)
+        assertEquals(1, f.commits)
     }
     @Test fun batchedMoveSamplesRemainInOrder() {
         val f = Fixture(); val p = Pointer(0, MotionEvent.TOOL_TYPE_FINGER, 10f, 10f)

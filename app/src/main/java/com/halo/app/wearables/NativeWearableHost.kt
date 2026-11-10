@@ -23,11 +23,28 @@ class NativeWearableHost(
     private val context = context.applicationContext
     private val registration = Mutex()
     companion object {
-        fun supports(kind: DeviceKind): Boolean = kind in setOf(DeviceKind.EYEVUE_GLASSES, DeviceKind.TUNEBUDS_GLASSES)
+        private class Adapter(
+            val address: (BleAdvertisement) -> String,
+            val create: (Context, String, () -> Boolean) -> NativeDeviceDriver,
+        )
+        // One explicit factory per installed protocol. Future SDK/dual-endpoint adapters
+        // register here without inheriting the TuneBuds wire format as an else branch.
+        private val adapters = DeviceAdapterRegistry(listOf(
+            DeviceKind.EYEVUE_GLASSES to Adapter(
+                { it.address.uppercase(Locale.ROOT) },
+                { context, id, _ -> NativeWearableDriver(id, NativeFamily.EYEVUE, { EyeVueAndroidLink(context, id) }) },
+            ),
+            DeviceKind.TUNEBUDS_GLASSES to Adapter(::tuneBudsAddress,
+                { context, id, bond -> NativeWearableDriver(id, NativeFamily.TUNEBUDS, { NativeRfcommLink(context, id, bond()) }) },
+            ),
+        ))
+        fun supports(kind: DeviceKind): Boolean = adapters.supports(kind)
+
+        fun transportAddress(kind: DeviceKind, advertisement: BleAdvertisement): String =
+            adapters.requireAdapter(kind).address(advertisement)
 
         /** AB Mate advertises an obfuscated Classic address, not necessarily its BLE MAC. */
-        fun transportAddress(kind: DeviceKind, advertisement: BleAdvertisement): String {
-            if (kind != DeviceKind.TUNEBUDS_GLASSES) return advertisement.address.uppercase(Locale.ROOT)
+        private fun tuneBudsAddress(advertisement: BleAdvertisement): String {
             val vendor = setOf(0x475a, 0x455a, 0x535a, 0x4d5a)
             for ((company, raw) in advertisement.manufacturerData) {
                 if (company.toIntOrNull() !in vendor) continue
@@ -52,11 +69,9 @@ class NativeWearableHost(
                 return@withContext existing
             }
             val bondPermission = AtomicBoolean(false)
-            val family = if (record.descriptor.kind == DeviceKind.EYEVUE_GLASSES) NativeFamily.EYEVUE else NativeFamily.TUNEBUDS
-            val driver = NativeWearableDriver(record.identity.deviceId, family, {
-                if (family == NativeFamily.EYEVUE) EyeVueAndroidLink(context, record.identity.deviceId)
-                else NativeRfcommLink(context, record.identity.deviceId, bondPermission.getAndSet(false))
-            })
+            val driver = adapters.requireAdapter(record.descriptor.kind).create(context, record.identity.deviceId) {
+                bondPermission.getAndSet(false)
+            }
             NativeWearableSession(record.identity, driver, events) { bondPermission.set(true) }
                 .also(sessions::registerSession)
         }

@@ -25,12 +25,13 @@ class NativeDeviceRejected(val status: Int) : IOException("Device rejected the c
  * All multi-command capture/transfer work keeps the workflow lease until cleanup.
  */
 class NativeWearableDriver(
-    val deviceId: String,
+    override val deviceId: String,
     val family: NativeFamily,
     private val linkFactory: () -> NativeByteLink,
     private val requestTimeoutMs: Long = 30_000L,
     private val connectionTimeoutMs: Long = 60_000L,
-) {
+) : NativeDeviceDriver {
+    override val protocolId: String get() = family.name
     private class Pending(val command: NativeCommand, val result: CompletableDeferred<WearableFrame>)
     private class Attempt(val link: NativeByteLink) {
         val pending = AtomicReference<Pending?>(null)
@@ -48,9 +49,9 @@ class NativeWearableDriver(
     private val active = AtomicReference<Attempt?>(null)
     private val stateLock = Any()
     private val mutableState = MutableStateFlow(NativeSnapshot())
-    val state: StateFlow<NativeSnapshot> = mutableState.asStateFlow()
+    override val state: StateFlow<NativeSnapshot> = mutableState.asStateFlow()
 
-    suspend fun connect() = workflow.withLock {
+    override suspend fun connect() = workflow.withLock {
         require(deviceId.isNotBlank())
         if (state.value.stage == NativeStage.READY && active.get()?.link?.connected?.value == true) return@withLock
         check(active.get() == null) { "Previous connection is not yet retired" }
@@ -96,7 +97,7 @@ class NativeWearableDriver(
         }
     }
 
-    suspend fun disconnect() {
+    override suspend fun disconnect() {
         val attempt = synchronized(stateLock) {
             val previous = active.getAndSet(null)
             mutableState.value = NativeSnapshot()
@@ -105,9 +106,9 @@ class NativeWearableDriver(
         cleanup(attempt, CancellationException("Native device disconnected"))
     }
 
-    suspend fun dispose() { disconnect(); scope.cancel() }
+    override suspend fun dispose() { disconnect(); scope.cancel() }
 
-    suspend fun execute(action: NativeAction): NativeReceipt = workflow.withLock {
+    override suspend fun execute(action: NativeAction): NativeReceipt = workflow.withLock {
         val attempt = readyAttempt()
         if (action in setOf(NativeAction.PHOTO, NativeAction.AI_PHOTO, NativeAction.START_VIDEO, NativeAction.START_AUDIO)) {
             check(state.value.cameraAvailable != false) { "Selected firmware reports no camera subsystem" }
@@ -119,7 +120,7 @@ class NativeWearableDriver(
         } else transact(attempt, command(action))
     }
 
-    suspend fun captureAiPhoto(): ByteArray = workflow.withLock {
+    override suspend fun captureAiPhoto(): ByteArray = workflow.withLock {
         val attempt = readyAttempt()
         check(state.value.cameraAvailable != false && state.value.aiPhotoAvailable) { "Selected connection does not expose an AI photo channel" }
         val picture = CompletableDeferred<ByteArray>()

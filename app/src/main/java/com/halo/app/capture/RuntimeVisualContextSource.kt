@@ -44,7 +44,7 @@ class RuntimeVisualContextSource(
                     val bytes = session.driver.captureAiPhoto()
                     Result.success(CapturedAsset(id = request.captureId.value, originDeviceId = session.identity.deviceId,
                         mimeType = "image/jpeg", capturedAtMs = System.currentTimeMillis(), bytes = bytes,
-                        metadata = mapOf("family" to session.driver.family.name)))
+                        metadata = mapOf("family" to session.driver.protocolId)))
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) { Result.failure(error) }
             }

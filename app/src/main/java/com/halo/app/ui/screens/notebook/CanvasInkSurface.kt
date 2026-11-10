@@ -1,6 +1,9 @@
 package com.halo.app.ui.screens.notebook
 
 import android.view.MotionEvent
+import android.hardware.input.InputManager
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -28,6 +31,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -183,7 +187,17 @@ internal fun CanvasInkSurface(
             onCommit = { publish() }, onHover = { hover = it })
     }
     // The normalized document belongs to the draft owner; the viewport is intentionally ephemeral.
-    DisposableEffect(input) { onDispose { input.abort() } }
+    val inputContext = LocalContext.current
+    DisposableEffect(input, inputContext) {
+        val manager = inputContext.getSystemService(InputManager::class.java)
+        val listener = object : InputManager.InputDeviceListener {
+            override fun onInputDeviceAdded(deviceId: Int) = Unit
+            override fun onInputDeviceRemoved(deviceId: Int) = input.deviceUnavailable(deviceId)
+            override fun onInputDeviceChanged(deviceId: Int) = input.deviceUnavailable(deviceId)
+        }
+        manager?.registerInputDeviceListener(listener, Handler(Looper.getMainLooper()))
+        onDispose { manager?.unregisterInputDeviceListener(listener); input.abort() }
+    }
     val preview = remember(editor, revision) { editor.preview() }
     fun changeMode(next: InkMode) { input.abort(); panPointer = -1; selectionPointer = -1; selectionStart = null; selectionEnd = null; hover = null; mode = next; revision++ }
     fun changeZoom(next: Float) { input.abort(); zoom = next.coerceIn(1f, 4f); pan = clampPan(pan); revision++ }

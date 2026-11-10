@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.*
 /** Adapter into the existing runtime session manager, not a parallel device registry. */
 class NativeWearableSession(
     override val identity: DeviceIdentity,
-    val driver: NativeWearableDriver,
+    val driver: NativeDeviceDriver,
     private val events: EventBus,
     private val authorizeBond: () -> Unit = {},
 ) : EmbodimentSession {
@@ -38,7 +38,7 @@ class NativeWearableSession(
                 if (battery != null && stage == NativeStage.READY) events.publish(ObservationUpdated(
                     observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH,
                         payload = BatteryObservationPayload(battery), sourceDeviceId = identity.deviceId,
-                        metadata = mapOf("battery" to battery, "charging" to (charging == true), "family" to driver.family.name))))
+                        metadata = mapOf("battery" to battery, "charging" to (charging == true), "family" to driver.protocolId))))
             }
         }
     }
@@ -82,7 +82,7 @@ class NativeWearableSession(
             // Device ACK and a completed physical effect are different facts.
             remember(intent.intentId, ExecutionStatus.UNCONFIRMED,
                 "${receipt.confirmation.name}: device-side completion is not confirmed",
-                mapOf("nativeReceipt" to receipt.confirmation.name, "family" to driver.family.name))
+                mapOf("nativeReceipt" to receipt.confirmation.name, "family" to driver.protocolId))
         } catch (rejected: NativeDeviceRejected) {
             remember(intent.intentId, ExecutionStatus.FAILED, "Device rejected operation (status ${rejected.status})")
         } catch (cancelled: CancellationException) {
