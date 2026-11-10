@@ -615,6 +615,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         }
         item { CrossDeviceInkPanel(com.halo.app.di.ManualDependencyGraph.crossDeviceInk) }
         item { ExternalDisplayPanel(com.halo.app.di.ManualDependencyGraph.externalDisplayPresenter) }
+        item { PeripheralInventoryPanel(com.halo.app.di.ManualDependencyGraph.peripheralInventory) }
         listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
             val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
             if (group.isNotEmpty()) item {

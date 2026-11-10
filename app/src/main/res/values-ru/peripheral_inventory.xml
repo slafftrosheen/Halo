@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="peripheral_inventory_title">Подключённая периферия</string>
+    <string name="peripheral_inventory_help">Android сообщает об устройствах ввода и USB-подключениях отдельно. Видео может работать без USB-канала данных. Заявленные возможности нужно проверить на самом устройстве.</string>
+    <string name="peripheral_inventory_input_status">Устройства ввода: %1$s</string>
+    <string name="peripheral_inventory_usb_status">USB-подключения: %1$s</string>
+    <string name="peripheral_inventory_available">доступны</string>
+    <string name="peripheral_inventory_partial">часть данных не удалось прочитать</string>
+    <string name="peripheral_inventory_unavailable">недоступны</string>
+    <string name="peripheral_inventory_background">откройте и разблокируйте Halo с доступом взрослого</string>
+    <string name="peripheral_inventory_empty">Внешние устройства и перьевой ввод не найдены в списке. Встроенные кнопки и виртуальные устройства здесь скрыты.</string>
+    <string name="peripheral_kind_usb">USB-устройство</string>
+    <string name="peripheral_kind_input">Устройство ввода</string>
+    <string name="peripheral_role_stylus">Перо</string>
+    <string name="peripheral_role_mouse">Мышь</string>
+    <string name="peripheral_role_touch">Касание</string>
+    <string name="peripheral_role_keyboard">Клавиатура</string>
+    <string name="peripheral_role_gamepad">Геймпад</string>
+    <string name="peripheral_role_joystick">Джойстик</string>
+    <string name="peripheral_role_rotary">Поворотный регулятор</string>
+    <string name="peripheral_inventory_pressure">Android сообщает о диапазоне давления пера.</string>
+    <string name="peripheral_inventory_tilt">Android сообщает о диапазоне наклона пера.</string>
+    <string name="peripheral_inventory_details">Технические сведения</string>
+    <string name="peripheral_inventory_hide_details">Скрыть технические сведения</string>
+    <string name="peripheral_inventory_reported">Только данные операционной системы. Они не подтверждают модель, работу протокола или фактическую реакцию пера.</string>
+    <string name="peripheral_inventory_unknown">неизвестно</string>
+    <string name="peripheral_inventory_ids">ID производителя: %1$s · ID продукта: %2$s</string>
+    <string name="peripheral_inventory_location">Подключение: %1$s</string>
+    <string name="peripheral_inventory_external">внешнее</string>
+    <string name="peripheral_inventory_builtin">встроенное</string>
+    <string name="peripheral_inventory_axes">Показано осей: %1$d из %2$d</string>
+    <string name="peripheral_inventory_axis">%1$s · источник %2$s · диапазон %3$s–%4$s · разрешение %5$s</string>
+    <string name="peripheral_inventory_usb_class">Класс USB %1$s · подкласс %2$s · протокол %3$s</string>
+    <string name="peripheral_inventory_permission">Доступ к USB: %1$s. Просмотр сведений не запрашивает доступ и не открывает устройство.</string>
+    <string name="peripheral_inventory_granted">уже предоставлен</string>
+    <string name="peripheral_inventory_not_granted">не предоставлен</string>
+    <string name="peripheral_inventory_interfaces">Показано интерфейсов: %1$d из %2$d</string>
+    <string name="peripheral_inventory_interface">Интерфейс %1$d / вариант %2$d · класс %3$d / %4$d / %5$d · конечных точек %6$d</string>
+    <string name="peripheral_inventory_endpoint">Точка %1$s · направление %2$d · тип %3$d · макс. пакет %4$d · интервал %5$d</string>
+    <string name="peripheral_inventory_details_limited">Часть заявленных данных пропущена или некорректна.</string>
+    <string name="peripheral_inventory_limited">Список неполон или превышает лимит отображения.</string>
+    <string name="peripheral_inventory_show_all">Показать все устройства (%1$d)</string>
+    <string name="peripheral_inventory_show_fewer">Показать меньше устройств</string>
+    <string name="peripheral_inventory_refresh">Обновить список</string>
+    <string name="peripheral_inventory_refreshing">Обновляем список…</string>
+    <string name="peripheral_inventory_refresh_failed">Не удалось обновить список. Снова откройте Halo и повторите попытку.</string>
+</resources>

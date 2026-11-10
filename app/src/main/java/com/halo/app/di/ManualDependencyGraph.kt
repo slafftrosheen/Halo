@@ -1247,6 +1247,13 @@ object ManualDependencyGraph {
                     sourceRevision = { privacyModes.revision }),
                 appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
+                com.halo.app.di.tools.host.PeripheralTools(peripheralInventory,
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    remoteReadAllowed = {
+                        val policy = storage.readRuntimeAiContextPolicy()
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                            policy.allowCloudScreenContext && policy.allowCloudWorkspace
+                    }),
                 com.halo.app.di.tools.host.ExternalDisplayTools(externalDisplayPresenter,
                     canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
                     remoteReadAllowed = {
@@ -1649,6 +1656,18 @@ object ManualDependencyGraph {
             enabled = { voiceExperienceSettings.state.value.wearNearbyInteraction }, events = eventBus)
     }
     val audioAccessoryRegistry by lazy { com.halo.app.audio.AndroidAudioAccessoryRegistry(applicationContext) }
+    val peripheralInventory by lazy {
+        com.halo.host.android.hardware.AndroidPeripheralInventory(applicationContext) {
+            com.halo.app.ui.mini.HaloHostVisibility.active.value &&
+                applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true &&
+                kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+        }.also { inventory ->
+            infra.scope.launch {
+                kotlinx.coroutines.flow.combine(kidsPreferences.loadedState, kidsPreferences.enabled) { loaded, kids -> loaded && !kids }
+                    .collect { inventory.snapshot() }
+            }
+        }
+    }
     val externalDisplayPresenter by lazy {
         com.halo.host.android.display.AndroidExternalDisplayPresenter(applicationContext) {
             com.halo.app.ui.mini.HaloHostVisibility.active.value &&

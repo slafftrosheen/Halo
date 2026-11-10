@@ -644,6 +644,7 @@ open class MainActivity : ComponentActivity() {
         super.onResume()
         com.halo.app.ui.mini.HaloHostVisibility.resumed(this)
         ManualDependencyGraph.externalDisplayPresenter.resume(this)
+        ManualDependencyGraph.peripheralInventory.resume(this)
         com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(applicationContext)
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
@@ -658,6 +659,7 @@ open class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         ManualDependencyGraph.externalDisplayPresenter.pause(this)
+        ManualDependencyGraph.peripheralInventory.pause(this)
         ManualDependencyGraph.stopRemoteInkOnBackground()
         com.halo.app.ui.mini.HaloHostVisibility.hidden(this)
         super.onPause()

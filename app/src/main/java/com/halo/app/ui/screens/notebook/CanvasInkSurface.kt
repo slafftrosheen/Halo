@@ -4,6 +4,7 @@ import android.view.MotionEvent
 import android.hardware.input.InputManager
 import android.os.Handler
 import android.os.Looper
+import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -38,6 +39,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.R
 import com.halo.host.android.ink.AndroidInkInput
 import com.halo.sdk.runtime.ink.*
@@ -81,13 +85,16 @@ internal fun CanvasInkSurface(
     var pan by remember { mutableStateOf(Offset.Zero) }
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     var hover by remember { mutableStateOf<Pair<Float, Float>?>(null) }
+    var selectionHoverDevice by remember { mutableStateOf<Int?>(null) }
     var selectionBounds by remember { mutableStateOf<InkSelectionBounds?>(null) }
     var selectionContext by remember { mutableStateOf<InkSelectionContext?>(null) }
     var selectionStart by remember { mutableStateOf<Offset?>(null) }
     var selectionEnd by remember { mutableStateOf<Offset?>(null) }
-    var selectionPointer by remember { mutableIntStateOf(-1) }
+    var selectionContact by remember(initial, sourceAspect, selectionOwnerId, selectionPageId, selectionBaseRevision) {
+        mutableStateOf<InkContactIdentity?>(null)
+    }
     var rejectedChange by remember { mutableStateOf(false) }
-    var panPointer by remember { mutableIntStateOf(-1) }
+    var panContact by remember(initial, sourceAspect) { mutableStateOf<InkContactIdentity?>(null) }
     var lastPan by remember { mutableStateOf(Offset.Zero) }
     val density = LocalDensity.current.density
     val focus = remember { FocusRequester() }
@@ -120,9 +127,9 @@ internal fun CanvasInkSurface(
         selectionContext = null
         selectionStart = null
         selectionEnd = null
+        selectionContact = null
         if (notify && hadSelection) onSelectionChanged(null)
     }
-    LaunchedEffect(selectionOwnerId, selectionPageId, selectionBaseRevision) { clearSelection() }
     fun normalizedBounds(from: Offset, to: Offset): InkSelectionBounds? {
         val minX = minOf(from.x, to.x); val maxX = maxOf(from.x, to.x)
         val minY = minOf(from.y, to.y); val maxY = maxOf(from.y, to.y)
@@ -139,7 +146,7 @@ internal fun CanvasInkSurface(
         selectionBounds = region
         selectionStart = null
         selectionEnd = null
-        selectionPointer = -1
+        selectionContact = null
         val owner = selectionOwnerId
         val context = if (region != null && !owner.isNullOrBlank()) {
             val doc = editor.preview()
@@ -166,6 +173,12 @@ internal fun CanvasInkSurface(
         }
         revision++
     }
+    val previewCallback by rememberUpdatedState<() -> Unit> {
+        clearSelection()
+        if (!editor.active) disallowIntercept(false)
+        revision++
+    }
+    val commitCallback by rememberUpdatedState<() -> Unit> { publish() }
     val input = remember(editor, density) {
         AndroidInkInput(editor,
             position = { x, y ->
@@ -183,26 +196,56 @@ internal fun CanvasInkSurface(
                 (18f * density * 1000 / rect.width.coerceAtLeast(1f) / zoom) to
                     (18f * density * 1000 / rect.height.coerceAtLeast(1f) / zoom)
             },
-            eraseSelected = { mode == InkMode.ERASE }, onPreview = { clearSelection(); revision++ },
-            onCommit = { publish() }, onHover = { hover = it })
+            eraseSelected = { mode == InkMode.ERASE }, onPreview = { previewCallback() },
+            onCommit = { commitCallback() }, onHover = { hover = it })
     }
+    fun cancelGestures(clearSavedSelection: Boolean = false) {
+        input.abort()
+        panContact = null
+        selectionContact = null
+        selectionStart = null
+        selectionEnd = null
+        hover = null
+        selectionHoverDevice = null
+        disallowIntercept(false)
+        if (clearSavedSelection) clearSelection()
+        revision++
+    }
+    LaunchedEffect(editor, selectionOwnerId, selectionPageId, selectionBaseRevision) { cancelGestures(clearSavedSelection = true) }
     // The normalized document belongs to the draft owner; the viewport is intentionally ephemeral.
     val inputContext = LocalContext.current
-    DisposableEffect(input, inputContext) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cancelCurrentGestures by rememberUpdatedState<(Boolean) -> Unit> { clear -> cancelGestures(clear) }
+    DisposableEffect(input, inputContext, lifecycleOwner, selectionOwnerId, selectionPageId, selectionBaseRevision) {
         val manager = inputContext.getSystemService(InputManager::class.java)
+        fun deviceUnavailable(deviceId: Int) {
+            val lostInk = input.deviceUnavailable(deviceId)
+            if (selectionHoverDevice == deviceId) { selectionHoverDevice = null; hover = null }
+            if (lostInk || panContact?.deviceId == deviceId || selectionContact?.deviceId == deviceId) cancelCurrentGestures(false)
+        }
         val listener = object : InputManager.InputDeviceListener {
             override fun onInputDeviceAdded(deviceId: Int) = Unit
-            override fun onInputDeviceRemoved(deviceId: Int) = input.deviceUnavailable(deviceId)
-            override fun onInputDeviceChanged(deviceId: Int) = input.deviceUnavailable(deviceId)
+            override fun onInputDeviceRemoved(deviceId: Int) = deviceUnavailable(deviceId)
+            override fun onInputDeviceChanged(deviceId: Int) = deviceUnavailable(deviceId)
+        }
+        val lifecycleObserver = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP || event == Lifecycle.Event.ON_DESTROY)
+                cancelCurrentGestures(true)
         }
         manager?.registerInputDeviceListener(listener, Handler(Looper.getMainLooper()))
-        onDispose { manager?.unregisterInputDeviceListener(listener); input.abort() }
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+            manager?.unregisterInputDeviceListener(listener)
+            input.abort()
+            cancelCurrentGestures(true)
+        }
     }
     val preview = remember(editor, revision) { editor.preview() }
-    fun changeMode(next: InkMode) { input.abort(); panPointer = -1; selectionPointer = -1; selectionStart = null; selectionEnd = null; hover = null; mode = next; revision++ }
-    fun changeZoom(next: Float) { input.abort(); zoom = next.coerceIn(1f, 4f); pan = clampPan(pan); revision++ }
-    fun undo() { input.abort(); clearSelection(); if (editor.undo()) publish { editor.redo() } }
-    fun redo() { input.abort(); clearSelection(); if (editor.redo()) publish() }
+    fun changeMode(next: InkMode) { cancelGestures(); mode = next }
+    fun changeZoom(next: Float) { cancelGestures(); zoom = next.coerceIn(1f, 4f); pan = clampPan(pan) }
+    fun undo() { cancelGestures(true); if (editor.undo()) publish { editor.redo() } }
+    fun redo() { cancelGestures(true); if (editor.redo()) publish() }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (!readable) Text(stringResource(R.string.ink_unreadable), color = MaterialTheme.colorScheme.error)
@@ -228,63 +271,109 @@ internal fun CanvasInkSurface(
                     else -> false
                 }
             }.focusable().semantics { contentDescription = surfaceLabel }
-            .onSizeChanged { if (boardSize != it) { input.abort(); boardSize = it; pan = Offset.Zero; revision++ } }
+            .onSizeChanged { if (boardSize != it) { cancelGestures(); boardSize = it; pan = Offset.Zero } }
             .pointerInteropFilter(disallowIntercept) { event ->
-                if (!readable) false else {
-                    if (event.actionMasked == MotionEvent.ACTION_DOWN) { focus.requestFocus(); disallowIntercept(true) }
-                    if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL)
-                        disallowIntercept(false)
-                    if (mode == InkMode.SELECT) {
+                if (!readable || !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) false else {
+                    val action = event.actionMasked
+                    val index = event.actionIndex
+                    val pointerTool = AndroidInkInput.pointerTool(event, index)
+                    val starts = action == MotionEvent.ACTION_DOWN && pointerTool != null && event.downTime >= 0 &&
+                        (pointerTool != MotionEvent.TOOL_TYPE_MOUSE || event.buttonState and MotionEvent.BUTTON_PRIMARY != 0)
+                    fun canReplace(current: InkContactIdentity?) = current == null ||
+                        current.deviceId == event.deviceId && event.downTime >= current.downTimeMs
+                    fun holdingPointer(i: Int): Boolean {
+                        val tool = AndroidInkInput.pointerTool(event, i) ?: return false
+                        return tool != MotionEvent.TOOL_TYPE_MOUSE || event.buttonState and MotionEvent.BUTTON_PRIMARY != 0
+                    }
+                    val handled = if (mode == InkMode.SELECT) {
+                        val current = selectionContact
+                        val ownsStream = current?.ownsStream(event.deviceId, event.downTime) == true
                         when (event.actionMasked) {
                             MotionEvent.ACTION_HOVER_ENTER, MotionEvent.ACTION_HOVER_MOVE -> {
-                                hover = documentPoint(event.x, event.y)?.let { it.x to it.y }
+                                if (pointerTool == null || current != null && !ownsStream) false else {
+                                    selectionHoverDevice = event.deviceId
+                                    hover = documentPoint(event.getX(index), event.getY(index))?.let { it.x to it.y }
+                                    true
+                                }
+                            }
+                            MotionEvent.ACTION_HOVER_EXIT -> {
+                                if (selectionHoverDevice == event.deviceId) { hover = null; selectionHoverDevice = null }
                                 true
                             }
-                            MotionEvent.ACTION_HOVER_EXIT -> { hover = null; true }
                             MotionEvent.ACTION_DOWN -> {
-                                hover = null
-                                selectionPointer = event.getPointerId(event.actionIndex)
-                                selectionStart = documentPoint(event.getX(event.actionIndex), event.getY(event.actionIndex))
-                                selectionEnd = selectionStart
-                                true
+                                val start = if (starts && canReplace(current)) documentPoint(event.getX(index), event.getY(index)) else null
+                                if (start == null) false else {
+                                    hover = null
+                                    clearSelection()
+                                    selectionContact = InkContactIdentity(event.deviceId, event.getPointerId(index), event.downTime)
+                                    selectionStart = start
+                                    selectionEnd = start
+                                    true
+                                }
                             }
                             MotionEvent.ACTION_MOVE -> {
-                                val index = event.findPointerIndex(selectionPointer)
-                                if (index >= 0) selectionEnd = documentPoint(event.getX(index), event.getY(index))
-                                true
+                                if (!ownsStream) false else {
+                                    val i = event.findPointerIndex(requireNotNull(current).pointerId)
+                                    if (!holdingPointer(i)) cancelGestures()
+                                    else selectionEnd = documentPoint(event.getX(i), event.getY(i))
+                                    true
+                                }
                             }
                             MotionEvent.ACTION_UP -> {
-                                if (event.getPointerId(event.actionIndex) == selectionPointer) {
-                                    val end = documentPoint(event.getX(event.actionIndex), event.getY(event.actionIndex))
-                                    finishSelection(selectionStart, end)
+                                if (!ownsStream) false else {
+                                    val cancelled = Build.VERSION.SDK_INT >= 33 && event.flags and MotionEvent.FLAG_CANCELED != 0
+                                    if (pointerTool == null || cancelled || !requireNotNull(current).ownsPointer(event.deviceId, event.downTime, event.getPointerId(index)))
+                                        cancelGestures()
+                                    else finishSelection(selectionStart, documentPoint(event.getX(index), event.getY(index)))
+                                    true
                                 }
-                                true
                             }
-                            MotionEvent.ACTION_CANCEL -> { finishSelection(null, null); true }
+                            MotionEvent.ACTION_CANCEL -> if (!ownsStream) false else { cancelGestures(); true }
                             MotionEvent.ACTION_POINTER_UP -> {
-                                if (event.getPointerId(event.actionIndex) == selectionPointer) finishSelection(null, null)
-                                true
+                                if (!ownsStream) false else {
+                                    if (index in 0 until event.pointerCount && event.getPointerId(index) == current?.pointerId) cancelGestures()
+                                    true
+                                }
                             }
-                            else -> true
+                            else -> ownsStream
                         }
                     } else if (mode != InkMode.PAN) input.motion(event) else {
+                        val current = panContact
+                        val ownsStream = current?.ownsStream(event.deviceId, event.downTime) == true
                         when (event.actionMasked) {
                             MotionEvent.ACTION_DOWN -> {
-                                panPointer = event.getPointerId(event.actionIndex)
-                                lastPan = Offset(event.getX(event.actionIndex), event.getY(event.actionIndex))
-                            }
-                            MotionEvent.ACTION_MOVE -> {
-                                val i = event.findPointerIndex(panPointer)
-                                if (i >= 0) {
-                                    val next = Offset(event.getX(i), event.getY(i))
-                                    pan = clampPan(pan + next - lastPan); lastPan = next
+                                if (!starts || !canReplace(current)) false else {
+                                    panContact = InkContactIdentity(event.deviceId, event.getPointerId(index), event.downTime)
+                                    lastPan = Offset(event.getX(index), event.getY(index))
+                                    true
                                 }
                             }
-                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> panPointer = -1
-                            MotionEvent.ACTION_POINTER_UP -> if (event.getPointerId(event.actionIndex) == panPointer) panPointer = -1
+                            MotionEvent.ACTION_MOVE -> {
+                                if (!ownsStream) false else {
+                                    val i = event.findPointerIndex(requireNotNull(current).pointerId)
+                                    if (!holdingPointer(i)) cancelGestures() else {
+                                        val next = Offset(event.getX(i), event.getY(i))
+                                        val moved = pan + next - lastPan
+                                        if (!moved.x.isFinite() || !moved.y.isFinite()) cancelGestures()
+                                        else { pan = clampPan(moved); lastPan = next }
+                                    }
+                                    true
+                                }
+                            }
+                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if (!ownsStream) false else { cancelGestures(); true }
+                            MotionEvent.ACTION_POINTER_UP -> if (!ownsStream) false else {
+                                if (index in 0 until event.pointerCount && event.getPointerId(index) == current?.pointerId) cancelGestures()
+                                true
+                            }
+                            else -> ownsStream
                         }
-                        true
                     }
+                    if (handled && action == MotionEvent.ACTION_DOWN) {
+                        focus.requestFocus()
+                        disallowIntercept(editor.active || panContact != null || selectionContact != null)
+                    }
+                    if (handled && (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)) disallowIntercept(false)
+                    handled
                 }
             }) {
             val rect = bounds()
@@ -328,7 +417,7 @@ internal fun CanvasInkSurface(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { undo() }, enabled = readable && editor.canUndo) { Text(stringResource(R.string.ink_undo)) }
             TextButton(onClick = { redo() }, enabled = readable && editor.canRedo) { Text(stringResource(R.string.ink_redo)) }
-            TextButton(onClick = { input.abort(); clearSelection(); if (editor.clear()) publish() }, enabled = readable && preview.strokes.isNotEmpty()) {
+            TextButton(onClick = { cancelGestures(true); if (editor.clear()) publish() }, enabled = readable && preview.strokes.isNotEmpty()) {
                 Text(stringResource(R.string.ink_clear))
             }
             TextButton(onClick = { changeZoom(zoom - 0.5f) }, enabled = zoom > 1f,

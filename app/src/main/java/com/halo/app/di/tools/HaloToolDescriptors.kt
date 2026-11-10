@@ -522,6 +522,11 @@ object HaloToolDescriptors {
      * so every entry is READ_ONLY with no confirmation and safe replay.
      */
     fun deviceInsight(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.PeripheralTools.NAMES -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            readOnly(definition.name), keywords = setOf("peripheral", "usb", "pen", "tablet", "huion", "stylus", "controller", "hardware"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.peripherals.inspect"))),
+            execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 32000))
+            .copy(operability = com.halo.app.di.tools.host.PeripheralTools.operability(definition.name))
         "halo_device_info" -> descriptor(definition.name, definition, ToolCategory.SYSTEM,
             readOnly(definition.name),
             keywords = setOf("device", "phone", "model", "android version", "hardware", "specs"),

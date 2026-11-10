@@ -7,6 +7,13 @@
     <string name="external_display_dimensions">%1$d × %2$d pixels</string>
     <string name="external_display_active">Halo output is active on this display.</string>
     <string name="external_display_show_test">Show test card</string>
+    <string name="external_display_text_label">Text for the selected display</string>
+    <string name="external_display_text_count">%1$d / %2$d characters</string>
+    <string name="external_display_text_help">Long text is split into pages. Send it when ready, then use Previous and Next. This draft clears when Halo leaves the foreground or the selected display disconnects.</string>
+    <string name="external_display_show_text">Show text</string>
+    <string name="external_display_page">Page %1$d of %2$d</string>
+    <string name="external_display_previous">Previous</string>
+    <string name="external_display_next">Next</string>
     <string name="external_display_stop">Stop display output</string>
     <string name="external_display_working">Updating display output…</string>
     <string name="external_display_failed">Display output could not be updated. Check the connection and try again.</string>

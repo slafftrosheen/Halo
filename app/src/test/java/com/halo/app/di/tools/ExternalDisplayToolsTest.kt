@@ -24,13 +24,25 @@ class ExternalDisplayToolsTest {
         }
         override val state = MutableStateFlow(session.state)
         var dispatched = 0
+        var beforeDispatch: () -> Unit = {}
         override suspend fun snapshot() = state.value
-        override suspend fun show(endpointToken: String, text: String, expectedRevision: Long?): ExternalDisplayReceipt {
+        override suspend fun show(endpointToken: String, text: String, expectedRevision: Long?, requestAllowed: () -> Boolean): ExternalDisplayReceipt {
+            beforeDispatch()
+            if (!requestAllowed()) return session.rejected("Access changed")
             if (session.resolve(endpointToken, expectedRevision) == null) return session.rejected("Stale display")
             dispatched++
-            return session.presented(endpointToken).also { state.value = session.state }
+            return session.presented(endpointToken, requireNotNull(ExternalDisplaySession.paginate(text))).also { state.value = session.state }
         }
-        override suspend fun clear(expectedRevision: Long?, endpointToken: String?): ExternalDisplayReceipt {
+        override suspend fun page(endpointToken: String, page: Int, expectedRevision: Long, requestAllowed: () -> Boolean): ExternalDisplayReceipt {
+            beforeDispatch()
+            if (!requestAllowed()) return session.rejected("Access changed")
+            if (session.pageText(endpointToken, page, expectedRevision) == null) return session.rejected("Stale page")
+            dispatched++
+            return session.pagePresented(endpointToken, page, expectedRevision).also { state.value = session.state }
+        }
+        override suspend fun clear(expectedRevision: Long?, endpointToken: String?, requestAllowed: () -> Boolean): ExternalDisplayReceipt {
+            beforeDispatch()
+            if (!requestAllowed()) return session.rejected("Access changed")
             if (expectedRevision != session.state.revision || endpointToken != session.state.activeToken)
                 return session.rejected("Stale output")
             return session.cleared().also { state.value = session.state }
@@ -75,7 +87,7 @@ class ExternalDisplayToolsTest {
     @Test fun staleOversizeAndExtraArgumentsNeverDispatch() = runBlocking {
         withContext(RunToolScope(AgentRunId("test"))) {
             assertTrue(tools.execute(show(version = 0)) is ToolExecutionResult.Rejected)
-            assertTrue(tools.execute(show(text = "x".repeat(401))) is ToolExecutionResult.Rejected)
+            assertTrue(tools.execute(show(text = "x".repeat(8001))) is ToolExecutionResult.Rejected)
             val extra = show().let { it.copy(arguments = it.arguments + ("autoReconnect" to true)) }
             assertTrue(tools.execute(extra) is ToolExecutionResult.Rejected)
         }
@@ -94,5 +106,30 @@ class ExternalDisplayToolsTest {
             assertEquals(ActionTruth.CONFIRMED, stopped.actionTruth)
             assertNull(output.state.value.activeToken)
         }
+    }
+    @Test fun pageCallsUseAbsoluteIndexAndRejectStaleRevision() = runBlocking {
+        withContext(RunToolScope(AgentRunId("test"))) {
+            tools.execute(show(text = "x".repeat(1000)))
+            val revision = output.state.value.revision
+            val page = call(ExternalDisplayTools.PAGE,
+                mapOf("endpointToken" to "live-token", "sourceVersion" to revision, "page" to 2))
+            val result = tools.execute(page) as ToolExecutionResult.Success
+            assertEquals(ActionTruth.DISPATCHED, result.actionTruth)
+            assertEquals(2, JSONObject(result.output).getInt("currentPage"))
+            assertEquals(3, JSONObject(result.output).getInt("pageCount"))
+            assertTrue(tools.execute(page) is ToolExecutionResult.Rejected)
+            val invalid = page.copy(arguments = page.arguments + ("sourceVersion" to output.state.value.revision) + ("page" to 1.5))
+            assertTrue(tools.execute(invalid) is ToolExecutionResult.Rejected)
+            val listed = tools.execute(call(ExternalDisplayTools.LIST)) as ToolExecutionResult.Success
+            assertFalse(JSONObject(listed.output).has("text"))
+        }
+    }
+    @Test fun disclosureRevokedDuringHostHandoffPreventsOutput() = runBlocking {
+        remote = true
+        output.beforeDispatch = { remote = false }
+        withContext(RunToolScope(AgentRunId("test"), targetIsLocal = false)) {
+            assertTrue(tools.execute(show()) is ToolExecutionResult.Rejected)
+        }
+        assertEquals(0, output.dispatched)
     }
 }

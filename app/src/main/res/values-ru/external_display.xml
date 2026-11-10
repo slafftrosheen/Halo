@@ -7,6 +7,13 @@
     <string name="external_display_dimensions">%1$d × %2$d пикселей</string>
     <string name="external_display_active">Halo выводит изображение на этот экран.</string>
     <string name="external_display_show_test">Показать тестовую карточку</string>
+    <string name="external_display_text_label">Текст для выбранного экрана</string>
+    <string name="external_display_text_count">%1$d / %2$d символов</string>
+    <string name="external_display_text_help">Длинный текст разбивается на страницы. Когда будете готовы, отправьте его и листайте кнопками «Назад» и «Далее». Черновик очищается, когда Halo уходит в фон или выбранный экран отключается.</string>
+    <string name="external_display_show_text">Показать текст</string>
+    <string name="external_display_page">Страница %1$d из %2$d</string>
+    <string name="external_display_previous">Назад</string>
+    <string name="external_display_next">Далее</string>
     <string name="external_display_stop">Остановить вывод на экран</string>
     <string name="external_display_working">Обновляем вывод на экран…</string>
     <string name="external_display_failed">Не удалось обновить вывод на экран. Проверьте подключение и повторите попытку.</string>

@@ -7,6 +7,13 @@
     <string name="external_display_dimensions">%1$d × %2$d pikseļi</string>
     <string name="external_display_active">Halo izvade šajā ekrānā ir aktīva.</string>
     <string name="external_display_show_test">Rādīt testa kartīti</string>
+    <string name="external_display_text_label">Teksts izvēlētajam ekrānam</string>
+    <string name="external_display_text_count">%1$d / %2$d rakstzīmes</string>
+    <string name="external_display_text_help">Garš teksts tiek sadalīts lappusēs. Kad tas ir gatavs, nosūtiet to un izmantojiet pogas Atpakaļ un Tālāk. Melnraksts tiek dzēsts, kad Halo pāriet fonā vai izvēlētais ekrāns tiek atvienots.</string>
+    <string name="external_display_show_text">Rādīt tekstu</string>
+    <string name="external_display_page">%1$d. lappuse no %2$d</string>
+    <string name="external_display_previous">Atpakaļ</string>
+    <string name="external_display_next">Tālāk</string>
     <string name="external_display_stop">Apturēt izvadi ekrānā</string>
     <string name="external_display_working">Atjaunina izvadi ekrānā…</string>
     <string name="external_display_failed">Neizdevās atjaunināt izvadi ekrānā. Pārbaudiet savienojumu un mēģiniet vēlreiz.</string>

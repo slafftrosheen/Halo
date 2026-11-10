@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="peripheral_inventory_title">Connected peripherals</string>
+    <string name="peripheral_inventory_help">Android reports input devices and USB connections separately. Display video can work without a USB data endpoint. Reported features still need a real-device check.</string>
+    <string name="peripheral_inventory_input_status">Input devices: %1$s</string>
+    <string name="peripheral_inventory_usb_status">USB connections: %1$s</string>
+    <string name="peripheral_inventory_available">available</string>
+    <string name="peripheral_inventory_partial">some reports could not be read</string>
+    <string name="peripheral_inventory_unavailable">unavailable</string>
+    <string name="peripheral_inventory_background">open and unlock Halo with grown-up access</string>
+    <string name="peripheral_inventory_empty">No external or pen input peripherals are listed. Built-in buttons and virtual input devices are hidden here.</string>
+    <string name="peripheral_kind_usb">USB device</string>
+    <string name="peripheral_kind_input">Input device</string>
+    <string name="peripheral_role_stylus">Pen</string>
+    <string name="peripheral_role_mouse">Mouse</string>
+    <string name="peripheral_role_touch">Touch</string>
+    <string name="peripheral_role_keyboard">Keyboard</string>
+    <string name="peripheral_role_gamepad">Gamepad</string>
+    <string name="peripheral_role_joystick">Joystick</string>
+    <string name="peripheral_role_rotary">Rotary control</string>
+    <string name="peripheral_inventory_pressure">Android reports a stylus pressure range.</string>
+    <string name="peripheral_inventory_tilt">Android reports a stylus tilt range.</string>
+    <string name="peripheral_inventory_details">Technical details</string>
+    <string name="peripheral_inventory_hide_details">Hide technical details</string>
+    <string name="peripheral_inventory_reported">OS-reported values only. These do not confirm a model, working protocol or measured pen response.</string>
+    <string name="peripheral_inventory_unknown">unknown</string>
+    <string name="peripheral_inventory_ids">Vendor ID: %1$s · Product ID: %2$s</string>
+    <string name="peripheral_inventory_location">Connection: %1$s</string>
+    <string name="peripheral_inventory_external">external</string>
+    <string name="peripheral_inventory_builtin">built-in</string>
+    <string name="peripheral_inventory_axes">Axes shown: %1$d of %2$d</string>
+    <string name="peripheral_inventory_axis">%1$s · source %2$s · range %3$s–%4$s · resolution %5$s</string>
+    <string name="peripheral_inventory_usb_class">USB class %1$s · subclass %2$s · protocol %3$s</string>
+    <string name="peripheral_inventory_permission">USB access: %1$s. Inspection does not request access or open the device.</string>
+    <string name="peripheral_inventory_granted">already granted</string>
+    <string name="peripheral_inventory_not_granted">not granted</string>
+    <string name="peripheral_inventory_interfaces">Interfaces shown: %1$d of %2$d</string>
+    <string name="peripheral_inventory_interface">Interface %1$d / alternate %2$d · class %3$d / %4$d / %5$d · endpoints %6$d</string>
+    <string name="peripheral_inventory_endpoint">Endpoint %1$s · direction %2$d · type %3$d · max packet %4$d · interval %5$d</string>
+    <string name="peripheral_inventory_details_limited">Some reported details are omitted or invalid.</string>
+    <string name="peripheral_inventory_limited">The inventory is incomplete or exceeds the display limit.</string>
+    <string name="peripheral_inventory_show_all">Show all %1$d peripherals</string>
+    <string name="peripheral_inventory_show_fewer">Show fewer peripherals</string>
+    <string name="peripheral_inventory_refresh">Refresh peripherals</string>
+    <string name="peripheral_inventory_refreshing">Refreshing peripherals…</string>
+    <string name="peripheral_inventory_refresh_failed">Could not refresh the inventory. Reopen Halo and try again.</string>
+</resources>

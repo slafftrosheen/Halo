@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="peripheral_inventory_title">Pievienotās perifērijas ierīces</string>
+    <string name="peripheral_inventory_help">Android ievades ierīces un USB savienojumus uzrāda atsevišķi. Video var darboties bez USB datu savienojuma. Norādītās iespējas vēl jāpārbauda ar pašu ierīci.</string>
+    <string name="peripheral_inventory_input_status">Ievades ierīces: %1$s</string>
+    <string name="peripheral_inventory_usb_status">USB savienojumi: %1$s</string>
+    <string name="peripheral_inventory_available">var nolasīt</string>
+    <string name="peripheral_inventory_partial">daļu datu nevarēja nolasīt</string>
+    <string name="peripheral_inventory_unavailable">nevar nolasīt</string>
+    <string name="peripheral_inventory_background">atveriet un atbloķējiet Halo ar pieaugušā piekļuvi</string>
+    <string name="peripheral_inventory_empty">Sarakstā nav ārējo vai pildspalvas ievades ierīču. Iebūvētās pogas un virtuālās ierīces šeit ir paslēptas.</string>
+    <string name="peripheral_kind_usb">USB ierīce</string>
+    <string name="peripheral_kind_input">Ievades ierīce</string>
+    <string name="peripheral_role_stylus">Pildspalva</string>
+    <string name="peripheral_role_mouse">Pele</string>
+    <string name="peripheral_role_touch">Pieskāriens</string>
+    <string name="peripheral_role_keyboard">Tastatūra</string>
+    <string name="peripheral_role_gamepad">Spēļu pults</string>
+    <string name="peripheral_role_joystick">Kursorsvira</string>
+    <string name="peripheral_role_rotary">Grozāms regulators</string>
+    <string name="peripheral_inventory_pressure">Android uzrāda pildspalvas spiediena diapazonu.</string>
+    <string name="peripheral_inventory_tilt">Android uzrāda pildspalvas slīpuma diapazonu.</string>
+    <string name="peripheral_inventory_details">Tehniskā informācija</string>
+    <string name="peripheral_inventory_hide_details">Paslēpt tehnisko informāciju</string>
+    <string name="peripheral_inventory_reported">Tikai operētājsistēmas norādītie dati. Tie neapstiprina modeli, protokola darbību vai izmērītu pildspalvas reakciju.</string>
+    <string name="peripheral_inventory_unknown">nav zināms</string>
+    <string name="peripheral_inventory_ids">Ražotāja ID: %1$s · Produkta ID: %2$s</string>
+    <string name="peripheral_inventory_location">Savienojums: %1$s</string>
+    <string name="peripheral_inventory_external">ārējs</string>
+    <string name="peripheral_inventory_builtin">iebūvēts</string>
+    <string name="peripheral_inventory_axes">Parādītas asis: %1$d no %2$d</string>
+    <string name="peripheral_inventory_axis">%1$s · avots %2$s · diapazons %3$s–%4$s · izšķirtspēja %5$s</string>
+    <string name="peripheral_inventory_usb_class">USB klase %1$s · apakšklase %2$s · protokols %3$s</string>
+    <string name="peripheral_inventory_permission">USB piekļuve: %1$s. Informācijas apskate nepieprasa piekļuvi un neatver ierīci.</string>
+    <string name="peripheral_inventory_granted">jau piešķirta</string>
+    <string name="peripheral_inventory_not_granted">nav piešķirta</string>
+    <string name="peripheral_inventory_interfaces">Parādīti interfeisi: %1$d no %2$d</string>
+    <string name="peripheral_inventory_interface">Interfeiss %1$d / alternatīva %2$d · klase %3$d / %4$d / %5$d · galapunkti %6$d</string>
+    <string name="peripheral_inventory_endpoint">Galapunkts %1$s · virziens %2$d · tips %3$d · maks. pakete %4$d · intervāls %5$d</string>
+    <string name="peripheral_inventory_details_limited">Daļa norādīto datu ir izlaista vai nederīga.</string>
+    <string name="peripheral_inventory_limited">Saraksts ir nepilnīgs vai pārsniedz parādīšanas ierobežojumu.</string>
+    <string name="peripheral_inventory_show_all">Rādīt visas ierīces (%1$d)</string>
+    <string name="peripheral_inventory_show_fewer">Rādīt mazāk ierīču</string>
+    <string name="peripheral_inventory_refresh">Atjaunināt sarakstu</string>
+    <string name="peripheral_inventory_refreshing">Atjaunina sarakstu…</string>
+    <string name="peripheral_inventory_refresh_failed">Sarakstu neizdevās atjaunināt. Atveriet Halo vēlreiz un mēģiniet no jauna.</string>
+</resources>
