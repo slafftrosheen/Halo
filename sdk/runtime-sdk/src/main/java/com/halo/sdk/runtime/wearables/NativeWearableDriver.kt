@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 /** Android GATT/RFCOMM implementations own permissions, sockets and callback fencing. */
 data class NativePacket(val bytes: ByteArray, val channel: String = "command")
 interface NativeByteLink {
+    val maxWriteBytes: Int get() = 20
     val availableChannels: Set<String> get() = setOf("command")
     val incoming: Flow<NativePacket>
     val connected: StateFlow<Boolean>
@@ -32,6 +33,9 @@ class NativeWearableDriver(
     private val connectionTimeoutMs: Long = 60_000L,
 ) : NativeDeviceDriver {
     override val protocolId: String get() = family.name
+    override val supportedActions: Set<NativeAction> = NativeAction.entries.toSet() -
+        if (family == NativeFamily.TUNEBUDS) setOf(NativeAction.MEDIA_AP, NativeAction.MEDIA_P2P,
+            NativeAction.PREVIEW_AP, NativeAction.PREVIEW_P2P) else emptySet()
     private class Pending(val command: NativeCommand, val result: CompletableDeferred<WearableFrame>)
     private class Attempt(val link: NativeByteLink) {
         val pending = AtomicReference<Pending?>(null)
@@ -108,8 +112,14 @@ class NativeWearableDriver(
 
     override suspend fun dispose() { disconnect(); scope.cancel() }
 
-    override suspend fun execute(action: NativeAction): NativeReceipt = workflow.withLock {
+    override suspend fun execute(action: NativeAction, expectedVersion: String?, requestAllowed: () -> Boolean): NativeReceipt = workflow.withLock {
         val attempt = readyAttempt()
+        require(action in supportedActions) { "Unsupported native capability" }
+        synchronized(stateLock) {
+            if (!requestAllowed() || expectedVersion != null && state.value.sourceVersion != expectedVersion) throw NativeRequestRejected()
+            check(active.get() === attempt)
+            mutableState.value = state.value.copy(sourceVersion = java.util.UUID.randomUUID().toString())
+        }
         if (action in setOf(NativeAction.PHOTO, NativeAction.AI_PHOTO, NativeAction.START_VIDEO, NativeAction.START_AUDIO)) {
             check(state.value.cameraAvailable != false) { "Selected firmware reports no camera subsystem" }
         }
@@ -363,7 +373,7 @@ class NativeWearableDriver(
     }
 
     private fun publish(attempt: Attempt, update: (NativeSnapshot) -> NativeSnapshot) = synchronized(stateLock) {
-        if (active.get() === attempt) mutableState.value = update(mutableState.value)
+        if (active.get() === attempt) mutableState.value = update(mutableState.value).copy(sourceVersion = java.util.UUID.randomUUID().toString())
     }
 
     private suspend fun retire(attempt: Attempt, error: Exception) {

@@ -38,6 +38,7 @@ data class NativeSnapshot(
     val videoRecording: Boolean? = null,
     val audioRecording: Boolean? = null,
     val error: String? = null,
+    val sourceVersion: String = java.util.UUID.randomUUID().toString(),
 )
 
 /** Evidence: CyanBridge d7e726e EyevueProtocol, TuneBudsProtocol and manager flows.

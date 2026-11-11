@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="frame_status_adapter_scope">Frame currently supports model, firmware and battery status. Camera, microphone, display and motion controls are not yet available.</string>
+    <string name="frame_status_pairing_hint">Choose Brilliant Labs Frame explicitly and accept Android pairing if requested. Frame must be available at its Lua prompt; Halo will not interrupt an app or reset the glasses.</string>
+</resources>

@@ -37,6 +37,11 @@ class NativeWearableHost(
             DeviceKind.TUNEBUDS_GLASSES to Adapter(::tuneBudsAddress,
                 { context, id, bond -> NativeWearableDriver(id, NativeFamily.TUNEBUDS, { NativeRfcommLink(context, id, bond()) }) },
             ),
+            DeviceKind.BRILLIANT_FRAME to Adapter(
+                { it.address.uppercase(Locale.ROOT) },
+                { context, id, bond -> com.halo.sdk.runtime.wearables.frame.BrilliantFrameDriver(id,
+                    { BrilliantFrameAndroidLink(context, id, bond()) }) },
+            ),
         ))
         fun supports(kind: DeviceKind): Boolean = adapters.supports(kind)
 

@@ -1247,6 +1247,13 @@ object ManualDependencyGraph {
                     sourceRevision = { privacyModes.revision }),
                 appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
+                com.halo.app.di.tools.host.NativeDeviceStatusTools(nativeDeviceStatusActions,
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    remoteReadAllowed = {
+                        val policy = storage.readRuntimeAiContextPolicy()
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                            policy.allowCloudScreenContext && policy.allowCloudWorkspace
+                    }),
                 com.halo.app.di.tools.host.PeripheralTools(peripheralInventory,
                     canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
                     remoteReadAllowed = {
@@ -1656,6 +1663,13 @@ object ManualDependencyGraph {
             enabled = { voiceExperienceSettings.state.value.wearNearbyInteraction }, events = eventBus)
     }
     val audioAccessoryRegistry by lazy { com.halo.app.audio.AndroidAudioAccessoryRegistry(applicationContext) }
+    val nativeDeviceStatusActions by lazy {
+        com.halo.app.embodiment.NativeDeviceStatusActions(deviceRegistry, deviceSessionManager) {
+            com.halo.app.ui.mini.HaloHostVisibility.active.value &&
+                applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true &&
+                kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+        }
+    }
     val peripheralInventory by lazy {
         com.halo.host.android.hardware.AndroidPeripheralInventory(applicationContext) {
             com.halo.app.ui.mini.HaloHostVisibility.active.value &&

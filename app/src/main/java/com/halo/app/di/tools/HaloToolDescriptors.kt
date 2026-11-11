@@ -497,6 +497,13 @@ object HaloToolDescriptors {
     }
 
     fun device(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.NativeDeviceStatusTools.NAMES -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.NativeDeviceStatusTools.GET) readOnly(definition.name) else external(),
+            keywords = setOf("glasses", "frame", "brilliant", "battery", "firmware", "native device"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("halo.devices.native.status"))),
+            execution = ToolExecutionPolicy(timeoutMs = 40_000L),
+            presentation = ToolPresentation(title = "Glasses status", actionVerb = "Read status", targetArgument = "deviceId"))
+            .copy(operability = com.halo.app.di.tools.host.NativeDeviceStatusTools.operability(definition.name))
         in com.halo.app.di.tools.host.ExternalDisplayTools.NAMES -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
             if (definition.name == com.halo.app.di.tools.host.ExternalDisplayTools.LIST) readOnly(definition.name) else external(),
             keywords = setOf("display", "glasses", "xreal", "caption", "external screen"),

@@ -55,6 +55,24 @@ class SavedDeviceToolExecutorTest {
         assertEquals(1, f.retried.size)
     }
 
+    @Test fun retryUsesRegisteredNativeFamiliesAndRejectsUninstalledAdapters() = runBlocking {
+        val f = DeviceSettingsFixture()
+        val identity = com.halo.sdk.runtime.DeviceIdentity("frame-saved", "BRILLIANT_FRAME", "My Frame")
+        val record = com.halo.sdk.runtime.embodiment.DeviceRecord(identity, autoConnect = true)
+        f.registry.saveDevice(record)
+        val owner = SavedDeviceActions(f.registry, f.sessions, f.storage,
+            nativeSupported = com.halo.app.wearables.NativeWearableHost::supports,
+            retry = { id -> f.retried += id; true })
+        assertTrue(owner.apply(identity.deviceId, SavedDeviceCommand.RETRY,
+            expectedVersion = owner.get(identity.deviceId)!!.sourceVersion)!!.requested)
+        assertEquals(listOf(identity.deviceId), f.retried)
+        assertFalse(SavedDeviceActions.canRetry(record.copy(autoConnect = false), SessionState.DISCONNECTED,
+            com.halo.app.wearables.NativeWearableHost::supports))
+        assertFalse(SavedDeviceActions.canRetry(record, SessionState.READY,
+            com.halo.app.wearables.NativeWearableHost::supports))
+        assertFalse(com.halo.app.wearables.NativeWearableHost.supports(com.halo.sdk.runtime.embodiment.DeviceKind.MYVU_GLASSES))
+    }
+
     @Test fun autoConnectAndForgetUseExistingRegistryAndSessionWithoutAffectingOtherDevice() = runBlocking {
         val f = DeviceSettingsFixture(); val session = f.save(auto = false); f.save("AA:02")
         val tool = SavedDeviceToolExecutor(f.owner) { true }

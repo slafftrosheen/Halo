@@ -4,13 +4,14 @@ package com.halo.sdk.runtime.embodiment
  * Persisted device family, NOT a guarantee of hardware readiness.
  *
  * Unknown eyewear must never be silently routed to the HeyCyan driver.
- * These types allow per-vendor adapters to be registered independently; only
- * HEYCYAN_GLASSES and BUDDYBOT currently have Halo production sessions.
+ * These types allow per-vendor adapters to be registered independently. An
+ * installed adapter and an observed READY session still do not qualify hardware.
  */
 enum class DeviceKind(val label: String) {
     HEYCYAN_GLASSES("HeyCyan Glasses"),
     EYEVUE_GLASSES("EyeVue glasses"),
     TUNEBUDS_GLASSES("TuneBuds / AB Mate"),
+    BRILLIANT_FRAME("Brilliant Labs Frame"),
     MYVU_GLASSES("Meizu MYVU / Star Air"),
     MOYOUNG_W620_GLASSES("MoYoung / W620"),
     META_RAYBAN_GLASSES("Meta Ray-Ban"),
@@ -36,6 +37,7 @@ enum class DeviceKind(val label: String) {
                 "BW_AG1", "BW_AG1_PRO" -> HEYCYAN_GLASSES
                 "EYEVUE", "EYEVUE_GLASSES" -> EYEVUE_GLASSES
                 "TUNEBUDS", "AB_MATE", "XK_ONE", "TUNEBUDS_GLASSES" -> TUNEBUDS_GLASSES
+                "BRILLIANT_FRAME", "BRILLIANT_LABS_FRAME" -> BRILLIANT_FRAME
                 "MEIZU_MYVU", "MEIZU_MYVU_GLASSES", "MYVU", "MYVU_GLASSES",
                 "STAR_AIR" -> MYVU_GLASSES
                 "MOYOUNG", "MOYOUNG_W620", "MOYOUNG_W620_GLASSES",

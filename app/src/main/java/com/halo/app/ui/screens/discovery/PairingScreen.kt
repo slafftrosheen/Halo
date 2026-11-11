@@ -225,6 +225,8 @@ fun PairingScreen(viewModel: PairingViewModel, onRequestBluetoothPermissions: ()
                     }
                 }
                 Text(uiText("Selecting a family does not bypass its hardware handshake."), style = MaterialTheme.typography.bodySmall)
+                if (state.selectedFamily == DeviceKind.BRILLIANT_FRAME) Text(
+                    androidx.compose.ui.res.stringResource(com.halo.app.R.string.frame_status_pairing_hint), style = MaterialTheme.typography.bodySmall)
             }
         }
         if (next == PairingNextAction.DONE) {

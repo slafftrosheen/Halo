@@ -22,6 +22,7 @@ class SavedDeviceActions(
     private val registry: DeviceRegistry,
     private val sessions: DeviceSessionManager,
     private val storage: Storage? = null,
+    private val nativeSupported: (DeviceKind) -> Boolean = { false },
     private val retry: (suspend (String) -> Boolean)? = null,
 ) {
     private val mutex = Mutex()
@@ -69,7 +70,7 @@ class SavedDeviceActions(
         // All source tokens are consumed before invoking an external host, including failed/uncertain requests.
         try { when (command) {
             SavedDeviceCommand.RETRY -> {
-                if (!canRetry(record, before.sessionState) || retry == null) return@withLock null
+                if (!canRetry(record, before.sessionState, nativeSupported) || retry == null) return@withLock null
                 changed()
                 val requested = retry.invoke(deviceId)
                 SavedDeviceReceipt(deviceId, registry.getDevice(deviceId)?.let(::snapshot)?.sourceVersion,
@@ -119,8 +120,8 @@ class SavedDeviceActions(
 
     companion object {
         private const val QUALITY_KEY = "heycyan_ai_thumbnail_quality"
-        fun canRetry(record: DeviceRecord, state: SessionState?): Boolean = record.autoConnect &&
-            record.descriptor.kind in setOf(DeviceKind.HEYCYAN_GLASSES, DeviceKind.BUDDYBOT) &&
+        fun canRetry(record: DeviceRecord, state: SessionState?, nativeSupported: (DeviceKind) -> Boolean = { false }): Boolean = record.autoConnect &&
+            (record.descriptor.kind in setOf(DeviceKind.HEYCYAN_GLASSES, DeviceKind.BUDDYBOT) || nativeSupported(record.descriptor.kind)) &&
             state !in setOf(SessionState.READY, SessionState.CONNECTING, SessionState.CONNECTED,
                 SessionState.HANDSHAKE, SessionState.CAPABILITY_SYNC, SessionState.STATE_SYNC, SessionState.DISCONNECTING)
     }

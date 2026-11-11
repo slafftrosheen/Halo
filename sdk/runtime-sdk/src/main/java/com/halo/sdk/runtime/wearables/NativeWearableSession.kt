@@ -38,7 +38,11 @@ class NativeWearableSession(
                 if (battery != null && stage == NativeStage.READY) events.publish(ObservationUpdated(
                     observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH,
                         payload = BatteryObservationPayload(battery), sourceDeviceId = identity.deviceId,
-                        metadata = mapOf("battery" to battery, "charging" to (charging == true), "family" to driver.protocolId))))
+                        metadata = buildMap {
+                            put("battery", battery)
+                            put("family", driver.protocolId)
+                            charging?.let { put("charging", it) }
+                        })))
             }
         }
     }
@@ -73,7 +77,7 @@ class NativeWearableSession(
                 IntentKind.FETCH_MEDIA_COUNT -> NativeAction.MEDIA_COUNTS
                 else -> null
             }
-            if (action == null) { remember(intent.intentId, ExecutionStatus.REJECTED, "Unsupported native capability"); return }
+            if (action == null || action !in driver.supportedActions) { remember(intent.intentId, ExecutionStatus.REJECTED, "Unsupported native capability"); return }
             if (receipts.size + inProgress.size > 4096) {
                 emit(intent.intentId, ExecutionStatus.REJECTED, "Session receipt limit reached; reconnect explicitly"); return
             }

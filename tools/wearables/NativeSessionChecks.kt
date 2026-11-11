@@ -160,5 +160,25 @@ fun main() = runBlocking {
         photo.start(); photo.append(byteArrayOf(0xff.toByte(), 0xd8.toByte(), 1, 0xff.toByte(), 0xd9.toByte()))
         check(photo.finish().size == 5)
     }
+    test("native status source tokens fence stale and concurrent refreshes") {
+        val link = FakeLink(::eyeReply)
+        val driver = NativeWearableDriver("observed", NativeFamily.EYEVUE, { link }, requestTimeoutMs = 1000)
+        driver.connect()
+        val token = driver.state.value.sourceVersion
+        val results = List(2) { async { runCatching { driver.execute(NativeAction.BATTERY, token) }.isSuccess } }.awaitAll()
+        check(results.count { it } == 1 && link.writes.size == 3)
+        check(driver.state.value.sourceVersion != token)
+        driver.dispose()
+    }
+    test("native status refresh rechecks access without protocol dispatch") {
+        val link = FakeLink(::eyeReply)
+        val driver = NativeWearableDriver("permission", NativeFamily.EYEVUE, { link }, requestTimeoutMs = 1000)
+        driver.connect()
+        val token = driver.state.value.sourceVersion
+        check(runCatching { driver.execute(NativeAction.DEVICE_INFO, token) { false } }.exceptionOrNull() is NativeRequestRejected)
+        check(link.writes.size == 2 && driver.state.value.sourceVersion == token)
+        check(driver.supportedActions.contains(NativeAction.PHOTO))
+        driver.dispose()
+    }
     println("Native session checks: $passed passed")
 }

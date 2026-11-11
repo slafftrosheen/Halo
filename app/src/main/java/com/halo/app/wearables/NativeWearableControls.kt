@@ -56,6 +56,7 @@ fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
     DisposableEffect(deviceId) { onDispose { task?.cancel(); image = null } }
     val snapshot by (session?.driver?.state ?: remember { MutableStateFlow(NativeSnapshot()) }).collectAsStateWithLifecycle()
     val ready = snapshot.stage == NativeStage.READY
+    val supported = session?.driver?.supportedActions.orEmpty()
     fun runOperation(block: suspend (NativeWearableSession) -> String) {
         val owner = session ?: return
         if (busy) return
@@ -68,6 +69,10 @@ fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
         }
     }
     fun execute(action: NativeAction) = runOperation { owner ->
+        if (action in setOf(NativeAction.BATTERY, NativeAction.DEVICE_INFO)) {
+            checkNotNull(ManualDependencyGraph.nativeDeviceStatusActions.refresh(deviceId, action, snapshot.sourceVersion))
+            return@runOperation "Device response received"
+        }
         val receipt = owner.driver.execute(action)
         when (receipt.confirmation) {
             NativeConfirmation.RECEIVED -> "Device response received"
@@ -79,14 +84,17 @@ fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
         objectId = deviceId, titleIsSource = true,
         sourceIdentity = "$deviceId:${snapshot.stage}:$busy",
         actions = listOf(
-            ShellPageAction("glasses.refresh", "Check status", HaloGlyph.GLASSES, ready && !busy) { execute(NativeAction.BATTERY) },
-            ShellPageAction("glasses.photo", "Take photo", HaloGlyph.CAMERA, ready && !busy && snapshot.cameraAvailable != false) { execute(NativeAction.PHOTO) },
+            ShellPageAction("glasses.refresh", "Check status", HaloGlyph.GLASSES, ready && !busy && NativeAction.BATTERY in supported) { execute(NativeAction.BATTERY) },
+            ShellPageAction("glasses.photo", "Take photo", HaloGlyph.CAMERA, ready && !busy && NativeAction.PHOTO in supported && snapshot.cameraAvailable != false) { execute(NativeAction.PHOTO) },
         )) else false
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!hosted) Text(record?.identity?.displayName ?: uiText("Native glasses"), style = MaterialTheme.typography.titleLarge)
         Text(uiText("Native protocol · physical qualification pending"), style = MaterialTheme.typography.labelMedium)
         HaloStatusPresentation(if (ready) HaloStatus.READY else if (snapshot.stage == NativeStage.ERROR) HaloStatus.FAILED
             else if (snapshot.stage in setOf(NativeStage.CONNECTING, NativeStage.HANDSHAKE)) HaloStatus.PREPARING else HaloStatus.UNAVAILABLE)
+        if (session?.driver?.protocolId == "BRILLIANT_FRAME") Text(
+            androidx.compose.ui.res.stringResource(com.halo.app.R.string.frame_status_adapter_scope), style = MaterialTheme.typography.bodySmall)
+        snapshot.error?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
         snapshot.batteryPercent?.let { Text(uiText("Battery") + ": $it%") }
         snapshot.model?.let { Text(uiText("Model") + ": $it") }
         snapshot.firmware?.let { Text(uiText("Firmware") + ": $it") }
@@ -122,21 +130,21 @@ fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
                 }
             }
             listOf("Battery status" to NativeAction.BATTERY, "Device information" to NativeAction.DEVICE_INFO,
-                "Check for photos" to NativeAction.MEDIA_COUNTS, "Storage status" to NativeAction.STORAGE).forEach { (label, action) ->
+                "Check for photos" to NativeAction.MEDIA_COUNTS, "Storage status" to NativeAction.STORAGE).filter { it.second in supported }.forEach { (label, action) ->
                 OutlinedButton(onClick = { execute(action) }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(label)) }
             }
-            if (snapshot.cameraAvailable != false) {
+            if (snapshot.cameraAvailable != false && NativeAction.PHOTO in supported) {
                 Text(uiText("Camera and recording"), style = MaterialTheme.typography.titleMedium)
                 Text(uiText("Capture is explicit. Images stay on this phone; no cloud request is made."), style = MaterialTheme.typography.bodySmall)
                 listOf("Take photo on glasses" to NativeAction.PHOTO, "Start video" to NativeAction.START_VIDEO,
                     "Stop video" to NativeAction.STOP_VIDEO, "Start audio recording" to NativeAction.START_AUDIO,
-                    "Stop audio recording" to NativeAction.STOP_AUDIO).forEach { (label, action) ->
+                    "Stop audio recording" to NativeAction.STOP_AUDIO).filter { it.second in supported }.forEach { (label, action) ->
                     OutlinedButton(onClick = { execute(action) }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(label)) }
                 }
                 Button(onClick = { runOperation { image = it.driver.captureAiPhoto(); "Fresh glasses image received" } }, enabled = !busy && snapshot.aiPhotoAvailable,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Capture image for review")) }
             }
-            OutlinedButton(onClick = { execute(NativeAction.SYNC_TIME) }, enabled = !busy,
+            if (NativeAction.SYNC_TIME in supported) OutlinedButton(onClick = { execute(NativeAction.SYNC_TIME) }, enabled = !busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Sync device clock")) }
         }
         image?.let { bytes ->

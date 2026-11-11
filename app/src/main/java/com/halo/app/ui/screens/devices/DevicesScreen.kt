@@ -161,6 +161,7 @@ class DevicesViewModel(
     private val storage: Storage? = null,
 ) : ViewModel() {
     val savedDeviceActions = com.halo.app.embodiment.SavedDeviceActions(deviceRegistry, sessionManager, storage,
+        nativeSupported = com.halo.app.wearables.NativeWearableHost::supports,
         retry = autoConnectCoordinator?.let { it::retryDevice })
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()

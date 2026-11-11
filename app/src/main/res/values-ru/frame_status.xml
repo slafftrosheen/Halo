@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="frame_status_adapter_scope">Для Frame пока доступны модель, версия прошивки и заряд батареи. Камера, микрофон, дисплей и датчики движения ещё не подключены.</string>
+    <string name="frame_status_pairing_hint">Выберите Brilliant Labs Frame и при необходимости подтвердите сопряжение Android. Frame должен принимать команды Lua; Halo не прерывает приложения и не сбрасывает очки.</string>
+</resources>

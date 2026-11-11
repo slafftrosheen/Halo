@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="frame_status_adapter_scope">Frame pašlaik nodrošina modeļa, programmaparatūras un akumulatora informāciju. Kamera, mikrofons, displejs un kustības sensori vēl nav pieejami.</string>
+    <string name="frame_status_pairing_hint">Izvēlieties Brilliant Labs Frame un, ja nepieciešams, apstipriniet Android savienošanu pārī. Frame jābūt gatavam pieņemt Lua komandas; Halo nepārtrauks lietotni un neatiestatīs brilles.</string>
+</resources>
