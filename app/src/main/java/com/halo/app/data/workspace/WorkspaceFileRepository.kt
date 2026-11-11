@@ -228,6 +228,92 @@ class RoomWorkspaceFileRepository(
         }
     }
 
+    /** Stream a verified device download into Library through the canonical file owner.
+     * Deduplication is device + remote identity + bytes, survives restart and respects Trash. */
+    suspend fun importDeviceMedia(source: File, deviceId: String, remoteId: String, displayName: String,
+        expectedSha256: String, expectedBytes: Long, allowed: () -> Boolean): com.halo.sdk.runtime.wearables.media.DeviceMediaSavedFile =
+        withContext(Dispatchers.IO) { copyMutex.withLock {
+            require(deviceId.length in 1..200 && remoteId.length in 1..512 && displayName.length in 1..255)
+            require(displayName != "." && displayName != ".." && displayName.none(Char::isISOControl) && '/' !in displayName && '\\' !in displayName)
+            require(expectedSha256.matches(Regex("[a-f0-9]{64}")) && expectedBytes in 1..com.halo.sdk.runtime.wearables.media.DeviceMediaManager.MAX_FILE_BYTES)
+            check(allowed() && source.isFile && source.length() == expectedBytes)
+            fun hash(text: String) = MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
+            val origin = "device-media:" + hash(deviceId)
+            val revision = hash(remoteId + "\u0000" + expectedSha256)
+            val id = newId()
+            val directory = File(ownedRoot, safe(id)).also { check(it.exists() || it.mkdirs()) }
+            val temporary = File(directory, ".importing")
+            val destination = File(directory, safe(displayName))
+            var publishedId: String? = null
+            try {
+                val digest = MessageDigest.getInstance("SHA-256")
+                var count = 0L
+                source.inputStream().use { input -> java.io.FileOutputStream(temporary).use { output ->
+                    val bytes = ByteArray(64 * 1024)
+                    while (true) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive(); check(allowed())
+                        val n = input.read(bytes); if (n < 0) break
+                        count += n; check(count <= expectedBytes)
+                        output.write(bytes, 0, n); digest.update(bytes, 0, n)
+                    }
+                    output.flush(); output.fd.sync()
+                } }
+                check(count == expectedBytes && digest.digest().joinToString("") { "%02x".format(it) } == expectedSha256) { "Device file changed before Library import" }
+                val header = temporary.inputStream().use { input -> ByteArray(256).let { b -> b.copyOf(maxOf(0, input.read(b))) } }
+                val mime = com.halo.sdk.runtime.wearables.media.DeviceMediaFormat.mime(header)
+                check(temporary.renameTo(destination))
+                val timestamp = now()
+                val result = db.withTransaction {
+                    check(allowed())
+                    val previousId = db.workspaceContextDao().captureObject(origin, revision)
+                    val previousObject = previousId?.let { db.notebookDao().getWorkspaceObject(it) }
+                    val previousFile = previousId?.let { db.workspaceFileDao().getFile(it) }
+                    if (previousObject != null && previousFile != null && previousFile.sha256 == expectedSha256 &&
+                        previousFile.ownedCopyPath?.let { path ->
+                            val existing = File(path)
+                            if (!existing.isFile || existing.length() != expectedBytes) false else {
+                                val existingDigest = MessageDigest.getInstance("SHA-256")
+                                existing.inputStream().use { input ->
+                                    val buffer = ByteArray(64 * 1024)
+                                    while (true) {
+                                        kotlinx.coroutines.currentCoroutineContext().ensureActive(); check(allowed())
+                                        val n = input.read(buffer); if (n < 0) break
+                                        existingDigest.update(buffer, 0, n)
+                                    }
+                                }
+                                existingDigest.digest().joinToString("") { "%02x".format(it) } == expectedSha256
+                            }
+                        } == true) {
+                        return@withTransaction com.halo.sdk.runtime.wearables.media.DeviceMediaSavedFile(previousId,
+                            previousFile.contentVersion(), previousFile.displayName, previousFile.mimeType,
+                            alreadyImported = true, inTrash = previousObject.lifecycle == "TRASHED")
+                    }
+                    // Keep an existing object's identity/lifecycle when repairing missing local bytes.
+                    val targetId = previousObject?.id ?: id
+                    if (previousObject == null) db.notebookDao().insertWorkspaceObject(WorkspaceObjectEntity(targetId, "FILE",
+                        displayName.take(160), timestamp, timestamp, "DEVICE_CAPTURE", "ACTIVE", true, "READY", "file:$targetId"))
+                    db.workspaceFileDao().insertFile(WorkspaceFileEntity(targetId, ownedUri(destination).toString(),
+                        displayName, mime, expectedBytes, timestamp, destination.absolutePath, false,
+                        ContentOwnership.HALO_OWNED.name, WorkspaceFileAvailability.OWNED_LOCAL.name, expectedSha256))
+                    db.workspaceContextDao().provenance(com.halo.app.data.ObjectProvenance(targetId, origin, revision,
+                        org.json.JSONObject().put("kind", "DEVICE_MEDIA_IMPORT").put("deviceId", deviceId)
+                            .put("remoteId", remoteId).put("sha256", expectedSha256).put("originalFilename", displayName)
+                            .put("bytes", expectedBytes).put("mimeType", mime).put("receivedAt", timestamp).toString()))
+                    publishedId = targetId
+                    com.halo.sdk.runtime.wearables.media.DeviceMediaSavedFile(targetId, expectedSha256, displayName, mime,
+                        alreadyImported = previousObject != null, inTrash = previousObject?.lifecycle == "TRASHED")
+                }
+                result
+            } finally {
+                withContext(kotlinx.coroutines.NonCancellable) {
+                    temporary.delete()
+                    // A transaction can commit while its caller is cancelled; preserve referenced bytes.
+                    val keep = runCatching { publishedId?.let { db.workspaceFileDao().getFile(it)?.ownedCopyPath == destination.absolutePath } ?: false }.getOrDefault(true)
+                    if (!keep) { destination.delete(); directory.delete() }
+                }
+            }
+        } }
+
     override suspend fun getFile(objectId: WorkspaceObjectId): WorkspaceFile? {
         val entity = db.workspaceFileDao().getFile(objectId.value) ?: return null
         return entity.toDomain()

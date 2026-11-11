@@ -24,23 +24,16 @@ data class WearableCaptureStatus(
     val itemIndex: Int? = null, val itemTotal: Int? = null,
     val captureRequested: Boolean = false,
 )
-data class PendingCaptureOperation(
-    val operationId: String,
-    val deviceId: String,
-    val requestedAt: Long
-)
-
 /** Existing verified transport composition. Receipt, rather than BLE write, establishes success. */
 class HeyCyanCaptureCoordinator(private val context: Context, private val driver: RealHeyCyanDriver,
     private val captures: LocalCaptureStore, private val events: EventBus, private val scope: CoroutineScope,
-    private val preloadLocalModel: () -> Unit = {}) {
+    private val preloadLocalModel: () -> Unit = {},
+    private val mediaImporter: com.halo.sdk.runtime.wearables.media.DeviceMediaImporter,
+    private val canManageFiles: () -> Boolean) {
     private val mutex = Mutex()
     private val hardwareThumbnailMutex = Mutex()
     private val _state = MutableStateFlow(WearableCaptureStatus())
     val state = _state.asStateFlow()
-    private val imported = context.getSharedPreferences("received_wearable_media", Context.MODE_PRIVATE)
-    private val pendingCaptureStore = context.getSharedPreferences("pending_wearable_capture", Context.MODE_PRIVATE)
-    private var pendingCaptureOperation: PendingCaptureOperation? = loadPendingCapture()
     private val connector = HeyCyanWifiConnector(context)
     private val wifiState = MutableStateFlow(WifiConnectionState.DISCONNECTED)
     private val wifi = object : HeyCyanWifiConnection {
@@ -57,14 +50,12 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
                 .discover(driver.deviceState.value.wifiIp)
                 ?.let(InetAddress::getByName)
     }
-    private val pendingSync = MutableStateFlow(false)
     private val thumbnailQuality: Int
         get() = context.getSharedPreferences("heycyan_settings", Context.MODE_PRIVATE)
             .getInt("ai_thumbnail_quality", 3)
             .coerceIn(0, 5)
 
     fun start() {
-        pendingSync.value = pendingCaptureOperation != null
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             driver.heyCyanEvents.collect { event ->
                 if (event == HeyCyanEvent.AiImageRecognition) {
@@ -75,14 +66,7 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
                 }
             }
         }
-        scope.launch {
-            driver.deviceState.mapNotNull { it.wifiCredentials }.collect {
-                if (pendingSync.value) {
-                    pendingSync.value = false
-                    sync()
-                }
-            }
-        }
+
     }
 
     suspend fun captureAiThumbnail(quality: Int = thumbnailQuality, publishForInference: Boolean = false, review: Boolean = true): Result<HeyCyanCapturedThumbnail> {
@@ -176,110 +160,79 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
             }
             driver.capabilityController.execute(HeyCyanOperation.GetMediaInventory).getOrThrow()
             Log.i("HaloMedia", "MEDIA_INVENTORY_REQUESTED operation=$id device=$device")
-            pendingCaptureOperation = PendingCaptureOperation(id, device, System.currentTimeMillis()).also(::persistPendingCapture)
-            _state.value = _state.value.copy(message = "Capture requested. Sync media to receive the image.")
+            _state.value = _state.value.copy(message = "Capture requested. Browse device files and select the image to copy into Library.")
         } catch (error: Exception) {
             if (error is CancellationException) throw error
             _state.value = _state.value.copy(message = error.message ?: "Capture request failed", failed = true, deviceId = device)
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Wearable capture", stage = "Failed", detail = _state.value.message, sourceDeviceId = device))
         } finally { _state.value = _state.value.copy(busy = false); mutex.unlock() }
     }
-    suspend fun sync() {
-        if (!mutex.tryLock()) {
-            pendingSync.value = true
-            return
-        }
-        val device = driver.activeDeviceId
-        val id = pendingCaptureOperation
-            ?.takeIf { it.deviceId == device }
-            ?.operationId
-            ?: UUID.randomUUID().toString()
+    val files = com.halo.sdk.runtime.wearables.media.DeviceMediaManager(
+        object : com.halo.sdk.runtime.wearables.media.DeviceMediaTransport {
+            override suspend fun <T> withSession(deviceId: String, allowed: () -> Boolean,
+                block: suspend (com.halo.sdk.runtime.wearables.media.DeviceMediaSession) -> T): T =
+                withFileSession(deviceId, allowed, block)
+        }, mediaImporter, canManageFiles)
+
+    /** Compatibility action: first lists files; deliberate selections are imported by the file panel. */
+    suspend fun sync() { driver.activeDeviceId?.let { files.refresh(it) } }
+
+    private suspend fun <T> withFileSession(device: String, allowed: () -> Boolean,
+        block: suspend (com.halo.sdk.runtime.wearables.media.DeviceMediaSession) -> T): T {
+        check(mutex.tryLock()) { "Glasses capture or transfer already running" }
         var transfer: HeyCyanTransferCoordinator? = null
+        var staging: File? = null
+        fun current() = driver.activeDeviceId == device && allowed() && canManageFiles()
         try {
-            requireNotNull(device) { "No connected HeyCyan device" }
-            val credentialsProvider = DeviceStateWifiCredentialProvider(driver.deviceState)
-            _state.value = (_state.value.takeIf { it.deviceId == device } ?: WearableCaptureStatus()).copy(
-                busy = true, message = "Awaiting transfer credentials", deviceId = device, failed = false,
-                waitingForConnection = false, itemIndex = null, itemTotal = null, captureRequested = false)
-            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
-
+            val saved = com.halo.app.di.ManualDependencyGraph.deviceRegistry.getDevice(device)
+            check(saved?.descriptor?.kind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES)
+            check(current() && driver.deviceState.value.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
+            _state.value = WearableCaptureStatus(busy = true, message = "Opening device files", deviceId = device)
             var api: HeyCyanMediaApi? = null
-            val activeTransfer = HeyCyanTransferCoordinator(driver.capabilityController, credentialsProvider, wifi,
-                HeyCyanMediaApiFactory { address ->
-                    DefaultHeyCyanMediaApi(address, connectionFactory = connector::openConnection).also { api = it }
-                }, driver.resourceArbiter)
-            transfer = activeTransfer
-            activeTransfer.synchronizeManifest(device).getOrElse { error ->
-                if (activeTransfer.state.value is HeyCyanTransferState.WaitingForCredentials) {
-                    pendingSync.value = true
-                    _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials", waitingForConnection = true)
-                    return
-                }
-                throw error
+            val coordinator = HeyCyanTransferCoordinator(driver.capabilityController,
+                DeviceStateWifiCredentialProvider(driver.deviceState), wifi,
+                HeyCyanMediaApiFactory { address -> DefaultHeyCyanMediaApi(address,
+                    connectionFactory = { url -> check(current()); connector.openConnection(url) }).also { api = it } },
+                driver.resourceArbiter, deviceIsCurrent = { id -> id == device && driver.activeDeviceId == device })
+            transfer = coordinator
+            val manifest = coordinator.synchronizeManifest(device).getOrThrow()
+            check(current())
+            val activeApi = requireNotNull(api)
+            // Library owns completed bytes. This operation cache is disposable and must
+            // not retain a second hidden copy when users manage their Library files.
+            val stageRoot = File(context.cacheDir, "device-media-transfers")
+            withContext(Dispatchers.IO) {
+                stageRoot.listFiles()?.filter { it.isDirectory && runCatching { UUID.fromString(it.name) }.isSuccess }
+                    ?.forEach { it.deleteRecursively() } // Orphans from a previous process; this host owns the mutex.
             }
-            _state.value = _state.value.copy(busy = true, message = "Transfer ready")
-            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Glasses endpoint verified", sourceDeviceId = device))
-            val activeApi = checkNotNull(api)
-            val deviceKey = UUID.nameUUIDFromBytes(device.toByteArray()).toString()
-            val repository = FileHeyCyanMediaRepository(File(context.filesDir, "captures/transfer/$deviceKey"))
-            val sync = HeyCyanMediaSynchronizer(activeApi, repository,
-                HeyCyanMediaDiffer(DefaultHeyCyanMediaIdentityResolver()), StreamingMediaDownloadStrategy(activeApi))
-            val progress = scope.launch {
-                sync.state.collect { value ->
-                    if (value is HeyCyanMediaSyncState.Downloading) _state.value = _state.value.copy(
-                        message = "Receiving item ${value.index}/${value.total} · ${value.progress.bytesReceived} bytes",
-                        itemIndex = value.index, itemTotal = value.total)
+            val directory = File(stageRoot, UUID.randomUUID().toString()).also { staging = it }
+            val repository = FileHeyCyanMediaRepository(directory)
+            val entries = manifest.items.map { item -> com.halo.sdk.runtime.wearables.media.DeviceMediaEntry(
+                item.id, item.filename, item.toMediaType().name, item.sizeBytes, item.createdAt) }
+            val result = block(object : com.halo.sdk.runtime.wearables.media.DeviceMediaSession {
+                override val files = entries
+                override suspend fun download(file: com.halo.sdk.runtime.wearables.media.DeviceMediaEntry,
+                    progress: (Long, Long?) -> Unit): com.halo.sdk.runtime.wearables.media.DeviceMediaDownload {
+                    check(current())
+                    val remote = manifest.items.single { it.id == file.id && it.filename == file.name }
+                    // Explicit selection fetches current bytes even when the device reuses a filename/size.
+                    StreamingMediaDownloadStrategy(activeApi).download(remote, repository) {
+                        check(current()); progress(it.bytesReceived, it.totalBytes)
+                    }.getOrThrow()
+                    check(current())
+                    val saved = requireNotNull(repository.find(DefaultHeyCyanMediaIdentityResolver().identity(remote)))
+                    return com.halo.sdk.runtime.wearables.media.DeviceMediaDownload(saved.localPath, requireNotNull(saved.sha256), saved.sizeBytes)
                 }
-            }
-            val result = try { sync.synchronize(MediaSyncRequest(mediaTypes = setOf(HeyCyanMediaType.PHOTO))).getOrThrow() }
-                finally { progress.cancelAndJoin() }
-            var received = 0
-            for (item in repository.list().filter { it.mediaType == HeyCyanMediaType.PHOTO }) {
-                val key = "$deviceKey:${item.identity}:${item.sha256}"
-                if (!imported.getBoolean(key, false)) {
-                    // Imported images have their own identities; an inventory cannot prove
-                    // which physical button event produced an older, unsynchronized file.
-                    captures.receive(File(item.localPath), device, item.identity)
-                    imported.edit().putBoolean(key, true).commit()
-                    received++
-                }
-            }
-            check(result.failed == 0) { "${result.failed} media downloads failed; received images remain in Inbox" }
-            _state.value = WearableCaptureStatus(message = "$received images received in Inbox", received = received,
-                lastSync = System.currentTimeMillis(), deviceId = device)
-            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Completed", detail = _state.value.message, sourceDeviceId = device))
-            if (pendingCaptureOperation?.operationId == id) clearPendingCapture()
-        } catch (error: Exception) {
-            if (error is CancellationException) throw error
-            _state.value = _state.value.copy(message = error.message ?: "Media transfer failed", failed = true, deviceId = device)
-            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Failed", detail = _state.value.message, sourceDeviceId = device))
+            })
+            return result
         } finally {
-            withContext(NonCancellable) {
-                transfer?.closeSession()
-                wifi.disconnect()
+            try { withContext(NonCancellable) {
+                try { withTimeout(8_000) { transfer?.closeSession()?.getOrThrow() } } finally { wifi.disconnect() }
+            } } finally {
+                try { withContext(NonCancellable + Dispatchers.IO) { staging?.deleteRecursively() } }
+                finally { _state.value = _state.value.copy(busy = false, message = "Device file session closed"); mutex.unlock() }
             }
-            _state.value = _state.value.copy(busy = false)
-            mutex.unlock()
         }
     }
 
-    private fun loadPendingCapture(): PendingCaptureOperation? {
-        val operationId = pendingCaptureStore.getString("operationId", null) ?: return null
-        val deviceId = pendingCaptureStore.getString("deviceId", null) ?: return null
-        val requestedAt = pendingCaptureStore.getLong("requestedAt", 0L)
-        return PendingCaptureOperation(operationId, deviceId, requestedAt)
-    }
-
-    private fun persistPendingCapture(operation: PendingCaptureOperation) {
-        pendingCaptureStore.edit()
-            .putString("operationId", operation.operationId)
-            .putString("deviceId", operation.deviceId)
-            .putLong("requestedAt", operation.requestedAt)
-            .apply()
-    }
-
-    private fun clearPendingCapture() {
-        pendingCaptureOperation = null
-        pendingCaptureStore.edit().clear().apply()
-    }
 }

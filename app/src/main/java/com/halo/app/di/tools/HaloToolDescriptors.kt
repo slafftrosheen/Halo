@@ -6,6 +6,8 @@ import com.halo.runtime.cognition.tools.ReplaySafety
 import com.halo.runtime.cognition.tools.ToolAutomationMetadata
 import com.halo.runtime.cognition.tools.ToolCategory
 import com.halo.runtime.cognition.tools.ToolDescriptor
+import com.halo.runtime.cognition.tools.ToolExecutionPolicy
+import com.halo.runtime.cognition.tools.ToolConcurrency
 import com.halo.runtime.cognition.tools.ToolId
 import com.halo.runtime.cognition.tools.ToolPresentation
 import com.halo.runtime.cognition.tools.ToolRequirement
@@ -497,6 +499,25 @@ object HaloToolDescriptors {
     }
 
     fun device(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.WorkspaceExportTools.NAMES -> descriptor(definition.name, definition, ToolCategory.FILES,
+            if (definition.name == com.halo.app.di.tools.host.WorkspaceExportTools.STATUS) readOnly(definition.name) else external(),
+            keywords = setOf("file", "export", "copy", "destination", "library"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("halo.files.external-export"))),
+            presentation = ToolPresentation(title = "Export a file", actionVerb = "Prepare export", targetArgument = "objectId"))
+            .copy(operability = com.halo.app.di.tools.host.WorkspaceExportTools.operability(definition.name))
+        in com.halo.app.di.tools.host.CaptureReviewTools.NAMES -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.CaptureReviewTools.STATUS) readOnly(definition.name) else external(),
+            keywords = setOf("capture", "image", "review", "save", "library", "glasses"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("halo.capture.review"))),
+            presentation = ToolPresentation(title = "Capture review", actionVerb = "Review image", targetArgument = "captureId"))
+            .copy(operability = com.halo.app.di.tools.host.CaptureReviewTools.operability(definition.name))
+        in com.halo.app.di.tools.host.DeviceMediaTools.NAMES -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.DeviceMediaTools.STATUS) readOnly(definition.name) else external(),
+            keywords = setOf("glasses", "device files", "import", "photos", "recordings", "video", "library", "colmi"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("halo.devices.files"))),
+            execution = ToolExecutionPolicy(maxOutputChars = 32_000, concurrency = ToolConcurrency.PARALLEL_SAFE),
+            presentation = ToolPresentation(title = "Device files", actionVerb = "Manage files", targetArgument = "deviceId"))
+            .copy(operability = com.halo.app.di.tools.host.DeviceMediaTools.operability(definition.name))
         in com.halo.app.di.tools.host.NativeDeviceStatusTools.NAMES -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
             if (definition.name == com.halo.app.di.tools.host.NativeDeviceStatusTools.GET) readOnly(definition.name) else external(),
             keywords = setOf("glasses", "frame", "brilliant", "battery", "firmware", "native device"),

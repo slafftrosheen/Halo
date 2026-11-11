@@ -566,7 +566,7 @@ object ManualDependencyGraph {
     val workspaceExternalExport by lazy {
         val permitted = { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }
         com.halo.app.data.workspace.WorkspaceExternalExportSession(storage,
-            com.halo.app.data.workspace.WorkspaceExternalExport(workspaceFileVersions, applicationContext.contentResolver, permitted),
+            com.halo.app.data.workspace.WorkspaceExternalExport(workspaceFileVersions, applicationContext.contentResolver, permitted, applicationContext.cacheDir),
             infra.scope, permitted)
     }
     val workspaceTextDocuments by lazy { com.halo.app.data.workspace.WorkspaceTextDocuments(applicationContext, appDatabase,
@@ -1247,6 +1247,22 @@ object ManualDependencyGraph {
                     sourceRevision = { privacyModes.revision }),
                 appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
+                com.halo.app.di.tools.host.WorkspaceExportTools(workspaceExternalExport, workspaceFileVersions,
+                    allowed = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.host.CaptureReviewTools({ contextualCapture },
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    remoteAllowed = {
+                        val policy = storage.readRuntimeAiContextPolicy()
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                            policy.allowCloudScreenContext && policy.allowCloudWorkspace
+                    }),
+                com.halo.app.di.tools.host.DeviceMediaTools({ hostGraph.captureCoordinator?.files },
+                    canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    remoteReadAllowed = {
+                        val policy = storage.readRuntimeAiContextPolicy()
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                            policy.allowCloudScreenContext && policy.allowCloudWorkspace
+                    }, operationScope = infra.scope),
                 com.halo.app.di.tools.host.NativeDeviceStatusTools(nativeDeviceStatusActions,
                     canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
                     remoteReadAllowed = {

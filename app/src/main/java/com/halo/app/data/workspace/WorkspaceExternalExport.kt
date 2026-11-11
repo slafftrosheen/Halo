@@ -7,6 +7,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.MessageDigest
@@ -21,42 +23,43 @@ class WorkspaceExternalExport(
     private val input: (Uri) -> InputStream?,
     private val output: (Uri) -> OutputStream?,
     private val allowed: () -> Boolean,
+    private val snapshotFile: () -> File = { java.nio.file.Files.createTempFile("halo-export-", ".tmp").toFile() },
+    private val maxBytes: Long = 256L * 1024 * 1024,
 ) {
-    constructor(versions: WorkspaceFileVersions, resolver: ContentResolver, allowed: () -> Boolean) : this(
-        versions::current, resolver::openInputStream, { resolver.openOutputStream(it, "wt") }, allowed)
+    constructor(versions: WorkspaceFileVersions, resolver: ContentResolver, allowed: () -> Boolean, cacheDir: File) : this(
+        versions::current, resolver::openInputStream, { resolver.openOutputStream(it, "wt") }, allowed,
+        snapshotFile = { File(cacheDir, "workspace-export").also { check(it.exists() || it.mkdirs()) }
+            .let { File.createTempFile("snapshot-", ".tmp", it) } })
 
     suspend fun write(source: WorkspaceFileVersion, destination: Uri): ExternalExportReceipt = withContext(Dispatchers.IO) {
         var writing = false
         var verifying = false
+        var snapshot: File? = null
         try {
             check(allowed())
             require(destination.scheme == "content")
             val file = current(source)
             require(file.objectId == WorkspaceObjectId(source.objectId) && file.uri != destination)
             require(file.ownership == ContentOwnership.HALO_OWNED && file.sha256 != null)
-            // Validate all source bytes before touching the chosen output. Never silently export a newer version.
-            val bytes = requireNotNull(input(file.uri)).use { readBounded(it) }
-            require(digest(bytes) == file.sha256)
-            require(current(source) == file)
-            check(allowed())
-            coroutineContext.ensureActive()
-            writing = true // Opening may create/truncate even when the provider throws.
-            requireNotNull(output(destination)).use { stream ->
-                var offset = 0
-                while (offset < bytes.size) {
-                    coroutineContext.ensureActive()
-                    check(allowed())
-                    val count = minOf(DEFAULT_BUFFER_SIZE, bytes.size - offset)
-                    stream.write(bytes, offset, count)
-                    offset += count
-                }
-                stream.flush()
+            // Stage a bounded immutable snapshot before touching the chosen output.
+            // Large video files never require a whole-file ByteArray, and an aliased
+            // provider destination cannot truncate the source before it has been copied.
+            val staged = snapshotFile().also { snapshot = it }
+            val original = FileOutputStream(staged).use { sink ->
+                requireNotNull(input(file.uri)).use { stream -> digestStream(stream, sink) }.also { sink.flush(); sink.fd.sync() }
             }
+            require(original.sha256 == file.sha256 && (file.sizeBytes == null || original.bytes == file.sizeBytes))
+            require(current(source) == file)
+            check(allowed()); coroutineContext.ensureActive()
+            writing = true // Opening may create/truncate even when the provider throws.
+            val copied = requireNotNull(output(destination)).use { sink ->
+                staged.inputStream().use { stream -> digestStream(stream, sink) }.also { sink.flush() }
+            }
+            if (copied != original) return@withContext ExternalExportReceipt(ExternalExportOutcome.WRITE_FAILED)
             verifying = true
-            val written = requireNotNull(input(destination)).use { readBounded(it) }
-            if (written.size != bytes.size || digest(written) != file.sha256)
-                ExternalExportReceipt(ExternalExportOutcome.WRITE_FAILED)
-            else ExternalExportReceipt(ExternalExportOutcome.VERIFIED, bytes.size.toLong(), file.sha256)
+            val written = requireNotNull(input(destination)).use { digestStream(it) }
+            if (written != original) ExternalExportReceipt(ExternalExportOutcome.WRITE_FAILED)
+            else ExternalExportReceipt(ExternalExportOutcome.VERIFIED, original.bytes, original.sha256)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: SecurityException) { ExternalExportReceipt(if (writing) ExternalExportOutcome.UNKNOWN else ExternalExportOutcome.ACCESS_DENIED) }
         catch (_: Exception) { ExternalExportReceipt(when {
@@ -64,6 +67,7 @@ class WorkspaceExternalExport(
             writing -> ExternalExportOutcome.WRITE_FAILED
             else -> ExternalExportOutcome.SOURCE_UNAVAILABLE
         }) }
+        finally { snapshot?.delete() }
     }
 
     /** Read-only recovery: verifying a previously chosen URI never replays a write. */
@@ -73,24 +77,27 @@ class WorkspaceExternalExport(
             require(destination.scheme == "content")
             val file = current(source)
             require(file.sha256 != null && file.ownership == ContentOwnership.HALO_OWNED)
-            val bytes = requireNotNull(input(destination)).use { readBounded(it) }
-            if (digest(bytes) == file.sha256) ExternalExportReceipt(ExternalExportOutcome.VERIFIED, bytes.size.toLong(), file.sha256)
+            val read = requireNotNull(input(destination)).use { digestStream(it) }
+            if (read.sha256 == file.sha256 && (file.sizeBytes == null || read.bytes == file.sizeBytes))
+                ExternalExportReceipt(ExternalExportOutcome.VERIFIED, read.bytes, file.sha256)
             else ExternalExportReceipt(ExternalExportOutcome.WRITE_FAILED)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { ExternalExportReceipt(ExternalExportOutcome.UNKNOWN) }
     }
 
-    private suspend fun readBounded(stream: InputStream): ByteArray {
-        val buffer = java.io.ByteArrayOutputStream()
-        val chunk = ByteArray(DEFAULT_BUFFER_SIZE)
+    private data class Digest(val bytes: Long, val sha256: String)
+    private suspend fun digestStream(stream: InputStream, output: OutputStream? = null): Digest {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val chunk = ByteArray(64 * 1024)
+        var total = 0L
         while (true) {
-            coroutineContext.ensureActive()
+            coroutineContext.ensureActive(); check(allowed())
             val count = stream.read(chunk)
             if (count < 0) break
-            require(buffer.size() + count <= 20_000_000)
-            buffer.write(chunk, 0, count)
+            require(total <= maxBytes - count) { "File exceeds export limit" }
+            output?.write(chunk, 0, count)
+            digest.update(chunk, 0, count); total += count
         }
-        return buffer.toByteArray()
+        return Digest(total, digest.digest().joinToString("") { "%02x".format(it) })
     }
-    private fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 }

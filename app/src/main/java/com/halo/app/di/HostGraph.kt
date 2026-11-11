@@ -120,7 +120,15 @@ class HostGraph(
             ).start()
             captureCoordinator = com.halo.app.capture.HeyCyanCaptureCoordinator(context, driver,
                 ManualDependencyGraph.captures, infra.eventBus, infra.scope,
-                preloadLocalModel = { infra.scope.launch { providerGraph.preloadLocalModel() } }).also { it.start() }
+                preloadLocalModel = { infra.scope.launch { providerGraph.preloadLocalModel() } },
+                mediaImporter = com.halo.sdk.runtime.wearables.media.DeviceMediaImporter { deviceId, source, download, allowed ->
+                    ManualDependencyGraph.workspaceFileRepository.importDeviceMedia(File(download.localPath), deviceId, source.id,
+                        source.name, download.sha256, download.bytes, allowed)
+                }, canManageFiles = {
+                    com.halo.app.ui.mini.HaloHostVisibility.active.value &&
+                        context.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true &&
+                        ManualDependencyGraph.kidsPreferences.loadedState.value && !ManualDependencyGraph.kidsPreferences.enabled.value
+                }).also { it.start() }
         }
     }
 

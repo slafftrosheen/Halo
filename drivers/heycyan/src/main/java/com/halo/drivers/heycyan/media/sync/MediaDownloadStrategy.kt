@@ -45,14 +45,14 @@ class StreamingMediaDownloadStrategy(
                 repository.commit(session, sha256 = downloadRes.integrity.sha256).getOrThrow()
                 result
             } else {
-                repository.abort(session)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { repository.abort(session) }
                 result
             }
         } catch (e: CancellationException) {
-            repository.abort(session)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { repository.abort(session) }
             throw e
         } catch (e: Exception) {
-            repository.abort(session)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { repository.abort(session) }
             return Result.failure(e)
         }
     }

@@ -177,4 +177,31 @@ class WorkspaceExternalExportTest {
         assertEquals(0, writes)
     }
 
+    @Test fun largeDeviceFilesExportWithBoundedStreamsAndRemoveSnapshot() = runBlocking {
+        val root = java.nio.file.Files.createTempDirectory("halo-export-test-").toFile()
+        try {
+            val large = java.io.File(root, "source.mp4")
+            large.outputStream().use { stream -> repeat(384) { stream.write(ByteArray(64 * 1024) { (it % 251).toByte() }) } }
+            fun digest(file: java.io.File): String {
+                val value = MessageDigest.getInstance("SHA-256")
+                file.inputStream().use { stream -> val buffer = ByteArray(64 * 1024)
+                    while (true) { val n = stream.read(buffer); if (n < 0) break; value.update(buffer, 0, n) } }
+                return value.digest().joinToString("") { "%02x".format(it) }
+            }
+            val checksum = digest(large)
+            val file = source.copy(displayName = "video.mp4", mimeType = "video/mp4", sizeBytes = large.length(), sha256 = checksum, version = checksum)
+            val reference = WorkspaceFileVersion(file.objectId.value, checksum)
+            val destination = java.io.File(root, "copy.mp4")
+            val staged = java.io.File(root, "snapshot.tmp")
+            val exporter = WorkspaceExternalExport({ file }, { uri -> if (uri == sourceUri) large.inputStream() else destination.inputStream() },
+                { destination.outputStream() }, { true }, snapshotFile = { staged })
+            val receipt = exporter.write(reference, target)
+            assertEquals(ExternalExportOutcome.VERIFIED, receipt.outcome)
+            assertEquals(large.length(), receipt.bytes)
+            assertEquals(checksum, digest(destination))
+            assertFalse(staged.exists())
+            assertEquals(ExternalExportOutcome.VERIFIED, exporter.verify(reference, target).outcome)
+        } finally { root.deleteRecursively() }
+    }
+
 }

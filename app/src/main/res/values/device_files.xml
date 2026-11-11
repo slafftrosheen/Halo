@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_files_title">Files on glasses</string>
+    <string name="device_files_help">Browse, select and copy photos, videos, recordings or original files into Library.</string>
+    <string name="device_files_browse">Browse device files</string>
+    <string name="device_files_library">Open Library</string>
+    <string name="device_files_connecting">Waiting for the glasses Wi-Fi connection…</string>
+    <string name="device_files_listing">Reading file list…</string>
+    <string name="device_files_saving">Saving verified file in Library…</string>
+    <string name="device_files_cancelling">Stopping transfer and restoring the connection…</string>
+    <string name="device_files_downloading">Receiving file…</string>
+    <string name="device_files_progress">File %1$d of %2$d · %3$s received</string>
+    <string name="device_files_cancel">Stop transfer</string>
+    <string name="device_files_failed">Files could not be read or copied. Check the selected glasses, Wi-Fi approval and free storage, then refresh. Completed imports remain in Library.</string>
+    <string name="device_files_cancelled">Transfer stopped. Completed imports remain in Library.</string>
+    <string name="device_files_partial">%1$d files could not be imported. Refresh and select them again.</string>
+    <string name="device_files_complete">%1$d files processed. Saved copies are listed below.</string>
+    <string name="device_files_all">All</string>
+    <string name="device_files_photos">Photos</string>
+    <string name="device_files_videos">Videos</string>
+    <string name="device_files_audio">Recordings</string>
+    <string name="device_files_other">Other files</string>
+    <string name="device_files_unknown_size">Size unknown</string>
+    <string name="device_files_too_large">Exceeds the 256 MiB import limit</string>
+    <string name="device_files_previous">Previous</string>
+    <string name="device_files_next">Next</string>
+    <string name="device_files_import">Copy selected (%1$d) to Library</string>
+    <string name="device_files_limits">Select up to 16 files per transfer, up to 256 MiB each.</string>
+    <string name="device_files_empty">No files reported by these glasses.</string>
+    <string name="device_files_saved">Received files · continue in Halo</string>
+    <string name="device_files_in_trash">This copy is already in Trash. Restore it from Library if needed.</string>
+    <string name="device_files_original">Original bytes preserved. This format may need another app; playback is not verified.</string>
+    <string name="device_files_local_only">Copies stay on this phone until you choose how to use or share them. Library actions affect the copy. Originals on the glasses are retained.</string>
+</resources>

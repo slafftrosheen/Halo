@@ -447,6 +447,9 @@ private fun FileDetailCard(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             enabled = !busy && canOpen
         )
+        if (canOpen && !busy && file.ownership == ContentOwnership.HALO_OWNED && file.sha256 != null) {
+            com.halo.app.ui.workspace.WorkspaceExportButton(file)
+        }
         if (file.ownership != ContentOwnership.HALO_OWNED) {
             if (!canOpen) Text(
                 uiText("The original file is unavailable. Choose it again to reconnect."),

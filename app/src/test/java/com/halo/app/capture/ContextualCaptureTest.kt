@@ -326,4 +326,22 @@ class ContextualCaptureTest {
         }
     }
 
+    @Test fun typedReviewRejectsStaleSourceAndCannotDiscardAnotherCapture() = runBlocking {
+        fixture { store, scope, db, prefs ->
+            val notes = RoomNotebookRepository(db.notebookDao())
+            val controller = ContextualCaptureController(context, store, LocalCaptureStore(context, db, notes, Events()),
+                VisualAttachmentStore(context, store), NotebookAssetRepository(context, db), scope, WorkspaceMediaAiPolicy(db, prefs))
+            controller.receive(image(), CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", deviceId = "selected")
+            val first = controller.state.value!!
+            assertTrue(runCatching { controller.saveExpected("wrong", first.mediaRef.id) { true } }.isFailure)
+            assertTrue(runCatching { controller.discardExpected(first.captureId, first.mediaRef.id) { false } }.isFailure)
+            assertNotNull(controller.state.value)
+            controller.discardExpected(first.captureId, first.mediaRef.id) { true }
+            assertNull(controller.state.value)
+            controller.receive(image(), CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", deviceId = "selected")
+            assertTrue(runCatching { controller.discardExpected(first.captureId, first.mediaRef.id) { true } }.isFailure)
+            assertNotNull(controller.state.value)
+        }
+    }
+
 }

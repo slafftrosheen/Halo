@@ -103,7 +103,12 @@ class ContextualCaptureController(private val context: Context, private val medi
         } } finally { captures.discardPendingCapture(file) }
     }
     suspend fun save(): String = lock.withLock { saveLocked() }
-    private suspend fun saveLocked(): String {
+    /** Typed actions compare the exact pending source under the same lock as the review sheet. */
+    suspend fun saveExpected(captureId: String, assetId: String, allowed: () -> Boolean): String = lock.withLock {
+        check(allowed() && mutable.value?.captureId == captureId && mutable.value?.mediaRef?.id == assetId) { "Capture changed" }
+        saveLocked(allowed)
+    }
+    private suspend fun saveLocked(allowed: () -> Boolean = { true }): String {
         val capture = requireNotNull(mutable.value)
         capture.workspaceObjectId?.let { return it }
         mutable.value = capture.copy(status = CaptureStatus.SAVING, error = null)
@@ -116,6 +121,7 @@ class ContextualCaptureController(private val context: Context, private val medi
         try {
             val content = media.open(capture.mediaRef)
             withContext(Dispatchers.IO) { pending.file.writeBytes(content.bytes) }
+            currentCoroutineContext().ensureActive(); check(allowed())
             val id = captures.receive(pending.file, capture.mediaRef.sourceDeviceId, capture.captureId, publishForInference = false, sourceLabel = capture.label, sourceKind = capture.source.name, captureQuality = capture.quality.name, captureTimestampMs = capture.captureTimestampMs, trigger = capture.trigger, title = saveTitle.value, body = saveDescription.value)
             mediaPolicy.associateSaved(capture.mediaRef.id, id)
             workflowStorage?.putBoolean(pendingKey,false)
@@ -225,7 +231,12 @@ class ContextualCaptureController(private val context: Context, private val medi
         visible.value = true
     }
     fun openSaved() = scope.launch { state.value?.workspaceObjectId?.let { events.send(ContextualCaptureNavigation.OpenNote(it)); visible.value = false } }
-    fun discard() = scope.launch { lock.withLock {
+    fun discard() = scope.launch { discardCurrent() }
+    suspend fun discardExpected(captureId: String, assetId: String, allowed: () -> Boolean) =
+        discardCurrent(captureId, assetId, allowed)
+    private suspend fun discardCurrent(captureId: String? = null, assetId: String? = null, allowed: () -> Boolean = { true }) = lock.withLock {
+        check(allowed())
+        if (captureId != null) check(mutable.value?.captureId == captureId && mutable.value?.mediaRef?.id == assetId) { "Capture changed" }
         val capture = mutable.value
         val pending = attachments.state.value
         if(pending != null && capture != null && (pending.ref.id == capture.mediaRef.id ||
@@ -234,6 +245,6 @@ class ContextualCaptureController(private val context: Context, private val medi
         mutable.value?.mediaRef?.interactionId?.let { media.releaseInteraction(it) }
         mutable.value = null; visible.value = false
         workflowStorage?.putBoolean(pendingKey,false); notice.value = null
-    } }
+    }
     fun reopen() { if(state.value != null) visible.value = true }
 }

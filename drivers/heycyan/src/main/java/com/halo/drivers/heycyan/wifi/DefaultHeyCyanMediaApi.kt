@@ -11,7 +11,14 @@ import com.halo.drivers.heycyan.media.MediaLocation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.URL
@@ -51,6 +58,7 @@ class DefaultHeyCyanMediaApi(
     private val readTimeoutMillis: Int = 30_000,
     private val bufferSize: Int = 8 * 1024,
     private val connectionFactory: (URL) -> URLConnection = URL::openConnection,
+    private val maxDownloadBytes: Long = 256L * 1024 * 1024,
 ) : HeyCyanMediaApi {
 
     companion object {
@@ -87,20 +95,30 @@ class DefaultHeyCyanMediaApi(
                 conn.connectTimeout = connectTimeoutMillis
                 conn.readTimeout = readTimeoutMillis
                 conn.requestMethod = "GET"
+                conn.instanceFollowRedirects = false
 
-                try {
+                withConnection(conn) {
                     val code = conn.responseCode
-                    if (code !in 200..299) {
+                    if (code != 200) {
                         throw HeyCyanHttpException(
                             statusCode = code,
                             message = "GET $MANIFEST_PATH returned HTTP $code",
                         )
                     }
 
-                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    require(conn.contentLengthLong <= 1024 * 1024) { "Device manifest exceeds 1 MiB" }
+                    val body = conn.inputStream.use { input ->
+                        val out = java.io.ByteArrayOutputStream()
+                        val bytes = ByteArray(8192)
+                        while (true) {
+                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                            val n = input.read(bytes); if (n < 0) break
+                            require(out.size() + n <= 1024 * 1024) { "Device manifest exceeds 1 MiB" }
+                            out.write(bytes, 0, n)
+                        }
+                        out.toString(Charsets.UTF_8.name())
+                    }
                     parser.parse(body).getOrThrow()
-                } finally {
-                    conn.disconnect()
                 }
             }
         }
@@ -115,21 +133,18 @@ class DefaultHeyCyanMediaApi(
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> = withContext(Dispatchers.IO) {
         val file = java.io.File(destinationPath)
-        val partial = java.io.File(file.parentFile, "${file.name}.part")
+        val partial = java.io.File(file.parentFile, "${file.name}.${java.util.UUID.randomUUID()}.part")
         runCatching {
             file.parentFile?.mkdirs()
             if (partial.exists()) partial.delete()
             val result = java.io.FileOutputStream(partial).use { outputStream ->
                 downloadInternal(media, destinationPath, progress) { buffer, offset, len ->
                     outputStream.write(buffer, offset, len)
-                }.getOrThrow()
+                }.getOrThrow().also { outputStream.flush(); outputStream.fd.sync() }
             }
-            if (file.exists() && !file.delete()) {
-                throw IllegalStateException("Unable to replace existing HeyCyan media destination")
-            }
-            if (!partial.renameTo(file)) {
-                throw IllegalStateException("Unable to commit completed HeyCyan media download")
-            }
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            java.nio.file.Files.move(partial.toPath(), file.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
             result.copy(destination = MediaLocation(destinationPath))
         }.onFailure {
             partial.delete()
@@ -165,13 +180,15 @@ class DefaultHeyCyanMediaApi(
             readTimeoutMillis
         }
         conn.requestMethod = "GET"
+        conn.instanceFollowRedirects = false
 
         var bytesReceived = 0L
         val expectedBytes = media.sizeBytes
+        require(expectedBytes == null || expectedBytes in 1..maxDownloadBytes) { "Device file exceeds size limit" }
 
-        try {
+        withConnection(conn) { try {
             val code = conn.responseCode
-            if (code !in 200..299) {
+            if (code != 200) {
                 throw HeyCyanHttpException(
                     statusCode = code,
                     message = "GET $FILES_PATH$filename returned HTTP $code",
@@ -179,6 +196,9 @@ class DefaultHeyCyanMediaApi(
             }
 
             val headerTotalBytes = conn.contentLengthLong.let { if (it > 0) it else null }
+            require(headerTotalBytes == null || headerTotalBytes <= maxDownloadBytes) { "Device file exceeds size limit" }
+            if (expectedBytes != null && headerTotalBytes != null && expectedBytes != headerTotalBytes)
+                throw HeyCyanIntegrityException(media.id, expectedBytes, headerTotalBytes)
             val finalExpectedBytes = headerTotalBytes ?: expectedBytes
             val digest = MessageDigest.getInstance("SHA-256")
 
@@ -187,6 +207,7 @@ class DefaultHeyCyanMediaApi(
                 var read: Int
                 while (input.read(buffer).also { read = it } != -1) {
                     if (!kotlinx.coroutines.currentCoroutineContext().isActive) throw CancellationException("Download cancelled: $filename")
+                    require(bytesReceived <= maxDownloadBytes - read) { "Device file exceeds size limit" }
                     writeBlock(buffer, 0, read)
                     digest.update(buffer, 0, read)
                     bytesReceived += read
@@ -194,6 +215,7 @@ class DefaultHeyCyanMediaApi(
                 }
             }
 
+            require(bytesReceived > 0) { "Empty device media" }
             val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
             val integrity = MediaIntegrity(
                 expectedBytes = finalExpectedBytes,
@@ -216,6 +238,7 @@ class DefaultHeyCyanMediaApi(
                 integrity = integrity,
             )
         } catch (e: Exception) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             if (e is CancellationException || e is HeyCyanHttpException || e is HeyCyanIntegrityException) throw e
             val targetExpected = expectedBytes ?: runCatching { conn.contentLengthLong.let { if (it > 0) it else null } }.getOrNull()
             if (targetExpected != null && bytesReceived != targetExpected) {
@@ -226,17 +249,23 @@ class DefaultHeyCyanMediaApi(
                 )
             }
             throw e
-        } finally {
-            conn.disconnect()
+        } }
+    }
+
+    /** Disconnect a blocking HTTP read when its owning operation is cancelled. */
+    private suspend fun <T> withConnection(connection: HttpURLConnection, block: suspend () -> T): T = coroutineScope {
+        val watcher = launch(Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
+            try { awaitCancellation() } finally { connection.disconnect() }
         }
+        try { block() } finally { withContext(NonCancellable) { watcher.cancelAndJoin() } }
     }
 
     private fun validateFilename(filename: String) {
         require(filename.isNotBlank()) { "HeyCyan media filename is blank" }
         require(filename.length <= 255) { "HeyCyan media filename is too long" }
         require(filename != "." && filename != "..") { "Invalid HeyCyan media filename" }
-        require('/' !in filename && '\\' !in filename && '\u0000' !in filename) {
-            "HeyCyan media filename contains a path separator"
+        require('/' !in filename && '\\' !in filename && filename.none(Char::isISOControl)) {
+            "HeyCyan media filename contains a path separator or control character"
         }
     }
 

@@ -1,18 +1,11 @@
 package com.halo.app.wearables
 
-import android.content.ContentValues
-import android.graphics.BitmapFactory
-import android.os.Build
-import android.provider.MediaStore
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph
@@ -25,7 +18,6 @@ import com.halo.sdk.runtime.embodiment.DeviceRecord
 import com.halo.sdk.runtime.wearables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.util.UUID
 
 @Composable
 fun NativeWearableControlScreen(deviceId: String, onBack: () -> Unit) {
@@ -38,13 +30,11 @@ fun NativeWearableControlScreen(deviceId: String, onBack: () -> Unit) {
 /** UI and runtime tools share the exact same session/driver operation owner. */
 @Composable
 fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var record by remember(deviceId) { mutableStateOf<DeviceRecord?>(null) }
     var session by remember(deviceId) { mutableStateOf<NativeWearableSession?>(null) }
     var task by remember(deviceId) { mutableStateOf<Job?>(null) }
     var message by remember(deviceId) { mutableStateOf<String?>(null) }
-    var image by remember(deviceId) { mutableStateOf<ByteArray?>(null) }
     var busy by remember(deviceId) { mutableStateOf(false) }
     LaunchedEffect(deviceId) {
         try {
@@ -53,7 +43,7 @@ fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { message = "This native adapter is not available" }
     }
-    DisposableEffect(deviceId) { onDispose { task?.cancel(); image = null } }
+    DisposableEffect(deviceId) { onDispose { task?.cancel() } }
     val snapshot by (session?.driver?.state ?: remember { MutableStateFlow(NativeSnapshot()) }).collectAsStateWithLifecycle()
     val ready = snapshot.stage == NativeStage.READY
     val supported = session?.driver?.supportedActions.orEmpty()
@@ -141,40 +131,20 @@ fun NativeWearableControls(deviceId: String, onBack: (() -> Unit)? = null) {
                     "Stop audio recording" to NativeAction.STOP_AUDIO).filter { it.second in supported }.forEach { (label, action) ->
                     OutlinedButton(onClick = { execute(action) }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText(label)) }
                 }
-                Button(onClick = { runOperation { image = it.driver.captureAiPhoto(); "Fresh glasses image received" } }, enabled = !busy && snapshot.aiPhotoAvailable,
+                Button(onClick = { runOperation { owner ->
+                    val review = ManualDependencyGraph.contextualCapture
+                    check(review.state.value == null) { "Finish the current capture first" }
+                    val bytes = owner.driver.captureAiPhoto()
+                    review.receive(com.halo.sdk.runtime.multimodal.MediaAssetContent(bytes, "image/jpeg"),
+                        com.halo.app.capture.CaptureSource.MANAGED_WEARABLE_CAMERA, record?.identity?.displayName ?: "Wearable camera",
+                        deviceId = deviceId, quality = com.halo.app.capture.CaptureQuality.AI_THUMBNAIL,
+                        captureTimestampMs = System.currentTimeMillis(), trigger = "SOFTWARE_REQUEST")
+                    "Fresh glasses image received"
+                } }, enabled = !busy && snapshot.aiPhotoAvailable,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Capture image for review")) }
             }
             if (NativeAction.SYNC_TIME in supported) OutlinedButton(onClick = { execute(NativeAction.SYNC_TIME) }, enabled = !busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Sync device clock")) }
-        }
-        image?.let { bytes ->
-            val bitmap = remember(bytes) {
-                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-                if (bounds.outWidth <= 0 || bounds.outHeight <= 0 || bounds.outWidth.toLong() * bounds.outHeight > 48_000_000) null
-                else BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply {
-                    inSampleSize = Integer.highestOneBit(maxOf(1, maxOf(bounds.outWidth, bounds.outHeight) / 1080))
-                })
-            }
-            if (bitmap != null) Image(bitmap.asImageBitmap(), uiText("Captured glasses image"), Modifier.fillMaxWidth().heightIn(max = 360.dp))
-            if (Build.VERSION.SDK_INT >= 29) OutlinedButton(onClick = { runOperation {
-                withContext(Dispatchers.IO) {
-                    val resolver = context.contentResolver
-                    val values = ContentValues().apply {
-                        put(MediaStore.Images.Media.DISPLAY_NAME, "Halo_${UUID.randomUUID()}.jpg")
-                        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                        put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Halo")
-                        put(MediaStore.Images.Media.IS_PENDING, 1)
-                    }
-                    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: error("Cannot create gallery item")
-                    try {
-                        resolver.openOutputStream(uri)?.use { output -> output.write(bytes) } ?: error("Cannot save image")
-                        resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
-                    } catch (error: Exception) { resolver.delete(uri, null, null); throw error }
-                }
-                "Saved to DCIM/Halo"
-            } }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Save image to Gallery")) }
-            TextButton(onClick = { image = null }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Close image")) }
         }
     }
 }

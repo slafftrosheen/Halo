@@ -92,6 +92,7 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
             onAutoConnect = { viewModel.toggleAutoConnect(deviceId, it) },
             onForget = { viewModel.forgetDevice(deviceId); onBack() },
             reviewing = reviewing, reviewFailed = reviewFailed,
+            files = { DeviceFilesPanel(deviceId, captureReady && !reviewing) },
             controls = {
                 if (device?.hasLiveGlasses == true && device.sessionState == SessionState.READY) {
                     AccessoryControlsPanel(com.halo.app.di.ManualDependencyGraph.hostGraph.heyCyanHost.controlEndpointId)
@@ -109,7 +110,7 @@ internal fun GlassesControlsContent(
     onConnect: () -> Unit, onPhoto: () -> Unit, onVideo: () -> Unit, onAudio: () -> Unit,
     onReviewPhoto: () -> Unit, onCopy: () -> Unit, onRefresh: () -> Unit,
     onConnectAudio: () -> Unit, onAutoConnect: (Boolean) -> Unit, onForget: () -> Unit,
-    reviewing: Boolean = false, reviewFailed: Boolean = false, controls: @Composable () -> Unit = {},
+    reviewing: Boolean = false, reviewFailed: Boolean = false, controls: @Composable () -> Unit = {}, files: @Composable () -> Unit = {},
 ) {
     val ready = device?.sessionState == SessionState.READY && device.hasLiveGlasses
     val connecting = device?.sessionState in setOf(SessionState.CONNECTING, SessionState.CONNECTED,
@@ -169,30 +170,7 @@ internal fun GlassesControlsContent(
                     color = MaterialTheme.colorScheme.error)
             }
         }
-        HaloWorkspaceSection(uiText("Photos")) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(uiText("Photos stay on your glasses until copied. Copied photos appear in Notebook."))
-                val copyStatus = when {
-                    media.failed && media.captureRequested -> uiText("The photo request failed. Check the glasses connection and try again.")
-                    media.failed -> uiText("Photos could not be copied. Keep the glasses nearby and try again.")
-                    media.captureRequested && media.busy -> uiText("Requesting a photo…")
-                    media.captureRequested -> uiText("Photo requested. Copy photos to receive it.")
-                    media.busy -> uiText("Copying photos from your glasses…")
-                    media.waitingForConnection -> uiText("Waiting for the glasses to allow photo transfer.")
-                    media.lastSync != null -> uiText("Last copy completed: %1\$d photos added.", media.received)
-                    else -> uiText("No completed copy yet.")
-                }
-                Text(copyStatus, style = MaterialTheme.typography.bodyMedium)
-                if (media.busy && media.itemIndex != null && media.itemTotal != null) {
-                    Text(uiText("Photo %1\$d of %2\$d", media.itemIndex, media.itemTotal))
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    HaloWorkspaceButton(uiText(if (media.busy && !media.captureRequested) "Copying…" else "Copy photos"), onCopy,
-                        enabled = available, primary = false)
-                    HaloWorkspaceButton(uiText("Check for photos"), onRefresh, enabled = available, primary = false)
-                }
-            }
-        }
+        files()
         HaloWorkspaceSection(uiText("Sound")) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText(glassesAudioLabel(device?.id, pairing)))

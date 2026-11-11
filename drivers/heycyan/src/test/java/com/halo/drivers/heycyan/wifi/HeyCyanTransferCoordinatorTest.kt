@@ -88,7 +88,7 @@ class HeyCyanTransferCoordinatorTest {
         val result = coordinator.synchronizeManifest("device")
         assertTrue(result.isFailure)
         val state = coordinator.state.value
-        assertTrue(state is HeyCyanTransferState.WaitingForCredentials)
+        assertTrue(state is HeyCyanTransferState.Failed)
     }
 
     @Test
@@ -165,15 +165,15 @@ class HeyCyanTransferCoordinatorTest {
     }
 
     @Test
-    fun closeSessionSendsExitTransferModeCommand() = runTest {
+    fun closeWithoutOwnershipDoesNotSendExitToAnotherOperation() = runTest {
         val closeResult = coordinator.closeSession()
         assertTrue(closeResult.isSuccess)
-        assertEquals(HeyCyanCommand.ExitWifiTransferMode, fakeExecutor.executedCommands.lastOrNull())
+        assertTrue(fakeExecutor.executedCommands.isEmpty())
         assertEquals(HeyCyanTransferState.Idle, coordinator.state.value)
     }
 
     @Test
-    fun downloadNormalizesOpusFile() = runTest {
+    fun downloadPreservesOriginalRecordingBytes() = runTest {
         stateStore.apply(
             com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass")
         )
@@ -194,11 +194,24 @@ class HeyCyanTransferCoordinatorTest {
             val downloadResult = coordinator.download(audioMedia, tempFile.absolutePath)
             assertTrue(downloadResult.isSuccess)
 
-            // Verify file has been normalized to start with OggS
-            val updatedBytes = tempFile.readBytes()
-            assertTrue(com.halo.drivers.heycyan.media.HeyCyanOpusMediaNormalizer.isAlreadyOgg(updatedBytes))
+            org.junit.Assert.assertArrayEquals(ByteArray(200) { 0x42 }, tempFile.readBytes())
         } finally {
             tempFile.delete()
         }
     }
+    @Test fun ownedSessionClosesOnceAndCannotExitANewSelectedDevice() = runTest {
+        stateStore.apply(com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass"))
+        coordinator.synchronizeManifest("device").getOrThrow()
+        coordinator.closeSession().getOrThrow()
+        coordinator.closeSession().getOrThrow()
+        assertEquals(1, fakeExecutor.executedCommands.count { it == HeyCyanCommand.ExitWifiTransferMode })
+        var current = true
+        val guarded = HeyCyanTransferCoordinator(controller, credentialProvider, wifiConnection,
+            HeyCyanMediaApiFactory { fakeApi }, deviceIsCurrent = { current })
+        guarded.synchronizeManifest("device").getOrThrow()
+        current = false
+        guarded.closeSession().getOrThrow()
+        assertEquals(1, fakeExecutor.executedCommands.count { it == HeyCyanCommand.ExitWifiTransferMode })
+    }
+
 }

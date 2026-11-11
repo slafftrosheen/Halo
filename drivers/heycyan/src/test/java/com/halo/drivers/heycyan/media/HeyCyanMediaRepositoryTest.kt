@@ -30,18 +30,18 @@ class HeyCyanMediaRepositoryTest {
             identityResolver = DefaultHeyCyanMediaIdentityResolver(),
         )
 
-        val photo = HeyCyanMedia.Photo("sample.jpg", "sample.jpg", 100L, 1000L, null, null)
+        val photo = HeyCyanMedia.Photo("sample.jpg", "sample.jpg", null, 1000L, null, null)
         val session = repository.beginWrite(photo)
 
         val sampleBytes = "BINARY_PHOTO_DATA_FIXTURE_CONTENT_12345".toByteArray()
         session.write(sampleBytes, 0, sampleBytes.size)
 
-        val commitResult = repository.commit(session, sha256 = "testsha256")
+        val commitResult = repository.commit(session, sha256 = java.security.MessageDigest.getInstance("SHA-256").digest(sampleBytes).joinToString("") { "%02x".format(it) })
         assertTrue(commitResult.isSuccess)
 
         val stored = commitResult.getOrThrow()
         assertEquals(photo.filename, stored.filename)
-        assertEquals("testsha256", stored.sha256)
+        assertEquals(java.security.MessageDigest.getInstance("SHA-256").digest(sampleBytes).joinToString("") { "%02x".format(it) }, stored.sha256)
 
         // Verify stored file on disk matches binary fixture bytes
         val fileOnDisk = File(stored.localPath)

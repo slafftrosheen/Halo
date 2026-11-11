@@ -45,6 +45,10 @@ class DefaultHeyCyanMediaConfigParser : HeyCyanMediaConfigParser {
             else -> parseLineBased(trimmed)
         }
 
+        require(filenames.size <= 5000 && filenames.distinct().size == filenames.size) { "Invalid device file list" }
+        filenames.forEach { name ->
+            require(name.length in 1..255 && name.none(Char::isISOControl) && name != "." && name != ".." && '/' !in name && '\\' !in name)
+        }
         val items = filenames.map { filename ->
             val type = MediaType.fromExtension(filename)
             MediaItem(
@@ -60,36 +64,57 @@ class DefaultHeyCyanMediaConfigParser : HeyCyanMediaConfigParser {
         )
     }
 
-    // -------------------------------------------------------------------------
-    // Private parsing — source field name: "files"
-    // -------------------------------------------------------------------------
+    // Only the documented JSON shape is accepted. Error objects, nested structures,
+    // malformed escapes and trailing data cannot become successful empty catalogs.
+    private fun parseJsonObject(json: String): List<String> = JsonFiles(json).parse(objectForm = true)
+    private fun parseJsonArray(json: String): List<String> = JsonFiles(json).parse(objectForm = false)
 
-    /**
-     * Extracts the `"files"` array from a JSON object.
-     * The key name `"files"` is source-established from CyanBridge.
-     */
-    private fun parseJsonObject(json: String): List<String> {
-        val filesStart = json.indexOf("[")
-        val filesEnd = json.lastIndexOf("]")
-        if (filesStart < 0 || filesEnd < 0 || filesEnd <= filesStart) {
-            return emptyList()
+    private class JsonFiles(private val text: String) {
+        private var offset = 0
+        private fun whitespace() { while (offset < text.length && text[offset] in " \t\r\n") offset++ }
+        private fun expect(char: Char) { whitespace(); require(offset < text.length && text[offset++] == char) { "Invalid media manifest JSON" } }
+        private fun take(char: Char): Boolean { whitespace(); return if (offset < text.length && text[offset] == char) { offset++; true } else false }
+        private fun string(): String {
+            expect('"')
+            val result = StringBuilder()
+            while (offset < text.length) {
+                val char = text[offset++]
+                if (char == '"') return result.toString()
+                require(char >= ' ') { "Invalid JSON control character" }
+                if (char != '\\') result.append(char) else {
+                    require(offset < text.length)
+                    when (val escape = text[offset++]) {
+                        '"', '\\', '/' -> result.append(escape)
+                        'b' -> result.append('\b')
+                        'f' -> result.append('\u000c')
+                        'n' -> result.append('\n')
+                        'r' -> result.append('\r')
+                        't' -> result.append('\t')
+                        'u' -> { require(offset + 4 <= text.length)
+                            result.append(text.substring(offset, offset + 4).toInt(16).toChar()); offset += 4 }
+                        else -> error("Invalid JSON escape")
+                    }
+                }
+                require(result.length <= 255) { "Device filename too long" }
+            }
+            error("Unterminated JSON string")
         }
-        return parseJsonArray(json.substring(filesStart, filesEnd + 1))
+        fun parse(objectForm: Boolean): List<String> {
+            if (objectForm) { expect('{'); require(string() == "files"); expect(':') }
+            expect('[')
+            val names = mutableListOf<String>()
+            if (!take(']')) {
+                do { names += string(); require(names.size <= 5000) } while (take(','))
+                expect(']')
+            }
+            if (objectForm) expect('}')
+            whitespace(); require(offset == text.length)
+            return names
+        }
     }
 
-    /**
-     * Extracts quoted string values from a JSON array.
-     */
-    private fun parseJsonArray(json: String): List<String> {
-        val pattern = Regex(""""([^"]+)"""")
-        return pattern.findAll(json).map { it.groupValues[1] }.toList()
+    private fun parseLineBased(body: String): List<String> {
+        require(!body.startsWith("<")) { "Device returned a document instead of a file list" }
+        return body.lineSequence().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("#") }.take(5001).toList()
     }
-
-    /**
-     * Parses line-based format: one filename per line, # = comment.
-     */
-    private fun parseLineBased(body: String): List<String> =
-        body.lines()
-            .map { it.trim() }
-            .filter { it.isNotBlank() && !it.startsWith("#") }
 }

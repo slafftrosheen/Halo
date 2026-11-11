@@ -46,7 +46,7 @@ class HeyCyanMediaSynchronizer(
         val queueItems: List<HeyCyanMedia> = when (request.policy) {
             MediaSyncPolicy.NEW_ONLY -> diff.newItems
             MediaSyncPolicy.NEW_AND_CHANGED -> diff.newItems + diff.changedItems
-            MediaSyncPolicy.FORCE_REDOWNLOAD -> manifest.items
+            MediaSyncPolicy.FORCE_REDOWNLOAD -> filteredRemote
         }
 
         var downloaded = 0
